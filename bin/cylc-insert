@@ -47,27 +47,30 @@ See also 'cylc submit', for running tasks without the scheduler.
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"),
         ('MATCH', 'Task or family name matching regular expression'),
-        ('TAG', 'Cycle time or integer tag'),
-        ('[STOP]', 'Optional stop tag for inserted task.' )])
+        ('CYCLE_POINT', 'Cycle point (e.g. date-time or integer)'),
+        ('[STOP_POINT]', 'Optional stop cycle point for inserted task.' )])
 
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
 name = args[1]
-tag = args[2]
+point_string = args[2]
 if len(args) == 4:
-    stoptag = args[3]
-    # TODO ISO - VALIDATE stoptag
+    stop_point_string = args[3]
+    # TODO ISO - VALIDATE stop_point_string
 else:
-    stoptag = None
+    stop_point_string = None
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'command-interface' )
-    prompt( 'Insert ' + name + ' at ' + tag + ' in ' + suite, options.force )
-    result = proxy.put( 'insert task', name, tag, options.is_family, stoptag )
+    prompt( 'Insert ' + name + ' at ' + point_string + ' in ' + suite,
+            options.force )
+    result = proxy.put(
+        'insert task', name, point_string, options.is_family,
+        stop_point_string )
 except Exception, x:
     if cylc.flags.debug:
         raise

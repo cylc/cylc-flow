@@ -103,7 +103,7 @@ try:
         while True:
             # continual redisplay loop
 
-            # get state summary, task names, cycle times
+            # get state summary, task names, cycle points
             try:
                 [glbl, states, fam_states] = proxy.get_state_summary()
 
@@ -146,20 +146,21 @@ try:
 
             task_ids = states.keys()
             n_tasks_all = len( task_ids )
+            task_ids.sort()
 
             seen_time = {}
             seen_name = {}
-            c_time_list = []
+            point_string_list = []
             name_list = []
 
             for task_id in task_ids:
 
                 name = states[ task_id ][ 'name' ]
-                c_time = states[ task_id ][ 'label' ]
+                point_string = states[ task_id ][ 'label' ]
 
-                if c_time not in seen_time.keys():
-                    seen_time[ c_time ] = True
-                    c_time_list.append( c_time )
+                if point_string not in seen_time.keys():
+                    seen_time[ point_string ] = True
+                    point_string_list.append( point_string )
 
                 if name not in seen_name.keys():
                     seen_name[ name ] = True
@@ -168,10 +169,10 @@ try:
             n_task_types = len( name_list )
 
             # initialize a dict-of-dicts to store display information
-            # for all tasks at each current cycle time
-            #   task_info[ c_time ][ task_name ] = info
+            # for all tasks at each current cycle point
+            #   task_info[ point_string ][ task_name ] = info
             task_info = {}
-            for rt in c_time_list:
+            for rt in point_string_list:
                 task_info[ rt ] = {}
                 for name in name_list:
                     # initialise with blank string of the same size as
@@ -185,10 +186,7 @@ try:
             for task_id in task_ids:
 
                 name = states[ task_id ][ 'name' ]
-                asyncid = ''
-                if 'asyncid' in states[ task_id ]:
-                    asyncid = '(' + states[ task_id ][ 'asyncid' ] + ')'
-                ctime = states[ task_id ][ 'label' ]
+                point_string = states[ task_id ][ 'label' ]
 
                 name     =      states[ task_id ][ 'name' ]
                 state    =      states[ task_id ][ 'state' ]
@@ -203,7 +201,8 @@ try:
                 # color displayed info according to run status
                 ctrl_start = task_state.ctrl[state]
                 # construct the display string for this task
-                task_info[ ctime ][ name ] = ctrl_start + name + asyncid + ctrl_end + abd
+                task_info[ point_string ][ name ] = (
+                    ctrl_start + name + ctrl_end + abd)
 
             # construct an array of lines to blit to the screen
 
@@ -243,8 +242,8 @@ try:
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )
 
-            # construct a line of text to display for each cycle time
-            for rt in c_time_list:
+            # construct a line of text to display for each cycle point
+            for rt in point_string_list:
                 indx = rt
                 line = '\033[1;34m' + rt + ctrl_end
 

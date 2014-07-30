@@ -41,21 +41,25 @@ queue limit specifies).
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[ ('REG', 'Suite name'),
         ('MATCH', 'Task or family name matching regular expression'),
-        ('TAG', 'Task cycle time or integer tag') ])
+        ('POINT', 'Task cycle point (e.g. date-time or integer)') ])
 
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
 name = args[1]
-tag = args[2]
+point_string = args[2]
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'command-interface' )
-    prompt( 'Trigger task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
-    result = proxy.put( 'trigger task', name, tag, options.is_family )
+    prompt(
+        'Trigger task(s) ' + name + ' at ' + point_string + ' in ' + suite,
+        options.force
+    )
+    result = proxy.put(
+        'trigger task', name, point_string, options.is_family)
 except Exception, x:
     if cylc.flags.debug:
         raise

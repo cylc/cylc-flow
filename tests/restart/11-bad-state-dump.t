@@ -15,10 +15,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting for suites that have bad state dump files.
+# Test restarting for suites that have bad state dump files.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 18
+set_test_number 15
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE bad-state
 #-------------------------------------------------------------------------------
@@ -45,7 +45,6 @@ while [[ -e $HOME/.cylc/ports/$SUITE_NAME ]]; do
     sleep 1
 done
 __SCRIPT__
-grep_ok 'Suite shutting down.*ERROR' "$SUITE_RUN_DIR/log/suite/log"
 grep_ok 'state dump file not found:' "$SUITE_RUN_DIR/log/suite/err"
 #-------------------------------------------------------------------------------
 echo "" >$STATE_FILE
@@ -63,7 +62,6 @@ while [[ -e $HOME/.cylc/ports/$SUITE_NAME ]]; do
     sleep 1
 done
 __SCRIPT__
-grep_ok 'Suite shutting down.*ERROR' "$SUITE_RUN_DIR/log/suite/log"
 grep_ok 'ERROR, incomplete suite state dump' "$SUITE_RUN_DIR/log/suite/err"
 #-------------------------------------------------------------------------------
 head -2 state.orig >$STATE_FILE
@@ -81,7 +79,6 @@ while [[ -e $HOME/.cylc/ports/$SUITE_NAME ]]; do
     sleep 1
 done
 __SCRIPT__
-grep_ok 'Suite shutting down.*ERROR' "$SUITE_RUN_DIR/log/suite/log"
 grep_ok 'ERROR, incomplete suite state dump' "$SUITE_RUN_DIR/log/suite/err"
 #-------------------------------------------------------------------------------
 sed "s/status=[^,][^,]*, /status=quo, /g" state.orig >$STATE_FILE

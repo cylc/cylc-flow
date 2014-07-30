@@ -9,6 +9,7 @@
 {%- endif %}
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
+    UTC mode = True
     [[event hooks]]
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
         timeout = 3

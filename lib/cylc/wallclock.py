@@ -16,15 +16,18 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from flags import utc
-from datetime import datetime
+import flags
+from datetime import datetime, timedelta
+from isodatetime.data import TimeInterval
 from isodatetime.parsers import TimePointParser
-from isodatetime.timezone import get_local_time_zone_format
+from isodatetime.timezone import (
+    get_local_time_zone_format, get_local_time_zone)
 
 TIME_ZONE_STRING_LOCAL_BASIC = get_local_time_zone_format(reduced_mode=True)
 TIME_ZONE_STRING_LOCAL_EXTENDED = get_local_time_zone_format(
     extended_mode=True, reduced_mode=True)
 TIME_ZONE_STRING_UTC = "Z"
+TIME_ZONE_LOCAL_UTC_OFFSET = get_local_time_zone()
 
 DATE_TIME_FORMAT_BASIC = "%Y%m%dT%H%M%S"
 DATE_TIME_FORMAT_BASIC_SUB_SECOND = "%Y%m%dT%H%M%S.%f"
@@ -50,7 +53,7 @@ def now(override_use_utc=None):
     used.
 
     """
-    if override_use_utc or (override_use_utc is None and utc):
+    if override_use_utc or (override_use_utc is None and flags.utc):
         return datetime.utcnow()
     else:
         return datetime.now()
@@ -88,7 +91,8 @@ def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
 
 def get_time_string(date_time, display_sub_seconds=False,
                     override_use_utc=None, use_basic_format=False,
-                    only_display_time=False, no_display_time_zone=False):
+                    only_display_time=False, no_display_time_zone=False,
+                    date_time_is_local=False):
     """Return a string representing the current system time.
 
     Arguments:
@@ -109,10 +113,17 @@ def get_time_string(date_time, display_sub_seconds=False,
     no_display_time_zone (default False) - a boolean that, if True,
     means that the date/time representation is returned without a time
     zone.
+    date_time_is_local - a boolean that, if True, indicates that
+    the date_time argument object is in the local time zone, not UTC.
 
     """
-    if override_use_utc or (override_use_utc is None and utc):
+    if override_use_utc or (override_use_utc is None and flags.utc):
         time_zone_string = TIME_ZONE_STRING_UTC
+        if date_time_is_local:
+            date_time = date_time - timedelta(
+                hours=TIME_ZONE_LOCAL_UTC_OFFSET[0],
+                minutes=TIME_ZONE_LOCAL_UTC_OFFSET[1]
+            )
     elif use_basic_format:
         time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
     else:
@@ -169,7 +180,8 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
                            use_basic_format=use_basic_format,
                            override_use_utc=None,
                            only_display_time=only_display_time,
-                           no_display_time_zone=no_display_time_zone)
+                           no_display_time_zone=no_display_time_zone,
+                           date_time_is_local=True)
 
 
 def get_unix_time_from_time_string(time_string):
@@ -177,3 +189,8 @@ def get_unix_time_from_time_string(time_string):
     parser = TimePointParser()
     time_point = parser.parse(time_string)
     return time_point.get("seconds_since_unix_epoch")
+
+
+def get_seconds_as_interval_string(seconds):
+    """Convert a number of seconds into an ISO 8601 duration string."""
+    return str(TimeInterval(seconds=seconds, standardize=True))

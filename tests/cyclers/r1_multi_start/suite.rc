@@ -1,8 +1,8 @@
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 2014-01-01
-    final cycle time = 2014-01-04
+    initial cycle point = 2014-01-01
+    final cycle point = 2014-01-04
     [[dependencies]]
         [[[ R1 ]]]
             graph = "cold_foo"
@@ -17,3 +17,6 @@
 [runtime]
     [[root]]
         command scripting = true
+[visualization]
+    initial cycle point = 2014-01-01
+    final cycle point = 2014-01-04

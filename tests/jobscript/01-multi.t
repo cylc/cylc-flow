@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test jobscipt is being generated right for mult-inheritance cases
+# Test jobscipt is being generated right for mult-inheritance cases
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 22
@@ -94,6 +94,3 @@ grep -A1 "TASK COMMAND SCRIPTING" exp.jobfile > exp.task_cmd
 cmp_ok exp.task_cmd $TEST_SOURCE_DIR/multi/exp.cmd
 
 purge_suite $SUITE_NAME
-if [[ -n $SUITE_NAME ]]; then
-    rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME-submit
-fi

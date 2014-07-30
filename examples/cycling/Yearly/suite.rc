@@ -1,6 +1,6 @@
 [scheduling]
-    initial cycle time = 2010
-    final cycle time = 2015
+    initial cycle point = 2010
+    final cycle point = 2015
     [[dependencies]]
         [[[R1/0505T05+1300]]]
             # at the first occurring 5 May at 0500, UTC + 13 hours timezone
@@ -18,6 +18,6 @@
                 foo => baz
                     """
 [visualization]
-    initial cycle time = 2010
-    final cycle time = 2015
+    initial cycle point = 2010
+    final cycle point = 2015
 

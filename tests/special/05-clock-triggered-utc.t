@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test clock triggering is working
+# Test clock triggering is working
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -31,7 +31,7 @@ run_ok $TEST_NAME cylc run --debug $SUITE_NAME \
     -s START=$(date -u +%Y%m%dT%H00)Z -s HOUR=T$(date -u +%H) -s UTC_MODE=True
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-past
-NOW=$(date +%Y%m%dT%H00)Z
+NOW=$(date -u +%Y%m%dT%H00)Z
 START=$(cylc cycletime $NOW --offset-hour=-10)
 HOUR=T$(cylc cycletime $NOW --offset-hour=-10 --print-hour)
 run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START -s HOUR=$HOUR \

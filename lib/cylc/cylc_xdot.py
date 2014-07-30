@@ -72,7 +72,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file, watch, orientation="TB" ):
+            template_vars_file, watch, orientation="TB",
+            should_hide=False ):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -169,7 +170,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
                     #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
                     break
 
-        self.show_all()
+        if not should_hide:
+            self.show_all()
         while True:
             if self.load_config():
                 break
@@ -285,16 +287,17 @@ class MyDotWindow( CylcDotViewerCommon ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-                 template_vars_file,  watch, ctime, stop_after,
-                 orientation="TB", subgraphs_on=False ):
+                 template_vars_file,  watch, start_point_string,
+                 stop_point_string, orientation="TB",
+                 subgraphs_on=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.suiterc = None
-        self.ctime = ctime
+        self.start_point_string = start_point_string
         self.raw = False
-        self.stop_after = stop_after
+        self.stop_point_string = stop_point_string
         self.watch = []
         self.orientation = orientation
         self.subgraphs_on = subgraphs_on
@@ -430,12 +433,14 @@ class MyDotWindow( CylcDotViewerCommon ):
         graphed_family_nodes = self.suiterc.triggering_families
         suite_polling_tasks = self.suiterc.suite_polling_tasks
 
-        if self.ctime != None and self.stop_after != None:
-            one = self.ctime
-            two = self.stop_after
+        if self.start_point_string != None and self.stop_point_string != None:
+            one = self.start_point_string
+            two = self.stop_point_string
         else:
-            one = str( self.suiterc.cfg['visualization']['initial cycle time'])
-            two = str(self.suiterc.cfg['visualization']['final cycle time'])
+            one = str(
+                self.suiterc.cfg['visualization']['initial cycle point'])
+            two = str(
+                self.suiterc.cfg['visualization']['final cycle point'])
 
         graph = self.suiterc.get_graph( one, two,
                 raw=self.raw, group_nodes=group_nodes,
@@ -448,7 +453,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         graph.graph_attr['rankdir'] = self.orientation
 
         for node in graph.nodes():
-            name, tag = TaskID.split( node.get_name() )
+            name, point_string = TaskID.split( node.get_name() )
             if name in family_nodes:
                 if name in graphed_family_nodes:
                     node.attr['shape'] = 'doubleoctagon'

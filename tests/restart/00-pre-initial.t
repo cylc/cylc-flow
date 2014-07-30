@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting a suite with pre-initial cycle dependencies
+# Test restarting a suite with pre-initial cycle dependencies
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -49,7 +49,7 @@ sqlite3 $RUN_DIR/$SUITE_NAME/cylc-suite.db \
                  from task_states
                  order by name, cycle" > final-state
 
-cmp_ok final-state $TEST_SOURCE_DIR/pre-init/ref-state
+contains_ok final-state $TEST_SOURCE_DIR/pre-init/ref-state
 
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

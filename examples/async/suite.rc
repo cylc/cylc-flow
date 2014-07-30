@@ -1,8 +1,8 @@
 title = "asynchronous + cycling task demo"
 
 [scheduling]
-    initial cycle time = 2011010112
-    final cycle time = 2011010312
+    initial cycle point = 2011010112
+    final cycle point = 2011010312
     [[special tasks]]
         cold-start = ColdA
     [[dependencies]]
@@ -15,6 +15,6 @@ title = "asynchronous + cycling task demo"
                 ColdA | A[T-24] => A => B
                     """
 [visualization]
-    initial cycle time = 2011010112
-    final cycle time = 2011010312
+    initial cycle point = 2011010112
+    final cycle point = 2011010312
  

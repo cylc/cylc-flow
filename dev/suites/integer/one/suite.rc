@@ -1,8 +1,8 @@
 
 [scheduling]
-    initial cycle time = 1
-    final cycle time = 16
-    runahead factor = 4 
+    initial cycle point = 1
+    final cycle point = 16
+    runahead limit = 12
     cycling mode = integer
     [[special tasks]]
         sequential = seq

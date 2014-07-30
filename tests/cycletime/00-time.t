@@ -15,13 +15,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: basic jinja2 expansion test
+# basic jinja2 expansion test
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 27
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-use-env-var
-export CYLC_TASK_CYCLE_TIME=2010010203
+export CYLC_TASK_CYCLE_POINT=2010010203
 run_ok $TEST_NAME.check-env cylc cycletime
 run_ok $TEST_NAME.year-only cylc cycletime --print-year
 cmp_ok $TEST_NAME.year-only.stdout - << __OUT__

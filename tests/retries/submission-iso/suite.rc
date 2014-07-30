@@ -1,0 +1,17 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 1.0 # minutes
+       allow task failures = True
+       expected task failures = foo.1
+[scheduling]
+    [[dependencies]]
+        graph = "foo:submit-fail => !foo"
+[runtime]
+    [[foo]]
+        command scripting = true
+        [[[job submission]]]
+            retry delays = PT4S, PT5S, PT7S # 3*0.1
+        [[[remote]]]
+            host = notahost
+

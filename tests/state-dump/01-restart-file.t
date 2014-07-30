@@ -15,10 +15,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Basic test for state dumps, specify the dump on restart command line.
+# Basic test for state dumps, specify the dump on restart command line.
 run_restart() {
     rm $SUITE_DIR/state/state
     suite_run_ok $TEST_NAME cylc restart --reference-test --debug $SUITE_NAME \
         $STATE_BEFORE_RESTART
 }
 . $(dirname $0)/test_impl
+

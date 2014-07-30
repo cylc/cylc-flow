@@ -76,7 +76,7 @@ by normal [runtime] inheritance. In other words, it follows this order:
 all:root -> all:FAM -> all:task -> tag:root -> tag:FAM -> tag:task
 
 Broadcasts persist, even across suite restarts, until they expire when
-their target cycle time is older than the oldest current in the suite,
+their target cycle point is older than the oldest current in the suite,
 or until they are explicitly cancelled with this command.  All-cycle
 broadcasts do not expire.
 
@@ -103,11 +103,18 @@ See also 'cylc reload' - reload a modified suite definition at run time."""
 
 parser = cop( usage, pyro=True )
 
-parser.add_option( "-t", "--tag", metavar="TAG",
-        help="Target cycle time or tag. Defaults "
-        "to 'all-cycles' with --set and --cancel, "
+parser.add_option( "-t", "--tag", metavar="CYCLE_POINT",
+        help="(Deprecated). "
+        "Target cycle point. More than one can be added. "
+        "Defaults to 'all-cycle-points' with --set and --cancel, "
         "and nothing with --clear.",
-        action="append", dest="tags", default=[] )
+        action="append", dest="point_strings", default=[] )
+
+parser.add_option( "-p", "--point", metavar="CYCLE_POINT",
+        help="Target cycle point. More than one can be added. "
+        "Defaults to 'all-cycle-points' with --set and --cancel, "
+        "and nothing with --clear.",
+        action="append", dest="point_strings", default=[] )
 
 parser.add_option( "-n", "--namespace", metavar="NAME",
         help="Target namespace. Defaults to 'root' with "
@@ -123,9 +130,9 @@ parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM",
         action="append", dest="cancel", default=[] )
 
 parser.add_option( "-C", "--clear",
-        help="Cancel all broadcasts, or with -t/--tag, "
+        help="Cancel all broadcasts, or with -p/--point, "
         "-n/--namespace, cancel all broadcasts to targeted "
-        "namespaces and/or cycle times. Use '-C -t all-cycles' "
+        "namespaces and/or cycle points. Use '-C -p all-cycle-points' "
         "to cancel all all-cycle broadcasts without canceling "
         "all specific-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
@@ -141,7 +148,7 @@ parser.add_option( "-d", "--display",
 
 parser.add_option( "-k", "--display-task", metavar="TASKID",
         help="Print active broadcasts for a given task "
-        "(NAME"+TaskID.DELIM+"TAG).",
+        "(NAME"+TaskID.DELIM+"CYCLE_POINT).",
         action="store", default=None, dest="showtask" )
 
 parser.add_option( "-b", "--box",
@@ -182,9 +189,9 @@ except Exception, x:
 if options.show or options.showtask:
     if options.showtask:
         try:
-            name, tag = options.showtask.split(TaskID.DELIM)
+            name, point_string = options.showtask.split(TaskID.DELIM)
         except ValueError:
-            parser.error( "TASKID must be NAME"+TaskID.DELIM+"TAG" )
+            parser.error( "TASKID must be NAME"+TaskID.DELIM+"CYCLE_POINT" )
     try:
         settings = proxy.get( options.showtask )
     except Exception,x:
@@ -200,7 +207,7 @@ if options.show or options.showtask:
 
 if options.clear:
     try:
-        settings = proxy.clear( options.namespaces, options.tags )
+        settings = proxy.clear( options.namespaces, options.point_strings )
     except Exception,x:
         if debug:
             raise
@@ -218,13 +225,13 @@ if options.expire:
     else:
         sys.exit(0)
 
-# implement namespace and tag defaults here
+# implement namespace and cycle point defaults here
 namespaces = options.namespaces
 if not namespaces:
     namespaces = ["root"]
-tags = options.tags
-if not tags:
-    tags = ["all-cycles"]
+point_strings = options.point_strings
+if not point_strings:
+    point_strings = ["all-cycle-points"]
 
 settings = []
 for s in options.set:
@@ -256,7 +263,7 @@ for setting in settings:
         sys.exit(x)
 
 try:
-    success, msg = proxy.put( namespaces, tags, settings )
+    success, msg = proxy.put( namespaces, point_strings, settings )
 except Exception, x:
     if debug:
         raise

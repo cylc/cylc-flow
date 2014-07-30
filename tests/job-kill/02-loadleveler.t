@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test killing of jobs submitted to loadleveler.
+# Test killing of jobs submitted to loadleveler.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 export CYLC_TEST_HOST=$( \

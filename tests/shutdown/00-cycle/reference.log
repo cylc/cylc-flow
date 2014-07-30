@@ -4,8 +4,8 @@
 2013/08/19 15:51:11 INFO - Suite starting at 2013-08-19 15:51:11.535859
 2013/08/19 15:51:11 INFO - Log event clock: real time
 2013/08/19 15:51:11 INFO - Run mode: live
-2013/08/19 15:51:11 INFO - Start tag: 2010010100
-2013/08/19 15:51:11 INFO - Stop tag: 2010010500
+2013/08/19 15:51:11 INFO - Start point: 2010010100
+2013/08/19 15:51:11 INFO - Stop point: 2010010500
 2013/08/19 15:51:11 INFO - Thread-4 start (Job Submission)
 2013/08/19 15:51:11 INFO - Thread-5 start (Request Handling)
 2013/08/19 15:51:11 INFO - Cold Start 2010010100
@@ -28,7 +28,7 @@
 2013/08/19 15:51:16 INFO - [stopper.2010010100] -(current:submitted)> stopper.2010010100 started at 2013-08-19T15:51:15
 2013/08/19 15:51:16 INFO - [stopper.2010010100] -(setting:running)
 2013/08/19 15:51:16 INFO - Setting stop cycle time: 2010010100
-2013/08/19 15:51:16 INFO - Command succeeded: stop after tag(2010010100)
+2013/08/19 15:51:16 INFO - Command succeeded: stop after point(2010010100)
 2013/08/19 15:51:17 INFO - [stopper.2010010100] -(current:running)> stopper.2010010100 succeeded at 2013-08-19T15:51:17
 2013/08/19 15:51:17 INFO - [stopper.2010010100] -(setting:succeeded)
 2013/08/19 15:51:17 INFO - [c.2010010100] -(setting:submitting)

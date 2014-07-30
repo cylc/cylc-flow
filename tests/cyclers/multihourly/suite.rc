@@ -3,8 +3,8 @@
     [[reference test]]
         live mode suite timeout = 2.0
 [scheduling]
-    initial cycle time = 20000131T0100Z
-    final cycle time = 20000202T0600+0600
+    initial cycle point = 20000131T0100Z
+    final cycle point = 20000202T0600+0600
     [[dependencies]]
         [[[ PT3H ]]]
             graph = "foo[-PT3H] => foo => bar"
@@ -13,3 +13,6 @@
 [runtime]
     [[root]]
         command scripting = true
+[visualization]
+    initial cycle point = 20000131T0100Z
+    final cycle point = 20000202T0600+0600

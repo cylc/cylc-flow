@@ -15,10 +15,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test whether job vacation trap is included in a loadleveler job or not.
-#C: A job for a task with the restart=yes directive will have the trap.
-#C: This does not test loadleveler job vacation itself, because the test will
-#C: require a site admin to pre-empt a job.
+# Test whether job vacation trap is included in a loadleveler job or not.
+# A job for a task with the restart=yes directive will have the trap.
+# This does not test loadleveler job vacation itself, because the test will
+# require a site admin to pre-empt a job.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 export CYLC_TEST_HOST=$( \
@@ -46,6 +46,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+cat $TEST_NAME.stderr >/dev/tty
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-t1.1
 T1_JOB_FILE=$SUITE_RUN_DIR/log/job/t1.1.1

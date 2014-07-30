@@ -45,11 +45,11 @@ class config_line:
         before the next is processed.
     """
     legal_ops = [ 'copy', 'move', 'delete' ]
-    def __init__( self, source, match, oper, ctime, offset, dest=None,
+    def __init__( self, source, match, oper, point, offset, dest=None,
             mode=None, cheap=False ):
         self.source = source
         self.match = match
-        self.ctime = ctime
+        self.point = point
         self.offset = offset
         self.opern = oper
         self.destn = dest
@@ -76,7 +76,7 @@ class config_line:
         try:
             int( self.offset )
         except ValueError:
-            raise HousekeepingError, 'Cycle time offset must be integer: ' + self.offset
+            raise HousekeepingError, 'Cycle point offset must be integer: ' + self.offset
 
         # check the validity of the source directory
         if not os.path.isdir( self.source ):
@@ -99,14 +99,15 @@ class config_line:
         print "MATCH :", self.match
         print "ACTION:", self.opern
         # TODO ISO
-        foo = self.ctime - self.offset # offset is HOURS
-        print "CUTOFF:", self.ctime, '-', self.offset, '=', foo.get()
+        foo = self.point - self.offset # offset is HOURS
+        print "CUTOFF:", self.point, '-', self.offset, '=', foo.get()
         batch = batchproc( batchsize )
         for entry in os.listdir( self.source ):
             src_entries += 1
             entrypath = os.path.join( self.source, entry )
-            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset,
-                    self.destn, self.mode, self.cheap )
+            item = hkitem(
+                entrypath, self.match, self.opern, self.point, self.offset,
+                self.destn, self.mode, self.cheap )
             if not item.matches():
                 not_matched += 1
                 continue
@@ -225,7 +226,7 @@ class hkitem:
         if flags.debug:
             print " + MATCH"
 
-        # extract cycle time from path
+        # extract cycle point from path
         mgrps = m.groups()
         if len(mgrps) == 1:
             self.matched_ctime = mgrps[0]
@@ -248,9 +249,9 @@ class hkitem:
             print " > extracted time groups:", m.groups()
             return False
 
-        # TODO ISO - check validity of extracted cycle time
+        # TODO ISO - check validity of extracted cycle point
         if flags.debug:
-            print " + extracted cycle time: " + self.matched_ctime
+            print " + extracted cycle point: " + self.matched_ctime
 
         # assume ctime is >= self.matched_ctime
         # TODO ISO:
@@ -269,9 +270,9 @@ class hkitem:
         return True
 
     def interpolate_destination( self ):
-        # Interpolate cycle time components into destination if necessary.
+        # Interpolate cycle point components into destination if necessary.
         if self.destn:
-            # destination directory may be cycle time dependent
+            # destination directory may be cycle point dependent
             dest = self.destn
             dest = re.sub( 'YYYYMMDDHH', self.matched_ctime, dest )
             dest = re.sub( 'YYYYMMDD', self.matched_ctime[0:8], dest )

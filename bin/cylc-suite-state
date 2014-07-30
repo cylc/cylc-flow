@@ -83,13 +83,13 @@ class suite_poller( poller ):
 parser = cop( usage = """cylc suite-state REG [OPTIONS]
 
 Print task states retrieved from a suite database; or (with --task,
---cycle, and --status) poll until a given task reaches a given state.
+--point, and --status) poll until a given task reaches a given state.
 Polling is configurable with --interval and --max-polls; for a one-off
 check use --max-polls=1. The suite database does not need to exist at
 the time polling commences but allocated polls are consumed waiting for
 it (consider max-polls*interval as an overall timeout).
 
-Note for non-cycling tasks --cycle=1 must be provided.
+Note for non-cycling tasks --point=1 must be provided.
 
 For your own suites the database location is determined by your
 site/user config. For other suites, e.g. those owned by others, or
@@ -105,7 +105,11 @@ parser.add_option( "-t", "--task",
         action="store", dest="task", default=None )
 
 parser.add_option( "-c", "--cycle",
-        help="Specify the cycle to check task states for.",
+        help="Deprecated. Specify the cycle to check task states for.",
+        action="store", dest="cycle", default=None )
+
+parser.add_option( "-p", "--point",
+        help="Specify the cycle point to check task states for.",
         action="store", dest="cycle", default=None )
 
 parser.add_option( "-d", "--run-dir",

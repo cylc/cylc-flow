@@ -57,8 +57,8 @@ expensive real tasks during suite development.
 Cylc runs off the suite host's system clock by default. This item allows
 you to run the suite in UTC even if the system clock is set to local time.
 Clock-triggered tasks will trigger when the current UTC time is equal to
-their cycle time plus offset; other time values used, reported, or
-logged by cylc will also be in UTC.
+their cycle point date-time plus offset; other time values used, reported,
+or logged by cylc will usually also be in UTC.
 
 \begin{myitemize}
     \item {\em type:} boolean
@@ -74,30 +74,31 @@ To just alter the timezone used in the date/time cycle point format, see
 \ref{cycle-point-num-expanded-year-digits}.
 
 Cylc usually uses a \lstinline=CCYYMMDDThhmmZ= (\lstinline=Z= in the special
-case of UTC) or \lstinline=CCYYMMDDThhmm±hhmm= format for writing down
-date/time cycle points, which follows one of the basic formats outlined in the
-ISO 8601 standard. For example, a cycle point on the 3rd of February 2001 at
-4:50 in the morning, UTC (+0000 timezone), would be written
+case of UTC) or \lstinline=CCYYMMDDThhmm+hhmm= format (\lstinline=+= standing
+for \lstinline=+= or \lstinline=-= here) for writing down date/time cycle
+points, which follows one of the basic formats outlined in the ISO 8601
+standard. For example, a cycle point on the 3rd of February 2001 at 4:50 in
+the morning, UTC (+0000 timezone), would be written
 \lstinline=20010203T0450Z=. Similarly, for the the 3rd of February 2001 at
 4:50 in the morning, +1300 timezone, cylc would write
 \lstinline=20010203T0450+1300=.
 
 You may use the isodatetime library's syntax to write dates and times in ISO
 8601 formats - \lstinline=CC= for century, \lstinline=YY= for decade and
-decadal year, \lstinline=±X= for expanded year digits, thereafter following
-the ISO 8601 standard example notation except for fractional digits, which are
-represented as \lstinline=,ii= for \lstinline=hh=, \lstinline=,nn= for
-\lstinline=mm=, etc. For example, to write date/times as week dates with
-fractional hours, set cycle point format to \lstinline=CCYYWwwDThh,iiZ= e.g.
-\lstinline=1987W041T08,5Z= for 08:30 UTC on Monday on the fourth ISO week of
-1987.
+decadal year, \lstinline=+X= for expanded year digits and their positive or
+negative sign, thereafter following the ISO 8601 standard example notation
+except for fractional digits, which are represented as \lstinline=,ii= for
+\lstinline=hh=, \lstinline=,nn= for \lstinline=mm=, etc. For example, to write
+date/times as week dates with fractional hours, set cycle point format to
+\lstinline=CCYYWwwDThh,iiZ= e.g. \lstinline=1987W041T08,5Z= for 08:30 UTC on
+Monday on the fourth ISO week of 1987.
 
 You can also use a subset of the strptime/strftime POSIX standard - supported
 tokens are \lstinline=\%F=, \lstinline=\%H=, \lstinline=\%M=, \lstinline=\%S=,
 \lstinline=\%Y=, \lstinline=\%d=, \lstinline=\%j=, \lstinline=\%m=,
 \lstinline=\%s=, \lstinline=\%z=.
 
-To use the old cylc cycle time format (e.g. \lstinline=2014020106= for 06:00
+To use the old cylc date-time format (e.g. \lstinline=2014020106= for 06:00
 on the 1st of February 2014), set cycle point format to
 \lstinline=\%Y\%m\%d\%H=.
 
@@ -137,7 +138,7 @@ zone offsets from UTC, such as \lstinline=+13=, \lstinline=+1300=,
 special \lstinline=+0000= case. Cycle points will be converted to the time
 zone you give and will be represented with this string at the end.
 
-Cycle points that are input without time zones (e.g. as an initial cycle time
+Cycle points that are input without time zones (e.g. as an initial cycle point
 setting) will use this time zone if set. If this isn't set (and UTC mode is
 also not set), then they will default to the current local time zone.
 
@@ -167,96 +168,12 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}job submission{]]}]{[cylc] $\rightarrow$ [[job submission]]}
-
-Tasks ready to submit are now queued for processing in a background
-worker thread, so submitting a lot of tasks at once does not hold cylc
-back.  In the job submission thread tasks are are batched, with members
-of each batch being submitted in parallel. Batches are processed serially,
-with a delay between batches, to avoid swamping the host system with too
-many simultaneous job submissions.
-
-The time required for a single task's job submission to complete
-typically depends on whether it is a remote task (for which an ssh
-connection must be established and used) and whether dynamic host
-selection is used (see~\ref{DynamicHostSelection} (a dynamic host
-selection command runs as part of the job submission command). The time
-taken for a batch of parallel job submissions to complete will be
-roughly the duration of the slowest member process.
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ batch size}
-
-The maximum number of tasks to be submitted in a single batch, in the
-job submission thread. cylc waits for all batch member job-submissions
-to complete before proceeding to the next batch.
-
+\subsubsection[process pool size]{[cylc] $\rightarrow$ process pool size}
+Number of process pool worker processes used to execute shell commands
+(job submission, event handlers, job poll and kill commands).
 \begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ delay between batches}
-
-It may cause a problem for some batch queue schedulers to submit too
-many jobs at once, so cylc allows a configurable delay between job
-submission batches.
-
-\begin{myitemize}
-    \item {\em type:} integer seconds (minimum 0)
-    \item {\em default:} 0
-\end{myitemize}
-
-\subsubsection[{[[}poll and kill command submission{]]}]{[cylc] $\rightarrow$ [[poll and kill command submission]]}
-
-Task poll and kill commands are queued to a worker thread that processes
-them in parallel, in batches to limit the number that can execute at
-once.
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ batch size}
-
-The maximum number of poll and kill commands to execute at once, before
-moving on to the next batch.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ delay between batches}
-
-How long to wait, in seconds, before processing the next batch of poll and kill commands.
-
-\begin{myitemize}
-    \item {\em type:} integer seconds (minimum 0)
-    \item {\em default:} 0
-\end{myitemize}
-
-
-\subsubsection[{[[}event handler submission{]]}]{[cylc] $\rightarrow$ [[event handler submission]]}
-
-Task event handlers are queued to a worker thread that processes them in
-parallel, in batches to limit the number that can execute at once ({\em
-suite event handlers}, on the other hand, are executed as background
-sub-processes in the main thread, not queued to the task
-event handler thread).
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ batch size}
-
-The maximum number of event handlers to execute at once, before moving
-on to the next batch.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ delay between batches}
-
-How long to wait, in seconds, before processing the next batch of event handlers.
-
-\begin{myitemize}
-    \item {\em type:} integer seconds (minimum 0)
-    \item {\em default:} 0
+    \item {\em type:} integer
+    \item {\em default:} None (number of processor cores on the suite host)
 \end{myitemize}
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
@@ -311,7 +228,8 @@ handler(s) will be called if the suite times out before it finishes.
 The timer is set initially at suite start up.
 
 \begin{myitemize}
-    \item {\em type:} float (minutes)
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -387,27 +305,29 @@ from running multiple distinct {\bf copies} of a suite simultaneously}.
 
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
-Variables defined here are exported into the environment in which cylc
-itself runs. They are then available to {\em local processes spawned
-directly by cylc}. Any variables read by task event handlers must be
-defined here, for instance, because event handlers are executed
-directly by cylc, not by running tasks. And similarly the {command
-lines} issued by cylc to invoke event handlers or to submit task
-job scripts could, in principle, make use of environment variables
-defined here.
-\paragraph{Warnings}
+Environment variables defined in this section are passed to suite and
+task event handlers.
 
 \begin{myitemize}
-    \item Cylc local variables are not available to
-        executing tasks unless you happen to choose a local direct job
-        submission method.  {\em Always use task runtime environments to
-        pass variables into the task execution environment
-        (\ref{AppendixTaskExecutionEnvironment}).}
-    \item Unlike task execution environment variables, which are written
-        to job scripts and interpreted by the shell at run time,
-        cylc local environment variables are written directly
-        to the environment by Python as literal strings {\em  so
-        shell variable expansion expressions cannot be used here.}
+    \item These variables are not passed to tasks - use task runtime
+        variables for that. Similarly, task runtime variables are not
+        available to event handlers - which are executed by cylc, not by
+        tasks, in response to task events.
+        
+    \item Cylc-defined environment variables such as
+        \lstinline=$CYLC_SUITE_RUN_DIR= are not passed to task event
+        handlers by default, but you can make them available by
+        extracting them to the cylc environment like this:
+\begin{lstlisting}
+[cylc]
+    [[environment]]
+        CYLC_SUITE_RUN_DIR = $CYLC_SUITE_RUN_DIR
+\end{lstlisting}
+
+    \item These variables - unlike task execution environment variables
+        which are written to job scripts and interpreted by the shell at
+        task run time - are not interpreted by the shell prior to use
+        so shell variable expansion expressions cannot be used here.
 \end{myitemize}
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
@@ -419,8 +339,8 @@ definition is preserved) and are not evaluated or manipulated by
 cylc, so any variable assignment expression that is legal in the
 shell in which cylc is running can be used (but see the warning
 above on variable expansions, which will not be evaluated).
-White space around the `$=$' is allowed (as far as cylc's suite.rc
-parser is concerned these are normal configuration items).
+White space around the `$=$' is allowed (as far as cylc's file 
+parser is concerned these are just suite configuration items).
 
 \begin{myitemize}
     \item {\em type:} string
@@ -484,21 +404,23 @@ A reference test run will abort immediately if any task fails, unless
 in a list IDs of tasks that are expected to fail.
 
 \begin{myitemize}
-    \item {\em type:} string list (task IDs: \lstinline=name.tag=)
+    \item {\em type:} string list (task IDs: \lstinline=name.cycle_point=)
     \item {\em default:} (none)
     \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}
 
 \paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
 
-The timeout value in minutes after which the test run should be aborted
-if it has not finished, in live mode. Test runs cannot be done in live
-mode unless you define a value for this item, because it is not possible
-to arrive at a sensible default for all suites.
+The timeout value, expressed as an ISO 8601 duration/interval, after which the
+test run should be aborted if it has not finished, in live mode. Test runs
+cannot be done in live mode unless you define a value for this item, because
+it is not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} float (minutes)
-    \item {\em default:} None
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
+ months, so remember the \lstinline=T=!)).
+    \item {\em default:} PT1M (1 minute)
 \end{myitemize}
 
 \paragraph[simulation mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ simulation mode suite timeout}
@@ -509,32 +431,35 @@ simulation mode unless you define a value for this item, because it is
 not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} float (minutes)
-    \item {\em default:} None
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
+ months, so remember the \lstinline=T=!)).
+    \item {\em default:} PT1M (1 minute)
 \end{myitemize}
 
 \paragraph[dummy mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ dummy mode suite timeout}
 
-The timeout value in minutes after which the test run should be aborted
-if it has not finished, in dummy mode.  Test runs cannot be done in
-dummy mode unless you define a value for this item, because it is not
-possible to arrive at a sensible default for all suites.
+The timeout value, expressed as an ISO 8601 duration/interval, after which the
+test run should be aborted if it has not finished, in dummy mode.  Test runs
+cannot be done in dummy mode unless you define a value for this item, because
+it is not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} float (minutes)
-    \item {\em default:} None
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
+ months, so remember the \lstinline=T=!)).
+    \item {\em default:} PT1M (1 minute)
 \end{myitemize}
-
 
 \subsection{[scheduling]}
 
 This section allows cylc to determine when tasks are ready to run.
 
-\subsubsection[initial cycle time]{[scheduling] $\rightarrow$ initial cycle time}
+\subsubsection[initial cycle point]{[scheduling] $\rightarrow$ initial cycle point}
 
 At startup each cycling task (unless specifically excluded under
-[special tasks]) will be inserted into the suite with this cycle time,
-or with the closest subsequent valid cycle time for the task. Note that
+[special tasks]) will be inserted into the suite with this cycle point,
+or with the closest subsequent valid cycle point for the task. Note that
 whether or not {\em cold-start tasks}, specified under [special tasks],
 are inserted, and in what state they are inserted, depends on the start
 up method - cold, warm, or raw.  If this item is provided you can
@@ -550,9 +475,9 @@ the \ref{cycle-point-time-zone} if that is set.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[final cycle time]{[scheduling] $\rightarrow$ final cycle time}
+\subsubsection[final cycle point]{[scheduling] $\rightarrow$ final cycle point}
 
-Cycling tasks are held once they pass the final cycle time, if one is
+Cycling tasks are held once they pass the final cycle point, if one is
 specified. Once all tasks have achieved this state the suite will shut
 down. If this item is provided you can override it on the command line
 or in the gcylc suite start panel.
@@ -582,18 +507,54 @@ in a year) or using integer cycling.
 \end{myitemize}
 
 
-\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead factor}
+\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
+\label{runahead limit}
 
-The suite runahead limit prevents the fastest tasks in a suite from
+Runahead limiting prevents the fastest tasks in a suite from
 getting too far ahead of the slowest ones, as documented in
 Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
 a special runahead held state until slower tasks have caught up
-sufficiently. The limit computed as this factor of the suite's minimum
-cycling interval.
+sufficiently.
+
+The default behaviour is to limit the number of tasks
+by only allowing up to \lstinline=N= (default 3) consecutive cycle
+points to be active at any time, up-adjusted if necessary for any
+future triggering.
+
+\lstinline=runahead limit= is deprecated in favour of specifying this
+maximum number of active cycle points (\ref{max active cycle points}).
+
 \begin{myitemize}
-    \item {\em type:} integer multiple of the suite's minimum cycling interval
-    \item {\em default:} $2$
+    \item {\em type:} Cycle interval string e.g. \lstinline=PT12H=
+    for a 12 hour limit under ISO 8601 cycling.
+    \item {\em default:} (none)
 \end{myitemize}
+
+
+\subsubsection[max active cycle points]{[scheduling] $\rightarrow$
+ max active cycle points}
+\label{max active cycle points}
+
+Runahead limiting prevents the fastest tasks in a suite from
+getting too far ahead of the slowest ones, as documented in
+Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
+a special runahead held state until slower tasks have caught up
+sufficiently.
+
+The default behaviour is to limit the number of tasks
+by only allowing up to \lstinline=N= (default 3) consecutive cycle
+points to be active at any time, up-adjusted if necessary for any
+future triggering.
+
+This input allows you to change \lstinline=N=, the maximum
+number of consecutive cycle points that can be active at once. This
+supersedes \ref{runahead limit}.
+
+\begin{myitemize}
+    \item {\em type:} integer
+    \item {\em default:} 3
+\end{myitemize}
+
 
 \subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}
 
@@ -640,10 +601,10 @@ for listing all member tasks.
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
 Clock-triggered tasks wait on a wall clock time specified as an offset
-{\em in hours} relative to their own cycle time, in addition to any
+{\em in hours} relative to their own cycle point, in addition to any
 dependence they have on other tasks. Generally speaking, only tasks that
 wait on external real time data need to be clock-triggered.  Note that
-in computing the trigger time the full wall clock time and cycle time
+in computing the trigger time the full wall clock time and cycle point
 are compared, not just hours and minutes of the day, so when running a
 suite in catchup/delayed operation, or over historical periods,
 clock-triggered tasks will not constrain the suite at all until they
@@ -669,25 +630,10 @@ Sections~\ref{SequentialTasks} and~\ref{LimitPID}.
     \item {\em example:} \lstinline@sequential = foo, bar@
 \end{myitemize}
 
-\paragraph[start-up]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ start-up}
-
-Start-up tasks are one-off tasks (they do not spawn a successor) that
-only run in the first cycle (and only in a cold-start) and any
-dependence on them is ignored in subsequent cycles. They can be used to
-prepare a suite workspace, for example, before other tasks run. Start-up
-tasks cannot appear in conditional trigger expressions with normal
-cycling tasks, because the meaning of the conditional expression becomes
-undefined in subsequent cycles.
-
-\begin{myitemize}
-    \item {\em type:} list of task or family names
-    \item {\em default:} (none)
-\end{myitemize}
-
 \paragraph[cold-start]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ cold-start}
 
 A cold-start task is one-off task used to satisfy the dependence of an
-associated task with the same cycle time, on outputs from a previous
+associated task with the same cycle point, on outputs from a previous
 cycle - when those outputs are not available.  The primary use for this
 is to cold-start a warm-cycled forecast model that normally depends on
 restart files (e.g.\ model background fields) generated by its previous
@@ -708,7 +654,7 @@ expressions to avoid holding up the suite.
 
 \paragraph[one-off]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ one-off}
 
-Synchronous one-off tasks have an associated cycle time but do not spawn
+Synchronous one-off tasks have an associated cycle point but do not spawn
 a successor. Synchronous {\em start-up} and {\em cold-start} tasks are
 automatically one-off tasks and do not need to be listed here.
 Dependence on one-off tasks is not restricted to the first cycle.
@@ -776,27 +722,15 @@ below for graph string syntax, and Section~\ref{ConfiguringScheduling}.
 \paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
 
 \_\_VALIDITY\_\_ section headings define the sequence of cycle times for
-which the subsequent graph section is valid. For cycling tasks use a
-comma-separated list of integer hours, $0\leq H \leq 23$ for the original
-hours-of-the-day cycling, or reference a particular stepped daily,
-monthly, or yearly cycling module:
+which the subsequent graph section is valid. These should be specified in
+our ISO 8601 derived sequence syntax:
 \begin{myitemize}
     \item {\em examples:}
         \begin{myitemize}
-            \item hours-of-the-day cycling: \lstinline@[[[0,6,12,18]]]@ or \lstinline@[[[HoursOfTheDay(0,6,12,18)]]]@
-            \item stepped daily cycling: \lstinline@[[[Daily(20100823,2)]]]@
-            \item stepped monthly cycling: \lstinline@[[[Monthly(201008,2)]]]@
-            \item stepped yearly cycling: \lstinline@[[[Yearly(2010,2)]]]@
-        \end{myitemize}
-    \item {\em default:} (none)
-\end{myitemize}
-For repeating asynchronous tasks put `ASYNCID:{\em pattern}' in the
-section heading, where {\em pattern} is a regular expression that
-matches an asynchronous task ID:
-\begin{myitemize}
-    \item {\em examples:}
-        \begin{myitemize}
-            \item repeating asynchronous tasks: \lstinline@[[ASYNCID:SAT-\d+]]@
+            \item hours-of-the-day cycling: \lstinline@[[[T00,T06,T12,T18]]]@ or \lstinline@[[[ PT6H ]]]@
+            \item stepped daily cycling: \lstinline@[[[P1D]]]@
+            \item stepped monthly cycling: \lstinline@[[[P2M]]]@
+            \item stepped yearly cycling: \lstinline@[[[P3Y]]]@
         \end{myitemize}
     \item {\em default:} (none)
 \end{myitemize}
@@ -818,33 +752,21 @@ and~\ref{TriggerTypes} ({\em Trigger Types}).
 \item {\em examples:}
   \begin{lstlisting}
 graph = """
-   foo => bar => baz & waz   # baz and waz both trigger off bar
-   baz:out1 => faz           # faz triggers off an internal output of baz
-   ColdFoo | foo[T-6] => foo # cold-start or restart for foo
-   X:start => Y              # Y triggers if X starts executing
-   X:fail => Y               # Y triggers if X fails
-   foo[T-6]:fail => bar      # bar triggers if foo[T-6] fails
-   X => !Y                   # Y suicides if X succeeds
-   X | X:fail => Z           # Z triggers if X succeeds or fails
-   X:finish => Z             # Z triggers if X succeeds or fails
-   (A | B & C ) | D => foo   # general conditional triggers
-   foo:submit => bar         # bar triggers if foo is successfully submitted
-   foo:submit-fail => bar    # bar triggers if submission of foo fails
+   foo => bar => baz & waz     # baz and waz both trigger off bar
+   baz:out1 => faz             # faz triggers off an internal output of baz
+   ColdFoo | foo[-PT6H] => foo # cold-start or restart for foo
+   X:start => Y                # Y triggers if X starts executing
+   X:fail => Y                 # Y triggers if X fails
+   foo[-PT6H]:fail => bar        # bar triggers if foo[-PT6H] fails
+   X => !Y                     # Y suicides if X succeeds
+   X | X:fail => Z             # Z triggers if X succeeds or fails
+   X:finish => Z               # Z triggers if X succeeds or fails
+   (A | B & C ) | D => foo     # general conditional triggers
+   foo:submit => bar           # bar triggers if foo is successfully submitted
+   foo:submit-fail => bar      # bar triggers if submission of foo fails
    # comment
    """
   \end{lstlisting}
-\item {\em default:} (none)
-\end{myitemize}
-
-\subparagraph[daemon]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]] $\rightarrow$ daemon }
-
-For [[[ASYNCID:pattern]]] validity sections only, list
-{\em asynchronous daemon} tasks by name. This item is located here rather than
-under [scheduling] $\rightarrow$ [[special tasks]] because a damon task
-is associated with a particular asynchronous ID.
-
-\begin{myitemize}
-\item {\em type:} list of task names
 \item {\em default:} (none)
 \end{myitemize}
 
@@ -996,8 +918,8 @@ above.
 \paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
 \label{RefRetries}
 
-A list of time intervals in minutes, after which to resubmit the task if
-it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
+A list of ISO 8601 time duration/intervals after which to resubmit the task
+if it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
 execution environment is incremented each time, starting from 1 for the
 first try - this can be used to vary task behavior by try number.
 
@@ -1007,11 +929,21 @@ first try - this can be used to vary task behavior by try number.
 \item {\em root default:} (none)
 \end{myitemize}
 
+\begin{myitemize}
+    \item {\em type:} list of ISO 8601 duration/interval representations,
+    optionally {\em preceded} by multipliers
+    \item {\em example:} \lstinline=PT1.5M,3*PT10M= is equivalent to
+    \lstinline=PT1.5M, PT10M, PT10M, PT10M= - 1.5 minutes, 10 minutes,
+    10 minutes, 10 minutes.
+    \item {\em default:} (none)
+\end{myitemize}
+
 \paragraph[submission polling intervals]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ submission polling intervals}
 \label{SubmissionPollingIntervals}
 
-A list of intervals, in minutes, with optional multipliers, after which
-cylc will poll for status while the task is in the submitted state.
+A list of intervals, expressed as ISO 8601 duration/intervals, with optional
+multipliers, after which cylc will poll for status while the task is in the
+submitted state.
 
 For the polling task communications method this overrides the default
 submission polling interval in the site/user config files
@@ -1026,18 +958,21 @@ until finished.
 see Section~\ref{DetachingTasks}.}
 
 \begin{myitemize}
-\item {\em type:} list of floats, optionally {\em preceded} by multipliers
-\item {\em example:} \lstinline=1,3*10,1= is equivalent
-        to \lstinline=1,10,10,10,1=
-\item {\em root default:} (none)
+    \item {\em type:} list of ISO 8601 duration/interval representations,
+    optionally {\em preceded} by multipliers
+    \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
+    \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
+    hour, 1 minute.
+    \item {\em default:} (none)
 \end{myitemize}
 A single interval value is probably appropriate for submission polling.
 
 \paragraph[execution polling intervals]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ execution polling intervals}
 \label{ExecutionPollingIntervals}
 
-A list of intervals, in minutes, with optional multipliers, after which
-cylc will poll for status while the task is in the running state.
+A list of intervals, expressed as ISO 8601 duration/intervals, with optional
+multipliers, after which cylc will poll for status while the task is in the
+running state.
 
 For the polling task communications method this overrides the default
 execution polling interval in the site/user config files
@@ -1052,10 +987,12 @@ until finished.
 see Section~\ref{DetachingTasks}.}
 
 \begin{myitemize}
-\item {\em type:} list of floats, optionally {\em preceded} by multipliers
-\item {\em example:} \lstinline=1,3*10,1= is equivalent
-        to \lstinline=1,10,10,10,1=
-\item {\em root default:} (none)
+    \item {\em type:} list of ISO 8601 duration/interval representations,
+    optionally {\em preceded} by multipliers
+    \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
+    \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
+    hour, 1 minute.
+    \item {\em default:} (none)
 \end{myitemize}
 
 \paragraph[manual completion]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ manual completion}
@@ -1149,12 +1086,16 @@ Simulation mode configuration.
 
 \paragraph[run time range]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[simulation mode]]] $\rightarrow$ run time range}
 
-This defines an interval \lstinline=[min,max)= (seconds) from within
-which the the simulation mode task run length will be randomly chosen.
+This defines a minimum and a maximum duration (expressed as ISO 8601
+duration/intervals) which define a range from which the simulation mode task
+run length will be randomly chosen.
 
 \begin{myitemize}
-\item {\em type:} integer list (two members)
-\item {\em root default:} $1,16$
+    \item {\em type:} list containing two ISO 8601 duration/interval
+    representations
+    \item {\em example:} \lstinline=PT1S,PT20S= - a range of 1 second to 20
+    seconds
+    \item {\em default:} (1, 16)
 \end{myitemize}
 
 \paragraph[{[[[}job submission{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]]}
@@ -1214,12 +1155,15 @@ to be modified slightly to allow use of the C shell.
 \subparagraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ retry delays}
 \label{JobSubRefRetries}
 
-A list of time intervals in minutes, after which to resubmit if job
-submission fails.
+A list of time intervals expressed as ISO 8601 duration/intervals, after
+which to resubmit if job submission fails.
 \begin{myitemize}
-\item {\em type:} list of floats, optionally {\em preceded} by multipliers
-\item {\em example:} \lstinline=1.5,3*10= is equivalent to \lstinline=1.5,10,10,10=
-\item {\em root default:} (none)
+    \item {\em type:} list of ISO 8601 duration/interval representations,
+    optionally {\em preceded} by multipliers
+    \item {\em example:} \lstinline=PT1M,3*PT1H, P1D= is equivalent to
+    \lstinline=PT1M, PT1H, PT1H, PT1H, P1D= - 1 minute, 1 hour, 1 hour, 1
+    hour, 1 day.
+    \item {\em default:} (none)
 \end{myitemize}
 
 
@@ -1353,20 +1297,21 @@ Item details:
 
 \subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
 
-If a task has not started the specified number of minutes after it was
-submitted, the {\em submission timeout} event handler(s) will be called.
+If a task has not started after the specified ISO 8601 duration/interval, the
+{\em submission timeout} event handler(s) will be called.
 \begin{myitemize}
-    \item {\em type:} float (minutes)
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT30M=, 30 minutes or \lstinline=P1D=, 1 day).
     \item {\em default:} (none)
 \end{myitemize}
 
 \subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ execution timeout}
 
-If a task has not finished the specified number of minutes after it
-started running, the {\em execution timeout} event handler(s) will be
-called.
+If a task has not finished after the specified ISO 8601 duration/interval, the
+{\em execution timeout} event handler(s) will be called.
 \begin{myitemize}
-    \item {\em type:} float (minutes)
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT4H=, 4 hours or \lstinline=P1D=, 1 day).
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -1414,8 +1359,8 @@ parser is concerned these are just normal configuration items).
        \item \lstinline@BAR = ${FOO}$GLOBALVAR@
        \item \lstinline@BAZ = $( echo "hello world" )@
        \item \lstinline@WAZ = ${FOO%.jpg}.png@
-       \item \lstinline@NEXT_CYCLE = $( cylc cycletime -a 6 )@
-       \item \lstinline@PREV_CYCLE = `cylc cycletime -s 6`@
+       \item \lstinline@NEXT_CYCLE = $( cylc cycletime --offset=PT6H )@
+       \item \lstinline@PREV_CYCLE = `cylc cycletime --offset=-PT6H`@
        \item \lstinline@ZAZ = "${FOO#bar}" # <-- QUOTED to escape the suite.rc comment character@
    \end{myitemize}
 \end{myitemize}
@@ -1497,7 +1442,7 @@ Replace \_\_OUTPUT\_\_ with any number of labelled output messages.
         \lstinline=<CYLC_TASK_CYCLE_TIME>= with an optional offset as shown
         below. Note that you cannot use the corresponding shell variable
         \lstinline=$CYLC_TASK_CYCLE_TIME= here. The string substitution
-        (replacing this special variable with the actual task cycle time) is
+        (replacing this special variable with the actual task cycle point) is
         done inside cylc, not in the task execution environment.
 \item {\em default:} (none)
 \item{ \em examples:}
@@ -1539,10 +1484,11 @@ suite-name sub-directory of this location).
 
 \subparagraph[interval]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ interval}
 
-Polling interval.
+Polling interval expressed as an ISO 8601 duration/interval.
 \begin{myitemize}
-    \item {\em type:} integer (seconds)
-    \item {\em default:} 60 seconds
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+    \item {\em default:} PT1M
 \end{myitemize}
 
 \subparagraph[max-polls]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ max-polls}
@@ -1550,7 +1496,7 @@ Polling interval.
 The maximum number of polls before timing out and entering the `failed' state.
 
 \begin{myitemize}
-    \item {\em type:} integer (seconds)
+    \item {\em type:} integer
     \item {\em default:} 10
 \end{myitemize}
 
@@ -1580,7 +1526,7 @@ will be invoked on the remote account.
 Run the polling \lstinline=cylc suite-state= command in verbose output mode.
 
 \begin{myitemize}
-    \item {\em type:} boolean (seconds)
+    \item {\em type:} boolean
     \item {\em default:} False
 \end{myitemize}
 
@@ -1590,20 +1536,20 @@ Configuration of suite graphing and, where applicable, the gcylc graph view.
 Graphviz documentation of node shapes and so on can be found at
 http://www.graphviz.org/Documentation.php.
 
-\subsubsection[initial cycle time]{[visualization] $\rightarrow$ initial cycle time}
+\subsubsection[initial cycle point]{[visualization] $\rightarrow$ initial cycle point}
 
-The cycle time from which to start the suite graph.
+The cycle point from which to start the suite graph.
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
-    \item {\em default:} the suite initial cycle time or 2999010100
+    \item {\em default:} the suite initial cycle point or 2999010100
 \end{myitemize}
 
-\subsubsection[final cycle time]{[visualization] $\rightarrow$ final cycle time}
+\subsubsection[final cycle point]{[visualization] $\rightarrow$ final cycle point}
 
-The cycle time at which to end the suite graph.
+The cycle point at which to end the suite graph.
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
-    \item {\em default:} the visualization initial cycle time plus the default runahead limit
+    \item {\em default:} the visualization initial cycle point plus the default runahead limit
 \end{myitemize}
 
 \subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}
@@ -1738,17 +1684,6 @@ Runtime graphing is disabled by default.
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} False
-\end{myitemize}
-
-\paragraph[cutoff]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ cutoff}
-
-New nodes will be added to the runtime graph as the corresponding tasks
-trigger, until their cycle time exceeds the initial cycle time by more
-than this cutoff, in hours.
-
-\begin{myitemize}
-    \item {\em type:} integer ($\geq 0$, hours)
-    \item {\em default:} $24$
 \end{myitemize}
 
 \paragraph[directory]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ directory}

@@ -89,14 +89,14 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             continue
         try:
             ( task_id, info ) = line.split(' : ')
-            ( name, tag ) = cylc.TaskID.split( task_id )
+            ( name, point_string ) = cylc.TaskID.split( task_id )
         except ValueError:
             continue
         except Exception as e:
             sys.stderr.write(str(e) + "\n")
             continue
-        task_summary.setdefault(task_id, {"name": name, "tag": tag,
-                                          "label": tag})
+        task_summary.setdefault(task_id, {"name": name, "point": point_string,
+                                          "label": point_string})
         # reconstruct state from a dumped state string
         items = dict([p.split("=") for p in info.split(', ')])
         state = items.get("status")
@@ -132,9 +132,6 @@ def dump_to_stdout( states, sort_by_cycle=False ):
             line = name + ', ' + label + ', '
 
         line += state + ', ' + spawned
-
-        if 'asyncid' in states[id]:
-            line += ', ' + states[id]['asyncid']
 
         lines.append( line )
 

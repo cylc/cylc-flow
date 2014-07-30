@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: job script torture test and check jobscript is generated correctly
+# job script torture test and check jobscript is generated correctly
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -35,4 +35,3 @@ echo "" >> jobfile
 sed 's/##suitename##/'$SUITE_NAME'/' $TEST_SOURCE_DIR/torture/foo.ref-jobfile > reffile
 cmp_ok jobfile reffile
 purge_suite $SUITE_NAME
-rm -rf $(cylc get-global-config --print-run-dir)/$SUITE_NAME-submit

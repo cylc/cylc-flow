@@ -3,8 +3,8 @@
 2013/10/31 01:27:58 INFO - Suite starting at 2013-10-31 01:27:58.502150
 2013/10/31 01:27:58 INFO - Log event clock: real time
 2013/10/31 01:27:58 INFO - Run mode: live
-2013/10/31 01:27:58 INFO - Start tag: 2010010100
-2013/10/31 01:27:58 INFO - Stop tag: 2010010500
+2013/10/31 01:27:58 INFO - Start point: 2010010100
+2013/10/31 01:27:58 INFO - Stop point: 2010010500
 2013/10/31 01:27:58 INFO - Thread-3 start (Poll & Kill Commands)
 2013/10/31 01:27:58 INFO - Thread-5 start (Request Handling)
 2013/10/31 01:27:58 INFO - Thread-4 start (Job Submission)
@@ -59,6 +59,4 @@
 2013/10/31 01:28:27 INFO - Thread-4 exit (Job Submission)
 2013/10/31 01:28:27 INFO - Thread-2 exit (Event Handlers)
 2013/10/31 01:28:27 INFO - Thread-3 exit (Poll & Kill Commands)
-2013/10/31 01:28:27 INFO - [stopper.2010010106] -(setting:queued)
-2013/10/31 01:28:27 INFO - [stopper.2010010106] -(setting:submitting)
-2013/10/31 01:28:27 INFO - [stopper.2010010106] -triggered off ['a.2010010106']
+

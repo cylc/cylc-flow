@@ -30,16 +30,13 @@ from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
-# NOTE: it is not clear that this command does the right thing for
-# asynchronous tasks - testing needed if purge is required for such.
-
 parser = cop( """cylc [control] purge [OPTIONS] ARGS
 
 Remove an entire tree of dependent tasks, over multiple cycles into the
 future, from a running suite. The purge top task will be forced to
 spawn and will then be removed, then so will every task that depends on
 it, and every task that depends on those, and so on until the given stop
-cycle time.
+cycle point.
 
 WARNING: THIS COMMAND IS DANGEROUS but in case of disaster you can
 restart the suite from the automatic pre-purge state dump (the filename
@@ -65,15 +62,15 @@ purge gap or runahead-held tasks may prevent the purge completing fully.
 graph to determine downstream tasks to remove, without doing this
 internal triggering simulation.]""",
     pyro=True, argdoc=[("REG", "Suite name"),
-                ("TASK", "Task (NAME.CYCLE) to start purge"),
-                ("STOP", "Cycle (inclusive!) to stop purge")])
+                ("TASK", "Task (NAME.CYCLE_POINT) to start purge"),
+                ("STOP_POINT", "Cycle point (inclusive!) to stop purge")])
 
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
 target = args[1]
-stoptag = args[2]
+stop_point_string = args[2]
 
 if not cylc.TaskID.is_valid_id( target ):
     sys.exit( "Invalid Task ID: " + target )
@@ -81,8 +78,8 @@ if not cylc.TaskID.is_valid_id( target ):
 task_id = target
 name, start = cylc.TaskID.split( target )
 
-# TODO ISO - VALIDATE STOP TAG
-stop = stoptag
+# TODO ISO - VALIDATE STOP CYCLE_POINT
+stop = stop_point_string
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,

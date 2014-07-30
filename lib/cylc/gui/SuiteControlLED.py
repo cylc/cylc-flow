@@ -24,6 +24,7 @@ from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client
 import cylc.TaskID
 from util import EntryTempText
+from warning_dialog import warning_dialog
 
 class ControlLED(object):
     """
@@ -86,14 +87,15 @@ LED suite control interface.
             return False
 
         if self.t.is_transposed:
-            ctime = self.t.led_headings[column_index]
+            point_string = self.t.led_headings[column_index]
             name = treeview.get_model().get_value( r_iter, 0 )
         else:
             name = self.t.led_headings[column_index]
-            ctime_column = treeview.get_model().get_n_columns() - 1
-            ctime = treeview.get_model().get_value( r_iter, ctime_column )
+            point_string_column = treeview.get_model().get_n_columns() - 1
+            point_string = treeview.get_model().get_value(
+                r_iter, point_string_column )
 
-        task_id = cylc.TaskID.get( name, ctime )
+        task_id = cylc.TaskID.get( name, point_string )
 
         is_fam = (name in self.t.descendants)
 
@@ -138,8 +140,15 @@ LED suite control interface.
         return True
 
     def check_filter_entry( self, e ):
-        ftxt = self.filter_entry.get_text()
-        self.t.filter = self.filter_entry.get_text()
+        ftext = self.filter_entry.get_text()
+        try:
+            re.compile(ftext)
+        except re.error as exc:
+            warning_dialog(
+                'Bad filter regex: %s: error: %s' % (ftext, exc)).warn()
+            self.t.filter = ""
+        else:
+            self.t.filter = ftext
         self.t.action_required = True
 
     def toggle_grouping( self, toggle_item ):

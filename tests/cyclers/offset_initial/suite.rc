@@ -1,11 +1,14 @@
 [cylc]
     UTC mode = True
 [scheduling]
-    initial cycle time = 20140101
-    final cycle time = 20140102T12
+    initial cycle point = 20140101
+    final cycle point = 20140102T12
     [[dependencies]]
         [[[ +P1D/PT6H ]]]
             graph = "bar => baz"
 [runtime]
     [[root]]
         command scripting = true
+[visualization]
+    initial cycle point = 20140101
+    final cycle point = 20140102T12

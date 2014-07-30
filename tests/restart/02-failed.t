@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting a simple suite with a failed task
+# Test restarting a simple suite with a failed task
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
@@ -35,7 +35,7 @@ fi
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate -v $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
@@ -76,13 +76,10 @@ output_states.2013092300 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
 grep_ok "failed_task|2013092300|1|1|failed" $TEST_DIR/states-db-pre-restart-2013092300
-cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
-failed_task|2013092306|0|1|waiting
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|waiting
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|waiting
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
@@ -93,12 +90,14 @@ final cycle : 2013092306
 .
 Begin task states
 failed_task.2013092306 : status=failed, spawned=true
+failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092306 : status=running, spawned=true
+force_restart.2013092312 : status=held, spawned=false
 output_states.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 force_restart|2013092300|1|1|succeeded
@@ -108,7 +107,7 @@ output_states|2013092306|0|1|waiting
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
-cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 force_restart|2013092300|1|1|succeeded
@@ -125,13 +124,17 @@ final cycle : 2013092306
 (dp1
 .
 Begin task states
+failed_task.2013092312 : status=held, spawned=false
+force_restart.2013092312 : status=held, spawned=false
+output_states.2013092312 : status=held, spawned=false
 tidy.2013092306 : status=succeeded, spawned=true
+tidy.2013092312 : status=held, spawned=false
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
   from task_states
   order by name, cycle;" > $TEST_DIR/states-db
-cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 failed_task|2013092300|1|1|failed
 failed_task|2013092306|1|1|failed
 force_restart|2013092300|1|1|succeeded

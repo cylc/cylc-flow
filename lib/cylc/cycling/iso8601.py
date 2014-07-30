@@ -17,13 +17,13 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import isodatetime.data
+from isodatetime.data import Calendar, TimeInterval
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
-from cylc.cycling import PointBase, IntervalBase
+from cylc.cycling import PointBase, IntervalBase, PointParsingError
 from parsec.validate import IllegalValueError
 
 # TODO - Consider copy vs reference of points, intervals, sequences
@@ -46,6 +46,8 @@ OLD_STRPTIME_FORMATS_BY_LENGTH = {
     12: "%Y%m%d%H%M",
     14: "%Y%m%d%H%M%S",
 }
+DATE_TIME_FORMAT = "CCYYMMDDThhmm"
+EXPANDED_DATE_TIME_FORMAT = "+XCCYYMMDDThhmm"
 PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 
 
@@ -75,7 +77,7 @@ def memoize(function):
             results = function(*args)
             if len(inputs_results) > MEMOIZE_LIMIT:
                 # Full up, no more room.
-                return results
+                inputs_results.popitem()
             inputs_results[args] = results
             return results
     return _wrapper
@@ -103,7 +105,10 @@ class ISO8601Point(PointBase):
         return self._iso_point_cmp(self.value, other.value)
 
     def standardise(self):
-        self.value = str(point_parse(self.value))
+        try:
+            self.value = str(point_parse(self.value))
+        except ValueError:
+            raise PointParsingError(type(self), self.value)
         return self
 
     def sub(self, other):
@@ -112,6 +117,9 @@ class ISO8601Point(PointBase):
                 self._iso_point_sub_point(self.value, other.value))
         return ISO8601Point(
             self._iso_point_sub_interval(self.value, other.value))
+
+    def __hash__(self):
+        return hash(self.value)
 
     @staticmethod
     @memoize
@@ -163,7 +171,7 @@ class ISO8601Interval(IntervalBase):
                           "hours", "minutes", "seconds"]:
             if getattr(interval, attribute):
                 unit_amounts[attribute] = amount_per_unit
-        interval = isodatetime.data.TimeInterval(**unit_amounts)
+        interval = TimeInterval(**unit_amounts)
         return ISO8601Interval(str(interval))
 
     def standardise(self):
@@ -189,7 +197,6 @@ class ISO8601Interval(IntervalBase):
             self._iso_interval_abs(self.value, self.NULL_INTERVAL_STRING))
 
     def __mul__(self, m):
-        # the suite runahead limit is a multiple of the smallest sequence interval
         return ISO8601Interval(self._iso_interval_mul(self.value, m))
 
     def __nonzero__(self):
@@ -271,7 +278,8 @@ class ISO8601Sequence(object):
 
         self.offset = ISO8601Interval.get_null()
 
-        i = convert_old_cycler_syntax(dep_section)
+        i = convert_old_cycler_syntax(
+            dep_section, start_point=self.context_start_point)
 
         if not i:
             raise "ERROR: iso8601 cycling init!"
@@ -380,7 +388,7 @@ class ISO8601Sequence(object):
         return result
 
     def get_first_point( self, point):
-        """Return the first point >= to poing, or None if out of bounds."""
+        """Return the first point >= to point, or None if out of bounds."""
         try:
             return ISO8601Point(self._cached_first_point_values[point.value])
         except KeyError:
@@ -417,32 +425,22 @@ class ISO8601Sequence(object):
         return False
 
 
-def convert_old_cycler_syntax(dep_section, only_detect_old=False):
+def convert_old_cycler_syntax(dep_section, only_detect_old=False,
+                              start_point=None):
     """Convert old cycler syntax into our Cylc-ISO8601 format."""
-    m = re.match('^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
-    if m:
-        # back compat Daily()
+    for re_old_format, unit in [
+            ("^Daily\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "D"),
+            ("^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "M"),
+            ("^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$", "Y")]:
+        m = re.search(re_old_format, dep_section)
+        if not m:
+            continue
         if only_detect_old:
             return True
         anchor, step = m.groups()
-        anchor = str(ISO8601Point.from_nonstandard_string(anchor))
-        return anchor + '/P' + step + 'D'
-    m = re.match('^Monthly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
-    if m:
-        # back compat Monthly()
-        if only_detect_old:
-            return True
-        anchor, step = m.groups()
-        anchor = str(ISO8601Point.from_nonstandard_string(anchor))
-        return anchor + '/P' + step + 'M'
-    m = re.match('^Yearly\(\s*(\d+)\s*,\s*(\d+)\s*\)$', dep_section)
-    if m:
-        # back compat Yearly()
-        if only_detect_old:
-            return True
-        anchor, step = m.groups()
-        anchor = str(ISO8601Point.from_nonstandard_string(anchor))
-        return anchor + '/P' + step + 'Y'
+        step = ISO8601Interval("P%s%s" % (step, unit))
+        return _get_old_anchor_step_recurrence(anchor, step, start_point)
+    # Check for the hourly syntax.
     m = re.match('(0?[0-9]|1[0-9]|2[0-3])$', dep_section)
     if m:
         # back compat 0,6,12 etc.
@@ -453,6 +451,16 @@ def convert_old_cycler_syntax(dep_section, only_detect_old=False):
     if only_detect_old:
         return False
     return dep_section
+
+
+def _get_old_anchor_step_recurrence(anchor, step, start_point):
+    """Return a string representing an old-format recurrence translation."""
+    anchor_point = ISO8601Point.from_nonstandard_string(anchor)
+    # We may need to adjust the anchor downwards if it is ahead of the start.
+    if start_point is not None:
+        while anchor_point >= start_point + step:
+            anchor_point -= step
+    return str(anchor_point) + "/" + str(step)
 
 
 def get_backwards_compatibility_mode():
@@ -466,8 +474,8 @@ def init_from_cfg(cfg):
         'cycle point num expanded year digits']
     time_zone = cfg['cylc']['cycle point time zone']
     custom_dump_format = cfg['cylc']['cycle point format']
-    initial_cycle_time = cfg['scheduling']['initial cycle time']
-    final_cycle_time = cfg['scheduling']['final cycle time']
+    initial_cycle_time = cfg['scheduling']['initial cycle point']
+    final_cycle_time = cfg['scheduling']['final cycle point']
     assume_utc = cfg['cylc']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
     test_cycle_time = initial_cycle_time
@@ -499,15 +507,15 @@ def init_from_cfg(cfg):
 
 
 def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
-         assume_utc=False, cycling_mode="gregorian"):
+         assume_utc=False, cycling_mode=None):
     """Initialise global variables (yuk)."""
     global point_parser
     global DUMP_FORMAT
     global NUM_EXPANDED_YEAR_DIGITS
     global ASSUMED_TIME_ZONE
 
-    if cycling_mode == "360day":
-        isodatetime.data.set_360_calendar()
+    if cycling_mode in Calendar.default().MODES:
+        Calendar.default().set_mode(cycling_mode)
 
     if time_zone is None:
         if assume_utc:
@@ -522,15 +530,15 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
     if custom_dump_format is None:
         if num_expanded_year_digits > 0:
-            DUMP_FORMAT = u"±XCCYYMMDDThhmm" + time_zone
+            DUMP_FORMAT = EXPANDED_DATE_TIME_FORMAT + time_zone
         else:
-            DUMP_FORMAT = "CCYYMMDDThhmm" + time_zone
+            DUMP_FORMAT = DATE_TIME_FORMAT + time_zone
         
     else:
         DUMP_FORMAT = custom_dump_format
-        if u"±X" not in custom_dump_format and num_expanded_year_digits:
+        if u"+X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
-                'cycle time format',
+                'cycle point format',
                 ('cylc', 'cycle point format'),
                 DUMP_FORMAT
             )

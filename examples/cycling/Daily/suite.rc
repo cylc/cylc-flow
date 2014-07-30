@@ -1,5 +1,5 @@
 [scheduling]
-    initial cycle time = 20120909
+    initial cycle point = 20120909
     final cycle time   = 20120913
 
     [[dependencies]]
@@ -17,7 +17,7 @@
                 foo => BAZ
             """
 [visualization]
-    initial cycle time = 20120909
+    initial cycle point = 20120909
     final cycle time   = 20120913
     [[node attributes]]
         foo = "color=blue"

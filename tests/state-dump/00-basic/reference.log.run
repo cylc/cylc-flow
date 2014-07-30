@@ -4,8 +4,8 @@
 2013/12/19 14:31:49 INFO - Suite starting at 2013-12-19 14:31:49.575652
 2013/12/19 14:31:49 INFO - Log event clock: real time
 2013/12/19 14:31:49 INFO - Run mode: live
-2013/12/19 14:31:49 INFO - Start tag: 2013010100
-2013/12/19 14:31:49 INFO - Stop tag: 2013011000
+2013/12/19 14:31:49 INFO - Start point: 2013010100
+2013/12/19 14:31:49 INFO - Stop point: 2013011000
 2013/12/19 14:31:49 INFO - Thread-5 start (Request Handling)
 2013/12/19 14:31:49 INFO - Thread-4 start (Job Submission)
 2013/12/19 14:31:49 INFO - Cold Start 2013010100
@@ -43,4 +43,3 @@
 2013/12/19 14:32:10 INFO - Thread-4 exit (Job Submission)
 2013/12/19 14:32:10 INFO - Thread-2 exit (Event Handlers)
 2013/12/19 14:32:10 INFO - Thread-3 exit (Poll & Kill Commands)
-2013/12/19 14:32:10 INFO - [t1.2013010600] -triggered off ['t1.2013010500']

@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test one-off tasks
+# Test one-off tasks
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 3

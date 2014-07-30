@@ -73,8 +73,8 @@ if len(args) == 2:
 
     suite_run_dir = sitecfg.get_derived_host_item(suite, 'suite run directory')
     suite_run_dao = CylcRuntimeDAO(suite_run_dir)
-    taskname, ctime = cylc.TaskID.split( taskid )
-    host = suite_run_dao.get_task_host(taskname, ctime)
+    taskname, point_string = cylc.TaskID.split( taskid )
+    host = suite_run_dao.get_task_host(taskname, point_string)
     suite_run_dao.close()
     owner = None
     if host and '@' in host:

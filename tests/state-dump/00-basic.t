@@ -15,8 +15,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Basic test for state dumps.
+# Basic test for state dumps.
 run_restart() {
     suite_run_ok $TEST_NAME cylc restart --reference-test --debug $SUITE_NAME
 }
 . $(dirname $0)/test_impl
+

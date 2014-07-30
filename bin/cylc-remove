@@ -31,14 +31,14 @@ import cylc.flags
 
 parser = cop( """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks, or all tasks with a common TAG (cycle time or
-integer tag) from a running suite.
+Remove one or more tasks, or all tasks with a common cycle point from a
+running suite.
 
 Tasks will spawn successors first if they have not done so already.
 """ + multitask_usage, pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"),
         ('[MATCH]', 'Task or family name matching regular expression'),
-        ('TAG', 'Task cycle time or integer tag') ])
+        ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
 
 parser.add_option( "--no-spawn",
         help="Do not spawn successors before removal.",
@@ -50,11 +50,11 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 
 if len(args) == 3:
     name = args[1]
-    tag = args[2]
-    remove_tag = False
+    point_string = args[2]
+    remove_point = False
 else:
-    tag = args[1]
-    remove_tag = True
+    point_string = args[1]
+    remove_point = True
 
 spawn = not options.no_spawn
 
@@ -62,12 +62,17 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'command-interface' )
-    if remove_tag:
-        prompt( 'remove ALL tasks at ' + tag + ' in ' + suite, options.force )
-        result = proxy.put( 'remove cycle', tag, spawn )
+    if remove_point:
+        prompt( 'remove ALL tasks at ' + point_string + ' in ' + suite,
+                options.force )
+        result = proxy.put( 'remove cycle', point_string, spawn )
     else:
-        prompt( 'remove task(s) ' + name + ' at ' + tag + ' in ' + suite, options.force )
-        result = proxy.put( 'remove task', name, tag, options.is_family, spawn )
+        prompt(
+            'remove task(s) ' + name + ' at ' + point_string + ' in ' + suite,
+            options.force
+        )
+        result = proxy.put(
+            'remove task', name, point_string, options.is_family, spawn)
 
 except Exception, x:
     if cylc.flags.debug:

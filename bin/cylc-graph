@@ -37,7 +37,7 @@ def on_url_clicked( widget, url, event, window ):
     right_click_menu( event, url, type='live task', window=window )
 
 def right_click_menu( event, task_id, type='live task', window=None ):
-    name, ctime = cylc.TaskID.split( task_id )
+    name, point_string = cylc.TaskID.split( task_id )
 
     menu = gtk.Menu()
     menu_root = gtk.MenuItem( task_id )
@@ -87,12 +87,15 @@ parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START [STOP]]
 Plot cylc dependency graphs in a pannable, zoomable viewer.
 
 The viewer updates automatically when the suite.rc file is saved during
-editing. Supply the optional initial and final cycle time arguments to
+editing. Supply the optional initial and final cycle point arguments to
 override the suite.rc file, which overrides the system defaults (if only
-an initial cycle is supplied, only that cycle will be graphed). The
-"Save" button generates an image of the current view, of format (e.g.
+an initial cycle point is supplied, only that cycle point will be graphed).
+The "Save" button generates an image of the current view, of format (e.g.
 png, svg, jpg, eps) determined by the filename extension. If the chosen
 format is not available a dialog box will show those that are available.
+
+If an output filename is specified in the options, the viewer will not
+open and a graph representation will be output to the filename.
 
 GRAPH VIEWER CONTROLS:
     * Center on a node: left-click.
@@ -113,8 +116,8 @@ GRAPH VIEWER CONTROLS:
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node.""",
     jset=True, prep=True, argdoc = [('[SUITE]', 'Suite name or path'),
-        ('[START]', 'Initial cycle time to plot (default=2999010100)'),
-        ('[STOP]', 'Final cycle time to plot (default=2999010123)') ])
+        ('[START]', 'Initial cycle point to plot (default=2999010100)'),
+        ('[STOP]', 'Final cycle point to plot (default=2999010123)') ])
 
 #parser.add_option( "-l", "--live",
 #    help="Update image in real time if the source file changes. Otherwise "
@@ -131,6 +134,16 @@ parser.add_option( "-n", "--namespaces",
 parser.add_option( "-f", "--file",
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
+
+parser.add_option( "-O", "--output-file",
+    help="Output to a specific file, with a format given by --output-format" +
+         " or extrapolated from the extension.",
+    metavar="FILE", action="store", default=None, dest="output_filename" )
+
+parser.add_option( "--output-format",
+    help="Specify a format for writing out the graph to --output-file " +
+         "e.g. png, svg, jpg, eps, dot.",
+    metavar="FORMAT", action="store", default=None, dest="output_format" )
 
 ( options, args ) = parser.parse_args()
 
@@ -155,6 +168,9 @@ if options.filename:
         from xdot import DotWindow
     except:
         raise SystemExit( "Failed to import the xdot viewer.")
+    if options.output_filename:
+        raise SystemExit( "ERROR: output-file not supported for " +
+                          "dot files. Use 'dot' command instead." )
     window = DotWindow()
     try:
         window.update( file )
@@ -168,6 +184,8 @@ if options.filename:
     gtk.main()
     sys.exit(0)
 
+should_hide_gtk_window = (not options.output_filename)
+
 suite, suiterc, watchers = parser.get_suite()
 
 # parse and plot the suite.rc dependency graph
@@ -176,30 +194,35 @@ if len(args) < 1 or len(args) > 3:
 
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
-                           options.templatevars_file, watchers )
+                           options.templatevars_file, watchers,
+                           should_hide=should_hide_gtk_window )
 else:
     # SUITE DEPENDENCY GRAPH
 
-    start_ctime = None
-    stop_ctime = None
+    start_point_string = None
+    stop_point_string = None
 
     if len(args) > 1:
         # got START
-        start_ctime = args[1]
+        start_point_string = args[1]
 
         if len(args) == 3:
             # got STOP
-            stop_ctime = args[2]
+            stop_point_string = args[2]
         else:
-            stop_ctime = start_ctime
+            stop_point_string = start_point_string
 
     window = MyDotWindow( suite, suiterc, options.templatevars,
                           options.templatevars_file, watchers,
-                          start_ctime, stop_ctime )
+                          start_point_string, stop_point_string )
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
 window.get_graph()
+
+if options.output_filename:
+    window.graph.draw( options.output_filename, prog="dot" )
+    sys.exit(0)
 
 window.connect( 'destroy', gtk.main_quit)
 

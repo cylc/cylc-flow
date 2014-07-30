@@ -21,8 +21,8 @@ import sys
 from task import task
 from copy import deepcopy
 
-# Cycling tasks: cycle time also required for a cold start. Init with:
-#  (1) cycle time
+# Cycling tasks: cycle point also required for a cold start. Init with:
+#  (1) cycle point
 #  (2) state ('waiting', 'submitted', 'running', and 'succeeded' or 'failed')
 
 # For a restart from previous state, however, some tasks may require
@@ -32,7 +32,7 @@ from copy import deepcopy
 # of bar to some extent, and changes its behavior according whether or
 # not it was triggered by a "old" bar (i.e. one already used by the
 # previous foo instance) or a "new" one. In this case, currently, we
-# use a class variable in task type foo to record the cycle time of
+# use a class variable in task type foo to record the cycle point of
 # the most recent bar used by any foo instance. This is written to the
 # the state dump file so that task foo does not have to automatically
 # assume it was triggered by a "new" bar after a restart.
@@ -45,21 +45,19 @@ from copy import deepcopy
 
 class cycling( task ):
 
-    is_cycling = True
-
     intercycle = False  # no inter-cycle dependents
 
     # derived classes must override ready_to_spawn()
 
-    def __init__( self, state, stop_c_time = None, validate = False ):
-        self.stop_c_time = stop_c_time
+    def __init__( self, state, stop_point = None, validate = False ):
         task.__init__( self, state, validate )
+        self.stop_point = stop_point
 
-    def next_tag( self ):
+    def next_point( self ):
         p_next = None
         adjusted = []
         for seq in self.sequences:
-            nxt = seq.get_next_point(self.c_time)
+            nxt = seq.get_next_point(self.point)
             if nxt:
                 # may be None if beyond the sequence bounds
                 adjusted.append( nxt )

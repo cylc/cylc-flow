@@ -52,11 +52,11 @@ def check_task_spec( task_spec ):
     check_suite_spec( suite )
 
     try:
-        (name, tag) = task_id.split( cylc.TaskID.DELIM )
+        (name, point_string) = task_id.split( cylc.TaskID.DELIM )
     except ValueError:
         raise SystemExit( task_spec + " - Please specify SUITE:TASK"+cylc.TaskID.DELIM+"CYCLE" )
 
-    cycle = tag
+    cycle = point_string
 
     return ( suite, task_id )
 

@@ -25,7 +25,7 @@ Where abbreviations or truncations are used, the missing information
 needs to be filled in by some date/time context - this means that "T06"
 needs to be applied to a context time such as "20201205T0000Z" in order
 to get a full date/time (in this example, "20201205T0600Z"). This
-context is the initial cycle time or final cycle time for the task
+context is the initial cycle point or final cycle point for the task
 cycling dependency graph section specification, and is the task cycle
 time for inter-cycle task references such as "foo[-P6Y] => foo".
 
@@ -37,6 +37,9 @@ import unittest
 import cylc.CylcError
 import isodatetime.data
 import isodatetime.parsers
+
+
+UTC_UTC_OFFSET_HOURS_MINUTES = (0, 0)
 
 
 class CylcTimeSyntaxError(cylc.CylcError.CylcError):
@@ -51,10 +54,10 @@ class CylcTimeParser(object):
     Arguments:
     context_start_point describes the beginning date/time used for
     extrapolating incomplete date/time syntax (usually initial
-    cycle time). It is either a date/time string in full ISO 8601
+    cycle point). It is either a date/time string in full ISO 8601
     syntax or an isodatetime.data.TimePoint object.
     context_end_point is the same as context_start_point, but describes
-    a final time - e.g. the final cycle time.
+    a final time - e.g. the final cycle point.
 
     """
 
@@ -94,7 +97,7 @@ class CylcTimeParser(object):
         self.num_expanded_year_digits = num_expanded_year_digits
         if dump_format is None:
             if num_expanded_year_digits:
-                dump_format = u"±XCCYYMMDDThhmmZ"
+                dump_format = u"+XCCYYMMDDThhmmZ"
             else:
                 dump_format = "CCYYMMDDThhmmZ"
             
@@ -134,7 +137,7 @@ class CylcTimeParser(object):
         context_point should be an isodatetime.data.TimePoint object
         that supplies the missing information for truncated
         expressions. For example, context_point should be the task
-        cycle time for inter-cycle dependency expressions. If
+        cycle point for inter-cycle dependency expressions. If
         context_point is None, self.context_start_point is used.
 
         """
@@ -212,8 +215,6 @@ class CylcTimeParser(object):
                          start_point=start_point,
                          interval=interval,
                          end_point=end_point
-                        # min_point=context_start_point,
-                        # max_point=context_end_point
             )
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
@@ -298,13 +299,17 @@ class TestRecurrenceSuite(unittest.TestCase):
         # Note: the following timezone will be Z-ified *after* truncation
         # or offsets are applied. 
         self._end_point = "20010506T1200+0200"
-        self._parsers = {0: CylcTimeParser(self._start_point,
-                                           self._end_point,
-                                           assumed_time_zone=(0, 0)),
-                         2: CylcTimeParser(self._start_point,
-                                           self._end_point,
-                                           num_expanded_year_digits=2,
-                                           assumed_time_zone=(0, 0))}
+        self._parsers = {
+            0: CylcTimeParser(
+                self._start_point, self._end_point,
+                assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+            ),
+            2: CylcTimeParser(
+                self._start_point, self._end_point,
+                num_expanded_year_digits=2,
+                assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+            )
+        }
 
     def test_first_recurrence_format(self):
         """Test the first ISO 8601 recurrence format."""
@@ -434,7 +439,7 @@ class TestRecurrenceSuite(unittest.TestCase):
             self.assertEqual(test_results, ctrl_results)
 
     def test_inter_cycle_timepoints(self):
-        """Test the inter-cycle timepoint parsing."""
+        """Test the inter-cycle point parsing."""
         task_cycle_time = self._parsers[0].parse_timepoint(
                                 "20000101T00Z")
         tests = [("T06", "20000101T0600Z", 0),

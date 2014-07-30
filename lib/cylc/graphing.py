@@ -38,57 +38,57 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.graph_attr['label'] = title
         self.suite_polling_tasks = suite_polling_tasks
 
-    def node_attr_by_taskname( self, n ):
-        name, tag = TaskID.split( n )
+    def node_attr_by_taskname( self, node_string ):
+        name, point_string = TaskID.split( node_string )
         if name in self.task_attr:
             return self.task_attr[name]
         else:
             return []
 
-    def style_edge( self, l, r ):
+    def style_edge( self, left, right ):
         pass
 
-    def style_node( self, n, autoURL, base=False ):
-        node = self.get_node( n )
-        name, tag = TaskID.split( n )
+    def style_node( self, node_string, autoURL, base=False ):
+        node = self.get_node( node_string )
+        name, point_string = TaskID.split( node_string )
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
-        label += "\\n" + tag
+        label += "\\n" + point_string
         node.attr[ 'label' ] = label
         if autoURL:
             if base:
                 # TODO - This is only called from cylc_add_edge in this
                 # base class ... should it also be called from add_node?
-                node.attr[ 'URL' ] = 'base:' + n
+                node.attr[ 'URL' ] = 'base:' + node_string
             else:
-                node.attr['URL'] = n
+                node.attr['URL'] = node_string
 
-    def cylc_add_node( self, n, autoURL, **attr ):
-        pygraphviz.AGraph.add_node( self, n, **attr )
-        self.style_node( n, autoURL )
+    def cylc_add_node( self, node_string, autoURL, **attr ):
+        pygraphviz.AGraph.add_node( self, node_string, **attr )
+        self.style_node( node_string, autoURL )
 
-    def cylc_add_edge( self, l, r, autoURL, **attr ):
-        if l == None and r == None:
+    def cylc_add_edge( self, left, right, autoURL, **attr ):
+        if left == None and right == None:
             pass
-        elif l == None:
-            self.cylc_add_node( r, autoURL )
-        elif r == None:
-            self.cylc_add_node( l, autoURL )
-        elif l == r:
+        elif left == None:
+            self.cylc_add_node( right, autoURL )
+        elif right == None:
+            self.cylc_add_node( left, autoURL )
+        elif left == right:
             # pygraphviz 1.1 adds a node instead of a self-edge
             # which results in a KeyError in get_edge() below.
-            self.cylc_add_node( l, autoURL )
+            self.cylc_add_node( left, autoURL )
         else:
-            pygraphviz.AGraph.add_edge( self, l, r, **attr )
-            self.style_node( l, autoURL, base=True )
-            self.style_node( r, autoURL, base=True )
-            self.style_edge( l, r )
+            pygraphviz.AGraph.add_edge( self, left, right, **attr )
+            self.style_node( left, autoURL, base=True )
+            self.style_node( right, autoURL, base=True )
+            self.style_edge( left, right )
 
     def add_edges( self, edges, ignore_suicide=False ):
         edges.sort() # TODO: does sorting help layout stability?
-        for e in edges:
-            l, r, dashed, suicide, conditional = e
+        for edge in edges:
+            left, right, dashed, suicide, conditional = edge
             if suicide and ignore_suicide:
                 continue
             if conditional:
@@ -111,8 +111,10 @@ class CGraphPlain( pygraphviz.AGraph ):
 
             penwidth = 2
 
-            self.cylc_add_edge( l, r, True, style=style, arrowhead=arrowhead,
-                                penwidth=penwidth )
+            self.cylc_add_edge(
+                left, right, True, style=style, arrowhead=arrowhead,
+                penwidth=penwidth
+            )
 
     def add_cycle_point_subgraphs( self, edges ):
         """Draw nodes within cycle point groups (subgraphs)."""
@@ -200,39 +202,41 @@ class CGraph( CGraphPlain ):
                         self.task_attr[item] = []
                     self.task_attr[item].append( attr )
 
-    def style_node( self, n, autoURL, base=False ):
-        super( self.__class__, self ).style_node( n, autoURL, False )
-        node = self.get_node(n)
-        for item in self.node_attr_by_taskname( n ):
+    def style_node( self, node_string, autoURL, base=False ):
+        super( self.__class__, self ).style_node(
+            node_string, autoURL, False)
+        node = self.get_node(node_string)
+        for item in self.node_attr_by_taskname( node_string ):
             attr, value = re.split( '\s*=\s*', item )
             node.attr[ attr ] = value
         if self.vizconfig['use node color for labels']:
             node.attr['fontcolor'] = node.attr['color']
 
-    def style_edge( self, l, r ):
-        super( self.__class__, self ).style_edge( l, r )
-        nl = self.get_node(l)
-        nr = self.get_node(r)
-        edge = self.get_edge(l,r)
+    def style_edge( self, left, right ):
+        super( self.__class__, self ).style_edge( left, right )
+        left_node = self.get_node(left)
+        edge = self.get_edge(left, right)
         if self.vizconfig['use node color for edges']:
-            if nl.attr['style'] == 'filled':
-                edge.attr['color'] = nl.attr['fillcolor']
+            if left_node.attr['style'] == 'filled':
+                edge.attr['color'] = left_node.attr['fillcolor']
             else:
-                edge.attr['color'] = nl.attr['color']
+                edge.attr['color'] = left_node.attr['color']
 
 
 class edge( object):
-    def __init__( self, l, r, sequence, sasl=False, suicide=False, conditional=False ):
+    def __init__( self, left, right, sequence, sasl=False, suicide=False,
+                  conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
-        self.left = l
-        self.right = r
+        self.left = left
+        self.right = right
         self.sequence = sequence
         self.sasl = sasl
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, intag, start_tag, not_first_cycle, raw, startup_only ):
-        tag = str(intag)
+    def get_right( self, inpoint, start_point, not_first_cycle, raw,
+                   startup_only ):
+        inpoint_string = str(inpoint)
         if self.right == None:
             return None
         first_cycle = not not_first_cycle
@@ -243,10 +247,10 @@ class edge( object):
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
-        return TaskID.get( self.right, tag )
+        return TaskID.get( self.right, inpoint_string )
 
-    def get_left( self, intag, start_tag, not_first_cycle, raw, startup_only,
-                  base_interval ):
+    def get_left( self, inpoint, start_point, not_first_cycle, raw,
+                  startup_only, base_interval ):
 
         first_cycle = not not_first_cycle
 
@@ -259,12 +263,12 @@ class edge( object):
 
         left_graphnode = graphnode(left, base_interval=base_interval)
         if left_graphnode.offset_is_from_ict:
-            tag = start_tag - left_graphnode.offset
+            point = start_point - left_graphnode.offset
         elif left_graphnode.offset:
-            tag = intag - left_graphnode.offset
+            point = inpoint - left_graphnode.offset
         else:
-            tag = intag
+            point = inpoint
         name = left_graphnode.name
 
-        return TaskID.get( name, str(tag) )
+        return TaskID.get( name, str(point) )
 

@@ -23,6 +23,7 @@ Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 
 import integer
 import iso8601
+from isodatetime.data import Calendar
 
 
 ISO8601_CYCLING_TYPE = 'iso8601'
@@ -60,6 +61,8 @@ def get_backwards_compatibility_mode(*args, **kwargs):
 
 
 def get_point(*args, **kwargs):
+    if args[0] is None:
+        return None
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return get_point_cls(cycling_type=cycling_type)(*args, **kwargs)
 
@@ -71,6 +74,8 @@ def get_point_cls(cycling_type=None):
 
 
 def get_interval(*args, **kwargs):
+    if args[0] is None:
+        return None
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return get_interval_cls(cycling_type=cycling_type)(*args, **kwargs)
 
@@ -82,6 +87,8 @@ def get_interval_cls(cycling_type=None):
 
 
 def get_sequence(*args, **kwargs):
+    if args[0] is None:
+        return None
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return get_sequence_cls(cycling_type=cycling_type)(*args, **kwargs)
 
@@ -94,7 +101,7 @@ def get_sequence_cls(cycling_type=None):
 
 def init_cyclers(cfg):
     DefaultCycler.TYPE = cfg['scheduling']['cycling mode']
-    if DefaultCycler.TYPE in ['360day','gregorian']:
+    if DefaultCycler.TYPE in Calendar.MODES:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
     for cycling_type, init_func in INIT_FUNCTIONS.items():
         init_func(cfg)

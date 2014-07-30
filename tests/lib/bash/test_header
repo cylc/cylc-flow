@@ -31,7 +31,8 @@
 #     ok TEST_NAME
 #         echo a TAP OK message for TEST_NAME.
 #     fail TEST_NAME
-#         echo a TAP fail message for TEST_NAME.
+#         echo a TAP fail message for TEST_NAME. If $CYLC_TEST_DEBUG is set,
+#         cat $TEST_NAME.stderr to stderr.
 #     run_ok TEST_NAME COMMAND ...
 #         Run COMMAND with any following options/arguments and store stdout
 #         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
@@ -42,8 +43,11 @@
 #         This is expected to have a non-zero return code, which ok's the test.
 #     cmp_ok FILE_TEST [FILE_CONTROL]
 #         Compare FILE_TEST with a file or stdin given by FILE_CONTROL
-#         (stdin if FILE_CONTROL is "-" or missing). If $TEST_DEBUG_CMP
+#         (stdin if FILE_CONTROL is "-" or missing). If $CYLC_TEST_DEBUG_CMP
 #         is set, show differences using xxdiff.
+#     contains_ok FILE_TEST [FILE_CONTROL]
+#         Make sure that each line in FILE_TEST is present in FILE_CONTROL
+#         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE
 #         Run "grep -q PATTERN FILE".
 #     exists_ok FILE
@@ -96,6 +100,11 @@ function ok() {
 function fail() {
     ((++FAILURES))
     echo "not ok $((++TEST_NUMBER)) - $@"
+    if [[ -n ${CYLC_TEST_DEBUG:-} ]]; then
+        echo >/dev/tty
+        echo "$TEST_NAME_BASE $TEST_NAME" >/dev/tty
+        cat "$TEST_NAME.stderr" >/dev/tty
+    fi
 }
 
 function run_ok() {
@@ -127,16 +136,16 @@ function run_fail() {
 function suite_run_ok() {
     local TEST_NAME=$1
     shift 1
-    if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+    if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        ok $TEST_NAME
+    else
         fail $TEST_NAME
-        SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
-        mkdir -p $SUITE_LOG_DIR # directory might not exist if run fails very early
-        cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
-        cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
         SUITE_RUN_FAILS=true
-        return
     fi
-    ok $TEST_NAME
+    SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
+    mkdir -p $SUITE_LOG_DIR # directory might not exist if run fails very early
+    cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
+    cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
 }
 
 function suite_run_fail() {
@@ -157,17 +166,35 @@ function cmp_ok() {
     local FILE_TEST=$1
     local FILE_CONTROL=${2:--}
     local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
-    local CMP_COMMAND="cmp"
-    if [[ -n ${TEST_DEBUG_CMP:-} ]]; then
+    local CMP_COMMAND="diff"
+    if [[ -n ${CYLC_TEST_DEBUG_CMP:-} ]]; then
         CMP_COMMAND="xxdiff -D"
     fi
     if $CMP_COMMAND "$FILE_TEST" "$FILE_CONTROL" \
-            1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+            1>$TEST_NAME.stderr 2>&1; then
         ok $TEST_NAME
         return
     fi
-    diff "$FILE_TEST" "$FILE_CONTROL" 2>>$TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
+}
+
+function contains_ok() {
+    local FILE_TEST=$1
+    local FILE_CONTROL=${2:--}
+    local TEST_NAME=$(basename $FILE_TEST)-contains-ok
+    comm -13 <(sort "$FILE_TEST") <(sort "$FILE_CONTROL") \
+        1>$TEST_NAME.stdout 2>$TEST_NAME.stderr
+    if [[ -s $TEST_NAME.stdout ]]; then
+        mkdir -p $TEST_LOG_DIR
+        echo "Missing lines:" >>$TEST_NAME.stderr
+        cat $TEST_NAME.stdout >>$TEST_NAME.stderr
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+        fail $TEST_NAME
+        return
+    fi
+    ok $TEST_NAME
 }
 
 function grep_ok() {
@@ -178,6 +205,9 @@ function grep_ok() {
         ok $TEST_NAME
         return
     fi
+    echo "Can't find $BRE in $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
 }
 
@@ -188,6 +218,9 @@ function exists_ok() {
         ok $TEST_NAME
         return
     fi
+    echo "Does not exist: $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
 }
 
@@ -198,7 +231,20 @@ function exists_fail() {
         ok $TEST_NAME
         return
     fi
+    echo "Exists: $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
+}
+
+function graph_suite() {
+    SUITE_NAME=$1
+    OUTPUT_FILE=$2
+    shift 2
+    TEMP_OUTPUT_FILE=$(mktemp XXXX-$(basename $OUTPUT_FILE))
+    cylc graph --output-file="$TEMP_OUTPUT_FILE" "$SUITE_NAME" "$@"
+    sed -i "s/[.0-9]\+\( \|$\)//g" "$TEMP_OUTPUT_FILE"
+    sort $TEMP_OUTPUT_FILE >$OUTPUT_FILE
 }
 
 function init_suite() {
@@ -270,7 +316,8 @@ TEST_NAME_BASE=$(basename $0 .t)
 TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
 TEST_DIR=$(mktemp -d)
 cd $TEST_DIR
-TEST_LOG_DIR=${TMPDIR:-/tmp}/cylc-tests/$(basename $TEST_SOURCE_DIR)
+TEST_LOG_DIR_BASE=${TMPDIR:-/tmp}/cylc-tests-"$LOGNAME"/$(basename $TEST_SOURCE_DIR)
+TEST_LOG_DIR=$TEST_LOG_DIR_BASE/$TEST_NAME_BASE-$(date -u +%Y%m%dT%H%M%SZ)
 SUITE_RUN_FAILS=false
 
 # these variables should be moved to site/user config:

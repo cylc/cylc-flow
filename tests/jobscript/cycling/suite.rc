@@ -1,0 +1,29 @@
+
+title = "job script cycling test"
+
+description = """Test the output of cycling environment variables"""
+
+[cylc]
+    cycle point time zone = +13
+    [[reference test]]
+        live mode suite timeout = 0.5
+        dummy mode suite timeout = 0.5
+        simulation mode suite timeout = 0.5
+
+[scheduling]
+    initial cycle point = 20140201T05
+    final cycle point = 20140204T11+12
+    [[dependencies]]
+        [[[T00]]]
+            graph = "foo"
+[runtime]
+    [[foo]]
+        initial scripting = echo HELLO FROM INITIAL SCRIPTING
+        pre-command scripting = echo HELLO FROM PRE-COMMAND SCRIPTING
+        command scripting = echo HELLO FROM COMMAND SCRIPTING
+        post-command scripting = echo HELLO FROM POST-COMMAND SCRIPTING
+        [[[remote]]]
+            # force use of ssh job submission to disconnect local tasks
+            # from the submitting suite environment.
+            host = localhost
+

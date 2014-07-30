@@ -15,15 +15,20 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test intercycle dependencies.
+# Test intercycle dependencies.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $(basename $0 | sed "s/^.*-\(.*\)\.t/\1/g")
+CHOSEN_SUITE=$(basename $0 | sed "s/^.*-\(.*\)\.t/\1/g")
+install_suite $TEST_NAME_BASE $CHOSEN_SUITE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate "$SUITE_NAME"
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-graph
+graph_suite "$SUITE_NAME" "$SUITE_NAME.graph.plain"
+cmp_ok "$SUITE_NAME.graph.plain" "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
