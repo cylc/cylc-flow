@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE warm-start
+install_suite $TEST_NAME_BASE warm-start-iso
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME

@@ -113,16 +113,16 @@ initial and final cycle point variables persists across suite restarts."""
 
         scheduler.parse_commandline( self )
 
-        if self.options.raw:
+        if self.options.warm:
+            self.load_tasks = self.load_tasks_warm
+        elif self.options.raw:
             self.load_tasks = self.load_tasks_raw
         else:
-            self.load_tasks = self.load_tasks_cold_or_warm
+            self.load_tasks = self.load_tasks_cold
 
-    def load_tasks_cold_or_warm( self ):
-        if self.start_point == self.initial_point:
-            self.log.info( 'Cold Start ' + str(self.initial_point) )
-        else:
-            self.log.info( 'Warm Start ' + str(self.start_point) )
+    def load_tasks_cold( self ):
+        if self.start_point is not None:
+            self.log.info( 'Cold Start %s' % self.start_point )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
 
@@ -142,6 +142,33 @@ initial and final cycle point variables persists across suite restarts."""
             else:
                 self.log.info( "Not loading " + name + " (out of sequence bounds)" )
                 del itask
+
+    def load_tasks_warm( self ):
+        if self.start_point is not None:
+            self.log.info( 'Warm Start %s' % self.start_point)
+
+        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+        coldstart_tasks = self.config.get_coldstart_task_list()
+        if len( coldstart_tasks ) == 0:
+            self.log.info( "This suite has not defined any cold start tasks" )
+        for name in task_list:
+            # (startup=True is only for cold start)
+            if self.start_point is not None:
+                point = self.start_point
+            else:
+                # no initial cycle point: we can't load cycling tasks
+                continue
+            itask = self.config.get_task_proxy(
+                name, point, 'waiting', stop_point=None, startup=False,
+                submit_num=0, exists=False
+            )
+            if name in coldstart_tasks:
+                itask.log( "NORMAL", "warm start: starting in succeeded state" )
+                itask.state.set_status( 'succeeded' )
+                itask.prerequisites.set_all_satisfied()
+                itask.outputs.set_all_completed()
+
+            self.pool.add_to_runahead_pool( itask )
 
     def load_tasks_raw( self ):
         if self.start_point is not None:
