@@ -70,7 +70,7 @@ internal triggering simulation.]""",
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
 target = args[1]
-stoptag = args[2]
+stop_point_string = args[2]
 
 if not cylc.TaskID.is_valid_id( target ):
     sys.exit( "Invalid Task ID: " + target )
@@ -79,7 +79,7 @@ task_id = target
 name, start = cylc.TaskID.split( target )
 
 # TODO ISO - VALIDATE STOP CYCLE_POINT
-stop = stoptag
+stop = stop_point_string
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,

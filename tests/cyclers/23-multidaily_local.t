@@ -18,9 +18,10 @@
 # Test intercycle dependencies, local time.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $(basename $0 | sed "s/^.*-\(.*\)\.t/\1/g")
+CHOSEN_SUITE=$(basename $0 | sed "s/^.*-\(.*\)\.t/\1/g")
+install_suite $TEST_NAME_BASE $CHOSEN_SUITE
 CURRENT_TZ_UTC_OFFSET=$(date +%z)
 if [[ $CURRENT_TZ_UTC_OFFSET == '+0000' ]]; then
     CURRENT_TZ_UTC_OFFSET="Z"
@@ -31,6 +32,13 @@ sed -i "s/Z/$CURRENT_TZ_UTC_OFFSET/g" reference.log
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-graph
+graph_suite "$SUITE_NAME" "$SUITE_NAME.graph.plain"
+sed "s/Z/$CURRENT_TZ_UTC_OFFSET/g" \
+    "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref" > graph.plain.local.ref
+cmp_ok "$SUITE_NAME.graph.plain" graph.plain.local.ref
+xxdiff -D "$SUITE_NAME.graph.plain" graph.plain.local.ref
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME

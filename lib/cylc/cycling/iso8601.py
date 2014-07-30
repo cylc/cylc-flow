@@ -47,6 +47,8 @@ OLD_STRPTIME_FORMATS_BY_LENGTH = {
     12: "%Y%m%d%H%M",
     14: "%Y%m%d%H%M%S",
 }
+DATE_TIME_FORMAT = "CCYYMMDDThhmm"
+EXPANDED_DATE_TIME_FORMAT = "+XCCYYMMDDThhmm"
 PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 
 
@@ -557,12 +559,13 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS = num_expanded_year_digits
     if custom_dump_format is None:
         if num_expanded_year_digits > 0:
-            SuiteSpecifics.DUMP_FORMAT = u"±XCCYYMMDDThhmm" + time_zone
+            SuiteSpecifics.DUMP_FORMAT = EXPANDED_DATE_TIME_FORMAT + time_zone
         else:
-            SuiteSpecifics.DUMP_FORMAT = "CCYYMMDDThhmm" + time_zone
+            SuiteSpecifics.DUMP_FORMAT = DATE_TIME_FORMAT + time_zone
+        
     else:
         SuiteSpecifics.DUMP_FORMAT = custom_dump_format
-        if u"±X" not in custom_dump_format and num_expanded_year_digits:
+        if u"+X" not in custom_dump_format and num_expanded_year_digits:
             raise IllegalValueError(
                 'cycle point format',
                 ('cylc', 'cycle point format'),
