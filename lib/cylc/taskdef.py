@@ -103,34 +103,33 @@ class taskdef(object):
 
     def get_cleanup_cutoff_point( self, my_point, offset_sequence_tuples):
         """Extract the max dependent cycle point for this point."""
-        print "Extract cleanup cutoff", self.name, my_point
         if not offset_sequence_tuples:
-            print "    not offset_seq_tuples: None"
-            return None
+            # This task does not have dependent tasks at other cycles.
+            return my_point
         cutoff_points = []
         for offset_string, sequence in offset_sequence_tuples:
-            print "    offset_string, sequence", offset_string, str(sequence)
             if offset_string is None:
-                # This indicates a dependency across the whole suite run.
+                # This indicates a dependency that lasts for the whole run.
                 return None
             if sequence is None:
+                # This indicates a simple offset interval such as [-PT6H].
                 cutoff_points.append(
                     my_point - get_interval(offset_string))
-                print "        cutoff point candidate:", cutoff_points[-1]
                 continue
+            # This is a complicated offset like [02T00-P1W].
             dependent_point = sequence.get_start_point()
             
             matching_dependent_points = []
             while dependent_point is not None:
+                # TODO: Is it realistically possible to hang in this loop?
                 target_point = (
                     get_point_relative(offset_string, dependent_point))
-                print "    dependent, target:", dependent_point, target_point
                 if target_point > my_point:
                     # Assume monotonic (target_point can never jump back).
                     break
                 if target_point == my_point:
+                    # We have found a dependent_point for my_point.
                     matching_dependent_points.append(dependent_point)
-                    print "        cutoff point candidate:", dependent_point
                 dependent_point = sequence.get_next_point_on_sequence(
                     dependent_point)
             if matching_dependent_points:
@@ -138,13 +137,12 @@ class taskdef(object):
                 cutoff_points.append(matching_dependent_points[-1])
         if cutoff_points:
             max_cutoff_point = max(cutoff_points)
-            print "    cutoff max:", max_cutoff_point
             if max_cutoff_point < my_point:
-                print "    too low, defaulting to:", my_point
+                # This is caused by future triggers - default to my_point.
                 return my_point
             return max_cutoff_point
-        print "    no cutoff points:", None
-        return None
+        # There aren't any dependent tasks in other cycles for my_point.
+        return my_point
                 
     def time_trans( self, strng, hours=False ):
         # Time unit translation.
