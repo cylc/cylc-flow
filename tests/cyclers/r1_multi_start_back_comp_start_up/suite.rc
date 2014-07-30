@@ -13,3 +13,6 @@
 [runtime]
     [[root]]
         command scripting = true
+[visualization]
+    initial cycle point = 20140101
+    final cycle point = 2014010206

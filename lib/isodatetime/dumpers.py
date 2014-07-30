@@ -158,9 +158,9 @@ class TimePointDumper(object):
                 time_string = time_string[:-1]
                 time_zone_string = "Z"
                 custom_time_zone = (0, 0)
-            elif u"±" in time_string:
-                time_string, time_zone_string = time_string.split(u"±")
-                time_zone_string = u"±" + time_zone_string
+            elif "+hh" in time_string:
+                time_string, time_zone_string = time_string.split("+")
+                time_zone_string = "+" + time_zone_string
             elif "+" in time_string:
                 time_string, time_zone_string = time_string.split("+")
                 time_zone_string = "+" + time_zone_string

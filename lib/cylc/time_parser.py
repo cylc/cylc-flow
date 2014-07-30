@@ -97,7 +97,7 @@ class CylcTimeParser(object):
         self.num_expanded_year_digits = num_expanded_year_digits
         if dump_format is None:
             if num_expanded_year_digits:
-                dump_format = u"±XCCYYMMDDThhmmZ"
+                dump_format = u"+XCCYYMMDDThhmmZ"
             else:
                 dump_format = "CCYYMMDDThhmmZ"
             

@@ -1579,7 +1579,7 @@ class config( object ):
             print "Parsing the dependency graph"
 
         start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
-        initial_tasks = list(start_up_tasks)
+        back_comp_initial_tasks = list(start_up_tasks)
 
         self.graph_found = False
         has_non_async_graphs = False
@@ -1596,9 +1596,9 @@ class config( object ):
             )
             for left, left_output, right in async_dependencies:
                 if left:
-                    initial_tasks.append(left)
+                    back_comp_initial_tasks.append(left)
                 if right:
-                    initial_tasks.append(right)
+                    back_comp_initial_tasks.append(right)
 
         # Create a stack of sections (sequence strings) and graphs.
         items = []
@@ -1606,18 +1606,20 @@ class config( object ):
             if item == 'graph':
                 continue
             has_non_async_graphs = True
-            items.append((item, value, initial_tasks, False))
+            items.append((item, value, back_comp_initial_tasks))
 
-        start_up_tasks_graphed = []
+        back_comp_initial_dep_points = {}
+        initial_point = get_point(
+            self.cfg['scheduling']['initial cycle point'])
+        back_comp_initial_tasks_graphed = []
         while items:
-            item, value, tasks_to_prune, is_inserted = items.pop(0)
+            item, value, tasks_to_prune = items.pop(0)
 
             # If the section consists of more than one sequence, split it up.
             if re.search("(?![^(]+\)),", item):
                 new_items = re.split("(?![^(]+\)),", item)
                 for new_item in new_items:
-                    items.append((new_item.strip(), value,
-                                  tasks_to_prune, False))
+                    items.append((new_item.strip(), value, tasks_to_prune))
                 continue
 
             try:
@@ -1628,10 +1630,6 @@ class config( object ):
                 continue
 
             section = item
-            if is_inserted:
-                print "INSERTED DEPENDENCIES REPLACEMENT:"
-                print "[[[" + section + "]]]"
-                print "    " + 'graph = """' + graph + '"""' 
             special_dependencies = self.parse_graph(
                 section, graph, section_seq_map=section_seq_map,
                 tasks_to_prune=tasks_to_prune
@@ -1642,32 +1640,57 @@ class config( object ):
                     self.cfg['scheduling']['initial cycle point'],
                     self.cfg['scheduling']['final cycle point']
                 )
-                first_point = section_seq.get_first_point(
-                    get_point(self.cfg['scheduling']['initial cycle point'])
-                )
-                graph_text = ""
-                for left, left_output, right in special_dependencies:
-                    # Set e.g. (foo, fail, bar) to be foo[^]:fail => bar.
-                    graph_text += left + "[^]"
-                    if left_output:
-                        graph_text += ":" + left_output
-                    graph_text += " => " + right + "\n"
-                    if (left in start_up_tasks and
-                            left not in start_up_tasks_graphed):
-                        # Start-up tasks need their own explicit section.
-                        items.append((get_sequence_cls().get_async_expr(),
-                                     {"graph": left}, [], True))
-                        start_up_tasks_graphed.append(left)
-                graph_text = graph_text.rstrip()
-                section = get_sequence_cls().get_async_expr(first_point)
-                items.append((section, {"graph": graph_text}, [], True))
+                first_point = section_seq.get_first_point(initial_point)
+                for dep in special_dependencies:
+                    # Set e.g. (foo, fail, bar) => foo, foo[^]:fail => bar.
+                    left, left_output, right = dep
+                    if left in back_comp_initial_tasks:
+                        # Start-up/Async tasks now always run at R1.
+                        back_comp_initial_dep_points[(left, None, None)] = [
+                            initial_point]
+                    # Sort out the dependencies on R1 at R1/some-time.
+                    back_comp_initial_dep_points.setdefault(tuple(dep), [])
+                    back_comp_initial_dep_points[tuple(dep)].append(
+                        first_point)
+
+        back_comp_initial_section_graphs = {}
+        for dep in sorted(back_comp_initial_dep_points):           
+            first_common_point = min(back_comp_initial_dep_points[dep])
+            at_initial_point = (first_common_point == initial_point)
+            left, left_output, right = dep
+            graph_text = left
+            if not at_initial_point:
+                # Reference left at the initial point.
+                graph_text += "[^]"
+            if left_output:
+                graph_text += ":" + left_output
+            if right:
+                graph_text += " => " + right
+            if at_initial_point:
+                section = get_sequence_cls().get_async_expr()
+            else:
+                section = get_sequence_cls().get_async_expr(
+                    first_common_point)
+            back_comp_initial_section_graphs.setdefault(section, [])
+            back_comp_initial_section_graphs[section].append(graph_text)
+
+        for section in sorted(back_comp_initial_section_graphs):
+            total_graph_text = "\n".join(
+                back_comp_initial_section_graphs[section])
+            print "INSERTED DEPENDENCIES REPLACEMENT:"
+            print "[[[" + section + "]]]"
+            print "    " + 'graph = """\n' + total_graph_text + '\n"""' 
+            self.parse_graph(
+                section, total_graph_text,
+                section_seq_map=section_seq_map, tasks_to_prune=[]
+            )
         if not flags.back_comp_cycling:
             if async_graph and has_non_async_graphs:
                 raise SuiteConfigError(
                     "Error: mixed async & cycling graphs is not allowed in " +
                     "new-style cycling. Use 'R1...' tasks instead."
                 )
-            if start_up_tasks:
+            if back_comp_initial_tasks:
                 raise SuiteConfigError(
                     "Error: start-up tasks should be 'R1...' tasks in " +
                     "new-style cycling"
