@@ -5991,10 +5991,9 @@ run, the only cycle point that can subsequently run is the next one. This
 is dangerous because if, accidentally or otherwise, the task runs for the
 wrong cycle point, its restart files will be corrupted such that the correct
 cycle point can no longer run (probably necessitating a cold-start).
-Instead, consider organising restart files by cycle point, through a file
+Instead, consider organising restart files by cycle point with a file
 or directory naming convention, and keep them in a simple rolling
-archive (cylc's filename templating and housekeeping utilities can easily
-do this for you). Then, given availability of external inputs, you can
+archive. Then, given availability of external inputs, you can
 easily rerun the task for any cycle point still in the restart archive.
 
 \subsection{Avoid Unnecessary Previous-Instance Dependence}
