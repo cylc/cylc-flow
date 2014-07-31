@@ -155,31 +155,8 @@ class graphnode( object ):
         else:
             self.intercycle = False
             self.offset_string = None
-        if not flags.back_comp_cycling and is_prev_cycling_format:
+        if not flags.backwards_compat_cycling and is_prev_cycling_format:
             raise GraphNodeError(
                 'Illegal graph offset (new-style cycling): ' +
                 '%s should be %s' % (offset_string, self.offset_string)
             )
-
-
-if __name__ == '__main__':
-    # TODO ISO - this is only for integer cycling:
-    nodes = [
-        'foo[T-24]:outx',
-        'foo[T-24]',
-        'foo:outx',
-        ':out1', # error
-        '[T-24]', # error
-        'outx:[T-24]', # error
-        '[T-6]:outx', # error
-        'foo:m1[T-24]' # error
-        ]
-
-    for n in nodes:
-        print n, '...',
-        m = re.match( NODE_RE, n )
-        if m:
-            print m.groups()
-        else:
-            print 'ERROR!'
-

@@ -31,8 +31,6 @@ from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 import cylc.TaskID
 from cylc.cycling.loader import get_point
-from cylc.locking.suite_lock import suite_lock
-from cylc.locking.lockserver import lockserver
 from cylc.task_types import task
 from cylc.suite_host import get_suite_host, get_hostname
 from cylc.port_scan import SuiteIdentificationError
@@ -50,14 +48,7 @@ Task messaging commands will print to stdout but will not attempt to
 communicate with the suite (which does not need to be running).
 
 WARNING: do not 'cylc submit' a task that is running in its suite at the
-same time - both instances will attempt to write to the same job logs.
-
-If the suite is running at the same time and it has acquired an
-exclusive suite lock (which means you cannot running multiple instances
-of the suite at once, even under different registrations) then the
-lockserver will let you 'submit' a task from the suite only under the
-same registration, and only if the task is not locked (i.e. only if
-the same task, NAME.CYCLE_POINT, is not currently running in the suite)."""
+same time - both instances will attempt to write to the same job logs."""
 
 def commandline_parser():
     parser = cop(
@@ -113,23 +104,6 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
-use_lockserver = False
-lockserver_port = None
-if config.cfg['cylc']['lockserver']['enable']:
-    hostname = get_hostname()
-    use_lockserver = True
-    try:
-        lockserver_port = lockserver( hostname ).get_port()
-    except SuiteIdentificationError, x:
-        raise SystemExit( 'Lockserver not found. See \'cylc lockserver status\'')
-
-    # Request suite access from the lock server. If the task's parent
-    # suite has an exclusive lock, we can use submit only via the
-    # same suite registration. submit does not need to call
-    # release_suite_access()
-    if not suite_lock( suite, suite_dir, hostname, lockserver_port, 'submit' ).request_suite_access():
-        raise SystemExit( 'ERROR: failed to acquire a suite lock' )
-
 # No TASK EVENT HOOKS are set for the submit command because there is
 # no scheduler instance watching for task failure etc.
 
@@ -155,8 +129,6 @@ suite_env = {
         'CYLC_MODE'              : 'submit',
         'CYLC_DEBUG'             : str( cylc.flags.debug ),
         'CYLC_VERBOSE'           : str( cylc.flags.verbose),
-        'CYLC_USE_LOCKSERVER'    : str( use_lockserver ),
-        'CYLC_LOCKSERVER_PORT'   : str( lockserver_port ), # "None" if not using lockserver
         'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
         'CYLC_SUITE_NAME'        : suite,
         'CYLC_SUITE_REG_NAME'    : suite, # DEPRECATED

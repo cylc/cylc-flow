@@ -29,8 +29,6 @@ import logging
 import re, os, sys, shutil, traceback
 from state_summary import state_summary
 from passphrase import passphrase
-from locking.lockserver import lockserver
-from locking.suite_lock import suite_lock
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
 from cfgspec.site import sitecfg
@@ -86,8 +84,6 @@ class scheduler(object):
 
         # SUITE HOST
         self.host= get_suite_host()
-
-        self.lock_acquired = False
 
         self.is_restart = is_restart
 
@@ -662,19 +658,6 @@ class scheduler(object):
             if self.options.hold_time:
                 self.hold_time = get_point( self.options.hold_time )
 
-        # USE LOCKSERVER?
-        self.use_lockserver = self.config.cfg['cylc']['lockserver']['enable']
-        self.lockserver_port = None
-        if self.use_lockserver:
-            # check that user is running a lockserver
-            # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
-            # (else scan etc. will hang on the partially started suite).
-            # raises port_scan.SuiteNotFound error:
-            self.lockserver_port = lockserver( self.host ).get_port()
-
-        # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
-        self.exclusive_suite_lock = not self.config.cfg['cylc']['lockserver']['simultaneous instances']
-
         # Running in UTC time? (else just use the system clock)
         flags.utc = self.config.cfg['cylc']['UTC mode']
 
@@ -710,8 +693,6 @@ class scheduler(object):
                 'CYLC_MODE'              : 'scheduler',
                 'CYLC_DEBUG'             : str( flags.debug ),
                 'CYLC_VERBOSE'           : str( flags.verbose ),
-                'CYLC_USE_LOCKSERVER'    : str( self.use_lockserver ),
-                'CYLC_LOCKSERVER_PORT'   : str( self.lockserver_port ), # "None" if not using lockserver
                 'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
                 'CYLC_SUITE_NAME'        : self.suite,
                 'CYLC_SUITE_REG_NAME'    : self.suite, # DEPRECATED
@@ -826,13 +807,6 @@ class scheduler(object):
                         print '\nSUITE REFERENCE TEST PASSED'
 
     def run( self ):
-
-        if self.use_lockserver:
-            # request suite access from the lock server
-            if suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
-               self.lock_acquired = True
-            else:
-               raise SchedulerError( "Failed to acquire a suite lock" )
 
         if self.hold_time:
             # TODO - HANDLE STOP AND PAUSE TIMES THE SAME WAY?
@@ -1068,16 +1042,6 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
-        if getattr(self, "use_lockserver", None):
-            if self.lock_acquired:
-                lock = suite_lock( self.suite, self.suite_dir, self.host, self.lockserver_port, 'scheduler' )
-                try:
-                    if not lock.release_suite_access():
-                        print >> sys.stderr, 'WARNING failed to release suite lock!'
-                except port_scan.SuiteIdentificationError, x:
-                    print >> sys.stderr, x
-                    print >> sys.stderr, 'WARNING failed to release suite lock!'
-
         try:
             self.port_file.unlink()
         except PortFileError, x:
@@ -1096,14 +1060,15 @@ class scheduler(object):
         print "DONE" # main thread exit
 
     def set_stop_point( self, stop_point_string ):
-        self.stop_point = get_point(stop_point_string)
+        stop_point = get_point(stop_point_string)
         try:
-            self.stop_point.standardise()
+            stop_point.standardise()
         except PointParsingError as exc:
             self.log.critical(
                 "Cannot set stop cycle point: %s: %s" % (
                     stop_point_string, exc))
             return
+        self.stop_point = stop_point
         self.log.info( "Setting stop cycle point: %s" % stop_point_string )
         self.pool.set_stop_point(self.stop_point)
 

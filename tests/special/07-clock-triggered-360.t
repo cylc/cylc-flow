@@ -24,7 +24,6 @@ install_suite $TEST_NAME_BASE clock-360
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_fail $TEST_NAME cylc validate $SUITE_NAME
-cat $TEST_NAME.stderr >/dev/tty
 grep_ok "ERROR: clock-triggered tasks require \[scheduling\]cycling mode=" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
