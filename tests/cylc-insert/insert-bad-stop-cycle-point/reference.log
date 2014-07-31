@@ -1,0 +1,16 @@
+2014-07-30T16:33:08+01 INFO - port:7766
+2014-07-30T16:33:08+01 INFO - Suite starting at 2014-07-30T16:33:08+01
+2014-07-30T16:33:08+01 INFO - Log event clock: real time
+2014-07-30T16:33:08+01 INFO - Run mode: live
+2014-07-30T16:33:08+01 INFO - Start point: 20140101T0000+01
+2014-07-30T16:33:08+01 INFO - Stop point: 20140101T0000+01
+2014-07-30T16:33:08+01 INFO - Cold Start 20140101T0000+01
+2014-07-30T16:33:08+01 INFO - [prep.20140101T0000+01] -triggered off []
+2014-07-30T16:33:09+01 INFO - [prep.20140101T0000+01] -submit_method_id=10807
+2014-07-30T16:33:09+01 INFO - [prep.20140101T0000+01] -submission succeeded
+2014-07-30T16:33:09+01 INFO - [prep.20140101T0000+01] -(current:submitted)> prep.20140101T0000+01 started at 2014-07-30T16:33:09+01
+2014-07-30T16:33:09+01 CRITICAL - soon: invalid cycle point for inserted task (Incompatible value for <class 'cylc.cycling.iso8601.ISO8601Point'>: soon)
+2014-07-30T16:33:09+01 INFO - Command succeeded: insert task(foo,soon,False,None)
+2014-07-30T16:33:10+01 INFO - [prep.20140101T0000+01] -(current:running)> prep.20140101T0000+01 succeeded at 2014-07-30T16:33:09+01
+2014-07-30T16:37:18+01 INFO - Command succeeded: stop cleanly(False)
+2014-07-30T16:37:19+01 INFO - Suite shutting down at 2014-07-30T16:37:19+01

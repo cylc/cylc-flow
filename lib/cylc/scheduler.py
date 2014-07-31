@@ -520,11 +520,26 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i, point_string) for i in matches ]
 
-        point = get_point(point_string)
+        try:
+            point = get_point(point_string).standardise()
+        except PointParsingError as exc:
+            self.log.critical(
+                "%s: invalid cycle point for inserted task (%s)" % (
+                    point_string, exc)
+            )
+            return
+
         if stop_string is None:
             stop_point = None
         else:
-            stop_point = get_point(stop_string)
+            try:
+                stop_point = get_point(stop_string).standardise()
+            except PointParsingError as exc:
+                self.log.critical(
+                    "%s: invalid stop cycle point for inserted task (%s)" % (
+                        stop_string, exc)
+                )
+                return
 
         for task_id in task_ids:
             name, task_point_string = TaskID.split( task_id )
