@@ -588,14 +588,14 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         assumed_time_zone=time_zone_hours_minutes
     )
     custom_point_parse_function = None
-    if DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
+    if SuiteSpecifics.DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
         custom_point_parse_function = point_parse
     SuiteSpecifics.abbrev_util = CylcTimeParser(
         None, None,
-        num_expanded_year_digits=NUM_EXPANDED_YEAR_DIGITS,
-        dump_format=DUMP_FORMAT,
+        num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
+        dump_format=SuiteSpecifics.DUMP_FORMAT,
         custom_point_parse_function=custom_point_parse_function,
-        assumed_time_zone=ASSUMED_TIME_ZONE
+        assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
     )
 
 
