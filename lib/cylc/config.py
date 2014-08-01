@@ -1526,7 +1526,8 @@ class config( object ):
 
     def get_graph( self, start_point_string, stop_point_string, raw=False,
                    group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-                   group_all=False, ungroup_all=False, ignore_suicide=False ):
+                   group_all=False, ungroup_all=False, ignore_suicide=False,
+                   subgraphs_on=False ):
 
         gr_edges = self.get_graph_raw(
             start_point_string, stop_point_string, raw,
@@ -1536,7 +1537,8 @@ class config( object ):
 
         graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
         graph.add_edges( gr_edges, ignore_suicide )
-
+        if subgraphs_on:
+            graph.add_cycle_point_subgraphs( gr_edges )
         return graph
 
     def get_node_labels( self, start_point_string, stop_point_string, raw ):

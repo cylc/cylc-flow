@@ -109,8 +109,56 @@ class CGraphPlain( pygraphviz.AGraph ):
                 # override
                 style='dashed'
 
+            penwidth = 2
+
             self.cylc_add_edge(
-                left, right, True, style=style, arrowhead=arrowhead)
+                left, right, True, style=style, arrowhead=arrowhead,
+                penwidth=penwidth
+            )
+
+    def add_cycle_point_subgraphs( self, edges ):
+        """Draw nodes within cycle point groups (subgraphs)."""
+        point_string_id_map = {}
+        for edge_entry in edges:
+            for id_ in edge_entry[:2]:
+                if id_ is None:
+                    continue
+                point_string = TaskID.split(id_)[1]
+                point_string_id_map.setdefault(point_string, [])
+                point_string_id_map[point_string].append(id_)
+        for point_string, ids in point_string_id_map.items():
+            self.add_subgraph(
+                nbunch=ids, name="cluster_" + point_string,
+                label=point_string, fontsize=28, rank="max", style="dashed"
+            )
+
+    def add_subgraph(self, nbunch=None, name=None, **attr):
+        """Return subgraph induced by nodes in nbunch.
+
+        Overrides (but does the same thing as) pygraphviz's
+        AGraph.add_subgraph method.
+
+        """
+
+        name = name.encode(self.encoding)
+
+        handle = pygraphviz.graphviz.agsubg(
+            self.handle, name, 1)
+
+        subgraph = pygraphviz.AGraph(
+            handle=handle, name=name,
+            strict=self.strict, directed=self.directed,
+            **attr
+        )
+
+        nodes = self.prepare_nbunch(nbunch)
+        subgraph.add_nodes_from(nodes)
+
+        for left, right in self.edges():
+            if left in subgraph and right in subgraph: 
+                subgraph.add_edge(left, right)
+
+        return subgraph
 
 
 class CGraph( CGraphPlain ):
