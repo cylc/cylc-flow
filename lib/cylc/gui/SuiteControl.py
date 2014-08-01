@@ -1874,7 +1874,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         load_button = gtk.Button( "_Load" )
         load_button.connect(
-            "clicked", self.loadpoint_strings,
+            "clicked", self.load_point_strings,
             point_string_entry, stop_point_string_entry
         )
 
