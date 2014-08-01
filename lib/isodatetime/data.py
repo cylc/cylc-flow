@@ -1338,12 +1338,14 @@ class TimePoint(object):
             if my_year > other_year:
                 diff_day += get_days_in_year_range(other_year, my_year - 1)
             else:
-                diff_day += get_days_in_year_range(my_year, other_year - 1)
-            my_time = self.get_hour_minute_second()
-            other_time = other.get_hour_minute_second()
-            diff_hour = my_time[0] - other_time[0]
-            diff_minute = my_time[1] - other_time[1]
-            diff_second = my_time[2] - other_time[2]
+                diff_day -= get_days_in_year_range(my_year, other_year - 1)
+            if diff_day < 0:
+                return -1 * (other - self)
+            my_hour, my_minute, my_second = self.get_hour_minute_second()
+            other_hour, other_minute, other_second = other.get_hour_minute_second()
+            diff_hour = my_hour - other_hour
+            diff_minute = my_minute - other_minute
+            diff_second = my_second - other_second
             if diff_second < 0:
                 diff_minute -= 1
                 diff_second += CALENDAR.SECONDS_IN_MINUTE

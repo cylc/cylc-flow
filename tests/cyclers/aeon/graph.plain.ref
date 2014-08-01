@@ -1,0 +1,24 @@
+edge "big_bang.-138000000000229T0530Z" "count_the_aeons.-138000000000229T0530Z" solid black
+graph 
+node "big_bang.-138000000000229T0530Z" "big_bang\n-138000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.+002000000000229T0530Z" "count_the_aeons\n+002000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.+012000000000229T0530Z" "count_the_aeons\n+012000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.+022000000000229T0530Z" "count_the_aeons\n+022000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.+032000000000229T0530Z" "count_the_aeons\n+032000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.+042000000000229T0530Z" "count_the_aeons\n+042000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.+052000000000229T0530Z" "count_the_aeons\n+052000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-008000000000229T0530Z" "count_the_aeons\n-008000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-018000000000229T0530Z" "count_the_aeons\n-018000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-028000000000229T0530Z" "count_the_aeons\n-028000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-038000000000229T0530Z" "count_the_aeons\n-038000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-048000000000229T0530Z" "count_the_aeons\n-048000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-058000000000229T0530Z" "count_the_aeons\n-058000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-068000000000229T0530Z" "count_the_aeons\n-068000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-078000000000229T0530Z" "count_the_aeons\n-078000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-088000000000229T0530Z" "count_the_aeons\n-088000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-098000000000229T0530Z" "count_the_aeons\n-098000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-108000000000229T0530Z" "count_the_aeons\n-108000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-118000000000229T0530Z" "count_the_aeons\n-118000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-128000000000229T0530Z" "count_the_aeons\n-128000000000229T0530Z" unfilled box black lightgrey
+node "count_the_aeons.-138000000000229T0530Z" "count_the_aeons\n-138000000000229T0530Z" unfilled box black lightgrey
+stop

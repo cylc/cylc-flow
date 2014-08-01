@@ -603,6 +603,63 @@ def get_timepointparser_tests(allow_only_basic=False,
                     yield tz_expr, tz_info
 
 
+def get_timepoint_subtract_tests():
+    """Yield tests for subtracting one timepoint from another."""
+    return [
+        (
+            {"year": 44, "month_of_year": 1, "day_of_month": 4,
+             "hour_of_day": 5, "minute_of_hour": 1, "second_of_minute": 2,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 41, "month_of_year": 12, "day_of_month": 2,
+             "hour_of_day": 4, "minute_of_hour": 23, "second_of_minute": 1,
+             "time_zone_hour": 3, "time_zone_minute": 20},
+            "P763DT3H58M1S"
+        ),
+        (
+            {"year": 41, "month_of_year": 12, "day_of_month": 2,
+             "hour_of_day": 4, "minute_of_hour": 23, "second_of_minute": 1,
+             "time_zone_hour": 3, "time_zone_minute": 20},
+            {"year": 44, "month_of_year": 1, "day_of_month": 4,
+             "hour_of_day": 5, "minute_of_hour": 1, "second_of_minute": 2,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            "-P763DT3H58M1S"
+        ),
+        (
+            {"year": 1991, "month_of_year": 6, "day_of_month": 3,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 1991, "month_of_year": 5, "day_of_month": 4,
+             "hour_of_day": 5, "time_zone_hour": 0, "time_zone_minute": 0},
+            "P29DT19H"
+        ),
+        (
+            {"year": 1991, "month_of_year": 5, "day_of_month": 4,
+             "hour_of_day": 5, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 1991, "month_of_year": 6, "day_of_month": 3,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            "-P29DT19H"
+        ),
+        (
+            {"year": 44, "month_of_year": 1, "day_of_month": 4,
+             "hour_of_day": 5, "minute_of_hour": 1, "second_of_minute": 2,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 41, "month_of_year": 12, "day_of_month": 2,
+             "hour_of_day": 13, "minute_of_hour": 23, "second_of_minute": 1,
+             "time_zone_hour": 3, "time_zone_minute": 20},
+            "P762DT18H58M1S"
+        ),
+        (
+            {"year": 41, "month_of_year": 12, "day_of_month": 2,
+             "hour_of_day": 13, "minute_of_hour": 23, "second_of_minute": 1,
+             "time_zone_hour": 3, "time_zone_minute": 20},
+            {"year": 44, "month_of_year": 1, "day_of_month": 4,
+             "hour_of_day": 5, "minute_of_hour": 1, "second_of_minute": 2,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            "-P762DT18H58M1S"
+        ),
+    ]
+
+
+
 def get_timerecurrence_expansion_tests():
     """Return test expansion expressions for data.TimeRecurrence."""
     return [
@@ -885,6 +942,16 @@ class TestSuite(unittest.TestCase):
         """Test (TimePoint + Duration).day_of_month is an int."""
         time_point = data.TimePoint(year=2000) + data.Duration(seconds=1.0)
         self.assertEqual(type(time_point.day_of_month), int)
+
+    def test_timepoint_subtract(self):
+        """Test subtracting one time point from another."""
+        for test_props1, test_props2, ctrl_string in (
+                get_timepoint_subtract_tests()):
+            point1 = data.TimePoint(**test_props1)
+            point2 = data.TimePoint(**test_props2)
+            test_string = str(point1 - point2)
+            self.assertEqual(test_string, ctrl_string,
+                             "%s - %s" % (point1, point2))
 
     def test_timepoint_time_zone(self):
         """Test the time zone handling of timepoint instances."""

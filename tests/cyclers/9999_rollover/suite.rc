@@ -1,0 +1,12 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 99991231T2300
+    [[dependencies]]
+        [[[ R2//PT1H ]]]
+            graph = "foo"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 99991231T2300
