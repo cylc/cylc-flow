@@ -19,7 +19,7 @@
 import re, os, sys
 import taskdef
 from cylc.cfgspec.suite import get_suitecfg
-from cylc.cycling.loader import (get_point,
+from cylc.cycling.loader import (get_point, get_point_relative,
                                  get_interval, get_interval_cls,
                                  get_sequence, get_sequence_cls,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
@@ -333,8 +333,7 @@ class config( object ):
         self.cfg['visualization']['initial cycle point'] = vict
 
         vict_rh = None
-        v_runahead_limit = (
-            self.custom_runahead_limit or self.minimum_runahead_limit)
+        v_runahead_limit = self.custom_runahead_limit
         if vict and v_runahead_limit:
             vict_rh = str( get_point( vict ) + v_runahead_limit )
         
@@ -576,7 +575,7 @@ class config( object ):
                 print '  ', '  ', item, val
 
     def compute_runahead_limits( self ):
-        """Extract the custom and the minimum runahead limits."""
+        """Extract the runahead limits information."""
 
         self.max_num_active_cycle_points = self.cfg['scheduling'][
             'max active cycle points']
@@ -590,29 +589,6 @@ class config( object ):
         # The custom runahead limit is None if not user-configured.
         self.custom_runahead_limit = get_interval(limit)
 
-        # Find the minimum runahead limit necessary for any future triggers.
-        self.minimum_runahead_limit = None
-
-        offsets = set()
-        for name, taskdef in self.taskdefs.items():
-            if taskdef.min_intercycle_offset:
-                offsets.add(taskdef.min_intercycle_offset)
-
-        if offsets:
-            min_offset = min(offsets)
-            if min_offset < get_interval_cls().get_null():
-                # A negative offset comes from future triggering.
-                self.minimum_runahead_limit = abs(min_offset)
-                if (self.custom_runahead_limit is not None and
-                        self.custom_runahead_limit <
-                        self.minimum_runahead_limit):
-                    print >> sys.stderr, (
-                        '  WARNING, custom runahead limit of %s is less than '
-                        'future triggering offset %s: suite may stall.' %
-                        (self.custom_runahead_limit,
-                         self.minimum_runahead_limit)
-                    )
-
     def get_custom_runahead_limit( self ):
         """Return the custom runahead limit (may be None)."""
         return self.custom_runahead_limit
@@ -620,10 +596,6 @@ class config( object ):
     def get_max_num_active_cycle_points( self ):
         """Return the maximum allowed number of pool cycle points."""
         return self.max_num_active_cycle_points
-
-    def get_minimum_runahead_limit( self ):
-        """Return the minimum runahead limit to apply."""
-        return self.minimum_runahead_limit
 
     def get_config( self, args, sparse=False ):
         return self.pcfg.get( args, sparse )
@@ -799,8 +771,9 @@ class config( object ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
-    def set_trigger( self, task_name, right, output_name=None, offset=None,
-                     cycle_point=None, suicide=False, base_interval=None ):
+    def set_trigger( self, task_name, right, output_name=None,
+                     offset_string=None, cycle_point=None,
+                     suicide=False, base_interval=None ):
         trig = triggerx(task_name)
         trig.set_suicide(suicide)
         if output_name:
@@ -837,8 +810,9 @@ class config( object ):
             # default: task succeeded
             trig.set_type( 'succeeded' )
 
-        if offset:
-            trig.set_offset( str(offset) ) # TODO ISO - CONSISTENT SET_OFFSET INPUT 
+        if offset_string:
+            # TODO ISO - CONSISTENT SET_OFFSET INPUT 
+            trig.set_offset_string( offset_string )
 
         if cycle_point:
             trig.set_cycle_point( cycle_point )
@@ -1268,7 +1242,7 @@ class config( object ):
                 raise SuiteConfigError, str(x)
 
             name = my_taskdef_node.name
-            offset = my_taskdef_node.offset
+            offset_string = my_taskdef_node.offset_string
 
             if name not in self.cfg['runtime']:
                 # naked dummy task, implicit inheritance from root
@@ -1308,19 +1282,20 @@ class config( object ):
                         'status' : self.suite_polling_tasks[name][2] }
 
             if not my_taskdef_node.is_absolute:
-                if offset:
+                if offset_string:
                     if flags.backwards_compat_cycling:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
-                        if str(offset) in offset_seq_map:
-                            seq_offset = offset_seq_map[str(offset)]
+                        if offset_string in offset_seq_map:
+                            seq_offset = offset_seq_map[offset_string]
                         else:
                             seq_offset = get_sequence(
                                 section,
                                 self.cfg['scheduling']['initial cycle point'],
                                 self.cfg['scheduling']['final cycle point']
                             )
-                            seq_offset.set_offset(offset)
-                            offset_seq_map[str(offset)] = seq_offset
+                            seq_offset.set_offset(
+                                get_interval(offset_string))
+                            offset_seq_map[offset_string] = seq_offset
                         self.taskdefs[name].add_sequence(
                             seq_offset, is_implicit=True)
                         if seq_offset not in self.sequences:
@@ -1360,21 +1335,30 @@ class config( object ):
 
             if lnode.intercycle:
                 ltaskdef.intercycle = True
-                if (ltaskdef.max_intercycle_offset is None or
-                        lnode.offset > ltaskdef.max_intercycle_offset):
-                    ltaskdef.max_intercycle_offset = lnode.offset
-                if (ltaskdef.min_intercycle_offset is None or
-                        lnode.offset < ltaskdef.min_intercycle_offset):
-                    ltaskdef.min_intercycle_offset = lnode.offset
 
             if lnode.offset_is_from_ict:
+                first_point = get_point_relative(
+                    lnode.offset_string, ltaskdef.ict)
                 last_point = seq.get_stop_point()
-                first_point = ltaskdef.ict - lnode.offset
-                if first_point and last_point is not None:
-                    offset = (last_point - first_point)
-                    ltaskdef.max_intercycle_offset = offset
+                if last_point is None:
+                    # This dependency persists for the whole suite run.
+                    ltaskdef.intercycle_offsets.append(
+                        (None, seq))
+                else:
+                    ltaskdef.intercycle_offsets.append(
+                        (str(-(last_point - first_point)), seq))
                 cycle_point = first_point
-            trigger = self.set_trigger( lnode.name, right, lnode.output, lnode.offset, cycle_point, suicide, seq.get_interval() )
+            elif lnode.intercycle:
+                ltaskdef.intercycle = True
+                if lnode.offset_is_irregular:
+                    offset_tuple = (lnode.offset_string, seq)
+                else:
+                    offset_tuple = (lnode.offset_string, None)
+                ltaskdef.intercycle_offsets.append(offset_tuple)
+            trigger = self.set_trigger(
+                lnode.name, right, lnode.output, lnode.offset_string,
+                cycle_point, suicide, seq.get_interval()
+            )
             if not trigger:
                 continue
             if not conditional:

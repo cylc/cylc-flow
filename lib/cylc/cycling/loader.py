@@ -33,6 +33,11 @@ INTEGER_CYCLING_TYPE = 'integer'
 POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
           ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
 
+POINT_RELATIVE_GETTERS = {
+    INTEGER_CYCLING_TYPE: integer.get_point_relative,
+    ISO8601_CYCLING_TYPE: iso8601.get_point_relative
+}
+
 INTERVALS = {INTEGER_CYCLING_TYPE: integer.IntegerInterval,
              ISO8601_CYCLING_TYPE: iso8601.ISO8601Interval}
 
@@ -74,6 +79,12 @@ def get_point_cls(cycling_type=None):
     if cycling_type is None:
         cycling_type = DefaultCycler.TYPE
     return POINTS[cycling_type]
+
+
+def get_point_relative(*args, **kwargs):
+    """Return a point from an offset expression and a base point."""
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
+    return POINT_RELATIVE_GETTERS[cycling_type](*args, **kwargs)
 
 
 def get_interval(*args, **kwargs):

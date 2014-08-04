@@ -22,7 +22,7 @@ ImportError due to pygraphviz/graphviz not being installed."""
 import re
 import pygraphviz
 import TaskID
-from cycling.loader import get_point, get_interval
+from cycling.loader import get_point, get_point_relative, get_interval
 from graphnode import graphnode
 
 # TODO: Do we still need autoURL below?
@@ -263,9 +263,10 @@ class edge( object):
 
         left_graphnode = graphnode(left, base_interval=base_interval)
         if left_graphnode.offset_is_from_ict:
-            point = start_point - left_graphnode.offset
-        elif left_graphnode.offset:
-            point = inpoint - left_graphnode.offset
+            point = get_point_relative(left_graphnode.offset_string,
+                                       start_point)
+        elif left_graphnode.offset_string:
+            point = get_point_relative(left_graphnode.offset_string, inpoint)
         else:
             point = inpoint
         name = left_graphnode.name

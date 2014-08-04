@@ -31,7 +31,7 @@ from cylc.task_state import task_state
 from cylc.run import main
 from cylc.command_prep import prep_file
 import cylc.TaskID
-from cylc.cycling.loader import get_point
+from cylc.cycling.loader import get_point, DefaultCycler, ISO8601_CYCLING_TYPE
 from cylc.wallclock import get_current_time_string
 
 
@@ -124,6 +124,11 @@ where they got to while the suite was down."""
         The state dump file format is:
         run mode : <mode> 
         time : <time> (<unix time>)
+        initial cycle : 2014050100
+        final cycle : (none)
+        (dp1   # (Broadcast pickle string)
+        .      # (Broadcast pickle string)
+        Begin task states
         class <classname>: item1=value1, item2=value2, ...
         <task_id> : <state>
         <task_id> : <state>
@@ -325,6 +330,14 @@ where they got to while the suite was down."""
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
                 raise Exception( "ERROR: corrupted state dump" )
+            if (point_string == "1" and
+                    DefaultCycler.TYPE == ISO8601_CYCLING_TYPE):
+                # A state file from a pre-cylc-6 with mixed-async graphing.
+                point_string = str(self.start_point)
+                new_id = cylc.TaskID.get(name, point_string)
+                print >> sys.stderr, (
+                    "WARNING: converting %s to %s" % (id, new_id))
+                id = new_id
             tasknames[name] = True
             if 'status=submitting,' in state:
                 # backward compabitility for state dumps generated prior to #787

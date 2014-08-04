@@ -58,6 +58,19 @@ NODE_ISO_ICT_RE = re.compile(
         (:[\w-]+|)$  # Optional type (e.g. :succeed)
      """, re.X)
 
+# A potentially non-regular offset, such as foo[01T+P1W].
+IRREGULAR_OFFSET_RE = re.compile(
+    r"""^            # Start of string
+        (            # Begin group
+         ..+         # EITHER: Two or more characters
+         [+-]P       # Then either +P or -P for start of duration
+         .*          # Then anything for the rest of the duration
+         |           # OR:
+         [^P]+       # No 'P' characters anywhere (e.g. T00).
+        )            # End group
+        $            # End of string
+    """, re.X)
+
 class GraphNodeError( Exception ):
     """
     Attributes:
@@ -83,6 +96,7 @@ class graphnode( object ):
         # or relative to initial cycle point: foo[^+P1D]
 
         self.offset_is_from_ict = False
+        self.offset_is_irregular = False
         self.is_absolute = False
         
         is_prev_cycling_format = False
@@ -91,7 +105,7 @@ class graphnode( object ):
         if m:
             # node looks like foo[^], foo[^-P4D], foo[^]:fail, etc.
             self.is_absolute = True
-            name, offset, outp = m.groups()
+            name, offset_string, outp = m.groups()
             self.offset_is_from_ict = True
             sign = ""
             prev_format = False
@@ -99,7 +113,7 @@ class graphnode( object ):
             m = re.match( NODE_ISO_RE, node )
             if m:
                 # node looks like foo, foo:fail, foo[-PT6H], foo[-P4D]:fail...
-                name, offset, outp = m.groups()
+                name, offset_string, outp = m.groups()
                 sign = ""
                 prev_format = False
             else:
@@ -108,7 +122,8 @@ class graphnode( object ):
                     raise GraphNodeError( 'Illegal graph node: ' + node )
                 is_prev_cycling_format = True
                 # node looks like foo[T-6], foo[T-12]:fail...
-                name, sign, offset, outp = m.groups()
+                name, sign, offset_string, outp = m.groups()
+                offset_string = sign + offset_string
                 prev_format = True
 
         if outp:
@@ -123,21 +138,25 @@ class graphnode( object ):
         else:
             raise GraphNodeError( 'Illegal graph node: ' + node )
             
-        if self.offset_is_from_ict and not offset:
-            offset = str(get_interval_cls().get_null())
-        if offset:
+        if self.offset_is_from_ict and not offset_string:
+            offset_string = str(get_interval_cls().get_null())
+        if offset_string:
             self.intercycle = True
             if prev_format:
-                self.offset = base_interval.get_inferred_child(offset)
-                if sign == "+":
-                    self.offset = (-self.offset).standardise()
+                self.offset_string = str(
+                    base_interval.get_inferred_child(offset_string))
             else:
-                self.offset = (-get_interval(offset)).standardise()
+                if IRREGULAR_OFFSET_RE.search(offset_string):
+                    self.offset_string = offset_string
+                    self.offset_is_irregular = True
+                else:
+                    self.offset_string = str(
+                        (get_interval(offset_string)).standardise())
         else:
             self.intercycle = False
-            self.offset = None
+            self.offset_string = None
         if not flags.backwards_compat_cycling and is_prev_cycling_format:
             raise GraphNodeError(
-                'Illegal graph offset (new-style cycling): ' + str(offset) +
-                ' should be ' + str(self.offset)
+                'Illegal graph offset (new-style cycling): ' +
+                '%s should be %s' % (offset_string, self.offset_string)
             )

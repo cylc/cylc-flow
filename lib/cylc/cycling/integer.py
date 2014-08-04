@@ -411,6 +411,10 @@ class IntegerSequence(SequenceBase):
             point = self.get_next_point(point)
         return point
 
+    def get_start_point( self ):
+        """Return the first point in this sequence, or None."""
+        return self.p_start
+
     def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
         return self.p_stop
@@ -429,6 +433,11 @@ class IntegerSequence(SequenceBase):
 def init_from_cfg(cfg):
     """Placeholder function required by all cycling modules."""
     pass
+
+def get_point_relative(offset_string, base_point):
+    """Create a point from offset_string applied to base_point."""
+    # TODO ISO: needs to be done somehow? Is it meaningful?
+    return base_point + IntegerInterval(offset_string)
 
 
 def test():

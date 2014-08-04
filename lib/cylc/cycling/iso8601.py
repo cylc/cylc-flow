@@ -58,6 +58,7 @@ class SuiteSpecifics(object):
     ASSUMED_TIME_ZONE = None
     DUMP_FORMAT = None
     NUM_EXPANDED_YEAR_DIGITS = None
+    abbrev_util = None
     interval_parser = None
     point_parser = None
 
@@ -320,15 +321,14 @@ class ISO8601Sequence(SequenceBase):
         self.custom_point_parse_function = None
         if SuiteSpecifics.DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
             self.custom_point_parse_function = point_parse
-
-        self.time_parser = CylcTimeParser(
+        self.abbrev_util = CylcTimeParser(
             self.context_start_point, self.context_end_point,
             num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
             dump_format=SuiteSpecifics.DUMP_FORMAT,
             custom_point_parse_function=self.custom_point_parse_function,
             assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
         )
-        self.recurrence = self.time_parser.parse_recurrence(recurrence_syntax)
+        self.recurrence = self.abbrev_util.parse_recurrence(recurrence_syntax)
         self.step = ISO8601Interval(str(self.recurrence.interval))
         self.value = str(self.recurrence)
 
@@ -343,9 +343,9 @@ class ISO8601Sequence(SequenceBase):
     def set_offset(self, offset):
         """Deprecated: alter state to offset the entire sequence."""
         if self.recurrence.start_point is not None:
-            self.recurrence.start_point -= interval_parse(str(offset))
+            self.recurrence.start_point += interval_parse(str(offset))
         if self.recurrence.end_point is not None:
-            self.recurrence.end_point -= interval_parse(str(offset))
+            self.recurrence.end_point += interval_parse(str(offset))
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
@@ -435,6 +435,12 @@ class ISO8601Sequence(SequenceBase):
                 return ISO8601Point(first_point_value)
         return None
 
+    def get_start_point( self ):
+        """Return the first point in this sequence, or None."""
+        for recurrence_iso_point in self.recurrence:
+            return ISO8601Point(str(recurrence_iso_point))
+        return None
+
     def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
         if (self.recurrence.repetitions is not None or (
@@ -454,6 +460,9 @@ class ISO8601Sequence(SequenceBase):
         if self.value == other.value:
             return True
         return False
+
+    def __str__(self):
+        return self.value
 
 
 def convert_old_cycler_syntax(dep_section, only_detect_old=False,
@@ -578,6 +587,32 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
         dump_format=SuiteSpecifics.DUMP_FORMAT,
         assumed_time_zone=time_zone_hours_minutes
     )
+    custom_point_parse_function = None
+    if SuiteSpecifics.DUMP_FORMAT == PREV_DATE_TIME_FORMAT:
+        custom_point_parse_function = point_parse
+    SuiteSpecifics.abbrev_util = CylcTimeParser(
+        None, None,
+        num_expanded_year_digits=SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS,
+        dump_format=SuiteSpecifics.DUMP_FORMAT,
+        custom_point_parse_function=custom_point_parse_function,
+        assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
+    )
+
+
+def get_point_relative(offset_string, base_point):
+    """Create a point from offset_string applied to base_point."""
+    try:
+        interval = ISO8601Interval(
+            str(interval_parse(offset_string)))
+    except Exception:
+        pass
+    else:
+        return base_point + interval
+    return ISO8601Point(str(
+        SuiteSpecifics.abbrev_util.parse_timepoint(
+            offset_string, context_point=_point_parse(base_point.value)
+        )
+    ))
 
 
 def interval_parse(interval_string):
