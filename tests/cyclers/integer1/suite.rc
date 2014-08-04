@@ -40,6 +40,8 @@ sleep 5
 
 [visualization]
     default node attributes = "style=filled"
+    initial cycle point = 1
+    final cycle point = 16
     [[node attributes]]
         foo = "fillcolor=slateblue"
         woo = "fillcolor=limegreen"

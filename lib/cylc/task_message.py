@@ -173,8 +173,7 @@ class message(object):
                     'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
-                    'CYLC_TASK_MSG_RETRY_INTVL',
-                    'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
+                    'CYLC_TASK_MSG_RETRY_INTVL']:
                 # (no exception handling here as these variables should
                 # always be present in the task execution environment)
                 env[var] = self.env_map.get( var, 'UNSET' )
@@ -239,10 +238,8 @@ class message(object):
 
     def send_started( self ):
         self.send( self.task_id + ' started' )
-        self.task_lock()
 
     def send_succeeded( self ):
-        self.task_lock( False )
         self.send( self.task_id + ' succeeded' )
 
     def send_failed( self ):
@@ -251,26 +248,7 @@ class message(object):
             # send reason for failure first so it does not contaminate
             # the special task failed message.
             self.send()
-        self.task_lock( False )
         self.send( self.task_id + ' failed' )
-
-    def task_lock( self, acquire=True ):
-        # acquire or release a task lock if using the lockserver
-        if cylc_mode.mode().is_raw() or self.ssh_messaging:
-            return
-        from cylc.locking.task_lock import task_lock
-        try:
-            if acquire:
-                if not task_lock().acquire():
-                    raise SystemExit( "Failed to acquire a task lock" )
-            else:
-                if not task_lock().release():
-                    raise SystemExit( "Failed to release task lock" )
-        except Exception, z:
-            print >> sys.stderr, z
-            if cylc.flags.debug:
-                raise
-            raise SystemExit( "Failed to connect to the lockserver?" )
 
     def shortcut_next_restart( self ):
         self.print_msg( 'next restart file completed' )

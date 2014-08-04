@@ -18,13 +18,13 @@
 # Test documentation can be made
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
+if [[ ! -w $CYLC_DIR/doc ]]; then
+    skip_all '$CYLC_DIR/doc: not writable'
+fi
+#-------------------------------------------------------------------------------
 set_test_number 1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-make-docs
-
-if [ -w $CYLC_DIR/doc ]; then
-    run_ok $TEST_NAME make -C $CYLC_DIR/doc
-else
-    run_ok $TEST_NAME echo bypassing building documentation
-    echo -e "\nbypassing building documentation" > /dev/tty
-fi
+run_ok $TEST_NAME make -C $CYLC_DIR/doc
+#-------------------------------------------------------------------------------
+exit

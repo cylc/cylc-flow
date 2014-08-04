@@ -16,10 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Documentation
-"""
-
 import os, sys
 from optparse import OptionParser
 from cylc.task_message import message
@@ -30,10 +26,9 @@ usage = """cylc [task] failed [OPTIONS] [REASON]
 This command is part of the cylc task messaging interface, used by
 running tasks to communicate progress to their parent suite.
 
-The failed command reports failure of task execution (and releases the
-task lock to the lockserver if necessary). It is automatically called in
-case of an error trapped by the task job script, but it can also be
-called explicitly for self-detected failures if necessary.
+The failed command reports to successfully complete task execution.
+It is automatically called by task job scripts, except in the case of
+"detaching tasks" which must do their own completion messaging.
 
 Suite and task identity are determined from the task execution
 environment supplied by the suite (or by the single task 'submit'

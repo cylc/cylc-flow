@@ -1,3 +1,4 @@
+#!jinja2
 [cylc]
     UTC mode = True
     [[event hooks]]
@@ -7,17 +8,18 @@
     initial cycle point = 20100101T00
     final cycle point = 20100105T00
     [[dependencies]]
-        # T00, T01, T02, ...
+        # foo will fail and cause a stuck bar task at T00.
         [[[PT1H]]]
             graph = "foo => bar"
-        # T04 (depending on T10)
-        [[[T04/PT6H]]]
+        # If wibble gets into the pool, it will demand a +PT6H raise
+        # of the 'runahead limit'.
+        [[[{{ FUTURE_TRIGGER_START_POINT }}/PT6H]]]
             graph = """
-                baz[+PT6H] => bar
+                baz[+PT6H] => wibble
                 baz
             """
 [runtime]
     [[foo]]
         command scripting = false
-    [[bar]]
+    [[bar,baz,wibble]]
         command scripting = true

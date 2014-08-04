@@ -26,6 +26,9 @@ usage = """cylc [task] message [OPTIONS] MESSAGE
 This command is part of the cylc task messaging interface, used by
 running tasks to communicate progress to their parent suite.
 
+The message command can be used to report "message outputs" completed.
+Other messages received by the suite daemon will just be logged.
+
 Suite and task identity are determined from the task execution
 environment supplied by the suite (or by the single task 'submit'
 command, in which case case the message is just printed to stdout).

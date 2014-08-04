@@ -72,7 +72,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file, watch, orientation="TB" ):
+            template_vars_file, watch, orientation="TB",
+            should_hide=False ):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -169,7 +170,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
                     #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
                     break
 
-        self.show_all()
+        if not should_hide:
+            self.show_all()
         while True:
             if self.load_config():
                 break
@@ -276,6 +278,7 @@ class MyDotWindow( CylcDotViewerCommon ):
             <toolitem action="UnGroup"/>
             <separator name="LeftToRightSep"/>
             <toolitem action="LeftToRight"/>
+            <toolitem action="Subgraphs"/>
             <toolitem action="IgnoreSuicide"/>
             <toolitem action="IgnoreColdStart"/>
             <separator expand="true"/>
@@ -284,8 +287,9 @@ class MyDotWindow( CylcDotViewerCommon ):
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-                 template_vars_file,  watch, point_string, stop_point_string,
-                 orientation="TB" ):
+                 template_vars_file,  watch, start_point_string,
+                 stop_point_string, orientation="TB",
+                 subgraphs_on=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -296,6 +300,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.stop_point_string = stop_point_string
         self.watch = []
         self.orientation = orientation
+        self.subgraphs_on = subgraphs_on
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
         self.ignore_suicide = False
@@ -356,6 +361,10 @@ class MyDotWindow( CylcDotViewerCommon ):
              None, 'Left-to-right Graphing', self.on_left_to_right),
         ))
         actiongroup.add_toggle_actions((
+            ('Subgraphs', gtk.STOCK_LEAVE_FULLSCREEN, 'Cycle Point Subgraphs',
+             None, 'Organise by cycle point', self.on_subgraphs),
+        ))
+        actiongroup.add_toggle_actions((
             ('IgnoreSuicide', gtk.STOCK_CANCEL, 'Ignore Suicide Triggers',
              None, 'Ignore Suicide Triggers', self.on_igsui),
         ))
@@ -372,6 +381,10 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         left_to_right_toolitem = uimanager.get_widget('/ToolBar/LeftToRight')
         left_to_right_toolitem.set_active(self.orientation == "LR")
+
+        subgraphs_toolitem = uimanager.get_widget(
+            '/ToolBar/Subgraphs')
+        subgraphs_toolitem.set_active(self.subgraphs_on)
 
         # Create a Toolbar
 
@@ -434,7 +447,8 @@ class MyDotWindow( CylcDotViewerCommon ):
                 ungroup_nodes=ungroup_nodes,
                 ungroup_recursive=ungroup_recursive,
                 group_all=group_all, ungroup_all=ungroup_all,
-                ignore_suicide=self.ignore_suicide )
+                ignore_suicide=self.ignore_suicide,
+                subgraphs_on=self.subgraphs_on )
 
         graph.graph_attr['rankdir'] = self.orientation
 
@@ -455,6 +469,10 @@ class MyDotWindow( CylcDotViewerCommon ):
         else:
             self.set_orientation( "TB" )  # Top to bottom (default) ordering
 
+    def on_subgraphs( self, toolitem ):
+        self.subgraphs_on = toolitem.get_active()
+        self.get_graph()
+ 
     def on_igsui( self, toolitem ):
         self.ignore_suicide = toolitem.get_active()
         self.get_graph()

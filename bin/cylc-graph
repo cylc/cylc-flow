@@ -94,6 +94,9 @@ The "Save" button generates an image of the current view, of format (e.g.
 png, svg, jpg, eps) determined by the filename extension. If the chosen
 format is not available a dialog box will show those that are available.
 
+If an output filename is specified in the options, the viewer will not
+open and a graph representation will be output to the filename.
+
 GRAPH VIEWER CONTROLS:
     * Center on a node: left-click.
     * Pan view: left-drag.
@@ -132,6 +135,16 @@ parser.add_option( "-f", "--file",
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
 
+parser.add_option( "-O", "--output-file",
+    help="Output to a specific file, with a format given by --output-format" +
+         " or extrapolated from the extension.",
+    metavar="FILE", action="store", default=None, dest="output_filename" )
+
+parser.add_option( "--output-format",
+    help="Specify a format for writing out the graph to --output-file " +
+         "e.g. png, svg, jpg, eps, dot.",
+    metavar="FORMAT", action="store", default=None, dest="output_format" )
+
 ( options, args ) = parser.parse_args()
 
 # import modules that require gtk now, so that a display is not needed
@@ -155,6 +168,9 @@ if options.filename:
         from xdot import DotWindow
     except:
         raise SystemExit( "Failed to import the xdot viewer.")
+    if options.output_filename:
+        raise SystemExit( "ERROR: output-file not supported for " +
+                          "dot files. Use 'dot' command instead." )
     window = DotWindow()
     try:
         window.update( file )
@@ -168,6 +184,8 @@ if options.filename:
     gtk.main()
     sys.exit(0)
 
+should_hide_gtk_window = (not options.output_filename)
+
 suite, suiterc, watchers = parser.get_suite()
 
 # parse and plot the suite.rc dependency graph
@@ -176,7 +194,8 @@ if len(args) < 1 or len(args) > 3:
 
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
-                           options.templatevars_file, watchers )
+                           options.templatevars_file, watchers,
+                           should_hide=should_hide_gtk_window )
 else:
     # SUITE DEPENDENCY GRAPH
 
@@ -200,6 +219,10 @@ else:
 window.widget.connect( 'clicked', on_url_clicked, window )
 
 window.get_graph()
+
+if options.output_filename:
+    window.graph.draw( options.output_filename, prog="dot" )
+    sys.exit(0)
 
 window.connect( 'destroy', gtk.main_quit)
 
