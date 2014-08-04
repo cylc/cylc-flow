@@ -40,7 +40,6 @@ Suites run in daemon mode unless -n/--no-detach or --debug is used.
 The following are all equivalent if no intercycle dependence exists:
   1/ Cold start (default)    : use special cold-start tasks
   2/ Warm start (-w,--warm)  : assume a previous cycle
-  3/ Raw  start (-r,--raw)   : assume nothing
 
 1/ COLD START -- start at the initial cycle point of the suite,
 specified via the suite.rc or via the first argument (ARGS). Any
@@ -50,8 +49,6 @@ dependencies on earlier cycles will be ignored.
 point, supplied via the first argument (ARGS). The initial cycle point
 should be specified via the suite.rc. Any dependencies on earlier
 cycles will be ignored.
-
-3/ RAW START -- do not insert any cold-start tasks (mainly for testing).
 
 In task environments, $CYLC_SUITE_FINAL_CYCLE_POINT is always set to the
 final cycle point if one is set (by suite.rc file or command line). The
@@ -75,9 +72,6 @@ initial and final cycle point variables persists across suite restarts."""
 
         self.parser.add_option( "-w", "--warm", help="Warm start the suite",
                 action="store_true", default=False, dest="warm" )
-
-        self.parser.add_option( "-r", "--raw", help="Raw start the suite",
-                action="store_true", default=False, dest="raw" )
 
         self.parser.add_option( "--ict",
                 help="Set $CYLC_SUITE_INITIAL_CYCLE_POINT to the initial "
@@ -113,18 +107,15 @@ initial and final cycle point variables persists across suite restarts."""
 
         scheduler.parse_commandline( self )
 
-        if self.options.warm:
-            self.load_tasks = self.load_tasks_warm
-        elif self.options.raw:
-            self.load_tasks = self.load_tasks_raw
-        else:
-            self.load_tasks = self.load_tasks_cold
-
-    def load_tasks_cold( self ):
+    def load_tasks( self ):
         if self.start_point is not None:
-            self.log.info( 'Cold Start %s' % self.start_point )
+            if self.options.warm:
+                self.log.info( 'Warm Start %s' % self.start_point)
+            else:
+                self.log.info( 'Cold Start %s' % self.start_point )
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+        coldstart_tasks = self.config.get_coldstart_task_list()
 
         for name in task_list:
             if self.start_point is not None:
@@ -137,64 +128,18 @@ initial and final cycle point variables persists across suite restarts."""
                 submit_num=0, exists=False
             )
 
+            if name in coldstart_tasks and self.options.warm:
+                itask.log("NORMAL",
+                          "warm start: starting in succeeded state")
+                itask.state.set_status( 'succeeded' )
+                itask.prerequisites.set_all_satisfied()
+                itask.outputs.set_all_completed()
+
             if itask.point:
                 self.pool.add_to_runahead_pool( itask )
             else:
                 self.log.info( "Not loading " + name + " (out of sequence bounds)" )
                 del itask
-
-    def load_tasks_warm( self ):
-        if self.start_point is not None:
-            self.log.info( 'Warm Start %s' % self.start_point)
-
-        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
-        coldstart_tasks = self.config.get_coldstart_task_list()
-        if len( coldstart_tasks ) == 0:
-            self.log.info( "This suite has not defined any cold start tasks" )
-        for name in task_list:
-            # (startup=True is only for cold start)
-            if self.start_point is not None:
-                point = self.start_point
-            else:
-                # no initial cycle point: we can't load cycling tasks
-                continue
-            itask = self.config.get_task_proxy(
-                name, point, 'waiting', stop_point=None, startup=False,
-                submit_num=0, exists=False
-            )
-            if name in coldstart_tasks:
-                itask.log( "NORMAL", "warm start: starting in succeeded state" )
-                itask.state.set_status( 'succeeded' )
-                itask.prerequisites.set_all_satisfied()
-                itask.outputs.set_all_completed()
-
-            self.pool.add_to_runahead_pool( itask )
-
-    def load_tasks_raw( self ):
-        if self.start_point is not None:
-            self.log.info( 'Raw Start ' + str(self.start_point) )
-
-        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
-
-        coldstart_tasks = self.config.get_coldstart_task_list()
-
-        for name in task_list:
-            # startup=True only for cold start
-            if self.start_point is not None:
-                point = self.start_point
-            else:
-                # no initial cycle point: we can't load cycling tasks
-                continue
-            itask = self.config.get_task_proxy(
-                name, point, 'waiting', stop_point=None, startup=False,
-                submit_num=0, exists=False
-            )
-            if name in coldstart_tasks:
-                itask.log( "NORMAL", "This is a raw start: I will self-destruct." )
-                del itask
-                continue
-
-            self.pool.add_to_runahead_pool( itask )
 
 if __name__ == '__main__':
     main("run", start)

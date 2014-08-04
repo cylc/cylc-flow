@@ -96,7 +96,7 @@ messages such as remote error tracebacks to be sent to the handler.
 * a 'nudge' that just updates task state info, without going through
   the full task processing loop?
 
-* warm, cold, and raw start should insert tasks beyond the optional
+* warm and cold start should insert tasks beyond the optional
   final task in the 'held' state, not just delete them? (see 'STOPPING'
   in bin/_run
 
