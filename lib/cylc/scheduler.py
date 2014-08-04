@@ -533,7 +533,7 @@ class scheduler(object):
             )
             return
 
-        if stop_string is None:
+        if stop_point_string is None:
             stop_point = None
         else:
             try:
