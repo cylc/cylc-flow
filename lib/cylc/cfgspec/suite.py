@@ -122,7 +122,7 @@ def _coerce_cycletime_time_zone( value, keys, args ):
 def _coerce_final_cycletime( value, keys, args ):
     """Coerce final cycle point."""
     value = _strip_and_unquote( keys, value )
-    if "P" in str(value):
+    if "P" in str(value) or str(value).startswith("T"):
         return value
     if re.match(r"\d+$", value):
         # Old date-time cycle point format, or integer format.
