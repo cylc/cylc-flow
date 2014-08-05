@@ -1703,7 +1703,7 @@ final cycle point is given), as shown in Figure~\ref{fig-tut-one}.
 
 \lstset{language=transcript}
 If you run this suite instances of \lstinline=foo= will spawn in
-parallel out to the {\em suite runahead limit}, and each \lstinline=bar=
+parallel out to the {\em runahead limit}, and each \lstinline=bar=
 will trigger off the corresponding instance of \lstinline=foo= at the
 same cycle point.  The runahead limit prevents uncontrolled spawning of
 cycling tasks in suites that are not constrained by clock triggers in
@@ -5273,90 +5273,48 @@ grant read-only access to others.
 
 A connection timeout can be set in site and user config files (see
 Section~\ref{SiteAndUserConfiguration}) so that messaging commands
-cannot hang indefinitely if the suite is not responding (thie can be
+cannot hang indefinitely if the suite is not responding (this can be
 caused by suspending a suite with Ctrl-Z) thereby preventing the task
 from completing. The same can be done on the command line for other
 suite-connecting user commands, with the \lstinline=--pyro-timeout= option.
 
-\subsection{Internal Queues And The Runahead Limit}
-
-Some cylc suites have the potential to generate too much activity at
-once by virtue of the fact that each task cycles independently
-constrained only by dependence on other tasks or by clock triggers.
-Quick-running tasks at the top of the dependency tree with no
-prerequisites and no clock-triggers (or when running far behind the
-clock) will spawn rapidly into the future if not constrained somehow.
-There are two issues to be aware of here: over-burdening task host
-resources by submitting too many tasks at once, and over-burdening cylc
-itself by letting the task pool become too big (when fast tasks spawn
-ahead of the pack cylc has to keep them around in the {\em succeeded}
-state until other tasks, which may depend on them, have caught up).
-
-\subsubsection{The Suite Runahead Limit}
+\subsection{Runahead Limiting}
 \label{RunaheadLimit}
 
-The runahead limit prevents the fastest tasks in a suite from getting too
-far ahead of the slowest ones. Cylc's cycle-interleaving abilities make
-for generally efficient scheduling, but there is no great advantage in
-letting a few fast data retrieval tasks, say, get far ahead of the
-slower tasks because it is typically the tasks at the bottom of the
-dependency tree, which necessarily run last, that generate the final
-products.
+Runahead limiting prevent the fastest tasks in a suite from getting too far
+ahead of the slowest ones.  Newly spawned tasks are released to the task pool
+only when they fall below the runahead limit.  A low runhead limit can prevent
+cylc from interleaving cycles, but it will not stall a suite unless it fails to
+extend out past a future trigger (see~\ref{InterCyclePointTriggers}).
+A high runahead limit may allow fast tasks that are not constrained by
+dependencies or clock-triggers to spawn far ahead of the pack, which could have
+performance implications for the suite daemon when running very large suites.
+Succeeded and failed tasks are ignored when computing the runahead limit. 
 
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    runahead limit = 48 # hours
-\end{lstlisting}
+The preferred runahead limiting mechanism restricts the number of consecutive
+active cycle points. The default value is 3 active cycle points; see~\ref{ref max
+active cycle points}. Alternatively the interval between the
+slowest and fastest tasks can be specified as hard limit;
+see~\ref{ref runahead limit}.
 
-A cycling task spawns its successor when it enters the submitted state.
-If a newly spawned task's cycle point is ahead of the oldest non-finished
-(succeeded or failed) task by more than the runahead limit it is put
-into the special {\em runahead} held state until other tasks catch up
-sufficiently; i.e.\ the runahead limit constrains the number of cycles
-that can run at once.
-
-The default runahead limit is normally set to twice the minimum cycling
-interval in the suite. For a suite with 1- and 24-hourly cylcing tasks
-the default limit will be 2 hours, so that two of the hourly cycles can
-run at once in between the 24-hourly cycles.  If there are any future
-triggers present (\lstinline@graph = "foo[T+24] => bar"@) that extend
-beyond the default limit, it is adjusted up to equal the future
-offset plus one minimum cycling interval.
-
-A manually set runahead limit should not stall the suite even if set to
-less than the minimum cycling interval, unless it does not extend out
-past any future triggers (see Section~\ref{InterCyclePointTriggers}.
-
-Succeeded and failed tasks are ignored when applying the runahead limit
-(but tasks that can't run because they depend on a failed task are not
-ignored, of course).
-
-\subsubsection{Internal Queues}
+\subsection{Limiting Active Tasks With Internal Queues}
 \label{InternalQueues}
 
-Large suites could potentially swamp the task host hardware or external
-batch queueing system, depending on the chosen job submission method, by
-submitting too many tasks at once. Cylc's internal queues prevent this
-by limiting the number of tasks, within defined groups, that are active
-(submitted or running) at once.
+Large suites can potentially overwhelm task hosts by submitting too many
+tasks at once. You can prevent this with {\em internal queues}, which 
+limit the number of tasks that can be active (submitted or running) 
+at the some time.
 
-A queue is defined by a name; a {\em limit}, which is the maximum
-number of active tasks allowed for the queue; and a list of member tasks,
-which are assigned by name to the queue.
+A queue is defined by a {\em name}; a {\em limit}, which is the maximum
+number of active tasks allowed for the queue; and a list of {\em members},
+assigned by task or family name.
 
-Queue configuration is done under the [scheduling] section of the
-suite.rc file, not as part of the runtime namespace hierarchy, because
-like dependencies queues constrain {\em when} a task runs rather than
-{\em what} runs after it is submitted. When runtime family relationships
-and queues do coincide you can assign task family members en masse to
-queues by using the family name, as shown in the example suite listing
-below.
+Queue configuration is done under the [scheduling] section of the suite.rc file
+(like dependencies, internal queues constrain {\em when} a task runs).
 
-By default every task is assigned to a {\em default} queue, which by
-default has a zero limit (interpreted by cylc as no limit). To use a
-single queue for the whole suite just set the default queue
-limit:
+By default every task is assigned to the {\em default} queue, which by default
+has a zero limit (interpreted by cylc as no limit). To use a single queue for
+the whole suite just set the default queue limit:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -5365,8 +5323,8 @@ limit:
         [[[default]]]
             limit = 5
 \end{lstlisting}
-To use other queues just name each one, set the limit, and assign member
-tasks:
+To use additional queues just name each one, set their limits, and assign
+members:
 \begin{lstlisting}
 [scheduling]
     [[ queues]]
@@ -5380,8 +5338,6 @@ running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/queues/suite.rc}
-Note assignment of runtime task family members to queues using the
-family name.
 
 \subsection{Automatic Task Retry On Failure}
 \label{TaskRetries}
