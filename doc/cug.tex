@@ -3384,32 +3384,37 @@ way of working.
 
 Special cold-start tasks are non-spawning tasks intended for use in general
 cycling sections, so they must be declared as special tasks. Dependence on them
-is retained throughout the suite run so they must be in conditional triggers to
-avoid stalling the suite. For example:
+is retained throughout the suite run so they must be used in conditional
+triggers to avoid stalling the suite, like this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     initial cycle point = 20140808T00
     [[special tasks]]
         cold-start = cold_model
-    [[[T00]]]
-        graph = cold_model | model[-P1D] => model
+    [[dependencies]]
+        [[[T00]]]
+            graph = cold_model | model[-P1D] => model
 \end{lstlisting}
-
-This allows the \lstinline=cold_model= task to be inserted manually in the
-middle of a suite run to cold-start \lstinline=model= again after problems that
-require skipping one or more cycles.
-If you do not need this late cold start functionality then it is easier to
-use a normal task in an initial R1 recurrence:
+Here, in the first cycle point \lstinline=model= will trigger off the
+cold-start task \lstinline=cold_model=.  In subsequent cycle points
+\lstinline=model= retains its dependence on \lstinline=cold_model=, but the
+conditional expression allows it to trigger off the previous instance of itself
+instead.  The reason for doing this is that it allows \lstinline=cold_model= to
+be inserted manually later in the suite run to cold-start \lstinline=model=
+again after problems that require skipping one or more cycles. If you do not
+need this mid-run cold start capability then it is simpler to start the suite
+with a normal task in an initial R1 recurrence, like this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     initial cycle point = 20140808T00
-    [[[R1]]]
-        graph = start_model => model
-    [[[T00]]]
-        graph = model[-P1D] => model
-    \end{lstlisting}
+    [[dependencies]]
+        [[[R1]]]
+            graph = start_model => model
+        [[[T00]]]
+            graph = model[-P1D] => model
+\end{lstlisting}
 
 \paragraph{Special Sequential Tasks}
 \label{SequentialTasks}
@@ -4883,68 +4888,75 @@ at the top of the example file above).
 \section{Running Suites}
 \label{RunningSuites}
 
-This chapter currently features a rather diverse collection of topics related
-to running suites. Please also see the Tutorial (Section~\ref{Tutorial} and 
+This chapter currently features a diverse collection of topics related
+to running suites. Please also see the Tutorial (Section~\ref{Tutorial}) and 
 command documentation (Section~\ref{CommandReference}), and experiment with
 plenty of examples.
 
 \subsection{Suite Start-up}
 \label{SuiteStartUp}
 
-There are three ways to start a suite running: cold start and warm start, which
-start from scratch; and restart, which loads a prior suite state. If a suite
-does not contain any special cold-start tasks there is no difference
-between cold and warm start, except that a warm start should start from a
-point beyond the original initial cycle point of the suite. You may not need
-to use special cold start tasks - see Section~\ref{SpecialColdStartTasks}.
+There are three ways to start a suite running: {\em cold start} and {\em warm
+start}, which start from scratch; and {\em restart}, which loads a prior suite
+state.  If a suite does not contain any special cold-start tasks there is no
+difference between cold and warm start, except that a warm start should start
+from a point beyond the original initial cycle point of the suite. Special
+cold-start tasks are only needed if you want to be able to cold-start
+individual tasks again in the middle of a suite run - see
+Section~\ref{SpecialColdStartTasks}.
 
 Once a suite is up and running it is typically a restart that is needed most
 often (but see also \lstinline=cylc reload=). Be aware that cold and warm
 starts wipe out any prior suite state, which prevents returning to a restart
 if you decide that's what you really intended.
 
-
 \subsubsection{Cold Start}
 
 A cold start is the primary way to start a suite run from scratch:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc run SUITE [INITIAL_CYCLE_POINT]
 \end{lstlisting}
 The initial cycle point may be specified on the command line or in the suite.rc
-file. The scheduler starts by loading an initial instance of each task at
-the initial cycle point, or at the next valid point for the task, including any
-special ``cold-start tasks''.
+file. The scheduler starts by loading the first instance of each task at the
+suite initial cycle point, or at the next valid point for the task, including
+any special cold-start tasks (see the note on cold-start tasks at the beginning
+of this section).
 
 \subsubsection{Restart}
 
-A restart starts a suite run from the state it recorded at the end of a
-previous run. This allows restarting a suite that was shut down or killed,
-without rerunning any tasks that already ran.
+A restart starts a suite run from the state recorded at the end of a previous
+run. This allows restarting a suite that was shut down or killed, without
+rerunning tasks that were already completed, or which were already submitted or
+running when the suite went down.
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc restart SUITE [STATE_FILE]
 \end{lstlisting}
 For a restart, the scheduler starts by loading each task in its recorded state.
 The most recent state is loaded by default, but earlier state files can be
 specified on the command line. Any tasks recorded as `submitted' or `running'
-will be polled automatically to determined what happened to them while the
+will be polled automatically to determine what happened to them while the
 suite was down.
 
 \subsubsection{Warm Start}
 
-A warm start runs from a cycle point later than the suite's initial cycle
-point, but without referencing any previous suite state. It can be considered
-an inferior alternative to a restart because it may result in some tasks
-rerunning.  A warm start may be required if a restart is not possible because
-the suite state files were accidentally deleted (for instance). The warm start
-cycle point must be given on the command line:
+A warm start runs a suite from scratch like a cold start, but from a given
+cycle point that is later than the suite's initial cycle point. It can be
+considered an inferior alternative to a restart because it may result in some
+tasks rerunning.  A warm start may be required if a restart is not possible
+because the suite state files were accidentally deleted (for instance). The
+warm start cycle point must be given on the command line:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc run --warm SUITE [START_CYCLE_POINT]
 \end{lstlisting}
-In this case the scheduler starts by loading an initial instance of each 
-task at the warm start cycle point (or at the next valid point for the task),
+In this case the scheduler starts by loading a first instance of each 
+task at the warm start cycle point, or at the next valid point for the task,
 and any special cold-start tasks are loaded in the `succeeded' state (this is
-merely a device to satisfy any initial dependence on the cold-start tasks which
-are assumed not to be needed for a warm start).
+merely a device to satisfy any initial dependence on the cold-start tasks, which
+are assumed not to be needed for a warm start; see the note on cold-start tasks
+at the beginning of this section).
 
 \subsection{How Tasks Interact With Running Suites}
 \label{TaskComms}
@@ -5029,7 +5041,8 @@ of the gcylc GUI and suite visualization tools.
 
 \subsection{Task Host Communications Configuration}
 
-Here are the site and user config items relevant to task tracking:
+Here are the default site and user config items relevant to task state 
+tracking (see these with \lstinline=cylc get-site-config=):
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5038,14 +5051,14 @@ Here are the site and user config items relevant to task tracking:
 # Task messaging settings affect task-to-suite communications.
 [task messaging]
     # If a message send fails, retry after this delay:
-    retry interval in seconds = float( min=1, default=5 )
+    retry interval in seconds = 5
     # If send fails after this many tries, give up trying:
-    maximum number of tries = integer( min=1, default=7 )
+    maximum number of tries = 7
 
     # This timeout is the same as --pyro-timeout for user commands. If
     # set to None (no timeout) message send to non-responsive suite
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
-    connection timeout in seconds = float( min=1, default=30 )
+    connection timeout in seconds = 30
 
 # Pyro is required for communications between cylc clients and servers
 # (i.e. between suite-connecting commands and guis, and running suite
@@ -5055,14 +5068,14 @@ Here are the site and user config items relevant to task tracking:
     # Each suite listens on a dedicated network port.
     # Servers bind on the first port available from the base port up:
 # SITE ONLY
-    base port = integer( default=7766 )
+    base port = 7766
 
     # This sets the maximum number of suites that can run at once.
 # SITE ONLY
-    maximum number of ports = integer( default=100 )
+    maximum number of ports = 100
 
     # Port numbers are recorded in this directory, by suite name.
-    ports directory = string( default="$HOME/.cylc/ports/" )
+    ports directory = "$HOME/.cylc/ports/"
 
 [hosts]
     # The default task host is the suite host, i.e. localhost:
@@ -5074,13 +5087,13 @@ Here are the site and user config items relevant to task tracking:
         #   3) poll - the suite polls for status of passive tasks
         # Pyro RPC is still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites.
-        task communication method = option( "pyro", "ssh", "poll", default="pyro" )
+        task communication method = "pyro" # or "ssh" or "poll"
         # The "poll" method sets a default interval here to ensure no
         # tasks are accidentally left unpolled. You should override this
         # with run-length appropriate intervals under task [runtime] -
         # which will also result in routine polling to check task health
         # under the pyro or ssh communications methods.
-        default polling interval in minutes = float( min=0.1, default=1.0 )
+        default polling interval in minutes = 1.0
 \end{lstlisting}
 
 \subsection{How Commands Interact With Running Suites}
@@ -5167,57 +5180,44 @@ not been addressed yet.
 
 \subsection{Task States}
 
-As a suite runs its task proxies transition through the following states:
+As a suite runs its task proxies may pass through the following states:
 
 \begin{myitemize}
-    \item {\bf waiting} - task prerequisites not satisfied yet
-    (clock-triggered tasks also wait on their trigger time).
+    \item {\bf waiting} - prerequisites not satisfied yet
+    (note that clock-triggered tasks also wait on their trigger time).
 
-    \item {\bf held} - task waiting, but will not be submitted even if ready
-    to run because it (and possibly the suite as a whole) has been put
-    on hold. Cylc automatically holds tasks that spawn past the final
-    cycle point, if one is set.
+    \item {\bf queued} - ready to run (prerequisites satisfied) but
+    temporarily held back by an {\em internal cylc queue} (see
+    Section~\ref{InternalQueues}).
 
-    \item {\bf runahead} - task waiting, but will not be submitted
-    even if ready to run because it has exceeded the {\em suite
-    runahead limit}, i.e.\ it has got too far ahead of the slowest tasks
-    and will be held back until they have caught up sufficiently. The
-    size of the runahead limit is configurable - see
-    Section~\ref{RunaheadLimit}.
+    \item {\bf held} - will not be submitted even if ready to run.
+    Tasks that spawn past the final cycle point are held automatically.
 
-    \item {\bf queued} - task ready to run (prerequisites satisfied) but
-    is temporarily held in an {\em internal cylc queue} (see
-    Section~\ref{InternalQueues}). Note this is not the same as the
-    `submitted' state below.
+    \item {\bf ready} - ready to run (prerequisites satisfied) and 
+    handed to cylc's job submission sub-system.
 
-    \item {\bf ready} - task ready to run (prerequisites satisfied)
-    and handed to the background thread that handles job submission.
+    \item {\bf submitted} - submitted to run, but not executing yet
+    (could be waiting in an external batch scheduler queue).
 
-    \item {\bf submitted} - task successfully submitted but has not
-    started running yet (e.g.\ waiting in a PBS batch queue).
+    \item {\bf submit-failed} - job submission failed {\em or} 
+    submitted job killed before commencing execution.
 
-    \item {\bf submit-failed} - task job submission failed {\em or} the
-    submitted job was killed before it could start executing.
+    \item {\bf submit-retrying} - job submission failed, but a submission retry
+    was configured. Will only enter the {\em submit-failed} state if all 
+    configured submission retries are exhausted.
 
-    \item {\bf running} - task currently executing (a {\em task started}
+    \item {\bf running} - currently executing (a {\em task started}
     message was received, or the task polled as running).
 
-    \item {\bf succeeded} - task finished successsfully (a {\em task
-    succeeded} message was received, or the task polled as succeeeded).
-    Succeeded task proxies are removed from the suite once they are no
-    longer needed to satisfy the prerequisites of others.
+    \item {\bf succeeded} - finished executing successfully (a {\em task
+    succeeded} message was received, or the task polled as succeeded).
 
-    \item {\bf failed} - task aborted due to some error condition (a
+    \item {\bf failed} - aborted execution due to some error condition (a
     {\em task failed} message was received, or the task polled as failed).
-    Failed task proxies are not automatically removed from the suite
-    unless by deliberate use of suicide triggers.
 
-    \item {\bf retrying} - task job submission or execution failed, but
-    a retry was configured (submission or execution retries, respectively)
-    so the task is currently waiting for the configured retry delay
-    before resubmitting. See Section~\ref{TaskRetries}. Tasks only enter
-    the `submit-failed' or `failed' states if all configured retries
-    are exhausted.
+    \item {\bf retrying} - job execution failed, but an execution retry
+    was configured. Will only enter the {\em failed} state if all configured
+    execution retries are exhausted.
 
 \end{myitemize}
 
