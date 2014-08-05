@@ -32,27 +32,24 @@ class start( scheduler ):
     def __init__( self ):
         usage = """cylc [control] run|start [OPTIONS] ARGS
 
-Start a suite from scratch. To restart from a previous state see the
-'cylc restart' command.
+Start a suite run from scratch, wiping out any previous suite state. To
+restart from a previous state see 'cylc restart --help'.
 
-Suites run in daemon mode unless -n/--no-detach or --debug is used.
+The scheduler runs in daemon mode unless you specify n/--no-detach or --debug.
 
-The following are all equivalent if no intercycle dependence exists:
-  1/ Cold start (default)    : use special cold-start tasks
-  2/ Warm start (-w,--warm)  : assume a previous cycle
+Any dependence on cycle points earlier than the start cycle point is ignored.
 
-1/ COLD START -- start at the initial cycle point of the suite,
-specified via the suite.rc or via the first argument (ARGS). Any
-dependencies on earlier cycles will be ignored.
+A "cold start" (the default) starts from the suite's initial cycle point
+(specified in the suite.rc or on the command line), and loads any special
+one-off cold-start tasks (see below).
 
-2/ WARM START -- start from a cycle point later than the initial cycle
-point, supplied via the first argument (ARGS). The initial cycle point
-should be specified via the suite.rc. Any dependencies on earlier
-cycles will be ignored.
+A "warm start" (-w/--warm) starts from a given cycle point that is later than
+the initial cycle point (specified in the suite.rc), and loads any cold-start
+tasks in the 'succeeded' state just to satisfy initial dependence on them.
 
-In task environments, $CYLC_SUITE_FINAL_CYCLE_POINT is always set to the
-final cycle point if one is set (by suite.rc file or command line). The
-initial and final cycle point variables persists across suite restarts."""
+Aside from the starting cycle point there is no difference between cold and
+warm start unless you use special cold-start tasks. See "Suite Start-up" and
+"Cold-Start Tasks" in the User Guide for more."""
 
         self.parser = cop( usage, jset=True, argdoc=[ ("REG", "Suite name"),
                 ("[START_POINT]", """Initial cycle point or 'now'; overrides the
@@ -70,7 +67,8 @@ initial and final cycle point variables persists across suite restarts."""
                 help="Output profiling (performance) information",
                 action="store_true", default=False, dest="profile_mode" )
 
-        self.parser.add_option( "-w", "--warm", help="Warm start the suite",
+        self.parser.add_option( "-w", "--warm", help="Warm start the suite. "
+                "The default is to cold start.",
                 action="store_true", default=False, dest="warm" )
 
         self.parser.add_option( "--ict",
@@ -118,28 +116,23 @@ initial and final cycle point variables persists across suite restarts."""
         coldstart_tasks = self.config.get_coldstart_task_list()
 
         for name in task_list:
-            if self.start_point is not None:
-                point = self.start_point
-            else:
-                # no initial cycle point: we can't load cycling tasks
+            if self.start_point is None:
+                # No start cycle point at which to load cycling tasks.
                 continue
             itask = self.config.get_task_proxy(
-                name, point, 'waiting', stop_point=None, startup=True,
-                submit_num=0, exists=False
+                name, self.start_point, 'waiting', stop_point=None,
+                startup=True, submit_num=0, exists=False
             )
-
+            if not itask.point:
+                self.log.debug( "Not loading " + name + " (out of sequence bounds)" )
+                del itask
+                continue
             if name in coldstart_tasks and self.options.warm:
-                itask.log("NORMAL",
-                          "warm start: starting in succeeded state")
                 itask.state.set_status( 'succeeded' )
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_completed()
-
-            if itask.point:
-                self.pool.add_to_runahead_pool( itask )
-            else:
-                self.log.info( "Not loading " + name + " (out of sequence bounds)" )
-                del itask
+            # Load task.
+            self.pool.add_to_runahead_pool( itask )
 
 if __name__ == '__main__':
     main("run", start)

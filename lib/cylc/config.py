@@ -932,8 +932,6 @@ class config( object ):
 
 
     def get_coldstart_task_list( self ):
-        # TODO - automatically determine this by parsing the dependency graph?
-        # For now user must define this:
         return self.cfg['scheduling']['special tasks']['cold-start']
 
     def get_task_name_list( self ):
@@ -1781,7 +1779,7 @@ class config( object ):
             name, rtcfg, self.run_mode, self.start_point)
 
         # TODO - put all taskd.foo items in a single config dict
-        # SET COLD-START TASK INDICATORS
+        # Set cold-start task indicators.
         if name in self.cfg['scheduling']['special tasks']['cold-start']:
             taskd.modifiers.append( 'oneoff' )
             taskd.is_coldstart = True
