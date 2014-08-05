@@ -4,8 +4,8 @@
 2013/12/19 14:35:10 INFO - Suite starting at 2013-12-19 14:35:10.192998
 2013/12/19 14:35:10 INFO - Log event clock: real time
 2013/12/19 14:35:10 INFO - Run mode: live
-2013/12/19 14:35:10 INFO - Start point: 2013010100
-2013/12/19 14:35:10 INFO - Stop point: 2013011000
+2013/12/19 14:35:10 INFO - Initial point: 2013010100
+2013/12/19 14:35:10 INFO - Final point: 2013011000
 2013/12/19 14:35:10 INFO - Thread-4 start (Job Submission)
 2013/12/19 14:35:10 INFO - Thread-5 start (Request Handling)
 2013/12/19 14:35:10 INFO - Restart /net/home/h01/frsn/cylc-run/cycles/state/state.20131219T143500.700796Z

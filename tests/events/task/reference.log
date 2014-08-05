@@ -3,8 +3,8 @@
 2013/05/20 22:04:58 INFO - Suite starting at 2013-05-20 22:04:58.349005
 2013/05/20 22:04:58 INFO - Log event clock: real time
 2013/05/20 22:04:58 INFO - Run mode: live
-2013/05/20 22:04:58 INFO - Start point: 1
-2013/05/20 22:04:58 INFO - Stop point: 1
+2013/05/20 22:04:58 INFO - Initial point: 1
+2013/05/20 22:04:58 INFO - Final point: 1
 2013/05/20 22:04:58 INFO - Starting Job Submission thread
 2013/05/20 22:04:58 INFO - Starting request handler thread
 2013/05/20 22:04:58 INFO - [prep.1] -triggered off []

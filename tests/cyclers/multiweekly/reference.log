@@ -4,8 +4,8 @@
 2014-04-09T11:00:46 INFO - Suite starting at 2014-04-09T11:00:46.869645
 2014-04-09T11:00:46 INFO - Log event clock: real time
 2014-04-09T11:00:46 INFO - Run mode: live
-2014-04-09T11:00:46 INFO - Start point: 1000W011
-2014-04-09T11:00:46 INFO - Stop point: 1000W064
+2014-04-09T11:00:46 INFO - Initial point: 1000W011
+2014-04-09T11:00:46 INFO - Final point: 1000W064
 2014-04-09T11:00:46 INFO - Thread-4 start (Job Submission)
 2014-04-09T11:00:46 INFO - Thread-5 start (Request Handling)
 2014-04-09T11:00:46 INFO - Cold Start 1000W011

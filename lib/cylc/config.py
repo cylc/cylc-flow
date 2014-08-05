@@ -93,7 +93,8 @@ class config( object ):
     def __init__( self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             validation=False, strict=False, collapsed=[],
-            cli_start_string=None, is_restart=False, is_reload=False,
+            cli_initial_point_string=None, cli_start_point_string=None,
+            is_restart=False, is_reload=False,
             write_proc=True ):
 
         self.suite = suite  # suite name
@@ -106,7 +107,10 @@ class config( object ):
         self.edges = []
         self.taskdefs = {}
         self.validation = validation
-        self._cli_start_string = cli_start_string
+        self.initial_point = None
+        self.start_point = None
+        self._cli_initial_point_string = cli_initial_point_string
+        self._cli_start_point_string = cli_start_point_string
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
@@ -147,9 +151,9 @@ class config( object ):
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
 
-        if self._cli_start_string is not None:
+        if self._cli_initial_point_string is not None:
             self.cfg['scheduling']['initial cycle point'] = (
-                self._cli_start_string)
+                self._cli_initial_point_string)
 
         if 'cycling mode' not in self.cfg['scheduling']:
             # Auto-detect integer cycling for pure async graph suites.
@@ -225,6 +229,7 @@ class config( object ):
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
 
+        initial_point = None
         if self.cfg['scheduling']['initial cycle point'] is not None:
             initial_point = get_point(
                 self.cfg['scheduling']['initial cycle point']).standardise()
@@ -235,9 +240,18 @@ class config( object ):
                 self.cfg['scheduling']['final cycle point']).standardise()
             self.cfg['scheduling']['final cycle point'] = str(final_point)
 
-        self.cli_start_point = get_point(self._cli_start_string)
-        if self.cli_start_point is not None:
-            self.cli_start_point.standardise()
+        self.cli_initial_point = get_point(self._cli_initial_point_string)
+        if self.cli_initial_point is not None:
+            self.cli_initial_point.standardise()
+
+        self.initial_point = self.cli_initial_point or initial_point
+        if self.initial_point is not None:
+            self.initial_point.standardise()
+
+        self.start_point = (
+            get_point(self._cli_start_point_string) or self.initial_point)
+        if self.start_point is not None:
+            self.start_point.standardise()
 
         flags.backwards_compat_cycling = (
             get_backwards_compat_mode())
@@ -328,8 +342,7 @@ class config( object ):
 
         # initial and final cycles for visualization
         vict = self.cfg['visualization']['initial cycle point'] or \
-                str(self.get_actual_first_point(
-                        self.cfg['scheduling']['initial cycle point']))
+                str(self.get_actual_first_point(self.start_point))
         self.cfg['visualization']['initial cycle point'] = vict
 
         vict_rh = None
@@ -868,10 +881,9 @@ class config( object ):
         for name in self.taskdefs.keys():
             type = self.taskdefs[name].type
             # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
-            start_point = get_point( self.cfg['scheduling']['initial cycle point'] )
             try:
                 # instantiate a task
-                itask = self.taskdefs[name].get_task_class()( start_point, 'waiting', None, True, validate=True )
+                itask = self.taskdefs[name].get_task_class()( self.start_point, 'waiting', None, True, validate=True )
             except TypeError, x:
                 # This should not happen as we now explicitly catch use
                 # of synchronous special tasks in an asynchronous graph.
@@ -884,7 +896,7 @@ class config( object ):
                     'ERROR, failed to instantiate task %s: %s' % (name, x))
             if itask.point is None:
                 if flags.verbose:
-                    print " + Task out of bounds for " + str(start_point) + ": " + itask.name
+                    print " + Task out of bounds for " + str(self.start_point) + ": " + itask.name
                 continue
 
             # warn for purely-implicit-cycling tasks (these are deprecated).
@@ -1338,7 +1350,7 @@ class config( object ):
 
             if lnode.offset_is_from_ict:
                 first_point = get_point_relative(
-                    lnode.offset_string, ltaskdef.ict)
+                    lnode.offset_string, self.initial_point)
                 last_point = seq.get_stop_point()
                 if last_point is None:
                     # This dependency persists for the whole suite run.
@@ -1761,14 +1773,12 @@ class config( object ):
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
             raise SuiteConfigError, "Task not found: " + name
-
-        ict_point = (self.cli_start_point or
-                     get_point(self.cfg['scheduling']['initial cycle point']))
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
         # Get the taskdef object for generating the task proxy class
-        taskd = taskdef.taskdef( name, rtcfg, self.run_mode, ict_point )
+        taskd = taskdef.taskdef(
+            name, rtcfg, self.run_mode, self.start_point)
 
         # TODO - put all taskd.foo items in a single config dict
         # SET COLD-START TASK INDICATORS

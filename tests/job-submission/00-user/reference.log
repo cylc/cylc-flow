@@ -4,8 +4,8 @@
 2014/02/04 16:27:40 INFO - Suite starting at 2014-02-04 16:27:40.360630
 2014/02/04 16:27:40 INFO - Log event clock: real time
 2014/02/04 16:27:40 INFO - Run mode: live
-2014/02/04 16:27:40 INFO - Start point: 1
-2014/02/04 16:27:40 INFO - Stop point: 1
+2014/02/04 16:27:40 INFO - Initial point: 1
+2014/02/04 16:27:40 INFO - Final point: 1
 2014/02/04 16:27:40 INFO - Thread-4 start (Job Submission)
 2014/02/04 16:27:40 INFO - Thread-5 start (Request Handling)
 2014/02/04 16:27:40 INFO - [foo.1] -triggered off []

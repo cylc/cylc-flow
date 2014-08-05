@@ -2,6 +2,7 @@
 title = "test insertion of a task with a bad cycle point."
 
 [cylc]
+    cycle point time zone = +01
     [[reference test]]
         required run mode = live
         live mode suite timeout = PT10S
