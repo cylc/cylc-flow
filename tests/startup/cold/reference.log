@@ -4,8 +4,8 @@
 2013/09/27 10:08:06 INFO - Suite starting at 2013-09-27 10:08:06.149999
 2013/09/27 10:08:06 INFO - Log event clock: real time
 2013/09/27 10:08:06 INFO - Run mode: live
-2013/09/27 10:08:06 INFO - Start point: 2010010100
-2013/09/27 10:08:06 INFO - Stop point: 2010010106
+2013/09/27 10:08:06 INFO - Initial point: 2010010100
+2013/09/27 10:08:06 INFO - Final point: 2010010106
 2013/09/27 10:08:06 INFO - Thread-4 start (Job Submission)
 2013/09/27 10:08:06 INFO - Thread-5 start (Request Handling)
 2013/09/27 10:08:06 INFO - Cold Start 2010010100

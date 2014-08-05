@@ -300,7 +300,7 @@ class GraphUpdater(threading.Thread):
         if start_time == None or oldest > start_time:
             rawx = True
         else:
-            # (show cold start tasks) - TODO - actual raw start
+            # (show cold start tasks)
             rawx = False
 
         extra_node_ids = {}

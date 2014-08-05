@@ -936,7 +936,7 @@ been defined for this suite""").inform()
             pass # error dialogs done by run_get_stdout()
 
     def startsuite( self, bt, window,
-            coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
+            coldstart_rb, warmstart_rb, restart_rb,
             entry_point_string, stop_point_string_entry, statedump_entry,
             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb, hold_cb,
             holdtime_entry ):
@@ -949,9 +949,6 @@ been defined for this suite""").inform()
         elif warmstart_rb.get_active():
             method = 'warmstart'
             options += ' -w'
-        elif rawstart_rb.get_active():
-            method = 'rawstart'
-            options += ' -r'
         elif restart_rb.get_active():
             method = 'restart'
             command = 'cylc restart ' + self.cfg.template_vars_opts
@@ -1802,7 +1799,7 @@ shown here in the state they were in at the time of triggering.''' )
             box.set_sensitive(True)
 
     def startup_method( self, b, meth, ic_box, is_box ):
-        if meth in ['cold', 'warm', 'raw']:
+        if meth in ['cold', 'warm']:
             for ch in ic_box.get_children():
                 ch.set_sensitive( True )
             for ch in is_box.get_children():
@@ -1832,8 +1829,6 @@ shown here in the state they were in at the time of triggering.''' )
         box.pack_start (restart_rb, True)
         warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm-start" )
         box.pack_start (warmstart_rb, True)
-        rawstart_rb = gtk.RadioButton( coldstart_rb, "Raw-start" )
-        box.pack_start (rawstart_rb, True)
         coldstart_rb.set_active(True)
         vbox.pack_start( box )
 
@@ -1894,7 +1889,6 @@ shown here in the state they were in at the time of triggering.''' )
 
         coldstart_rb.connect( "toggled", self.startup_method, "cold", ic_box, is_box )
         warmstart_rb.connect( "toggled", self.startup_method, "warm", ic_box, is_box )
-        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ic_box, is_box )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ic_box, is_box )
 
         hbox = gtk.HBox()
@@ -1934,7 +1928,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         start_button = gtk.Button( "_Start" )
         start_button.connect("clicked", self.startsuite, window,
-                coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
+                coldstart_rb, warmstart_rb, restart_rb,
                 point_string_entry, stop_point_string_entry,
                 statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
                 mode_dum_rb, hold_cb, holdtime_entry )

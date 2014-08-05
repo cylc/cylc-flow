@@ -15,16 +15,17 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test Daily cycling
+# Test pre-initial cycling works under warm starts
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE Daily
+install_suite $TEST_NAME_BASE warm-start-iso
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-perl -pi -e 's/(Initial point: ).*$/${1}2014010506/' $TEST_DIR/$SUITE_NAME/reference.log
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --warm --reference-test --debug $SUITE_NAME 20130102T00
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-

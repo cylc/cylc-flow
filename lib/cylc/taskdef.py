@@ -49,7 +49,7 @@ class DefinitionError( Error ):
 
 class taskdef(object):
 
-    def __init__( self, name, rtcfg, run_mode, ict ):
+    def __init__( self, name, rtcfg, run_mode, start_point ):
         if re.search( '[^0-9a-zA-Z_\.]', name ):
             # dot for namespace syntax (NOT USED).
             # regex [\w] allows spaces.
@@ -57,7 +57,7 @@ class taskdef(object):
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg
-        self.ict = ict
+        self.start_point = start_point
 
         self.sequences = []
         self.implicit_sequences = []  # Implicit sequences are deprecated.
@@ -223,8 +223,8 @@ class taskdef(object):
             # valid member of sequenceX's sequence of cycle points.
 
             # 1) non-conditional triggers
-            pp = plain_prerequisites( sself.id, self.ict )
-            sp = plain_prerequisites( sself.id, self.ict )
+            pp = plain_prerequisites( sself.id, self.start_point )
+            sp = plain_prerequisites( sself.id, self.start_point )
 
             if self.sequential:
                 # For tasks declared 'sequential' we automatically add a
@@ -267,11 +267,10 @@ class taskdef(object):
                     if trig.cycling and not sequence.is_valid( sself.point ):
                         # This trigger is not used in current cycle
                         continue
-                    if (self.ict is None or
-                            trig.evaluation_offset_string is None or
+                    if (trig.evaluation_offset_string is None or
                             (get_point_relative(
                                 trig.evaluation_offset_string, point) >=
-                             self.ict)):
+                             self.start_point)):
                         # i.c.t. can be None after a restart, if one
                         # is not specified in the suite definition.
 
@@ -299,18 +298,17 @@ class taskdef(object):
                             not sequence.is_valid( sself.point)):
                         # This trigger is not valid for current cycle (see NOTE just above)
                         continue
-                    cp = conditional_prerequisites( sself.id, self.ict )
+                    cp = conditional_prerequisites( sself.id, self.start_point )
                     for label in ctrig:
                         trig = ctrig[label]
-                        if (self.ict is not None and
-                                trig.evaluation_offset_string is not None):
-                            is_less_than_ict = (
+                        if trig.evaluation_offset_string is not None:
+                            is_less_than_start = (
                                 get_point_relative(
                                     trig.evaluation_offset_string, point) <
-                                self.ict
+                                self.start_point
                             )
                             cp.add( trig.get( point )[0], label,
-                                    is_less_than_ict)
+                                    is_less_than_start)
                         else:
                             cp.add( trig.get( point )[0], label )
                     cp.set_condition( exp )
@@ -361,8 +359,8 @@ class taskdef(object):
                 sself.real_time_delay =  float( self.clocktriggered_offset )
 
             # prerequisites
-            sself.prerequisites = prerequisites( self.ict )
-            sself.suicide_prerequisites = prerequisites( self.ict )
+            sself.prerequisites = prerequisites( self.start_point )
+            sself.suicide_prerequisites = prerequisites( self.start_point )
             sself.add_prerequisites( sself.point )
 
             sself.logfiles = logfiles()
