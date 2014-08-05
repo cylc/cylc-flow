@@ -232,11 +232,15 @@ class config( object ):
             self.cfg['scheduling']['initial cycle point'] = str(initial_point)
 
         if self.cfg['scheduling']['final cycle point'] is not None:
-            final_point = get_point_relative(
-                    self.cfg['scheduling']['final cycle point'],
-                    initial_point).standardise()
+            if "P" in self.cfg['scheduling']['final cycle point']:
+                final_point = get_point_relative(
+                        self.cfg['scheduling']['final cycle point'],
+                        initial_point).standardise()
+            else:
+                final_point = get_point(
+                    self.cfg['scheduling']['final cycle point']).standardise()
             self.cfg['scheduling']['final cycle point'] = str(final_point)
-
+            self.cfg['visualization']['final cycle point'] = str(final_point)
         self.cli_start_point = get_point(self._cli_start_string)
         if self.cli_start_point is not None:
             self.cli_start_point.standardise()
