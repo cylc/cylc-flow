@@ -122,26 +122,6 @@ def _coerce_cycletime_time_zone( value, keys, args ):
 def _coerce_final_cycletime( value, keys, args ):
     """Coerce final cycle point."""
     value = _strip_and_unquote( keys, value )
-    if "P" in str(value) or str(value).startswith("T"):
-        return value
-    if re.match(r"\d+$", value):
-        # Old date-time cycle point format, or integer format.
-        return value
-    if value.startswith("-") or value.startswith("+"):
-        # We don't know the value given for num expanded year digits...
-        for i in range(1, 101):
-            parser = TimePointParser(num_expanded_year_digits=i)
-            try:
-                parser.parse(value)
-            except ValueError:
-                continue
-            return value
-        raise IllegalValueError("cycle point", keys, value)
-    parser = TimePointParser()
-    try:
-        parser.parse(value)
-    except ValueError:
-        raise IllegalValueError("cycle point", keys, value)
     return value
 
 
