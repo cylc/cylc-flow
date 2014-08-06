@@ -297,7 +297,9 @@ class config( object ):
                     try:
                         offset_interval = get_interval(offset_string).standardise()
                     except IntervalParsingError as exc:
-                        raise SuiteConfigError("ERROR, bad clock-trigger: %s" % str(exc))
+                        raise SuiteConfigError(
+                            "ERROR: Illegal clock-trigger spec: %s" % offset_string
+                        )
                     extn = "(" + offset_string + ")"
 
                 # Replace family names with members.
