@@ -419,6 +419,20 @@ it is not possible to arrive at a sensible default for all suites.
 
 This section allows cylc to determine when tasks are ready to run.
 
+\subsubsection[cycling]{ [scheduling] $\rightarrow$ cycling mode }
+\label{cycling-mode}
+
+Cylc runs using the proleptic Gregorian calendar by default. This item allows
+you to either run the suite using the 360 day calendar (12 months of 30 days 
+in a year) or using integer cycling.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal values:} gregorian, 360day, integer
+    \item {\em default:} gregorian
+    
+\end{myitemize}
+
 \subsubsection[initial cycle point]{[scheduling] $\rightarrow$ initial cycle point}
 
 In a cold start each cycling task (unless specifically excluded under
@@ -456,37 +470,15 @@ the \ref{cycle-point-time-zone} if that is set.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[cycling]{ [scheduling] $\rightarrow$ cycling mode }
-\label{cycling-mode}
-
-Cylc runs using the proleptic Gregorian calendar by default. This item allows
-you to either run the suite using the 360 day calendar (12 months of 30 days 
-in a year) or using integer cycling.
-
-\begin{myitemize}
-    \item {\em type:} string
-    \item {\em legal values:} gregorian, 360day, integer
-    \item {\em default:} gregorian
-    
-\end{myitemize}
-
-
 \subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
 \label{runahead limit}
 
-Runahead limiting prevents the fastest tasks in a suite from
-getting too far ahead of the slowest ones, as documented in
-Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
-a special runahead held state until slower tasks have caught up
-sufficiently.
+Runahead limiting prevents the fastest tasks in a suite from getting too far
+ahead of the slowest ones, as documented in Section~\ref{RunaheadLimit}.
 
-The default behaviour is to limit the number of tasks
-by only allowing up to \lstinline=N= (default 3) consecutive cycle
-points to be active at any time, up-adjusted if necessary for any
-future triggering.
-
-\lstinline=runahead limit= is deprecated in favour of specifying this
-maximum number of active cycle points (\ref{max active cycle points}).
+This config item specifies a hard limit as a cycle interval between the
+slowest and fastest tasks. It is deprecated in favour of the newer default 
+limiting by \lstinline=max active cycle points= (\ref{max active cycle points}).
 
 \begin{myitemize}
     \item {\em type:} Cycle interval string e.g. \lstinline=PT12H=
@@ -494,25 +486,17 @@ maximum number of active cycle points (\ref{max active cycle points}).
     \item {\em default:} (none)
 \end{myitemize}
 
-
 \subsubsection[max active cycle points]{[scheduling] $\rightarrow$
  max active cycle points}
 \label{max active cycle points}
 
-Runahead limiting prevents the fastest tasks in a suite from
-getting too far ahead of the slowest ones, as documented in
-Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
-a special runahead held state until slower tasks have caught up
-sufficiently.
+Runahead limiting prevents the fastest tasks in a suite from getting too far
+ahead of the slowest ones, as documented in Section~\ref{RunaheadLimit}.
 
-The default behaviour is to limit the number of tasks
-by only allowing up to \lstinline=N= (default 3) consecutive cycle
-points to be active at any time, up-adjusted if necessary for any
-future triggering.
-
-This input allows you to change \lstinline=N=, the maximum
-number of consecutive cycle points that can be active at once. This
-supersedes \ref{runahead limit}.
+This config item supersedes the deprecated hard \lstinline=runahead limit= 
+(\ref{runahead limit}). It allows up to \lstinline=N= (default 3) consecutive
+cycle points to be active at any time, adjusted up if necessary for
+any future triggering.
 
 \begin{myitemize}
     \item {\em type:} integer
