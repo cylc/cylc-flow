@@ -293,7 +293,7 @@ class config( object ):
                         # Backward-compatibility for a raw float number of hours.
                         if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
                             seconds = int(float(offset_string)*3600)
-                            offset_interval = "PT%sS" % seconds
+                            offset_string = "PT%sS" % seconds
                     try:
                         offset_interval = get_interval(offset_string).standardise()
                     except IntervalParsingError as exc:
