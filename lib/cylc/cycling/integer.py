@@ -436,9 +436,9 @@ def init_from_cfg(cfg):
 
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
-    # TODO ISO: needs to be done somehow? Is it meaningful?
+    # This is fine so long as it is called deliberately
+    # (absolute and relative integers look the same).
     return base_point + IntegerInterval(offset_string)
-
 
 def test():
     """Run some simple tests for integer cycling."""
