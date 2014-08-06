@@ -26,11 +26,7 @@ chosen method on the chosen host (using passwordless ssh if not local).
 Derived classes define the particular job submission method.
 """
 
-import sys, os
-import stat
-from jobfile import jobfile
-import socket
-from subprocess import Popen, PIPE
+from cylc.job_submission.jobfile import JobFile
 from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
 import cylc.TaskID
@@ -38,49 +34,60 @@ from cylc.cfgspec.site import sitecfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
 import cylc.flags
+import os
+import socket
+import stat
+import sys
 
-class job_submit(object):
+
+class JobSubmit(object):
     """Base class for method-specific job script and submission command."""
 
-    LOCAL_COMMAND_TEMPLATE = ( "(%(command)s)" )
+    LOCAL_COMMAND_TEMPLATE = "(%(command)s)"
 
     # For remote jobs copy the job file to a temporary file and
-    # then rename it, in case of a common filesystem (else this 
+    # then rename it, in case of a common filesystem (else this
     # is trouble: 'ssh HOST "cat > $DIR/foo.sh" < $DIR/foo.sh').
-    REMOTE_COMMAND_TEMPLATE = ( " '"
-            + pr_scripting_sl + "; "
-            + " mkdir -p $(dirname %(jobfile_path)s)"
-            + " && cat >%(jobfile_path)s.tmp"
-            + " && mv %(jobfile_path)s.tmp %(jobfile_path)s"
-            + " && chmod +x %(jobfile_path)s"
-            + " && rm -f %(jobfile_path)s.status"
-            + " && (%(command)s)"
-            + "'" )
+    REMOTE_COMMAND_TEMPLATE = (
+        " '" +
+        pr_scripting_sl +
+        "; " +
+        " mkdir -p %(jobfile_dir)s" +
+        " && cat >%(jobfile_path)s.tmp" +
+        " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
+        " && chmod +x %(jobfile_path)s" +
+        " && rm -f %(jobfile_path)s.status" +
+        " && (%(command)s)" +
+        "'")
 
-    def __init__( self, task_id, suite, jobconfig, submit_num ):
+    def __init__(self, task_id, suite, jobconfig, submit_num):
 
         self.jobconfig = jobconfig
 
         self.task_id = task_id
         self.suite = suite
-        self.logfiles = jobconfig.get( 'log files' )
+        self.logfiles = jobconfig.get('log files')
 
+        self.command = None
         self.job_submit_command_template = jobconfig.get('command template')
 
         # Local job script path: append submit number.
         # (used by both local and remote tasks)
         tag = task_id + cylc.TaskID.DELIM + submit_num
-
-        self.local_jobfile_path = os.path.join( \
-                sitecfg.get_derived_host_item( self.suite, 'suite job log directory' ), tag )
+        job_log_dir = sitecfg.get_derived_host_item(
+            self.suite, 'suite job log directory')
+        self.local_jobfile_path = os.path.join(job_log_dir, tag)
 
         # The directory is created in config.py
-        self.logfiles.add_path( self.local_jobfile_path )
+        self.logfiles.add_path(self.local_jobfile_path)
 
         task_host = jobconfig.get('task host')
-        task_owner  = jobconfig.get('task owner')
+        task_owner = jobconfig.get('task owner')
 
-        self.remote_shell_template = sitecfg.get_host_item( 'remote shell template', task_host, task_owner )
+        self.remote_shell_template = sitecfg.get_host_item(
+            'remote shell template',
+            task_host,
+            task_owner)
 
         if is_remote_host(task_host) or is_remote_user(task_owner):
             # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
@@ -95,15 +102,19 @@ class job_submit(object):
             else:
                 self.task_host = socket.gethostname()
 
-            self.remote_jobfile_path = os.path.join( \
-                    sitecfg.get_derived_host_item( self.suite, 'suite job log directory', self.task_host, self.task_owner ), tag )
+            remote_log_job_dir = sitecfg.get_derived_host_item(
+                self.suite,
+                'suite job log directory',
+                self.task_host,
+                self.task_owner)
+            remote_jobfile_path = os.path.join(remote_log_job_dir, tag)
 
             # Remote log files
-            self.stdout_file = self.remote_jobfile_path + ".out"
-            self.stderr_file = self.remote_jobfile_path + ".err"
+            self.stdout_file = remote_jobfile_path + ".out"
+            self.stderr_file = remote_jobfile_path + ".err"
 
             # Used in command construction:
-            self.jobfile_path = self.remote_jobfile_path
+            self.jobfile_path = remote_jobfile_path
 
             # Record paths of remote log files for access by gui
             if True:
@@ -111,8 +122,8 @@ class job_submit(object):
                 url_prefix = self.task_host
                 if self.task_owner:
                     url_prefix = self.task_owner + "@" + url_prefix
-                self.logfiles.add_path( url_prefix + ':' + self.stdout_file)
-                self.logfiles.add_path( url_prefix + ':' + self.stderr_file)
+                self.logfiles.add_path(url_prefix + ':' + self.stdout_file)
+                self.logfiles.add_path(url_prefix + ':' + self.stderr_file)
             else:
                 # CURRENTLY DISABLED:
                 # If the remote and suite hosts see a common filesystem, or
@@ -124,8 +135,8 @@ class job_submit(object):
                 # specified (for example use of '$HOME' as for remote
                 # task use would not work here as log file access is by
                 # gui under the suite owner account.
-                self.logfiles.add_path( self.stdout_file )
-                self.logfiles.add_path( self.stderr_file )
+                self.logfiles.add_path(self.stdout_file)
+                self.logfiles.add_path(self.stderr_file)
         else:
             # LOCAL TASKS
             self.local = True
@@ -138,18 +149,18 @@ class job_submit(object):
             self.stderr_file = self.local_jobfile_path + ".err"
 
             # interpolate environment variables in extra logs
-            for idx in range( 0, len( self.logfiles.paths )):
-                self.logfiles.paths[idx] = expandvars( self.logfiles.paths[idx] )
+            for idx in range(0, len(self.logfiles.paths)):
+                self.logfiles.paths[idx] = expandvars(self.logfiles.paths[idx])
 
             # Record paths of local log files for access by gui
-            self.logfiles.add_path( self.stdout_file)
-            self.logfiles.add_path( self.stderr_file)
+            self.logfiles.add_path(self.stdout_file)
+            self.logfiles.add_path(self.stderr_file)
 
         # set some defaults that can be overridden by derived classes
-        self.jobconfig[ 'directive prefix'    ] = None
-        self.jobconfig[ 'directive final'     ] = "# FINAL DIRECTIVE"
-        self.jobconfig[ 'directive connector' ] = " "
-        self.jobconfig[ 'job vacation signal' ] = None
+        self.jobconfig['directive prefix'] = None
+        self.jobconfig['directive final'] = "# FINAL DIRECTIVE"
+        self.jobconfig['directive connector'] = " "
+        self.jobconfig['job vacation signal'] = None
 
         # overrideable methods
         self.set_directives()
@@ -157,89 +168,103 @@ class job_submit(object):
         self.set_scripting()
         self.set_environment()
 
-    def set_directives( self ):
+    def set_directives(self):
+        """OVERRIDE IN DERIVED JOB SUBMISSION CLASSES THAT USE DIRECTIVES
+
+        (directives will be ignored if the prefix below is not overridden)
+
+        Defaults set in task.py:
+        self.jobconfig = {
+         PREFIX: e.g. '#QSUB' (qsub), or '# @' (loadleveler)
+             'directive prefix' : None,
+         FINAL directive, WITH PREFIX, e.g. '# @ queue' for loadleveler
+             'directive final' : '# FINAL_DIRECTIVE '
+         CONNECTOR, e.g. ' = ' for loadleveler, ' ' for qsub
+             'directive connector' :  " DIRECTIVE_CONNECTOR "
+        }
+        """
         pass
-        # OVERRIDE IN DERIVED JOB SUBMISSION CLASSES THAT USE DIRECTIVES
-        # (directives will be ignored if the prefix below is not overridden)
 
-        # Defaults set in task.py:
-        # self.jobconfig = {
-        #  PREFIX: e.g. '#QSUB' (qsub), or '# @' (loadleveler)
-        #      'directive prefix' : None,
-        #  FINAL directive, WITH PREFIX, e.g. '# @ queue' for loadleveler
-        #      'directive final' : '# FINAL_DIRECTIVE '
-        #  CONNECTOR, e.g. ' = ' for loadleveler, ' ' for qsub
-        #      'directive connector' :  " DIRECTIVE_CONNECTOR "
-        # }
-
-    def set_scripting( self ):
-        # Derived class can use this to modify pre- and post-command scripting
+    def set_scripting(self):
+        """Derived class can use this to modify pre/post-command scripting"""
         return
 
-    def set_environment( self ):
-        # Derived classes can use this to modify task execution environment
+    def set_environment(self):
+        """Derived classes can use this to modify task execution environment"""
         return
 
-    def set_job_vacation_signal( self ):
+    def set_job_vacation_signal(self):
         """Derived class can set self.jobconfig['job vacation signal']."""
         return
 
-    def construct_jobfile_submission_command( self ):
-        # DERIVED CLASSES MUST OVERRIDE THIS METHOD to construct
-        # self.command, the command to submit the job script to
-        # run by the derived class job submission method.
-        raise SystemExit( 'ERROR: no job submission command defined!' )
+    def construct_job_submit_command(self):
+        """DERIVED CLASSES MUST OVERRIDE THIS METHOD to construct
 
-    def filter_output( self, out, err ):
+        self.command, the command to submit the job script to
+        run by the derived class job submission method.
+
         """
-        Override this to filter stdout and stderr from the job submission command.
+        raise NotImplementedError('ERROR: no job submission command defined!')
+
+    def filter_output(self, out, err):
+        """Filter the stdout/stderr from a job submission command.
+
+        Derived classes should override this method.
+
         """
         return out, err
 
-    def get_id( self, out, err ):
+    def get_id(self, out, err):
+        """Get the job submit ID from a job submission command output.
+
+        Derived classes should override this method.
+
         """
-        Override this to extract the job submit ID from job submission command output.
-        """
-        return None
- 
-    def write_jobscript( self ):
+        raise NotImplementedError()
+
+    def write_jobscript(self):
         """ submit the task and return the process ID of the job
         submission sub-process, or None if a failure occurs."""
 
-        jf = jobfile(\
-                self.suite,
-                self.jobfile_path,
-                self.__class__.__name__,
-                self.task_id,
-                self.jobconfig )
+        job_file = JobFile(
+            self.suite,
+            self.jobfile_path,
+            self.__class__.__name__,
+            self.task_id,
+            self.jobconfig)
 
         # write the job file
-        jf.write( self.local_jobfile_path )
+        job_file.write(self.local_jobfile_path)
         # make it executable
-        mode = ( os.stat(self.local_jobfile_path).st_mode |
-                 stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH )
-        os.chmod( self.local_jobfile_path, mode )
+        mode = (os.stat(self.local_jobfile_path).st_mode |
+                stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        os.chmod(self.local_jobfile_path, mode)
 
-    def get_job_submission_command( self, dry_run=False ):
-        # Construct self.command, the command to submit the jobfile to run
+    def get_job_submission_command(self, dry_run=False):
+        """Construct self.command, the command to submit the jobfile to run"""
         try:
-            self.construct_jobfile_submission_command()
-        except TypeError, x:
+            self.construct_job_submit_command()
+        except TypeError, exc:
             if cylc.flags.debug:
                 raise
-            print >> sys.stderr, "ERROR:", x
-            print >> sys.stderr, "ERROR: Failed to construct job submission command"
-            print >> sys.stderr, """  Possible cause: a command template that is not compatible with the
+            print >> sys.stderr, "ERROR:", exc
+            print >> sys.stderr, (
+                "ERROR: Failed to construct job submission command")
+            print >> sys.stderr, (
+                """  Possible cause: command template not compatible with the
   job submission method in terms of the number of string substitutions.
-  Use --debug to abort cylc with an exception traceback."""
+  Use --debug to abort cylc with an exception traceback.""")
             return None
 
         if self.local:
             command = self.LOCAL_COMMAND_TEMPLATE % {
-                      "jobfile_path": self.jobfile_path, "command": self.command}
+                "jobfile_path": self.jobfile_path,
+                "command": self.command}
         else:
             command = self.REMOTE_COMMAND_TEMPLATE % {
-                      "jobfile_path": self.jobfile_path, "command": self.command}
+                "jobfile_dir": os.path.dirname(self.jobfile_path),
+                "jobfile_path": self.jobfile_path,
+                "command": self.command}
             if self.task_owner:
                 destination = self.task_owner + "@" + self.task_host
             else:
@@ -264,4 +289,3 @@ class job_submit(object):
             command = command + ' < ' + self.local_jobfile_path
 
         return command
-

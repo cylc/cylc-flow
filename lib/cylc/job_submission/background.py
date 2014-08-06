@@ -16,13 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from job_submit import job_submit
+from job_submit import JobSubmit
 from cylc.command_env import pr_scripting_sl
 import os
 from signal import SIGKILL
 from subprocess import Popen, PIPE
 
-class background( job_submit ):
+class background( JobSubmit ):
     """
     Background 'job submission' runs the task directly in the background
     (with '&') so that we can get the job PID (with $!) but then uses
@@ -34,13 +34,17 @@ class background( job_submit ):
 
     LOCAL_COMMAND_TEMPLATE = ( "( %(command)s & echo $!; wait )" )
 
-    REMOTE_COMMAND_TEMPLATE = ( " '"
-            + pr_scripting_sl + "; "
-            + " mkdir -p $(dirname %(jobfile_path)s)"
-            + " && cat >%(jobfile_path)s"
-            + " && chmod +x %(jobfile_path)s"
-            + " && ( %(command)s & echo $!; wait )"
-            + "'" )
+    REMOTE_COMMAND_TEMPLATE = (
+        " '" +
+        pr_scripting_sl +
+        "; " +
+        " mkdir -p %(jobfile_dir)s" +
+        " && cat >%(jobfile_path)s.tmp" +
+        " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
+        " && chmod +x %(jobfile_path)s" +
+        " && rm -f %(jobfile_path)s.status" +
+        " && ( %(command)s & echo $!; wait )" +
+        "'")
 
     # N.B. The perl command ensures that the job script is executed in its own
     # process group, which allows the job script and its child processes to be
@@ -48,7 +52,7 @@ class background( job_submit ):
     COMMAND_TEMPLATE = ("perl -e \"setpgrp(0,0);exec(@ARGV)\" %s " +
                         "</dev/null 1>%s 2>%s")
 
-    def construct_jobfile_submission_command( self ):
+    def construct_job_submit_command( self ):
         """
         Construct a command to submit this job to run.
         """
