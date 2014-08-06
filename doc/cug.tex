@@ -386,7 +386,7 @@ previous section, emerges naturally at run time.
     \item {\bf Cylc}, the version associated with this document is: \input{cylc-version.txt}. % generated each time by doc/process
         \newline Cylc can be downloaded from from GitHub: \url{http://cylc.github.com/cylc}
     \item {\bf OS: A Linux or Unix variant (including, reportedly, Apple OS X).}
-    \item {\bf The Python Language, version 2.5 or later, but not 3.x yet}.
+    \item {\bf The Python Language, version 2.6 or later, but not 3.x yet}.
         \newline \url{http://python.org}
     \item {\bf Pyro-3 (Python Remote Objects), version 3.10$+$, latest
         tested 3.16}; not Pyro4 as yet. Pyro is used
@@ -582,7 +582,7 @@ installed properly:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc check-software
-Checking for Python >= 2.5 ... found 2.7.3 ... ok
+Checking for Python >= 2.6 ... found 2.7.3 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
@@ -671,7 +671,7 @@ processing) is installed:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc check-software
-Checking for Python >= 2.5 ... found 2.7.3 ... ok
+Checking for Python >= 2.6 ... found 2.7.3 ... ok
 Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
@@ -1106,7 +1106,7 @@ usually a date/time or an integer representation:
 foo.20100808T00Z   # a task with a date/time cycle point
 bar.1              # a task with an integer cycle point (could be non-cycling)
 \end{lstlisting}
-Non-cycling tasks usually just have the tag \lstinline=1=, but this
+Non-cycling tasks usually just have the cycle point \lstinline=1=, but this
 still has to be used to target the task instance with cylc commands.
 
 \subsection{Job Submission: How Tasks Are Executed}
@@ -1757,14 +1757,12 @@ initial cycle point) provided that the initial cycle point was always at 00 and
 Experiment with this suite to see how inter-cycle-point triggers work.
 Note that the first instance of \lstinline=foo=, at suite start-up, will
 trigger immediately in spite of its inter-cycle-point trigger, because cylc
-ignores triggers that reach back beyond the initial cycle point.
-
-The presence of an inter-cycle-point trigger usually implies something
-special has to happen at start-up, however. If a model depends on its
-own previous instance for restart files, for instance, then some special
-process will typically have to generate the initial set of restart files when
-there is no previous cycle point to do it. The following sections illustrate
-several ways of handling this in cylc suites.
+ignores dependence on points earlier than the initial cycle point.
+However, the presence of an inter-cycle-point trigger usually implies something
+special has to happen at start-up. If a model depends on its own previous
+instance for restart files, for example, then some special process has to
+generate the initial set of restart files when there is no previous cycle point
+to do it. The following section shows one way to handle this in cylc suites.
 
 \subsubsection{Initial Non-Repeating (R1) Tasks}
 \label{initial-non-repeating-r1-tasks}
@@ -1849,6 +1847,9 @@ prep.20130808T0000+13 => foo.20130808T0000+13
     \caption{The \lstinline=tut.cycling.three= suite}
 \label{fig-tut-three}
 \end{figure}
+
+For another way to make something different happen at start-up, see 
+{\em cold start tasks} in Section~\ref{SpecialColdStartTasks}.
 
 \subsection{Jinja2}
 
@@ -3378,20 +3379,39 @@ depends on its previous (12 hours ago) instance.
 This is quite different to the non-preferred \lstinline=cold-start tasks=
 way of working.
 
-When using \lstinline=cold-start tasks=, unlike for asynchronous and start-up
-initial tasks, however, the cold-start ``OR'' construct means that cold-start
-triggers don't have to be ignored by cylc after the first cycle point, so it
-is possible to insert cold-start task into a suite mid-run to do mid-stream
-cold-starts after problems that preclude continued normal warm cycling.
+\paragraph{Special Cold-Start Tasks}
+\label{SpecialColdStartTasks}
 
-Initial tasks can invoke real processing to generate the files
-that are subsequently produced by a tasks in the previous cycle point; or
-they could be dummy tasks that represent some external process that does the
-same before the suite is started - in which case the initial task can
-just report itself successfully completed after checking that the
-required files are present.
+Special cold-start tasks are non-spawning tasks intended for use in general
+cycling sections, so they must be declared as special tasks. Dependence on them
+is retained throughout the suite run so they must be in conditional triggers to
+avoid stalling the suite. For example:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 20140808T00
+    [[special tasks]]
+        cold-start = cold_model
+    [[[T00]]]
+        graph = cold_model | model[-P1D] => model
+\end{lstlisting}
 
-\paragraph{Sequential Tasks}
+This allows the \lstinline=cold_model= task to be inserted manually in the
+middle of a suite run to cold-start \lstinline=model= again after problems that
+require skipping one or more cycles.
+If you do not need this late cold start functionality then it is easier to
+use a normal task in an initial R1 recurrence:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 20140808T00
+    [[[R1]]]
+        graph = start_model => model
+    [[[T00]]]
+        graph = model[-P1D] => model
+    \end{lstlisting}
+
+\paragraph{Special Sequential Tasks}
 \label{SequentialTasks}
 
 If a cycling task does not generate files required by its own successor,
@@ -3448,17 +3468,6 @@ is equivalent to this one:
             graph = "foo[-PT8H] => foo"
 \end{lstlisting}
 
-\paragraph{Warm Start}
-
-For suites with inter-cycle-point dependence a {\em warm start} is essentially
-an implicit restart. Rather than loading tasks from a previous recorded
-suite state, cylc loads all cycling tasks at a given cycle point assuming
-that the previous cycle was completed in an earlier suite run. Any initial
-tasks therefore may not need to run again. Dependence on tasks from before
-the start cycle is still ignored, but cold-start tasks have to be loaded in
-the {\em succeeded} state because dependence on them (in the cold-start OR
-construct) is retained throughout the suite run as is explained above in
-Section~\ref{InterCyclePointTriggers}.
 
 \paragraph{Future Triggers}
 
@@ -4290,7 +4299,7 @@ use one or both of [scheduling][[special task]] lists, {\em include at
 start-up} or {\em exclude at start-up} (documented in
 Sections~\ref{IASU} and~\ref{EASU}). Then the graph still defines the
 validity of the tasks and their dependencies, but they are not actually
-inserted into the suite at start-up. Other tasks that depend on the
+loaded into the suite at start-up. Other tasks that depend on the
 omitted ones, if any, will have to wait on their insertion at a later
 time or otherwise be triggered manually.
 
@@ -4459,11 +4468,9 @@ The cylc messaging commands are called like this:
 #!/bin/bash
 # ...
 if $SUCCESS; then
-    # release my task lock and report success
     cylc task succeeded
     exit 0
 else
-    # release my task lock and report failed
     cylc task failed "Input file X not found"
     exit 1
 fi
@@ -4876,10 +4883,68 @@ at the top of the example file above).
 \section{Running Suites}
 \label{RunningSuites}
 
-To learn how to control running suites please also see the Tutorial
-(Section~\ref{Tutorial}, command documentation
-(Section~\ref{CommandReference}), and experiment with plenty of test
-suites.
+This chapter currently features a rather diverse collection of topics related
+to running suites. Please also see the Tutorial (Section~\ref{Tutorial} and 
+command documentation (Section~\ref{CommandReference}), and experiment with
+plenty of examples.
+
+\subsection{Suite Start-up}
+\label{SuiteStartUp}
+
+There are three ways to start a suite running: cold start and warm start, which
+start from scratch; and restart, which loads a prior suite state. If a suite
+does not contain any special cold-start tasks there is no difference
+between cold and warm start, except that a warm start should start from a
+point beyond the original initial cycle point of the suite. You may not need
+to use special cold start tasks - see Section~\ref{SpecialColdStartTasks}.
+
+Once a suite is up and running it is typically a restart that is needed most
+often (but see also \lstinline=cylc reload=). Be aware that cold and warm
+starts wipe out any prior suite state, which prevents returning to a restart
+if you decide that's what you really intended.
+
+
+\subsubsection{Cold Start}
+
+A cold start is the primary way to start a suite run from scratch:
+\begin{lstlisting}
+shell$ cylc run SUITE [INITIAL_CYCLE_POINT]
+\end{lstlisting}
+The initial cycle point may be specified on the command line or in the suite.rc
+file. The scheduler starts by loading an initial instance of each task at
+the initial cycle point, or at the next valid point for the task, including any
+special ``cold-start tasks''.
+
+\subsubsection{Restart}
+
+A restart starts a suite run from the state it recorded at the end of a
+previous run. This allows restarting a suite that was shut down or killed,
+without rerunning any tasks that already ran.
+\begin{lstlisting}
+shell$ cylc restart SUITE [STATE_FILE]
+\end{lstlisting}
+For a restart, the scheduler starts by loading each task in its recorded state.
+The most recent state is loaded by default, but earlier state files can be
+specified on the command line. Any tasks recorded as `submitted' or `running'
+will be polled automatically to determined what happened to them while the
+suite was down.
+
+\subsubsection{Warm Start}
+
+A warm start runs from a cycle point later than the suite's initial cycle
+point, but without referencing any previous suite state. It can be considered
+an inferior alternative to a restart because it may result in some tasks
+rerunning.  A warm start may be required if a restart is not possible because
+the suite state files were accidentally deleted (for instance). The warm start
+cycle point must be given on the command line:
+\begin{lstlisting}
+shell$ cylc run --warm SUITE [START_CYCLE_POINT]
+\end{lstlisting}
+In this case the scheduler starts by loading an initial instance of each 
+task at the warm start cycle point (or at the next valid point for the task),
+and any special cold-start tasks are loaded in the `succeeded' state (this is
+merely a device to satisfy any initial dependence on the cold-start tasks which
+are assumed not to be needed for a warm start).
 
 \subsection{How Tasks Interact With Running Suites}
 \label{TaskComms}
@@ -4916,22 +4981,14 @@ intervals, not when task events actually occur.
 \subsubsection{Task Polling}
 
 Be careful to avoid spamming task hosts with polling commands. Each poll
-opens (and then closes) a new ssh connection. Polling subprocesses are
-batched by cylc, and the number invoked at once can be configured in the
-suite definition:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[cylc]
-    [[poll and kill command submission]]
-        batch size = 5  # default 10
-        delay between batches = 10 # seconds, default 0
-\end{lstlisting}
+opens (and then closes) a new ssh connection.
 
-Polling intervals are configurable here because they should be
-appropriate to the expected task run length. For instance, a task that
-typically takes an hour to run might be polled every 10 minutes
-initially, and then every minute toward the end of its run. Interval
-values are used in turn until the last value, which is used repeatedly
+Polling intervals are configurable under \lstinline=[runtime]= because
+they should may depend on the expected execution time. For instance, a
+task that typically takes an hour to run might be polled every 10
+minutes initially, and then every minute toward the end of its run.
+Interval values are used in turn until the last value, which is used
+repeatedly
 until finished:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5211,32 +5268,8 @@ finer-grained authentication in the future to allow suite owners to
 grant read-only access to others.
 
 
-\subsection{Ensemble Suites, Job Submission, and Network Timeouts}
-\label{MaxSimJobSub}
 
-\subsubsection{Parallel Submission Of Jobs Ready At The Same Time}
-
-Cylc now handles task job submission in a dedicated worker thread so
-that submission of many remote tasks at once does not impact cylc's
-performance or responsiveness.
-
-Further, for maximum efficiency, job submissions are batched inside the
-worker thread: batch members are submitted in parallel, and all members
-must complete (the job submission process, that is, not the submitted
-task) before the next batch is handled. There is a configurable delay
-between batches to avoid swamping the host system in the event that
-hundreds of tasks become ready at the same time:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[cylc]
-    [[job submission]]
-        batch size = 50 # default 10
-        delay between batches = 10 # seconds, default 0
-\end{lstlisting}
-Here a 120 task ensemble, for example, would be submitted in two batches
-of 50 followed by one of 20, with a 10 second delay between batches.
-
-\subsubsection{Network Connection Timeouts}
+\subsection{Network Connection Timeouts}
 
 A connection timeout can be set in site and user config files (see
 Section~\ref{SiteAndUserConfiguration}) so that messaging commands
@@ -5630,21 +5663,6 @@ before re-triggering the task.
 Dummy mode is equivalent to commenting out each task's command scripting
 to expose the default scripting.
 
-\subsubsection{The Non-live-mode Accelerated Clock}
-
-In simulation and dummy mode cylc uses an accelerated clock with
-configurable rate and offset relative to the suite's initial cycle point.
-This affects the trigger time of any clock-triggered tasks in the suite,
-and the length of time between cycle points if simulating ``caught up''
-operation (without this a six-hour cycling suite, for instance, would
-wait six hours between cycles when simulating caught-up operation, even
-though the simulated or dummy tasks run very quickly). By configuring
-the initial clock offset you can quickly simulate how suites catch up
-and transition from delayed to real time operation.
-
-See Section~\ref{ClockConfig} for accelerated clock configuration
-settings.
-
 \subsubsection{Restarting Suites With A Different Run Mode?}
 
 The run mode is recorded in the suite state dump file. Cylc will not let
@@ -5918,9 +5936,6 @@ This results in \lstinline=DOG= having cycle points of
 The following topics have yet to be documented in detail.
 
 \begin{myitemize}
-    \item The difference between cold-, warm-, raw-, and re-starting, a suite:
-        see \lstinline=cylc run help=.
-
     \item Intervening in suites, e.g.\ stopping, removing, inserting tasks:
         see \lstinline=cylc control help=.
 
@@ -6038,10 +6053,9 @@ run, the only cycle point that can subsequently run is the next one. This
 is dangerous because if, accidentally or otherwise, the task runs for the
 wrong cycle point, its restart files will be corrupted such that the correct
 cycle point can no longer run (probably necessitating a cold-start).
-Instead, consider organising restart files by cycle point, through a file
+Instead, consider organising restart files by cycle point with a file
 or directory naming convention, and keep them in a simple rolling
-archive (cylc's filename templating and housekeeping utilities can easily
-do this for you). Then, given availability of external inputs, you can
+archive. Then, given availability of external inputs, you can
 easily rerun the task for any cycle point still in the restart archive.
 
 \subsection{Avoid Unnecessary Previous-Instance Dependence}
@@ -6596,58 +6610,6 @@ Graph lines can also be split up without line breaks, like this:
 \input{commands.tex}
 \lstset{language=transcript}
 
-\section{The Cylc Lockserver}
-\label{TheCylcLockserver}
-
-Each cylc user can optionally run his/her own lockserver to prevent
-accidental invocation of multiple instances of the same suite or task at
-the same time. The suite and task locks brokered by the lockserver are
-analogous to traditional lock files, but they work across a network,
-even for distributed suites containing tasks that start executing on one
-host and finish on another.
-
-Accidental invocation of multiple instances
-of the same suite or task at the same time can have serious consequences,
-so use of the lockserver should be considered for important operational
-suites, but it may be considered an unnecessary complication for general
-less critical usage, so it is currently disabled by default.
-
-To enable the lockserver:
-\lstset{language=suiterc}
-\begin{lstlisting}
-use lockserver = True
-\end{lstlisting}
-
-The suite will now abort at start-up if it cannot connect to the
-lockserver.  To start your lockserver daemon,
-\lstset{language=transcript}
-\begin{lstlisting}
-shell$ cylc lockserver start
-\end{lstlisting}
-
-To check that it is running,
-\begin{lstlisting}
-shell$ cylc lockserver status
-\end{lstlisting}
-
-For detailed usage information,
-\begin{lstlisting}
-shell$ cylc lockserver --help
-\end{lstlisting}
-
-There is a command line client interface,
-\begin{lstlisting}
-shell$ cylc lockclient --help
-\end{lstlisting}
-for interrogating the lockserver and managing locks manually (e.g.\
-releasing locks if a suite was killed before it could clean up after
-itself).
-
-To watch suite locks being acquired and released as a suite runs,
-\begin{lstlisting}
-shell$ watch cylc lockclient --print
-\end{lstlisting}
-
 \section{The gcylc Graph View}
 \label{TheGraphBasedcontrolGUI}
 
@@ -6813,9 +6775,6 @@ target suites - all suites are thus entirely isolated from one another.
 %
 %Each entry shows the time of logging, the name and cycle point of the
 %reporting task (in square brackets), and the logged message.
-%
-%In simulation mode, the logged time is the simulation mode accelerated clock time, not
-%real time.
 %
 %Existing log files are automatically rotated at start-up and,
 %individually, when they reach a size of 10 MB.  This maximum file

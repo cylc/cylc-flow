@@ -4,8 +4,8 @@
 2014/03/31 10:15:05 INFO - Suite starting at 2014-03-31 10:15:05.149485
 2014/03/31 10:15:05 INFO - Log event clock: real time
 2014/03/31 10:15:05 INFO - Run mode: live
-2014/03/31 10:15:05 INFO - Start tag: 20140101
-2014/03/31 10:15:05 INFO - Stop tag: 20140102T12
+2014/03/31 10:15:05 INFO - Initial point: 20140101
+2014/03/31 10:15:05 INFO - Final point: 20140102T12
 2014/03/31 10:15:05 INFO - Thread-4 start (Job Submission)
 2014/03/31 10:15:05 INFO - Thread-5 start (Request Handling)
 2014/03/31 10:15:05 INFO - Cold Start 20140101

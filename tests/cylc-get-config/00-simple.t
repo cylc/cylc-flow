@@ -91,9 +91,12 @@ TEST_NAME=$TEST_NAME_BASE-section1
 run_ok $TEST_NAME cylc get-config --item=[scheduling] $SUITE_NAME
 cmp_ok $TEST_NAME.stdout - <<__OUT__
 cycling mode = integer
-runahead factor = 2
+max active cycle points = 3
 initial cycle point = 1
 final cycle point = 1
+runahead limit = 
+[[dependencies]]
+   graph = OPS:finish-all => VAR
 [[queues]]
    [[[default]]]
       limit = 0
@@ -105,8 +108,6 @@ final cycle point = 1
    sequential = 
    clock-triggered = 
    exclude at start-up = 
-[[dependencies]]
-   graph = OPS:finish-all => VAR
 __OUT__
 cmp_ok $TEST_NAME.stderr - </dev/null
 #-------------------------------------------------------------------------------

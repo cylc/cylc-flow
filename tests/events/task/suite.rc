@@ -29,7 +29,7 @@ title = "test all event hooks"
 
     [[prep]]
         command scripting = """
-printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > $EVNTLOG
+printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > {{ EVNTLOG }}
                             """
     [[foo]]
         # timeout, retry, warning, succeeded 

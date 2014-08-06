@@ -4,8 +4,8 @@
 2013/09/30 15:23:52 INFO - Suite starting at 2013-09-30 15:23:52.423636
 2013/09/30 15:23:52 INFO - Log event clock: real time
 2013/09/30 15:23:52 INFO - Run mode: live
-2013/09/30 15:23:52 INFO - Start tag: 1
-2013/09/30 15:23:52 INFO - Stop tag: 1
+2013/09/30 15:23:52 INFO - Initial point: 1
+2013/09/30 15:23:52 INFO - Final point: 1
 2013/09/30 15:23:52 INFO - Thread-4 start (Job Submission)
 2013/09/30 15:23:52 INFO - Thread-5 start (Request Handling)
 2013/09/30 15:23:52 INFO - [a.1] -(setting:submitting)

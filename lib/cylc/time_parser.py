@@ -39,6 +39,9 @@ import isodatetime.data
 import isodatetime.parsers
 
 
+UTC_UTC_OFFSET_HOURS_MINUTES = (0, 0)
+
+
 class CylcTimeSyntaxError(cylc.CylcError.CylcError):
 
     """An error denoting invalid ISO/Cylc input syntax."""
@@ -103,7 +106,7 @@ class CylcTimeParser(object):
         self.num_expanded_year_digits = num_expanded_year_digits
         if dump_format is None:
             if num_expanded_year_digits:
-                dump_format = u"±XCCYYMMDDThhmmZ"
+                dump_format = u"+XCCYYMMDDThhmmZ"
             else:
                 dump_format = "CCYYMMDDThhmmZ"
             
@@ -226,8 +229,6 @@ class CylcTimeParser(object):
                          start_point=start_point,
                          interval=interval,
                          end_point=end_point
-                        # min_point=context_start_point,
-                        # max_point=context_end_point
             )
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
@@ -316,13 +317,17 @@ class TestRecurrenceSuite(unittest.TestCase):
         # Note: the following timezone will be Z-ified *after* truncation
         # or offsets are applied. 
         self._end_point = "20010506T1200+0200"
-        self._parsers = {0: CylcTimeParser(self._start_point,
-                                           self._end_point,
-                                           assumed_time_zone=(0, 0)),
-                         2: CylcTimeParser(self._start_point,
-                                           self._end_point,
-                                           num_expanded_year_digits=2,
-                                           assumed_time_zone=(0, 0))}
+        self._parsers = {
+            0: CylcTimeParser(
+                self._start_point, self._end_point,
+                assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+            ),
+            2: CylcTimeParser(
+                self._start_point, self._end_point,
+                num_expanded_year_digits=2,
+                assumed_time_zone=UTC_UTC_OFFSET_HOURS_MINUTES
+            )
+        }
 
     def test_first_recurrence_format(self):
         """Test the first ISO 8601 recurrence format."""

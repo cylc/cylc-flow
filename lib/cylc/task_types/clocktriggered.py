@@ -39,9 +39,9 @@ class clocktriggered(object):
         reached = False
         # check current time against expected start time
         # TODO ISO - DATE TIME CONVERSION?
-        if not hasattr(self, "c_time_as_seconds"):
-            iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.c_time))
-            self.c_time_as_seconds = int(iso_timepoint.get(
+        if not hasattr(self, "point_as_seconds"):
+            iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.point))
+            self.point_as_seconds = int(iso_timepoint.get(
                 "seconds_since_unix_epoch"))
             if iso_timepoint.time_zone.unknown:
                 utc_offset_hours, utc_offset_minutes = (
@@ -49,8 +49,8 @@ class clocktriggered(object):
                 )
                 utc_offset_in_seconds = (
                     3600 * utc_offset_hours + 60 * utc_offset_minutes)
-                self.c_time_as_seconds += utc_offset_in_seconds
-        delayed_start = self.c_time_as_seconds + self.real_time_delay * 3600
+                self.point_as_seconds += utc_offset_in_seconds
+        delayed_start = self.point_as_seconds + self.real_time_delay * 3600
         if time.time() > delayed_start:
            reached = True
         return reached

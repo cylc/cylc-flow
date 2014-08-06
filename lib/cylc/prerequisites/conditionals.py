@@ -36,16 +36,16 @@ class conditional_prerequisites(object):
     # Extracts T from "foo.T succeeded" etc.
     CYCLE_POINT_RE = re.compile( '^\w+\.(\d+).*$' ) # 
 
-    def __init__( self, owner_id, p_ict=None ):
+    def __init__( self, owner_id, start_point=None ):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
-        self.target_tags = []   # list of target cycle points (tags)
+        self.target_point_strings = []   # list of target cycle points
         self.auto_label = 0
         self.excess_labels = []
-        self.p_ict = p_ict
+        self.start_point = start_point
         self.pre_initial_messages = []
 
     def add( self, message, label = None, pre_initial = False ):
@@ -72,7 +72,7 @@ class conditional_prerequisites(object):
         self.satisfied[label]  = False
         m = re.match( self.__class__.CYCLE_POINT_RE, message )
         if m:
-            self.target_tags.append( m.groups()[0] )
+            self.target_point_strings.append( m.groups()[0] )
         if pre_initial:
             self.pre_initial_messages.append(label)
 
@@ -90,12 +90,13 @@ class conditional_prerequisites(object):
 
         drop_these = []
         for k in self.messages:
-            if self.p_ict:
+            if self.start_point:
                 task = re.search( r'(.*).(.*) ', self.messages[k])
                 if task.group:
                     try:
                         foo = task.group().split(".")[1].rstrip()
-                        if ( get_point( foo ) <  self.p_ict and foo != '1' ):
+                        if ( get_point( foo ) <  self.start_point and
+                                 foo != '1' ):
                             # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
                             # INTEGER CYCLING (AND MORE?)
                             drop_these.append(k)
@@ -172,8 +173,8 @@ class conditional_prerequisites(object):
         for label in self.messages:
             self.satisfied[ label ] = False
 
-    def get_target_tags( self ):
+    def get_target_points( self ):
         """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        return [get_point(p) for p in self.target_tags]
+        return [get_point(p) for p in self.target_point_strings]
 

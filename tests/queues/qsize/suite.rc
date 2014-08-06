@@ -30,7 +30,8 @@
             fi
             sleep 1
         done
-        if ((TASKS > 3)); then
+        if ((TASKS > {{q_size}})); then
+            echo "[FAIL] more than {{q_size}} tasks running: $TASKS" >&2
             false
         else
             true

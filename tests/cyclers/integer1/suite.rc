@@ -4,7 +4,7 @@
 [scheduling]
     initial cycle point = 1
     final cycle point = 16
-    runahead factor = 4 
+    runahead limit = 12
     cycling mode = integer
     [[special tasks]]
         sequential = seq
@@ -40,6 +40,8 @@ sleep 5
 
 [visualization]
     default node attributes = "style=filled"
+    initial cycle point = 1
+    final cycle point = 16
     [[node attributes]]
         foo = "fillcolor=slateblue"
         woo = "fillcolor=limegreen"

@@ -1,0 +1,9 @@
+edge "foo.20130228T00" "foo.20130229T00" solid black
+edge "foo.20130229T00" "foo.20130230T00" solid black
+edge "foo.20130230T00" "foo.20130301T00" solid black
+graph 
+node "foo.20130228T00" "foo\n20130228T00" unfilled box black lightgrey
+node "foo.20130229T00" "foo\n20130229T00" unfilled box black lightgrey
+node "foo.20130230T00" "foo\n20130230T00" unfilled box black lightgrey
+node "foo.20130301T00" "foo\n20130301T00" unfilled box black lightgrey
+stop

@@ -3,8 +3,8 @@
 2013/11/08 22:20:16 INFO - Suite starting at 2013-11-08 22:20:16.941435
 2013/11/08 22:20:16 INFO - Log event clock: real time
 2013/11/08 22:20:16 INFO - Run mode: live
-2013/11/08 22:20:16 INFO - Start tag: 2010010100
-2013/11/08 22:20:16 INFO - Stop tag: 2012010100
+2013/11/08 22:20:16 INFO - Initial point: 2010010100
+2013/11/08 22:20:16 INFO - Final point: 2012010100
 2013/11/08 22:20:16 INFO - Thread-3 start (Poll & Kill Commands)
 2013/11/08 22:20:16 INFO - Thread-5 start (Request Handling)
 2013/11/08 22:20:16 INFO - Thread-4 start (Job Submission)

@@ -1,0 +1,12 @@
+[scheduling]
+    initial cycle time = 2014050100
+    [[dependencies]]
+        graph = "async_install"
+        [[[0,6,12,18]]]
+            graph = """
+                foo[T-6] => bar => baz
+                baz | qux => wibble & foo
+            """
+[runtime]
+    [[root]]
+        command scripting = /bin/true

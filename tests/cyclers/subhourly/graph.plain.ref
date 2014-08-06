@@ -1,0 +1,17 @@
+edge "foo.20131231T2300Z" "bar.20131231T2300Z" solid black
+edge "foo.20131231T2300Z" "foo.20131231T2330Z" solid black
+edge "foo.20131231T2330Z" "bar.20131231T2330Z" solid black
+edge "foo.20131231T2330Z" "foo.20140101T0000Z" solid black
+edge "foo.20140101T0000Z" "bar.20140101T0000Z" solid black
+edge "foo.20140101T0000Z" "foo.20140101T0030Z" solid black
+edge "foo.20140101T0030Z" "bar.20140101T0030Z" solid black
+graph 
+node "bar.20131231T2300Z" "bar\n20131231T2300Z" unfilled box black lightgrey
+node "bar.20131231T2330Z" "bar\n20131231T2330Z" unfilled box black lightgrey
+node "bar.20140101T0000Z" "bar\n20140101T0000Z" unfilled box black lightgrey
+node "bar.20140101T0030Z" "bar\n20140101T0030Z" unfilled box black lightgrey
+node "foo.20131231T2300Z" "foo\n20131231T2300Z" unfilled box black lightgrey
+node "foo.20131231T2330Z" "foo\n20131231T2330Z" unfilled box black lightgrey
+node "foo.20140101T0000Z" "foo\n20140101T0000Z" unfilled box black lightgrey
+node "foo.20140101T0030Z" "foo\n20140101T0030Z" unfilled box black lightgrey
+stop

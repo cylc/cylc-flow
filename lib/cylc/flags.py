@@ -34,8 +34,10 @@ verbose = False
 # debug mode
 debug = False
 
+# TODO - run mode should be a flag
+
 # utc mode
 utc = False
 
 # Backwards compatible cycling - allow start-up tasks, async graphs, etc.
-back_comp_cycling = False
+backwards_compat_cycling = False

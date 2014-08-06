@@ -4,8 +4,8 @@
 2013/11/05 10:48:58 INFO - Suite starting at 2013-11-05 10:48:58.503573
 2013/11/05 10:48:58 INFO - Log event clock: real time
 2013/11/05 10:48:58 INFO - Run mode: live
-2013/11/05 10:48:58 INFO - Start tag: 1
-2013/11/05 10:48:58 INFO - Stop tag: 1
+2013/11/05 10:48:58 INFO - Initial point: 1
+2013/11/05 10:48:58 INFO - Final point: 1
 2013/11/05 10:48:58 INFO - Thread-4 start (Job Submission)
 2013/11/05 10:48:58 INFO - Thread-5 start (Request Handling)
 2013/11/05 10:48:58 DEBUG - [reloader.1] -task proxy added to the pool

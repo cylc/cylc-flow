@@ -74,23 +74,24 @@ To just alter the timezone used in the date/time cycle point format, see
 \ref{cycle-point-num-expanded-year-digits}.
 
 Cylc usually uses a \lstinline=CCYYMMDDThhmmZ= (\lstinline=Z= in the special
-case of UTC) or \lstinline=CCYYMMDDThhmm±hhmm= format for writing down
-date/time cycle points, which follows one of the basic formats outlined in the
-ISO 8601 standard. For example, a cycle point on the 3rd of February 2001 at
-4:50 in the morning, UTC (+0000 timezone), would be written
+case of UTC) or \lstinline=CCYYMMDDThhmm+hhmm= format (\lstinline=+= standing
+for \lstinline=+= or \lstinline=-= here) for writing down date/time cycle
+points, which follows one of the basic formats outlined in the ISO 8601
+standard. For example, a cycle point on the 3rd of February 2001 at 4:50 in
+the morning, UTC (+0000 timezone), would be written
 \lstinline=20010203T0450Z=. Similarly, for the the 3rd of February 2001 at
 4:50 in the morning, +1300 timezone, cylc would write
 \lstinline=20010203T0450+1300=.
 
 You may use the isodatetime library's syntax to write dates and times in ISO
 8601 formats - \lstinline=CC= for century, \lstinline=YY= for decade and
-decadal year, \lstinline=±X= for expanded year digits, thereafter following
-the ISO 8601 standard example notation except for fractional digits, which are
-represented as \lstinline=,ii= for \lstinline=hh=, \lstinline=,nn= for
-\lstinline=mm=, etc. For example, to write date/times as week dates with
-fractional hours, set cycle point format to \lstinline=CCYYWwwDThh,iiZ= e.g.
-\lstinline=1987W041T08,5Z= for 08:30 UTC on Monday on the fourth ISO week of
-1987.
+decadal year, \lstinline=+X= for expanded year digits and their positive or
+negative sign, thereafter following the ISO 8601 standard example notation
+except for fractional digits, which are represented as \lstinline=,ii= for
+\lstinline=hh=, \lstinline=,nn= for \lstinline=mm=, etc. For example, to write
+date/times as week dates with fractional hours, set cycle point format to
+\lstinline=CCYYWwwDThh,iiZ= e.g. \lstinline=1987W041T08,5Z= for 08:30 UTC on
+Monday on the fourth ISO week of 1987.
 
 You can also use a subset of the strptime/strftime POSIX standard - supported
 tokens are \lstinline=\%F=, \lstinline=\%H=, \lstinline=\%M=, \lstinline=\%S=,
@@ -167,102 +168,12 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}job submission{]]}]{[cylc] $\rightarrow$ [[job submission]]}
-
-Tasks ready to submit are now queued for processing in a background
-worker thread, so submitting a lot of tasks at once does not hold cylc
-back.  In the job submission thread tasks are are batched, with members
-of each batch being submitted in parallel. Batches are processed serially,
-with a delay between batches, to avoid swamping the host system with too
-many simultaneous job submissions.
-
-The time required for a single task's job submission to complete
-typically depends on whether it is a remote task (for which an ssh
-connection must be established and used) and whether dynamic host
-selection is used (see~\ref{DynamicHostSelection} (a dynamic host
-selection command runs as part of the job submission command). The time
-taken for a batch of parallel job submissions to complete will be
-roughly the duration of the slowest member process.
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ batch size}
-
-The maximum number of tasks to be submitted in a single batch, in the
-job submission thread. cylc waits for all batch member job-submissions
-to complete before proceeding to the next batch.
-
+\subsubsection[process pool size]{[cylc] $\rightarrow$ process pool size}
+Number of process pool worker processes used to execute shell commands
+(job submission, event handlers, job poll and kill commands).
 \begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[job submission]] $\rightarrow$ delay between batches}
-
-It may cause a problem for some batch queue schedulers to submit too
-many jobs at once, so cylc allows a configurable delay between job
-submission batches.
-
-\begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
- \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second)
-    \item {\em default:} PT0S (0 seconds)
-\end{myitemize}
-
-\subsubsection[{[[}poll and kill command submission{]]}]{[cylc] $\rightarrow$ [[poll and kill command submission]]}
-
-Task poll and kill commands are queued to a worker thread that processes
-them in parallel, in batches to limit the number that can execute at
-once.
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ batch size}
-
-The maximum number of poll and kill commands to execute at once, before
-moving on to the next batch.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[poll and kill command submission]] $\rightarrow$ delay between batches}
-
-How long to wait, expressed as an ISO 8601 duration/interval, before
-processing the next batch of poll and kill commands.
-
-\begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
- \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
-    \item {\em default:} PT0S (0 seconds)
-\end{myitemize}
-
-
-\subsubsection[{[[}event handler submission{]]}]{[cylc] $\rightarrow$ [[event handler submission]]}
-
-Task event handlers are queued to a worker thread that processes them in
-parallel, in batches to limit the number that can execute at once ({\em
-suite event handlers}, on the other hand, are executed as background
-sub-processes in the main thread, not queued to the task
-event handler thread).
-
-\paragraph[batch size]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ batch size}
-
-The maximum number of event handlers to execute at once, before moving
-on to the next batch.
-
-\begin{myitemize}
-    \item {\em type:} integer (minimum 1)
-    \item {\em default:} 10
-\end{myitemize}
-
-\paragraph[delay between batches]{[cylc] $\rightarrow$ [[event handler submission]] $\rightarrow$ delay between batches}
-
-How long to wait, expressed as an ISO 8601 duration/interval, before
-processing the next batch of event handlers.
-
-\begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
- \lstinline=PT10S=, 10 seconds, \lstinline=PT1S=, 1 second) - minimum 0
- seconds.
-    \item {\em default:} PT0S (0 seconds)
+    \item {\em type:} integer
+    \item {\em default:} None (number of processor cores on the suite host)
 \end{myitemize}
 
 \subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
@@ -356,65 +267,31 @@ suite will abort if the handler fails.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}lockserver{]]}]{[cylc] $\rightarrow$ [[lockserver]]}
-
-The cylc lockserver brokers suite and task locks on the network (these
-are somewhat analagous to traditional local {\em lock files}). It
-prevents multiple instances of a suite or task from being invoked
-at the same time (via scheduler instances or \lstinline=cylc submit=).
-
-See \lstinline=cylc lockserver --help= for
-how to run the lockserver, and \lstinline=cylc lockclient --help= for
-occasional manual lock management requirements.
-
-\paragraph[enable]{[cylc] $\rightarrow$ [[lockserver]] $\rightarrow$ enable}
-
-The lockserver is currently disabled by default. It is intended mainly for
-operational use.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
-\paragraph[simultaneous instances]{[cylc] $\rightarrow$ [[lockserver]] $\rightarrow$ simultaneous instances}
-
-By default the lockserver prevents multiple simultaneous instances of a
-suite from running even under different registered names. But allowing
-this may be desirable if the I/O paths of every task in the suite are
-dynamically configured to be suite specific (and similarly for the suite
-state dump and logging directories, by using suite identity variables in
-their directory paths). Note that {\em the lockserver cannot protect you
-from running multiple distinct {\bf copies} of a suite simultaneously}.
-
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
 \subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
 
-Variables defined here are exported into the environment in which cylc
-itself runs. They are then available to {\em local processes spawned
-directly by cylc}. Any variables read by task event handlers must be
-defined here, for instance, because event handlers are executed
-directly by cylc, not by running tasks. And similarly the {command
-lines} issued by cylc to invoke event handlers or to submit task
-job scripts could, in principle, make use of environment variables
-defined here.
-\paragraph{Warnings}
+Environment variables defined in this section are passed to suite and
+task event handlers.
 
 \begin{myitemize}
-    \item Cylc local variables are not available to
-        executing tasks unless you happen to choose a local direct job
-        submission method.  {\em Always use task runtime environments to
-        pass variables into the task execution environment
-        (\ref{AppendixTaskExecutionEnvironment}).}
-    \item Unlike task execution environment variables, which are written
-        to job scripts and interpreted by the shell at run time,
-        cylc local environment variables are written directly
-        to the environment by Python as literal strings {\em  so
-        shell variable expansion expressions cannot be used here.}
+    \item These variables are not passed to tasks - use task runtime
+        variables for that. Similarly, task runtime variables are not
+        available to event handlers - which are executed by cylc, not by
+        tasks, in response to task events.
+        
+    \item Cylc-defined environment variables such as
+        \lstinline=$CYLC_SUITE_RUN_DIR= are not passed to task event
+        handlers by default, but you can make them available by
+        extracting them to the cylc environment like this:
+\begin{lstlisting}
+[cylc]
+    [[environment]]
+        CYLC_SUITE_RUN_DIR = $CYLC_SUITE_RUN_DIR
+\end{lstlisting}
+
+    \item These variables - unlike task execution environment variables
+        which are written to job scripts and interpreted by the shell at
+        task run time - are not interpreted by the shell prior to use
+        so shell variable expansion expressions cannot be used here.
 \end{myitemize}
 
 \paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
@@ -426,8 +303,8 @@ definition is preserved) and are not evaluated or manipulated by
 cylc, so any variable assignment expression that is legal in the
 shell in which cylc is running can be used (but see the warning
 above on variable expansions, which will not be evaluated).
-White space around the `$=$' is allowed (as far as cylc's suite.rc
-parser is concerned these are normal configuration items).
+White space around the `$=$' is allowed (as far as cylc's file 
+parser is concerned these are just suite configuration items).
 
 \begin{myitemize}
     \item {\em type:} string
@@ -491,7 +368,7 @@ A reference test run will abort immediately if any task fails, unless
 in a list IDs of tasks that are expected to fail.
 
 \begin{myitemize}
-    \item {\em type:} string list (task IDs: \lstinline=name.tag=)
+    \item {\em type:} string list (task IDs: \lstinline=name.cycle_point=)
     \item {\em default:} (none)
     \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}
@@ -544,13 +421,12 @@ This section allows cylc to determine when tasks are ready to run.
 
 \subsubsection[initial cycle point]{[scheduling] $\rightarrow$ initial cycle point}
 
-At startup each cycling task (unless specifically excluded under
-[special tasks]) will be inserted into the suite with this cycle point,
+In a cold start each cycling task (unless specifically excluded under
+[special tasks]) will be loaded into the suite with this cycle point,
 or with the closest subsequent valid cycle point for the task. Note that
-whether or not {\em cold-start tasks}, specified under [special tasks],
-are inserted, and in what state they are inserted, depends on the start
-up method - cold, warm, or raw.  If this item is provided you can
-override it on the command line or in the gcylc suite start panel.
+special {\em cold-start tasks} are not loaded in a warm start. If this item is
+provided you can override it on the command line or in the gcylc suite start
+panel.
 
 In date-time cycling, if you do not provide time zone information for this,
 it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
@@ -575,7 +451,8 @@ the \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time point representation (e.g.
- \lstinline=CCYYMMDDThhmm=, 19951231T1230)
+ \lstinline=CCYYMMDDThhmm=, 19951231T1230) or ISO 8601 date/time offset
+    (e.g. +P1D)
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -594,18 +471,54 @@ in a year) or using integer cycling.
 \end{myitemize}
 
 
-\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead factor}
+\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
+\label{runahead limit}
 
-The suite runahead limit prevents the fastest tasks in a suite from
+Runahead limiting prevents the fastest tasks in a suite from
 getting too far ahead of the slowest ones, as documented in
 Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
 a special runahead held state until slower tasks have caught up
-sufficiently. The limit computed as this factor of the suite's minimum
-cycling interval.
+sufficiently.
+
+The default behaviour is to limit the number of tasks
+by only allowing up to \lstinline=N= (default 3) consecutive cycle
+points to be active at any time, up-adjusted if necessary for any
+future triggering.
+
+\lstinline=runahead limit= is deprecated in favour of specifying this
+maximum number of active cycle points (\ref{max active cycle points}).
+
 \begin{myitemize}
-    \item {\em type:} integer multiple of the suite's minimum cycling interval
-    \item {\em default:} $2$
+    \item {\em type:} Cycle interval string e.g. \lstinline=PT12H=
+    for a 12 hour limit under ISO 8601 cycling.
+    \item {\em default:} (none)
 \end{myitemize}
+
+
+\subsubsection[max active cycle points]{[scheduling] $\rightarrow$
+ max active cycle points}
+\label{max active cycle points}
+
+Runahead limiting prevents the fastest tasks in a suite from
+getting too far ahead of the slowest ones, as documented in
+Section~\ref{RunaheadLimit}. Tasks exceeding the limit are put into
+a special runahead held state until slower tasks have caught up
+sufficiently.
+
+The default behaviour is to limit the number of tasks
+by only allowing up to \lstinline=N= (default 3) consecutive cycle
+points to be active at any time, up-adjusted if necessary for any
+future triggering.
+
+This input allows you to change \lstinline=N=, the maximum
+number of consecutive cycle points that can be active at once. This
+supersedes \ref{runahead limit}.
+
+\begin{myitemize}
+    \item {\em type:} integer
+    \item {\em default:} 3
+\end{myitemize}
+
 
 \subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}
 

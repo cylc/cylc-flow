@@ -21,8 +21,9 @@ Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
 
-import integer
-import iso8601
+from . import integer
+from . import iso8601
+from isodatetime.data import Calendar
 
 
 ISO8601_CYCLING_TYPE = 'iso8601'
@@ -31,6 +32,11 @@ INTEGER_CYCLING_TYPE = 'integer'
 
 POINTS = {INTEGER_CYCLING_TYPE: integer.IntegerPoint,
           ISO8601_CYCLING_TYPE: iso8601.ISO8601Point}
+
+POINT_RELATIVE_GETTERS = {
+    INTEGER_CYCLING_TYPE: integer.get_point_relative,
+    ISO8601_CYCLING_TYPE: iso8601.get_point_relative
+}
 
 INTERVALS = {INTEGER_CYCLING_TYPE: integer.IntegerInterval,
              ISO8601_CYCLING_TYPE: iso8601.ISO8601Interval}
@@ -43,7 +49,7 @@ INIT_FUNCTIONS = {INTEGER_CYCLING_TYPE: integer.init_from_cfg,
 
 BACKWARDS_COMPATIBILITY_FUNCTIONS = {
     INTEGER_CYCLING_TYPE: lambda: True,
-    ISO8601_CYCLING_TYPE: iso8601.get_backwards_compatibility_mode
+    ISO8601_CYCLING_TYPE: iso8601.get_backwards_compat_mode
 }
 
 
@@ -54,12 +60,14 @@ class DefaultCycler(object):
     TYPE = None
 
 
-def get_backwards_compatibility_mode(*args, **kwargs):
+def get_backwards_compat_mode(*args, **kwargs):
+    """Return whether we are in backwards compatibility cycling mode."""
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
     return BACKWARDS_COMPATIBILITY_FUNCTIONS[cycling_type](*args, **kwargs)
 
 
 def get_point(*args, **kwargs):
+    """Return a cylc.cycling.PointBase-derived object from a string."""
     if args[0] is None:
         return None
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
@@ -67,12 +75,20 @@ def get_point(*args, **kwargs):
 
 
 def get_point_cls(cycling_type=None):
+    """Return the cylc.cycling.PointBase-derived class we're using."""
     if cycling_type is None:
         cycling_type = DefaultCycler.TYPE
     return POINTS[cycling_type]
 
 
+def get_point_relative(*args, **kwargs):
+    """Return a point from an offset expression and a base point."""
+    cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
+    return POINT_RELATIVE_GETTERS[cycling_type](*args, **kwargs)
+
+
 def get_interval(*args, **kwargs):
+    """Return a cylc.cycling.IntervalBase-derived object from a string."""
     if args[0] is None:
         return None
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
@@ -80,12 +96,14 @@ def get_interval(*args, **kwargs):
 
 
 def get_interval_cls(cycling_type=None):
+    """Return the cylc.cycling.IntervalBase-derived class we're using."""
     if cycling_type is None:
         cycling_type = DefaultCycler.TYPE
     return INTERVALS[cycling_type]
 
 
 def get_sequence(*args, **kwargs):
+    """Return a cylc.cycling.SequenceBase-derived object from a string."""
     if args[0] is None:
         return None
     cycling_type = kwargs.pop("cycling_type", DefaultCycler.TYPE)
@@ -93,14 +111,16 @@ def get_sequence(*args, **kwargs):
 
 
 def get_sequence_cls(cycling_type=None):
+    """Return the cylc.cycling.SequenceBase-derived class we're using."""
     if cycling_type is None:
         cycling_type = DefaultCycler.TYPE
     return SEQUENCES[cycling_type]
 
 
 def init_cyclers(cfg):
+    """Initialise cycling specifics using the suite configuration (cfg)."""
     DefaultCycler.TYPE = cfg['scheduling']['cycling mode']
-    if DefaultCycler.TYPE in ['360day','gregorian']:
+    if DefaultCycler.TYPE in Calendar.MODES:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
-    for cycling_type, init_func in INIT_FUNCTIONS.items():
+    for init_func in INIT_FUNCTIONS.values():
         init_func(cfg)

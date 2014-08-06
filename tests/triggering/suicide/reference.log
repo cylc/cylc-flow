@@ -4,8 +4,8 @@
 2014/01/08 10:04:17 INFO - Suite starting at 2014-01-08 10:04:17.657578
 2014/01/08 10:04:17 INFO - Log event clock: real time
 2014/01/08 10:04:17 INFO - Run mode: live
-2014/01/08 10:04:17 INFO - Start tag: 1
-2014/01/08 10:04:17 INFO - Stop tag: 1
+2014/01/08 10:04:17 INFO - Initial point: 1
+2014/01/08 10:04:17 INFO - Final point: 1
 2014/01/08 10:04:17 INFO - Thread-4 start (Job Submission)
 2014/01/08 10:04:17 INFO - Thread-5 start (Request Handling)
 2014/01/08 10:04:17 INFO - [hello.1] -triggered off []

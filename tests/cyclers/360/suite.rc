@@ -13,3 +13,6 @@
 [runtime]
     [[foo]]
         command scripting = true
+[visualization]
+    initial cycle point = 20130228T00
+    final cycle point = 20130301T00

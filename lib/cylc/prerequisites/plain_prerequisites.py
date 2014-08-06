@@ -30,24 +30,24 @@ class plain_prerequisites(object):
     # Extracts T from "foo.T succeeded" etc.
     CYCLE_POINT_RE = re.compile( '^\w+\.(\d+).*$' )
 
-    def __init__( self, owner_id, p_ict=None ):
+    def __init__( self, owner_id, start_point=None ):
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
-        self.target_tags = []   # list of target cycle points (tags)
+        self.target_point_strings = []   # list of target cycle points (tags)
         self.auto_label = 0
         self.owner_id = owner_id
-        self.p_ict = p_ict
+        self.start_point = start_point
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
-        if self.p_ict:
+        if self.start_point:
             task = re.search( r'(.*).(.*) ', message)
             if task.group:
                 try:
                     foo = task.group().split(".")[1].rstrip()
-                    if ( get_point( foo ) <  self.p_ict ):
+                    if ( get_point( foo ) <  self.start_point ):
                         return
                 except IndexError:
                     pass
@@ -71,7 +71,7 @@ class plain_prerequisites(object):
         self.satisfied_by[label] = None
         m = re.match( self.__class__.CYCLE_POINT_RE, message )
         if m:
-            self.target_tags.append( m.groups()[0] )
+            self.target_point_strings.append( m.groups()[0] )
 
     def remove( self, message ):
         lbl = self.labels[message]
@@ -80,8 +80,8 @@ class plain_prerequisites(object):
         del self.satisfied[lbl]
         del self.satisfied_by[lbl]
         m = re.match( self.__class__.CYCLE_POINT_RE, message )
-        if m and m.groups()[0] in self.target_tags:
-            self.target_tags.remove( m.groups()[0] )
+        if m and m.groups()[0] in self.target_point_strings:
+            self.target_point_strings.remove( m.groups()[0] )
 
     def all_satisfied( self ):
         return not ( False in self.satisfied.values() )
@@ -115,8 +115,8 @@ class plain_prerequisites(object):
         for label in self.messages:
             self.satisfied[ label ] = False
 
-    def get_target_tags( self ):
+    def get_target_points( self ):
         """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        return [ get_point(p) for p in self.target_tags ]
+        return [ get_point(p) for p in self.target_point_strings ]
 

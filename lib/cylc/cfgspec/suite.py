@@ -27,14 +27,25 @@ from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
 from isodatetime.dumpers import TimePointDumper
-from isodatetime.data import TimePoint, SECONDS_IN_DAY
+from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
-
 
 "Define all legal items and values for cylc suite definition files."
 
 interval_parser = TimeIntervalParser()
 
+def _coerce_cycleinterval( value, keys, args ):
+    """Coerce value to a cycle interval."""
+    value = _strip_and_unquote( keys, value )
+    if value.isdigit():
+        # Old runahead limit format.
+        return value
+    parser = TimeIntervalParser()
+    try:
+        parser.parse(value)
+    except ValueError:
+        raise IllegalValueError("interval", keys, value)
+    return value
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle point."""
@@ -108,6 +119,12 @@ def _coerce_cycletime_time_zone( value, keys, args ):
     return value
 
 
+def _coerce_final_cycletime( value, keys, args ):
+    """Coerce final cycle point."""
+    value = _strip_and_unquote( keys, value )
+    return value
+
+
 def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote( keys, value )
@@ -120,7 +137,7 @@ def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     except ValueError:
         raise IllegalValueError("ISO 8601 interval", keys, value)
     days, seconds = interval.get_days_and_seconds()
-    seconds += days * SECONDS_IN_DAY
+    seconds += days * Calendar.default().SECONDS_IN_DAY
     return seconds
 
 
@@ -140,6 +157,8 @@ def _coerce_interval_list( value, keys, args, back_comp_unit_factor=1 ):
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
+coercers['cycleinterval'] = _coerce_cycleinterval
+coercers['final_cycletime'] = _coerce_final_cycletime
 coercers['interval'] = _coerce_interval
 coercers['interval_minutes'] = lambda *a: _coerce_interval(
     *a, back_comp_unit_factor=60)
@@ -148,6 +167,7 @@ coercers['interval_list'] = _coerce_interval_list
 coercers['interval_minutes_list'] = lambda *a: _coerce_interval_list(
     *a, back_comp_unit_factor=60)
 coercers['interval_seconds_list'] = _coerce_interval_list
+
 
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
@@ -161,22 +181,7 @@ SPEC = {
         'force run mode'                      : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),
         'log resolved dependencies'           : vdr( vtype='boolean', default=False ),
-        'job submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='interval_seconds', vmin=0, default=0 ),
-            },
-        'event handler submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='interval_seconds', vmin=0, default=0  ),
-            },
-        'poll and kill command submission' : {
-            'batch size'                      : vdr( vtype='integer', vmin=1, default=10 ),
-            'delay between batches'           : vdr( vtype='integer', vmin=0, default=0  ),
-            },
-        'lockserver' : {
-            'enable'                          : vdr( vtype='boolean', default=False ),
-            'simultaneous instances'          : vdr( vtype='boolean', default=False ),
-            },
+        'process pool size'                   : vdr( vtype='integer', default=None ),
         'environment' : {
             '__MANY__'                        : vdr( vtype='string' ),
             },
@@ -209,9 +214,10 @@ SPEC = {
         },
     'scheduling' : {
         'initial cycle point'                 : vdr(vtype='cycletime'),
-        'final cycle point'                   : vdr(vtype='cycletime'),
-        'cycling mode'                             : vdr(vtype='string', default="gregorian", options=["360day","gregorian","integer"] ),
-        'runahead factor'                     : vdr(vtype='integer', default=2 ),
+        'final cycle point'                   : vdr(vtype='final_cycletime'),
+        'cycling mode'                        : vdr(vtype='string', default=Calendar.MODE_GREGORIAN, options=Calendar.MODES.keys() + ["integer"] ),
+        'runahead limit'                      : vdr(vtype='cycleinterval' ),
+        'max active cycle points'             : vdr(vtype='integer', default=3),
         'queues' : {
             'default' : {
                 'limit'                       : vdr( vtype='integer', default=0),
@@ -318,7 +324,7 @@ SPEC = {
         },
     'visualization' : {
         'initial cycle point'                  : vdr( vtype='cycletime' ),
-        'final cycle point'                    : vdr( vtype='cycletime' ),
+        'final cycle point'                    : vdr( vtype='final_cycletime' ),
         'collapsed families'                  : vdr( vtype='string_list', default=[] ),
         'use node color for edges'            : vdr( vtype='boolean', default=True ),
         'use node color for labels'           : vdr( vtype='boolean', default=False ),
@@ -340,7 +346,6 @@ def upg( cfg, descr ):
     # TODO - should abort if obsoleted items are encountered
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
-    # TODO - replace ISO version here:
     u.obsolete( '6.0.0', ['visualization', 'runtime graph'] )
     u.obsolete( '6.0.0', ['development'] )
     u.deprecate(
@@ -363,9 +368,11 @@ def upg( cfg, descr ):
         ['visualization', 'final cycle time'], ['visualization', 'final cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
-    u.deprecate( '6.0.0', ['scheduling', 'runahead limit'], ['scheduling', 'runahead factor'],
-            converter( lambda x:'2', 'using default runahead factor' ))
-    u.obsolete( '6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'] )
+    u.obsolete('6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'])
+    u.obsolete('6.0.0', ['cylc', 'job submission'])
+    u.obsolete('6.0.0', ['cylc', 'event handler submission'])
+    u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
+    u.obsolete('6.0.0', ['cylc', 'lockserver'])
     u.upgrade()
 
 class sconfig( config ):

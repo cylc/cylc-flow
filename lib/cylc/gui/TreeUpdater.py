@@ -140,14 +140,14 @@ class TreeUpdater(threading.Thread):
         if not path:
             return False
         model = self.ttreeview.get_model()
-        ctime = model.get_value(model.get_iter(path), 0)
+        point_string = model.get_value(model.get_iter(path), 0)
         name = model.get_value(model.get_iter(path), 1)
-        if ctime == name:
+        if point_string == name:
             # We are hovering over a cycle point row.
-            task_id = ctime
+            task_id = point_string
         else:
             # We are hovering over a task or family row.
-            task_id = cylc.TaskID.get( name, ctime )
+            task_id = cylc.TaskID.get( name, point_string )
         if task_id != self._prev_tooltip_task_id:
             # Clear tooltip when crossing row boundaries.
             self._prev_tooltip_task_id = task_id
@@ -190,9 +190,9 @@ class TreeUpdater(threading.Thread):
                               (self.updater.fam_state_summary, new_fam_data)]:
             # Populate new_data and new_fam_data.
             for id in summary:
-                name, ctime = cylc.TaskID.split( id )
-                if ctime not in dest:
-                    dest[ ctime ] = {}
+                name, point_string = cylc.TaskID.split( id )
+                if point_string not in dest:
+                    dest[ point_string ] = {}
                 state = summary[ id ].get( 'state' )
                 message = summary[ id ].get( 'latest_message', )
 
@@ -237,7 +237,7 @@ class TreeUpdater(threading.Thread):
                             )
                         )
                 if isinstance(meant, float):
-                    if not meant:
+                    if meant == 0:
                         # This is a very fast (sub-cylc-resolution) task.
                         meant = 1
                     meant = int(meant)
@@ -254,24 +254,25 @@ class TreeUpdater(threading.Thread):
                 except KeyError:
                     icon = self.dots['empty']
 
-                dest[ ctime ][ name ] = [ state, message, tsub_string,
-                                          tstart_string, meant_string,
-                                          tetc_string, icon ]
+                dest[ point_string ][ name ] = [ state, message, tsub_string,
+                                                 tstart_string, meant_string,
+                                                 tetc_string, icon ]
 
         tree_data = {}
         self.ttreestore.clear()
-        times = new_data.keys()
-        times.sort()
+        point_strings = new_data.keys()
+        point_strings.sort()
 
-        for ctime in times:
+        for point_string in point_strings:
             f_data = [ None ] * 7
-            if "root" in new_fam_data[ctime]:
-                f_data = new_fam_data[ctime]["root"]
-            piter = self.ttreestore.append(None, [ ctime, ctime ] + f_data )
+            if "root" in new_fam_data[point_string]:
+                f_data = new_fam_data[point_string]["root"]
+            piter = self.ttreestore.append(
+                None, [ point_string, point_string ] + f_data )
             family_iters = {}
             name_iters = {}
             task_named_paths = []
-            for name in new_data[ ctime ].keys():
+            for name in new_data[ point_string ].keys():
                 # The following line should filter by allowed families.
                 families = list(self.ancestors[name])
                 families.sort(lambda x, y: (y in self.ancestors[x]) -
@@ -295,7 +296,7 @@ class TreeUpdater(threading.Thread):
 
             for named_path in task_named_paths:
                 name = named_path[-1]
-                state = new_data[ctime][name][0]
+                state = new_data[point_string][name][0]
                 self._update_path_info( piter, state, name )
                 f_iter = piter
                 for i, fam in enumerate(named_path[:-1]):
@@ -306,14 +307,15 @@ class TreeUpdater(threading.Thread):
                     else:
                         # Add family to tree
                         f_data = [ None ] * 7
-                        if fam in new_fam_data[ctime]:
-                            f_data = new_fam_data[ctime][fam]
+                        if fam in new_fam_data[point_string]:
+                            f_data = new_fam_data[point_string][fam]
                         f_iter = self.ttreestore.append(
-                                      f_iter, [ ctime, fam ] + f_data )
+                                      f_iter, [ point_string, fam ] + f_data )
                         family_iters[fam] = f_iter
                     self._update_path_info( f_iter, state, name )
                 # Add task to tree
-                self.ttreestore.append( f_iter, [ ctime, name ] + new_data[ctime][name])
+                self.ttreestore.append(
+                    f_iter, [ point_string, name ] + new_data[point_string][name])
         if self.autoexpand:
             autoexpand_me = self._get_autoexpand_rows()
             for row_id in list(autoexpand_me):
@@ -335,9 +337,9 @@ class TreeUpdater(threading.Thread):
     def _get_row_id( self, model, rpath ):
         # Record a rows first two values.
         riter = model.get_iter( rpath )
-        ctime = model.get_value( riter, 0 )
+        point_string = model.get_value( riter, 0 )
         name = model.get_value( riter, 1 )
-        return (ctime, name)
+        return (point_string, name)
 
     def _add_expanded_row( self, view, rpath, expand_me ):
         # Add user-expanded rows to a list of rows to be expanded.
@@ -350,7 +352,7 @@ class TreeUpdater(threading.Thread):
         return False
 
     def _get_user_expanded_row_ids( self ):
-        """Return a list of row ctimes and names that were user expanded."""
+        """Return a list of user-expanded row point_strings and names."""
         names = []
         model = self.ttreeview.get_model()
         if model is None or model.get_iter_first() is None:
@@ -359,9 +361,9 @@ class TreeUpdater(threading.Thread):
         return names
 
     def _expand_row( self, model, rpath, riter, expand_me ):
-        """Expand a row if it matches expand_me ctimes and names."""
-        ctime_name_tuple = self._get_row_id( model, rpath )
-        if ctime_name_tuple in expand_me:
+        """Expand a row if it matches expand_me point_strings and names."""
+        point_string_name_tuple = self._get_row_id( model, rpath )
+        if point_string_name_tuple in expand_me:
             self.ttreeview.expand_to_path( rpath )
         return False
 
@@ -391,12 +393,12 @@ class TreeUpdater(threading.Thread):
         autoexpand_me = []
         r_iter = self.ttreestore.get_iter_first()
         while r_iter is not None:
-            ctime = self.ttreestore.get_value( r_iter, 0 )
+            point_string = self.ttreestore.get_value( r_iter, 0 )
             name = self.ttreestore.get_value( r_iter, 1 )
-            if (( ctime, name ) not in autoexpand_me and
+            if (( point_string, name ) not in autoexpand_me and
                 self._calc_autoexpand_row( r_iter )):
                 # This row should be auto-expanded.
-                autoexpand_me.append( ( ctime, name ) )
+                autoexpand_me.append( ( point_string, name ) )
                 # Now check whether the child rows also need this.
                 new_iter = self.ttreestore.iter_children( r_iter )
             else:
@@ -417,11 +419,11 @@ class TreeUpdater(threading.Thread):
         """
         path = self.ttreestore.get_path( row_iter )
         sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
-        ctime = self.ttreestore.get_value( row_iter, 0 )
+        point_string = self.ttreestore.get_value( row_iter, 0 )
         name = self.ttreestore.get_value( row_iter, 1 )
         if any( [ s in self.autoexpand_states for s in sub_st ] ):
             # return True  # TODO: Option for different expansion rules?
-            if ctime == name:
+            if point_string == name:
                 # Expand cycle points if any child states comply.
                 return True
             child_iter = self.ttreestore.iter_children( row_iter )
