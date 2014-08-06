@@ -19,7 +19,7 @@ description = """change final cycle."""
     [[reloader]]
         command scripting = """
 # change the final cycle:
-perl -pi -e 's/(final cycle time = )20100102T00( # marker)/\1 2010010112\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(final cycle time = )20100102T00( # marker)/\1 20100101T12\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
 sleep 5

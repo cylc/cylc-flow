@@ -25,6 +25,7 @@ from cylc.cycling.loader import (get_point, get_point_relative,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
                                  ISO8601_CYCLING_TYPE,
                                  get_backwards_compat_mode)
+from cylc.cycling.iso8601 import get_point_relative
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
@@ -236,8 +237,13 @@ class config( object ):
             self.cfg['scheduling']['initial cycle point'] = str(initial_point)
 
         if self.cfg['scheduling']['final cycle point'] is not None:
-            final_point = get_point(
-                self.cfg['scheduling']['final cycle point']).standardise()
+            try:
+                final_point = get_point_relative(
+                        self.cfg['scheduling']['final cycle point'],
+                        initial_point).standardise()
+            except ValueError:
+                final_point = get_point(
+                    self.cfg['scheduling']['final cycle point']).standardise()
             self.cfg['scheduling']['final cycle point'] = str(final_point)
 
         self.cli_initial_point = get_point(self._cli_initial_point_string)
