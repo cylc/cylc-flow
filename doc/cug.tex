@@ -5270,7 +5270,7 @@ suite-connecting user commands, with the \lstinline=--pyro-timeout= option.
 \subsection{Runahead Limiting}
 \label{RunaheadLimit}
 
-Runahead limiting prevent the fastest tasks in a suite from getting too far
+Runahead limiting prevents the fastest tasks in a suite from getting too far
 ahead of the slowest ones.  Newly spawned tasks are released to the task pool
 only when they fall below the runahead limit.  A low runhead limit can prevent
 cylc from interleaving cycles, but it will not stall a suite unless it fails to
