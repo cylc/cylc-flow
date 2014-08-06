@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.TaskID import TaskID
+import cylc.TaskID
 
 import re, os
 import StringIO
@@ -43,7 +43,7 @@ class jobfile(object):
         self.owner = jobconfig['task owner']
         self.host = jobconfig['task host']
 
-        self.task_name, self.tag = task_id.split( TaskID.DELIM )
+        self.task_name, self.point_string = cylc.TaskID.split( task_id )
 
     def write( self, path ):
         ############# !!!!!!!! WARNING !!!!!!!!!!! #####################
@@ -94,35 +94,6 @@ class jobfile(object):
         self.write_task_succeeded()
         self.write_eof()
         self.FILE.close()
-        # Wait for job file to properly close to prevent errors that look like
-        # this:
-        #     /bin/bash: SCRIPT: /bin/bash: bad interpreter: Text file busy
-        # which means that the OS thinks that the job file is still connected
-        # to a process when it is being executed.
-        try:
-            # lsof may hang or never return 0.
-            t_init_0 = time()
-            while time() - t_init_0 <= 10.0: # 10s should not take that long
-                proc = Popen(["lsof", path], stderr=PIPE, stdout=PIPE)
-                rc = 0
-                t_init = time()
-                while time() - t_init <= 2.0: # 2s should not take that long
-                    sleep(0.1)
-                    rc = proc.poll()
-                    if rc is not None:
-                        break
-                if rc:
-                    break
-                elif rc is None:
-                    if hasattr(proc, "kill"):
-                        proc.kill()
-                    else:
-                        os.kill(proc.pid, signal.SIGKILL)
-                    proc.wait()
-                    break
-                sleep(0.1)
-        except OSError: # OSError is triggered if "lsof" command not available
-            pass
 
     def write_header( self ):
         self.FILE.write( "#!" + self.jobconfig['job script shell'] )
@@ -179,12 +150,13 @@ class jobfile(object):
         BUFFER.write( "\n\n# CYLC SUITE ENVIRONMENT:" )
 
         # write the static suite variables
-        for var, val in self.__class__.suite_env.items():
+        for var, val in sorted(self.__class__.suite_env.items()):
             BUFFER.write( "\nexport " + var + "=" + str(val) )
 
         if str(self.__class__.suite_env.get('CYLC_UTC')) == 'True':
             BUFFER.write( "\nexport TZ=UTC" )
 
+        BUFFER.write("\n")
         # override and write task-host-specific suite variables
         suite_work_dir = sitecfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
         st_env = deepcopy( self.__class__.suite_task_env ) 
@@ -198,7 +170,7 @@ class jobfile(object):
         else:
             # replace home dir with '$HOME' for evaluation on the task host
             st_env[ 'CYLC_SUITE_DEF_PATH' ] = re.sub( os.environ['HOME'], '$HOME', st_env['CYLC_SUITE_DEF_PATH'] )
-        for var, val in st_env.items():
+        for var, val in sorted(st_env.items()):
             BUFFER.write( "\nexport " + var + "=" + str(val) )
 
         task_work_dir  = os.path.join( suite_work_dir, self.jobconfig['work sub-directory'] )
@@ -207,18 +179,19 @@ class jobfile(object):
         comms = sitecfg.get_host_item( 'task communication method', self.host, self.owner )
 
         BUFFER.write( "\n\n# CYLC TASK ENVIRONMENT:" )
-        BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
-        BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( sitecfg.get( ['task messaging','retry interval in seconds'])) )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( sitecfg.get( ['task messaging','maximum number of tries'])) )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( sitecfg.get( ['task messaging','connection timeout in seconds'])) )
-        BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
-        BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.tag )
-        BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
-        BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
-        BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_COMMS_METHOD=" + comms )
+        BUFFER.write( "\nexport CYLC_TASK_CYCLE_POINT=" + self.point_string )
+        BUFFER.write( "\nexport CYLC_TASK_CYCLE_TIME=" + self.point_string )
+        BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
+        BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
+        BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( sitecfg.get( ['task messaging','maximum number of tries'])) )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( sitecfg.get( ['task messaging','retry interval in seconds'])) )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( sitecfg.get( ['task messaging','connection timeout in seconds'])) )
+        BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
+        BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
+        BUFFER.write( "\nexport CYLC_TASK_TRY_NUMBER=" + str(self.jobconfig['try number']) )
         BUFFER.write( "\nexport CYLC_TASK_WORK_DIR=" + task_work_dir )
         BUFFER.write( "\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR") # DEPRECATED
 

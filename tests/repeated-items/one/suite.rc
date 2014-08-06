@@ -1,6 +1,7 @@
 title = "override this"
 title = "the quick brown fox"
 [scheduling]
+    initial cycle time = 2013010100
     [[dependencies]]
         graph = "foo => bar"
         graph = "bar => baz"

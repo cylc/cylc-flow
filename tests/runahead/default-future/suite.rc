@@ -1,0 +1,25 @@
+#!jinja2
+[cylc]
+    UTC mode = True
+    [[event hooks]]
+        timeout = 0.1
+        abort on timeout = True
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point = 20100105T00
+    [[dependencies]]
+        # foo will fail and cause a stuck bar task at T00.
+        [[[PT1H]]]
+            graph = "foo => bar"
+        # If wibble gets into the pool, it will demand a +PT6H raise
+        # of the 'runahead limit'.
+        [[[{{ FUTURE_TRIGGER_START_POINT }}/PT6H]]]
+            graph = """
+                baz[+PT6H] => wibble
+                baz
+            """
+[runtime]
+    [[foo]]
+        command scripting = false
+    [[bar,baz,wibble]]
+        command scripting = true

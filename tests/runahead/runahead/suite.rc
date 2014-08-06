@@ -1,13 +1,14 @@
 [cylc]
+    cycle point time zone = Z
     [[event hooks]]
         timeout = 0.1
         abort on timeout = True
 [scheduling]
-    runahead limit = 18
-    initial cycle time = 2010010100
-    final cycle time = 2010010500
+    runahead limit = PT18H
+    initial cycle time = 20100101T00
+    final cycle time = 20100105T00
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[PT6H]]]
             graph = "foo => bar"
 [runtime]
     [[foo]]

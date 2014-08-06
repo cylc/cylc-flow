@@ -1,0 +1,304 @@
+2014-04-08T12:44:30 INFO - Thread-2 start (Event Handlers)
+2014-04-08T12:44:30 INFO - Thread-3 start (Poll & Kill Commands)
+2014-04-08T12:44:30 INFO - port:7768
+2014-04-08T12:44:30 INFO - Suite starting at 2014-04-08 12:44:30.297823
+2014-04-08T12:44:30 INFO - Log event clock: real time
+2014-04-08T12:44:30 INFO - Run mode: live
+2014-04-08T12:44:30 INFO - Initial point: 20000131T0100Z
+2014-04-08T12:44:30 INFO - Final point: 20000202T0600+0600
+2014-04-08T12:44:30 INFO - Thread-4 start (Job Submission)
+2014-04-08T12:44:30 INFO - Thread-5 start (Request Handling)
+2014-04-08T12:44:30 INFO - Cold Start 20000131T1400+13
+2014-04-08T12:44:30 INFO - [baz.20000131T1400+13] -triggered off []
+2014-04-08T12:44:30 INFO - [foo.20000131T1400+13] -triggered off []
+2014-04-08T12:44:31 INFO - [baz.20000131T1400+13] -(current:ready)> baz.20000131T1400+13 submitting now
+2014-04-08T12:44:32 INFO - [baz.20000131T1400+13] -(current:ready)> baz.20000131T1400+13 submission succeeded
+2014-04-08T12:44:32 INFO - [baz.20000131T1400+13] -(current:submitted)> baz.20000131T1400+13 submit_method_id=535
+2014-04-08T12:44:32 INFO - [foo.20000131T1400+13] -(current:ready)> foo.20000131T1400+13 submitting now
+2014-04-08T12:44:33 INFO - [baz.20000131T1400+13] -(current:submitted)> baz.20000131T1400+13 started at 2014-04-08T12:44:32
+2014-04-08T12:44:33 INFO - [foo.20000131T1400+13] -(current:ready)> foo.20000131T1400+13 started at 2014-04-08T12:44:32
+2014-04-08T12:44:33 INFO - [foo.20000131T1400+13] -(current:running)> foo.20000131T1400+13 submission succeeded
+2014-04-08T12:44:33 INFO - [foo.20000131T1400+13] -(current:running)> foo.20000131T1400+13 submit_method_id=623
+2014-04-08T12:44:34 INFO - [baz.20000131T1400+13] -(current:running)> baz.20000131T1400+13 succeeded at 2014-04-08T12:44:34
+2014-04-08T12:44:35 INFO - [qux.20000131T1400+13] -triggered off ['baz.20000131T1400+13']
+2014-04-08T12:44:35 INFO - [baz.20000131T2000+13] -triggered off ['baz.20000131T1400+13']
+2014-04-08T12:44:35 INFO - [foo.20000131T1400+13] -(current:running)> foo.20000131T1400+13 succeeded at 2014-04-08T12:44:34
+2014-04-08T12:44:36 INFO - [bar.20000131T1400+13] -triggered off ['foo.20000131T1400+13']
+2014-04-08T12:44:36 INFO - [foo.20000131T1700+13] -triggered off ['foo.20000131T1400+13']
+2014-04-08T12:44:36 INFO - [qux.20000131T1400+13] -(current:ready)> qux.20000131T1400+13 submitting now
+2014-04-08T12:44:36 INFO - [baz.20000131T2000+13] -(current:ready)> baz.20000131T2000+13 submitting now
+2014-04-08T12:44:37 INFO - [qux.20000131T1400+13] -(current:ready)> qux.20000131T1400+13 submission succeeded
+2014-04-08T12:44:37 INFO - [qux.20000131T1400+13] -(current:submitted)> qux.20000131T1400+13 submit_method_id=980
+2014-04-08T12:44:37 INFO - [qux.20000131T1400+13] -(current:submitted)> qux.20000131T1400+13 started at 2014-04-08T12:44:37
+2014-04-08T12:44:37 INFO - [baz.20000131T2000+13] -(current:ready)> baz.20000131T2000+13 started at 2014-04-08T12:44:37
+2014-04-08T12:44:38 INFO - [baz.20000131T2000+13] -(current:running)> baz.20000131T2000+13 submission succeeded
+2014-04-08T12:44:38 INFO - [baz.20000131T2000+13] -(current:running)> baz.20000131T2000+13 submit_method_id=1067
+2014-04-08T12:44:39 INFO - [bar.20000131T1400+13] -(current:ready)> bar.20000131T1400+13 submitting now
+2014-04-08T12:44:39 INFO - [qux.20000131T1400+13] -(current:running)> qux.20000131T1400+13 succeeded at 2014-04-08T12:44:38
+2014-04-08T12:44:39 INFO - [baz.20000131T2000+13] -(current:running)> baz.20000131T2000+13 succeeded at 2014-04-08T12:44:39
+2014-04-08T12:44:40 INFO - [qux.20000131T2000+13] -triggered off ['baz.20000131T2000+13']
+2014-04-08T12:44:40 INFO - [baz.20000201T0200+13] -triggered off ['baz.20000131T2000+13']
+2014-04-08T12:44:40 INFO - [bar.20000131T1400+13] -(current:ready)> bar.20000131T1400+13 submission succeeded
+2014-04-08T12:44:40 INFO - [bar.20000131T1400+13] -(current:submitted)> bar.20000131T1400+13 submit_method_id=1289
+2014-04-08T12:44:40 INFO - [foo.20000131T1700+13] -(current:ready)> foo.20000131T1700+13 submitting now
+2014-04-08T12:44:41 INFO - [bar.20000131T1400+13] -(current:submitted)> bar.20000131T1400+13 started at 2014-04-08T12:44:40
+2014-04-08T12:44:41 INFO - [foo.20000131T1700+13] -(current:ready)> foo.20000131T1700+13 submission succeeded
+2014-04-08T12:44:41 INFO - [foo.20000131T1700+13] -(current:submitted)> foo.20000131T1700+13 submit_method_id=1363
+2014-04-08T12:44:41 INFO - [foo.20000131T1700+13] -(current:submitted)> foo.20000131T1700+13 started at 2014-04-08T12:44:41
+2014-04-08T12:44:43 INFO - [bar.20000131T1400+13] -(current:running)> bar.20000131T1400+13 succeeded at 2014-04-08T12:44:42
+2014-04-08T12:44:43 INFO - [foo.20000131T1700+13] -(current:running)> foo.20000131T1700+13 succeeded at 2014-04-08T12:44:43
+2014-04-08T12:44:43 INFO - [qux.20000131T2000+13] -(current:ready)> qux.20000131T2000+13 submitting now
+2014-04-08T12:44:43 INFO - [qux.20000131T2000+13] -(current:ready)> qux.20000131T2000+13 submission succeeded
+2014-04-08T12:44:43 INFO - [qux.20000131T2000+13] -(current:submitted)> qux.20000131T2000+13 submit_method_id=1505
+2014-04-08T12:44:43 INFO - [baz.20000201T0200+13] -(current:ready)> baz.20000201T0200+13 submitting now
+2014-04-08T12:44:44 INFO - [bar.20000131T1700+13] -triggered off ['foo.20000131T1700+13']
+2014-04-08T12:44:44 INFO - [foo.20000131T2000+13] -triggered off ['foo.20000131T1700+13']
+2014-04-08T12:44:44 INFO - [qux.20000131T2000+13] -(current:submitted)> qux.20000131T2000+13 started at 2014-04-08T12:44:44
+2014-04-08T12:44:44 INFO - [baz.20000201T0200+13] -(current:ready)> baz.20000201T0200+13 started at 2014-04-08T12:44:44
+2014-04-08T12:44:44 INFO - [baz.20000201T0200+13] -(current:running)> baz.20000201T0200+13 submission succeeded
+2014-04-08T12:44:44 INFO - [baz.20000201T0200+13] -(current:running)> baz.20000201T0200+13 submit_method_id=1580
+2014-04-08T12:44:46 INFO - [qux.20000131T2000+13] -(current:running)> qux.20000131T2000+13 succeeded at 2014-04-08T12:44:46
+2014-04-08T12:44:46 INFO - [baz.20000201T0200+13] -(current:running)> baz.20000201T0200+13 succeeded at 2014-04-08T12:44:46
+2014-04-08T12:44:46 INFO - [bar.20000131T1700+13] -(current:ready)> bar.20000131T1700+13 submitting now
+2014-04-08T12:44:47 INFO - [qux.20000201T0200+13] -triggered off ['baz.20000201T0200+13']
+2014-04-08T12:44:47 INFO - [bar.20000131T1700+13] -(current:ready)> bar.20000131T1700+13 submission succeeded
+2014-04-08T12:44:47 INFO - [bar.20000131T1700+13] -(current:submitted)> bar.20000131T1700+13 submit_method_id=1719
+2014-04-08T12:44:47 INFO - [bar.20000131T1700+13] -(current:submitted)> bar.20000131T1700+13 started at 2014-04-08T12:44:47
+2014-04-08T12:44:47 INFO - [foo.20000131T2000+13] -(current:ready)> foo.20000131T2000+13 submitting now
+2014-04-08T12:44:49 INFO - [foo.20000131T2000+13] -(current:ready)> foo.20000131T2000+13 started at 2014-04-08T12:44:47
+2014-04-08T12:44:49 INFO - [foo.20000131T2000+13] -(current:running)> foo.20000131T2000+13 submission succeeded
+2014-04-08T12:44:49 INFO - [foo.20000131T2000+13] -(current:running)> foo.20000131T2000+13 submit_method_id=1806
+2014-04-08T12:44:50 INFO - [bar.20000131T1700+13] -(current:running)> bar.20000131T1700+13 succeeded at 2014-04-08T12:44:49
+2014-04-08T12:44:50 INFO - [foo.20000131T2000+13] -(current:running)> foo.20000131T2000+13 succeeded at 2014-04-08T12:44:49
+2014-04-08T12:44:51 INFO - [baz.20000201T0800+13] -triggered off ['baz.20000201T0200+13']
+2014-04-08T12:44:51 INFO - [bar.20000131T2000+13] -triggered off ['foo.20000131T2000+13']
+2014-04-08T12:44:51 INFO - [foo.20000131T2300+13] -triggered off ['foo.20000131T2000+13']
+2014-04-08T12:44:51 INFO - [qux.20000201T0200+13] -(current:ready)> qux.20000201T0200+13 submitting now
+2014-04-08T12:44:51 INFO - [qux.20000201T0200+13] -(current:ready)> qux.20000201T0200+13 submission succeeded
+2014-04-08T12:44:51 INFO - [qux.20000201T0200+13] -(current:submitted)> qux.20000201T0200+13 submit_method_id=1953
+2014-04-08T12:44:52 INFO - [qux.20000201T0200+13] -(current:submitted)> qux.20000201T0200+13 started at 2014-04-08T12:44:51
+2014-04-08T12:44:53 INFO - [qux.20000201T0200+13] -(current:running)> qux.20000201T0200+13 succeeded at 2014-04-08T12:44:52
+2014-04-08T12:44:53 INFO - [baz.20000201T0800+13] -(current:ready)> baz.20000201T0800+13 submitting now
+2014-04-08T12:44:53 INFO - [bar.20000131T2000+13] -(current:ready)> bar.20000131T2000+13 submitting now
+2014-04-08T12:44:53 INFO - [foo.20000131T2300+13] -(current:ready)> foo.20000131T2300+13 submitting now
+2014-04-08T12:44:54 INFO - [baz.20000201T0800+13] -(current:ready)> baz.20000201T0800+13 submission succeeded
+2014-04-08T12:44:54 INFO - [baz.20000201T0800+13] -(current:submitted)> baz.20000201T0800+13 submit_method_id=2060
+2014-04-08T12:44:54 INFO - [baz.20000201T0800+13] -(current:submitted)> baz.20000201T0800+13 started at 2014-04-08T12:44:53
+2014-04-08T12:44:54 INFO - [bar.20000131T2000+13] -(current:ready)> bar.20000131T2000+13 started at 2014-04-08T12:44:53
+2014-04-08T12:44:54 INFO - [foo.20000131T2300+13] -(current:ready)> foo.20000131T2300+13 submission succeeded
+2014-04-08T12:44:54 INFO - [foo.20000131T2300+13] -(current:submitted)> foo.20000131T2300+13 submit_method_id=2283
+2014-04-08T12:44:55 INFO - [baz.20000201T0800+13] -(current:running)> baz.20000201T0800+13 succeeded at 2014-04-08T12:44:55
+2014-04-08T12:44:55 INFO - [bar.20000131T2000+13] -(current:running)> bar.20000131T2000+13 submission succeeded
+2014-04-08T12:44:55 INFO - [bar.20000131T2000+13] -(current:running)> bar.20000131T2000+13 submit_method_id=2176
+2014-04-08T12:44:55 INFO - [foo.20000131T2300+13] -(current:submitted)> foo.20000131T2300+13 started at 2014-04-08T12:44:54
+2014-04-08T12:44:56 INFO - [qux.20000201T0800+13] -triggered off ['baz.20000201T0800+13']
+2014-04-08T12:44:56 INFO - [bar.20000131T2000+13] -(current:running)> bar.20000131T2000+13 succeeded at 2014-04-08T12:44:55
+2014-04-08T12:44:56 INFO - [foo.20000131T2300+13] -(current:running)> foo.20000131T2300+13 succeeded at 2014-04-08T12:44:56
+2014-04-08T12:44:57 INFO - [bar.20000131T2300+13] -triggered off ['foo.20000131T2300+13']
+2014-04-08T12:44:57 INFO - [foo.20000201T0200+13] -triggered off ['foo.20000131T2300+13']
+2014-04-08T12:44:57 INFO - [qux.20000201T0800+13] -(current:ready)> qux.20000201T0800+13 submitting now
+2014-04-08T12:44:57 INFO - [qux.20000201T0800+13] -(current:ready)> qux.20000201T0800+13 submission succeeded
+2014-04-08T12:44:57 INFO - [qux.20000201T0800+13] -(current:submitted)> qux.20000201T0800+13 submit_method_id=2463
+2014-04-08T12:44:58 INFO - [qux.20000201T0800+13] -(current:submitted)> qux.20000201T0800+13 started at 2014-04-08T12:44:58
+2014-04-08T12:44:59 INFO - [bar.20000131T2300+13] -(current:ready)> bar.20000131T2300+13 submitting now
+2014-04-08T12:44:59 INFO - [bar.20000131T2300+13] -(current:ready)> bar.20000131T2300+13 submission succeeded
+2014-04-08T12:44:59 INFO - [bar.20000131T2300+13] -(current:submitted)> bar.20000131T2300+13 submit_method_id=2565
+2014-04-08T12:44:59 INFO - [foo.20000201T0200+13] -(current:ready)> foo.20000201T0200+13 submitting now
+2014-04-08T12:45:00 INFO - [qux.20000201T0800+13] -(current:running)> qux.20000201T0800+13 succeeded at 2014-04-08T12:45:00
+2014-04-08T12:45:00 INFO - [bar.20000131T2300+13] -(current:submitted)> bar.20000131T2300+13 started at 2014-04-08T12:44:59
+2014-04-08T12:45:00 INFO - [foo.20000201T0200+13] -(current:ready)> foo.20000201T0200+13 submission succeeded
+2014-04-08T12:45:00 INFO - [foo.20000201T0200+13] -(current:submitted)> foo.20000201T0200+13 submit_method_id=2653
+2014-04-08T12:45:00 INFO - [foo.20000201T0200+13] -(current:submitted)> foo.20000201T0200+13 started at 2014-04-08T12:45:00
+2014-04-08T12:45:02 INFO - [bar.20000131T2300+13] -(current:running)> bar.20000131T2300+13 succeeded at 2014-04-08T12:45:01
+2014-04-08T12:45:02 INFO - [foo.20000201T0200+13] -(current:running)> foo.20000201T0200+13 succeeded at 2014-04-08T12:45:02
+2014-04-08T12:45:03 INFO - [baz.20000201T1400+13] -triggered off ['baz.20000201T0800+13']
+2014-04-08T12:45:03 INFO - [bar.20000201T0200+13] -triggered off ['foo.20000201T0200+13']
+2014-04-08T12:45:03 INFO - [foo.20000201T0500+13] -triggered off ['foo.20000201T0200+13']
+2014-04-08T12:45:04 INFO - [baz.20000201T1400+13] -(current:ready)> baz.20000201T1400+13 submitting now
+2014-04-08T12:45:05 INFO - [baz.20000201T1400+13] -(current:ready)> baz.20000201T1400+13 submission succeeded
+2014-04-08T12:45:05 INFO - [baz.20000201T1400+13] -(current:submitted)> baz.20000201T1400+13 submit_method_id=2800
+2014-04-08T12:45:05 INFO - [bar.20000201T0200+13] -(current:ready)> bar.20000201T0200+13 submitting now
+2014-04-08T12:45:05 INFO - [foo.20000201T0500+13] -(current:ready)> foo.20000201T0500+13 submitting now
+2014-04-08T12:45:05 INFO - [foo.20000201T0500+13] -(current:ready)> foo.20000201T0500+13 submission succeeded
+2014-04-08T12:45:05 INFO - [foo.20000201T0500+13] -(current:submitted)> foo.20000201T0500+13 submit_method_id=3056
+2014-04-08T12:45:06 INFO - [baz.20000201T1400+13] -(current:submitted)> baz.20000201T1400+13 started at 2014-04-08T12:45:05
+2014-04-08T12:45:06 INFO - [bar.20000201T0200+13] -(current:ready)> bar.20000201T0200+13 started at 2014-04-08T12:45:06
+2014-04-08T12:45:06 INFO - [bar.20000201T0200+13] -(current:running)> bar.20000201T0200+13 submission succeeded
+2014-04-08T12:45:06 INFO - [bar.20000201T0200+13] -(current:running)> bar.20000201T0200+13 submit_method_id=2896
+2014-04-08T12:45:06 INFO - [foo.20000201T0500+13] -(current:submitted)> foo.20000201T0500+13 started at 2014-04-08T12:45:06
+2014-04-08T12:45:07 INFO - [baz.20000201T1400+13] -(current:running)> baz.20000201T1400+13 succeeded at 2014-04-08T12:45:07
+2014-04-08T12:45:08 INFO - [qux.20000201T1400+13] -triggered off ['baz.20000201T1400+13']
+2014-04-08T12:45:08 INFO - [bar.20000201T0200+13] -(current:running)> bar.20000201T0200+13 succeeded at 2014-04-08T12:45:08
+2014-04-08T12:45:08 INFO - [foo.20000201T0500+13] -(current:running)> foo.20000201T0500+13 succeeded at 2014-04-08T12:45:08
+2014-04-08T12:45:09 INFO - [foo.20000201T0800+13] -triggered off ['foo.20000201T0500+13']
+2014-04-08T12:45:09 INFO - [bar.20000201T0500+13] -triggered off ['foo.20000201T0500+13']
+2014-04-08T12:45:09 INFO - [qux.20000201T1400+13] -(current:ready)> qux.20000201T1400+13 submitting now
+2014-04-08T12:45:09 INFO - [qux.20000201T1400+13] -(current:ready)> qux.20000201T1400+13 submission succeeded
+2014-04-08T12:45:09 INFO - [qux.20000201T1400+13] -(current:submitted)> qux.20000201T1400+13 submit_method_id=3214
+2014-04-08T12:45:11 INFO - [qux.20000201T1400+13] -(current:submitted)> qux.20000201T1400+13 started at 2014-04-08T12:45:10
+2014-04-08T12:45:12 INFO - [foo.20000201T0800+13] -(current:ready)> foo.20000201T0800+13 submitting now
+2014-04-08T12:45:13 INFO - [qux.20000201T1400+13] -(current:running)> qux.20000201T1400+13 succeeded at 2014-04-08T12:45:12
+2014-04-08T12:45:13 INFO - [foo.20000201T0800+13] -(current:ready)> foo.20000201T0800+13 submission succeeded
+2014-04-08T12:45:13 INFO - [foo.20000201T0800+13] -(current:submitted)> foo.20000201T0800+13 submit_method_id=3333
+2014-04-08T12:45:13 INFO - [bar.20000201T0500+13] -(current:ready)> bar.20000201T0500+13 submitting now
+2014-04-08T12:45:14 INFO - [foo.20000201T0800+13] -(current:submitted)> foo.20000201T0800+13 started at 2014-04-08T12:45:13
+2014-04-08T12:45:14 INFO - [bar.20000201T0500+13] -(current:ready)> bar.20000201T0500+13 submission succeeded
+2014-04-08T12:45:14 INFO - [bar.20000201T0500+13] -(current:submitted)> bar.20000201T0500+13 submit_method_id=3423
+2014-04-08T12:45:14 INFO - [bar.20000201T0500+13] -(current:submitted)> bar.20000201T0500+13 started at 2014-04-08T12:45:13
+2014-04-08T12:45:15 INFO - [foo.20000201T0800+13] -(current:running)> foo.20000201T0800+13 succeeded at 2014-04-08T12:45:14
+2014-04-08T12:45:16 INFO - [foo.20000201T1100+13] -triggered off ['foo.20000201T0800+13']
+2014-04-08T12:45:16 INFO - [bar.20000201T0800+13] -triggered off ['foo.20000201T0800+13']
+2014-04-08T12:45:16 INFO - [bar.20000201T0500+13] -(current:running)> bar.20000201T0500+13 succeeded at 2014-04-08T12:45:15
+2014-04-08T12:45:17 INFO - [baz.20000201T2000+13] -triggered off ['baz.20000201T1400+13']
+2014-04-08T12:45:17 INFO - [foo.20000201T1100+13] -(current:ready)> foo.20000201T1100+13 submitting now
+2014-04-08T12:45:17 INFO - [foo.20000201T1100+13] -(current:ready)> foo.20000201T1100+13 submission succeeded
+2014-04-08T12:45:17 INFO - [foo.20000201T1100+13] -(current:submitted)> foo.20000201T1100+13 submit_method_id=3585
+2014-04-08T12:45:17 INFO - [bar.20000201T0800+13] -(current:ready)> bar.20000201T0800+13 submitting now
+2014-04-08T12:45:18 INFO - [foo.20000201T1100+13] -(current:submitted)> foo.20000201T1100+13 started at 2014-04-08T12:45:17
+2014-04-08T12:45:18 INFO - [bar.20000201T0800+13] -(current:ready)> bar.20000201T0800+13 started at 2014-04-08T12:45:18
+2014-04-08T12:45:18 INFO - [bar.20000201T0800+13] -(current:running)> bar.20000201T0800+13 submission succeeded
+2014-04-08T12:45:18 INFO - [bar.20000201T0800+13] -(current:running)> bar.20000201T0800+13 submit_method_id=3678
+2014-04-08T12:45:20 INFO - [baz.20000201T2000+13] -(current:ready)> baz.20000201T2000+13 submitting now
+2014-04-08T12:45:20 INFO - [baz.20000201T2000+13] -(current:ready)> baz.20000201T2000+13 submission succeeded
+2014-04-08T12:45:20 INFO - [baz.20000201T2000+13] -(current:submitted)> baz.20000201T2000+13 submit_method_id=3821
+2014-04-08T12:45:20 INFO - [foo.20000201T1100+13] -(current:running)> foo.20000201T1100+13 succeeded at 2014-04-08T12:45:19
+2014-04-08T12:45:20 INFO - [bar.20000201T0800+13] -(current:running)> bar.20000201T0800+13 succeeded at 2014-04-08T12:45:19
+2014-04-08T12:45:21 INFO - [foo.20000201T1400+13] -triggered off ['foo.20000201T1100+13']
+2014-04-08T12:45:21 INFO - [bar.20000201T1100+13] -triggered off ['foo.20000201T1100+13']
+2014-04-08T12:45:21 INFO - [baz.20000201T2000+13] -(current:submitted)> baz.20000201T2000+13 started at 2014-04-08T12:45:21
+2014-04-08T12:45:22 INFO - [foo.20000201T1400+13] -(current:ready)> foo.20000201T1400+13 submitting now
+2014-04-08T12:45:23 INFO - [baz.20000201T2000+13] -(current:running)> baz.20000201T2000+13 succeeded at 2014-04-08T12:45:22
+2014-04-08T12:45:23 INFO - [foo.20000201T1400+13] -(current:ready)> foo.20000201T1400+13 submission succeeded
+2014-04-08T12:45:23 INFO - [foo.20000201T1400+13] -(current:submitted)> foo.20000201T1400+13 submit_method_id=3927
+2014-04-08T12:45:23 INFO - [bar.20000201T1100+13] -(current:ready)> bar.20000201T1100+13 submitting now
+2014-04-08T12:45:24 INFO - [qux.20000201T2000+13] -triggered off ['baz.20000201T2000+13']
+2014-04-08T12:45:24 INFO - [foo.20000201T1400+13] -(current:submitted)> foo.20000201T1400+13 started at 2014-04-08T12:45:23
+2014-04-08T12:45:24 INFO - [bar.20000201T1100+13] -(current:ready)> bar.20000201T1100+13 submission succeeded
+2014-04-08T12:45:24 INFO - [bar.20000201T1100+13] -(current:submitted)> bar.20000201T1100+13 submit_method_id=4013
+2014-04-08T12:45:24 INFO - [bar.20000201T1100+13] -(current:submitted)> bar.20000201T1100+13 started at 2014-04-08T12:45:24
+2014-04-08T12:45:25 INFO - [foo.20000201T1400+13] -(current:running)> foo.20000201T1400+13 succeeded at 2014-04-08T12:45:25
+2014-04-08T12:45:26 INFO - [foo.20000201T1700+13] -triggered off ['foo.20000201T1400+13']
+2014-04-08T12:45:26 INFO - [bar.20000201T1400+13] -triggered off ['foo.20000201T1400+13']
+2014-04-08T12:45:26 INFO - [qux.20000201T2000+13] -(current:ready)> qux.20000201T2000+13 submitting now
+2014-04-08T12:45:26 INFO - [qux.20000201T2000+13] -(current:ready)> qux.20000201T2000+13 submission succeeded
+2014-04-08T12:45:26 INFO - [qux.20000201T2000+13] -(current:submitted)> qux.20000201T2000+13 submit_method_id=4146
+2014-04-08T12:45:26 INFO - [bar.20000201T1100+13] -(current:running)> bar.20000201T1100+13 succeeded at 2014-04-08T12:45:26
+2014-04-08T12:45:27 INFO - [baz.20000202T0200+13] -triggered off ['baz.20000201T2000+13']
+2014-04-08T12:45:27 INFO - [qux.20000201T2000+13] -(current:submitted)> qux.20000201T2000+13 started at 2014-04-08T12:45:27
+2014-04-08T12:45:29 INFO - [foo.20000201T1700+13] -(current:ready)> foo.20000201T1700+13 submitting now
+2014-04-08T12:45:29 INFO - [bar.20000201T1400+13] -(current:ready)> bar.20000201T1400+13 submitting now
+2014-04-08T12:45:30 INFO - [qux.20000201T2000+13] -(current:running)> qux.20000201T2000+13 succeeded at 2014-04-08T12:45:29
+2014-04-08T12:45:30 INFO - [baz.20000202T0200+13] -(current:ready)> baz.20000202T0200+13 submitting now
+2014-04-08T12:45:30 INFO - [baz.20000202T0200+13] -(current:ready)> baz.20000202T0200+13 submission succeeded
+2014-04-08T12:45:30 INFO - [baz.20000202T0200+13] -(current:submitted)> baz.20000202T0200+13 submit_method_id=4438
+2014-04-08T12:45:30 INFO - [foo.20000201T1700+13] -(current:ready)> foo.20000201T1700+13 submission succeeded
+2014-04-08T12:45:30 INFO - [foo.20000201T1700+13] -(current:submitted)> foo.20000201T1700+13 submit_method_id=4261
+2014-04-08T12:45:30 INFO - [foo.20000201T1700+13] -(current:submitted)> foo.20000201T1700+13 started at 2014-04-08T12:45:29
+2014-04-08T12:45:31 INFO - [baz.20000202T0200+13] -(current:submitted)> baz.20000202T0200+13 started at 2014-04-08T12:45:30
+2014-04-08T12:45:31 INFO - [bar.20000201T1400+13] -(current:ready)> bar.20000201T1400+13 started at 2014-04-08T12:45:29
+2014-04-08T12:45:31 INFO - [bar.20000201T1400+13] -(current:running)> bar.20000201T1400+13 submission succeeded
+2014-04-08T12:45:31 INFO - [bar.20000201T1400+13] -(current:running)> bar.20000201T1400+13 submit_method_id=4350
+2014-04-08T12:45:32 INFO - [foo.20000201T1700+13] -(current:running)> foo.20000201T1700+13 succeeded at 2014-04-08T12:45:31
+2014-04-08T12:45:32 INFO - [bar.20000201T1400+13] -(current:running)> bar.20000201T1400+13 succeeded at 2014-04-08T12:45:31
+2014-04-08T12:45:33 INFO - [foo.20000201T2000+13] -triggered off ['foo.20000201T1700+13']
+2014-04-08T12:45:33 INFO - [bar.20000201T1700+13] -triggered off ['foo.20000201T1700+13']
+2014-04-08T12:45:33 INFO - [baz.20000202T0200+13] -(current:running)> baz.20000202T0200+13 succeeded at 2014-04-08T12:45:32
+2014-04-08T12:45:34 INFO - [qux.20000202T0200+13] -triggered off ['baz.20000202T0200+13']
+2014-04-08T12:45:34 INFO - [foo.20000201T2000+13] -(current:ready)> foo.20000201T2000+13 submitting now
+2014-04-08T12:45:34 INFO - [foo.20000201T2000+13] -(current:ready)> foo.20000201T2000+13 submission succeeded
+2014-04-08T12:45:34 INFO - [foo.20000201T2000+13] -(current:submitted)> foo.20000201T2000+13 submit_method_id=4586
+2014-04-08T12:45:34 INFO - [bar.20000201T1700+13] -(current:ready)> bar.20000201T1700+13 submitting now
+2014-04-08T12:45:35 INFO - [foo.20000201T2000+13] -(current:submitted)> foo.20000201T2000+13 started at 2014-04-08T12:45:34
+2014-04-08T12:45:35 INFO - [bar.20000201T1700+13] -(current:ready)> bar.20000201T1700+13 started at 2014-04-08T12:45:35
+2014-04-08T12:45:35 INFO - [bar.20000201T1700+13] -(current:running)> bar.20000201T1700+13 submission succeeded
+2014-04-08T12:45:35 INFO - [bar.20000201T1700+13] -(current:running)> bar.20000201T1700+13 submit_method_id=4673
+2014-04-08T12:45:37 INFO - [qux.20000202T0200+13] -(current:ready)> qux.20000202T0200+13 submitting now
+2014-04-08T12:45:37 INFO - [qux.20000202T0200+13] -(current:ready)> qux.20000202T0200+13 submission succeeded
+2014-04-08T12:45:37 INFO - [qux.20000202T0200+13] -(current:submitted)> qux.20000202T0200+13 submit_method_id=4802
+2014-04-08T12:45:37 INFO - [foo.20000201T2000+13] -(current:running)> foo.20000201T2000+13 succeeded at 2014-04-08T12:45:36
+2014-04-08T12:45:37 INFO - [bar.20000201T1700+13] -(current:running)> bar.20000201T1700+13 succeeded at 2014-04-08T12:45:36
+2014-04-08T12:45:38 INFO - [baz.20000202T0800+13] -triggered off ['baz.20000202T0200+13']
+2014-04-08T12:45:38 INFO - [foo.20000201T2300+13] -triggered off ['foo.20000201T2000+13']
+2014-04-08T12:45:38 INFO - [bar.20000201T2000+13] -triggered off ['foo.20000201T2000+13']
+2014-04-08T12:45:38 INFO - [qux.20000202T0200+13] -(current:submitted)> qux.20000202T0200+13 started at 2014-04-08T12:45:38
+2014-04-08T12:45:39 INFO - [baz.20000202T0800+13] -(current:ready)> baz.20000202T0800+13 submitting now
+2014-04-08T12:45:39 INFO - [foo.20000201T2300+13] -(current:ready)> foo.20000201T2300+13 submitting now
+2014-04-08T12:45:40 INFO - [qux.20000202T0200+13] -(current:running)> qux.20000202T0200+13 succeeded at 2014-04-08T12:45:40
+2014-04-08T12:45:40 INFO - [baz.20000202T0800+13] -(current:ready)> baz.20000202T0800+13 submission succeeded
+2014-04-08T12:45:40 INFO - [baz.20000202T0800+13] -(current:submitted)> baz.20000202T0800+13 submit_method_id=4906
+2014-04-08T12:45:40 INFO - [baz.20000202T0800+13] -(current:submitted)> baz.20000202T0800+13 started at 2014-04-08T12:45:40
+2014-04-08T12:45:40 INFO - [bar.20000201T2000+13] -(current:ready)> bar.20000201T2000+13 submitting now
+2014-04-08T12:45:40 INFO - [bar.20000201T2000+13] -(current:ready)> bar.20000201T2000+13 submission succeeded
+2014-04-08T12:45:40 INFO - [bar.20000201T2000+13] -(current:submitted)> bar.20000201T2000+13 submit_method_id=5084
+2014-04-08T12:45:41 INFO - [foo.20000201T2300+13] -(current:ready)> foo.20000201T2300+13 started at 2014-04-08T12:45:41
+2014-04-08T12:45:41 INFO - [foo.20000201T2300+13] -(current:running)> foo.20000201T2300+13 submission succeeded
+2014-04-08T12:45:41 INFO - [foo.20000201T2300+13] -(current:running)> foo.20000201T2300+13 submit_method_id=4995
+2014-04-08T12:45:41 INFO - [bar.20000201T2000+13] -(current:submitted)> bar.20000201T2000+13 started at 2014-04-08T12:45:41
+2014-04-08T12:45:43 INFO - [baz.20000202T0800+13] -(current:running)> baz.20000202T0800+13 succeeded at 2014-04-08T12:45:42
+2014-04-08T12:45:43 INFO - [foo.20000201T2300+13] -(current:running)> foo.20000201T2300+13 succeeded at 2014-04-08T12:45:42
+2014-04-08T12:45:44 INFO - [qux.20000202T0800+13] -triggered off ['baz.20000202T0800+13']
+2014-04-08T12:45:44 INFO - [bar.20000201T2300+13] -triggered off ['foo.20000201T2300+13']
+2014-04-08T12:45:44 INFO - [foo.20000202T0200+13] -triggered off ['foo.20000201T2300+13']
+2014-04-08T12:45:44 INFO - [bar.20000201T2000+13] -(current:running)> bar.20000201T2000+13 succeeded at 2014-04-08T12:45:43
+2014-04-08T12:45:45 INFO - [qux.20000202T0800+13] -(current:ready)> qux.20000202T0800+13 submitting now
+2014-04-08T12:45:45 INFO - [bar.20000201T2300+13] -(current:ready)> bar.20000201T2300+13 submitting now
+2014-04-08T12:45:45 INFO - [foo.20000202T0200+13] -(current:ready)> foo.20000202T0200+13 submitting now
+2014-04-08T12:45:46 INFO - [qux.20000202T0800+13] -(current:ready)> qux.20000202T0800+13 submission succeeded
+2014-04-08T12:45:46 INFO - [qux.20000202T0800+13] -(current:submitted)> qux.20000202T0800+13 submit_method_id=5233
+2014-04-08T12:45:46 INFO - [qux.20000202T0800+13] -(current:submitted)> qux.20000202T0800+13 started at 2014-04-08T12:45:45
+2014-04-08T12:45:46 INFO - [bar.20000201T2300+13] -(current:ready)> bar.20000201T2300+13 started at 2014-04-08T12:45:46
+2014-04-08T12:45:46 INFO - [foo.20000202T0200+13] -(current:ready)> foo.20000202T0200+13 submission succeeded
+2014-04-08T12:45:46 INFO - [foo.20000202T0200+13] -(current:submitted)> foo.20000202T0200+13 submit_method_id=5409
+2014-04-08T12:45:47 INFO - [bar.20000201T2300+13] -(current:running)> bar.20000201T2300+13 submission succeeded
+2014-04-08T12:45:47 INFO - [bar.20000201T2300+13] -(current:running)> bar.20000201T2300+13 submit_method_id=5321
+2014-04-08T12:45:47 INFO - [foo.20000202T0200+13] -(current:submitted)> foo.20000202T0200+13 started at 2014-04-08T12:45:46
+2014-04-08T12:45:48 INFO - [qux.20000202T0800+13] -(current:running)> qux.20000202T0800+13 succeeded at 2014-04-08T12:45:47
+2014-04-08T12:45:48 INFO - [bar.20000201T2300+13] -(current:running)> bar.20000201T2300+13 succeeded at 2014-04-08T12:45:47
+2014-04-08T12:45:48 INFO - [foo.20000202T0200+13] -(current:running)> foo.20000202T0200+13 succeeded at 2014-04-08T12:45:48
+2014-04-08T12:45:49 INFO - [bar.20000202T0200+13] -triggered off ['foo.20000202T0200+13']
+2014-04-08T12:45:49 INFO - [foo.20000202T0500+13] -triggered off ['foo.20000202T0200+13']
+2014-04-08T12:45:49 INFO - [bar.20000202T0200+13] -(current:ready)> bar.20000202T0200+13 submitting now
+2014-04-08T12:45:50 INFO - [bar.20000202T0200+13] -(current:ready)> bar.20000202T0200+13 submission succeeded
+2014-04-08T12:45:50 INFO - [bar.20000202T0200+13] -(current:submitted)> bar.20000202T0200+13 submit_method_id=5575
+2014-04-08T12:45:50 INFO - [foo.20000202T0500+13] -(current:ready)> foo.20000202T0500+13 submitting now
+2014-04-08T12:45:51 INFO - [bar.20000202T0200+13] -(current:submitted)> bar.20000202T0200+13 started at 2014-04-08T12:45:50
+2014-04-08T12:45:51 INFO - [foo.20000202T0500+13] -(current:ready)> foo.20000202T0500+13 started at 2014-04-08T12:45:50
+2014-04-08T12:45:51 INFO - [foo.20000202T0500+13] -(current:running)> foo.20000202T0500+13 submission succeeded
+2014-04-08T12:45:51 INFO - [foo.20000202T0500+13] -(current:running)> foo.20000202T0500+13 submit_method_id=5660
+2014-04-08T12:45:52 INFO - [bar.20000202T0200+13] -(current:running)> bar.20000202T0200+13 succeeded at 2014-04-08T12:45:52
+2014-04-08T12:45:52 INFO - [foo.20000202T0500+13] -(current:running)> foo.20000202T0500+13 succeeded at 2014-04-08T12:45:52
+2014-04-08T12:45:53 INFO - [bar.20000202T0500+13] -triggered off ['foo.20000202T0500+13']
+2014-04-08T12:45:53 INFO - [foo.20000202T0800+13] -triggered off ['foo.20000202T0500+13']
+2014-04-08T12:45:54 INFO - [bar.20000202T0500+13] -(current:ready)> bar.20000202T0500+13 submitting now
+2014-04-08T12:45:54 INFO - [bar.20000202T0500+13] -(current:ready)> bar.20000202T0500+13 submission succeeded
+2014-04-08T12:45:54 INFO - [bar.20000202T0500+13] -(current:submitted)> bar.20000202T0500+13 submit_method_id=5790
+2014-04-08T12:45:54 INFO - [foo.20000202T0800+13] -(current:ready)> foo.20000202T0800+13 submitting now
+2014-04-08T12:45:55 INFO - [bar.20000202T0500+13] -(current:submitted)> bar.20000202T0500+13 started at 2014-04-08T12:45:55
+2014-04-08T12:45:55 INFO - [foo.20000202T0800+13] -(current:ready)> foo.20000202T0800+13 submission succeeded
+2014-04-08T12:45:55 INFO - [foo.20000202T0800+13] -(current:submitted)> foo.20000202T0800+13 submit_method_id=5865
+2014-04-08T12:45:55 INFO - [foo.20000202T0800+13] -(current:submitted)> foo.20000202T0800+13 started at 2014-04-08T12:45:55
+2014-04-08T12:45:57 INFO - [bar.20000202T0500+13] -(current:running)> bar.20000202T0500+13 succeeded at 2014-04-08T12:45:57
+2014-04-08T12:45:57 INFO - [foo.20000202T0800+13] -(current:running)> foo.20000202T0800+13 succeeded at 2014-04-08T12:45:57
+2014-04-08T12:45:58 INFO - [bar.20000202T0800+13] -triggered off ['foo.20000202T0800+13']
+2014-04-08T12:45:58 INFO - [foo.20000202T1100+13] -triggered off ['foo.20000202T0800+13']
+2014-04-08T12:46:00 INFO - [bar.20000202T0800+13] -(current:ready)> bar.20000202T0800+13 submitting now
+2014-04-08T12:46:00 INFO - [foo.20000202T1100+13] -(current:ready)> foo.20000202T1100+13 submitting now
+2014-04-08T12:46:01 INFO - [bar.20000202T0800+13] -(current:ready)> bar.20000202T0800+13 submission succeeded
+2014-04-08T12:46:01 INFO - [bar.20000202T0800+13] -(current:submitted)> bar.20000202T0800+13 submit_method_id=6013
+2014-04-08T12:46:01 INFO - [bar.20000202T0800+13] -(current:submitted)> bar.20000202T0800+13 started at 2014-04-08T12:46:00
+2014-04-08T12:46:02 INFO - [foo.20000202T1100+13] -(current:ready)> foo.20000202T1100+13 started at 2014-04-08T12:46:01
+2014-04-08T12:46:02 INFO - [foo.20000202T1100+13] -(current:running)> foo.20000202T1100+13 submission succeeded
+2014-04-08T12:46:02 INFO - [foo.20000202T1100+13] -(current:running)> foo.20000202T1100+13 submit_method_id=6098
+2014-04-08T12:46:03 INFO - [bar.20000202T0800+13] -(current:running)> bar.20000202T0800+13 succeeded at 2014-04-08T12:46:02
+2014-04-08T12:46:03 INFO - [foo.20000202T1100+13] -(current:running)> foo.20000202T1100+13 succeeded at 2014-04-08T12:46:02
+2014-04-08T12:46:04 INFO - [bar.20000202T1100+13] -triggered off ['foo.20000202T1100+13']
+2014-04-08T12:46:05 INFO - [bar.20000202T1100+13] -(current:ready)> bar.20000202T1100+13 submitting now
+2014-04-08T12:46:06 INFO - [bar.20000202T1100+13] -(current:ready)> bar.20000202T1100+13 submission succeeded
+2014-04-08T12:46:06 INFO - [bar.20000202T1100+13] -(current:submitted)> bar.20000202T1100+13 submit_method_id=6227
+2014-04-08T12:46:07 INFO - [bar.20000202T1100+13] -(current:submitted)> bar.20000202T1100+13 started at 2014-04-08T12:46:06
+2014-04-08T12:46:09 INFO - [bar.20000202T1100+13] -(current:running)> bar.20000202T1100+13 succeeded at 2014-04-08T12:46:08
+2014-04-08T12:46:09 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 20000202T0600+0600
+2014-04-08T12:46:09 INFO - Thread-2 exit (Event Handlers)
+2014-04-08T12:46:09 INFO - Thread-3 exit (Poll & Kill Commands)
+2014-04-08T12:46:09 INFO - Thread-4 exit (Job Submission)

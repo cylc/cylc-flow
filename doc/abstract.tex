@@ -15,25 +15,25 @@
     outputs, negotiate dependencies so that correct scheduling emerges
     naturally at run time. Cylc does not group tasks
     artificially by forecast cycle\footnote{A {\em forecast cycle}
-    comprises all tasks with a common {\em cycle time}, i.e.\ the
-    analysis time or nominal start time of a forecast model, or that of
-    the associated forecast model(s) for other tasks.} (each task
-    has a private cycle time and is self-spawning - there is no
-    suite-wide cycle time) and handles dependencies within and between
-    cycles equally so that tasks from multiple cycles can run at
-    once to the maximum possible extent. This matters in particular
-    whenever the external driving data\footnote{Forecast
-    suites are typically driven by real time observational data or
-    timely model fields from an external forecasting system.} for upcoming
-    cycles are available in advance: cylc suites can catch up from
-    delays very quickly, parallel test suites can be started
-    behind the main operation to catch up quickly, and one can
-    likewise achieve greater throughput in historical case studies; the
-    usual sequence of distinct forecast cycles emerges naturally if a
-    suite catches up to real time operation. Cylc can easily use
-    existing tasks and can run suites distributed across a heterogenous
-    network. Suites can be stopped and restarted in any state of
-    operation, and they dynamically adapt to insertion and removal of
+    comprises all tasks with a common {\em cycle time} (later referred
+    to here as {\em cycle point}) i.e.\ the analysis time or nominal
+    start time of a forecast model, or that of the associated forecast
+    model(s) for other tasks.} (each task has a private cycle time and
+    is self-spawning - there is no suite-wide cycle time) and handles
+    dependencies within and between cycles equally so that tasks from
+    multiple cycles can run at once to the maximum possible extent. This
+    matters in particular whenever the external driving data
+    \footnote{Forecast suites are typically driven by real time
+    observational data or timely model fields from an external
+    forecasting system.} for upcoming cycles are available in advance:
+    cylc suites can catch up from  delays very quickly, parallel test
+    suites can be started behind the main operation to catch up quickly,
+    and one can likewise achieve greater throughput in historical case
+    studies; the usual sequence of distinct forecast cycles emerges
+    naturally if a suite catches up to real time operation. Cylc can
+    easily use existing tasks and can run suites distributed across a
+    heterogenous network. Suites can be stopped and restarted in any state
+    of operation, and they dynamically adapt to insertion and removal of
     tasks, and to delays or failures in particular tasks or in the
     external environment: tasks not directly affected will carry on
     cycling as normal while the problem is addressed, and then the

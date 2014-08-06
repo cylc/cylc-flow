@@ -26,14 +26,12 @@ usage = """cylc [task] started [OPTIONS]
 This command is part of the cylc task messaging interface, used by
 running tasks to communicate progress to their parent suite.
 
-The started command reports commencement of task execution (and it
-acquires a task lock from the lockserver if necessary). It is
-automatically written to the top of task job scripts by cylc and
-therefore does not need to be called explicitly by task scripting.
+The started command reports commencement of task execution. It is
+called automatically by task job scripts.
 
 Suite and task identity are determined from the task execution
 environment supplied by the suite (or by the single task 'submit'
-command, in which case case the message is just printed to stdout).
+command, in which case the message is just printed to stdout).
 
 See also:
     cylc [task] message

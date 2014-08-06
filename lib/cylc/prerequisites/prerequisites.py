@@ -21,9 +21,9 @@ import re
 class prerequisites(object):
     """A container for other prerequisite types."""
 
-    def __init__( self, ict=None ):
+    def __init__( self, start_point=None ):
         self.container = []
-        self.ict = ict
+        self.start_point = start_point
 
     def add_requisites( self, reqs ):
         self.container.append( reqs )
@@ -50,8 +50,6 @@ class prerequisites(object):
 
     def satisfy_me( self, outputs ):
         # Can any completed outputs satisfy any of my prerequisites?
-        # DELEGATE TO CONTAINED CLASSES (TODO - CHECK EFFICIENCY)
-        # (asynchronous tasks have different satisfy_me() requirements)
         for reqs in self.container:
         ##    for label in reqs.satisfied:
         ##        for msg in outputs:
@@ -91,11 +89,11 @@ class prerequisites(object):
             for label in reqs.messages:
                 reqs.satisfied[ label ] = False
 
-    def get_target_tags( self ):
-        """Return a list of cycle times target by each prerequisite,
+    def get_target_points( self ):
+        """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
-        tags = []
+        points = []
         for reqs in self.container:
-            tags += reqs.get_target_tags()
-        return tags
+            points += reqs.get_target_points()
+        return points
 

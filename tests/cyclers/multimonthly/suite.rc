@@ -1,0 +1,18 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = 2.0
+[scheduling]
+    initial cycle point = 1000
+    final cycle point = 1001
+    [[dependencies]]
+        [[[ P1M ]]]
+            graph = "foo[-P1M] => foo => bar"
+        [[[ P6M ]]]
+            graph = "baz[-P6M] => baz => qux"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 1000
+    final cycle point = 1001

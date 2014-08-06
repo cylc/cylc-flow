@@ -5,8 +5,8 @@ For manual testing of new-style family triggers. Play around
 with command scripting true/false to get different outcomes."""
 
 [scheduling]
-    initial cycle time = 2012080800
-    final cycle time = 2012080900
+    initial cycle point = 2012080800
+    final cycle point = 2012080900
     [[special tasks]]
         cold-start = cold
     [[dependencies]]

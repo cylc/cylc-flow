@@ -1,0 +1,35 @@
+2014-07-16T12:18:22+01 INFO - Thread-2 start (Event Handlers)
+2014-07-16T12:18:22+01 INFO - Thread-3 start (Poll & Kill Commands)
+2014-07-16T12:18:22+01 INFO - port:7767
+2014-07-16T12:18:22+01 INFO - Suite starting at 2014-07-16T12:18:22+01
+2014-07-16T12:18:22+01 INFO - Log event clock: real time
+2014-07-16T12:18:22+01 INFO - Run mode: live
+2014-07-16T12:18:22+01 INFO - Initial point: 20140201T0500+13
+2014-07-16T12:18:22+01 INFO - Final point: 20140204T1200+13
+2014-07-16T12:18:22+01 INFO - Thread-4 start (Job Submission)
+2014-07-16T12:18:22+01 INFO - Thread-5 start (Request Handling)
+2014-07-16T12:18:22+01 INFO - Cold Start 20140201T0500+13
+2014-07-16T12:18:22+01 INFO - [foo.20140202T0000+13] -triggered off []
+2014-07-16T12:18:23+01 INFO - [foo.20140202T0000+13] -(current:ready)> foo.20140202T0000+13 submitting now
+2014-07-16T12:18:24+01 INFO - [foo.20140202T0000+13] -(current:ready)> foo.20140202T0000+13 submission succeeded
+2014-07-16T12:18:24+01 INFO - [foo.20140202T0000+13] -(current:submitted)> foo.20140202T0000+13 submit_method_id=3368
+2014-07-16T12:18:25+01 INFO - [foo.20140202T0000+13] -(current:submitted)> foo.20140202T0000+13 started at 2014-07-16T12:18:24+01
+2014-07-16T12:18:26+01 INFO - [foo.20140203T0000+13] -triggered off []
+2014-07-16T12:18:26+01 INFO - [foo.20140202T0000+13] -(current:running)> foo.20140202T0000+13 succeeded at 2014-07-16T12:18:25+01
+2014-07-16T12:18:27+01 INFO - [foo.20140203T0000+13] -(current:ready)> foo.20140203T0000+13 submitting now
+2014-07-16T12:18:27+01 INFO - [foo.20140203T0000+13] -(current:ready)> foo.20140203T0000+13 submission succeeded
+2014-07-16T12:18:27+01 INFO - [foo.20140203T0000+13] -(current:submitted)> foo.20140203T0000+13 submit_method_id=3566
+2014-07-16T12:18:28+01 INFO - [foo.20140203T0000+13] -(current:submitted)> foo.20140203T0000+13 started at 2014-07-16T12:18:28+01
+2014-07-16T12:18:29+01 INFO - [foo.20140204T0000+13] -triggered off []
+2014-07-16T12:18:29+01 INFO - [foo.20140203T0000+13] -(current:running)> foo.20140203T0000+13 succeeded at 2014-07-16T12:18:28+01
+2014-07-16T12:18:30+01 INFO - [foo.20140204T0000+13] -(current:ready)> foo.20140204T0000+13 submitting now
+2014-07-16T12:18:30+01 INFO - [foo.20140204T0000+13] -(current:ready)> foo.20140204T0000+13 submission succeeded
+2014-07-16T12:18:30+01 INFO - [foo.20140204T0000+13] -(current:submitted)> foo.20140204T0000+13 submit_method_id=3780
+2014-07-16T12:18:31+01 INFO - [foo.20140205T0000+13] -holding (beyond suite stop point) 20140204T1200+13
+2014-07-16T12:18:31+01 INFO - [foo.20140204T0000+13] -(current:submitted)> foo.20140204T0000+13 started at 2014-07-16T12:18:31+01
+2014-07-16T12:18:32+01 INFO - [foo.20140204T0000+13] -(current:running)> foo.20140204T0000+13 succeeded at 2014-07-16T12:18:32+01
+2014-07-16T12:18:32+01 INFO - Stopping: 
+  + all tasks have spawned past the final cycle 20140204T1200+13
+2014-07-16T12:18:33+01 INFO - Thread-2 exit (Event Handlers)
+2014-07-16T12:18:33+01 INFO - Thread-3 exit (Poll & Kill Commands)
+2014-07-16T12:18:33+01 INFO - Thread-4 exit (Job Submission)

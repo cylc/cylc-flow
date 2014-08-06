@@ -3,7 +3,6 @@
 import os, sys, re
 import datetime
 from difflib import unified_diff
-from cycle_time import ct
 
 class LogAnalyserError( Exception ):
     def __init__( self, msg ):
@@ -14,46 +13,56 @@ class LogAnalyserError( Exception ):
 class LogSpec( object ):
     """Get important information from an existing reference run log
     file, in order to do the same run for a reference test. Currently
-    just gets the start and stop cycle times."""
+    just gets the start and stop cycle points."""
 
     def __init__( self, log ):
         h = open( log, 'rb' )
         self.lines = h.readlines()
         h.close()
 
-    def get_start_tag( self ):
+    def get_initial_point_string( self ):
         found = False
         for line in self.lines:
-            m = re.search( 'Start tag: (.*)$',line)
+            m = re.search( 'Initial point: (.*)$',line)
             if m:
                 found = True
-                tag = m.groups()[0]
-                if tag == "None":
-                    tag = None
-                else:
-                    tag = ct(tag).get()
+                point_string = m.groups()[0]
+                if point_string == "None":
+                    point_string = None
                 break
         if found:
-            return tag
+            return point_string
         else:
-            raise LogAnalyserError( "ERROR: logged start tag not found" )
+            raise LogAnalyserError( "ERROR: logged start point not found" )
 
-    def get_stop_tag( self ):
+    def get_start_point_string( self ):
         found = False
         for line in self.lines:
-            m = re.search( 'Stop tag: (.*)$',line)
+            m = re.search( 'Start point: (.*)$',line)
             if m:
                 found = True
-                tag = m.groups()[0]
-                if tag == "None":
-                    return None
-                else:
-                    tag = ct(tag).get()
+                point_string = m.groups()[0]
+                if point_string == "None":
+                    point_string = None
                 break
         if found:
-            return tag
+            return point_string
+        return None
+
+    def get_final_point_string( self ):
+        found = False
+        for line in self.lines:
+            m = re.search( 'Final point: (.*)$',line)
+            if m:
+                found = True
+                point_string = m.groups()[0]
+                if point_string == "None":
+                    return None
+                break
+        if found:
+            return point_string
         else:
-            raise LogAnalyserError( "ERROR: logged stop tag not found" )
+            raise LogAnalyserError( "ERROR: logged stop point not found" )
 
 class LogAnalyser( object ):
     """Compare an existing reference log with the log from a new

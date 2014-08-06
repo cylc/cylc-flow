@@ -25,7 +25,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 import os, re
 from cylc.prompt import prompt
-from cylc.TaskID import TaskID, TaskIDError
+import cylc.TaskID
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
@@ -53,23 +53,17 @@ suite, pphrase = prep_pyro( args[0], options ).execute()
 task_id = args[1]
 dep = args[2]
 
-m = re.match( '^(\w+)'+TaskID.DELIM_RE+'(\w+)$', dep )
+m = re.match( '^(\w+)'+cylc.TaskID.DELIM_RE+'(\w+)$', dep )
 if m:
-    #name, ctime = m.groups()
+    #name, point_string = m.groups()
     msg = dep + ' succeeded'
 else:
     msg = dep
     print >> sys.stderr, "WARNING: DEP should be a prerequisite but looks like a task ID"
     print >> sys.stderr, msg
 
-try:
-    tid = TaskID( task_id )
-except TaskIDError, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-else:
-    task_id = tid.getstr()
+if not cylc.TaskID.is_valid_id( task_id ):
+    sys.exit( "Invalid task ID: " + task_id )
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,

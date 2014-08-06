@@ -10,6 +10,8 @@
     [[dependencies]]
         [[[0, 6]]]
             graph = "cold | c[T-6] => a => b => c"
+        [[[18]]]
+            graph = "c"
 [runtime]
     [[a,c,cold]]
         command scripting = "true"

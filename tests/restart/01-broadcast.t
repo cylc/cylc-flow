@@ -15,12 +15,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test restarting a simple suite with a broadcast
+# Test restarting a simple suite with a broadcast
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 13
+set_test_number 14
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE broadcast
 TEST_SUITE_RUN_OPTIONS=
@@ -83,29 +83,19 @@ ssss.
 Begin task states
 broadcast_task.2013092300 : status=waiting, spawned=false
 force_restart.2013092300 : status=running, spawned=true
-force_restart.2013092306 : status=runahead, spawned=false
+force_restart.2013092306 : status=waiting, spawned=false
 output_states.2013092300 : status=waiting, spawned=false
 send_a_broadcast_task.2013092300 : status=succeeded, spawned=true
-send_a_broadcast_task.2013092306 : status=runahead, spawned=false
+send_a_broadcast_task.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092300 <<'__DB_DUMP__'
-broadcast_task|2013092300|0|1|waiting
-force_restart|2013092300|1|1|running
-force_restart|2013092306|0|1|runahead
-output_states|2013092300|0|1|waiting
-send_a_broadcast_task|2013092300|1|1|succeeded
-send_a_broadcast_task|2013092306|0|1|runahead
-tidy|2013092300|0|1|waiting
-__DB_DUMP__
-cmp_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
+grep_ok "broadcast_task|2013092300|0|1|waiting" $TEST_DIR/states-db-pre-restart-2013092300
+grep_ok "send_a_broadcast_task|2013092300|1|1|succeeded" $TEST_DIR/states-db-pre-restart-2013092300
+contains_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
 broadcast_task|2013092300|0|1|waiting
 force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|0|1|runahead
 output_states|2013092300|1|1|running
-output_states|2013092306|0|1|runahead
 send_a_broadcast_task|2013092300|1|1|succeeded
-send_a_broadcast_task|2013092306|0|1|runahead
 tidy|2013092300|0|1|waiting
 __DB_DUMP__
 cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
@@ -150,33 +140,28 @@ send_a_broadcast_task.2013092312 : status=held, spawned=false
 tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 __STATE__
-cmp_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|running
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|0|1|waiting
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
-send_a_broadcast_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
 
-cmp_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|0|1|waiting
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|running
-output_states|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
-send_a_broadcast_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|0|1|waiting
 __DB_DUMP__
@@ -211,22 +196,17 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
   from task_states
   order by name, cycle;" > $TEST_DIR/states-db
-cmp_ok $TEST_DIR/states-db <<'__DB_DUMP__'
+contains_ok $TEST_DIR/states-db <<'__DB_DUMP__'
 broadcast_task|2013092300|1|1|succeeded
 broadcast_task|2013092306|1|1|succeeded
-broadcast_task|2013092312|0|1|held
 force_restart|2013092300|1|1|succeeded
 force_restart|2013092306|1|1|succeeded
-force_restart|2013092312|0|1|held
 output_states|2013092300|1|1|succeeded
 output_states|2013092306|1|1|succeeded
-output_states|2013092312|0|1|held
 send_a_broadcast_task|2013092300|1|1|succeeded
 send_a_broadcast_task|2013092306|1|1|succeeded
-send_a_broadcast_task|2013092312|0|1|held
 tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
-tidy|2013092312|0|1|held
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

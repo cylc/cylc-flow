@@ -21,7 +21,6 @@ import gobject
 #pygtk.require('2.0')
 import gtk
 
-from cylc.cycle_time import ct, CycleTimeError
 from cylc.config import config, SuiteConfigError
 from gcapture import gcapture, gcapture_tmpfile
 from warning_dialog import warning_dialog
@@ -94,25 +93,13 @@ def graph_suite( reg, start, stop, graph_opts,
     """Launch the cylc graph command with some options."""
     options = graph_opts
 
-    if True:
-        if start != '':
-            try:
-                ct(start)
-            except CycleTimeError,x:
-                warning_dialog( str(x), window ).warn()
-                return False
-        if stop != '':
-            if start == '':
-                warning_dialog(
-                        "You cannot override Final Cycle without " +
-                        "overriding Initial Cycle.").warn()
-                return False
-
-            try:
-                ct(stop)
-            except CycleTimeError,x:
-                warning_dialog( str(x), window ).warn()
-                return False
+    # TODO ISO - RESTORE CYCLE TIME CHECKING on start and stop?
+    if stop != '':
+        if start == '':
+            warning_dialog(
+                    "You cannot override Final Cycle without " +
+                    "overriding Initial Cycle.").warn()
+            return False
 
     options += ' ' + reg + ' ' + start + ' ' + stop
     command = "cylc graph --notify-completion " + template_opts + " " + options

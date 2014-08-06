@@ -4,8 +4,8 @@
 2014/02/05 12:14:06 INFO - Suite starting at 2014-02-05 12:14:06.923067
 2014/02/05 12:14:06 INFO - Log event clock: real time
 2014/02/05 12:14:06 INFO - Run mode: live
-2014/02/05 12:14:06 INFO - Start tag: None
-2014/02/05 12:14:06 INFO - Stop tag: None
+2014/02/05 12:14:06 INFO - Initial point: 1
+2014/02/05 12:14:06 INFO - Final point: 1
 2014/02/05 12:14:06 INFO - Thread-4 start (Job Submission)
 2014/02/05 12:14:06 INFO - Thread-5 start (Request Handling)
 2014/02/05 12:14:06 DEBUG - [t2.1] -task proxy added to the pool

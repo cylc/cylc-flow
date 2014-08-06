@@ -1,0 +1,16 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = 2.0
+[scheduling]
+    initial cycle point = 20000131T0100Z
+    final cycle point = 2001
+    [[dependencies]]
+        [[[ P1M ]]]
+            graph = "foo[-P1M] => foo => bar"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 20000131T0100Z
+    final cycle point = 2001

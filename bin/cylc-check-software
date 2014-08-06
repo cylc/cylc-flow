@@ -22,7 +22,9 @@ usage() {
     cat <<eof
 USAGE: cylc [admin] check-software
 
-Check that external software required by cylc is installed.
+Check that the external software required by cylc is installed.
+
+Minimum versions are not checked, except in the case of Python.
 
 Options:
   -h, --help   Print this help message and exit.
@@ -48,36 +50,26 @@ while getopts "h" opt; do
     esac
 done
 
-RES=0
-
-# Minimum Python version 2.5
-echo -n "Checking for Python >= 2.5 ... "
+# Minimum Python version 2.6
+echo -n "Checking for Python >= 2.6 ... "
 PVER=$( python -V 2>&1 | awk '{print $2}' )
 echo -n "found ${PVER} ... "
-if ! python - <<EOF
-import sys
-if sys.version_info < (2,5):
-    sys.exit(1)
-EOF
-then
-    RES=$(( RES + 1 ))
-    echo "ERROR: Python version too old"
-else
+if python -c 'import sys; sys.exit(sys.version_info < (2,6))'; then
     echo "ok"
+else
+    echo "ERROR: Python version too old"
 fi
 
 # non-Python packages
 echo "Checking for non-Python packages:"
 echo -n " + Graphviz ... "
 if ! which dot > /dev/null 2>&1; then
-    RES=$(( RES + 1 ))
     echo "NOT FOUND"
 else
     echo "ok"
 fi
 echo -n " + sqlite ... "
 if ! which sqlite3 > /dev/null 2>&1; then
-    RES=$(( RES + 1 ))
     echo "NOT FOUND"
 else
     echo "ok"
@@ -98,7 +90,6 @@ for ITEM in $PKGS; do
 
     echo -n " + $NAME ... "
     if ! python -c "import $MODL" > /dev/null 2>&1; then
-        RES=$(( RES + 1 ))
         echo "NOT FOUND"
     else
         echo "ok"

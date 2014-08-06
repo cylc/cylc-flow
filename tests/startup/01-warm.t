@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test warm starting setting cold-start tasks to succeeded & not running them
+# Test warm starting setting cold-start tasks to succeeded & not running them
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -26,6 +26,6 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --warm --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --reference-test --warm --debug $SUITE_NAME 2010010100
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

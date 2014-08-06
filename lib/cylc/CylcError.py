@@ -29,8 +29,15 @@ class CylcError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
+
+class SchedulerError( CylcError ):
+    pass
+
+
 class TaskStateError( CylcError ):
     pass
 
+
 class TaskNotFoundError( CylcError ):
     pass
+

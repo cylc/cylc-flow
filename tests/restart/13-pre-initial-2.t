@@ -25,10 +25,10 @@ install_suite $TEST_NAME_BASE pre-init-2
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate --ict=2010080800 $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug --until=2010080800 $SUITE_NAME 2010080800 
+suite_run_ok $TEST_NAME cylc run --debug --until=2010080800 $SUITE_NAME 2010080800
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-restart
 suite_run_ok $TEST_NAME cylc restart --debug --reference-test $SUITE_NAME

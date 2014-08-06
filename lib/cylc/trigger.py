@@ -16,9 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.TaskID import TaskID
+import cylc.TaskID
+from cylc.cycling.loader import (
+    get_interval, get_interval_cls, get_point_relative)
 
-import sys, re
+import re
 
 class TriggerXError( Exception ):
     def __init__( self, msg ):
@@ -35,7 +37,7 @@ Note on trigger time offsets:
     foo[T-n] => bar   # bar triggers off "foo succeeded at T-n"
 (a) foo[T-n]:x => bar # bar triggers off "output x of foo evaluated at T-n"
 where output x of foo may also have an offset:
-(b) x = "foo outputx completed for <CYLC_TASK_CYCLE_TIME[+n]>"
+(b) x = "foo outputx completed for <CYLC_TASK_CYCLE_POINT[+n]>"
 
 (a) is an "evaluation offset"
 (b) is an "intrinsic offset"
@@ -45,62 +47,63 @@ where output x of foo may also have an offset:
         self.name = name
         self.msg = None
         self.intrinsic_offset = None
-        self.evaluation_offset = None
+        self.evaluation_offset_string = None
+        self.cycle_point = None
         self.type = None
         self.cycling = False
-        self.async_oneoff = False
-        self.async_repeating = False
-        self.asyncid_pattern = None
-        self.startup = False
         self.suicide = False
+
     def set_suicide( self, suicide ):
         self.suicide = suicide
-    def set_startup( self ):
-        self.startup = True
-    def set_async_oneoff( self ):
-        self.async_oneoff = True
-    def set_async_repeating( self, pattern ):
-        self.async_repeating = True
-        self.asyncid_pattern = pattern
+
     def set_cycling( self ):
         self.cycling = True
-    def set_special( self, msg ):
+
+    def set_special( self, msg, base_interval=None ):
         # explicit internal output message ...
         self.msg = msg
-        m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', msg )
+        # TODO ISO: support '+PT6H', etc
+        m = re.search( '\[\s*T?\s*([+-]?)\s*(.*)\s*\]', msg )
         if m:
             sign, offset = m.groups()
-            if sign != '+':
+            if sign and sign != '+':
                 raise TriggerXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.intrinsic_offset = int(offset)
+            if offset:
+                self.intrinsic_offset = base_interval.get_inferred_child(
+                    offset)
+            else:
+                self.intrinsic_offset = get_interval_cls().get_null()
+
     def set_type( self, type ):
         if type not in [ 'submitted', 'submit-failed', 'started', 'succeeded', 'failed' ]:
             raise TriggerXError, 'ERROR, ' + self.name + ', illegal trigger type: ' + type
         self.type = type
-    def set_offset( self, offset ):
-        self.evaluation_offset = int( offset )
-    def get( self, ctime, cycler ):
-        if self.async_repeating:
-            # repeating async
-            preq = re.sub( '<ASYNCID>', '(' + self.asyncid_pattern + ')', self.msg )
-        else:
-            # cycling or oneoff async
-            if self.async_oneoff:
-                # ctime is defined by the cycling section, but this
-                # means the trigger is on an async oneoff task!
-                ctime = '1'
-            if self.msg:
-                # explicit internal output ...
-                preq = self.msg
-                if self.intrinsic_offset:
-                    ctime = cycler.offset( ctime, - self.intrinsic_offset )
-                if self.evaluation_offset:
-                    ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = re.sub( '\[\s*T\s*.*?\]', ctime, preq )
-            else:
-                # implicit output
-                if self.evaluation_offset:
-                    ctime = cycler.offset( ctime, self.evaluation_offset )
-                preq = self.name + TaskID.DELIM + ctime + ' ' + self.type
-        return preq
 
+    def set_cycle_point( self, cycle_point ):
+        self.cycle_point = cycle_point
+
+    def set_offset_string( self, offset_string ):
+        self.evaluation_offset_string = offset_string
+
+    def get( self, ctime ):
+        """Return a prerequisite string and the relevant point for ctime."""
+        if self.msg:
+            # explicit internal output ...
+            preq = self.msg
+            if self.intrinsic_offset:
+                ctime += self.intrinsic_offset
+            if self.evaluation_offset_string:
+                ctime = get_point_relative(
+                    self.evaluation_offset_string, ctime)
+            if self.cycle_point:
+                ctime = self.cycle_point
+            preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
+        else:
+            # implicit output
+            if self.evaluation_offset_string:
+                ctime = get_point_relative(
+                    self.evaluation_offset_string, ctime)
+            if self.cycle_point:
+                ctime = self.cycle_point
+            preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type
+        return preq, ctime

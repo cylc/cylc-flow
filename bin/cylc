@@ -212,10 +212,7 @@ utility_commands = OrderedDict()
 utility_commands['cycletime'    ] = ['cycletime' ]
 utility_commands['checkvars'    ] = ['checkvars']
 utility_commands['random'       ] = ['random', 'rnd']
-utility_commands['housekeeping' ] = ['housekeeping']
 utility_commands['scp-transfer' ] = ['scp-transfer']
-utility_commands['lockserver'] = ['lockserver' ]
-utility_commands['lockclient'] = ['lockclient', 'lc' ]
 utility_commands['suite-state'] = ['suite-state']
 
 hook_commands = OrderedDict()
@@ -317,7 +314,7 @@ catsum['discovery'   ]   = "Detect running suites."
 catsum['control'     ]   = "Suite start up, monitoring, and control."
 catsum['task'        ]   = "The task messaging interface."
 catsum['hook'        ]   = "Suite and task event hook scripts."
-catsum['utility'     ]   = "Cycle arithmetic and templating, housekeeping, etc."
+catsum['utility'     ]   = "Cycle arithmetic and templating, etc."
 
 usage = general_usage + """
 
@@ -336,9 +333,12 @@ that simply associates names with the suite definition locations.  The
 users, with access governed by normal filesystem permissions.
 
 TASK IDENTIFICATION IN CYLC SUITES
-  Tasks are identified by NAME.TAG where for cycling tasks TAG is a
-cycle time (YYYY[MM[DD[HH[mm[ss]]]]]) and for asynchronous tasks TAG is
-an integer (just '1' for one-off asynchronous tasks).
+  Tasks are identified by NAME.CYCLE_POINT where POINT is either a
+  date-time or an integer.
+  Date-time cycle points are in an ISO 8601 date-time format, typically
+  CCYYMMDDThhmm followed by a time zone - e.g. 20101225T0600Z.
+  Integer cycle points (including those for one-off suites) are integers
+  - just '1' for one-off suites.
 
 HOW TO DRILL DOWN TO COMMAND USAGE HELP:
   % cylc help           # list all available categories (this page)
@@ -391,7 +391,7 @@ comsum[ 'gsummary'   ] = 'Summary GUI for monitoring multiple suites'
 comsum[ 'gpanel'     ] = 'Internal interface for GNOME 2 panel applet'
 # control
 comsum[ 'gui'        ] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
-comsum[ 'run'        ] = 'Start a suite at a given cycle time'
+comsum[ 'run'        ] = 'Start a suite at a given cycle point'
 comsum[ 'stop'       ] = 'Shut down running suites'
 comsum[ 'restart'    ] = 'Restart a suite from a previous state'
 comsum[ 'trigger'    ] = 'Manually trigger or re-trigger a task'
@@ -407,29 +407,26 @@ comsum[ 'nudge'      ] = 'Cause the cylc task processing loop to be invoked'
 comsum[ 'reload'     ] = 'Reload the suite definition at run time'
 comsum[ 'depend'     ] = 'Add prerequisites to tasks in a running suite'
 comsum[ 'set-runahead'   ] = 'Change the runahead limit in a running suite.'
-comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
-comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'set-verbosity'  ] = 'Change a running suite\'s logging verbosity'
 # discovery
 comsum[ 'ping'       ] = 'Check that a suite is running'
-comsum[ 'scan'       ] = 'Scan a host for running suites and lockservers'
+comsum[ 'scan'       ] = 'Scan a host for running suites'
 comsum[ 'check-versions' ] = 'Compare cylc versions on task host accounts'
 # task
 comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
-comsum[ 'started'    ] = 'Acquire a task lock and report started'
-comsum[ 'message'    ] = 'Report progress and completion of outputs'
-comsum[ 'succeeded'  ] = 'Release task lock and report succeeded'
-comsum[ 'failed'     ] = 'Release task lock and report failure'
+comsum[ 'started'    ] = '(task messaging) Report task started'
+comsum[ 'message'    ] = '(task messaging) Report task messages'
+comsum[ 'succeeded'  ] = '(task messaging) Report task succeeded'
+comsum[ 'failed'     ] = '(task messaging) Report task failed'
 comsum[ 'broadcast'  ] = 'Change suite [runtime] settings on the fly'
 comsum[ 'get-job-status' ] = '(Internal) Retrieve job status for a task'
 comsum[ 'job-kill' ] = '(Internal) Kill a job for a task'
 
 # utility
-comsum[ 'cycletime'    ] = 'Cycle time arithmetic and filename templating'
+comsum[ 'cycletime'    ] = 'Cycle point arithmetic and filename templating'
 comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
 comsum[ 'random'       ] = 'Generate a random integer within a given range'
 comsum[ 'jobscript'    ] = 'Generate a task job script and print it to stdout'
-comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
 comsum[ 'suite-state' ] = 'Query the task states in a suite'
 

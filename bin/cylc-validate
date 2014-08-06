@@ -36,6 +36,11 @@ will correspond to the inlined version seen by the parser; use
 'cylc view -i,--inline SUITE' for comparison.""",
 jset=True, prep=True )
 
+
+parser.add_option( "--ict",
+        help="Set an initial cycle time to validate against. This "
+        "may be required if the suite does not supply one.")
+
 parser.add_option( "--strict",
         help="Fail any use of unsafe or experimental features. "
         "Currently this just means naked dummy tasks (tasks with no "
@@ -56,6 +61,7 @@ if cylc.flags.verbose:
 
 try:
     config( suite, suiterc,
+            cli_initial_point_string=options.ict,
             template_vars=options.templatevars,
             template_vars_file=options.templatevars_file,
             validation=True, strict=options.strict,

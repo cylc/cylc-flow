@@ -25,7 +25,7 @@ from datetime import datetime
 from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
-from cylc.strftime import strftime
+from cylc.wallclock import get_current_time_string
 from cylc import cylc_mode
 import cylc.flags
 
@@ -75,10 +75,8 @@ class message(object):
         self.utc = self.env_map.get('CYLC_UTC') == 'True'
         # Record the time the messaging system was called and append it
         # to the message, in case the message is delayed in some way.
-        if self.utc:
-            self.true_event_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-        else:
-            self.true_event_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        self.true_event_time = get_current_time_string(
+            override_use_utc=self.utc)
 
         self.ssh_messaging = (
                 self.env_map.get('CYLC_TASK_COMMS_METHOD') == 'ssh' )
@@ -105,12 +103,6 @@ class message(object):
             value = self.env_map.get(key, default)
             setattr(self, attr, value)
 
-    def now( self ):
-        if self.utc:
-            return datetime.utcnow()
-        else:
-            return datetime.now()
-
     def get_proxy( self ):
         # get passphrase here, not in __init__, because it is not needed
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
@@ -124,11 +116,7 @@ class message(object):
                 self.port ).get_proxy( self.task_id )
 
     def print_msg( self, msg ):
-        if self.utc:
-            dt = datetime.utcnow()
-        else:
-            dt = datetime.now()
-        now = strftime( dt, "%Y/%m/%d %H:%M:%S" )
+        now = get_current_time_string(override_use_utc=self.utc)
         prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
             print prefix + msg
@@ -185,8 +173,7 @@ class message(object):
                     'CYLC_SUITE_NAME', 'CYLC_SUITE_OWNER',
                     'CYLC_SUITE_HOST', 'CYLC_SUITE_PORT', 'CYLC_UTC',
                     'CYLC_TASK_MSG_MAX_TRIES', 'CYLC_TASK_MSG_TIMEOUT',
-                    'CYLC_TASK_MSG_RETRY_INTVL',
-                    'CYLC_USE_LOCKSERVER', 'CYLC_LOCKSERVER_PORT' ]:
+                    'CYLC_TASK_MSG_RETRY_INTVL']:
                 # (no exception handling here as these variables should
                 # always be present in the task execution environment)
                 env[var] = self.env_map.get( var, 'UNSET' )
@@ -251,10 +238,8 @@ class message(object):
 
     def send_started( self ):
         self.send( self.task_id + ' started' )
-        self.task_lock()
 
     def send_succeeded( self ):
-        self.task_lock( False )
         self.send( self.task_id + ' succeeded' )
 
     def send_failed( self ):
@@ -263,26 +248,7 @@ class message(object):
             # send reason for failure first so it does not contaminate
             # the special task failed message.
             self.send()
-        self.task_lock( False )
         self.send( self.task_id + ' failed' )
-
-    def task_lock( self, acquire=True ):
-        # acquire or release a task lock if using the lockserver
-        if cylc_mode.mode().is_raw() or self.ssh_messaging:
-            return
-        from cylc.locking.task_lock import task_lock
-        try:
-            if acquire:
-                if not task_lock().acquire():
-                    raise SystemExit( "Failed to acquire a task lock" )
-            else:
-                if not task_lock().release():
-                    raise SystemExit( "Failed to release task lock" )
-        except Exception, z:
-            print >> sys.stderr, z
-            if cylc.flags.debug:
-                raise
-            raise SystemExit( "Failed to connect to the lockserver?" )
 
     def shortcut_next_restart( self ):
         self.print_msg( 'next restart file completed' )

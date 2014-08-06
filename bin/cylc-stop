@@ -24,8 +24,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc.cycle_time import ct, CycleTimeError
-from cylc.TaskID import TaskID, TaskIDError
+import cylc.TaskID
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
@@ -83,19 +82,23 @@ tasks, or on queued event handlers and job poll and kill commands.
 
 5/ cylc stop REG STOP
    Do a clean shutdown after (a) all tasks have succeeded out to cycle
-time STOP, or (b) all tasks have succeeded out to wall clock time STOP
-(YYYY/MM/DD-HH:mm), or (c) task ID STOP has succeeded.
+time STOP, or (b) task ID STOP has succeeded.
+
+6/ cylc stop --wall-clock=DATETIME REG
+    Do a clean shutdown after all tasks have succeeded out to wall clock time
+    DATETIME (ISO 8601 date/time format e.g. CCYYMMDDThh:mm, CCYY-MM-DDThh,
+    etc).
 
 Note that cylc does not shut down automatically at a designated future
-cycle time (either by the "final cycle time" in the suite definition, or
+cycle point (either by the "final cycle point" in the suite definition, or
 by usage case 5/ above) if any failed tasks are present in the suite.
 This is to ensure that failed tasks do not go unnoticed.
 
 The command exits immediately unless --max-polls is greater than zero
 in which case it polls to wait for suite shutdown.""",
     pyro=True, argdoc=[ ("REG", "Suite name"),
-    ("[STOP]", """a/ task TAG (cycle time or integer), or
-                        b/ YYYY/MM/DD-HH:mm (clock time), or
+    ("[STOP]", """a/ task POINT (cycle point), or
+                        b/ ISO 8601 date-time (clock time), or
                         c/ TASK (task ID).""")] )
 
 parser.add_option( "-k", "--kill",
@@ -112,6 +115,11 @@ parser.add_option( "-Q", "--quick",
         "remaining event handlers and job poll/kill commands."
         "(see above).",
         action="store_true", default=False, dest="quick" )
+
+parser.add_option( "-w", "--wall-clock", metavar="DATETIME",
+        help="Do a clean shutdown after all tasks have succeeded out to wall"
+        " clock DATETIME (ISO 8601 formatted)", action="store",
+        dest="wall_clock" )
 
 stop_poller.add_to_cmd_options( parser, d_max_polls=0 )
 
@@ -155,51 +163,25 @@ except Exception, x:
         raise
     raise SystemExit(x)
 
+
 method = None
-if shutdown_at:
+if options.wall_clock:
+    method = 'stop after clock time'
+    prompt_text = 'Set shutdown at wall clock %s' % options.wall_clock
+    shutdown_arg = options.wall_clock
+elif shutdown_at:
     # STOP argument detected
-    try:
-        # is it a task ID?
-        tid = TaskID( shutdown_arg )
-    except TaskIDError:
-        # not a task ID
-        try:
-            # is it a date time YYYY/MM/DD-HH:mm?
-            date, time = shutdown_arg.split('-')
-            yyyy, mm, dd = date.split('/')
-            HH,MM = time.split(':')
-        except:
-            # not a task ID or a date time;
-            try:
-                # is it a cycle time?
-                ct(shutdown_arg)
-            except CycleTimeError,x:
-                # nope: is it an async integer tag?
-                try:
-                    int( shutdown_arg )
-                except ValueError:
-                    # nope: not task ID, date time, or TAG
-                    raise SystemExit( "ERROR:, invalid STOP argument: " + shutdown_arg )
-                else:
-                    # is probably an async TAG
-                    method = 'stop after tag'
-                    #print 'async'
-            else:
-                # is a cycle time
-                method = 'stop after tag'
-                #print 'cycling'
-        else:
-            # is a date time
-            method = 'stop after clock time'
-            #print 'date-time'
-    else:
+    if cylc.TaskID.is_valid_id( shutdown_arg ):
         # is a task ID
         method = 'stop after task'
-        #print 'task id'
+        prompt_text = 'Set shutdown after task %s' % shutdown_arg
+    else:
+        # not a task ID, may be a cycle point
+        method = 'stop after point'
+        prompt_text = 'Set shutdown at cycle point %s' % shutdown_arg
 
-    #print method
-
-    prompt( 'Set shutdown ' + shutdown_arg + ' for ' + suite, options.force )
+if method:
+    prompt( prompt_text + ' for ' + suite, options.force )
     try:
         result = proxy.put( method, shutdown_arg )
     except Exception,x:
@@ -208,7 +190,7 @@ if shutdown_at:
         sys.exit(x)
 
 elif options.now:
-    prompt( 'Shut down ' + suite + ' now', options.force )
+    prompt( 'Shut down %s now' % suite, options.force )
     try:
         result = proxy.put( 'stop now' )
     except Exception,x:
@@ -217,7 +199,7 @@ elif options.now:
         sys.exit(x)
 
 elif options.quick:
-    prompt( 'Shut down ' + suite + ' quickly', options.force )
+    prompt( 'Shut down %s quickly' % suite, options.force )
     try:
         result = proxy.put( 'stop quickly' )
     except Exception,x:
@@ -226,7 +208,7 @@ elif options.quick:
         sys.exit(x)
 
 else:
-    prompt( 'Shut down ' + suite, options.force )
+    prompt( 'Shut down %s' % suite, options.force )
     print "Telling the suite to shut down ..."
     try:
         result = proxy.put( 'stop cleanly', options.kill )

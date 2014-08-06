@@ -7,7 +7,7 @@
     final cycle time = 2010010200
     [[dependencies]]
         [[[0, 6, 12, 18]]]
-            graph = "(a[T-6] & b) & c[T-6] => a"
+            graph = "(a[T-6] & b) & c[T-6] => a & c"
 [runtime]
     [[a, b, c]]
         command scripting = "sleep 1"

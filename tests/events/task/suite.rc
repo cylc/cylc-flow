@@ -10,7 +10,7 @@ title = "test all event hooks"
     [[environment]]
         EVNTLOG = {{ EVNTLOG }}
     [[reference test]]
-        live mode suite timeout = 0.8
+        live mode suite timeout = 0.75
         suite shutdown event handler = log-check.sh
         expected task failures = bar.1, baz.1
  
@@ -29,11 +29,11 @@ title = "test all event hooks"
 
     [[prep]]
         command scripting = """
-printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > $EVNTLOG
+printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > {{ EVNTLOG }}
                             """
     [[foo]]
         # timeout, retry, warning, succeeded 
-        retry delays = 0.01
+        retry delays = 0.05
         command scripting = """
 if [[ $CYLC_TASK_TRY_NUMBER == 1 ]]; then
     false
@@ -44,7 +44,7 @@ fi"""
             succeeded handler = {{ HANDLER }}
             warning handler = {{ HANDLER }}
             retry handler = {{ HANDLER }}
-            execution timeout = 0.01
+            execution timeout = 0.05
             execution timeout handler = {{ HANDLER }}
 
     [[bar]]
@@ -53,7 +53,7 @@ fi"""
             submission failed handler = {{ HANDLER }}
             submission retry handler = {{ HANDLER }}
         [[[job submission]]]
-            retry delays = 0.01
+            retry delays = 0.05
         [[[remote]]]
             host = NOHOST
 
@@ -65,6 +65,6 @@ fi"""
             submitted handler = {{ HANDLER }}
             started handler = {{ HANDLER }}
             failed handler = {{ HANDLER }}
-            submission timeout = 0.01
+            submission timeout = 0.05
             submission timeout handler = {{ HANDLER }}
 

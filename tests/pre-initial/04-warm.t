@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: Test pre-initial cycling works under warm starts
+# Test pre-initial cycling works under warm starts
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -26,6 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --warm --reference-test --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --warm --reference-test --debug \
+    $SUITE_NAME 2013010100
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

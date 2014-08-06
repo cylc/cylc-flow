@@ -3,8 +3,8 @@
 2014/04/29 16:12:17 INFO - Suite starting at 2014-04-29 16:12:17.181302
 2014/04/29 16:12:17 INFO - Log event clock: real time
 2014/04/29 16:12:17 INFO - Run mode: live
-2014/04/29 16:12:17 INFO - Start tag: None
-2014/04/29 16:12:17 INFO - Stop tag: None
+2014/04/29 16:12:17 INFO - Initial point: 1
+2014/04/29 16:12:17 INFO - Final point: 1
 2014/04/29 16:12:17 INFO - Thread-3 start (Poll & Kill Commands)
 2014/04/29 16:12:17 INFO - Thread-5 start (Request Handling)
 2014/04/29 16:12:17 INFO - Thread-4 start (Job Submission)

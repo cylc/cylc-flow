@@ -4,8 +4,8 @@
 2013/09/25 12:04:21 INFO - Suite starting at 2013-09-25 12:04:21.653087
 2013/09/25 12:04:21 INFO - Log event clock: real time
 2013/09/25 12:04:21 INFO - Run mode: live
-2013/09/25 12:04:21 INFO - Start tag: None
-2013/09/25 12:04:21 INFO - Stop tag: None
+2013/09/25 12:04:21 INFO - Initial point: 1
+2013/09/25 12:04:21 INFO - Final point: 1
 2013/09/25 12:04:21 INFO - Thread-4 start (Job Submission)
 2013/09/25 12:04:21 INFO - Thread-5 start (Request Handling)
 2013/09/25 12:04:21 DEBUG - [a.1] -task proxy added to the pool

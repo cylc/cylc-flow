@@ -17,19 +17,20 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import Pyro.core
-from cycle_time import ct, CycleTimeError
 from copy import deepcopy
 from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
-from cylc.TaskID import TaskID, InvalidTaskIDError, InvalidCycleTimeError
+import TaskID
+from cycling.loader import get_point
 from rundb import RecordBroadcastObject
+from wallclock import get_current_time_string
 
 class broadcast( Pyro.core.ObjBase ):
     """Receive broadcast variables from cylc clients."""
 
     # examples:
-    #self.settings[ 'all-cycles' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
+    #self.settings[ 'all-cycle-points' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
     #self.settings[ '2010080806' ][ 'root' ] = "{ 'command scripting' : 'stuff' }
 
     def __init__( self, linearized_ancestors ):
@@ -88,7 +89,10 @@ class broadcast( Pyro.core.ObjBase ):
         self.prune( self.settings )
 
         if self.get_dump() != self.last_settings:
-            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            current_time_string = get_current_time_string(
+                display_sub_seconds=True)
+            self.settings_queue.append(RecordBroadcastObject(
+                current_time_string, self.get_dump() ))
             self.last_settings = self.settings
             self.new_settings = True
 
@@ -99,13 +103,14 @@ class broadcast( Pyro.core.ObjBase ):
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, tag = task_id.split( TaskID.DELIM )
+        name, point_string = TaskID.split( task_id )
 
         ret = {}
         # The order is:
         #    all:root -> all:FAM -> ... -> all:task
         # -> tag:root -> tag:FAM -> ... -> tag:task
-        for cycle in [ 'all-cycles', tag ]:
+        # DEPRECATED at cylc 6: 'all-cycles'
+        for cycle in [ 'all-cycle-points', 'all-cycles', point_string ]:
             if cycle not in self.settings:
                 continue
             for ns in reversed(self.linearized_ancestors[name]):
@@ -114,41 +119,46 @@ class broadcast( Pyro.core.ObjBase ):
         return ret
 
     def expire( self, cutoff ):
-        """Clear all settings targetting cycle times earlier than cutoff."""
+        """Clear all settings targetting cycle points earlier than cutoff."""
         if not cutoff:
             self.log.info( 'Expiring all broadcast settings now' )
             self.settings = {}
-        for ctime in self.settings.keys():
-            if ctime == 'all-cycles':
+        for point_string in self.settings.keys():
+            # DEPRECATED at cylc 6: 'all-cycles'
+            if point_string in ['all-cycle-points', 'all-cycles']:
                 continue
-            elif ctime < cutoff:
-                self.log.info( 'Expiring ' + ctime + ' broadcast settings now' )
-                del self.settings[ ctime ]
+            point = get_point(point_string)
+            if point < cutoff:
+                self.log.info( 'Expiring ' + str(point) + ' broadcast settings now' )
+                del self.settings[ point_string ]
 
-    def clear( self, namespaces, tags ):
+    def clear( self, namespaces, point_strings ):
         """
-        Clear settings globally, or for listed namespaces and/or tags.
+        Clear settings globally, or for listed namespaces and/or points.
         """
-        if not namespaces and not tags:
+        if not namespaces and not point_strings:
             # clear all settings
             self.settings = {}
-        elif tags:
-            # clear all settings specific to given tags
-            for tag in tags:
+        elif point_strings:
+            # clear all settings specific to given point_strings
+            for point_string in point_strings:
                 try:
-                    del self.settings[tag]
+                    del self.settings[point_string]
                 except:
                     pass
         elif namespaces:
             # clear all settings specific to given namespaces
-            for tag in self.settings.keys():
+            for point_string in self.settings.keys():
                 for ns in namespaces:
                     try:
-                        del self.settings[tag][ns]
+                        del self.settings[point_string][ns]
                     except:
                         pass
         if self.get_dump() != self.last_settings:
-            self.settings_queue.append(RecordBroadcastObject(datetime.now(), self.get_dump() ))
+            self.settings_queue.append(RecordBroadcastObject(
+                get_current_time_string(display_sub_seconds=True),
+                self.get_dump()
+            ))
             self.last_settings = self.settings
             self.new_settings = True
 

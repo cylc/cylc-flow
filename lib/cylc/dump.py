@@ -16,9 +16,12 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime, time
+import re
+import sys
 import subprocess
-from cylc.TaskID import TaskID
+import time
+import cylc.TaskID
+
 
 def get_stop_state(suite, owner=None, host=None):
     """Return the contents of the last 'state' file."""
@@ -41,6 +44,7 @@ def get_stop_state(suite, owner=None, host=None):
     else:
         return None
 
+
 def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     """Load the contents of the last 'state' file into summary maps."""
     global_summary = {}
@@ -60,15 +64,19 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
     if line0.startswith( 'suite time' ) or \
             line0.startswith( 'simulation time' ):
         # backward compatibility with pre-5.4.11 state dumps
-        time_string = line0.rstrip().split(' : ')[1]
+        global_summary["last_updated"] = time.time()
     else:
         # (line0 is run mode)
         line1 = lines.pop(0)
-        time_string = line1.rstrip().split(' : ')[1]
-
-    dt = datetime.datetime( *(time.strptime(time_string, "%Y:%m:%d:%H:%M:%S")[0:6]))
-
-    global_summary["last_updated"] = dt
+        while not line1.startswith("time :"):
+            line1 = lines.pop(0)
+        try:
+            time_string = line1.rstrip().split(' : ')[1]
+            unix_time_string = time_string.rsplit('(', 1)[1].rstrip(")")
+            global_summary["last_updated"] = int(unix_time_string)
+        except (TypeError, ValueError):
+            global_summary["last_updated"] = time.time()
+  
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     stop = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     if start != "(none)":
@@ -81,11 +89,14 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             continue
         try:
             ( task_id, info ) = line.split(' : ')
-            ( name, tag ) = task_id.split( TaskID.DELIM )
-        except:
+            ( name, point_string ) = cylc.TaskID.split( task_id )
+        except ValueError:
             continue
-        task_summary.setdefault(task_id, {"name": name, "tag": tag,
-                                          "label": tag})
+        except Exception as e:
+            sys.stderr.write(str(e) + "\n")
+            continue
+        task_summary.setdefault(task_id, {"name": name, "point": point_string,
+                                          "label": point_string})
         # reconstruct state from a dumped state string
         items = dict([p.split("=") for p in info.split(', ')])
         state = items.get("status")
@@ -121,9 +132,6 @@ def dump_to_stdout( states, sort_by_cycle=False ):
             line = name + ', ' + label + ', '
 
         line += state + ', ' + spawned
-
-        if 'asyncid' in states[id]:
-            line += ', ' + states[id]['asyncid']
 
         lines.append( line )
 

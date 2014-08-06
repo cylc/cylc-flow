@@ -1,6 +1,6 @@
 2013/05/31 10:45:47 INFO - Suite starting at 2013-05-31 10:45:42.262882
-2013/05/31 10:45:48 INFO - Start tag: None
-2013/05/31 10:45:48 INFO - Stop tag: None
+2013/05/31 10:45:48 INFO - Initial point: 1
+2013/05/31 10:45:48 INFO - Final point: 1
 2013/05/31 10:46:01 INFO - [a.1] -triggered off []
 2013/05/31 11:40:19 INFO - [a.1] -> a.1 submitted
 2013/05/31 11:40:19 INFO - [a.1] -> a.1 succeeded

@@ -1,15 +1,16 @@
 [cylc]
+    UTC mode = True
     [[event hooks]]
         timeout = 0.2
         abort on timeout = True
 [scheduling]
-    runahead limit = 12 # marker
-    initial cycle time = 2010010100
-    final cycle time = 2010010500
+    initial cycle time = 2010-01-01
+    final cycle time = 2010-01-05
+    runahead limit = PT12H # marker
     [[dependencies]]
-        [[[0]]]
+        [[[T00]]]
             graph = "foo:fail => reloader"
-        [[[0,6,12,18]]]
+        [[[T00/PT6H]]]
             graph = "foo => bar"
 [runtime]
     [[foo]]
@@ -19,7 +20,7 @@
     [[reloader]]
         command scripting = """
 # change the dependencies section name to garbage:
-perl -pi -e 's/(runahead limit = )12( # marker)/\1 18\2/' $CYLC_SUITE_DEF_PATH/suite.rc
+perl -pi -e 's/(runahead limit = )PT12H( # marker)/\1 PT18H\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
 """

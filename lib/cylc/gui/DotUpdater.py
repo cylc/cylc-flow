@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.task_state import task_state
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from copy import deepcopy
@@ -55,7 +55,7 @@ class DotUpdater(threading.Thread):
         self.ancestors_pruned = {}
         self.descendants = []
         self.filter = ""
-        self.ctimes = []
+        self.point_strings = []
 
         self.led_headings = []
         self.led_treeview = treeview
@@ -118,16 +118,20 @@ class DotUpdater(threading.Thread):
 
         self.updater.set_update(True)
 
-        self.ctimes = []
+        self.point_strings = []
         state_summary = {}
         state_summary.update(self.state_summary)
         state_summary.update(self.fam_state_summary)
 
         for id_ in state_summary:
-            name, ctime = id_.split( TaskID.DELIM )
-            if ctime not in self.ctimes:
-                self.ctimes.append(ctime)
-        self.ctimes.sort()
+            name, point_string = cylc.TaskID.split( id_ )
+            if point_string not in self.point_strings:
+                self.point_strings.append(point_string)
+        try:
+            self.point_strings.sort(key=int)
+        except (TypeError, ValueError):
+            # iso cycle points
+            self.point_strings.sort()
 
         if self.should_group_families:
             for key, val in self.ancestors_pruned.items():
@@ -136,8 +140,9 @@ class DotUpdater(threading.Thread):
                 # highest level family name (or plain task) above root
                 name = val[-2]
                 if name not in self.task_list:
-                    for ctime in self.ctimes:
-                        if name + TaskID.DELIM + ctime in state_summary:
+                    for point_string in self.point_strings:
+                        task_id = cylc.TaskID.get( name, point_string )
+                        if task_id in state_summary:
                             self.task_list.append( name )
                             break
 
@@ -154,7 +159,7 @@ class DotUpdater(threading.Thread):
 
     def set_led_headings( self ):
         if self.should_transpose_view:
-            new_headings = [ 'Name' ] + self.ctimes
+            new_headings = [ 'Name' ] + self.point_strings
         else:
             new_headings = ['Tag' ] + self.task_list
         if new_headings == self.led_headings:
@@ -188,7 +193,7 @@ class DotUpdater(threading.Thread):
 
     def ledview_widgets( self ):
         if self.should_transpose_view:
-            types = [str] + [gtk.gdk.Pixbuf] * len( self.ctimes )
+            types = [str] + [gtk.gdk.Pixbuf] * len( self.point_strings )
             num_new_columns = len(types)
         else:
             types = [str] + [gtk.gdk.Pixbuf] * len( self.task_list) + [str]
@@ -251,7 +256,7 @@ class DotUpdater(threading.Thread):
         self.led_treeview.append_column( tvc )
 
         if self.should_transpose_view:
-            data_range = range(1, len( self.ctimes ) + 1)
+            data_range = range(1, len( self.point_strings ) + 1)
         else:
             data_range = range(1, len( self.task_list ) + 1)
 
@@ -280,27 +285,27 @@ class DotUpdater(threading.Thread):
             iter_ = self.led_treeview.get_model().get_iter(path)
             name = self.led_treeview.get_model().get_value(iter_, 0)
             try:
-                ctime = self.led_headings[col_index]
+                point_string = self.led_headings[col_index]
             except IndexError:
                 # This can occur for a tooltip while switching from transposed.
                 return False
             if col_index == 0:
                 task_id = name
             else:
-                task_id = name + TaskID.DELIM + ctime
+                task_id = cylc.TaskID.get( name, point_string )
         else:
             try:
-                ctime = self.ctimes[path[0]]
+                point_string = self.point_strings[path[0]]
             except IndexError:
                 return False
             if col_index == 0:
-                task_id = ctime
+                task_id = point_string
             else:
                 try:
                     name = self.led_headings[col_index]
                 except IndexError:
                     return False
-                task_id = name + TaskID.DELIM + ctime
+                task_id = cylc.TaskID.get( name, point_string )
         if task_id != self._prev_tooltip_task_id:
             self._prev_tooltip_task_id = task_id
             tooltip.set_text(None)
@@ -323,14 +328,14 @@ class DotUpdater(threading.Thread):
         state_summary.update( self.fam_state_summary )
         self.ledview_widgets()
 
-        tasks_by_ctime = {}
+        tasks_by_point_string = {}
         tasks_by_name = {}
         for id_ in state_summary:
-            name, ctime = id_.split( TaskID.DELIM )
-            tasks_by_ctime.setdefault( ctime, [] )
-            tasks_by_ctime[ctime].append(name)
+            name, point_string = cylc.TaskID.split( id_ )
+            tasks_by_point_string.setdefault( point_string, [] )
+            tasks_by_point_string[point_string].append(name)
             tasks_by_name.setdefault( name, [] )
-            tasks_by_name[name].append(ctime)
+            tasks_by_name[name].append(point_string)
 
         # flat (a liststore would do)
         names = tasks_by_name.keys()
@@ -339,13 +344,14 @@ class DotUpdater(threading.Thread):
 
         if self.is_transposed:
             for name in self.task_list:
-                ctimes_for_tasks = tasks_by_name.get( name, [] )
-                if not ctimes_for_tasks:
+                point_strings_for_tasks = tasks_by_name.get( name, [] )
+                if not point_strings_for_tasks:
                     continue
                 state_list = [ ]
-                for ctime in self.ctimes:
-                    if ctime in ctimes_for_tasks:
-                        state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
+                for point_string in self.point_strings:
+                    if point_string in point_strings_for_tasks:
+                        task_id = cylc.TaskID.get( name, point_string )
+                        state = state_summary[ task_id ][ 'state' ]
                         state_list.append( self.dots[state] )
                     else:
                         state_list.append( self.dots['empty'] )
@@ -355,12 +361,13 @@ class DotUpdater(threading.Thread):
                     # A very laggy store can change the columns and raise this.
                     return False
         else:
-            for ctime in self.ctimes:
-                tasks_at_ctime = tasks_by_ctime[ ctime ]
+            for point_string in self.point_strings:
+                tasks_at_point_string = tasks_by_point_string[ point_string ]
                 state_list = [ ]
                 for name in self.task_list:
-                    if name in tasks_at_ctime:
-                        state = state_summary[ name + TaskID.DELIM + ctime ][ 'state' ]
+                    if name in tasks_at_point_string:
+                        task_id = cylc.TaskID.get( name, point_string )
+                        state = state_summary[ task_id ][ 'state' ]
                         try:
                             state_list.append( self.dots[state] )
                         except KeyError:
@@ -370,7 +377,8 @@ class DotUpdater(threading.Thread):
                     else:
                         state_list.append( self.dots['empty'] )
                 try:
-                    self.led_liststore.append( [ctime] + state_list + [ctime])
+                    self.led_liststore.append(
+                        [point_string] + state_list + [point_string])
                 except ValueError:
                     # A very laggy store can change the columns and raise this.
                     return False

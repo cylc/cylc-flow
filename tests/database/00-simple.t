@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-#C: basic tests for suite database contents
+# basic tests for suite database contents
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 5
@@ -37,7 +37,7 @@ sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "sel
 cmp_ok $TEST_SOURCE_DIR/simple/db-states states
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-db-events
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select name, cycle, event, message, misc from task_events order by name, message" > events
+sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select name, cycle, event, message, misc from task_events" > events
 cmp_ok $TEST_SOURCE_DIR/simple/db-events events
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

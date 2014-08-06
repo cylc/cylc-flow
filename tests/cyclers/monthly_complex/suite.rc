@@ -1,0 +1,19 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT2M
+[scheduling]
+    initial cycle point = 20000331T0100Z
+    final cycle point = 2001
+    [[dependencies]]
+        [[[20T-P2W/P1M]]]
+            graph = "foo"
+        [[[30T06+P8DT6H/P3W]]]
+            graph = "foo[20T-P2W] => bar"
+        [[[R1/+P1M]]]
+            graph = "flub"
+        [[[R4//P1D]]]
+            graph = "flub[^+P1M] & flob[-P1D] => flob"
+[runtime]
+    [[root]]
+        command scripting = true

@@ -1,49 +1,44 @@
-2013/12/18 15:53:41 INFO - Thread-2 start (Event Handlers)
-2013/12/18 15:53:41 INFO - Thread-3 start (Poll & Kill Commands)
-2013/12/18 15:53:41 INFO - port:7766
-2013/12/18 15:53:41 INFO - Suite starting at 2013-12-18 15:53:41.320622
-2013/12/18 15:53:41 INFO - Log event clock: real time
-2013/12/18 15:53:41 INFO - Run mode: live
-2013/12/18 15:53:41 INFO - Start tag: 2013122512
-2013/12/18 15:53:41 INFO - Stop tag: 2013122512
-2013/12/18 15:53:41 INFO - Thread-4 start (Job Submission)
-2013/12/18 15:53:41 INFO - Thread-5 start (Request Handling)
-2013/12/18 15:53:41 INFO - Cold Start 2013122512
-2013/12/18 15:53:41 INFO - [a.2013122600] -STOPPING at configured stop cycle 2013122512
-2013/12/18 15:53:41 INFO - [c.2013122600] -STOPPING at configured stop cycle 2013122512
-2013/12/18 15:53:41 INFO - [b.2013122600] -STOPPING at configured stop cycle 2013122512
-2013/12/18 15:53:41 DEBUG - [d.2013122512] -task proxy added to the pool
-2013/12/18 15:53:41 DEBUG - BEGIN TASK PROCESSING
-2013/12/18 15:53:41 DEBUG - [d.2013122512] -(setting:queued)
-2013/12/18 15:53:41 DEBUG - 1 task(s) ready
-2013/12/18 15:53:41 DEBUG - [d.2013122512] -(setting:ready)
-2013/12/18 15:53:41 INFO - [d.2013122512] -triggered off []
-2013/12/18 15:53:41 DEBUG - END TASK PROCESSING (took 0.006644 sec)
-2013/12/18 15:53:42 DEBUG - Job Submission batch 1/1 (1 members):
-2013/12/18 15:53:42 INFO - [d.2013122512] -(current:ready)> d.2013122512 submitting now
-2013/12/18 15:53:42 DEBUG - Job Submission: batch completed
-  Time taken: 0:00:00.314164
-  All 1 items succeeded
-2013/12/18 15:53:43 INFO - [d.2013122512] -(current:ready)> d.2013122512 submission succeeded
-2013/12/18 15:53:43 DEBUG - [d.2013122512] -(setting:submitted)
-2013/12/18 15:53:43 INFO - [d.2013122512] -(current:submitted)> d.2013122512 submit_method_id=22753
-2013/12/18 15:53:44 DEBUG - BEGIN TASK PROCESSING
-2013/12/18 15:53:44 DEBUG - [d.2013122512] -forced spawning
-2013/12/18 15:53:44 DEBUG - [d.2013122612] -HOLDING (beyond suite stop cycle) 2013122512
-2013/12/18 15:53:44 DEBUG - [d.2013122612] -(setting:held)
-2013/12/18 15:53:44 DEBUG - [d.2013122612] -task proxy added to the pool
-2013/12/18 15:53:44 DEBUG - END TASK PROCESSING (took 0.006791 sec)
-2013/12/18 15:53:44 INFO - [d.2013122512] -(current:submitted)> d.2013122512 started at 2013-12-18T15:53:43
-2013/12/18 15:53:44 DEBUG - [d.2013122512] -(setting:running)
-2013/12/18 15:53:45 DEBUG - BEGIN TASK PROCESSING
-2013/12/18 15:53:45 DEBUG - END TASK PROCESSING (took 0.003222 sec)
-2013/12/18 15:53:45 INFO - [d.2013122512] -(current:running)> d.2013122512 succeeded at 2013-12-18T15:53:44
-2013/12/18 15:53:45 DEBUG - [d.2013122512] -(setting:succeeded)
-2013/12/18 15:53:45 INFO - Stopping: 
+2014-05-19T16:58:04 INFO - Thread-2 start (Event Handlers)
+2014-05-19T16:58:04 INFO - Thread-3 start (Poll & Kill Commands)
+2014-05-19T16:58:04 INFO - port:7766
+2014-05-19T16:58:04 INFO - Suite starting at 2014-05-19T16:58:04.062189
+2014-05-19T16:58:04 INFO - Log event clock: real time
+2014-05-19T16:58:04 INFO - Run mode: live
+2014-05-19T16:58:04 INFO - Initial point: 2013122512
+2014-05-19T16:58:04 INFO - Final point: 2013122512
+2014-05-19T16:58:04 INFO - Thread-4 start (Job Submission)
+2014-05-19T16:58:04 INFO - Thread-5 start (Request Handling)
+2014-05-19T16:58:04 INFO - Cold Start 2013122512
+2014-05-19T16:58:04 INFO - [c.2013122512] -triggered off []
+2014-05-19T16:58:04 INFO - [d.2013122512] -triggered off []
+2014-05-19T16:58:04 INFO - [a.2013122512] -triggered off []
+2014-05-19T16:58:04 INFO - [b.2013122512] -triggered off []
+2014-05-19T16:58:05 INFO - [c.2013122512] -(current:ready)> c.2013122512 submitting now
+2014-05-19T16:58:06 INFO - [d.2013122512] -(current:ready)> d.2013122512 submitting now
+2014-05-19T16:58:06 INFO - [a.2013122512] -(current:ready)> a.2013122512 submitting now
+2014-05-19T16:58:06 INFO - [b.2013122512] -(current:ready)> b.2013122512 submitting now
+2014-05-19T16:58:07 INFO - [c.2013122512] -(current:ready)> c.2013122512 started at 2014-05-19T16:58:06
+2014-05-19T16:58:07 INFO - [c.2013122512] -(current:running)> c.2013122512 submission succeeded
+2014-05-19T16:58:07 INFO - [c.2013122512] -(current:running)> c.2013122512 submit_method_id=3002
+2014-05-19T16:58:07 INFO - [d.2013122512] -(current:ready)> d.2013122512 started at 2014-05-19T16:58:06
+2014-05-19T16:58:07 INFO - [a.2013122512] -(current:ready)> a.2013122512 submission succeeded
+2014-05-19T16:58:07 INFO - [a.2013122512] -(current:submitted)> a.2013122512 submit_method_id=3203
+2014-05-19T16:58:07 INFO - [a.2013122512] -(current:submitted)> a.2013122512 started at 2014-05-19T16:58:06
+2014-05-19T16:58:07 INFO - [b.2013122512] -(current:ready)> b.2013122512 started at 2014-05-19T16:58:07
+2014-05-19T16:58:08 WARNING - [c.2013122612] -not adding (beyond suite stop cycle) 2013122512
+2014-05-19T16:58:08 WARNING - [d.2013122612] -not adding (beyond suite stop cycle) 2013122512
+2014-05-19T16:58:08 WARNING - [a.2013122612] -not adding (beyond suite stop cycle) 2013122512
+2014-05-19T16:58:08 WARNING - [b.2013122612] -not adding (beyond suite stop cycle) 2013122512
+2014-05-19T16:58:08 INFO - [c.2013122512] -(current:running)> c.2013122512 succeeded at 2014-05-19T16:58:07
+2014-05-19T16:58:08 INFO - [d.2013122512] -(current:running)> d.2013122512 submission succeeded
+2014-05-19T16:58:08 INFO - [d.2013122512] -(current:running)> d.2013122512 submit_method_id=3109
+2014-05-19T16:58:09 INFO - [d.2013122512] -(current:running)> d.2013122512 succeeded at 2014-05-19T16:58:08
+2014-05-19T16:58:09 INFO - [a.2013122512] -(current:running)> a.2013122512 succeeded at 2014-05-19T16:58:08
+2014-05-19T16:58:09 INFO - [b.2013122512] -(current:running)> b.2013122512 submission succeeded
+2014-05-19T16:58:09 INFO - [b.2013122512] -(current:running)> b.2013122512 submit_method_id=3311
+2014-05-19T16:58:09 INFO - [b.2013122512] -(current:running)> b.2013122512 succeeded at 2014-05-19T16:58:08
+2014-05-19T16:58:09 INFO - Stopping: 
   + all cycling tasks have spawned past the final cycle 2013122512
-2013/12/18 15:53:45 INFO - Thread-4 exit (Job Submission)
-2013/12/18 15:53:46 INFO - Thread-2 exit (Event Handlers)
-2013/12/18 15:53:46 INFO - Thread-3 exit (Poll & Kill Commands)
-2013/12/18 15:53:46 DEBUG - BEGIN TASK PROCESSING
-2013/12/18 15:53:46 DEBUG - [d.2013122512] -task proxy removed
-2013/12/18 15:53:46 DEBUG - END TASK PROCESSING (took 0.005786 sec)
+2014-05-19T16:58:09 INFO - Thread-4 exit (Job Submission)
+2014-05-19T16:58:10 INFO - Thread-2 exit (Event Handlers)
+2014-05-19T16:58:10 INFO - Thread-3 exit (Poll & Kill Commands)

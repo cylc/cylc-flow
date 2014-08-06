@@ -31,7 +31,6 @@ if '--use-ssh' in sys.argv[1:]:
 import os, re
 from copy import copy
 from time import sleep
-from cylc.cycle_time import ct, CycleTimeError
 from cylc import cylc_pyro_client
 from cylc.passphrase import SecurityError
 from cylc.CylcOptionParsers import cop
@@ -40,6 +39,9 @@ from cylc.task_state import task_state
 from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
 from cylc.command_prep import prep_pyro
 import cylc.flags
+from cylc.wallclock import (
+    get_current_time_string, get_time_string_from_unix_time
+)
 
 compress = True
 
@@ -101,7 +103,7 @@ try:
         while True:
             # continual redisplay loop
 
-            # get state summary, task names, cycle times
+            # get state summary, task names, cycle points
             try:
                 [glbl, states, fam_states] = proxy.get_state_summary()
 
@@ -135,6 +137,7 @@ try:
             alerted3 = False
 
             dt = glbl[ 'last_updated' ]
+            dt = get_time_string_from_unix_time(dt)
             run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
@@ -147,31 +150,29 @@ try:
 
             seen_time = {}
             seen_name = {}
-            c_time_list = []
+            point_string_list = []
             name_list = []
 
             for task_id in task_ids:
 
                 name = states[ task_id ][ 'name' ]
-                c_time = states[ task_id ][ 'label' ]
+                point_string = states[ task_id ][ 'label' ]
 
-                if c_time not in seen_time.keys():
-                    seen_time[ c_time ] = True
-                    c_time_list.append( c_time )
+                if point_string not in seen_time.keys():
+                    seen_time[ point_string ] = True
+                    point_string_list.append( point_string )
 
                 if name not in seen_name.keys():
                     seen_name[ name ] = True
                     name_list.append( name )
 
             n_task_types = len( name_list )
-            name_list.sort()
-            c_time_list.sort()
 
             # initialize a dict-of-dicts to store display information
-            # for all tasks at each current cycle time
-            #   task_info[ c_time ][ task_name ] = info
+            # for all tasks at each current cycle point
+            #   task_info[ point_string ][ task_name ] = info
             task_info = {}
-            for rt in c_time_list:
+            for rt in point_string_list:
                 task_info[ rt ] = {}
                 for name in name_list:
                     # initialise with blank string of the same size as
@@ -185,10 +186,7 @@ try:
             for task_id in task_ids:
 
                 name = states[ task_id ][ 'name' ]
-                asyncid = ''
-                if 'asyncid' in states[ task_id ]:
-                    asyncid = '(' + states[ task_id ][ 'asyncid' ] + ')'
-                ctime = states[ task_id ][ 'label' ]
+                point_string = states[ task_id ][ 'label' ]
 
                 name     =      states[ task_id ][ 'name' ]
                 state    =      states[ task_id ][ 'state' ]
@@ -203,7 +201,8 @@ try:
                 # color displayed info according to run status
                 ctrl_start = task_state.ctrl[state]
                 # construct the display string for this task
-                task_info[ ctime ][ name ] = ctrl_start + name + asyncid + ctrl_end + abd
+                task_info[ point_string ][ name ] = (
+                    ctrl_start + name + ctrl_end + abd)
 
             # construct an array of lines to blit to the screen
 
@@ -222,7 +221,7 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:                                          ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( 'suite state summary last updated at:                                            ' + '\033[1;38m' + dt + ctrl_end )
 
             foo = 'mode: ' + run_mode
             baz = header
@@ -230,42 +229,23 @@ try:
             blit.append( baz )
 
             if stopping:
-                foo = '__________________________________________________________________________________S_T_O_P_P_I_N_G'
+                foo = '___________________________________________________________________________________S_T_O_P_P_I_N_G'
             elif paused:
-                foo = '______________________________________________________________________________________P_A_U_S_E_D'
+                foo = '_______________________________________________________________________________________P_A_U_S_E_D'
             elif will_pause_at:
-                foo = '___________________________________________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
+                foo = '____________________________________________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
-                foo = '_________________________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
+                foo = '__________________________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
-                foo = '____________________________________________________________________________________R_U_N_N_I_N_G'
+                foo = '_____________________________________________________________________________________R_U_N_N_I_N_G'
 
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )
 
-            # construct a line of text to display for each cycle time
-            for rt in c_time_list:
-                line = ''
-
-                try:
-                    crt = ct(rt)
-                except CycleTimeError:
-                    line += rt
-                    indx = rt
-                    if asyncid:
-                        line += ' ' + asyncid
-                        indx = asyncid
-                else:
-                    indx = rt
-                    # colour cycle time according to whether it has
-                    # caught up to the current clock time or not.
-                    rtdt = crt.get_datetime()
-                    if dt > rtdt:
-                        # behind
-                        line = '\033[1;34m' + rt + ctrl_end
-                    else:
-                        # caught up
-                        line = '\033[1;31m' + rt + ctrl_end
+            # construct a line of text to display for each cycle point
+            for rt in point_string_list:
+                indx = rt
+                line = '\033[1;34m' + rt + ctrl_end
 
                 # add info for each task to the line
                 for name in name_list:
@@ -284,15 +264,18 @@ try:
             os.system( "clear" )
             print '\n'.join( blit )
             indxs = blitlines.keys()
-            indxs.sort(key=int)
+            try:
+                int( indxs[1] )
+            except:
+                indxs.sort()
+            else:
+                indxs.sort(key=int)
             for ix in indxs:
                 print blitlines[ix]
             # sleep here determines minimum display time before trying to
             # update the information and redisplay it (?).
             sleep(1)
 
-        # sleep here determines how long to wait before trying to reconnect (?)
-        sleep( 1 )
 
 except KeyboardInterrupt:
     sys.exit(0)

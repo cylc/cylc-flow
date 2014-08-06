@@ -1,0 +1,146 @@
+2014/07/21 14:14:05 INFO - Thread-2 start (Event Handlers)
+2014/07/21 14:14:05 INFO - Thread-3 start (Poll & Kill Commands)
+2014/07/21 14:14:05 INFO - port:7770
+2014/07/21 14:14:05 INFO - Suite starting at 2014-07-21 14:14:05.921630
+2014/07/21 14:14:05 INFO - Log event clock: real time
+2014/07/21 14:14:05 INFO - Run mode: live
+2014/07/21 14:14:05 INFO - Initial point: 2014050100
+2014/07/21 14:14:05 INFO - Final point: 2014050300
+2014/07/21 14:14:05 INFO - Thread-4 start (Job Submission)
+2014/07/21 14:14:05 INFO - Thread-5 start (Request Handling)
+2014/07/21 14:14:05 INFO - Restart /some/path/to/back-comp-restart/state
+2014/07/21 14:14:05 INFO - [qux.2014050206] -polling now
+2014/07/21 14:14:05 INFO - [bar.2014050206] -triggered off ['foo.2014050200']
+2014/07/21 14:14:06 INFO - [qux.2014050212] -triggered off []
+2014/07/21 14:14:07 INFO - [bar.2014050206] -(current:ready)> bar.2014050206 submitting now
+2014/07/21 14:14:08 INFO - [bar.2014050206] -(current:ready)> bar.2014050206 submission succeeded
+2014/07/21 14:14:08 INFO - [bar.2014050206] -(current:submitted)> bar.2014050206 submit_method_id=1858
+2014/07/21 14:14:08 INFO - [bar.2014050206] -(current:submitted)> bar.2014050206 started at 2014-07-21T14:14:07
+2014/07/21 14:14:08 INFO - [qux.2014050206] -(current:running)> polled qux.2014050206 succeeded at 2014-07-21T13:05:45
+2014/07/21 14:14:08 WARNING - [qux.2014050206] -Assuming non-reported outputs were completed:
+qux.2014050206 submitted
+qux.2014050206 started
+2014/07/21 14:14:09 INFO - [wibble.2014050206] -triggered off ['qux.2014050206']
+2014/07/21 14:14:09 INFO - [foo.2014050206] -triggered off ['qux.2014050206']
+2014/07/21 14:14:09 INFO - [bar.2014050206] -(current:running)> bar.2014050206 succeeded at 2014-07-21T14:14:08
+2014/07/21 14:14:10 INFO - [baz.2014050206] -triggered off ['bar.2014050206']
+2014/07/21 14:14:10 INFO - [wibble.2014050206] -(current:ready)> wibble.2014050206 submitting now
+2014/07/21 14:14:10 INFO - [foo.2014050206] -(current:ready)> foo.2014050206 submitting now
+2014/07/21 14:14:10 INFO - [qux.2014050212] -(current:ready)> qux.2014050212 submitting now
+2014/07/21 14:14:11 INFO - [wibble.2014050206] -(current:ready)> wibble.2014050206 started at 2014-07-21T14:14:10
+2014/07/21 14:14:11 INFO - [wibble.2014050206] -(current:running)> wibble.2014050206 succeeded at 2014-07-21T14:14:10
+2014/07/21 14:14:11 WARNING - [wibble.2014050206] -Assuming non-reported outputs were completed:
+wibble.2014050206 submitted
+2014/07/21 14:14:11 INFO - [foo.2014050206] -(current:ready)> foo.2014050206 submission succeeded
+2014/07/21 14:14:11 INFO - [foo.2014050206] -(current:submitted)> foo.2014050206 submit_method_id=2227
+2014/07/21 14:14:11 INFO - [foo.2014050206] -(current:submitted)> foo.2014050206 started at 2014-07-21T14:14:10
+2014/07/21 14:14:11 INFO - [qux.2014050212] -(current:ready)> qux.2014050212 started at 2014-07-21T14:14:10
+2014/07/21 14:14:11 INFO - [qux.2014050212] -(current:running)> qux.2014050212 submission succeeded
+2014/07/21 14:14:11 INFO - [qux.2014050212] -(current:running)> qux.2014050212 submit_method_id=2012
+2014/07/21 14:14:11 INFO - [qux.2014050212] -(current:running)> qux.2014050212 succeeded at 2014-07-21T14:14:10
+2014/07/21 14:14:12 INFO - [foo.2014050206] -(current:running)> foo.2014050206 succeeded at 2014-07-21T14:14:11
+2014/07/21 14:14:13 INFO - [bar.2014050212] -triggered off ['foo.2014050206']
+2014/07/21 14:14:13 INFO - [wibble.2014050212] -triggered off ['qux.2014050212']
+2014/07/21 14:14:13 INFO - [foo.2014050212] -triggered off ['qux.2014050212']
+2014/07/21 14:14:14 INFO - [baz.2014050206] -(current:ready)> baz.2014050206 submitting now
+2014/07/21 14:14:14 INFO - [bar.2014050212] -(current:ready)> bar.2014050212 submitting now
+2014/07/21 14:14:14 INFO - [wibble.2014050212] -(current:ready)> wibble.2014050212 submitting now
+2014/07/21 14:14:15 INFO - [baz.2014050206] -(current:ready)> baz.2014050206 started at 2014-07-21T14:14:14
+2014/07/21 14:14:15 INFO - [baz.2014050206] -(current:running)> baz.2014050206 submission succeeded
+2014/07/21 14:14:15 INFO - [baz.2014050206] -(current:running)> baz.2014050206 submit_method_id=3561
+2014/07/21 14:14:15 INFO - [baz.2014050206] -(current:running)> baz.2014050206 succeeded at 2014-07-21T14:14:14
+2014/07/21 14:14:15 INFO - [bar.2014050212] -(current:ready)> bar.2014050212 started at 2014-07-21T14:14:14
+2014/07/21 14:14:15 INFO - [wibble.2014050212] -(current:ready)> wibble.2014050212 submission succeeded
+2014/07/21 14:14:15 INFO - [wibble.2014050212] -(current:submitted)> wibble.2014050212 submit_method_id=3796
+2014/07/21 14:14:15 INFO - [wibble.2014050212] -(current:submitted)> wibble.2014050212 started at 2014-07-21T14:14:14
+2014/07/21 14:14:15 INFO - [foo.2014050212] -(current:ready)> foo.2014050212 submitting now
+2014/07/21 14:14:16 INFO - [qux.2014050218] -triggered off []
+2014/07/21 14:14:16 INFO - [bar.2014050212] -(current:running)> bar.2014050212 succeeded at 2014-07-21T14:14:15
+2014/07/21 14:14:16 WARNING - [bar.2014050212] -Assuming non-reported outputs were completed:
+bar.2014050212 submitted
+2014/07/21 14:14:16 INFO - [bar.2014050212] -(current:succeeded)> bar.2014050212 submission succeeded
+2014/07/21 14:14:16 INFO - [bar.2014050212] -(current:succeeded)> bar.2014050212 submit_method_id=3682
+2014/07/21 14:14:16 INFO - [wibble.2014050212] -(current:running)> wibble.2014050212 succeeded at 2014-07-21T14:14:15
+2014/07/21 14:14:16 INFO - [foo.2014050212] -(current:ready)> foo.2014050212 started at 2014-07-21T14:14:15
+2014/07/21 14:14:17 INFO - [baz.2014050212] -triggered off ['bar.2014050212']
+2014/07/21 14:14:17 INFO - [foo.2014050212] -(current:running)> foo.2014050212 succeeded at 2014-07-21T14:14:16
+2014/07/21 14:14:17 WARNING - [foo.2014050212] -Assuming non-reported outputs were completed:
+foo.2014050212 submitted
+2014/07/21 14:14:17 INFO - [foo.2014050212] -(current:succeeded)> foo.2014050212 submission succeeded
+2014/07/21 14:14:17 INFO - [foo.2014050212] -(current:succeeded)> foo.2014050212 submit_method_id=3930
+2014/07/21 14:14:18 INFO - [bar.2014050218] -triggered off ['foo.2014050212']
+2014/07/21 14:14:19 INFO - [qux.2014050218] -(current:ready)> qux.2014050218 submitting now
+2014/07/21 14:14:19 INFO - [baz.2014050212] -(current:ready)> baz.2014050212 submitting now
+2014/07/21 14:14:20 INFO - [qux.2014050218] -(current:ready)> qux.2014050218 submission succeeded
+2014/07/21 14:14:20 INFO - [qux.2014050218] -(current:submitted)> qux.2014050218 submit_method_id=4509
+2014/07/21 14:14:20 INFO - [bar.2014050218] -(current:ready)> bar.2014050218 submitting now
+2014/07/21 14:14:20 INFO - [bar.2014050218] -(current:ready)> bar.2014050218 submission succeeded
+2014/07/21 14:14:20 INFO - [bar.2014050218] -(current:submitted)> bar.2014050218 submit_method_id=5057
+2014/07/21 14:14:21 INFO - [qux.2014050218] -(current:submitted)> qux.2014050218 started at 2014-07-21T14:14:20
+2014/07/21 14:14:21 INFO - [qux.2014050218] -(current:running)> qux.2014050218 succeeded at 2014-07-21T14:14:20
+2014/07/21 14:14:21 INFO - [baz.2014050212] -(current:ready)> baz.2014050212 started at 2014-07-21T14:14:20
+2014/07/21 14:14:21 INFO - [baz.2014050212] -(current:running)> baz.2014050212 submission succeeded
+2014/07/21 14:14:21 INFO - [baz.2014050212] -(current:running)> baz.2014050212 submit_method_id=4835
+2014/07/21 14:14:21 INFO - [baz.2014050212] -(current:running)> baz.2014050212 succeeded at 2014-07-21T14:14:20
+2014/07/21 14:14:21 INFO - [bar.2014050218] -(current:submitted)> bar.2014050218 started at 2014-07-21T14:14:20
+2014/07/21 14:14:22 INFO - [wibble.2014050218] -triggered off ['qux.2014050218']
+2014/07/21 14:14:22 INFO - [foo.2014050218] -triggered off ['qux.2014050218']
+2014/07/21 14:14:22 INFO - [qux.2014050300] -triggered off []
+2014/07/21 14:14:22 INFO - [bar.2014050218] -(current:running)> bar.2014050218 succeeded at 2014-07-21T14:14:21
+2014/07/21 14:14:23 INFO - [baz.2014050218] -triggered off ['bar.2014050218']
+2014/07/21 14:14:23 INFO - [wibble.2014050218] -(current:ready)> wibble.2014050218 submitting now
+2014/07/21 14:14:24 INFO - [wibble.2014050218] -(current:ready)> wibble.2014050218 started at 2014-07-21T14:14:23
+2014/07/21 14:14:24 INFO - [wibble.2014050218] -(current:running)> wibble.2014050218 submission succeeded
+2014/07/21 14:14:24 INFO - [wibble.2014050218] -(current:running)> wibble.2014050218 submit_method_id=5565
+2014/07/21 14:14:24 INFO - [foo.2014050218] -(current:ready)> foo.2014050218 submitting now
+2014/07/21 14:14:24 INFO - [qux.2014050300] -(current:ready)> qux.2014050300 submitting now
+2014/07/21 14:14:24 INFO - [qux.2014050300] -(current:ready)> qux.2014050300 submission succeeded
+2014/07/21 14:14:24 INFO - [qux.2014050300] -(current:submitted)> qux.2014050300 submit_method_id=5751
+2014/07/21 14:14:25 INFO - [wibble.2014050218] -(current:running)> wibble.2014050218 succeeded at 2014-07-21T14:14:24
+2014/07/21 14:14:25 INFO - [foo.2014050218] -(current:ready)> foo.2014050218 started at 2014-07-21T14:14:24
+2014/07/21 14:14:25 INFO - [foo.2014050218] -(current:running)> foo.2014050218 succeeded at 2014-07-21T14:14:24
+2014/07/21 14:14:25 WARNING - [foo.2014050218] -Assuming non-reported outputs were completed:
+foo.2014050218 submitted
+2014/07/21 14:14:25 INFO - [foo.2014050218] -(current:succeeded)> foo.2014050218 submission succeeded
+2014/07/21 14:14:25 INFO - [foo.2014050218] -(current:succeeded)> foo.2014050218 submit_method_id=5652
+2014/07/21 14:14:25 INFO - [qux.2014050300] -(current:submitted)> qux.2014050300 started at 2014-07-21T14:14:24
+2014/07/21 14:14:25 INFO - [qux.2014050300] -(current:running)> qux.2014050300 succeeded at 2014-07-21T14:14:24
+2014/07/21 14:14:26 INFO - [bar.2014050300] -triggered off ['foo.2014050218']
+2014/07/21 14:14:26 INFO - [wibble.2014050300] -triggered off ['qux.2014050300']
+2014/07/21 14:14:27 INFO - [foo.2014050300] -triggered off ['qux.2014050300']
+2014/07/21 14:14:27 INFO - [baz.2014050218] -(current:ready)> baz.2014050218 submitting now
+2014/07/21 14:14:28 INFO - [bar.2014050300] -(current:ready)> bar.2014050300 submitting now
+2014/07/21 14:14:28 INFO - [baz.2014050218] -(current:ready)> baz.2014050218 started at 2014-07-21T14:14:27
+2014/07/21 14:14:28 INFO - [baz.2014050218] -(current:running)> baz.2014050218 submission succeeded
+2014/07/21 14:14:28 INFO - [baz.2014050218] -(current:running)> baz.2014050218 submit_method_id=6653
+2014/07/21 14:14:28 INFO - [wibble.2014050300] -(current:ready)> wibble.2014050300 submitting now
+2014/07/21 14:14:28 INFO - [wibble.2014050300] -(current:ready)> wibble.2014050300 submission succeeded
+2014/07/21 14:14:28 INFO - [wibble.2014050300] -(current:submitted)> wibble.2014050300 submit_method_id=7068
+2014/07/21 14:14:29 INFO - [bar.2014050300] -(current:ready)> bar.2014050300 started at 2014-07-21T14:14:28
+2014/07/21 14:14:29 INFO - [bar.2014050300] -(current:running)> bar.2014050300 succeeded at 2014-07-21T14:14:28
+2014/07/21 14:14:29 WARNING - [bar.2014050300] -Assuming non-reported outputs were completed:
+bar.2014050300 submitted
+2014/07/21 14:14:29 INFO - [bar.2014050300] -(current:succeeded)> bar.2014050300 submission succeeded
+2014/07/21 14:14:29 INFO - [bar.2014050300] -(current:succeeded)> bar.2014050300 submit_method_id=6824
+2014/07/21 14:14:29 INFO - [baz.2014050218] -(current:running)> baz.2014050218 succeeded at 2014-07-21T14:14:28
+2014/07/21 14:14:29 INFO - [wibble.2014050300] -(current:submitted)> wibble.2014050300 started at 2014-07-21T14:14:28
+2014/07/21 14:14:29 INFO - [wibble.2014050300] -(current:running)> wibble.2014050300 succeeded at 2014-07-21T14:14:29
+2014/07/21 14:14:30 INFO - [baz.2014050300] -triggered off ['bar.2014050300']
+2014/07/21 14:14:31 INFO - [foo.2014050300] -(current:ready)> foo.2014050300 submitting now
+2014/07/21 14:14:32 INFO - [foo.2014050300] -(current:ready)> foo.2014050300 submission succeeded
+2014/07/21 14:14:32 INFO - [foo.2014050300] -(current:submitted)> foo.2014050300 submit_method_id=7330
+2014/07/21 14:14:32 INFO - [foo.2014050300] -(current:submitted)> foo.2014050300 started at 2014-07-21T14:14:31
+2014/07/21 14:14:32 INFO - [baz.2014050300] -(current:ready)> baz.2014050300 submitting now
+2014/07/21 14:14:32 INFO - [baz.2014050300] -(current:ready)> baz.2014050300 started at 2014-07-21T14:14:32
+2014/07/21 14:14:33 INFO - [foo.2014050300] -(current:running)> foo.2014050300 succeeded at 2014-07-21T14:14:32
+2014/07/21 14:14:33 INFO - [baz.2014050300] -(current:running)> baz.2014050300 succeeded at 2014-07-21T14:14:32
+2014/07/21 14:14:33 WARNING - [baz.2014050300] -Assuming non-reported outputs were completed:
+baz.2014050300 submitted
+2014/07/21 14:14:33 INFO - [baz.2014050300] -(current:succeeded)> baz.2014050300 submission succeeded
+2014/07/21 14:14:33 INFO - [baz.2014050300] -(current:succeeded)> baz.2014050300 submit_method_id=7411
+2014/07/21 14:14:33 INFO - Stopping: 
+  + all cycling tasks have spawned past the final cycle 2014050300
+  + all non-cycling tasks have succeeded
+2014/07/21 14:14:33 INFO - Thread-4 exit (Job Submission)
+2014/07/21 14:14:33 INFO - Thread-2 exit (Event Handlers)
+2014/07/21 14:14:33 INFO - Thread-3 exit (Poll & Kill Commands)

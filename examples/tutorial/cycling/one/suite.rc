@@ -1,13 +1,15 @@
 title = "Two cycling tasks, no inter-cycle dependence"
+[cylc]
+    UTC mode = True
 [scheduling]
-    initial cycle time = 2013080800
-    final cycle time = 2013081200
+    initial cycle point = 20130808T00
+    final cycle point = 20130812T00
     [[dependencies]]
-        [[[0,12]]] # 00 and 12 hours every day
+        [[[T00,T12]]] # 00 and 12 hours UTC every day
             graph = "foo => bar"
 [visualization]
-    initial cycle time = 2013080800
-    final cycle time = 2013080900
+    initial cycle point = 20130808T00
+    final cycle point = 20130809T00
     [[node attributes]]
         foo = "color=red"
         bar = "color=blue"

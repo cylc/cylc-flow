@@ -6,8 +6,8 @@ otherwise take themselves out of the suite if model succeeds.
 Model post processing triggers off model or recovery tasks."""
 
 [scheduling]
-    initial cycle time = 2011010100
-    final cycle time = 2011010112
+    initial cycle point = 2011010100
+    final cycle point = 2011010112
 
     [[dependencies]]
         [[[0,12]]]

@@ -1,0 +1,41 @@
+
+[scheduling]
+    initial cycle time = 1 # T0
+    final cycle time = 9
+    [[dependencies]]
+        # once at T0 (async tasks now shorthand for R1/c0/P1)
+        graph = "start1 => foo"
+        [[[ R1/c0/P? ]]]
+            # once at T0
+            graph = "start2 => foo"
+        [[[ R/c0/P2 ]]]
+            # repeat with step 2, from T0
+            graph = "foo[T-2] => foo"
+        [[[ R/c2/P2 ]]]
+            # repeat with step 2 from T0 + 2
+            graph = "foo => bar"
+        [[[ R2/3/7 ]]] # or [[[ R2/3/P4 ]]]
+            # repeat twice, at 3 and 7
+            graph = "foo => qux"
+        [[[ R1/7/7 ]]]
+            # once at 7
+            graph = "qux => egg"
+        [[[ R1/P?/c0 ]]]
+            # once at final cycle
+            graph = "bar => final"
+        [[[ R2/P2/c0 ]]]
+            # final two cycles
+            graph = "bar => stopping"
+
+[visualization]
+    default node attributes = "style=filled", "shape=box"
+    use node color for edges = False
+    [[node attributes]]
+        bar = "fillcolor=skyblue"
+        qux = "fillcolor=limegreen"
+        start1 = "fillcolor=lemonchiffon"
+        start2 = "fillcolor=lemonchiffon"
+        egg = "fillcolor=orange"
+        stopping = "fillcolor=orangered"
+        final = "fillcolor=red"
+

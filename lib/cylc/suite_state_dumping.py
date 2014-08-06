@@ -21,15 +21,15 @@ import os
 import time
 import logging
 from cfgspec.site import sitecfg
-from wallclock import now
+from wallclock import now, get_current_time_string
 
 class dumper( object ):
 
     BASE_NAME = 'state'
 
-    def __init__( self, suite, run_mode='live', ict=None, stop_tag=None ):
+    def __init__( self, suite, run_mode='live', ict=None, stop_point=None ):
         self.run_mode = run_mode
-        self.set_cts(ict, stop_tag)
+        self.set_cts(ict, stop_point)
         self.dir_name = sitecfg.get_derived_host_item( suite,
                                                     'suite state directory' )
         self.file_name = os.path.join( self.dir_name, self.BASE_NAME )
@@ -42,17 +42,17 @@ class dumper( object ):
         self.log = logging.getLogger('main')
 
     def set_cts( self, ict, fct ):
-        self.ict = ict
-        self.stop_tag = fct
+        self.ict_string = str(ict)
+        self.stop_string = str(fct)
 
         self.cts_str = ""
-        if self.ict:
-            self.cts_str += 'initial cycle : ' + self.ict + '\n'
+        if self.ict_string:
+            self.cts_str += 'initial cycle : ' + self.ict_string + '\n'
         else:
             self.cts_str += 'initial cycle : (none)\n'
 
-        if self.stop_tag:
-            self.cts_str += 'final cycle : ' + self.stop_tag + '\n'
+        if self.stop_string:
+            self.cts_str += 'final cycle : ' + self.stop_string + '\n'
         else:
             self.cts_str += 'final cycle : (none)\n'
 
@@ -60,9 +60,12 @@ class dumper( object ):
         """Dump suite states to disk. Return state file basename on success."""
 
         if wireless is None:
-            wireless = self.wireless
+            wireless = self.pool.wireless
 
-        base_name = self.BASE_NAME + "." + now().strftime("%Y%m%dT%H%M%S.%fZ")
+        base_name = self.BASE_NAME + "." + get_current_time_string(
+            override_use_utc=True, use_basic_format=True,
+            display_sub_seconds=True
+        )
         file_name = os.path.join(self.dir_name, base_name)
 
         # write the state dump file, retrying several times in case of:
@@ -75,7 +78,8 @@ class dumper( object ):
                 handle = open(file_name, "wb")
 
                 handle.write('run mode : %s\n' % self.run_mode)
-                handle.write('time : %s\n' % now().strftime("%Y:%m:%d:%H:%M:%S"))
+                handle.write('time : %s (%d)\n' % (
+                   get_current_time_string(), time.time()))
 
                 handle.write(self.cts_str)
 
@@ -85,7 +89,7 @@ class dumper( object ):
                 handle.write('Begin task states\n')
 
                 if tasks is None and self.pool is not None:
-                    tasks = self.pool.get_tasks()
+                    tasks = self.pool.get_tasks( all=True )
                 if tasks is not None:
                     for itask in sorted(tasks, key=lambda t: t.id):
                         itask.dump_class_vars( handle )
@@ -106,8 +110,9 @@ class dumper( object ):
                 n_attempt += 1
                 try:
                     handle.close()
-                except:
-                    pass
+                except Exception as exc:
+                    self.log.warning('State file handle closing failed: %s' %
+                                     exc)
                 time.sleep(0.2)
             else:
                 break

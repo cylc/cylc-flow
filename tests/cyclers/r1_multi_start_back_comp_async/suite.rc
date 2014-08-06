@@ -1,0 +1,17 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20140101
+    final cycle point = 20140104
+    [[dependencies]]
+        graph = "cold_foo"
+        [[[ T00 ]]]
+            graph = "foo_midnight[-P1D] & cold_foo => foo_midnight"
+        [[[ T06 ]]]
+            graph = "foo_dawn[-P1D] & cold_foo => foo_dawn"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 20140101
+    final cycle point = 2014010206

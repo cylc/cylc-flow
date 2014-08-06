@@ -16,9 +16,60 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from cycling.loader import get_interval, get_interval_cls
+import flags
 import re
-NODE_RE =re.compile('^(\w+)\s*(?:\[\s*T\s*([+-]\s*\d+)\s*\]){0,1}(:[\w-]+){0,1}$')
 
+# Previous node format.
+NODE_PREV_RE = re.compile(
+    r"""^(\w+)          # Task name
+        \s*             # Optional whitespace
+        (?:\[           # Begin optional [offset] syntax, start [
+         \s*            # Optional whitespace
+         T              # T as in T-6, T+1, etc
+         \s*            # Optional whitespace
+         ([+-])         # Either + or - in e.g. T-6, T+1
+         (\s*\w+)       # Offset amount
+         \s*            # Optional whitespace
+         \]             # End ]
+        ){0,1}          # End optional [offset] syntax
+        (:[\w-]+){0,1}  # Optional type (e.g. :fail, :finish-all)
+        $               # End
+    """, re.X)
+              
+# Cylc's ISO 8601 format.
+NODE_ISO_RE = re.compile(
+    r"""^(\w+)       # Task name
+        (?:\[        # Begin optional [offset] syntax
+         (?!T[+-])   # Do not match a 'T-' or 'T+' (this is the old format)
+         ([^\]]+)    # Continue until next ']'
+         \]          # Stop at next ']'
+        )?           # End optional [offset] syntax]
+        (:[\w-]+|)$  # Optional type (e.g. :succeed)
+     """, re.X)
+
+# Cylc's ISO 8601 initial cycle point based format
+NODE_ISO_ICT_RE = re.compile(
+    r"""^(\w+)       # Task name
+        \[           # Begin square bracket syntax
+        \^           # Initial cycle point offset marker
+        ([^\]]*)     # Optional ^offset syntax
+        \]           # End square bracket syntax
+        (:[\w-]+|)$  # Optional type (e.g. :succeed)
+     """, re.X)
+
+# A potentially non-regular offset, such as foo[01T+P1W].
+IRREGULAR_OFFSET_RE = re.compile(
+    r"""^            # Start of string
+        (            # Begin group
+         ..+         # EITHER: Two or more characters
+         [+-]P       # Then either +P or -P for start of duration
+         .*          # Then anything for the rest of the duration
+         |           # OR:
+         [^P]+       # No 'P' characters anywhere (e.g. T00).
+        )            # End group
+        $            # End of string
+    """, re.X)
 
 class GraphNodeError( Exception ):
     """
@@ -33,7 +84,7 @@ class GraphNodeError( Exception ):
 class graphnode( object ):
     """A node in the cycle suite.rc dependency graph."""
 
-    def __init__( self, node ):
+    def __init__( self, node, base_interval=None ):
         node_in = node
         # Get task name and properties from a graph node name.
 
@@ -41,51 +92,71 @@ class graphnode( object ):
         # - output label: foo:m1
         # - intercycle dependence: foo[T-6]
         # These may be combined: foo[T-6]:m1
+        # Task may be defined at initial cycle point: foo[^]
+        # or relative to initial cycle point: foo[^+P1D]
 
-        m = re.match( NODE_RE, node )
+        self.offset_is_from_ict = False
+        self.offset_is_irregular = False
+        self.is_absolute = False
+        
+        is_prev_cycling_format = False
+
+        m = re.match( NODE_ISO_ICT_RE, node )
         if m:
-            name, offset, outp = m.groups()
-
-            if outp:
-                self.special_output = True
-                self.output = outp[1:] # strip ':'
+            # node looks like foo[^], foo[^-P4D], foo[^]:fail, etc.
+            self.is_absolute = True
+            name, offset_string, outp = m.groups()
+            self.offset_is_from_ict = True
+            sign = ""
+            prev_format = False
+        else:
+            m = re.match( NODE_ISO_RE, node )
+            if m:
+                # node looks like foo, foo:fail, foo[-PT6H], foo[-P4D]:fail...
+                name, offset_string, outp = m.groups()
+                sign = ""
+                prev_format = False
             else:
-                self.special_output = False
-                self.output = None
+                m = re.match( NODE_PREV_RE, node )
+                if not m:
+                    raise GraphNodeError( 'Illegal graph node: ' + node )
+                is_prev_cycling_format = True
+                # node looks like foo[T-6], foo[T-12]:fail...
+                name, sign, offset_string, outp = m.groups()
+                offset_string = sign + offset_string
+                prev_format = True
 
-            if name:
-                self.name = name
-            else:
-                raise GraphNodeError( 'Illegal graph node: ' + node )
+        if outp:
+            self.special_output = True
+            self.output = outp[1:] # strip ':'
+        else:
+            self.special_output = False
+            self.output = None
 
-            if offset:
-                self.intercycle = True
-                # negative offset is normal (foo[T-N])
-                self.offset = str( -int( offset ))
-            else:
-                self.intercycle = False
-                self.offset = None
-
+        if name:
+            self.name = name
         else:
             raise GraphNodeError( 'Illegal graph node: ' + node )
-
-if __name__ == '__main__':
-    nodes = [
-        'foo[T-24]:outx',
-        'foo[T-24]',
-        'foo:outx',
-        ':out1', # error
-        '[T-24]', # error
-        'outx:[T-24]', # error
-        '[T-6]:outx', # error
-        'foo:m1[T-24]' # error
-        ]
-
-    for n in nodes:
-        print n, '...',
-        m = re.match( NODE_RE, n )
-        if m:
-            print m.groups()
+            
+        if self.offset_is_from_ict and not offset_string:
+            offset_string = str(get_interval_cls().get_null())
+        if offset_string:
+            self.intercycle = True
+            if prev_format:
+                self.offset_string = str(
+                    base_interval.get_inferred_child(offset_string))
+            else:
+                if IRREGULAR_OFFSET_RE.search(offset_string):
+                    self.offset_string = offset_string
+                    self.offset_is_irregular = True
+                else:
+                    self.offset_string = str(
+                        (get_interval(offset_string)).standardise())
         else:
-            print 'ERROR!'
-
+            self.intercycle = False
+            self.offset_string = None
+        if not flags.backwards_compat_cycling and is_prev_cycling_format:
+            raise GraphNodeError(
+                'Illegal graph offset (new-style cycling): ' +
+                '%s should be %s' % (offset_string, self.offset_string)
+            )

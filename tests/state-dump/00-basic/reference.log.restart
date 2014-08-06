@@ -4,12 +4,12 @@
 2013/12/19 14:35:10 INFO - Suite starting at 2013-12-19 14:35:10.192998
 2013/12/19 14:35:10 INFO - Log event clock: real time
 2013/12/19 14:35:10 INFO - Run mode: live
-2013/12/19 14:35:10 INFO - Start tag: 2013010100
-2013/12/19 14:35:10 INFO - Stop tag: 2013011000
+2013/12/19 14:35:10 INFO - Initial point: 2013010100
+2013/12/19 14:35:10 INFO - Final point: 2013011000
 2013/12/19 14:35:10 INFO - Thread-4 start (Job Submission)
 2013/12/19 14:35:10 INFO - Thread-5 start (Request Handling)
 2013/12/19 14:35:10 INFO - Restart /net/home/h01/frsn/cylc-run/cycles/state/state.20131219T143500.700796Z
-2013/12/19 14:35:10 INFO - [t1.2013010600] -triggered off [None]
+2013/12/19 14:35:10 INFO - [t1.2013010600] -triggered off ['t1.2013010500']
 2013/12/19 14:35:11 INFO - [t1.2013010600] -(current:ready)> t1.2013010600 submitting now
 2013/12/19 14:35:12 INFO - [t1.2013010600] -(current:ready)> t1.2013010600 submission succeeded
 2013/12/19 14:35:12 INFO - [t1.2013010600] -(current:submitted)> t1.2013010600 submit_method_id=2132

@@ -26,20 +26,21 @@ chosen method on the chosen host (using passwordless ssh if not local).
 Derived classes define the particular job submission method.
 """
 
-import pwd, sys, os
+import sys, os
 import stat
 from jobfile import jobfile
 import socket
 from subprocess import Popen, PIPE
-from cylc.owner import user, is_remote_user
+from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
-from cylc.TaskID import TaskID
+import cylc.TaskID
 from cylc.cfgspec.site import sitecfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
 import cylc.flags
 
 class job_submit(object):
+    """Base class for method-specific job script and submission command."""
 
     LOCAL_COMMAND_TEMPLATE = ( "(%(command)s)" )
 
@@ -68,7 +69,7 @@ class job_submit(object):
 
         # Local job script path: append submit number.
         # (used by both local and remote tasks)
-        tag = task_id + TaskID.DELIM + submit_num
+        tag = task_id + cylc.TaskID.DELIM + submit_num
 
         self.local_jobfile_path = os.path.join( \
                 sitecfg.get_derived_host_item( self.suite, 'suite job log directory' ), tag )
@@ -189,19 +190,21 @@ class job_submit(object):
         # run by the derived class job submission method.
         raise SystemExit( 'ERROR: no job submission command defined!' )
 
-    def submit( self, dry_run=False ):
+    def filter_output( self, out, err ):
+        """
+        Override this to filter stdout and stderr from the job submission command.
+        """
+        return out, err
+
+    def get_id( self, out, err ):
+        """
+        Override this to extract the job submit ID from job submission command output.
+        """
+        return None
+ 
+    def write_jobscript( self ):
         """ submit the task and return the process ID of the job
         submission sub-process, or None if a failure occurs."""
-
-        try:
-            os.chdir( pwd.getpwnam(user).pw_dir )
-        except OSError, e:
-            if cylc.flags.debug:
-                raise
-            print >> sys.stderr, "ERROR:", e
-            print >> sys.stderr, "ERROR: Failed to change to suite owner's home directory"
-            print >> sys.stderr, "Use --debug to abort cylc with an exception traceback."
-            return None
 
         jf = jobfile(\
                 self.suite,
@@ -217,10 +220,7 @@ class job_submit(object):
                  stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH )
         os.chmod( self.local_jobfile_path, mode )
 
-        if dry_run:
-            # this is needed by the 'cylc jobscript' command:
-            print "JOB SCRIPT: " + self.local_jobfile_path
-
+    def get_job_submission_command( self, dry_run=False ):
         # Construct self.command, the command to submit the jobfile to run
         try:
             self.construct_jobfile_submission_command()
@@ -248,6 +248,8 @@ class job_submit(object):
 
         # execute the local command to submit the job
         if dry_run:
+            # this is needed by the 'cylc jobscript' command:
+            print "JOB SCRIPT: " + self.local_jobfile_path
             print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
             print 'SUBMIT:', command
             return None
@@ -261,17 +263,5 @@ class job_submit(object):
             # direct the local jobfile across the ssh tunnel via stdin
             command = command + ' < ' + self.local_jobfile_path
 
-        print 'SUBMIT No.' + \
-                str(self.jobconfig.get('absolute submit number')) + '(' + \
-                str(self.jobconfig.get('submission try number')) + ',' + \
-                str( self.jobconfig.get('try number')) + '):', command
-
-        # Exceptions raised here are caught in batch_submit and will
-        # result in the task being put in the 'submit-failed' state.
-
-        # "close_fds=True" is required here to prevent the process from
-        # hanging on to the file descriptor that was used to write the
-        # job script, the root cause of the random "text file busy" error.
-        
-        return Popen( command, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True )
+        return command
 
