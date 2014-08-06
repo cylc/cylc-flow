@@ -1013,8 +1013,8 @@ class pool(object):
                 extra_info = {}
                 # extra info for clocktriggered tasks
                 try:
-                    extra_info[ 'Delayed start time reached' ] = itask.start_time_reached()
-                    extra_info[ 'Triggers at' ] = 'T+' + str(itask.real_time_delay) + ' hours'
+                    extra_info['Clock trigger time reached'] = itask.start_time_reached()
+                    extra_info['Triggers at'] = itask.delayed_start_str
                 except AttributeError:
                     # not a clocktriggered task
                     pass

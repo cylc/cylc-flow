@@ -39,6 +39,16 @@ class PointParsingError(ValueError):
         return self.ERROR_MESSAGE.format(*self.args)
 
 
+class IntervalParsingError(ValueError):
+
+    """An error raised when an interval has an incorrect value."""
+
+    ERROR_MESSAGE = "Incompatible value for {0}: {1}"
+
+    def __str__(self):
+        return self.ERROR_MESSAGE.format(*self.args)
+
+
 class PointBase(object):
 
     """The base class for single points in a cycler sequence.

@@ -356,7 +356,7 @@ class taskdef(object):
                 sself.id = TaskID.get( sself.name, str(sself.point) )
 
             if 'clocktriggered' in self.modifiers:
-                sself.real_time_delay =  float( self.clocktriggered_offset )
+                sself.clocktrigger_offset =  self.clocktrigger_offset
 
             # prerequisites
             sself.prerequisites = prerequisites( self.start_point )

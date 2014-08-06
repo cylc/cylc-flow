@@ -575,9 +575,11 @@ clock-triggered tasks will not constrain the suite at all until they
 catch up to the wall clock.
 
 \begin{myitemize}
-    \item {\em type:} list of task or family names with offsets (hours, positive or negative)
+    \item {\em type:} list of task or family names with offsets expressed as an
+        ISO8601 interval string, positive or negative, e.g. \lstinline=PT1H=
+        for 1 hour.
     \item {\em default:} (none)
-    \item {\em example:} \lstinline@clock-triggered = foo(1.5), bar(2.25)@
+    \item {\em examples:} \lstinline=foo(PT1H30M)=, \lstinline=bar(PT1.5H)=
 \end{myitemize}
 
 \paragraph[sequential]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ sequential}
