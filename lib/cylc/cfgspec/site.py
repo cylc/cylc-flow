@@ -352,4 +352,3 @@ if not sitecfg:
     sitecfg.loadcfg( SITE_FILE, "site config", silent=True )
     sitecfg.loadcfg( USER_FILE, "user config", silent=True )
     sitecfg.transform()
-

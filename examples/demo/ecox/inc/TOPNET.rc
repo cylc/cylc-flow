@@ -63,5 +63,3 @@ prerequisites. The real restart file(s) are assumed to have been
 provided by an initial TopNet spinup experiment.  Topnet has 2 restart
 files. Topnet will run automatically in cold start but results will be
 useless.  Topnet needs at least 2 weeks of spinup."""
-
-

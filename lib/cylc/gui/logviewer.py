@@ -168,4 +168,3 @@ class logviewer(object):
         self.vbox.pack_start( sw, True )
         self.vbox.pack_start( searchbox, False )
         self.vbox.pack_start( self.hbox, False )
-

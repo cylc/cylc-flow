@@ -181,4 +181,3 @@ class broadcast( Pyro.core.ObjBase ):
 
     def load( self, pickled_settings ):
         self.settings = pickle.loads( pickled_settings )
-

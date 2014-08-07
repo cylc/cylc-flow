@@ -130,6 +130,3 @@ class CylcSuiteDBChecker(object):
             if term.strip(" ") not in fieldnames:
                 return False
         return True
-
-
-

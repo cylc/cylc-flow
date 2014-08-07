@@ -142,4 +142,3 @@ if prnt_id:
         print """
 NOTE: for tasks that have triggered already, prerequisites are
 shown here in the state they were in at the time of triggering."""
-

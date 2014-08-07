@@ -109,4 +109,3 @@ class outputs( object ):
         self.add( self.owner_id + ' submitted' )
         self.add( self.owner_id + ' started' )
         self.add( self.owner_id + ' succeeded' )
-

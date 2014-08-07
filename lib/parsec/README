@@ -98,5 +98,3 @@ general) of hostname match patterns.
 This generally only matters for items parsed from config files, not for
 the default values defined in file spec modules - so there is no need to
 use ordered dicts in file specs unless the order of defaults matters.
-
-

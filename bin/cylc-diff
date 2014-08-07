@@ -167,4 +167,3 @@ if n_diff > 0:
     print msg
     #print '-' * len(msg)
     prdict( diff_1_2, '', diff=True, nested=options.nested )
-

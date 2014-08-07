@@ -28,4 +28,3 @@ duration of the suite; and the other is set to stop after two cycles."""
         command scripting = """
 cylc insert $CYLC_SUITE_NAME bar 20140101T00
 cylc insert $CYLC_SUITE_NAME baz 20140101T00 20140102T00"""
-

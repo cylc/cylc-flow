@@ -63,4 +63,3 @@ class client( object ):
             proxy._setIdentification( self.pphrase )
 
         return proxy
-

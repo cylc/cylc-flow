@@ -397,4 +397,3 @@ class DotUpdater(threading.Thread):
         else:
             pass
             ####print "Disconnecting task state info thread"
-

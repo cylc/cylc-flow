@@ -236,4 +236,3 @@ class localdb(object):
             if m:
                 rcfiles.append(os.path.join( dir, m.groups()[0]))
         return rcfiles
-

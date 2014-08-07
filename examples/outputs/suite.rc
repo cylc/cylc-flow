@@ -27,4 +27,3 @@ echo BYE"""
             # [T] is replaced by actual cycle time at run time:
             out1 = "foo uploaded file set 1 for [T]"
             out2 = "foo uploaded file set 2 for [T]"
-

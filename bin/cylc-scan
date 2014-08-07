@@ -64,4 +64,3 @@ if options.print_ports:
     sys.exit(0)
 
 suites = scan( options.host, options.db, options.pyro_timeout )
-

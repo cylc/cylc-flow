@@ -28,4 +28,3 @@ def prompt( reason, force=False ):
         return
     else:
         sys.exit(0)
-

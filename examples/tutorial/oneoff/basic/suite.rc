@@ -5,4 +5,3 @@ title = "The cylc Hello World! suite"
 [runtime]
     [[hello]]
         command scripting = "sleep 10; echo Hello World!"
-

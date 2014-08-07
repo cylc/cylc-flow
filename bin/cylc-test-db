@@ -96,4 +96,3 @@ cylc db pr $GRP
 
 echo
 echo "> All database tests passed."
-

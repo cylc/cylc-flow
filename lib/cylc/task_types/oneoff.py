@@ -26,4 +26,3 @@ class oneoff(object):
 
     def has_spawned( self ):
         return True
-

@@ -15,4 +15,3 @@ use theme = PinkRun           # set your default theme
     [[PinkRun]] # override the 'running' color in the 'default' theme
         inherit = default
         running = "color=#ff00ff" # magenta
-

@@ -35,4 +35,3 @@ perl -pi -e 'undef $/; s/( *\[\[\[00.*marker1)\n( *\[\[\[Monthly.*marker2)/${2}\
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-

@@ -22,4 +22,3 @@ for FILE in $FILES; do
     fi
     perl -pi -e "s/$OLD/$NEW/" $FILE
 done
- 

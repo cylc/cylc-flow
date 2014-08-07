@@ -53,4 +53,3 @@ else
     skip 2 '[directive tests]loadleveler host not defined'
 fi
 unset CYLC_LL_TEST_TASK_HOST
-

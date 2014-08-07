@@ -30,5 +30,3 @@
         inherit = NCEP
         description = "Archiving and cleanup for the ncep files."
         command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ncep_housekeeping.conf
-
-

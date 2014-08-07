@@ -347,4 +347,3 @@ def parse( fpath, write_proc=False,
                 raise ParseError( 'Invalid line ' + str(index+1) + ': ' + line )
 
     return config
-

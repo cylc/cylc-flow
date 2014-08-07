@@ -69,4 +69,3 @@ if result[0]:
     print result[1]
 else:
     sys.exit( result[1] )
-

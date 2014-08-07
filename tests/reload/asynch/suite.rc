@@ -16,4 +16,3 @@
         command scripting = "true"
     [[b]]
         command scripting = "cylc reload $CYLC_SUITE_REG_NAME -f; sleep 5"
-

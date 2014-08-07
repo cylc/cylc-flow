@@ -170,4 +170,3 @@ else:
                 task=options.task,
                 cycle=options.cycle,
                 status=options.status))
-

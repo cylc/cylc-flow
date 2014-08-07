@@ -96,4 +96,3 @@ class prerequisites(object):
         for reqs in self.container:
             points += reqs.get_target_points()
         return points
-

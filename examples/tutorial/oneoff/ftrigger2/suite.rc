@@ -18,4 +18,3 @@ title = "Trigger *off* a family of tasks"
         inherit = GREETERS
         [[[environment]]]
             GREETING = Goodbye
-

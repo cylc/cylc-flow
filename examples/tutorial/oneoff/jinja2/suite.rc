@@ -23,4 +23,3 @@ title = "A Jinja2 Hello World! suite"
         inherit = BYE
     {% endfor %}
 {% endif %}
-

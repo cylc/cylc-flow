@@ -26,4 +26,3 @@
         command scripting = "/bin/true"
         [[[remote]]]
             host = {{ HOST }}
-

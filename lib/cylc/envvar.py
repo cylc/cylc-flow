@@ -45,4 +45,3 @@ def expandvars( item, owner=None ):
     # now expand any other environment variable or tilde-username
     item = os.path.expandvars( os.path.expanduser( item ))
     return item
-

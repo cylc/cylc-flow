@@ -28,4 +28,3 @@ def is_remote_user(name):
     Return False if name is None.
     """
     return name and name != user
-

@@ -110,4 +110,3 @@ if __name__ == "__main__":
         b.add_or_process( item(i) )
     # process any leftovers
     b.process()
-

@@ -179,4 +179,3 @@ class config( object ):
             print cfg
         else:
             printcfg( cfg, prefix=prefix, level=len(keys), none_str=none_str )
-

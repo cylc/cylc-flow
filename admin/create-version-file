@@ -9,4 +9,3 @@ else
 	echo "Setting VERSION from parent directory name: $VN" >&2
 	echo $VN > VERSION
 fi
-

@@ -349,5 +349,3 @@ make_alabc.sh --keep"""
         inherit = NZLAM
         description = "Check obstore files for current cycle, unpack if necessary."
         command scripting = check-nzlam-inputs.sh --obstore
-
-

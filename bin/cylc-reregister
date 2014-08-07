@@ -46,4 +46,3 @@ except Exception, x:
     if cylc.flags.debug:
         raise
     raise SystemExit(x)
-

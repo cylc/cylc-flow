@@ -26,4 +26,3 @@ fi
 
 echo "REMOVING FAILED TASK: $TASK"
 cylc control remove --force $CYLC_SUITE_REG_NAME $TASK
-

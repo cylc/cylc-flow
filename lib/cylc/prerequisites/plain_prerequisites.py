@@ -119,4 +119,3 @@ class plain_prerequisites(object):
         """Return a list of cycle points target by each prerequisite,
         including each component of conditionals."""
         return [ get_point(p) for p in self.target_point_strings ]
-

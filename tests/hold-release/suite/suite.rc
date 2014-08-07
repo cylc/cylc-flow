@@ -28,4 +28,3 @@ cylc release $CYLC_SUITE_NAME
 sleep 5"""
     [[foo,bar]]
         command scripting = true
-

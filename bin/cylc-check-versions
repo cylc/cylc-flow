@@ -116,4 +116,3 @@ else:
         print ' ', ac.ljust(m), warning
     if options.error:
         sys.exit(1)
-

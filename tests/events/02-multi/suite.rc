@@ -20,4 +20,3 @@ title = "Test list of task event handlers"
         command scripting = true
         [[[event hooks]]]
             started handler = trigger-bar.sh, remove-bar.sh
-

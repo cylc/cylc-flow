@@ -45,4 +45,3 @@ SPEC = {
             'float lists'   : { '__MANY__' : vdr( vtype="float_list", allow_zeroes=False   ) },
             },
         }
-

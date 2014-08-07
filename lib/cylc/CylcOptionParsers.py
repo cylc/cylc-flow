@@ -248,4 +248,3 @@ Arguments:"""
         cylc.flags.debug = options.debug
 
         return ( options, args )
-

@@ -23,4 +23,3 @@
         foo = "color=blue"
         bar = "color=red"
         BAZ = "style=filled", "color=skyblue"
-

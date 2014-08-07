@@ -28,4 +28,3 @@ if [[ $CYLC_TASK_CYCLE_TIME == $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
     cylc stop $CYLC_SUITE_NAME
     sleep 5
 fi"""
-

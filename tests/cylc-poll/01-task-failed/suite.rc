@@ -23,4 +23,3 @@ trap '' EXIT # die silently
 exit 0"""
     [[B]]
         command scripting = cylc poll $CYLC_SUITE_NAME A 1
-

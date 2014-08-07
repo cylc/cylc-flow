@@ -19,4 +19,3 @@ title = "Hello, Goodbye, Suicide"
 sleep 1
 echo Goodbye ... oops!
 /bin/false # FAIL"""
-

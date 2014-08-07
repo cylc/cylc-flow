@@ -8,4 +8,3 @@ cylc suite-state $SUITE --task=bar --cycle=1 \
 
 # then remove it
 cylc remove $SUITE bar 1
-

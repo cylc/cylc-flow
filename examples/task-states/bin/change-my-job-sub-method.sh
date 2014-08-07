@@ -12,4 +12,3 @@ CYCLE=${TASKID#*.}
 
 echo cylc broadcast -n $NAME -t $CYCLE --set "[job submission]method=background" $SUITE
 cylc broadcast -n $NAME -t $CYCLE --set "[job submission]method=background" $SUITE
-

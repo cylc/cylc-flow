@@ -8,4 +8,3 @@ echo "model.sh: executing pseudo-executable"
 echo "model.sh: CYLC_VERSION is $CYLC_VERSION"
 eval $MODEL
 echo "model.sh: done"
-

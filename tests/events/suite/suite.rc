@@ -33,4 +33,3 @@ cylc unreg $REG"""
             host = localhost
     [[startup, timeout, shutdown]]
         inherit = common
-

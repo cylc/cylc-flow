@@ -45,4 +45,3 @@ cv_scripting_sl = cv_export + '; ' + '; '.join(s_profile)
 cv_scripting_ml = """
 """ + cv_export + """
 """ + '\n'.join( s_profile )
-

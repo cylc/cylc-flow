@@ -164,5 +164,3 @@ the suite has been restarted.""", self.window ).warn()
                     warning_re = 'WARNING', critical_re = 'CRITICAL' )
         ###print "Starting log viewer thread"
         self.t.start()
-
-

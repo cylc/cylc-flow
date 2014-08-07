@@ -41,4 +41,3 @@ case "$VN" in
 esac
 # echo to stdout
 echo "$VN"
-

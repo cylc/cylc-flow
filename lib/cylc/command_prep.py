@@ -72,4 +72,3 @@ class prep_file( prep ):
 
     def get_rcfiles( self ):
         return self.db.get_rcfiles( self.suite )
-

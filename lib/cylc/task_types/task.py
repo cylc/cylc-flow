@@ -1309,4 +1309,3 @@ class task( object ):
         self.log( 'CRITICAL', "Killing job" )
         cmd_spec = ( CMD_TYPE_JOB_POLL_KILL, cmd )
         self.__class__.proc_pool.put_command( cmd_spec, self.kill_command_callback )
-

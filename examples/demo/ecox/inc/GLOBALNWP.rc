@@ -82,5 +82,3 @@
             OPTIONS = -f -t -i
             FIELDS  = All
             SERVICE = globalnwp_conv_ice
-
-

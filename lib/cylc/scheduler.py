@@ -1269,4 +1269,3 @@ class scheduler(object):
             self.log.warning( "Cannot get CPU % statistics: %s" % e )
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
-

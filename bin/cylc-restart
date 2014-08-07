@@ -499,4 +499,3 @@ determine what happened to them while the suite was down."""
 
 if __name__ == '__main__':
     main("restart", restart)
-

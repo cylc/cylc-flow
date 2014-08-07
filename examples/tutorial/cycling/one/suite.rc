@@ -13,4 +13,3 @@ title = "Two cycling tasks, no inter-cycle dependence"
     [[node attributes]]
         foo = "color=red"
         bar = "color=blue"
-

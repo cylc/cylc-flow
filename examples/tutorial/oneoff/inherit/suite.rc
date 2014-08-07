@@ -11,4 +11,3 @@ title = "Simple runtime inheritance example"
     [[goodbye]]
         [[[environment]]]
             GREETING = Goodbye
-

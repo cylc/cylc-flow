@@ -138,4 +138,3 @@ def dump_to_stdout( states, sort_by_cycle=False ):
     lines.sort()
     for line in lines:
         print line
-

@@ -7,4 +7,3 @@ title = "Hello World! by 'at' job submission"
         command scripting = "sleep 10; echo Hello World!"
         [[[job submission]]]
             method = at
-

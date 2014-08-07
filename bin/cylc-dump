@@ -94,4 +94,3 @@ if display_global:
 if display_tasks:
     #print 'TASKS:'
     dump_to_stdout( states, options.sort_by_cycle )
-

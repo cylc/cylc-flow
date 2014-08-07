@@ -82,4 +82,3 @@ except Exception, x:
         raise
     raise SystemExit(x)
 gtk.main()
-

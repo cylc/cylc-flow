@@ -24,4 +24,3 @@ cylc reload -f $CYLC_SUITE_NAME
         command scripting = "$FALSE"
         [[[environment]]]
             FALSE = false # marker
-    

@@ -44,4 +44,3 @@ EOF
     perl -pi -e "s/(final cycle time\s*=)\s*.*/\1 2013080812/g" suite.rc
 
 }
-

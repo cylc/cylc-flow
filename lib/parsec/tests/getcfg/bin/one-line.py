@@ -19,4 +19,3 @@ cfg = config( SPEC )
 cfg.loadcfg( "test.rc" )
 
 cfg.mdump ( [['foo','bar','baz'],['foo','bar','qux']], oneline=True, sparse=True)
-

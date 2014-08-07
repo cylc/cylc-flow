@@ -2,4 +2,3 @@
 
 GREETING=${GREETING:-"Goodbye World!"}
 echo $GREETING
-

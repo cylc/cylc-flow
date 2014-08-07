@@ -41,4 +41,3 @@ SPEC = {
             '__MANY__' : { '__MANY__' : vdr( vtype="integer_list", allow_zeroes=False   ) },
             },
         }
-

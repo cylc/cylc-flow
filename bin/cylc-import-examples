@@ -82,4 +82,3 @@ for SUITE_RC in $SUITE_RCS; do
 done
 
 echo "DONE"
-

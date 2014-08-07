@@ -212,4 +212,3 @@ if __name__ == "__main__":
     printcfg( { 'foo' : { 'bar' : None } }, prefix=' > ' )
     printcfg( { 'foo' : { 'bar' : None } }, none_str='(none)', prefix=' > ' )
     printcfg( { 'foo' : { 'bar' : 1, 'baz' : 2, 'qux' : { 'boo' : None} } }, none_str='(none)', prefix=' > ' )
-

@@ -37,4 +37,3 @@ y1 | H => I"""
     [[node attributes]]
         FAMx = 'color=red', 'shape=ellipse'
         FAMy = 'color=blue', 'shape=ellipse'
-

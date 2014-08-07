@@ -25,5 +25,3 @@ prerequisites. The real restart file(s) are assumed to have been
 provided by an initial external spinup experiment. NZWave will
 automatically cold start if it runs out of restart files (8
 avaialble)."""
-
-

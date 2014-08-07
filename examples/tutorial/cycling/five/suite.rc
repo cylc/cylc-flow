@@ -16,4 +16,3 @@ title = "Inter-cycle dependence + a cold-start task"
     [[node attributes]]
         foo = "color=red"
         bar = "color=blue"
-

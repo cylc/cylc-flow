@@ -42,5 +42,3 @@ def execute( command_list, ignore_output=False, notify=False ):
         # the command was not invoked
         print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
         sys.exit(1)
-
-

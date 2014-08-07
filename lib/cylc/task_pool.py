@@ -1071,4 +1071,3 @@ class pool(object):
             self.remove(itask, 'purge')
 
         print 'PURGE DONE'
-

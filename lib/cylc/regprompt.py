@@ -38,4 +38,3 @@ def prompt( question, default ):
         else:
             break
     return res
-

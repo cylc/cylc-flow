@@ -56,4 +56,3 @@ purge_suite $SUITE_NAME
 cylc stop --now $UPSTREAM --max-polls=20 --interval=2 > /dev/null 2>&1
 rm -rf $( cylc get-global-config --print-run-dir )/$UPSTREAM
 cylc unreg $UPSTREAM
-

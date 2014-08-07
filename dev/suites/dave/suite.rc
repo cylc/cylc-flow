@@ -45,4 +45,3 @@ background thread; (c) job submission in a background worker thread."""
         inherit = REMOTE
   {% endfor %}
 {% endfor %}
-

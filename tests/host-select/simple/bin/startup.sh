@@ -7,4 +7,3 @@ DEST=.cylc/$CYLC_SUITE_REG_NAME
 ssh -oBatchmode=yes ${CYLC_TEST_TASK_OWNER}@$CYLC_TEST_TASK_HOST mkdir -p $DEST
 scp -oBatchmode=yes $PPHRASE ${CYLC_TEST_TASK_OWNER}@${CYLC_TEST_TASK_HOST}:$DEST/
 echo "Done"
-

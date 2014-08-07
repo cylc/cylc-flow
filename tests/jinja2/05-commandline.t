@@ -33,4 +33,3 @@ suite_run_ok $TEST_NAME cylc run --reference-test \
     --set-file=$TEST_DIR/$SUITE_NAME/vars.txt $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-

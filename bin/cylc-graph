@@ -230,4 +230,3 @@ window.connect( 'destroy', gtk.main_quit)
 # checking periodically for file changed
 gobject.timeout_add(1000, window.update)
 gtk.main()
-

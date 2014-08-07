@@ -20,4 +20,3 @@ cfg.loadcfg( "missing.rc" )
 
 if cfg.get(sparse=True) != OrderedDict():
     sys.exit(1)
-

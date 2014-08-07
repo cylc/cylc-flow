@@ -30,4 +30,3 @@ class info_interface( Pyro.core.ObjBase ):
     def get( self, descrip, *args ):
         # TODO - WHAT TO RETURN IN CASE OF UNKNOWN COMMAND?
         return self.commands[ descrip ]( *args )
-

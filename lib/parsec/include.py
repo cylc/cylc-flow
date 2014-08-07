@@ -201,4 +201,3 @@ modifying one of the include-file boundary markers. Fix the backed-
 up inlined file, copy it to the original filename and invoke another
 inlined edit session split the file up again."""
         print >> sys.stderr
-

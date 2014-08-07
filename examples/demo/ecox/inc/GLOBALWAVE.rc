@@ -31,5 +31,3 @@ available)."""
         inherit = GLOBALWAVE
         description = "Archiving and cleanup for the globalwave sub-system."
         command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalwave_housekeeping.conf
-
-

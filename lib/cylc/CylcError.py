@@ -40,4 +40,3 @@ class TaskStateError( CylcError ):
 
 class TaskNotFoundError( CylcError ):
     pass
-

@@ -48,4 +48,3 @@ else:
         print >> sys.stderr, """Please inform your cylc admin user. This file should have been created
 by running 'make' or 'make version' after unpacking the cylc release tarball."""
         sys.exit("ABORTING")
-

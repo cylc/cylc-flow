@@ -69,4 +69,3 @@ class RegPath(object):
     def append( self, rpath2 ):
         # join on another rpath
         return RegPath( self.rpath + self.__class__.delimiter + rpath2.rpath )
-

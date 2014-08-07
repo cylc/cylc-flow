@@ -13,4 +13,3 @@
         [[[job submission]]]
             # use python/my_background.py:my_background
             method = my_background
-

@@ -34,4 +34,3 @@ TEST_NAME=$TEST_NAME_BASE-restart
 suite_run_ok $TEST_NAME cylc restart --debug --reference-test $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-

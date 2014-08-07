@@ -119,4 +119,3 @@ class remrun( object ):
             sys.exit("ERROR: remote command invocation failed %s" % str(e))
         else:
             return True
-

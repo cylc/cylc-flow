@@ -31,4 +31,3 @@ by many of the other test suites (see "cylc test-battery --help")."""
         [[[remote]]]
             host = $CYLC_TEST_TASK_HOST
             owner = {{ OWNER }}
-

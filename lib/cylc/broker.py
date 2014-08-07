@@ -55,4 +55,3 @@ class broker(object):
     def negotiate( self, task ):
         # can my outputs satisfy any of task's prerequisites
         task.satisfy_me( self.all_outputs )
-

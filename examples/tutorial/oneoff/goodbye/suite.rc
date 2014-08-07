@@ -7,4 +7,3 @@ title = "Hello and Goodbye World!"
         command scripting = "sleep 10; echo Hello World!"
     [[goodbye]]
         command scripting = "sleep 10; echo Goodbye World!"
-

@@ -22,5 +22,3 @@ model because it does not have any restart outputs."""
         inherit = NZTIDE
         description = "Archiving and cleanup for the NZTIDE sub-system."
         command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nztide_housekeeping.conf
-
-

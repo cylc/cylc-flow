@@ -66,4 +66,3 @@ except Exception, x:
         raise
     print >> sys.stderr, 'ERROR: task messaging failure.'
     raise SystemExit(x)
-

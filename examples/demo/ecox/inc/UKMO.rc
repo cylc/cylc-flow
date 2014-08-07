@@ -273,5 +273,3 @@ when needed."""
 	        wall_clock_limit = "8:00:10,8:00:00"
         [[[event hooks]]]
             execution timeout = 300
-
-

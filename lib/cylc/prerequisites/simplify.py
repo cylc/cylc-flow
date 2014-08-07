@@ -148,5 +148,3 @@ class conditional_simplifier( object ):
         flattened = "(" + flattened
         flattened += ")"
         return flattened
-
-

@@ -120,4 +120,3 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None ):
         suiterc.append(line)
 
     return suiterc
-

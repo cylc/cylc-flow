@@ -73,4 +73,3 @@ except Exception, x:
     if cylc.flags.debug:
         raise
     sys.exit( str(x) )
-

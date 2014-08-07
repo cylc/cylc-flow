@@ -51,4 +51,3 @@ class clocktriggered(object):
 
     def ready_to_run( self ):
         return task.ready_to_run(self) and self.start_time_reached()
-

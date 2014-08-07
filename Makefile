@@ -27,4 +27,3 @@ ordereddict:
 
 clean:
 	cd doc && $(MAKE) clean
-

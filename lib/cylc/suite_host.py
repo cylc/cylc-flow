@@ -124,4 +124,3 @@ if __name__ == "__main__":
 
     target = sys.argv[1]
     print get_local_ip_address( target )
-

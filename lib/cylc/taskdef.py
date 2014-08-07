@@ -392,4 +392,3 @@ class taskdef(object):
         tclass.__init__ = tclass_init
 
         return tclass
-

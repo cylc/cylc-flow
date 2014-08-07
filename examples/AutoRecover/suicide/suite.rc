@@ -31,4 +31,3 @@ else
     echo "Succeeded"
     true
 fi"""
-

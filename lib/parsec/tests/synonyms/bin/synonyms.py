@@ -49,4 +49,3 @@ for expected in res[rcname].keys():
         sys.exit( "FAIL" )
     else:
         print "OK"
-

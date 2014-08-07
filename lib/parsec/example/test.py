@@ -46,4 +46,3 @@ cfg.printcfg()
 #cfg.printcfg( ['list values', 'integers'] )
 #print
 #cfg.printcfg( ['single values', 'strings with internal comments'] )
-

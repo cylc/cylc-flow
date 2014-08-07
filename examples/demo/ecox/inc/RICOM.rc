@@ -29,5 +29,3 @@ provided by an initial external spinup experiment.  Ricom will fail if
 it runs out of restart files (4 available) but capture the failure and
 automatically do a cold start. One week spinup is required before the
 output is considered usable."""
-
-

@@ -21,4 +21,3 @@ from subprocess import Popen, PIPE
 
 class my_background( background ):
     pass
-

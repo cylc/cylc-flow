@@ -19,4 +19,3 @@ title = "Jinja2 'do' extension test"
     [[ {{ T }} ]]
         inherit = FAMILY
 {% endfor %}
-

@@ -143,4 +143,3 @@ class port_retriever( object ):
             print '...', port
 
         return port
-
