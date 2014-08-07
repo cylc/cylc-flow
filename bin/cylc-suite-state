@@ -57,14 +57,11 @@ class suite_poller( poller ):
                 connected = True
                 # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
-            except (DBNotFoundError, DBOperationError) as err:
+            except DBOperationError:
+                if self.n_polls >= max_polls:
+                    raise
                 if cylc.flags.verbose:
                     sys.stdout.write('.')
-                if self.n_polls >= max_polls:
-                    if isinstance(err, DBOperationError):
-                        sys.exit("unable to query suite database: " + str(err))
-                    else:
-                        break
                 sleep(self.interval)
         if cylc.flags.verbose:
             sys.stdout.write('\n')
