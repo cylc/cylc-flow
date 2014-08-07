@@ -265,23 +265,27 @@ class CylcRuntimeDAO(object):
         return
 
     def get_task_submit_num(self, name, cycle):
-        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
+        s_fmt = ("SELECT COUNT(*) FROM task_events" +
+                 " WHERE name==? AND cycle==? AND event==?")
         args = [name, str(cycle), "incrementing submit number"]
-        count = self.c.select(s_fmt, args).next()[0]
-        submit_num = count + 1 #submission numbers should start at 0
-        return submit_num
+        count = 0
+        for row in self.c.select(s_fmt, args):
+            count = row[0]  # submission numbers should start at 0
+            break
+        return count + 1
 
     def get_task_current_submit_num(self, name, cycle):
-        s_fmt = "SELECT COUNT(*) FROM task_events WHERE name==? AND cycle==? AND event==?"
+        s_fmt = ("SELECT COUNT(*) FROM task_events" +
+                 " WHERE name==? AND cycle==? AND event==?")
         args = [name, str(cycle), "incrementing submit number"]
-        count = self.c.select(s_fmt, args).next()[0]
-        return count
+        for row in self.c.select(s_fmt, args):
+            return row[0]
 
     def get_task_state_exists(self, name, cycle):
         s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
-        args = [name, str(cycle)]
-        count = self.c.select(s_fmt, args).next()[0]
-        return count > 0
+        for row in self.c.select(s_fmt, [name, str(cycle)]):
+            return row[0] > 0
+        return False
 
     def get_task_host(self, name, cycle):
         """Return the host name for task "name" at a given cycle."""
@@ -293,16 +297,14 @@ class CylcRuntimeDAO(object):
         s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==?
                    AND event=="submission succeeded" AND misc!=""
                    ORDER BY submit_num DESC LIMIT 1"""
-        args = [name, str(cycle)]
-        res = self.c.select(s_fmt, args).next()
-        return res
+        for row in self.c.select(s_fmt, [name, str(cycle)]):
+            return row
 
     def get_task_submit_method_id_and_try(self, name, cycle):
         s_fmt = """SELECT submit_method_id, try_num FROM task_states WHERE name==? AND cycle==?
                    ORDER BY submit_num DESC LIMIT 1"""
-        args = [name, str(cycle)]
-        res = self.c.select(s_fmt, args).next()
-        return res
+        for row in self.c.select(s_fmt, [name, str(cycle)]):
+            return row
 
     def run_db_op(self, db_oper):
         if isinstance(db_oper, BulkDBOperObject):
