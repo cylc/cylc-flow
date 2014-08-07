@@ -27,7 +27,7 @@ import signal
 from subprocess import Popen, PIPE
 from time import time, sleep
 
-class jobfile(object):
+class JobFile(object):
 
     # These are set by the scheduler object at start-up:
     suite_env = None       # static variables not be be changed below

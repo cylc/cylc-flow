@@ -83,6 +83,12 @@ def execute_shell_command(cmd_spec, job_sub_method=None):
             # Capture just the echoed PID then move on.
             cmd_result['EXIT'] = 0
             cmd_result['OUT'] = p.stdout.readline().rstrip()
+            # Check if submission is OK or not
+            if not cmd_result['OUT']:
+                ret_code = p.poll()
+                if ret_code is not None:
+                    cmd_result['OUT'], cmd_result['ERR'] = p.communicate()
+                    cmd_result['EXIT'] = ret_code
         else:
             cmd_result['EXIT'] = p.wait()
             if cmd_result['EXIT'] is not None:

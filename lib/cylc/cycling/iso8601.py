@@ -26,13 +26,9 @@ from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
-    PointBase, IntervalBase, SequenceBase, PointParsingError)
+    PointBase, IntervalBase, SequenceBase, PointParsingError,
+    IntervalParsingError)
 from parsec.validate import IllegalValueError
-
-# TODO - Consider copy vs reference of points, intervals, sequences
-# TODO - Use context points properly
-# TODO - ignoring anchor in back-compat sections
-
 
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
@@ -192,7 +188,10 @@ class ISO8601Interval(IntervalBase):
 
     def standardise(self):
         """Format self.value into a standard representation."""
-        self.value = str(interval_parse(self.value))
+        try:
+            self.value = str(interval_parse(self.value))
+        except ValueError:
+            raise IntervalParsingError(type(self), self.value)
         return self
 
     def add(self, other):
@@ -609,7 +608,7 @@ def get_point_relative(offset_string, base_point):
     else:
         return base_point + interval
     return ISO8601Point(str(
-        abbrev_util.parse_timepoint(
+        SuiteSpecifics.abbrev_util.parse_timepoint(
             offset_string, context_point=_point_parse(base_point.value)
         )
     ))

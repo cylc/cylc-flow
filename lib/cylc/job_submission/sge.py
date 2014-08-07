@@ -17,10 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from job_submit import job_submit
+from job_submit import JobSubmit
 from subprocess import check_call, Popen, PIPE
 
-class sge( job_submit ):
+class sge( JobSubmit ):
 
     "SGE qsub job submission"
 
@@ -46,7 +46,7 @@ class sge( job_submit ):
             defaults[ d ] = val
         self.jobconfig['directives'] = defaults
 
-    def construct_jobfile_submission_command( self ):
+    def construct_job_submit_command( self ):
         """
         Construct a command to submit this job to run.
         """

@@ -39,17 +39,16 @@ class restart( scheduler ):
     def __init__( self ):
         usage = """cylc [control] restart [OPTIONS] ARGS
 
-Restart a suite from a previous state. To start from scratch see the
-'cylc run' command.
+Start a suite run from a previous state. To start from scratch (cold or warm
+start) see the 'cylc run' command.
 
-Suites run in daemon mode unless -n/--no-detach or --debug is used.
+The scheduler runs in daemon mode unless you specify n/--no-detach or --debug.
 
-The most recent previous state is loaded by default, but other states
-can be specified on the command line (cylc writes special state dumps
-and logs their filenames before actioning intervention commands).
+The most recent previous suite state is loaded by default, but earlier state
+files in the suite state directory can be specified on the command line.
 
-Tasks recorded as 'submitted' or 'running' will be polled to determine
-where they got to while the suite was down."""
+Tasks recorded as 'submitted' or 'running' will be polled at start-up to
+determine what happened to them while the suite was down."""
 
         self.parser = cop( usage, jset=True, argdoc=[("REG", "Suite name"),
    ( "[FILE]", """Optional state dump file, assumed to reside in the
@@ -96,8 +95,8 @@ where they got to while the suite was down."""
 
         scheduler.parse_commandline( self )
 
-    def get_state_start_string( self ):
-        """Return the start string specified in the state file, if any."""
+    def get_state_initial_point_string( self ):
+        """Return the initial point string from the state file, if any."""
         return self.get_state_file_info()[0]
         
     def get_state_file_path( self ):

@@ -26,7 +26,7 @@ import subprocess
 from time import sleep
 from parsec.OrderedDict import OrderedDict
 from cylc.execute import execute
-from cylc.job_submission import jobfile
+from cylc.job_submission.jobfile import JobFile
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 import cylc.TaskID
@@ -160,8 +160,8 @@ suite_task_env = {
         }
 # (note sitecfg automatically expands environment variables in local paths)
 
-jobfile.jobfile.suite_env = suite_env
-jobfile.jobfile.suite_task_env = suite_task_env
+JobFile.suite_env = suite_env
+JobFile.suite_task_env = suite_task_env
 
 point = get_point(point_string)
 try:

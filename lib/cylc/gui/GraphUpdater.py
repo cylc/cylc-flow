@@ -74,6 +74,7 @@ class GraphUpdater(threading.Thread):
         self.filter_include = None
         self.filter_exclude = None
         self.state_filter = None
+        self.subgraphs_on = False # If True, organise by cycle point.
 
         self.descendants = {}
         self.all_families = []
@@ -299,7 +300,7 @@ class GraphUpdater(threading.Thread):
         if start_time == None or oldest > start_time:
             rawx = True
         else:
-            # (show cold start tasks) - TODO - actual raw start
+            # (show cold start tasks)
             rawx = False
 
         extra_node_ids = {}
@@ -354,6 +355,8 @@ class GraphUpdater(threading.Thread):
         if needs_redraw:
             self.graphw = graphing.CGraphPlain( self.cfg.suite, suite_polling_tasks )
             self.graphw.add_edges( gr_edges, ignore_suicide=self.ignore_suicide )
+            if self.subgraphs_on:
+                self.graphw.add_cycle_point_subgraphs( gr_edges )
 
         for n in self.graphw.nodes(): # base node defaults
             n.attr['style'] = 'filled'
@@ -492,4 +495,4 @@ class GraphUpdater(threading.Thread):
             states = set(self.state_filter)
         return ( set( edges ), set( extra_ids ), self.crop,
                  self.filter_exclude, self.filter_include, states,
-                 self.orientation, self.ignore_suicide )
+                 self.orientation, self.ignore_suicide, self.subgraphs_on )

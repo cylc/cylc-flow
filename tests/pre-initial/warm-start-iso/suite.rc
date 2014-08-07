@@ -1,0 +1,20 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = 1.0 # minutes
+[scheduling]
+    initial cycle point = 20130101T00
+    final cycle point = 20130103T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = "foo"
+        [[[R1/T18]]]
+            graph = "bar => baz"
+        [[[R6//PT6H]]]
+            graph = "wibble"
+        [[[T00,T06,T12,T18]]]
+            graph = "foo[^] & qux[-PT6H] => qux"
+[runtime]
+    [[root]]
+        command scripting = "true"

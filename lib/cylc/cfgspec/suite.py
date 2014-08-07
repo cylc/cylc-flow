@@ -119,6 +119,12 @@ def _coerce_cycletime_time_zone( value, keys, args ):
     return value
 
 
+def _coerce_final_cycletime( value, keys, args ):
+    """Coerce final cycle point."""
+    value = _strip_and_unquote( keys, value )
+    return value
+
+
 def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote( keys, value )
@@ -152,6 +158,7 @@ coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
 coercers['cycleinterval'] = _coerce_cycleinterval
+coercers['final_cycletime'] = _coerce_final_cycletime
 coercers['interval'] = _coerce_interval
 coercers['interval_minutes'] = lambda *a: _coerce_interval(
     *a, back_comp_unit_factor=60)
@@ -207,7 +214,7 @@ SPEC = {
         },
     'scheduling' : {
         'initial cycle point'                 : vdr(vtype='cycletime'),
-        'final cycle point'                   : vdr(vtype='cycletime'),
+        'final cycle point'                   : vdr(vtype='final_cycletime'),
         'cycling mode'                        : vdr(vtype='string', default=Calendar.MODE_GREGORIAN, options=Calendar.MODES.keys() + ["integer"] ),
         'runahead limit'                      : vdr(vtype='cycleinterval' ),
         'max active cycle points'             : vdr(vtype='integer', default=3),
@@ -317,7 +324,7 @@ SPEC = {
         },
     'visualization' : {
         'initial cycle point'                  : vdr( vtype='cycletime' ),
-        'final cycle point'                    : vdr( vtype='cycletime' ),
+        'final cycle point'                    : vdr( vtype='final_cycletime' ),
         'collapsed families'                  : vdr( vtype='string_list', default=[] ),
         'use node color for edges'            : vdr( vtype='boolean', default=True ),
         'use node color for labels'           : vdr( vtype='boolean', default=False ),

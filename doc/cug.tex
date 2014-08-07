@@ -573,9 +573,8 @@ shell$ easy_install pygraphviz
 \end{lstlisting}
 
 If you do not have root access on your intended cylc host machine and
-cannot get a sysadmin to do this at system level, see
-Section~\ref{LocalInstall} for tips on installing everything to
-a local user account.
+cannot get a sysadmin to do this at system level, see~\ref{LocalInstall} for
+tips on installing everything to a local user account.
 
 Now check that everything other than the \LaTeX packages is
 installed properly:
@@ -601,15 +600,15 @@ install) not present in your \lstinline=$PYTHONPATH= variable.
 
 Cylc installs into a normal user account, as an unpacked release tarball
 or a git repository clone. See the \lstinline=INSTALL= file in the source
-tree for instructions (also listed in Section~\ref{INSTALL}).
+tree for instructions (also listed in~\ref{INSTALL}).
 
 \subsubsection{Create A Site Config File}
 
 Site and user config files define some important parameters that affect
 all suites, some of which may need to be customized for your site.
-Section~\ref{SiteAndUserConfiguration} describes how to generate an
-initial site file and where to install it. All legal site and user
-config items are defined Appendix~\ref{SiteRCReference}.
+See~\ref{SiteAndUserConfiguration} for how to generate an initial site file and
+where to install it. All legal site and user config items are defined
+in~\ref{SiteRCReference}.
 
 \subsection{Automated Tests}
 \label{RTAST}
@@ -626,7 +625,7 @@ even if nothing is wrong, if you run too many tests in parallel. See
 It is possible to install cylc and all of its software prerequisites
 under your own user account. Cylc itself is already designed to be
 installed into a normal user account, just follow the instructions above
-in Section~\ref{InstallCylc}. For the other packages, depending on the
+in~\ref{InstallCylc}. For the other packages, depending on the
 installation method used for each, it is just a matter of learning
 how to change the default install path prefix from, for example,
 \lstinline=/usr/local= to \lstinline=$HOME/installed/usr/local= and
@@ -689,7 +688,7 @@ install) not present in your \lstinline=$PYTHONPATH= variable.
 
 Upgrading is just a matter of unpacking the new cylc release. Successive
 cylc releases can be installed in parallel as suggested in the
-\lstinline=INSTALL= file (Section~\ref{INSTALL}).
+\lstinline=INSTALL= file (\ref{INSTALL}).
 
 \section{On The Meaning Of {\em Cycle } and {\em Cycle Point} In Cylc}
 
@@ -755,8 +754,7 @@ out of user config files so that they don't override future changes to
 the site file.
 
 Legal items, values, and system defaults are documented in the
-{\em Site And User Config File Reference}, Section~\ref{SiteRCReference}.
-
+{\em Site And User Config File Reference} (\ref{SiteRCReference}).
 
 %\pagebreak
 \section{Tutorial}
@@ -783,8 +781,7 @@ invoked by cylc on suite definitions:
 
 \begin{myitemize}
 \item For more on site and user config files, including how to generate
-one at first, see Section~\ref{SiteAndUserConfiguration} and
-Appendix~\ref{SiteRCReference}.
+one at first, see~\ref{SiteAndUserConfiguration} and~\ref{SiteRCReference}.
 \end{myitemize}
 
 
@@ -811,9 +808,8 @@ shell$ cylc run --help # example command-specific help
 \end{lstlisting}
 
 \begin{myitemize}
-    \item Command help transcripts are also printed in
-        Appendix~\ref{CommandReference}, and can be accessed
-        from the \lstinline=cylc gui= Help menu.
+    \item Command help transcripts are also printed in~\ref{CommandReference},
+        and can be accessed from the \lstinline=cylc gui= Help menu.
 \end{myitemize}
 
 \subsubsection{Graphical (GUI)}
@@ -840,8 +836,8 @@ in {\em suite definition directories} that may also contain a
 \lstinline=bin= directory and any other suite-related files.
 
 \begin{myitemize}
-\item For more on the suite definition file format, see
-    Section~\ref{SuiteDefinition} and Appendix~\ref{SuiteRCReference}.
+\item For more on the suite definition file format, see~\ref{SuiteDefinition}
+    and~\ref{SuiteRCReference}.
 \end{myitemize}
 
 \subsection{Suite Name Registration}
@@ -867,9 +863,8 @@ shell$ cylc stop my.suite
 
 \begin{myitemize}
 \item For more on registering, copying, deleting, and renaming suites,
-see \lstinline=cylc db --help=, Section~\ref{SuiteRegistration} (Suite
-Registration and Passphrases), and Section~\ref{SuiteStorageEtc} (Suite
-Storage, Discovery, Revision Control, and Deployment).
+see \lstinline=cylc db --help= (see~\ref{SuiteRegistration}
+and~\ref{SuiteStorageEtc}).
 \end{myitemize}
 
 \subsection{Suite Passphrases}
@@ -885,7 +880,7 @@ subject to Unix user account permissions). Local tasks and user commands
 on the suite host automatically use the passphrase in the suite
 definition directory. For remote tasks and commands, however, the
 passphrase must be installed appropriately on the remote
-account - see Section~\ref{RemoteTasks} below.
+account - see~\ref{RemoteTasks} below.
 
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
@@ -1000,7 +995,7 @@ information and exits).
 \subsection{Editing Suites}
 
 The text editor invoked by cylc on suite definitions is determined
-by cylc site and user config files, as shown above in Section~\ref{CUI}.
+by cylc site and user config files, as shown above in~\ref{CUI}.
 Check that you have renamed the tutorial examples suites as described
 just above and open the {\em Hello World} suite definition in your text
 editor:
@@ -1181,8 +1176,8 @@ be displayed as {\em submitted} in cylc until they actually start
 executing.
 
 \begin{myitemize}
-\item For more on task job scripts, see Section~\ref{JobScripts}.
-\item For more on job submission methods, see Section~\ref{AvailableMethods}.
+\item For more on task job scripts, see~\ref{JobScripts}.
+\item For more on job submission methods, see~\ref{AvailableMethods}.
 \end{myitemize}
 
 \subsection{Locating Suite And Task Output}
@@ -1246,11 +1241,10 @@ shell$ cylc log -o tut.oneoff.basic hello.1   # task stdout log
 shell$ cylc log -e tut.oneoff.basic hello.1   # task stderr log
 \end{lstlisting}
 For a more sophisticated web-based interface to suite and task logs,
-see {\em Rose} in Section~\ref{SuiteStorageEtc}.
+see {\em Rose} in~\ref{SuiteStorageEtc}.
 \begin{myitemize}
     \item For more on environment variables supplied to tasks,
-    such as \lstinline=$CYLC_SUITE_SHARE_DIR=, see
-    Section~\ref{TaskExecutionEnvironment}.
+    such as \lstinline=$CYLC_SUITE_SHARE_DIR=, see~\ref{TaskExecutionEnvironment}.
 \end{myitemize}
 
 \subsection{Remote Tasks}
@@ -1337,12 +1331,12 @@ retrieved by right-clicking on the task in the GUI. Rose
 the suite host.
 
 \begin{myitemize}
-\item For more on remote tasks see Section~\ref{RunningTasksOnARemoteHost}
+\item For more on remote tasks see~\ref{RunningTasksOnARemoteHost}
 
-\item For more on task communications, see Section~\ref{TaskComms}.
+\item For more on task communications, see~\ref{TaskComms}.
 
-\item For more on suite passphrases and authentication, see
-    Sections~\ref{tutPassphrases} and~\ref{ConnectionAuthentication}.
+\item For more on suite passphrases and authentication,
+    see~\ref{tutPassphrases} and~\ref{ConnectionAuthentication}.
 \end{myitemize}
 
 
@@ -1445,8 +1439,8 @@ Try running \lstinline=tut.oneoff.suicide=, which also configures
 the \lstinline=hello= task's runtime to make it fail, to see how this
 works.
 \begin{myitemize}
-    \item For more on suite dependency graphs see Section~\ref{ConfiguringScheduling}.
-    \item For more on task triggering see Section~\ref{TriggerTypes}.
+    \item For more on suite dependency graphs see~\ref{ConfiguringScheduling}.
+    \item For more on task triggering see~\ref{TriggerTypes}.
 \end{myitemize}
 
 \subsection{Runtime Inheritance}
@@ -1470,7 +1464,7 @@ implicit; from other parents an explicit \lstinline@inherit = PARENT@
 is required, as shown below.
 
 \begin{myitemize}
-\item For more on runtime inheritance, see Section~\ref{NIORP}.
+\item For more on runtime inheritance, see~\ref{NIORP}.
 \end{myitemize}
 
 \subsection{Triggering Families}
@@ -1586,7 +1580,7 @@ Experiment with \lstinline=tut.oneoff.ftrigger2= to see how this
 works.
 
 \begin{myitemize}
-\item For more on family triggering, see Section~\ref{FamilyTriggers}.
+\item For more on family triggering, see~\ref{FamilyTriggers}.
 \end{myitemize}
 
 \subsection{Suite Visualization}
@@ -1703,7 +1697,7 @@ final cycle point is given), as shown in Figure~\ref{fig-tut-one}.
 
 \lstset{language=transcript}
 If you run this suite instances of \lstinline=foo= will spawn in
-parallel out to the {\em suite runahead limit}, and each \lstinline=bar=
+parallel out to the {\em runahead limit}, and each \lstinline=bar=
 will trigger off the corresponding instance of \lstinline=foo= at the
 same cycle point.  The runahead limit prevents uncontrolled spawning of
 cycling tasks in suites that are not constrained by clock triggers in
@@ -1715,10 +1709,9 @@ work.
 
 \begin{myitemize}
     %Q Runahead factor now
-    \item The suite runahead limit is configurable - see
-        Section~\ref{RunaheadLimit}.
+    \item The suite runahead limit is configurable - see~\ref{RunaheadLimit}.
     \item Other date-time cycling is also supported (multihourly, daily,
- monthly, yearly...) - see Section~\ref{AdvancedCycling}.
+ monthly, yearly...) - see~\ref{AdvancedCycling}.
 \end{myitemize}
 
 \subsubsection{Inter-Cycle-Point Triggers}
@@ -1757,14 +1750,12 @@ initial cycle point) provided that the initial cycle point was always at 00 and
 Experiment with this suite to see how inter-cycle-point triggers work.
 Note that the first instance of \lstinline=foo=, at suite start-up, will
 trigger immediately in spite of its inter-cycle-point trigger, because cylc
-ignores triggers that reach back beyond the initial cycle point.
-
-The presence of an inter-cycle-point trigger usually implies something
-special has to happen at start-up, however. If a model depends on its
-own previous instance for restart files, for instance, then some special
-process will typically have to generate the initial set of restart files when
-there is no previous cycle point to do it. The following sections illustrate
-several ways of handling this in cylc suites.
+ignores dependence on points earlier than the initial cycle point.
+However, the presence of an inter-cycle-point trigger usually implies something
+special has to happen at start-up. If a model depends on its own previous
+instance for restart files, for example, then some special process has to
+generate the initial set of restart files when there is no previous cycle point
+to do it. The following section shows one way to handle this in cylc suites.
 
 \subsubsection{Initial Non-Repeating (R1) Tasks}
 \label{initial-non-repeating-r1-tasks}
@@ -1850,6 +1841,9 @@ prep.20130808T0000+13 => foo.20130808T0000+13
 \label{fig-tut-three}
 \end{figure}
 
+For another way to make something different happen at start-up, see 
+{\em cold start tasks} in~\ref{SpecialColdStartTasks}.
+
 \subsection{Jinja2}
 
 Cylc has built in support for the Jinja2 template processor, which
@@ -1933,9 +1927,8 @@ will need to copy their suite passphrase to
 \begin{lstlisting}
     $HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase
 \end{lstlisting}
-(use of the host and owner names is optional here -
-Section~\ref{passphrases}) {\em and} also retrieve the port number
-of the running suite, which can be found in their account:
+(use of the host and owner names is optional here - see~\ref{passphrases}) 
+{\em and} also retrieve the port number of the running suite from,
 \begin{lstlisting}
     ~SUITE_OWNER/.cylc/ports/SUITE_NAME
 \end{lstlisting}
@@ -1945,8 +1938,7 @@ shell$ cylc monitor --user=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
 \end{lstlisting}
 to view the progress of their suite.
 
-Other suite-connecting commands work in the same way too; see
-Section~\ref{RemoteControl}.
+Other suite-connecting commands work in the same way too; see~\ref{RemoteControl}.
 
 
 
@@ -2002,7 +1994,7 @@ as the suite runs.
 
 \item Use an {\em internal queue} to prevent more than an alotted number
     of tasks from running at once even though they are ready -
-   Section~\ref{InternalQueues}.
+   see~\ref{InternalQueues}.
 
 \item Configure task event hooks to send an email, or shut the suite down,
     on task failure.
@@ -2150,7 +2142,7 @@ be used as a last resort for hosts that do not allow routing back to the
 suite host for pyro or ssh. It can also be used as regular health check
 on submitted tasks under the other communications methods.
 
-See Section~\ref{RunningSuites} for more detail on cylc client/server
+See~\ref{RunningSuites} for more detail on cylc client/server
 communications, and how to use it.
 
 
@@ -2164,9 +2156,9 @@ between, the various tasks managed by the suite. This section of the
 User Guide deals with the format and content of the suite.rc file,
 including task definition. Task implementation - what's required of the
 real commands, scripts, or programs that do the processing that the
-tasks represent - is covered in Section~\ref{TaskImplementation}; and
-task job submission - how tasks are submitted to run - is in
-Section~\ref{TaskJobSubmission}.
+tasks represent - is covered in~\ref{TaskImplementation}; and
+task job submission - how tasks are submitted to run - is
+in~\ref{TaskJobSubmission}.
 
 \subsection{Suite Definition Directories}
 \label{SuiteDefinitionDirectories}
@@ -2192,8 +2184,8 @@ A cylc {\em suite definition directory} contains:
     \item {\bf A \lstinline=python/= sub-directory}.
         \begin{myitemize}
             \item {\em Optional.}
-            \item For user-defined job-submission methods, if needed (see
-                Section~\ref{TaskJobSubmission}).
+            \item For user-defined job-submission methods, if needed
+                (see~\ref{TaskJobSubmission}).
             \item Alternatively, new job submission methods can be
                 installed into the cylc source tree, or in any directory
                 in your \lstinline=$PYTHONPATH=.
@@ -2207,7 +2199,7 @@ A cylc {\em suite definition directory} contains:
             \item Portable access to files here, for running tasks, is
                 provided through
                 \lstinline=$CYLC_SUITE_DEF_PATH=
-                (see Section~\ref{TaskExecutionEnvironment}).
+                (see~\ref{TaskExecutionEnvironment}).
             \item Ignored by cylc, but the entire suite definition
                 directory tree is copied when you copy a
                 suite using cylc commands.
@@ -2242,9 +2234,9 @@ Suite.rc files are an extended-INI format with section nesting.
 Embedded template processor expressions may also be used in the file, to
 programatically generate the final suite definition seen by
 cylc.  Currently the Jinja2 template processor is supported
-(\url{http://jinja.pocoo.org/docs}); see {\em Jinja2}
-(Section~\ref{Jinja2}) for examples. In the future cylc may provide a
-plug-in interface to allow use of other template engines too.
+(\url{http://jinja.pocoo.org/docs}); see~\ref{Jinja2} for examples. In the
+future cylc may provide a plug-in interface to allow use of other template
+engines too.
 
 \subsubsection{Syntax}
 \label{Syntax}
@@ -2271,7 +2263,7 @@ The following defines legal suite.rc syntax:
     \item {\bf Include-files} \lstinline=%include inc/foo.rc= can be
         used as a verbatim inlining mechanism.
 \end{myitemize}
-Suites that embed Jinja2 code (Section~\ref{Jinja2}) must
+Suites that embed Jinja2 code (see~\ref{Jinja2}) must
 process to raw suite.rc syntax.
 
 \subsubsection{Include-Files}
@@ -2303,7 +2295,7 @@ the file.  See \lstinline=cylc prep edit --help= for more information.
 
 \paragraph{Include-Files via Jinja2}
 
-Jinja2 (Section~\ref{Jinja2}) also has template inclusion functionality.
+Jinja2 (\ref{Jinja2}) also has template inclusion functionality.
 
 \subsubsection{Syntax Highlighting For Suite Definitions}
 \label{SyntaxHighlighting}
@@ -2356,7 +2348,7 @@ detects formatting errors, typographic errors, illegal items and illegal
 values prior to run time. Some values are complex strings that require
 further parsing by cylc to determine their correctness (this is also
 done during validation). All legal entries are documented in the {\em
-Suite.rc Reference} (Appendix~\ref{SuiteRCReference}).
+Suite.rc Reference} (\ref{SuiteRCReference}).
 
 The validator reports the line numbers of detected errors. Here's an
 example showing a section heading with a missing right bracket:
@@ -2461,8 +2453,8 @@ conditionally related) defines a trigger for the task or family on the
 right. For instance the ``word graph'' {\em C triggers off B which
 triggers off A} can be deconstructed into pairs {\em C triggers off B}
 and {\em B triggers off A}.  In this section we use only the default
-trigger type, which is to trigger off the upstream task succeeding; see
-Section~\ref{TriggerTypes} for other available triggers.
+trigger type, which is to trigger off the upstream task succeeding;
+see~\ref{TriggerTypes} for other available triggers.
 
 In the case of cycling tasks, the triggers defined by a graph string are
 valid for cycle points matching the list of hours specified for the
@@ -2495,7 +2487,7 @@ depend only on others with the same cycle point. Cycle point offsets can only
 appear on the left of a pair, because a pairs define triggers for the right
 task at cycle point $time$.  However, \lstinline@A => B[-PT6H]@, which is
 illegal, can be reformulated as a {\em future trigger}
-\lstinline@A[+PT6H] => B@ (see Section~\ref{InterCyclePointTriggers}).
+\lstinline@A[+PT6H] => B@ (see~\ref{InterCyclePointTriggers}).
 
 Triggers can be chained together. This graph:
 \lstset{language=suiterc}
@@ -2829,8 +2821,8 @@ the graph should be written like this:
 \subparagraph{Advanced Starting Up}
 
 Dependencies that are only valid at the initial cycle point can be written
-using the \lstinline=R1= notation (e.g. as in Section
-\ref{initial-non-repeating-r1-tasks}. For example:
+using the \lstinline=R1= notation (e.g. as
+in~\ref{initial-non-repeating-r1-tasks}. For example:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -2958,8 +2950,8 @@ To trigger off the upstream task reporting failure:
 # B triggers if A FAILS:
     graph = "A:fail => B"
 \end{lstlisting}
-Section~\ref{SuicideTriggers} ({\em Suicide Triggers}) shows
-one way of handling task B here if A does not fail.
+{\em Suicide triggers} can be used to remove task \lstinline=B= here if 
+\lstinline=A= does not fail, see~\ref{SuicideTriggers}.
 
 \paragraph{Start Triggers}
 
@@ -2979,8 +2971,8 @@ same time (\lstinline@foo => model & post@), but depending on
 external queue delays this could result in the monitoring task starting
 to execute first; or a different postprocessing task could be
 triggered off an internal output for each data file
-(\lstinline@model:out1 => post1@ etc.; see
-Section~\ref{InternalTriggers}), but this may not be practical if the
+(\lstinline@model:out1 => post1@ etc.; see~\ref{InternalTriggers}), but this
+may not be practical if the
 number of output files is large or if it is difficult to add cylc
 messaging calls to the model.
 
@@ -3013,7 +3005,7 @@ deliberately sent by the task at the appropriate time.
             upload1 = "NWP products uploaded for [T]"
 \end{lstlisting}
 Task A must emit this message when the actual output has been completed -
-see {\em Reporting Internal Outputs Completed} (Section~\ref{RIOC}).
+see {\em Reporting Internal Outputs Completed} (\ref{RIOC}).
 
 \paragraph{Job Submission Triggers}
 
@@ -3193,7 +3185,7 @@ is removed from the suite by a suicide trigger, a warning will be logged.
 \label{FamilyTriggers}
 
 Families defined by the namespace inheritance hierarchy
-(Section~\ref{NIORP}) can be used in the graph trigger whole groups of
+(~\ref{NIORP}) can be used in the graph trigger whole groups of
 tasks at the same time (e.g.\ forecast model ensembles and groups of
 tasks for processing different observation types at the same time) and
 for triggering downstream tasks off families as a whole. Higher level
@@ -3291,8 +3283,8 @@ restart files, for instance, then an initial set of restart files has to be
 generated somehow or the first model task will presumably fail with
 missing input files. There are several ways to handle this in cylc
 using different kinds of one-off (non-cycling) tasks that run at suite
-start-up.  They are illustrated in Tutorial
-Section~\ref{TutInterCyclePointTriggers}; to summarize here briefly:
+start-up.  They are illustrated in the Tutorial
+(\ref{TutInterCyclePointTriggers}); to summarize here briefly:
 
 \begin{myitemize}
     \item \lstinline=R1= tasks (recommended):
@@ -3378,20 +3370,44 @@ depends on its previous (12 hours ago) instance.
 This is quite different to the non-preferred \lstinline=cold-start tasks=
 way of working.
 
-When using \lstinline=cold-start tasks=, unlike for asynchronous and start-up
-initial tasks, however, the cold-start ``OR'' construct means that cold-start
-triggers don't have to be ignored by cylc after the first cycle point, so it
-is possible to insert cold-start task into a suite mid-run to do mid-stream
-cold-starts after problems that preclude continued normal warm cycling.
+\paragraph{Special Cold-Start Tasks}
+\label{SpecialColdStartTasks}
 
-Initial tasks can invoke real processing to generate the files
-that are subsequently produced by a tasks in the previous cycle point; or
-they could be dummy tasks that represent some external process that does the
-same before the suite is started - in which case the initial task can
-just report itself successfully completed after checking that the
-required files are present.
+Special cold-start tasks are non-spawning tasks intended for use in general
+cycling sections, so they must be declared as special tasks. Dependence on them
+is retained throughout the suite run so they must be used in conditional
+triggers to avoid stalling the suite, like this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 20140808T00
+    [[special tasks]]
+        cold-start = cold_model
+    [[dependencies]]
+        [[[T00]]]
+            graph = cold_model | model[-P1D] => model
+\end{lstlisting}
+Here, in the first cycle point \lstinline=model= will trigger off the
+cold-start task \lstinline=cold_model=.  In subsequent cycle points
+\lstinline=model= retains its dependence on \lstinline=cold_model=, but the
+conditional expression allows it to trigger off the previous instance of itself
+instead.  The reason for doing this is that it allows \lstinline=cold_model= to
+be inserted manually later in the suite run to cold-start \lstinline=model=
+again after problems that require skipping one or more cycles. If you do not
+need this mid-run cold start capability then it is simpler to start the suite
+with a normal task in an initial R1 recurrence, like this:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 20140808T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = start_model => model
+        [[[T00]]]
+            graph = model[-P1D] => model
+\end{lstlisting}
 
-\paragraph{Sequential Tasks}
+\paragraph{Special Sequential Tasks}
 \label{SequentialTasks}
 
 If a cycling task does not generate files required by its own successor,
@@ -3448,17 +3464,6 @@ is equivalent to this one:
             graph = "foo[-PT8H] => foo"
 \end{lstlisting}
 
-\paragraph{Warm Start}
-
-For suites with inter-cycle-point dependence a {\em warm start} is essentially
-an implicit restart. Rather than loading tasks from a previous recorded
-suite state, cylc loads all cycling tasks at a given cycle point assuming
-that the previous cycle was completed in an earlier suite run. Any initial
-tasks therefore may not need to run again. Dependence on tasks from before
-the start cycle is still ignored, but cold-start tasks have to be loaded in
-the {\em succeeded} state because dependence on them (in the cold-start OR
-construct) is retained throughout the suite run as is explained above in
-Section~\ref{InterCyclePointTriggers}.
 
 \paragraph{Future Triggers}
 
@@ -3504,8 +3509,8 @@ Or if you don't need an explicit cold-start task, this will do:
             graph = "A[-PT6H] => A"
 \end{lstlisting}
 If the model can emit an explicit output message as soon as its
-restart files are completed (see {\em Internal Message Outputs} -
-Section~\ref{RIOC}) there's no need to wait for it to finish:
+restart files are completed (see~\ref{RIOC}) there's no need to wait for it to
+finish:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -3554,15 +3559,15 @@ namespaces} culminating in individual tasks. This allows all common
 configuration detail to be factored out and defined in one place.
 
 Any namespace can configure any or all of the items defined in the
-{\em Suite.rc Reference}, Appendix~\ref{SuiteRCReference}.
+{\em Suite.rc Reference} (\ref{SuiteRCReference}).
 
 Namespaces that do not explicitly inherit from others automatically
 inherit from the {\em root} namespace (below).
 
 Nested namespaces define {\em task families} that can be used in the
 graph as convenient shorthand for triggering all member tasks at once,
-or for triggering other tasks off all members at once - see {\em Family
-Triggers}, Section~\ref{FamilyTriggers}.  Nested namespaces can be
+or for triggering other tasks off all members at once -
+see~\ref{FamilyTriggers}.  Nested namespaces can be
 progressively expanded and collapsed in the dependency graph viewer, and
 in the gcylc graph and tree views. Only the first parent of each
 namespace (as for single-inheritance) is used for suite visualization
@@ -3580,7 +3585,7 @@ Namespace names may contain letters, digits, underscores, and hyphens.
 Note that {\em task names need not be hardwired into task
 implementations} because task and suite identity can be extracted
 portably from the task execution environment supplied by cylc
-(Section~\ref{TaskExecutionEnvironment}) - then to rename a task you
+(\ref{TaskExecutionEnvironment}) - then to rename a task you
 can just change its name in the suite definition.
 
 \subsubsection{Root - Runtime Defaults}
@@ -3591,9 +3596,10 @@ Most root items are unset by default, but some have default values
 sufficient to allow test suites to be defined by dependency graph alone.
 The {\em command scripting} item, for example, defaults to code that
 prints a message then sleeps for between 1 and 15 seconds and
-exits. Default values are documented with each item in
-Appendix~\ref{SuiteRCReference}.  You can override the defaults or
+exits. Default values are documented with each item in~\ref{SuiteRCReference}.
+You can override the defaults or
 provide your own defaults by explicitly configuring the root namespace.
+
 \subsubsection{Defining Multiple Namespaces At Once}
 \label{MultiTaskDef}
 
@@ -3617,7 +3623,7 @@ argument that identifies the calling task name:
 
 For large ensembles Jinja2 template processing can be used to
 automatically generate the member names and associated dependencies
-(see Section~\ref{Jinja2}).
+(see~\ref{Jinja2}).
 
 \subsubsection{Runtime Inheritance - Single}
 
@@ -3698,8 +3704,7 @@ namespace structure through from root from the beginning).
 The task execution environment contains suite and task identity
 variables provided by cylc, and user-defined environment variables.
 The environment is explicitly exported (by the task job script) prior to
-executing task command scripting (see {\em Task Job Submission},
-Section~\ref{TaskJobSubmission}).
+executing task command scripting (see~\ref{TaskJobSubmission}).
 
 Suite and task identity are exported first, so that user-defined
 variables can refer to them. Order of definition is preserved throughout
@@ -3837,7 +3842,7 @@ in the first or final cycles.
 Variables in the task execution environment are not evaluated in the
 shell in which the suite is running prior to submitting the task. They
 are written in unevaluated form to the job script that is submitted by
-cylc to run the task (Section~\ref{JobScripts}) and are therefore
+cylc to run the task (\ref{JobScripts}) and are therefore
 evaluated when the task begins executing under the task owner account
 on the task host. Thus \lstinline=$HOME=, for instance, evaluates at
 run time to the home directory of task owner on the task host.
@@ -3885,8 +3890,8 @@ For this to work,
         content, can be installed on the task host, if needed.
 \end{myitemize}
 
-To learn how to give remote tasks access to cylc, see
-Section~\ref{HowTasksGetAccessToCylc}.
+To learn how to give remote tasks access to cylc,
+see~\ref{HowTasksGetAccessToCylc}.
 
 Tasks running on the suite host under another user account are treated as
 remote tasks.
@@ -3899,13 +3904,13 @@ the root namespace, or per family, or for individual tasks.
 Instead of hardwiring host names into the suite definition you can
 specify a shell command that prints a hostname, or an environment
 variable that holds a hostname, as the value of the host config item.
-See Section~\ref{DynamicHostSelection}.
+See~\ref{DynamicHostSelection}.
 
 \paragraph{Remote Task Log Directories}
 
 Task stdout and stderr streams are written to log files in a
 suite-specific sub-directory of the {\em suite run directory}, as
-explained in Section~\ref{WhitherStdoutAndStderr}. For remote tasks
+explained in~\ref{WhitherStdoutAndStderr}. For remote tasks
 the same directory is used, but {\em on the task host}.
 Remote task log directories, like local ones, are created on the fly, if
 necessary, during job submission.
@@ -3916,8 +3921,7 @@ necessary, during job submission.
 The visualization section of a suite definition is used to configure
 suite graphing, principally graph node (task) and edge (dependency
 arrow) style attributes. Tasks can be grouped for the purpose of
-applying common style attributes. See the suite.rc reference
-(Appendix~\ref{SuiteRCReference}) for details.
+applying common style attributes. See~\ref{SuiteRCReference}) for details.
 
 \subsubsection{Collapsible Families In Suite Graphs}
 
@@ -4269,7 +4273,7 @@ Several special variables are used as placeholders in cylc suite definitions:
 \end{myitemize}
 
 To use proper variables (c.f.\ programming languages) in suite
-definitions, see the Jinja2 template processor (Section~\ref{Jinja2}).
+definitions, see the Jinja2 template processor (\ref{Jinja2}).
 
 \subsection{Omitting Tasks At Runtime}
 
@@ -4287,14 +4291,14 @@ commenting them out of the graph.
 To omit a task from the suite at runtime but still leave it fully
 defined and available for use (by insertion or \lstinline=cylc submit=)
 use one or both of [scheduling][[special task]] lists, {\em include at
-start-up} or {\em exclude at start-up} (documented in
-Sections~\ref{IASU} and~\ref{EASU}). Then the graph still defines the
+start-up} or {\em exclude at start-up} (documented in~\ref{IASU}
+and~\ref{EASU}). Then the graph still defines the
 validity of the tasks and their dependencies, but they are not actually
-inserted into the suite at start-up. Other tasks that depend on the
+loaded into the suite at start-up. Other tasks that depend on the
 omitted ones, if any, will have to wait on their insertion at a later
 time or otherwise be triggered manually.
 
-Finally, with Jinja2 (Section~\ref{Jinja2}) you can radically alter
+Finally, with Jinja2 (\ref{Jinja2}) you can radically alter
 suite structure by including or excluding tasks from the [scheduling]
 and [runtime] sections according to the value of a single logical flag
 defined at the top of the suite.
@@ -4375,8 +4379,7 @@ message string is held in the suite daemon to be matched with
 incoming task messages - it cannot contain shell variables because
 is never interpreted by the shell.
 
-See {\em Model Restart Dependencies}
-(Section~\ref{ModelRestartDependencies}) for an example that uses
+See~\ref{ModelRestartDependencies} for an example that uses
 cycle offsets in message outputs.
 
 \subsection{Other Task Messages}
@@ -4441,8 +4444,8 @@ it is a background shell process, for instance, just run it in the
 foreground instead. For loadleveler jobs the \lstinline=-s= option
 prevents \lstinline=llsubmit= from returning until the job has
 completed. For Sun Grid Engine, \lstinline=qsub -sync yes= has the same
-effect.  Section~\ref{CommandTemplate} shows how to override job
-submission command template to achieve this.
+effect.  For how to override the job submission command template 
+see~\ref{CommandTemplate}.
 
 If the detaching process cannot be reconnected, disable cylc's automatic
 completion messaging:
@@ -4540,9 +4543,9 @@ expressions above) to do the job.
 \section{Task Job Submission, Poll and Kill}
 \label{TaskJobSubmission}
 
-{\em Task Implementation} (Section~\ref{TaskImplementation}) describes
-what requirements a command, script, or program, must fulfill in order
-to function as a cylc task. This section explains how tasks are submitted
+For the requirements a command, script, or program, must fulfill in order
+to function as a cylc task, see~\ref{TaskImplementation}.
+This section explains how tasks are submitted
 by cylc when they are ready to run, and how to define new task job
 submission methods.
 
@@ -4552,11 +4555,11 @@ For most job submission methods cylc now supports polling for real task
 status, and job kill, from the gcylc GUI and command line
 (\lstinline=cylc poll= and \lstinline=cylc kill=).
 In addition to on-demand polling, submitted and running tasks are polled
-automatically on suite restart (Section~\ref{RestartingSuites})
+automatically on suite restart (\ref{RestartingSuites})
 and on job submission and execution timeouts, and one-way polling can be
 used as regular health check for submitted tasks, and to track tasks on
 hosts that do not allow return routing for task messaging
-(Section~\ref{RunningSuites}).
+(\ref{RunningSuites}).
 
 \subsubsection{Exceptions}
 
@@ -4586,7 +4589,7 @@ specific tasks or families:
             method = at
 \end{lstlisting}
 
-As shown in the Tutorial Section~\ref{RunningSuitesCLI}, job scripts are
+As shown in the Tutorial (\ref{RunningSuitesCLI}) job scripts are
 saved to the suite run directory; the commands used to submit them are
 printed to stdout by cylc; and they can be printed with the
 \lstinline=cylc log= command or new ones generated and printed with the
@@ -4596,9 +4599,9 @@ how cylc wraps and runs your tasks.
 \subsection{Supported Job Submission Methods}
 \label{AvailableMethods}
 
-Cylc supports a number of commonly used job submission methods, and
-Section~\ref{DefiningNewJobSubmissionMethods} shows how to add
-support for other user-defined job submission methods.
+Cylc supports a number of commonly used job submission methods. 
+See~\ref{DefiningNewJobSubmissionMethods} for how to add new job
+submission methods.
 
 \subsubsection{background}
 
@@ -4771,7 +4774,7 @@ your suite.rc file:
             # Use '-s' to stop llsubmit returning until all job steps have completed:
             command template = llsubmit -s %s
 \end{lstlisting}
-As explained in the suite.rc reference (Appendix~\ref{SuiteRCReference}),
+As explained in~\ref{SuiteRCReference}),
 the template's first \%s will be substituted by the job file path and,
 where applicable a second and third \%s will be substituted by the paths
 to the job stdout and stderr files.
@@ -4874,17 +4877,82 @@ at the top of the example file above).
 \section{Running Suites}
 \label{RunningSuites}
 
-To learn how to control running suites please also see the Tutorial
-(Section~\ref{Tutorial}, command documentation
-(Section~\ref{CommandReference}), and experiment with plenty of test
-suites.
+This chapter currently features a diverse collection of topics related
+to running suites. Please also see the Tutorial (\ref{Tutorial}) and 
+command documentation (\ref{CommandReference}), and experiment with
+plenty of examples.
+
+\subsection{Suite Start-up}
+\label{SuiteStartUp}
+
+There are three ways to start a suite running: {\em cold start} and {\em warm
+start}, which start from scratch; and {\em restart}, which loads a prior suite
+state.  If a suite does not contain any special cold-start tasks there is no
+difference between cold and warm start, except that a warm start should start
+from a point beyond the original initial cycle point of the suite. Special
+cold-start tasks are only needed if you want to be able to cold-start
+individual tasks again in the middle of a suite run - 
+see~\ref{SpecialColdStartTasks}.
+
+Once a suite is up and running it is typically a restart that is needed most
+often (but see also \lstinline=cylc reload=). Be aware that cold and warm
+starts wipe out any prior suite state, which prevents returning to a restart
+if you decide that's what you really intended.
+
+\subsubsection{Cold Start}
+
+A cold start is the primary way to start a suite run from scratch:
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc run SUITE [INITIAL_CYCLE_POINT]
+\end{lstlisting}
+The initial cycle point may be specified on the command line or in the suite.rc
+file. The scheduler starts by loading the first instance of each task at the
+suite initial cycle point, or at the next valid point for the task, including
+any special cold-start tasks (see the note on cold-start tasks at the beginning
+of this section).
+
+\subsubsection{Restart}
+
+A restart starts a suite run from the state recorded at the end of a previous
+run. This allows restarting a suite that was shut down or killed, without
+rerunning tasks that were already completed, or which were already submitted or
+running when the suite went down.
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc restart SUITE [STATE_FILE]
+\end{lstlisting}
+For a restart, the scheduler starts by loading each task in its recorded state.
+The most recent state is loaded by default, but earlier state files can be
+specified on the command line. Any tasks recorded as `submitted' or `running'
+will be polled automatically to determine what happened to them while the
+suite was down.
+
+\subsubsection{Warm Start}
+
+A warm start runs a suite from scratch like a cold start, but from a given
+cycle point that is later than the suite's initial cycle point. It can be
+considered an inferior alternative to a restart because it may result in some
+tasks rerunning.  A warm start may be required if a restart is not possible
+because the suite state files were accidentally deleted (for instance). The
+warm start cycle point must be given on the command line:
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc run --warm SUITE [START_CYCLE_POINT]
+\end{lstlisting}
+In this case the scheduler starts by loading a first instance of each 
+task at the warm start cycle point, or at the next valid point for the task,
+and any special cold-start tasks are loaded in the `succeeded' state (this is
+merely a device to satisfy any initial dependence on the cold-start tasks, which
+are assumed not to be needed for a warm start; see the note on cold-start tasks
+at the beginning of this section).
 
 \subsection{How Tasks Interact With Running Suites}
 \label{TaskComms}
 
 Cylc has three ways of tracking the progress of tasks, configured per
 task host in the site and user config files
-(Section~\ref{SiteAndUserConfiguration}).
+(\ref{SiteAndUserConfiguration}).
 All three methods can be used on different task hosts within the same
 suite if necessary.
 \begin{myenumerate}
@@ -4962,7 +5030,8 @@ of the gcylc GUI and suite visualization tools.
 
 \subsection{Task Host Communications Configuration}
 
-Here are the site and user config items relevant to task tracking:
+Here are the default site and user config items relevant to task state 
+tracking (see these with \lstinline=cylc get-site-config=):
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -4971,14 +5040,14 @@ Here are the site and user config items relevant to task tracking:
 # Task messaging settings affect task-to-suite communications.
 [task messaging]
     # If a message send fails, retry after this delay:
-    retry interval in seconds = float( min=1, default=5 )
+    retry interval in seconds = 5
     # If send fails after this many tries, give up trying:
-    maximum number of tries = integer( min=1, default=7 )
+    maximum number of tries = 7
 
     # This timeout is the same as --pyro-timeout for user commands. If
     # set to None (no timeout) message send to non-responsive suite
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
-    connection timeout in seconds = float( min=1, default=30 )
+    connection timeout in seconds = 30
 
 # Pyro is required for communications between cylc clients and servers
 # (i.e. between suite-connecting commands and guis, and running suite
@@ -4988,14 +5057,14 @@ Here are the site and user config items relevant to task tracking:
     # Each suite listens on a dedicated network port.
     # Servers bind on the first port available from the base port up:
 # SITE ONLY
-    base port = integer( default=7766 )
+    base port = 7766
 
     # This sets the maximum number of suites that can run at once.
 # SITE ONLY
-    maximum number of ports = integer( default=100 )
+    maximum number of ports = 100
 
     # Port numbers are recorded in this directory, by suite name.
-    ports directory = string( default="$HOME/.cylc/ports/" )
+    ports directory = "$HOME/.cylc/ports/"
 
 [hosts]
     # The default task host is the suite host, i.e. localhost:
@@ -5007,13 +5076,13 @@ Here are the site and user config items relevant to task tracking:
         #   3) poll - the suite polls for status of passive tasks
         # Pyro RPC is still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites.
-        task communication method = option( "pyro", "ssh", "poll", default="pyro" )
+        task communication method = "pyro" # or "ssh" or "poll"
         # The "poll" method sets a default interval here to ensure no
         # tasks are accidentally left unpolled. You should override this
         # with run-length appropriate intervals under task [runtime] -
         # which will also result in routine polling to check task health
         # under the pyro or ssh communications methods.
-        default polling interval in minutes = float( min=0.1, default=1.0 )
+        default polling interval in minutes = 1.0
 \end{lstlisting}
 
 \subsection{How Commands Interact With Running Suites}
@@ -5100,57 +5169,44 @@ not been addressed yet.
 
 \subsection{Task States}
 
-As a suite runs its task proxies transition through the following states:
+As a suite runs its task proxies may pass through the following states:
 
 \begin{myitemize}
-    \item {\bf waiting} - task prerequisites not satisfied yet
-    (clock-triggered tasks also wait on their trigger time).
+    \item {\bf waiting} - prerequisites not satisfied yet
+    (note that clock-triggered tasks also wait on their trigger time).
 
-    \item {\bf held} - task waiting, but will not be submitted even if ready
-    to run because it (and possibly the suite as a whole) has been put
-    on hold. Cylc automatically holds tasks that spawn past the final
-    cycle point, if one is set.
+    \item {\bf queued} - ready to run (prerequisites satisfied) but
+    temporarily held back by an {\em internal cylc queue}
+    (see~\ref{InternalQueues}).
 
-    \item {\bf runahead} - task waiting, but will not be submitted
-    even if ready to run because it has exceeded the {\em suite
-    runahead limit}, i.e.\ it has got too far ahead of the slowest tasks
-    and will be held back until they have caught up sufficiently. The
-    size of the runahead limit is configurable - see
-    Section~\ref{RunaheadLimit}.
+    \item {\bf held} - will not be submitted even if ready to run.
+    Tasks that spawn past the final cycle point are held automatically.
 
-    \item {\bf queued} - task ready to run (prerequisites satisfied) but
-    is temporarily held in an {\em internal cylc queue} (see
-    Section~\ref{InternalQueues}). Note this is not the same as the
-    `submitted' state below.
+    \item {\bf ready} - ready to run (prerequisites satisfied) and 
+    handed to cylc's job submission sub-system.
 
-    \item {\bf ready} - task ready to run (prerequisites satisfied)
-    and handed to the background thread that handles job submission.
+    \item {\bf submitted} - submitted to run, but not executing yet
+    (could be waiting in an external batch scheduler queue).
 
-    \item {\bf submitted} - task successfully submitted but has not
-    started running yet (e.g.\ waiting in a PBS batch queue).
+    \item {\bf submit-failed} - job submission failed {\em or} 
+    submitted job killed before commencing execution.
 
-    \item {\bf submit-failed} - task job submission failed {\em or} the
-    submitted job was killed before it could start executing.
+    \item {\bf submit-retrying} - job submission failed, but a submission retry
+    was configured. Will only enter the {\em submit-failed} state if all 
+    configured submission retries are exhausted.
 
-    \item {\bf running} - task currently executing (a {\em task started}
+    \item {\bf running} - currently executing (a {\em task started}
     message was received, or the task polled as running).
 
-    \item {\bf succeeded} - task finished successsfully (a {\em task
-    succeeded} message was received, or the task polled as succeeeded).
-    Succeeded task proxies are removed from the suite once they are no
-    longer needed to satisfy the prerequisites of others.
+    \item {\bf succeeded} - finished executing successfully (a {\em task
+    succeeded} message was received, or the task polled as succeeded).
 
-    \item {\bf failed} - task aborted due to some error condition (a
+    \item {\bf failed} - aborted execution due to some error condition (a
     {\em task failed} message was received, or the task polled as failed).
-    Failed task proxies are not automatically removed from the suite
-    unless by deliberate use of suicide triggers.
 
-    \item {\bf retrying} - task job submission or execution failed, but
-    a retry was configured (submission or execution retries, respectively)
-    so the task is currently waiting for the configured retry delay
-    before resubmitting. See Section~\ref{TaskRetries}. Tasks only enter
-    the `submit-failed' or `failed' states if all configured retries
-    are exhausted.
+    \item {\bf retrying} - job execution failed, but an execution retry
+    was configured. Will only enter the {\em failed} state if all configured
+    execution retries are exhausted.
 
 \end{myitemize}
 
@@ -5180,7 +5236,7 @@ tasks. Running tasks know the port number from the execution environment
 provided by the suite (via the task job script).
 
 So, to connect to a suite running on another account you must install
-the suite passphrase (Section~\ref{passphrases}), and configure
+the suite passphrase (\ref{passphrases}), and configure
 passwordless ssh so that the port number can be retrieved from the
 remote port file. Then use the \lstinline=--user= and
 \lstinline=--host= command options to connect:
@@ -5204,92 +5260,50 @@ grant read-only access to others.
 
 \subsection{Network Connection Timeouts}
 
-A connection timeout can be set in site and user config files (see
-Section~\ref{SiteAndUserConfiguration}) so that messaging commands
-cannot hang indefinitely if the suite is not responding (thie can be
+A connection timeout can be set in site and user config files 
+(see~\ref{SiteAndUserConfiguration}) so that messaging commands
+cannot hang indefinitely if the suite is not responding (this can be
 caused by suspending a suite with Ctrl-Z) thereby preventing the task
 from completing. The same can be done on the command line for other
 suite-connecting user commands, with the \lstinline=--pyro-timeout= option.
 
-\subsection{Internal Queues And The Runahead Limit}
-
-Some cylc suites have the potential to generate too much activity at
-once by virtue of the fact that each task cycles independently
-constrained only by dependence on other tasks or by clock triggers.
-Quick-running tasks at the top of the dependency tree with no
-prerequisites and no clock-triggers (or when running far behind the
-clock) will spawn rapidly into the future if not constrained somehow.
-There are two issues to be aware of here: over-burdening task host
-resources by submitting too many tasks at once, and over-burdening cylc
-itself by letting the task pool become too big (when fast tasks spawn
-ahead of the pack cylc has to keep them around in the {\em succeeded}
-state until other tasks, which may depend on them, have caught up).
-
-\subsubsection{The Suite Runahead Limit}
+\subsection{Runahead Limiting}
 \label{RunaheadLimit}
 
-The runahead limit prevents the fastest tasks in a suite from getting too
-far ahead of the slowest ones. Cylc's cycle-interleaving abilities make
-for generally efficient scheduling, but there is no great advantage in
-letting a few fast data retrieval tasks, say, get far ahead of the
-slower tasks because it is typically the tasks at the bottom of the
-dependency tree, which necessarily run last, that generate the final
-products.
+Runahead limiting prevents the fastest tasks in a suite from getting too far
+ahead of the slowest ones.  Newly spawned tasks are released to the task pool
+only when they fall below the runahead limit.  A low runhead limit can prevent
+cylc from interleaving cycles, but it will not stall a suite unless it fails to
+extend out past a future trigger (see~\ref{InterCyclePointTriggers}).
+A high runahead limit may allow fast tasks that are not constrained by
+dependencies or clock-triggers to spawn far ahead of the pack, which could have
+performance implications for the suite daemon when running very large suites.
+Succeeded and failed tasks are ignored when computing the runahead limit. 
 
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    runahead limit = 48 # hours
-\end{lstlisting}
+The preferred runahead limiting mechanism restricts the number of consecutive
+active cycle points. The default value is three active cycle points;
+see~\ref{max active cycle points}. Alternatively the interval between the
+slowest and fastest tasks can be specified as hard limit;
+see~\ref{runahead limit}.
 
-A cycling task spawns its successor when it enters the submitted state.
-If a newly spawned task's cycle point is ahead of the oldest non-finished
-(succeeded or failed) task by more than the runahead limit it is put
-into the special {\em runahead} held state until other tasks catch up
-sufficiently; i.e.\ the runahead limit constrains the number of cycles
-that can run at once.
-
-The default runahead limit is normally set to twice the minimum cycling
-interval in the suite. For a suite with 1- and 24-hourly cylcing tasks
-the default limit will be 2 hours, so that two of the hourly cycles can
-run at once in between the 24-hourly cycles.  If there are any future
-triggers present (\lstinline@graph = "foo[T+24] => bar"@) that extend
-beyond the default limit, it is adjusted up to equal the future
-offset plus one minimum cycling interval.
-
-A manually set runahead limit should not stall the suite even if set to
-less than the minimum cycling interval, unless it does not extend out
-past any future triggers (see Section~\ref{InterCyclePointTriggers}.
-
-Succeeded and failed tasks are ignored when applying the runahead limit
-(but tasks that can't run because they depend on a failed task are not
-ignored, of course).
-
-\subsubsection{Internal Queues}
+\subsection{Limiting Active Tasks With Internal Queues}
 \label{InternalQueues}
 
-Large suites could potentially swamp the task host hardware or external
-batch queueing system, depending on the chosen job submission method, by
-submitting too many tasks at once. Cylc's internal queues prevent this
-by limiting the number of tasks, within defined groups, that are active
-(submitted or running) at once.
+Large suites can potentially overwhelm task hosts by submitting too many
+tasks at once. You can prevent this with {\em internal queues}, which 
+limit the number of tasks that can be active (submitted or running) 
+at the some time.
 
-A queue is defined by a name; a {\em limit}, which is the maximum
-number of active tasks allowed for the queue; and a list of member tasks,
-which are assigned by name to the queue.
+A queue is defined by a {\em name}; a {\em limit}, which is the maximum
+number of active tasks allowed for the queue; and a list of {\em members},
+assigned by task or family name.
 
-Queue configuration is done under the [scheduling] section of the
-suite.rc file, not as part of the runtime namespace hierarchy, because
-like dependencies queues constrain {\em when} a task runs rather than
-{\em what} runs after it is submitted. When runtime family relationships
-and queues do coincide you can assign task family members en masse to
-queues by using the family name, as shown in the example suite listing
-below.
+Queue configuration is done under the [scheduling] section of the suite.rc file
+(like dependencies, internal queues constrain {\em when} a task runs).
 
-By default every task is assigned to a {\em default} queue, which by
-default has a zero limit (interpreted by cylc as no limit). To use a
-single queue for the whole suite just set the default queue
-limit:
+By default every task is assigned to the {\em default} queue, which by default
+has a zero limit (interpreted by cylc as no limit). To use a single queue for
+the whole suite just set the default queue limit:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -5298,8 +5312,8 @@ limit:
         [[[default]]]
             limit = 5
 \end{lstlisting}
-To use other queues just name each one, set the limit, and assign member
-tasks:
+To use additional queues just name each one, set their limits, and assign
+members:
 \begin{lstlisting}
 [scheduling]
     [[ queues]]
@@ -5313,25 +5327,22 @@ running two task trees side by side (as seen in the graph GUI) each
 limited to 2 and 3 tasks respectively:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/queues/suite.rc}
-Note assignment of runtime task family members to queues using the
-family name.
 
 \subsection{Automatic Task Retry On Failure}
 \label{TaskRetries}
 
-See also Section~\ref{RefRetries} in the {\em Suite.rc Reference}.
+See also~\ref{RefRetries} in the {\em Suite.rc Reference}.
 
 Tasks can be configured with a list of ``retry delay'' periods, in
 minutes, such that if a task fails it will go into a temporary
 {\em retrying} state and then automatically resubmit itself after
 the next specified delay period expires. A usage example is shown in the
-suite listed below under {\em Suite And Task Event Handling},
-Section~\ref{EventHandling}.
+suite listed below under~\ref{EventHandling}.
 
 \subsection{Suite And Task Event Handling}
 \label{EventHandling}
 
-See also Sections~\ref{SuiteEventHandling} and~\ref{TaskEventHandling}
+See also~\ref{SuiteEventHandling} and~\ref{TaskEventHandling}
 in the {\em Suite.rc Reference}.
 
 Cylc can call nominated event handlers when certain suite or task events
@@ -5369,7 +5380,7 @@ MESSAGE, if provided, describes what has happened, and TASKID identifies
 the task (\lstinline=NAME.CYCLE= for cycling tasks).
 
 The retry event occurs if a task fails and has any remaining retries
-configured (see Section~\ref{TaskRetries}).
+configured (see~\ref{TaskRetries}).
 The event handler will be called as soon as the task fails, not after
 the retry delay period when it is resubmitted.
 
@@ -5661,7 +5672,7 @@ copying it, do this:
 %        a copy of the live mode suite without interference, but only if
 %        the real suite tasks are configured to use the registered
 %        suite name in all important input and output filenames and/or
-%        directory paths - see {\em Command Reference} Section~\ref{register}).
+%        directory paths - see~\ref{register}).
 %
 %    \item start-up the newly registered suite in simulation mode using:
 %        \begin{lstlisting}
@@ -5690,9 +5701,8 @@ copying it, do this:
 %
 %    \item In addition to the cylc host, cylc must be installed on all
 %        task hosts; and the remote task scripts must
-%        themselves be installed on their host machines.  Refer to {\em
-%        Running Tasks On A Remote Host}
-%        (Section~\ref{RunningTasksOnARemoteHost}) for more on this.
+%        themselves be installed on their host machines.
+%        Refer to~\ref{RunningTasksOnARemoteHost}) for more on this.
 %
 %    \item Pyro must be installed on every host used by the suite.
 %         Ideally all relevant machines should have the same version of
@@ -5869,9 +5879,6 @@ This results in \lstinline=DOG= having cycle points of
 The following topics have yet to be documented in detail.
 
 \begin{myitemize}
-    \item The difference between cold-, warm-, raw-, and re-starting, a suite:
-        see \lstinline=cylc run help=.
-
     \item Intervening in suites, e.g.\ stopping, removing, inserting tasks:
         see \lstinline=cylc control help=.
 
@@ -5880,12 +5887,12 @@ The following topics have yet to be documented in detail.
         and \lstinline=cylc discovery help=.
 
     \item Understanding suite evolution, particularly in delayed/catchup
-        operation: the Tutorial helps here (Section~\ref{Tutorial}),
+        operation: the Tutorial helps here (\ref{Tutorial}),
         along with running the example suites.
 
     \item Automatic state dump backups, named pre-intervention state dumps:
         these are used to resetart a suite from a previous state of operation.
-        They are mentioned in the Tutorial (Section~\ref{Tutorial}). Watch the
+        They are mentioned in the Tutorial (\ref{Tutorial}). Watch the
         suite log after intervening in a suite, to get the filename.
 
     \item Recursive purge: this is a powerful intervention but you need
@@ -6004,7 +6011,7 @@ be able to run in parallel if the opportunity arises.
 If such a task would interfere with its own siblings for internal reasons,
 however, perhaps by use of a hardwired non cycle dependent temporary file or
 similar, then it can be forced to run sequentially -
-see Section~\ref{SequentialTasks}.
+see~\ref{SequentialTasks}.
 
 \subsection{Put Task Cycle Point In All Output File Paths}
 \label{PutCycleTimeinIO}
@@ -6079,9 +6086,8 @@ specific, e.g.
 $HOME/output/$CYLC_SUITE_REG_PATH
 \end{lstlisting}
 (these variables are automatically exported to the task execution
-environment by cylc - see {\em Task Execution Environment},
-Section~\ref{TaskExecutionEnvironment}). Then you can run multiple
-instances of the suite
+environment by cylc - see~\ref{TaskExecutionEnvironment}). Then you can run
+multiple instances of the suite
 at once (even under the same user account) without changing anything,
 and they will not interfere with each other.
 
@@ -6155,7 +6161,7 @@ your suite to ensure that the final products never arrive out of
 sequence.  One way of doing this would be to have a final ``product
 upload'' task that depends on completion of all the real product
 generation tasks at the same cycle point, and then declare it to be sequential
-(see Section~\ref{SequentialTasks}.
+(see~\ref{SequentialTasks}.
 
 \subsection{Clock-triggered Tasks Wait On External Data}
 
@@ -6218,8 +6224,8 @@ operation as required.
         \lstinline=[root]=, but this is somewhat analagous to overuse of
         global variables in programming and it can make it difficult to
         determine which variables matter to which tasks. Environment
-        filters (Section~\ref{EnvironmentFilter}) can be used
-        to make this safer, however.
+        filters can be used to make this safer, however
+        (see~\ref{EnvironmentFilter}).
 
         Finally, Jinja2 can also be used to avoid defining intermediate
         environment variables for the sole purpose of deriving other

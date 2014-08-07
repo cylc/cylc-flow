@@ -1,0 +1,16 @@
+[cylc]
+    cycle point time zone = +01
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = 1.0 # minutes
+[scheduling]
+    initial cycle point = 20100101T00
+    final cycle point   = T06
+    [[dependencies]]
+        [[[T00]]]
+            graph = "foo[-PT6H] => foo"
+        [[[T06]]]
+            graph = "foo[-PT6H] => foo"
+[runtime]
+    [[foo]]
+        command scripting = true

@@ -30,7 +30,7 @@ class plain_prerequisites(object):
     # Extracts T from "foo.T succeeded" etc.
     CYCLE_POINT_RE = re.compile( '^\w+\.(\d+).*$' )
 
-    def __init__( self, owner_id, p_ict=None ):
+    def __init__( self, owner_id, start_point=None ):
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
         self.satisfied = {}    # satisfied[ label ] = True/False
@@ -38,16 +38,16 @@ class plain_prerequisites(object):
         self.target_point_strings = []   # list of target cycle points (tags)
         self.auto_label = 0
         self.owner_id = owner_id
-        self.p_ict = p_ict
+        self.start_point = start_point
 
     def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
-        if self.p_ict:
+        if self.start_point:
             task = re.search( r'(.*).(.*) ', message)
             if task.group:
                 try:
                     foo = task.group().split(".")[1].rstrip()
-                    if ( get_point( foo ) <  self.p_ict ):
+                    if ( get_point( foo ) <  self.start_point ):
                         return
                 except IndexError:
                     pass

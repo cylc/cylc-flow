@@ -16,9 +16,9 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from job_submit import job_submit
+from job_submit import JobSubmit
 
-class fail( job_submit ):
+class fail( JobSubmit ):
     """
 This is a fake job submission that deliberately fails, used for cylc
 development purposes.
@@ -27,7 +27,7 @@ development purposes.
     # even on a remote host - ssh can exit without waiting for the
     # remote process to finish.
     COMMAND_TEMPLATE = "sleep 10; /bin/false"
-    def construct_jobfile_submission_command( self ):
+    def construct_job_submit_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
