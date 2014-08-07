@@ -47,6 +47,9 @@ checking, then construct task proxy objects and graph structures.
 """
 
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*(.+)\s*\)')
+ERROR_INCOMPATIBLE_NEW_CYCLING = "Incompatible with new format cycling: %s"
+ERROR_INCOMPATIBLE_PREV_CYCLING = (
+    "Incompatible with previous format cycling: %s")
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
 
@@ -174,6 +177,8 @@ class config( object ):
                     self.cfg['scheduling']['cycling mode'] = (
                         INTEGER_CYCLING_TYPE
                     )
+                    flags.set_is_prev_syntax(
+                        True, "[scheduling][[dependencies]]graph")
                     if 'initial cycle point' not in self.cfg['scheduling']:
                         self.cfg['scheduling']['initial cycle point'] = "1"
                     if 'final cycle point' not in self.cfg['scheduling']:
@@ -266,8 +271,8 @@ class config( object ):
         if self.start_point is not None:
             self.start_point.standardise()
 
-        flags.backwards_compat_cycling = (
-            get_backwards_compat_mode())
+        flags.set_is_prev_syntax(get_backwards_compat_mode(),
+                                 "point or sequence syntax")
 
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
@@ -1321,7 +1326,7 @@ class config( object ):
 
             if not my_taskdef_node.is_absolute:
                 if offset_string:
-                    if flags.backwards_compat_cycling:
+                    if flags.SyntaxVersion.is_prev:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
                         if offset_string in offset_seq_map:
                             seq_offset = offset_seq_map[offset_string]
@@ -1723,12 +1728,7 @@ class config( object ):
                 section, total_graph_text,
                 section_seq_map=section_seq_map, tasks_to_prune=[]
             )
-        if not flags.backwards_compat_cycling:
-            if async_graph and has_non_async_graphs:
-                raise SuiteConfigError(
-                    "Error: mixed async & cycling graphs is not allowed in " +
-                    "new-style cycling. Use 'R1...' tasks instead."
-                )
+        if flags.SyntaxVersion.is_new:
             if back_comp_initial_tasks:
                 raise SuiteConfigError(
                     "Error: start-up tasks should be 'R1...' tasks in " +

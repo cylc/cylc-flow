@@ -33,6 +33,11 @@ from parsec.validate import IllegalValueError
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
 
+ERROR_MIXED_FORMATS = (
+    "Mixing pre- and post- cylc 6 formats (%s) is not permitted.")
+ERROR_NEW_CYCLING_MIXED_ASYNC = (
+    "Async graph sections not permitted in new-style cycling.")
+
 MEMOIZE_LIMIT = 10000
 
 OLD_STRPTIME_FORMATS_BY_LENGTH = {
@@ -517,25 +522,53 @@ def init_from_cfg(cfg):
     final_cycle_time = cfg['scheduling']['final cycle point']
     assume_utc = cfg['cylc']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
-    test_cycle_time = initial_cycle_time
-    if initial_cycle_time is None:
-        test_cycle_time = final_cycle_time
-    if test_cycle_time is not None and re.match("\d+$", test_cycle_time):
-        dep_sections = list(cfg['scheduling']['dependencies'])
-        while dep_sections:
-            dep_section = dep_sections.pop(0)
-            if re.search("(?![^(]+\)),", dep_section):
-                dep_sections.extend([i.strip() for i in
-                                     re.split("(?![^(]+\)),", dep_section)])
-                continue
-            if ((dep_section == "graph" and
-                    cfg['scheduling']['dependencies']['graph']) or
-                    convert_old_cycler_syntax(dep_section,
-                                              only_detect_old=True)):
-                # Old cycling syntax is present.
-                custom_dump_format = PREV_DATE_TIME_FORMAT
-                num_expanded_year_digits = 0
-                break
+    has_non_numeric_cycle_time = (
+        (initial_cycle_time is not None and
+         not re.match("\d+$", initial_cycle_time)) or
+        (final_cycle_time is not None and
+         not re.match("\d+$", final_cycle_time))
+    )
+    dep_sections = list(cfg['scheduling']['dependencies'])
+    num_dep_sections = len(dep_sections)
+    is_in_prev_format = False
+    is_in_new_format = False
+    if has_non_numeric_cycle_time:
+        is_in_new_format = True
+    while dep_sections:
+        dep_section = dep_sections.pop(0)
+        if re.search("(?![^(]+\)),", dep_section):
+            dep_sections.extend([i.strip() for i in
+                                    re.split("(?![^(]+\)),", dep_section)])
+            continue
+        if (dep_section == "graph" and
+                cfg['scheduling']['dependencies']['graph']):
+            # Using async graph in date-time cycling.
+            if is_in_new_format:
+                raise IllegalValueError(ERROR_NEW_CYCLING_MIXED_ASYNC)
+            is_in_prev_format = True
+            custom_dump_format = PREV_DATE_TIME_FORMAT
+            num_expanded_year_digits = 0
+            continue
+        if convert_old_cycler_syntax(dep_section,
+                                     only_detect_old=True)):
+            # Detected prev-format (old) syntax.
+            if is_in_new_format:
+                raise IllegalValueError(
+                    ERROR_MIXED_FORMATS % (
+                        "[[dependencies]][[[%s]]]" % dep_section)
+                )
+            is_in_prev_format = True
+            custom_dump_format = PREV_DATE_TIME_FORMAT
+            num_expanded_year_digits = 0
+        else:
+            # Detected new syntax.
+            if is_in_prev_format:
+                raise IllegalValueError(
+                    ERROR_MIXED_FORMATS % (
+                        "[[dependencies]][[[%s]]]" % dep_section)
+                )
+            is_in_new_format = True
+
     init(
         num_expanded_year_digits=num_expanded_year_digits,
         custom_dump_format=custom_dump_format,
@@ -642,6 +675,7 @@ def point_parse(point_string):
 def _point_parse(point_string):
     """Parse a point_string into a proper TimePoint object."""
     if "%" in SuiteSpecifics.DUMP_FORMAT:
+        # Includes prev-format point strings.
         try:
             point = SuiteSpecifics.point_parser.strptime(
                 point_string, SuiteSpecifics.DUMP_FORMAT)
@@ -650,15 +684,8 @@ def _point_parse(point_string):
             if strptime_string is not None:
                 return SuiteSpecifics.point_parser.strptime(
                     point_string, strptime_string)
-    try:
-        point = SuiteSpecifics.point_parser.parse(point_string)  # Fail?
-        return point
-    except ValueError:
-        strptime_string = _get_old_strptime_format(point_string)
-        if strptime_string is None:
-            raise
-        return SuiteSpecifics.point_parser.strptime(
-            point_string, strptime_string)
+    # Attempt to parse it in ISO 8601 format then...
+    return SuiteSpecifics.point_parser.parse(point_string)  # ISO 8601.
 
 
 def _get_old_strptime_format(point_string):

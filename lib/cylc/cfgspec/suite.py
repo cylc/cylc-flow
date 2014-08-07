@@ -26,6 +26,7 @@ from parsec.validate import (
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
+import flags
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
@@ -39,7 +40,11 @@ def _coerce_cycleinterval( value, keys, args ):
     value = _strip_and_unquote( keys, value )
     if value.isdigit():
         # Old runahead limit format.
+        flags.set_is_prev_syntax(True, IllegalValueError,
+                                 ("interval", keys, value))
         return value
+    flags.set_is_prev_syntax(False, IllegalValueError,
+                             ("interval", keys, value))
     parser = TimeIntervalParser()
     try:
         parser.parse(value)
@@ -68,12 +73,16 @@ def _coerce_cycletime( value, keys, args ):
         parser.parse(value)
     except ValueError:
         raise IllegalValueError("cycle point", keys, value)
+    flags.set_is_prev_syntax(False, IllegalValueError,
+                             ("cycle point", keys, value))
     return value
 
 
 def _coerce_cycletime_format( value, keys, args ):
     """Coerce value to a cycle point format (either CCYYMM... or %Y%m...)."""
     value = _strip_and_unquote( keys, value )
+    flags.set_is_prev_syntax(False, IllegalValueError,
+                             ("format", keys, value))
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -105,6 +114,8 @@ def _coerce_cycletime_format( value, keys, args ):
 def _coerce_cycletime_time_zone( value, keys, args ):
     """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
     value = _strip_and_unquote( keys, value )
+    flags.set_is_prev_syntax(False, IllegalValueError,
+                             ("format", keys, value))
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -129,13 +140,19 @@ def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote( keys, value )
     try:
-        return float(value) * back_comp_unit_factor
+        value = float(value) * back_comp_unit_factor
     except (TypeError, ValueError):
         pass
+    else:
+        flags.set_is_prev_syntax(True, IllegalValueError,
+                                 ("interval", keys, value))
+        return
     try:
         interval = interval_parser.parse(value)
     except ValueError:
         raise IllegalValueError("ISO 8601 interval", keys, value)
+    flags.set_is_prev_syntax(False, IllegalValueError,
+                             ("interval", keys, value))
     days, seconds = interval.get_days_and_seconds()
     seconds += days * Calendar.default().SECONDS_IN_DAY
     return seconds

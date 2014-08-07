@@ -99,8 +99,6 @@ class graphnode( object ):
         self.offset_is_irregular = False
         self.is_absolute = False
         
-        is_prev_cycling_format = False
-
         m = re.match( NODE_ISO_ICT_RE, node )
         if m:
             # node looks like foo[^], foo[^-P4D], foo[^]:fail, etc.
@@ -120,7 +118,7 @@ class graphnode( object ):
                 m = re.match( NODE_PREV_RE, node )
                 if not m:
                     raise GraphNodeError( 'Illegal graph node: ' + node )
-                is_prev_cycling_format = True
+                flags.set_is_prev_syntax(True, "graph = %s" % node)
                 # node looks like foo[T-6], foo[T-12]:fail...
                 name, sign, offset_string, outp = m.groups()
                 offset_string = sign + offset_string
@@ -155,7 +153,7 @@ class graphnode( object ):
         else:
             self.intercycle = False
             self.offset_string = None
-        if not flags.backwards_compat_cycling and is_prev_cycling_format:
+        if not flags.backwards_compat_cycling and prev_format:
             raise GraphNodeError(
                 'Illegal graph offset (new-style cycling): ' +
                 '%s should be %s' % (offset_string, self.offset_string)
