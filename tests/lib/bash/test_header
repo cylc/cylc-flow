@@ -245,6 +245,10 @@ function graph_suite() {
     TEMP_OUTPUT_FILE=$(mktemp XXXX-$(basename $OUTPUT_FILE))
     cylc graph --output-file="$TEMP_OUTPUT_FILE" "$SUITE_NAME" "$@"
     sed -i "s/[.0-9]\+\( \|$\)//g" "$TEMP_OUTPUT_FILE"
+    # Some (older?) graphviz versions (e.g. 2.20.2) put two spaces before node
+    # coordinates instead of one in the "plain" graph output format; we need to
+    # make the output consistent here for comparing tests graphs.
+    sed -i "s/  / /g" "$TEMP_OUTPUT_FILE"
     sort $TEMP_OUTPUT_FILE >$OUTPUT_FILE
 }
 
