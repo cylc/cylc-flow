@@ -63,7 +63,7 @@ class CylcTimeParser(object):
 
     POINT_INVALID_FOR_CYLC_REGEXES = [
         (r"^\d\d$", ("2 digit centuries not allowed. " +
-                     "Did you mean e.g. 'T00'?")
+                     "Did you mean T-digit-digit e.g. 'T00'?")
         )
     ]
 
