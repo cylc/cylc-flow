@@ -16,13 +16,13 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from job_submit import job_submit
+from job_submit import JobSubmit
 import os
 import re
 from signal import SIGKILL
 from subprocess import check_call, Popen, PIPE
 
-class at( job_submit ):
+class at( JobSubmit ):
     """
     Submit the task job script to the simple 'at' scheduler. Note that
     (1) the 'atd' daemon service must be running; (2) the atq command
@@ -50,7 +50,7 @@ class at( job_submit ):
     #   * queue is '=' if running
     #
 
-    def construct_jobfile_submission_command( self ):
+    def construct_job_submit_command( self ):
         """
         Construct a command to submit this job to run.
         """

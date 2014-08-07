@@ -18,7 +18,7 @@
 
 from cylc_pyro_server import pyro_server
 from task_types import task, clocktriggered
-from job_submission import jobfile
+from job_submission.jobfile import JobFile
 from suite_host import get_suite_host
 from owner import user
 from shutil import copy as shcopy
@@ -750,8 +750,8 @@ class scheduler(object):
         # (note global config automatically expands environment variables in local paths)
 
         # Pass these to the job script generation code.
-        jobfile.jobfile.suite_env = self.suite_env
-        jobfile.jobfile.suite_task_env = self.suite_task_env
+        JobFile.suite_env = self.suite_env
+        JobFile.suite_task_env = self.suite_task_env
         # And pass contact env to the task module
         task.task.suite_contact_env = self.suite_contact_env
 
