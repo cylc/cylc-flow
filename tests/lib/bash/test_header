@@ -249,7 +249,7 @@ function graph_suite() {
     # coordinates instead of one in the "plain" graph output format; we need to
     # make the output consistent here for comparing tests graphs.
     sed -i "s/  / /g" "$TEMP_OUTPUT_FILE"
-    sort $TEMP_OUTPUT_FILE >$OUTPUT_FILE
+    sort -V $TEMP_OUTPUT_FILE >$OUTPUT_FILE
 }
 
 function init_suite() {
