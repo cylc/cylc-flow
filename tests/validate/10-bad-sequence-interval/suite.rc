@@ -1,0 +1,9 @@
+[scheduling]
+    initial cycle point = 20140101T00
+    final cycle point = 20140201T00
+    [[dependencies]]
+        [[[R/T00/PT5D]]]  # PT5D is invalid - should be P5D
+            graph = "foo"
+[runtime]
+    [[foo]]
+        command scripting = true

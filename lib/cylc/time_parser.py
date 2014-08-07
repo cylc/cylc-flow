@@ -61,6 +61,12 @@ class CylcTimeParser(object):
 
     """
 
+    POINT_INVALID_FOR_CYLC_REGEXES = [
+        (r"^\d\d$", ("2 digit centuries not allowed. " +
+                     "Did you mean T-digit-digit e.g. 'T00'?")
+        )
+    ]
+
     RECURRENCE_FORMAT_REGEXES = [
         (r"^(?P<start>[^PR/][^/]*)$", 3),
         (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
@@ -112,6 +118,10 @@ class CylcTimeParser(object):
         for regex, format_num in self.RECURRENCE_FORMAT_REGEXES:
             self._recur_format_recs.append((re.compile(regex), format_num))
         self._offset_rec = re.compile(self.OFFSET_REGEX)
+        self._invalid_point_recs = [
+            (re.compile(regex), msg) for (regex, msg) in
+            self.POINT_INVALID_FOR_CYLC_REGEXES
+        ]
         self.custom_point_parse_function = custom_point_parse_function
         if isinstance(context_start_point, basestring):
             context_start_point, offset = self._get_point_from_expression(
@@ -263,6 +273,9 @@ class CylcTimeParser(object):
                 expr_offset *= -1
         if not expr and allow_truncated:
             return context.copy(), expr_offset
+        for invalid_rec, msg in self._invalid_point_recs:
+            if invalid_rec.search(expr):
+                raise CylcTimeSyntaxError("'%s': %s" % (expr, msg))
         expr_to_parse = expr
         if expr.endswith("T"):
             expr_to_parse = expr + "00"

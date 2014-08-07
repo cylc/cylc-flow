@@ -1,0 +1,11 @@
+[scheduling]
+    initial cycle point = 20140101T00
+    final cycle point = 20140201T00
+    [[dependencies]]
+        # Users may easily write 00 where they mean T00 or '0' in old syntax.
+        # Technically 00 means the year 0000, but we won't allow it in Cylc.
+        [[[R/00/P5D]]]
+            graph = "foo"
+[runtime]
+    [[foo]]
+        command scripting = true
