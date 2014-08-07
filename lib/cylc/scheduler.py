@@ -919,11 +919,11 @@ class scheduler(object):
 
             if (self.stop_clock_done() or
                     self.stop_task_done() or 
-                    self.pool.check_stop()):
+                    self.pool.check_auto_shutdown()):
                 self.command_set_stop_cleanly()
 
             if ((self.shut_down_cleanly and self.pool.no_active_tasks()) or 
-                    self.shut_down_quickly or self.pool.check_stop()):
+                    self.shut_down_quickly or self.pool.check_auto_shutdown()):
                 self.shut_down_now = True
 
             if self.options.profile_mode:

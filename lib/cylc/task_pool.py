@@ -38,7 +38,7 @@ from broadcast import broadcast
 # is not visible in the GUI. Tasks are then released to the task pool if
 # not beyond the current runahead limit.
 
-# The check_stop() and remove_spent_cycling_task() have to consider
+# The check_auto_shutdown() and remove_spent_cycling_task() have to consider
 # tasks in the runahead pool too.
 
 # TODO ISO - spawn-on-submit means a only one waiting instance of each
@@ -904,33 +904,23 @@ class pool(object):
             itask.check_timers()
 
 
-    def check_stop( self ):
-        stop = True
-
-        i_cyc = False
-        i_fut = False
-
-        for itask in self.get_tasks( all=True ):
-            i_cyc = True
-            # Don't stop if a cycling task has not passed the stop cycle
-            # (note finite recurrence tasks disappear once finished).
-            if self.stop_point:
-                if itask.point <= self.stop_point:
-                    if itask.state.is_currently('succeeded') and itask.has_spawned():
-                        # ignore spawned succeeded tasks - their successors matter
-                        pass
-                    elif itask.id in self.held_future_tasks:
-                        # unless held because a future trigger reaches beyond the stop cycle
-                        i_fut = True
-                        pass
-                    else:
-                        stop = False
-                        break
-            else:
-                # don't stop if there are cycling tasks and no stop cycle set
-                stop = False
-                break
-        return stop
+    def check_auto_shutdown(self):
+        """Check if we should do a normal automatic shutdown."""
+        shutdown = True
+        for itask in self.get_tasks(all=True):
+            if self.stop_point is None:
+                # Don't if any unsucceeded task exists.
+                if not itask.state.is_currently('succeeded'):
+                    shutdown = False
+                    break
+            elif (itask.point <= self.stop_point and
+                    not itask.state.is_currently('succeeded')):
+                # Don't if any unsucceeded task exists < stop point...
+                if itask.id not in self.held_future_tasks:
+                    # ...unless it has a future trigger extending > stop point.
+                    shutdown = False
+                    break
+        return shutdown
 
 
     def sim_time_check( self ):
