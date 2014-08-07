@@ -1,0 +1,61 @@
+edge "cold_foo.20140101T0000Z" "foo.20140101T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140101T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140102T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140102T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140103T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140103T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140104T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140104T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140105T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140105T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140106T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140106T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140107T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140107T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140108T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140108T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140109T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140109T1200Z" solid black
+edge "cold_foo.20140101T0000Z" "foo.20140110T0000Z" solid black
+edge "foo.20140101T0000Z" "foo.20140101T1200Z" solid black
+edge "foo.20140101T1200Z" "foo.20140102T0000Z" solid black
+edge "foo.20140102T0000Z" "foo.20140102T1200Z" solid black
+edge "foo.20140102T1200Z" "foo.20140103T0000Z" solid black
+edge "foo.20140103T0000Z" "foo.20140103T1200Z" solid black
+edge "foo.20140103T1200Z" "foo.20140104T0000Z" solid black
+edge "foo.20140104T0000Z" "foo.20140104T1200Z" solid black
+edge "foo.20140104T1200Z" "foo.20140105T0000Z" solid black
+edge "foo.20140105T0000Z" "foo.20140105T1200Z" solid black
+edge "foo.20140105T1200Z" "foo.20140106T0000Z" solid black
+edge "foo.20140106T0000Z" "foo.20140106T1200Z" solid black
+edge "foo.20140106T1200Z" "foo.20140107T0000Z" solid black
+edge "foo.20140107T0000Z" "foo.20140107T1200Z" solid black
+edge "foo.20140107T1200Z" "foo.20140108T0000Z" solid black
+edge "foo.20140108T0000Z" "foo.20140108T1200Z" solid black
+edge "foo.20140108T1200Z" "foo.20140109T0000Z" solid black
+edge "foo.20140109T0000Z" "foo.20140109T1200Z" solid black
+edge "foo.20140109T1200Z" "foo.20140110T0000Z" solid black
+edge "stop.20140105T0000Z" "foo.20140105T0000Z" solid black
+graph 
+node "cold_foo.20140101T0000Z" "cold_foo\n20140101T0000Z" unfilled box black lightgrey
+node "foo.20140101T0000Z" "foo\n20140101T0000Z" unfilled box black lightgrey
+node "foo.20140101T1200Z" "foo\n20140101T1200Z" unfilled box black lightgrey
+node "foo.20140102T0000Z" "foo\n20140102T0000Z" unfilled box black lightgrey
+node "foo.20140102T1200Z" "foo\n20140102T1200Z" unfilled box black lightgrey
+node "foo.20140103T0000Z" "foo\n20140103T0000Z" unfilled box black lightgrey
+node "foo.20140103T1200Z" "foo\n20140103T1200Z" unfilled box black lightgrey
+node "foo.20140104T0000Z" "foo\n20140104T0000Z" unfilled box black lightgrey
+node "foo.20140104T1200Z" "foo\n20140104T1200Z" unfilled box black lightgrey
+node "foo.20140105T0000Z" "foo\n20140105T0000Z" unfilled box black lightgrey
+node "foo.20140105T1200Z" "foo\n20140105T1200Z" unfilled box black lightgrey
+node "foo.20140106T0000Z" "foo\n20140106T0000Z" unfilled box black lightgrey
+node "foo.20140106T1200Z" "foo\n20140106T1200Z" unfilled box black lightgrey
+node "foo.20140107T0000Z" "foo\n20140107T0000Z" unfilled box black lightgrey
+node "foo.20140107T1200Z" "foo\n20140107T1200Z" unfilled box black lightgrey
+node "foo.20140108T0000Z" "foo\n20140108T0000Z" unfilled box black lightgrey
+node "foo.20140108T1200Z" "foo\n20140108T1200Z" unfilled box black lightgrey
+node "foo.20140109T0000Z" "foo\n20140109T0000Z" unfilled box black lightgrey
+node "foo.20140109T1200Z" "foo\n20140109T1200Z" unfilled box black lightgrey
+node "foo.20140110T0000Z" "foo\n20140110T0000Z" unfilled box black lightgrey
+node "stop.20140105T0000Z" "stop\n20140105T0000Z" unfilled box black lightgrey
+stop

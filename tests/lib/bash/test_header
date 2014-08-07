@@ -243,7 +243,7 @@ function graph_suite() {
     shift 2
     TEMP_OUTPUT_FILE=$(mktemp XXXX-$(basename $OUTPUT_FILE))
     cylc graph --output-file="$TEMP_OUTPUT_FILE" "$SUITE_NAME" "$@"
-    sed -i "s/[.0-9]\+\( \|$\)//g" "$TEMP_OUTPUT_FILE"
+    sed -i "s/[.0-9]\+\(e[+-][.0-9]\+\)\?\( \|$\)//g" "$TEMP_OUTPUT_FILE"
     sort $TEMP_OUTPUT_FILE >$OUTPUT_FILE
 }
 
