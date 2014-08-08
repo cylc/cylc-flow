@@ -27,7 +27,7 @@ import subprocess
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from dbchooser import dbchooser
-from combo_logviewer import combo_logviewer
+from combo_logviewer import ComboLogViewer
 from warning_dialog import warning_dialog, info_dialog
 
 try:
@@ -2186,7 +2186,7 @@ or remove task definitions without restarting the suite."""
         else:
             logs = out + err + extra
             window.set_title( task_id + ": Log Files" )
-            lv = combo_logviewer( task_id, logs )
+            lv = ComboLogViewer( task_id, logs )
         #print "ADDING to quitters: ", lv
         self.quitters.append( lv )
 
