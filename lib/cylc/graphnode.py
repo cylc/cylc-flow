@@ -107,7 +107,10 @@ class graphnode( object ):
             self.offset_is_from_ict = True
             sign = ""
             prev_format = False
-            # Can't set syntax version here, as we use ^ for backwards comp.
+            # Can't always set syntax here, as we use [^] for backwards comp.
+            if offset_string:
+                set_syntax_version(
+                        VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
         else:
             m = re.match( NODE_ISO_RE, node )
             if m:

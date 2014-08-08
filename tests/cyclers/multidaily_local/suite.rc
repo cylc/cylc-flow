@@ -1,6 +1,6 @@
 [cylc]
     [[reference test]]
-        live mode suite timeout = 2.0
+        live mode suite timeout = PT2M
 [scheduling]
     initial cycle point = 20001231T0100
     final cycle point = 20010114

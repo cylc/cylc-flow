@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
 cat $TEST_NAME.stderr >/dev/tty
 grep_ok "Conflicting syntax: post-cylc-6 syntax \
-(cycle point: [scheduling]initial cycle point = 20100101T00) \
+(cycle point: \[scheduling\]initial cycle point = 20100101T00) \
 vs pre-cylc-6 syntax \
 (\[scheduling\]\[\[dependencies\]\]graph: mixed with date-time cycling)" \
     $TEST_NAME.stderr

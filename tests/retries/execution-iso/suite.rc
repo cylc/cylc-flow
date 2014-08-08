@@ -1,7 +1,7 @@
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 1.0 # minutes
+       live mode suite timeout = PT1M
 [scheduling]
     [[dependencies]]
         graph = "foo"

@@ -2,7 +2,7 @@
    UTC mode = True
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 1.0 # minutes
+       live mode suite timeout = PT1M
 [scheduling]
     initial cycle time = 20130130T00
     final cycle time =   20130202T00

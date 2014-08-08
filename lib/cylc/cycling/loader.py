@@ -111,5 +111,4 @@ def init_cyclers(cfg):
     DefaultCycler.TYPE = cfg['scheduling']['cycling mode']
     if DefaultCycler.TYPE in Calendar.MODES:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
-    for init_func in INIT_FUNCTIONS.values():
-        init_func(cfg)
+    INIT_FUNCTIONS[DefaultCycler.TYPE](cfg)

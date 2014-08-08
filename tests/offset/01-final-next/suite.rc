@@ -2,7 +2,7 @@
     cycle point time zone = +01
     [[reference test]]
         required run mode = live
-        live mode suite timeout = 1.0 # minutes
+        live mode suite timeout = PT1M
 [scheduling]
     initial cycle point = 20100101T00
     final cycle point   = T06

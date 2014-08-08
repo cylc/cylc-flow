@@ -120,7 +120,7 @@ def _coerce_cycletime_format( value, keys, args ):
 def _coerce_cycletime_time_zone( value, keys, args ):
     """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
     value = _strip_and_unquote( keys, value )
-    set_syntax_version(VERSION_PREV,
+    set_syntax_version(VERSION_NEW,
                        "use of [cylc]cycle point time zone format",
                        exc_class=IllegalValueError,
                        exc_args=("cycle point time zone format", keys, value))

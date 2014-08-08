@@ -39,7 +39,8 @@ import TaskID
 from C3MRO import C3
 from parsec.OrderedDict import OrderedDict
 import flags
-from syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
+from syntax_flags import (
+    SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -1327,7 +1328,7 @@ class config( object ):
 
             if not my_taskdef_node.is_absolute:
                 if offset_string:
-                    if flags.SyntaxVersion.is_prev:
+                    if SyntaxVersion.VERSION == VERSION_PREV:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
                         if offset_string in offset_seq_map:
                             seq_offset = offset_seq_map[offset_string]

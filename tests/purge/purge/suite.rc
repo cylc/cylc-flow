@@ -12,7 +12,7 @@ title = "Old Cylc Admin Test Suite"
     [[reference test]]
         required run mode = live
         expected task failures = X.2010010112
-        live mode suite timeout = 1.5 # minutes
+        live mode suite timeout = PT1.5M
 
 [scheduling]
     # This test suite only needs a start time;
@@ -21,7 +21,7 @@ title = "Old Cylc Admin Test Suite"
 
     [[special tasks]]
         cold-start       = ColdA, ColdB, ColdC
-        clock-triggered  = X(1)
+        clock-triggered  = X(PT1H)
 
     [[dependencies]]
         [[[R1]]]

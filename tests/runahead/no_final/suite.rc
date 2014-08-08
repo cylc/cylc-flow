@@ -1,7 +1,7 @@
 [cylc]
     cycle point time zone = Z
     [[event hooks]]
-        timeout = 0.1
+        timeout = PT0.1M
         abort on timeout = True
 [scheduling]
     runahead limit = PT18H
