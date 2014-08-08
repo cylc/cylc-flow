@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a new-style cycle point and a prev-style offset.
+# Test validation with a new-style cycle point and start-up tasks.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -27,7 +27,6 @@ run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
 grep_ok "Conflicting syntax: post-cylc-6 syntax \
 (cycle point: \[scheduling\]initial cycle point = 20100101T00) \
 vs pre-cylc-6 syntax \
-(graphnode foo\[T-24\]: old-style offset)" \
-    $TEST_NAME.stderr
+(start-up or mixed-async tasks: cold_foo)" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 exit

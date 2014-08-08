@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a new-style cycle time and an old-style cycling section
+# Test validation with a new-style cycle time and an prev-style cycling section
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -24,7 +24,10 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "Not allowed under new syntax: [scheduling][[dependencies]][[[0]]]" \
+grep_ok "Conflicting syntax: post-cylc-6 syntax \
+(cycle point: \[scheduling\]initial cycle point = 20100101T00) \
+vs pre-cylc-6 syntax \
+(\[scheduling\]\[\[dependencies\]\]\[\[\[0\]\]\]: old-style cycling)" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 exit

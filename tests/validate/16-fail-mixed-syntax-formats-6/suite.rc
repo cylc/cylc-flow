@@ -1,9 +1,9 @@
 [scheduling]
-    initial cycle point = 20100101T00
+    initial cycle point = 2010010100
     [[dependencies]]
-        [[[T00,T06,T12]]]
+        [[[0,6,12]]]
             graph = "foo"
 [runtime]
     [[root]]
         [[[event hooks]]]
-            execution timeout = 3
+            execution timeout = PT3M

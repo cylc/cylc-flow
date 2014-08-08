@@ -23,8 +23,7 @@ from cylc.cycling.loader import (get_point, get_point_relative,
                                  get_interval, get_interval_cls,
                                  get_sequence, get_sequence_cls,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
-                                 ISO8601_CYCLING_TYPE,
-                                 get_backwards_compat_mode)
+                                 ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
@@ -40,6 +39,7 @@ import TaskID
 from C3MRO import C3
 from parsec.OrderedDict import OrderedDict
 import flags
+from syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -47,9 +47,6 @@ checking, then construct task proxy objects and graph structures.
 """
 
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*(.+)\s*\)')
-ERROR_INCOMPATIBLE_NEW_CYCLING = "Incompatible with new format cycling: %s"
-ERROR_INCOMPATIBLE_PREV_CYCLING = (
-    "Incompatible with previous format cycling: %s")
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
 
@@ -177,8 +174,6 @@ class config( object ):
                     self.cfg['scheduling']['cycling mode'] = (
                         INTEGER_CYCLING_TYPE
                     )
-                    flags.set_is_prev_syntax(
-                        True, "[scheduling][[dependencies]]graph")
                     if 'initial cycle point' not in self.cfg['scheduling']:
                         self.cfg['scheduling']['initial cycle point'] = "1"
                     if 'final cycle point' not in self.cfg['scheduling']:
@@ -271,9 +266,6 @@ class config( object ):
         if self.start_point is not None:
             self.start_point.standardise()
 
-        flags.set_is_prev_syntax(get_backwards_compat_mode(),
-                                 "point or sequence syntax")
-
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
             print "Parsing [special tasks]"
@@ -304,6 +296,10 @@ class config( object ):
                         pass
                     else:
                         # Backward-compatibility for a raw float number of hours.
+                        set_syntax_version(
+                            VERSION_PREV,
+                            "clock-triggered=%s: integer offset" % item
+                        )
                         if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
                             seconds = int(float(offset_string)*3600)
                             offset_string = "PT%sS" % seconds
@@ -312,6 +308,11 @@ class config( object ):
                     except IntervalParsingError as exc:
                         raise SuiteConfigError(
                             "ERROR: Illegal clock-trigger spec: %s" % offset_string
+                        )
+                    else:
+                        set_syntax_version(
+                            VERSION_NEW,
+                            "clock-triggered=%s: ISO 8601 offset" % item
                         )
                     extn = "(" + offset_string + ")"
 
@@ -1728,12 +1729,12 @@ class config( object ):
                 section, total_graph_text,
                 section_seq_map=section_seq_map, tasks_to_prune=[]
             )
-        if flags.SyntaxVersion.is_new:
-            if back_comp_initial_tasks:
-                raise SuiteConfigError(
-                    "Error: start-up tasks should be 'R1...' tasks in " +
-                    "new-style cycling"
-                )
+        if back_comp_initial_tasks:
+            set_syntax_version(
+                VERSION_PREV,
+                "start-up or mixed-async tasks: %s" % (
+                    ", ".join(back_comp_initial_tasks))
+            )
 
     def parse_graph( self, section, graph, section_seq_map=None,
                      tasks_to_prune=None, return_all_dependencies=False ):

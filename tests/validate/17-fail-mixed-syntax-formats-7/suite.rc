@@ -1,5 +1,5 @@
 [scheduling]
     initial cycle point = 2010010100
     [[dependencies]]
-        [[[T12]]]
-            graph = "foo"
+        [[[12]]]
+            graph = "cold_foo[^] => foo"
