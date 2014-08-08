@@ -24,6 +24,7 @@ from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, TimeIntervalParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
+import cylc.flags
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, PointParsingError,
@@ -530,8 +531,6 @@ def init_from_cfg(cfg):
     )
     dep_sections = list(cfg['scheduling']['dependencies'])
     num_dep_sections = len(dep_sections)
-    is_in_prev_format = False
-    is_in_new_format = False
     if has_non_numeric_cycle_time:
         is_in_new_format = True
     while dep_sections:
@@ -543,31 +542,28 @@ def init_from_cfg(cfg):
         if (dep_section == "graph" and
                 cfg['scheduling']['dependencies']['graph']):
             # Using async graph in date-time cycling.
-            if is_in_new_format:
-                raise IllegalValueError(ERROR_NEW_CYCLING_MIXED_ASYNC)
-            is_in_prev_format = True
+            cylc.flags.set_is_prev_syntax(
+                True,
+                "[scheduling][[dependencies]]graph - use 'R1' tasks instead"
+            )
             custom_dump_format = PREV_DATE_TIME_FORMAT
             num_expanded_year_digits = 0
             continue
         if convert_old_cycler_syntax(dep_section,
-                                     only_detect_old=True)):
+                                     only_detect_old=True):
             # Detected prev-format (old) syntax.
-            if is_in_new_format:
-                raise IllegalValueError(
-                    ERROR_MIXED_FORMATS % (
-                        "[[dependencies]][[[%s]]]" % dep_section)
-                )
-            is_in_prev_format = True
+            cylc.flags.set_is_prev_syntax(
+                True,
+                "[scheduling][[dependencies]][[[%s]]]" % dep_section
+            )
             custom_dump_format = PREV_DATE_TIME_FORMAT
             num_expanded_year_digits = 0
         else:
             # Detected new syntax.
-            if is_in_prev_format:
-                raise IllegalValueError(
-                    ERROR_MIXED_FORMATS % (
-                        "[[dependencies]][[[%s]]]" % dep_section)
-                )
-            is_in_new_format = True
+            cylc.flags.set_is_prev_syntax(
+                False,
+                "[scheduling][[dependencies]][[[%s]]]" % dep_section
+            )
 
     init(
         num_expanded_year_digits=num_expanded_year_digits,

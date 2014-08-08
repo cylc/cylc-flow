@@ -1,0 +1,5 @@
+[scheduling]
+    initial cycle point = 20100101T00
+    [[dependencies]]
+        [[[0,6,12]]]
+            graph = "foo"
