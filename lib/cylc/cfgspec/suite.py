@@ -257,7 +257,7 @@ SPEC = {
             'manual completion'               : vdr( vtype='boolean', default=False ),
             'extra log files'                 : vdr( vtype='string_list', default=[] ),
             'enable resurrection'             : vdr( vtype='boolean', default=False ),
-            'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_ID' ),
+            'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME' ),
             'submission polling intervals'    : vdr( vtype='interval_minutes_list', default=[] ),
             'execution polling intervals'     : vdr( vtype='interval_minutes_list', default=[] ),
             'environment filter' : {

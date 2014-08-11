@@ -33,7 +33,7 @@ TEST_NAME=$TEST_NAME_BASE-null
 # A non-existent status file
 T_ST_FILE=$PWD/$TEST_NAME.1.status
 T_JOB_ID=$(get_fake_pid)
-run_ok $TEST_NAME cylc get-job-status $T_ST_FILE background $T_JOB_ID
+run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE background $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
 polled $TEST_NAME submission failed
 __OUT__
@@ -44,7 +44,7 @@ T_ST_FILE=$PWD/$TEST_NAME.1.status
 # Give it a real PID
 sleep 60 &
 T_JOB_ID=$!
-run_ok $TEST_NAME cylc get-job-status $T_ST_FILE background $T_JOB_ID
+run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE background $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
 polled $TEST_NAME submitted
 __OUT__
@@ -62,7 +62,7 @@ cat >$T_ST_FILE <<__STATUS__
 CYLC_JOB_PID=$T_JOB_ID
 CYLC_JOB_INIT_TIME=$T_INIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $T_ST_FILE background $T_JOB_ID
+run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE background $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
 polled $TEST_NAME started at $T_INIT_TIME
 __OUT__
@@ -81,7 +81,7 @@ CYLC_JOB_INIT_TIME=$T_INIT_TIME
 CYLC_JOB_EXIT=SUCCEEDED
 CYLC_JOB_EXIT_TIME=$T_EXIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $T_ST_FILE background $T_JOB_ID
+run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE background $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
 polled $TEST_NAME succeeded at $T_EXIT_TIME
 __OUT__
@@ -98,7 +98,7 @@ CYLC_JOB_INIT_TIME=$T_INIT_TIME
 CYLC_JOB_EXIT=ERR
 CYLC_JOB_EXIT_TIME=$T_EXIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $T_ST_FILE background $T_JOB_ID
+run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE background $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
 polled $TEST_NAME failed at $T_EXIT_TIME
 __OUT__
@@ -113,7 +113,7 @@ cat >$T_ST_FILE <<__STATUS__
 CYLC_JOB_PID=$T_JOB_ID
 CYLC_JOB_INIT_TIME=$T_INIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $T_ST_FILE background $T_JOB_ID
+run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE background $T_JOB_ID
 cmp_ok $TEST_NAME.stdout <<__OUT__
 polled $TEST_NAME failed at unknown-time
 __OUT__

@@ -48,12 +48,12 @@ TEST_NAME=$TEST_NAME_BASE-run
 run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-t1.1
-T1_JOB_FILE=$SUITE_RUN_DIR/log/job/t1.1.1
+T1_JOB_FILE=$SUITE_RUN_DIR/log/job/1/t1/01/job
 exists_ok $T1_JOB_FILE
 run_fail $TEST_NAME grep -q -e '^# TRAP VACATION SIGNALS:' $T1_JOB_FILE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-t2.1
-T2_JOB_FILE=$SUITE_RUN_DIR/log/job/t2.1.1
+T2_JOB_FILE=$SUITE_RUN_DIR/log/job/1/t2/01/job
 exists_ok $T2_JOB_FILE
 grep_ok '^# TRAP VACATION SIGNALS:' $T2_JOB_FILE
 #-------------------------------------------------------------------------------

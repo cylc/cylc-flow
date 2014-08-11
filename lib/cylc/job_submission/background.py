@@ -38,7 +38,8 @@ class background( JobSubmit ):
         " '" +
         pr_scripting_sl +
         "; " +
-        " mkdir -p %(jobfile_dir)s" +
+        # Retry "mkdir" once to avoid race to create log/job/CYCLE/
+        " (mkdir -p %(jobfile_dir)s || mkdir -p %(jobfile_dir)s)" +
         " && cat >%(jobfile_path)s.tmp" +
         " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
         " && chmod +x %(jobfile_path)s" +

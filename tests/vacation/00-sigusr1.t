@@ -32,7 +32,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test $SUITE_NAME
 SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
 
 # Make sure t1.1.1's status file is in place
-T1_STATUS_FILE=$SUITE_RUN_DIR/log/job/t1.1.1.status
+T1_STATUS_FILE=$SUITE_RUN_DIR/log/job/1/t1/01/job.status
 
 TEST_NAME=$TEST_NAME_BASE-find-status-file
 TIMEOUT=$(($(date +%s) + 120))
@@ -77,9 +77,9 @@ do
 done
 cmp_ok "$TEST_NAME-db-t1" - <<<'submitted'
 # Start the job again and see what happens
-mkdir -p $SUITE_RUN_DIR/work/t1.1/
-touch $SUITE_RUN_DIR/work/t1.1/file # Allow t1 to complete
-$SUITE_RUN_DIR/log/job/t1.1.1 </dev/null >/dev/null 2>&1 &
+mkdir -p $SUITE_RUN_DIR/work/1/t1/
+touch $SUITE_RUN_DIR/work/1/t1/file # Allow t1 to complete
+$SUITE_RUN_DIR/log/job/1/t1/01/job </dev/null >/dev/null 2>&1 &
 # Wait for suite to complete
 TIMEOUT=$(($(date +%s) + 120))
 while [[ -f ~/.cylc/ports/$SUITE_NAME ]] && (($TIMEOUT > $(date +%s))); do

@@ -34,6 +34,7 @@ from cylc.cfgspec.site import sitecfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
 import cylc.flags
+from cylc.mkdir_p import mkdir_p
 import os
 import socket
 import stat
@@ -52,7 +53,8 @@ class JobSubmit(object):
         " '" +
         pr_scripting_sl +
         "; " +
-        " mkdir -p %(jobfile_dir)s" +
+        # Retry "mkdir" once to avoid race to create log/job/CYCLE/
+        " (mkdir -p %(jobfile_dir)s || mkdir -p %(jobfile_dir)s)" +
         " && cat >%(jobfile_path)s.tmp" +
         " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
         " && chmod +x %(jobfile_path)s" +
@@ -73,10 +75,12 @@ class JobSubmit(object):
 
         # Local job script path: append submit number.
         # (used by both local and remote tasks)
-        tag = task_id + cylc.TaskID.DELIM + submit_num
-        job_log_dir = sitecfg.get_derived_host_item(
-            self.suite, 'suite job log directory')
-        self.local_jobfile_path = os.path.join(job_log_dir, tag)
+        task_name, cycle_name = cylc.TaskID.split(task_id)
+        tag = os.path.join(cycle_name, task_name, "%02d" % int(submit_num))
+
+        job_log_dir = sitecfg.get_derived_host_item(self.suite,
+                                                    'suite job log directory')
+        self.local_jobfile_path = os.path.join(job_log_dir, tag, "job")
 
         # The directory is created in config.py
         self.logfiles.add_path(self.local_jobfile_path)
@@ -107,7 +111,7 @@ class JobSubmit(object):
                 'suite job log directory',
                 self.task_host,
                 self.task_owner)
-            remote_jobfile_path = os.path.join(remote_log_job_dir, tag)
+            remote_jobfile_path = os.path.join(remote_log_job_dir, tag, "job")
 
             # Remote log files
             self.stdout_file = remote_jobfile_path + ".out"
@@ -234,6 +238,20 @@ class JobSubmit(object):
             self.jobconfig)
 
         # write the job file
+        local_log_dir = os.path.dirname(self.local_jobfile_path)
+        mkdir_p(local_log_dir)
+        target = os.path.join(os.path.dirname(local_log_dir), "NN")
+        try:
+            os.unlink(target)
+        except OSError:
+            pass
+        try:
+            os.symlink(os.path.basename(local_log_dir), target)
+        except OSError as exc:
+            if not exc.filename:
+                exc.filename = target
+            raise exc
+
         job_file.write(self.local_jobfile_path)
         # make it executable
         mode = (os.stat(self.local_jobfile_path).st_mode |
@@ -279,7 +297,7 @@ class JobSubmit(object):
             print 'SUBMIT:', command
             return None
 
-        # Ensure old job's *.status files do not get left behind
+        # Ensure old job's status files do not get left behind
         st_file_path = self.jobfile_path + ".status"
         if os.path.exists(st_file_path):
             os.unlink(st_file_path)

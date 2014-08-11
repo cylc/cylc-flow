@@ -1,0 +1,149 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import re
+import os
+import sys
+import shutil
+from optparse import OptionParser
+from collections import defaultdict
+
+from cylc.cfgspec.site import sitecfg
+from cylc.mkdir_p import mkdir_p
+
+OLD_LOGFILE_RE = re.compile("""
+            ^
+            ([\w]+)  # task name
+            \.
+            ([^.]+)  # any cycle time format
+            \.
+            (\d+)    # submit number
+            (\.
+              (.*)
+            )?       # optional extension
+            $
+            """,
+            re.VERBOSE
+        )
+
+OLD_WORKDIR_RE = re.compile("""
+            ^
+            ([\w]+)  # task name
+            \.
+            ([^.]+)  # any cycle time format
+            $
+            """,
+            re.VERBOSE
+        )
+
+def upgrade_logdir(jobdir):
+    """Upgrade a pre cylc-6 suite job log directory."""
+
+    if not os.path.isdir(jobdir):
+        return
+    os.chdir(jobdir)
+    print "Upgrading %s" % jobdir
+    max_subnums = defaultdict(lambda:defaultdict(int))
+    for old_jobfile in os.listdir("."):
+        m = re.match(OLD_LOGFILE_RE, old_jobfile)
+        if not m:
+            print >> sys.stderr, (
+                    "WARNING: skipping non-standard log file: %s" % old_jobfile
+                    )
+            continue
+        sys.stdout.write(".")
+        task_name, cycle_point, subnum, dot, extn = m.groups()
+        if len(subnum) == 1:
+            subnum = "0" + subnum
+        new_jobdir = os.path.join(cycle_point, task_name, subnum)
+        mkdir_p(new_jobdir)
+        if extn is None:
+            # The job script.
+            jfile = "job"
+        elif extn in ["out", "err", "status"]:
+            # Cylc-generated logs.
+            jfile = "job." + extn
+        else:
+            # User-generated file.
+            jfile = extn
+        new_jobfile = os.path.join(new_jobdir, jfile)
+        shutil.move(old_jobfile, new_jobfile)
+        # Record max submit number for each task.
+        if int(subnum) > int(max_subnums[cycle_point][task_name]):
+            max_subnums[cycle_point][task_name] = subnum
+
+    # Symlink "NN" to the latest submit numbers.
+    for cycle_point, task_names in max_subnums.items():
+        for task_name, max_subnum in task_names.items():
+            sys.stdout.write(".")
+            target = os.path.join(cycle_point, task_name, "NN")
+            try:
+                os.symlink(max_subnum, target)
+            except OSError as exc:
+                if not exc.filename:
+                    exc.filename = target
+                raise exc
+    sys.stdout.write("\n")
+
+def upgrade_workdir(workdir):
+    """Upgrade a pre cylc-6 suite work directory."""
+
+    if not os.path.isdir(workdir):
+        return
+    os.chdir(workdir)
+    print "Upgrading %s" % workdir
+    for old_workdir in os.listdir("."):
+        m = re.match(OLD_WORKDIR_RE, old_workdir)
+        if not m:
+            print >> sys.stderr, (
+                    "WARNING: skipping non-standard workdir %s" % old_workdir
+                    )
+            continue
+        sys.stdout.write(".")
+        task_name, cycle_point = m.groups()
+        mkdir_p(cycle_point)
+        new_workdir = os.path.join(cycle_point, task_name)
+        shutil.move(old_workdir, new_workdir)
+    sys.stdout.write("\n")
+
+
+parser = OptionParser(
+    usage = """cylc [admin] upgrade-run-dir SUITE
+
+For one-off conversion of a suite run directory to cylc-6 format.
+
+Arguments:
+     SUITE    suite name or run directory path""")
+
+(options, args) = parser.parse_args()
+
+arg0 = args[0]
+if os.path.isdir(arg0):
+    rundir = arg0
+else:
+    rundir = sitecfg.get_derived_host_item(arg0, "suite run directory")
+if not os.path.isdir(rundir):
+    sys.exit("ERROR: Directory not found: %s" % rundir)
+
+logdir = os.path.join( rundir, "log", "job" )
+upgrade_logdir(logdir)
+
+workdir = os.path.join( rundir, "work" )
+upgrade_workdir(workdir)
+
+print "Done"
