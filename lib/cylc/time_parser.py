@@ -131,13 +131,13 @@ class CylcTimeParser(object):
             context_end_point, offset = self._get_point_from_expression(
                 context_end_point, None)
         self.context_end_point = context_end_point
-        self.timeinterval_parser = isodatetime.parsers.TimeIntervalParser()
+        self.duration_parser = isodatetime.parsers.DurationParser()
         self.recurrence_parser = isodatetime.parsers.TimeRecurrenceParser(
                         timepoint_parser=self.timepoint_parser)
 
     def parse_interval(self, expr):
         """Parse an interval (duration) in full ISO date/time format."""
-        return self.timeinterval_parser.parse(expr)
+        return self.duration_parser.parse(expr)
 
     def parse_timepoint(self, expr, context_point=None):
         """Parse an expression in abbrev. or full ISO date/time format.
@@ -208,7 +208,7 @@ class CylcTimeParser(object):
                 interval = None
             if repetitions == 1:
                 # Set arbitrary interval (does not matter).
-                interval = self.timeinterval_parser.parse("P0Y")
+                interval = self.duration_parser.parse("P0Y")
             if start_point is not None:
                 if start_point.truncated:
                     start_point += context_start_point
@@ -223,7 +223,7 @@ class CylcTimeParser(object):
             return isodatetime.data.TimeRecurrence(
                          repetitions=repetitions,
                          start_point=start_point,
-                         interval=interval,
+                         duration=interval,
                          end_point=end_point
             )
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
@@ -252,8 +252,8 @@ class CylcTimeParser(object):
                 kwargs = {"minutes": 1}
             if not kwargs:
                 return None
-            return isodatetime.data.TimeInterval(**kwargs)
-        return self.timeinterval_parser.parse(expr)
+            return isodatetime.data.Duration(**kwargs)
+        return self.duration_parser.parse(expr)
 
     def _get_point_from_expression(self, expr, context, is_required=False,
                                    allow_truncated=False):
@@ -267,7 +267,7 @@ class CylcTimeParser(object):
             split_expr = self._offset_rec.split(expr)
             expr = split_expr.pop(0)
             expr_offset = "".join(split_expr[1:])
-            expr_offset = self.timeinterval_parser.parse(
+            expr_offset = self.duration_parser.parse(
                                                 expr_offset)
             if split_expr[0] == "-":
                 expr_offset *= -1

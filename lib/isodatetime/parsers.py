@@ -54,9 +54,9 @@ class TimeRecurrenceParser(object):
     Keyword arguments:
     timepoint_parser (default None) should be an instance of
     TimePointParser, or None to use a normal TimePointParser instance.
-    timeinterval_parser (default None) should be an instance of
-    TimeIntervalParser, or None to generate a normal
-    TimeIntervalParser.
+    duration_parser (default None) should be an instance of
+    DurationParser, or None to generate a normal
+    DurationParser.
 
     Callable (via self.parse method) with an ISO 8601-compliant
     recurrence pattern - this returns a TimeRecurrence instance.
@@ -68,15 +68,15 @@ class TimeRecurrenceParser(object):
         re.compile(r"^R(?P<reps>\d+)?/(?P<start>[^P][^/]*)/(?P<intv>P.+)$"),
         re.compile(r"^R(?P<reps>\d+)?/(?P<intv>P.+)/(?P<end>[^P].*)$")]
 
-    def __init__(self, timepoint_parser=None, timeinterval_parser=None):
+    def __init__(self, timepoint_parser=None, duration_parser=None):
         if timepoint_parser is None:
             self.timepoint_parser = TimePointParser()
         else:
             self.timepoint_parser = timepoint_parser
-        if timeinterval_parser is None:
-            self.timeinterval_parser = TimeIntervalParser()
+        if duration_parser is None:
+            self.duration_parser = DurationParser()
         else:
-            self.timepoint_parser = timeinterval_parser
+            self.duration_parser = duration_parser
 
     def parse(self, expression):
         """Parse a recurrence string into a TimeRecurrence instance."""
@@ -88,7 +88,7 @@ class TimeRecurrenceParser(object):
             repetitions = None
             start_point = None
             end_point = None
-            interval = None
+            duration = None
             if "reps" in result_map and result_map["reps"] is not None:
                 repetitions = int(result_map["reps"])
             if "start" in result_map:
@@ -96,13 +96,13 @@ class TimeRecurrenceParser(object):
             if "end" in result_map:
                 end_point = self.timepoint_parser.parse(result_map["end"])
             if "intv" in result_map:
-                interval = self.timeinterval_parser.parse(
+                duration = self.duration_parser.parse(
                     result_map["intv"])
             return data.TimeRecurrence(
                 repetitions=repetitions,
                 start_point=start_point,
                 end_point=end_point,
-                interval=interval
+                duration=duration
             )
         raise ISO8601SyntaxError("recurrence", expression)
 
@@ -533,11 +533,11 @@ class TimePointParser(object):
         return time_zone_info
 
 
-class TimeIntervalParser(object):
+class DurationParser(object):
 
-    """Parser for ISO 8601 Durations (time intervals)."""
+    """Parser for ISO 8601 Durations (durations)."""
 
-    INTERVAL_REGEXES = [
+    DURATION_REGEXES = [
         re.compile(r"""^P(?:(?P<years>\d+)Y)?
                    (?:(?P<months>\d+)M)?
                    (?:(?P<days>\d+)D)?$""", re.X),
@@ -551,12 +551,12 @@ class TimeIntervalParser(object):
     ]
 
     def parse(self, expression):
-        """Parse an ISO duration expression into a TimeInterval instance."""
+        """Parse an ISO duration expression into a Duration instance."""
         sign_factor = 1
         if expression.startswith("-"):
             sign_factor = -1
             expression = expression[1:]
-        for rec_regex in self.INTERVAL_REGEXES:
+        for rec_regex in self.DURATION_REGEXES:
             result = rec_regex.search(expression)
             if not result:
                 continue
@@ -572,7 +572,7 @@ class TimeIntervalParser(object):
                         value = value.replace(",", ".")
                     value = float(value)
                 result_map[key] = value * sign_factor
-            return data.TimeInterval(**result_map)
+            return data.Duration(**result_map)
         if expression.startswith("P") and sign_factor != -1:
             # TimePoint-like duration - don't allow our negative extension.
             try:
@@ -596,7 +596,7 @@ class TimeIntervalParser(object):
                 result_map["minutes"] = timepoint.minute_of_hour
             if timepoint.second_of_minute is not None:
                 result_map["seconds"] = timepoint.second_of_minute
-            return data.TimeInterval(**result_map)
+            return data.Duration(**result_map)
         raise ISO8601SyntaxError("duration", expression)
 
 

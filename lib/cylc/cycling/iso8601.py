@@ -19,9 +19,9 @@
 """Date-time cycling by point, interval, and sequence classes."""
 
 import re
-from isodatetime.data import Calendar, TimeInterval
+from isodatetime.data import Calendar, Duration
 from isodatetime.dumpers import TimePointDumper
-from isodatetime.parsers import TimePointParser, TimeIntervalParser
+from isodatetime.parsers import TimePointParser, DurationParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
 from cylc.time_parser import CylcTimeParser
@@ -183,7 +183,7 @@ class ISO8601Interval(IntervalBase):
                           "hours", "minutes", "seconds"]:
             if getattr(interval, attribute):
                 unit_amounts[attribute] = amount_per_unit
-        interval = TimeInterval(**unit_amounts)
+        interval = Duration(**unit_amounts)
         return ISO8601Interval(str(interval))
 
     def standardise(self):
@@ -328,7 +328,7 @@ class ISO8601Sequence(SequenceBase):
             assumed_time_zone=SuiteSpecifics.ASSUMED_TIME_ZONE
         )
         self.recurrence = self.abbrev_util.parse_recurrence(recurrence_syntax)
-        self.step = ISO8601Interval(str(self.recurrence.interval))
+        self.step = ISO8601Interval(str(self.recurrence.duration))
         self.value = str(self.recurrence)
 
     def get_interval(self):
@@ -549,7 +549,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
          assume_utc=False, cycling_mode=None):
     """Initialise suite-setup-specific information."""
 
-    SuiteSpecifics.interval_parser = TimeIntervalParser()
+    SuiteSpecifics.interval_parser = DurationParser()
 
     if cycling_mode in Calendar.default().MODES:
         Calendar.default().set_mode(cycling_mode)
@@ -615,7 +615,7 @@ def get_point_relative(offset_string, base_point):
 
 
 def interval_parse(interval_string):
-    """Parse an interval_string into a proper TimeInterval class."""
+    """Parse an interval_string into a proper Duration class."""
     try:
         return _interval_parse(interval_string).copy()
     except Exception:
@@ -629,7 +629,7 @@ def interval_parse(interval_string):
 
 @memoize
 def _interval_parse(interval_string):
-    """Parse an interval_string into a proper TimeInterval object."""
+    """Parse an interval_string into a proper Duration object."""
     return SuiteSpecifics.interval_parser.parse(interval_string)
 
 
