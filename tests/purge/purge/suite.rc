@@ -17,7 +17,7 @@ title = "Old Cylc Admin Test Suite"
 [scheduling]
     # This test suite only needs a start time;
     # the first task sets a stop time.
-    initial cycle time = 2010010106
+    initial cycle time = 20100101T06
 
     [[special tasks]]
         cold-start       = ColdA, ColdB, ColdC

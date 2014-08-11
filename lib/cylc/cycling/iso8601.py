@@ -693,6 +693,8 @@ def _point_parse(point_string):
             if strptime_string is not None:
                 return SuiteSpecifics.point_parser.strptime(
                     point_string, strptime_string)
+        else:
+            return point
     # Attempt to parse it in ISO 8601 format then...
     try:
         point = SuiteSpecifics.point_parser.parse(point_string)  # Fail?

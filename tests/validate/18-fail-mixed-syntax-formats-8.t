@@ -27,6 +27,6 @@ run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
 grep_ok "Conflicting syntax: post-cylc-6 syntax \
 (cycle point: \[scheduling\]initial cycle point = 20100101T00) \
 vs pre-cylc-6 syntax \
-(start-up or mixed-async tasks: cold_foo)" $TEST_NAME.stderr
+(start-up tasks: cold_foo)" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 exit

@@ -290,6 +290,7 @@ class config( object ):
                             Calendar.MODE_GREGORIAN
                         )
                     name, offset_string = m.groups()
+                    offset_converted_from_prev = False
                     try:
                         float(offset_string)
                     except ValueError:
@@ -304,6 +305,7 @@ class config( object ):
                         if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
                             seconds = int(float(offset_string)*3600)
                             offset_string = "PT%sS" % seconds
+                        offset_converted_from_prev = True
                     try:
                         offset_interval = get_interval(offset_string).standardise()
                     except IntervalParsingError as exc:
@@ -311,10 +313,11 @@ class config( object ):
                             "ERROR: Illegal clock-trigger spec: %s" % offset_string
                         )
                     else:
-                        set_syntax_version(
-                            VERSION_NEW,
-                            "clock-triggered=%s: ISO 8601 offset" % item
-                        )
+                        if not offset_converted_from_prev:
+                            set_syntax_version(
+                                VERSION_NEW,
+                                "clock-triggered=%s: ISO 8601 offset" % item
+                            )
                     extn = "(" + offset_string + ")"
 
                 # Replace family names with members.
@@ -1625,6 +1628,11 @@ class config( object ):
             print "Parsing the dependency graph"
 
         start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
+        if start_up_tasks:
+            set_syntax_version(
+                VERSION_PREV,
+                "start-up tasks: %s" % ",".join(start_up_tasks)
+            )
         back_comp_initial_tasks = list(start_up_tasks)
 
         self.graph_found = False
@@ -1729,12 +1737,6 @@ class config( object ):
             self.parse_graph(
                 section, total_graph_text,
                 section_seq_map=section_seq_map, tasks_to_prune=[]
-            )
-        if back_comp_initial_tasks:
-            set_syntax_version(
-                VERSION_PREV,
-                "start-up or mixed-async tasks: %s" % (
-                    ", ".join(back_comp_initial_tasks))
             )
 
     def parse_graph( self, section, graph, section_seq_map=None,
