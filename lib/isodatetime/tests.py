@@ -28,8 +28,8 @@ from . import parsers
 from . import parser_spec
 
 
-def get_timeinterval_tests():
-    """Yield tests for the time interval class."""
+def get_timeduration_tests():
+    """Yield tests for the duration class."""
     tests = {
         "get_days_and_seconds": [
             ([], {"hours": 25}, (1, 3600)),
@@ -53,8 +53,8 @@ def get_timeinterval_tests():
             yield test_props, method, method_args, ctrl_results
 
 
-def get_timeintervalparser_tests():
-    """Yield tests for the time interval parser."""
+def get_timedurationparser_tests():
+    """Yield tests for the duration parser."""
     test_expressions = {
         "P3Y": {"years": 3},
         "P90Y": {"years": 90},
@@ -90,12 +90,12 @@ def get_timeintervalparser_tests():
         "-P7Y": {"years": -7, "hours": 0}
     }
     for expression, ctrl_result in test_expressions.items():
-        ctrl_data = str(data.TimeInterval(**ctrl_result))
+        ctrl_data = str(data.Duration(**ctrl_result))
         yield expression, ctrl_data
 
 
-def get_timeintervaldumper_tests():
-    """Yield tests for the time interval dumper."""
+def get_timedurationdumper_tests():
+    """Yield tests for the duration dumper."""
     test_expressions = {
         "P3Y": {"years": 3},
         "P90Y": {"years": 90},
@@ -226,6 +226,32 @@ def get_timepoint_dumper_tests():
         )
     ]
 
+
+def get_timepointdumper_failure_tests():
+    """Yield tests that raise exceptions for custom time point dumps."""
+    bounds_error = dumpers.TimePointDumperBoundsError
+    return [
+        (
+            {"year": 10000, "month_of_year": 1, "day_of_month": 4,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            [("CCYY-MMDDThhmmZ", bounds_error, 0)]
+        ),
+        (
+            {"year": -10000, "month_of_year": 1, "day_of_month": 4,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            [("CCYY-MMDDThhmmZ", bounds_error, 0)]
+        ),
+        (
+            {"year": 1000000, "month_of_year": 1, "day_of_month": 4,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            [("+XCCYY-MMDDThhmmZ", bounds_error, 2)]
+        ),
+        (
+            {"year": -1000000, "month_of_year": 1, "day_of_month": 4,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            [("+XCCYY-MMDDThhmmZ", bounds_error, 2)]
+        )
+    ]
 
 def get_timepointparser_tests(allow_only_basic=False,
                               allow_truncated=False,
@@ -739,16 +765,16 @@ def get_timerecurrenceparser_tests():
         else:
             reps_string = str(reps)
         point_parser = parsers.TimePointParser()
-        interval_parser = parsers.TimeIntervalParser()
+        duration_parser = parsers.DurationParser()
         for point_expr in test_points:
-            interval_tests = get_timeintervalparser_tests()
+            duration_tests = get_timedurationparser_tests()
             start_point = point_parser.parse(point_expr)
-            for interval_expr, interval_result in interval_tests:
-                if interval_expr.startswith("-P"):
-                    # Our negative intervals are not supported in recurrences.
+            for duration_expr, duration_result in duration_tests:
+                if duration_expr.startswith("-P"):
+                    # Our negative durations are not supported in recurrences.
                     continue
-                interval = interval_parser.parse(interval_expr)
-                end_point = start_point + interval
+                duration = duration_parser.parse(duration_expr)
+                end_point = start_point + duration
                 if reps is not None:
                     expr_1 = ("R" + reps_string + "/" + str(start_point) +
                                 "/" + str(end_point))
@@ -756,13 +782,13 @@ def get_timerecurrenceparser_tests():
                                     "start_point": start_point,
                                     "end_point": end_point}
                 expr_3 = ("R" + reps_string + "/" + str(start_point) +
-                            "/" + str(interval))
+                            "/" + str(duration))
                 yield expr_3, {"repetitions": reps,
                                 "start_point": start_point,
-                                "interval": interval}
-                expr_4 = ("R" + reps_string + "/" + str(interval) + "/" +
+                                "duration": duration}
+                expr_4 = ("R" + reps_string + "/" + str(duration) + "/" +
                             str(end_point))
-                yield expr_4, {"repetitions": reps, "interval": interval,
+                yield expr_4, {"repetitions": reps, "duration": duration,
                                 "end_point": end_point}
 
 
@@ -790,36 +816,50 @@ class TestSuite(unittest.TestCase):
                     (source, test, control))
         super(TestSuite, self).assertEqual(test, control, info)
 
-    def test_timeinterval(self):
-        """Test the time interval class methods."""
+    def test_days_in_year_range(self):
+        """Test the summing-over-days-in-year-range shortcut code."""
+        for start_year in range(-401, 2):
+            for end_year in range(start_year, 2):
+               test_days = data.get_days_in_year_range(
+                   start_year, end_year)
+               control_days = 0
+               for year in xrange(start_year, end_year + 1):
+                   control_days += data.get_days_in_year(year)
+               self.assertEqual(
+                   control_days, test_days, "days in %s to %s" % (
+                       start_year, end_year)
+               )
+
+    def test_timeduration(self):
+        """Test the duration class methods."""
         for test_props, method, method_args, ctrl_results in (
-                get_timeinterval_tests()):
-            interval = data.TimeInterval(**test_props)
-            interval_method = getattr(interval, method)
-            test_results = interval_method(*method_args)
+                get_timeduration_tests()):
+            duration = data.Duration(**test_props)
+            duration_method = getattr(duration, method)
+            test_results = duration_method(*method_args)
             self.assertEqual(
                 test_results, ctrl_results,
                 "%s -> %s(%s)" % (test_props, method, method_args)
             )
 
-    def test_timeinterval_parser(self):
-        """Test the time interval parsing."""
-        parser = parsers.TimeIntervalParser()
-        for expression, ctrl_result in get_timeintervalparser_tests():
+    def test_timeduration_parser(self):
+        """Test the duration parsing."""
+        parser = parsers.DurationParser()
+        for expression, ctrl_result in get_timedurationparser_tests():
             try:
                 test_result = str(parser.parse(expression))
             except parsers.ISO8601SyntaxError:
                 raise ValueError(
-                    "TimeIntervalParser test failed to parse '%s'" %
+                    "DurationParser test failed to parse '%s'" %
                     expression
                 )
             self.assertEqual(test_result, ctrl_result, expression)
 
-    def test_timeinterval_dumper(self):
-        """Test the time interval dumping."""
-        for ctrl_expression, test_props in get_timeintervaldumper_tests():
-            interval = data.TimeInterval(**test_props)
-            test_expression = str(interval)
+    def test_timeduration_dumper(self):
+        """Test the duration dumping."""
+        for ctrl_expression, test_props in get_timedurationdumper_tests():
+            duration = data.Duration(**test_props)
+            test_expression = str(duration)
             self.assertEqual(test_expression, ctrl_expression,
                              str(test_props))
 
@@ -828,9 +868,9 @@ class TestSuite(unittest.TestCase):
         pool = multiprocessing.Pool(processes=4)
         pool.map_async(test_timepoint_at_year, range(1801, 2403)).get()
 
-    def test_timepoint_plus_float_time_interval_day_of_month_type(self):
-        """Test (TimePoint + TimeInterval).day_of_month is an int."""
-        time_point = data.TimePoint(year=2000) + data.TimeInterval(seconds=1.0)
+    def test_timepoint_plus_float_time_duration_day_of_month_type(self):
+        """Test (TimePoint + Duration).day_of_month is an int."""
+        time_point = data.TimePoint(year=2000) + data.Duration(seconds=1.0)
         self.assertEqual(type(time_point.day_of_month), int)
 
     def test_timepoint_time_zone(self):
@@ -895,9 +935,9 @@ class TestSuite(unittest.TestCase):
                             test_dates[i], test_dates[j],
                             i_date_str + " == " + j_date_str
                         )
-                        interval = test_dates[j] - test_dates[i]
+                        duration = test_dates[j] - test_dates[i]
                         self.assertEqual(
-                            interval, data.TimeInterval(days=0),
+                            duration, data.Duration(days=0),
                             i_date_str + " - " + j_date_str
                         )
 
@@ -923,6 +963,15 @@ class TestSuite(unittest.TestCase):
             for format_, ctrl_data in format_results:
                 test_data = dumper.dump(ctrl_timepoint, format_)
                 self.assertEqual(test_data, ctrl_data, format_)
+        for timepoint_kwargs, format_exception_results in (
+                get_timepointdumper_failure_tests()):
+            ctrl_timepoint = data.TimePoint(**timepoint_kwargs)
+            for format_, ctrl_exception, num_expanded_year_digits in (
+                    format_exception_results):
+                dumper = dumpers.TimePointDumper(
+                    num_expanded_year_digits=num_expanded_year_digits)
+                self.assertRaises(ctrl_exception, dumper.dump,
+                                  ctrl_timepoint, format_)
 
     def test_timepoint_parser(self):
         """Test the parsing of date/time expressions."""
@@ -1207,7 +1256,7 @@ def test_timepoint_at_year(test_year):
     import random
     my_date = datetime.datetime(test_year, 1, 1)
     stop_date = datetime.datetime(test_year + 1, 1, 1)
-    test_interval_attributes = [
+    test_duration_attributes = [
         ("weeks", 110),
         ("days", 770),
         ("hours", 770*24),
@@ -1232,34 +1281,34 @@ def test_timepoint_at_year(test_year):
         test_data = day_of_year
         test_data += data.get_days_since_1_ad(year - 1)
         assert_equal(test_data, ctrl_data)
-        for attribute, attr_max in test_interval_attributes:
+        for attribute, attr_max in test_duration_attributes:
             delta_attr = random.randrange(0, attr_max)
             kwargs = {attribute: delta_attr}
             ctrl_data = my_date + datetime.timedelta(**kwargs)
             ctrl_data = (ctrl_data.year, ctrl_data.month, ctrl_data.day)
             test_data = (
-                test_date + data.TimeInterval(
+                test_date + data.Duration(
                     **kwargs)).get_calendar_date()
             assert_equal(test_data, ctrl_data)
             ctrl_data = (my_date - datetime.timedelta(**kwargs))
             ctrl_data = (ctrl_data.year, ctrl_data.month, ctrl_data.day)
             test_data = (
-                test_date - data.TimeInterval(
+                test_date - data.Duration(
                     **kwargs)).get_calendar_date()
             assert_equal(test_data, ctrl_data)
         kwargs = {}
-        for attribute, attr_max in test_interval_attributes:
+        for attribute, attr_max in test_duration_attributes:
             delta_attr = random.randrange(0, attr_max)
             kwargs[attribute] = delta_attr
         test_date_minus = (
-            test_date - data.TimeInterval(**kwargs))
+            test_date - data.Duration(**kwargs))
         test_data = test_date - test_date_minus
-        ctrl_data = data.TimeInterval(**kwargs)
+        ctrl_data = data.Duration(**kwargs)
         assert_equal(test_data, ctrl_data)
         test_data = (test_date_minus + (test_date - test_date_minus))
         ctrl_data = test_date
         assert_equal(test_data, ctrl_data)
-        test_data = (test_date_minus + data.TimeInterval(**kwargs))
+        test_data = (test_date_minus + data.Duration(**kwargs))
         ctrl_data = test_date
         assert_equal(test_data, ctrl_data)
         ctrl_data = (my_date + datetime.timedelta(minutes=450) +
@@ -1268,9 +1317,9 @@ def test_timepoint_at_year(test_year):
         ctrl_data = [(ctrl_data.year, ctrl_data.month, ctrl_data.day),
                         (ctrl_data.hour, ctrl_data.minute, ctrl_data.second)]
         test_data = (
-            test_date + data.TimeInterval(minutes=450) +
-            data.TimeInterval(hours=5) -
-            data.TimeInterval(weeks=5, seconds=500)
+            test_date + data.Duration(minutes=450) +
+            data.Duration(hours=5) -
+            data.Duration(weeks=5, seconds=500)
         )
         test_data = [test_data.get_calendar_date(),
                         test_data.get_hour_minute_second()]
