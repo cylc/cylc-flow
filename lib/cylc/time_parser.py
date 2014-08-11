@@ -51,6 +51,7 @@ class CylcMissingContextPointError(cylc.CylcError.CylcError):
 
     """An error denoting a missing (but required) context cycle point."""
 
+
 class CylcMissingFinalCyclePointError(cylc.CylcError.CylcError):
 
     """An error denoting a missing (but required) final cycle point."""
