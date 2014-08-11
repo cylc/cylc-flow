@@ -25,7 +25,7 @@ from cylc.cycling.loader import (get_point, get_point_relative,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
                                  ISO8601_CYCLING_TYPE,
                                  get_backwards_compat_mode)
-from cylc.cycling.iso8601 import get_point_relative
+from cylc.cycling import IntervalParsingError
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
@@ -46,8 +46,7 @@ Parse and validate the suite definition file, do some consistency
 checking, then construct task proxy objects and graph structures.
 """
 
-AUTO_RUNAHEAD_FACTOR = 2  # Factor to apply to the minimum cycling interval.
-CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)')
+CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*(.+)\s*\)')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
 
@@ -237,13 +236,21 @@ class config( object ):
             self.cfg['scheduling']['initial cycle point'] = str(initial_point)
 
         if self.cfg['scheduling']['final cycle point'] is not None:
-            try:
-                final_point = get_point_relative(
-                        self.cfg['scheduling']['final cycle point'],
-                        initial_point).standardise()
-            except ValueError:
+            final_point = None
+            # Is the final "point"(/interval) relative to initial?
+            if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
+                # TODO ISO - final as offset doesn't work for integer cycling
+                try:
+                    final_point = get_point_relative(
+                            self.cfg['scheduling']['final cycle point'],
+                            initial_point).standardise()
+                except ValueError:
+                    # (not relative)
+                    pass
+            if final_point is None:
+                # Must be absolute.
                 final_point = get_point(
-                    self.cfg['scheduling']['final cycle point']).standardise()
+                        self.cfg['scheduling']['final cycle point']).standardise()
             self.cfg['scheduling']['final cycle point'] = str(final_point)
 
         self.cli_initial_point = get_point(self._cli_initial_point_string)
@@ -269,41 +276,56 @@ class config( object ):
         if flags.verbose:
             print "Parsing [special tasks]"
         for type in self.cfg['scheduling']['special tasks']:
-            result = copy( self.cfg['scheduling']['special tasks'][type] )
+            result = copy(self.cfg['scheduling']['special tasks'][type])
+            extn = ''
             for item in self.cfg['scheduling']['special tasks'][type]:
-                if type != 'clock-triggered':
-                    name = item
-                    extn = ''
-                else:
+                name = item
+                # Get clock-trigger offsets.
+                if type == 'clock-triggered':
                     m = re.match( CLOCK_OFFSET_RE, item )
-                    if m:
-                        if (self.cfg['scheduling']['cycling mode'] !=
-                                Calendar.MODE_GREGORIAN):
-                            raise SuiteConfigError(
-                                "ERROR: clock-triggered tasks require " +
-                                "[scheduling]cycling mode=%s" %
-                                Calendar.MODE_GREGORIAN
-                            )
-                        name, offset = m.groups()
-                        try:
-                            float( offset )
-                        except ValueError:
-                            raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
-                        extn = '(' + offset + ')'
+                    if m is None:
+                        raise SuiteConfigError(
+                            "ERROR: Illegal clock-trigger spec: %s" % item
+                        )
+                    if (self.cfg['scheduling']['cycling mode'] !=
+                            Calendar.MODE_GREGORIAN):
+                        raise SuiteConfigError(
+                            "ERROR: clock-triggered tasks require " +
+                            "[scheduling]cycling mode=%s" %
+                            Calendar.MODE_GREGORIAN
+                        )
+                    name, offset_string = m.groups()
+                    try:
+                        float(offset_string)
+                    except ValueError:
+                        # So the offset should be an ISO8601 interval.
+                        pass
                     else:
-                        raise SuiteConfigError, "ERROR: Illegal clock-triggered task spec: " + item
+                        # Backward-compatibility for a raw float number of hours.
+                        if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
+                            seconds = int(float(offset_string)*3600)
+                            offset_string = "PT%sS" % seconds
+                    try:
+                        offset_interval = get_interval(offset_string).standardise()
+                    except IntervalParsingError as exc:
+                        raise SuiteConfigError(
+                            "ERROR: Illegal clock-trigger spec: %s" % offset_string
+                        )
+                    extn = "(" + offset_string + ")"
+
+                # Replace family names with members.
                 if name in self.runtime['descendants']:
-                    # is a family
                     result.remove( item )
                     for member in self.runtime['descendants'][name]:
                         if member in self.runtime['descendants']:
-                            # is a sub-family
+                            # (sub-family)
                             continue
-                        result.append( member + extn )
+                        result.append(member + extn)
                         if type == 'clock-triggered':
-                            self.clock_offsets[ member ] = float( offset )
+                            self.clock_offsets[member] = offset_interval
                 elif type == 'clock-triggered':
-                    self.clock_offsets[ name ] = float( offset )
+                    self.clock_offsets[name] = offset_interval
+
             self.cfg['scheduling']['special tasks'][type] = result
 
         self.collapsed_families_rc = self.cfg['visualization']['collapsed families']
@@ -1793,10 +1815,10 @@ class config( object ):
             taskd.modifiers.append( 'oneoff' )
             taskd.is_coldstart = True
 
-        # SET CLOCK-TRIGGERED TASKS
+        # Set clock-triggered tasks.
         if name in self.clock_offsets:
-            taskd.modifiers.append( 'clocktriggered' )
-            taskd.clocktriggered_offset = self.clock_offsets[name]
+            taskd.modifiers.append('clocktriggered')
+            taskd.clocktrigger_offset = self.clock_offsets[name]
 
         taskd.sequential = name in self.cfg['scheduling']['special tasks']['sequential']
 

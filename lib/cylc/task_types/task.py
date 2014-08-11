@@ -409,7 +409,10 @@ class task( object ):
         elif result['EXIT'] != 0:
             self.job_submission_failed( out, err )
         else:
-            self.submit_method_id = self.job_sub_method.get_id( out, err )
+            try:
+                self.submit_method_id = self.job_sub_method.get_id( out, err )
+            except NotImplementedError:
+                pass
             if self.submit_method_id:
                 self.log( 'NORMAL', 'submit_method_id=' + self.submit_method_id )
                 self.record_db_update("task_states", self.name,
@@ -775,12 +778,18 @@ class task( object ):
                                 'suite run directory',
                                 self.task_host,
                                 self.task_owner)
+            r_log_job_dir = sitecfg.get_derived_host_item(
+                self.suite_name,
+                'suite job log directory',
+                self.task_host,
+                self.task_owner)
             r_env_file_path = '%s:%s/cylc-suite-env' % (
                                 self.user_at_host,
                                 r_suite_run_dir)
             self.log('NORMAL', 'Installing %s' % r_env_file_path)
             cmd1 = (['ssh'] + self.SUITE_CONTACT_ENV_SSH_OPTS +
-                    [self.user_at_host, 'mkdir', '-p', r_suite_run_dir])
+                    [self.user_at_host, 'mkdir', '-p', r_suite_run_dir,
+                     r_log_job_dir])
             cmd2 = (['scp'] + self.SUITE_CONTACT_ENV_SSH_OPTS +
                     [env_file_path, r_env_file_path])
             for cmd in [cmd1, cmd2]:
@@ -1248,10 +1257,10 @@ class task( object ):
             self.log( 'WARNING', "'" + self.job_sub_method_name + "' job submission does not support polling" )
             return
 
-        cmd = ("cylc get-job-status %(status_file)s %(job_sys)s %(job_id)s" % {
-                    "status_file": job_sub_method.jobfile_path + ".status",
-                    "job_sys": job_sub_method.__class__.__name__,
-                    "job_id": self.submit_method_id})
+        cmd = "cylc get-job-status %(status_file)s %(job_sys)s %(job_id)s" % {
+            "status_file": job_sub_method.jobfile_path + ".status",
+            "job_sys": job_sub_method.__class__.__name__,
+            "job_id": self.submit_method_id}
         if self.user_at_host not in [user + '@localhost', 'localhost']:
             cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
@@ -1290,9 +1299,9 @@ class task( object ):
             return
 
         cmd = ("cylc job-kill %(status_file)s %(job_sys)s %(job_id)s" % {
-                    "status_file": job_sub_method.jobfile_path + ".status",
-                    "job_sys": job_sub_method.__class__.__name__,
-                    "job_id": self.submit_method_id})
+            "status_file": job_sub_method.jobfile_path + ".status",
+            "job_sys": job_sub_method.__class__.__name__,
+            "job_id": self.submit_method_id})
         if self.user_at_host != user + '@localhost':
             cmd = cv_scripting_sl + "; " + cmd
             cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"

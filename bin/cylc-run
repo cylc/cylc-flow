@@ -91,9 +91,8 @@ warm start unless you use special cold-start tasks. See "Suite Start-up" and
         if len( self.args ) == 2:
             start_point_string = self.args[1]
             if start_point_string == "now":
-                # TODO ISO: will it ever be useful to have this in minutes?
                 start_point_string = (
-                    datetime.datetime.utcnow().strftime("%Y%m%dT%HZ")
+                    datetime.datetime.utcnow().strftime("%Y%m%dT%H%MZ")
                 )
             if self.options.warm:
                 self._cli_start_point_string = start_point_string

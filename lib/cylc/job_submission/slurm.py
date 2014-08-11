@@ -17,9 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from job_submit import job_submit
+from job_submit import JobSubmit
 
-class slurm( job_submit ):
+class slurm( JobSubmit ):
     """
 SLURM job submission.
     """
@@ -46,7 +46,7 @@ SLURM job submission.
             defaults[ d ] = val
         self.jobconfig['directives'] = defaults
 
-    def construct_jobfile_submission_command( self ):
+    def construct_job_submit_command( self ):
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE

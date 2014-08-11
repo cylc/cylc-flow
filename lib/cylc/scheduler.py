@@ -18,7 +18,7 @@
 
 from cylc_pyro_server import pyro_server
 from task_types import task, clocktriggered
-from job_submission import jobfile
+from job_submission.jobfile import JobFile
 from suite_host import get_suite_host
 from owner import user
 from shutil import copy as shcopy
@@ -750,8 +750,8 @@ class scheduler(object):
         # (note global config automatically expands environment variables in local paths)
 
         # Pass these to the job script generation code.
-        jobfile.jobfile.suite_env = self.suite_env
-        jobfile.jobfile.suite_task_env = self.suite_task_env
+        JobFile.suite_env = self.suite_env
+        JobFile.suite_task_env = self.suite_task_env
         # And pass contact env to the task module
         task.task.suite_contact_env = self.suite_contact_env
 
@@ -919,11 +919,11 @@ class scheduler(object):
 
             if (self.stop_clock_done() or
                     self.stop_task_done() or 
-                    self.pool.check_stop()):
+                    self.pool.check_auto_shutdown()):
                 self.command_set_stop_cleanly()
 
             if ((self.shut_down_cleanly and self.pool.no_active_tasks()) or 
-                    self.shut_down_quickly or self.pool.check_stop()):
+                    self.shut_down_quickly or self.pool.check_auto_shutdown()):
                 self.shut_down_now = True
 
             if self.options.profile_mode:

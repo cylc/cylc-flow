@@ -16,50 +16,39 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import time
 import cylc.cycling.iso8601
 from isodatetime.timezone import get_local_time_zone
 from task import task
-import time
-from cylc.flags import utc
 
 # TODO - the task base class now has clock-triggering functionality too, to
 # handle retry delays, so this class could probably disappear now to leave
 # clock-triggering as just a special case of normal task initialization.
 
 class clocktriggered(object):
-    clock = None
-
     is_clock_triggered = True
-
-    def get_real_time_delay( self ):
-        return self.real_time_delay
 
     def start_time_reached( self ):
         reached = False
-        # check current time against expected start time
-        # TODO ISO - DATE TIME CONVERSION?
         if not hasattr(self, "point_as_seconds"):
             iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.point))
+            iso_clocktrigger_offset = cylc.cycling.iso8601.interval_parse(
+                str(self.clocktrigger_offset))
             self.point_as_seconds = int(iso_timepoint.get(
                 "seconds_since_unix_epoch"))
+            self.clocktrigger_offset_as_seconds = int(
+                iso_clocktrigger_offset.get_seconds())
             if iso_timepoint.time_zone.unknown:
                 utc_offset_hours, utc_offset_minutes = (
-                    get_local_time_zone()
-                )
+                    get_local_time_zone())
                 utc_offset_in_seconds = (
                     3600 * utc_offset_hours + 60 * utc_offset_minutes)
                 self.point_as_seconds += utc_offset_in_seconds
-        delayed_start = self.point_as_seconds + self.real_time_delay * 3600
-        if time.time() > delayed_start:
-           reached = True
-        return reached
+            self.delayed_start = (self.point_as_seconds +
+                    self.clocktrigger_offset_as_seconds)
+            self.delayed_start_str = str(self.point + self.clocktrigger_offset)
+        return time.time() > self.delayed_start
 
     def ready_to_run( self ):
-        if task.ready_to_run( self ) and self.start_time_reached():
-            #print '(ready)'
-            return True
-        else:
-            #print '(not ready)'
-            return False
+        return task.ready_to_run(self) and self.start_time_reached()
 
