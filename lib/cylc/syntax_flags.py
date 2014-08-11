@@ -22,6 +22,7 @@
 VERSION_PREV = "pre-cylc-6"  # < cylc-6
 VERSION_NEW = "post-cylc-6"  # cylc 6 +
 
+
 class SyntaxVersion(object):
 
     """Store the syntax version used in the suite.rc."""
@@ -45,7 +46,7 @@ class SyntaxVersionError(ValueError):
 def set_syntax_version(version, message, exc_class=None,
                        exc_args=None, exc_kwargs=None):
     """Attempt to define the syntax version.
-    
+
     If it's already defined differently, raise an exception.
     The exception is exc_class if it is not None, raised
     using *exc_args and **exc_kwargs (or using message as the

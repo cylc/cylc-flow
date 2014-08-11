@@ -34,11 +34,6 @@ from parsec.validate import IllegalValueError
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = "b"
 
-ERROR_MIXED_FORMATS = (
-    "Mixing pre- and post- cylc 6 formats (%s) is not permitted.")
-ERROR_NEW_CYCLING_MIXED_ASYNC = (
-    "Async graph sections not permitted in new-style cycling.")
-
 MEMOIZE_LIMIT = 10000
 
 OLD_STRPTIME_FORMATS_BY_LENGTH = {
@@ -520,18 +515,21 @@ def init_from_cfg(cfg):
     final_cycle_point = cfg['scheduling']['final cycle point']
     assume_utc = cfg['cylc']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
+
+    # Detect (date-time) previous-format cycle point usage.
     has_prev_format_cycle_point = (
         (initial_cycle_point is not None and
          PREV_DATE_TIME_REC.search(initial_cycle_point)) or
         (final_cycle_point is not None and
          PREV_DATE_TIME_REC.search(final_cycle_point))
     )
-    dep_sections = list(cfg['scheduling']['dependencies'])
     if has_prev_format_cycle_point:
         set_syntax_version(
             VERSION_PREV,
             "initial/final cycle point format: CCYYMMDDhh"
         )
+
+    # Detect (date-time) ISO 8601-format cycle point usage.
     has_new_format_cycle_point = (
         (initial_cycle_point is not None and
          NEW_DATE_TIME_REC.search(initial_cycle_point)) or
@@ -543,6 +541,9 @@ def init_from_cfg(cfg):
             VERSION_NEW,
             "initial/final cycle point format: non-numeric (ISO 8601?)"
         )
+
+    # Loop over all dependency sub-sections and detect cycler syntax versions.
+    dep_sections = list(cfg['scheduling']['dependencies'])
     while dep_sections:
         dep_section = dep_sections.pop(0)
         if re.search("(?![^(]+\)),", dep_section):
@@ -571,7 +572,7 @@ def init_from_cfg(cfg):
             custom_dump_format = PREV_DATE_TIME_FORMAT
             num_expanded_year_digits = 0
         else:
-            # Detected new syntax.
+            # Detected new-style syntax.
             set_syntax_version(
                 VERSION_NEW,
                 ("[scheduling][[dependencies]][[[%s]]]: " % dep_section) +
