@@ -16,8 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-N=4
-
 usage() {
   cat <<eof
 USAGE: cylc test-battery [OPTIONS] [FILES or DIRECTORIES] -- [prove OPTIONS]
@@ -61,33 +59,27 @@ E.g. to run N tests at once, in parallel (default $N):
 eof
 }
 
-# handle long --help
-if [[ $@ == *\-\-help ]]; then
-    usage
-    exit 0
-fi
-
 TESTS=""
-for arg in $@; do
+for ARG in "$@"; do
     shift
-    [[ $arg == '--' ]] && break
-    TESTS="$TESTS $arg"
+    if [[ "$ARG" == '--' ]]; then
+        break
+    elif [[ "$ARG" == '--help' ]]; then
+        usage
+        exit 0
+    else
+        TESTS="$TESTS $ARG"
+    fi
 done
 
-if [[ -z $TESTS ]]; then
-    TESTS="$CYLC_DIR/tests $CYLC_DIR/lib/parsec/tests"
+if [[ "$PWD" != "$CYLC_DIR" ]]; then
+    echo "[INFO] cd \"$CYLC_DIR\""
+    cd "$CYLC_DIR"
 fi
-
-if (($# == 0)); then
-    ARGS=$TESTS
-else
-    ARGS="$@ $TESTS"
-fi
-
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
-    exec prove -j $N -r -s $ARGS
+    NPROC=$(python -c 'import multiprocessing as mpc; print mpc.cpu_count()')
+    exec prove -j "$NPROC" -s -r ${TESTS:-tests lib/parsec/tests}
 else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
-    exec prove -r -s $ARGS
+    exec prove -s -r ${TESTS:-tests lib/parsec/tests}
 fi
-
