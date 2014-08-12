@@ -49,7 +49,6 @@ continuation
         {% for I in range( 0, N_MEMBERS ) %}
           foo => mem_{{ I }} => post_{{ I }} => bar
         {% endfor %}"""
-
 EOF
 #-------------------------------------------------------------------------------
 # "cylc view -j/--jinja2" should imply "-i/inline" too:
@@ -96,7 +95,6 @@ description = "Auto-generation of dependencies for related tasks."
         {% for I in range( 0, N_MEMBERS ) %}
           foo => mem_{{ I }} => post_{{ I }} => bar
         {% endfor %}"""
-
 EOF
 #-------------------------------------------------------------------------------
 # all processing
