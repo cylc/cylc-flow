@@ -54,5 +54,3 @@ class question_dialog(object):
         response = self.dialog.run()
         self.dialog.destroy()
         return response
-
-

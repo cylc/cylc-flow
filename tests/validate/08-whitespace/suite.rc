@@ -18,4 +18,3 @@
    [  runtime   ]    
     [[  foo,bar   ,  a,  b  ]]   
 %include "inc.rc"   
-

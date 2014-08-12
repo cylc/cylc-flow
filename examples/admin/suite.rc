@@ -88,4 +88,3 @@ modified unless you know what you're doing."""
         D      = "style=bold", "color=green4"
         E      = "style=bold", "color=blue"
         F      = "style=bold", "color=red"
-

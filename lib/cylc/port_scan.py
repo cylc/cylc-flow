@@ -271,4 +271,3 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, silent=False ):
             # found a cylc suite or lock server
             suites.append( ( name, port ) )
     return suites
-

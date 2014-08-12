@@ -25,4 +25,3 @@ install_test $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_ok $TEST_NAME synonyms.py integer_list
-

@@ -95,4 +95,3 @@ for ITEM in $PKGS; do
         echo "ok"
     fi
 done
-

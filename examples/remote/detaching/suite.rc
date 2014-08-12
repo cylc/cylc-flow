@@ -35,4 +35,3 @@ cylc task message "detached now, BYE from $(hostname)"
         [[[remote]]]
             # the remote host name:
             host = wrh-1.hpcf.niwa.co.nz
-

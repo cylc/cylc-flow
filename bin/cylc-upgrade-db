@@ -62,4 +62,3 @@ for suite, (dir,title) in olditems.items():
         db.register( suite, dir )
     except RegistrationError, x:
         print >> sys.stderr, x
-

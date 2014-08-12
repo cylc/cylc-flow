@@ -141,4 +141,3 @@ if __name__ == "__main__":
 
     # Note we can get Python's result by defining an equivalent class
     # hierarchy (with empty class bodies) and printing foo.__mro__.
-

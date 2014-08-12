@@ -654,5 +654,3 @@ NAME,TOP_DIRECTORY""")
                     warning_dialog( '\n'.join(out), self.window ).warn()
                 elif out:
                     info_dialog( '\n'.join(out), self.window ).inform()
-
-

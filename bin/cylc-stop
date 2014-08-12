@@ -231,4 +231,3 @@ if int(options.max_polls) > 0:
         sys.exit(0)
     if not spoller.poll():
         sys.exit(1)
-

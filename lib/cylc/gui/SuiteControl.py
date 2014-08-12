@@ -3071,4 +3071,3 @@ For more Stop options use the Control menu.""" )
         foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir, 700, 600 )
         self.gcapture_windows.append(foo)
         foo.run()
-

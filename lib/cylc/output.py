@@ -50,4 +50,3 @@ own cycle point.
         if self.offset:
             new_point = point + self.offset
         return re.sub( '\[\s*T.*?\]', str(new_point), self.msg )
-

@@ -17,4 +17,3 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 exec $(dirname $0)/cylc gui "$@"
-

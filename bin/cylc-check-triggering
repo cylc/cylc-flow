@@ -59,4 +59,3 @@ except Exception, x:
     raise SystemExit( "ERROR: Triggering check FAILED" )
 else:
     print "Triggering check passed"
-

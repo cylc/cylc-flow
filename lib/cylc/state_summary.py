@@ -207,4 +207,3 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
     if not text:
         return id_
     return text
-

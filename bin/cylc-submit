@@ -195,4 +195,3 @@ proc_pool.close()
 proc_pool.join()
 proc_pool.handle_results_async()
 print 'Job ID:', task_proxy.submit_method_id
-

@@ -18,4 +18,3 @@ continuation
         {% for I in range( 0, N_MEMBERS ) %}
           foo => mem_{{ I }} => post_{{ I }} => bar
         {% endfor %}"""
-

@@ -40,4 +40,3 @@ check1 | check2 | check3 => PostVAR
     #[[check1]] # first check fails, OR:
     [[check1, check2]] # first and second check fails
         inherit = FAIL
-

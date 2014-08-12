@@ -19,4 +19,3 @@
 echo "WARNING: \"gcontrol\" is deprecated - it is now called \"gcylc\""
 echo "WARNING: This command alias will eventually be deleted."
 $(dirname $0)/cylc gui "$@"
-

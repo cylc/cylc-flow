@@ -56,4 +56,3 @@ if [[ -z $JOBSCRIPT ]]; then
 fi
 echo "Task Job Script Generated: $JOBSCRIPT" >&2 # (only send script contents to stdout)
 cat $JOBSCRIPT
-

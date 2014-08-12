@@ -69,4 +69,3 @@ fi"""
             failed handler = {{ HANDLER }}
             submission timeout = PT3S
             submission timeout handler = {{ HANDLER }}
-

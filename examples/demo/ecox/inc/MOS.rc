@@ -33,6 +33,3 @@
         inherit = MOS
         description = "Archiving and cleanup for the mos sub-system."
         command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/mos_housekeeping.conf
-
-
-

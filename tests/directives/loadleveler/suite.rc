@@ -31,4 +31,3 @@
         command scripting = "sleep 30"
     [[killer]]
         command scripting = cylc kill $CYLC_SUITE_NAME rem2 1 -f; sleep 10
-

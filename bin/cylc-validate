@@ -72,4 +72,3 @@ except Exception,x:
     raise SystemExit(x)
 
 print "Valid for cylc-" + cylc_version
-

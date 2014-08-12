@@ -22,4 +22,3 @@ run_restart() {
         $STATE_BEFORE_RESTART
 }
 . $(dirname $0)/test_impl
-

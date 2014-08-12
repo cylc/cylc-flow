@@ -49,4 +49,3 @@ sleep 5
         seq = "fillcolor=navajowhite"
         on_toast = "fillcolor=beige"
         qux = "fillcolor=orangered"
-

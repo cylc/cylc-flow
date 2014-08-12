@@ -36,4 +36,3 @@ else:
 res = os.system( "cylc check-triggering " + event + " " + suite )
 if res != 0:
     sys.exit( 1 )
-

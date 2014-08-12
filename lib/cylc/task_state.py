@@ -183,4 +183,3 @@ class task_state(object):
                 state[ item ] = value
 
         return state
-

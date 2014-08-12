@@ -43,4 +43,3 @@
     (font-lock-add-keywords nil
        '(("\\({%[[:alnum:], _=\\(\\)]*%}\\|{{[[:alnum:] ]*}}\\)" 0
 	  font-lock-constant-face t)))))
-

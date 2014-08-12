@@ -21,4 +21,3 @@ The template variable N_MEMBERS can be set on the command line with
     [[ mem_{{ I }} ]]
         inherit = ens
 {% endfor %}
-

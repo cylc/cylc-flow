@@ -37,4 +37,3 @@ have to be complicated by reference test configuration details.
  (else the suite will time out) cycling suites are on a 12-hour cycle
  (else the modified test suite will not run two cycles). If new tutorial
  suites violate these assumptions test_header_tutorial will need changes.
-

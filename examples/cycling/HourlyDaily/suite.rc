@@ -26,4 +26,3 @@
         root = "style=filled", "fillcolor=yellow"
         bar = "style=filled", "fillcolor=green"
         baz = "style=filled", "fillcolor=red"
-

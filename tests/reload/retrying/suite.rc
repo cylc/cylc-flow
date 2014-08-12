@@ -20,4 +20,3 @@ new task proxy; ref github #945"""
 cylc suite-state --max-polls=10 --interval=1 --task=retrier --cycle=1 \
     --status=retrying $CYLC_SUITE_NAME
 cylc reload $CYLC_SUITE_NAME"""
-

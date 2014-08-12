@@ -13,4 +13,3 @@ if [[ $CYLC_TASK_TRY_NUMBER < 3 ]]; then
 else
     echo "Hello World!"
 fi"""
-

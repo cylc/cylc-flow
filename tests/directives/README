@@ -16,4 +16,3 @@ Any 'loadleveler directives' supplied will be added to those used in the
 test suite.  This can be used, for instance, to override 'class =
 serial' in the suite if your site does not have a 'serial' class; and to
 add a job accounting code, if that is required at your site.
-

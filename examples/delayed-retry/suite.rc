@@ -9,4 +9,3 @@ sleep 10
 if (( CYLC_TASK_TRY_NUMBER < 3 )); then
     bin/false
 fi"""
-

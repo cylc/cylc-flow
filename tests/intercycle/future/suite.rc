@@ -14,4 +14,3 @@
 [runtime]
     [[a,b]]
         command scripting = "/bin/true" # fast
-

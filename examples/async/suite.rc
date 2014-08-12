@@ -17,4 +17,3 @@ title = "asynchronous + cycling task demo"
 [visualization]
     initial cycle point = 2011010112
     final cycle point = 2011010312
- 

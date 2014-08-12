@@ -67,4 +67,3 @@ fi"""
             failed handler = {{ HANDLER }}
             submission timeout = 0.05
             submission timeout handler = {{ HANDLER }}
-

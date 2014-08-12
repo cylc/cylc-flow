@@ -217,4 +217,3 @@ that do not actually need the suite definition directory to be installed.
         # chomp trailing whitespace and newline
         self.passphrase = lines[0].strip()
         return self.passphrase
-

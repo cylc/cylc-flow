@@ -32,5 +32,3 @@ for root, dirs, files in os.walk( pre ):
         if not re.match( mfoo, dir ):
             print 'rejecting', dir
             dirs.remove( dir )
-            
-

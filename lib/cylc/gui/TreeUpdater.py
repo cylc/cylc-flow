@@ -449,4 +449,3 @@ class TreeUpdater(threading.Thread):
         else:
             pass
             ####print "Disconnecting task state info thread"
-

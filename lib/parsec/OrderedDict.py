@@ -32,4 +32,3 @@ except ImportError:
         # then try the pre-2.7 backport from ActiveState
         # (packaged with cylc)
         from OrderedDictCompat import OrderedDict
-

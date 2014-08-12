@@ -80,4 +80,3 @@ class suite_output( object ):
         if self.roll_at_startup:
             oarchive.roll()
             earchive.roll()
-

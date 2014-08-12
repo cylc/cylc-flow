@@ -27,4 +27,3 @@ perl -pi -e 's/(Initial point: ).*$/${1}201003/' $TEST_DIR/$SUITE_NAME/reference
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-

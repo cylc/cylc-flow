@@ -666,4 +666,3 @@ class xdot_widgets(object):
 
     def on_reload(self, action):
         self.widget.reload()
-

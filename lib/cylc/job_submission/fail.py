@@ -32,4 +32,3 @@ development purposes.
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
         self.command = command_template
-

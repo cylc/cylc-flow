@@ -14,4 +14,3 @@ start one, two, or three units in because the initial cycle time gets
 adjusted up to the next on-sequence cycle time, so additional tests are
 done to confirm this - by modifying the test start time in the installed
 reference log on the fly.
-

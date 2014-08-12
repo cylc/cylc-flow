@@ -108,4 +108,3 @@ mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
         get_data = "fillcolor=skyblue"
         products = "fillcolor=orange"
         collate = "fillcolor=red"
-

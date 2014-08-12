@@ -12,4 +12,3 @@ title = "polls for success and failure tasks in another suite"
         [[[suite state polling]]]
             interval = 2
             max-polls = 20
-

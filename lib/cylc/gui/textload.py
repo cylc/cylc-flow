@@ -113,5 +113,3 @@ class textload(object):
             self.find_current_iter = l
             self.find_current = needle
             tv.scroll_to_iter( f, 0 )
-
-

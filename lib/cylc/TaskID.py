@@ -20,4 +20,3 @@ def is_valid_id( name ):
     """Return whether a task id is valid."""
     # TODO!
     return DELIM in name
-

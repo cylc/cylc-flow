@@ -12,4 +12,3 @@
         command scripting = true
     [[exclude]]
         command scripting = false
-

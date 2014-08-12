@@ -38,4 +38,3 @@ def RunHandler( event, script, suite, taskID=None, msg=None, fg=False ):
     res = subprocess.call( command, shell=True )
     if fg and res != 0:
         raise Exception( 'ERROR: event handler failed' )
-

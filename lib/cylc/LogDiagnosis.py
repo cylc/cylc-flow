@@ -103,4 +103,3 @@ class LogAnalyser( object ):
             raise LogAnalyserError( "ERROR: triggering is NOT consistent with the reference log" )
         else:
             print "LogAnalyser: triggering is consistent with the reference log"
-

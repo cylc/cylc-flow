@@ -117,5 +117,3 @@
     # makebc
     MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
     # (oper suite handles all OPS and VAR control files in this way).
-
-

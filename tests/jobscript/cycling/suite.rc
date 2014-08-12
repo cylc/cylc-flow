@@ -26,4 +26,3 @@ description = """Test the output of cycling environment variables"""
             # force use of ssh job submission to disconnect local tasks
             # from the submitting suite environment.
             host = localhost
-

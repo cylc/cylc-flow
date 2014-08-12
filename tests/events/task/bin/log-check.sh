@@ -19,4 +19,3 @@ else
 fi
 
 echo "BYE FROM log-check.sh shutdown handler for $CYLC_SUITE_REG_NAME"
-

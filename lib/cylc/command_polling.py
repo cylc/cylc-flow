@@ -87,4 +87,3 @@ class poller( object ):
             else:
                 print >> sys.stderr, ""
             return False
-

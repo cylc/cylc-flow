@@ -28,4 +28,3 @@ run_ok $TEST_NAME synonyms.py boolean
 
 TEST_NAME=${TEST_NAME_BASE}-True
 run_ok $TEST_NAME synonyms.py boolean
-

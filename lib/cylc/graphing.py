@@ -272,4 +272,3 @@ class edge( object):
         name = left_graphnode.name
 
         return TaskID.get( name, str(point) )
-

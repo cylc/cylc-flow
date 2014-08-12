@@ -5,4 +5,3 @@ title = "A test with nested include-files"
 
 [visualization]
     default node attributes = "style=filled"
-

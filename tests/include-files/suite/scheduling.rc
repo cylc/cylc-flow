@@ -6,4 +6,3 @@
     [[dependencies]]
         [[[0]]]
             graph = "foo => bar"
-

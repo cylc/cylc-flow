@@ -40,4 +40,3 @@ for SDEF in $SDEFS; do
         ok $TEST_NAME
     fi
 done
-

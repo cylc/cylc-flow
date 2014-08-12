@@ -323,4 +323,3 @@ class validator(object):
             if value not in self.args['options']:
                 raise IllegalValueError( 'option', keys, value )
         return value
-

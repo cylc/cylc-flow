@@ -221,4 +221,3 @@ if not gcfg:
     gcfg.check()
     # add spec defaults and do theme inheritance
     gcfg.transform()
-

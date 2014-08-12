@@ -16,4 +16,3 @@ object MRI reference document. For a detailed explanation, see:
     [[g]]
         inherit = e,f # GOOD, or:
         # inherit = f,e # BAD
-

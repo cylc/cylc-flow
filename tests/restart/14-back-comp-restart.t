@@ -34,4 +34,3 @@ suite_run_ok $TEST_NAME cylc restart --debug --reference-test \
     --until=2014050300 $SUITE_NAME $TEST_SOURCE_DIR/back-comp-restart/state
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-

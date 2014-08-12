@@ -4,4 +4,3 @@ The tutorial suites are validated and run as reference tests in the test
 battery to ensure they remain valid and functional. After adding a new 
 tutorial suite or modifying an existing one, please see instructions in 
 tests/tutorial/README.
-

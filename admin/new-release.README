@@ -9,5 +9,3 @@ github gh-pages):
  5 generate the new documentation and update it to gh-pages:
 
  % admin/update-gh-pages -p "release x.y.z"
-
-

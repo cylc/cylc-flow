@@ -58,4 +58,3 @@ description = """To see how multiple inheritance works:
         SERIAL = "color=blue" #(see comment above:), "style="
         #(see comment above:)
         #serial_ops = "color=blue", "style=filled", "fillcolor=green"
-

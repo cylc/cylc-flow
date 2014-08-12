@@ -27,4 +27,3 @@ echo
 echo "GENERATING mp4 movie"
 echo ffmpeg -sameq -r 2 -f image2 -i small-live-%02d.png vid.mp4
 ffmpeg -sameq -r 2 -f image2 -i small-live-%02d.png vid.mp4
-

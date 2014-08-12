@@ -25,4 +25,3 @@ cylc message "polled $CYLC_TASK_ID failed"
     [[bar]]
         # to keep the suite up for 10s
         command scripting = "sleep 10"
-

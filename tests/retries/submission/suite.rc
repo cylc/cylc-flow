@@ -14,4 +14,3 @@
             retry delays = 3*0.1
         [[[remote]]]
             host = notahost
-

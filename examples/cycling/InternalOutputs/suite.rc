@@ -30,4 +30,3 @@ sleep 5
                             """
         [[[outputs]]]
             x = "foo stuff ready for [T+1]"
-

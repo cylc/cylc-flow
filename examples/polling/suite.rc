@@ -22,4 +22,3 @@ as the suite runs, filtering for the word 'poll'.
             method = at
             # stay 'submitted' for up to a minute:
             command template = 'echo "%s 1>%s 2>%s" | at now + 1 minutes'
-

@@ -98,4 +98,3 @@ if options.obliterate and len(dirs) > 0:
                     break
                 else:
                     print 'Removed empty directory:', tmp
-

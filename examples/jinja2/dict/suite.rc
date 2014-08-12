@@ -18,4 +18,3 @@
         [[[directives]]]
              -I = {{ resource[i] }}
      {% endfor %}
-

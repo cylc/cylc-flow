@@ -264,4 +264,3 @@ class message(object):
         self.print_msg( 'all outputs completed' )
         if self.mode == 'scheduler':
             self.get_proxy().set_all_internal_outputs_completed()
-

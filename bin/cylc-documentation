@@ -85,4 +85,3 @@ try:
 except OSError:
     # the command was not invoked
     raise SystemExit( 'ERROR: unable to execute: ' + command )
-

@@ -14,4 +14,3 @@ bar:submit => baz
     [[foo]]
         [[[job submission]]]
             method = "FAIL"
-

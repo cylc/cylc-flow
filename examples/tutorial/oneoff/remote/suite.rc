@@ -7,4 +7,3 @@ title = "Hello World! on a remote host"
         command scripting = "sleep 10; echo Hello World!"
         [[[remote]]]
             host = server1.niwa.co.nz
-

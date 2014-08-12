@@ -59,4 +59,3 @@ else:
     [glbl, states, fam_states] = get_stop_state_summary( suite,
             options.owner, options.host, lines )
     dump_to_stdout( states )
-

@@ -29,4 +29,3 @@
         description = "clean up temporary cylc job submission files."
         # keep temporary job submission files for one week
         command scripting = cylc util housekeeping /tmp 'cylc-.*(\d{10})-.{6}' delete 168
-

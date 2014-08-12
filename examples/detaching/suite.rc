@@ -23,4 +23,3 @@ to handle task completion messaging manually - see the Cylc User Guide."""
             # output path prefix for detached model stdout and stderr:
             PREFIX = $CYLC_TASK_LOG_ROOT
             FOO = "$HOME bar $PREFIX"
-

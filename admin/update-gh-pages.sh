@@ -91,4 +91,3 @@ $PUSH && git push cylc gh-pages
 git checkout master
 
 echo "DONE: gh-pages updated."
-

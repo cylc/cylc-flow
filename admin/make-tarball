@@ -47,4 +47,3 @@ BRANCH=$( git rev-parse --abbrev-ref HEAD )
 
 git archive $BRANCH --prefix=$RELEASE/ | gzip > $TARBALL
 ls -lh $TARBALL
-

@@ -49,4 +49,3 @@ if __name__ == '__main__':
 
     print strftime( dt2, "%Y-%m-%d %H:%M:%S" )
     print dt2.strftime( "%Y-%m-%d %H:%M:%S" ) # FAILS
-

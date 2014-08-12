@@ -62,4 +62,3 @@ MESSAGE: $MESSAGE"
 
 echo "cylc hook email-task: Sending email to $MAIL_ADDRESS"
 echo "$MAIL_BODY" | mail -s "$MAIL_SUBJECT" $MAIL_ADDRESS
-

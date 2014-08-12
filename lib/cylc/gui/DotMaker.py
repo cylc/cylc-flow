@@ -191,4 +191,3 @@ class DotMaker(object):
         img = gtk.Image()
         img.set_from_pixbuf( self.get_icon( state, is_stopped=is_stopped ) )
         return img
-

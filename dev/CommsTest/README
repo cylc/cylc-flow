@@ -33,4 +33,3 @@ bob> hostname
   waz.bar.baz
 bob> CommsTestClient.py foo.bar.baz 7766
   ***Hello bob, this is the CommsTest server on foo.bar.baz***
-  

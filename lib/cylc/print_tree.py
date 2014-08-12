@@ -76,4 +76,3 @@ def print_tree( tree, padding, use_unicode=False, prefix='', labels=None, eq=Fal
                 else:
                     joiner = ''
                 print line + joiner + str( tree[item] )
-

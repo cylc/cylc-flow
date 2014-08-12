@@ -30,4 +30,3 @@ suite_run_fail $TEST_NAME cylc run -v -v --reference-test --debug $SUITE_NAME
 grep_ok "teatime: invalid cycle point for inserted task" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-
