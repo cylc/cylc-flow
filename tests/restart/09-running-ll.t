@@ -27,15 +27,9 @@ export TEST_DIR
 # select a compute node and have that same host used by the suite.
 export CYLC_LL_TEST_TASK_HOST=$(cylc get-global-config -i '[test battery][directives]loadleveler host')
 export CYLC_LL_TEST_SITE_DIRECTIVES=$(cylc get-global-config -i '[test battery][directives][loadleveler directives]')
-if [[ -n $CYLC_LL_TEST_TASK_HOST && $CYLC_LL_TEST_TASK_HOST != 'None' ]]
-then
-    # check the host is reachable
-    if ping -c 1 $CYLC_LL_TEST_TASK_HOST 1>/dev/null 2>&1; then
-        . $TEST_BASE_PATH
-    else
-        set_test_number 0
-    fi
+if [[ -n $CYLC_LL_TEST_TASK_HOST && $CYLC_LL_TEST_TASK_HOST != 'None' ]]; then
+    . $TEST_BASE_PATH
 else
-    set_test_number 0
+    skip_all "[test battery][directives]loadleveler host: not defined"
 fi
 unset CYLC_LL_TEST_TASK_HOST

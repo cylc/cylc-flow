@@ -24,6 +24,16 @@ from . import parser_spec
 from . import util
 
 
+class TimePointDumperBoundsError(ValueError):
+
+    """An error raised when a TimePoint can't be dumped within bounds."""
+
+    MESSAGE = "Cannot dump TimePoint {0}: {1} not in bounds {2} to {3}."
+
+    def __str__(self):
+        return self.MESSAGE.format(*self.args)
+
+
 class TimePointDumper(object):
 
     """Dump TimePoint instances to strings using particular formats.
@@ -61,6 +71,7 @@ class TimePointDumper(object):
     def __init__(self, num_expanded_year_digits=2):
         self._rec_formats = {"date": [], "time": [], "time_zone": []}
         self._time_designator = parser_spec.TIME_DESIGNATOR
+        self.num_expanded_year_digits = num_expanded_year_digits
         for info, key in [
                 (parser_spec.get_date_translate_info(
                     num_expanded_year_digits),
@@ -142,6 +153,18 @@ class TimePointDumper(object):
         property_map = {}
         for property_ in properties:
             property_map[property_] = timepoint.get(property_)
+            if property_ == "century" and not self.num_expanded_year_digits:
+                min_value = 0
+                max_value = 9999
+            elif property_ == "expanded_year_digits":
+                max_value = (10 ** (self.num_expanded_year_digits + 4)) - 1
+                min_value = -max_value
+            else:
+                continue
+            value = timepoint.year
+            if not (min_value <= value <= max_value):
+                raise TimePointDumperBoundsError(
+                    "year", value, min_value, max_value)
         return expression % property_map
 
     @util.cache_results

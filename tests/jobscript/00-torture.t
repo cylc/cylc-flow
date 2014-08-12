@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE torture
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -30,8 +30,9 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-foo-jobscript-match
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.1
-sed 's/\(export CYLC_.*=\).*/\1/g' $TEST_NAME.stdout > jobfile
+sed 's/\(export CYLC_.*=\).*/\1/g' $TEST_NAME.stdout >jobfile
 echo "" >> jobfile
-sed 's/##suitename##/'$SUITE_NAME'/' $TEST_SOURCE_DIR/torture/foo.ref-jobfile > reffile
+sed 's/##suitename##/'$SUITE_NAME'/' \
+    $TEST_SOURCE_DIR/$TEST_NAME_BASE/foo.ref-jobfile >reffile
 cmp_ok jobfile reffile
 purge_suite $SUITE_NAME

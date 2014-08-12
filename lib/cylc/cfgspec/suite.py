@@ -28,11 +28,11 @@ from parsec.fileparse import parse
 from parsec.config import config
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
-from isodatetime.parsers import TimePointParser, TimeIntervalParser
+from isodatetime.parsers import TimePointParser, DurationParser
 
 "Define all legal items and values for cylc suite definition files."
 
-interval_parser = TimeIntervalParser()
+interval_parser = DurationParser()
 
 def _coerce_cycleinterval( value, keys, args ):
     """Coerce value to a cycle interval."""
@@ -40,7 +40,7 @@ def _coerce_cycleinterval( value, keys, args ):
     if value.isdigit():
         # Old runahead limit format.
         return value
-    parser = TimeIntervalParser()
+    parser = DurationParser()
     try:
         parser.parse(value)
     except ValueError:
@@ -257,7 +257,7 @@ SPEC = {
             'manual completion'               : vdr( vtype='boolean', default=False ),
             'extra log files'                 : vdr( vtype='string_list', default=[] ),
             'enable resurrection'             : vdr( vtype='boolean', default=False ),
-            'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_ID' ),
+            'work sub-directory'              : vdr( vtype='string', default='$CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME' ),
             'submission polling intervals'    : vdr( vtype='interval_minutes_list', default=[] ),
             'execution polling intervals'     : vdr( vtype='interval_minutes_list', default=[] ),
             'environment filter' : {

@@ -516,7 +516,7 @@ class pool(object):
     def reload_taskdefs(self):
         found = False
         for itask in self.get_tasks(all=True):
-            if itask.state.is_currently('submitted','running'):
+            if itask.state.is_currently('ready', 'submitted','running'):
                 # do not reload active tasks as it would be possible to
                 # get a task proxy incompatible with the running task
                 if itask.reconfigure_me:

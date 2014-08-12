@@ -29,11 +29,12 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-ps
 SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
-for DIR in $SUITE_RUN_DIR/work/t*; do
+for DIR in $SUITE_RUN_DIR/work/*/t*; do
     run_fail $TEST_NAME-$(basename $DIR) ps $(cat $DIR/file)
 done
-for FILE in $SUITE_RUN_DIR/log/job/t*.status; do
-    run_fail $TEST_NAME-$(basename $FILE) \
+N=0
+for FILE in $SUITE_RUN_DIR/log/job/*/t*/01/job.status; do
+    run_fail "$TEST_NAME-status-$((++N))" \
         ps $(awk -F= '$1 == "CYLC_JOB_PID" {print $2}' $FILE)
 done
 #-------------------------------------------------------------------------------

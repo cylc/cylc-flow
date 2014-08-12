@@ -9,7 +9,7 @@
             limit = {{q_size}} # allow testing with various queue sizes
             members = monitor, FAM
     [[dependencies]]
-        graph =  "monitor:start => FAM"
+        graph = monitor:start => FAM
 [runtime]
     [[FAM]]
         command scripting = sleep 10
@@ -17,23 +17,11 @@
         inherit = FAM
     [[monitor]]
         command scripting = """
-        sleep 5
-        while true; do
-            TASKS=$(cylc suite-state $CYLC_SUITE_NAME -S running | wc -l)
-            if ((TASKS > {{q_size}})); then
-                break
-            fi
+        N_SUCCEDED=0
+        while ((N_SUCCEDED < 12)); do
             sleep 1
-            SUCCEEDED=$(cylc suite-state $CYLC_SUITE_NAME -S succeeded | wc -l)
-            if ((SUCCEEDED==12)); then
-                break
-            fi
-            sleep 1
+            N_RUNNING=$(cylc suite-state $CYLC_SUITE_NAME -S running | wc -l)
+            ((N_RUNNING <= {{q_size}})) # check
+            N_SUCCEDED=$(cylc suite-state $CYLC_SUITE_NAME -S succeeded | wc -l)
         done
-        if ((TASKS > {{q_size}})); then
-            echo "[FAIL] more than {{q_size}} tasks running: $TASKS" >&2
-            false
-        else
-            true
-        fi
 """

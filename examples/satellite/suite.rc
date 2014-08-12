@@ -41,7 +41,7 @@ rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
     [[satsim]]
         title = simulate a satellite data feed
         description = """Generates {{N_DATASETS}} arbitrarily labelled
-datasets after random time intervals."""
+datasets after random durations."""
         pre-command scripting = mkdir -p {{DATA_IN_DIR}}
         command scripting = """
 COUNT=0

@@ -1257,7 +1257,10 @@ class task( object ):
             self.log( 'WARNING', "'" + self.job_sub_method_name + "' job submission does not support polling" )
             return
 
-        cmd = "cylc get-job-status %(status_file)s %(job_sys)s %(job_id)s" % {
+        cmd_tmpl = ("cylc get-job-status %(task_id)s %(status_file)s " +
+                    "%(job_sys)s %(job_id)s")
+        cmd = cmd_tmpl % {
+            "task_id": self.id,
             "status_file": job_sub_method.jobfile_path + ".status",
             "job_sys": job_sub_method.__class__.__name__,
             "job_id": self.submit_method_id}
