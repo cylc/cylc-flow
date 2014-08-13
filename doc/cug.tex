@@ -3696,8 +3696,8 @@ without affecting the order of inheritance of runtime properties:
 The linear precedence order of ancestors is computed for each namespace
 using the C3 algorithm. Then any runtime items that are explicitly
 configured in the suite definition are ``inherited'' up the linearized
-hierachy for each task, starting at the root namespace: if a particular
-item is defined at multiple levels in the hiearchy, the level nearest
+hierarchy for each task, starting at the root namespace: if a particular
+item is defined at multiple levels in the hierarchy, the level nearest
 the final task namespace takes precedence.  Finally, root namespace
 defaults are applied for every item that has not been configured in the
 inheritance process (this is more efficient than carrying the full dense
@@ -4458,7 +4458,7 @@ completion messaging:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        manual completion = False # this is a detaching task
+        manual completion = True # this is a detaching task
 \end{lstlisting}
 
 The cylc messaging commands are called like this:
@@ -4476,7 +4476,7 @@ fi
 \end{lstlisting}
 They read environment variables that identify the calling task and the
 target suite, so the task execution environment must be propagated to
-the deatched process.
+the detached process.
 
 One way to handle this is to write a {\em task wrapper} that modifies a
 copy of the detaching native job scripts, on the fly, to insert
@@ -5134,7 +5134,7 @@ that is not possible, run gcylc on the suite host.
 \label{ConnectionAuthentication}
 
 All Pyro connections to a running suite (task messaging and
-user-invoked commands) must authenticate with an arbitary single line of
+user-invoked commands) must authenticate with an arbitrary single line of
 text in a file called \lstinline=passphrase=, which will be found and
 used automatically if installed properly - see below.  A secure MD5
 checksum, not the raw passphrase, is passed across the network. A random
@@ -5524,12 +5524,12 @@ environment variables (communication of information from one task to
 another normally takes place via the filesystem, i.e.\ the input/output
 file relationships embodied in inter-task dependencies). Variables (and
 any other runtime settings) may be broadcast to all subsequent tasks,
-or targetted specifically at a specific task, all subsequent tasks with a
+or targeted specifically at a specific task, all subsequent tasks with a
 given name, or all tasks with a given cycle point; see broadcast command help
 for details.
 
-Broadcast settings targetted at a specific task ID or cycle point expire and
-are forgotten as the suite moves on. Untargetted variables and those
+Broadcast settings targeted at a specific task ID or cycle point expire and
+are forgotten as the suite moves on. Un-targeted variables and those
 targetted at a task name persist throughout the suite run, even across
 restarts, unless manually cleared using the broadcast command - and so
 should be used sparingly.
@@ -5927,7 +5927,7 @@ The following topics have yet to be documented in detail.
         along with running the example suites.
 
     \item Automatic state dump backups, named pre-intervention state dumps:
-        these are used to resetart a suite from a previous state of operation.
+        these are used to restart a suite from a previous state of operation.
         They are mentioned in the Tutorial (\ref{Tutorial}). Watch the
         suite log after intervening in a suite, to get the filename.
 
@@ -5948,7 +5948,7 @@ The following topics have yet to be documented in detail.
     %    within limits, instance of an upstream task
 
     \item Sub-suites: to run another suite inside a task, just invoke the
-        subsuite, with appropriate start and end cycle points (probably a
+        sub-suite, with appropriate start and end cycle points (probably a
         single cycle point), in the host task's command scripting:
 
 \lstset{language=suiterc}
@@ -6015,7 +6015,7 @@ advantages to fine-graining:
 
 \end{myitemize}
 
-\subsection{Make Tasks Rerunnable}
+\subsection{Make Tasks Re-runnable}
 
 It should be possible to rerun a task by simply resubmitting it for the
 same cycle point. In other words, failure at any point during execution
@@ -6023,9 +6023,9 @@ of a task should not render a rerun impossible by corrupting the state
 of some internal-use file, or whatever. It is difficult to overstate the
 usefulness of being able to rerun the same task multiple times,
 either outside of the suite with \lstinline=cylc submit=, or by
-retriggering it within the running suite, when debugging a problem.
+re-triggering it within the running suite, when debugging a problem.
 
-\subsection{Make Models Rerunnable}
+\subsection{Make Models Re-runnable}
 
 If a warm-cycled model simply overwrites its restart files in each
 run, the only cycle point that can subsequently run is the next one. This
@@ -6083,7 +6083,7 @@ file rather than hard wiring it into the task implementations.
 
 Tasks can be added to a suite to move files from A's output directory to
 B's input directory, and so on.  Many connector tasks may be able
-to call the same file transfer script or command, with task-dependendent
+to call the same file transfer script or command, with task-dependent
 input parameters defined in the suite.rc file.
 
 \item {\bf Dynamic Configuration Of I/O Paths}
@@ -6409,9 +6409,10 @@ local nesting level inside large blocks.
              a short item = value1
     a very very long item = value2
 \end{lstlisting}
-    This does not show nesting level clearly, and long items push
-    everything off to the right. The following may be acceptable
-    though as it preserves proper indentation:
+This does not show nesting level clearly, and long items push everything off to
+the right. The following layout does preserves proper indentation, but the
+whole block will need reformatting if an even longer item is added (or the
+current longest one removed or renamed) in the future:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [SECTION]
@@ -6594,7 +6595,7 @@ Graph lines can also be split up without line breaks, like this:
 The graph view in the gcylc GUI shows the structure of the suite as it
 evolves. It can work well even for large suites, but be aware that the
 graphviz layout engine has to do a new global layout every time a task
-proxy appears to disappears from the suite. The following may help
+proxy appears in or disappears from the task pool. The following may help
 mitigate any jumping layout problems:
 
 \begin{myitemize}
@@ -6651,6 +6652,11 @@ mitigate any jumping layout problems:
     run databases; polling and killing of real task jobs; polling as
     task communications option.
 
+    \item {\bf cylc-6} - specification of all date-times and cycling
+    workflows via the ISO8601 date-times, durations, and recurrence
+    expressions; integer cycling; a multi-process pool to execute job
+    submissions, event handlers, and poll and kill commands.
+
 \end{myitemize}
 
 \section{Pyro}
@@ -6662,7 +6668,7 @@ oriented Remote Procedure Call technology developed by Irmen de Jong.
 Earlier versions of cylc used the Pyro Nameserver to marshal
 communication between client programs (tasks, commands, viewers, etc.)
 and their target suites. This worked well, but in principle it
-provided a route for one suite or user on the subnet to bring down
+provided a route for one suite or user on the network to bring down
 all running suites by killing the nameserver. Consequently cylc now
 uses Pyro simply as a lightweight object oriented wrapper for
 direct network socket communication between client programs and their
