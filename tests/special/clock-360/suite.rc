@@ -3,7 +3,7 @@
     UTC mode = True
     [[event hooks]]
         abort on timeout = True
-        timeout = 0.5
+        timeout = PT0.5M
 [scheduling]
     initial cycle time = 20130101T00
     final cycle time   = 20150101T00

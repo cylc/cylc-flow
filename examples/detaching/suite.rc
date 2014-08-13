@@ -10,7 +10,7 @@ to handle task completion messaging manually - see the Cylc User Guide."""
     [[special tasks]]
         sequential = model
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[T00,T06,T12,T18]]]
         graph = "model"
 
 [runtime]

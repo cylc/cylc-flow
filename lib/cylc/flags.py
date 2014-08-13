@@ -38,6 +38,3 @@ debug = False
 
 # utc mode
 utc = False
-
-# Backwards compatible cycling - allow start-up tasks, async graphs, etc.
-backwards_compat_cycling = False

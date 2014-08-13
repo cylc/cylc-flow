@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cycling.loader import get_interval, get_interval_cls
-import flags
+from syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
 import re
 
 # Previous node format.
@@ -99,8 +99,6 @@ class graphnode( object ):
         self.offset_is_irregular = False
         self.is_absolute = False
         
-        is_prev_cycling_format = False
-
         m = re.match( NODE_ISO_ICT_RE, node )
         if m:
             # node looks like foo[^], foo[^-P4D], foo[^]:fail, etc.
@@ -109,6 +107,10 @@ class graphnode( object ):
             self.offset_is_from_ict = True
             sign = ""
             prev_format = False
+            # Can't always set syntax here, as we use [^] for backwards comp.
+            if offset_string:
+                set_syntax_version(
+                        VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
         else:
             m = re.match( NODE_ISO_RE, node )
             if m:
@@ -116,15 +118,21 @@ class graphnode( object ):
                 name, offset_string, outp = m.groups()
                 sign = ""
                 prev_format = False
+                if offset_string:
+                    set_syntax_version(
+                        VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
             else:
                 m = re.match( NODE_PREV_RE, node )
                 if not m:
                     raise GraphNodeError( 'Illegal graph node: ' + node )
-                is_prev_cycling_format = True
                 # node looks like foo[T-6], foo[T-12]:fail...
                 name, sign, offset_string, outp = m.groups()
                 offset_string = sign + offset_string
                 prev_format = True
+                set_syntax_version(
+                    VERSION_PREV,
+                    "graphnode %s: old-style offset" % node
+                )
 
         if outp:
             self.special_output = True
@@ -155,8 +163,3 @@ class graphnode( object ):
         else:
             self.intercycle = False
             self.offset_string = None
-        if not flags.backwards_compat_cycling and is_prev_cycling_format:
-            raise GraphNodeError(
-                'Illegal graph offset (new-style cycling): ' +
-                '%s should be %s' % (offset_string, self.offset_string)
-            )

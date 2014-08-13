@@ -1,7 +1,7 @@
 [cylc]
     UTC mode = True
     [[event hooks]]
-        timeout = 0.2
+        timeout = PT0.2M
         abort on timeout = True
 [scheduling]
     initial cycle time = 2010-01-01

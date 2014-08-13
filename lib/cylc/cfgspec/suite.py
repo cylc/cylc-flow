@@ -23,9 +23,11 @@ from parsec.validate import (
     coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
     IllegalValueError
 )
+from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
+from cylc.syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
@@ -39,19 +41,25 @@ def _coerce_cycleinterval( value, keys, args ):
     value = _strip_and_unquote( keys, value )
     if value.isdigit():
         # Old runahead limit format.
+        set_syntax_version(VERSION_PREV,
+                           "integer interval for %s" % itemstr(
+                               keys[:-1], keys[-1], value))
         return value
     parser = DurationParser()
     try:
         parser.parse(value)
     except ValueError:
         raise IllegalValueError("interval", keys, value)
+    set_syntax_version(VERSION_NEW,
+                       "ISO 8601 interval for %s" % itemstr(
+                           keys[:-1], keys[-1], value))
     return value
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle point."""
     value = _strip_and_unquote( keys, value )
     if re.match(r"\d+$", value):
-        # Old date-time cycle point format, or integer format.
+        # Could be an old date-time cycle point format, or integer format.
         return value
     if value.startswith("-") or value.startswith("+"):
         # We don't know the value given for num expanded year digits...
@@ -68,12 +76,19 @@ def _coerce_cycletime( value, keys, args ):
         parser.parse(value)
     except ValueError:
         raise IllegalValueError("cycle point", keys, value)
+    set_syntax_version(VERSION_NEW,
+                       "cycle point: %s" % itemstr(
+                           keys[:-1], keys[-1], value))
     return value
 
 
 def _coerce_cycletime_format( value, keys, args ):
     """Coerce value to a cycle point format (either CCYYMM... or %Y%m...)."""
     value = _strip_and_unquote( keys, value )
+    set_syntax_version(VERSION_NEW,
+                       "use of [cylc]cycle point format",
+                       exc_class=IllegalValueError,
+                       exc_args=("cycle point format", keys, value))
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -105,6 +120,10 @@ def _coerce_cycletime_format( value, keys, args ):
 def _coerce_cycletime_time_zone( value, keys, args ):
     """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
     value = _strip_and_unquote( keys, value )
+    set_syntax_version(VERSION_NEW,
+                       "use of [cylc]cycle point time zone format",
+                       exc_class=IllegalValueError,
+                       exc_args=("cycle point time zone format", keys, value))
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -129,13 +148,21 @@ def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote( keys, value )
     try:
-        return float(value) * back_comp_unit_factor
+        backwards_compat_value = float(value) * back_comp_unit_factor
     except (TypeError, ValueError):
         pass
+    else:
+        set_syntax_version(VERSION_PREV,
+                           "integer interval: %s" % itemstr(
+                               keys[:-1], keys[-1], value))
+        return backwards_compat_value
     try:
         interval = interval_parser.parse(value)
     except ValueError:
         raise IllegalValueError("ISO 8601 interval", keys, value)
+    set_syntax_version(VERSION_NEW,
+                       "ISO 8601 interval: %s" % itemstr(
+                           keys[:-1], keys[-1], value))
     days, seconds = interval.get_days_and_seconds()
     seconds += days * Calendar.default().SECONDS_IN_DAY
     return seconds

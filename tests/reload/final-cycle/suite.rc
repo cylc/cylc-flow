@@ -5,7 +5,7 @@ description = """change final cycle."""
    UTC mode = True
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 1.0 # minutes
+       live mode suite timeout = PT1M
 
 [scheduling]
     initial cycle time = 20100101T00

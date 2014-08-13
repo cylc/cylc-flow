@@ -3,7 +3,7 @@
     UTC mode = {{UTC_MODE}}
     [[event hooks]]
         abort on timeout = True
-        timeout = 0.5
+        timeout = {{TIMEOUT}}
 [scheduling]
     initial cycle time = {{START}}
     final cycle time   = {{START}}

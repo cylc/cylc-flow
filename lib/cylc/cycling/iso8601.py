@@ -24,6 +24,7 @@ from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, DurationParser
 from isodatetime.timezone import (
     get_local_time_zone, get_local_time_zone_format)
+from cylc.syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, PointParsingError,
@@ -46,6 +47,8 @@ OLD_STRPTIME_FORMATS_BY_LENGTH = {
 DATE_TIME_FORMAT = "CCYYMMDDThhmm"
 EXPANDED_DATE_TIME_FORMAT = "+XCCYYMMDDThhmm"
 PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
+PREV_DATE_TIME_REC = re.compile("^\d{10}$")
+NEW_DATE_TIME_REC = re.compile("T")
 
 
 class SuiteSpecifics(object):
@@ -502,40 +505,80 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def get_backwards_compat_mode():
-    """Return whether we are in the old cycling syntax regime."""
-    return SuiteSpecifics.DUMP_FORMAT == PREV_DATE_TIME_FORMAT
-
-
 def init_from_cfg(cfg):
     """Initialise global variables (yuk) based on the configuration."""
     num_expanded_year_digits = cfg['cylc'][
         'cycle point num expanded year digits']
     time_zone = cfg['cylc']['cycle point time zone']
     custom_dump_format = cfg['cylc']['cycle point format']
-    initial_cycle_time = cfg['scheduling']['initial cycle point']
-    final_cycle_time = cfg['scheduling']['final cycle point']
+    initial_cycle_point = cfg['scheduling']['initial cycle point']
+    final_cycle_point = cfg['scheduling']['final cycle point']
     assume_utc = cfg['cylc']['UTC mode']
     cycling_mode = cfg['scheduling']['cycling mode']
-    test_cycle_time = initial_cycle_time
-    if initial_cycle_time is None:
-        test_cycle_time = final_cycle_time
-    if test_cycle_time is not None and re.match("\d+$", test_cycle_time):
-        dep_sections = list(cfg['scheduling']['dependencies'])
-        while dep_sections:
-            dep_section = dep_sections.pop(0)
-            if re.search("(?![^(]+\)),", dep_section):
-                dep_sections.extend([i.strip() for i in
-                                     re.split("(?![^(]+\)),", dep_section)])
-                continue
-            if ((dep_section == "graph" and
-                    cfg['scheduling']['dependencies']['graph']) or
-                    convert_old_cycler_syntax(dep_section,
-                                              only_detect_old=True)):
-                # Old cycling syntax is present.
+
+    # Detect (date-time) previous-format cycle point usage.
+    has_prev_format_cycle_point = (
+        (initial_cycle_point is not None and
+         PREV_DATE_TIME_REC.search(initial_cycle_point)) or
+        (final_cycle_point is not None and
+         PREV_DATE_TIME_REC.search(final_cycle_point))
+    )
+    if has_prev_format_cycle_point:
+        set_syntax_version(
+            VERSION_PREV,
+            "initial/final cycle point format: CCYYMMDDhh"
+        )
+
+    # Detect (date-time) ISO 8601-format cycle point usage.
+    has_new_format_cycle_point = (
+        (initial_cycle_point is not None and
+         NEW_DATE_TIME_REC.search(initial_cycle_point)) or
+        (final_cycle_point is not None and
+         NEW_DATE_TIME_REC.search(final_cycle_point))
+    )
+    if has_new_format_cycle_point:
+        set_syntax_version(
+            VERSION_NEW,
+            "initial/final cycle point format: non-numeric (ISO 8601?)"
+        )
+
+    # Loop over all dependency sub-sections and detect cycler syntax versions.
+    dep_sections = list(cfg['scheduling']['dependencies'])
+    while dep_sections:
+        dep_section = dep_sections.pop(0)
+        if re.search("(?![^(]+\)),", dep_section):
+            dep_sections.extend([i.strip() for i in
+                                    re.split("(?![^(]+\)),", dep_section)])
+            continue
+        if dep_section == "graph":
+            if cfg['scheduling']['dependencies']['graph']:
+                # Using async graph in date-time cycling.
+                set_syntax_version(
+                    VERSION_PREV,
+                    "[scheduling][[dependencies]]graph: mixed with " +
+                    "date-time cycling"
+                )
                 custom_dump_format = PREV_DATE_TIME_FORMAT
                 num_expanded_year_digits = 0
-                break
+            continue
+        if convert_old_cycler_syntax(dep_section,
+                                     only_detect_old=True):
+            # Detected prev-format (old) syntax.
+            set_syntax_version(
+                VERSION_PREV,
+                "[scheduling][[dependencies]][[[%s]]]: old-style cycling" %
+                dep_section
+            )
+            custom_dump_format = PREV_DATE_TIME_FORMAT
+            num_expanded_year_digits = 0
+        else:
+            # Detected new-style syntax.
+            set_syntax_version(
+                VERSION_NEW,
+                ("[scheduling][[dependencies]][[[%s]]]: " % dep_section) +
+                "ISO 8601-style cycling"
+            )
+
     init(
         num_expanded_year_digits=num_expanded_year_digits,
         custom_dump_format=custom_dump_format,
@@ -642,6 +685,7 @@ def point_parse(point_string):
 def _point_parse(point_string):
     """Parse a point_string into a proper TimePoint object."""
     if "%" in SuiteSpecifics.DUMP_FORMAT:
+        # Includes prev-format point strings.
         try:
             point = SuiteSpecifics.point_parser.strptime(
                 point_string, SuiteSpecifics.DUMP_FORMAT)
@@ -650,6 +694,9 @@ def _point_parse(point_string):
             if strptime_string is not None:
                 return SuiteSpecifics.point_parser.strptime(
                     point_string, strptime_string)
+        else:
+            return point
+    # Attempt to parse it in ISO 8601 format then...
     try:
         point = SuiteSpecifics.point_parser.parse(point_string)  # Fail?
         return point
@@ -657,6 +704,10 @@ def _point_parse(point_string):
         strptime_string = _get_old_strptime_format(point_string)
         if strptime_string is None:
             raise
+        set_syntax_version(
+            VERSION_PREV,
+            "non-ISO-8601-compatible cycle point: %s" % point_string
+        )
         return SuiteSpecifics.point_parser.strptime(
             point_string, strptime_string)
 

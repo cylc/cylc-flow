@@ -23,8 +23,7 @@ from cylc.cycling.loader import (get_point, get_point_relative,
                                  get_interval, get_interval_cls,
                                  get_sequence, get_sequence_cls,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
-                                 ISO8601_CYCLING_TYPE,
-                                 get_backwards_compat_mode)
+                                 ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
@@ -40,6 +39,8 @@ import TaskID
 from C3MRO import C3
 from parsec.OrderedDict import OrderedDict
 import flags
+from syntax_flags import (
+    SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -269,9 +270,6 @@ class config( object ):
         if self.start_point is not None:
             self.start_point.standardise()
 
-        flags.backwards_compat_cycling = (
-            get_backwards_compat_mode())
-
         # [special tasks]: parse clock-offsets, and replace families with members
         if flags.verbose:
             print "Parsing [special tasks]"
@@ -295,6 +293,7 @@ class config( object ):
                             Calendar.MODE_GREGORIAN
                         )
                     name, offset_string = m.groups()
+                    offset_converted_from_prev = False
                     try:
                         float(offset_string)
                     except ValueError:
@@ -302,15 +301,26 @@ class config( object ):
                         pass
                     else:
                         # Backward-compatibility for a raw float number of hours.
+                        set_syntax_version(
+                            VERSION_PREV,
+                            "clock-triggered=%s: integer offset" % item
+                        )
                         if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
                             seconds = int(float(offset_string)*3600)
                             offset_string = "PT%sS" % seconds
+                        offset_converted_from_prev = True
                     try:
                         offset_interval = get_interval(offset_string).standardise()
                     except IntervalParsingError as exc:
                         raise SuiteConfigError(
                             "ERROR: Illegal clock-trigger spec: %s" % offset_string
                         )
+                    else:
+                        if not offset_converted_from_prev:
+                            set_syntax_version(
+                                VERSION_NEW,
+                                "clock-triggered=%s: ISO 8601 offset" % item
+                            )
                     extn = "(" + offset_string + ")"
 
                 # Replace family names with members.
@@ -1324,7 +1334,7 @@ class config( object ):
 
             if not my_taskdef_node.is_absolute:
                 if offset_string:
-                    if flags.backwards_compat_cycling:
+                    if SyntaxVersion.VERSION == VERSION_PREV:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
                         if offset_string in offset_seq_map:
                             seq_offset = offset_seq_map[offset_string]
@@ -1621,6 +1631,11 @@ class config( object ):
             print "Parsing the dependency graph"
 
         start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
+        if start_up_tasks:
+            set_syntax_version(
+                VERSION_PREV,
+                "start-up tasks: %s" % ",".join(start_up_tasks)
+            )
         back_comp_initial_tasks = list(start_up_tasks)
 
         self.graph_found = False
@@ -1726,17 +1741,6 @@ class config( object ):
                 section, total_graph_text,
                 section_seq_map=section_seq_map, tasks_to_prune=[]
             )
-        if not flags.backwards_compat_cycling:
-            if async_graph and has_non_async_graphs:
-                raise SuiteConfigError(
-                    "Error: mixed async & cycling graphs is not allowed in " +
-                    "new-style cycling. Use 'R1...' tasks instead."
-                )
-            if back_comp_initial_tasks:
-                raise SuiteConfigError(
-                    "Error: start-up tasks should be 'R1...' tasks in " +
-                    "new-style cycling"
-                )
 
     def parse_graph( self, section, graph, section_seq_map=None,
                      tasks_to_prune=None, return_all_dependencies=False ):
