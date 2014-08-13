@@ -694,7 +694,7 @@ cylc releases can be installed in parallel as suggested in the
 
 The problem with the word ``cycle'' is that it is often used to refer to a
 series of times (e.g. ``an hourly cycle'') as well as a particular time
-(e.g. ``current cycle'' or ``current cycle time''). Here, we use
+(e.g. ``current cycle'' or ``current cycle point''). Here, we use
 ``cycle point'' to refer to a particular (usually date/time) item. If a task
 has an hourly date-time cycle that starts at 2014-01-01T00 and ends at
 2014-01-02T00, the first ``cycle point'' will be 2014-01-01T01, the second
@@ -1025,7 +1025,7 @@ Run the suite at the terminal with the \lstinline=cylc run= command:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --no-detach tut.oneoff.basic
+shell$ cylc run --debug tut.oneoff.basic
 ************************************************************************
 *              The Cylc Suite Engine [5.4.13-113-g89224]               *
 *             Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
@@ -1034,15 +1034,15 @@ shell$ cylc run --no-detach tut.oneoff.basic
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-SUBMIT No.1(1,1): ( perl -e "setpgrp(0,0);exec(@ARGV)" $HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1 </dev/null 1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out 2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err & echo $!; wait )
+SUBMIT No.1(1,1): ( perl -e "setpgrp(0,0);exec(@ARGV)"
+$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1 </dev/null
+  1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out
+  2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err & echo $!; wait )
 Stopping: 
   + all cycling tasks have spawned past the final cycle 1
 Requesting Job Submission stop - ignoring remaining items (currently 0)
 Requesting Event Handlers stop - after remaining items (currently 0)
 Requesting Poll & Kill Commands stop - after remaining items (currently 0)
-Thread-4 exit (Job Submission)
-Thread-2 exit (Event Handlers)
-Thread-3 exit (Poll & Kill Commands)
 Suite shutting down at 2014-06-04T10:18:27.142923Z
 DONE
 \end{lstlisting}
@@ -1148,7 +1148,7 @@ If you run the suite (first check that the {\em at daemon}
 to stdout:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --no-detach tut.oneoff.basic 
+shell$ cylc run --debug tut.oneoff.basic 
 ************************************************************************
 *           The Cylc Suite Engine [5.4.13-113-g89224-dirty]            *
 *             Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
@@ -1157,15 +1157,11 @@ shell$ cylc run --no-detach tut.oneoff.basic
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-SUBMIT No.1(1,1): (echo "perl -e \"setpgrp(0,0);exec(@ARGV)\" $HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1 1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out 2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err" | at now)
-Stopping: 
-  + all cycling tasks have spawned past the final cycle 1
-Requesting Job Submission stop - ignoring remaining items (currently 0)
-Requesting Event Handlers stop - after remaining items (currently 0)
-Requesting Poll & Kill Commands stop - after remaining items (currently 0)
-Thread-4 exit (Job Submission)
-Thread-2 exit (Event Handlers)
-Thread-3 exit (Poll & Kill Commands)
+SUBMIT No.1(1,1): (echo "perl -e \"setpgrp(0,0);exec(@ARGV)\"
+ $HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1
+  1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out
+  2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err" | at now)
+Stopping: all cycling tasks have spawned past the final cycle 1
 Suite shutting down at 2014-06-04T10:48:14.944483Z
 DONE
 \end{lstlisting}
@@ -1304,7 +1300,7 @@ to run there by the configured job submission method:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --no-detach tut.oneoff.remote
+shell$ cylc run --debug tut.oneoff.remote
 # ...
 1 task ready
   * hello.1 submitting now
@@ -1958,8 +1954,8 @@ FILE: /home/hilary/cylc/examples/admin/suite.rc
 
 FILE: /home/hilary/cylc/examples/admin/bin/A.sh
    (7): cylc checkvars -c OUTPUT_DIR RUNNING_DIR
-   (28): touch $OUTPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_TIME}.nc
-   (29): touch $OUTPUT_DIR/precipitation-${CYLC_TASK_CYCLE_TIME}.nc
+   (28): touch $OUTPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_POINT}.nc
+   (29): touch $OUTPUT_DIR/precipitation-${CYLC_TASK_CYCLE_POINT}.nc
 
 #...
 \end{lstlisting}
@@ -3587,11 +3583,11 @@ Namespace names may contain letters, digits, underscores, and hyphens.
 %separates suite groups and names, e.g.\
 %my\_suites.test.foo).
 
-Note that {\em task names need not be hardwired into task
-implementations} because task and suite identity can be extracted
-portably from the task execution environment supplied by cylc
-(\ref{TaskExecutionEnvironment}) - then to rename a task you
-can just change its name in the suite definition.
+Note that {\em task names need not be hardwired into task implementations}
+because task and suite identity can be extracted portably from the task
+execution environment supplied by the suite daemon
+(\ref{TaskExecutionEnvironment}) - then to rename a task you can just change
+its name in the suite definition.
 
 \subsubsection{Root - Runtime Defaults}
 
@@ -3707,7 +3703,7 @@ namespace structure through from root from the beginning).
 \label{TaskExecutionEnvironment}
 
 The task execution environment contains suite and task identity
-variables provided by cylc, and user-defined environment variables.
+variables provided by the suite daemon, and user-defined environment variables.
 The environment is explicitly exported (by the task job script) prior to
 executing task command scripting (see~\ref{TaskJobSubmission}).
 
@@ -3783,12 +3779,12 @@ must use a different name for the parent variable:
 
 \paragraph{Suite And Task Identity Variables}
 
-The task identity variables provided to tasks by cylc are:
+The task identity variables provided to tasks by the suite daemon include:
 \lstset{language=bash}
 \begin{lstlisting}
 $CYLC_TASK_ID                    # X.20110511T1800Z (e.g.)
 $CYLC_TASK_NAME                  # X
-$CYLC_TASK_CYCLE_TIME            # 20110511T1800Z
+$CYLC_TASK_CYCLE_POINT            # 20110511T1800Z
 $CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.20110511T1800Z.1
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
 $CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
@@ -3833,8 +3829,8 @@ spaces.
 Initial and final cycle points, if supplied via the suite.rc file or the
 command line, are passed to task execution environments as:
 \begin{lstlisting}
-$CYLC_SUITE_INITIAL_CYCLE_TIME
-$CYLC_SUITE_FINAL_CYCLE_TIME
+$CYLC_SUITE_INITIAL_CYCLE_POINT
+$CYLC_SUITE_FINAL_CYCLE_POINT
 \end{lstlisting}
 Tasks can use these to determine whether or not they are running
 in the first or final cycles.
@@ -4379,7 +4375,7 @@ The ``outputs'' example is a self-contained suite that illustrates this:
 \lstinputlisting{../examples/outputs/suite.rc}
 Compare the registered message string, which uses \lstinline=[T]= as
 a placeholder for the cycle point, with the actual message emitted by the
-task, which uses \lstinline=$CYLC_TASK_CYCLE_TIME=. The registered
+task, which uses \lstinline=$CYLC_TASK_CYCLE_POINT=. The registered
 message string is held in the suite daemon to be matched with
 incoming task messages - it cannot contain shell variables because
 is never interpreted by the shell.
@@ -4433,8 +4429,8 @@ if [[ $? != 0 ]]; then  # so this will never be reached.
 fi
 \end{lstlisting}
 If critical errors are not reported in this way task failures will still
-be detected and logged by cylc, but you may have to examine task logs to
-determine what the problem was.
+be detected and logged by the suite daemon, but you may have to examine task
+logs to determine what the problem was.
 
 \subsection{Detaching Tasks}
 \label{DetachingTasks}
@@ -4550,8 +4546,8 @@ expressions above) to do the job.
 
 For the requirements a command, script, or program, must fulfill in order
 to function as a cylc task, see~\ref{TaskImplementation}.
-This section explains how tasks are submitted by cylc when they are ready to
-run, and how to define new task job submission methods.
+This section explains how tasks are submitted by the suite daemon when they are
+ready to run, and how to define new task job submission methods.
 
 \subsection{Task Job Scripts}
 \label{JobScripts}
@@ -4577,7 +4573,7 @@ specific tasks or families:
 
 As shown in the Tutorial (\ref{RunningSuitesCLI}) job scripts are
 saved to the suite run directory; the commands used to submit them are
-printed to stdout by cylc; and they can be printed with the
+printed to stdout by cylc in debug mode; and they can be printed with the
 \lstinline=cylc log= command or new ones generated and printed with the
 \lstinline=cylc jobscript= command.  Take a look at one to see exactly
 how cylc wraps and runs your tasks.
@@ -5393,7 +5389,7 @@ Event handlers can be located in the suite bin directory, otherwise
 it is up to you to ensure their location is in \lstinline=$PATH=
 (in the shell in which cylc runs, on the suite host).
 
-Task event handlers are passed the following arguments by cylc:
+Task event handlers are passed the following arguments by the suite daemon:
 
 \begin{lstlisting}
 <task-event-handler> EVENT SUITE TASKID MESSAGE
@@ -5435,7 +5431,7 @@ suite stdout.
     initial cycle point = 20100808T00
     final cycle point = 20100810T00
     [[dependencies]]
-        [[[0]]]
+        [[[T00]]]
             graph = "foo => bar"
 [runtime]
     [[foo]]
@@ -5446,7 +5442,7 @@ sleep 10
 # retry twice and succeed on the final try,
 # but fail definitively in the final cycle.
 if (( CYLC_TASK_TRY_NUMBER <= 2 )) || \
-    (( CYLC_TASK_CYCLE_TIME == CYLC_SUITE_FINAL_CYCLE_TIME )); then
+    (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_FINAL_CYCLE_POINT )); then
     echo ABORTING
     /bin/false
 fi"""
@@ -5550,11 +5546,11 @@ or,
 An initial cycle given on the command line will override one in the
 suite.rc file.
 
-\subsubsection[CYLC\_SUITE\_INITIAL\_CYCLE\_TIME]{The Environment Variable CYLC\_SUITE\_INITIAL\_CYCLE\_TIME}
+\subsubsection[CYLC\_SUITE\_INITIAL\_CYCLE\_POINT]{The Environment Variable CYLC\_SUITE\_INITIAL\_CYCLE\_POINT}
 
 In the case of {\em cold starts only} the initial cycle point will also
 be passed through to task execution environments as
-\lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME=.  The intended use of this
+\lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT=.  The intended use of this
 variable is to allow tasks to determine whether they are running in the
 initial cold-start cycle point (when different behaviour may be required) or
 in a normal mid-run cycle point. {\em This is not done for warm starts}
@@ -5563,7 +5559,7 @@ reference a particular previous suite state but it does assume that a
 previous cycle point (for each task) has been run and completed entirely.
 It follows that in a warm start tasks are really in a normal mid-run
 cycle point, and because no actual previous state is referenced
-\lstinline=$CYLC_SUITE_INITIAL_CYCLE_TIME= gets the value
+\lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT= gets the value
 \lstinline=None=. After a cold-start, however, the value of the
 environment variable does persist across restarts because the original
 cold-start cycle point is stored in suite state dump files.
@@ -5956,7 +5952,7 @@ The following topics have yet to be documented in detail.
 [runtime]
     [[foo]]
         command scripting = \
-        "cylc run SUITE $CYLC_TASK_CYCLE_TIME --until=$CYLC_TASK_CYCLE_TIME"
+        "cylc run SUITE $CYLC_TASK_CYCLE_POINT --until=$CYLC_TASK_CYCLE_POINT"
 \end{lstlisting}
 
 \end{myitemize}
