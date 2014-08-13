@@ -481,7 +481,7 @@ therefore, presumably, all earlier Ubuntu releases.  Attempting to run
 a suite with Pyro 3.9 or earlier installed results in the following
 Python traceback:
 
-\lstset{language=Python}
+\lstset{language=transcript}
 \begin{lstlisting}
 Traceback (most recent call last):
  File "/home/hilary/cylc/bin/_run", line 232, in <module>
@@ -1938,9 +1938,8 @@ shell$ cylc monitor --user=SUITE_OWNER --port=SUITE_PORT SUITE_NAME
 \end{lstlisting}
 to view the progress of their suite.
 
-Other suite-connecting commands work in the same way too; see~\ref{RemoteControl}.
-
-
+Other suite-connecting commands work in the same way too;
+see~\ref{RemoteControl}.
 
 \subsection{Searching A Suite}
 
@@ -2075,7 +2074,7 @@ shell$ cylc db help
 CATEGORY: db|database - Suite name registration, copying, deletion, etc.
 
 Suite name registrations are held in a simple database $HOME/.cylc/REGDB
-shell$ cat $HOME/.cylc/REGDB/my.suite
+$ cat $HOME/.cylc/REGDB/my.suite
    title=my suite title
    path=/path/to/my/suite
 
@@ -2099,14 +2098,17 @@ just use suite group names as source and/or target for operations, as
 appropriate.  For instance, if a group \lstinline=foo.bar= contains the
 suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.qux=, you can copy
 a single suite like this:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc copy foo.bar.baz boo $HOME/suites
 \end{lstlisting}
 (resulting in a new suite \lstinline=boo=); or the group like this:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc copy foo.bar boo $HOME/suites
 \end{lstlisting}
 (resulting in new suites \lstinline=boo.baz= and \lstinline=boo.qux=); or the group like this:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc copy foo boo $HOME/suites
 \end{lstlisting}
@@ -2285,6 +2287,7 @@ e.g.:
 
 Cylc's native file inclusion mechanism supports optional inlined
 editing:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc edit --inline SUITE
 \end{lstlisting}
@@ -2305,6 +2308,7 @@ Cylc comes with a syntax file to configure suite.rc syntax
 highlighting and section folding in the {\em vim} editor, as shown in
 Figure~\ref{fig-cylc-vim}. We also have an {\em emacs} font-lock mode,
 and syntax files for the {\em gedit} and {\em kate} editors:
+\lstset{language=transcript}
 \begin{lstlisting}
 $CYLC_DIR/conf/cylc.vim     # vim
 $CYLC_DIR/conf/cylc-mode.el # emacs
@@ -2352,6 +2356,7 @@ Suite.rc Reference} (\ref{SuiteRCReference}).
 
 The validator reports the line numbers of detected errors. Here's an
 example showing a section heading with a missing right bracket:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc validate my.suite
     [[special tasks]
@@ -4453,7 +4458,7 @@ completion messaging:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        manual completion = False # this is a detching task
+        manual completion = False # this is a detaching task
 \end{lstlisting}
 
 The cylc messaging commands are called like this:
@@ -4540,32 +4545,13 @@ expressions above) to do the job.
 
 %\pagebreak
 
-\section{Task Job Submission, Poll and Kill}
+\section{Task Job Submission}
 \label{TaskJobSubmission}
 
 For the requirements a command, script, or program, must fulfill in order
 to function as a cylc task, see~\ref{TaskImplementation}.
-This section explains how tasks are submitted
-by cylc when they are ready to run, and how to define new task job
-submission methods.
-
-\subsection{Job Poll And Kill Support}
-
-For most job submission methods cylc now supports polling for real task
-status, and job kill, from the gcylc GUI and command line
-(\lstinline=cylc poll= and \lstinline=cylc kill=).
-In addition to on-demand polling, submitted and running tasks are polled
-automatically on suite restart (\ref{RestartingSuites})
-and on job submission and execution timeouts, and one-way polling can be
-used as regular health check for submitted tasks, and to track tasks on
-hosts that do not allow return routing for task messaging
-(\ref{RunningSuites}).
-
-\subsubsection{Exceptions}
-
-Task poll and kill support has not yet been added to the {\em SGE} and
-{\em slurm} job submission methods. It will be added in an upcoming
-release.
+This section explains how tasks are submitted by cylc when they are ready to
+run, and how to define new task job submission methods.
 
 \subsection{Task Job Scripts}
 \label{JobScripts}
@@ -4774,10 +4760,58 @@ your suite.rc file:
             # Use '-s' to stop llsubmit returning until all job steps have completed:
             command template = llsubmit -s %s
 \end{lstlisting}
-As explained in~\ref{SuiteRCReference}),
+As explained in~\ref{SuiteRCReference}
 the template's first \%s will be substituted by the job file path and,
 where applicable a second and third \%s will be substituted by the paths
 to the job stdout and stderr files.
+
+\subsection{Job Polling}
+
+For supported job submission methods, one-way polling can be used to determine
+actual job status: the suite daemon executes a process on the task host, by
+passwordless ssh, to interrogate the batch queueing system there, and to read a
+{\em status file} that is automatically generated by the task job script as it
+runs.
+
+Polling may be required to update the suite state correctly after unusual
+events such as a machine being rebooted with tasks running on it, or network
+problems that prevent task messages from getting back to the suite host.
+
+Tasks can be polled on demand by right-clicking on them in gcylc or using the
+\lstinline=cylc poll= command.
+
+Tasks are polled automatically, once, if they timeout during job submission or
+execution (see~\ref{TaskEventHandling} for how to configure timeouts).
+
+Any tasks recorded in the {\em submitted} or {\em running} states at suite
+restart are automatically polled to determine what happened to them while the
+suite was down.
+
+Regular polling can also be configured as a health check on tasks submitted to
+hosts that are known to be flaky, or as the sole method of determining task
+status on hosts that do not allow task messages to be routed back to the suite
+host.
+
+To use polling instead of task-to-suite messaging set
+\lstinline@task communication method = poll@
+in site/user config (see~\ref{task_comms_method}).  The default polling
+intervals can be overridden for all suites there too
+(see~\ref{submission_polling} and~\ref{execution_polling}), or in specific
+suite definitions (in which case polling will be done regardless of the 
+task communication method configured for the host;
+see~\ref{SubmissionPollingIntervals} and~\ref{ExecutionPollingIntervals}).
+
+Note that regular polling is not as efficient as task messaging in updating
+task status, and it should be used sparingly in large suites.
+
+\subsection{Job Killing}
+
+For supported job submission methods, the suite daemon can execute a process on
+the task host, by passwordless ssh, to kill a submitted or running job according
+to its job submission method.
+
+Tasks can be killed on demand by right-clicking on them in gcylc or using the
+\lstinline=cylc kill= command.
 
 \subsection{Defining New Job Submission Methods}
 \label{DefiningNewJobSubmissionMethods}
@@ -4838,13 +4872,13 @@ use it in a suite definition:
             -cwd = ' '
 \end{lstlisting}
 and generate a job script to see the resulting directives:
-\lstset{language=bash}
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc db reg test $HOME/test
 shell$ cylc jobscript test a | grep QSUB
-#QSUB -e /home/hilary/cylc-run/pbs/log/job/a.1.1.err
+#QSUB -e /home/hilary/cylc-run/my.suite/log/job/a.1.1.err
 #QSUB -l nodes=1,walltime=00:01:00
-#QSUB -o /home/hilary/cylc-run/pbs/log/job/a.1.1.out
+#QSUB -o /home/hilary/cylc-run/my.suite/log/job/a.1.1.out
 #QSUB -N a.1
 #QSUB -I bar=baz
 #QSUB -cwd
@@ -5240,11 +5274,13 @@ the suite passphrase (\ref{passphrases}), and configure
 passwordless ssh so that the port number can be retrieved from the
 remote port file. Then use the \lstinline=--user= and
 \lstinline=--host= command options to connect:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc monitor --user=USER --host=HOST SUITE
 \end{lstlisting}
 If you know the port number of the target suite, give it on the command
 line to prevent the port-retrieving ssh connection being attempted:
+\lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc monitor --user=USER --host=HOST --port=PORT SUITE
 \end{lstlisting}
