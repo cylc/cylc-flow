@@ -235,6 +235,17 @@ class config( object ):
                 self.cfg['scheduling']['initial cycle point']).standardise()
             self.cfg['scheduling']['initial cycle point'] = str(initial_point)
 
+        self.cli_initial_point = get_point(self._cli_initial_point_string)
+        if self.cli_initial_point is not None:
+            self.cli_initial_point.standardise()
+
+        self.initial_point = self.cli_initial_point or initial_point
+        if self.initial_point is None:
+            raise SuiteConfigError(
+                "This suite requires an initial cycle point.")
+        else:
+            self.initial_point.standardise()
+
         if self.cfg['scheduling']['final cycle point'] is not None:
             final_point = None
             # Is the final "point"(/interval) relative to initial?
@@ -242,8 +253,8 @@ class config( object ):
                 # TODO ISO - final as offset doesn't work for integer cycling
                 try:
                     final_point = get_point_relative(
-                            self.cfg['scheduling']['final cycle point'],
-                            initial_point).standardise()
+                        self.cfg['scheduling']['final cycle point'],
+                        self.initial_point).standardise()
                 except ValueError:
                     # (not relative)
                     pass
@@ -252,14 +263,6 @@ class config( object ):
                 final_point = get_point(
                         self.cfg['scheduling']['final cycle point']).standardise()
             self.cfg['scheduling']['final cycle point'] = str(final_point)
-
-        self.cli_initial_point = get_point(self._cli_initial_point_string)
-        if self.cli_initial_point is not None:
-            self.cli_initial_point.standardise()
-
-        self.initial_point = self.cli_initial_point or initial_point
-        if self.initial_point is not None:
-            self.initial_point.standardise()
 
         self.start_point = (
             get_point(self._cli_start_point_string) or self.initial_point)

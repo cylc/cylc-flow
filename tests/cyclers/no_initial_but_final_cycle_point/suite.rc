@@ -1,0 +1,10 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    final cycle point = 20140101T00
+    [[dependencies]]
+        [[[ P1D ]]]
+            graph = "foo[-P1D] => foo => bar"
+[runtime]
+    [[root]]
+        command scripting = true

@@ -47,6 +47,16 @@ class CylcTimeSyntaxError(cylc.CylcError.CylcError):
     """An error denoting invalid ISO/Cylc input syntax."""
 
 
+class CylcMissingContextPointError(cylc.CylcError.CylcError):
+
+    """An error denoting a missing (but required) context cycle point."""
+
+
+class CylcMissingFinalCyclePointError(cylc.CylcError.CylcError):
+
+    """An error denoting a missing (but required) final cycle point."""
+
+
 class CylcTimeParser(object):
 
     """Parser for Cylc abbreviated/full ISO 8601 syntax.
@@ -191,11 +201,16 @@ class CylcTimeParser(object):
                 is_required=start_required,
                 allow_truncated=True
             )
-            end_point, end_offset = self._get_point_from_expression(
-                end, context_end_point,
-                is_required=end_required,
-                allow_truncated=True
-            )
+            try:
+                end_point, end_offset = self._get_point_from_expression(
+                    end, context_end_point,
+                    is_required=end_required,
+                    allow_truncated=True
+                )
+            except CylcMissingContextPointError:
+                raise CylcMissingFinalCyclePointError(
+                    "This suite requires a final cycle point."
+                )
             intv = result.groupdict().get("intv")
             intv_context_truncated_point = None
             if start_point is not None and start_point.truncated:
@@ -259,6 +274,10 @@ class CylcTimeParser(object):
                                    allow_truncated=False):
         if expr is None:
             if is_required and allow_truncated:
+                if context is None:
+                    raise CylcMissingContextPointError(
+                        "Missing context cycle point."
+                    )
                 return context.copy(), None
             return None, None
         expr_point = None

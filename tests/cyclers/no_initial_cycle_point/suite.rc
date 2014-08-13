@@ -1,0 +1,9 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    [[dependencies]]
+        [[[ P1D ]]]
+            graph = "foo[-P1D] => foo => bar"
+[runtime]
+    [[root]]
+        command scripting = true
