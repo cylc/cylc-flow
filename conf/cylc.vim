@@ -18,64 +18,76 @@
 " set foldlevelstart=99
 "----------------------------------------------------------------------
 
+" see :help syntax
+
 " syncing from start of file is best, but may be slow for large files:
 syn sync fromstart
 
-syn match jinja2 '{%.\{-}%}'
-syn match jinja2variable '{{.\{-}}}'
-"syn match jinja2comment '{#.\{-}#}'
+" contained items are only recognized inside containing items
+syn match lineCon "\\$"
+syn match badLineCon "\\ \+$"
+syn match trailingWS " \+\(\n\)\@="
+
+syn region jinja2 start='{%' end='%}'
+syn region jinja2variable start='{{' end='}}'
 syn region jinja2comment start='{#' end='#}'
 
-syn match cylcSectionA '\[.*\]'
-syn match cylcSectionB '\[\[.*\]\]'
-syn match cylcSectionC '\[\[\[.*\]\]\]'
+syn region cylcSectionA start='\[' end='\]' contains=trailingWS,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable
+syn region cylcSectionB start='\[\[' end='\]\]' contains=trailingWS,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable
+syn region cylcSectionC start='\[\[\[' end='\]\]\]' contains=trailingWS,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable
 
+set foldmethod=syntax
 syn region myFold start='\_^ *\[\[\[\(\w\| \)' end='\ze\_^ *\[\{1,3}\(\w\| \)' transparent fold
 syn region myFold start='\_^ *\[\[\(\w\| \)' end='\ze\_^ *\[\{1,2}\(\w\| \)' transparent fold
 syn region myFold start='\_^ *\[\(\w\| \)' end='\_^ *\ze\[\(\w\| \)' transparent fold
-set foldmethod=syntax
 
 syn match cylcInlineMarker '\_^!\{1,}'
-syn match cylcItem ' *\zs\(\w\| \|\-\)*\>\ze *='
+syn match cylcItemKey ' *\zs\(\w\| \|\-\)*\> *='
+syn match trigger /=>/ contained
+syn match output /:[a-zA-Z0-9-]*\>/ contained
+syn match suicide /\!\w\+/ contained
+syn match offset /\[.\{-}\]/ contained
 
 syn match cylcInclude '%include *\(\w\|\-\|\/\|\.\)*'
+syn match cylcInline '.*\(START INLINED\|END INLINED\).*'
 
-syntax keyword ToDo TODO ToDo contained
-syn match cylcComment excludenl '#.*' contains=ToDo
-syn match cylcCommentInString '#.*[^"']' contained contains=ToDo
+syn match cylcToDo /[Tt][Oo][Dd][Oo].*$/
+syn match cylcComment /#.*/ contains=trailingWS,cylcToDo,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable
+syn match cylcCommentInString /#.*/ contained contains=trailingWS,cylcToDo,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable
 
-syn match jinja2InString '{%.\{-}[^"']%}' contained
-syn match jinja2variableInString '{{.\{-}[^"']}}' contained
-syn match jinja2commentInString '{#.\{-}[^"']#}' contained
+syn region String start=+'+ skip=+\\'+ end=+'+ contains=trailingWS,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable
+syn region String start=+"+ skip=+\\"+ end=+"+ contains=trailingWS,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable
+syn region String start=+=\@<= *"""+ end=+"""+ contains=trailingWS,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable,cylcCommentInString,trigger,output,suicide,offset
+syn region String start=+=\@<= *'''+ end=+'''+ contains=trailingWS,lineCon,badLineCon,jinja2,jinja2comment,jinja2variable,cylcCommentInString,trigger,output,suicide,offset
 
-syn region cylcString start=+"+ end=+"+ skip=+\\"+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
-syn region cylcString start=+'+ end=+'+ skip=+\\'+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
-syn region cylcString start=+"""+ end=+"""+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
-syn region cylcString start=+'''+ end=+'''+ contains=jinja2InString,jinja2commentInString,jinja2variableInString,cylcCommentInString keepend
-
-" TO DO: replace the following with cylc-specific groups as for cylcSectionA,B,C:
-hi def link cylcCommentInString Comment
 hi def link jinja2InString jinja2
 hi def link jinja2commentInString jinja2comment
 hi def link jinja2variableInString jinja2variable
-hi def link cylcComment Comment
-hi def link cylcInlineMarker Statement
-hi def link cylcString String
-hi def link cylcItem Special
-hi def link cylcInclude Statement
+hi def link cylcInlineMarker cylcInlining
+hi def link cylcInline cylcInlining
+hi def link cylcInclude cylcInlining
 
-hi Normal ctermfg=DarkGrey guifg=#444444
+hi Normal ctermfg=DarkGrey guifg=#666666 gui=None
+hi String ctermfg=DarkGrey guifg=#666666 gui=None
 
-hi cylcSectionC ctermfg=DarkRed guifg=#550044 term=bold cterm=bold gui=bold
-hi cylcSectionB ctermfg=DarkRed guifg=#9900aa term=bold cterm=bold gui=bold
-hi cylcSectionA ctermfg=DarkRed guifg=#ff00ee term=bold cterm=bold gui=bold
+hi trailingWS ctermbg=Grey guibg=#aaa
+hi badLineCon ctermbg=Red guibg=red guifg=#fff
+hi lineCon ctermfg=Green guifg=DarkBlue guibg=SkyBlue
 
-hi jinja2         ctermfg=DarkGrey guifg=#666 term=bold cterm=bold gui=bold
-hi jinja2comment  ctermfg=DarkGrey guifg=#776 term=bold cterm=bold gui=bold 
-hi jinja2variable ctermfg=DarkGrey guifg=#677 term=bold cterm=bold gui=bold
+hi cylcSectionC ctermfg=Black guifg=#600 term=bold cterm=bold gui=bold
+hi cylcSectionB ctermfg=Black guifg=#600 term=bold cterm=bold gui=bold
+hi cylcSectionA ctermfg=Black guifg=#600 term=bold cterm=bold gui=bold
 
-hi Comment ctermfg=LightBlue guifg=#ff4422 term=bold cterm=bold gui=bold 
-hi cylcCommentInString ctermfg=LightBlue guifg=#ff8844 term=bold cterm=bold gui=bold 
-hi String ctermfg=DarkGreen guifg=#18a329
-hi Special term=Underline cterm=Underline gui=Underline ctermfg=Blue guifg=#0082d3
-hi Statement ctermbg=Yellow ctermfg=Blue guibg=#aff guifg=#00a
+hi jinja2         ctermfg=Blue ctermbg=yellow guifg=slategray guibg=#d8ff6f gui=None
+hi jinja2comment  ctermfg=Red ctermbg=yellow guifg=white guibg=DeepPink gui=None 
+hi jinja2variable ctermfg=Magenta ctermbg=yellow guifg=slategray guibg=#aaffd8 gui=None
+
+hi cylcItemKey ctermfg=DarkBlue guifg=#28f cterm=bold gui=bold
+hi cylcCommentInString ctermfg=red guifg=#f42 gui=italic
+hi cylcComment ctermfg=red guifg=deeppink gui=italic
+hi cylcInlining ctermbg=LightGrey ctermfg=DarkBlue guibg=#aff guifg=#00a
+hi cylcToDo guibg=DeepPink
+hi trigger guifg=#00cc00 gui=bold
+hi output guifg=#aaaa3d
+hi suicide guifg=#cc3dcc
+hi offset guifg=#3d4ccc
