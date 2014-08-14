@@ -695,7 +695,7 @@ cylc releases can be installed in parallel as suggested in the
 The problem with the word ``cycle'' is that it is often used to refer to a
 series of times (e.g. ``an hourly cycle'') as well as a particular time
 (e.g. ``current cycle'' or ``current cycle point''). Here, we use
-``cycle point'' to refer to a particular (usually date/time) item. If a task
+``cycle point'' to refer to a particular (usually date-time) item. If a task
 has an hourly date-time cycle that starts at 2014-01-01T00 and ends at
 2014-01-02T00, the first ``cycle point'' will be 2014-01-01T01, the second
 ``cycle point'' will be 2014-01-01T02, etc.
@@ -795,35 +795,41 @@ search path:
 \begin{lstlisting}
 export PATH=/path/to/cylc/bin:$PATH
 \end{lstlisting}
+Note however that direct use of a specific installed version, like this, is 
+not recommended. Instead a special wrapper script provided with cylc should be
+installed centrally for all users. This points to a top level cylc release
+directory and allows use of multiple cylc versions at once if necessary.
+See the cylc INSTALL file for details (\ref{INSTALL}).
 
-\subsubsection{Command Line (CLI)}
+\subsubsection{Command Line Interface (CLI)}
 
 The command line interface is unified under a single top level
 \lstinline=cylc= command that provides access to many sub-commands
 and their help documentation.
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc help       # top level command help
-shell$ cylc run --help # example command-specific help
+shell$ cylc help       # Top level command help.
+shell$ cylc run --help # Example command-specific help.
 \end{lstlisting}
 
 \begin{myitemize}
     \item Command help transcripts are also printed in~\ref{CommandReference},
         and can be accessed from the \lstinline=cylc gui= Help menu.
+    \item Cylc suites are {\em scriptable} because the error status returned by
+        all commands can be relied on. 
 \end{myitemize}
 
-\subsubsection{Graphical (GUI)}
+\subsubsection{Graphical User Interface (GUI)}
 
-The cylc GUI covers the same functionality as the CLI with the addition
-of live suite monitoring capability, and it is intended to be easier to
-use without expert knowledge.  It can start and stop suites, or connect
-to suites that are already running; in either case, shutting down the
-GUI does not have affect the suite itself.
+The cylc GUI covers the same functionality as the CLI, but it has more
+sophisticated suite monitoring capability. It can start and stop suites, or
+connect to suites that are already running; in either case, shutting down the
+GUI does not affect the suite itself.
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ gcylc & # or:
-shell$ cylc gui &
-shell$ cylc gsummary & # summary GUI for multiple running suites
+shell$ cylc gui & # Use the File menu to switch to specific suite.
+shell$ cylc gsummary & # Summary GUI for multiple running suites.
 \end{lstlisting}
 Clicking on a suite in the summary GUI, shown in
 Figure~\ref{fig-gsummary}, opens a gcylc instance for it.
@@ -874,7 +880,7 @@ At registration time a random string of characters is written to a
 file called \lstinline=passphrase= in the suite definition directory.
 At run time any contact from cylc client programs (running tasks, user
 commands, the cylc GUI) must use the same passphrase to authenticate
-with the running suite. This prevents unauthorized users interfering in
+with the running suite. This prevents unauthorized users from interfering with
 your suites (network communication between running processes is not
 subject to Unix user account permissions). Local tasks and user commands
 on the suite host automatically use the passphrase in the suite
@@ -1011,59 +1017,106 @@ shell$ gcylc tut.oneoff.basic &
 \end{lstlisting}
 and choose {\em Suite } $\rightarrow$ {\em Edit} from the menu.
 
-The editor will be invoked from the suite definition directory
-for easy access to other suite files (in this case there are
-none).  There are syntax highlighting control files for several text
-editors under \lstinline=/path/to/cylc/conf/=; see in-file comments
-for installation instructions.
+The editor will be invoked from within the suite definition directory for easy
+access to other suite files (in this case there are none).  There are syntax
+highlighting control files for several text editors under
+\lstinline=/path/to/cylc/conf/=; see in-file comments for installation
+instructions.
 
 \subsection{Running Suites}
 \label{RunningSuitesCLI}
 
 \subsubsection{CLI}
-Run the suite at the terminal with the \lstinline=cylc run= command:
+Run \lstinline=tut.oneoff.basic= using the \lstinline=cylc run= command.
+As a suite runs detailed timestamped information is written to a {\em suite
+log} and progress can be followed with cylc's suite monitoring tools (below).
+By default a running suite daemonizes after printing a short message so that
+you can exit the terminal or even log out without killing the suite:
 
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --debug tut.oneoff.basic
+shell$ cylc run tut.oneoff.basic
 ************************************************************************
-*              The Cylc Suite Engine [5.4.13-113-g89224]               *
+*                     The Cylc Suite Engine [6.0.0]                    *
 *             Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
 *                                                                      *
 * This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-SUBMIT No.1(1,1): ( perl -e "setpgrp(0,0);exec(@ARGV)"
-$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1 </dev/null
-  1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out
-  2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err & echo $!; wait )
-Stopping: 
-  + all cycling tasks have spawned past the final cycle 1
-Requesting Job Submission stop - ignoring remaining items (currently 0)
-Requesting Event Handlers stop - after remaining items (currently 0)
-Requesting Poll & Kill Commands stop - after remaining items (currently 0)
-Suite shutting down at 2014-06-04T10:18:27.142923Z
+
+Suite Info:
+ + Name: tut.oneoff.basic
+ + PID:  29338
+ + Port: 7766
+ + Logs: /home/oliverh/cylc-run/tut.oneoff.basic/log/suite/{log,out,err}
+
+To see if this suite is still running:
+ * cylc scan
+ * cylc ping -v tut.oneoff.basic
+ * ps -fu $USER | grep 'cylc-run .* tut.oneoff.basic'
+
+To run in non-daemon mode use --no-detach or --debug.
+For more information see 'cylc --help' and the User Guide.
+\end{lstlisting}
+
+If you're quick enough (this example only takes 10-15 seconds to run) the
+\lstinline=cylc scan= command will detect the running suite:
+\begin{lstlisting}
+shell$ cylc scan
+tut.oneoff.basic oliverh oliverh-34403DL 7766
+
+# wait 10-15 seconds ...
+
+shell$ cylc scan
+# (nothing: suite finished)
+\end{lstlisting}
+
+Using the \lstinline=--no-detach= option prevents the suite daemonizing,
+but only warnings and errors, if any, are printed to the terminal. 
+The \lstinline=--debug= option, however, causes (among other things) task job
+submission commands to to be printed stdout:
+
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc run --debug tut.oneoff.basic
+************************************************************************
+*                     The Cylc Suite Engine [6.0.0]                    *
+*             Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
+*                                                                      *
+* This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
+* you are welcome to redistribute it under certain conditions. Details:*
+*          `cylc license conditions'; `cylc license warranty'          *
+************************************************************************
+( perl -e "setpgrp(0,0);exec(@ARGV)"
+  /home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job </dev/null
+    1>/home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.out
+    2>/home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.err &
+    echo $!; wait )
+'Finished'
+Suite shutting down at 2014-08-14T13:26:52+12
 DONE
 \end{lstlisting}
-The \lstinline=--no-detach= option tells cylc not to daemonize so that
-output is printed to the terminal. When the task is
-ready to run cylc generates a special {\em job script} to run
-it. The command line used to submit the job script, which depends on the
-task's job submission method and host machine, is printed to suite
-stdout. More detailed information is written, time-stamped, to
-a {\em suite log}. The suite automatically shuts down when and if
-all tasks have succeeded.
+When a task is ready to run a {\em job script} is generated to run it. The
+command printed just above is how cylc executes background jobs on the
+suite host (this is the default), retrieves the job process ID, and directs the
+output to log files in standard locations. For the log file locations that can
+be seen above, in \lstinline=job/1/hello/01/= the first \lstinline=1/= is the
+{\em cycle point} of the task \lstinline=hello= (for a non-cycling task
+this is just the integer 1); and the final \lstinline=01/= directory is
+its {\em submission number} (tasks can be made to retry on failure, manually
+or automatically, in which case the submission number increments).
+
+The suite shuts down automatically once all tasks have succeeded.
 
 \subsubsection{GUI}
 
 The cylc GUI can start and stop suites, or (re)connect to suites that
 are already running:
-\lstinline=gcylc=
 \begin{lstlisting}
 shell$ cylc gui tut.oneoff.basic &
 \end{lstlisting}
-use the tool bar {\em Play} button, or the {\em Control}
+Use the tool bar {\em Play} button, or the {\em Control}
 $\rightarrow$ {\em Run} menu item, to run the suite again.
 You may want to alter the suite definition slightly to make the task
 take longer to run. Try right-clicking on the \lstinline=hello= task
@@ -1078,6 +1131,8 @@ GUI tools:
 \begin{lstlisting}
 # list currently running suites and their port numbers:
 shell$ cylc scan
+tut.oneoff.basic oliverh oliverh-34403DL 7766
+
 # GUI summary view of running suites:
 shell$ cylc gsummary &
 \end{lstlisting}
@@ -1095,10 +1150,10 @@ shell$ cylc gsummary &
 
 At run time, task instances are identified by {\em name}, which is
 determined entirely by the suite definition, and a {\em cycle point} which is
-usually a date/time or an integer representation:
+usually a date-time or an integer:
 \lstset{language=transcript}
 \begin{lstlisting}
-foo.20100808T00Z   # a task with a date/time cycle point
+foo.20100808T00Z   # a task with a date-time cycle point
 bar.1              # a task with an integer cycle point (could be non-cycling)
 \end{lstlisting}
 Non-cycling tasks usually just have the cycle point \lstinline=1=, but this
@@ -1109,25 +1164,28 @@ still has to be used to target the task instance with cylc commands.
 \hilight{ suite: \lstinline=tut.oneoff.jobsub= }
 \vspace{3mm}
 
-Task {\em job scripts} are generated by cylc to wrap the task
-implementation specified in the suite definition (environment,
-command scripting, etc.) in error trapping code and cylc messaging
-calls to report task progress back to the suite. Job scripts are saved
-to the {\em suite run directory} - the location can be seen in the job
-submission commands printed to suite stdout.  They can be viewed by
-right-clicking on the task in the cylc GUI, or printed to the terminal:
+Task {\em job scripts} are generated by cylc to wrap the task implementation
+specified in the suite definition (environment, command scripting, etc.) in
+error trapping code, messaging calls to report task progress back to the suite
+daemon, and so forth.  Job scripts are written to the {\em suite job log
+directory} where later they can be viewed alongside the job output logs. They
+can be accessed at run time by right-clicking on the task in the cylc GUI, or
+printed to the terminal:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc log tut.oneoff.basic hello.1
 \end{lstlisting}
-Or a new job script can be generated on the fly for inspection,
+This command can also print the suite log (and stdout and stderr for suites
+in daemon mode) and task stdout and stderr logs (see
+\lstinline=cylc log --help=).
+A new job script can also be generated on the fly for inspection,
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc jobscript tut.oneoff.basic hello.1
 \end{lstlisting}
 
 Take a look at the job script generated for \lstinline=hello.1= during
-the suite run above.  The command scripting should be clearly visible
+the suite run above.  The task command scripting should be clearly visible
 toward the bottom of the file.
 
 The \lstinline=hello= task in the first tutorial suite defaults to
@@ -1143,32 +1201,33 @@ as in \lstinline=tut.oneoff.jobsub=:
             method = at
 \end{lstlisting}
 If you run the suite (first check that the {\em at daemon}
-\lstinline=atd= is running on the suite host) a different,
-\lstinline=at=-specific job submission command will be used and printed
-to stdout:
+\lstinline=atd= is running on the suite host) you'll see a slightly different
+job submission command printed to stdout:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc run --debug tut.oneoff.basic 
+ cylc run --debug tut.oneoff.jobsub
 ************************************************************************
-*           The Cylc Suite Engine [5.4.13-113-g89224-dirty]            *
+*        The Cylc Suite Engine [6.0.0alpha1-294-ge08560-dirty]         *
 *             Copyright (C) 2008-2014 Hilary Oliver, NIWA              *
 *                                                                      *
 * This program comes with ABSOLUTELY NO WARRANTY.  It is free software;*
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-SUBMIT No.1(1,1): (echo "perl -e \"setpgrp(0,0);exec(@ARGV)\"
- $HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1
-  1>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.out
-  2>$HOME/cylc-run/tut.oneoff.basic/log/job/hello.1.1.err" | at now)
-Stopping: all cycling tasks have spawned past the final cycle 1
-Suite shutting down at 2014-06-04T10:48:14.944483Z
+(echo "perl -e \"setpgrp(0,0);exec(@ARGV)\"
+  /home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job
+    1>/home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job.out
+    2>/home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job.err"
+    | at now)
+'Finished'
+Suite shutting down at 2014-08-14T14:14:43+12
 DONE
 \end{lstlisting}
+
 Cylc supports a number of different job submission methods. Tasks
 submitted to external batch queuing systems like \lstinline=at=,
-\lstinline=PBS=, \lstinline=SLURM=, or \lstinline=loadleveler=, will
-be displayed as {\em submitted} in cylc until they actually start
+\lstinline=PBS=, \lstinline=SLURM=, or \lstinline=loadleveler=, are
+displayed as {\em submitted} in the cylc GUI until they actually start
 executing.
 
 \begin{myitemize}
@@ -1187,34 +1246,42 @@ time-stamped suite log file, and task job scripts and job logs
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ tree $HOME/cylc-run/tut.oneoff.basic/
-|-- cylc-suite.db       # suite run database
-|-- cylc-suite-env      # suite environment file
-|-- log                 # suite log files
-|   |-- job                 # task job logs
-|   |   |-- hello.1.1           # task job script
-|   |   |-- hello.1.1.err       # task stderr log
-|   |   |-- hello.1.1.out       # task stdout log
-|   |   `-- hello.1.1.status    # task status file
-|   `-- suite               # suite server logs
-|       |-- err                 # suite stderr log
-|       |-- log                 # suite event log
-|       `-- out                 # suite stdout log
-|-- state               # suite state dump files
-|   |-- state
-|   |-- state.20140604T104814.945181Z
-|   `-- state.20140604T104814.942055Z
-|-- share               # suite share directory
-`-- work                # suite work directory
+|-- cylc-suite.db      # suite run database
+|-- cylc-suite-env     # suite environment file
+|-- share              # suite share directory (not used in this example) 
+|-- work               # task work space (sub-dirs are deleted if not used)
+|    `-- 1                # task cycle point directory (or 1)
+|        `-- hello           # task work directory (deleted if not used)
+|-- log                # suite log directory
+|   `-- suite             # suite daemon log directory
+|   |   |-- err              # suite daemon stderr log (daemon mode only)
+|   |   |-- out              # suite daemon stdout log (damon mode only)
+|   |   `-- log              # suite daemon event log (timestamped info)     
+|   `-- job               # task job log directory
+|       `-- 1                # task cycle point directory (or 1)
+|           `-- hello           # task name
+|               |-- 01             # task submission number
+|               |   |-- job           # task job script
+|               |   |-- job.err       # task stderr log
+|               |   |-- job.out       # task stdout log
+|               |   `-- job.status    # task status file
+|               `-- NN -> 01       # symlink to latest submission number
+`--state                # suite state dump directory (used for restarts) 
+    |-- state -> state.20140814T022436.591110Z # latest state dump file
+    |-- state.20140814T022424.565162Z          # older state dump files..
+    |-- state.20140814T022425.570343Z
+    |-- state.20140814T022426.575306Z
+    `-- state.20140814T022436.591110Z
 \end{lstlisting}
 The suite run database, suite environment file, suite state files,
 and task status files are used internally by cylc. Tasks execute in
-sub-directories of \lstinline=work/=, which are automatically deleted
+private \lstinline=work/= directories that are deleted automatically
 if empty when the task finishes. The suite
 \lstinline=share/= directory is made available to all tasks (by
-\lstinline=$CYLC_SUITE_SHARE_DIR=) as a common share space. Job log
-filenames have the {\em task try number} appended
-(here just $1$) - this increments from $1$ if a task is configured to
-retry on failure, to avoid overwriting the logs from previous tries.
+\lstinline=$CYLC_SUITE_SHARE_DIR=) as a common share space. The task submission
+number increments from 1 if a task retries on failure; this is used a
+sub-directory of the log tree to avoid overwriting log files from earlier
+job submissions.
 
 The top level run directory location can be changed in site and user
 config files if necessary, and the suite share and work locations can be
@@ -1236,9 +1303,9 @@ shell$ cylc log    tut.oneoff.basic hello.1   # task job script
 shell$ cylc log -o tut.oneoff.basic hello.1   # task stdout log
 shell$ cylc log -e tut.oneoff.basic hello.1   # task stderr log
 \end{lstlisting}
-For a more sophisticated web-based interface to suite and task logs,
-see {\em Rose} in~\ref{SuiteStorageEtc}.
 \begin{myitemize}
+    \item For a web-based interface to suite and task logs (and much more),
+        see {\em Rose} in~\ref{SuiteStorageEtc}.
     \item For more on environment variables supplied to tasks,
     such as \lstinline=$CYLC_SUITE_SHARE_DIR=, see~\ref{TaskExecutionEnvironment}.
 \end{myitemize}
@@ -1292,37 +1359,36 @@ If your username is different on the task host the
 file can be configured for username translation.
 
 If you configure a task host according to the requirements above and run
-the suite again you'll see that the job submission command printed to
-suite stdout is now considerably more complicated. That's because it has
-to create remote log directories, source login scripts to ensure cylc is
-visible on the remote host, pipe the task job script over, and submit it
+the suite again in debug mode, you'll see that the job submission command
+printed to suite stdout is now considerably more complicated. That's because it
+has to create remote log directories, source login scripts on the remote host
+to ensure cylc is visible there, send the task job script over, and submit it
 to run there by the configured job submission method:
 
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc run --debug tut.oneoff.remote
 # ...
-1 task ready
-  * hello.1 submitting now
-SUBMIT No.1(1,1): ssh -oBatchMode=yes server1.niwa.co.nz \
-    "test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1; \
-     test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1; \
-     mkdir -p $(dirname $HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1) \
-     && cat >$HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1 && \
-     chmod +x $HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1 && \
-     (($HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1 </dev/null \
-     1>$HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1.out \
-     2>$HOME/cylc-run/tut.oneoff.remote/log/job/hello.1.1.err) & echo $!; wait )" \
-     < /home/hilary/cylc-run/tut.oneoff.remote/log/job/hello.1.1
-  * hello.1 submission succeeded
-  * hello.1 started at 2013-09-28T17:45:13
-  * hello.1 submit_method_id=27256
-  * hello.1 succeeded at 2013-09-28T17:45:23
+ssh -oBatchMode=yes wrh-1.niwa.co.nz 'test -f /etc/profile && . /etc/profile
+  1>/dev/null 2>&1; test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;
+  (mkdir -p $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01 ||
+   mkdir -p $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01) &&
+   cat >$HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.tmp &&
+   mv $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.tmp
+     $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job &&
+   chmod +x $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job &&
+   rm -f $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.status &&
+   ( perl -e "setpgrp(0,0);exec(@ARGV)"
+     $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job </dev/null
+       1>$HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.out
+       2>$HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.err &
+       echo $!; wait)' < 
+  /home/oliverh/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job
 \end{lstlisting}
-
-Remote task job logs are saved to the suite run directory on
-the task host, not on the suite host, although they can be
-retrieved by right-clicking on the task in the GUI. Rose
+(Don't be intimated by this - it really quite straightforward and would appear
+much simpler if the job log path was shorter!). Remote task job logs are
+saved to the suite run directory on the task host, not on the suite host,
+although they can be retrieved by right-clicking on the task in the GUI. Rose
 (section~\ref{Rose}) provides a task event handler to pull logs back to
 the suite host.
 
@@ -1370,27 +1436,27 @@ Run \lstinline=tut.oneoff.goodbye= and check the output from the new
 task:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cat ~/cylc-run/tut.oneoff.goodbye/log/job/goodbye.1.1.out
-# (or cylc log -o tut.oneoff.goodbye goodbye.1
+shell$ cat ~/cylc-run/tut.oneoff.goodbye/log/job/1/goodbye/01/job.out
+  # or
+shell$ cylc log -o tut.oneoff.goodbye goodbye.1
 JOB SCRIPT STARTING
-cylc (scheduler - 2014-06-04T11:20:29Z): goodbye.1 started at 2014-06-04T11:20:29Z
+cylc (scheduler - 2014-08-14T15:09:30+12): goodbye.1 started at 2014-08-14T15:09:30+12
 cylc Suite and Task Identity:
-  Suite Name  : tut.oneoff.basic
-  Suite Host  : server0
+  Suite Name  : tut.oneoff.goodbye
+  Suite Host  : oliverh-34403dl.niwa.local
   Suite Port  : 7766
-  Suite Owner : hilary
+  Suite Owner : oliverh
   Task ID     : goodbye.1
-  Task Host   : server0
-  Task Owner  : hilary
+  Task Host   : oliverh-34403DL
+  Task Owner  : oliverh
   Task Try No.: 1
 
 Goodbye World!
-cylc (scheduler - 2014-06-04T11:20:39Z): goodbye.1 succeeded at 2014-06-04T11:20:39Z
+cylc (scheduler - 2014-08-14T15:09:40+12): goodbye.1 succeeded at 2014-08-14T15:09:40+12
 JOB SCRIPT EXITING (TASK SUCCEEDED)
-
 \end{lstlisting}
 
-\subsubsection{Failure And Suicide Triggering}
+\subsubsection{Task Failure And Suicide Triggering}
 
 \hilight{ suite: \lstinline=tut.oneoff.suicide= }
 \vspace{3mm}
@@ -1446,14 +1512,13 @@ works.
 
 The \lstinline=[runtime]= section is actually a {\em multiple
 inheritance} hierarchy.  Each subsection is a {\em namespace} that
-represents a task, or if it inherits from other namespaces, a {\em
+represents a task, or if it is inherited by other namespaces, a {\em
 family}.  This allows common configuration to be factored out of related
 tasks very efficiently.
 \lstset{language=suiterc}
 \lstinputlisting{../examples/tutorial/oneoff/inherit/suite.rc}
-The \lstinline=[root]= namespace is at the root of all runtime
-hierarchies. It provides defaults for all tasks in the suite. Here both
-tasks inherit command scripting from \lstinline=root=, which they
+The \lstinline=[root]= namespace provides defaults for all tasks in the suite.
+Here both tasks inherit command scripting from \lstinline=root=, which they
 customize with different values of the environment variable
 \lstinline=$GREETING=. Note that inheritance from \lstinline=root= is
 implicit; from other parents an explicit \lstinline@inherit = PARENT@
@@ -1496,7 +1561,7 @@ Verbose validation shows the family member substitution done
 when the suite definition is parsed:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc val -v tut.oneoff.ftr1gger1
+shell$ cylc val -v tut.oneoff.ftrigger1
 ...
 Graph line substitutions occurred:
   IN: foo => GREETERS
@@ -1659,11 +1724,11 @@ automatically detect unforeseen errors.
 So far we've considered non-cycling tasks, which finish without spawning
 a successor.
 
-Cycling is usually based around iterating through date/time or integer
+Cycling is usually based around iterating through date-time or integer
 sequences. A cycling task may run at each cycle point in a given sequence
-(cycle). For example, a sequence might be a set of date/times every 6 hours
-starting from a particular date/time. A cycling task may run for each
-date/time item (cycle point) in that sequence.
+(cycle). For example, a sequence might be a set of date-times every 6 hours
+starting from a particular date-time. A cycling task may run for each
+date-time item (cycle point) in that sequence.
 
 There may be multiple instances of this type of task running in parallel,
 if the opportunity arises and their dependencies allow it. Alternatively,
@@ -1676,11 +1741,11 @@ Open the \lstinline=tut.cycling.one= suite:
 The difference between cycling and non-cycling suites is all in the
 \lstinline=[scheduling]= section, so we will leave the
 \lstinline=[runtime]= section alone for now (this will result in
-cycling dummy tasks).  Note that the graph is now defined under an
-{\em Hours Of The Day} cycling section - each task in the graph section
-will have a succession of cycle points (times) ending in $00$ or $12$ hours,
-between specified initial and final cycle points (or indefinitely, if no
-final cycle point is given), as shown in Figure~\ref{fig-tut-one}.
+cycling dummy tasks).  Note that the graph is now defined under a new
+section heading that makes each task under it have a succession of cycle points
+(times) ending in $00$ or $12$ hours, between specified initial and final cycle
+points (or indefinitely, if no final cycle point is given), as shown in
+Figure~\ref{fig-tut-one}.
 
 \begin{figure}
     \begin{center}
@@ -1760,19 +1825,19 @@ to do it. The following section shows one way to handle this in cylc suites.
 
 Sometimes we want to be able to run a task at the initial cycle point, but
 refrain from running it in subsequent cycles. We can do this by writing an
-extra set of dependencies that are only valid at a single date/time cycle
+extra set of dependencies that are only valid at a single date-time cycle
 point. If we choose this to be the initial cycle point, these will only apply
 at the very start of the suite.
 
-The cylc syntax for writing this single date/time cycle point occurrence is
+The cylc syntax for writing this single date-time cycle point occurrence is
 \lstinline=R1=, which stands for
 \lstinline=R1/no-specified-date-time/no-specified-period=.
-This is an adaptation of part of the ISO 8601 date/time standard's recurrence
+This is an adaptation of part of the ISO 8601 date-time standard's recurrence
 syntax (\lstinline=Rn/date-time/period=) with some special context information
 supplied by cylc for the \lstinline=no-specified-*= data.
 
 The \lstinline=1= in the \lstinline=R1= means repeat once. As we've specified
-no date-time, Cylc will use the initial cycle point date/time by default,
+no date-time, Cylc will use the initial cycle point date-time by default,
 which is what we want. We've also missed out specifying the period - this is
 set by cylc to a zero amount of time in this case (as it never
 repeats, this is not significant).
@@ -2695,7 +2760,7 @@ For example, all these are valid in cylc:
 
 Here is a quick summary of the syntax rules:
 
-Date/time cycling information is made up of a starting {\em date-time}, an
+Date-time cycling information is made up of a starting {\em date-time}, an
 {\em interval}, and an optional {\em limit}.
 
 The time is assumed to be in the local time zone unless you set
@@ -2722,12 +2787,12 @@ For example, \lstinline=T00= is an example of \lstinline=[date-time]=, with an
 inferred 1 day period and no limit.
 
 Where some or all {\em date-time } information is omitted, it is inferred to
-be relative to the initial date/time cycle point. For example, \lstinline=T00=
+be relative to the initial date-time cycle point. For example, \lstinline=T00=
 by itself would mean the next occurrence of midnight that follows, or is, the
 initial cycle point. Entering \lstinline=+PT6H= would mean 6 hours after the
 initial cycle point. Entering \lstinline=-P1D= would mean 1 day before the
 initial cycle point. Entering no information for the {\em date-time} implies
-the initial cycle point date/time itself.
+the initial cycle point date-time itself.
 
 Where the {\em interval} is omitted and some (but not all) {\em date-time}
 information is omitted, it is inferred to be a single unit above
@@ -2736,7 +2801,7 @@ given specific unit in \lstinline=T00= is hours, so the inferred interval is
 1 day (daily), \lstinline=P1D=.
 
 Where the {\em limit} is omitted, unlimited cycling is assumed. This will be
-bounded by the final cycle point's date/time if given.
+bounded by the final cycle point's date-time if given.
 
 Another supported form of ISO 8601 recurrence is:
 \lstinline=R[limit?]/[interval]/[date-time]=. This form uses the
@@ -2749,7 +2814,7 @@ For example, \lstinline=R3/P5D/20140430T06= means:
 \end{lstlisting}
 
 This kind of form can be used for specifying special behaviour near the end of
-the suite, at the final cycle point's date/time. We can also represent this in
+the suite, at the final cycle point's date-time. We can also represent this in
 cylc with a collapsed form:
 \begin{lstlisting}
 R[limit?]/[interval]
@@ -3469,7 +3534,7 @@ is equivalent to this one:
 \paragraph{Future Triggers}
 
 Cylc also supports inter-cycle-point triggering off tasks in the future (with
-respect to cycle point date/time, not real time!):
+respect to cycle point date-time, not real time!):
 \begin{lstlisting}
 [[dependencies]]
     [[[T00,T06,T12,T18]]]
@@ -6054,8 +6119,8 @@ previous-instance dependence (above) by ensuring that important files do not
 get overwritten by the next cycle point.
 
 The \lstinline=cylc cycletime= command computes offsets (in hours, days,
-months, and years) from a given or current date/time cycle point, and
-optionally inserts the resulting computed date/time, or components of it, into
+months, and years) from a given or current date-time cycle point, and
+optionally inserts the resulting computed date-time, or components of it, into
 a given filename template string.
 
 \subsection{How To Manage Input/Output File Dependencies}
@@ -6179,7 +6244,7 @@ reproduce earlier versions, regardless of suite complexity.
 \label{OrderlyProductGeneration}
 
 Correct scheduling is not equivalent to ``orderly generation of products
-by cycle point date/time''.  Under cylc, a product generation task will
+by cycle point date-time''.  Under cylc, a product generation task will
 trigger as soon as its prerequisites are satisfied (i.e.\ when its input files
 are ready, generally) regardless of whether other tasks with the same cycle
 point have finished or have yet to run. If your product delivery or
@@ -6198,10 +6263,10 @@ generation tasks at the same cycle point, and then declare it to be sequential
 \subsection{Clock-triggered Tasks Wait On External Data}
 
 All tasks in a cylc suite know their own private cycle point, which is usually
-a date/time, but most don't care about the wall clock time - they just run
+a date-time, but most don't care about the wall clock time - they just run
 when their prerequisites are satisfied. The exception to this is
 {\em clock-triggered} tasks, which wait on a wall clock time expressed as an
-offset from their own cycle point date/time as a real-life date/time, in
+offset from their own cycle point date-time as a real-life date-time, in
 addition to any other prerequisites. The usual purpose of these tasks is to
 retrieve real time data from the external world, triggering at roughly the
 expected time of availability of the data. Triggering the task at the right
@@ -6610,11 +6675,11 @@ mitigate any jumping layout problems:
         structure.
 \end{myitemize}
 
-\section{Cylc Project README File}
+\section{Cylc README File}
 
 \lstinputlisting{../README}
 
-\section{Cylc Project INSTALL File}
+\section{Cylc INSTALL File}
 \label{INSTALL}
 
 \lstinputlisting{../INSTALL}
