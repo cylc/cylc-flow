@@ -55,6 +55,7 @@ class JobSubmit(object):
         "; " +
         # Retry "mkdir" once to avoid race to create log/job/CYCLE/
         " (mkdir -p %(jobfile_dir)s || mkdir -p %(jobfile_dir)s)" +
+        " && ln -fs $(basename %(jobfile_dir)s) $(dirname %(jobfile_dir)s)/NN"
         " && cat >%(jobfile_path)s.tmp" +
         " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
         " && chmod +x %(jobfile_path)s" +
