@@ -58,7 +58,7 @@ Cylc runs off the suite host's system clock by default. This item allows
 you to run the suite in UTC even if the system clock is set to local time.
 Clock-triggered tasks will trigger when the current UTC time is equal to
 their cycle point date-time plus offset; other time values used, reported,
-or logged by cylc will usually also be in UTC.
+or logged by the suite daemon will usually also be in UTC.
 
 \begin{myitemize}
     \item {\em type:} boolean
@@ -180,7 +180,7 @@ Number of process pool worker processes used to execute shell commands
 \label{SuiteEventHandling}
 
 Cylc has internal ``hooks'' to which you can attach handlers that are
-called {\em by cylc} whenever certain events occur. This section
+called by the suite daemon whenever certain events occur. This section
 configures suite event hooks; see Section~\ref{TaskEventHandling} for
 task event hooks.
 
@@ -191,7 +191,7 @@ to ensure their location is in \lstinline=$PATH= (in the shell in which
 cylc runs, on the suite host).
 \lstinline=cylc [hook] email-suite= is a simple suite event handler.
 
-Suite event handlers are called by cylc with the following arguments:
+Suite event handlers are called by the suite daemon with the following arguments:
 \begin{lstlisting}
 <suite-event-handler> EVENT SUITE MESSAGE
 \end{lstlisting}
@@ -275,8 +275,8 @@ task event handlers.
 \begin{myitemize}
     \item These variables are not passed to tasks - use task runtime
         variables for that. Similarly, task runtime variables are not
-        available to event handlers - which are executed by cylc, not by
-        tasks, in response to task events.
+        available to event handlers - which are executed by the suite daemon,
+        (not by running tasks) in response to task events.
         
     \item Cylc-defined environment variables such as
         \lstinline=$CYLC_SUITE_RUN_DIR= are not passed to task event
@@ -443,8 +443,8 @@ provided you can override it on the command line or in the gcylc suite start
 panel.
 
 In date-time cycling, if you do not provide time zone information for this,
-it will be assumed to be local time, or in UTC if \ref{UTC-mode} is set, or in
-the \ref{cycle-point-time-zone} if that is set.
+it will be assumed to be local time, or in UTC if~\ref{UTC-mode} is set, or in
+the time zone determined by \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time point representation (e.g.
@@ -671,7 +671,7 @@ below for graph string syntax, and Section~\ref{ConfiguringScheduling}.
 
 \paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
 
-\_\_VALIDITY\_\_ section headings define the sequence of cycle times for
+\_\_VALIDITY\_\_ section headings define the sequence of cycle points for
 which the subsequent graph section is valid. These should be specified in
 our ISO 8601 derived sequence syntax:
 \begin{myitemize}
@@ -707,7 +707,7 @@ graph = """
    ColdFoo | foo[-PT6H] => foo # cold-start or restart for foo
    X:start => Y                # Y triggers if X starts executing
    X:fail => Y                 # Y triggers if X fails
-   foo[-PT6H]:fail => bar        # bar triggers if foo[-PT6H] fails
+   foo[-PT6H]:fail => bar      # bar triggers if foo[-PT6H] fails
    X => !Y                     # Y suicides if X succeeds
    X | X:fail => Z             # Z triggers if X succeeds or fails
    X:finish => Z               # Z triggers if X succeeds or fails
@@ -904,7 +904,7 @@ regular check on the health of submitted tasks.
 Each list value is used in turn until the last, which is used repeatedly
 until finished.
 
-{\em Detaching tasks cannot be polled or killed by cylc -
+{\em Detaching tasks cannot be polled or killed by the suite daemon -
 see Section~\ref{DetachingTasks}.}
 
 \begin{myitemize}
@@ -933,7 +933,7 @@ regular check on the health of submitted tasks.
 Each list value is used in turn until the last, which is used repeatedly
 until finished.
 
-{\em Detaching tasks cannot be polled or killed by cylc -
+{\em Detaching tasks cannot be polled or killed by the suite daemon -
 see Section~\ref{DetachingTasks}.}
 
 \begin{myitemize}
@@ -1088,8 +1088,8 @@ substituted by the paths to the job stdout and stderr files.
 \subparagraph[shell]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ shell}
 \label{JobSubShell}
 
-This is the shell used to interpret the job script submitted by cylc
-when a task is ready to run.  {\em It has no bearing on the shell used
+This is the shell used to interpret the job script submitted by the suite
+daemon when a task is ready to run.  {\em It has no bearing on the shell used
 in task implementations.} Command scripting and suite environment
 variable assignment expressions must be valid for this shell. The
 latter is currently hardwired into cylc as
@@ -1157,7 +1157,7 @@ of cylc on the remote machine; if not, the corresponding local settings
 \subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
 
 The username of the task host account. This is (only) used in the
-passwordless ssh command invoked by cylc to submit the remote task
+passwordless ssh command invoked by the suite daemon to submit the remote task
 (consequently it may be defined using local environment variables
 (i.e.\ the shell in which cylc runs, and [cylc] $\rightarrow$ [[environment]]).
 
@@ -1191,7 +1191,7 @@ interpretation on the remote host.
 \label{TaskEventHandling}
 
 Cylc has internal ``hooks'' to which you can attach handlers that are
-called {\em by cylc} whenever certain events occur. This section
+called by the suite daemon whenever certain events occur. This section
 configures task event hooks; see Section~\ref{SuiteEventHandling} for
 suite event hooks.
 
@@ -1202,7 +1202,7 @@ to ensure their location is in \lstinline=$PATH= (in the shell in which
 cylc runs, on the suite host).
 \lstinline=cylc [hook] email-task= is a simple task event handler.
 
-Task event handlers are called by cylc with the following arguments:
+Task event handlers are called by the suite daemon with the following arguments:
 \begin{lstlisting}
 <task-event-handler> EVENT SUITE TASK MESSAGE
 \end{lstlisting}
@@ -1389,16 +1389,16 @@ corresponding real outputs have been completed.
 Replace \_\_OUTPUT\_\_ with any number of labelled output messages.
 \begin{myitemize}
     \item {\em type:} string (a message containing
-        \lstinline=<CYLC_TASK_CYCLE_TIME>= with an optional offset as shown
+        \lstinline=<CYLC_TASK_CYCLE_POINT>= with an optional offset as shown
         below. Note that you cannot use the corresponding shell variable
-        \lstinline=$CYLC_TASK_CYCLE_TIME= here. The string substitution
+        \lstinline=$CYLC_TASK_CYCLE_POINT= here. The string substitution
         (replacing this special variable with the actual task cycle point) is
         done inside cylc, not in the task execution environment.
 \item {\em default:} (none)
 \item{ \em examples:}
  \begin{lstlisting}
- foo = "sea state products ready for <CYLC_TASK_CYCLE_TIME>"
- bar = "nwp restart files ready for <CYLC_TASK_CYCLE_TIME+6>"
+ foo = "sea state products ready for <CYLC_TASK_CYCLE_POINT>"
+ bar = "nwp restart files ready for <CYLC_TASK_CYCLE_POINT+6>"
  \end{lstlisting}
  where the item name must match the output label associated with
  this task in the suite dependency graph, e.g.:
