@@ -92,7 +92,7 @@ class CylcTimeParser(object):
         (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
     ]
 
-    CHAIN_REGEX = '([+-P|\dT][\d\w]*)'
+    CHAIN_REGEX = '((?:[+-P]|[\dT])[\d\w]*)'
 
     OFFSET_REGEX = r"(?P<sign>[+-])(?P<intv>P.+)$"
 
