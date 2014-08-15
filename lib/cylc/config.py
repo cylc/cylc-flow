@@ -1734,9 +1734,10 @@ class config( object ):
         for section in sorted(back_comp_initial_section_graphs):
             total_graph_text = "\n".join(
                 back_comp_initial_section_graphs[section])
-            print "INSERTED DEPENDENCIES REPLACEMENT:"
-            print "[[[" + section + "]]]"
-            print "    " + 'graph = """\n' + total_graph_text + '\n"""' 
+            if self.validation:
+                print "INSERTED DEPENDENCIES REPLACEMENT:"
+                print "[[[" + section + "]]]"
+                print "    " + 'graph = """\n' + total_graph_text + '\n"""' 
             self.parse_graph(
                 section, total_graph_text,
                 section_seq_map=section_seq_map, tasks_to_prune=[]
