@@ -34,6 +34,7 @@
 sleep 5
 cylc task message "the cheese is ready for $(( CYLC_TASK_CYCLE_POINT + 3 ))"
 sleep 5
+touch typing
                             """
         [[[outputs]]]
             out1 = "the cheese is ready for [T+3]"

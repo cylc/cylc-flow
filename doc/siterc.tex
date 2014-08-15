@@ -80,6 +80,7 @@ housekeeping is enabled.
 \end{myitemize}
 
 \subsubsection{execution polling intervals}
+\label{execution_polling}
 
 Cylc can poll running jobs to catch problems that prevent task messages
 from being sent back to the suite, such as hard job kills, network
@@ -99,6 +100,7 @@ Multipliers can be used as shorthand as in the example below.
 
 
 \subsubsection{submission polling intervals}
+\label{submission_polling}
 
 Cylc can also poll submitted jobs to catch problems that prevent the
 submitted job from executing at all, such as deletion from an external
@@ -408,6 +410,7 @@ The top level for suite work and share directories.
 
 
 \paragraph[task communication method]{[hosts] $\rightarrow$ HOST $\rightarrow$ task communication method }
+\label{task_comms_method}
 
 The means by which task progress messages are reported back to the running suite.
 See above for default polling intervals for the poll method.

@@ -44,8 +44,8 @@ def daemonize( suite, port ):
             print " * cylc ping -v", suite
             print " * ps -fu $USER | grep 'cylc-run .*", suite + "'"
             print
-            print "To run in non-daemon mode use --debug."
-            print "For more information type 'cylc --help'."
+            print "To run in non-daemon mode use --no-detach or --debug."
+            print "For more information see 'cylc --help' and the User Guide."
             print
             sys.exit(0)
     except OSError, e:
