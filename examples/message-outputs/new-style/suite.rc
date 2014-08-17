@@ -1,0 +1,33 @@
+title = "triggering off message outputs"
+
+description = """
+A self-contained example (task implementation, including output
+messaging, is entirely contained within the suite definition)."""
+
+[scheduling]
+    initial cycle point = 20140801T00
+    final cycle point = 20141201T00
+    [[dependencies]]
+        [[[R//P2M]]]
+          graph = """
+            #x => y
+            #foo:out1 => bar
+            foo
+            foo[-P2M]:out2 => baz
+                  """
+[runtime]
+    [[foo]]
+        command scripting = """
+echo HELLO
+sleep 10 
+TARGET_POINT=$CYLC_TASK_CYCLE_POINT
+cylc message "file 1 for $TARGET_POINT done"
+sleep 10
+TARGET_POINT=$(cylc cycletime --offset P2M)
+cylc message "file 2 for $TARGET_POINT done"
+sleep 10
+echo BYE"""
+        [[[outputs]]]
+            # [T] is replaced by actual cycle time at run time:
+            #out1 = "file 1 for [] done"
+            out2 = "file 2 for [P2M] done"

@@ -19,34 +19,44 @@
 import re
 from cycling.loader import get_interval
 
-class OutputXError( Exception ):
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr( self.msg )
+# TODO - unify with RE in config.py
+BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
+MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 
-class outputx(object):
+class output(object):
     """
-Hold and process explicit internal task outputs during suite configuration.
-This is for outputs used as outputs, not outputs used as prerequisites. The
-latter can have instrinsic (in message) and evaluation ([T-n]) offsets, but
-these only have intrinsic offsets - they are always evaluated at the task's
-own cycle point.
+    Hold and process task message outputs during suite configuration.
+    
+    This is for outputs used as outputs, not outputs used as prerequisites. The
+    latter can have message and graph offsets, but these only have message
+    offsets; they are always evaluated at the task's own cycle point.
     """
-    def __init__(self, msg, base_interval=None ):
-        self.offset = None
+
+    def __init__(self, msg, base_interval=None):
+        self.msg_offset = None
         self.msg = msg
-        # TODO ISO: support "+P1D", etc.
-        m = re.search( '\[\s*T\s*([+-])\s*(\d+)\s*\]', self.msg )
+        m = re.match(BACK_COMPAT_MSG_RE, self.msg)
         if m:
-            sign, offset = m.groups()
-            if sign != '+':
-                raise OutputXError, "ERROR, task output offsets must be positive: " + self.msg
-            self.offset = base_interval.get_inferred_child( offset )
+            # Old-style offset
+            prefix, signed_offset, sign, offset, suffix = m.groups()
+            # TODO - checked all signed offsets work
+            self.msg_offset = base_interval.get_inferred_child(signed_offset)
+        else:
+            n = re.match(MSG_RE, msg)
+            if n:
+                # New-style offset
+                prefix, signed_offset, sign, offset, suffix = n.groups()
+                if offset:
+                    self.msg_offset = get_interval(signed_offset)
+                else:
+                    self.msg_offset = get_interval_cls().get_null()
+            else:
+                # Plain message, no offset.
+                pass
 
     def get( self, point ):
-        # Replace [T] with actual cycle point
         new_point = point
-        if self.offset:
-            new_point = point + self.offset
-        return re.sub( '\[\s*T.*?\]', str(new_point), self.msg )
+        if self.msg_offset:
+            new_point = point + self.msg_offset
+        msg = re.sub( '\[.*\]', str(new_point), self.msg )
+        return msg

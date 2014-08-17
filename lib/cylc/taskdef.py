@@ -267,9 +267,9 @@ class taskdef(object):
                     if trig.cycling and not sequence.is_valid( sself.point ):
                         # This trigger is not used in current cycle
                         continue
-                    if (trig.evaluation_offset_string is None or
+                    if (trig.graph_offset_string is None or
                             (get_point_relative(
-                                trig.evaluation_offset_string, point) >=
+                                trig.graph_offset_string, point) >=
                              self.start_point)):
                         # i.c.t. can be None after a restart, if one
                         # is not specified in the suite definition.
@@ -301,10 +301,10 @@ class taskdef(object):
                     cp = conditional_prerequisites( sself.id, self.start_point )
                     for label in ctrig:
                         trig = ctrig[label]
-                        if trig.evaluation_offset_string is not None:
+                        if trig.graph_offset_string is not None:
                             is_less_than_start = (
                                 get_point_relative(
-                                    trig.evaluation_offset_string, point) <
+                                    trig.graph_offset_string, point) <
                                 self.start_point
                             )
                             cp.add( trig.get( point )[0], label,

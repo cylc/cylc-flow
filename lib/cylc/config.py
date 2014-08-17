@@ -28,12 +28,13 @@ from cylc.cycling import IntervalParsingError
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from output import outputx
+from task_state import TaskStateError
+from output import output
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
-from trigger import triggerx
+from trigger import trigger
 from parsec.util import replicate, pdeepcopy
 import TaskID
 from C3MRO import C3
@@ -49,7 +50,13 @@ checking, then construct task proxy objects and graph structures.
 
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*(.+)\s*\)')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
+
+# TODO - unify this with task_state.py:
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
+
+# TODO - combine these?:
+MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
 
 try:
     import graphing
@@ -831,52 +838,63 @@ class config( object ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
-    def set_trigger( self, task_name, right, output_name=None,
-                     offset_string=None, cycle_point=None,
+    def get_trigger( self, task_name, right, qualifier=None,
+                     graph_offset_string=None, cycle_point=None,
                      suicide=False, base_interval=None ):
-        trig = triggerx(task_name)
+        trig = trigger(task_name)
         trig.set_suicide(suicide)
-        if output_name:
+        if qualifier is None:
+            qualifier = 'succeeded'
+        try:
+            # Standard trigger?
+            trig.set_standard_trigger(qualifier)
+        except TaskStateError:
             try:
-                # check for internal outputs
-                trig.set_special( self.cfg['runtime'][task_name]['outputs'][output_name],
-                                  base_interval=base_interval )
+                # Message trigger?
+                msg = self.cfg['runtime'][task_name]['outputs'][qualifier]
             except KeyError:
-                # There is no matching output defined under the task runtime section
-                if output_name == 'submit':
-                    # OK, task:submit
-                    trig.set_type('submitted' )
-                elif output_name == 'submit-fail':
-                    # OK, task:submit-fail
-                    trig.set_type('submit-failed' )
-                elif output_name == 'fail':
-                    # OK, task:fail
-                    trig.set_type('failed' )
-                elif output_name == 'start':
-                    # OK, task:start
-                    trig.set_type('started')
-                elif output_name == 'succeed':
-                    # OK, task:succeed
-                    trig.set_type('succeeded')
+                raise SuiteConfigError, (
+                        "ERROR: undefined trigger qualifier: %s.%s" %
+                        task_name, qualifier
+                )
+            if self.run_mode != 'live':
+                # Dummy tasks do not report message outputs.
+                return None
+            # Back compat for [T+n] in message string.
+            # TODO - handle negative offsets?
+            m = re.match(BACK_COMPAT_MSG_RE, msg)
+            msg_offset = None
+            if m:
+                prefix, signed_offset, sign, offset, suffix = m.groups()
+                if offset:
+                    # TODO - checked all signed offets work
+                    msg_offset = base_interval.get_inferred_child(signed_offset)
                 else:
-                    # ERROR
-                    raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
+                    msg_offset = get_interval_cls().get_null()
             else:
-                # There is a matching output defined under the task runtime section
-                if self.run_mode != 'live':
-                    # Ignore internal outputs: dummy tasks will not report them finished.
-                    return None
-        else:
-            # default: task succeeded
-            trig.set_type( 'succeeded' )
+                n = re.match(MSG_RE, msg)
+                if n:
+                    prefix, signed_offset, sign, offset, suffix = n.groups()
+                    if offset:
+                        msg_offset = get_interval(signed_offset)
+                    else:
+                        msg_offset = get_interval_cls().get_null()
+                else:
+                    # TODO - combine with same above?
+                    raise SuiteConfigError, (
+                            "ERROR: undefined trigger qualifier: %s.%s" %
+                            task_name, qualifier
+                    )
 
-        if offset_string:
-            # TODO ISO - CONSISTENT SET_OFFSET INPUT 
-            trig.set_offset_string( offset_string )
+            trig.set_message_trigger(msg, msg_offset)
+
+        if graph_offset_string:
+            trig.set_offset_string(graph_offset_string)
 
         if cycle_point:
-            trig.set_cycle_point( cycle_point )
+            trig.set_cycle_point(cycle_point)
 
+        # TODO - GET RID OF cycling_tasks????!!!!
         if task_name in self.cycling_tasks:
             trig.set_cycling()
 
@@ -937,6 +955,7 @@ class config( object ):
                 # But in principle a clash of multiply inherited base
                 # classes due to choice of "special task" modifiers
                 # could cause a TypeError.
+                raise
                 raise SuiteConfigError('(inconsistent use of special tasks?)')
             except Exception, x:
                 raise SuiteConfigError(
@@ -1375,8 +1394,8 @@ class config( object ):
                 # register any explicit internal outputs
                 if 'outputs' in self.cfg['runtime'][name]:
                     for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = outputx(msg, base_interval)
-                        self.taskdefs[ name ].outputs.append( outp )
+                        outp = output(msg, base_interval)
+                        self.taskdefs[name].outputs.append(outp)
 
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
@@ -1422,7 +1441,7 @@ class config( object ):
                 else:
                     offset_tuple = (lnode.offset_string, None)
                 ltaskdef.intercycle_offsets.append(offset_tuple)
-            trigger = self.set_trigger(
+            trigger = self.get_trigger(
                 lnode.name, right, lnode.output, lnode.offset_string,
                 cycle_point, suicide, seq.get_interval()
             )

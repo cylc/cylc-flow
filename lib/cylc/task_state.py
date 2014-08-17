@@ -54,9 +54,26 @@ class task_state(object):
         'spawn'
     ]
 
+    legal_for_trigger = {
+        'submit' : 'submitted',
+        'submit-fail' : 'submit-failed',
+        'start' : 'started',
+        'succeed' : 'succeeded',
+        'fail' : 'failed'
+    }
+
     @classmethod
-    def is_legal( cls, state ):
+    def is_legal(cls, state):
         return state in cls.legal
+
+    @classmethod
+    def get_legal_trigger_state(cls, str):
+        if str in cls.legal_for_trigger.values():
+            return str
+        elif str in cls.legal_for_trigger.keys(): 
+            return cls.legal_for_trigger[str]
+        else:
+            raise TaskStateError("Illegal trigger state: %s" % str)
 
     # GUI button labels
     labels = {
