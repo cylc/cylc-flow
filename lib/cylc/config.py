@@ -156,10 +156,19 @@ class config( object ):
             self.cfg['scheduling']['initial cycle point'] = (
                 self._cli_initial_point_string)
 
-        if 'cycling mode' not in self.cfg['scheduling']:
+        dependency_map = self.cfg.get('scheduling', {}).get(
+            'dependencies', {})
+
+        graph_found = False
+        for item, value in dependency_map.items():
+            if item == 'graph' or value.get('graph'):
+                graph_found = True
+                break
+        if not graph_found:
+            raise SuiteConfigError('No suite dependency graph defined.')
+
+        if 'cycling mode' not in self.cfg.get('scheduling', {}):
             # Auto-detect integer cycling for pure async graph suites.
-            dependency_map = self.cfg.get('scheduling', {}).get(
-                'dependencies', {})
             if dependency_map.get('graph'):
                 # There is an async graph setting.
                 # If it is by itself, it is integer shorthand.
@@ -360,9 +369,6 @@ class config( object ):
         self.process_directories()
 
         self.load_graph()
-
-        if not self.graph_found:
-            raise SuiteConfigError, 'No suite dependency graph defined.'
 
         self.compute_runahead_limits()
 
@@ -1638,7 +1644,6 @@ class config( object ):
             )
         back_comp_initial_tasks = list(start_up_tasks)
 
-        self.graph_found = False
         has_non_async_graphs = False
 
         section_seq_map = {}
@@ -1757,7 +1762,6 @@ class config( object ):
         a graph of 'foo:start => bar'.
 
         """
-        self.graph_found = True
 
         ttype = 'cycling'
         sec = section
