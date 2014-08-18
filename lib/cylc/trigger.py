@@ -22,6 +22,12 @@ import cylc.TaskID
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point_relative)
 from cylc.task_state import task_state
+from cylc.task_state import TaskStateError
+
+
+BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
+MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+
 
 class TriggerError( Exception ):
     def __init__( self, msg ):
@@ -31,7 +37,7 @@ class TriggerError( Exception ):
 
 class trigger(object):
     """
-Task triggers are used to generate task prerequisite messages.
+Task triggers, used to generate prerequisite messages for specific points.
 
 Note on trigger time offsets:
   bar triggers off "foo succeeded at -P1D"
@@ -49,56 +55,96 @@ Message output x may have an offset too:
 (b) is an "message offset"
     """
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(
+            self, task_name, qualifier=None, graph_offset_string=None,
+            cycle_point=None, suicide=False, cycling=False, outputs={},
+            base_interval=None):
+
+        self.task_name = task_name
+        self.suicide = suicide
+        self.graph_offset_string = graph_offset_string
+        self.cycle_point = cycle_point
+        self.cycling = cycling
+
         self.message = None
         self.message_offset = None
-        self.graph_offset_string = None
         self.cycle_point = None
         self.standard_type = None
-        self.cycling = False
-        self.suicide = False
+        qualifier = qualifier or "succeeded"
 
-    def set_suicide(self, suicide):
-        self.suicide = suicide
+        # Built-in trigger?
+        try:
+            self.standard_type = task_state.get_legal_trigger_state(qualifier)
+        except TaskStateError:
+            pass
+        else:
+            return
+
+        # Message trigger?
+        try:
+            msg = outputs[qualifier]
+        except KeyError:
+            raise TriggerError, (
+                    "ERROR: undefined trigger qualifier: %s.%s" % (task_name,
+                        qualifier)
+            )
+
+        # Back compat for [T+n] in message string.
+        # TODO - handle negative offsets?
+        m = re.match(BACK_COMPAT_MSG_RE, msg)
+        msg_offset = None
+        if m:
+            prefix, signed_offset, sign, offset, suffix = m.groups()
+            if offset:
+                # TODO - checked all signed offets work
+                msg_offset = base_interval.get_inferred_child(signed_offset)
+            else:
+                msg_offset = get_interval_cls().get_null()
+        else:
+            n = re.match(MSG_RE, msg)
+            if n:
+                prefix, signed_offset, sign, offset, suffix = n.groups()
+                if offset:
+                    msg_offset = get_interval(signed_offset)
+                else:
+                    msg_offset = get_interval_cls().get_null()
+            else:
+                # TODO - combine with same above?
+                raise TriggerError, (
+                        "ERROR: undefined trigger qualifier: %s.%s" %
+                        (task_name, qualifier)
+                )
+        self.message = msg
+        self.message_offset = msg_offset
 
     def set_cycling(self):
+        # TODO - GET RID OF task.cycling ????!!!!
         self.cycling = True
 
-    def set_standard_trigger(self, qualifier):
-        self.standard_type = task_state.get_legal_trigger_state(qualifier)
+    def is_standard(self):
+        return self.standard_type is not None
 
-    def set_message_trigger(self, msg, offset=None):
-        self.message = msg
-        self.message_offset = offset
-
-    def set_cycle_point(self, cycle_point):
-        self.cycle_point = cycle_point
-
-    def set_offset_string(self, offset_string):
-        self.graph_offset_string = offset_string
-
-    def get(self, ctime):
-        """Return a prerequisite string and the relevant point for ctime."""
+    def get(self, point):
+        """Return a prerequisite string and the relevant point."""
         if self.message:
             preq = self.message
             if self.cycle_point:
-                ctime = self.cycle_point
+                point = self.cycle_point
             else:
                 if self.message_offset:
-                    ctime += self.message_offset
+                    point += self.message_offset
                 if self.graph_offset_string:
-                    ctime = get_point_relative(
-                            self.graph_offset_string, ctime)
-            preq = re.sub( '\[.*\]', str(ctime), preq )
+                    point = get_point_relative(
+                            self.graph_offset_string, point)
+            preq = re.sub( '\[.*\]', str(point), preq )
         elif self.standard_type:
             if self.cycle_point:
-                ctime = self.cycle_point
+                point = self.cycle_point
             elif self.graph_offset_string:
-                ctime = get_point_relative(
-                    self.graph_offset_string, ctime)
-            preq = cylc.TaskID.get(self.name, str(ctime)) + ' ' + self.standard_type
+                point = get_point_relative(
+                    self.graph_offset_string, point)
+            preq = cylc.TaskID.get(self.task_name, str(point)) + ' ' + self.standard_type
         else:
             # TODO
             raise Exception("shite")
-        return preq, ctime
+        return preq, point

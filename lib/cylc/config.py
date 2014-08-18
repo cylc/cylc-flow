@@ -28,7 +28,6 @@ from cylc.cycling import IntervalParsingError
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from task_state import TaskStateError
 from output import output
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
@@ -53,10 +52,6 @@ NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
 # TODO - unify this with task_state.py:
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
-
-# TODO - combine these?:
-MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
-BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
 
 try:
     import graphing
@@ -838,68 +833,6 @@ class config( object ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
-    def get_trigger( self, task_name, right, qualifier=None,
-                     graph_offset_string=None, cycle_point=None,
-                     suicide=False, base_interval=None ):
-        trig = trigger(task_name)
-        trig.set_suicide(suicide)
-        if qualifier is None:
-            qualifier = 'succeeded'
-        try:
-            # Standard trigger?
-            trig.set_standard_trigger(qualifier)
-        except TaskStateError:
-            try:
-                # Message trigger?
-                msg = self.cfg['runtime'][task_name]['outputs'][qualifier]
-            except KeyError:
-                raise SuiteConfigError, (
-                        "ERROR: undefined trigger qualifier: %s.%s" %
-                        task_name, qualifier
-                )
-            if self.run_mode != 'live':
-                # Dummy tasks do not report message outputs.
-                return None
-            # Back compat for [T+n] in message string.
-            # TODO - handle negative offsets?
-            m = re.match(BACK_COMPAT_MSG_RE, msg)
-            msg_offset = None
-            if m:
-                prefix, signed_offset, sign, offset, suffix = m.groups()
-                if offset:
-                    # TODO - checked all signed offets work
-                    msg_offset = base_interval.get_inferred_child(signed_offset)
-                else:
-                    msg_offset = get_interval_cls().get_null()
-            else:
-                n = re.match(MSG_RE, msg)
-                if n:
-                    prefix, signed_offset, sign, offset, suffix = n.groups()
-                    if offset:
-                        msg_offset = get_interval(signed_offset)
-                    else:
-                        msg_offset = get_interval_cls().get_null()
-                else:
-                    # TODO - combine with same above?
-                    raise SuiteConfigError, (
-                            "ERROR: undefined trigger qualifier: %s.%s" %
-                            task_name, qualifier
-                    )
-
-            trig.set_message_trigger(msg, msg_offset)
-
-        if graph_offset_string:
-            trig.set_offset_string(graph_offset_string)
-
-        if cycle_point:
-            trig.set_cycle_point(cycle_point)
-
-        # TODO - GET RID OF cycling_tasks????!!!!
-        if task_name in self.cycling_tasks:
-            trig.set_cycling()
-
-        return trig
-
     def check_tasks( self ):
         # Call after all tasks are defined.
         # ONLY IF VALIDATING THE SUITE
@@ -1085,6 +1018,8 @@ class config( object ):
 
         orig_line = line
 
+        base_interval = seq.get_interval()
+
         ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed' (NOT USED)
         ## we can replace synonyms here with the standard type designator:
         # line = re.sub( r':succe(ss|ed|eded){0,1}\b', '', line )
@@ -1250,8 +1185,7 @@ class config( object ):
 
                 for left_node in left_nodes:
                     try:
-                        left_graph_node = graphnode(
-                            left_node, base_interval=seq.get_interval())
+                        left_graph_node = graphnode(left_node, base_interval)
                     except GraphNodeError, x:
                         print >> sys.stderr, orig_line
                         raise SuiteConfigError, str(x)
@@ -1278,13 +1212,12 @@ class config( object ):
                         right_edge_node = None
                     self.generate_edges(lexpression, left_edge_nodes,
                                          right_edge_node, seq, suicide)
-                self.generate_taskdefs( orig_line, pruned_left_nodes,
+                self.generate_taskdefs(orig_line, pruned_left_nodes,
                                         right_name, section,
                                         seq, offset_seq_map,
-                                        seq.get_interval() )
-                self.generate_triggers( lexpression, pruned_left_nodes,
-                                        right_name, seq,
-                                        suicide )
+                                        base_interval)
+                self.generate_triggers(lexpression, pruned_left_nodes,
+                                        right_name, seq, suicide)
         return special_dependencies
             
 
@@ -1425,14 +1358,21 @@ class config( object ):
                 else:
                     offset_tuple = (lnode.offset_string, None)
                 ltaskdef.intercycle_offsets.append(offset_tuple)
-            trigger = self.get_trigger(
-                lnode.name, right, lnode.output, lnode.offset_string,
-                cycle_point, suicide, seq.get_interval()
+
+            trig = trigger(
+                    lnode.name, lnode.output, lnode.offset_string,
+                    cycle_point, suicide,
+                    lnode.name in self.cycling_tasks,
+                    self.cfg['runtime'][lnode.name]['outputs'],
+                    base_interval
             )
-            if not trigger:
+
+            if self.run_mode != 'live' and not trig.is_standard():
+                # Dummy tasks do not report message outputs.
                 continue
+
             if not conditional:
-                self.taskdefs[right].add_trigger( trigger, seq )
+                self.taskdefs[right].add_trigger( trig, seq )
                 continue
 
             # CONDITIONAL TRIGGERS
@@ -1440,7 +1380,7 @@ class config( object ):
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
             label = re.sub( '\+', 'x', label ) # future triggers
-            ctrig[label] = trigger
+            ctrig[label] = trig
             cname[label] = lnode.name
 
         if not conditional:
