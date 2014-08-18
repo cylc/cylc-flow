@@ -1,0 +1,19 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20140101
+    final cycle point = 20140104
+    [[special tasks]]
+        start-up = cold_foo1, cold_foo2
+    [[dependencies]]
+        [[[ 0 ]]]
+            graph = """
+                cold_foo1 => cold_foo2
+                foo_midnight[T-24] & cold_foo2 => foo_midnight
+            """
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 20140101
+    final cycle point = 20140104

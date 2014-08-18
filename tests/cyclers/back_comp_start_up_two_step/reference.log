@@ -1,0 +1,39 @@
+2014-08-18T10:11:35Z INFO - port:7766
+2014-08-18T10:11:35Z INFO - Suite starting at 2014-08-18T10:11:35Z
+2014-08-18T10:11:35Z INFO - Log event clock: real time
+2014-08-18T10:11:35Z INFO - Run mode: live
+2014-08-18T10:11:35Z INFO - Initial point: 2014010100
+2014-08-18T10:11:35Z INFO - Final point: 2014010400
+2014-08-18T10:11:35Z INFO - Cold Start 2014010100
+2014-08-18T10:11:35Z INFO - [cold_foo1.2014010100] -triggered off []
+2014-08-18T10:11:36Z INFO - [cold_foo1.2014010100] -submit_method_id=15896
+2014-08-18T10:11:36Z INFO - [cold_foo1.2014010100] -submission succeeded
+2014-08-18T10:11:36Z INFO - [cold_foo1.2014010100] -(current:submitted)> cold_foo1.2014010100 started at 2014-08-18T10:11:36Z
+2014-08-18T10:11:37Z INFO - [cold_foo1.2014010100] -(current:running)> cold_foo1.2014010100 succeeded at 2014-08-18T10:11:37Z
+2014-08-18T10:11:38Z INFO - [cold_foo2.2014010100] -triggered off ['cold_foo1.2014010100']
+2014-08-18T10:11:39Z INFO - [cold_foo2.2014010100] -submit_method_id=16000
+2014-08-18T10:11:39Z INFO - [cold_foo2.2014010100] -submission succeeded
+2014-08-18T10:11:39Z INFO - [cold_foo2.2014010100] -(current:submitted)> cold_foo2.2014010100 started at 2014-08-18T10:11:39Z
+2014-08-18T10:11:40Z INFO - [cold_foo2.2014010100] -(current:running)> cold_foo2.2014010100 succeeded at 2014-08-18T10:11:40Z
+2014-08-18T10:11:41Z INFO - [foo_midnight.2014010100] -triggered off ['cold_foo2.2014010100']
+2014-08-18T10:11:42Z INFO - [foo_midnight.2014010100] -submit_method_id=16104
+2014-08-18T10:11:42Z INFO - [foo_midnight.2014010100] -submission succeeded
+2014-08-18T10:11:42Z INFO - [foo_midnight.2014010100] -(current:submitted)> foo_midnight.2014010100 started at 2014-08-18T10:11:42Z
+2014-08-18T10:11:43Z INFO - [foo_midnight.2014010100] -(current:running)> foo_midnight.2014010100 succeeded at 2014-08-18T10:11:43Z
+2014-08-18T10:11:44Z INFO - [foo_midnight.2014010200] -triggered off ['foo_midnight.2014010100']
+2014-08-18T10:11:45Z INFO - [foo_midnight.2014010200] -submit_method_id=16208
+2014-08-18T10:11:45Z INFO - [foo_midnight.2014010200] -submission succeeded
+2014-08-18T10:11:45Z INFO - [foo_midnight.2014010200] -(current:submitted)> foo_midnight.2014010200 started at 2014-08-18T10:11:45Z
+2014-08-18T10:11:47Z INFO - [foo_midnight.2014010200] -(current:running)> foo_midnight.2014010200 succeeded at 2014-08-18T10:11:46Z
+2014-08-18T10:11:48Z INFO - [foo_midnight.2014010300] -triggered off ['foo_midnight.2014010200']
+2014-08-18T10:11:49Z INFO - [foo_midnight.2014010300] -submit_method_id=16313
+2014-08-18T10:11:49Z INFO - [foo_midnight.2014010300] -submission succeeded
+2014-08-18T10:11:49Z INFO - [foo_midnight.2014010300] -(current:submitted)> foo_midnight.2014010300 started at 2014-08-18T10:11:48Z
+2014-08-18T10:11:50Z INFO - [foo_midnight.2014010300] -(current:running)> foo_midnight.2014010300 succeeded at 2014-08-18T10:11:49Z
+2014-08-18T10:11:51Z INFO - [foo_midnight.2014010400] -triggered off ['foo_midnight.2014010300']
+2014-08-18T10:11:52Z INFO - [foo_midnight.2014010400] -submit_method_id=16417
+2014-08-18T10:11:52Z INFO - [foo_midnight.2014010400] -submission succeeded
+2014-08-18T10:11:52Z INFO - [foo_midnight.2014010500] -holding (beyond suite stop point) 2014010400
+2014-08-18T10:11:52Z INFO - [foo_midnight.2014010400] -(current:submitted)> foo_midnight.2014010400 started at 2014-08-18T10:11:51Z
+2014-08-18T10:11:53Z INFO - [foo_midnight.2014010400] -(current:running)> foo_midnight.2014010400 succeeded at 2014-08-18T10:11:52Z
+2014-08-18T10:11:54Z INFO - Suite shutting down at 2014-08-18T10:11:54Z
