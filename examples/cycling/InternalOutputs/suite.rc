@@ -24,7 +24,7 @@ output message is explicited target at the next cycle."""
     [[foo]]
         command scripting = """
 sleep 5
-cylc task message "foo stuff ready for $(cylc cycletime --offset-year=1)"
+cylc task message "foo stuff ready for $(cylc cycle-point --offset-year=1)"
 # TO DO: extend the cycle time utility
 sleep 5
                             """

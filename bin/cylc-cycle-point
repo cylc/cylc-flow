@@ -24,30 +24,30 @@ import isodatetime.dumpers
 import isodatetime.parsers
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc [util] cycletime [OPTIONS] [POINT]
+parser = OptionParser( usage = """cylc [util] cycle-point [OPTIONS] [POINT]
 
 Arithmetic date-time cycle point offset computation, and filename templating.
 
 Examples:
 
 1) print offset from an explicit cycle point:
-  % cylc [util] cycletime --offset-hours=6 20100823T1800Z
+  % cylc [util] cycle-point --offset-hours=6 20100823T1800Z
   20100824T0000Z
 
 2) print offset from $CYLC_TASK_CYCLE_POINT (as in suite tasks):
   % export CYLC_TASK_CYCLE_POINT=20100823T1800Z
-  % cylc cycletime --offset-hours=-6
+  % cylc cycle-point --offset-hours=-6
   20100823T1200Z
 
 3) cycle point filename templating, explicit template:
   % export CYLC_TASK_CYCLE_POINT=2010-08
-  % cylc cycletime --offset-years=2 --template=foo-YYYY-MM.nc
+  % cylc cycle-point --offset-years=2 --template=foo-YYYY-MM.nc
   foo-2012-08.nc
 
 4) cycle point filename templating, template in a variable:
   % export CYLC_TASK_CYCLE_POINT=2010-08
   % export MYTEMPLATE=foo-YYYY-MM.nc
-  % cylc cycletime --offset-years=2 --template=MYTEMPLATE
+  % cylc cycle-point --offset-years=2 --template=MYTEMPLATE
   foo-2012-08.nc
 
 Arguments:

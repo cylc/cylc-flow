@@ -73,7 +73,7 @@ title = "Old Cylc Admin Test Suite"
         description = "Clean out the suite workspace for a new run"
         command scripting = """
 clean-workspace.sh $WORKSPACE
-STOP=$( cylc cycletime --offset-hours=24 )
+STOP=$( cylc cycle-point --offset-hours=24 )
 cylc message "Setting stop cycle $STOP"
 cylc stop -f $CYLC_SUITE_REG_NAME $STOP
 # set a runahead limit big enough to cross the purge gap
@@ -83,7 +83,7 @@ cylc set-runahead -f $CYLC_SUITE_REG_NAME 30"""
         description = "Retrieve real time data for model A"
         pre-command scripting = """
 #sleep 10
-CYCLE2=$( cylc cycletime --offset-hours=6 $CYLC_SUITE_INITIAL_CYCLE_TIME )
+CYCLE2=$( cylc cycle-point --offset-hours=6 $CYLC_SUITE_INITIAL_CYCLE_TIME )
 if (( CYLC_TASK_CYCLE_TIME == CYCLE2 )); then
     echo "This task ABORTS in the 2nd cycle!"
     /bin/false
@@ -101,10 +101,10 @@ fi"""
     [[recover]]
         command scripting = """
 # insert ColdA:
-AT=$( cylc cycletime --offset-hours=18 )
+AT=$( cylc cycle-point --offset-hours=18 )
 cylc insert -f $CYLC_SUITE_REG_NAME ColdA ${AT}
 # purge tasks that cannot run:
-TO=$( cylc cycletime --offset-hours=12 )
+TO=$( cylc cycle-point --offset-hours=12 )
 cylc purge -f $CYLC_SUITE_REG_NAME X.$CYLC_TASK_CYCLE_TIME ${TO}
 # when the new A task is finished, trigger B and C manually
 # (they write out restart files to T+24)

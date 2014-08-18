@@ -3587,7 +3587,7 @@ finish:
     [[A]]
         command scripting = """
 sleep 10
-cylc message "restart files ready for $( cylc cycletime --offset-hours=6 )"
+cylc message "restart files ready for $( cylc cycle-point --offset-hours=6 )"
 sleep 20"""
         [[[outputs]]]
             res1 = "restart files ready for [T+6]"
@@ -6118,7 +6118,7 @@ cleanup easier, and it facilitates task re-runnability and avoidance of
 previous-instance dependence (above) by ensuring that important files do not
 get overwritten by the next cycle point.
 
-The \lstinline=cylc cycletime= command computes offsets (in hours, days,
+The \lstinline=cylc cycle-point= command computes offsets (in hours, days,
 months, and years) from a given or current date-time cycle point, and
 optionally inserts the resulting computed date-time, or components of it, into
 a given filename template string.
@@ -6375,8 +6375,8 @@ operation as required.
 [runtime]
     [[bar]]
         command scripting = """
-if [[ $( cylc cycletime --print-hour ) == 06 || \
-      $( cylc cycletime --print-hour ) == 18 ]]; then
+if [[ $( cylc cycle-point --print-hour ) == 06 || \
+      $( cylc cycle-point --print-hour ) == 18 ]]; then
     SENTENCE="the quick brown fox"
 else
     SENTENCE="the lazy dog"
