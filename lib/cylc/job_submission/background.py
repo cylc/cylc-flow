@@ -15,14 +15,16 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Implement background job submission."""
 
-from job_submit import JobSubmit
+from cylc.job_submission.job_submit import JobSubmit
 from cylc.command_env import pr_scripting_sl
 import os
 from signal import SIGKILL
 from subprocess import Popen, PIPE
 
-class background( JobSubmit ):
+
+class background(JobSubmit):
     """
     Background 'job submission' runs the task directly in the background
     (with '&') so that we can get the job PID (with $!) but then uses
@@ -32,7 +34,7 @@ class background( JobSubmit ):
       % ssh user@host 'job-script & echo $!; wait'
     (We have to override the general command templates to achieve this)."""
 
-    LOCAL_COMMAND_TEMPLATE = ( "( %(command)s & echo $!; wait )" )
+    LOCAL_COMMAND_TEMPLATE = "( %(command)s & echo $!; wait )"
 
     REMOTE_COMMAND_TEMPLATE = (
         " '" +
@@ -40,6 +42,8 @@ class background( JobSubmit ):
         "; " +
         # Retry "mkdir" once to avoid race to create log/job/CYCLE/
         " (mkdir -p %(jobfile_dir)s || mkdir -p %(jobfile_dir)s)" +
+        " && rm -f $(dirname %(jobfile_dir)s)/NN"
+        " && ln -s $(basename %(jobfile_dir)s) $(dirname %(jobfile_dir)s)/NN"
         " && cat >%(jobfile_path)s.tmp" +
         " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
         " && chmod +x %(jobfile_path)s" +
@@ -50,21 +54,20 @@ class background( JobSubmit ):
     # N.B. The perl command ensures that the job script is executed in its own
     # process group, which allows the job script and its child processes to be
     # killed correctly.
-    COMMAND_TEMPLATE = ("perl -e \"setpgrp(0,0);exec(@ARGV)\" %s " +
-                        "</dev/null 1>%s 2>%s")
+    COMMAND_TEMPLATE = (
+        "perl -e \"setpgrp(0,0);exec(@ARGV)\" %s </dev/null 1>%s 2>%s")
 
-    def construct_job_submit_command( self ):
+    def construct_job_submit_command(self):
         """
         Construct a command to submit this job to run.
         """
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path,
-                                            self.stdout_file,
-                                            self.stderr_file )
+        self.command = command_template % (
+            self.jobfile_path, self.stdout_file, self.stderr_file)
 
-    def get_id( self, out, err ):
+    def get_id(self, out, err):
         """
         Extract the job process ID from job submission command
         output. For background jobs the submission command simply
@@ -72,10 +75,12 @@ class background( JobSubmit ):
         """
         return out.strip()
 
-    def kill( self, jid, st_file=None ):
+    @classmethod
+    def kill(cls, jid, _=None):
         """Kill the job."""
         os.killpg(int(jid), SIGKILL)
 
-    def poll( self, jid ):
+    @classmethod
+    def poll(cls, jid):
         """Return 0 if jid is in the queueing system, 1 otherwise."""
         return Popen(["ps", jid], stdout=PIPE).wait()

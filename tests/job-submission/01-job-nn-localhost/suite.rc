@@ -1,0 +1,28 @@
+#!jinja2
+[cylc]
+    UTC mode = True # Ignore DST
+    [[reference test]]
+        live mode suite timeout = PT10M
+
+[scheduling]
+    [[dependencies]]
+        graph="""foo => bar"""
+
+[runtime]
+{% if "CYLC_TEST_HOST" in environ %}
+    [[root]]
+        [[[remote]]]
+            host = {{environ["CYLC_TEST_HOST"]}}
+{% endif %}
+    [[foo]]
+        command scripting="""
+JOB_LOG_DIR=$(dirname $(dirname "$CYLC_TASK_LOG_ROOT"))
+readlink "$JOB_LOG_DIR/NN" >>what-is-nn.txt
+echo "$JOB_LOG_DIR/NN"
+((CYLC_TASK_TRY_NUMBER == 100))
+"""
+        retry delays=99*PT0S
+    [[bar]]
+        command scripting="""
+printf "%02d\n" {1..100} | cmp -s ../foo/what-is-nn.txt -
+"""
