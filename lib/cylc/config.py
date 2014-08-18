@@ -1522,7 +1522,6 @@ class config( object ):
         for e in self.edges:
             # Get initial cycle point for this sequence
             i_point = e.sequence.get_first_point( start_point )
-            
             if i_point is None:
                 # out of bounds
                 continue
@@ -1534,7 +1533,7 @@ class config( object ):
                     break
 
                 not_initial_cycle = ( point != i_point )
-                
+
                 r_id = e.get_right(point, start_point, not_initial_cycle, raw,
                                    startup_exclude_list )
                 l_id = e.get_left( point, start_point, not_initial_cycle, raw,
