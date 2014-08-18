@@ -1,0 +1,29 @@
+2014-08-18T12:19:43+01 INFO - port:7766
+2014-08-18T12:19:43+01 INFO - Suite starting at 2014-08-18T12:19:43+01
+2014-08-18T12:19:43+01 INFO - Log event clock: real time
+2014-08-18T12:19:43+01 INFO - Run mode: live
+2014-08-18T12:19:43+01 INFO - Initial point: 2014090100
+2014-08-18T12:19:43+01 INFO - Final point: 2014090112
+2014-08-18T12:19:43+01 INFO - Cold Start 2014090100
+2014-08-18T12:19:43+01 INFO - [cold_foo.2014090100] -triggered off []
+2014-08-18T12:19:44+01 INFO - [cold_foo.2014090100] -submit_method_id=7693
+2014-08-18T12:19:44+01 INFO - [cold_foo.2014090100] -submission succeeded
+2014-08-18T12:19:44+01 INFO - [cold_foo.2014090100] -(current:submitted)> cold_foo.2014090100 started at 2014-08-18T12:19:43+01
+2014-08-18T12:19:51+01 INFO - [cold_foo.2014090100] -(current:running)> cold_foo.2014090100 succeeded at 2014-08-18T12:19:50+01
+2014-08-18T12:19:52+01 INFO - [foo.2014090100] -triggered off ['cold_foo.2014090100']
+2014-08-18T12:19:53+01 INFO - [foo.2014090100] -submit_method_id=7808
+2014-08-18T12:19:53+01 INFO - [foo.2014090100] -submission succeeded
+2014-08-18T12:19:53+01 INFO - [foo.2014090100] -(current:submitted)> foo.2014090100 started at 2014-08-18T12:19:52+01
+2014-08-18T12:19:54+01 INFO - [foo.2014090106] -triggered off []
+2014-08-18T12:19:55+01 INFO - [foo.2014090106] -submit_method_id=7910
+2014-08-18T12:19:55+01 INFO - [foo.2014090106] -submission succeeded
+2014-08-18T12:19:55+01 INFO - [foo.2014090106] -(current:submitted)> foo.2014090106 started at 2014-08-18T12:19:55+01
+2014-08-18T12:19:56+01 INFO - [foo.2014090112] -triggered off []
+2014-08-18T12:19:57+01 INFO - [foo.2014090112] -submit_method_id=8015
+2014-08-18T12:19:57+01 INFO - [foo.2014090112] -submission succeeded
+2014-08-18T12:19:57+01 INFO - [foo.2014090118] -holding (beyond suite stop point) 2014090112
+2014-08-18T12:19:57+01 INFO - [foo.2014090112] -(current:submitted)> foo.2014090112 started at 2014-08-18T12:19:57+01
+2014-08-18T12:19:58+01 INFO - [foo.2014090100] -(current:running)> foo.2014090100 succeeded at 2014-08-18T12:19:57+01
+2014-08-18T12:20:04+01 INFO - [foo.2014090112] -(current:running)> foo.2014090112 succeeded at 2014-08-18T12:20:03+01
+2014-08-18T12:20:09+01 INFO - [foo.2014090106] -(current:running)> foo.2014090106 succeeded at 2014-08-18T12:20:09+01
+2014-08-18T12:20:10+01 INFO - Suite shutting down at 2014-08-18T12:20:10+01

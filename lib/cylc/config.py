@@ -1254,8 +1254,14 @@ class config( object ):
 
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
-                    self.generate_edges( lexpression, pruned_left_nodes,
-                                         right_name, ttype,
+                    left_edge_nodes = pruned_left_nodes
+                    right_edge_node = right_name
+                    if not left_edge_nodes and left_nodes:
+                        # All the left nodes have been pruned.
+                        left_edge_nodes = [right_name]
+                        right_edge_node = None
+                    self.generate_edges( lexpression, left_edge_nodes,
+                                         right_edge_node, ttype,
                                          seq, suicide )
                 self.generate_taskdefs( orig_line, pruned_left_nodes,
                                         right_name, ttype,
@@ -1516,6 +1522,7 @@ class config( object ):
         for e in self.edges:
             # Get initial cycle point for this sequence
             i_point = e.sequence.get_first_point( start_point )
+            
             if i_point is None:
                 # out of bounds
                 continue
@@ -1527,7 +1534,7 @@ class config( object ):
                     break
 
                 not_initial_cycle = ( point != i_point )
-
+                
                 r_id = e.get_right(point, start_point, not_initial_cycle, raw,
                                    startup_exclude_list )
                 l_id = e.get_left( point, start_point, not_initial_cycle, raw,
