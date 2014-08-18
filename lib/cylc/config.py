@@ -1037,7 +1037,7 @@ class config( object ):
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section, ttype, seq, offset_seq_map,
+    def process_graph_line( self, line, section, seq, offset_seq_map,
                             tasks_to_prune=None,
                             return_all_dependencies=False ):
         """Extract dependent pairs from the suite.rc dependency text.
@@ -1053,7 +1053,6 @@ class config( object ):
         this dependency section.
         section is the text describing this dependency section (e.g.
         T00).
-        ttype is now always 'cycling' (TODO - is not needed now)
         seq is the sequence generated from 'section' given the initial
         and final cycle point.
         offset_seq_map is a cache of seq with various offsets for
@@ -1249,34 +1248,22 @@ class config( object ):
 
                 pruned_left_nodes = list(left_nodes)  # Create copy of LHS tasks.
 
-                if ttype != 'cycling':
-                    for node in left_nodes + [right_name]:
-                        if not node:
-                            continue
-                        try:
-                            node_name = graphnode(
-                                node, base_interval=seq.get_interval()).name
-                        except GraphNodeError, x:
-                            print >> sys.stderr, orig_line
-                            raise SuiteConfigError, str(x)
-
-                if ttype == 'cycling':
-                    for left_node in left_nodes:
-                        try:
-                            left_graph_node = graphnode(
-                                left_node, base_interval=seq.get_interval())
-                        except GraphNodeError, x:
-                            print >> sys.stderr, orig_line
-                            raise SuiteConfigError, str(x)
-                        left_name = left_graph_node.name
-                        left_output = left_graph_node.output  
-                        if (left_name in tasks_to_prune or
-                                return_all_dependencies or
-                                right_name in tasks_to_prune):
-                            special_dependencies.append(
-                                (left_name, left_output, right_name))
-                        if left_name in tasks_to_prune:
-                            pruned_left_nodes.remove(left_node)
+                for left_node in left_nodes:
+                    try:
+                        left_graph_node = graphnode(
+                            left_node, base_interval=seq.get_interval())
+                    except GraphNodeError, x:
+                        print >> sys.stderr, orig_line
+                        raise SuiteConfigError, str(x)
+                    left_name = left_graph_node.name
+                    left_output = left_graph_node.output
+                    if (left_name in tasks_to_prune or
+                            return_all_dependencies or
+                            right_name in tasks_to_prune):
+                        special_dependencies.append(
+                            (left_name, left_output, right_name))
+                    if left_name in tasks_to_prune:
+                        pruned_left_nodes.remove(left_node)
 
                 if right_name in tasks_to_prune:
                     continue
@@ -1289,12 +1276,11 @@ class config( object ):
                         # All the left nodes have been pruned.
                         left_edge_nodes = [right_name]
                         right_edge_node = None
-                    self.generate_edges( lexpression, left_edge_nodes,
-                                         right_edge_node, ttype,
-                                         seq, suicide )
+                    self.generate_edges(lexpression, left_edge_nodes,
+                                         right_edge_node, seq, suicide)
                 self.generate_taskdefs( orig_line, pruned_left_nodes,
-                                        right_name, ttype,
-                                        section, seq, offset_seq_map,
+                                        right_name, section,
+                                        seq, offset_seq_map,
                                         seq.get_interval() )
                 self.generate_triggers( lexpression, pruned_left_nodes,
                                         right_name, seq,
@@ -1302,7 +1288,7 @@ class config( object ):
         return special_dependencies
             
 
-    def generate_edges( self, lexpression, left_nodes, right, ttype, seq, suicide=False ):
+    def generate_edges( self, lexpression, left_nodes, right, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
         conditional = False
         if re.search( '\|', lexpression ):
@@ -1313,7 +1299,7 @@ class config( object ):
             e = graphing.edge( left, right, seq, False, suicide, conditional )
             self.edges.append(e)
 
-    def generate_taskdefs( self, line, left_nodes, right, ttype, section, seq,
+    def generate_taskdefs( self, line, left_nodes, right, section, seq,
                            offset_seq_map, base_interval ):
         """Generate task definitions for nodes on a given line."""
         for node in left_nodes + [right]:
@@ -1355,11 +1341,9 @@ class config( object ):
                     print >> sys.stderr, line
                     raise SuiteConfigError, str(x)
 
-            # TODO - setting type should be consolidated to get_taskdef()
-            if ttype == 'cycling':
-                self.taskdefs[name].cycling = True
-                if name not in self.cycling_tasks:
-                    self.cycling_tasks.append(name)
+            self.taskdefs[name].cycling = True
+            if name not in self.cycling_tasks:
+                self.cycling_tasks.append(name)
 
             if name in self.suite_polling_tasks:
                 self.taskdefs[name].suite_polling_cfg = {
@@ -1793,7 +1777,6 @@ class config( object ):
 
         """
 
-        ttype = 'cycling'
         sec = section
 
         if section in section_seq_map:
@@ -1824,13 +1807,11 @@ class config( object ):
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
             special_dependencies.extend(self.process_graph_line(
-                line, section, ttype, seq, offset_seq_map,
+                line, section, seq, offset_seq_map,
                 tasks_to_prune=tasks_to_prune,
                 return_all_dependencies=return_all_dependencies
             ))
-        if ttype == 'cycling':
-            return special_dependencies
-        return []
+        return special_dependencies
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)
