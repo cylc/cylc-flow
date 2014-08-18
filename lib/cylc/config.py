@@ -1254,8 +1254,14 @@ class config( object ):
 
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
-                    self.generate_edges( lexpression, pruned_left_nodes,
-                                         right_name, ttype,
+                    left_edge_nodes = pruned_left_nodes
+                    right_edge_node = right_name
+                    if not left_edge_nodes and left_nodes:
+                        # All the left nodes have been pruned.
+                        left_edge_nodes = [right_name]
+                        right_edge_node = None
+                    self.generate_edges( lexpression, left_edge_nodes,
+                                         right_edge_node, ttype,
                                          seq, suicide )
                 self.generate_taskdefs( orig_line, pruned_left_nodes,
                                         right_name, ttype,
