@@ -30,28 +30,24 @@ except OSError,x:
     # because that would break relative directory path command arguments
     # (cylc reg SUITE PATH).
     print >> sys.stderr, x
-    raise SystemExit( 'ERROR: your current working directory does not exist!')
+    raise SystemExit('ERROR: your current working directory does not exist!')
 
 from cylc.version import cylc_version
 from parsec.OrderedDict import OrderedDict
 
-class CommandError( Exception ):
-    """
-    Attributes:
-        message - what the problem is.
-    """
-    def __init__( self, msg ):
+class CommandError(Exception):
+    def __init__(self, msg):
         self.msg = msg
-    def __str__( self ):
+    def __str__(self):
         return repr(self.msg)
 
-class CommandNotFoundError( CommandError ):
+class CommandNotFoundError(CommandError):
     pass
 
-class CommandNotUniqueError( CommandError ):
+class CommandNotUniqueError(CommandError):
     pass
 
-def is_help( str ):
+def is_help(str):
     if str == '-h' or \
         str == '--help' or \
         str == '--hlep' or \
@@ -62,17 +58,17 @@ def is_help( str ):
     else:
         return False
 
-def match_dict( abbrev, categories, title ):
+def match_dict(abbrev, categories, title):
     # allow any unique abbreviation to cylc categories
     matches = []
     for cat in categories.keys():
         for alias in categories[cat]:
-            if re.match( '^' + abbrev + '.*', alias ):
+            if re.match('^' + abbrev + '.*', alias):
                 if cat not in matches:
-                    matches.append( cat )
-    if len( matches ) == 0:
+                    matches.append(cat)
+    if len(matches) == 0:
         raise CommandNotFoundError, title + ' not found: ' + abbrev
-    elif len( matches ) > 1:
+    elif len(matches) > 1:
         # multiple matches
         res = ''
         for cat in matches:
@@ -81,7 +77,7 @@ def match_dict( abbrev, categories, title ):
     else:
         return matches[0]
 
-def match_command( abbrev ):
+def match_command(abbrev):
     # allow any unique abbreviation to commands when no category is specified
     matches = []
     for dct in [
@@ -97,12 +93,12 @@ def match_command( abbrev ):
         task_commands]:
         for com in dct.keys():
             for alias in dct[com]:
-                if re.match( '^' + abbrev + '.*', alias ):
+                if re.match('^' + abbrev + '.*', alias):
                     if com not in matches:
-                        matches.append( com )
-    if len( matches ) == 0:
+                        matches.append(com)
+    if len(matches) == 0:
         raise CommandNotFoundError, 'COMMAND not found: ' + abbrev
-    elif len( matches ) > 1:
+    elif len(matches) > 1:
         # multiple matches
         res = ''
         for com in matches:
@@ -111,7 +107,7 @@ def match_command( abbrev ):
     else:
         return matches[0]
 
-def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
+def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
     # pretty print commands or topics from a dict:
     # (com[item] = description)
 
@@ -124,11 +120,11 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
     choose = []
     longest = 0
     for item in choose_dict:
-        choose.append( item )
+        choose.append(item)
         lbl = '|'.join(choose_dict[item])
         label[item] = lbl
-        if len( lbl ) > longest:
-            longest = len( lbl )
+        if len(lbl) > longest:
+            longest = len(lbl)
 
     count = 0
     pad = False
@@ -139,7 +135,7 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
         choose.sort()
     for item in choose:
         if item not in incom:
-            raise SystemExit( "ERROR: summary for '" + item + "' not found" )
+            raise SystemExit("ERROR: summary for '" + item + "' not found")
 
         print spacer,
         if numbered:
@@ -437,25 +433,25 @@ comsum['email-task'] = 'A task event hook script that sends email alerts'
 comsum['email-suite'] = 'A suite event hook script that sends email alerts'
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
-def typo( str ):
+def typo(str):
     corrected = str
     if str == 'gcycl':
         corrected = 'gcylc'
     return corrected
 
 def category_help(category):
-    coms = eval( category + '_commands')
+    coms = eval(category + '_commands')
     alts = '|'.join(categories[category])
     print 'CATEGORY: ' + alts + ' - ' + catsum[category]
     if category == 'database':
-        print "Suite registrations are held in a simple database $HOME/.cylc/REGDB."
+        print "Suite name registrations are held under $HOME/.cylc/REGDB."
     print
     print 'HELP: cylc [' + alts + '] COMMAND help,--help'
     print '  You can abbreviate ' + alts + ' and COMMAND.'
     print '  The category ' + alts + ' may be omitted.'
     print
     print 'COMMANDS:'
-    pretty_print( comsum, coms, sort=True )
+    pretty_print(comsum, coms, sort=True)
 
 def set_environment_vars(args):
     """
@@ -472,7 +468,7 @@ def set_environment_vars(args):
 # no arguments: print help and exit
 if len(sys.argv) == 1:
     print usage
-    pretty_print( catsum, categories )
+    pretty_print(catsum, categories)
     sys.exit(1)
 
 args = sys.argv[1:]
@@ -501,53 +497,53 @@ if len(args) == 1:
         for key in keys:
             print key
         sys.exit(0)
-    if args[0].startswith( 'category=' ):
+    if args[0].startswith('category='):
         # secret argument for gcylc
         category = args[0][9:]
-        commands = eval( category + '_commands')
+        commands = eval(category + '_commands')
         for command in commands:
             print command
         sys.exit(0)
-    if is_help( args[0] ):
+    if is_help(args[0]):
         # cylc help
         print usage
-        pretty_print( catsum, categories)
+        pretty_print(catsum, categories)
         sys.exit(0)
-    if ( args[0] == '-v' or args[0] == '--version' ):
+    if (args[0] == '-v' or args[0] == '--version'):
         # cylc -v,--version
         print cylc_version
         sys.exit(0)
 
     # cylc CATEGORY with no args => category help
     try:
-        category = match_dict( args[0], categories, 'CATEGORY' )
+        category = match_dict(args[0], categories, 'CATEGORY')
     except CommandError, x:
         # No matching category
-        # print >> sys.stderr, x # (no need to print this, the exception will recur below)
+        # (no need to print this, the exception will recur below)
         # Carry on in case of a no-argument command (e.g. 'cylc scan')
         pass
     else:
-        category_help( category )
+        category_help(category)
         sys.exit(0)
 
 command_args = []
 
-if len( args ) == 2 and ( is_help(args[0]) or is_help(args[1])):
+if len(args) == 2 and (is_help(args[0]) or is_help(args[1])):
     # TWO ARGUMENTS, one help
     # cylc help CATEGORY
     # cylc CATEGORY help
     # cylc help COMMAND
     # cylc COMMAND help
-    if is_help( args[1] ):
+    if is_help(args[1]):
         item = args[0]
     else:
         item = args[1]
     try:
-        category = match_dict( item, categories, 'CATEGORY' )
+        category = match_dict(item, categories, 'CATEGORY')
     except CommandError, x:
         # no matching category, try command
         try:
-            command = match_command( typo(item) )
+            command = match_command(typo(item))
         except CommandError, y:
             print >> sys.stderr, x
             raise SystemExit(y)
@@ -556,26 +552,26 @@ if len( args ) == 2 and ( is_help(args[0]) or is_help(args[1])):
             command_args = ['--help']
     else:
         # cylc help CATEGORY
-        category_help( category )
+        category_help(category)
         sys.exit(0)
 
-elif len( args ) == 3 and ( is_help(args[0]) or is_help(args[2])):
+elif len(args) == 3 and (is_help(args[0]) or is_help(args[2])):
     # cylc help CATEGORY COMMAND
     # cylc CATEGORY COMMAND help
-    if is_help( args[2] ):
+    if is_help(args[2]):
         category = args[0]
         command = args[1]
     else:
         category = args[1]
         command = args[2]
     try:
-        category = match_dict( category, categories, 'CATEGORY' )
+        category = match_dict(category, categories, 'CATEGORY')
     except CommandError, x:
         raise SystemExit(x)
 
-    coms = eval( category + '_commands')
+    coms = eval(category + '_commands')
     try:
-        command = match_dict( command, coms, category + ' COMMAND' )
+        command = match_dict(command, coms, category + ' COMMAND')
     except CommandNotUniqueError, y:
         print y
         sys.exit(1)
@@ -594,12 +590,12 @@ else:
     # cylc COMMAND [ARGS]
     try:
         category = args[0]
-        category = match_dict( category, categories, 'CATEGORY' )
+        category = match_dict(category, categories, 'CATEGORY')
     except CommandError, x:
         # no matching category, try command
         try:
             command = args[0]
-            command = match_command( typo(command) )
+            command = match_command(typo(command))
         except CommandError, y:
             print >> sys.stderr, x
             raise SystemExit(y)
@@ -608,10 +604,10 @@ else:
             command_args = args[1:]
     else:
         # cylc CATEGORY COMMAND [ARGS]
-        coms = eval( category + '_commands')
+        coms = eval(category + '_commands')
         command = args[1]
         try:
-            command = match_dict( command, coms, category + ' COMMAND' )
+            command = match_dict(command, coms, category + ' COMMAND')
         except CommandNotUniqueError, y:
             print y
             sys.exit(1)
@@ -630,14 +626,14 @@ else:
 
 args_new = []
 for item in command_args:
-    if is_help( item ):
+    if is_help(item):
         # transform all legal help options to '--help'
-        args_new.append( '--help' )
-    elif item.startswith( '--owner' ):
+        args_new.append('--help')
+    elif item.startswith('--owner'):
         # deprecate '--owner' to '--user'
-        args_new.append( item.replace( '--owner', '--user' ))
+        args_new.append(item.replace('--owner', '--user'))
     else:
-        args_new.append( item )
+        args_new.append(item)
 args = args_new
 
 cmd = 'cylc-' + command
@@ -648,11 +644,11 @@ cmd = 'cylc-' + command
 ####stderr log).
 ##if command in ['started', 'message']:
 ##    # Run non job-ending task message commands in the background.
-##    p = subprocess.Popen( [cmd] + args )
+##    p = subprocess.Popen([cmd] + args)
 ##    sys.exit(0)
 ##else:
 # Replace the current process with that of the sub-command.
 try:
-    os.execvp( cmd, [cmd] + args )
+    os.execvp(cmd, [cmd] + args)
 except OSError, x:
     raise SystemExit(x)
