@@ -4,7 +4,7 @@
         command scripting = $HOME/bin/ecan/ecan_rain2netcdf.sh
         [[[environment]]]
             OUT_DIR = ${HOME}/input/topnet
-            START_DATE  = $(cylc cycletime -s 48)
+            START_DATE  = $(cylc cycle-point -s 48)
             FILEOUT = topnet_rain_clidb_${START_DATE}_${CYLC_TASK_CYCLE_TIME}_utc.nc
             RUN_DIR  = ${HOME}/bin/ecan
             NHH = 48

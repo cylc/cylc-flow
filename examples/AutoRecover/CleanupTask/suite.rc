@@ -26,7 +26,7 @@ the AutoRecover examples for recovery tasks that only run if needed."""
         inherit = fam
         command scripting = """
 # Fail at 6,18, succeed at 0,12:
-HH=$( cylc cycletime --print-hour )
+HH=$( cylc cycle-point --print-hour )
 if (( HH == 06 || HH == 18 )); then
     COMMAND=/bin/false
 else

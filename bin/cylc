@@ -94,7 +94,7 @@ def match_command( abbrev ):
         control_commands,
         utility_commands,
         hook_commands,
-        task_commands ]:
+        task_commands]:
         for com in dct.keys():
             for alias in dct[com]:
                 if re.match( '^' + abbrev + '.*', alias ):
@@ -153,117 +153,117 @@ def pretty_print( incom, choose_dict, indent=True, numbered=False, sort=False ):
 
 # BEGIN MAIN
 
-# categories[ category ] = [ aliases ]
+# categories[category] = [aliases]
 categories = OrderedDict()
-categories['all'         ] = ['all' ]
-categories['database'    ] = ['db', 'database' ]
-categories['preparation' ] = ['preparation' ]
-categories['information' ] = ['information' ]
-categories['discovery'   ] = ['discovery' ]
-categories['control'     ] = ['control' ]
-categories['utility'     ] = ['utility' ]
-categories['task'        ] = ['task' ]
-categories['hook'        ] = ['hook' ]
-categories['admin'       ] = ['admin' ]
-categories['license'     ] = ['license', 'GPL' ]
+categories['all'] = ['all']
+categories['database'] = ['db', 'database']
+categories['preparation'] = ['preparation']
+categories['information'] = ['information']
+categories['discovery'] = ['discovery']
+categories['control'] = ['control']
+categories['utility'] = ['utility']
+categories['task'] = ['task']
+categories['hook'] = ['hook']
+categories['admin'] = ['admin']
+categories['license'] = ['license', 'GPL']
 
 information_commands = OrderedDict()
 
-information_commands['gsummary' ] = ['gsummary'       ]
-information_commands['gpanel'   ] = ['gpanel'         ]
-information_commands['gui'      ] = ['gui', 'gcylc'   ]
-information_commands['list'     ] = ['list', 'ls'     ]
-information_commands['dump'     ] = ['dump'           ]
-information_commands['cat-state'] = ['cat-state'      ]
-information_commands['show'     ] = ['show'           ]
-information_commands['cat-log'  ] = ['cat-log', 'log' ]
+information_commands['gsummary'] = ['gsummary']
+information_commands['gpanel'] = ['gpanel']
+information_commands['gui'] = ['gui', 'gcylc']
+information_commands['list'] = ['list', 'ls']
+information_commands['dump'] = ['dump']
+information_commands['cat-state'] = ['cat-state']
+information_commands['show'] = ['show']
+information_commands['cat-log'] = ['cat-log', 'log']
 
-information_commands['documentation'   ] = ['documentation', 'browse']
-information_commands['monitor'  ] = ['monitor'  ]
-information_commands['get-suite-config' ] = ['get-suite-config', 'get-config' ]
-information_commands['get-site-config'  ] = ['get-site-config', 'get-global-config' ]
-information_commands['get-gui-config'   ] = ['get-gui-config' ]
+information_commands['documentation'] = ['documentation', 'browse']
+information_commands['monitor'] = ['monitor']
+information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
+information_commands['get-site-config'] = ['get-site-config', 'get-global-config']
+information_commands['get-gui-config'] = ['get-gui-config']
 
 control_commands = OrderedDict()
-control_commands['gui'      ] = [ 'gui' ]
+control_commands['gui'] = ['gui']
 # NOTE: don't change 'run' to 'start' or the category [control]
 # becomes compulsory to disambiguate from 'cylc [task] started'.
 # Keeping 'start' as an alias however: 'cylc con start'.
-control_commands['run'    ] = ['run', 'start' ]
-control_commands['stop'] = ['stop', 'shutdown' ]
-control_commands['restart'] = ['restart' ]
-control_commands['trigger'] = ['trigger' ]
-control_commands['insert' ] = ['insert' ]
-control_commands['remove' ] = ['remove' ]
-control_commands['poll' ] = ['poll' ]
-control_commands['kill' ] = ['kill' ]
-control_commands['purge'  ] = ['purge' ]
-control_commands['hold'   ] = ['hold' ]
-control_commands['release' ] = ['release', 'unhold' ]
-control_commands['reset'  ] = ['reset'  ]
-control_commands['nudge'  ] = ['nudge' ]
-control_commands['reload' ] = ['reload' ]
-control_commands['depend' ] = ['depend']
+control_commands['run'] = ['run', 'start']
+control_commands['stop'] = ['stop', 'shutdown']
+control_commands['restart'] = ['restart']
+control_commands['trigger'] = ['trigger']
+control_commands['insert'] = ['insert']
+control_commands['remove'] = ['remove']
+control_commands['poll'] = ['poll']
+control_commands['kill'] = ['kill']
+control_commands['purge'] = ['purge']
+control_commands['hold'] = ['hold']
+control_commands['release'] = ['release', 'unhold']
+control_commands['reset'] = ['reset']
+control_commands['nudge'] = ['nudge']
+control_commands['reload'] = ['reload']
+control_commands['depend'] = ['depend']
 control_commands['set-runahead'] = ['set-runahead']
-control_commands['set-verbosity' ] = ['set-verbosity' ]
-control_commands['broadcast'] = [ 'broadcast', 'bcast' ]
+control_commands['set-verbosity'] = ['set-verbosity']
+control_commands['broadcast'] = ['broadcast', 'bcast']
 
 utility_commands = OrderedDict()
-utility_commands['cycletime'    ] = ['cycletime' ]
-utility_commands['checkvars'    ] = ['checkvars']
-utility_commands['random'       ] = ['random', 'rnd']
-utility_commands['scp-transfer' ] = ['scp-transfer']
+utility_commands['cycle-point'] = ['cycle-point', 'cyclepoint', 'datetime','cycletime']
+utility_commands['checkvars'] = ['checkvars']
+utility_commands['random'] = ['random', 'rnd']
+utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
 
 hook_commands = OrderedDict()
-hook_commands['email-suite' ] = ['email-suite']
-hook_commands['email-task'  ] = ['email-task' ]
-hook_commands['check-triggering'  ] = ['check-triggering' ]
+hook_commands['email-suite'] = ['email-suite']
+hook_commands['email-task'] = ['email-task']
+hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = OrderedDict()
-admin_commands['test-db'         ] = [ 'test-db']
-admin_commands['test-battery'    ] = [ 'test-battery']
-admin_commands['import-examples' ] = [ 'import-examples']
-admin_commands['upgrade-db'      ] = [ 'upgrade-db']
-admin_commands['upgrade-run-dir' ] = [ 'upgrade-run-dir']
-admin_commands['check-software'  ] = [ 'check-software']
+admin_commands['test-db'] = ['test-db']
+admin_commands['test-battery'] = ['test-battery']
+admin_commands['import-examples'] = ['import-examples']
+admin_commands['upgrade-db'] = ['upgrade-db']
+admin_commands['upgrade-run-dir'] = ['upgrade-run-dir']
+admin_commands['check-software'] = ['check-software']
 
 license_commands = OrderedDict()
-license_commands['warranty'  ] = [ 'warranty']
-license_commands['conditions'] = [ 'conditions']
+license_commands['warranty'] = ['warranty']
+license_commands['conditions'] = ['conditions']
 
 database_commands = OrderedDict()
-database_commands['register'  ] = [ 'register' ]
-database_commands['reregister'] = [ 'reregister','rename' ]
-database_commands['unregister'] = [ 'unregister' ]
-database_commands['copy'      ] = [ 'copy', 'cp' ]
-database_commands['print'     ] = [ 'print' ]
-database_commands['get-directory' ] = [ 'get-directory' ]
-database_commands['refresh'   ] = [ 'refresh' ]
+database_commands['register'] = ['register']
+database_commands['reregister'] = ['reregister','rename']
+database_commands['unregister'] = ['unregister']
+database_commands['copy'] = ['copy', 'cp']
+database_commands['print'] = ['print']
+database_commands['get-directory'] = ['get-directory']
+database_commands['refresh'] = ['refresh']
 
 preparation_commands = OrderedDict()
-preparation_commands['edit'    ] = [ 'edit'    ]
-preparation_commands['view'    ] = [ 'view'    ]
-preparation_commands['validate'] = [ 'validate'    ]
-preparation_commands['list'    ] = ['list', 'ls' ]
-preparation_commands['search'  ] = [ 'search', 'grep' ]
-preparation_commands['graph'   ] = [ 'graph'    ]
-preparation_commands['diff'    ] = [ 'diff', 'compare' ]
-preparation_commands['jobscript' ] = ['jobscript']
+preparation_commands['edit'] = ['edit']
+preparation_commands['view'] = ['view']
+preparation_commands['validate'] = ['validate']
+preparation_commands['list'] = ['list', 'ls']
+preparation_commands['search'] = ['search', 'grep']
+preparation_commands['graph'] = ['graph']
+preparation_commands['diff'] = ['diff', 'compare']
+preparation_commands['jobscript'] = ['jobscript']
 
 discovery_commands = OrderedDict()
-discovery_commands['ping'] = [ 'ping' ]
-discovery_commands['scan'] = [ 'scan' ]
-discovery_commands['check-versions'] = [ 'check-versions' ]
+discovery_commands['ping'] = ['ping']
+discovery_commands['scan'] = ['scan']
+discovery_commands['check-versions'] = ['check-versions']
 
 task_commands = OrderedDict()
-task_commands['submit'   ] = [ 'submit', 'single' ]
-task_commands['started'  ] = [ 'started', 'task-started' ]
-task_commands['message'  ] = [ 'message', 'task-message' ]
-task_commands['succeeded'] = [ 'succeeded', 'task-succeeded' ]
-task_commands['failed'   ] = [ 'failed', 'task-failed' ]
-task_commands['get-job-status'] = [ 'get-job-status' ]
-task_commands['job-kill'] = [ 'job-kill' ]
+task_commands['submit'] = ['submit', 'single']
+task_commands['started'] = ['started', 'task-started']
+task_commands['message'] = ['message', 'task-message']
+task_commands['succeeded'] = ['succeeded', 'task-succeeded']
+task_commands['failed'] = ['failed', 'task-failed']
+task_commands['get-job-status'] = ['get-job-status']
+task_commands['job-kill'] = ['job-kill']
 
 all_commands = OrderedDict()
 for dct in [
@@ -276,7 +276,7 @@ for dct in [
         task_commands,
         admin_commands,
         hook_commands,
-        license_commands ]:
+        license_commands]:
     for com in dct.keys():
         all_commands[com] = dct[com]
 
@@ -305,17 +305,17 @@ USAGE:
 
 # topic summaries
 catsum = OrderedDict()
-catsum['all'    ]        = "The complete command set."
-catsum['admin'       ]   = "Cylc installation, testing, and example suites."
-catsum['license'     ]   = "Software licensing information (GPL v3.0)."
-catsum['database'    ]   = "Suite name registration, copying, deletion, etc."
-catsum['information' ]   = "Interrogate suite definitions and running suites."
-catsum['preparation' ]   = "Suite editing, validation, visualization, etc."
-catsum['discovery'   ]   = "Detect running suites."
-catsum['control'     ]   = "Suite start up, monitoring, and control."
-catsum['task'        ]   = "The task messaging interface."
-catsum['hook'        ]   = "Suite and task event hook scripts."
-catsum['utility'     ]   = "Cycle arithmetic and templating, etc."
+catsum['all']        = "The complete command set."
+catsum['admin']   = "Cylc installation, testing, and example suites."
+catsum['license']   = "Software licensing information (GPL v3.0)."
+catsum['database']   = "Suite name registration, copying, deletion, etc."
+catsum['information']   = "Interrogate suite definitions and running suites."
+catsum['preparation']   = "Suite editing, validation, visualization, etc."
+catsum['discovery']   = "Detect running suites."
+catsum['control']   = "Suite start up, monitoring, and control."
+catsum['task']   = "The task messaging interface."
+catsum['hook']   = "Suite and task event hook scripts."
+catsum['utility']   = "Cycle arithmetic and templating, etc."
 
 usage = general_usage + """
 
@@ -354,88 +354,88 @@ Command CATEGORIES:"""
 # command summaries
 comsum = OrderedDict()
 # admin
-comsum[ 'test-db'    ] = 'Run an automated suite name database test'
-comsum[ 'test-battery' ] = 'Run a battery of self-diagnosing test suites'
-comsum[ 'import-examples' ] = 'Import example suites your suite name database'
-comsum[ 'upgrade-db'      ] = 'Upgrade a pre-cylc-5.4 suite name database'
-comsum[ 'upgrade-run-dir' ] = 'Upgrade a pre-cylc-6 suite run directory'
-comsum[ 'check-software'  ] = 'Check required software is installed.'
+comsum['test-db'] = 'Run an automated suite name database test'
+comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
+comsum['import-examples'] = 'Import example suites your suite name database'
+comsum['upgrade-db'] = 'Upgrade a pre-cylc-5.4 suite name database'
+comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
+comsum['check-software'] = 'Check required software is installed.'
 # license
-comsum[ 'warranty'   ] = 'Print the GPLv3 disclaimer of warranty'
-comsum[ 'conditions' ] = 'Print the GNU General Public License v3.0'
+comsum['warranty'] = 'Print the GPLv3 disclaimer of warranty'
+comsum['conditions'] = 'Print the GNU General Public License v3.0'
 # database
-comsum[ 'register'   ] = 'Register a suite for use'
-comsum[ 'reregister' ] = 'Change the name of a suite'
-comsum[ 'unregister' ] = 'Unregister and optionally delete suites'
-comsum[ 'copy'       ] = 'Copy a suite or a group of suites'
-comsum[ 'print'      ] = 'Print registered suites'
-comsum[ 'get-directory' ] = 'Retrieve suite definition directory paths'
-comsum[ 'refresh'    ] = 'Report invalid registrations and update suite titles'
+comsum['register'] = 'Register a suite for use'
+comsum['reregister'] = 'Change the name of a suite'
+comsum['unregister'] = 'Unregister and optionally delete suites'
+comsum['copy'] = 'Copy a suite or a group of suites'
+comsum['print'] = 'Print registered suites'
+comsum['get-directory'] = 'Retrieve suite definition directory paths'
+comsum['refresh'] = 'Report invalid registrations and update suite titles'
 # preparation
-comsum[ 'edit'       ] = 'Edit suite definitions, optionally inlined'
-comsum[ 'view'       ] = 'View suite definitions, inlined and Jinja2 processed'
-comsum[ 'validate'   ] = 'Parse and validate suite definitions'
-comsum[ 'search'     ] = 'Search in suite definitions'
-comsum[ 'graph'      ] = 'Plot suite dependency graphs and runtime hierarchies'
-comsum[ 'diff'       ] = 'Compare two suite definitions and print differences'
+comsum['edit'] = 'Edit suite definitions, optionally inlined'
+comsum['view'] = 'View suite definitions, inlined and Jinja2 processed'
+comsum['validate'] = 'Parse and validate suite definitions'
+comsum['search'] = 'Search in suite definitions'
+comsum['graph'] = 'Plot suite dependency graphs and runtime hierarchies'
+comsum['diff'] = 'Compare two suite definitions and print differences'
 # information
-comsum[ 'list'       ] = 'List suite tasks and family namespaces'
-comsum[ 'dump'       ] = 'Print the state of tasks in a running suite'
-comsum[ 'cat-state'  ] = 'Print the state of tasks from the state dump'
-comsum[ 'show'       ] = 'Print task state (prerequisites and outputs etc.)'
-comsum[ 'cat-log'    ] = 'Print various suite and task log files'
-comsum[ 'documentation' ] = 'Display cylc documentation (User Guide etc.)'
-comsum[ 'monitor'    ] = 'An in-terminal suite monitor (see also gcylc)'
-comsum[ 'get-suite-config' ] = 'Print suite configuration items'
-comsum[ 'get-site-config' ] = 'Print site/user configuration items'
-comsum[ 'get-gui-config' ] = 'Print gcylc configuration items'
-comsum[ 'gsummary'   ] = 'Summary GUI for monitoring multiple suites'
-comsum[ 'gpanel'     ] = 'Internal interface for GNOME 2 panel applet'
+comsum['list'] = 'List suite tasks and family namespaces'
+comsum['dump'] = 'Print the state of tasks in a running suite'
+comsum['cat-state'] = 'Print the state of tasks from the state dump'
+comsum['show'] = 'Print task state (prerequisites and outputs etc.)'
+comsum['cat-log'] = 'Print various suite and task log files'
+comsum['documentation'] = 'Display cylc documentation (User Guide etc.)'
+comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
+comsum['get-suite-config'] = 'Print suite configuration items'
+comsum['get-site-config'] = 'Print site/user configuration items'
+comsum['get-gui-config'] = 'Print gcylc configuration items'
+comsum['gsummary'] = 'Summary GUI for monitoring multiple suites'
+comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'
 # control
-comsum[ 'gui'        ] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
-comsum[ 'run'        ] = 'Start a suite at a given cycle point'
-comsum[ 'stop'       ] = 'Shut down running suites'
-comsum[ 'restart'    ] = 'Restart a suite from a previous state'
-comsum[ 'trigger'    ] = 'Manually trigger or re-trigger a task'
-comsum[ 'insert'     ] = 'Insert tasks into a running suite'
-comsum[ 'remove'     ] = 'Remove tasks from a running suite'
-comsum[ 'poll'     ] = 'Poll submitted or running tasks'
-comsum[ 'kill'     ] = 'Kill submitted or running tasks'
-comsum[ 'purge'      ] = 'Remove task trees from a running suite'
-comsum[ 'hold'       ] = 'Hold (pause) suites or individual tasks'
-comsum[ 'release'    ] = 'Release (unpause) suites or individual tasks'
-comsum[ 'reset'      ] = 'Force one or more tasks to change state.'
-comsum[ 'nudge'      ] = 'Cause the cylc task processing loop to be invoked'
-comsum[ 'reload'     ] = 'Reload the suite definition at run time'
-comsum[ 'depend'     ] = 'Add prerequisites to tasks in a running suite'
-comsum[ 'set-runahead'   ] = 'Change the runahead limit in a running suite.'
-comsum[ 'set-verbosity'  ] = 'Change a running suite\'s logging verbosity'
+comsum['gui'] = '(a.k.a. gcylc) cylc GUI for suite control etc.'
+comsum['run'] = 'Start a suite at a given cycle point'
+comsum['stop'] = 'Shut down running suites'
+comsum['restart'] = 'Restart a suite from a previous state'
+comsum['trigger'] = 'Manually trigger or re-trigger a task'
+comsum['insert'] = 'Insert tasks into a running suite'
+comsum['remove'] = 'Remove tasks from a running suite'
+comsum['poll'] = 'Poll submitted or running tasks'
+comsum['kill'] = 'Kill submitted or running tasks'
+comsum['purge'] = 'Remove task trees from a running suite'
+comsum['hold'] = 'Hold (pause) suites or individual tasks'
+comsum['release'] = 'Release (unpause) suites or individual tasks'
+comsum['reset'] = 'Force one or more tasks to change state.'
+comsum['nudge'] = 'Cause the cylc task processing loop to be invoked'
+comsum['reload'] = 'Reload the suite definition at run time'
+comsum['depend'] = 'Add prerequisites to tasks in a running suite'
+comsum['set-runahead'] = 'Change the runahead limit in a running suite.'
+comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
 # discovery
-comsum[ 'ping'       ] = 'Check that a suite is running'
-comsum[ 'scan'       ] = 'Scan a host for running suites'
-comsum[ 'check-versions' ] = 'Compare cylc versions on task host accounts'
+comsum['ping'] = 'Check that a suite is running'
+comsum['scan'] = 'Scan a host for running suites'
+comsum['check-versions'] = 'Compare cylc versions on task host accounts'
 # task
-comsum[ 'submit'     ] = 'Run a single task just as its parent suite would'
-comsum[ 'started'    ] = '(task messaging) Report task started'
-comsum[ 'message'    ] = '(task messaging) Report task messages'
-comsum[ 'succeeded'  ] = '(task messaging) Report task succeeded'
-comsum[ 'failed'     ] = '(task messaging) Report task failed'
-comsum[ 'broadcast'  ] = 'Change suite [runtime] settings on the fly'
-comsum[ 'get-job-status' ] = '(Internal) Retrieve job status for a task'
-comsum[ 'job-kill' ] = '(Internal) Kill a job for a task'
+comsum['submit'] = 'Run a single task just as its parent suite would'
+comsum['started'] = '(task messaging) Report task started'
+comsum['message'] = '(task messaging) Report task messages'
+comsum['succeeded'] = '(task messaging) Report task succeeded'
+comsum['failed'] = '(task messaging) Report task failed'
+comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
+comsum['get-job-status'] = '(Internal) Retrieve job status for a task'
+comsum['job-kill'] = '(Internal) Kill a job for a task'
 
 # utility
-comsum[ 'cycletime'    ] = 'Cycle point arithmetic and filename templating'
-comsum[ 'checkvars'    ] = 'Check required environment variables en masse'
-comsum[ 'random'       ] = 'Generate a random integer within a given range'
-comsum[ 'jobscript'    ] = 'Generate a task job script and print it to stdout'
-comsum[ 'scp-transfer' ] = 'Scp-based file transfer for cylc suites'
-comsum[ 'suite-state' ] = 'Query the task states in a suite'
+comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
+comsum['checkvars'] = 'Check required environment variables en masse'
+comsum['random'] = 'Generate a random integer within a given range'
+comsum['jobscript'] = 'Generate a task job script and print it to stdout'
+comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
+comsum['suite-state'] = 'Query the task states in a suite'
 
 # hook
-comsum[ 'email-task'  ] = 'A task event hook script that sends email alerts'
-comsum[ 'email-suite' ] = 'A suite event hook script that sends email alerts'
-comsum[ 'check-triggering' ] = 'A suite shutdown event hook for cylc testing'
+comsum['email-task'] = 'A task event hook script that sends email alerts'
+comsum['email-suite'] = 'A suite event hook script that sends email alerts'
+comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
 def typo( str ):
     corrected = str
@@ -446,7 +446,7 @@ def typo( str ):
 def category_help(category):
     coms = eval( category + '_commands')
     alts = '|'.join(categories[category])
-    print 'CATEGORY: ' + alts + ' - ' + catsum[ category ]
+    print 'CATEGORY: ' + alts + ' - ' + catsum[category]
     if category == 'database':
         print "Suite registrations are held in a simple database $HOME/.cylc/REGDB."
     print
@@ -553,7 +553,7 @@ if len( args ) == 2 and ( is_help(args[0]) or is_help(args[1])):
             raise SystemExit(y)
         else:
             # cylc COMMAND --help
-            command_args = [ '--help' ]
+            command_args = ['--help']
     else:
         # cylc help CATEGORY
         category_help( category )
@@ -586,7 +586,7 @@ elif len( args ) == 3 and ( is_help(args[0]) or is_help(args[2])):
         sys.exit(1)
 
     # cylc COMMAND --help
-    command_args = [ '--help' ]
+    command_args = ['--help']
 
 else:
     # two or more args, neither of first two are help
@@ -646,13 +646,13 @@ cmd = 'cylc-' + command
 ####undiagnosed error in Pyro core when the 'message' command is
 ####invoked - but not for the 'started' command (try it and see the task
 ####stderr log).
-##if command in [ 'started', 'message' ]:
+##if command in ['started', 'message']:
 ##    # Run non job-ending task message commands in the background.
-##    p = subprocess.Popen( [ cmd ] + args )
+##    p = subprocess.Popen( [cmd] + args )
 ##    sys.exit(0)
 ##else:
 # Replace the current process with that of the sub-command.
 try:
-    os.execvp( cmd, [ cmd ] + args )
+    os.execvp( cmd, [cmd] + args )
 except OSError, x:
     raise SystemExit(x)

@@ -57,7 +57,7 @@ class JobFile(object):
 
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
-        # variables: NEXT_CYCLE=$( cylc cycletime --offset-hours=6 )
+        # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
 
         self.FILE = open( path, 'wb' )
         self.write_header()

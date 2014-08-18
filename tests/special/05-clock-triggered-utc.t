@@ -33,15 +33,15 @@ run_ok $TEST_NAME cylc run --debug $SUITE_NAME \
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-past
 NOW=$(date -u +%Y%m%dT%H00)Z
-START=$(cylc cycletime $NOW --offset-hour=-10)
-HOUR=T$(cylc cycletime $NOW --offset-hour=-10 --print-hour)
+START=$(cylc cycle-point $NOW --offset-hour=-10)
+HOUR=T$(cylc cycle-point $NOW --offset-hour=-10 --print-hour)
 run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START -s HOUR=$HOUR \
      -s UTC_MODE=True -s OFFSET=PT0M -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-later
 NOW=$(date -u +%Y%m%dT%H00)Z
-START=$(cylc cycletime $NOW --offset-hour=10)
-HOUR=T$(cylc cycletime $NOW --offset-hour=10 --print-hour)
+START=$(cylc cycle-point $NOW --offset-hour=10)
+HOUR=T$(cylc cycle-point $NOW --offset-hour=10 --print-hour)
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START \
     -s HOUR=$HOUR -s UTC_MODE=True -s OFFSET=PT0M -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------

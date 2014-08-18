@@ -67,7 +67,7 @@
         description = "Converts the UM global sea ice file to netcdf format."
         command scripting = um_conv_nc.sh
         [[[environment]]]
-            ICE_CYLC_TASK_CYCLE_TIME = $( cylc cycletime --offset-hours=-18 )
+            ICE_CYLC_TASK_CYCLE_TIME = $( cylc cycle-point --offset-hours=-18 )
             FILEIN  = qwgl_daily_${CYLC_TASK_CYCLE_TIME}_ice.gz
             FILEIN_LOC  = ${HOME}/output
             FILEOUT = sls_${CYLC_TASK_CYCLE_TIME}_utc_global_seaice.nc
