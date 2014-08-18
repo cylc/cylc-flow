@@ -100,6 +100,7 @@ SPEC = {
         },
 
     'test battery' : {
+       'remote host with shared fs'       : vdr( vtype='string' ),
        'remote host'                      : vdr( vtype='string' ),
        'directives' : {
             'loadleveler host'            : vdr( vtype='string' ),
