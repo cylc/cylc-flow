@@ -5,10 +5,10 @@
         live mode suite timeout = PT1M
 [scheduling]
     initial cycle point = 20100101T00
-    final cycle point   = +P1D+PT06H
+    final cycle point   = +P1D+PT6H
     [[dependencies]]
         [[[T00, T06, T12, T18]]]
-            graph = "foo[-PT06H] => foo"
+            graph = "foo[-PT6H] => foo"
 
 [runtime]
     [[foo]]
