@@ -534,9 +534,7 @@ class task( object ):
             self.started_time = time.time()
             self.summary[ 'started_time' ] = self.started_time
             self.summary[ 'started_time_string' ] = (
-                get_time_string_from_unix_time(
-                    self.started_time, no_display_time_zone=True
-                )
+                get_time_string_from_unix_time(self.started_time)
             )
             self.outputs.set_completed( self.id + " started" )
             self.set_status( 'running' )
@@ -552,9 +550,7 @@ class task( object ):
         self.submitted_time = time.time()
         self.summary[ 'submitted_time' ] = self.submitted_time
         self.summary[ 'submitted_time_string' ] = (
-            get_time_string_from_unix_time(
-                self.submitted_time, no_display_time_zone=True
-            )
+            get_time_string_from_unix_time(self.submitted_time)
         )
         self.handle_event( 'submitted', 'job submitted', db_event='submission succeeded' )
 
@@ -1071,9 +1067,7 @@ class task( object ):
             self.started_time = time.time()
             self.summary[ 'started_time' ] = self.started_time
             self.summary[ 'started_time_string' ] = (
-                get_time_string_from_unix_time(
-                    self.started_time, no_display_time_zone=True
-                )
+                get_time_string_from_unix_time(self.started_time)
             )
 
             # TODO - should we use the real event time extracted from the message here:
@@ -1099,9 +1093,7 @@ class task( object ):
             self.succeeded_time = time.time()
             self.summary[ 'succeeded_time' ] = self.succeeded_time
             self.summary[ 'succeeded_time_string' ] = (
-                get_time_string_from_unix_time(
-                    self.succeeded_time, no_display_time_zone=True
-                )
+                get_time_string_from_unix_time(self.succeeded_time)
             )
             self.__class__.update_mean_total_elapsed_time( self.started_time, self.succeeded_time )
             self.set_status( 'succeeded' )
