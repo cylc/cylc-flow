@@ -552,6 +552,14 @@ class task( object ):
         self.summary[ 'submitted_time_string' ] = (
             get_time_string_from_unix_time(self.submitted_time)
         )
+        if self.submit_method_id:
+            self.latest_message = "%s submitted as '%s'" % (
+                self.id, self.submit_method_id)
+        else:
+            self.latest_message = outp
+        self.latest_message_priority = "NORMAL"
+        self.summary[ 'latest_message' ] = (
+            self.latest_message.replace(self.id, "", 1).strip())
         self.handle_event( 'submitted', 'job submitted', db_event='submission succeeded' )
 
         if self.state.is_currently( 'ready' ):
@@ -1001,6 +1009,7 @@ class task( object ):
         # Log incoming messages with '>' to distinguish non-message log entries.
         self.log( priority, '(current:' + self.state.get_status() + ')> ' + message )
 
+        print "id, priority, message:", self.id, priority, message
         # always update the suite state summary for latest message
         self.latest_message = message
         self.latest_message_priority = priority
