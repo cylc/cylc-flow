@@ -217,7 +217,7 @@ Text Treeview suite control interface.
         for st in task_state.legal:
             b = gtk.CheckButton( task_state.labels[st] )
             cnt += 1
-            if cnt > len(task_state.legal)/2:
+            if cnt > (len(task_state.legal) + 1)//2:
                 subbox2.pack_start(b)
             else:
                 subbox1.pack_start(b)
@@ -226,6 +226,11 @@ Text Treeview suite control interface.
             else:
                 b.set_active(True)
             b.connect('toggled', self.check_tfilter_buttons)
+        
+        if cnt % 2 != 0:
+            # subbox2 needs another entry to line things up.
+            null_event_box = gtk.EventBox()
+            subbox2.pack_start(null_event_box)
 
         ahbox = gtk.HBox()
         ahbox.pack_start( self.tfilterbox, True)
