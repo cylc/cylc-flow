@@ -184,7 +184,7 @@ if options.filename:
     gtk.main()
     sys.exit(0)
 
-should_hide_gtk_window = (not options.output_filename)
+should_hide_gtk_window = (options.output_filename is not None)
 
 suite, suiterc, watchers = parser.get_suite()
 
