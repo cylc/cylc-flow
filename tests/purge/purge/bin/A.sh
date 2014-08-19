@@ -20,9 +20,9 @@ echo "Hello from $CYLC_TASK_NAME at $CYLC_TASK_CYCLE_TIME in $CYLC_SUITE_REG_NAM
 sleep $TASK_EXE_SECONDS
 
 # generate a restart file for the next three cycles
-touch $RUNNING_DIR/A-$(cylc cycletime --offset-hours=6 ).restart
-touch $RUNNING_DIR/A-$(cylc cycletime --offset-hours=12).restart
-touch $RUNNING_DIR/A-$(cylc cycletime --offset-hours=18).restart
+touch $RUNNING_DIR/A-$(cylc cycle-point --offset-hours=6 ).restart
+touch $RUNNING_DIR/A-$(cylc cycle-point --offset-hours=12).restart
+touch $RUNNING_DIR/A-$(cylc cycle-point --offset-hours=18).restart
 
 # model outputs
 touch $OUTPUT_DIR/surface-winds-${CYLC_TASK_CYCLE_TIME}.nc

@@ -1,0 +1,711 @@
+2014-08-14T20:15:16Z INFO - port:7766
+2014-08-14T20:15:16Z INFO - Suite starting at 2014-08-14T20:15:16Z
+2014-08-14T20:15:16Z INFO - Log event clock: real time
+2014-08-14T20:15:16Z INFO - Run mode: live
+2014-08-14T20:15:16Z INFO - Initial point: 1
+2014-08-14T20:15:16Z INFO - Final point: 1
+2014-08-14T20:15:16Z INFO - Cold Start 1
+2014-08-14T20:15:16Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:17Z INFO - [foo.1] -submit_method_id=20205
+2014-08-14T20:15:17Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:17Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:16Z
+2014-08-14T20:15:17Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:16Z
+2014-08-14T20:15:17Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:16Z
+2014-08-14T20:15:17Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:18Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:19Z INFO - [foo.1] -submit_method_id=20248
+2014-08-14T20:15:19Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:20Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:19Z
+2014-08-14T20:15:20Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:19Z
+2014-08-14T20:15:20Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:19Z
+2014-08-14T20:15:20Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:21Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:22Z INFO - [foo.1] -submit_method_id=20291
+2014-08-14T20:15:22Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:22Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:21Z
+2014-08-14T20:15:22Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:21Z
+2014-08-14T20:15:22Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:21Z
+2014-08-14T20:15:22Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:23Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:24Z INFO - [foo.1] -submit_method_id=20343
+2014-08-14T20:15:24Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:24Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:23Z
+2014-08-14T20:15:24Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:23Z
+2014-08-14T20:15:24Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:23Z
+2014-08-14T20:15:24Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:25Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:26Z INFO - [foo.1] -submit_method_id=20386
+2014-08-14T20:15:26Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:26Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:25Z
+2014-08-14T20:15:26Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:26Z
+2014-08-14T20:15:26Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:26Z
+2014-08-14T20:15:26Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:27Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:29Z INFO - [foo.1] -submit_method_id=20429
+2014-08-14T20:15:29Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:29Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:28Z
+2014-08-14T20:15:29Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:28Z
+2014-08-14T20:15:29Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:28Z
+2014-08-14T20:15:29Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:30Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:31Z INFO - [foo.1] -submit_method_id=20472
+2014-08-14T20:15:31Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:31Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:30Z
+2014-08-14T20:15:31Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:30Z
+2014-08-14T20:15:31Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:30Z
+2014-08-14T20:15:31Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:32Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:33Z INFO - [foo.1] -submit_method_id=20515
+2014-08-14T20:15:33Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:33Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:32Z
+2014-08-14T20:15:33Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:32Z
+2014-08-14T20:15:33Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:32Z
+2014-08-14T20:15:33Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:34Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:35Z INFO - [foo.1] -submit_method_id=20558
+2014-08-14T20:15:35Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:35Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:34Z
+2014-08-14T20:15:35Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:35Z
+2014-08-14T20:15:35Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:35Z
+2014-08-14T20:15:35Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:36Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:38Z INFO - [foo.1] -submit_method_id=20601
+2014-08-14T20:15:38Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:38Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:37Z
+2014-08-14T20:15:38Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:37Z
+2014-08-14T20:15:38Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:37Z
+2014-08-14T20:15:38Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:39Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:40Z INFO - [foo.1] -submit_method_id=20644
+2014-08-14T20:15:40Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:40Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:39Z
+2014-08-14T20:15:40Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:39Z
+2014-08-14T20:15:40Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:39Z
+2014-08-14T20:15:40Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:41Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:42Z INFO - [foo.1] -submit_method_id=20687
+2014-08-14T20:15:42Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:42Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:41Z
+2014-08-14T20:15:42Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:41Z
+2014-08-14T20:15:42Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:41Z
+2014-08-14T20:15:42Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:43Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:44Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:15:43Z
+2014-08-14T20:15:44Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:44Z
+2014-08-14T20:15:44Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:44Z
+2014-08-14T20:15:44Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:45Z INFO - [foo.1] -submit_method_id=20738
+2014-08-14T20:15:45Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:45Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:46Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:15:45Z
+2014-08-14T20:15:46Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:45Z
+2014-08-14T20:15:46Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:45Z
+2014-08-14T20:15:46Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:47Z INFO - [foo.1] -submit_method_id=20781
+2014-08-14T20:15:47Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:47Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:47Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:15:47Z
+2014-08-14T20:15:47Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:47Z
+2014-08-14T20:15:47Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:47Z
+2014-08-14T20:15:47Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:48Z INFO - [foo.1] -submit_method_id=20825
+2014-08-14T20:15:48Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:48Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:49Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:15:49Z
+2014-08-14T20:15:50Z INFO - [foo.1] -submit_method_id=20868
+2014-08-14T20:15:50Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:50Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:49Z
+2014-08-14T20:15:50Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:49Z
+2014-08-14T20:15:50Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:51Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:52Z INFO - [foo.1] -submit_method_id=20911
+2014-08-14T20:15:52Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:53Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:15:51Z
+2014-08-14T20:15:53Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:52Z
+2014-08-14T20:15:53Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:52Z
+2014-08-14T20:15:53Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:54Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:54Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:15:54Z
+2014-08-14T20:15:54Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:54Z
+2014-08-14T20:15:54Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:54Z
+2014-08-14T20:15:54Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:55Z INFO - [foo.1] -submit_method_id=20954
+2014-08-14T20:15:55Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:55Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:56Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:15:55Z
+2014-08-14T20:15:57Z INFO - [foo.1] -submit_method_id=20997
+2014-08-14T20:15:57Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:15:57Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:56Z
+2014-08-14T20:15:57Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:56Z
+2014-08-14T20:15:57Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:15:58Z INFO - [foo.1] -triggered off []
+2014-08-14T20:15:59Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:15:58Z
+2014-08-14T20:15:59Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:15:58Z
+2014-08-14T20:15:59Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:15:58Z
+2014-08-14T20:15:59Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:00Z INFO - [foo.1] -submit_method_id=21040
+2014-08-14T20:16:00Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:00Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:01Z INFO - [foo.1] -submit_method_id=21084
+2014-08-14T20:16:01Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:01Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:00Z
+2014-08-14T20:16:01Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:00Z
+2014-08-14T20:16:01Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:00Z
+2014-08-14T20:16:01Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:02Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:02Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:16:02Z
+2014-08-14T20:16:03Z INFO - [foo.1] -submit_method_id=21127
+2014-08-14T20:16:03Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:04Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:03Z
+2014-08-14T20:16:04Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:03Z
+2014-08-14T20:16:04Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:05Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:05Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:16:05Z
+2014-08-14T20:16:06Z INFO - [foo.1] -submit_method_id=21170
+2014-08-14T20:16:06Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:06Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:05Z
+2014-08-14T20:16:06Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:05Z
+2014-08-14T20:16:06Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:07Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:08Z INFO - [foo.1] -submit_method_id=21213
+2014-08-14T20:16:08Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:08Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:07Z
+2014-08-14T20:16:08Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:08Z
+2014-08-14T20:16:08Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:08Z
+2014-08-14T20:16:08Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:09Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:10Z INFO - [foo.1] -submit_method_id=21256
+2014-08-14T20:16:10Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:11Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:10Z
+2014-08-14T20:16:11Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:10Z
+2014-08-14T20:16:11Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:10Z
+2014-08-14T20:16:11Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:12Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:12Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:16:12Z
+2014-08-14T20:16:13Z INFO - [foo.1] -submit_method_id=21300
+2014-08-14T20:16:13Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:15Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:12Z
+2014-08-14T20:16:15Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:12Z
+2014-08-14T20:16:15Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:16Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:17Z INFO - [foo.1] -submit_method_id=21344
+2014-08-14T20:16:17Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:18Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:16Z
+2014-08-14T20:16:18Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:16Z
+2014-08-14T20:16:18Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:16Z
+2014-08-14T20:16:18Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:19Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:19Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:16:19Z
+2014-08-14T20:16:20Z INFO - [foo.1] -submit_method_id=21388
+2014-08-14T20:16:20Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:20Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:19Z
+2014-08-14T20:16:20Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:19Z
+2014-08-14T20:16:20Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:21Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:22Z INFO - [foo.1] -submit_method_id=21434
+2014-08-14T20:16:22Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:22Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:21Z
+2014-08-14T20:16:22Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:21Z
+2014-08-14T20:16:22Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:21Z
+2014-08-14T20:16:22Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:23Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:24Z INFO - [foo.1] -submit_method_id=21477
+2014-08-14T20:16:24Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:25Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:23Z
+2014-08-14T20:16:25Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:24Z
+2014-08-14T20:16:25Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:24Z
+2014-08-14T20:16:25Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:26Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:27Z INFO - [foo.1] -submit_method_id=21520
+2014-08-14T20:16:27Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:27Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:26Z
+2014-08-14T20:16:27Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:26Z
+2014-08-14T20:16:27Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:26Z
+2014-08-14T20:16:27Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:28Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:29Z INFO - [foo.1] -submit_method_id=21563
+2014-08-14T20:16:29Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:29Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:28Z
+2014-08-14T20:16:29Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:28Z
+2014-08-14T20:16:29Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:28Z
+2014-08-14T20:16:29Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:30Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:32Z INFO - [foo.1] -submit_method_id=21606
+2014-08-14T20:16:32Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:32Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:31Z
+2014-08-14T20:16:32Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:31Z
+2014-08-14T20:16:32Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:31Z
+2014-08-14T20:16:32Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:33Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:34Z INFO - [foo.1] -submit_method_id=21649
+2014-08-14T20:16:34Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:34Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:33Z
+2014-08-14T20:16:34Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:33Z
+2014-08-14T20:16:34Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:33Z
+2014-08-14T20:16:34Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:35Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:36Z INFO - [foo.1] -submit_method_id=21692
+2014-08-14T20:16:36Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:36Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:35Z
+2014-08-14T20:16:36Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:35Z
+2014-08-14T20:16:36Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:35Z
+2014-08-14T20:16:36Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:37Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:38Z INFO - [foo.1] -submit_method_id=21735
+2014-08-14T20:16:38Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:38Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:37Z
+2014-08-14T20:16:38Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:37Z
+2014-08-14T20:16:38Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:37Z
+2014-08-14T20:16:38Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:39Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:40Z INFO - [foo.1] -submit_method_id=21778
+2014-08-14T20:16:40Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:40Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:39Z
+2014-08-14T20:16:40Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:40Z
+2014-08-14T20:16:40Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:40Z
+2014-08-14T20:16:40Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:41Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:43Z INFO - [foo.1] -submit_method_id=21821
+2014-08-14T20:16:43Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:43Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:42Z
+2014-08-14T20:16:43Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:42Z
+2014-08-14T20:16:43Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:42Z
+2014-08-14T20:16:43Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:44Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:45Z INFO - [foo.1] -submit_method_id=21864
+2014-08-14T20:16:45Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:45Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:44Z
+2014-08-14T20:16:45Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:44Z
+2014-08-14T20:16:45Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:44Z
+2014-08-14T20:16:45Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:46Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:47Z INFO - [foo.1] -submit_method_id=21907
+2014-08-14T20:16:47Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:47Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:46Z
+2014-08-14T20:16:47Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:46Z
+2014-08-14T20:16:47Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:46Z
+2014-08-14T20:16:47Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:48Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:49Z INFO - [foo.1] -submit_method_id=21951
+2014-08-14T20:16:49Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:49Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:48Z
+2014-08-14T20:16:49Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:48Z
+2014-08-14T20:16:49Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:48Z
+2014-08-14T20:16:49Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:50Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:51Z INFO - [foo.1] -submit_method_id=21994
+2014-08-14T20:16:51Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:51Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:50Z
+2014-08-14T20:16:51Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:51Z
+2014-08-14T20:16:51Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:51Z
+2014-08-14T20:16:51Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:52Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:53Z INFO - [foo.1] -submit_method_id=22037
+2014-08-14T20:16:53Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:54Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:53Z
+2014-08-14T20:16:54Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:53Z
+2014-08-14T20:16:54Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:53Z
+2014-08-14T20:16:54Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:55Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:56Z INFO - [foo.1] -submit_method_id=22080
+2014-08-14T20:16:56Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:56Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:55Z
+2014-08-14T20:16:56Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:55Z
+2014-08-14T20:16:56Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:55Z
+2014-08-14T20:16:56Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:57Z INFO - [foo.1] -triggered off []
+2014-08-14T20:16:58Z INFO - [foo.1] -submit_method_id=22123
+2014-08-14T20:16:58Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:16:58Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:57Z
+2014-08-14T20:16:58Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:57Z
+2014-08-14T20:16:58Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:57Z
+2014-08-14T20:16:58Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:16:59Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:00Z INFO - [foo.1] -submit_method_id=22166
+2014-08-14T20:17:00Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:00Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:16:59Z
+2014-08-14T20:17:00Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:16:59Z
+2014-08-14T20:17:00Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:16:59Z
+2014-08-14T20:17:00Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:01Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:02Z INFO - [foo.1] -submit_method_id=22212
+2014-08-14T20:17:02Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:02Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:01Z
+2014-08-14T20:17:02Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:01Z
+2014-08-14T20:17:02Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:01Z
+2014-08-14T20:17:02Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:03Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:04Z INFO - [foo.1] -submit_method_id=22255
+2014-08-14T20:17:04Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:04Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:03Z
+2014-08-14T20:17:04Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:04Z
+2014-08-14T20:17:04Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:04Z
+2014-08-14T20:17:04Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:05Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:07Z INFO - [foo.1] -submit_method_id=22298
+2014-08-14T20:17:07Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:07Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:06Z
+2014-08-14T20:17:07Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:06Z
+2014-08-14T20:17:07Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:06Z
+2014-08-14T20:17:07Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:08Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:09Z INFO - [foo.1] -submit_method_id=22341
+2014-08-14T20:17:09Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:09Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:08Z
+2014-08-14T20:17:09Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:08Z
+2014-08-14T20:17:09Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:08Z
+2014-08-14T20:17:09Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:10Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:11Z INFO - [foo.1] -submit_method_id=22384
+2014-08-14T20:17:11Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:11Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:10Z
+2014-08-14T20:17:11Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:10Z
+2014-08-14T20:17:11Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:10Z
+2014-08-14T20:17:11Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:12Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:13Z INFO - [foo.1] -submit_method_id=22427
+2014-08-14T20:17:13Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:13Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:12Z
+2014-08-14T20:17:13Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:12Z
+2014-08-14T20:17:13Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:12Z
+2014-08-14T20:17:13Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:14Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:15Z INFO - [foo.1] -submit_method_id=22470
+2014-08-14T20:17:15Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:15Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:14Z
+2014-08-14T20:17:15Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:14Z
+2014-08-14T20:17:15Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:14Z
+2014-08-14T20:17:15Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:16Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:17Z INFO - [foo.1] -submit_method_id=22513
+2014-08-14T20:17:17Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:17Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:16Z
+2014-08-14T20:17:17Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:17Z
+2014-08-14T20:17:17Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:17Z
+2014-08-14T20:17:17Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:18Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:20Z INFO - [foo.1] -submit_method_id=22556
+2014-08-14T20:17:20Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:20Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:19Z
+2014-08-14T20:17:20Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:19Z
+2014-08-14T20:17:20Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:19Z
+2014-08-14T20:17:20Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:21Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:22Z INFO - [foo.1] -submit_method_id=22599
+2014-08-14T20:17:22Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:22Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:21Z
+2014-08-14T20:17:22Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:21Z
+2014-08-14T20:17:22Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:21Z
+2014-08-14T20:17:22Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:23Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:24Z INFO - [foo.1] -submit_method_id=22643
+2014-08-14T20:17:24Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:24Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:23Z
+2014-08-14T20:17:24Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:23Z
+2014-08-14T20:17:24Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:23Z
+2014-08-14T20:17:24Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:25Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:26Z INFO - [foo.1] -submit_method_id=22686
+2014-08-14T20:17:26Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:26Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:25Z
+2014-08-14T20:17:26Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:25Z
+2014-08-14T20:17:26Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:25Z
+2014-08-14T20:17:26Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:27Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:28Z INFO - [foo.1] -submit_method_id=22729
+2014-08-14T20:17:28Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:28Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:27Z
+2014-08-14T20:17:28Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:27Z
+2014-08-14T20:17:28Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:27Z
+2014-08-14T20:17:28Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:29Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:30Z INFO - [foo.1] -submit_method_id=22772
+2014-08-14T20:17:30Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:30Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:29Z
+2014-08-14T20:17:30Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:30Z
+2014-08-14T20:17:30Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:30Z
+2014-08-14T20:17:30Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:31Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:32Z INFO - [foo.1] -submit_method_id=22815
+2014-08-14T20:17:32Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:33Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:32Z
+2014-08-14T20:17:33Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:32Z
+2014-08-14T20:17:33Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:32Z
+2014-08-14T20:17:33Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:34Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:35Z INFO - [foo.1] -submit_method_id=22858
+2014-08-14T20:17:35Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:35Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:34Z
+2014-08-14T20:17:35Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:34Z
+2014-08-14T20:17:35Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:34Z
+2014-08-14T20:17:35Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:36Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:37Z INFO - [foo.1] -submit_method_id=22901
+2014-08-14T20:17:37Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:37Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:36Z
+2014-08-14T20:17:37Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:36Z
+2014-08-14T20:17:37Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:36Z
+2014-08-14T20:17:37Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:38Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:39Z INFO - [foo.1] -submit_method_id=22944
+2014-08-14T20:17:39Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:39Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:38Z
+2014-08-14T20:17:39Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:38Z
+2014-08-14T20:17:39Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:38Z
+2014-08-14T20:17:39Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:40Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:41Z INFO - [foo.1] -submit_method_id=22987
+2014-08-14T20:17:41Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:41Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:40Z
+2014-08-14T20:17:41Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:40Z
+2014-08-14T20:17:41Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:40Z
+2014-08-14T20:17:41Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:42Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:43Z INFO - [foo.1] -submit_method_id=23030
+2014-08-14T20:17:43Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:43Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:42Z
+2014-08-14T20:17:43Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:43Z
+2014-08-14T20:17:43Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:43Z
+2014-08-14T20:17:43Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:44Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:46Z INFO - [foo.1] -submit_method_id=23073
+2014-08-14T20:17:46Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:46Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:45Z
+2014-08-14T20:17:46Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:45Z
+2014-08-14T20:17:46Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:45Z
+2014-08-14T20:17:46Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:47Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:48Z INFO - [foo.1] -submit_method_id=23117
+2014-08-14T20:17:48Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:48Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:47Z
+2014-08-14T20:17:48Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:47Z
+2014-08-14T20:17:48Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:47Z
+2014-08-14T20:17:48Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:49Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:50Z INFO - [foo.1] -submit_method_id=23160
+2014-08-14T20:17:50Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:50Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:49Z
+2014-08-14T20:17:50Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:49Z
+2014-08-14T20:17:50Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:49Z
+2014-08-14T20:17:50Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:51Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:52Z INFO - [foo.1] -submit_method_id=23203
+2014-08-14T20:17:52Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:52Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:51Z
+2014-08-14T20:17:52Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:51Z
+2014-08-14T20:17:52Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:51Z
+2014-08-14T20:17:52Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:53Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:54Z INFO - [foo.1] -submit_method_id=23246
+2014-08-14T20:17:54Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:54Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:53Z
+2014-08-14T20:17:54Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:53Z
+2014-08-14T20:17:54Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:53Z
+2014-08-14T20:17:54Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:55Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:56Z INFO - [foo.1] -submit_method_id=23289
+2014-08-14T20:17:56Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:56Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:55Z
+2014-08-14T20:17:56Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:56Z
+2014-08-14T20:17:56Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:56Z
+2014-08-14T20:17:56Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:17:57Z INFO - [foo.1] -triggered off []
+2014-08-14T20:17:58Z INFO - [foo.1] -submit_method_id=23332
+2014-08-14T20:17:58Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:17:58Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:17:57Z
+2014-08-14T20:17:58Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:17:58Z
+2014-08-14T20:17:58Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:17:58Z
+2014-08-14T20:17:58Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:00Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:01Z INFO - [foo.1] -submit_method_id=23375
+2014-08-14T20:18:01Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:01Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:00Z
+2014-08-14T20:18:01Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:00Z
+2014-08-14T20:18:01Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:00Z
+2014-08-14T20:18:01Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:02Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:03Z INFO - [foo.1] -submit_method_id=23418
+2014-08-14T20:18:03Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:03Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:02Z
+2014-08-14T20:18:03Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:02Z
+2014-08-14T20:18:03Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:02Z
+2014-08-14T20:18:03Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:04Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:05Z INFO - [foo.1] -submit_method_id=23461
+2014-08-14T20:18:05Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:05Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:04Z
+2014-08-14T20:18:05Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:04Z
+2014-08-14T20:18:05Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:04Z
+2014-08-14T20:18:05Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:06Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:07Z INFO - [foo.1] -submit_method_id=23504
+2014-08-14T20:18:07Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:07Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:06Z
+2014-08-14T20:18:07Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:06Z
+2014-08-14T20:18:07Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:06Z
+2014-08-14T20:18:07Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:08Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:09Z INFO - [foo.1] -submit_method_id=23547
+2014-08-14T20:18:09Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:09Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:08Z
+2014-08-14T20:18:09Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:09Z
+2014-08-14T20:18:09Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:09Z
+2014-08-14T20:18:09Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:10Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:11Z INFO - [foo.1] -submit_method_id=23590
+2014-08-14T20:18:11Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:12Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:11Z
+2014-08-14T20:18:12Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:11Z
+2014-08-14T20:18:12Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:11Z
+2014-08-14T20:18:12Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:13Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:14Z INFO - [foo.1] -submit_method_id=23633
+2014-08-14T20:18:14Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:14Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:13Z
+2014-08-14T20:18:14Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:13Z
+2014-08-14T20:18:14Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:13Z
+2014-08-14T20:18:14Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:15Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:16Z INFO - [foo.1] -submit_method_id=23676
+2014-08-14T20:18:16Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:16Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:15Z
+2014-08-14T20:18:16Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:15Z
+2014-08-14T20:18:16Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:15Z
+2014-08-14T20:18:16Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:17Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:18Z INFO - [foo.1] -submit_method_id=23719
+2014-08-14T20:18:18Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:18Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:17Z
+2014-08-14T20:18:18Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:17Z
+2014-08-14T20:18:18Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:17Z
+2014-08-14T20:18:18Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:19Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:20Z INFO - [foo.1] -submit_method_id=23762
+2014-08-14T20:18:20Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:20Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:19Z
+2014-08-14T20:18:20Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:19Z
+2014-08-14T20:18:20Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:19Z
+2014-08-14T20:18:20Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:21Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:22Z INFO - [foo.1] -submit_method_id=23805
+2014-08-14T20:18:22Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:22Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:21Z
+2014-08-14T20:18:22Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:22Z
+2014-08-14T20:18:22Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:22Z
+2014-08-14T20:18:22Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:23Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:24Z INFO - [foo.1] -submit_method_id=23848
+2014-08-14T20:18:24Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:25Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:24Z
+2014-08-14T20:18:25Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:24Z
+2014-08-14T20:18:25Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:24Z
+2014-08-14T20:18:25Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:26Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:27Z INFO - [foo.1] -submit_method_id=23891
+2014-08-14T20:18:27Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:27Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:26Z
+2014-08-14T20:18:27Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:26Z
+2014-08-14T20:18:27Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:26Z
+2014-08-14T20:18:27Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:28Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:29Z INFO - [foo.1] -submit_method_id=23934
+2014-08-14T20:18:29Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:29Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:28Z
+2014-08-14T20:18:29Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:28Z
+2014-08-14T20:18:29Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:28Z
+2014-08-14T20:18:29Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:30Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:31Z INFO - [foo.1] -submit_method_id=23977
+2014-08-14T20:18:31Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:31Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:30Z
+2014-08-14T20:18:31Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:30Z
+2014-08-14T20:18:31Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:30Z
+2014-08-14T20:18:31Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:32Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:33Z INFO - [foo.1] -submit_method_id=24020
+2014-08-14T20:18:33Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:33Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:32Z
+2014-08-14T20:18:33Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:32Z
+2014-08-14T20:18:33Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:32Z
+2014-08-14T20:18:33Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:34Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:35Z INFO - [foo.1] -submit_method_id=24063
+2014-08-14T20:18:35Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:35Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:34Z
+2014-08-14T20:18:35Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:35Z
+2014-08-14T20:18:35Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:35Z
+2014-08-14T20:18:35Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:36Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:37Z INFO - [foo.1] -submit_method_id=24106
+2014-08-14T20:18:37Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:37Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:36Z
+2014-08-14T20:18:37Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:37Z
+2014-08-14T20:18:37Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:37Z
+2014-08-14T20:18:37Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:38Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:39Z INFO - [foo.1] -(current:ready)> foo.1 started at 2014-08-14T20:18:39Z
+2014-08-14T20:18:40Z INFO - [foo.1] -submit_method_id=24149
+2014-08-14T20:18:40Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:40Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:39Z
+2014-08-14T20:18:40Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:39Z
+2014-08-14T20:18:40Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:41Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:42Z INFO - [foo.1] -submit_method_id=24192
+2014-08-14T20:18:42Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:42Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:41Z
+2014-08-14T20:18:42Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:41Z
+2014-08-14T20:18:42Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:41Z
+2014-08-14T20:18:42Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:43Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:44Z INFO - [foo.1] -submit_method_id=24245
+2014-08-14T20:18:44Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:44Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:43Z
+2014-08-14T20:18:44Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:43Z
+2014-08-14T20:18:44Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:43Z
+2014-08-14T20:18:44Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:45Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:46Z INFO - [foo.1] -submit_method_id=24288
+2014-08-14T20:18:46Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:46Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:45Z
+2014-08-14T20:18:46Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:46Z
+2014-08-14T20:18:46Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:46Z
+2014-08-14T20:18:46Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:47Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:48Z INFO - [foo.1] -submit_method_id=24332
+2014-08-14T20:18:48Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:49Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:48Z
+2014-08-14T20:18:49Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:48Z
+2014-08-14T20:18:49Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:48Z
+2014-08-14T20:18:49Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:50Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:51Z INFO - [foo.1] -submit_method_id=24375
+2014-08-14T20:18:51Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:51Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:50Z
+2014-08-14T20:18:51Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:50Z
+2014-08-14T20:18:51Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:50Z
+2014-08-14T20:18:51Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:52Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:53Z INFO - [foo.1] -submit_method_id=24418
+2014-08-14T20:18:53Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:53Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:52Z
+2014-08-14T20:18:53Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:52Z
+2014-08-14T20:18:53Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:52Z
+2014-08-14T20:18:53Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:54Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:55Z INFO - [foo.1] -submit_method_id=24461
+2014-08-14T20:18:55Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:55Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:54Z
+2014-08-14T20:18:55Z CRITICAL - [foo.1] -(current:running)> Task job script received signal ERR at 2014-08-14T20:18:54Z
+2014-08-14T20:18:55Z CRITICAL - [foo.1] -(current:running)> foo.1 failed at 2014-08-14T20:18:54Z
+2014-08-14T20:18:55Z INFO - [foo.1] -job failed, retrying in P0Y
+2014-08-14T20:18:56Z INFO - [foo.1] -triggered off []
+2014-08-14T20:18:57Z INFO - [foo.1] -submit_method_id=24504
+2014-08-14T20:18:57Z INFO - [foo.1] -submission succeeded
+2014-08-14T20:18:57Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-08-14T20:18:56Z
+2014-08-14T20:18:57Z INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-08-14T20:18:56Z
+2014-08-14T20:18:58Z INFO - [bar.1] -triggered off ['foo.1']
+2014-08-14T20:18:59Z INFO - [bar.1] -submit_method_id=24547
+2014-08-14T20:18:59Z INFO - [bar.1] -submission succeeded
+2014-08-14T20:18:59Z INFO - [bar.1] -(current:submitted)> bar.1 started at 2014-08-14T20:18:58Z
+2014-08-14T20:18:59Z INFO - [bar.1] -(current:running)> bar.1 succeeded at 2014-08-14T20:18:59Z
+2014-08-14T20:19:00Z INFO - Suite shutting down at 2014-08-14T20:19:00Z

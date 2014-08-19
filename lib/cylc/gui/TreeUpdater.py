@@ -73,6 +73,9 @@ class TreeUpdater(threading.Thread):
                 # Lower PyGTK version.
                 pass
 
+        # Cache the latest ETC calculation for active ids.
+        self._id_tetc_cache = {}
+
         dotm = DotMaker( theme )
         self.dots = {}
         for state in task_state.legal:
@@ -175,9 +178,8 @@ class TreeUpdater(threading.Thread):
 
         # Retrieve any user-expanded rows so that we can expand them later.
         expand_me = self._get_user_expanded_row_ids()
-        daemon_time_zone = self.updater.global_summary.get("daemon time zone")
-        my_time_zone = TIME_ZONE_STRING_LOCAL_BASIC
-        display_time_zone = (daemon_time_zone != my_time_zone)
+        daemon_time_zone_info = self.updater.global_summary.get(
+            "daemon time zone info")
         new_data = {}
         new_fam_data = {}
         self.ttree_paths.clear()
@@ -186,6 +188,8 @@ class TreeUpdater(threading.Thread):
         else:
             last_update_date = None
         
+        tetc_cached_ids_left = set(self._id_tetc_cache)
+
         for summary, dest in [(self.updater.state_summary, new_data),
                               (self.updater.fam_state_summary, new_fam_data)]:
             # Populate new_data and new_fam_data.
@@ -207,17 +211,18 @@ class TreeUpdater(threading.Thread):
 
                 if tsub_string is not None:
                     tsub_string = self._alter_date_time_string_for_context(
-                        tsub_string, last_update_date, daemon_time_zone,
-                        display_time_zone=display_time_zone
-                    )
+                        tsub_string, last_update_date)
                 if tstart_string is not None:
                     tstart_string = self._alter_date_time_string_for_context(
-                        tstart_string, last_update_date, daemon_time_zone,
-                        display_time_zone=display_time_zone
-                    )
+                        tstart_string, last_update_date)
+                
                 meant = summary[ id ].get( 'mean total elapsed time' )
                 meant_string = None
                 tetc_string = None
+
+                if id in tetc_cached_ids_left:
+                    tetc_cached_ids_left.remove(id)
+
                 if isinstance(tstart, float):
                     # Cylc 6 suites - don't populate info for others.
                     if (tsucceeded is None and
@@ -225,30 +230,35 @@ class TreeUpdater(threading.Thread):
                              isinstance(meant, int))):
                         # We can calculate an expected time of completion.
                         tetc_unix = tstart + meant
-                        tetc_string = get_time_string_from_unix_time(
-                            tetc_unix,
-                            no_display_time_zone=(not display_time_zone)
-                        )
                         tetc_string = (
-                            self._alter_date_time_string_for_context(
-                                tetc_string, last_update_date,
-                                daemon_time_zone,
-                                display_time_zone=display_time_zone
+                            self._id_tetc_cache.get(id, {}).get(tetc_unix))
+                        if tetc_string is None:
+                            # We have to calculate it.
+                            tetc_string = get_time_string_from_unix_time(
+                                tetc_unix,
+                                custom_time_zone_info=daemon_time_zone_info
                             )
-                        )
+                            tetc_string = (
+                                self._alter_date_time_string_for_context(
+                                    tetc_string, last_update_date)
+                            )
+                            self._id_tetc_cache[id] = {
+                                tetc_unix: tetc_string}
                 if isinstance(meant, float):
                     if meant == 0:
                         # This is a very fast (sub-cylc-resolution) task.
                         meant = 1
                     meant = int(meant)
                     meant_minutes, meant_seconds = divmod(meant, 60)
-                    # Technically, we should have a leading "PT" here.
                     if meant_minutes:
-                        meant_string = "%dM%dS" % (
+                        meant_string = "PT%dM%dS" % (
                             meant_minutes, meant_seconds)
                     else:
-                        meant_string = "%dS" % meant
+                        meant_string = "PT%dS" % meant
+                
+                # priority is not currently used.
                 priority = summary[ id ].get( 'latest_message_priority' )
+
                 try:
                     icon = self.dots[state]
                 except KeyError:
@@ -258,6 +268,10 @@ class TreeUpdater(threading.Thread):
                                                  tstart_string, meant_string,
                                                  tetc_string, icon ]
 
+        for id in tetc_cached_ids_left:
+            # These ids were not present in the summary - so clear them.
+            self._id_tetc_cache.pop(id)
+        
         tree_data = {}
         self.ttreestore.clear()
         point_strings = new_data.keys()
@@ -376,16 +390,13 @@ class TreeUpdater(threading.Thread):
         self.ttree_paths[path].setdefault( 'names', [] )
         self.ttree_paths[path]['names'].append( descendant_name )
 
-    def _alter_date_time_string_for_context(
-            self, date_time_string, context_date, context_time_zone,
-            display_time_zone=False):
-        """Alter a date/time string based on date and time zone contexts."""
-        if context_date is not None:
+    def _alter_date_time_string_for_context(self, date_time_string,
+                                            context_date_time):
+        """Alter a date-time string based on a context date-time."""
+        if context_date_time is not None:
             # Remove the date part if it matches the context date.
             date_time_string = date_time_string.replace(
-                context_date + "T", "", 1)
-        if display_time_zone:
-            date_time_string += context_time_zone
+                context_date_time + "T", "", 1)
         return date_time_string
 
     def _get_autoexpand_rows( self ):

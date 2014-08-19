@@ -156,10 +156,19 @@ class config( object ):
             self.cfg['scheduling']['initial cycle point'] = (
                 self._cli_initial_point_string)
 
-        if 'cycling mode' not in self.cfg['scheduling']:
+        dependency_map = self.cfg.get('scheduling', {}).get(
+            'dependencies', {})
+
+        graph_found = False
+        for item, value in dependency_map.items():
+            if item == 'graph' or value.get('graph'):
+                graph_found = True
+                break
+        if not graph_found:
+            raise SuiteConfigError('No suite dependency graph defined.')
+
+        if 'cycling mode' not in self.cfg.get('scheduling', {}):
             # Auto-detect integer cycling for pure async graph suites.
-            dependency_map = self.cfg.get('scheduling', {}).get(
-                'dependencies', {})
             if dependency_map.get('graph'):
                 # There is an async graph setting.
                 # If it is by itself, it is integer shorthand.
@@ -360,9 +369,6 @@ class config( object ):
         self.process_directories()
 
         self.load_graph()
-
-        if not self.graph_found:
-            raise SuiteConfigError, 'No suite dependency graph defined.'
 
         self.compute_runahead_limits()
 
@@ -1246,16 +1252,26 @@ class config( object ):
                         left_name = left_graph_node.name
                         left_output = left_graph_node.output  
                         if (left_name in tasks_to_prune or
-                                return_all_dependencies):
+                                return_all_dependencies or
+                                right_name in tasks_to_prune):
                             special_dependencies.append(
                                 (left_name, left_output, right_name))
                         if left_name in tasks_to_prune:
                             pruned_left_nodes.remove(left_node)
 
+                if right_name in tasks_to_prune:
+                    continue
+
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
-                    self.generate_edges( lexpression, pruned_left_nodes,
-                                         right_name, ttype,
+                    left_edge_nodes = pruned_left_nodes
+                    right_edge_node = right_name
+                    if not left_edge_nodes and left_nodes:
+                        # All the left nodes have been pruned.
+                        left_edge_nodes = [right_name]
+                        right_edge_node = None
+                    self.generate_edges( lexpression, left_edge_nodes,
+                                         right_edge_node, ttype,
                                          seq, suicide )
                 self.generate_taskdefs( orig_line, pruned_left_nodes,
                                         right_name, ttype,
@@ -1638,7 +1654,6 @@ class config( object ):
             )
         back_comp_initial_tasks = list(start_up_tasks)
 
-        self.graph_found = False
         has_non_async_graphs = False
 
         section_seq_map = {}
@@ -1758,7 +1773,6 @@ class config( object ):
         a graph of 'foo:start => bar'.
 
         """
-        self.graph_found = True
 
         ttype = 'cycling'
         sec = section

@@ -1309,8 +1309,8 @@ parser is concerned these are just normal configuration items).
        \item \lstinline@BAR = ${FOO}$GLOBALVAR@
        \item \lstinline@BAZ = $( echo "hello world" )@
        \item \lstinline@WAZ = ${FOO%.jpg}.png@
-       \item \lstinline@NEXT_CYCLE = $( cylc cycletime --offset=PT6H )@
-       \item \lstinline@PREV_CYCLE = `cylc cycletime --offset=-PT6H`@
+       \item \lstinline@NEXT_CYCLE = $( cylc cycle-point --offset=PT6H )@
+       \item \lstinline@PREV_CYCLE = `cylc cycle-point --offset=-PT6H`@
        \item \lstinline@ZAZ = "${FOO#bar}" # <-- QUOTED to escape the suite.rc comment character@
    \end{myitemize}
 \end{myitemize}

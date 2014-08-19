@@ -19,7 +19,7 @@ foo:finish => A:start => B
         command scripting = """
 echo "HELLO"
 sleep 10
-if [[ $( cylc cycletime --print-hour ) == 00 ]]; then
+if [[ $( cylc cycle-point --print-hour ) == 00 ]]; then
     cylc task message "Succeeding now"
     echo "BYE"
 else

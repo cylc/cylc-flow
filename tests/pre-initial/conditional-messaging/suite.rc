@@ -15,13 +15,13 @@
     [[foo]]
         command scripting = """
 sleep 1
-cylc message "restart files ready for $(cylc cycletime --offset-hours=24 )"
+cylc message "restart files ready for $(cylc cycle-point --offset-hours=24 )"
 sleep 1"""
         [[[outputs]]]
             restart1 = "restart files ready for [T+24]"
     [[bar]]
         command scripting = """
-                            if (($(cylc cycletime)==2010080800)); then
+                            if (($(cylc cycle-point)==2010080800)); then
                                 true
                             else
                                 false
