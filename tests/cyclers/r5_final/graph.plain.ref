@@ -1,17 +1,17 @@
-edge "xyzzy.20140102T0000Z" "bar.20140102T0000Z" solid black
-edge "xyzzy.20140102T0300Z" "bar.20140102T0300Z" solid black
-edge "xyzzy.20140102T0600Z" "bar.20140102T0600Z" solid black
-edge "xyzzy.20140102T0900Z" "bar.20140102T0900Z" solid black
-edge "xyzzy.20140102T1200Z" "bar.20140102T1200Z" solid black
+edge "xyzzy.20140102T0000Z" "bar.20140102T0000Z" solid
+edge "xyzzy.20140102T0300Z" "bar.20140102T0300Z" solid
+edge "xyzzy.20140102T0600Z" "bar.20140102T0600Z" solid
+edge "xyzzy.20140102T0900Z" "bar.20140102T0900Z" solid
+edge "xyzzy.20140102T1200Z" "bar.20140102T1200Z" solid
 graph 
-node "bar.20140102T0000Z" "bar\n20140102T0000Z" unfilled box black lightgrey
-node "bar.20140102T0300Z" "bar\n20140102T0300Z" unfilled box black lightgrey
-node "bar.20140102T0600Z" "bar\n20140102T0600Z" unfilled box black lightgrey
-node "bar.20140102T0900Z" "bar\n20140102T0900Z" unfilled box black lightgrey
-node "bar.20140102T1200Z" "bar\n20140102T1200Z" unfilled box black lightgrey
-node "xyzzy.20140102T0000Z" "xyzzy\n20140102T0000Z" unfilled box black lightgrey
-node "xyzzy.20140102T0300Z" "xyzzy\n20140102T0300Z" unfilled box black lightgrey
-node "xyzzy.20140102T0600Z" "xyzzy\n20140102T0600Z" unfilled box black lightgrey
-node "xyzzy.20140102T0900Z" "xyzzy\n20140102T0900Z" unfilled box black lightgrey
-node "xyzzy.20140102T1200Z" "xyzzy\n20140102T1200Z" unfilled box black lightgrey
+node "bar.20140102T0000Z" "bar\n20140102T0000Z" unfilled box black
+node "bar.20140102T0300Z" "bar\n20140102T0300Z" unfilled box black
+node "bar.20140102T0600Z" "bar\n20140102T0600Z" unfilled box black
+node "bar.20140102T0900Z" "bar\n20140102T0900Z" unfilled box black
+node "bar.20140102T1200Z" "bar\n20140102T1200Z" unfilled box black
+node "xyzzy.20140102T0000Z" "xyzzy\n20140102T0000Z" unfilled box black
+node "xyzzy.20140102T0300Z" "xyzzy\n20140102T0300Z" unfilled box black
+node "xyzzy.20140102T0600Z" "xyzzy\n20140102T0600Z" unfilled box black
+node "xyzzy.20140102T0900Z" "xyzzy\n20140102T0900Z" unfilled box black
+node "xyzzy.20140102T1200Z" "xyzzy\n20140102T1200Z" unfilled box black
 stop

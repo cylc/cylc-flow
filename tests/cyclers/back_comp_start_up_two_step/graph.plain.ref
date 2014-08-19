@@ -1,13 +1,13 @@
-edge "cold_foo1.2014010100" "cold_foo2.2014010100" solid black
-edge "cold_foo2.2014010100" "foo_midnight.2014010100" solid black
-edge "foo_midnight.2014010100" "foo_midnight.2014010200" solid black
-edge "foo_midnight.2014010200" "foo_midnight.2014010300" solid black
-edge "foo_midnight.2014010300" "foo_midnight.2014010400" solid black
+edge "cold_foo1.2014010100" "cold_foo2.2014010100" solid
+edge "cold_foo2.2014010100" "foo_midnight.2014010100" solid
+edge "foo_midnight.2014010100" "foo_midnight.2014010200" solid
+edge "foo_midnight.2014010200" "foo_midnight.2014010300" solid
+edge "foo_midnight.2014010300" "foo_midnight.2014010400" solid
 graph 
-node "cold_foo1.2014010100" "cold_foo1\n2014010100" unfilled box black lightgrey
-node "cold_foo2.2014010100" "cold_foo2\n2014010100" unfilled box black lightgrey
-node "foo_midnight.2014010100" "foo_midnight\n2014010100" unfilled box black lightgrey
-node "foo_midnight.2014010200" "foo_midnight\n2014010200" unfilled box black lightgrey
-node "foo_midnight.2014010300" "foo_midnight\n2014010300" unfilled box black lightgrey
-node "foo_midnight.2014010400" "foo_midnight\n2014010400" unfilled box black lightgrey
+node "cold_foo1.2014010100" "cold_foo1\n2014010100" unfilled box black
+node "cold_foo2.2014010100" "cold_foo2\n2014010100" unfilled box black
+node "foo_midnight.2014010100" "foo_midnight\n2014010100" unfilled box black
+node "foo_midnight.2014010200" "foo_midnight\n2014010200" unfilled box black
+node "foo_midnight.2014010300" "foo_midnight\n2014010300" unfilled box black
+node "foo_midnight.2014010400" "foo_midnight\n2014010400" unfilled box black
 stop

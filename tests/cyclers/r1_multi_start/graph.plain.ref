@@ -1,17 +1,17 @@
-edge "cold_foo.20140101T0000Z" "foo_dawn.20140101T0600Z" solid black
-edge "cold_foo.20140101T0000Z" "foo_midnight.20140101T0000Z" solid black
-edge "foo_dawn.20140101T0600Z" "foo_dawn.20140102T0600Z" solid black
-edge "foo_dawn.20140102T0600Z" "foo_dawn.20140103T0600Z" solid black
-edge "foo_midnight.20140101T0000Z" "foo_midnight.20140102T0000Z" solid black
-edge "foo_midnight.20140102T0000Z" "foo_midnight.20140103T0000Z" solid black
-edge "foo_midnight.20140103T0000Z" "foo_midnight.20140104T0000Z" solid black
+edge "cold_foo.20140101T0000Z" "foo_dawn.20140101T0600Z" solid
+edge "cold_foo.20140101T0000Z" "foo_midnight.20140101T0000Z" solid
+edge "foo_dawn.20140101T0600Z" "foo_dawn.20140102T0600Z" solid
+edge "foo_dawn.20140102T0600Z" "foo_dawn.20140103T0600Z" solid
+edge "foo_midnight.20140101T0000Z" "foo_midnight.20140102T0000Z" solid
+edge "foo_midnight.20140102T0000Z" "foo_midnight.20140103T0000Z" solid
+edge "foo_midnight.20140103T0000Z" "foo_midnight.20140104T0000Z" solid
 graph 
-node "cold_foo.20140101T0000Z" "cold_foo\n20140101T0000Z" unfilled box black lightgrey
-node "foo_dawn.20140101T0600Z" "foo_dawn\n20140101T0600Z" unfilled box black lightgrey
-node "foo_dawn.20140102T0600Z" "foo_dawn\n20140102T0600Z" unfilled box black lightgrey
-node "foo_dawn.20140103T0600Z" "foo_dawn\n20140103T0600Z" unfilled box black lightgrey
-node "foo_midnight.20140101T0000Z" "foo_midnight\n20140101T0000Z" unfilled box black lightgrey
-node "foo_midnight.20140102T0000Z" "foo_midnight\n20140102T0000Z" unfilled box black lightgrey
-node "foo_midnight.20140103T0000Z" "foo_midnight\n20140103T0000Z" unfilled box black lightgrey
-node "foo_midnight.20140104T0000Z" "foo_midnight\n20140104T0000Z" unfilled box black lightgrey
+node "cold_foo.20140101T0000Z" "cold_foo\n20140101T0000Z" unfilled box black
+node "foo_dawn.20140101T0600Z" "foo_dawn\n20140101T0600Z" unfilled box black
+node "foo_dawn.20140102T0600Z" "foo_dawn\n20140102T0600Z" unfilled box black
+node "foo_dawn.20140103T0600Z" "foo_dawn\n20140103T0600Z" unfilled box black
+node "foo_midnight.20140101T0000Z" "foo_midnight\n20140101T0000Z" unfilled box black
+node "foo_midnight.20140102T0000Z" "foo_midnight\n20140102T0000Z" unfilled box black
+node "foo_midnight.20140103T0000Z" "foo_midnight\n20140103T0000Z" unfilled box black
+node "foo_midnight.20140104T0000Z" "foo_midnight\n20140104T0000Z" unfilled box black
 stop

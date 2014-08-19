@@ -1,5 +1,5 @@
-edge "foo.20140102T1200Z" "final_foo.20140102T1200Z" solid black
+edge "foo.20140102T1200Z" "final_foo.20140102T1200Z" solid
 graph 
-node "final_foo.20140102T1200Z" "final_foo\n20140102T1200Z" unfilled box black lightgrey
-node "foo.20140102T1200Z" "foo\n20140102T1200Z" unfilled box black lightgrey
+node "final_foo.20140102T1200Z" "final_foo\n20140102T1200Z" unfilled box black
+node "foo.20140102T1200Z" "foo\n20140102T1200Z" unfilled box black
 stop

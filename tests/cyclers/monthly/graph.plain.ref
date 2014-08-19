@@ -1,48 +1,48 @@
-edge "foo.20000131T0100Z" "bar.20000131T0100Z" solid black
-edge "foo.20000229T0100Z" "bar.20000229T0100Z" solid black
-edge "foo.20000229T0100Z" "foo.20000329T0100Z" solid black
-edge "foo.20000329T0100Z" "bar.20000329T0100Z" solid black
-edge "foo.20000329T0100Z" "foo.20000429T0100Z" solid black
-edge "foo.20000429T0100Z" "bar.20000429T0100Z" solid black
-edge "foo.20000429T0100Z" "foo.20000529T0100Z" solid black
-edge "foo.20000529T0100Z" "bar.20000529T0100Z" solid black
-edge "foo.20000529T0100Z" "foo.20000629T0100Z" solid black
-edge "foo.20000629T0100Z" "bar.20000629T0100Z" solid black
-edge "foo.20000629T0100Z" "foo.20000729T0100Z" solid black
-edge "foo.20000729T0100Z" "bar.20000729T0100Z" solid black
-edge "foo.20000729T0100Z" "foo.20000829T0100Z" solid black
-edge "foo.20000829T0100Z" "bar.20000829T0100Z" solid black
-edge "foo.20000829T0100Z" "foo.20000929T0100Z" solid black
-edge "foo.20000929T0100Z" "bar.20000929T0100Z" solid black
-edge "foo.20000929T0100Z" "foo.20001029T0100Z" solid black
-edge "foo.20001029T0100Z" "bar.20001029T0100Z" solid black
-edge "foo.20001029T0100Z" "foo.20001129T0100Z" solid black
-edge "foo.20001129T0100Z" "bar.20001129T0100Z" solid black
-edge "foo.20001129T0100Z" "foo.20001229T0100Z" solid black
-edge "foo.20001229T0100Z" "bar.20001229T0100Z" solid black
+edge "foo.20000131T0100Z" "bar.20000131T0100Z" solid
+edge "foo.20000229T0100Z" "bar.20000229T0100Z" solid
+edge "foo.20000229T0100Z" "foo.20000329T0100Z" solid
+edge "foo.20000329T0100Z" "bar.20000329T0100Z" solid
+edge "foo.20000329T0100Z" "foo.20000429T0100Z" solid
+edge "foo.20000429T0100Z" "bar.20000429T0100Z" solid
+edge "foo.20000429T0100Z" "foo.20000529T0100Z" solid
+edge "foo.20000529T0100Z" "bar.20000529T0100Z" solid
+edge "foo.20000529T0100Z" "foo.20000629T0100Z" solid
+edge "foo.20000629T0100Z" "bar.20000629T0100Z" solid
+edge "foo.20000629T0100Z" "foo.20000729T0100Z" solid
+edge "foo.20000729T0100Z" "bar.20000729T0100Z" solid
+edge "foo.20000729T0100Z" "foo.20000829T0100Z" solid
+edge "foo.20000829T0100Z" "bar.20000829T0100Z" solid
+edge "foo.20000829T0100Z" "foo.20000929T0100Z" solid
+edge "foo.20000929T0100Z" "bar.20000929T0100Z" solid
+edge "foo.20000929T0100Z" "foo.20001029T0100Z" solid
+edge "foo.20001029T0100Z" "bar.20001029T0100Z" solid
+edge "foo.20001029T0100Z" "foo.20001129T0100Z" solid
+edge "foo.20001129T0100Z" "bar.20001129T0100Z" solid
+edge "foo.20001129T0100Z" "foo.20001229T0100Z" solid
+edge "foo.20001229T0100Z" "bar.20001229T0100Z" solid
 graph 
-node "bar.20000131T0100Z" "bar\n20000131T0100Z" unfilled box black lightgrey
-node "bar.20000229T0100Z" "bar\n20000229T0100Z" unfilled box black lightgrey
-node "bar.20000329T0100Z" "bar\n20000329T0100Z" unfilled box black lightgrey
-node "bar.20000429T0100Z" "bar\n20000429T0100Z" unfilled box black lightgrey
-node "bar.20000529T0100Z" "bar\n20000529T0100Z" unfilled box black lightgrey
-node "bar.20000629T0100Z" "bar\n20000629T0100Z" unfilled box black lightgrey
-node "bar.20000729T0100Z" "bar\n20000729T0100Z" unfilled box black lightgrey
-node "bar.20000829T0100Z" "bar\n20000829T0100Z" unfilled box black lightgrey
-node "bar.20000929T0100Z" "bar\n20000929T0100Z" unfilled box black lightgrey
-node "bar.20001029T0100Z" "bar\n20001029T0100Z" unfilled box black lightgrey
-node "bar.20001129T0100Z" "bar\n20001129T0100Z" unfilled box black lightgrey
-node "bar.20001229T0100Z" "bar\n20001229T0100Z" unfilled box black lightgrey
-node "foo.20000131T0100Z" "foo\n20000131T0100Z" unfilled box black lightgrey
-node "foo.20000229T0100Z" "foo\n20000229T0100Z" unfilled box black lightgrey
-node "foo.20000329T0100Z" "foo\n20000329T0100Z" unfilled box black lightgrey
-node "foo.20000429T0100Z" "foo\n20000429T0100Z" unfilled box black lightgrey
-node "foo.20000529T0100Z" "foo\n20000529T0100Z" unfilled box black lightgrey
-node "foo.20000629T0100Z" "foo\n20000629T0100Z" unfilled box black lightgrey
-node "foo.20000729T0100Z" "foo\n20000729T0100Z" unfilled box black lightgrey
-node "foo.20000829T0100Z" "foo\n20000829T0100Z" unfilled box black lightgrey
-node "foo.20000929T0100Z" "foo\n20000929T0100Z" unfilled box black lightgrey
-node "foo.20001029T0100Z" "foo\n20001029T0100Z" unfilled box black lightgrey
-node "foo.20001129T0100Z" "foo\n20001129T0100Z" unfilled box black lightgrey
-node "foo.20001229T0100Z" "foo\n20001229T0100Z" unfilled box black lightgrey
+node "bar.20000131T0100Z" "bar\n20000131T0100Z" unfilled box black
+node "bar.20000229T0100Z" "bar\n20000229T0100Z" unfilled box black
+node "bar.20000329T0100Z" "bar\n20000329T0100Z" unfilled box black
+node "bar.20000429T0100Z" "bar\n20000429T0100Z" unfilled box black
+node "bar.20000529T0100Z" "bar\n20000529T0100Z" unfilled box black
+node "bar.20000629T0100Z" "bar\n20000629T0100Z" unfilled box black
+node "bar.20000729T0100Z" "bar\n20000729T0100Z" unfilled box black
+node "bar.20000829T0100Z" "bar\n20000829T0100Z" unfilled box black
+node "bar.20000929T0100Z" "bar\n20000929T0100Z" unfilled box black
+node "bar.20001029T0100Z" "bar\n20001029T0100Z" unfilled box black
+node "bar.20001129T0100Z" "bar\n20001129T0100Z" unfilled box black
+node "bar.20001229T0100Z" "bar\n20001229T0100Z" unfilled box black
+node "foo.20000131T0100Z" "foo\n20000131T0100Z" unfilled box black
+node "foo.20000229T0100Z" "foo\n20000229T0100Z" unfilled box black
+node "foo.20000329T0100Z" "foo\n20000329T0100Z" unfilled box black
+node "foo.20000429T0100Z" "foo\n20000429T0100Z" unfilled box black
+node "foo.20000529T0100Z" "foo\n20000529T0100Z" unfilled box black
+node "foo.20000629T0100Z" "foo\n20000629T0100Z" unfilled box black
+node "foo.20000729T0100Z" "foo\n20000729T0100Z" unfilled box black
+node "foo.20000829T0100Z" "foo\n20000829T0100Z" unfilled box black
+node "foo.20000929T0100Z" "foo\n20000929T0100Z" unfilled box black
+node "foo.20001029T0100Z" "foo\n20001029T0100Z" unfilled box black
+node "foo.20001129T0100Z" "foo\n20001129T0100Z" unfilled box black
+node "foo.20001229T0100Z" "foo\n20001229T0100Z" unfilled box black
 stop

@@ -239,16 +239,21 @@ function exists_fail() {
 }
 
 function graph_suite() {
+    # Generate a graphviz "plain" format graph of a suite.
     SUITE_NAME=$1
     OUTPUT_FILE=$2
     shift 2
     TEMP_OUTPUT_FILE=$(mktemp XXXX-$(basename $OUTPUT_FILE))
     cylc graph --output-file="$TEMP_OUTPUT_FILE" "$SUITE_NAME" "$@"
+    # Strip graph coordinates.
     sed -i "s/[.0-9]\+\(e[+-][.0-9]\+\)\?\( \|$\)//g" "$TEMP_OUTPUT_FILE"
     # Some (older?) graphviz versions (e.g. 2.20.2) put two spaces before node
-    # coordinates instead of one in the "plain" graph output format; we need to
-    # make the output consistent here for comparing tests graphs.
+    # coordinates instead of one.
     sed -i "s/  / /g" "$TEMP_OUTPUT_FILE"
+    # Different graphviz versions use "lightgrey" or "black" as the final word
+    # on node and edge lines. 
+    perl -pi -e 's/((?:node|edge).*) \w+/\1/' $TEMP_OUTPUT_FILE
+    # Sort the result to "natural order".
     sort -V $TEMP_OUTPUT_FILE >$OUTPUT_FILE
 }
 
