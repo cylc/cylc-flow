@@ -1009,7 +1009,6 @@ class task( object ):
         # Log incoming messages with '>' to distinguish non-message log entries.
         self.log( priority, '(current:' + self.state.get_status() + ')> ' + message )
 
-        print "id, priority, message:", self.id, priority, message
         # always update the suite state summary for latest message
         self.latest_message = message
         self.latest_message_priority = priority
