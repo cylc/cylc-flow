@@ -1252,11 +1252,15 @@ class config( object ):
                         left_name = left_graph_node.name
                         left_output = left_graph_node.output  
                         if (left_name in tasks_to_prune or
-                                return_all_dependencies):
+                                return_all_dependencies or
+                                right_name in tasks_to_prune):
                             special_dependencies.append(
                                 (left_name, left_output, right_name))
                         if left_name in tasks_to_prune:
                             pruned_left_nodes.remove(left_node)
+
+                if right_name in tasks_to_prune:
+                    continue
 
                 if not self.validation and not graphing_disabled:
                     # edges not needed for validation
