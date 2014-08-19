@@ -92,6 +92,8 @@ class CylcTimeParser(object):
         (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
     ]
 
+    CHAIN_REGEX = '((?:[+-P]|[\dT])[\d\w]*)'
+
     OFFSET_REGEX = r"(?P<sign>[+-])(?P<intv>P.+)$"
 
     TRUNCATED_REC_MAP = {"---": [re.compile("^\d\dT")],
@@ -283,13 +285,25 @@ class CylcTimeParser(object):
         expr_point = None
         expr_offset = None
         if self._offset_rec.search(expr):
-            split_expr = self._offset_rec.split(expr)
-            expr = split_expr.pop(0)
-            expr_offset = "".join(split_expr[1:])
-            expr_offset = self.duration_parser.parse(
-                                                expr_offset)
-            if split_expr[0] == "-":
-                expr_offset *= -1
+            chain_expr = re.findall(self.CHAIN_REGEX, expr)
+            expr = ""
+            for item in chain_expr:
+                if not "P" in item:
+                    expr += item
+                    continue
+                split_expr = self._offset_rec.split(item)
+                expr += split_expr.pop(0)
+                if split_expr[1] == "+":
+                    split_expr.pop(1)
+                expr_offset_item = "".join(split_expr[1:])
+                expr_offset_item = self.duration_parser.parse(
+                                                item[1:])
+                if item[0] == "-":
+                    expr_offset_item *= -1
+                if not expr_offset:
+                    expr_offset = expr_offset_item
+                else:
+                    expr_offset = expr_offset + expr_offset_item
         if not expr and allow_truncated:
             return context.copy(), expr_offset
         for invalid_rec, msg in self._invalid_point_recs:
