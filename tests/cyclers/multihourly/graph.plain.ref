@@ -1,96 +1,96 @@
-edge "baz.20000131T1400+13" "baz.20000131T2000+13" solid black
-edge "baz.20000131T1400+13" "qux.20000131T1400+13" solid black
-edge "baz.20000131T2000+13" "baz.20000201T0200+13" solid black
-edge "baz.20000131T2000+13" "qux.20000131T2000+13" solid black
-edge "baz.20000201T0200+13" "baz.20000201T0800+13" solid black
-edge "baz.20000201T0200+13" "qux.20000201T0200+13" solid black
-edge "baz.20000201T0800+13" "baz.20000201T1400+13" solid black
-edge "baz.20000201T0800+13" "qux.20000201T0800+13" solid black
-edge "baz.20000201T1400+13" "baz.20000201T2000+13" solid black
-edge "baz.20000201T1400+13" "qux.20000201T1400+13" solid black
-edge "baz.20000201T2000+13" "baz.20000202T0200+13" solid black
-edge "baz.20000201T2000+13" "qux.20000201T2000+13" solid black
-edge "baz.20000202T0200+13" "baz.20000202T0800+13" solid black
-edge "baz.20000202T0200+13" "qux.20000202T0200+13" solid black
-edge "baz.20000202T0800+13" "qux.20000202T0800+13" solid black
-edge "foo.20000131T1400+13" "bar.20000131T1400+13" solid black
-edge "foo.20000131T1400+13" "foo.20000131T1700+13" solid black
-edge "foo.20000131T1700+13" "bar.20000131T1700+13" solid black
-edge "foo.20000131T1700+13" "foo.20000131T2000+13" solid black
-edge "foo.20000131T2000+13" "bar.20000131T2000+13" solid black
-edge "foo.20000131T2000+13" "foo.20000131T2300+13" solid black
-edge "foo.20000131T2300+13" "bar.20000131T2300+13" solid black
-edge "foo.20000131T2300+13" "foo.20000201T0200+13" solid black
-edge "foo.20000201T0200+13" "bar.20000201T0200+13" solid black
-edge "foo.20000201T0200+13" "foo.20000201T0500+13" solid black
-edge "foo.20000201T0500+13" "bar.20000201T0500+13" solid black
-edge "foo.20000201T0500+13" "foo.20000201T0800+13" solid black
-edge "foo.20000201T0800+13" "bar.20000201T0800+13" solid black
-edge "foo.20000201T0800+13" "foo.20000201T1100+13" solid black
-edge "foo.20000201T1100+13" "bar.20000201T1100+13" solid black
-edge "foo.20000201T1100+13" "foo.20000201T1400+13" solid black
-edge "foo.20000201T1400+13" "bar.20000201T1400+13" solid black
-edge "foo.20000201T1400+13" "foo.20000201T1700+13" solid black
-edge "foo.20000201T1700+13" "bar.20000201T1700+13" solid black
-edge "foo.20000201T1700+13" "foo.20000201T2000+13" solid black
-edge "foo.20000201T2000+13" "bar.20000201T2000+13" solid black
-edge "foo.20000201T2000+13" "foo.20000201T2300+13" solid black
-edge "foo.20000201T2300+13" "bar.20000201T2300+13" solid black
-edge "foo.20000201T2300+13" "foo.20000202T0200+13" solid black
-edge "foo.20000202T0200+13" "bar.20000202T0200+13" solid black
-edge "foo.20000202T0200+13" "foo.20000202T0500+13" solid black
-edge "foo.20000202T0500+13" "bar.20000202T0500+13" solid black
-edge "foo.20000202T0500+13" "foo.20000202T0800+13" solid black
-edge "foo.20000202T0800+13" "bar.20000202T0800+13" solid black
-edge "foo.20000202T0800+13" "foo.20000202T1100+13" solid black
-edge "foo.20000202T1100+13" "bar.20000202T1100+13" solid black
+edge "baz.20000131T1400+13" "baz.20000131T2000+13" solid
+edge "baz.20000131T1400+13" "qux.20000131T1400+13" solid
+edge "baz.20000131T2000+13" "baz.20000201T0200+13" solid
+edge "baz.20000131T2000+13" "qux.20000131T2000+13" solid
+edge "baz.20000201T0200+13" "baz.20000201T0800+13" solid
+edge "baz.20000201T0200+13" "qux.20000201T0200+13" solid
+edge "baz.20000201T0800+13" "baz.20000201T1400+13" solid
+edge "baz.20000201T0800+13" "qux.20000201T0800+13" solid
+edge "baz.20000201T1400+13" "baz.20000201T2000+13" solid
+edge "baz.20000201T1400+13" "qux.20000201T1400+13" solid
+edge "baz.20000201T2000+13" "baz.20000202T0200+13" solid
+edge "baz.20000201T2000+13" "qux.20000201T2000+13" solid
+edge "baz.20000202T0200+13" "baz.20000202T0800+13" solid
+edge "baz.20000202T0200+13" "qux.20000202T0200+13" solid
+edge "baz.20000202T0800+13" "qux.20000202T0800+13" solid
+edge "foo.20000131T1400+13" "bar.20000131T1400+13" solid
+edge "foo.20000131T1400+13" "foo.20000131T1700+13" solid
+edge "foo.20000131T1700+13" "bar.20000131T1700+13" solid
+edge "foo.20000131T1700+13" "foo.20000131T2000+13" solid
+edge "foo.20000131T2000+13" "bar.20000131T2000+13" solid
+edge "foo.20000131T2000+13" "foo.20000131T2300+13" solid
+edge "foo.20000131T2300+13" "bar.20000131T2300+13" solid
+edge "foo.20000131T2300+13" "foo.20000201T0200+13" solid
+edge "foo.20000201T0200+13" "bar.20000201T0200+13" solid
+edge "foo.20000201T0200+13" "foo.20000201T0500+13" solid
+edge "foo.20000201T0500+13" "bar.20000201T0500+13" solid
+edge "foo.20000201T0500+13" "foo.20000201T0800+13" solid
+edge "foo.20000201T0800+13" "bar.20000201T0800+13" solid
+edge "foo.20000201T0800+13" "foo.20000201T1100+13" solid
+edge "foo.20000201T1100+13" "bar.20000201T1100+13" solid
+edge "foo.20000201T1100+13" "foo.20000201T1400+13" solid
+edge "foo.20000201T1400+13" "bar.20000201T1400+13" solid
+edge "foo.20000201T1400+13" "foo.20000201T1700+13" solid
+edge "foo.20000201T1700+13" "bar.20000201T1700+13" solid
+edge "foo.20000201T1700+13" "foo.20000201T2000+13" solid
+edge "foo.20000201T2000+13" "bar.20000201T2000+13" solid
+edge "foo.20000201T2000+13" "foo.20000201T2300+13" solid
+edge "foo.20000201T2300+13" "bar.20000201T2300+13" solid
+edge "foo.20000201T2300+13" "foo.20000202T0200+13" solid
+edge "foo.20000202T0200+13" "bar.20000202T0200+13" solid
+edge "foo.20000202T0200+13" "foo.20000202T0500+13" solid
+edge "foo.20000202T0500+13" "bar.20000202T0500+13" solid
+edge "foo.20000202T0500+13" "foo.20000202T0800+13" solid
+edge "foo.20000202T0800+13" "bar.20000202T0800+13" solid
+edge "foo.20000202T0800+13" "foo.20000202T1100+13" solid
+edge "foo.20000202T1100+13" "bar.20000202T1100+13" solid
 graph 
-node "bar.20000131T1400+13" "bar\n20000131T1400+13" unfilled box black lightgrey
-node "bar.20000131T1700+13" "bar\n20000131T1700+13" unfilled box black lightgrey
-node "bar.20000131T2000+13" "bar\n20000131T2000+13" unfilled box black lightgrey
-node "bar.20000131T2300+13" "bar\n20000131T2300+13" unfilled box black lightgrey
-node "bar.20000201T0200+13" "bar\n20000201T0200+13" unfilled box black lightgrey
-node "bar.20000201T0500+13" "bar\n20000201T0500+13" unfilled box black lightgrey
-node "bar.20000201T0800+13" "bar\n20000201T0800+13" unfilled box black lightgrey
-node "bar.20000201T1100+13" "bar\n20000201T1100+13" unfilled box black lightgrey
-node "bar.20000201T1400+13" "bar\n20000201T1400+13" unfilled box black lightgrey
-node "bar.20000201T1700+13" "bar\n20000201T1700+13" unfilled box black lightgrey
-node "bar.20000201T2000+13" "bar\n20000201T2000+13" unfilled box black lightgrey
-node "bar.20000201T2300+13" "bar\n20000201T2300+13" unfilled box black lightgrey
-node "bar.20000202T0200+13" "bar\n20000202T0200+13" unfilled box black lightgrey
-node "bar.20000202T0500+13" "bar\n20000202T0500+13" unfilled box black lightgrey
-node "bar.20000202T0800+13" "bar\n20000202T0800+13" unfilled box black lightgrey
-node "bar.20000202T1100+13" "bar\n20000202T1100+13" unfilled box black lightgrey
-node "baz.20000131T1400+13" "baz\n20000131T1400+13" unfilled box black lightgrey
-node "baz.20000131T2000+13" "baz\n20000131T2000+13" unfilled box black lightgrey
-node "baz.20000201T0200+13" "baz\n20000201T0200+13" unfilled box black lightgrey
-node "baz.20000201T0800+13" "baz\n20000201T0800+13" unfilled box black lightgrey
-node "baz.20000201T1400+13" "baz\n20000201T1400+13" unfilled box black lightgrey
-node "baz.20000201T2000+13" "baz\n20000201T2000+13" unfilled box black lightgrey
-node "baz.20000202T0200+13" "baz\n20000202T0200+13" unfilled box black lightgrey
-node "baz.20000202T0800+13" "baz\n20000202T0800+13" unfilled box black lightgrey
-node "foo.20000131T1400+13" "foo\n20000131T1400+13" unfilled box black lightgrey
-node "foo.20000131T1700+13" "foo\n20000131T1700+13" unfilled box black lightgrey
-node "foo.20000131T2000+13" "foo\n20000131T2000+13" unfilled box black lightgrey
-node "foo.20000131T2300+13" "foo\n20000131T2300+13" unfilled box black lightgrey
-node "foo.20000201T0200+13" "foo\n20000201T0200+13" unfilled box black lightgrey
-node "foo.20000201T0500+13" "foo\n20000201T0500+13" unfilled box black lightgrey
-node "foo.20000201T0800+13" "foo\n20000201T0800+13" unfilled box black lightgrey
-node "foo.20000201T1100+13" "foo\n20000201T1100+13" unfilled box black lightgrey
-node "foo.20000201T1400+13" "foo\n20000201T1400+13" unfilled box black lightgrey
-node "foo.20000201T1700+13" "foo\n20000201T1700+13" unfilled box black lightgrey
-node "foo.20000201T2000+13" "foo\n20000201T2000+13" unfilled box black lightgrey
-node "foo.20000201T2300+13" "foo\n20000201T2300+13" unfilled box black lightgrey
-node "foo.20000202T0200+13" "foo\n20000202T0200+13" unfilled box black lightgrey
-node "foo.20000202T0500+13" "foo\n20000202T0500+13" unfilled box black lightgrey
-node "foo.20000202T0800+13" "foo\n20000202T0800+13" unfilled box black lightgrey
-node "foo.20000202T1100+13" "foo\n20000202T1100+13" unfilled box black lightgrey
-node "qux.20000131T1400+13" "qux\n20000131T1400+13" unfilled box black lightgrey
-node "qux.20000131T2000+13" "qux\n20000131T2000+13" unfilled box black lightgrey
-node "qux.20000201T0200+13" "qux\n20000201T0200+13" unfilled box black lightgrey
-node "qux.20000201T0800+13" "qux\n20000201T0800+13" unfilled box black lightgrey
-node "qux.20000201T1400+13" "qux\n20000201T1400+13" unfilled box black lightgrey
-node "qux.20000201T2000+13" "qux\n20000201T2000+13" unfilled box black lightgrey
-node "qux.20000202T0200+13" "qux\n20000202T0200+13" unfilled box black lightgrey
-node "qux.20000202T0800+13" "qux\n20000202T0800+13" unfilled box black lightgrey
+node "bar.20000131T1400+13" "bar\n20000131T1400+13" unfilled box black
+node "bar.20000131T1700+13" "bar\n20000131T1700+13" unfilled box black
+node "bar.20000131T2000+13" "bar\n20000131T2000+13" unfilled box black
+node "bar.20000131T2300+13" "bar\n20000131T2300+13" unfilled box black
+node "bar.20000201T0200+13" "bar\n20000201T0200+13" unfilled box black
+node "bar.20000201T0500+13" "bar\n20000201T0500+13" unfilled box black
+node "bar.20000201T0800+13" "bar\n20000201T0800+13" unfilled box black
+node "bar.20000201T1100+13" "bar\n20000201T1100+13" unfilled box black
+node "bar.20000201T1400+13" "bar\n20000201T1400+13" unfilled box black
+node "bar.20000201T1700+13" "bar\n20000201T1700+13" unfilled box black
+node "bar.20000201T2000+13" "bar\n20000201T2000+13" unfilled box black
+node "bar.20000201T2300+13" "bar\n20000201T2300+13" unfilled box black
+node "bar.20000202T0200+13" "bar\n20000202T0200+13" unfilled box black
+node "bar.20000202T0500+13" "bar\n20000202T0500+13" unfilled box black
+node "bar.20000202T0800+13" "bar\n20000202T0800+13" unfilled box black
+node "bar.20000202T1100+13" "bar\n20000202T1100+13" unfilled box black
+node "baz.20000131T1400+13" "baz\n20000131T1400+13" unfilled box black
+node "baz.20000131T2000+13" "baz\n20000131T2000+13" unfilled box black
+node "baz.20000201T0200+13" "baz\n20000201T0200+13" unfilled box black
+node "baz.20000201T0800+13" "baz\n20000201T0800+13" unfilled box black
+node "baz.20000201T1400+13" "baz\n20000201T1400+13" unfilled box black
+node "baz.20000201T2000+13" "baz\n20000201T2000+13" unfilled box black
+node "baz.20000202T0200+13" "baz\n20000202T0200+13" unfilled box black
+node "baz.20000202T0800+13" "baz\n20000202T0800+13" unfilled box black
+node "foo.20000131T1400+13" "foo\n20000131T1400+13" unfilled box black
+node "foo.20000131T1700+13" "foo\n20000131T1700+13" unfilled box black
+node "foo.20000131T2000+13" "foo\n20000131T2000+13" unfilled box black
+node "foo.20000131T2300+13" "foo\n20000131T2300+13" unfilled box black
+node "foo.20000201T0200+13" "foo\n20000201T0200+13" unfilled box black
+node "foo.20000201T0500+13" "foo\n20000201T0500+13" unfilled box black
+node "foo.20000201T0800+13" "foo\n20000201T0800+13" unfilled box black
+node "foo.20000201T1100+13" "foo\n20000201T1100+13" unfilled box black
+node "foo.20000201T1400+13" "foo\n20000201T1400+13" unfilled box black
+node "foo.20000201T1700+13" "foo\n20000201T1700+13" unfilled box black
+node "foo.20000201T2000+13" "foo\n20000201T2000+13" unfilled box black
+node "foo.20000201T2300+13" "foo\n20000201T2300+13" unfilled box black
+node "foo.20000202T0200+13" "foo\n20000202T0200+13" unfilled box black
+node "foo.20000202T0500+13" "foo\n20000202T0500+13" unfilled box black
+node "foo.20000202T0800+13" "foo\n20000202T0800+13" unfilled box black
+node "foo.20000202T1100+13" "foo\n20000202T1100+13" unfilled box black
+node "qux.20000131T1400+13" "qux\n20000131T1400+13" unfilled box black
+node "qux.20000131T2000+13" "qux\n20000131T2000+13" unfilled box black
+node "qux.20000201T0200+13" "qux\n20000201T0200+13" unfilled box black
+node "qux.20000201T0800+13" "qux\n20000201T0800+13" unfilled box black
+node "qux.20000201T1400+13" "qux\n20000201T1400+13" unfilled box black
+node "qux.20000201T2000+13" "qux\n20000201T2000+13" unfilled box black
+node "qux.20000202T0200+13" "qux\n20000202T0200+13" unfilled box black
+node "qux.20000202T0800+13" "qux\n20000202T0800+13" unfilled box black
 stop

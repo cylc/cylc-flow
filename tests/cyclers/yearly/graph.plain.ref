@@ -1,13 +1,13 @@
-edge "foo.20050123T1200Z" "bar.20050123T1200Z" solid black
-edge "foo.20050123T1200Z" "foo.20060123T1200Z" solid black
-edge "foo.20060123T1200Z" "bar.20060123T1200Z" solid black
-edge "foo.20060123T1200Z" "foo.20070123T1200Z" solid black
-edge "foo.20070123T1200Z" "bar.20070123T1200Z" solid black
+edge "foo.20050123T1200Z" "bar.20050123T1200Z" solid
+edge "foo.20050123T1200Z" "foo.20060123T1200Z" solid
+edge "foo.20060123T1200Z" "bar.20060123T1200Z" solid
+edge "foo.20060123T1200Z" "foo.20070123T1200Z" solid
+edge "foo.20070123T1200Z" "bar.20070123T1200Z" solid
 graph 
-node "bar.20050123T1200Z" "bar\n20050123T1200Z" unfilled box black lightgrey
-node "bar.20060123T1200Z" "bar\n20060123T1200Z" unfilled box black lightgrey
-node "bar.20070123T1200Z" "bar\n20070123T1200Z" unfilled box black lightgrey
-node "foo.20050123T1200Z" "foo\n20050123T1200Z" unfilled box black lightgrey
-node "foo.20060123T1200Z" "foo\n20060123T1200Z" unfilled box black lightgrey
-node "foo.20070123T1200Z" "foo\n20070123T1200Z" unfilled box black lightgrey
+node "bar.20050123T1200Z" "bar\n20050123T1200Z" unfilled box black
+node "bar.20060123T1200Z" "bar\n20060123T1200Z" unfilled box black
+node "bar.20070123T1200Z" "bar\n20070123T1200Z" unfilled box black
+node "foo.20050123T1200Z" "foo\n20050123T1200Z" unfilled box black
+node "foo.20060123T1200Z" "foo\n20060123T1200Z" unfilled box black
+node "foo.20070123T1200Z" "foo\n20070123T1200Z" unfilled box black
 stop

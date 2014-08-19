@@ -1,7 +1,7 @@
-edge "cold_foo.2014090100" "foo.2014090100" solid black
+edge "cold_foo.2014090100" "foo.2014090100" solid
 graph 
-node "cold_foo.2014090100" "cold_foo\n2014090100" unfilled box black lightgrey
-node "foo.2014090100" "foo\n2014090100" unfilled box black lightgrey
-node "foo.2014090106" "foo\n2014090106" unfilled box black lightgrey
-node "foo.2014090112" "foo\n2014090112" unfilled box black lightgrey
+node "cold_foo.2014090100" "cold_foo\n2014090100" unfilled box black
+node "foo.2014090100" "foo\n2014090100" unfilled box black
+node "foo.2014090106" "foo\n2014090106" unfilled box black
+node "foo.2014090112" "foo\n2014090112" unfilled box black
 stop
