@@ -256,17 +256,18 @@ class TreeUpdater(threading.Thread):
                     else:
                         meant_string = "PT%dS" % meant
                 
-                # priority is not currently used.
-                priority = summary[ id ].get( 'latest_message_priority' )
+                job_id = summary[id].get('submit_method_id')
+                host = summary[id].get('host')
 
                 try:
                     icon = self.dots[state]
                 except KeyError:
                     icon = self.dots['empty']
 
-                dest[ point_string ][ name ] = [ state, message, tsub_string,
-                                                 tstart_string, meant_string,
-                                                 tetc_string, icon ]
+                dest[point_string][name] = [
+                        host, job_id, tsub_string, tstart_string,
+                        tetc_string, meant_string, message, icon
+                ]
 
         for id in tetc_cached_ids_left:
             # These ids were not present in the summary - so clear them.
