@@ -2553,7 +2553,18 @@ depend only on others with the same cycle point. Cycle point offsets can only
 appear on the left of a pair, because a pairs define triggers for the right
 task at cycle point $time$.  However, \lstinline@A => B[-PT6H]@, which is
 illegal, can be reformulated as a {\em future trigger}
-\lstinline@A[+PT6H] => B@ (see~\ref{InterCyclePointTriggers}).
+\lstinline@A[+PT6H] => B@ (see~\ref{InterCyclePointTriggers}). It is also 
+possible to combine multiple offsets within a cycle point offset e.g.
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[T00,T12]]]
+            graph = "A[-P1D-PT12H] => B"
+\end{lstlisting}
+\lstset{language=transcript}
+This means that B[Time] triggers off A[time-P1D-PT12H] (1 day and 12 hours 
+before).
 
 Triggers can be chained together. This graph:
 \lstset{language=suiterc}
