@@ -160,10 +160,10 @@ def get_timepoint_dumper_tests():
              "expanded_year_digits": 2, "hour_of_day": 0,
              "hour_of_day_decimal": 0.4356, "time_zone_hour": -8,
              "time_zone_minute": -30},
-            [("CCYY-MMDDThhmmZ", "0200-0728T0856Z"),
-             ("YYDDDThh:mm:ss", "00209T00:26:08"),
+            [("+XCCYY-MMDDThhmmZ", "+500200-0728T0856Z"),
+             ("+XCCYYDDDThh:mm:ss", "+500200209T00:26:08"),
              ("WwwD", "W311"),
-             ("CCDDDThh*ss-0600", "02209T02*08-0600"),
+             ("+XCCDDDThh*ss-0600", "+5002209T02*08-0600"),
              (u"+XCCYY-MM-DDThh:mm:ss-11:45",
               "+500200-07-27T21:11:08-11:45"),
              (u"+XCCYYMM-DDThhmm-01:00", "+50020007-28T0756-01:00"),
@@ -178,17 +178,17 @@ def get_timepoint_dumper_tests():
              (u"+XCCYY-MM-DDThh:mm:ss+hh:mm",
               "+500200-07-28T00:26:08-08:30"),
              (u"+XCCYY-MM-DDThh:mm:ssZ", "+500200-07-28T08:56:08Z"),
-             ("DD/MM/CCYY is a silly format", "28/07/0200 is a silly format"),
+             ("DD/MM/+XCCYY is a silly format", "28/07/+500200 is a silly format"),
              ("ThhmmZ", "T0856Z"),
              ("%m-%dT%H:%M", "07-28T00:26")]
         ),
         (
             {"year": -56, "day_of_year": 318, "expanded_year_digits": 2,
              "hour_of_day": 5, "minute_of_hour": 1, "time_zone_hour": 6},
-            [("CCYY-MMDDThhmmZ", "0056-1112T2301Z"),
-             ("YYDDDThh:mm:ss", "56318T05:01:00"),
+            [("+XCCYY-MMDDThhmmZ", "-000056-1112T2301Z"),
+             ("+XCCYYDDDThh:mm:ss", "-000056318T05:01:00"),
              ("WwwD", "W461"),
-             ("CCDDDThh*ss-0600", "00317T17*00-0600"),
+             ("+XCCDDDThh*ss-0600", "-0000317T17*00-0600"),
              (u"+XCCYY-MM-DDThh:mm:ss-11:45",
               "-000056-11-12T11:16:00-11:45"),
              (u"+XCCYYMM-DDThhmm-01:00", "-00005611-12T2201-01:00"),
@@ -203,9 +203,9 @@ def get_timepoint_dumper_tests():
              (u"+XCCYY-MM-DDThh:mm:ss+hh:mm",
               "-000056-11-13T05:01:00+06:00"),
              (u"+XCCYY-MM-DDThh:mm:ssZ", "-000056-11-12T23:01:00Z"),
-             ("DD/MM/CCYY is a silly format", "13/11/0056 is a silly format"),
+             ("DD/MM/+XCCYY is a silly format", "13/11/-000056 is a silly format"),
              ("ThhmmZ", "T2301Z"),
-             ("%Y-%m-%dT%H:%M", "0056-11-13T05:01")]
+             ("%m-%dT%H:%M", "11-13T05:01")]
         ),
         (
             {"year": 1000, "week_of_year": 1, "day_of_week": 1,
@@ -234,12 +234,24 @@ def get_timepointdumper_failure_tests():
         (
             {"year": 10000, "month_of_year": 1, "day_of_month": 4,
              "time_zone_hour": 0, "time_zone_minute": 0},
-            [("CCYY-MMDDThhmmZ", bounds_error, 0)]
+            [("CCYY-MMDDThhmmZ", bounds_error, 0),
+             ("%Y-%m-%dT%H:%M", bounds_error, 0)]
         ),
         (
             {"year": -10000, "month_of_year": 1, "day_of_month": 4,
              "time_zone_hour": 0, "time_zone_minute": 0},
-            [("CCYY-MMDDThhmmZ", bounds_error, 0)]
+            [("CCYY-MMDDThhmmZ", bounds_error, 0),
+             ("%Y-%m-%dT%H:%M", bounds_error, 0)]
+        ),
+        (
+            {"year": 10000, "month_of_year": 1, "day_of_month": 4,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            [("CCYY-MMDDThhmmZ", bounds_error, 2)]
+        ),
+        (
+            {"year": -10000, "month_of_year": 1, "day_of_month": 4,
+             "time_zone_hour": 0, "time_zone_minute": 0},
+            [("CCYY-MMDDThhmmZ", bounds_error, 2)]
         ),
         (
             {"year": 1000000, "month_of_year": 1, "day_of_month": 4,
@@ -252,6 +264,7 @@ def get_timepointdumper_failure_tests():
             [("+XCCYY-MMDDThhmmZ", bounds_error, 2)]
         )
     ]
+
 
 def get_timepointparser_tests(allow_only_basic=False,
                               allow_truncated=False,
