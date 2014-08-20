@@ -34,6 +34,7 @@ SITE_FILE = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'site.rc' )
 USER_FILE = os.path.join( os.environ['HOME'], '.cylc', 'user.rc' )
 
 SPEC = {
+    'process pool size'                   : vdr( vtype='integer', default=None ),
     'temporary directory'                 : vdr( vtype='string' ),
     'state dump rolling archive length'   : vdr( vtype='integer', vmin=1, default=10 ),
     'disable interactive command prompts' : vdr( vtype='boolean', default=True ),
