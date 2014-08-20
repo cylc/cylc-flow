@@ -208,7 +208,6 @@ SPEC = {
         'force run mode'                      : vdr( vtype='string', options=['live','dummy','simulation'] ),
         'abort if any task fails'             : vdr( vtype='boolean', default=False ),
         'log resolved dependencies'           : vdr( vtype='boolean', default=False ),
-        'process pool size'                   : vdr( vtype='integer', default=None ),
         'environment' : {
             '__MANY__'                        : vdr( vtype='string' ),
             },

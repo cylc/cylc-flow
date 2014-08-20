@@ -29,6 +29,16 @@ automatically on exit. Leave unset for the default (usually
 \item {\em example:} \lstinline@temporary directory = /tmp/$USER/cylc@
 \end{myitemize}
 
+\subsubsection{process pool size}
+
+Number of process pool worker processes used to execute shell commands
+(job submission, event handlers, job poll and kill commands).
+
+\begin{myitemize}
+\item {\em type:} integer
+\item {\em default:} None (number of processor cores on the suite host)
+\end{myitemize}
+
 \subsubsection{state dump rolling archive length}
 
 A rolling archive of suite state dumps is maintained under the suite run
