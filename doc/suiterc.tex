@@ -458,7 +458,7 @@ the \ref{cycle-point-time-zone} if that is set.
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time point representation (e.g.
  \lstinline=CCYYMMDDThhmm=, 19951231T1230) or ISO 8601 date/time offset
-    (e.g. +P1D)
+    (e.g. +P1D+PT6H)
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -695,6 +695,7 @@ and~\ref{TriggerTypes} ({\em Trigger Types}).
   \begin{lstlisting}
 graph = """
    foo => bar => baz & waz     # baz and waz both trigger off bar
+   foo[-P1D-PT6H] => bar       # bar triggers off foo[-P1D-PT6H]
    baz:out1 => faz             # faz triggers off an internal output of baz
    ColdFoo | foo[-PT6H] => foo # cold-start or restart for foo
    X:start => Y                # Y triggers if X starts executing
