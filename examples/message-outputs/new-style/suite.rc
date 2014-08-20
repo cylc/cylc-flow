@@ -10,9 +10,7 @@ messaging, is entirely contained within the suite definition)."""
     [[dependencies]]
         [[[R//P2M]]]
           graph = """
-            #x => y
-            #foo:out1 => bar
-            foo
+            foo:out1 => bar
             foo[-P2M]:out2 => baz
                   """
 [runtime]
@@ -28,6 +26,6 @@ cylc message "file 2 for $TARGET_POINT done"
 sleep 10
 echo BYE"""
         [[[outputs]]]
-            # [T] is replaced by actual cycle time at run time:
-            #out1 = "file 1 for [] done"
+            # [] is replaced by actual cycle time at run time:
+            out1 = "file 1 for [] done"
             out2 = "file 2 for [P2M] done"

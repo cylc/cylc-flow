@@ -68,7 +68,6 @@ Message output x may have an offset too:
 
         self.message = None
         self.message_offset = None
-        self.cycle_point = None
         self.standard_type = None
         qualifier = qualifier or "succeeded"
 

@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from cycling.loader import get_interval
+from cycling.loader import get_interval, get_interval_cls
 from trigger import BACK_COMPAT_MSG_RE, MSG_RE
 
 class output(object):
@@ -38,8 +38,8 @@ class output(object):
         if m:
             # Old-style offset
             prefix, signed_offset, sign, offset, suffix = m.groups()
-            # TODO - checked all signed offsets work
-            self.msg_offset = base_interval.get_inferred_child(signed_offset)
+            if signed_offset is not None:
+                self.msg_offset = base_interval.get_inferred_child(signed_offset)
         else:
             n = re.match(MSG_RE, msg)
             if n:
@@ -57,7 +57,5 @@ class output(object):
         new_point = point
         if self.msg_offset:
             new_point = point + self.msg_offset
-            msg = re.sub( '\[.*\]', str(new_point), self.msg )
-        else:
-            msg = self.msg
+        msg = re.sub( '\[.*\]', str(new_point), self.msg )
         return msg
