@@ -265,7 +265,7 @@ class TreeUpdater(threading.Thread):
                     icon = self.dots['empty']
 
                 dest[point_string][name] = [
-                        host, job_id, tsub_string, tstart_string,
+                        state, host, job_id, tsub_string, tstart_string,
                         tetc_string, meant_string, message, icon
                 ]
 

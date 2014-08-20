@@ -179,7 +179,7 @@ Text Treeview suite control interface.
 
         self.sort_col_num = 0
 
-        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str, str, gtk.gdk.Pixbuf)
+        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str, str, str, gtk.gdk.Pixbuf)
         self.tmodelfilter = self.ttreestore.filter_new()
         self.tmodelfilter.set_visible_func(self.visible_cb)
         self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
@@ -192,7 +192,7 @@ Text Treeview suite control interface.
 
         self.ttreeview.connect('button_press_event', self.on_treeview_button_pressed)
         headings = [
-                None, 'task', 'host', 'Job ID', 'T-submit', 'T-start',
+                None, 'task', 'state', 'host', 'Job ID', 'T-submit', 'T-start',
                 'T-finish?', 'dT-mean', 'latest message'
         ]
 
@@ -203,7 +203,7 @@ Text Treeview suite control interface.
             if n == 1:
                 crp = gtk.CellRendererPixbuf()
                 tvc.pack_start(crp, False)
-                tvc.set_attributes(crp, pixbuf=9)
+                tvc.set_attributes(crp, pixbuf=10)
             tvc.pack_start(cr, True)
             tvc.set_attributes(cr, text=n)
             tvc.set_resizable(True)
