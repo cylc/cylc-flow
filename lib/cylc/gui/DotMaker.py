@@ -152,20 +152,20 @@ class DotMaker(object):
 
     """Make a dot icon for a task state."""
 
-    def __init__( self, theme ):
+    def __init__(self, theme, size=None):
         self.theme = theme
+        self.size = size or gcfg.get(['dot icon size'])
 
-    def get_icon( self, state=None, is_stopped=False ):
+    def get_icon(self, state=None, is_stopped=False):
         """Generate a gtk.gdk.Pixbuf for a state.
 
         if is_stopped, generate a stopped form of the Pixbuf.
 
         """
-        size = gcfg.get(['dot icon size'])
         if is_stopped:
-            xpm = deepcopy(stopped[size])
+            xpm = deepcopy(stopped[self.size])
         else:
-            xpm = deepcopy(live[size])
+            xpm = deepcopy(live[self.size])
 
         if not state or state not in self.theme:
             # empty icon ('None' is xpm transparent)
@@ -186,8 +186,8 @@ class DotMaker(object):
         #    gtk.gdk.pixbuf_new_from_file('/path/to/file.xpm')
         return gtk.gdk.pixbuf_new_from_xpm_data( data=xpm )
 
-    def get_image( self, state, is_stopped=False ):
+    def get_image(self, state, is_stopped=False):
         """Returns a gtk.Image form of get_icon."""
         img = gtk.Image()
-        img.set_from_pixbuf( self.get_icon( state, is_stopped=is_stopped ) )
+        img.set_from_pixbuf(self.get_icon(state, is_stopped=is_stopped))
         return img

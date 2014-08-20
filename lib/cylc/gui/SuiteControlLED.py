@@ -30,12 +30,12 @@ class ControlLED(object):
     """
 LED suite control interface.
     """
-    def __init__(self, cfg, updater, usercfg, info_bar, get_right_click_menu,
+    def __init__(self, cfg, updater, theme, info_bar, get_right_click_menu,
                  log_colors, insert_task_popup):
 
         self.cfg = cfg
         self.updater = updater
-        self.usercfg = usercfg
+        self.theme = theme
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
@@ -58,8 +58,9 @@ LED suite control interface.
 
         main_box.pack_start( sw, expand=True, fill=True )
 
-        self.t = DotUpdater( self.cfg, self.updater, treeview,
-                             self.info_bar, self.usercfg )
+        self.t = DotUpdater(
+                self.cfg, self.updater, treeview, self.info_bar, self.theme
+        )
         self.t.start()
 
         return main_box
