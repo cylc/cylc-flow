@@ -37,22 +37,20 @@ class TriggerError( Exception ):
 
 class trigger(object):
     """
-Task triggers, used to generate prerequisite messages for specific points.
+Task triggers, used to generate prerequisite messages.
 
-Note on trigger time offsets:
-  bar triggers off "foo succeeded at -P1D"
-    foo[-P1D] => bar
-  bar triggers off "message output x of foo evaluated for -P1D"
-    foo[-P1D]:x => bar
-Message output x may have an offset too:
+#(a) graph offsets:
+  # trigger bar if foo at -P1D succeeded:
+    graph = foo[-P1D] => bar
+  # trigger bar if foo at -P1D reported message output:
+    graph = foo[-P1D]:x => bar
+
+#(b) output message offsets:
 [runtime]
    [[foo]]
       [[[outputs]]]
-         x = "X uploaded for [P1D]"
-         y = "Y uploaded for []"
-
-(a) is an "graph offset"
-(b) is an "message offset"
+         x = "file X uploaded for [P1D]"
+         y = "file Y uploaded for []"
     """
 
     def __init__(
@@ -66,12 +64,12 @@ Message output x may have an offset too:
 
         self.message = None
         self.message_offset = None
-        self.standard_type = None
+        self.builtin = None
         qualifier = qualifier or "succeeded"
 
         # Built-in trigger?
         try:
-            self.standard_type = task_state.get_legal_trigger_state(qualifier)
+            self.builtin = task_state.get_legal_trigger_state(qualifier)
         except TaskStateError:
             pass
         else:
@@ -82,44 +80,42 @@ Message output x may have an offset too:
             msg = outputs[qualifier]
         except KeyError:
             raise TriggerError, (
-                    "ERROR: undefined trigger qualifier: %s.%s" % (task_name,
-                        qualifier)
+                    "ERROR: undefined trigger qualifier: %s:%s" % (
+                        task_name, qualifier)
             )
-
-        # Back compat for [T+n] in message string.
-        # TODO - handle negative offsets?
-        m = re.match(BACK_COMPAT_MSG_RE, msg)
-        msg_offset = None
-        if m:
-            prefix, signed_offset, sign, offset, suffix = m.groups()
-            if offset:
-                # TODO - checked all signed offets work
-                msg_offset = base_interval.get_inferred_child(signed_offset)
-            else:
-                msg_offset = get_interval_cls().get_null()
         else:
-            n = re.match(MSG_RE, msg)
-            if n:
-                prefix, signed_offset, sign, offset, suffix = n.groups()
+            # Back compat for [T+n] in message string.
+            m = re.match(BACK_COMPAT_MSG_RE, msg)
+            msg_offset = None
+            if m:
+                prefix, signed_offset, sign, offset, suffix = m.groups()
                 if offset:
-                    msg_offset = get_interval(signed_offset)
+                    msg_offset = base_interval.get_inferred_child(signed_offset)
                 else:
                     msg_offset = get_interval_cls().get_null()
             else:
-                # TODO - combine with same above?
-                raise TriggerError, (
-                        "ERROR: undefined trigger qualifier: %s.%s" %
-                        (task_name, qualifier)
-                )
-        self.message = msg
-        self.message_offset = msg_offset
+                n = re.match(MSG_RE, msg)
+                if n:
+                    prefix, signed_offset, sign, offset, suffix = n.groups()
+                    if offset:
+                        msg_offset = get_interval(signed_offset)
+                    else:
+                        msg_offset = get_interval_cls().get_null()
+                else:
+                    raise TriggerError, (
+                            "ERROR: undefined trigger qualifier: %s:%s" % (
+                                task_name, qualifier)
+                    )
+            self.message = msg
+            self.message_offset = msg_offset
 
     def is_standard(self):
-        return self.standard_type is not None
+        return self.builtin is not None
 
     def get(self, point):
         """Return a prerequisite string and the relevant point."""
         if self.message:
+            # Message trigger
             preq = self.message
             if self.cycle_point:
                 point = self.cycle_point
@@ -130,14 +126,12 @@ Message output x may have an offset too:
                     point = get_point_relative(
                             self.graph_offset_string, point)
             preq = re.sub( '\[.*\]', str(point), preq )
-        elif self.standard_type:
+        else:
+            # Built-in trigger
             if self.cycle_point:
                 point = self.cycle_point
             elif self.graph_offset_string:
                 point = get_point_relative(
                     self.graph_offset_string, point)
-            preq = cylc.TaskID.get(self.task_name, str(point)) + ' ' + self.standard_type
-        else:
-            # TODO
-            raise Exception("shite")
+            preq = cylc.TaskID.get(self.task_name, str(point)) + ' ' + self.builtin
         return preq, point

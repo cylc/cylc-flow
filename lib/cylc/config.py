@@ -877,12 +877,10 @@ class config( object ):
                 # instantiate a task
                 itask = self.taskdefs[name].get_task_class()( self.start_point, 'waiting', None, True, validate=True )
             except TypeError, x:
-                # This should not happen as we now explicitly catch use
-                # of synchronous special tasks in an asynchronous graph.
-                # But in principle a clash of multiply inherited base
-                # classes due to choice of "special task" modifiers
-                # could cause a TypeError.
-                raise
+                # This should not happen as we now explicitly catch use of
+                # synchronous special tasks in an asynchronous graph.  But in
+                # principle a clash of multiply inherited base classes due to
+                # choice of "special task" modifiers could cause a TypeError.
                 raise SuiteConfigError('(inconsistent use of special tasks?)')
             except Exception, x:
                 raise SuiteConfigError(
