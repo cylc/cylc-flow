@@ -1,0 +1,27 @@
+title = "test suite for cylc-6 message triggers"
+
+[scheduling]
+    initial cycle point = 20140801T00
+    final cycle point = 20141201T00
+    [[dependencies]]
+        [[[P2M]]]
+           graph = """
+# bar triggers off message 'x' emitted by foo:
+              foo:x => bar
+# baz triggers off message 'y' emitted by the previous instance of foo:
+           foo[-P2M]:y => baz
+                  """
+[runtime]
+    [[foo]]
+        command scripting = """
+echo HELLO
+sleep 2 
+TARGET_POINT=$CYLC_TASK_CYCLE_POINT
+cylc message "file 1 for $TARGET_POINT done"
+sleep 2
+TARGET_POINT=$(cylc cycle-point --offset P2M)
+cylc message "file 2 for $TARGET_POINT done"
+sleep 2"""
+        [[[outputs]]]
+            x = "file 1 for [] done"
+            y = "file 2 for [P2M] done"
