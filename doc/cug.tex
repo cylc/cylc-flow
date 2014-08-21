@@ -290,9 +290,9 @@ different cycle points can in principle run simultaneously at any given
 time.
 
 In fact, if our tasks are able to trigger off internal outputs of
-upstream tasks, rather than waiting on full completion, successive
-instances of the forecast models could overlap as well (because model
-restart outputs are generally completed early in the forecast) for an
+upstream tasks (message triggers) rather than waiting on full completion,
+then successive instances of the forecast models could overlap as well (because
+model restart outputs are generally completed early in the forecast) for an
 even more efficient job schedule.
 
 %Finally, we note again that a good job scheduler should be able to
@@ -3047,8 +3047,8 @@ ways of handling this scenario: both tasks could be triggered at the
 same time (\lstinline@foo => model & post@), but depending on
 external queue delays this could result in the monitoring task starting
 to execute first; or a different postprocessing task could be
-triggered off an internal output for each data file
-(\lstinline@model:out1 => post1@ etc.; see~\ref{InternalTriggers}), but this
+triggered off a message output for each data file
+(\lstinline@model:out1 => post1@ etc.; see~\ref{MessageTriggers}), but this
 may not be practical if the
 number of output files is large or if it is difficult to add cylc
 messaging calls to the model.
@@ -3064,25 +3064,29 @@ one way or the other:
     graph = "A:finish => B"
 \end{lstlisting}
 
-\paragraph{Internal (Message) Triggers}
-\label{InternalTriggers}
+\paragraph{Message Triggers}
+\label{MessageTriggers}
 
-These allow triggering off off events that occur while a task runs. A
-special event message must be registered in the suite definition, and
-deliberately sent by the task at the appropriate time.
-\begin{lstlisting}
-[scheduling]
-    [[dependencies]]
-        [[[6,18]]]
-            # B triggers off internal output "upload1" of task A:
-            graph = "A:upload1 => B"
-[runtime]
-    [[A]]
-        [[[outputs]]]
-            upload1 = "NWP products uploaded for [T]"
-\end{lstlisting}
-Task A must emit this message when the actual output has been completed -
-see {\em Reporting Internal Outputs Completed} (\ref{RIOC}).
+Message triggers allow triggering off custom messages emitted by a task as it
+runs. {\em Message outputs} must be registered for the task in the suite
+definition, and matching messages sent back to the suite daemon by the
+task at the appropriate time. {\em Note that polling does not yet detect custom
+message output completion.} Custom output messages should normally contain the
+cycle point in order to
+distinguish between the outputs of different instances of the same task. 
+The task implementation can use \lstinline=$CYLC_TASK_CYCLE_POINT= for
+this, or \lstinline@cylc cycle-point --offset=P2M@ for an offset value.
+The matching message string registered in the suite definition, however, does
+not get interpreted by the shell, so a cycle point placeholder is used instead:
+\lstinline=[]= for the current cycle point, or for an offset \lstinline=[-P2M]=.
+
+The \lstinline=$CYLC_DIR/examples/message-triggers/= suite is a self-contained
+example that illustrates message triggering. Note that the graph trigger
+notation uses a label that selects the message registered under the task
+\lstinline=[runtime]= section.
+
+\lstset{language=suiterc}
+\lstinputlisting{../examples/message-triggers/suite.rc}
 
 \paragraph{Job Submission Triggers}
 
@@ -3344,7 +3348,8 @@ kind of relationship in cylc:
         # B triggers off A in the previous cycle point
         graph = "A[-PT6H] => B"
 \end{lstlisting}
-inter-cycle-point and trigger type (and internal output) notation can be combined:
+inter-cycle-point and trigger type (or message trigger) notation can be
+combined:
 \begin{lstlisting}
     # B triggers if A in the previous cycle point fails:
     graph = "A[-PT6H]:fail => B"
@@ -3584,24 +3589,6 @@ Or if you don't need an explicit cold-start task, this will do:
     [[dependencies]]
         [[[T00,T06,T12,T18]]]
             graph = "A[-PT6H] => A"
-\end{lstlisting}
-If the model can emit an explicit output message as soon as its
-restart files are completed (see~\ref{RIOC}) there's no need to wait for it to
-finish:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [[dependencies]]
-        [[[T00,T06,T12,T18]]]
-            graph = "A[-PT6H]:res1 => A"
-[runtime]
-    [[A]]
-        command scripting = """
-sleep 10
-cylc message "restart files ready for $( cylc cycle-point --offset-hours=6 )"
-sleep 20"""
-        [[[outputs]]]
-            res1 = "restart files ready for [T+6]"
 \end{lstlisting}
 
 If your model is configured to write out additional restart files
@@ -4406,13 +4393,11 @@ tasks are detected.
 \section{Task Implementation}
 \label{TaskImplementation}
 
-Existing tasks (models, scripts, etc.) can be used by cylc without any
-modification, with the following few exceptions:
+Existing scripts or executables can be used as cylc tasks without any
+modification, unless:
 \begin{myitemize}
-    \item tasks that do not return error status on error
-    \item tasks with internal outputs that others need to trigger off
-        before the task is finished
-    \item tasks that spawn internal processes and then detach and exit early
+    \item they do not return error status on failure
+    \item they detach early after spawning other internal processes
 \end{myitemize}
 
 \subsection{Inlined Tasks}
@@ -4423,7 +4408,7 @@ task {\em command scripting} can be a multi-line string.
 \subsection{Returning Proper Error Status}
 
 Tasks should abort with non-zero exit status if a fatal error occurs
-(this is just standard coding practice anyway). This allows cylc's task
+(this is just good coding practice anyway). This allows cylc's task
 job scripts to automatically trap errors and send a
 \lstinline=cylc task failed= message back to the suite. The shell
 \lstinline=set -e= option can be used in lieu of explicit error
@@ -4435,29 +4420,6 @@ set -e  # abort on error
 mkdir /illegal/dir  # this will abort the script with error status
 \end{lstlisting}
 
-\subsection{Reporting Internal (Message) Outputs}
-\label{RIOC}
-
-If a task has {\em internal outputs} that others need to trigger off
-before the task is finished, then it must report completion of those
-outputs to the suite daemon. These messages must exactly match
-corresponding {\em outputs} registered for the task in the suite
-definition, and for cycling tasks they should contain the cycle point in
-order to distinguish between the outputs of different instances of the
-same task.
-
-The ``outputs'' example is a self-contained suite that illustrates this:
-\lstset{language=suiterc}
-\lstinputlisting{../examples/outputs/suite.rc}
-Compare the registered message string, which uses \lstinline=[T]= as
-a placeholder for the cycle point, with the actual message emitted by the
-task, which uses \lstinline=$CYLC_TASK_CYCLE_POINT=. The registered
-message string is held in the suite daemon to be matched with
-incoming task messages - it cannot contain shell variables because
-is never interpreted by the shell.
-
-See~\ref{ModelRestartDependencies} for an example that uses
-cycle offsets in message outputs.
 
 \subsection{Other Task Messages}
 
