@@ -5064,10 +5064,10 @@ until finished:
 [runtime]
     [[foo]]
         # poll every minute in the 'submitted' state:
-        submission polling intervals = 1.0
+        submission polling intervals = PT1M
         # poll one minute after foo starts running, then every 10
         # minutes for 50 minutes, then every minute until finished:
-        execution polling intervals = 1.0, 5*10.0, 1.0
+        execution polling intervals = PT1M, 5*PT10M, PT1M
 \end{lstlisting}
 A list of intervals with optional multipliers can be used for both
 submission and execution polling, although a single value is probably
@@ -5403,8 +5403,8 @@ limited to 2 and 3 tasks respectively:
 
 See also~\ref{RefRetries} in the {\em Suite.rc Reference}.
 
-Tasks can be configured with a list of ``retry delay'' periods, in
-minutes, such that if a task fails it will go into a temporary
+Tasks can be configured with a list of ``retry delay'' periods, as
+ISO 8601 durations, such that if a task fails it will go into a temporary
 {\em retrying} state and then automatically resubmit itself after
 the next specified delay period expires. A usage example is shown in the
 suite listed below under~\ref{EventHandling}.
@@ -5473,7 +5473,7 @@ suite stdout.
             graph = "foo => bar"
 [runtime]
     [[foo]]
-        retry delays = 0, 0.5
+        retry delays = PT0S, PT30S
         command scripting = """
 echo TRY NUMBER: $CYLC_TASK_TRY_NUMBER
 sleep 10
@@ -5846,9 +5846,9 @@ Reference tests can be configured with the following settings:
         suite shutdown event handler = cylc check-triggering
         required run mode = dummy
         allow task failures = False
-        live mode suite timeout = 5 # minutes
-        dummy mode suite timeout = 2
-        simulation mode suite timeout = 2
+        live mode suite timeout = PT5M
+        dummy mode suite timeout = PT2M
+        simulation mode suite timeout = PT2M
 \end{lstlisting}
 
 \subsubsection{Roll-your-own Reference Tests}
@@ -5865,7 +5865,7 @@ you wish:
     abort if any task fails = True
     [[event hooks]]
         shutdown handler = cylc check-triggering
-        timeout = 5
+        timeout = PT5M
         abort if shutdown handler fails = True
         abort on timeout = True
 \end{lstlisting}
@@ -5910,7 +5910,7 @@ runtime section:
     [[FOO]]
         [[[suite state polling]]]
             max-polls = 100
-            interval = 10 # seconds
+            interval = PT10S
 \end{lstlisting}
 
 The remote suite does not have to be running when polling commences (or
