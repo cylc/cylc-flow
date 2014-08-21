@@ -4,7 +4,7 @@ PARSEC CONFIG FILE PARSER
 A framework for constructing nested-INI-style config file formats with
 automatic parsing, validation, default values, on-the-fly item
 obsoletion, deprecation and upgrade, and site/user-style file override
-(e.g. user.rc overrides site.rc overrides spec default values).
+(e.g. User's global.rc overrides site's overrides spec default values).
 _____________________________
   USED IN CYLC FOR:
    * suite definition files

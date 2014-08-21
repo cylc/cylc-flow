@@ -62,12 +62,12 @@ if len(args) != 0:
     parser.error( "ERROR: wrong number of arguments" )
 
 try:
-    # import sitecfg here to avoid aborting before command help is printed
-    from cylc.cfgspec.site import sitecfg
+    # import GLOBAL_CFG here to avoid aborting before command help is printed
+    from cylc.cfgspec.globalcfg import GLOBAL_CFG
     if options.run_dir:
-        print sitecfg.get_host_item('run directory')
+        print GLOBAL_CFG.get_host_item('run directory')
     else:
-        sitecfg.idump( options.item, sparse=options.sparse, pnative=options.pnative )
+        GLOBAL_CFG.idump( options.item, sparse=options.sparse, pnative=options.pnative )
 
 except Exception, x:
     if cylc.flags.debug:

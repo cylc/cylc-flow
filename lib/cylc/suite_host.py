@@ -76,20 +76,20 @@ def get_hostname():
     return hostname
 
 def get_host_ip_address():
-    from cfgspec.site import sitecfg
+    from cylc.cfgspec.globalcfg import GLOBAL_CFG
     global host_ip_address
     if host_ip_address is None:
-        target = sitecfg.get( ['suite host self-identification','target'] )
+        target = GLOBAL_CFG.get( ['suite host self-identification','target'] )
         # external IP address of the suite host:
         host_ip_address = get_local_ip_address( target )
     return host_ip_address
 
 def get_suite_host():
-    from cfgspec.site import sitecfg
+    from cylc.cfgspec.globalcfg import GLOBAL_CFG
     global suite_host
     if suite_host is None:
-        hardwired = sitecfg.get( ['suite host self-identification','host'] )
-        method = sitecfg.get( ['suite host self-identification','method'] )
+        hardwired = GLOBAL_CFG.get( ['suite host self-identification','host'] )
+        method = GLOBAL_CFG.get( ['suite host self-identification','method'] )
         # the following is for suite host self-identfication in task job scripts:
         if method == 'name':
             suite_host = hostname

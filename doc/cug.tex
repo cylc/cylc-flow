@@ -604,10 +604,10 @@ tree for instructions (also listed in~\ref{INSTALL}).
 
 \subsubsection{Create A Site Config File}
 
-Site and user config files define some important parameters that affect
+Site and user global config files define some important parameters that affect
 all suites, some of which may need to be customized for your site.
 See~\ref{SiteAndUserConfiguration} for how to generate an initial site file and
-where to install it. All legal site and user config items are defined
+where to install it. All legal site and user global config items are defined
 in~\ref{SiteRCReference}.
 
 \subsection{Automated Tests}
@@ -725,32 +725,36 @@ particularly in delayed (catch up) operation.
 \section{Site And User Configuration Files}
 \label{SiteAndUserConfiguration}
 
-Cylc site and user configuration files contain settings that affect all
+Cylc site and user global configuration files contain settings that affect all
 suites. Some of these, such as the range of network ports used by cylc,
 should be set at site level,
 \lstset{language=transcript}
 \begin{lstlisting}
-# cylc site config file
+# cylc site global config file
+/path/to/cylc/conf/global.rc
+# Deprecated path to cylc site global config file
 /path/to/cylc/conf/siterc/site.rc
 \end{lstlisting}
 Others, such as the preferred text editor for suite definitions,
 can be overridden by users,
 \lstset{language=transcript}
 \begin{lstlisting}
-# cylc user config file
-$HOME/.cylc/user.rc
+# cylc user global config file
+~/.cylc/global.rc
+# Deprecated cylc user global config file
+~/.cylc/user.rc
 \end{lstlisting}
 
 The \lstinline=cylc get-site-config= command retrieves current
 global settings consisting of cylc defaults overridden by site settings,
 if any, overridden by user settings, if any. To generate an
-initial site or user config file:
+initial site or user global config file:
 \lstset{language=transcript}
 \begin{lstlisting}
-shell$ cylc get-site-config > $HOME/.cylc/user.rc
+shell$ cylc get-site-config > $HOME/.cylc/global.rc
 \end{lstlisting}
 Settings that do not need to be changed should be deleted or commented
-out of user config files so that they don't override future changes to
+out of user global config files so that they don't override future changes to
 the site file.
 
 Legal items, values, and system defaults are documented in the
@@ -768,19 +772,19 @@ the User Guide.
 \subsection{User Config File}
 
 Some global parameters affecting cylc's behaviour are defined in a
-{\em site config file}, and can be customized per user in
-{\em user config files}. For example, to choose the text editor
+{\em site global config file}, and can be customized per user in
+{\em user global config files}. For example, to choose the text editor
 invoked by cylc on suite definitions:
 \lstset{language=suiterc}
 \begin{lstlisting}
-# $HOME/.cylc/user.rc
+# $HOME/.cylc/global.rc
 [editors]
     terminal = vim
     gui = gvim -f
 \end{lstlisting}
 
 \begin{myitemize}
-\item For more on site and user config files, including how to generate
+\item For more on site and user global config files, including how to generate
 one at first, see~\ref{SiteAndUserConfiguration} and~\ref{SiteRCReference}.
 \end{myitemize}
 
@@ -1001,7 +1005,7 @@ information and exits).
 \subsection{Editing Suites}
 
 The text editor invoked by cylc on suite definitions is determined
-by cylc site and user config files, as shown above in~\ref{CUI}.
+by cylc site and user global config files, as shown above in~\ref{CUI}.
 Check that you have renamed the tutorial examples suites as described
 just above and open the {\em Hello World} suite definition in your text
 editor:
@@ -3873,7 +3877,7 @@ order to target the right task proxy object in the right suite.
 A {\em suite share directory} is created automatically for use as a file
 exchange area for tasks on same task host. It can be accessed via
 \lstinline=$CYLC_SUITE_SHARE_DIR= and its location can be set in the
-cylc site and user config files.
+cylc site and user global config files.
 
 A {\em task work directory} is also created automatically for each task,
 and can be accessed via the \lstinline=$CYLC_TASK_WORK_DIR= variable.
@@ -3881,7 +3885,7 @@ Task command scripting is executed from within the work directory (i.e.\
 it is the task's {\em current working directory}). For non-detaching
 tasks the work directory is automatically removed again if it is empty
 when the task finishes. The main work directory location is set in the
-cylc site and user config files, but the lowest-level sub-directory, which
+cylc site and user global config files, but the lowest-level sub-directory, which
 name defaults to the task ID to give each task a unique workspace, can
 be overridden under \lstinline=[runtime]= in suite definitions. This
 enables groups of tasks that read and write files from their current
@@ -4829,8 +4833,8 @@ host.
 
 To use polling instead of task-to-suite messaging set
 \lstinline@task communication method = poll@
-in site/user config (see~\ref{task_comms_method}).  The default polling
-intervals can be overridden for all suites there too
+in cylc site and user global config (see~\ref{task_comms_method}).
+The default polling intervals can be overridden for all suites there too
 (see~\ref{submission_polling} and~\ref{execution_polling}), or in specific
 suite definitions (in which case polling will be done regardless of the 
 task communication method configured for the host;
@@ -5020,7 +5024,7 @@ at the beginning of this section).
 \label{TaskComms}
 
 Cylc has three ways of tracking the progress of tasks, configured per
-task host in the site and user config files
+task host in the site and user global config files
 (\ref{SiteAndUserConfiguration}).
 All three methods can be used on different task hosts within the same
 suite if necessary.
@@ -5073,7 +5077,7 @@ until finished:
 A list of intervals with optional multipliers can be used for both
 submission and execution polling, although a single value is probably
 sufficient for submission polling. If these items are not configured
-default values from site and user config will be used for the polling
+default values from site and user global config will be used for the polling
 task communication method; polling is not done by default under the
 other task communications methods (but it can still be used if you
 like).
@@ -5099,7 +5103,7 @@ of the gcylc GUI and suite visualization tools.
 
 \subsection{Task Host Communications Configuration}
 
-Here are the default site and user config items relevant to task state 
+Here are the default site and user global config items relevant to task state 
 tracking (see these with \lstinline=cylc get-site-config=):
 
 \lstset{language=suiterc}
@@ -5331,7 +5335,7 @@ grant read-only access to others.
 
 \subsection{Network Connection Timeouts}
 
-A connection timeout can be set in site and user config files 
+A connection timeout can be set in site and user global config files 
 (see~\ref{SiteAndUserConfiguration}) so that messaging commands
 cannot hang indefinitely if the suite is not responding (this can be
 caused by suspending a suite with Ctrl-Z) thereby preventing the task

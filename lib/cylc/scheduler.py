@@ -31,7 +31,7 @@ from state_summary import state_summary
 from passphrase import passphrase
 from suite_id import identifier
 from config import config, SuiteConfigError, TaskNotDefinedError
-from cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from port_file import port_file, PortFileExistsError, PortFileError
 from regpath import RegPath
 from CylcError import TaskNotFoundError, SchedulerError
@@ -268,7 +268,7 @@ class scheduler(object):
 
         # Write suite contact environment variables.
         # 1) local file (os.path.expandvars is called automatically for local)
-        suite_run_dir = sitecfg.get_derived_host_item(self.suite, 'suite run directory')
+        suite_run_dir = GLOBAL_CFG.get_derived_host_item(self.suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
         for key, value in self.suite_contact_env.items():
@@ -276,7 +276,7 @@ class scheduler(object):
         f.close()
         # 2) restart only: copy to other accounts with still-running tasks
         r_suite_run_dir = os.path.expandvars(
-                sitecfg.get_derived_host_item(self.suite, 'suite run directory'))
+                GLOBAL_CFG.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
             # Reinstate suite contact file to each old job's user@host
             if '@' in user_at_host:
@@ -285,7 +285,7 @@ class scheduler(object):
                 owner, host = None, user_at_host
             if (owner, host) in [(None, 'localhost'), (user, 'localhost')]:
                 continue
-            r_suite_run_dir = sitecfg.get_derived_host_item(
+            r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
                                 self.suite,
                                 'suite run directory',
                                 host,
@@ -614,8 +614,8 @@ class scheduler(object):
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir,
-                sitecfg.get( ['pyro','base port'] ),
-                sitecfg.get( ['pyro','maximum number of ports'] ) )
+                GLOBAL_CFG.get( ['pyro','base port'] ),
+                GLOBAL_CFG.get( ['pyro','maximum number of ports'] ) )
         self.port = self.pyro.get_port()
 
         try:
@@ -666,7 +666,7 @@ class scheduler(object):
             self.state_dumper = dumper( self.suite, self.run_mode,
                                         self.initial_point, self.final_point )
 
-            run_dir = sitecfg.get_derived_host_item( self.suite, 'suite run directory' )
+            run_dir = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
             else:
@@ -740,9 +740,9 @@ class scheduler(object):
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
         self.suite_task_env = {
-                'CYLC_SUITE_RUN_DIR'    : sitecfg.get_derived_host_item( self.suite, 'suite run directory' ),
-                'CYLC_SUITE_WORK_DIR'   : sitecfg.get_derived_host_item( self.suite, 'suite work directory' ),
-                'CYLC_SUITE_SHARE_DIR'  : sitecfg.get_derived_host_item( self.suite, 'suite share directory' ),
+                'CYLC_SUITE_RUN_DIR'    : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' ),
+                'CYLC_SUITE_WORK_DIR'   : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite work directory' ),
+                'CYLC_SUITE_SHARE_DIR'  : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite share directory' ),
                 'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
                 'CYLC_SUITE_DEF_PATH'   : self.suite_dir
                 }

@@ -19,7 +19,7 @@
 import sys, os, re
 import subprocess
 from optparse import OptionParser
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 parser = OptionParser( """cylc [info] documentation|browse [OPTIONS]
 
@@ -31,8 +31,8 @@ documentation URL. The browser and PDF reader to use, and the intranet
 URL, is determined by cylc site/user configuration - for details see
   $ cylc site-config --help""" )
 
-intranet = sitecfg.get( ['documentation','urls','local index'] )
-internet = sitecfg.get( ['documentation','urls','internet homepage'] )
+intranet = GLOBAL_CFG.get( ['documentation','urls','local index'] )
+internet = GLOBAL_CFG.get( ['documentation','urls','internet homepage'] )
 
 parser.add_option( "-p", "--pdf",
         help="Open the PDF User Guide directly",
@@ -51,20 +51,20 @@ if intranet:
 
 http = False
 if options.pdf:
-    viewer = sitecfg.get( ['document viewers','pdf'] )
-    target = sitecfg.get( ['documentation','files','pdf user guide'] )
+    viewer = GLOBAL_CFG.get( ['document viewers','pdf'] )
+    target = GLOBAL_CFG.get( ['documentation','files','pdf user guide'] )
 elif options.www:
     http = True
-    viewer = sitecfg.get( ['document viewers','html'] )
-    target = sitecfg.get( ['documentation','urls','internet homepage'] )
+    viewer = GLOBAL_CFG.get( ['document viewers','html'] )
+    target = GLOBAL_CFG.get( ['documentation','urls','internet homepage'] )
 elif intranet and options.xxx:
     http = True
-    viewer = sitecfg.get( ['document viewers','html'] )
-    target = sitecfg.get( ['documentation','urls','local index'] )
+    viewer = GLOBAL_CFG.get( ['document viewers','html'] )
+    target = GLOBAL_CFG.get( ['documentation','urls','local index'] )
 else:
     # default
-    viewer = sitecfg.get( ['document viewers','html'] )
-    target = sitecfg.get( ['documentation','files','html index'] )
+    viewer = GLOBAL_CFG.get( ['document viewers','html'] )
+    target = GLOBAL_CFG.get( ['documentation','files','html index'] )
 
 if not http and not os.path.isfile( target ):
     print >> sys.stderr, "ERROR, file not found: " + target

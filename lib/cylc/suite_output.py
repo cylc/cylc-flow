@@ -18,7 +18,7 @@
 
 import os, sys
 import logging, logging.handlers
-from cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from rolling_archive import rolling_archive
 
 """Configure suite stdout and stderr logs, as rolling archives, in a
@@ -29,13 +29,13 @@ class suite_output( object ):
 
     def __init__( self, suite ):
 
-        sodir = sitecfg.get_derived_host_item( suite, 'suite log directory' )
+        sodir = GLOBAL_CFG.get_derived_host_item( suite, 'suite log directory' )
         self.opath = os.path.join( sodir, 'out' ) 
         self.epath = os.path.join( sodir, 'err' ) 
 
         # use same archive length as logging (TODO: document this)
-        self.roll_at_startup = sitecfg.get( ['suite logging','roll over at start-up'] )
-        self.arclen = sitecfg.get( ['suite logging','rolling archive length'] )
+        self.roll_at_startup = GLOBAL_CFG.get( ['suite logging','roll over at start-up'] )
+        self.arclen = GLOBAL_CFG.get( ['suite logging','rolling archive length'] )
 
     def get_path( self, err=False ):
         if err:

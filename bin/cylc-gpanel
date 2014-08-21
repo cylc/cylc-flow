@@ -39,7 +39,7 @@ To customize themes, copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file.
 
 To configure default suite hosts, edit the
-[suite host scanning]hosts entry in your site.rc file.""")
+[suite host scanning]hosts entry in your global.rc file.""")
 
 parser.add_option("--compact",
                   help="Switch on compact mode at runtime.",

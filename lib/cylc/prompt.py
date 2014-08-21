@@ -18,10 +18,10 @@
 
 import sys
 
-from cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 def prompt( reason, force=False ):
-    if force or sitecfg.get( ['disable interactive command prompts'] ):
+    if force or GLOBAL_CFG.get( ['disable interactive command prompts'] ):
         return
     response = raw_input( reason + ' (y/n)? ' )
     if response == 'y':

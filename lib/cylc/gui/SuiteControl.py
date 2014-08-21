@@ -62,7 +62,7 @@ from cylc.task_state import task_state
 from cylc.passphrase import passphrase
 from cylc.suite_logging import suite_log
 from cylc.registration import localdb
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_time_string_from_unix_time
 from isodatetime.parsers import TimePointParser
@@ -126,8 +126,8 @@ Class to hold initialisation data.
         self.ungrouped_views = ungrouped_views
         self.use_defn_order = use_defn_order
 
-        self.cylc_tmpdir = sitecfg.get_tmpdir()
-        self.no_prompt = sitecfg.get( ['disable interactive command prompts'] )
+        self.cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
+        self.no_prompt = GLOBAL_CFG.get( ['disable interactive command prompts'] )
 
         self.imagedir = get_image_dir()
 
@@ -2609,7 +2609,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
         doc_menu.append( gtk.SeparatorMenuItem() )
 
-        if sitecfg.get( ['documentation','urls','local index'] ):
+        if GLOBAL_CFG.get( ['documentation','urls','local index'] ):
             cug_www_item = gtk.ImageMenuItem( '(http://) Local Document Index' )
             img = gtk.image_new_from_stock(  gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU )
             cug_www_item.set_image(img)

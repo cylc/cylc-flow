@@ -21,7 +21,7 @@ import logging
 import subprocess
 import multiprocessing
 
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import flags
 
 """Process pool to execute shell commands for the suite daemon.
@@ -104,7 +104,7 @@ class mp_pool(object):
     def __init__(self, pool_size=None):
         self.pool_size = (
             pool_size or
-            sitecfg.get(["process pool size"]) or
+            GLOBAL_CFG.get(["process pool size"]) or
             multiprocessing.cpu_count())
         # (The Pool class defaults to cpu_count anyway, but does not
         # expose the result via its public interface).

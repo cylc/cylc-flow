@@ -21,7 +21,7 @@ from optparse import OptionParser
 
 sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
 
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.gcapture import gcapture, gcapture_tmpfile
 
 # This is a unit test for $CYLC_DIR/lib/cylc/gui/gcapture.py
@@ -70,7 +70,7 @@ if options.other:
 else:
     ignore_command = False
 
-cylc_tmpdir = sitecfg.get_tmpdir()
+cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
 
 gobject.threads_init()
 if options.filep:

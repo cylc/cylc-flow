@@ -24,7 +24,7 @@ if remrun().execute():
 import os, re
 import tempfile
 import subprocess
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.CylcOptionParsers import cop
 from parsec.fileparse import read_and_proc
 import cylc.flags
@@ -37,7 +37,7 @@ editor, after optional include-file inlining and Jinja2 preprocessing.
 The edit process is spawned in the foreground as follows:
   % <editor> suite.rc
 Where <editor> is defined in the cylc site and user config files
-($CYLC_DIR/conf/siterc/site.rc and $HOME/.cylc/user.rc).
+($CYLC_DIR/conf/global.rc and $HOME/.cylc/global.rc).
 
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.
@@ -95,11 +95,11 @@ parser.add_option( "--mark-for-edit",
 
 suite, suiterc, junk = parser.get_suite()
 
-cylc_tmpdir = sitecfg.get_tmpdir()
+cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
 if options.geditor:
-    editor = sitecfg.get( ['editors','gui'] )
+    editor = GLOBAL_CFG.get( ['editors','gui'] )
 else:
-    editor = sitecfg.get( ['editors','terminal'] )
+    editor = GLOBAL_CFG.get( ['editors','terminal'] )
 
 global suitedir
 suitedir = os.path.dirname(suiterc)

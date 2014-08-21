@@ -33,7 +33,7 @@ import warnings
 #import pygtk
 #pygtk.require('2.0')
 
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.gui.gsummary import (get_host_suites, get_status_tasks,
                                get_summary_menu, launch_gcylc,
@@ -56,7 +56,7 @@ class SummaryPanelApplet(object):
         setup_icons()
         if not hosts:
             try:
-                hosts = sitecfg.get( ["suite host scanning","hosts"] )
+                hosts = GLOBAL_CFG.get( ["suite host scanning","hosts"] )
             except KeyError:
                 hosts = ["localhost"]
         self.is_compact = is_compact

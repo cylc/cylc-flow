@@ -21,7 +21,7 @@ import cylc.TaskID
 import re, os
 import StringIO
 from copy import deepcopy
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_env import cv_scripting_ml
 import signal
 from subprocess import Popen, PIPE
@@ -158,11 +158,11 @@ class JobFile(object):
 
         BUFFER.write("\n")
         # override and write task-host-specific suite variables
-        suite_work_dir = sitecfg.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
+        suite_work_dir = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite work directory', self.host, self.owner )
         st_env = deepcopy( self.__class__.suite_task_env ) 
-        st_env[ 'CYLC_SUITE_RUN_DIR'    ] = sitecfg.get_derived_host_item( self.suite, 'suite run directory', self.host, self.owner )
+        st_env[ 'CYLC_SUITE_RUN_DIR'    ] = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory', self.host, self.owner )
         st_env[ 'CYLC_SUITE_WORK_DIR'   ] = suite_work_dir
-        st_env[ 'CYLC_SUITE_SHARE_DIR'  ] = sitecfg.get_derived_host_item( self.suite, 'suite share directory', self.host, self.owner )
+        st_env[ 'CYLC_SUITE_SHARE_DIR'  ] = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite share directory', self.host, self.owner )
         st_env[ 'CYLC_SUITE_SHARE_PATH' ] = '$CYLC_SUITE_SHARE_DIR' # DEPRECATED
         rsp = self.jobconfig['remote suite path']
         if rsp:
@@ -175,8 +175,8 @@ class JobFile(object):
 
         task_work_dir  = os.path.join( suite_work_dir, self.jobconfig['work sub-directory'] )
 
-        use_login_shell = sitecfg.get_host_item( 'use login shell', self.host, self.owner )
-        comms = sitecfg.get_host_item( 'task communication method', self.host, self.owner )
+        use_login_shell = GLOBAL_CFG.get_host_item( 'use login shell', self.host, self.owner )
+        comms = GLOBAL_CFG.get_host_item( 'task communication method', self.host, self.owner )
 
         BUFFER.write( "\n\n# CYLC TASK ENVIRONMENT:" )
         BUFFER.write( "\nexport CYLC_TASK_COMMS_METHOD=" + comms )
@@ -185,9 +185,9 @@ class JobFile(object):
         BUFFER.write( "\nexport CYLC_TASK_ID=" + self.task_id )
         BUFFER.write( "\nexport CYLC_TASK_IS_COLDSTART=" + str( self.jobconfig['is cold-start']) )
         BUFFER.write( "\nexport CYLC_TASK_LOG_ROOT=" + self.log_root )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( sitecfg.get( ['task messaging','maximum number of tries'])) )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( sitecfg.get( ['task messaging','retry interval in seconds'])) )
-        BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( sitecfg.get( ['task messaging','connection timeout in seconds'])) )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_MAX_TRIES=" + str( GLOBAL_CFG.get( ['task messaging','maximum number of tries'])) )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str( GLOBAL_CFG.get( ['task messaging','retry interval in seconds'])) )
+        BUFFER.write( "\nexport CYLC_TASK_MSG_TIMEOUT=" + str( GLOBAL_CFG.get( ['task messaging','connection timeout in seconds'])) )
         BUFFER.write( "\nexport CYLC_TASK_NAME=" + self.task_name )
         BUFFER.write( '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' + ' '.join( self.jobconfig['namespace hierarchy']) + '"')
         BUFFER.write( "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell) )
