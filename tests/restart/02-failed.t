@@ -20,7 +20,7 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 13
+set_test_number 12
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE failed
 TEST_SUITE_RUN_OPTIONS=
@@ -35,8 +35,7 @@ fi
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate -v $SUITE_NAME
-cmp_ok "$TEST_NAME.stderr" </dev/null
+run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug $TEST_SUITE_RUN_OPTIONS $SUITE_NAME

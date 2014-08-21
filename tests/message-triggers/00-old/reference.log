@@ -1,0 +1,62 @@
+2014-08-21T10:47:29+12 INFO - port:7766
+2014-08-21T10:47:29+12 INFO - Suite starting at 2014-08-21T10:47:29+12
+2014-08-21T10:47:29+12 INFO - Log event clock: real time
+2014-08-21T10:47:29+12 INFO - Run mode: live
+2014-08-21T10:47:29+12 INFO - Initial point: 2014080100
+2014-08-21T10:47:29+12 INFO - Final point: 2014120100
+2014-08-21T10:47:29+12 INFO - Cold Start 2014080100
+2014-08-21T10:47:29+12 INFO - [foo.2014080100] -triggered off []
+2014-08-21T10:47:29+12 INFO - [baz.2014080100] -triggered off []
+2014-08-21T10:47:30+12 INFO - [foo.2014080100] -submit_method_id=63202
+2014-08-21T10:47:30+12 INFO - [foo.2014080100] -submission succeeded
+2014-08-21T10:47:30+12 INFO - [baz.2014080100] -submit_method_id=63205
+2014-08-21T10:47:30+12 INFO - [baz.2014080100] -submission succeeded
+2014-08-21T10:47:30+12 INFO - [foo.2014080100] -(current:submitted)> foo.2014080100 started at 2014-08-21T10:47:29+12
+2014-08-21T10:47:30+12 INFO - [baz.2014080100] -(current:submitted)> baz.2014080100 started at 2014-08-21T10:47:29+12
+2014-08-21T10:47:31+12 INFO - [foo.2014100100] -triggered off []
+2014-08-21T10:47:32+12 INFO - [foo.2014100100] -submit_method_id=63275
+2014-08-21T10:47:32+12 INFO - [foo.2014100100] -submission succeeded
+2014-08-21T10:47:32+12 INFO - [foo.2014080100] -(current:running)> uploaded file 1 for 2014080100 at 2014-08-21T10:47:31+12
+2014-08-21T10:47:32+12 INFO - [foo.2014100100] -(current:submitted)> foo.2014100100 started at 2014-08-21T10:47:31+12
+2014-08-21T10:47:33+12 INFO - [bar.2014080100] -triggered off ['foo.2014080100']
+2014-08-21T10:47:33+12 INFO - [foo.2014120100] -triggered off []
+2014-08-21T10:47:34+12 INFO - [bar.2014080100] -submit_method_id=63318
+2014-08-21T10:47:34+12 INFO - [bar.2014080100] -submission succeeded
+2014-08-21T10:47:34+12 INFO - [foo.2014120100] -submit_method_id=63322
+2014-08-21T10:47:34+12 INFO - [foo.2014120100] -submission succeeded
+2014-08-21T10:47:34+12 INFO - [foo.2015020100] -holding (beyond suite stop point) 2014120100
+2014-08-21T10:47:34+12 INFO - [foo.2014080100] -(current:running)> uploaded file 2 for 2014100100 at 2014-08-21T10:47:33+12
+2014-08-21T10:47:34+12 INFO - [foo.2014080100] -(current:running)> foo.2014080100 succeeded at 2014-08-21T10:47:34+12
+2014-08-21T10:47:34+12 INFO - [bar.2014080100] -(current:submitted)> bar.2014080100 started at 2014-08-21T10:47:33+12
+2014-08-21T10:47:34+12 INFO - [foo.2014120100] -(current:submitted)> foo.2014120100 started at 2014-08-21T10:47:33+12
+2014-08-21T10:47:34+12 INFO - [foo.2014100100] -(current:running)> uploaded file 1 for 2014100100 at 2014-08-21T10:47:33+12
+2014-08-21T10:47:35+12 INFO - [baz.2014100100] -triggered off ['foo.2014080100']
+2014-08-21T10:47:35+12 INFO - [bar.2014100100] -triggered off ['foo.2014100100']
+2014-08-21T10:47:36+12 INFO - [baz.2014100100] -submit_method_id=63433
+2014-08-21T10:47:36+12 INFO - [baz.2014100100] -submission succeeded
+2014-08-21T10:47:36+12 INFO - [bar.2014100100] -submit_method_id=63436
+2014-08-21T10:47:36+12 INFO - [bar.2014100100] -submission succeeded
+2014-08-21T10:47:36+12 INFO - [baz.2014100100] -(current:submitted)> baz.2014100100 started at 2014-08-21T10:47:35+12
+2014-08-21T10:47:36+12 INFO - [foo.2014120100] -(current:running)> uploaded file 1 for 2014120100 at 2014-08-21T10:47:35+12
+2014-08-21T10:47:36+12 INFO - [bar.2014100100] -(current:submitted)> bar.2014100100 started at 2014-08-21T10:47:35+12
+2014-08-21T10:47:36+12 INFO - [foo.2014100100] -(current:running)> uploaded file 2 for 2014120100 at 2014-08-21T10:47:36+12
+2014-08-21T10:47:36+12 INFO - [foo.2014100100] -(current:running)> foo.2014100100 succeeded at 2014-08-21T10:47:36+12
+2014-08-21T10:47:37+12 INFO - [baz.2014120100] -triggered off ['foo.2014100100']
+2014-08-21T10:47:37+12 INFO - [bar.2014120100] -triggered off ['foo.2014120100']
+2014-08-21T10:47:38+12 INFO - [baz.2014120100] -submit_method_id=63557
+2014-08-21T10:47:38+12 INFO - [baz.2014120100] -submission succeeded
+2014-08-21T10:47:38+12 INFO - [bar.2014120100] -submit_method_id=63561
+2014-08-21T10:47:38+12 INFO - [bar.2014120100] -submission succeeded
+2014-08-21T10:47:38+12 INFO - [baz.2015020100] -holding (beyond suite stop point) 2014120100
+2014-08-21T10:47:38+12 INFO - [bar.2015020100] -holding (beyond suite stop point) 2014120100
+2014-08-21T10:47:38+12 INFO - [baz.2014120100] -(current:submitted)> baz.2014120100 started at 2014-08-21T10:47:37+12
+2014-08-21T10:47:38+12 INFO - [bar.2014120100] -(current:submitted)> bar.2014120100 started at 2014-08-21T10:47:37+12
+2014-08-21T10:47:38+12 INFO - [foo.2014120100] -(current:running)> uploaded file 2 for 2015020100 at 2014-08-21T10:47:38+12
+2014-08-21T10:47:38+12 INFO - [foo.2014120100] -(current:running)> foo.2014120100 succeeded at 2014-08-21T10:47:38+12
+2014-08-21T10:47:39+12 INFO - [bar.2014100100] -(current:running)> bar.2014100100 succeeded at 2014-08-21T10:47:38+12
+2014-08-21T10:47:43+12 INFO - [baz.2014120100] -(current:running)> baz.2014120100 succeeded at 2014-08-21T10:47:42+12
+2014-08-21T10:47:45+12 INFO - [bar.2014080100] -(current:running)> bar.2014080100 succeeded at 2014-08-21T10:47:44+12
+2014-08-21T10:47:45+12 INFO - [baz.2014080100] -(current:running)> baz.2014080100 succeeded at 2014-08-21T10:47:44+12
+2014-08-21T10:47:45+12 INFO - [baz.2014100100] -(current:running)> baz.2014100100 succeeded at 2014-08-21T10:47:44+12
+2014-08-21T10:47:53+12 INFO - [bar.2014120100] -(current:running)> bar.2014120100 succeeded at 2014-08-21T10:47:52+12
+2014-08-21T10:47:54+12 INFO - Suite shutting down at 2014-08-21T10:47:54+12

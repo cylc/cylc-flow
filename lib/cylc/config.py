@@ -28,12 +28,12 @@ from cylc.cycling import IntervalParsingError
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from output import outputx
+from output import output
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
-from trigger import triggerx
+from trigger import trigger
 from parsec.util import replicate, pdeepcopy
 import TaskID
 from C3MRO import C3
@@ -49,6 +49,8 @@ checking, then construct task proxy objects and graph structures.
 
 CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*(.+)\s*\)')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
+
+# TODO - unify this with task_state.py:
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
 
 try:
@@ -117,8 +119,6 @@ class config( object ):
         self.clock_offsets = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
-
-        self.cycling_tasks = []
 
         self.sequences = []
         self.actual_first_point = None
@@ -831,57 +831,6 @@ class config( object ):
         os.environ['CYLC_SUITE_REG_PATH'] = RegPath( self.suite ).get_fpath()
         os.environ['CYLC_SUITE_DEF_PATH'] = self.fdir
 
-    def set_trigger( self, task_name, right, output_name=None,
-                     offset_string=None, cycle_point=None,
-                     suicide=False, base_interval=None ):
-        trig = triggerx(task_name)
-        trig.set_suicide(suicide)
-        if output_name:
-            try:
-                # check for internal outputs
-                trig.set_special( self.cfg['runtime'][task_name]['outputs'][output_name],
-                                  base_interval=base_interval )
-            except KeyError:
-                # There is no matching output defined under the task runtime section
-                if output_name == 'submit':
-                    # OK, task:submit
-                    trig.set_type('submitted' )
-                elif output_name == 'submit-fail':
-                    # OK, task:submit-fail
-                    trig.set_type('submit-failed' )
-                elif output_name == 'fail':
-                    # OK, task:fail
-                    trig.set_type('failed' )
-                elif output_name == 'start':
-                    # OK, task:start
-                    trig.set_type('started')
-                elif output_name == 'succeed':
-                    # OK, task:succeed
-                    trig.set_type('succeeded')
-                else:
-                    # ERROR
-                    raise SuiteConfigError, "ERROR: '" + task_name + "' does not define output '" + output_name  + "'"
-            else:
-                # There is a matching output defined under the task runtime section
-                if self.run_mode != 'live':
-                    # Ignore internal outputs: dummy tasks will not report them finished.
-                    return None
-        else:
-            # default: task succeeded
-            trig.set_type( 'succeeded' )
-
-        if offset_string:
-            # TODO ISO - CONSISTENT SET_OFFSET INPUT 
-            trig.set_offset_string( offset_string )
-
-        if cycle_point:
-            trig.set_cycle_point( cycle_point )
-
-        if task_name in self.cycling_tasks:
-            trig.set_cycling()
-
-        return trig
-
     def check_tasks( self ):
         # Call after all tasks are defined.
         # ONLY IF VALIDATING THE SUITE
@@ -908,9 +857,6 @@ class config( object ):
             for name in self.cfg['scheduling']['special tasks'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
-                elif type == 'sequential':
-                    if name not in self.cycling_tasks:
-                        raise SuiteConfigError, 'ERROR: sequential tasks must be cycling tasks: ' + name
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self.cfg['runtime']:
@@ -926,17 +872,15 @@ class config( object ):
         if flags.verbose:
             print "Instantiating tasks to check trigger expressions"
         for name in self.taskdefs.keys():
-            type = self.taskdefs[name].type
             # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
             try:
                 # instantiate a task
                 itask = self.taskdefs[name].get_task_class()( self.start_point, 'waiting', None, True, validate=True )
             except TypeError, x:
-                # This should not happen as we now explicitly catch use
-                # of synchronous special tasks in an asynchronous graph.
-                # But in principle a clash of multiply inherited base
-                # classes due to choice of "special task" modifiers
-                # could cause a TypeError.
+                # This should not happen as we now explicitly catch use of
+                # synchronous special tasks in an asynchronous graph.  But in
+                # principle a clash of multiply inherited base classes due to
+                # choice of "special task" modifiers could cause a TypeError.
                 raise SuiteConfigError('(inconsistent use of special tasks?)')
             except Exception, x:
                 raise SuiteConfigError(
@@ -1018,7 +962,7 @@ class config( object ):
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
 
-    def process_graph_line( self, line, section, ttype, seq, offset_seq_map,
+    def process_graph_line( self, line, section, seq, offset_seq_map,
                             tasks_to_prune=None,
                             return_all_dependencies=False ):
         """Extract dependent pairs from the suite.rc dependency text.
@@ -1034,7 +978,6 @@ class config( object ):
         this dependency section.
         section is the text describing this dependency section (e.g.
         T00).
-        ttype is now always 'cycling' (TODO - is not needed now)
         seq is the sequence generated from 'section' given the initial
         and final cycle point.
         offset_seq_map is a cache of seq with various offsets for
@@ -1066,6 +1009,8 @@ class config( object ):
             tasks_to_prune = []
 
         orig_line = line
+
+        base_interval = seq.get_interval()
 
         ## SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed' (NOT USED)
         ## we can replace synonyms here with the standard type designator:
@@ -1230,34 +1175,21 @@ class config( object ):
 
                 pruned_left_nodes = list(left_nodes)  # Create copy of LHS tasks.
 
-                if ttype != 'cycling':
-                    for node in left_nodes + [right_name]:
-                        if not node:
-                            continue
-                        try:
-                            node_name = graphnode(
-                                node, base_interval=seq.get_interval()).name
-                        except GraphNodeError, x:
-                            print >> sys.stderr, orig_line
-                            raise SuiteConfigError, str(x)
-
-                if ttype == 'cycling':
-                    for left_node in left_nodes:
-                        try:
-                            left_graph_node = graphnode(
-                                left_node, base_interval=seq.get_interval())
-                        except GraphNodeError, x:
-                            print >> sys.stderr, orig_line
-                            raise SuiteConfigError, str(x)
-                        left_name = left_graph_node.name
-                        left_output = left_graph_node.output  
-                        if (left_name in tasks_to_prune or
-                                return_all_dependencies or
-                                right_name in tasks_to_prune):
-                            special_dependencies.append(
-                                (left_name, left_output, right_name))
-                        if left_name in tasks_to_prune:
-                            pruned_left_nodes.remove(left_node)
+                for left_node in left_nodes:
+                    try:
+                        left_graph_node = graphnode(left_node, base_interval)
+                    except GraphNodeError, x:
+                        print >> sys.stderr, orig_line
+                        raise SuiteConfigError, str(x)
+                    left_name = left_graph_node.name
+                    left_output = left_graph_node.output
+                    if (left_name in tasks_to_prune or
+                            return_all_dependencies or
+                            right_name in tasks_to_prune):
+                        special_dependencies.append(
+                            (left_name, left_output, right_name))
+                    if left_name in tasks_to_prune:
+                        pruned_left_nodes.remove(left_node)
 
                 if right_name in tasks_to_prune:
                     continue
@@ -1270,20 +1202,18 @@ class config( object ):
                         # All the left nodes have been pruned.
                         left_edge_nodes = [right_name]
                         right_edge_node = None
-                    self.generate_edges( lexpression, left_edge_nodes,
-                                         right_edge_node, ttype,
-                                         seq, suicide )
-                self.generate_taskdefs( orig_line, pruned_left_nodes,
-                                        right_name, ttype,
-                                        section, seq, offset_seq_map,
-                                        seq.get_interval() )
-                self.generate_triggers( lexpression, pruned_left_nodes,
-                                        right_name, seq,
-                                        suicide )
+                    self.generate_edges(lexpression, left_edge_nodes,
+                                         right_edge_node, seq, suicide)
+                self.generate_taskdefs(orig_line, pruned_left_nodes,
+                                        right_name, section,
+                                        seq, offset_seq_map,
+                                        base_interval)
+                self.generate_triggers(lexpression, pruned_left_nodes,
+                                        right_name, seq, suicide)
         return special_dependencies
             
 
-    def generate_edges( self, lexpression, left_nodes, right, ttype, seq, suicide=False ):
+    def generate_edges( self, lexpression, left_nodes, right, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
         conditional = False
         if re.search( '\|', lexpression ):
@@ -1294,7 +1224,7 @@ class config( object ):
             e = graphing.edge( left, right, seq, False, suicide, conditional )
             self.edges.append(e)
 
-    def generate_taskdefs( self, line, left_nodes, right, ttype, section, seq,
+    def generate_taskdefs( self, line, left_nodes, right, section, seq,
                            offset_seq_map, base_interval ):
         """Generate task definitions for nodes on a given line."""
         for node in left_nodes + [right]:
@@ -1336,12 +1266,6 @@ class config( object ):
                     print >> sys.stderr, line
                     raise SuiteConfigError, str(x)
 
-            # TODO - setting type should be consolidated to get_taskdef()
-            if ttype == 'cycling':
-                self.taskdefs[name].cycling = True
-                if name not in self.cycling_tasks:
-                    self.cycling_tasks.append(name)
-
             if name in self.suite_polling_tasks:
                 self.taskdefs[name].suite_polling_cfg = {
                         'suite'  : self.suite_polling_tasks[name][0],
@@ -1375,8 +1299,8 @@ class config( object ):
                 # register any explicit internal outputs
                 if 'outputs' in self.cfg['runtime'][name]:
                     for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = outputx(msg, base_interval)
-                        self.taskdefs[ name ].outputs.append( outp )
+                        outp = output(msg, base_interval)
+                        self.taskdefs[name].outputs.append(outp)
 
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
@@ -1422,14 +1346,20 @@ class config( object ):
                 else:
                     offset_tuple = (lnode.offset_string, None)
                 ltaskdef.intercycle_offsets.append(offset_tuple)
-            trigger = self.set_trigger(
-                lnode.name, right, lnode.output, lnode.offset_string,
-                cycle_point, suicide, seq.get_interval()
+
+            trig = trigger(
+                    lnode.name, lnode.output, lnode.offset_string,
+                    cycle_point, suicide,
+                    self.cfg['runtime'][lnode.name]['outputs'],
+                    base_interval
             )
-            if not trigger:
+
+            if self.run_mode != 'live' and not trig.is_standard():
+                # Dummy tasks do not report message outputs.
                 continue
+
             if not conditional:
-                self.taskdefs[right].add_trigger( trigger, seq )
+                self.taskdefs[right].add_trigger( trig, seq )
                 continue
 
             # CONDITIONAL TRIGGERS
@@ -1437,7 +1367,7 @@ class config( object ):
             # (task name is not unique, e.g.: "F | F:fail => G")
             label = re.sub( '[-\[\]:]', '_', left )
             label = re.sub( '\+', 'x', label ) # future triggers
-            ctrig[label] = trigger
+            ctrig[label] = trig
             cname[label] = lnode.name
 
         if not conditional:
@@ -1774,7 +1704,6 @@ class config( object ):
 
         """
 
-        ttype = 'cycling'
         sec = section
 
         if section in section_seq_map:
@@ -1805,13 +1734,11 @@ class config( object ):
             line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
             special_dependencies.extend(self.process_graph_line(
-                line, section, ttype, seq, offset_seq_map,
+                line, section, seq, offset_seq_map,
                 tasks_to_prune=tasks_to_prune,
                 return_all_dependencies=return_all_dependencies
             ))
-        if ttype == 'cycling':
-            return special_dependencies
-        return []
+        return special_dependencies
 
     def get_taskdef( self, name ):
         # (DefinitionError caught above)

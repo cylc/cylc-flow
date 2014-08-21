@@ -16,94 +16,122 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 import cylc.TaskID
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point_relative)
+from cylc.task_state import task_state
+from cylc.task_state import TaskStateError
 
-import re
 
-class TriggerXError( Exception ):
+BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
+MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+
+
+class TriggerError( Exception ):
     def __init__( self, msg ):
         self.msg = msg
     def __str__( self ):
         return repr( self.msg )
 
-class triggerx(object):
+class trigger(object):
     """
-Class to hold and process task triggers during suite configuration.
-The information here eventually ends up as task proxy preqrequisites.
+Task triggers, used to generate prerequisite messages.
 
-Note on trigger time offsets:
-    foo[T-n] => bar   # bar triggers off "foo succeeded at T-n"
-(a) foo[T-n]:x => bar # bar triggers off "output x of foo evaluated at T-n"
-where output x of foo may also have an offset:
-(b) x = "foo outputx completed for <CYLC_TASK_CYCLE_POINT[+n]>"
+#(a) graph offsets:
+  # trigger bar if foo at -P1D succeeded:
+    graph = foo[-P1D] => bar
+  # trigger bar if foo at -P1D reported message output:
+    graph = foo[-P1D]:x => bar
 
-(a) is an "evaluation offset"
-(b) is an "intrinsic offset"
+#(b) output message offsets:
+[runtime]
+   [[foo]]
+      [[[outputs]]]
+         x = "file X uploaded for [P1D]"
+         y = "file Y uploaded for []"
     """
 
-    def __init__(self, name ):
-        self.name = name
-        self.msg = None
-        self.intrinsic_offset = None
-        self.evaluation_offset_string = None
-        self.cycle_point = None
-        self.type = None
-        self.cycling = False
-        self.suicide = False
+    def __init__(
+            self, task_name, qualifier=None, graph_offset_string=None,
+            cycle_point=None, suicide=False, outputs={}, base_interval=None):
 
-    def set_suicide( self, suicide ):
+        self.task_name = task_name
         self.suicide = suicide
-
-    def set_cycling( self ):
-        self.cycling = True
-
-    def set_special( self, msg, base_interval=None ):
-        # explicit internal output message ...
-        self.msg = msg
-        # TODO ISO: support '+PT6H', etc
-        m = re.search( '\[\s*T?\s*([+-]?)\s*(.*)\s*\]', msg )
-        if m:
-            sign, offset = m.groups()
-            if sign and sign != '+':
-                raise TriggerXError, "ERROR, task output offsets must be positive: " + self.msg
-            if offset:
-                self.intrinsic_offset = base_interval.get_inferred_child(
-                    offset)
-            else:
-                self.intrinsic_offset = get_interval_cls().get_null()
-
-    def set_type( self, type ):
-        if type not in [ 'submitted', 'submit-failed', 'started', 'succeeded', 'failed' ]:
-            raise TriggerXError, 'ERROR, ' + self.name + ', illegal trigger type: ' + type
-        self.type = type
-
-    def set_cycle_point( self, cycle_point ):
+        self.graph_offset_string = graph_offset_string
         self.cycle_point = cycle_point
 
-    def set_offset_string( self, offset_string ):
-        self.evaluation_offset_string = offset_string
+        self.message = None
+        self.message_offset = None
+        self.builtin = None
+        qualifier = qualifier or "succeeded"
 
-    def get( self, ctime ):
-        """Return a prerequisite string and the relevant point for ctime."""
-        if self.msg:
-            # explicit internal output ...
-            preq = self.msg
-            if self.intrinsic_offset:
-                ctime += self.intrinsic_offset
-            if self.evaluation_offset_string:
-                ctime = get_point_relative(
-                    self.evaluation_offset_string, ctime)
-            if self.cycle_point:
-                ctime = self.cycle_point
-            preq = re.sub( '\[\s*T\s*.*?\]', str(ctime), preq )
+        # Built-in trigger?
+        try:
+            self.builtin = task_state.get_legal_trigger_state(qualifier)
+        except TaskStateError:
+            pass
         else:
-            # implicit output
-            if self.evaluation_offset_string:
-                ctime = get_point_relative(
-                    self.evaluation_offset_string, ctime)
+            return
+
+        # Message trigger?
+        try:
+            msg = outputs[qualifier]
+        except KeyError:
+            raise TriggerError, (
+                    "ERROR: undefined trigger qualifier: %s:%s" % (
+                        task_name, qualifier)
+            )
+        else:
+            # Back compat for [T+n] in message string.
+            m = re.match(BACK_COMPAT_MSG_RE, msg)
+            msg_offset = None
+            if m:
+                prefix, signed_offset, sign, offset, suffix = m.groups()
+                if offset:
+                    msg_offset = base_interval.get_inferred_child(signed_offset)
+                else:
+                    msg_offset = get_interval_cls().get_null()
+            else:
+                n = re.match(MSG_RE, msg)
+                if n:
+                    prefix, signed_offset, sign, offset, suffix = n.groups()
+                    if offset:
+                        msg_offset = get_interval(signed_offset)
+                    else:
+                        msg_offset = get_interval_cls().get_null()
+                else:
+                    raise TriggerError, (
+                            "ERROR: undefined trigger qualifier: %s:%s" % (
+                                task_name, qualifier)
+                    )
+            self.message = msg
+            self.message_offset = msg_offset
+
+    def is_standard(self):
+        return self.builtin is not None
+
+    def get(self, point):
+        """Return a prerequisite string and the relevant point."""
+        if self.message:
+            # Message trigger
+            preq = self.message
             if self.cycle_point:
-                ctime = self.cycle_point
-            preq = cylc.TaskID.get( self.name, str(ctime) ) + ' ' + self.type
-        return preq, ctime
+                point = self.cycle_point
+            else:
+                if self.message_offset:
+                    point += self.message_offset
+                if self.graph_offset_string:
+                    point = get_point_relative(
+                            self.graph_offset_string, point)
+            preq = re.sub( '\[.*\]', str(point), preq )
+        else:
+            # Built-in trigger
+            if self.cycle_point:
+                point = self.cycle_point
+            elif self.graph_offset_string:
+                point = get_point_relative(
+                    self.graph_offset_string, point)
+            preq = cylc.TaskID.get(self.task_name, str(point)) + ' ' + self.builtin
+        return preq, point

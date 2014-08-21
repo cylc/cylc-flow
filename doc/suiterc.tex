@@ -696,7 +696,7 @@ and~\ref{TriggerTypes} ({\em Trigger Types}).
 graph = """
    foo => bar => baz & waz     # baz and waz both trigger off bar
    foo[-P1D-PT6H] => bar       # bar triggers off foo[-P1D-PT6H]
-   baz:out1 => faz             # faz triggers off an internal output of baz
+   baz:out1 => faz             # faz triggers off a message output of baz
    ColdFoo | foo[-PT6H] => foo # cold-start or restart for foo
    X:start => Y                # Y triggers if X starts executing
    X:fail => Y                 # Y triggers if X fails
@@ -1371,41 +1371,30 @@ Section~\ref{AvailableMethods}.
 
 \paragraph[{[[[}outputs{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]]}
 
-This section is only required if other tasks need to trigger off specific
-internal outputs of this task (as opposed to triggering off it finishing).
-The task implementation must report the specified output messages
-by calling \lstinline=cylc task message= when the
-corresponding real outputs have been completed.
+This section is for registering custom message outputs that other tasks can
+trigger off instead of the standard triggers. The task implementation must send
+corresponding messages using the \lstinline=cylc task message= command at the
+appropriate time. See~\ref{MessageTriggers} for more information.
 
 \subparagraph[\_\_OUTPUT\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]] $\rightarrow$ \_\_OUTPUT\_\_}
 
-Replace \_\_OUTPUT\_\_ with any number of labelled output messages.
+Replace \_\_OUTPUT\_\_ with one or more labelled output messages, and use the
+labels in graph trigger notation.  Messages should contain a placeholder for
+the current cycle point (\lstinline=[]=) or some offset from it (e.g.\ \lstinline=[-P2M]=).
 \begin{myitemize}
-    \item {\em type:} string (a message containing
-        \lstinline=<CYLC_TASK_CYCLE_POINT>= with an optional offset as shown
-        below. Note that you cannot use the corresponding shell variable
-        \lstinline=$CYLC_TASK_CYCLE_POINT= here. The string substitution
-        (replacing this special variable with the actual task cycle point) is
-        done inside cylc, not in the task execution environment.
-\item {\em default:} (none)
-\item{ \em examples:}
- \begin{lstlisting}
- foo = "sea state products ready for <CYLC_TASK_CYCLE_POINT>"
- bar = "nwp restart files ready for <CYLC_TASK_CYCLE_POINT+6>"
- \end{lstlisting}
- where the item name must match the output label associated with
- this task in the suite dependency graph, e.g.:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [dependencies]
-        graph = TaskA:foo => TaskB
- \end{lstlisting}
+    \item {\em type:} string
+    \item {\em default:} (none)
+    \item{ \em examples:}
 \end{myitemize}
-\lstset{language=transcript}
+\begin{lstlisting}
+foo = "sea state products ready for []"
+bar = "nwp restart files ready for [-PT6H]"
+\end{lstlisting}
+See~\ref{MessageTriggers} for more information.
 
 \paragraph[{[[[}suite state polling{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]]}
 
+\lstset{language=transcript}
 Configure automatic suite polling tasks as described in Section~\ref{SuiteStatePolling}. The
 items in this section reflect the options and defaults of the
 \lstinline=cylc suite-state= command, except that the target suite name and the
