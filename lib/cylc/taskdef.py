@@ -67,7 +67,6 @@ class taskdef(object):
         self.max_future_prereq_offset = None
         self.intercycle_offsets = []
         self.sequential = False
-        self.cycling = False
         self.modifiers = []
         self.is_coldstart = False
         self.suite_polling_cfg = {}
@@ -82,7 +81,6 @@ class taskdef(object):
         self.outputs = [] # list of explicit internal outputs; change to dict if need to vary per cycle.
 
         self.name = name
-        self.type = 'cycling'
 
     def add_trigger( self, trigger, sequence ):
         if sequence not in self.triggers:
@@ -185,7 +183,7 @@ class taskdef(object):
         # return a task proxy class definition, to be used for
         # instantiating objects of this particular task class.
         base_types = []
-        for foo in self.modifiers + [self.type]:
+        for foo in self.modifiers + ['cycling']:
             mod = __import__( 'cylc.task_types.' + foo, fromlist=[foo] )
             base_types.append( getattr( mod, foo ) )
 
@@ -264,7 +262,7 @@ class taskdef(object):
 
             for sequence in self.triggers:
                 for trig in self.triggers[ sequence ]:
-                    if trig.cycling and not sequence.is_valid( sself.point ):
+                    if not sequence.is_valid(sself.point):
                         # This trigger is not used in current cycle
                         continue
                     if (trig.graph_offset_string is None or
@@ -294,8 +292,7 @@ class taskdef(object):
             for sequence in self.cond_triggers.keys():
                 for ctrig, exp in self.cond_triggers[ sequence ]:
                     foo = ctrig.keys()[0]
-                    if (ctrig[foo].cycling and
-                            not sequence.is_valid( sself.point)):
+                    if not sequence.is_valid( sself.point):
                         # This trigger is not valid for current cycle (see NOTE just above)
                         continue
                     cp = conditional_prerequisites( sself.id, self.start_point )
@@ -331,7 +328,7 @@ class taskdef(object):
             sself.exists=exists
             sself.intercycle_offsets = self.intercycle_offsets
 
-            if self.cycling and startup:
+            if startup:
                 # adjust up to the first on-sequence cycle point
                 adjusted = []
                 for seq in sself.sequences:

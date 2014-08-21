@@ -656,8 +656,7 @@ class scheduler(object):
         if self.final_point is not None:
             self.final_point.standardise()
 
-        if (not self.initial_point and not self.is_restart and
-            self.config.cycling_tasks):
+        if (not self.initial_point and not self.is_restart):
             print >> sys.stderr, 'WARNING: No initial cycle point provided - no cycling tasks will be loaded.'
 
         if self.run_mode != self.config.run_mode:
@@ -878,6 +877,7 @@ class scheduler(object):
                 self.pool.spawn_tasks()
 
                 self.pool.remove_spent_tasks()
+                self.pool.remove_suiciding_tasks()
 
                 self.state_dumper.dump()
 

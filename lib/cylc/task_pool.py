@@ -32,30 +32,20 @@ from CylcError import SchedulerError, TaskNotFoundError
 from prerequisites.plain_prerequisites import plain_prerequisites
 from broadcast import broadcast
 
-# All new task proxies (including spawned ones) are added first to the
-# runahead pool, which does not participate in dependency matching and
-# is not visible in the GUI. Tasks are then released to the task pool if
-# not beyond the current runahead limit.
+# All new task proxies (including spawned ones) are added first to the runahead
+# pool, which does not participate in dependency matching and is not visible in
+# the GUI. Tasks are then released to the task pool if not beyond the current
+# runahead limit.
 
-# The check_auto_shutdown() and remove_spent_cycling_task() have to consider
-# tasks in the runahead pool too.
+# check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
+# runahead pool too.
 
-# TODO ISO - spawn-on-submit means a only one waiting instance of each
-# task exists, in the pool, so if a new stop cycle is set we just need
-# to check waiting pool tasks against the new stop cycle.
+# TODO - spawn-on-submit means a only one waiting instance of each task exists,
+# in the pool, so if a new stop cycle is set we just need to check waiting pool
+# tasks against the new stop cycle.
 
-# NOTE pre cycl-6 close_fds=True in job submission was required to prevent
-# the process from hanging on to the file descriptor that used to write
-# the job script, the root cause of the random "text file busy" error.
-# TODO ISO - is this still needed?
-
-# Background jobs echo PID to stdout but do not detach. Read one line to
-# get PID then don't wait on the process.
-#  p.stderr.readline() blocks until the process
-#  finishes because nothing is written to stderr.
-
-# restart: runahead tasks are all in the 'waiting' state and will be
-# reloaded as such, on restart, into the runahead pool.
+# restart: runahead tasks are all in the 'waiting' state and will be reloaded
+# as such, on restart, into the runahead pool.
 
 
 class pool(object):
@@ -757,11 +747,6 @@ class pool(object):
             if itask.ready_to_spawn():
                 self.force_spawn(itask)
 
-    def remove_spent_tasks(self):
-        """Remove tasks no longer needed to satisfy others' prerequisites."""
-        self.remove_suiciding_tasks()
-        self.remove_spent_cycling_tasks()
-
     def remove_suiciding_tasks(self):
         """Remove any tasks that have suicide-triggered."""
         for itask in self.get_tasks():
@@ -789,7 +774,7 @@ class pool(object):
                     cutoff = nxt
         return cutoff
 
-    def remove_spent_cycling_tasks(self):
+    def remove_spent_tasks(self):
         """
         Remove cycling tasks no longer needed to satisfy others' prerequisites.
         Each task proxy knows its "cleanup cutoff" from the graph. For example:

@@ -120,8 +120,6 @@ class config( object ):
         self.suite_polling_tasks = {}
         self.triggering_families = []
 
-        self.cycling_tasks = []
-
         self.sequences = []
         self.actual_first_point = None
 
@@ -859,9 +857,6 @@ class config( object ):
             for name in self.cfg['scheduling']['special tasks'][type]:
                 if type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
-                elif type == 'sequential':
-                    if name not in self.cycling_tasks:
-                        raise SuiteConfigError, 'ERROR: sequential tasks must be cycling tasks: ' + name
                 if re.search( '[^0-9a-zA-Z_]', name ):
                     raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
                 if name not in self.taskdefs and name not in self.cfg['runtime']:
@@ -877,7 +872,6 @@ class config( object ):
         if flags.verbose:
             print "Instantiating tasks to check trigger expressions"
         for name in self.taskdefs.keys():
-            type = self.taskdefs[name].type
             # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
             try:
                 # instantiate a task
@@ -1274,10 +1268,6 @@ class config( object ):
                     print >> sys.stderr, line
                     raise SuiteConfigError, str(x)
 
-            self.taskdefs[name].cycling = True
-            if name not in self.cycling_tasks:
-                self.cycling_tasks.append(name)
-
             if name in self.suite_polling_tasks:
                 self.taskdefs[name].suite_polling_cfg = {
                         'suite'  : self.suite_polling_tasks[name][0],
@@ -1362,7 +1352,6 @@ class config( object ):
             trig = trigger(
                     lnode.name, lnode.output, lnode.offset_string,
                     cycle_point, suicide,
-                    lnode.name in self.cycling_tasks,
                     self.cfg['runtime'][lnode.name]['outputs'],
                     base_interval
             )

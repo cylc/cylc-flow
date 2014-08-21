@@ -57,14 +57,12 @@ Message output x may have an offset too:
 
     def __init__(
             self, task_name, qualifier=None, graph_offset_string=None,
-            cycle_point=None, suicide=False, cycling=False, outputs={},
-            base_interval=None):
+            cycle_point=None, suicide=False, outputs={}, base_interval=None):
 
         self.task_name = task_name
         self.suicide = suicide
         self.graph_offset_string = graph_offset_string
         self.cycle_point = cycle_point
-        self.cycling = cycling
 
         self.message = None
         self.message_offset = None
@@ -115,10 +113,6 @@ Message output x may have an offset too:
                 )
         self.message = msg
         self.message_offset = msg_offset
-
-    def set_cycling(self):
-        # TODO - GET RID OF task.cycling ????!!!!
-        self.cycling = True
 
     def is_standard(self):
         return self.standard_type is not None
