@@ -1,0 +1,4 @@
+[runtime]
+[[foo, bar]]
+command scripting=true
+retry delays = 0.1
