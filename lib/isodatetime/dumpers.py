@@ -92,6 +92,8 @@ class TimePointDumper(object):
         if "%" in formatting_string:
             try:
                 return self.strftime(timepoint, formatting_string)
+            except TimePointDumperBoundsError:
+                raise
             except ValueError:
                 pass
         expression, properties, custom_time_zone = (
@@ -153,7 +155,9 @@ class TimePointDumper(object):
         property_map = {}
         for property_ in properties:
             property_map[property_] = timepoint.get(property_)
-            if property_ == "century" and not self.num_expanded_year_digits:
+            if (property_ == "century" and
+                    ("expanded_year_digits" not in properties or
+                     not self.num_expanded_year_digits)):
                 min_value = 0
                 max_value = 9999
             elif property_ == "expanded_year_digits":
