@@ -12,15 +12,15 @@ foo & bar => baz
 [runtime]
     [[foo]]
         command scripting = """
-echo "$CYLC_TASK_SUBMIT_NUMBER" >>"$CYLC_SUITE_RUN_DIR/foo-submits.txt"
-((CYLC_TASK_SUBMIT_NUMBER > CYLC_TASK_TRY_NUMBER))
+echo "${CYLC_TASK_SUBMIT_NUMBER}" >>"${CYLC_SUITE_RUN_DIR}/foo-submits.txt"
+test "${CYLC_TASK_SUBMIT_NUMBER}" -gt "${CYLC_TASK_TRY_NUMBER}"
 """
         retry delays=2*PT0S
     [[bar]]
         command scripting = """
-cylc reset -f -s ready "$CYLC_SUITE_NAME" foo 1
+cylc reset -f -s ready "${CYLC_SUITE_NAME}" foo 1
 """
     [[baz]]
         command scripting = """
-printf "%d\n" {1..4} | cmp - "$CYLC_SUITE_RUN_DIR/foo-submits.txt"
+printf "%d\n" {1..4} | cmp - "${CYLC_SUITE_RUN_DIR}/foo-submits.txt"
 """
