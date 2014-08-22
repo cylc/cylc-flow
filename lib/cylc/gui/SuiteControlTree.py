@@ -31,12 +31,13 @@ class ControlTree(object):
     """
 Text Treeview suite control interface.
     """
-    def __init__(self, cfg, updater, theme, info_bar, get_right_click_menu,
+    def __init__(self, cfg, updater, theme, dot_size, info_bar, get_right_click_menu,
                  log_colors, insert_task_popup ):
 
         self.cfg = cfg
         self.updater = updater
         self.theme = theme
+        self.dot_size = dot_size
         self.info_bar = info_bar
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
@@ -54,7 +55,7 @@ Text Treeview suite control interface.
 
         self.t = TreeUpdater(
                 self.cfg, self.updater, self.ttreeview, self.ttree_paths,
-                self.info_bar, self.theme
+                self.info_bar, self.theme, self.dot_size
         )
         self.t.start()
         return main_box
@@ -223,7 +224,7 @@ Text Treeview suite control interface.
 
         self.tfilter_states = []
 
-        dotm = DotMaker(self.theme,size='small')
+        dotm = DotMaker(self.theme, size='small')
         cnt = 0
         for st in task_state.legal:
             box = gtk.HBox()

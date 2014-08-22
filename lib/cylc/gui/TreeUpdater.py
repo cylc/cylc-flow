@@ -16,18 +16,19 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.task_state import task_state
+from copy import deepcopy
+import datetime
+import gobject
+import threading
+from time import sleep
+
 import cylc.TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
 from cylc.wallclock import (
     get_time_string_from_unix_time, TIME_ZONE_STRING_LOCAL_BASIC)
-from copy import deepcopy
-import datetime
-import gobject
-import threading
-from time import sleep
+
 
 def _time_trim(time_value):
     if time_value is not None:
@@ -37,7 +38,7 @@ def _time_trim(time_value):
 
 class TreeUpdater(threading.Thread):
 
-    def __init__(self, cfg, updater, ttreeview, ttree_paths, info_bar, theme ):
+    def __init__(self, cfg, updater, ttreeview, ttree_paths, info_bar, theme, dot_size):
 
         super(TreeUpdater, self).__init__()
 
@@ -50,7 +51,6 @@ class TreeUpdater(threading.Thread):
 
         self.cfg = cfg
         self.updater = updater
-        self.theme = theme
         self.info_bar = info_bar
         self.last_update_time = None
         self.ancestors = {}
@@ -77,7 +77,7 @@ class TreeUpdater(threading.Thread):
         self._id_tetc_cache = {}
 
         # generate task state icons
-        dotm = DotMaker(theme)
+        dotm = DotMaker(theme, size=dot_size)
         self.dots = dotm.get_dots()
 
     def clear_tree( self ):

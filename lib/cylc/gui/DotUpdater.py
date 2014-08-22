@@ -16,10 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import cylc.TaskID
-from cylc.gui.DotMaker import DotMaker
-from cylc.state_summary import get_id_summary
-from copy import deepcopy
 import gobject
 import gtk
 import re
@@ -27,9 +23,15 @@ import string
 import threading
 from time import sleep
 
+import cylc.TaskID
+from cylc.gui.DotMaker import DotMaker
+from cylc.state_summary import get_id_summary
+from copy import deepcopy
+
+
 class DotUpdater(threading.Thread):
 
-    def __init__(self, cfg, updater, treeview, info_bar, theme ):
+    def __init__(self, cfg, updater, treeview, info_bar, theme, dot_size):
 
         super(DotUpdater, self).__init__()
 
@@ -72,7 +74,7 @@ class DotUpdater(threading.Thread):
         self.task_list = []
 
         # generate task state icons
-        dotm = DotMaker(theme)
+        dotm = DotMaker(theme, size=dot_size)
         self.dots = dotm.get_dots()
 
     def _set_tooltip(self, widget, tip_text):
@@ -354,7 +356,7 @@ class DotUpdater(threading.Thread):
                             dot_type = 'task'
                         state_list.append(self.dots[dot_type][state])
                     else:
-                        state_list.append(self.dots[dot_type]['empty'])
+                        state_list.append(self.dots['task']['empty'])
                 try:
                     self.led_liststore.append([name] + state_list)
                 except ValueError:

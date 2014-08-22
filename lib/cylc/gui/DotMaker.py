@@ -18,7 +18,6 @@
 
 import gtk
 from copy import deepcopy
-from cylc.cfgspec.gcylc import gcfg
 from cylc.task_state import task_state
 
 stopped = {
@@ -165,9 +164,9 @@ class DotMaker(object):
 
     """Make dot icons to represent task and family states."""
 
-    def __init__(self, theme, size=None):
+    def __init__(self, theme, size='medium'):
         self.theme = theme
-        self.size = size or gcfg.get(['dot icon size'])
+        self.size = size
 
     def get_icon(self, state=None, is_stopped=False, is_family=False):
         """Generate a gtk.gdk.Pixbuf for a state.

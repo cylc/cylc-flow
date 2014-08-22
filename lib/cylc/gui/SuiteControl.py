@@ -149,14 +149,14 @@ class InfoBar(gtk.VBox):
 Class to create an information bar.
     """
 
-    def __init__( self, host, theme,
+    def __init__( self, host, theme, dot_size,
                   status_changed_hook=lambda s: False,
                   log_launch_hook=lambda: False ):
         super(InfoBar, self).__init__()
 
         self.host = host
 
-        self.set_theme( theme )
+        self.set_theme(theme, dot_size)
 
         self._suite_states = []
         self._is_suite_stopped = False
@@ -232,8 +232,8 @@ Class to create an information bar.
         eb.add( self.log_widget )
         hbox.pack_start( eb, False )
 
-    def set_theme( self, theme ):
-        self.dots = DotMaker( theme )
+    def set_theme(self, theme, dot_size):
+        self.dots = DotMaker(theme, size=dot_size)
 
     def set_log(self, log_text, log_size):
         """Set log text."""
@@ -398,6 +398,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.theme_name = gcfg.get( ['use theme'] )
         self.theme = gcfg.get( ['themes', self.theme_name ] )
+        self.dot_size = gcfg.get(['dot icon size'])
 
         self.current_views = []
 
@@ -528,6 +529,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.theme = gcfg.get( ['themes',item.theme_name] )
         self.restart_views()
 
+    def set_dot_size(self, item, dsize):
+        """Change self.dot_size and then replace each view with itself"""
+        if not item.get_active():
+            return False
+        self.dot_size = dsize
+        self.restart_views()
+
     def restart_views( self ):
         """Replace each view with itself"""
         if not self.current_views[0]:
@@ -539,7 +547,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if self.current_views[view_num]:
                 # (may be None if the second view pane is turned off)
                 self.switch_view( self.current_views[view_num].name, view_num, force=True )
-        self.info_bar.set_theme( self.theme )
+        self.info_bar.set_theme( self.theme, self.dot_size )
         self.info_bar._set_state_widget() # (to update info bar immediately)
         self.update_theme_legend()
         return False
@@ -668,6 +676,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                                                    self.cfg,
                                                    self.updater,
                                                    self.theme,
+                                                   self.dot_size,
                                                    self.info_bar,
                                                    self.get_right_click_menu,
                                                    self.log_colors,
@@ -2259,39 +2268,73 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
-        key_item = gtk.ImageMenuItem( "Show task state key" )
-        dots = DotMaker( self.theme )
-        img = dots.get_image( "running" )
+        key_item = gtk.ImageMenuItem("State Icon _Key")
+        dots = DotMaker(self.theme, size='small')
+        img = dots.get_image("running")
         key_item.set_image(img)
-        self._set_tooltip( key_item, "Describe what task states the colors represent" )
-        self.view_menu.append( key_item )
-        key_item.connect( 'activate', self.popup_theme_legend )
+        self._set_tooltip(key_item, "Describe what task states the colors represent")
+        self.view_menu.append(key_item)
+        key_item.connect('activate', self.popup_theme_legend)
 
-        theme_item = gtk.ImageMenuItem( 'Theme' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU )
+        dot_size_item = gtk.ImageMenuItem('State Icon _Size')
+        img = gtk.image_new_from_stock(
+                gtk.STOCK_ZOOM_FIT, gtk.ICON_SIZE_MENU)
+        dot_size_item.set_image(img)
+        self.view_menu.append(dot_size_item)
+        dot_sizemenu = gtk.Menu()
+        dot_size_item.set_submenu(dot_sizemenu)
+
+        dot_sizes = ['small', 'medium', 'large']
+        dot_size_items = {}
+        self.dot_size = gcfg.get(['dot icon size'])
+        dot_size_items[self.dot_size] = gtk.RadioMenuItem(
+                label='_' + self.dot_size)
+        dot_sizemenu.append(dot_size_items[self.dot_size])
+        self._set_tooltip(
+                dot_size_items[self.dot_size],
+                self.dot_size + " state icon dot size")
+        for dsize in dot_sizes:
+            if dsize == self.dot_size:
+                continue
+            dot_size_items[dsize] = gtk.RadioMenuItem(
+                    group=dot_size_items[self.dot_size], label='_' + dsize)
+            dot_sizemenu.append(dot_size_items[dsize])
+            self._set_tooltip(
+                    dot_size_items[dsize], dsize + " state icon size")
+
+        # set_active then connect, to avoid causing an unnecessary toggle now.
+        dot_size_items[ self.dot_size ].set_active(True)
+        for dot_size in dot_sizes:
+            dot_size_items[dot_size].connect(
+                    'toggled', self.set_dot_size, dot_size)
+
+        theme_item = gtk.ImageMenuItem('State Icon _Theme')
+        img = gtk.image_new_from_stock(
+                gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
         theme_item.set_image(img)
-        self.view_menu.append( theme_item )
+        self.view_menu.append(theme_item)
         thememenu = gtk.Menu()
         theme_item.set_submenu(thememenu)
 
         theme_items = {}
         theme = "default"
-        theme_items[theme] = gtk.RadioMenuItem( label=theme )
-        thememenu.append( theme_items[theme] )
-        self._set_tooltip( theme_items[theme], theme + " task state theme" )
+        theme_items[theme] = gtk.RadioMenuItem(label='_' + theme)
+        thememenu.append(theme_items[theme])
+        self._set_tooltip(theme_items[theme], theme + " state icon theme")
         theme_items[theme].theme_name = theme
-        for theme in gcfg.get( ['themes'] ):
+        for theme in gcfg.get(['themes']):
             if theme == "default":
                 continue
-            theme_items[theme] = gtk.RadioMenuItem( group=theme_items['default'], label=theme )
-            thememenu.append( theme_items[theme] )
-            self._set_tooltip( theme_items[theme], theme + " task state theme" )
+            theme_items[theme] = gtk.RadioMenuItem(
+                    group=theme_items['default'], label='_' + theme)
+            thememenu.append(theme_items[theme])
+            self._set_tooltip(theme_items[theme], theme + " state icon theme")
             theme_items[theme].theme_name = theme
 
         # set_active then connect, to avoid causing an unnecessary toggle now.
         theme_items[ self.theme_name ].set_active(True)
-        for theme in gcfg.get( ['themes'] ):
-            theme_items[theme].connect( 'toggled', self.set_theme )
+        for theme in gcfg.get(['themes']):
+            theme_items[theme].connect('toggled', self.set_theme)
 
         self.view_menu.append( gtk.SeparatorMenuItem() )
 
@@ -2920,24 +2963,24 @@ For more Stop options use the Control menu.""" )
 
     def create_info_bar( self ):
         self.info_bar = InfoBar(
-            self.cfg.host, self.theme,
+            self.cfg.host, self.theme, self.dot_size,
             self._alter_status_toolbar_menu,
             lambda: self.run_suite_log(None, type="err"))
 
     def popup_theme_legend( self, widget=None ):
         """Popup a theme legend window."""
         if self.theme_legend_window is None:
-            self.theme_legend_window = ThemeLegendWindow( self.window,
-                                                          self.theme )
-            self.theme_legend_window.connect( "destroy",
-                                              self.destroy_theme_legend )
+            self.theme_legend_window = ThemeLegendWindow(
+                    self.window, self.theme, self.dot_size)
+            self.theme_legend_window.connect(
+                    "destroy", self.destroy_theme_legend)
         else:
             self.theme_legend_window.present()
 
     def update_theme_legend( self ):
         """Update the theme legend window, if it exists."""
         if self.theme_legend_window is not None:
-            self.theme_legend_window.update( self.theme )
+            self.theme_legend_window.update(self.theme, self.dot_size)
 
     def destroy_theme_legend( self, widget ):
         """Handle a destroy of the theme legend window."""
