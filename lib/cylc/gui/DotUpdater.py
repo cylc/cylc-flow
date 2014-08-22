@@ -16,7 +16,6 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.task_state import task_state
 import cylc.TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
@@ -73,11 +72,8 @@ class DotUpdater(threading.Thread):
         self.task_list = []
 
         # generate task state icons
-        dotm = DotMaker( theme )
-        self.dots = {}
-        for state in task_state.legal:
-            self.dots[ state ] = dotm.get_icon( state )
-        self.dots['empty'] = dotm.get_icon()
+        dotm = DotMaker(theme)
+        self.dots = dotm.get_dots()
 
     def _set_tooltip(self, widget, tip_text):
         tip = gtk.Tooltips()
@@ -344,38 +340,46 @@ class DotUpdater(threading.Thread):
 
         if self.is_transposed:
             for name in self.task_list:
-                point_strings_for_tasks = tasks_by_name.get( name, [] )
+                point_strings_for_tasks = tasks_by_name.get(name, [])
                 if not point_strings_for_tasks:
                     continue
-                state_list = [ ]
+                state_list = []
                 for point_string in self.point_strings:
                     if point_string in point_strings_for_tasks:
-                        task_id = cylc.TaskID.get( name, point_string )
-                        state = state_summary[ task_id ][ 'state' ]
-                        state_list.append( self.dots[state] )
+                        task_id = cylc.TaskID.get(name, point_string)
+                        state = state_summary[task_id]['state']
+                        if task_id in self.fam_state_summary:
+                            dot_type = 'family'
+                        else:
+                            dot_type = 'task'
+                        state_list.append(self.dots[dot_type][state])
                     else:
-                        state_list.append( self.dots['empty'] )
+                        state_list.append(self.dots[dot_type]['empty'])
                 try:
-                    self.led_liststore.append( [name] + state_list )
+                    self.led_liststore.append([name] + state_list)
                 except ValueError:
                     # A very laggy store can change the columns and raise this.
                     return False
         else:
             for point_string in self.point_strings:
-                tasks_at_point_string = tasks_by_point_string[ point_string ]
-                state_list = [ ]
+                tasks_at_point_string = tasks_by_point_string[point_string]
+                state_list = []
                 for name in self.task_list:
+                    task_id = cylc.TaskID.get(name, point_string)
+                    if task_id in self.fam_state_summary:
+                        dot_type = 'family'
+                    else:
+                        dot_type = 'task'
                     if name in tasks_at_point_string:
-                        task_id = cylc.TaskID.get( name, point_string )
-                        state = state_summary[ task_id ][ 'state' ]
+                        state = state_summary[task_id]['state']
                         try:
-                            state_list.append( self.dots[state] )
+                            state_list.append(self.dots[dot_type][state])
                         except KeyError:
                             # unknown task state: use empty and save for next encounter
-                            self.dots[state] = self.dots['empty']
-                            state_list.append( self.dots['empty'] )
+                            self.dots[dot_type][state] = self.dots[dot_type]['empty']
+                            state_list.append(self.dots[dot_type][state])
                     else:
-                        state_list.append( self.dots['empty'] )
+                        state_list.append(self.dots[dot_type]['empty'])
                 try:
                     self.led_liststore.append(
                         [point_string] + state_list + [point_string])

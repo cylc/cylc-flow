@@ -76,11 +76,9 @@ class TreeUpdater(threading.Thread):
         # Cache the latest ETC calculation for active ids.
         self._id_tetc_cache = {}
 
-        dotm = DotMaker( theme )
-        self.dots = {}
-        for state in task_state.legal:
-            self.dots[ state ] = dotm.get_icon( state )
-        self.dots['empty'] = dotm.get_icon()
+        # generate task state icons
+        dotm = DotMaker(theme)
+        self.dots = dotm.get_dots()
 
     def clear_tree( self ):
         self.ttreestore.clear()
@@ -259,10 +257,14 @@ class TreeUpdater(threading.Thread):
                 job_id = summary[id].get('submit_method_id')
                 host = summary[id].get('host')
 
+                if id in self.fam_state_summary:
+                    dot_type = 'family'
+                else:
+                    dot_type = 'task'
                 try:
-                    icon = self.dots[state]
+                    icon = self.dots[dot_type][state]
                 except KeyError:
-                    icon = self.dots['empty']
+                    icon = self.dots[dot_type]['empty']
 
                 dest[point_string][name] = [
                         state, host, job_id, tsub_string, tstart_string,
