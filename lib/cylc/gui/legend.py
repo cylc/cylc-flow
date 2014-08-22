@@ -29,7 +29,7 @@ class ThemeLegendWindow(gtk.Window):
 
     """This is a popup window displaying the theme state colors."""
 
-    def __init__( self, parent_window, theme_map ):
+    def __init__(self, parent_window, theme_map, dot_size):
         super(ThemeLegendWindow, self).__init__()
         self.set_border_width(5)
         self.set_title( "" )
@@ -42,6 +42,7 @@ class ThemeLegendWindow(gtk.Window):
         vbox = gtk.VBox()
 
         self._theme = theme_map
+        self._dot_size = dot_size
         self._key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
         treeview = gtk.TreeView( self._key_liststore )
         treeview.set_headers_visible(False)
@@ -64,14 +65,16 @@ class ThemeLegendWindow(gtk.Window):
         self.add( treeview )
         self.show_all()
 
-    def update( self, new_theme=None ):
+    def update(self, new_theme=None, new_dot_size=None):
         """Update, optionally with a new theme."""
         if new_theme is not None:
             self._theme = new_theme
+        if new_dot_size is not None:
+            self._dot_size = new_dot_size
         self._set_key_liststore()
 
-    def _set_key_liststore( self ):
-        dotm = DotMaker( self._theme )
+    def _set_key_liststore(self):
+        dotm = DotMaker(self._theme, self._dot_size)
         self._key_liststore.clear()
         for state in task_state.legal:
             dot = dotm.get_icon( state )
