@@ -22,7 +22,7 @@ import re
 from signal import SIGKILL
 from subprocess import check_call, Popen, PIPE
 
-class at( JobSubmit ):
+class at(JobSubmit):
     """
     Submit the task job script to the simple 'at' scheduler. Note that
     (1) the 'atd' daemon service must be running; (2) the atq command
@@ -41,8 +41,9 @@ class at( JobSubmit ):
     # killed correctly.
     COMMAND_TEMPLATE = (
             "echo \"perl -e \\\"setpgrp(0,0);exec(@ARGV)\\\" %s 1>%s 2>%s\"" +
-            " | at now") # % ( jobfile-path, out, err )
+            " | at now") # % (jobfile-path, out, err)
     REC_ID = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
+    ROUTINE_WARNING = "warning: commands will be executed using /bin/sh"
 
     # atq properties:
     #   * stdout is "job-num date hour queue username", e.g.:
@@ -50,10 +51,9 @@ class at( JobSubmit ):
     #   * queue is '=' if running
     #
 
-    def construct_job_submit_command( self ):
-        """
-        Construct a command to submit this job to run.
-        """
+    def construct_job_submit_command(self):
+        """Construct a command to submit this job to run."""
+
         command_template = self.job_submit_command_template
         if not command_template:
             command_template = self.__class__.COMMAND_TEMPLATE
@@ -61,26 +61,47 @@ class at( JobSubmit ):
                                             self.stdout_file,
                                             self.stderr_file )
 
-    def filter_output( self, out, err):
-        """Filter the stdout/stderr output - suppress ID stderr message."""
+    def filter_output(self, out, err):
+        """Suppress at's routine output to stderr.
+        
+        Otherwises we get warning messages that suggest something is wrong.
+        1) move the standard job ID message from stderr to stdout
+        2) suppress the message warning that commands will be executed with
+        /bin/sh (this refers to the command line that runs the job script).
+
+        Call get_id() first, to extract the job ID.
+
+        """
+
+        if out is not None:
+            out_lines = out.split()
+        else:
+            out_lines = []
         new_err = ""
+        new_out = ""
         if err:
             for line in err.splitlines():
-                if not self.REC_ID.match(line):
+                if self.REC_ID.match(line):
+                    out_lines.append(line)
+                elif line == self.__class__.ROUTINE_WARNING:
+                    continue
+                else:
                     new_err += line + "\n"
-        return out, new_err
+        new_out = "\n".join(out_lines)
+        return new_out, new_err
 
-    def get_id( self, out, err ):
-        """
-        Extract the job submit ID from job submission command
+    def get_id(self, out, err):
+        """Extract the job submit ID from job submission command
+
         output. The at scheduler prints the job ID to stderr.
+
         """
         for line in str(err).splitlines():
             match = self.REC_ID.match(line)
             if match:
                 return match.group("id")
 
-    def kill( self, jid, st_file ):
+    def kill(self, jid, st_file):
         """Kill the job."""
         if os.access(st_file, os.F_OK | os.R_OK):
             for line in open(st_file):
@@ -91,7 +112,7 @@ class at( JobSubmit ):
                     return
         check_call(["atrm", jid])
 
-    def poll( self, jid ):
+    def poll(self, jid):
         """Return 0 if jid is in the queueing system, 1 otherwise."""
         proc = Popen(["atq"], stdout=PIPE)
         if proc.wait():

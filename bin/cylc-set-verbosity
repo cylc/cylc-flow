@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove( '--use-ssh' )
     from cylc.remote import remrun
@@ -28,33 +29,37 @@ from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
+from cylc.job_logs import logging_priority
 
-parser = cop( """cylc [control] set-verbosity [OPTIONS] ARGS
+parser = cop("""cylc [control] set-verbosity [OPTIONS] ARGS
 
 Change the logging priority level of a running suite.  Only messages at
 or above the chosen priority level will be logged; for example, if you
-choose 'warning', only warning, error, and critical messages will be
-logged. The 'info' level is appropriate under most circumstances.""",
+choose WARNING, only warnings and critical messages will be logged.""",
     pyro=True,
-    argdoc=[ ('REG', 'Suite name'),
-        ('LEVEL', 'debug, info, warning, error, or critical')] )
-
-vchoices = ['debug','info', 'warning', 'error', 'critical']
+    argdoc=[
+        ('REG', 'Suite name'),
+        ('LEVEL', ', '.join(logging_priority.keys()))
+    ]
+)
 
 (options, args) = parser.parse_args()
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+suite, pphrase = prep_pyro(args[0], options).execute()
 
-verbosity = args[1]
-if verbosity not in vchoices:
-    parser.error( "Illegal logging level, " + verbosity )
+priority_str = args[1]
+try:
+    priority = logging_priority[priority_str]
+except KeyError:
+    parser.error("Illegal logging level, %s" % priority)
 
 try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+    proxy = cylc_pyro_client.client(
+            suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    prompt( "Set logging level to " + verbosity + " in " + suite, options.force )
-    res, msg = proxy.put( 'set verbosity', verbosity )
+            options.port).get_proxy('command-interface')
+    prompt("Set logging level to " + priority_str + " in " + suite, options.force)
+    res, msg = proxy.put('set verbosity', priority)
 except Exception, x:
     if cylc.flags.debug:
         raise
@@ -63,4 +68,4 @@ except Exception, x:
 if res:
     print msg
 else:
-    sys.exit( msg )
+    sys.exit(msg)

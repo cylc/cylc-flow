@@ -26,19 +26,19 @@ chosen method on the chosen host (using passwordless ssh if not local).
 Derived classes define the particular job submission method.
 """
 
+import os
+import sys
+import stat
+import socket
+
+import cylc.flags
+import cylc.TaskID
 from cylc.job_submission.jobfile import JobFile
+from cylc.cfgspec.site import sitecfg
 from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
-import cylc.TaskID
-from cylc.cfgspec.site import sitecfg
 from cylc.envvar import expandvars
 from cylc.command_env import pr_scripting_sl
-import cylc.flags
-from cylc.mkdir_p import mkdir_p
-import os
-import socket
-import stat
-import sys
 
 
 class JobSubmit(object):
@@ -75,28 +75,17 @@ class JobSubmit(object):
         self.command = None
         self.job_submit_command_template = jobconfig.get('command template')
 
-        # Local job script path: append submit number.
-        # (used by both local and remote tasks)
-        task_name, cycle_name = cylc.TaskID.split(task_id)
-        tag = os.path.join(cycle_name, task_name, "%02d" % int(submit_num))
-
-        job_log_dir = sitecfg.get_derived_host_item(self.suite,
-                                                    'suite job log directory')
-        self.local_jobfile_path = os.path.join(job_log_dir, tag, "job")
-
-        # The directory is created in config.py
+        common_job_log_path = jobconfig.get('common job log path')
+        self.local_jobfile_path = jobconfig.get('local job file path')
         self.logfiles.add_path(self.local_jobfile_path)
 
         task_host = jobconfig.get('task host')
         task_owner = jobconfig.get('task owner')
 
         self.remote_shell_template = sitecfg.get_host_item(
-            'remote shell template',
-            task_host,
-            task_owner)
+            'remote shell template', task_host, task_owner)
 
         if is_remote_host(task_host) or is_remote_user(task_owner):
-            # REMOTE TASK OR USER ACCOUNT SPECIFIED FOR TASK - submit using ssh
             self.local = False
             if task_owner:
                 self.task_owner = task_owner
@@ -108,12 +97,14 @@ class JobSubmit(object):
             else:
                 self.task_host = socket.gethostname()
 
-            remote_log_job_dir = sitecfg.get_derived_host_item(
+            remote_job_log_dir = sitecfg.get_derived_host_item(
                 self.suite,
                 'suite job log directory',
                 self.task_host,
                 self.task_owner)
-            remote_jobfile_path = os.path.join(remote_log_job_dir, tag, "job")
+
+            remote_jobfile_path = os.path.join(
+                    remote_job_log_dir, common_job_log_path)
 
             # Remote log files
             self.stdout_file = remote_jobfile_path + ".out"
@@ -216,6 +207,7 @@ class JobSubmit(object):
         """Filter the stdout/stderr from a job submission command.
 
         Derived classes should override this method.
+        Used to prevent routine logging of irrelevant information.
 
         """
         return out, err
@@ -239,21 +231,6 @@ class JobSubmit(object):
             self.task_id,
             self.jobconfig)
 
-        # write the job file
-        local_log_dir = os.path.dirname(self.local_jobfile_path)
-        mkdir_p(local_log_dir)
-        target = os.path.join(os.path.dirname(local_log_dir), "NN")
-        try:
-            os.unlink(target)
-        except OSError:
-            pass
-        try:
-            os.symlink(os.path.basename(local_log_dir), target)
-        except OSError as exc:
-            if not exc.filename:
-                exc.filename = target
-            raise exc
-
         job_file.write(self.local_jobfile_path)
         # make it executable
         mode = (os.stat(self.local_jobfile_path).st_mode |
@@ -261,21 +238,9 @@ class JobSubmit(object):
         os.chmod(self.local_jobfile_path, mode)
 
     def get_job_submission_command(self, dry_run=False):
-        """Construct self.command, the command to submit the jobfile to run"""
-        try:
-            self.construct_job_submit_command()
-        except TypeError, exc:
-            if cylc.flags.debug:
-                raise
-            print >> sys.stderr, "ERROR:", exc
-            print >> sys.stderr, (
-                "ERROR: Failed to construct job submission command")
-            print >> sys.stderr, (
-                """  Possible cause: command template not compatible with the
-  job submission method in terms of the number of string substitutions.
-  Use --debug to abort cylc with an exception traceback.""")
-            return None
-
+        """Construct the command to submit the jobfile to run"""
+        # (Exceptions here caught in task_pool.py).
+        self.construct_job_submit_command()
         if self.local:
             command = self.LOCAL_COMMAND_TEMPLATE % {
                 "jobfile_path": self.jobfile_path,

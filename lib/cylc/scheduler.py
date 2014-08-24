@@ -487,25 +487,10 @@ class scheduler(object):
         self.log.info(
             "The suite will pause when all tasks have passed " + point_string)
 
-    def command_set_verbosity( self, level ):
-        # change logging verbosity:
-        if level == 'debug':
-            new_level = logging.DEBUG
-        elif level == 'info':
-            new_level = logging.INFO
-        elif level == 'warning':
-            new_level = logging.WARNING
-        elif level == 'error':
-            new_level = logging.ERROR
-        elif level == 'critical':
-            new_level = logging.CRITICAL
-        else:
-            self.log.warning( "Illegal logging level: " + level )
-            return False, "Illegal logging level: " + level
-
-        self.log.setLevel( new_level )
-
-        flags.debug = ( level == 'debug' )
+    def command_set_verbosity(self, lvl):
+        # (lvl legality checked by CLI)
+        self.log.setLevel(lvl)
+        flags.debug = (lvl == logging.DEBUG)
         return True, 'OK'
 
     def command_remove_cycle( self, point_string, spawn ):
@@ -954,7 +939,8 @@ class scheduler(object):
         # satisfied by', but necessarily 'started running' too.
         for itask in tasks:
             if self.config.cfg['cylc']['log resolved dependencies']:
-                itask.log( 'NORMAL', 'triggered off ' + str( itask.get_resolved_dependencies()) )
+                itask.log(logging.INFO, 'triggered off %s' %
+                        str(itask.get_resolved_dependencies()))
 
     def check_suite_timer( self ):
         if self.already_timed_out:
