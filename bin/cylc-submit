@@ -190,7 +190,8 @@ if options.dry_run:
 proc_pool = mp_pool(nproc=1)
 cmd_spec = (CMD_TYPE_JOB_SUBMISSION, task_proxy.get_command())
 capture_first_line = task_proxy.job_sub_method_name=='background'
-proc_pool.put_command(cmd_spec, task_proxy.submission_command_callback, capture_first_line)
+proc_pool.put_command(
+        cmd_spec, task_proxy.job_submission_callback, capture_first_line)
 proc_pool.close()
 proc_pool.join()
 proc_pool.handle_results_async()

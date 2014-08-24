@@ -110,13 +110,11 @@ class scheduler(object):
         self._profile_amounts = {}
         self._profile_update_times = {}
 
-        # provide a variable to allow persistance of reference test settings
-        # across reloads
+        # For persistence of reference test settings across reloads:
         self.reference_test_mode = False
         self.gen_reference_log = False
 
         self.shut_down_cleanly = False
-        self.shut_down_quickly = False
         self.shut_down_now = False
 
         # TODO - stop task should be held by the task pool.
@@ -179,7 +177,6 @@ class scheduler(object):
         # control commands to expose indirectly via a command queue
         self.control_commands = {
                 'stop cleanly'          : self.command_set_stop_cleanly,
-                'stop quickly'          : self.command_stop_quickly,
                 'stop now'              : self.command_stop_now,
                 'stop after point'        : self.command_set_stop_after_point,
                 'stop after clock time' : self.command_set_stop_after_clock_time,
@@ -411,18 +408,14 @@ class scheduler(object):
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
+        self.proc_pool.stop_job_submission()
         if kill_active_tasks:
             self.pool.kill_active_tasks()
-        self.proc_pool.close()
         self.shut_down_cleanly = True
-
-    def command_stop_quickly(self):
-        """Stop job submission and set the flag for quick shutdown."""
-        self.proc_pool.close()
-        self.shut_down_quickly = True
 
     def command_stop_now(self):
         """Shutdown immediately."""
+        self.proc_pool.stop_job_submission()
         self.proc_pool.terminate()
         raise SchedulerStop("Stopping NOW")
 
@@ -903,12 +896,13 @@ class scheduler(object):
                 self.pool.check_task_timers()
 
             if (self.stop_clock_done() or
-                    self.stop_task_done() or 
+                    self.stop_task_done() or
                     self.pool.check_auto_shutdown()):
                 self.command_set_stop_cleanly()
 
-            if ((self.shut_down_cleanly and self.pool.no_active_tasks()) or 
-                    self.shut_down_quickly or self.pool.check_auto_shutdown()):
+            if ((self.shut_down_cleanly or self.pool.check_auto_shutdown()) and 
+                    self.pool.no_active_tasks()):
+                self.proc_pool.close()
                 self.shut_down_now = True
 
             if self.options.profile_mode:
@@ -916,8 +910,10 @@ class scheduler(object):
                 self._update_profile_info("scheduler loop dt (s)", t1 - t0,
                                           amount_format="%.3f")
                 self._update_cpu_usage()
-                self._update_profile_info("jobqueue.qsize", float(self.pool.jobqueue.qsize()),
-                                          amount_format="%.1f")
+                self._update_profile_info(
+                        "jobqueue.qsize",
+                        float(self.pool.jobqueue.qsize()),
+                        amount_format="%.1f")
 
             time.sleep(1)
 
@@ -929,7 +925,7 @@ class scheduler(object):
                 self.pool.get_min_point(), self.pool.get_max_point(),
                 self.paused(),
                 self.will_pause_at(),
-                (self.shut_down_cleanly or self.shut_down_quickly),
+                self.shut_down_cleanly,
                 self.will_stop_at(), self.pool.custom_runahead_limit,
                 self.config.ns_defn_order)
 
