@@ -19,7 +19,6 @@
 import os
 import sys
 import logging
-from shutil import rmtree
 
 from cfgspec.site import sitecfg
 from mkdir_p import mkdir_p
@@ -53,8 +52,7 @@ def get_create_job_log_path(suite, task_name, task_point, submit_num):
     * part2: the rest, which is also used on remote task hosts.
     
     The full local job log directory is created if necessary, and its parent
-    symlinked to NN (submit number). If the directory already exists it is
-    deleted first to get rid of any output from a previous suite run.
+    symlinked to NN (submit number).
 
     """
 
@@ -67,10 +65,6 @@ def get_create_job_log_path(suite, task_name, task_point, submit_num):
 
     local_log_dir = os.path.join(suite_job_log_dir, the_rest_dir)
 
-    try:
-        rmtree(local_log_dir)
-    except OSError:
-        pass
     mkdir_p(local_log_dir)
     target = os.path.join(os.path.dirname(local_log_dir), "NN")
     try:

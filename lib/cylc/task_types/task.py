@@ -849,14 +849,22 @@ class task( object ):
         self.job_sub_method.write_jobscript()
         return self.job_sub_method.get_job_submission_command(dry_run)
 
-    def presubmit( self, owner, host, subnum ):
-        """A cut down version of submit, without the job submission,
-        just to provide access to the job_sub_method-specific job poll
-        commands before the task is submitted (polling in submitted
-        state or on suite restart)."""
+    def presubmit(self, owner, host, subnum):
+        """A cut down version of get_command().
+        
+        This provides access to job poll commands before the task is submitted,
+        for polling in the submitted state or on suite restart.
+        
+        """
         # TODO - refactor to get easier access to polling commands!
 
         rtconfig = pdeepcopy(self.__class__.rtconfig)
+
+        local_job_log_dir, common_job_log_path = (
+                get_create_job_log_path(
+                self.suite_name, self.name, self.point, self.submit_num))
+        local_jobfile_path = os.path.join(
+                local_job_log_dir, common_job_log_path)
 
         # dynamic instantiation - don't know job sub method till run time.
         module_name = rtconfig['job submission']['method']
@@ -881,27 +889,29 @@ class task( object ):
         job_sub_method_class = getattr(mod, class_name)
 
         jobconfig = {
-                'directives'             : rtconfig['directives'],
-                'initial scripting'      : rtconfig['initial scripting'],
-                'environment scripting'  : rtconfig['environment scripting'],
-                'runtime environment'    : rtconfig['environment'],
-                'remote suite path'      : rtconfig['remote']['suite definition directory'],
-                'job script shell'       : rtconfig['job submission']['shell'],
-                'command template'       : rtconfig['job submission']['command template'],
-                'work sub-directory'     : rtconfig['work sub-directory'],
-                'use manual completion'  : False,
-                'pre-command scripting'  : '',
-                'command scripting'      : '',
+                'directives' : rtconfig['directives'],
+                'initial scripting' : rtconfig['initial scripting'],
+                'environment scripting' : rtconfig['environment scripting'],
+                'runtime environment' : rtconfig['environment'],
+                'remote suite path' : rtconfig['remote']['suite definition directory'],
+                'job script shell' : rtconfig['job submission']['shell'],
+                'command template' : rtconfig['job submission']['command template'],
+                'work sub-directory' : rtconfig['work sub-directory'],
+                'use manual completion' : False,
+                'pre-command scripting' : '',
+                'command scripting' : '',
                 'post-command scripting' : '',
-                'namespace hierarchy'    : '',
-                'submission try number'  : 1,
-                'try number'             : 1,
+                'namespace hierarchy' : '',
+                'submission try number' : 1,
+                'try number' : 1,
                 'absolute submit number' : subnum,
-                'is cold-start'          : False,
-                'task owner'             : owner,
-                'task host'              : host,
-                'log files'              : self.logfiles,
-                }
+                'is cold-start' : False,
+                'task owner' : owner,
+                'task host' : host,
+                'log files' : self.logfiles,
+                'local job file path' : local_jobfile_path,
+                'common job log path' : common_job_log_path
+        }
         try:
             job_sub_method = job_sub_method_class(
                     self.id, self.suite_name, jobconfig, str(subnum))
@@ -1285,7 +1295,7 @@ class task( object ):
                     self.task_owner, self.task_host = self.user_at_host.split('@', 1)
                 else:
                     self.task_host = self.user_at_host
-            job_sub_method = self.presubmit( self.task_owner, self.task_host, self.submit_num )
+            job_sub_method = self.presubmit(self.task_owner, self.task_host, self.submit_num)
 
         cmd_tmpl = ("cylc get-job-status %(task_id)s %(status_file)s " +
                     "%(job_sys)s %(job_id)s")
@@ -1325,12 +1335,7 @@ class task( object ):
                     self.task_owner, self.task_host = self.user_at_host.split('@', 1)
                 else:
                     self.task_host = self.user_at_host
-            job_sub_method = self.presubmit( self.task_owner, self.task_host, self.submit_num )
-
-        if not hasattr( job_sub_method, 'kill' ):
-            # (for job submission methods that do not handle polling yet)
-            self.log(WARNING, "'" + self.job_sub_method_name + "' job submission does not support killing" )
-            return
+            job_sub_method = self.presubmit(self.task_owner, self.task_host, self.submit_num)
 
         cmd = ("cylc job-kill %(status_file)s %(job_sys)s %(job_id)s" % {
             "status_file": job_sub_method.jobfile_path + ".status",
