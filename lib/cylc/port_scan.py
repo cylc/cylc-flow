@@ -54,7 +54,7 @@ class OtherServerFoundError( SuiteIdentificationError ):
     pass
 
 class port_interrogator(object):
-    # find which suite or lockserver is running on a given port
+    # find which suite is running on a given port
     def __init__( self, host, port, my_passphrases=None, pyro_timeout=None ):
         self.host = host
         self.port = port
@@ -268,6 +268,5 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, silent=False ):
             if flags.verbose:
                 after = datetime.datetime.now()
                 print "Pyro connection on port " +str(port) + " took: " + str( after - before )
-            # found a cylc suite or lock server
             suites.append( ( name, port ) )
     return suites
