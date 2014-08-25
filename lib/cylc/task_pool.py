@@ -399,7 +399,7 @@ class pool(object):
         for itask in readytogo:
             itask.set_state_ready()
             if self.run_mode == 'simulation':
-                itask.job_submission_succeeded('','')
+                itask.job_submission_succeeded()
                 continue
             try:
                 cmd = itask.get_command(overrides=self.wireless.get(itask.id))
@@ -407,6 +407,7 @@ class pool(object):
                 # Could be a bad command template.
                 itask.log(ERROR, "Failed to construct job submission command")
                 itask.command_log("SUBMIT", err=str(e))
+                itask.job_submission_failed()
             else:
                 # Queue the job submission command for execution.
                 cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
