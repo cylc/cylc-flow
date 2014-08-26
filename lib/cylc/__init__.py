@@ -49,13 +49,6 @@ def environ_init(argv0=None):
     # case in post-5.0 daemon-mode cylc?)
     os.environ['PYTHONUNBUFFERED'] = 'true'
 
-    # Export $HOSTNAME for use in the default lockserver config (see
-    # $CYLC_DIR/conf/lockserver.conf). HOSTNAME is a bash variable (see
-    # man bash) that is defined but not exported; in other shells it may
-    # not even be defined.
-    if not os.getenv('HOSTNAME', ''):
-        os.environ['HOSTNAME'] = socket.gethostname()
-
 def environ_path_add(dirs, key='PATH'):
     """For each dir in dirs, add dir to the front of the PATH environment
     variable. If the 2nd argument key is specified, add each dir to the front of

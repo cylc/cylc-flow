@@ -61,9 +61,6 @@ messages such as remote error tracebacks to be sent to the handler.
   The defaultdict can be used similarly (i.e. without checking for 
   existence of an item first) but only since Python 2.5.
 
-* In dummy mode, task message stdout is not in dummy clock time.
-  To correct this would require getting the dummy time from the suite.
-
 * We need to be able to distinguish cycle time and async tags
   throughout, by using distinct derived classes or preprending 
   markers such as: c:YYYYMMDDHH and a:1. Currently both are 
@@ -79,9 +76,6 @@ messages such as remote error tracebacks to be sent to the handler.
   each task could just ask those tasks, rather than all of them (via the
   broker) for satisfaction. We could then eliminate the broker, and
   may significantly increase efficiency for very large suites?
-
-* lockserver configuration is currently installation-wide under
-  $CYLC_DIR/conf - should allow user override.
 
 * RECURSIVE PURGE OVERHAUL? see documentation of limitations in the
   purge command help. Post cylc-3.0 we could easily determine, via the
@@ -137,9 +131,6 @@ messages such as remote error tracebacks to be sent to the handler.
   to the suite.rc dependency graph. E.g. we may be able to remove many
   finished tasks ahead of the generic cleanup cut off.
 
-* locking code could be simplified or cleaned up a bit now that
-  the lockserver is user-specific? (has this been done?)
-
 * currently all task reset commands go through the 'remote' object,
   which all suites have, but we could get a proxy for the task proxy
   directly, in which case we'd could catch Pyro.NamingError to detect if
@@ -150,14 +141,10 @@ messages such as remote error tracebacks to be sent to the handler.
   of simultaneous connections to a single pyro server?
   The default connection validator checks for this.
   + port range: set sufficiently wide for large sites.
-  (Consider lockservers too)
   + consider Pyro multi-threading again?
 
 * Check that user-defined task names do not clash with parent class
   or attribute names.
-
-* --port= does not prevent port scan for lockserver?  check for
-  non-essential port scanning, esp. in gui. (see GUI note below)
 
 * ?can deletion and insertion while a suite is HELD result in 
     "INSERTING A TASK
@@ -266,13 +253,6 @@ messages such as remote error tracebacks to be sent to the handler.
   prerequisite satisfied. However, we could get tasks to record the ID
   of the satisfier task as well, for each prerequisite, and also to
   choose the latest task as satisfier if more than one can do it.
-
-* need a way to make the the custom clock (accelerated in dummy mode)
-  available throughout the code, so we can easily use it anywhere
-  (task.set_execution_timer is a kludge we could avoid, for instance).
-
-* clean up the clock class with respect to dummy vs real time, and move
-  it into task pool?
 
 * Cylc internals can easily handle different task commands, environment,
 outputs etc., at different times, BUT this would complicate the suite.rc 

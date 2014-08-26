@@ -9,18 +9,6 @@ TO BE DOCUMENTED:
 * cold start prerequisites are ignored if the initial cycle time is not 
   a valid hour for the task (intentional: consider 00Z RCF task in nzlam).
 
-* document lockserver hosting issues: on a global filesystem, could use
-  single lockserver across multiple machines (have to specify
-  CYLC_LOCKSERVER_HOST in all suites, however) OR allow a separate
-  lockserver on each host - but this won't prevent running the same
-  suite on different hosts at the same time, which would cause probs in
-  a global filesystem.  ALSO _THIS functionality is currently disabled
-  in cylc -it is assumed that CYLC_SUITE_HOST is also the lockserver host.
-
-* suite db locking: document, and provide info via command response, 
-  what to do in the unlikely event that a lock is in place when a
-  transaction is attempted. Also, should trap Ctrl-C => unlock.
-
 * if a suite is restarted on a new port the gui still reconnects to the
   correct suite.
 
@@ -37,9 +25,6 @@ TO BE DOCUMENTED:
 * deleting a task may allow the suite to move on to the point that the
   deleted task, if reinserted, will not get its prerequisites satisfied
   automatically.
-
-* when a suite releases its lock all of its task locks are also released
-  (e.g. when a suite is stopped --now with tasks still running).
 
 * Why the need for different spawning behaviour of sequential tasks?
   Because relying on self-dependence, foo[T-6] => foo[T], would require
