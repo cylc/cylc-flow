@@ -27,6 +27,7 @@ import time
 
 import gtk
 import gobject
+from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 #import pygtk
 #pygtk.require('2.0')
 
@@ -528,9 +529,9 @@ class SummaryApp(object):
             tooltip.set_text(suite + " - " + host)
             return True
         if column.get_title() == "Updated":
-            time_object = datetime.datetime.fromtimestamp(update_time)
-            text = "Info retrieved at " + time_object.isoformat()
-            tooltip.set_text(text)
+            time_point = get_timepoint_from_seconds_since_unix_epoch(
+                update_time)
+            tooltip.set_text("Info retrieved at " + str(time_point))
             return True
         if column.get_title() != "Status":
             tooltip.set_text(None)
@@ -584,8 +585,9 @@ class SummaryApp(object):
 
     def _set_cell_text_time(self, column, cell, model, iter_):
         update_time = model.get_value(iter_, 4)
-        time_object = datetime.datetime.fromtimestamp(update_time)
-        time_string = time_object.strftime("%H:%M:%S")
+        time_point = get_timepoint_from_seconds_since_unix_epoch(update_time)
+        time_point.set_time_zone_to_local()
+        time_string = str(time_point).split("T")[1]
         is_stopped = model.get_value(iter_, 2)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", time_string)
