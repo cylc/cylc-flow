@@ -24,6 +24,7 @@ from broker import broker
 import flags
 from Pyro.errors import NamingError, ProtocolError
 from mp_pool import CMD_TYPE_JOB_SUBMISSION
+from logging import ERROR, WARNING, DEBUG, INFO
 
 import cylc.rundb
 from cylc.cycling.loader import (
@@ -119,19 +120,19 @@ class pool(object):
 
         # add in held state if beyond the suite stop point
         if self.stop_point and itask.point > self.stop_point:
-            itask.log('NORMAL', "holding (beyond suite stop point) " + str(self.stop_point))
+            itask.log(INFO, "holding (beyond suite stop point) " + str(self.stop_point))
             itask.reset_state_held()
 
         # TODO ISO - restore this functionality
         #elif self.hold_time and itask.point > self.hold_time:
-        #    itask.log('NORMAL', "holding (beyond suite hold point) " +
+        #    itask.log(INFO, "holding (beyond suite hold point) " +
         #    str(self.hold_time))
         #    itask.reset_state_held()
 
         # add in held state if a future trigger goes beyond the suite stop point
         # (note this only applies to tasks below the suite stop point themselves)
         elif self.task_has_future_trigger_overrun(itask):
-            itask.log("NORMAL", "holding (future trigger beyond stop point)")
+            itask.log(INFO, "holding (future trigger beyond stop point)")
             self.held_future_tasks.append(itask.id)
             itask.reset_state_held()
 
@@ -233,7 +234,7 @@ class pool(object):
         self.pool[itask.point][itask.id] = itask
         self.pool_changed = True
         flags.pflag = True
-        itask.log('DEBUG', "released to the task pool")
+        itask.log(DEBUG, "released to the task pool")
         del self.runahead_pool[itask.point][itask.id]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
@@ -281,7 +282,7 @@ class pool(object):
         msg = "task proxy removed"
         if reason:
             msg += " (" + reason + ")"
-        itask.log('DEBUG', msg)
+        itask.log(DEBUG, msg)
         if itask.max_future_prereq_offset is not None:
             self.set_max_future_offset()
         del itask
@@ -398,13 +399,15 @@ class pool(object):
         for itask in readytogo:
             itask.set_state_ready()
             if self.run_mode == 'simulation':
-                itask.job_submission_succeeded('','')
+                itask.job_submission_succeeded()
                 continue
             try:
                 cmd = itask.get_command(overrides=self.wireless.get(itask.id))
             except Exception, e:
-                # TODO - is this the right response?
-                itask.job_submission_failed(err=str(e))
+                # Could be a bad command template.
+                itask.log(ERROR, "Failed to construct job submission command")
+                itask.command_log("SUBMIT", err=str(e))
+                itask.job_submission_failed()
             else:
                 # Queue the job submission command for execution.
                 cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
@@ -580,7 +583,7 @@ class pool(object):
             # check cycle stop or hold conditions
             if (self.stop_point and itask.point > self.stop_point and
                     itask.state.is_currently('waiting', 'queued')):
-                itask.log('WARNING',
+                itask.log(WARNING,
                            "not running (beyond suite stop cycle) " +
                            str(self.stop_point))
                 itask.reset_state_held()
@@ -633,11 +636,11 @@ class pool(object):
             if itask.state.is_currently('held'):
                 #if self.stop_point and itask.point > self.stop_point:
                 #    # this task has passed the suite stop time
-                #    itask.log('NORMAL', "Not releasing (beyond suite stop
+                #    itask.log(INFO, "Not releasing (beyond suite stop
                 #    cycle) " + str(self.stop_point))
                 #elif itask.stop_point and itask.point > itask.stop_point:
                 #    # this task has passed its own stop time
-                #    itask.log('NORMAL', "Not releasing (beyond task stop
+                #    itask.log(INFO, "Not releasing (beyond task stop
                 #    cycle) " + str(itask.stop_point))
                 #else:
                 # release this task
@@ -735,7 +738,7 @@ class pool(object):
         if itask.state.has_spawned():
             return None
         itask.state.set_spawned()
-        itask.log('DEBUG', 'forced spawning')
+        itask.log(DEBUG, 'forced spawning')
         new_task = itask.spawn('waiting')
         if new_task and self.add_to_runahead_pool(new_task):
             return new_task
@@ -753,9 +756,9 @@ class pool(object):
             if itask.suicide_prerequisites.count() != 0:
                 if itask.suicide_prerequisites.all_satisfied():
                     if itask.state.is_currently('ready', 'submitted', 'running'):
-                        itask.log('WARNING', 'suiciding while active')
+                        itask.log(WARNING, 'suiciding while active')
                     else:
-                        itask.log('NORMAL', 'suiciding')
+                        itask.log(INFO, 'suiciding')
                     self.force_spawn(itask)
                     self.remove(itask, 'suicide')
 
@@ -818,7 +821,7 @@ class pool(object):
             if itask.state.is_currently('ready'):
                 # Currently can't reset a 'ready' task in the job submission thread!
                 self.log.warning("A 'ready' task cannot be reset: " + itask.id)
-            itask.log("NORMAL", "resetting to " + state + " state")
+            itask.log(INFO,"resetting to " + state + " state")
             if state == 'ready':
                 itask.reset_state_ready()
             elif state == 'waiting':

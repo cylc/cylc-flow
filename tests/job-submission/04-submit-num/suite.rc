@@ -13,6 +13,7 @@ foo & bar => baz
     [[foo]]
         command scripting = """
 echo "${CYLC_TASK_SUBMIT_NUMBER}" >>"${CYLC_SUITE_RUN_DIR}/foo-submits.txt"
+# bash 4.2.0 bug: ((VAR == VAL)) does not trigger 'set -e':
 test "${CYLC_TASK_SUBMIT_NUMBER}" -gt "${CYLC_TASK_TRY_NUMBER}"
 """
         retry delays=2*PT0S

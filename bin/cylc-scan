@@ -29,10 +29,9 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 parser = cop( """cylc [discovery] scan [OPTIONS]
 
-Detect (by port scanning) running cylc suites and lockservers, and
-print the results. By default only your own running suites will be
-printed.  With --verbose you will also get "Connection Denied" from
-running suites owned by others on the same host.
+Detect (by port scanning) running cylc suites and print the results. By default
+only your own running suites will be printed.  With --verbose you will also get
+"Connection Denied" from running suites owned by others on the same host.
 
 Simple space-delimited output format for easy parsing:
     SUITE OWNER HOST PORT

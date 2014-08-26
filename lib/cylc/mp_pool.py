@@ -48,9 +48,6 @@ TRUE=1
 FALSE=0
 POOL_CLOSED = multiprocessing.Value('i',FALSE)
 
-# Job skipped flag
-JOB_NOT_SUBMITTED=999
-
 def execute_shell_command(cmd_spec, job_sub_method=None):
     """Execute a shell command and capture its output and exit status."""
 
@@ -70,7 +67,7 @@ def execute_shell_command(cmd_spec, job_sub_method=None):
         # Stop job submission commands if pool closed but continue others
         # till done (call pool.terminate() to stop all work immediately).
         cmd_result['ERR'] = "job submission skipped (pool closed)"
-        cmd_result['EXIT'] = JOB_NOT_SUBMITTED
+        cmd_result['EXIT'] = 1
         return cmd_result
 
     try:

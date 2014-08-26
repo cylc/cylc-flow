@@ -19,7 +19,8 @@
 JOB_LOG_DIR=$(dirname $(dirname "$CYLC_TASK_LOG_ROOT"))
 readlink "$JOB_LOG_DIR/NN" >>what-is-nn.txt
 echo "$JOB_LOG_DIR/NN"
-((CYLC_TASK_TRY_NUMBER == 100))
+# bash 4.2.0 bug: ((VAR == VAL)) does not trigger 'set -e':
+test "$CYLC_TASK_TRY_NUMBER" -eq "100"
 """
         retry delays=99*PT0S
     [[bar]]
