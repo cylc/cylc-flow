@@ -1,20 +1,8 @@
-2014-08-01T08:52:32Z INFO - port:7766
-2014-08-01T08:52:32Z INFO - Suite starting at 2014-08-01T08:52:32Z
-2014-08-01T08:52:32Z INFO - Log event clock: real time
-2014-08-01T08:52:32Z INFO - Run mode: live
-2014-08-01T08:52:32Z INFO - Initial point: 99991231T2300Z
-2014-08-01T08:52:32Z INFO - Final point: None
-2014-08-01T08:52:32Z INFO - Cold Start 99991231T2300Z
-2014-08-01T08:52:32Z INFO - [foo.99991231T2300Z] -triggered off []
-2014-08-01T08:52:33Z INFO - [foo.99991231T2300Z] -submit_method_id=4850
-2014-08-01T08:52:33Z INFO - [foo.99991231T2300Z] -submission succeeded
-2014-08-01T08:52:33Z INFO - [foo.99991231T2300Z] -(current:submitted)> foo.99991231T2300Z started at 2014-08-01T08:52:32Z
-2014-08-01T08:52:34Z INFO - [foo.00000101T0000Z] -triggered off []
-2014-08-01T08:52:34Z INFO - [foo.99991231T2300Z] -(current:running)> foo.99991231T2300Z succeeded at 2014-08-01T08:52:33Z
-2014-08-01T08:52:35Z INFO - [foo.00000101T0000Z] -submit_method_id=4954
-2014-08-01T08:52:35Z INFO - [foo.00000101T0000Z] -submission succeeded
-2014-08-01T08:52:35Z WARNING - foo.99991231T2300Z cannot be added to pool: task ID already exists
-2014-08-01T08:52:35Z INFO - [foo.00000101T0000Z] -(current:submitted)> foo.00000101T0000Z started at 2014-08-01T08:52:34Z
-2014-08-01T08:52:36Z INFO - [foo.00000101T0000Z] -(current:running)> foo.00000101T0000Z succeeded at 2014-08-01T08:52:35Z
-2014-08-01T08:54:20Z INFO - Command succeeded: stop cleanly(False)
-2014-08-01T08:54:21Z INFO - Suite shutting down at 2014-08-01T08:54:21Z
+2014-08-26T16:02:56Z INFO - port:7766
+2014-08-26T16:02:56Z INFO - Suite starting at 2014-08-26T16:02:56Z
+2014-08-26T16:02:56Z INFO - Log event clock: real time
+2014-08-26T16:02:56Z INFO - Run mode: live
+2014-08-26T16:02:56Z INFO - Initial point: 99991231T2300Z
+2014-08-26T16:02:56Z INFO - Final point: None
+2014-08-26T16:02:56Z INFO - Cold Start 99991231T2300Z
+2014-08-26T16:02:56Z INFO - Suite shutting down at 2014-08-26T16:02:56Z (ERROR: Cannot dump TimePoint year: 10000 not in bounds 0 to 9999.)
