@@ -116,7 +116,8 @@ class ISO8601Point(PointBase):
         """Reformat self.value into a standard representation."""
         try:
             self.value = str(point_parse(self.value))
-        except ValueError:
+        except ValueError as exc:
+            print "standardise %s" % exc
             raise PointParsingError(type(self), self.value)
         return self
 
