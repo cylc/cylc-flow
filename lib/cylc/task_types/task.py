@@ -32,9 +32,7 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 from cylc import task_state
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import user
-from cylc.job_logs import (
-        CommandLogger, logging_priority, get_create_job_log_path
-)
+from cylc.job_logs import CommandLogger
 import cylc.rundb
 import cylc.flags as flags
 from cylc.wallclock import (
@@ -266,9 +264,9 @@ class task( object ):
         msg = "[%s] -%s" % (self.id, msg)
         self.logger.log(lvl, msg)
 
-    def command_log(self, type, out=None, err=None):
+    def command_log(self, log_type, out=None, err=None):
         self.command_logger.append_to_log(
-                self.submit_num, type, out, err)
+                self.submit_num, log_type, out, err)
 
     def record_db_event(self, event="", message=""):
         call = cylc.rundb.RecordEventObject(
@@ -700,7 +698,7 @@ class task( object ):
         self.increment_submit_num()
 
         local_job_log_dir, common_job_log_path = (
-                get_create_job_log_path(
+                CommandLogger.get_create_job_log_path(
                 self.suite_name, self.name, self.point, self.submit_num))
         local_jobfile_path = os.path.join(
                 local_job_log_dir, common_job_log_path)
@@ -867,7 +865,7 @@ class task( object ):
         rtconfig = pdeepcopy(self.__class__.rtconfig)
 
         local_job_log_dir, common_job_log_path = (
-                get_create_job_log_path(
+                CommandLogger.get_create_job_log_path(
                 self.suite_name, self.name, self.point, self.submit_num))
         local_jobfile_path = os.path.join(
                 local_job_log_dir, common_job_log_path)
@@ -1047,7 +1045,7 @@ class task( object ):
 
         # Log incoming messages with '>' to distinguish non-message log entries.
         self.log(
-                logging_priority[priority],
+                CommandLogger.LOGGING_PRIORITY[priority],
                 '(current:' + self.state.get_status() + ')> ' + message
         )
         # always update the suite state summary for latest message
