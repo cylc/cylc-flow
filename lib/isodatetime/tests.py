@@ -639,6 +639,34 @@ def get_timepoint_subtract_tests():
             "-P29DT19H"
         ),
         (
+            {"year": 2014, "month_of_year": 1, "day_of_month": 1,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 2013, "month_of_year": 12, "day_of_month": 31,
+             "hour_of_day": 23, "time_zone_hour": 0, "time_zone_minute": 0},
+            "PT1H"
+        ),
+        (
+            {"year": 2013, "month_of_year": 12, "day_of_month": 31,
+             "hour_of_day": 23, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 2014, "month_of_year": 1, "day_of_month": 1,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            "-PT1H"
+        ),
+        (
+            {"year": 2014, "month_of_year": 1, "day_of_month": 1,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 2013, "month_of_year": 12, "day_of_month": 1,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            "P31D"
+        ),
+        (
+            {"year": 2013, "month_of_year": 12, "day_of_month": 1,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            {"year": 2014, "month_of_year": 1, "day_of_month": 1,
+             "hour_of_day": 0, "time_zone_hour": 0, "time_zone_minute": 0},
+            "-P31D"
+        ),
+        (
             {"year": 44, "month_of_year": 1, "day_of_month": 4,
              "hour_of_day": 5, "minute_of_hour": 1, "second_of_minute": 2,
              "time_zone_hour": 0, "time_zone_minute": 0},
