@@ -20,7 +20,7 @@ import os
 import sys
 import logging
 
-from cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from mkdir_p import mkdir_p
 from wallclock import get_current_time_string
 
@@ -56,7 +56,7 @@ def get_create_job_log_path(suite, task_name, task_point, submit_num):
 
     """
 
-    suite_job_log_dir = sitecfg.get_derived_host_item(
+    suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
             suite, "suite job log directory")
 
     the_rest_dir = os.path.join(
@@ -84,7 +84,7 @@ class CommandLogger(object):
     """Log daemon-invoked command output to the job log dir."""
 
     def __init__(self, suite, task_name, task_point):
-        dir = sitecfg.get_derived_host_item(
+        dir = GLOBAL_CFG.get_derived_host_item(
                 suite, "suite job log directory")
         self.base_path = os.path.join(
                 dir, str(task_point), task_name)

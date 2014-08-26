@@ -32,9 +32,8 @@ import stat
 import socket
 
 import cylc.flags
-import cylc.TaskID
 from cylc.job_submission.jobfile import JobFile
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
 from cylc.envvar import expandvars
@@ -82,7 +81,7 @@ class JobSubmit(object):
         task_host = jobconfig.get('task host')
         task_owner = jobconfig.get('task owner')
 
-        self.remote_shell_template = sitecfg.get_host_item(
+        self.remote_shell_template = GLOBAL_CFG.get_host_item(
             'remote shell template', task_host, task_owner)
 
         if is_remote_host(task_host) or is_remote_user(task_owner):
@@ -97,7 +96,7 @@ class JobSubmit(object):
             else:
                 self.task_host = socket.gethostname()
 
-            remote_job_log_dir = sitecfg.get_derived_host_item(
+            remote_job_log_dir = GLOBAL_CFG.get_derived_host_item(
                 self.suite,
                 'suite job log directory',
                 self.task_host,

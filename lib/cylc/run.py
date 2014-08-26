@@ -21,7 +21,7 @@
 import sys
 from daemonize import daemonize
 from version import cylc_version
-from cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import flags
 from exceptions import SchedulerStop, SchedulerError
 
@@ -59,7 +59,7 @@ def main(name, start):
 
     try:
         if server.__class__.__name__ != 'restart':
-            sitecfg.create_cylc_run_tree( server.suite )
+            GLOBAL_CFG.create_cylc_run_tree( server.suite )
         server.configure_pyro()
     except Exception, x:
         if flags.debug:

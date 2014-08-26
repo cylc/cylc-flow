@@ -155,7 +155,7 @@ class GlobalConfigError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
-class gconfig( config ):
+class GlobalConfig( config ):
     """
     Handle global (all suites) site and user configuration for cylc.
     User file values override site file values.
@@ -163,6 +163,43 @@ class gconfig( config ):
     For all derived items - paths hardwired under the configurable top
     levels - use the get_derived_host_item(suite,host) method.
     """
+
+    _DEFAULT = None
+    CONF_BASE = "global.rc"
+    SITE_CONF_DIR = os.path.join(os.environ["CYLC_DIR"], "conf")
+    USER_CONF_DIR = os.path.join(os.environ['HOME'], '.cylc')
+    OLD_SITE_CONF_BASE = os.path.join("siterc", "site.rc")
+    OLD_USER_CONF_BASE = os.path.join("user.rc")
+
+    @classmethod
+    def default(cls):
+        """Return the singleton instance."""
+        if not cls._DEFAULT:
+            if cylc.flags.verbose:
+                print "Loading site/user config files"
+            cls._DEFAULT = cls(SPEC, upg)
+            conf_path_str = os.getenv("CYLC_CONF_PATH")
+            if conf_path_str is None:
+                # CYLC_CONF_PATH not defined, use default locations
+                for old_base, conf_dir in [
+                        [cls.OLD_SITE_CONF_BASE, cls.SITE_CONF_DIR],
+                        [cls.OLD_USER_CONF_BASE, cls.USER_CONF_DIR]]:
+                    for base in [cls.CONF_BASE, old_base]:
+                        file_name = os.path.join(conf_dir, base)
+                        if os.access(file_name, os.F_OK | os.R_OK):
+                            cls._DEFAULT.loadcfg(
+                                file_name, "global config", silent=True)
+                            break
+            elif conf_path_str:
+                # CYLC_CONF_PATH defined with a value
+                for path in conf_path_str.split(os.pathsep):
+                    file_name = os.path.join(path, cls.CONF_BASE)
+                    if os.access(file_name, os.F_OK | os.R_OK):
+                        cls._DEFAULT.loadcfg(
+                            file_name, "global config", silent=True)
+            cls._DEFAULT.transform()
+        return cls._DEFAULT
+        
 
     def get_derived_host_item( self, suite, item, host=None, owner=None, replace=False ):
         """Compute hardwired paths relative to the configurable top dirs."""
@@ -345,12 +382,5 @@ class gconfig( config ):
             if val and 'directory' in key:
                 cfg['hosts']['localhost'][key] = expandvars( val )
 
-# load on import if not already loaded
-sitecfg = None
-if not sitecfg:
-    if cylc.flags.verbose:
-        print "Loading site/user config files"
-    sitecfg = gconfig( SPEC, upg )
-    sitecfg.loadcfg( SITE_FILE, "site config", silent=True )
-    sitecfg.loadcfg( USER_FILE, "user config", silent=True )
-    sitecfg.transform()
+
+GLOBAL_CFG = GlobalConfig.default()

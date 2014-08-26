@@ -27,7 +27,7 @@ from cylc.CylcOptionParsers import cop
 import cylc.TaskID
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 
 parser = cop( """cylc [discovery] ping [OPTIONS] ARGS
@@ -47,8 +47,8 @@ parser.add_option( "--print-ports",
 ( options, args ) = parser.parse_args()
 
 if options.print_ports:
-    base = sitecfg.get( ['pyro','base port'] )
-    range = sitecfg.get( ['pyro','maximum number of ports'] )
+    base = GLOBAL_CFG.get( ['pyro','base port'] )
+    range = GLOBAL_CFG.get( ['pyro','maximum number of ports'] )
     print base, '<= port <=', base + range
     sys.exit(0)
 

@@ -76,7 +76,7 @@ class config( object ):
             if strict:
                 raise
             if not silent or cylc.flags.verbose:
-                # no user.rc file, for instance, is not really an error.
+                # no global.rc file, for instance, is not really an error.
                 print >> sys.stderr, x
                 print >> sys.stderr, "WARNING: " + title + " parsing failed (continuing)"
         else:

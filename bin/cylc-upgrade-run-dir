@@ -23,7 +23,7 @@ import shutil
 from optparse import OptionParser
 from collections import defaultdict
 
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.mkdir_p import mkdir_p
 
 OLD_LOGFILE_RE = re.compile("""
@@ -136,7 +136,7 @@ arg0 = args[0]
 if os.path.isdir(arg0):
     rundir = arg0
 else:
-    rundir = sitecfg.get_derived_host_item(arg0, "suite run directory")
+    rundir = GLOBAL_CFG.get_derived_host_item(arg0, "suite run directory")
 if not os.path.isdir(rundir):
     sys.exit("ERROR: Directory not found: %s" % rundir)
 

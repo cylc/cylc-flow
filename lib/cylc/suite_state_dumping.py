@@ -20,7 +20,7 @@ import errno
 import os
 import time
 import logging
-from cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from wallclock import now, get_current_time_string
 
 class dumper( object ):
@@ -30,10 +30,10 @@ class dumper( object ):
     def __init__( self, suite, run_mode='live', ict=None, stop_point=None ):
         self.run_mode = run_mode
         self.set_cts(ict, stop_point)
-        self.dir_name = sitecfg.get_derived_host_item( suite,
+        self.dir_name = GLOBAL_CFG.get_derived_host_item( suite,
                                                     'suite state directory' )
         self.file_name = os.path.join( self.dir_name, self.BASE_NAME )
-        self.arch_len = sitecfg.get( [ 'state dump rolling archive length' ] )
+        self.arch_len = GLOBAL_CFG.get( [ 'state dump rolling archive length' ] )
         if not self.arch_len or int(self.arch_len) <= 1:
             self.arch_len = 1
         self.arch_files = []

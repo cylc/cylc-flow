@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 #C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
 #C:
@@ -15,16 +14,21 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Test "cylc search" basic usage.
+. $(dirname $0)/test_header
+#-------------------------------------------------------------------------------
+set_test_number 2
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+#-------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}"
+run_ok "${TEST_NAME}" cylc search "${SUITE_NAME}" 'initial cycle point'
+cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 
-import sys
-
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-
-def prompt( reason, force=False ):
-    if force or GLOBAL_CFG.get( ['disable interactive command prompts'] ):
-        return
-    response = raw_input( reason + ' (y/n)? ' )
-    if response == 'y':
-        return
-    else:
-        sys.exit(0)
+FILE: ${PWD}/include/suite-scheduling.rc
+   SECTION: [scheduling]
+      (2): initial cycle point=20130101
+__OUT__
+#-------------------------------------------------------------------------------
+purge_suite "${SUITE_NAME}"
+exit

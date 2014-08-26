@@ -26,7 +26,7 @@ if remrun().execute():
 
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import CylcSuiteDBChecker, DBNotFoundError, DBOperationError
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_polling import poller
 import cylc.flags
 
@@ -134,7 +134,7 @@ suite = args[0]
 # this only runs locally (use of --host or --user results in remote re-invocation).
 run_dir = os.path.expandvars( \
           os.path.expanduser( \
-          options.run_dir or sitecfg.get_host_item( 'run directory' )))
+          options.run_dir or GLOBAL_CFG.get_host_item( 'run directory' )))
 
 spoller = suite_poller( "requested state",
         options.interval, options.max_polls,

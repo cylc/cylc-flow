@@ -30,7 +30,7 @@ from collections import deque
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 from cylc import task_state
-from cylc.cfgspec.site import sitecfg
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import user
 from cylc.job_logs import (
         CommandLogger, logging_priority, get_create_job_log_path
@@ -76,7 +76,7 @@ class PollTimer( object ):
 
     def set_host( self, host, set_timer=False ):
         # the polling comms method is host-specific
-        if sitecfg.get_host_item( 'task communication method', host ) == "poll":
+        if GLOBAL_CFG.get_host_item( 'task communication method', host ) == "poll":
             if not self.intervals:
                 self.intervals = copy(self.default_intervals)
                 self.log(WARNING, '(polling comms) using default ' + self.name + ' polling intervals' )
@@ -670,12 +670,12 @@ class task( object ):
 
         self.submission_poll_timer = PollTimer( \
                     copy( rtconfig['submission polling intervals']), 
-                    copy( sitecfg.get( ['submission polling intervals'] )),
+                    copy( GLOBAL_CFG.get( ['submission polling intervals'] )),
                     'submission', self.log )
 
         self.execution_poll_timer = PollTimer( \
                     copy( rtconfig['execution polling intervals']), 
-                    copy( sitecfg.get( ['execution polling intervals'] )),
+                    copy( GLOBAL_CFG.get( ['execution polling intervals'] )),
                    'execution', self.log )
 
     def increment_submit_num(self):
@@ -786,16 +786,16 @@ class task( object ):
                 self.user_at_host != 'localhost' and cylc_mode == 'scheduler':
             # If the suite contact file has not been copied to user@host
             # host yet, do so.
-            suite_run_dir = sitecfg.get_derived_host_item(
+            suite_run_dir = GLOBAL_CFG.get_derived_host_item(
                                 self.suite_name,
                                 'suite run directory')
             env_file_path = os.path.join(suite_run_dir, 'cylc-suite-env')
-            r_suite_run_dir = sitecfg.get_derived_host_item(
+            r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
                                 self.suite_name,
                                 'suite run directory',
                                 self.task_host,
                                 self.task_owner)
-            r_log_job_dir = sitecfg.get_derived_host_item(
+            r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
                 self.suite_name,
                 'suite job log directory',
                 self.task_host,
