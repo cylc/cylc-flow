@@ -1,0 +1,19 @@
+[cylc]
+   [[reference test]]
+       expected task failures = t1.1
+       required run mode = live
+       live mode suite timeout = PT30S
+
+[scheduling]
+    [[dependencies]]
+        graph = """t1:start => t2"""
+
+[runtime]
+    [[t1]]
+        command scripting = sleep 60
+    [[t2]]
+        command scripting = """
+cylc shutdown "${CYLC_SUITE_NAME}"
+sleep 1
+cylc kill "${CYLC_SUITE_NAME}" t1 1
+"""
