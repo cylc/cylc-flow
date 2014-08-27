@@ -38,15 +38,17 @@ Some notes:
   (early versions of this module gave a choice of process or thread).
 """
 
-# Command type flags.
 CMD_TYPE_JOB_SUBMISSION=0
 CMD_TYPE_JOB_POLL_KILL=1
 CMD_TYPE_EVENT_HANDLER=2
 
-# Shared memory flag
 TRUE=1
 FALSE=0
-POOL_CLOSED = multiprocessing.Value('i',FALSE)
+JOB_SKIPPED_FLAG = 999
+
+# Shared memory flag.
+STOP_JOB_SUBMISSION = multiprocessing.Value('i',FALSE)
+
 
 def execute_shell_command(cmd_spec, job_sub_method=None):
     """Execute a shell command and capture its output and exit status."""
@@ -57,17 +59,14 @@ def execute_shell_command(cmd_spec, job_sub_method=None):
             'EXIT': None,
             'OUT': None,
             'ERR': None}
-    # FOR TESTING PURPOSES try making command execution take a long time:
-    # time.sleep(5)
 
     if flags.debug:
         print cmd_string
 
-    if POOL_CLOSED.value == TRUE and cmd_type == CMD_TYPE_JOB_SUBMISSION:
-        # Stop job submission commands if pool closed but continue others
-        # till done (call pool.terminate() to stop all work immediately).
-        cmd_result['ERR'] = "job submission skipped (pool closed)"
-        cmd_result['EXIT'] = 1
+    if (STOP_JOB_SUBMISSION.value == TRUE
+            and cmd_type == CMD_TYPE_JOB_SUBMISSION):
+        cmd_result['OUT'] = "job submission skipped (suite stopping)"
+        cmd_result['EXIT'] = JOB_SKIPPED_FLAG
         return cmd_result
 
     try:
@@ -138,16 +137,14 @@ class mp_pool(object):
                 still_to_do.append((res,callback))
         self.unhandled_results = still_to_do
 
-    def close(self):
-        """Close the pool to new commands.
+    def stop_job_submission(self):
+        STOP_JOB_SUBMISSION.value = TRUE
 
-        Also stop existing job submissions, but not other commands.
-        """
+    def close(self):
+        """Close the pool to new commands."""
         if not (self.is_dead() or self.is_closed()):
             self.log.debug("Closing process pool")
             self.pool.close()
-            # Tell the workers to stop job submissions.
-            POOL_CLOSED.value = TRUE
 
     def terminate(self):
         """Kill all worker processes immediately."""
@@ -175,7 +172,7 @@ class mp_pool(object):
 
 
 if __name__ == '__main__':
-    """manual test playground"""
+    """Manual test playground."""
 
     import sys
     log = logging.getLogger("main")

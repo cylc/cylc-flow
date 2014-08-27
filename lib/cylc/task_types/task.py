@@ -47,7 +47,9 @@ from cylc.host_select import get_task_host
 from parsec.util import pdeepcopy, poverride
 from cylc.mp_pool import (
         CMD_TYPE_EVENT_HANDLER,
-        CMD_TYPE_JOB_POLL_KILL)
+        CMD_TYPE_JOB_POLL_KILL,
+        JOB_SKIPPED_FLAG
+)
 
 cylc_mode = 'scheduler'
 poll_suffix_re = re.compile(
@@ -405,14 +407,18 @@ class task( object ):
     def set_state_queued( self ):
         self.set_status( 'queued' )
 
-    def submission_command_callback(self, result):
+    def job_submission_callback(self, result):
         out, err = result['OUT'], result['ERR']
+        status = result['EXIT']
         # Get filtered output for logging purposes.
         f_out, f_err = self.job_sub_method.filter_output(
                 result['OUT'], result['ERR'])
         self.command_log("SUBMIT", f_out, f_err)
-        if result['EXIT'] != 0:
-            self.job_submission_failed()
+        if status != 0:
+            if status == JOB_SKIPPED_FLAG:
+                pass
+            else:
+                self.job_submission_failed()
             return
         try:
             self.submit_method_id = self.job_sub_method.get_id(out, err)
@@ -424,7 +430,7 @@ class task( object ):
                 str(self.point), submit_method_id=self.submit_method_id)
         self.job_submission_succeeded()
 
-    def poll_command_callback(self, result):
+    def job_poll_callback(self, result):
         out = result['OUT']
         err = result['ERR']
         self.command_log("POLL", out, err)
@@ -440,7 +446,7 @@ class task( object ):
             # poll results emulate task messages
             self.process_incoming_message(('NORMAL', out.strip()))
 
-    def kill_command_callback(self, result):
+    def job_kill_callback(self, result):
         out   = result['OUT']
         err   = result['ERR']
         self.command_log("KILL", out, err)
@@ -1310,7 +1316,7 @@ class task( object ):
 
         self.log(INFO, 'polling now' )
         cmd_spec = ( CMD_TYPE_JOB_POLL_KILL, cmd )
-        self.__class__.proc_pool.put_command( cmd_spec, self.poll_command_callback )
+        self.__class__.proc_pool.put_command( cmd_spec, self.job_poll_callback )
 
     def kill( self ):
         if self.__class__.run_mode == 'simulation':
@@ -1347,4 +1353,4 @@ class task( object ):
 
         self.log(INFO, "Killing job" )
         cmd_spec = (CMD_TYPE_JOB_POLL_KILL, cmd)
-        self.__class__.proc_pool.put_command(cmd_spec, self.kill_command_callback)
+        self.__class__.proc_pool.put_command(cmd_spec, self.job_kill_callback)

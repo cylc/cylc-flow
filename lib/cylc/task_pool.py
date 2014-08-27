@@ -385,6 +385,8 @@ class pool(object):
             # 2.2) release queued tasks if not limited or if manually forced
             for itask in tasks:
                 if not itask.state.is_currently('queued'):
+                    # (Note this excludes tasks remaining 'ready' because job
+                    # submission has been stopped by use of 'cylc shutdown').
                     continue
                 if itask.manual_trigger or not n_limit or n_release > 0:
                     # manual release, or no limit, or not currently limited
@@ -394,7 +396,7 @@ class pool(object):
                         itask.reset_manual_trigger()
                 # else leaved queued
 
-        self.log.debug('%d task(s) ready' % len(readytogo))
+        self.log.debug('%d task(s) de-queued' % len(readytogo))
 
         for itask in readytogo:
             itask.set_state_ready()
@@ -413,7 +415,7 @@ class pool(object):
                 cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
                 self.proc_pool.put_command(
                         cmd_spec,
-                        itask.submission_command_callback,
+                        itask.job_submission_callback,
                         itask.job_sub_method_name)
 
         return readytogo

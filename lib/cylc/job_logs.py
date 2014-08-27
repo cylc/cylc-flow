@@ -105,14 +105,14 @@ class CommandLogger(object):
         fbase = os.path.join(dir, ftype)
         timestamp = '[%s]' % get_current_time_string()
         if out:
+            self.suite_logger.info(out)
             if not out.endswith('\n'):
                 out += '\n'
-            self.suite_logger.info(out)
             with open(fbase + ".out", 'a') as f:
                f.write("%s %s" % (timestamp, out))
         if err:
+            self.suite_logger.warning(err)
             if not err.endswith('\n'):
                 err += '\n'
-            self.suite_logger.warning(err)
             with open(fbase + ".err", 'a') as f:
                 f.write("%s %s" % (timestamp, err))

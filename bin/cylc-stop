@@ -63,63 +63,42 @@ class stop_poller( poller ):
 
 parser = cop( """cylc [control] stop|shutdown [OPTIONS] ARGS
 
-1/ cylc stop REG
-   Clean shutdown - cease submitting tasks and shut down after current
-submitted and running tasks have finished, and event handlers and job
-poll and kill commands have executed.
+Tell a running suite daemon to shut down. In order to prevent failures going
+unnoticed, suites only shut down automatically at a final cycle point if no
+failed tasks are present. There are several shutdown methods (note that an
+'active' task is either 'submitted' or 'running'):
 
-2/ cylc stop --quick REG
-   Quick shutdown - cease submitting tasks and shut down without waiting
-for current submitted and running tasks to finish, but do wait for event
-handlers and job poll and kill commands to be executed.
+  1. (default) stop after current active tasks finish
+  2. (--now) stop immediately, orphaning current active tasks
+  3. (--kill) stop after killing current active tasks
+  4. (with STOP as a cycle point) stop after cycle point STOP
+  5. (with STOP as a task ID) stop after task ID STOP has succeeded
+  6. (--wall-clock=T) stop after time T (an ISO 8601 date-time format e.g.
+     CCYYMMDDThh:mm, CCYY-MM-DDThh, etc).
 
-3/ cylc stop --now REG
-   Immediate shut down - do not wait on current submitted and running
-tasks, or on queued event handlers and job poll and kill commands.
+Tasks that become 'ready' after the shutdown is ordered will remain that way
+until the shutdown; they will submit if the suite is restarted.  Remaining task
+event handlers and job poll and kill commands, however, will be executed prior
+to shutdown, unless --now is used.
 
-4/ cylc stop --kill REG
-   Do a clean shutdown after killing current submitted and running tasks.
-
-5/ cylc stop REG STOP
-   Do a clean shutdown after (a) all tasks have succeeded out to cycle
-time STOP, or (b) task ID STOP has succeeded.
-
-6/ cylc stop --wall-clock=DATETIME REG
-    Do a clean shutdown after all tasks have succeeded out to wall clock time
-    DATETIME (ISO 8601 date/time format e.g. CCYYMMDDThh:mm, CCYY-MM-DDThh,
-    etc).
-
-Note that cylc does not shut down automatically at a designated future
-cycle point (either by the "final cycle point" in the suite definition, or
-by usage case 5/ above) if any failed tasks are present in the suite.
-This is to ensure that failed tasks do not go unnoticed.
-
-The command exits immediately unless --max-polls is greater than zero
-in which case it polls to wait for suite shutdown.""",
+This command exits immediately unless --max-polls is greater than zero, in
+which case it polls to wait for suite shutdown.""",
     pyro=True, argdoc=[ ("REG", "Suite name"),
     ("[STOP]", """a/ task POINT (cycle point), or
                         b/ ISO 8601 date-time (clock time), or
                         c/ TASK (task ID).""")] )
 
 parser.add_option( "-k", "--kill",
-        help="Shut down cleanly after killing any tasks currently "
-        "in the submitted or running states.",
+        help="Shut down after killing currently active tasks.",
         action="store_true", default=False, dest="kill" )
 
 parser.add_option( "-n", "--now",
-        help="Shut down immediately.",
+        help="Shut down immediately, orphaning currently active tasks.",
         action="store_true", default=False, dest="now" )
 
-parser.add_option( "-Q", "--quick",
-        help="Shut down after immediately after running any "
-        "remaining event handlers and job poll/kill commands."
-        "(see above).",
-        action="store_true", default=False, dest="quick" )
-
-parser.add_option( "-w", "--wall-clock", metavar="DATETIME",
-        help="Do a clean shutdown after all tasks have succeeded out to wall"
-        " clock DATETIME (ISO 8601 formatted)", action="store",
-        dest="wall_clock" )
+parser.add_option( "-w", "--wall-clock", metavar="STOP",
+        help="Shut down after time STOP (ISO 8601 formatted)",
+        action="store", dest="wall_clock" )
 
 stop_poller.add_to_cmd_options( parser, d_max_polls=0 )
 
@@ -132,11 +111,10 @@ if len( args ) == 2:
     shutdown_at = True
     shutdown_arg = args[1]
     if options.kill:
-        print >> sys.stderr, "WARNING: ignoring --kill ( not compatible with [STOP])"
-        options.kill = False
+        parser.error("ERROR: --kill is not compatible with [STOP]")
 
-if options.kill and ( options.now or options.quick ):
-    parser.error( "ERROR: --kill is not compatible with --now or --quick" )
+if options.kill and options.now:
+    parser.error( "ERROR: --kill is not compatible with --now" )
 
 if int(options.max_polls) > 0:
     # (test to avoid the "nothing to do" warning for # --max-polls=0)
@@ -162,7 +140,6 @@ except Exception, x:
     if cylc.flags.debug:
         raise
     raise SystemExit(x)
-
 
 method = None
 if options.wall_clock:
@@ -193,15 +170,6 @@ elif options.now:
     prompt( 'Shut down %s now' % suite, options.force )
     try:
         result = proxy.put( 'stop now' )
-    except Exception,x:
-        if cylc.flags.debug:
-            raise
-        sys.exit(x)
-
-elif options.quick:
-    prompt( 'Shut down %s quickly' % suite, options.force )
-    try:
-        result = proxy.put( 'stop quickly' )
     except Exception,x:
         if cylc.flags.debug:
             raise
