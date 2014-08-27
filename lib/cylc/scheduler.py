@@ -121,7 +121,7 @@ class scheduler(object):
         self.stop_task = None
         self.stop_point = None
         self.stop_clock_time = None  # When not None, in Unix time
-        self.stop_clock_time_description = None  # Human-readable format.
+        self.stop_clock_time_string = None  # Human-readable format.
 
         self.initial_point = None
         self.start_point = None
@@ -178,7 +178,7 @@ class scheduler(object):
         self.control_commands = {
                 'stop cleanly'          : self.command_set_stop_cleanly,
                 'stop now'              : self.command_stop_now,
-                'stop after point'        : self.command_set_stop_after_point,
+                'stop after point'      : self.command_set_stop_after_point,
                 'stop after clock time' : self.command_set_stop_after_clock_time,
                 'stop after task'       : self.command_set_stop_after_task,
                 'release suite'         : self.command_release_suite,
@@ -429,7 +429,7 @@ class scheduler(object):
             stop_point = parser.parse(arg)
         except ValueError as exc:
             try:
-                stop_point = parser.strptime("%Y/%m/%d-%H:%M")
+                stop_point = parser.strptime(arg, "%Y/%m/%d-%H:%M")
             except ValueError:
                 raise exc  # Raise the first (prob. more relevant) ValueError.
         stop_time_in_epoch_seconds = int(stop_point.get(
@@ -1115,7 +1115,7 @@ class scheduler(object):
         if self.stop_point:
             return str(self.stop_point)
         elif self.stop_clock_time is not None:
-            return self.stop_clock_time_description
+            return self.stop_clock_time_string
         elif self.stop_task:
             return self.stop_task
         elif self.final_point:
@@ -1126,7 +1126,7 @@ class scheduler(object):
     def clear_stop_times( self ):
         self.stop_point = None
         self.stop_clock_time = None
-        self.stop_clock_time_description = None
+        self.stop_clock_time_string = None
         self.stop_task = None
 
     def paused( self ):
