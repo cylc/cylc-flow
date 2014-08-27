@@ -1,0 +1,32 @@
+[cylc]
+   [[reference test]]
+       expected task failures = t1.1
+       required run mode = live
+       live mode suite timeout = PT30S
+
+[scheduling]
+    [[dependencies]]
+        graph = """t1:start => t2"""
+
+[runtime]
+    [[t1]]
+        command scripting = """
+set +e
+trap '' SIGKILL
+kill -s SIGKILL "${$}"
+sleep 5 # Prevent the script to run to success before it is killed
+"""
+        [[[event hooks]]]
+            failed handler = echo
+    [[t2]]
+        command scripting = """
+T1_ST_FILE="${CYLC_SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
+T1_PID=$(awk -F= '$1 == "CYLC_JOB_PID" {print $2}' "${T1_ST_FILE}")
+while ps "$T1_PID" 1>/dev/null 2>&1; do
+    sleep 1
+done
+cylc kill "${CYLC_SUITE_NAME}" t1 1
+sleep 1
+cylc poll "${CYLC_SUITE_NAME}" t1 1
+cylc shutdown "${CYLC_SUITE_NAME}"
+"""

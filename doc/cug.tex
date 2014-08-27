@@ -1266,6 +1266,7 @@ shell$ tree $HOME/cylc-run/tut.oneoff.basic/
 |           `-- hello           # task name
 |               |-- 01             # task submission number
 |               |   |-- job           # task job script
+|               |   `-- job-activity.log # task job activity log
 |               |   |-- job.err       # task stderr log
 |               |   |-- job.out       # task stdout log
 |               |   `-- job.status    # task status file
@@ -3852,7 +3853,7 @@ The task identity variables provided to tasks by the suite daemon include:
 $CYLC_TASK_ID                    # X.20110511T1800Z (e.g.)
 $CYLC_TASK_NAME                  # X
 $CYLC_TASK_CYCLE_POINT            # 20110511T1800Z
-$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/X.20110511T1800Z.1
+$CYLC_TASK_LOG_ROOT              # ~/cylc-run/foo.bar.baz/log/job/20110511T1800Z/X/01/job
 $CYLC_TASK_NAMESPACE_HIERARCHY   # "root postproc X" (e.g.)
 $CYLC_TASK_SUBMIT_NUMBER         # increments with every submit
 $CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
@@ -4764,11 +4765,11 @@ re-triggered multiple times:
 \lstset{language=bash}
 \begin{lstlisting}
 # task job script:
-~/cylc-run/tut.oneoff.basic/log/job/hello.1.1
+~/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job
 # task stdout:
-~/cylc-run/tut.oneoff.basic/log/job/hello.1.out
+~/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.out
 # task stderr:
-~/cylc-run/tut.oneoff.basic/log/job/hello.1.err
+~/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.err
 \end{lstlisting}
 
 How the stdout and stderr streams are directed into these files depends
@@ -4915,9 +4916,9 @@ and generate a job script to see the resulting directives:
 \begin{lstlisting}
 shell$ cylc db reg test $HOME/test
 shell$ cylc jobscript test a | grep QSUB
-#QSUB -e /home/hilary/cylc-run/my.suite/log/job/a.1.1.err
+#QSUB -e /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.err
 #QSUB -l nodes=1,walltime=00:01:00
-#QSUB -o /home/hilary/cylc-run/my.suite/log/job/a.1.1.out
+#QSUB -o /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.out
 #QSUB -N a.1
 #QSUB -I bar=baz
 #QSUB -cwd

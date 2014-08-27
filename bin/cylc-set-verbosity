@@ -29,7 +29,7 @@ from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
-from cylc.job_logs import logging_priority
+from cylc.job_logs import CommandLogger
 
 parser = cop("""cylc [control] set-verbosity [OPTIONS] ARGS
 
@@ -39,7 +39,7 @@ choose WARNING, only warnings and critical messages will be logged.""",
     pyro=True,
     argdoc=[
         ('REG', 'Suite name'),
-        ('LEVEL', ', '.join(logging_priority.keys()))
+        ('LEVEL', ', '.join(CommandLogger.LOGGING_PRIORITY.keys()))
     ]
 )
 
@@ -49,7 +49,7 @@ suite, pphrase = prep_pyro(args[0], options).execute()
 
 priority_str = args[1]
 try:
-    priority = logging_priority[priority_str]
+    priority = CommandLogger.LOGGING_PRIORITY[priority_str]
 except KeyError:
     parser.error("Illegal logging level, %s" % priority)
 

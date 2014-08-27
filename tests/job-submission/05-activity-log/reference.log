@@ -1,0 +1,31 @@
+2014-08-27T09:41:48+01 INFO - port:7766
+2014-08-27T09:41:48+01 INFO - Suite starting at 2014-08-27T09:41:48+01
+2014-08-27T09:41:48+01 INFO - Log event clock: real time
+2014-08-27T09:41:48+01 INFO - Run mode: live
+2014-08-27T09:41:48+01 INFO - Initial point: 1
+2014-08-27T09:41:48+01 INFO - Final point: 1
+2014-08-27T09:41:48+01 INFO - Cold Start 1
+2014-08-27T09:41:48+01 INFO - [t1.1] -triggered off []
+2014-08-27T09:41:49+01 INFO - 20822
+
+2014-08-27T09:41:49+01 INFO - [t1.1] -submit_method_id=20822
+2014-08-27T09:41:49+01 INFO - [t1.1] -submission succeeded
+2014-08-27T09:41:49+01 INFO - [t1.1] -(current:submitted)> t1.1 started at 2014-08-27T09:41:49+01
+2014-08-27T09:41:50+01 INFO - [t2.1] -triggered off ['t1.1']
+2014-08-27T09:41:51+01 INFO - 20915
+
+2014-08-27T09:41:51+01 INFO - [t2.1] -submit_method_id=20915
+2014-08-27T09:41:51+01 INFO - [t2.1] -submission succeeded
+2014-08-27T09:41:51+01 INFO - [t2.1] -(current:submitted)> t2.1 started at 2014-08-27T09:41:51+01
+2014-08-27T09:42:12+01 INFO - [t1.1] -Killing job
+2014-08-27T09:42:12+01 INFO - Command succeeded: kill tasks(t1,1,False)
+2014-08-27T09:42:13+01 INFO - [t1.1] -polling now
+2014-08-27T09:42:13+01 INFO - Command succeeded: poll tasks(t1,1,False)
+2014-08-27T09:42:14+01 INFO - polled t1.1 failed at unknown-time
+
+2014-08-27T09:42:14+01 INFO - [t1.1] -(current:running)> polled t1.1 failed at unknown-time
+2014-08-27T09:42:14+01 INFO - [t2.1] -(current:running)> t2.1 succeeded at 2014-08-27T09:42:13+01
+2014-08-27T09:42:15+01 INFO - failed foo t1.1 job failed
+
+2014-08-27T09:42:41+01 INFO - Command succeeded: stop cleanly(False)
+2014-08-27T09:42:42+01 INFO - Suite shutting down at 2014-08-27T09:42:42+01
