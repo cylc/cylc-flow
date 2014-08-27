@@ -57,8 +57,9 @@ class db_optparse( object ):
 class cop( OptionParser ):
 
     def __init__( self, usage, argdoc=None, pyro=False, noforce=False,
-            jset=False, multitask=False, prep=False, twosuites=False ):
+            jset=False, multitask=False, prep=False, twosuites=False, auto_add=True ):
 
+        self.auto_add = auto_add
         if argdoc == None:
             if not prep:
                 argdoc = [('REG', 'Suite name')]
@@ -206,7 +207,8 @@ Arguments:"""
 
     def parse_args( self, remove_opts=[] ):
 
-        self.add_std_options()
+        if self.auto_add:
+            self.add_std_options()
         for opt in remove_opts:
             try:
                 self.remove_option( opt )

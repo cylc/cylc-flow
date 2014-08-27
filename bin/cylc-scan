@@ -29,32 +29,27 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 parser = cop( """cylc [discovery] scan [OPTIONS]
 
-Detect (by port scanning) running cylc suites and print the results. By default
-only your own running suites will be printed.  With --verbose you will also get
-"Connection Denied" from running suites owned by others on the same host.
+Detect running suites by port scanning.  Use --verbose to see (with "connection
+denied") suites owned by others too.
 
-Simple space-delimited output format for easy parsing:
-    SUITE OWNER HOST PORT
-Here's one way to parse 'cylc scan' output by shell script:
-________________________________________________________________
-#!/bin/bash
-# parse suite, owner, host, port from 'cylc scan' output lines
-OFIS=$IFS
-IFS=$'\n'; for LINE in $( cylc scan ); do
-    # split on space and assign tokens to positional parameters:
-    IFS=$' '; set $LINE
-    echo "$1 - $2 - $3 - $4"
-done
-IFS=$OFIS
-----------------------------------------------------------------
-""", pyro=True, noforce=True, argdoc=[])
+WARNING: a suite suspended with Ctrl-Z will cause port scans to hang for all
+users until timing out (see --pyro-timeout, default 60 seconds).""",
+pyro=True, noforce=True, argdoc=[], auto_add=False)
 
 parser.add_option( "--print-ports",
         help="Print the port range from the site config file "
         "($CYLC_DIR/conf/global.rc).",
         action="store_true",default=False, dest="print_ports" )
 
+parser.add_std_options()
+parser.remove_option("--pyro-timeout")
+parser.add_option( "--pyro-timeout", metavar='SEC',
+        help="Set a timeout for network connections "
+        "to running suites. The default is 60 seconds.",
+        action="store", default=60, dest="pyro_timeout" )
+
 ( options, args ) = parser.parse_args()
+
 
 if options.print_ports:
     base = GLOBAL_CFG.get( ['pyro','base port'] )
