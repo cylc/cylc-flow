@@ -251,7 +251,6 @@ Text Treeview suite control interface.
         filter_hbox.pack_start(self.tfilterbox, True, True, 10)
         vbox = gtk.VBox()
         vbox.pack_start(sw, True)
-        vbox.pack_end(gtk.HSeparator(),False,False,5)
         vbox.pack_end(filter_hbox, False)
 
         return vbox
