@@ -27,7 +27,10 @@ from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
 from cylc.wallclock import (
-    get_time_string_from_unix_time, TIME_ZONE_STRING_LOCAL_BASIC)
+        get_current_time_string,
+        get_time_string_from_unix_time,
+        TIME_ZONE_STRING_LOCAL_BASIC
+)
 
 
 def _time_trim(time_value):
@@ -37,6 +40,11 @@ def _time_trim(time_value):
 
 
 class TreeUpdater(threading.Thread):
+
+    display_times = [
+            'submitted_time', 'started_time', 'finished_time',
+            'mean total elapsed time'
+    ]
 
     def __init__(self, cfg, updater, ttreeview, ttree_paths, info_bar, theme, dot_size):
 
@@ -76,7 +84,7 @@ class TreeUpdater(threading.Thread):
         # Cache the latest ETC calculation for active ids.
         self._id_tetc_cache = {}
 
-        # generate task state icons
+        # Generate task state icons.
         dotm = DotMaker(theme, size=dot_size)
         self.dots = dotm.get_dots()
 
@@ -201,59 +209,81 @@ class TreeUpdater(threading.Thread):
                 if message is not None and last_update_date is not None:
                     message = message.replace(last_update_date + "T", "", 1)
 
-                tsub = summary[ id ].get( 'submitted_time' )
-                tsub_string = summary[ id ].get( 'submitted_time_string' )
-                tstart = summary[ id ].get( 'started_time' )
-                tstart_string = summary[ id ].get( 'started_time_string' )
-                tsucceeded = summary[ id ].get( 'succeeded_time' )
+                # Task timing info.
+                tinfo_raw = {}
+                tinfo_str = {}
+                for dt in self.__class__.display_times:
+                    if id in self.fam_state_summary:
+                        # Avoid family rows.
+                        tinfo_raw[dt] = None
+                        tinfo_str[dt] = ""
+                        continue
+                    try:
+                        tinfo_raw[dt] = summary[id][dt]
+                    except KeyError:
+                        if dt == 'finished_time':
+                            # (pre cylc-6 back compat)
+                            tinfo_raw[dt] = summary[id].get('succeeded_time')
+                        else:
+                            tinfo_raw[dt] = None
 
-                if tsub_string is not None:
-                    tsub_string = self._alter_date_time_string_for_context(
-                        tsub_string, last_update_date)
-                if tstart_string is not None:
-                    tstart_string = self._alter_date_time_string_for_context(
-                        tstart_string, last_update_date)
-                
-                meant = summary[ id ].get( 'mean total elapsed time' )
-                meant_string = None
+                    if tinfo_raw[dt] is None or tinfo_raw[dt] == "*":
+                        # (pre cylc-6 back compat: "*" was passed in)
+                        tinfo_raw[dt] = None
+                        tinfo_str[dt] = "*"
+                    elif dt == "mean total elapsed time":
+                        # (already backward compatible)
+                        meant = tinfo_raw[dt]
+                        if meant == 0:
+                            # This is a very fast (sub-cylc-resolution) task.
+                            meant = 1
+                        meant = int(meant)
+                        meant_minutes, meant_seconds = divmod(meant, 60)
+                        if meant_minutes:
+                            meant_string = "PT%dM%dS" % (
+                                meant_minutes, meant_seconds)
+                        else:
+                            meant_string = "PT%dS" % meant
+                        tinfo_str[dt] = meant_string
+                    else:
+                        # Convert unix time to context-abbreviated ISO 8601.
+                        try:
+                            tinfo_str[dt] = self._alter_date_time_string_for_context(
+                                get_time_string_from_unix_time(tinfo_raw[dt]),
+                                last_update_date)
+                        except TypeError:
+                            # (pre cylc-6 back compat: was a datetime string)
+                            tinfo_str[dt] = str(tinfo_raw[dt])
+                            tinfo_raw[dt] = None
+
+                # Compute "Estimated Time of Completion".
+                # For cylc-6+ only.
                 tetc_string = None
-
                 if id in tetc_cached_ids_left:
                     tetc_cached_ids_left.remove(id)
-
-                if isinstance(tstart, float):
-                    # Cylc 6 suites - don't populate info for others.
-                    if (tsucceeded is None and
-                            (isinstance(meant, float) or
-                             isinstance(meant, int))):
-                        # We can calculate an expected time of completion.
-                        tetc_unix = tstart + meant
+                if (tinfo_raw['finished_time'] is None and
+                        tinfo_raw['started_time'] is not None and
+                        tinfo_raw['mean total elapsed time'] is not None):
+                    # Not finished yet, but can compute the estimate.
+                    tetc_unix = (
+                            tinfo_raw['started_time'] +
+                            tinfo_raw['mean total elapsed time']
+                    )
+                    tetc_string = (
+                        self._id_tetc_cache.get(id, {}).get(tetc_unix))
+                    if tetc_string is None:
+                        # We have to calculate it.
+                        tetc_string = get_time_string_from_unix_time(
+                            tetc_unix,
+                            custom_time_zone_info=daemon_time_zone_info
+                        )
                         tetc_string = (
-                            self._id_tetc_cache.get(id, {}).get(tetc_unix))
-                        if tetc_string is None:
-                            # We have to calculate it.
-                            tetc_string = get_time_string_from_unix_time(
-                                tetc_unix,
-                                custom_time_zone_info=daemon_time_zone_info
-                            )
-                            tetc_string = (
-                                self._alter_date_time_string_for_context(
-                                    tetc_string, last_update_date)
-                            )
-                            self._id_tetc_cache[id] = {
-                                tetc_unix: tetc_string}
-                if isinstance(meant, float):
-                    if meant == 0:
-                        # This is a very fast (sub-cylc-resolution) task.
-                        meant = 1
-                    meant = int(meant)
-                    meant_minutes, meant_seconds = divmod(meant, 60)
-                    if meant_minutes:
-                        meant_string = "PT%dM%dS" % (
-                            meant_minutes, meant_seconds)
-                    else:
-                        meant_string = "PT%dS" % meant
-                
+                            self._alter_date_time_string_for_context(
+                                tetc_string, last_update_date)
+                        )
+                        self._id_tetc_cache[id] = {tetc_unix: tetc_string}
+                    tinfo_str['finished_time'] = "<i>%s?</i>" % tetc_string
+            
                 job_id = summary[id].get('submit_method_id')
                 host = summary[id].get('host')
 
@@ -267,8 +297,12 @@ class TreeUpdater(threading.Thread):
                     icon = self.dots[dot_type]['empty']
 
                 dest[point_string][name] = [
-                        state, host, job_id, tsub_string, tstart_string,
-                        tetc_string, meant_string, message, icon
+                        state, host, job_id,
+                        tinfo_str['submitted_time'],
+                        tinfo_str['started_time'],
+                        tinfo_str['finished_time'],
+                        tinfo_str['mean total elapsed time'],
+                        message, icon
                 ]
 
         for id in tetc_cached_ids_left:

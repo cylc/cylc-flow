@@ -36,8 +36,9 @@ from cylc.job_logs import CommandLogger
 import cylc.rundb
 import cylc.flags as flags
 from cylc.wallclock import (
-    get_current_time_string, get_time_string_from_unix_time,
-    RE_DATE_TIME_FORMAT_EXTENDED, get_seconds_as_interval_string
+        get_current_time_string,
+        RE_DATE_TIME_FORMAT_EXTENDED,
+        get_seconds_as_interval_string
 )
 from cylc.task_receiver import msgqueue
 from cylc.command_env import cv_scripting_sl
@@ -164,16 +165,13 @@ class task( object ):
             pass
 
     @classmethod
-    def update_mean_total_elapsed_time( cls, started, succeeded ):
+    def update_mean_total_elapsed_time(cls, started, succeeded):
         if not started:
-            # TODO on suite restart we don't currently retain task started time
+            # In case the started messaged did not come in.
+            # (TODO -plus on restart we don't retain task started time?)
             return
-        # the class variables here are defined in derived task classes
-        if not started:
-            # in case the started messaged did not get through
-            return
-        cls.elapsed_times.append( succeeded - started )
-        mtet_sec = sum( cls.elapsed_times ) / len( cls.elapsed_times )
+        cls.elapsed_times.append(succeeded - started)
+        mtet_sec = sum(cls.elapsed_times) / len(cls.elapsed_times)
         cls.mean_total_elapsed_time = mtet_sec
 
     def __init__( self, state, validate=False ):
@@ -192,15 +190,11 @@ class task( object ):
 
         self.submitted_time = None
         self.started_time = None
-        self.succeeded_time = None
-        self.etc = None
+        self.finished_time = None
         self.summary = { 'latest_message': self.latest_message,
                          'started_time': None,
-                         'started_time_string': '*',
                          'submitted_time': None,
-                         'submitted_time_string': '*',
-                         'succeeded_time': None,
-                         'succeeded_time_string': '*',
+                         'finished_time': None,
                          'name': self.name,
                          'description': self.description,
                          'title': self.title,
@@ -538,9 +532,6 @@ class task( object ):
         if self.__class__.run_mode == 'simulation':
             self.started_time = time.time()
             self.summary[ 'started_time' ] = self.started_time
-            self.summary[ 'started_time_string' ] = (
-                get_time_string_from_unix_time(self.started_time)
-            )
             self.outputs.set_completed( self.id + " started" )
             self.set_status( 'running' )
             return
@@ -554,9 +545,6 @@ class task( object ):
         # TODO - should we use the real event time from the message here?
         self.submitted_time = time.time()
         self.summary[ 'submitted_time' ] = self.submitted_time
-        self.summary[ 'submitted_time_string' ] = (
-            get_time_string_from_unix_time(self.submitted_time)
-        )
         self.summary['submit_method_id'] = self.submit_method_id
         self.summary['host'] = self.task_host
         if self.submit_method_id:
@@ -582,7 +570,8 @@ class task( object ):
             self.submission_poll_timer.set_timer()
 
     def job_execution_failed( self ):
-
+        self.finished_time = time.time()
+        self.summary[ 'finished_time' ] = self.finished_time
         self.execution_timer_timeout = None
         try:
             retry_delay = self.retry_delays.popleft()
@@ -1114,9 +1103,6 @@ class task( object ):
 
             self.started_time = time.time()
             self.summary[ 'started_time' ] = self.started_time
-            self.summary[ 'started_time_string' ] = (
-                get_time_string_from_unix_time(self.started_time)
-            )
 
             # TODO - should we use the real event time extracted from the message here:
             execution_timeout = self.event_hooks['execution timeout']
@@ -1141,13 +1127,11 @@ class task( object ):
             # (submit* states in case of very fast submission and execution)
             self.execution_timer_timeout = None
             flags.pflag = True
-            self.succeeded_time = time.time()
-            self.summary[ 'succeeded_time' ] = self.succeeded_time
-            self.summary[ 'succeeded_time_string' ] = (
-                get_time_string_from_unix_time(self.succeeded_time)
-            )
+            self.finished_time = time.time()
+            self.summary[ 'finished_time' ] = self.finished_time
+            # Update mean elapsed time only on task succeeded.
             self.__class__.update_mean_total_elapsed_time(
-                    self.started_time, self.succeeded_time)
+                    self.started_time, self.finished_time)
             self.set_status( 'succeeded' )
             self.handle_event( "succeeded", "job succeeded" )
             if not self.outputs.all_completed():
@@ -1159,8 +1143,8 @@ class task( object ):
                 self.outputs.set_all_completed()
 
         elif (content == 'failed' and
-                self.state.is_currently('ready', 'submitted', 'submit-failed',
-                    'running')):
+                self.state.is_currently(
+                    'ready', 'submitted', 'submit-failed', 'running')):
             # (submit- states in case of very fast submission and execution).
             self.job_execution_failed()
 
@@ -1247,15 +1231,10 @@ class task( object ):
     def get_state_summary( self ):
         # derived classes can call this method and then
         # add more information to the summary if necessary.
-
-        self.summary[ 'state' ] = self.state.get_status()
-        self.summary[ 'spawned' ] = self.state.has_spawned()
-
-        met = self.__class__.mean_total_elapsed_time
-        if not met:
-            met = "*"
-        self.summary[ 'mean total elapsed time' ] =  met
-
+        self.summary['state'] = self.state.get_status()
+        self.summary['spawned'] = self.state.has_spawned()
+        self.summary['mean total elapsed time'] = (
+                self.__class__.mean_total_elapsed_time)
         return self.summary
 
     def not_fully_satisfied( self ):

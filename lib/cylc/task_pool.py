@@ -550,8 +550,7 @@ class pool(object):
                     new_task.summary = itask.summary
                     new_task.started_time = itask.started_time
                     new_task.submitted_time = itask.submitted_time
-                    new_task.succeeded_time = itask.succeeded_time
-                    new_task.etc = itask.etc
+                    new_task.finished_time = itask.finished_time
 
                     # if currently retrying, retain the old retry delay
                     # list, to avoid extra retries (the next instance
