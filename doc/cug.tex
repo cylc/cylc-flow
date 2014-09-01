@@ -4328,23 +4328,6 @@ suite with the Jinja2 variables as set.
 line do not currently {\em restart} with the same settings - you have to
 set them again on the \lstinline=cylc restart= command line.
 
-\subsection{Special Placeholder Variables}
-\label{SPHV}
-
-Several special variables are used as placeholders in cylc suite definitions:
-
-\begin{myitemize}
-    \item \lstinline=[T]= and \lstinline=[T+n]= \newline
-        Where \lstinline=n= is an integer cycle offset, the unit
-        of which (e.g. hours, days, months, or years) is determined by
-        the cycling module in use. This is replaced, in internal task
-        message strings under the runtime outputs config section, by the
-        actual offset cycle of the task. The syntax is the same as
-        for cycle offsets in the suite graph.
-\end{myitemize}
-
-To use proper variables (c.f.\ programming languages) in suite
-definitions, see the Jinja2 template processor (\ref{Jinja2}).
 
 \subsection{Omitting Tasks At Runtime}
 
@@ -7160,4 +7143,3 @@ triggering failure rather than create task instances at incorrect cycle points.
 %
 %
 %\pagebreak
-
