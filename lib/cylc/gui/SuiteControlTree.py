@@ -194,19 +194,22 @@ Text Treeview suite control interface.
         self.ttreeview.connect('button_press_event', self.on_treeview_button_pressed)
         headings = [
                 None, 'task', 'state', 'host', 'Job ID', 'T-submit', 'T-start',
-                'T-finish?', 'dT-mean', 'latest message'
+                'T-finish', 'dT-mean', 'latest message'
         ]
 
         for n in range(1, len(headings)):
             # Skip first column (cycle point)
-            cr = gtk.CellRendererText()
             tvc = gtk.TreeViewColumn(headings[n])
             if n == 1:
                 crp = gtk.CellRendererPixbuf()
                 tvc.pack_start(crp, False)
                 tvc.set_attributes(crp, pixbuf=10)
+            cr = gtk.CellRendererText()
             tvc.pack_start(cr, True)
-            tvc.set_attributes(cr, text=n)
+            if n == 7:
+                tvc.set_attributes(cr, markup=n)
+            else:
+                tvc.set_attributes(cr, text=n)
             tvc.set_resizable(True)
             tvc.set_clickable(True)
             self.ttreeview.append_column(tvc)

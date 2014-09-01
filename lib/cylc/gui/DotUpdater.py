@@ -378,7 +378,7 @@ class DotUpdater(threading.Thread):
                             state_list.append(self.dots[dot_type][state])
                         except KeyError:
                             # unknown task state: use empty and save for next encounter
-                            self.dots[dot_type][state] = self.dots[dot_type]['empty']
+                            self.dots[dot_type][state] = self.dots[dot_type]['unknown']
                             state_list.append(self.dots[dot_type][state])
                     else:
                         state_list.append(self.dots[dot_type]['empty'])

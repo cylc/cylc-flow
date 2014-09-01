@@ -195,7 +195,7 @@ def get_summary_menu(suite_host_tuples,
     theme_legend_item.set_sensitive(not is_stopped)
     theme_legend_item.connect("button-press-event",
                               lambda b, e: launch_theme_legend(
-                                        gcfg.get( ['themes',theme_name])))
+                                        gcfg.get(['themes',theme_name])))
     menu.append(theme_legend_item)
     sep_item = gtk.SeparatorMenuItem()
     sep_item.show()

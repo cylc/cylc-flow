@@ -74,7 +74,8 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             time_string = line1.rstrip().split(' : ')[1]
             unix_time_string = time_string.rsplit('(', 1)[1].rstrip(")")
             global_summary["last_updated"] = int(unix_time_string)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, IndexError):
+            # back compat pre cylc-6
             global_summary["last_updated"] = time.time()
   
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]

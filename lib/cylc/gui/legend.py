@@ -29,7 +29,7 @@ class ThemeLegendWindow(gtk.Window):
 
     """This is a popup window displaying the theme state colors."""
 
-    def __init__(self, parent_window, theme_map, dot_size):
+    def __init__(self, parent_window, theme_map, dot_size='medium'):
         super(ThemeLegendWindow, self).__init__()
         self.set_border_width(5)
         self.set_title( "" )
@@ -77,5 +77,6 @@ class ThemeLegendWindow(gtk.Window):
         dotm = DotMaker(self._theme, self._dot_size)
         self._key_liststore.clear()
         for state in task_state.legal:
-            dot = dotm.get_icon( state )
-            self._key_liststore.append( [ state, dot ] )
+            dot = dotm.get_icon(state)
+            self._key_liststore.append([ state, dot])
+        self._key_liststore.append(['(unknown)', dotm.get_icon('unknown')])

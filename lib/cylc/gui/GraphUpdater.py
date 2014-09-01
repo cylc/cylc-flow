@@ -270,10 +270,9 @@ class GraphUpdater(threading.Thread):
             node.attr['fontcolor'] = self.theme[state]['fontcolor']
         except KeyError:
             # unknown state
-            node.attr['style'    ] = 'filled'
-            node.attr['fillcolor'] = 'white'
-            node.attr['color'    ] = 'white'
-            node.attr['fontcolor'] = 'red'
+            node.attr['style'    ] = 'unfilled'
+            node.attr['color'    ] = 'black'
+            node.attr['fontcolor'] = 'black'
 
         if shape:
             node.attr['shape'] = shape
@@ -281,10 +280,17 @@ class GraphUpdater(threading.Thread):
     def update_graph(self):
         # TODO - check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
-        self.oldest_point_string = (
-            self.global_summary['oldest cycle point string'])
-        self.newest_point_string = (
-            self.global_summary['newest cycle point string'])
+        try:
+            self.oldest_point_string = (
+                    self.global_summary['oldest cycle point string'])
+            self.newest_point_string = (
+                    self.global_summary['newest cycle point string'])
+        except KeyError:
+            # Pre cylc-6 back compat.
+            self.oldest_point_string = (
+                    self.global_summary['oldest cycle time'])
+            self.newest_point_string = (
+                    self.global_summary['newest cycle time'])
 
         if self.focus_start_point_string:
             oldest = self.focus_start_point_string

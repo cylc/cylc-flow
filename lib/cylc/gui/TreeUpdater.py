@@ -27,7 +27,10 @@ from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
 from cylc.wallclock import (
-    get_time_string_from_unix_time, TIME_ZONE_STRING_LOCAL_BASIC)
+        get_current_time_string,
+        get_time_string_from_unix_time,
+        TIME_ZONE_STRING_LOCAL_BASIC
+)
 
 
 def _time_trim(time_value):
@@ -76,7 +79,7 @@ class TreeUpdater(threading.Thread):
         # Cache the latest ETC calculation for active ids.
         self._id_tetc_cache = {}
 
-        # generate task state icons
+        # Generate task state icons.
         dotm = DotMaker(theme, size=dot_size)
         self.dots = dotm.get_dots()
 
@@ -185,9 +188,9 @@ class TreeUpdater(threading.Thread):
             last_update_date = self.updater.dt.split("T")[0]
         else:
             last_update_date = None
-        
-        tetc_cached_ids_left = set(self._id_tetc_cache)
 
+        tetc_cached_ids_left = set(self._id_tetc_cache)
+        
         for summary, dest in [(self.updater.state_summary, new_data),
                               (self.updater.fam_state_summary, new_fam_data)]:
             # Populate new_data and new_fam_data.
@@ -201,32 +204,46 @@ class TreeUpdater(threading.Thread):
                 if message is not None and last_update_date is not None:
                     message = message.replace(last_update_date + "T", "", 1)
 
-                tsub = summary[ id ].get( 'submitted_time' )
-                tsub_string = summary[ id ].get( 'submitted_time_string' )
-                tstart = summary[ id ].get( 'started_time' )
-                tstart_string = summary[ id ].get( 'started_time_string' )
-                tsucceeded = summary[ id ].get( 'succeeded_time' )
+                # Populate task timing slots.
+                t_info = {}
+                tkeys = ['submitted_time_string', 'started_time_string',
+                        'finished_time_string']
 
-                if tsub_string is not None:
-                    tsub_string = self._alter_date_time_string_for_context(
-                        tsub_string, last_update_date)
-                if tstart_string is not None:
-                    tstart_string = self._alter_date_time_string_for_context(
-                        tstart_string, last_update_date)
-                
-                meant = summary[ id ].get( 'mean total elapsed time' )
-                meant_string = None
-                tetc_string = None
+                if id in self.fam_state_summary:
+                    # Family timing currently left empty.
+                    for dt in tkeys:
+                        t_info[dt] = ""
+                        t_info['mean_total_elapsed_time_string'] = ""
+                else:
+                    meant = summary[id].get('mean total elapsed time')
+                    tstart = summary[id].get('started_time')
+                    tetc_string = None
 
-                if id in tetc_cached_ids_left:
-                    tetc_cached_ids_left.remove(id)
+                    for dt in tkeys:
+                        try:
+                            t_info[dt] = summary[id][dt]
+                        except KeyError:
+                            # Pre cylc-6 back compat: no special "_string" items,
+                            # and the data was in string form already.
+                            odt = dt.replace("_string", "")
+                            try:
+                                t_info[dt] = summary[id][odt]
+                            except KeyError:
+                                if dt == 'finished_time_string':
+                                    # Was succeeded_time.
+                                    t_info[dt] = summary[id].get('succeeded_time')
+                                else:
+                                    t_info[dt] = None
+                            if isinstance(t_info[dt], str):
+                                # Remove decimal fraction seconds.
+                                t_info[dt] = t_info[dt].split('.')[0]
 
-                if isinstance(tstart, float):
-                    # Cylc 6 suites - don't populate info for others.
-                    if (tsucceeded is None and
+                    if (t_info['finished_time_string'] is None and
+                            isinstance(tstart, float) and
                             (isinstance(meant, float) or
                              isinstance(meant, int))):
-                        # We can calculate an expected time of completion.
+                        # Task not finished, but has started and has a meant;
+                        # so we can compute an expected time of completion.
                         tetc_unix = tstart + meant
                         tetc_string = (
                             self._id_tetc_cache.get(id, {}).get(tetc_unix))
@@ -236,26 +253,48 @@ class TreeUpdater(threading.Thread):
                                 tetc_unix,
                                 custom_time_zone_info=daemon_time_zone_info
                             )
-                            tetc_string = (
-                                self._alter_date_time_string_for_context(
-                                    tetc_string, last_update_date)
-                            )
-                            self._id_tetc_cache[id] = {
-                                tetc_unix: tetc_string}
-                if isinstance(meant, float):
-                    if meant == 0:
-                        # This is a very fast (sub-cylc-resolution) task.
-                        meant = 1
-                    meant = int(meant)
-                    meant_minutes, meant_seconds = divmod(meant, 60)
-                    if meant_minutes:
-                        meant_string = "PT%dM%dS" % (
-                            meant_minutes, meant_seconds)
+                            self._id_tetc_cache[id] = {tetc_unix: tetc_string}
+                        t_info['finished_time_string'] = tetc_string
+                        estimated_t_finish = True
                     else:
-                        meant_string = "PT%dS" % meant
-                
-                job_id = summary[id].get('submit_method_id')
-                host = summary[id].get('host')
+                        estimated_t_finish = False
+
+                    if isinstance(meant, float) or isinstance(meant, int):
+                        if meant == 0:
+                            # This is a very fast (sub cylc-resolution) task.
+                            meant = 1
+                        meant = int(meant)
+                        meant_minutes, meant_seconds = divmod(meant, 60)
+                        if meant_minutes != 0:
+                            meant_string = "PT%dM%dS" % (
+                                meant_minutes, meant_seconds)
+                        else:
+                            meant_string = "PT%dS" % meant_seconds
+                    elif isinstance(meant,str):
+                        meant_string = meant
+                    else:
+                        meant_string = "*"
+                    t_info['mean_total_elapsed_time_string'] = meant_string
+
+                    for dt in tkeys:
+                        if t_info[dt] is not None:
+                            # Abbreviate time strings in context.
+                            t_info[dt] = (
+                                self._alter_date_time_string_for_context(
+                                    t_info[dt], last_update_date)
+                            )
+                        else:
+                            # Or (no time info yet) use an asterix.
+                            t_info[dt] = "*"
+
+                    if estimated_t_finish:
+                        # TODO - this markup probably affects sort order?
+                        t_info['finished_time_string'] = "<i>%s?</i>" % (
+                                t_info['finished_time_string'])
+    
+                # Host and JobID, or "*" for pre cylc-6 back compat.
+                job_id = summary[id].get('submit_method_id') or "*"
+                host = summary[id].get('host') or "*"
 
                 if id in self.fam_state_summary:
                     dot_type = 'family'
@@ -264,17 +303,21 @@ class TreeUpdater(threading.Thread):
                 try:
                     icon = self.dots[dot_type][state]
                 except KeyError:
-                    icon = self.dots[dot_type]['empty']
+                    icon = self.dots[dot_type]['unknown']
 
                 dest[point_string][name] = [
-                        state, host, job_id, tsub_string, tstart_string,
-                        tetc_string, meant_string, message, icon
+                        state, host, job_id,
+                        t_info['submitted_time_string'],
+                        t_info['started_time_string'],
+                        t_info['finished_time_string'],
+                        t_info['mean_total_elapsed_time_string'],
+                        message, icon
                 ]
 
         for id in tetc_cached_ids_left:
             # These ids were not present in the summary - so clear them.
             self._id_tetc_cache.pop(id)
-        
+
         tree_data = {}
         self.ttreestore.clear()
         point_strings = new_data.keys()
