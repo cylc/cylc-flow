@@ -37,8 +37,9 @@ import cylc.rundb
 import cylc.flags as flags
 from cylc.wallclock import (
         get_current_time_string,
-        RE_DATE_TIME_FORMAT_EXTENDED,
-        get_seconds_as_interval_string
+        get_time_string_from_unix_time,
+        get_seconds_as_interval_string,
+        RE_DATE_TIME_FORMAT_EXTENDED
 )
 from cylc.task_receiver import msgqueue
 from cylc.command_env import cv_scripting_sl
@@ -128,6 +129,8 @@ class task( object ):
     event_handler_env = {}
     SUITE_CONTACT_ENV_SSH_OPTS = ['-oBatchMode=yes', '-oConnectTimeout=10']
 
+    mean_total_elapsed_time = None
+
     @classmethod
     def describe( cls ):
         return cls.title + '\n' + cls.description
@@ -165,14 +168,15 @@ class task( object ):
             pass
 
     @classmethod
-    def update_mean_total_elapsed_time(cls, started, succeeded):
-        if not started:
+    def update_mean_total_elapsed_time(cls, t_started, t_succeeded):
+        if not t_started:
             # In case the started messaged did not come in.
-            # (TODO -plus on restart we don't retain task started time?)
+            # (TODO - and we don't retain started time on restart?)
             return
-        cls.elapsed_times.append(succeeded - started)
+        cls.elapsed_times.append(t_succeeded - t_started)
         mtet_sec = sum(cls.elapsed_times) / len(cls.elapsed_times)
         cls.mean_total_elapsed_time = mtet_sec
+
 
     def __init__( self, state, validate=False ):
         # Call this AFTER derived class initialisation
@@ -191,16 +195,20 @@ class task( object ):
         self.submitted_time = None
         self.started_time = None
         self.finished_time = None
-        self.summary = { 'latest_message': self.latest_message,
-                         'started_time': None,
-                         'submitted_time': None,
-                         'finished_time': None,
-                         'name': self.name,
-                         'description': self.description,
-                         'title': self.title,
-                         'label': str(self.point),
-                         'logfiles': self.logfiles.get_paths()}
-
+        self.summary = {
+                'latest_message': self.latest_message,
+                'submitted_time': None,
+                'submitted_time_string': None,
+                'started_time': None,
+                'started_time_string': None,
+                'finished_time': None,
+                'finished_time_string': None,
+                'name': self.name,
+                'description': self.description,
+                'title': self.title,
+                'label': str(self.point),
+                'logfiles': self.logfiles.get_paths()
+        }
         self.retries_configured = False
 
         self.try_number = 1
@@ -313,9 +321,11 @@ class task( object ):
     def ready_to_run( self ):
         if self.state.is_currently('queued'): # ready by definition
             return True
-        elif self.state.is_currently('waiting') and self.prerequisites.all_satisfied():
+        elif (self.state.is_currently('waiting') and
+                self.prerequisites.all_satisfied()):
             return True
-        elif self.state.is_currently( 'submit-retrying', 'retrying') and self.retry_delay_done():
+        elif (self.state.is_currently('submit-retrying', 'retrying') and
+                self.retry_delay_done()):
             return True
         else:
             return False
@@ -531,9 +541,11 @@ class task( object ):
         self.log(INFO, 'submission succeeded' )
         if self.__class__.run_mode == 'simulation':
             self.started_time = time.time()
-            self.summary[ 'started_time' ] = self.started_time
-            self.outputs.set_completed( self.id + " started" )
-            self.set_status( 'running' )
+            self.summary['started_time'] = self.started_time
+            self.summary['started_time_string'] = (
+                    get_time_string_from_unix_time(self.started_time))
+            self.outputs.set_completed(self.id + " started")
+            self.set_status('running')
             return
 
         outp = self.id + ' submitted'
@@ -542,9 +554,10 @@ class task( object ):
             # Allow submitted tasks to spawn even if nothing else is happening.
             flags.pflag = True
 
-        # TODO - should we use the real event time from the message here?
         self.submitted_time = time.time()
-        self.summary[ 'submitted_time' ] = self.submitted_time
+        self.summary['submitted_time'] = self.submitted_time
+        self.summary['submitted_time_string'] = (
+                get_time_string_from_unix_time(self.submitted_time))
         self.summary['submit_method_id'] = self.submit_method_id
         self.summary['host'] = self.task_host
         if self.submit_method_id:
@@ -552,14 +565,15 @@ class task( object ):
                 self.id, self.submit_method_id)
         else:
             self.latest_message = outp
-        self.summary[ 'latest_message' ] = (
+        self.summary['latest_message'] = (
             self.latest_message.replace(self.id, "", 1).strip())
-        self.handle_event( 'submitted', 'job submitted', db_event='submission succeeded' )
+        self.handle_event(
+                'submitted', 'job submitted', db_event='submission succeeded')
 
-        if self.state.is_currently( 'ready' ):
+        if self.state.is_currently('ready'):
             # The 'started' message can arrive before this.
             # TODO - is this still true under mp_pool?
-            self.set_status( 'submitted' )
+            self.set_status('submitted')
             submit_timeout = self.event_hooks['submission timeout']
             if submit_timeout:
                 self.submission_timer_timeout = (
@@ -568,10 +582,12 @@ class task( object ):
             else:
                 self.submission_timer_timeout = None
             self.submission_poll_timer.set_timer()
-
+            
     def job_execution_failed( self ):
         self.finished_time = time.time()
-        self.summary[ 'finished_time' ] = self.finished_time
+        self.summary['finished_time'] = self.finished_time
+        self.summary['finished_time_string'] = (
+                get_time_string_from_unix_time(self.finished_time))
         self.execution_timer_timeout = None
         try:
             retry_delay = self.retry_delays.popleft()
@@ -812,28 +828,28 @@ class task( object ):
             submit_method=module_name, host=self.user_at_host
         )
         jobconfig = {
-                'directives' : rtconfig['directives'],
-                'initial scripting' : rtconfig['initial scripting'],
-                'environment scripting' : rtconfig['environment scripting'],
-                'runtime environment' : rtconfig['environment'],
-                'remote suite path' : rtconfig['remote']['suite definition directory'],
-                'job script shell' : rtconfig['job submission']['shell'],
-                'command template' : rtconfig['job submission']['command template'],
-                'work sub-directory' : rtconfig['work sub-directory'],
-                'use manual completion' : use_manual,
-                'pre-command scripting' : precommand,
-                'command scripting' : command,
-                'post-command scripting' : postcommand,
-                'namespace hierarchy' : self.namespace_hierarchy,
-                'submission try number' : self.sub_try_number,
-                'try number' : self.try_number,
-                'absolute submit number' : self.submit_num,
-                'is cold-start' : self.is_coldstart,
-                'task owner' : self.task_owner,
-                'task host' : self.task_host,
-                'log files' : self.logfiles,
-                'local job file path' : local_jobfile_path,
-                'common job log path' : common_job_log_path
+                'directives': rtconfig['directives'],
+                'initial scripting': rtconfig['initial scripting'],
+                'environment scripting': rtconfig['environment scripting'],
+                'runtime environment': rtconfig['environment'],
+                'remote suite path': rtconfig['remote']['suite definition directory'],
+                'job script shell': rtconfig['job submission']['shell'],
+                'command template': rtconfig['job submission']['command template'],
+                'work sub-directory': rtconfig['work sub-directory'],
+                'use manual completion': use_manual,
+                'pre-command scripting': precommand,
+                'command scripting': command,
+                'post-command scripting': postcommand,
+                'namespace hierarchy': self.namespace_hierarchy,
+                'submission try number': self.sub_try_number,
+                'try number': self.try_number,
+                'absolute submit number': self.submit_num,
+                'is cold-start': self.is_coldstart,
+                'task owner': self.task_owner,
+                'task host': self.task_host,
+                'log files': self.logfiles,
+                'local job file path': local_jobfile_path,
+                'common job log path': common_job_log_path
         }
 
         self.job_sub_method = job_sub_method_class(
@@ -882,28 +898,28 @@ class task( object ):
         job_sub_method_class = getattr(mod, class_name)
 
         jobconfig = {
-                'directives' : rtconfig['directives'],
-                'initial scripting' : rtconfig['initial scripting'],
-                'environment scripting' : rtconfig['environment scripting'],
-                'runtime environment' : rtconfig['environment'],
-                'remote suite path' : rtconfig['remote']['suite definition directory'],
-                'job script shell' : rtconfig['job submission']['shell'],
-                'command template' : rtconfig['job submission']['command template'],
-                'work sub-directory' : rtconfig['work sub-directory'],
-                'use manual completion' : False,
-                'pre-command scripting' : '',
-                'command scripting' : '',
-                'post-command scripting' : '',
-                'namespace hierarchy' : '',
-                'submission try number' : 1,
-                'try number' : 1,
-                'absolute submit number' : subnum,
-                'is cold-start' : False,
-                'task owner' : owner,
-                'task host' : host,
-                'log files' : self.logfiles,
-                'local job file path' : local_jobfile_path,
-                'common job log path' : common_job_log_path
+                'directives': rtconfig['directives'],
+                'initial scripting': rtconfig['initial scripting'],
+                'environment scripting': rtconfig['environment scripting'],
+                'runtime environment': rtconfig['environment'],
+                'remote suite path': rtconfig['remote']['suite definition directory'],
+                'job script shell': rtconfig['job submission']['shell'],
+                'command template': rtconfig['job submission']['command template'],
+                'work sub-directory': rtconfig['work sub-directory'],
+                'use manual completion': False,
+                'pre-command scripting': '',
+                'command scripting': '',
+                'post-command scripting': '',
+                'namespace hierarchy': '',
+                'submission try number': 1,
+                'try number': 1,
+                'absolute submit number': subnum,
+                'is cold-start': False,
+                'task owner': owner,
+                'task host': host,
+                'log files': self.logfiles,
+                'local job file path': local_jobfile_path,
+                'common job log path': common_job_log_path
         }
         try:
             job_sub_method = job_sub_method_class(
@@ -1099,12 +1115,11 @@ class task( object ):
                     'ready', 'submitted', 'submit-failed')):
             # Received a 'task started' message
             flags.pflag = True
-            self.set_status( 'running' )
-
+            self.set_status('running')
             self.started_time = time.time()
-            self.summary[ 'started_time' ] = self.started_time
-
-            # TODO - should we use the real event time extracted from the message here:
+            self.summary['started_time'] = self.started_time
+            self.summary['started_time_string'] = (
+                    get_time_string_from_unix_time(self.started_time))
             execution_timeout = self.event_hooks['execution timeout']
             if execution_timeout:
                 self.execution_timer_timeout = (
@@ -1115,8 +1130,8 @@ class task( object ):
 
             # submission was successful so reset submission try number
             self.sub_try_number = 1
-            self.sub_retry_delays = copy( self.sub_retry_delays_orig )
-            self.handle_event( 'started', 'job started' )
+            self.sub_retry_delays = copy(self.sub_retry_delays_orig)
+            self.handle_event('started', 'job started')
             self.execution_poll_timer.set_timer()
 
         elif (content == 'succeeded' and
@@ -1128,18 +1143,20 @@ class task( object ):
             self.execution_timer_timeout = None
             flags.pflag = True
             self.finished_time = time.time()
-            self.summary[ 'finished_time' ] = self.finished_time
+            self.summary['finished_time'] = self.finished_time
+            self.summary['finished_time_string'] = (
+                    get_time_string_from_unix_time(self.finished_time))
             # Update mean elapsed time only on task succeeded.
             self.__class__.update_mean_total_elapsed_time(
                     self.started_time, self.finished_time)
-            self.set_status( 'succeeded' )
-            self.handle_event( "succeeded", "job succeeded" )
+            self.set_status('succeeded')
+            self.handle_event("succeeded", "job succeeded")
             if not self.outputs.all_completed():
-                # Tasks can start or even succeed before their submitted message comes in.
+                # In case start or succeed before submitted message.
                 msg = "Assuming non-reported outputs were completed:"
                 for key in self.outputs.not_completed:
                     msg += "\n" + key
-                self.log(INFO, msg )
+                self.log(INFO, msg)
                 self.outputs.set_all_completed()
 
         elif (content == 'failed' and
@@ -1157,7 +1174,9 @@ class task( object ):
             self.set_status('submitted')
             self.record_db_event(event="vacated", message=content)
             self.execution_timer_timeout = None
-            self.summary['started_time'] = '*'
+            # TODO - check summary item value compat with GUI:
+            self.summary['started_time'] = None
+            self.summary['started_time_string'] = None
             self.sub_try_number = 0
             self.sub_retry_delays = copy(self.sub_retry_delays_orig)
             self.execution_poll_timer.timer_start = None
