@@ -25,7 +25,7 @@
 \renewcommand{\headsep}{10pt}
 \lhead{\leftmark}
 \rhead{\rightmark}
-\lfoot{Copyright Hilary Oliver, NIWA, 2008-2013}
+\lfoot{Copyright Hilary Oliver, NIWA, 2008-2014}
 \rfoot{\thepage}
 
 \usepackage{titlepic}  % off CTAN, held locally in cylc doc dir.
@@ -166,6 +166,37 @@ basicstyle=\color{basic}\ttfamily,
 \newcommand{\hilight}[1]{\colorbox{yellow}{#1}}
 
 \begin{document}
+
+\Configure{section}{}{}{
+    \HCode{
+        <h3 id="\thesection" class="sectionHead"><span class="titlemark">
+        <a href="\#\thesection">\thesection</a>
+    }
+}{
+    \HCode{</span></h3>}
+}
+
+\Configure{subsection}{}{}{
+    \HCode{
+        <h4 id="\thesection.\arabic{subsection}" class="subsectionHead">
+        <span class="titlemark">
+        <a href="\#\thesection.\arabic{subsection}">
+        \thesection.\arabic{subsection}</a>
+    }
+}{
+    \HCode{</span></h4>}
+}
+
+\Configure{subsubsection}{}{}{
+    \HCode{
+        <h4 id="\thesection.\arabic{subsection}.\arabic{subsubsection}"
+         class="subsubsectionHead"><span class="titlemark">
+        <a href="\#\thesection.\arabic{subsection}.\arabic{subsubsection}">
+        \thesection.\arabic{subsection}.\arabic{subsubsection}</a>
+    }
+}{
+    \HCode{</span></h4>}
+}
 
  % cylc-version.txt is generated each time by doc/process
 \title{The Cylc Suite Engine\\
