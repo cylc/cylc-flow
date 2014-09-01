@@ -6743,7 +6743,7 @@ in~\ref{cylc-6-migration-runahead-limit}).
 
 See Table \ref{cylc-6-migration-timeout-delays-table}.
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Timeout/Delay Syntax Change Examples}
 \centering
 \begin{tabular}{ l c c }
@@ -6780,7 +6780,7 @@ See Section \ref{initial cycle point}.
 The following suite.rc settings have changed name (Table
 \ref{cylc-6-migration-cycle-point-time-table}):
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Cycle Point Renaming}
 \centering
 \begin{tabular}{ l l }
@@ -6806,7 +6806,7 @@ Date-times are now required to be ISO 8601 compatible. This can be achieved
 easily enough by inserting a \lstinline=T= between the day and the hour
 digits.
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Cycle Point Syntax Example}
 \centering
 \begin{tabular}{ l c c }
@@ -6881,6 +6881,58 @@ Pre-Cylc-6 & Cylc-6+ \\
 \end{tabular}
 \label{cylc-6-migration-cycling-hours-offset-table}
 \end{table}
+
+\subsection{No Implicit Creation of Tasks by Offset Triggers}
+\label{cylc-6-migration-implicit-cycling}
+
+Prior to cylc-6 inter-cycle triggers implicitly created task instances at
+the offset cycle points. For instance, this pre cylc-6 suite automatically
+creates a task \lstinline=foo= at the offset hours \lstinline=3,9,15,21= 
+each day, for task \lstinline=bar= to trigger off at \lstinline=0,6,12,18=:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# Pre cylc-6 implicit cycling.
+[scheduling]
+   initial cycle time = 2014080800
+   [[dependencies]]
+      [[[00,06,12,18]]] 
+         # This creates foo instances at 03,09,15,21:
+         graph = foo[T-3] => bar
+\end{lstlisting}
+You can graph and run this suite to see how it works (cylc-6+ is
+backward-compatible: it generates the old-style behaviour when it detects an
+old-style suite definition).  Here's the direct translation of this suite to
+cylc-6+ format:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# In cylc-6+ this suite will stall.
+[scheduling]
+   initial cycle point = 20140808T00
+   [[dependencies]]
+      [[[T00,T06,T12,T18]]] 
+         # This does NOT create foo instances at 03,09,15,21:
+         graph = foo[-P3H] => bar
+\end{lstlisting}
+If you run this suite, \lstinline=bar.20140808T00= will execute at start-up
+because dependence on tasks prior to the initial cycle point is ignored, but
+the suite will then stall with \lstinline=bar.20140808T06= waiting on
+\lstinline=foo.20140808T03=, which does not exist because offset
+\lstinline=foo= instances are not created by the inter-cycle trigger. Here's
+the correct way to get the desired behaviour in cylc-6+:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# Cylc-6+ requires explicit task instance creation.
+[scheduling]
+   initial cycle point = 20140808T00
+   [[dependencies]]
+      [[[T03,T09,T15,T21]]] 
+         graph = foo
+      [[[T00,T06,T12,T18]]] 
+         graph = foo[-P3H] => bar
+\end{lstlisting}
+Implicit creation of task instances by offset triggers has been disabled
+because it is error prone: if a trigger offset is wrong it should cause a
+triggering failure rather than create task instances at incorrect cycle points.
 
 \section{GNU GENERAL PUBLIC LICENSE v3.0}
 \input{gpl-3.0}
