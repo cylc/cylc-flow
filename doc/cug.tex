@@ -6726,19 +6726,20 @@ some places, this is quite radically different from the earlier syntax.
 
 Timeouts and delays such as \lstinline=[cylc][[event hooks]]timeout= or
 \lstinline=[runtime][[my_task]]retry delays= were written in a purely
-numeric form before cylc 6. The numbers implied a number of seconds,
-minutes (most common), or hours, depending on the setting.
+numeric form before cylc 6, in seconds, minutes (most common), or hours,
+depending on the setting.
 
 They are now written in an ISO 8601 duration form, which has the benefit
 that the units are user-selectable (use 1 day instead of 1440 minutes)
 and explicit.
 
-Nearly all timeouts/delay numbers in cylc were in minutes - only
-\lstinline=[runtime][[my_task]][[[suite state polling]]]interval= and
-\lstinline=[runtime][[my_task]][[[simulation mode]]]run time range= involved
-seconds, and \lstinline=[scheduling]runahead limit= was in hours.
-\lstinline=[scheduling]runahead limit= is a special case which is discussed in
-\ref{cylc-6-migration-runahead-limit}.
+Nearly all timeouts and delays in cylc were in minutes, except for:\\*
+\lstinline=[runtime][[my_task]][[[suite state polling]]]interval= \\*
+\lstinline=[runtime][[my_task]][[[simulation mode]]]run time range= \\*
+which were in seconds, and\\*
+\lstinline=[scheduling]runahead limit=\\*
+which was in hours (this is a special case discussed below
+in~\ref{cylc-6-migration-runahead-limit}).
 
 See Table \ref{cylc-6-migration-timeout-delays-table}.
 
@@ -6749,7 +6750,8 @@ See Table \ref{cylc-6-migration-timeout-delays-table}.
 Setting & Pre-Cylc-6 & Cylc-6+ \\
 \hline
 \lstinline=[cylc][[event hooks]]timeout= & 180 & PT3H \\
-\lstinline=[runtime][[my_task]]retry delays= & 2*30, 360, 1440 & 2*PT30M, PT6H, P1D \\
+\lstinline=[runtime][[my_task]]retry delays= & 2*30, 360, & 2*PT30M, PT6H, \\
+ & 1440 & P1D \\
 \lstinline=[runtime][[my_task]][[[suite state polling]]]interval= & 2 & PT2S \\
 \end{tabular}
 \label{cylc-6-migration-timeout-delays-table}
@@ -6760,8 +6762,8 @@ Setting & Pre-Cylc-6 & Cylc-6+ \\
 
 See Section \ref{runahead limit}.
 
-The \lstinline=[scheduling]runahead limit= option was written as a number of
-hours in pre-cylc-6 suites. This number is now in ISO 8601 format for date-time
+The \lstinline=[scheduling]runahead limit= setting was written as a number of
+hours in pre-cylc-6 suites. This is now in ISO 8601 format for date-time
 cycling suites, so \lstinline@[scheduling]runahead limit=36@ would be written
 \lstinline@[scheduling]runahead limit=PT36H@.
 
