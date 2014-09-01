@@ -48,16 +48,32 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 #
 # 1) REPEAT/START/PERIOD: R[n]/[c]i/Pi
 # missing n means repeat indefinitely
-FULL_RE_1 = re.compile('R(\d+)?/(c)?([+-]?\d+)/P(\d+|\?)')
 #
 # 2) REPEAT/START/STOP: Rn/[c]i/[c]i
 # n required: n times between START and STOP
 # (R1 means just START, R2 means START and STOP)
-FULL_RE_2 = re.compile('R(\d+)/(c)?([+-]?\d+)/(c)?(\d+)')
 #
 # 3) REPEAT/PERIOD/STOP: Rn/Pi/[c]i
 # (n required to count back from stop)
-FULL_RE_3 = re.compile('R(\d+)?/P(\d+|\?)/(c)?([+-]?\d+)')
+RECURRENCE_FORMAT_RECS = [
+    (re.compile(regex), format_) for (regex, format_) in [
+        (r"^(?P<start>[^PR/][^/]*)$", 3),
+        (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
+        (r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$", 3),
+        (r"^(?P<intv>P[^/]*)$", 3),
+        (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4)
+        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
+        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
+        (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
+        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
+        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
+        (r"^R(?P<reps>1)/?(?P<start>$)", 3),
+        (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
+    ]
+]
+
+REC_RELATIVE_POINT = re.compile("^(?P<sign>[-+])(?P<interval>P\d+)$")
+
 #---------------------------
 
 
@@ -166,7 +182,7 @@ class IntegerSequence(SequenceBase):
     @classmethod
     def get_async_expr(cls, start_point=0):
         """Express a one-off sequence at the initial cycle point."""
-        return 'R1/c' + str(start_point) + '/P1'
+        return 'R1/' + str(start_point) + ''
 
     def __init__(self, dep_section, p_context_start, p_context_stop=None):
         """Parse state (start, stop, interval) from a graph section heading.
@@ -189,15 +205,36 @@ class IntegerSequence(SequenceBase):
         # offset must be stored to compute the runahead limit
         self.i_offset = IntegerInterval('0')
 
-        # 1) REPEAT/START/PERIOD: R([n])/([c])(i)/P(i)
-        results = FULL_RE_1.match(dep_section)
-        if results:
-            reps, context, start, step = results.groups()
-            if context == 'c':
-                self.p_start = self.p_context_start + IntegerPoint(start)
+        matched_recurrence = False
+
+        for rec, format_ in RECURRENCE_FORMAT_RECS:
+            results = rec.match(dep_section)
+            if not results:
+                continue
+            matched_recurrence = True
+            repetitions = result.groupdict().get("reps")
+            if repetitions is not None:
+                repetitions = int(repetitions)
+            start = result.groupdict().get("start")
+            end = result.groupdict().get("end")
+            start_required = (format_num in [1, 3])
+            end_required = (format_num in [1, 4])
+            break
+
+        if not matched_recurrence:
+            raise ValueError("Bad recurrence: %s" % dep_section)
+
+        if format_num == 3:
+            relative_results = REC_RELATIVE_POINT.search(start)
+            if relative_results:
+                offset = IntegerInterval(relative_results["interval"])
+                if relative_results["sign"] == "+":
+                    self.p_start = self.p_context_start + offset
+                else:
+                    self.p_start = self.p_context_start - offset
             else:
                 self.p_start = IntegerPoint(start)
-            if step == '?' or reps and int(reps) <= 1:
+            if not step or reps and int(reps) <= 1:
                 # one-off
                 self.i_step = None
                 self.p_stop = self.p_start
@@ -212,7 +249,7 @@ class IntegerSequence(SequenceBase):
                                  int(self.i_step))
                     self.p_stop = self.p_context_stop - IntegerInterval(
                         remainder)
-        else:
+        elif format_num == 1:
             # 2) REPEAT/START/STOP: R(n)/([c])(i)/([c])(i)
             results = FULL_RE_2.match(dep_section)
             # results fails if n in R(n) is not given
