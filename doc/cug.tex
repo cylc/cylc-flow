@@ -2896,6 +2896,7 @@ the graph should be written like this:
 \lstset{language=transcript}
 
 \subparagraph{Advanced Starting Up}
+\label{AdvancedStartingUp}
 
 Dependencies that are only valid at the initial cycle point can be written
 using the \lstinline=R1= notation (e.g. as
@@ -6814,8 +6815,8 @@ Setting & Pre-Cylc-6 & Cylc-6+ \\
 
 Start-up tasks and mixed-asynchronous tasks are removed from cylc 6, and 
 using cold-start tasks is no longer a preferred option. Instead, you should
-use the initial/repeat-once notation as detailed in Section
-\ref{initial-non-repeating-r1-tasks}.
+use the initial/repeat-once notation as detailed in Sections
+\ref{initial-non-repeating-r1-tasks} and \ref{AdvancedStartingUp}.
 
 For genuinely repeating tasks with hours-based cycling (not start-up or
 asynchronous or cold-start) the syntax has only minor changes:
