@@ -1680,9 +1680,12 @@ class config( object ):
             total_graph_text = "\n".join(
                 back_comp_initial_section_graphs[section])
             if self.validation:
-                print "INSERTED DEPENDENCIES REPLACEMENT:"
-                print "[[[" + section + "]]]"
-                print "    " + 'graph = """\n' + total_graph_text + '\n"""' 
+                print ("# REPLACING START-UP/ASYNC DEPENDENCIES " +
+                       "WITH AN R1* SECTION")
+                print "# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)"
+                print "        [[[" + section + "]]]"
+                print "            " + 'graph = """'
+                print total_graph_text + '\n"""'
             self.parse_graph(
                 section, total_graph_text,
                 section_seq_map=section_seq_map, tasks_to_prune=[]

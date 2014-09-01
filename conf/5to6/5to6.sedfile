@@ -1,0 +1,39 @@
+s/^\( *\)initial cycle time *= *\(.*\)/\1initial cycle point = \2 # UPGRADE CHANGE: 'cycle time' -> 'cycle point'/g
+s/^\( *\)final cycle time *= *\(.*\)/\1final cycle point = \2 # UPGRADE CHANGE: 'cycle time' -> 'cycle point'/g
+/^ *\[\[\[[0-9, ]\+\]\]\]/{s/\([0-9]\+\)/T\1/g; s/T\([0-9]\)\b/T0\1/g; s@$@ # UPGRADE CHANGE. INFO: Replace any start-up/async deps with 'cylc validate' 'R1*' output.@g}
+/\[T[-+][0-9]\+\]/{s/\[T\([-+]\)\([0-9]\+\)\]/[\1PT\2H\]/g; s/$/ # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)/g}
+s/^\(.*\) timeout *= *\([0-9]\+\)/\1 timeout = PT\2M # UPGRADE CHANGE: ISO 8601 durations/g
+s/^\( *\)runahead limit *= *\([0-9]\+\)/\1runahead limit = PT\2H # UPGRADE CHANGE: ISO 8601 cycle duration/g
+/^ *retry delays *= [0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: delays as ISO 8601 durations/g}
+/polling intervals *= *[0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: intervals as ISO 8601 durations/g}
+/^ *start-up *=/{s@$@ # UPGRADE INFO: Replace start-up/async deps with 'cylc validate' 'R1*' output@g}
+s/^\( *\)interval *= *\(\d\+\)/\1interval = PT\2S # UPGRADE CHANGE: ISO 8601 durations/g
+s/PT60M/PT1H/g
+s/PT120M/PT2H/g
+s/PT180M/PT3H/g
+s/PT240M/PT4H/g
+s/PT300M/PT5H/g
+s/PT360M/PT6H/g
+s/PT420M/PT7H/g
+s/PT480M/PT8H/g
+s/PT540M/PT9H/g
+s/PT600M/PT10H/g
+s/PT660M/PT11H/g
+s/PT720M/PT12H/g
+s/PT780M/PT13H/g
+s/PT840M/PT14H/g
+s/PT900M/PT15H/g
+s/PT960M/PT16H/g
+s/PT1020M/PT17H/g
+s/PT1080M/PT18H/g
+s/PT1140M/PT19H/g
+s/PT1200M/PT20H/g
+s/PT1260M/PT21H/g
+s/PT1320M/PT22H/g
+s/PT1380M/PT23H/g
+s/PT1440M/P1D/g
+s/PT2880M/P2D/g
+s/PT4320M/P3D/g
+s/PT24H/P1D/g
+s/PT48H/P2D/g
+s/PT72H/P3D/g
