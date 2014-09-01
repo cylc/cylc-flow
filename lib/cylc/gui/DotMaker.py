@@ -84,12 +84,79 @@ stopped = {
         }
 
 
+stopped_unknown = {
+        'small' : [
+                "10 10 2 1",
+                ".	c None",
+                "+  c black",
+                "....++++++",
+                "....+....+",
+                "....+....+",
+                "....+....+",
+                "+++++....+",
+                "+....+++++",
+                "+....+....",
+                "+....+....",
+                "+....+....",
+                "++++++...." ],
+        'medium' : [
+                "14 14 2 1",
+                ".	c None",
+                "+  c black",
+                "......++++++++",
+                "......+......+",
+                "......+......+",
+                "......+......+",
+                "......+......+",
+                "......+......+",
+                "+++++++......+",
+                "+......+++++++",
+                "+......+......",
+                "+......+......",
+                "+......+......",
+                "+......+......",
+                "+......+......",
+                "++++++++......"], 
+
+        'large' : [
+                "20 20 2 1",
+                ".	c None",
+                "+  c black",
+                ".........+++++++++++",
+                ".........+.........+",
+                ".........+.........+",
+                ".........+.........+",
+                ".........+.........+",
+                ".........+.........+",
+                ".........+.........+",
+                ".........+.........+",
+                ".........+.........+",
+                "++++++++++.........+",
+                "+.........++++++++++",
+                "+.........+.........",
+                "+.........+.........",
+                "+.........+.........",
+                "+.........+.........",
+                "+.........+.........",
+                "+.........+.........",
+                "+.........+.........", 
+                "+.........+.........",
+                "++++++++++++++++++++" ]
+        }
+
+empty = {}
+empty['small'] = ["11 11 1 1", ". c None"]
+empty['small'].extend(["..........."]*11)
+empty['medium']= ["17 17 1 1", ". c None"]
+empty['medium'].extend(["................."]*17)
+empty['large'] = ["22 22 1 1", ". c None"]
+empty['large'].extend(["......................"]*22)
+ 
 live = {
         'small' : [
-                "11 11 5 1",
+                "11 11 4 1",
                 ".	c <FILL>",
                 "*	c <BRDR>",
-                "+  c None",
                 "b  c <FAM_BLACK>",
                 "w  c <FAM_WHITE>",
                 "***********",
@@ -103,11 +170,11 @@ live = {
                 "**.......**",
                 "***********",
                 "***********" ],
+
         'medium' : [
-                "17 17 5 1",
+                "17 17 4 1",
                 ".	c <FILL>",
                 "*	c <BRDR>",
-                "+  c None",
                 "b  c <FAM_BLACK>",
                 "w  c <FAM_WHITE>",
                 "*****************",
@@ -129,10 +196,9 @@ live = {
                 "*****************"], 
 
         'large' : [
-                "22 22 5 1",
+                "22 22 4 1",
                 ".	c <FILL>",
                 "*	c <BRDR>",
-                "+  c None",
                 "b  c <FAM_BLACK>",
                 "w  c <FAM_WHITE>",
                 "**********************",
@@ -159,6 +225,75 @@ live = {
                 "**********************"]
         }
 
+unknown = {
+        'small' : [
+                "11 11 3 1",
+                ".	c None",
+                "*	c black",
+                "w  c <FAM>",
+                "***********",
+                "*.........*",
+                "*.wwwww...*",
+                "*.w...w...*",
+                "*.w...w...*",
+                "*.w...w...*",
+                "*.wwwww...*",
+                "*.........*",
+                "*.........*",
+                "*.........*",
+                "***********" ],
+        'medium' : [
+                "17 17 3 1",
+                ".	c None",
+                "+	c black",
+                "w  c <FAM>",
+                "+++++++++++++++++",
+                "+...............+",
+                "+...............+",
+                "+..wwwwwww......+",
+                "+..w.....w......+",
+                "+..w.....w......+",
+                "+..w.....w......+",
+                "+..w.....w......+",
+                "+..w.....w......+",
+                "+..wwwwwww......+",
+                "+...............+",
+                "+...............+",
+                "+...............+",
+                "+...............+",
+                "+...............+",
+                "+...............+",
+                "+++++++++++++++++"], 
+
+        'large' : [
+                "22 22 3 1",
+                ".	c None",
+                "+	c black",
+                "w  c <FAM>",
+                "++++++++++++++++++++++",
+                "+....................+",
+                "+....................+",
+                "+....................+",
+                "+...wwwwwwww.........+",
+                "+...w......w.........+",
+                "+...w......w.........+",
+                "+...w......w.........+",
+                "+...w......w.........+",
+                "+...w......w.........+",
+                "+...wwwwwwww.........+",
+                "+....................+",
+                "+....................+",
+                "+....................+",
+                "+....................+",
+                "+....................+",
+                "+....................+",
+                "+....................+",
+                "+....................+",
+                "+....................+", 
+                "+....................+",
+                "++++++++++++++++++++++"]
+        }
+
 
 class DotMaker(object):
 
@@ -174,31 +309,49 @@ class DotMaker(object):
         If is_stopped, generate a stopped form of the Pixbuf.
         If is_family, add a family indicator to the Pixbuf.
         """
-        if is_stopped:
-            xpm = deepcopy(stopped[self.size])
-        else:
-            xpm = deepcopy(live[self.size])
+        #if is_stopped:
+        #    xpm = deepcopy(stopped[self.size])
+        #elif state not in self.theme:
+        #    xpm = deepcopy(unknown[self.size])
+        #else:
+        #    xpm = deepcopy(live[self.size])
 
-        if not state or state not in self.theme:
-            # empty icon ('None' is xpm transparent)
-            cols = ['None', 'None']
-        else:
-            style = self.theme[state]['style']
-            color = self.theme[state]['color']
-            if style == 'filled':
-                cols = [color, color]
+        if state is None:
+            # Empty icon.
+            xpm = empty[self.size]
+        elif state not in self.theme:
+            # Unknown state icon.
+            if is_stopped:
+                xpm = stopped_unknown[self.size]
             else:
-                # unfilled with border
-                cols = ['None', color]
-
-        xpm[1] = xpm[1].replace('<FILL>', cols[0])
-        xpm[2] = xpm[2].replace('<BRDR>', cols[1])
-        if is_family:
-            xpm[4] = xpm[4].replace('<FAM_BLACK>', cols[1])
-            xpm[5] = xpm[5].replace('<FAM_WHITE>', 'None')
+                xpm = deepcopy(unknown[self.size])
+                if is_family:
+                    xpm[3] = xpm[3].replace('<FAM>', 'black')
+                else:
+                    xpm[3] = xpm[3].replace('<FAM>', 'None')
         else:
-            xpm[4] = xpm[4].replace('<FAM_BLACK>', cols[0])
-            xpm[5] = xpm[5].replace('<FAM_WHITE>', cols[0])
+            # Known state icon.
+            color = self.theme[state]['color']
+            if self.theme[state]['style'] == 'filled':
+                fill_color = color
+                brdr_color = color
+            else:
+                fill_color = 'None'
+                brdr_color = color
+            if is_stopped:
+                xpm = deepcopy(stopped[self.size])
+                xpm[1] = xpm[1].replace('<FILL>', fill_color)
+                xpm[2] = xpm[2].replace('<BRDR>', brdr_color)
+            else:
+                xpm = deepcopy(live[self.size])
+                xpm[1] = xpm[1].replace('<FILL>', fill_color)
+                xpm[2] = xpm[2].replace('<BRDR>', brdr_color)
+                if is_family:
+                    xpm[3] = xpm[3].replace('<FAM_BLACK>', brdr_color)
+                    xpm[4] = xpm[4].replace('<FAM_WHITE>', 'None')
+                else:
+                    xpm[3] = xpm[3].replace('<FAM_BLACK>', fill_color)
+                    xpm[4] = xpm[4].replace('<FAM_WHITE>', fill_color)
 
         # NOTE: to get a pixbuf from an xpm file, use:
         #    gtk.gdk.pixbuf_new_from_file('/path/to/file.xpm')
@@ -215,7 +368,8 @@ class DotMaker(object):
         for state in task_state.legal:
             dots['task'][state] = self.get_icon(state)
             dots['family'][state] = self.get_icon(state, is_family=True)
-        empty_dot = self.get_icon()
-        dots['task']['empty'] = empty_dot
-        dots['family']['empty'] = empty_dot
+        dots['task']['empty'] = self.get_icon()
+        dots['family']['empty'] = self.get_icon()
+        dots['task']['unknown'] = self.get_icon(state='unknown')
+        dots['family']['unknown'] = self.get_icon(state='unknown', is_family=True)
         return dots

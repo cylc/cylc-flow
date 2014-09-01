@@ -77,5 +77,6 @@ class ThemeLegendWindow(gtk.Window):
         dotm = DotMaker(self._theme, self._dot_size)
         self._key_liststore.clear()
         for state in task_state.legal:
-            dot = dotm.get_icon( state )
-            self._key_liststore.append( [ state, dot ] )
+            dot = dotm.get_icon(state)
+            self._key_liststore.append([ state, dot])
+        self._key_liststore.append(['(unknown)', dotm.get_icon('unknown')])

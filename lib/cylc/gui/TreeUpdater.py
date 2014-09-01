@@ -303,7 +303,7 @@ class TreeUpdater(threading.Thread):
                 try:
                     icon = self.dots[dot_type][state]
                 except KeyError:
-                    icon = self.dots[dot_type]['empty']
+                    icon = self.dots[dot_type]['unknown']
 
                 dest[point_string][name] = [
                         state, host, job_id,
