@@ -1865,13 +1865,13 @@ For example, in \lstinline=tut.cycling.three=:
         [[[T00,T12]]]
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
+\lstset{language=transcript}
 This is shown in Figure~\ref{fig-tut-three}.
 
 Note that the time zone has been set to \lstinline=+1300= in this case,
 instead of UTC (\lstinline=Z=) as before. If no time zone or UTC mode was
 set, the local time zone of your machine will be used in the cycle points.
 
-\lstset{language=transcript}
 
 At the initial cycle point, \lstinline=foo= will depend on the
 \lstinline=foo[-PT12H]= and also \lstinline=prep=:
@@ -2901,6 +2901,7 @@ the graph should be written like this:
 \lstset{language=transcript}
 
 \subparagraph{Advanced Starting Up}
+\label{AdvancedStartingUp}
 
 Dependencies that are only valid at the initial cycle point can be written
 using the \lstinline=R1= notation (e.g. as
@@ -6714,11 +6715,173 @@ uses Pyro simply as a lightweight object oriented wrapper for
 direct network socket communication between client programs and their
 target suites - all suites are thus entirely isolated from one another.
 
+\section{Cylc 6 Migration Reference}
+\label{cylc-6-migration}
+
+Cylc 6 introduced new date-time-related syntax for the suite.rc file. In
+some places, this is quite radically different from the earlier syntax.
+
+\subsection{Timeouts and Delays}
+\label{cylc-6-migration-timeout-delays}
+
+Timeouts and delays such as \lstinline=[cylc][[event hooks]]timeout= or
+\lstinline=[runtime][[my_task]]retry delays= were written in a purely
+numeric form before cylc 6. The numbers implied a number of seconds,
+minutes (most common), or hours, depending on the setting.
+
+They are now written in an ISO 8601 duration form, which has the benefit
+that the units are user-selectable (use 1 day instead of 1440 minutes)
+and explicit.
+
+Nearly all timeouts/delay numbers in cylc were in minutes - only
+\lstinline=[runtime][[my_task]][[[suite state polling]]]interval= and
+\lstinline=[runtime][[my_task]][[[simulation mode]]]run time range= involved
+seconds, and \lstinline=[scheduling]runahead limit= was in hours.
+\lstinline=[scheduling]runahead limit= is a special case which is discussed in
+\ref{cylc-6-migration-runahead-limit}.
+
+See Table \ref{cylc-6-migration-timeout-delays-table}.
+
+\begin{table}[h]
+\caption{Timeout/Delay Syntax Change Examples}
+\centering
+\begin{tabular}{ l c c }
+Setting & Pre-Cylc-6 & Cylc-6+ \\
+\hline
+\lstinline=[cylc][[event hooks]]timeout= & 180 & PT3H \\
+\lstinline=[runtime][[my_task]]retry delays= & 2*30, 360, 1440 & 2*PT30M, PT6H, P1D \\
+\lstinline=[runtime][[my_task]][[[suite state polling]]]interval= & 2 & PT2S \\
+\end{tabular}
+\label{cylc-6-migration-timeout-delays-table}
+\end{table}
+
+\subsection{Runahead Limit}
+\label{cylc-6-migration-runahead-limit}
+
+See Section \ref{runahead limit}.
+
+The \lstinline=[scheduling]runahead limit= option was written as a number of
+hours in pre-cylc-6 suites. This number is now in ISO 8601 format for date-time
+cycling suites, so \lstinline@[scheduling]runahead limit=36@ would be written
+\lstinline@[scheduling]runahead limit=PT36H@.
+
+There is a new preferred alternative to \lstinline=runahead limit=,
+\lstinline=[scheduling]max active cycle points=. This allows the user to
+configure how many cycle points can run at once (default \lstinline=3=). See
+\ref{max active cycle points}.
+
+\subsection{Cycle Time/Cycle Point}
+\label{cylc-6-migration-cycle-point}
+
+See Section \ref{initial cycle point}.
+
+The following suite.rc settings have changed name (Table
+\ref{cylc-6-migration-cycle-point-time-table}):
+
+\begin{table}[h]
+\caption{Cycle Point Renaming}
+\centering
+\begin{tabular}{ l l }
+Pre-Cylc-6 & Cylc-6+ \\
+\hline
+\lstinline=[scheduling]initial cycle time= & \lstinline=[scheduling]initial cycle point= \\
+\lstinline=[scheduling]final cycle time= & \lstinline=[scheduling]final cycle point= \\
+\lstinline=[visualization]initial cycle time= & \lstinline=[visualization]initial cycle point= \\
+\lstinline=[visualization]final cycle time= & \lstinline=[visualization]final cycle point= \\
+\end{tabular}
+\label{cylc-6-migration-cycle-point-time-table}
+\end{table}
+
+This change is to reflect the fact that cycling in cylc 6+ can now be over
+e.g. integers instead of being purely based on date-time.
+
+Date-times written in \lstinline=initial cycle time= and
+\lstinline=final cycle time= were in a cylc-specific 10-digit (or less)
+\lstinline=CCYYMMDDhh= format, such as \lstinline=2014021400= for 00:00 on
+the 14th of February 2014.
+
+Date-times are now required to be ISO 8601 compatible. This can be achieved
+easily enough by inserting a \lstinline=T= between the day and the hour
+digits.
+
+\begin{table}[h]
+\caption{Cycle Point Syntax Example}
+\centering
+\begin{tabular}{ l c c }
+Setting & Pre-Cylc-6 & Cylc-6+ \\
+\hline
+\lstinline=[scheduling]initial cycle time= & 2014021400 & 20140214T00 \\
+\end{tabular}
+\label{cylc-6-migration-cycle-point-syntax-table}
+\end{table}
+
+\subsection{Cycling}
+\label{cylc-6-migration-cycling}
+
+Start-up tasks and mixed-asynchronous tasks are removed from cylc 6, and 
+using cold-start tasks is no longer a preferred option. Instead, you should
+use the initial/repeat-once notation as detailed in Sections
+\ref{initial-non-repeating-r1-tasks} and \ref{AdvancedStartingUp}.
+
+For genuinely repeating tasks with hours-based cycling (not start-up or
+asynchronous or cold-start) the syntax has only minor changes:
+
+Pre-cylc-6:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    ...
+    [[dependencies]]
+        [[[0,12]]]
+            graph = foo[T-12] => foo & bar => baz
+\end{lstlisting}
+\lstset{language=transcript}
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    ...
+    [[dependencies]]
+        [[[T00,T12]]]
+            graph = foo[-PT12H] => foo & bar => baz
+\end{lstlisting}
+\lstset{language=transcript}
+
+Hour-based cycling section names are easy enough to convert, as seen in Table
+\ref{cylc-6-migration-cycling-hours-table}.
+
+\begin{table}[h]
+\caption{Hourly Cycling Sections}
+\centering
+\begin{tabular}{ l l }
+Pre-Cylc-6 & Cylc-6+ \\
+\hline
+\lstinline=[scheduling][[dependencies]][[[0]]]= & \lstinline=[scheduling][[dependencies]][[[T00]]]= \\
+\lstinline=[scheduling][[dependencies]][[[6]]]= & \lstinline=[scheduling][[dependencies]][[[T06]]]= \\
+\lstinline=[scheduling][[dependencies]][[[12]]]= & \lstinline=[scheduling][[dependencies]][[[T12]]]= \\
+\lstinline=[scheduling][[dependencies]][[[18]]]= & \lstinline=[scheduling][[dependencies]][[[T18]]]= \\
+\end{tabular}
+\label{cylc-6-migration-cycling-hours-table}
+\end{table}
+
+The graph text in hour-based cycling is also easy to convert, as seen in
+Table \ref{cylc-6-migration-cycling-hours-offset-table}.
+
+\begin{table}[h]
+\caption{Hourly Cycling Offsets}
+\centering
+\begin{tabular}{ l l }
+Pre-Cylc-6 & Cylc-6+ \\
+\hline
+\lstinline=my_task[T-6]= & \lstinline=my_task[-PT6H]= \\
+\lstinline=my_task[T-12]= & \lstinline=my_task[-PT12H]= \\
+\lstinline=my_task[T-24]= & \lstinline=my_task[-PT24H]= or even \lstinline=my_task[-P1D]= \\
+\end{tabular}
+\label{cylc-6-migration-cycling-hours-offset-table}
+\end{table}
 
 \section{GNU GENERAL PUBLIC LICENSE v3.0}
 \input{gpl-3.0}
-
-
 
 %\subsection{Understanding Suite Evolution}
 %\label{UnderstandingSuiteEvolution}
