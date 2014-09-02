@@ -672,58 +672,83 @@ class config( object ):
             queues['default']['members'].append( orphan )
 
     def configure_queues( self ):
-        """ Replace family names with members, in internal queues,
-         and remove assigned members from the default queue. """
+        """Assign tasks to internal queues."""
+        # Note this modifies the parsed config dict.
+        queues = self.cfg['scheduling']['queues']
 
         if flags.verbose:
             print "Configuring internal queues"
 
-        # NOTE: this method modifies the parsed config dict itself.
+        # First add all tasks to the default queue.
+        all_task_names = self.get_task_name_list()
+        queues['default']['members'] = all_task_names
 
-        queues = self.cfg['scheduling']['queues']
-        # add all tasks to the default queue
-        queues['default']['members'] = self.get_task_name_list()
-        #print 'INITIAL default', queues['default']['members']
+        # Then reassign to other queues as requested.
+        warnings = []
+        requeued = []
         for queue in queues:
             if queue == 'default':
                 continue
-            # assign tasks to queue and remove them from default
+            # Assign tasks to queue and remove them from default.
             qmembers = []
             for qmember in queues[queue]['members']:
+                # Is a family.
                 if qmember in self.runtime['descendants']:
-                    # qmember is a family so replace it with member tasks. Note that
-                    # self.runtime['descendants'][fam] includes sub-families too.
+                    # Replace with member tasks.
                     for fmem in self.runtime['descendants'][qmember]:
+                        # This includes sub-families.
                         if qmember not in qmembers:
                             try:
-                                queues['default']['members'].remove( fmem )
+                                queues['default']['members'].remove(fmem)
                             except ValueError:
-                                # no need to check for naked dummy tasks here as
-                                # families are defined by runtime entries.
-                                if flags.verbose and fmem not in self.runtime['descendants']:
-                                    # family members that are themselves families should be ignored as we only need tasks in the queues.
-                                    print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + fmem + ' of family ' + qmember + ' (task not used in the graph)'
+                                if fmem in requeued:
+                                    msg = "queue %s; %s from %s already assigned" % (
+                                            queue, fmem, qmember)
+                                    warnings.append(msg)
+                                else:
+                                    # Ignore: task not used in the graph.
+                                    pass
                             else:
-                                qmembers.append( fmem )
+                                qmembers.append(fmem)
+                                requeued.append(fmem)
                 else:
-                    # qmember is a task
+                    # Is a task.
                     if qmember not in qmembers:
                         try:
-                            queues['default']['members'].remove( qmember )
+                            queues['default']['members'].remove(qmember)
                         except ValueError:
-                            if flags.verbose:
-                                print >> sys.stderr, '  WARNING, queue ' + queue + ': ignoring ' + qmember + ' (task not used in the graph)'
-                            if qmember not in self.cfg['runtime']:
-                                self.naked_dummy_tasks.append( qmember )
+                            if qmember in requeued:
+                                msg = "queue %s: ignoring '%s' (task already assigned)" % (
+                                        queue, qmember)
+                                warnings.append(msg)
+                            elif qmember not in all_task_names:
+                                msg = "queue %s: ignoring '%s' (task not defined)" % (
+                                        queue, qmember)
+                                warnings.append(msg)
+                            else:
+                                # Ignore: task not used in the graph.
+                                pass
                         else:
                             qmembers.append(qmember)
-            queues[queue]['members'] = qmembers
-        if flags.verbose:
-            if len( queues.keys() ) > 1:
-                for queue in queues:
-                    print "  +", queue, queues[queue]['members']
+                            requeued.append(qmember)
+
+            if len(warnings) > 0:
+                print >> sys.stderr, "Queue configuration WARNINGS:"
+                for msg in warnings:
+                    print >> sys.stderr, " + %s" % msg
+
+            if len(qmembers) > 0:
+                queues[queue]['members'] = qmembers
             else:
-                print " + All tasks assigned to the 'default' queue"
+                del queues[queue]
+
+        if flags.verbose and len(queues.keys()) > 1:
+            print "Internal queues created:"
+            for queue in queues:
+                if queue == 'default':
+                    continue
+                print "  + %s: %s" % (
+                        queue, ', '.join(queues[queue]['members']))
 
     def get_parent_lists( self ):
         return self.runtime['parents']
