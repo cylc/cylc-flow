@@ -40,34 +40,62 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 #
 # Intended to be integer analogues of the ISO8601 date time notation.
 #
-# Unlike ISO8601 time points we can't tell if an integer point is
-# absolute, or relative to some context, so a special character 'c'
-# is used to signify that context is required. '?' can be used for
-# the period in one-off (no-repeat) expressions, otherwise an arbitrary
-# given value will be ignored.
+# Unlike ISO8601 time points there is no supported equivalent of a
+# truncated point, so e.g. 'T00' has no direct analogue. Instead, we
+# can use absolute integer points such as "5" or "10". We also can't
+# extrapolate intervals from the date-time truncation information -
+# e.g. assuming 'T00/P1D' from 'T00'.
+# 
+# We can also use relative point notation in a similar way to the
+# date-time offset notation. For example, we can write "5 after the
+# initial cycle point" as '+P5'.
 #
-# 1) REPEAT/START/PERIOD: R[n]/[c]i/Pi
-# missing n means repeat indefinitely
+# In the following regular expression comments:
+#     START and END: either absolute integers such as '1' or '5', or
+#         initial-relative (start) or final-relative (end) offsets
+#         such as '+P2' or '-P5'.
+#     INITIAL and FINAL: the initial cycle point and final cycle point.
+#     INTV: an integer interval such as 'P2'.
+#     n: an integer denoting the number of repetitions.
 #
-# 2) REPEAT/START/STOP: Rn/[c]i/[c]i
-# n required: n times between START and STOP
-# (R1 means just START, R2 means START and STOP)
-#
-# 3) REPEAT/PERIOD/STOP: Rn/Pi/[c]i
-# (n required to count back from stop)
+#     format_num meanings:
+#         1: repeat n times between START and END
+#         3: start at START, keep adding INTV (if n, only for n points)
+#         4: start at END, keep subtracting INTV (if n, only for n points)
+           
 RECURRENCE_FORMAT_RECS = [
-    (re.compile(regex), format_) for (regex, format_) in [
-        (r"^(?P<start>[^PR/][^/]*)$", 3),
+    (re.compile(regex), format_num) for (regex, format_num) in [
+        # START (not supported)
+        # (r"^(?P<start>[^PR/][^/]*)$", 3),
+        # Rn/START/END
+        # e.g. R3/0/10
         (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
+        # START/INTV, implies R/START/INTV
+        # e.g. +P5/P3, 2/P2
         (r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$", 3),
+        # INTV, implies R/INITIAL/INTV
+        # e.g. P3, P10
         (r"^(?P<intv>P[^/]*)$", 3),
+        # INTV/END, implies R/INTV/END, count backwards from END
+        # e.g. P3/-P1
         (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
-        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
+        # Rn/START (not supported)
+        # (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
         (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
+        # Rn/START/INTV
+        # e.g. R2/3/P3
         (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
+        # Rn/INTV/END
+        # e.g. R5/P2/10, R7/P1/+P20
         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
+        # Rn/INTV, implies R/INTV/FINAL
+        # e.g. R5/P2, R7/P1
         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
+        # R1/START, repeat once at START
+        # e.g. R1/2, R1/+P12
         (r"^R(?P<reps>1)/?(?P<start>$)", 3),
+        # R1//END, repeat once at END.
+        # e.g. R1//-P2
         (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
     ]
 ]
@@ -180,9 +208,11 @@ class IntegerSequence(SequenceBase):
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_INTEGER
 
     @classmethod
-    def get_async_expr(cls, start_point=0):
+    def get_async_expr(cls, start_point=None):
         """Express a one-off sequence at the initial cycle point."""
-        return 'R1/' + str(start_point) + ''
+        if start_point is None:
+            return "R1"
+        return 'R1/' + str(start_point)
 
     def __init__(self, dep_section, p_context_start, p_context_stop=None):
         """Parse state (start, stop, interval) from a graph section heading.
