@@ -1471,19 +1471,34 @@ http://www.graphviz.org/Documentation.php.
 
 \subsubsection[initial cycle point]{[visualization] $\rightarrow$ initial cycle point}
 
-The cycle point from which to start the suite graph.
+The cycle point at which to start the suite graph.
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
-    \item {\em default:} the suite initial cycle point or 2999010100
+    \item {\em default:} the suite initial cycle point
 \end{myitemize}
+Use this to start plotting the suite graph from a point after the initial cycle
+point. Note that no graph nodes exist prior to the suite initial cycle point,
+or after the final one.
 
 \subsubsection[final cycle point]{[visualization] $\rightarrow$ final cycle point}
 
-The cycle point at which to end the suite graph.
+An explicit cycle point at which to end the suite graph. This is deprecated in
+favour of {\em number of cycle points} (below).
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
-    \item {\em default:} the visualization initial cycle point plus the default runahead limit
+    \item {\em default:} (none)
 \end{myitemize}
+
+\subsubsection[number of cycle points]{[visualization] $\rightarrow$ number of cycle points}
+
+The number of cycle points, starting from the initial one, after which to end
+the suite graph. This setting can be overridden by the deprecated visualization
+{\em final cycle point} (above).
+\begin{myitemize}
+    \item {\em type:} integer
+    \item {\em default:} 3
+\end{myitemize}
+
 
 \subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}
 

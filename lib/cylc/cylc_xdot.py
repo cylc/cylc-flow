@@ -433,14 +433,14 @@ class MyDotWindow( CylcDotViewerCommon ):
         graphed_family_nodes = self.suiterc.triggering_families
         suite_polling_tasks = self.suiterc.suite_polling_tasks
 
-        if self.start_point_string != None and self.stop_point_string != None:
-            one = self.start_point_string
-            two = self.stop_point_string
-        else:
-            one = self.suiterc.cfg['visualization']['initial cycle point']
-            two = self.suiterc.cfg['visualization']['final cycle point']
+        start = (self.start_point_string or
+                self.suiterc.cfg['visualization']['initial cycle point'] or 
+                self.suiterc.cfg['scheduling']['initial cycle point'])
+        stop = (self.stop_point_string or
+                self.suiterc.cfg['visualization']['final cycle point'])
 
-        graph = self.suiterc.get_graph( one, two,
+        graph = self.suiterc.get_graph(
+                start, stop,
                 raw=self.raw, group_nodes=group_nodes,
                 ungroup_nodes=ungroup_nodes,
                 ungroup_recursive=ungroup_recursive,

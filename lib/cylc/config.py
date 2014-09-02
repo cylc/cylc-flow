@@ -387,11 +387,6 @@ class config( object ):
         if self.validation:
             self.check_tasks()
 
-        # Default to suite initial cycle for visualization.
-        self.cfg['visualization']['initial cycle point'] = (
-                self.cfg['visualization']['initial cycle point'] or
-                str(self.get_actual_first_point(self.start_point)))
-
         ngs = self.cfg['visualization']['node groups']
         # If a node group member is a family, include its descendants too.
         replace = {}
@@ -1444,6 +1439,7 @@ class config( object ):
         start_point = get_point(start_point_string)
         actual_first_point = self.get_actual_first_point(start_point)
         startup_exclude_list = self.get_coldstart_task_list()
+        n_points = self.cfg['visualization']['number of cycle points']
 
         if stop_point_string is not None:
             stop_point = get_point(stop_point_string)
@@ -1469,8 +1465,8 @@ class config( object ):
                 elif stop_point is not None and point > stop_point:
                     # Beyond requested final cycle point.
                     break
-                elif stop_point is None and len(new_points) > 3:
-                    # Take max 3 cycles from each sequence.
+                elif stop_point is None and len(new_points) > n_points:
+                    # Take n_points cycles from each sequence.
                     break
                 not_initial_cycle = ( point != i_point )
 
@@ -1507,9 +1503,9 @@ class config( object ):
 
         edges = []
         if stop_point is None:
-            # Prune to 3 points in total.
+            # Prune to n_points points in total.
             points = gr_edges.keys()
-            for point in sorted(points)[:3]:
+            for point in sorted(points)[:n_points]:
                 edges.extend(gr_edges[point])
         else:
             values = gr_edges.values()
