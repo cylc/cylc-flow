@@ -6869,9 +6869,10 @@ Pre-Cylc-6 & Cylc-6+ \\
 \label{cylc-6-migration-implicit-cycling}
 
 Prior to cylc-6 inter-cycle triggers implicitly created task instances at
-the offset cycle points. For instance, this pre cylc-6 suite automatically
-creates a task \lstinline=foo= at the offset hours \lstinline=3,9,15,21= 
-each day, for task \lstinline=bar= to trigger off at \lstinline=0,6,12,18=:
+the offset cycle points. For example, this pre cylc-6 suite automatically
+creates instances of task \lstinline=foo= at the offset hours
+\lstinline=3,9,15,21= each day, for task \lstinline=bar= to trigger off at
+\lstinline=0,6,12,18=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # Pre cylc-6 implicit cycling.
@@ -6882,10 +6883,9 @@ each day, for task \lstinline=bar= to trigger off at \lstinline=0,6,12,18=:
          # This creates foo instances at 03,09,15,21:
          graph = foo[T-3] => bar
 \end{lstlisting}
-You can graph and run this suite to see how it works (cylc-6+ is
-backward-compatible: it generates the old-style behaviour when it detects an
-old-style suite definition).  Here's the direct translation of this suite to
-cylc-6+ format:
+You can run this suite to see how it works (cylc-6+ is backward-compatible: it
+generates the old-style behaviour when it detects an old-style suite
+definition). Here's the direct translation of this suite to cylc-6+ format:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # In cylc-6+ this suite will stall.
@@ -6899,9 +6899,14 @@ cylc-6+ format:
 If you run this suite, \lstinline=bar.20140808T00= will execute at start-up
 because dependence on tasks prior to the initial cycle point is ignored, but
 the suite will then stall with \lstinline=bar.20140808T06= waiting on
-\lstinline=foo.20140808T03=, which does not exist because offset
-\lstinline=foo= instances are not created by the inter-cycle trigger. Here's
-the correct way to get the desired behaviour in cylc-6+:
+\lstinline=foo.20140808T03= (right-click on the task in the GUI to see its
+prerequisites), which does not exist because the offset \lstinline=foo=
+instances have not been created. Note that if you graph the suite the offset
+\lstinline=foo= instances do appear. That's because the graph expresses
+dependence, and \lstinline=bar= really does depend on these instances of
+\lstinline=foo=. The problem is just that the tasks don't get created at run
+time, which is why the suite stalls.  Here's the correct way to get the desired
+behaviour in cylc-6+:
 \lstset{language=suiterc}
 \begin{lstlisting}
 # Cylc-6+ requires explicit task instance creation.
