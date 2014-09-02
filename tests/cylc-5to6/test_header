@@ -1,0 +1,339 @@
+#!/bin/bash
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C: 
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# NAME
+#     test_header
+#
+# SYNOPSIS
+#     . $CYLC_DIR/t/lib/bash/test_header
+#
+# DESCRIPTION
+#     Interface for constructing tests under a TAP harness (the "prove"
+#     command).
+#
+# FUNCTIONS
+#     set_test_number N
+#         echo a total number of tests for TAP to read.
+#     ok TEST_NAME
+#         echo a TAP OK message for TEST_NAME.
+#     fail TEST_NAME
+#         echo a TAP fail message for TEST_NAME. If $CYLC_TEST_DEBUG is set,
+#         cat $TEST_NAME.stderr to stderr.
+#     run_ok TEST_NAME COMMAND ...
+#         Run COMMAND with any following options/arguments and store stdout
+#         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
+#         This is expected to have a return code of 0, which ok's the test.
+#     run_fail TEST_NAME COMMAND ...
+#         Run COMMAND with any following options/arguments and store stdout
+#         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
+#         This is expected to have a non-zero return code, which ok's the test.
+#     cmp_ok FILE_TEST [FILE_CONTROL]
+#         Compare FILE_TEST with a file or stdin given by FILE_CONTROL
+#         (stdin if FILE_CONTROL is "-" or missing). If $CYLC_TEST_DEBUG_CMP
+#         is set, show differences using xxdiff.
+#     contains_ok FILE_TEST [FILE_CONTROL]
+#         Make sure that each line in FILE_TEST is present in FILE_CONTROL
+#         (stdin if FILE_CONTROL is "-" or missing).
+#     grep_ok PATTERN FILE
+#         Run "grep -q PATTERN FILE".
+#     exists_ok FILE
+#         Test that FILE exists
+#     exists_fail FILE
+#         Test that FILE does not exist
+#     init_suite SUITE_NAME
+#         Create a suite called '__cylc__test__${SUITE_NAME}__' in $TEST_DIR.
+#     purge_suite SUITE_NAME
+#         Tidy up test directories for SUITE_NAME.
+#     skip N SKIP_REASON
+#         echo "ok $((++T)) # skip SKIP_REASON" N times.
+#     skip_all SKIP_REASON
+#         echo "1..0 # SKIP SKIP_REASON" and exit.
+#-------------------------------------------------------------------------------
+set -eu
+
+FAILURES=0
+SIGNALS="EXIT INT"
+TEST_DIR=
+function FINALLY() {
+    for S in $SIGNALS; do
+        trap '' $S
+    done
+    if [[ -n $TEST_DIR ]]; then
+        cd ~
+        rm -rf $TEST_DIR
+    fi
+    if (($FAILURES > 0)); then
+        echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" >&2
+        if $SUITE_RUN_FAILS; then
+            echo -e "    suite logs can be found under: $SUITE_LOG_DIR" >&2
+        fi
+    fi
+}
+for S in $SIGNALS; do
+    trap "FINALLY $S" $S
+done
+
+TEST_NUMBER=0
+
+function set_test_number() {
+    echo "1..$1"
+}
+
+function ok() {
+    echo "ok $((++TEST_NUMBER)) - $@"
+}
+
+function fail() {
+    ((++FAILURES))
+    echo "not ok $((++TEST_NUMBER)) - $@"
+    if [[ -n ${CYLC_TEST_DEBUG:-} ]]; then
+        echo >/dev/tty
+        echo "$TEST_NAME_BASE $TEST_NAME" >/dev/tty
+        cat "$TEST_NAME.stderr" >/dev/tty
+    fi
+}
+
+function run_ok() {
+    local TEST_NAME=$1
+    shift 1
+    if ! "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        fail $TEST_NAME
+        mkdir -p $TEST_LOG_DIR
+        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+        return
+    fi
+    ok $TEST_NAME
+}
+
+function run_fail() {
+    local TEST_NAME=$1
+    shift 1
+    if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        fail $TEST_NAME
+        mkdir -p $TEST_LOG_DIR
+        cp $TEST_NAME.stdout $TEST_LOG_DIR/$TEST_NAME.stdout
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+        return
+    fi
+    ok $TEST_NAME
+}
+
+function suite_run_ok() {
+    local TEST_NAME=$1
+    shift 1
+    if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        ok $TEST_NAME
+    else
+        fail $TEST_NAME
+        SUITE_RUN_FAILS=true
+    fi
+    SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
+    mkdir -p $SUITE_LOG_DIR # directory might not exist if run fails very early
+    cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
+    cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
+}
+
+function suite_run_fail() {
+    local TEST_NAME=$1
+    shift 1
+    if "$@" 1>$TEST_NAME.stdout 2>$TEST_NAME.stderr; then
+        fail $TEST_NAME
+        SUITE_RUN_FAILS=true
+    else
+        ok $TEST_NAME
+    fi
+    SUITE_LOG_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/log/suite
+    mkdir -p $SUITE_LOG_DIR
+    cp $TEST_NAME.stdout $SUITE_LOG_DIR/out
+    cp $TEST_NAME.stderr $SUITE_LOG_DIR/err
+}
+
+function cmp_ok() {
+    local FILE_TEST=$1
+    local FILE_CONTROL=${2:--}
+    local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
+    local CMP_COMMAND="diff -u"
+    if [[ -n ${CYLC_TEST_DEBUG_CMP:-} ]]; then
+        CMP_COMMAND="xxdiff -D"
+    fi
+    if $CMP_COMMAND "$FILE_TEST" "$FILE_CONTROL" \
+            1>$TEST_NAME.stderr 2>&1; then
+        ok $TEST_NAME
+        return
+    fi
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+    fail $TEST_NAME
+}
+
+function contains_ok() {
+    local FILE_TEST=$1
+    local FILE_CONTROL=${2:--}
+    local TEST_NAME=$(basename $FILE_TEST)-contains-ok
+    comm -13 <(sort "$FILE_TEST") <(sort "$FILE_CONTROL") \
+        1>$TEST_NAME.stdout 2>$TEST_NAME.stderr
+    if [[ -s $TEST_NAME.stdout ]]; then
+        mkdir -p $TEST_LOG_DIR
+        echo "Missing lines:" >>$TEST_NAME.stderr
+        cat $TEST_NAME.stdout >>$TEST_NAME.stderr
+        cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+        fail $TEST_NAME
+        return
+    fi
+    ok $TEST_NAME
+}
+
+function grep_ok() {
+    local BRE=$1
+    local FILE=$2
+    local TEST_NAME=$(basename "$FILE")-grep-ok
+    if grep -q -e "$BRE" "$FILE"; then
+        ok $TEST_NAME
+        return
+    fi
+    echo "Can't find $BRE in $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+    fail $TEST_NAME
+}
+
+function exists_ok() {
+    local FILE=$1
+    local TEST_NAME=$(basename "$FILE")-file-exists-ok
+    if [[ -a $FILE ]]; then
+        ok $TEST_NAME
+        return
+    fi
+    echo "Does not exist: $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+    fail $TEST_NAME
+}
+
+function exists_fail() {
+    local FILE=$1
+    local TEST_NAME=$(basename $FILE)-file-exists-fail
+    if [[ ! -a $FILE ]]; then
+        ok $TEST_NAME
+        return
+    fi
+    echo "Exists: $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+    fail $TEST_NAME
+}
+
+function graph_suite() {
+    # Generate a graphviz "plain" format graph of a suite.
+    SUITE_NAME=$1
+    OUTPUT_FILE=$2
+    shift 2
+    TEMP_OUTPUT_FILE=$(mktemp XXXX-$(basename $OUTPUT_FILE))
+    cylc graph --output-file="$TEMP_OUTPUT_FILE" "$SUITE_NAME" "$@"
+    # Strip graph coordinates.
+    sed -i "s/[.0-9\-]\+\(e[+-][.0-9]\+\)\?\( \|$\)//g" "$TEMP_OUTPUT_FILE"
+    # Some (older?) graphviz versions (e.g. 2.20.2) put two spaces before node
+    # coordinates instead of one.
+    sed -i "s/  / /g" "$TEMP_OUTPUT_FILE"
+    # Different graphviz versions use "lightgrey" or "black" as the final word
+    # on node and edge lines. 
+    perl -pi -e 's/((?:node|edge).*) \w+/\1/' $TEMP_OUTPUT_FILE
+    # Sort the result to "natural order".
+    sort -V $TEMP_OUTPUT_FILE >$OUTPUT_FILE
+}
+
+function init_suite() {
+    local TEST_NAME=$1
+    local SUITE_RC=${2:-'-'}
+    local SNAME=$(echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_')
+    SUITE_NAME="$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_${SNAME}_${TEST_NAME}"
+    mkdir "$TEST_DIR/$SUITE_NAME/"
+    cat "$SUITE_RC" >"$TEST_DIR/$SUITE_NAME/suite.rc"
+    cylc unregister "$SUITE_NAME" 2>/dev/null
+    cylc register "$SUITE_NAME $TEST_DIR/$SUITE_NAME" 2>/dev/null
+    while ! cylc get-directory "$SUITE_NAME" 1>/dev/null 2>&1; do
+        sleep 1
+        cylc unregister "$SUITE_NAME" 2>/dev/null
+        cylc register "$SUITE_NAME" "$TEST_DIR/$SUITE_NAME" 2>/dev/null
+    done
+    cd "$TEST_DIR/$SUITE_NAME"
+}
+
+function install_suite() {
+    ORIG_SUITE_NAME=$2
+    SNAME=$( echo ${TEST_SOURCE_DIR##*tests/} | tr '/' '_' )
+    SUITE_NAME=$(date -u +%Y%m%dT%H%M%SZ)_cylc_test_${SNAME}_${1}
+    mkdir $TEST_DIR/$SUITE_NAME/
+    cp -r $TEST_SOURCE_DIR/${2}/* $TEST_DIR/$SUITE_NAME
+    cylc unregister $SUITE_NAME 2>/dev/null
+    cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
+    while ! cylc get-directory $SUITE_NAME 1>/dev/null 2>&1; do
+        sleep 1
+        cylc unregister $SUITE_NAME 2>/dev/null
+        cylc register $SUITE_NAME $TEST_DIR/$SUITE_NAME 2>/dev/null
+    done
+    cd $TEST_DIR/$SUITE_NAME
+}
+
+function purge_suite() {
+    if (($FAILURES == 0)); then
+        SUITE_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
+        while lsof | grep -q $SUITE_DIR; do
+            sleep 1
+        done
+        rm -rf $SUITE_DIR
+    fi
+    cd $TEST_DIR
+    if [[ -n ${SUITE_NAME:-} ]]; then
+        cylc unregister $SUITE_NAME 2>/dev/null || true
+        if [[ -n ${TEST_DIR:-} ]]; then
+            rm -rf $TEST_DIR/$SUITE_NAME/
+        fi
+    fi
+}
+
+function skip() {
+    local N_TO_SKIP=$1
+    shift 1
+    local COUNT=0
+    while ((COUNT++ < N_TO_SKIP)); do
+        echo "ok $((++TEST_NUMBER)) # skip $@"
+    done
+}
+
+function skip_all() {
+    echo "1..0 # SKIP $@"
+    exit
+}
+
+CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}
+PATH=$CYLC_DIR/bin:$PATH
+
+TEST_NAME_BASE=$(basename $0 .t)
+TEST_SOURCE_DIR=$(cd $(dirname $0) && pwd)
+TEST_DIR=$(mktemp -d)
+cd $TEST_DIR
+TEST_LOG_DIR_BASE=${TMPDIR:-/tmp}/cylc-tests-"$LOGNAME"/$(basename $TEST_SOURCE_DIR)
+TEST_LOG_DIR=$TEST_LOG_DIR_BASE/$TEST_NAME_BASE-$(date -u +%Y%m%dT%H%M%SZ)
+SUITE_RUN_FAILS=false
+
+# these variables should be moved to site/user config:
+export CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
+export CYLC_TEST_TASK_OWNER=${CYLC_TEST_TASK_OWNER:-$USER}
+
+set +e

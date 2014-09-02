@@ -1,13 +1,56 @@
-s/^\( *\)initial cycle time *= *\(.*\)/\1initial cycle point = \2 # UPGRADE CHANGE: 'cycle time' -> 'cycle point'/g
-s/^\( *\)final cycle time *= *\(.*\)/\1final cycle point = \2 # UPGRADE CHANGE: 'cycle time' -> 'cycle point'/g
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Sed command file for the 5 to 6 cylc suite.rc syntax transformer tool.
+#
+#
+# Convert 'cycle time' to 'cycle point'.
+s/^\( *\)\(initial\|final\) cycle time *= *\(.*\)/\1\2 cycle point = \2 # UPGRADE CHANGE: ISO 8601, 'time' -> 'point'/g
+#
+# Convert 'cycle point' to use ISO 8601 date-time notation.
+s/^\( *\)\(initial\|final\) cycle point = \([0-9]\{8\}\)\([0-9][0-9].*\)/\1\2 cycle point = \3T\4/g
+#
+# Convert hourly cycling sections: e.g. [[[0]]] to [[[T00]]], [[[ 0, 12 ]]] to [[[T00, T12]]].
 /^ *\[\[\[[0-9, ]\+\]\]\]/{s/\([0-9]\+\)/T\1/g; s/T\([0-9]\)\b/T0\1/g; s@$@ # UPGRADE CHANGE. INFO: Replace any start-up/async deps with 'cylc validate' 'R1*' output.@g}
+#
+# Convert hourly offsets in the graph text: [T-6] to [-PT6H], etc.
 /\[T[-+][0-9]\+\]/{s/\[T\([-+]\)\([0-9]\+\)\]/[\1PT\2H\]/g; s/$/ # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)/g}
-s/^\(.*\) timeout *= *\([0-9]\+\)/\1 timeout = PT\2M # UPGRADE CHANGE: ISO 8601 durations/g
+#
+# Convert options that end with the word "timeout" to minute info: e.g. 6 -> PT6M.
+s/^\(.*\) timeout *= *\([0-9.]\+\)/\1 timeout = PT\2M # UPGRADE CHANGE: ISO 8601 durations/g
+#
+# Convert the runahead limit to be in hours: e.g. 12 -> PT12H.
 s/^\( *\)runahead limit *= *\([0-9]\+\)/\1runahead limit = PT\2H # UPGRADE CHANGE: ISO 8601 cycle duration/g
-/^ *retry delays *= [0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: delays as ISO 8601 durations/g}
-/polling intervals *= *[0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: intervals as ISO 8601 durations/g}
+#
+# Convert each item in retry delays to be in minutes: e.g. 5, 2*30 to PT5M, 2*PT30M.
+/^ *retry delays *= [0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9.]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: delays as ISO 8601 durations/g}
+#
+# Convert each item in *polling intervals to be in minutes: e.g. 5, 2*30 to PT5M, 2*PT30M.
+/polling intervals *= *[0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9.]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: intervals as ISO 8601 durations/g}
+#
+# Create a warning for the use of start-up tasks.
 /^ *start-up *=/{s@$@ # UPGRADE INFO: Replace start-up/async deps with 'cylc validate' 'R1*' output@g}
-s/^\( *\)interval *= *\(\d\+\)/\1interval = PT\2S # UPGRADE CHANGE: ISO 8601 durations/g
+#
+# Convert the suite state polling interval into seconds: e.g. 5 => PT5S
+s/^\( *\)interval *= *\([0-9.]\+\)/\1interval = PT\2S # UPGRADE CHANGE: ISO 8601 durations/g
+#
+# Tidy up unnecessary decimals: PT60.0M to PT60M.
+s/PT\([0-9]\+\)\.0\([HMS]\)/PT\1\2/g
+#
+# Tidy up units (to impress the users!).
 s/PT60M/PT1H/g
 s/PT120M/PT2H/g
 s/PT180M/PT3H/g
