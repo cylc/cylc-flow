@@ -24,7 +24,7 @@ import re
 
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, PointParsingError)
-
+from cylc.time_parser import CylcMissingContextPointError
 
 CYCLER_TYPE_INTEGER = "integer"
 CYCLER_TYPE_SORT_KEY_INTEGER = "a"
@@ -61,7 +61,7 @@ RECURRENCE_FORMAT_RECS = [
         (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
         (r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$", 3),
         (r"^(?P<intv>P[^/]*)$", 3),
-        (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4)
+        (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
         (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
         (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
         (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
@@ -72,7 +72,7 @@ RECURRENCE_FORMAT_RECS = [
     ]
 ]
 
-REC_RELATIVE_POINT = re.compile("^(?P<sign>[-+])(?P<interval>P\d+)$")
+REC_RELATIVE_POINT = re.compile("^[-+]P\d+$")
 
 #---------------------------
 
@@ -207,41 +207,48 @@ class IntegerSequence(SequenceBase):
 
         matched_recurrence = False
 
-        for rec, format_ in RECURRENCE_FORMAT_RECS:
+        for rec, format_num in RECURRENCE_FORMAT_RECS:
             results = rec.match(dep_section)
             if not results:
                 continue
             matched_recurrence = True
-            repetitions = result.groupdict().get("reps")
-            if repetitions is not None:
-                repetitions = int(repetitions)
-            start = result.groupdict().get("start")
-            end = result.groupdict().get("end")
+            reps = results.groupdict().get("reps")
+            if reps is not None:
+                reps = int(reps)
+            start = results.groupdict().get("start")
+            stop = results.groupdict().get("end")
+            intv = results.groupdict().get("intv")
+            if not start:
+                start = None
+            if not stop:
+                stop = None
+            if not intv:
+                intv = None
             start_required = (format_num in [1, 3])
             end_required = (format_num in [1, 4])
             break
 
         if not matched_recurrence:
-            raise ValueError("Bad recurrence: %s" % dep_section)
+            raise Exception(
+                "ERROR, bad integer cycling format: %s" % dep_section)
+
+        self.p_start = get_point_from_expression(
+            start, self.p_context_start, is_required=start_required)
+        self.p_stop = get_point_from_expression(
+            stop, self.p_context_stop, is_required=start_required)
+        if intv:
+            self.i_step = IntegerInterval(intv)
 
         if format_num == 3:
-            relative_results = REC_RELATIVE_POINT.search(start)
-            if relative_results:
-                offset = IntegerInterval(relative_results["interval"])
-                if relative_results["sign"] == "+":
-                    self.p_start = self.p_context_start + offset
-                else:
-                    self.p_start = self.p_context_start - offset
-            else:
-                self.p_start = IntegerPoint(start)
-            if not step or reps and int(reps) <= 1:
+            # REPEAT/START/PERIOD
+            if not intv or reps is not None and reps <= 1:
                 # one-off
                 self.i_step = None
                 self.p_stop = self.p_start
             else:
-                self.i_step = IntegerInterval(step)
+                self.i_step = IntegerInterval(intv)
                 if reps:
-                    self.p_stop = self.p_start + self.i_step * (int(reps) - 1)
+                    self.p_stop = self.p_start + self.i_step * (reps - 1)
                 elif self.p_context_stop:
                     # stop at the point <= self.p_context_stop
                     # use p_start as an on-sequence reference
@@ -250,64 +257,32 @@ class IntegerSequence(SequenceBase):
                     self.p_stop = self.p_context_stop - IntegerInterval(
                         remainder)
         elif format_num == 1:
-            # 2) REPEAT/START/STOP: R(n)/([c])(i)/([c])(i)
-            results = FULL_RE_2.match(dep_section)
-            # results fails if n in R(n) is not given
-            if results:
-                reps, context1, start, context2, stop = results.groups()
-                if context1 == 'c':
-                    self.p_start = (
-                        self.p_context_start + IntegerPoint(start))
-                else:
-                    self.p_start = IntegerPoint(start)
-                if int(reps) == 1:
-                    # one-off: ignore stop point
-                    self.i_step = None
-                    self.p_stop = self.p_start
-                else:
-                    if context2 == 'c':
-                        if self.p_context_stop:
-                            self.p_stop = (
-                                self.p_context_stop + IntegerPoint(stop))
-                        else:
-                            raise Exception(
-                                "ERROR: stop or stop context required with " +
-                                "regex 2"
-                            )
-                    else:
-                        self.p_stop = IntegerPoint(stop)
-                    self.i_step = IntegerInterval(
-                        int(self.p_stop - self.p_start) / (int(reps) - 1)
-                    )
+            # REPEAT/START/STOP
+            if reps == 1:
+                # one-off: ignore stop point
+                self.i_step = None
+                self.p_stop = self.p_start
             else:
-                # 3) REPEAT/PERIOD/STOP: R(n)/P(i)/([c])i
-                results = FULL_RE_3.match(dep_section)
-                # results fails if n in R(n) is not given
-                if results:
-                    reps, step, context, stop = results.groups()
-                    if context == 'c':
-                        if self.p_context_stop:
-                            self.p_stop = (
-                                self.p_context_stop + IntegerPoint(stop))
-                        else:
-                            raise Exception(
-                                "ERROR: stop or stop context required with " +
-                                "regex 2"
-                            )
-                    else:
-                        self.p_stop = IntegerPoint(stop)
-                    if int(reps) <= 1:
-                        # one-off
-                        self.p_start = self.p_stop
-                        self.i_step = None
-                    else:
-                        self.i_step = IntegerInterval(step)
-                        self.p_start = (
-                            self.p_stop - self.i_step * (int(reps) - 1))
-
+                self.i_step = IntegerInterval(
+                    int(self.p_stop - self.p_start) / (reps - 1)
+                )
+        else:
+            # This means that format_num == 4.
+            # REPEAT/PERIOD/STOP
+            if reps is not None:
+                if reps <= 1:
+                    # one-off
+                    self.p_start = self.p_stop
+                    self.i_step = None
                 else:
-                    raise Exception(
-                        "ERROR, bad integer cycling format: %s" % dep_section)
+                    self.i_step = IntegerInterval(step)
+                    self.p_start = (
+                        self.p_stop - self.i_step * (reps - 1))
+            else:
+                remainder = (int(self.p_context_stop - self.p_start) %
+                             int(self.i_step))
+                self.p_start = self.p_context_start - IntegerInterval(
+                    remainder)
 
         if self.i_step and self.i_step < IntegerInterval.get_null():
             # (TODO - this should be easy to handle but needs testing)
@@ -471,11 +446,30 @@ def init_from_cfg(cfg):
     """Placeholder function required by all cycling modules."""
     pass
 
+
 def get_point_relative(offset_string, base_point):
     """Create a point from offset_string applied to base_point."""
     # This is fine so long as it is called deliberately
     # (absolute and relative integers look the same).
     return base_point + IntegerInterval(offset_string)
+
+
+def get_point_from_expression(point_expr, context_point, is_required=False):
+    """Return a point from an absolute or relative point_expr."""
+    if point_expr is None and context_point is None:
+        if is_required:
+            raise CylcMissingContextPointError(
+                "Missing context cycle point."
+            )
+        return None
+    if point_expr is None:
+        return context_point
+    if REC_RELATIVE_POINT.search(point_expr):
+        # This is a relative point expression e.g. '+P2' or '-P12'.
+        return context_point + IntegerInterval(point_expr)
+    # This is an absolute point expression e.g. '4'.
+    return IntegerPoint(point_expr)
+
 
 def test():
     """Run some simple tests for integer cycling."""

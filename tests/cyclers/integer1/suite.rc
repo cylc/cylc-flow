@@ -9,7 +9,13 @@
     [[special tasks]]
         sequential = seq
     [[dependencies]]
-        [[[ R/c0/P3 ]]]
+  #      [[[ R1 ]]]
+  #          graph = wibble
+  #      [[[ +P6 ]]]
+  #          graph = wibble[^] => wobble
+  #      [[[ R1/P0 ]]]
+  #          graph = wobble[^+P6] => wubble
+        [[[ P3 ]]]
             graph = """
              seq => foo        # sequential task
         foo[-P3] => foo        # prev instance trigger
@@ -20,11 +26,11 @@
 
         foo[-P3]:out1 => on_toast # message outputs
                     """
-        [[[ R/c1/P3 ]]]
+        [[[ R/+P1/P3 ]]]
             graph = woo
-        [[[ R/c2/P3 ]]]
+        [[[ R/+P2/P3 ]]]
             graph = woo
-        [[[ R/c6/P6 ]]]
+        [[[ R/7/P6 ]]]
             graph = """
          foo[-P3] => qux       # every second cycle
                     """
@@ -50,3 +56,6 @@ touch typing
         seq = "fillcolor=navajowhite"
         on_toast = "fillcolor=beige"
         qux = "fillcolor=orangered"
+        wibble = "fillcolor=violet"
+        wobble = "fillcolor=darkviolet"
+        wubble = "fillcolor=mediumvioletred"
