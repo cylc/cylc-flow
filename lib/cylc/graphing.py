@@ -224,13 +224,12 @@ class CGraph( CGraphPlain ):
 
 
 class edge( object):
-    def __init__( self, left, right, sequence, sasl=False, suicide=False,
+    def __init__( self, left, right, sequence, suicide=False,
                   conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
         self.left = left
         self.right = right
         self.sequence = sequence
-        self.sasl = sasl
         self.suicide = suicide
         self.conditional = conditional
 

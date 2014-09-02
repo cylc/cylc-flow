@@ -1221,7 +1221,7 @@ class config( object ):
             conditional = True
 
         for left in left_nodes:
-            e = graphing.edge( left, right, seq, False, suicide, conditional )
+            e = graphing.edge( left, right, seq, suicide, conditional )
             self.edges.append(e)
 
     def generate_taskdefs( self, line, left_nodes, right, section, seq,
@@ -1486,7 +1486,7 @@ class config( object ):
                     # nothing to add to the graph
                     action = False
 
-                if l_id != None and not e.sasl:
+                if l_id != None:
                     # check that l_id is not earlier than start time
                     tmp, lpoint_string = TaskID.split(l_id)
                     ## NOTE BUG GITHUB #919
