@@ -9,12 +9,12 @@
     [[special tasks]]
         sequential = seq
     [[dependencies]]
-  #      [[[ R1 ]]]
-  #          graph = wibble
-  #      [[[ +P6 ]]]
-  #          graph = wibble[^] => wobble
-  #      [[[ R1/P0 ]]]
-  #          graph = wobble[^+P6] => wubble
+        [[[ R1 ]]]
+            graph = wibble
+        [[[ +P6 ]]]
+            graph = wibble[^] => wobble
+        [[[ R1/P0 ]]]
+            graph = wobble[^+P6] => wubble
         [[[ P3 ]]]
             graph = """
              seq => foo        # sequential task
