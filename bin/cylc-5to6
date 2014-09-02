@@ -38,6 +38,10 @@ start-up/mixed async replacement R1* section(s). The validity of these can
 be highly dependent on the initial cycle point choice (e.g. whether it is
 T00 or T12).
 
+This command works best for hour-based cycling - it will always convert
+e.g. 'foo[T-6]' to 'foo[-PT6H]', even where this is in a monthly or yearly
+cycling section graph.
+
 This command is an aid, and is not an auto-upgrader or a substitute for
 reading the documentation. The suggested changes must be understood and
 checked by hand.
