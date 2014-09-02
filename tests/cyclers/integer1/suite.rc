@@ -11,7 +11,7 @@
     [[dependencies]]
         [[[ R1 ]]]
             graph = wibble
-        [[[ +P6 ]]]
+        [[[ R1/+P6 ]]]
             graph = wibble[^] => wobble
         [[[ R1/P0 ]]]
             graph = wobble[^+P6] => wubble
@@ -26,7 +26,7 @@
 
         foo[-P3]:out1 => on_toast # message outputs
                     """
-        [[[ R/+P1/P3 ]]]
+        [[[ +P1/P3 ]]]
             graph = woo
         [[[ R/+P2/P3 ]]]
             graph = woo

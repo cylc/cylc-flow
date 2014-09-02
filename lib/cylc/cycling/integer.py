@@ -81,6 +81,9 @@ RECURRENCE_FORMAT_RECS = [
         (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
         # Rn/START (not supported)
         # (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
+        # but: R1/START (supported)
+        # e.g. R1/5, R1/+P3
+        (r"^R(?P<reps>1)?/(?P<start>[^PR/][^/]*)/?$", 3),
         (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
         # Rn/START/INTV
         # e.g. R2/3/P3
@@ -91,8 +94,8 @@ RECURRENCE_FORMAT_RECS = [
         # Rn/INTV, implies R/INTV/FINAL
         # e.g. R5/P2, R7/P1
         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
-        # R1/START, repeat once at START
-        # e.g. R1/2, R1/+P12
+        # R1, repeat once at INITIAL
+        # e.g. R1, R1/
         (r"^R(?P<reps>1)/?(?P<start>$)", 3),
         # R1//END, repeat once at END.
         # e.g. R1//-P2
