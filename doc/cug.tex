@@ -4328,23 +4328,6 @@ suite with the Jinja2 variables as set.
 line do not currently {\em restart} with the same settings - you have to
 set them again on the \lstinline=cylc restart= command line.
 
-\subsection{Special Placeholder Variables}
-\label{SPHV}
-
-Several special variables are used as placeholders in cylc suite definitions:
-
-\begin{myitemize}
-    \item \lstinline=[T]= and \lstinline=[T+n]= \newline
-        Where \lstinline=n= is an integer cycle offset, the unit
-        of which (e.g. hours, days, months, or years) is determined by
-        the cycling module in use. This is replaced, in internal task
-        message strings under the runtime outputs config section, by the
-        actual offset cycle of the task. The syntax is the same as
-        for cycle offsets in the suite graph.
-\end{myitemize}
-
-To use proper variables (c.f.\ programming languages) in suite
-definitions, see the Jinja2 template processor (\ref{Jinja2}).
 
 \subsection{Omitting Tasks At Runtime}
 
@@ -6726,30 +6709,32 @@ some places, this is quite radically different from the earlier syntax.
 
 Timeouts and delays such as \lstinline=[cylc][[event hooks]]timeout= or
 \lstinline=[runtime][[my_task]]retry delays= were written in a purely
-numeric form before cylc 6. The numbers implied a number of seconds,
-minutes (most common), or hours, depending on the setting.
+numeric form before cylc 6, in seconds, minutes (most common), or hours,
+depending on the setting.
 
 They are now written in an ISO 8601 duration form, which has the benefit
 that the units are user-selectable (use 1 day instead of 1440 minutes)
 and explicit.
 
-Nearly all timeouts/delay numbers in cylc were in minutes - only
-\lstinline=[runtime][[my_task]][[[suite state polling]]]interval= and
-\lstinline=[runtime][[my_task]][[[simulation mode]]]run time range= involved
-seconds, and \lstinline=[scheduling]runahead limit= was in hours.
-\lstinline=[scheduling]runahead limit= is a special case which is discussed in
-\ref{cylc-6-migration-runahead-limit}.
+Nearly all timeouts and delays in cylc were in minutes, except for:\\*
+\lstinline=[runtime][[my_task]][[[suite state polling]]]interval= \\*
+\lstinline=[runtime][[my_task]][[[simulation mode]]]run time range= \\*
+which were in seconds, and\\*
+\lstinline=[scheduling]runahead limit=\\*
+which was in hours (this is a special case discussed below
+in~\ref{cylc-6-migration-runahead-limit}).
 
 See Table \ref{cylc-6-migration-timeout-delays-table}.
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Timeout/Delay Syntax Change Examples}
 \centering
 \begin{tabular}{ l c c }
 Setting & Pre-Cylc-6 & Cylc-6+ \\
 \hline
 \lstinline=[cylc][[event hooks]]timeout= & 180 & PT3H \\
-\lstinline=[runtime][[my_task]]retry delays= & 2*30, 360, 1440 & 2*PT30M, PT6H, P1D \\
+\lstinline=[runtime][[my_task]]retry delays= & 2*30, 360, & 2*PT30M, PT6H, \\
+ & 1440 & P1D \\
 \lstinline=[runtime][[my_task]][[[suite state polling]]]interval= & 2 & PT2S \\
 \end{tabular}
 \label{cylc-6-migration-timeout-delays-table}
@@ -6760,8 +6745,8 @@ Setting & Pre-Cylc-6 & Cylc-6+ \\
 
 See Section \ref{runahead limit}.
 
-The \lstinline=[scheduling]runahead limit= option was written as a number of
-hours in pre-cylc-6 suites. This number is now in ISO 8601 format for date-time
+The \lstinline=[scheduling]runahead limit= setting was written as a number of
+hours in pre-cylc-6 suites. This is now in ISO 8601 format for date-time
 cycling suites, so \lstinline@[scheduling]runahead limit=36@ would be written
 \lstinline@[scheduling]runahead limit=PT36H@.
 
@@ -6778,7 +6763,7 @@ See Section \ref{initial cycle point}.
 The following suite.rc settings have changed name (Table
 \ref{cylc-6-migration-cycle-point-time-table}):
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Cycle Point Renaming}
 \centering
 \begin{tabular}{ l l }
@@ -6804,7 +6789,7 @@ Date-times are now required to be ISO 8601 compatible. This can be achieved
 easily enough by inserting a \lstinline=T= between the day and the hour
 digits.
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Cycle Point Syntax Example}
 \centering
 \begin{tabular}{ l c c }
@@ -6879,6 +6864,63 @@ Pre-Cylc-6 & Cylc-6+ \\
 \end{tabular}
 \label{cylc-6-migration-cycling-hours-offset-table}
 \end{table}
+
+\subsection{No Implicit Creation of Tasks by Offset Triggers}
+\label{cylc-6-migration-implicit-cycling}
+
+Prior to cylc-6 inter-cycle triggers implicitly created task instances at
+the offset cycle points. For example, this pre cylc-6 suite automatically
+creates instances of task \lstinline=foo= at the offset hours
+\lstinline=3,9,15,21= each day, for task \lstinline=bar= to trigger off at
+\lstinline=0,6,12,18=:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# Pre cylc-6 implicit cycling.
+[scheduling]
+   initial cycle time = 2014080800
+   [[dependencies]]
+      [[[00,06,12,18]]] 
+         # This creates foo instances at 03,09,15,21:
+         graph = foo[T-3] => bar
+\end{lstlisting}
+You can run this suite to see how it works (cylc-6+ is backward-compatible: it
+generates the old-style behaviour when it detects an old-style suite
+definition). Here's the direct translation of this suite to cylc-6+ format:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# In cylc-6+ this suite will stall.
+[scheduling]
+   initial cycle point = 20140808T00
+   [[dependencies]]
+      [[[T00,T06,T12,T18]]] 
+         # This does NOT create foo instances at 03,09,15,21:
+         graph = foo[-P3H] => bar
+\end{lstlisting}
+If you run this suite, \lstinline=bar.20140808T00= will execute at start-up
+because dependence on tasks prior to the initial cycle point is ignored, but
+the suite will then stall with \lstinline=bar.20140808T06= waiting on
+\lstinline=foo.20140808T03= (right-click on the task in the GUI to see its
+prerequisites), which does not exist because the offset \lstinline=foo=
+instances have not been created. Note that if you graph the suite the offset
+\lstinline=foo= instances do appear. That's because the graph expresses
+dependence, and \lstinline=bar= really does depend on these instances of
+\lstinline=foo=. The problem is just that the tasks don't get created at run
+time, which is why the suite stalls.  Here's the correct way to get the desired
+behaviour in cylc-6+:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# Cylc-6+ requires explicit task instance creation.
+[scheduling]
+   initial cycle point = 20140808T00
+   [[dependencies]]
+      [[[T03,T09,T15,T21]]] 
+         graph = foo
+      [[[T00,T06,T12,T18]]] 
+         graph = foo[-P3H] => bar
+\end{lstlisting}
+Implicit creation of task instances by offset triggers has been disabled
+because it is error prone: if a trigger offset is wrong it should cause a
+triggering failure rather than create task instances at incorrect cycle points.
 
 \section{GNU GENERAL PUBLIC LICENSE v3.0}
 \input{gpl-3.0}
@@ -7106,4 +7148,3 @@ Pre-Cylc-6 & Cylc-6+ \\
 %
 %
 %\pagebreak
-
