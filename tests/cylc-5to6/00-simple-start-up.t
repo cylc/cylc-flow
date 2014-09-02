@@ -68,14 +68,14 @@ title = Simple start-up suite.
     final cycle point = 20140104T00
     runahead limit = PT6H # UPGRADE CHANGE: ISO 8601 cycle duration
     [[dependencies]]
-        [[[T00]]] # UPGRADE CHANGE. INFO: Replace any start-up/async deps with 'cylc validate' 'R1*' output.
+        [[[T00]]] # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations
             graph = foo_midnight[-P1D] & cold_foo => foo_midnight # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
-        [[[T00, T12]]] # UPGRADE CHANGE. INFO: Replace any start-up/async deps with 'cylc validate' 'R1*' output.
+        [[[T00, T12]]] # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations
             graph = foo_twelves[-PT12H] & cold_foo => foo_twelves # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
-        [[[T06]]] # UPGRADE CHANGE. INFO: Replace any start-up/async deps with 'cylc validate' 'R1*' output.
+        [[[T06]]] # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations
             graph = foo_dawn[-P1D] & cold_foo => foo_dawn # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
     [[special tasks]]
-        start-up = cold_foo # UPGRADE INFO: Replace start-up/async deps with 'cylc validate' 'R1*' output
+        start-up = cold_foo # UPGRADE INFO: Replace this and *all* start-up/async graph deps with 'cylc validate' 'R1*' output
 [runtime]
     [[root]]
         command scripting = true

@@ -24,7 +24,7 @@ s/^\( *\)\(initial\|final\) cycle time *= *\(.*\)/\1\2 cycle point = \2 # UPGRAD
 s/^\( *\)\(initial\|final\) cycle point = \([0-9]\{8\}\)\([0-9][0-9].*\)/\1\2 cycle point = \3T\4/g
 #
 # Convert hourly cycling sections: e.g. [[[0]]] to [[[T00]]], [[[ 0, 12 ]]] to [[[T00, T12]]].
-/^ *\[\[\[[0-9, ]\+\]\]\]/{s/\([0-9]\+\)/T\1/g; s/T\([0-9]\)\b/T0\1/g; s@$@ # UPGRADE CHANGE. INFO: Replace any start-up/async deps with 'cylc validate' 'R1*' output.@g}
+/^ *\[\[\[[0-9, ]\+\]\]\]/{s/\([0-9]\+\)/T\1/g; s/T\([0-9]\)\b/T0\1/g; s@$@ # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations@g}
 #
 # Convert hourly offsets in the graph text: [T-6] to [-PT6H], etc.
 /\[T[-+][0-9]\+\]/{s/\[T\([-+]\)\([0-9]\+\)\]/[\1PT\2H\]/g; s/$/ # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)/g}
@@ -42,7 +42,7 @@ s/^\( *\)runahead limit *= *\([0-9]\+\)/\1runahead limit = PT\2H # UPGRADE CHANG
 /polling intervals *= *[0-9*. ,]\+/{s/\([0-9]\+\*\)\{0,1\}\([0-9.]\+\)/\1PT\2M/g; s/$/ # UPGRADE CHANGE: intervals as ISO 8601 durations/g}
 #
 # Create a warning for the use of start-up tasks.
-/^ *start-up *=/{s@$@ # UPGRADE INFO: Replace start-up/async deps with 'cylc validate' 'R1*' output@g}
+/^ *start-up *=/{s@$@ # UPGRADE INFO: Replace this and *all* start-up/async graph deps with 'cylc validate' 'R1*' output@g}
 #
 # Convert the suite state polling interval into seconds: e.g. 5 => PT5S
 s/^\( *\)interval *= *\([0-9.]\+\)/\1interval = PT\2S # UPGRADE CHANGE: ISO 8601 durations/g
