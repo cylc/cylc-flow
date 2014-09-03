@@ -30,8 +30,8 @@ from cylc.CylcOptionParsers import cop
 # viewer, via changes to this file and to lib/cylc/cylc_xdot.py - all
 # of which could stand some refactoring to streamline the code a bit.
 
-# TODO - clarify what it means to choose visualization boundaries outside of
-# the defined suite initial and final cycle times.
+# TODO - clarify what it means to choose visualization boundaries (by CLI
+# or in-suite) outside of the defined suite initial and final cycle times.
 
 def on_url_clicked( widget, url, event, window ):
     if event.button != 3:
