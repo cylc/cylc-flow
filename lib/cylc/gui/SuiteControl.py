@@ -2214,7 +2214,7 @@ or remove task definitions without restarting the suite."""
         window.show_all()
 
     def _sort_key_func(self, x):
-        return [int(w) if w.isdigit() else w for w in re.split("(\d+)", x)]
+        return [int(w) if w.isdigit() else w for w in re.split("(\d+)", x)[-2:]]
 
     def _set_tooltip( self, widget, tip_text ):
         tooltip = gtk.Tooltips()
