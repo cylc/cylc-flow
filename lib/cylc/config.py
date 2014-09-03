@@ -702,7 +702,7 @@ class config( object ):
                                 queues['default']['members'].remove(fmem)
                             except ValueError:
                                 if fmem in requeued:
-                                    msg = "queue %s; %s from %s already assigned" % (
+                                    msg = "%s: ignoring %s from %s (already assigned to a queue)" % (
                                             queue, fmem, qmember)
                                     warnings.append(msg)
                                 else:
@@ -718,11 +718,11 @@ class config( object ):
                             queues['default']['members'].remove(qmember)
                         except ValueError:
                             if qmember in requeued:
-                                msg = "queue %s: ignoring '%s' (task already assigned)" % (
+                                msg = "%s: ignoring '%s' (task already assigned)" % (
                                         queue, qmember)
                                 warnings.append(msg)
                             elif qmember not in all_task_names:
-                                msg = "queue %s: ignoring '%s' (task not defined)" % (
+                                msg = "%s: ignoring '%s' (task not defined)" % (
                                         queue, qmember)
                                 warnings.append(msg)
                             else:
