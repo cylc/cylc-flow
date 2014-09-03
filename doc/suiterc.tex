@@ -1619,30 +1619,6 @@ assignment.
 \end{lstlisting}
 \end{myitemize}
 
-\subsubsection[{[[}runtime graph{]]}]{[visualization] $\rightarrow$ [[runtime graph]]}
-
-Cylc can generate graphs of dependencies resolved at run time, i.e.\ what
-actually triggers off what as the suite runs. This feature is retained
-mainly for development and debugging purposes. You can use simulation
-mode or dummy mode to generate runtime graphs very quickly.
-
-\paragraph[enable]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ enable}
-
-Runtime graphing is disabled by default.
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
-\paragraph[directory]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ directory}
-
-Where to put the runtime graph file, \lstinline=runtime-graph.dot=.
-
-\begin{myitemize}
-    \item {\em type:} string (a valid directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/graphing=
-\end{myitemize}
-
 % HIDDEN \subsection{[development]}
 
 \subsection{Special Placeholder Variables In Suite Definitions}
