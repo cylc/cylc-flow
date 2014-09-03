@@ -1,0 +1,23 @@
+language: python
+
+# Python versions to test
+python:
+    - "2.6"
+    - "2.7"
+
+# Install dependencies & ssh setup
+install: 
+ - "pip install -r requirements.txt"
+ - "sudo apt-get install at" 
+ - "ssh-keygen -t rsa -f ~/.ssh/id_rsa -N '' -q"
+ - "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
+ - "ssh-keyscan -t rsa localhost >> ~/.ssh/known_hosts"
+ - "ssh localhost true"
+
+# Run tests
+script: "bin/cylc test-battery -- -j 2"
+
+# Print results
+after_script: 
+ - "find /tmp/cylc-tests -type f"
+ - "cat /tmp/cylc-tests/*/*"
