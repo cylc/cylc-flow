@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 Integer cycling by point, interval, and sequence classes.
-The same interface as for full ISO8601 date time cycling.
 """
 
 import re
@@ -29,22 +28,14 @@ from cylc.cycling import (
 CYCLER_TYPE_INTEGER = "integer"
 CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 
+# TODO - abbreviated integer recurrences?
 
-# TODO - consider copy vs reference of points, intervals, sequences
-# TODO - truncated integer recurrence notation?
-# TODO - handle cross-recurrence triggers properly
-#        (e.g. dependence of cycling tasks on start-up tasks.)
-
-#___________________________
 # INTEGER RECURRENCE REGEXES
 #
-# Intended to be integer analogues of the ISO8601 date time notation.
-#
-# Unlike ISO8601 time points we can't tell if an integer point is
-# absolute, or relative to some context, so a special character 'c'
-# is used to signify that context is required. '?' can be used for
-# the period in one-off (no-repeat) expressions, otherwise an arbitrary
-# given value will be ignored.
+# Unlike ISO8601 time points we can't tell if an integer point is absolute, or
+# relative to some context, so a special character 'c' is used to signify that
+# context is required. '?' can be used for the period in one-off (no-repeat)
+# expressions, otherwise an arbitrary given value will be ignored.
 #
 # 1) REPEAT/START/PERIOD: R[n]/[c]i/Pi
 # missing n means repeat indefinitely
@@ -58,7 +49,6 @@ FULL_RE_2 = re.compile('R(\d+)/(c)?([+-]?\d+)/(c)?(\d+)')
 # 3) REPEAT/PERIOD/STOP: Rn/Pi/[c]i
 # (n required to count back from stop)
 FULL_RE_3 = re.compile('R(\d+)?/P(\d+|\?)/(c)?([+-]?\d+)')
-#---------------------------
 
 
 class IntegerPoint(PointBase):
@@ -180,6 +170,8 @@ class IntegerSequence(SequenceBase):
         # stop context may exist
         if p_context_stop:
             self.p_context_stop = IntegerPoint(p_context_stop)
+        else:
+            self.p_context_stop = None
 
         # state variables: start, stop, and step
         self.p_start = None
@@ -340,7 +332,8 @@ class IntegerSequence(SequenceBase):
 
     def _get_point_in_bounds(self, point):
         """Return point, or None if out of bounds."""
-        if point >= self.p_start and point <= self.p_stop:
+        if point >= self.p_start and (
+                self.p_stop is None or point <= self.p_stop):
             return point
         else:
             return None
