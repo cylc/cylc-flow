@@ -432,12 +432,22 @@ class MyDotWindow( CylcDotViewerCommon ):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.triggering_families
         suite_polling_tasks = self.suiterc.suite_polling_tasks
-
-        start = (self.start_point_string or
-                self.suiterc.cfg['visualization']['initial cycle point'] or 
-                self.suiterc.cfg['scheduling']['initial cycle point'])
-        stop = (self.stop_point_string or
-                self.suiterc.cfg['visualization']['final cycle point'])
+        # Note this is used by "cylc graph" but not gcylc.
+        # self.start_ and self.stop_point_string come from CLI.
+        if self.start_point_string is not None:
+            # CLI overrode graph start point...
+            start = self.start_point_string
+            if self.stop_point_string is None:
+                # Force use of computed stop point to avoid a large gap between
+                # CLI start and in-suite stop.
+                stop = None
+            else:
+                # CLI overrode stop point too.
+                stop = self.stop_point_string
+        else:
+            # No CLI override: use in-suite values.
+            start = self.suiterc.cfg['visualization']['initial cycle point']
+            stop = self.suiterc.cfg['visualization']['final cycle point']
 
         graph = self.suiterc.get_graph(
                 start, stop,

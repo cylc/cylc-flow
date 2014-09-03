@@ -451,6 +451,19 @@ class config( object ):
                 if foot not in self.feet:
                     self.feet.append(foot)
 
+        # For static visualization, start point defaults to suite initial
+        # point; stop point must be explicit with initial point, or None.
+        if self.cfg['visualization']['initial cycle point'] is None:
+            self.cfg['visualization']['initial cycle point'] = (
+                    self.cfg['scheduling']['initial cycle point'])
+            # If viz initial point is None don't accept a final point.
+            if self.cfg['visualization']['final cycle point'] is not None:
+                if flags.verbose:
+                    print >> sys.stderr, (
+                        "WARNING: ignoring [visualization]final cycle point\n"
+                        "  (it must be defined with an initial cycle point)")
+                self.cfg['visualization']['final cycle point'] = None
+
     def check_env_names( self ):
         # check for illegal environment variable names
          bad = {}
@@ -1524,8 +1537,8 @@ class config( object ):
             group_nodes, ungroup_nodes, ungroup_recursive,
             group_all, ungroup_all
         )
-
-        graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
+        graph = graphing.CGraph(
+                self.suite, self.suite_polling_tasks, self.cfg['visualization'])
         graph.add_edges( gr_edges, ignore_suicide )
         if subgraphs_on:
             graph.add_cycle_point_subgraphs( gr_edges )

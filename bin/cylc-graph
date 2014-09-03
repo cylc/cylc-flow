@@ -30,6 +30,9 @@ from cylc.CylcOptionParsers import cop
 # viewer, via changes to this file and to lib/cylc/cylc_xdot.py - all
 # of which could stand some refactoring to streamline the code a bit.
 
+# TODO - clarify what it means to choose visualization boundaries outside of
+# the defined suite initial and final cycle times.
+
 def on_url_clicked( widget, url, event, window ):
     if event.button != 3:
         return False
@@ -85,6 +88,9 @@ parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START [STOP]]
      Plot the specified dot-language graph file.
 
 Plot cylc dependency graphs in a pannable, zoomable viewer.
+
+START and STOP points override [visualization] initial and final cycle points
+from the suite definition.
 
 The viewer updates automatically when the suite.rc file is saved during
 editing. Supply the optional initial and final cycle point arguments to
@@ -198,19 +204,13 @@ if options.namespaces:
                            should_hide=should_hide_gtk_window )
 else:
     # SUITE DEPENDENCY GRAPH
-
     start_point_string = None
     stop_point_string = None
 
     if len(args) > 1:
-        # got START
         start_point_string = args[1]
-
         if len(args) == 3:
-            # got STOP
             stop_point_string = args[2]
-        else:
-            stop_point_string = start_point_string
 
     window = MyDotWindow( suite, suiterc, options.templatevars,
                           options.templatevars_file, watchers,
