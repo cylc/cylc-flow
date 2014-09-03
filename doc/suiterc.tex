@@ -1617,17 +1617,3 @@ assignment.
    foo = 'style=filled'
 \end{lstlisting}
 \end{myitemize}
-
-\subsection{Default Suite Configuration}
-\label{SuiteDefaults}
-
-Cylc provides, via \lstinline=$CYLC_DIR/conf/suiterc/*.spec=, sensible
-default values for many configuration items so that most users will not
-need to explicitly configure log directories and so on. The defaults are
-sufficient, in fact, to allow test suites defined by dependency graph
-alone (command scripting, for example, defaults to printing a simple
-message, sleeping for a few seconds, and then exiting).
-
-The \lstinline=cylc get-suite-config= command parses a suite definition and
-retrieves configuration values for individual items, sections, or entire
-suites.
