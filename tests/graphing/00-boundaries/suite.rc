@@ -1,0 +1,12 @@
+
+[scheduling]
+    initial cycle point = 20140808T00
+    [[dependencies]]
+       [[[T00,T06,T12,T18]]]
+            graph = foo
+       [[[T00]]]
+            graph = foo => bar
+
+[visualization]
+    number of cycle points = 3
+
