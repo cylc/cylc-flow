@@ -261,7 +261,7 @@ class IntegerSequence(SequenceBase):
         self.p_start = get_point_from_expression(
             start, self.p_context_start, is_required=start_required)
         self.p_stop = get_point_from_expression(
-            stop, self.p_context_stop, is_required=start_required)
+            stop, self.p_context_stop, is_required=end_required)
         if intv:
             self.i_step = IntegerInterval(intv)
 
@@ -386,8 +386,10 @@ class IntegerSequence(SequenceBase):
 
     def is_valid(self, point):
         """Is point on-sequence and in-bounds?"""
-        return self.is_on_sequence(point) and \
-            point >= self.p_start and point <= self.p_stop
+        return (self.is_on_sequence(point) and
+                point >= self.p_start and
+                (self.p_stop is None or
+                    point <= self.p_stop))
 
     def get_prev_point(self, point):
         """Return the previous point < point, or None if out of bounds."""
