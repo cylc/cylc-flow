@@ -198,11 +198,7 @@ class TreeUpdater(threading.Thread):
                 name, point_string = cylc.TaskID.split( id )
                 if point_string not in dest:
                     dest[ point_string ] = {}
-                state = summary[ id ].get( 'state' )
-                message = summary[ id ].get( 'latest_message', )
-
-                if message is not None and last_update_date is not None:
-                    message = message.replace(last_update_date + "T", "", 1)
+                state = summary[ id ].get('state')
 
                 # Populate task timing slots.
                 t_info = {}
@@ -292,16 +288,23 @@ class TreeUpdater(threading.Thread):
                         t_info['finished_time_string'] = "<i>%s?</i>" % (
                                 t_info['finished_time_string'])
     
-                # Host and JobID columns: use "*" or "" until populated and for
-                # pre cylc-6 back compat.
+                # Use "*" (or "" for family rows) until slot is populated
+                # and for pre cylc-6 back compat for host and job ID cols.
+                job_id = summary[id].get('submit_method_id')
+                host = summary[id].get('host')
+                message = summary[ id ].get('latest_message')
+                if message is not None and last_update_date is not None:
+                    message = message.replace(last_update_date + "T", "", 1)
                 if id in self.fam_state_summary:
                     dot_type = 'family'
-                    job_id = summary[id].get('submit_method_id') or ""
-                    host = summary[id].get('host') or ""
+                    job_id = job_id or ""
+                    host = host or ""
+                    message = message or ""
                 else:
                     dot_type = 'task'
-                    job_id = summary[id].get('submit_method_id') or "*"
-                    host = summary[id].get('host') or "*"
+                    job_id = job_id or "*"
+                    host = host or "*"
+                    message = message or "*"
 
                 try:
                     icon = self.dots[dot_type][state]
