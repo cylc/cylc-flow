@@ -18,6 +18,11 @@ log/job/1/seq/01/job.err
 log/job/1/seq/01/job.out
 log/job/1/seq/01/job.status
 log/job/1/seq/01/job-activity.log
+log/job/1/wibble/01/job
+log/job/1/wibble/01/job.err
+log/job/1/wibble/01/job.out
+log/job/1/wibble/01/job.status
+log/job/1/wibble/01/job-activity.log
 log/job/2/woo/01/job
 log/job/2/woo/01/job.err
 log/job/2/woo/01/job.out
@@ -83,6 +88,11 @@ log/job/7/seq/01/job.err
 log/job/7/seq/01/job.out
 log/job/7/seq/01/job.status
 log/job/7/seq/01/job-activity.log
+log/job/7/wobble/01/job
+log/job/7/wobble/01/job.err
+log/job/7/wobble/01/job.out
+log/job/7/wobble/01/job.status
+log/job/7/wobble/01/job-activity.log
 log/job/8/woo/01/job
 log/job/8/woo/01/job.err
 log/job/8/woo/01/job.out
@@ -168,6 +178,11 @@ log/job/16/seq/01/job.err
 log/job/16/seq/01/job.out
 log/job/16/seq/01/job.status
 log/job/16/seq/01/job-activity.log
+log/job/16/wubble/01/job
+log/job/16/wubble/01/job.err
+log/job/16/wubble/01/job.out
+log/job/16/wubble/01/job.status
+log/job/16/wubble/01/job-activity.log
 work/1/foo/typing
 work/4/foo/typing
 work/7/foo/typing

@@ -22,6 +22,8 @@ edge "seq.7" "foo.7" solid
 edge "seq.10" "foo.10" solid
 edge "seq.13" "foo.13" solid
 edge "seq.16" "foo.16" solid
+edge "wibble.1" "wobble.7" solid
+edge "wobble.7" "wubble.16" solid
 edge "woo.2" "bar.1" solid
 edge "woo.2" "foo.1" solid
 edge "woo.3" "foo.4" solid
@@ -65,6 +67,8 @@ node "seq.7" "seq\n7" filled ellipse black
 node "seq.10" "seq\n10" filled ellipse black
 node "seq.13" "seq\n13" filled ellipse black
 node "seq.16" "seq\n16" filled ellipse black
+node "wibble.1" "wibble\n1" filled ellipse black
+node "wobble.7" "wobble\n7" filled ellipse black
 node "woo.2" "woo\n2" filled ellipse black
 node "woo.3" "woo\n3" filled ellipse black
 node "woo.5" "woo\n5" filled ellipse black
@@ -76,4 +80,5 @@ node "woo.12" "woo\n12" filled ellipse black
 node "woo.14" "woo\n14" filled ellipse black
 node "woo.15" "woo\n15" filled ellipse black
 node "woo.17" "woo\n17" filled ellipse black
+node "wubble.16" "wubble\n16" filled ellipse black
 stop
