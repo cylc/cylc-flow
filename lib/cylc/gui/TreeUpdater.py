@@ -292,14 +292,17 @@ class TreeUpdater(threading.Thread):
                         t_info['finished_time_string'] = "<i>%s?</i>" % (
                                 t_info['finished_time_string'])
     
-                # Host and JobID, or "*" for pre cylc-6 back compat.
-                job_id = summary[id].get('submit_method_id') or "*"
-                host = summary[id].get('host') or "*"
-
+                # Host and JobID columns: use "*" or "" until populated and for
+                # pre cylc-6 back compat.
                 if id in self.fam_state_summary:
                     dot_type = 'family'
+                    job_id = summary[id].get('submit_method_id') or ""
+                    host = summary[id].get('host') or ""
                 else:
                     dot_type = 'task'
+                    job_id = summary[id].get('submit_method_id') or "*"
+                    host = summary[id].get('host') or "*"
+
                 try:
                     icon = self.dots[dot_type][state]
                 except KeyError:
