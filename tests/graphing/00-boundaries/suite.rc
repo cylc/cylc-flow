@@ -1,4 +1,7 @@
 
+[cylc]
+    cycle point time zone = +12
+
 [scheduling]
     initial cycle point = 20140808T00
     [[dependencies]]
