@@ -93,7 +93,6 @@ class taskdef(object):
         self.cond_triggers[ sequence ].append( [triggers,exp] )
 
     def add_sequence( self, sequence, is_implicit=False ):
-        # TODO ISO - SEQUENCES CAN BE HELD BY TASK CLASS NOT INSTANCE
         if sequence not in self.sequences:
             self.sequences.append( sequence )
             if is_implicit:
@@ -321,8 +320,8 @@ class taskdef(object):
                          startup=False, validate=False, submit_num=0,
                          exists=False ):
 
-            sself.sequences = self.sequences
-            sself.implicit_sequences = self.implicit_sequences
+            sself.__class__.sequences = self.sequences
+            sself.__class__.implicit_sequences = self.implicit_sequences
             sself.startup = startup
             sself.submit_num = submit_num
             sself.exists=exists
@@ -331,7 +330,7 @@ class taskdef(object):
             if startup:
                 # adjust up to the first on-sequence cycle point
                 adjusted = []
-                for seq in sself.sequences:
+                for seq in sself.__class__.sequences:
                     adj = seq.get_first_point( start_point )
                     if adj:
                         # may be None if out of sequence bounds

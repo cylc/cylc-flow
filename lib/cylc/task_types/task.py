@@ -130,6 +130,8 @@ class task( object ):
     SUITE_CONTACT_ENV_SSH_OPTS = ['-oBatchMode=yes', '-oConnectTimeout=10']
 
     mean_total_elapsed_time = None
+    sequences = []
+    implicit_sequences = []
 
     @classmethod
     def describe( cls ):
