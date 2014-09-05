@@ -916,7 +916,7 @@ class config( object ):
                 continue
 
             # warn for purely-implicit-cycling tasks (these are deprecated).
-            if itask.sequences == itask.implicit_sequences:
+            if itask.__class__.sequences == itask.__class__.implicit_sequences:
                 print >> sys.stderr, (
                     "WARNING, " + name + ": not explicitly defined in " +
                     "dependency graphs (deprecated)"
