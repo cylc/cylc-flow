@@ -904,15 +904,10 @@ class pool(object):
 
     def task_succeeded(self, id):
         res = False
-        name, point_string = TaskID.split(id)
         for itask in self.get_tasks():
-            iname, ipoint_string = TaskID.split(itask.id)
-            # TODO ISO - check the following works
-            if (itask.name == name and
-                    get_point(point_string) == get_point(ipoint_string)):
-                if itask.state.is_currently('succeeded'):
-                    res = True
-                break
+            if itask.id == id and itask.state.is_currently('succeeded'):
+                res = True
+            break
         return res
 
     def ping_task(self, id):
