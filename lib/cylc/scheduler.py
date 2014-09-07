@@ -436,9 +436,9 @@ class scheduler(object):
             "seconds_since_unix_epoch"))
         self.set_stop_clock( stop_time_in_epoch_seconds, str(stop_point) )
 
-    def command_set_stop_after_task( self, tid ):
+    def command_set_stop_after_task(self, tid):
         if TaskID.is_valid_id(tid):
-            self.set_stop_task( tid )
+            self.set_stop_task(tid)
 
     def command_release_task( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )

@@ -907,7 +907,7 @@ class pool(object):
         for itask in self.get_tasks():
             if itask.id == id and itask.state.is_currently('succeeded'):
                 res = True
-            break
+                break
         return res
 
     def ping_task(self, id):
