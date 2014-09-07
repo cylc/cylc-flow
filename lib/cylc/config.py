@@ -259,15 +259,13 @@ class config( object ):
         if self.cfg['scheduling']['final cycle point'] is not None:
             final_point = None
             # Is the final "point"(/interval) relative to initial?
-            if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
-                # TODO ISO - final as offset doesn't work for integer cycling
-                try:
-                    final_point = get_point_relative(
-                        self.cfg['scheduling']['final cycle point'],
-                        self.initial_point).standardise()
-                except ValueError:
-                    # (not relative)
-                    pass
+            try:
+                final_point = get_point_relative(
+                    self.cfg['scheduling']['final cycle point'],
+                    self.initial_point).standardise()
+            except ValueError:
+                # (not relative)
+                pass
             if final_point is None:
                 # Must be absolute.
                 final_point = get_point(
