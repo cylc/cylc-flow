@@ -58,7 +58,6 @@ name = args[1]
 point_string = args[2]
 if len(args) == 4:
     stop_point_string = args[3]
-    # TODO ISO - VALIDATE stop_point_string
 else:
     stop_point_string = None
 
