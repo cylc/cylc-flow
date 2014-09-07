@@ -401,6 +401,37 @@ def upg( cfg, descr ):
     u.obsolete('6.0.0', ['cylc', 'lockserver'])
     u.upgrade()
 
+    # Force pre cylc-6 "cycling = Yearly" type suites to the explicit
+    # dependency heading form for which backward compatibility is provided:
+    #____________________________
+    # [scheduling]
+    #    cycling = Yearly
+    #    [[dependencies]]
+    #        [[[2014,2]]]
+    #----------------------------
+    # Same as (for auto upgrade):
+    #----------------------------
+    # [scheduling]
+    #    [[dependencies]]
+    #        [[[Yearly(2014,2)]]]
+    #____________________________
+    try:
+        old_cycling_mode = cfg['scheduling']['cycling']
+    except:
+        pass
+    else:
+        if old_cycling_mode in ['Yearly', 'Monthly', 'Daily']:
+            del cfg['scheduling']['cycling']
+            for old_key, val in cfg['scheduling']['dependencies'].items():
+                if re.match('\s*\d+,\s*\d+\s*$', old_key):
+                    new_key = "%s(%s)" % (old_cycling_mode, old_key)
+                    del cfg['scheduling']['dependencies'][old_key]
+                    cfg['scheduling']['dependencies'][new_key] = val
+        else:
+            # Could be misspelled new "cycling mode" - leave it to fail.
+            pass
+
+
 class sconfig( config ):
     pass
 
