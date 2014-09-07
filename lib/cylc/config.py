@@ -891,14 +891,14 @@ class config( object ):
             print >> sys.stderr, "WARNING, INCOMPLETE VALIDATION: Pyro is not installed"
             return
 
-        # Instantiate tasks and force evaluation of conditional trigger expressions.
+        # Instantiate tasks and force evaluation of trigger expressions.
+        # TODO - This is not exhaustive, it only uses the initial cycle point.
         if flags.verbose:
             print "Instantiating tasks to check trigger expressions"
         for name in self.taskdefs.keys():
-            # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
             try:
-                # instantiate a task
-                itask = self.taskdefs[name].get_task_class()( self.start_point, 'waiting', None, True, validate=True )
+                itask = self.taskdefs[name].get_task_class()(
+                        self.start_point, 'waiting', None, True, validate=True)
             except TypeError, x:
                 # This should not happen as we now explicitly catch use of
                 # synchronous special tasks in an asynchronous graph.  But in
