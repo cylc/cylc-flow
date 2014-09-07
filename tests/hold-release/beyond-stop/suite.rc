@@ -1,0 +1,31 @@
+
+title = "hold/release a suite with tasks held beyond suite stop point"
+
+description = """
+Releasing a held suite should not release tasks that are held because they're
+beyond the suite stop point."""
+
+# ref: GitHub Pull Request #1144
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT30S
+
+[scheduling]
+    initial cycle time = 20140101T00
+    final cycle time   = 20140101T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = foo => holdrelease
+        [[[T00]]]
+            graph = "foo => bar"
+[runtime]
+    [[holdrelease]]
+        # When this task runs foo will be held beyond the suite stop point.
+        command scripting = """
+cylc hold $CYLC_SUITE_NAME
+cylc release $CYLC_SUITE_NAME"""
+    [[foo]]
+        command scripting = true
+    [[bar]]
+        command scripting = sleep 10

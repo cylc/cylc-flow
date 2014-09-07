@@ -1,0 +1,32 @@
+2014-09-08T09:42:52+12 INFO - port:7766
+2014-09-08T09:42:52+12 INFO - Suite starting at 2014-09-08T09:42:52+12
+2014-09-08T09:42:52+12 INFO - Log event clock: real time
+2014-09-08T09:42:52+12 INFO - Run mode: live
+2014-09-08T09:42:52+12 INFO - Initial point: 20140101T0000+12
+2014-09-08T09:42:52+12 INFO - Final point: 20140101T0000+12
+2014-09-08T09:42:52+12 INFO - Cold Start 20140101T0000+12
+2014-09-08T09:42:52+12 INFO - [foo.20140101T0000+12] -triggered off []
+2014-09-08T09:42:53+12 INFO - 980
+2014-09-08T09:42:53+12 INFO - [foo.20140101T0000+12] -submit_method_id=980
+2014-09-08T09:42:53+12 INFO - [foo.20140101T0000+12] -submission succeeded
+2014-09-08T09:42:53+12 INFO - [foo.20140102T0000+12] -holding (beyond suite stop point) 20140101T0000+12
+2014-09-08T09:42:53+12 INFO - [foo.20140101T0000+12] -(current:submitted)> foo.20140101T0000+12 started at 2014-09-08T09:42:52+12
+2014-09-08T09:42:53+12 INFO - [foo.20140101T0000+12] -(current:running)> foo.20140101T0000+12 succeeded at 2014-09-08T09:42:53+12
+2014-09-08T09:42:54+12 INFO - [holdrelease.20140101T0000+12] -triggered off ['foo.20140101T0000+12']
+2014-09-08T09:42:54+12 INFO - [bar.20140101T0000+12] -triggered off ['foo.20140101T0000+12']
+2014-09-08T09:42:55+12 INFO - 1019
+2014-09-08T09:42:55+12 INFO - [holdrelease.20140101T0000+12] -submit_method_id=1019
+2014-09-08T09:42:55+12 INFO - [holdrelease.20140101T0000+12] -submission succeeded
+2014-09-08T09:42:55+12 INFO - 1022
+2014-09-08T09:42:55+12 INFO - [bar.20140101T0000+12] -submit_method_id=1022
+2014-09-08T09:42:55+12 INFO - [bar.20140101T0000+12] -submission succeeded
+2014-09-08T09:42:55+12 INFO - [bar.20140102T0000+12] -holding (beyond suite stop point) 20140101T0000+12
+2014-09-08T09:42:55+12 INFO - [holdrelease.20140101T0000+12] -(current:submitted)> holdrelease.20140101T0000+12 started at 2014-09-08T09:42:54+12
+2014-09-08T09:42:55+12 INFO - [bar.20140101T0000+12] -(current:submitted)> bar.20140101T0000+12 started at 2014-09-08T09:42:54+12
+2014-09-08T09:42:55+12 INFO - Holding all waiting or queued tasks now
+2014-09-08T09:42:55+12 INFO - Command succeeded: hold suite now()
+2014-09-08T09:42:55+12 INFO - RELEASE: new tasks will be queued when ready
+2014-09-08T09:42:55+12 INFO - Command succeeded: release suite()
+2014-09-08T09:42:56+12 INFO - [holdrelease.20140101T0000+12] -(current:running)> holdrelease.20140101T0000+12 succeeded at 2014-09-08T09:42:55+12
+2014-09-08T09:43:05+12 INFO - [bar.20140101T0000+12] -(current:running)> bar.20140101T0000+12 succeeded at 2014-09-08T09:43:04+12
+2014-09-08T09:43:06+12 INFO - Suite shutting down at 2014-09-08T09:43:06+12
