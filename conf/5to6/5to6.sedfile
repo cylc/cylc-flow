@@ -26,6 +26,15 @@ s/^\( *\)\(initial\|final\) cycle point = \([0-9]\{8\}\)\([0-9][0-9].*\)/\1\2 cy
 # Convert hourly cycling sections: e.g. [[[0]]] to [[[T00]]], [[[ 0, 12 ]]] to [[[T00, T12]]].
 /^ *\[\[\[[0-9, ]\+\]\]\]/{s/\([0-9]\+\)/T\1/g; s/T\([0-9]\)\b/T0\1/g; s@$@ # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations@g}
 #
+# Warn for daily cycling sections.
+s/^\( *\)\(\[\[\[ *Daily *( *[0-9]\+ *, *\)\([0-9]\+\)\( *) *\]\]\].*\)/\1\2\3\4 # UPGRADE INFO: manually convert. [[[P\3D]]]?\n\1    # UPGRADE INFO: change any mistaken [-PTnH] to [-PnD]./g
+#
+# Warn for monthly cycling sections.
+s/^\( *\)\(\[\[\[ *Monthly *( *[0-9]\+ *, *\)\([0-9]\+\)\( *) *\]\]\].*\)/\1\2\3\4 # UPGRADE INFO: manually convert. [[[P\3M]]]?\n\1    # UPGRADE INFO: change any mistaken [-PTnH] to [-PnM]./g
+#
+# Warn for yearly cycling sections.
+s/^\( *\)\(\[\[\[ *Yearly *( *[0-9]\+ *, *\)\([0-9]\+\)\( *) *\]\]\].*\)/\1\2\3\4 # UPGRADE INFO: manually convert. [[[P\3Y]]]?\n\1    # UPGRADE INFO: change any mistaken [-PTnH] to [-PnY]./g
+#
 # Convert hourly offsets in the graph text: [T-6] to [-PT6H], etc.
 /\[T[-+][0-9]\+\]/{s/\[T\([-+]\)\([0-9]\+\)\]/[\1PT\2H\]/g; s/$/ # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)/g}
 #

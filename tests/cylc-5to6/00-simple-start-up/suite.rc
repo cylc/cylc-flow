@@ -25,6 +25,12 @@ title = Simple start-up suite.
             graph = foo_twelves[T-12] & cold_foo => foo_twelves
         [[[6]]]
             graph = foo_dawn[T-24] & cold_foo => foo_dawn
+        [[[Daily(20131231 ,2)  ]]] 
+            graph = "foo_d => bar_d" 
+        [[[Monthly(201402,1)]]] 
+            graph = "foo_m[T-2] => bar_m & foo_m" 
+        [[[  Yearly( 2010 , 3 ) ]]] 
+            graph = "foo_y => bar_y"
     [[special tasks]]
         start-up = cold_foo
 [runtime]

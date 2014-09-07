@@ -74,6 +74,15 @@ title = Simple start-up suite.
             graph = foo_twelves[-PT12H] & cold_foo => foo_twelves # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
         [[[T06]]] # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations
             graph = foo_dawn[-P1D] & cold_foo => foo_dawn # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
+        [[[Daily(20131231 ,2)  ]]]  # UPGRADE INFO: manually convert. [[[P2D]]]?
+            # UPGRADE INFO: change any mistaken [-PTnH] to [-PnD].
+            graph = "foo_d => bar_d" 
+        [[[Monthly(201402,1)]]]  # UPGRADE INFO: manually convert. [[[P1M]]]?
+            # UPGRADE INFO: change any mistaken [-PTnH] to [-PnM].
+            graph = "foo_m[-PT2H] => bar_m & foo_m"  # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
+        [[[  Yearly( 2010 , 3 ) ]]]  # UPGRADE INFO: manually convert. [[[P3Y]]]?
+            # UPGRADE INFO: change any mistaken [-PTnH] to [-PnY].
+            graph = "foo_y => bar_y"
     [[special tasks]]
         start-up = cold_foo # UPGRADE INFO: Replace this and *all* start-up/async graph deps with 'cylc validate' 'R1*' output
 [runtime]
