@@ -30,7 +30,7 @@ import re, os, sys, shutil, traceback
 from state_summary import state_summary
 from passphrase import passphrase
 from suite_id import identifier
-from config import config, SuiteConfigError, TaskNotDefinedError
+from config import config
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from port_file import port_file, PortFileExistsError, PortFileError
 from regpath import RegPath

@@ -262,12 +262,18 @@ class config( object ):
         if self.cfg['scheduling']['final cycle point'] is not None:
             final_point = None
             # Is the final "point"(/interval) relative to initial?
-            if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
-                # TODO ISO - final as offset doesn't work for integer cycling
-                try:
+            if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
+                if "P" in self.cfg['scheduling']['final cycle point']:
+                    # Relative, integer cycling.
                     final_point = get_point_relative(
-                        self.cfg['scheduling']['final cycle point'],
+                            self.cfg['scheduling']['final cycle point'],
                         self.initial_point).standardise()
+            else:
+                try:
+                    # Relative, ISO8601 cycling.
+                    final_point = get_point_relative(
+                            self.cfg['scheduling']['final cycle point'],
+                            self.initial_point).standardise()
                 except ValueError:
                     # (not relative)
                     pass
@@ -907,14 +913,14 @@ class config( object ):
             print >> sys.stderr, "WARNING, INCOMPLETE VALIDATION: Pyro is not installed"
             return
 
-        # Instantiate tasks and force evaluation of conditional trigger expressions.
+        # Instantiate tasks and force evaluation of trigger expressions.
+        # TODO - This is not exhaustive, it only uses the initial cycle point.
         if flags.verbose:
             print "Instantiating tasks to check trigger expressions"
         for name in self.taskdefs.keys():
-            # TODO ISO - THIS DOES NOT GET ALL GRAPH SECTIONS:
             try:
-                # instantiate a task
-                itask = self.taskdefs[name].get_task_class()( self.start_point, 'waiting', None, True, validate=True )
+                itask = self.taskdefs[name].get_task_class()(
+                        self.start_point, 'waiting', None, True, validate=True)
             except TypeError, x:
                 # This should not happen as we now explicitly catch use of
                 # synchronous special tasks in an asynchronous graph.  But in
@@ -1815,7 +1821,7 @@ class config( object ):
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
-            raise SuiteConfigError, "Task not found: " + name
+            raise TaskNotDefinedError, "Task not found: " + name
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
@@ -1842,28 +1848,25 @@ class config( object ):
 
         return taskd
 
-    def get_task_proxy( self, name, point, state, stop_point, startup,
-                        submit_num, exists ):
+    def get_task_proxy(self, name, point, state, stop_point, startup,
+                        submit_num, exists):
         try:
             tdef = self.taskdefs[name]
         except KeyError:
-            raise TaskNotDefinedError("ERROR, No such task name: " + name )
-        return tdef.get_task_class()( point, state, stop_point, startup,
-                                      submit_num=submit_num, exists=exists )
+            raise TaskNotDefinedError("ERROR, task not found: " + name)
+        return tdef.get_task_class()(point, state, stop_point, startup,
+                                      submit_num=submit_num, exists=exists)
 
-    def get_task_proxy_raw( self, name, point, state, stop_point, startup,
-                            submit_num, exists ):
-        # Used by 'cylc submit' to submit tasks defined by runtime
-        # config but not currently present in the graph (so we must
-        # assume that the given point is valid for the task).
+    def get_task_proxy_raw(self, name, point):
+        # Used by 'cylc submit' to submit tasks defined under runtime but not
+        # present in the graph. Assume the given point is valid for the task.
+        point = point.standardise()
         try:
-            truntime = self.cfg['runtime'][name]
+            tdef = self.get_taskdef(name)
         except KeyError:
-            raise TaskNotDefinedError("ERROR, task not defined: " + name )
-        tdef = self.get_taskdef( name )
-        # TODO ISO - TEST THIS (did set 'tdef.hours' from point)
-        return tdef.get_task_class()( point, state, stop_point, startup,
-                                      submit_num=submit_num, exists=exists )
+            raise TaskNotDefinedError("ERROR, task not found: " + name)
+        # (startup=False stops the adjustment of cycle point by the graph)
+        return tdef.get_task_class()(point, 'waiting', None, False, 0, False)
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()

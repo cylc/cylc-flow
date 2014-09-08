@@ -848,7 +848,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                     "ERROR: No stop CYCLE_POINT entered", self.window
                 ).warn()
                 return
-            # TODO ISO - RESTORE CYCLE TIME VALIDITY CHECK ON stoppoint?
 
         elif stopnow_rb.get_active():
             stopnow = True
@@ -973,7 +972,6 @@ been defined for this suite""").inform()
         if method != 'restart':
             # start time
             point_string = entry_point_string.get_text()
-            # TODO ISO - RESTORE CYCLE TIME VALIDITY CHECK ON point_string AND ste?
 
         ste = stop_point_string_entry.get_text()
         if ste:
@@ -1386,8 +1384,6 @@ The Cylc Suite Engine.
                 self.window
             ).warn()
             return
-
-        # TODO ISO - RESTORE VALIDITY CHECK ON cycle?
 
         window.destroy()
         try:

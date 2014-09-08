@@ -133,8 +133,9 @@ Dependency graph suite control interface.
         timezoom_item_direct.connect(
             'activate', self.focused_timezoom_direct, point_string)
 
-        timezoom_item = gtk.MenuItem( 'Focus on Range' )
-        timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
+        # TODO - pre cylc-6 could focus on a range of points (was hours-based).
+        #timezoom_item = gtk.MenuItem( 'Focus on Range' )
+        #timezoom_item.connect( 'activate', self.focused_timezoom_popup, task_id )
 
         timezoom_reset_item = gtk.MenuItem( 'Focus Reset' )
         timezoom_reset_item.connect( 'activate', self.focused_timezoom_direct, None )
@@ -178,7 +179,7 @@ Dependency graph suite control interface.
             menu.append( gtk.SeparatorMenuItem() )
 
         menu.append( timezoom_item_direct )
-        menu.append( timezoom_item )
+        #menu.append( timezoom_item )
         menu.append( timezoom_reset_item )
 
         menu.append( gtk.SeparatorMenuItem() )
@@ -506,63 +507,62 @@ Dependency graph suite control interface.
 
         self.t.action_required = True
 
-    def focused_timezoom_popup( self, w, id ):
-        window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL,
-                gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title( "Cycle-Time Zoom")
-        parent_window = self.xdot.widget.get_toplevel()
-        if isinstance(parent_window, gtk.Window):
-            window.set_transient_for( parent_window )
-            window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-        vbox = gtk.VBox()
-
-        name, point_string = cylc.TaskID.split( id )
-        # TODO - do we need to check that oldest_point_string is defined yet?
-
-        # TODO ISO - RESTORE OR REMOVE THIS FUNCTIONALITY
-        #diff_pre = ctime - self.t.oldest_ctime.hours
-        #diff_post = self.t.newest_ctime - ctime.hours
-        # ...
-        #start_entry.set_text(str(diff_pre))
-        #stop_entry.set_text(str(diff_post))
-
-        # TODO - error checking on date range given
-        box = gtk.HBox()
-        label = gtk.Label( 'Pre (hours)' )
-        box.pack_start( label, True )
-        start_entry = gtk.Entry()
-        box.pack_start (start_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Post (hours)' )
-        box.pack_start( label, True )
-        stop_entry = gtk.Entry()
-        box.pack_start (stop_entry, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        reset_button = gtk.Button( "_Reset (No Zoom)" )
-        reset_button.connect("clicked", self.focused_timezoom_direct, None )
-
-        apply_button = gtk.Button( "_Apply" )
-        apply_button.connect("clicked", self.focused_timezoom,
-               point_string, start_entry, stop_entry )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( apply_button, False )
-        hbox.pack_start( reset_button, False )
-        hbox.pack_end( cancel_button, False )
-        #hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
+#    def focused_timezoom_popup( self, w, id ):
+#        window = gtk.Window()
+#        window.modify_bg( gtk.STATE_NORMAL,
+#                gtk.gdk.color_parse( self.log_colors.get_color()))
+#        window.set_border_width(5)
+#        window.set_title( "Cycle Point Zoom")
+#        parent_window = self.xdot.widget.get_toplevel()
+#        if isinstance(parent_window, gtk.Window):
+#            window.set_transient_for( parent_window )
+#            window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+#        vbox = gtk.VBox()
+#
+#        name, point_string = cylc.TaskID.split( id )
+#        # TODO - do we need to check that oldest_point_string is defined yet?
+#
+#        #diff_pre = ctime - self.t.oldest_ctime.hours
+#        #diff_post = self.t.newest_ctime - ctime.hours
+#        # ...
+#        #start_entry.set_text(str(diff_pre))
+#        #stop_entry.set_text(str(diff_post))
+#
+#        # TODO - error checking on date range given
+#        box = gtk.HBox()
+#        label = gtk.Label( 'Pre (hours)' )
+#        box.pack_start( label, True )
+#        start_entry = gtk.Entry()
+#        box.pack_start (start_entry, True)
+#        vbox.pack_start( box )
+#
+#        box = gtk.HBox()
+#        label = gtk.Label( 'Post (hours)' )
+#        box.pack_start( label, True )
+#        stop_entry = gtk.Entry()
+#        box.pack_start (stop_entry, True)
+#        vbox.pack_start( box )
+#
+#        cancel_button = gtk.Button( "_Close" )
+#        cancel_button.connect("clicked", lambda x: window.destroy() )
+#
+#        reset_button = gtk.Button( "_Reset (No Zoom)" )
+#        reset_button.connect("clicked", self.focused_timezoom_direct, None )
+#
+#        apply_button = gtk.Button( "_Apply" )
+#        apply_button.connect("clicked", self.focused_timezoom,
+#               point_string, start_entry, stop_entry )
+#
+#        hbox = gtk.HBox()
+#        hbox.pack_start( apply_button, False )
+#        hbox.pack_start( reset_button, False )
+#        hbox.pack_end( cancel_button, False )
+#        #hbox.pack_end( help_button, False )
+#        vbox.pack_start( hbox )
+#
+#        window.add( vbox )
+#        window.show_all()
+ 
     def focused_timezoom_direct( self, w, point_string ):
         self.t.focus_start_point_string = point_string
         self.t.focus_stop_point_string = point_string
@@ -628,15 +628,14 @@ Dependency graph suite control interface.
         self.t.best_fit = True
         self.t.action_required = True
 
-    def focused_timezoom(self, w, focus_point_string, start_e, stop_e):
-        pre_hours = start_e.get_text()
-        post_hours = stop_e.get_text()
-        # TODO ISO:
-        #self.t.focus_point_string = focus_point_string - pre_hours
-        #self.t.focus_stop_point_string = focus_point_string + post_hours
-        return
-        self.t.best_fit = True
-        self.t.action_required = True
+#    def focused_timezoom(self, w, focus_point_string, start_e, stop_e):
+#        pre_hours = start_e.get_text()
+#        post_hours = stop_e.get_text()
+#        self.t.focus_point_string = focus_point_string - pre_hours
+#        self.t.focus_stop_point_string = focus_point_string + post_hours
+#        return
+#        self.t.best_fit = True
+#        self.t.action_required = True
 
 class StandaloneControlGraphApp( ControlGraph ):
     # For a ControlApp not launched by the gcylc main app:

@@ -196,7 +196,7 @@ class taskdef(object):
         # [runtime][TASK][enviroment] is now held in a class variable).
         tclass.env_vars = OrderedDict()
 
-        tclass.name = self.name        # TODO - NOT NEEDED, USED class.__name__
+        tclass.name = self.name
 
         tclass.rtconfig = self.rtconfig
         tclass.run_mode = self.run_mode
@@ -228,22 +228,18 @@ class taskdef(object):
                 # previous-instance inter-cycle trigger, and adjust the
                 # cleanup cutoff (determined by inter-cycle triggers)
                 # accordingly.
-
                 p_next = None
                 adjusted = []
                 for seq in self.sequences:
                     nxt = seq.get_next_point(sself.point)
                     if nxt:
                         # may be None if beyond the sequence bounds
-                        adjusted.append( nxt )
+                        adjusted.append(nxt)
                 if adjusted:
-                    p_next = min( adjusted )
+                    p_next = min(adjusted)
                     if (sself.cleanup_cutoff is not None and
                             sself.cleanup_cutoff < p_next):
                         sself.cleanup_cutoff = p_next
-                else:
-                    # TODO ISO - ??
-                    pass
 
                 p_prev = None
                 adjusted = []
@@ -251,13 +247,10 @@ class taskdef(object):
                     prv = seq.get_nearest_prev_point(sself.point)
                     if prv:
                         # may be None if out of sequence bounds
-                        adjusted.append( prv )
+                        adjusted.append(prv)
                 if adjusted:
-                    p_prev = max( adjusted )
-                    pp.add( TaskID.get( sself.name, str(p_prev) ) + ' succeeded' )
-                else:
-                    # TODO ISO - ??
-                    pass
+                    p_prev = max(adjusted)
+                    pp.add( TaskID.get(sself.name, str(p_prev)) + ' succeeded')
 
             for sequence in self.triggers:
                 for trig in self.triggers[ sequence ]:
@@ -342,7 +335,7 @@ class taskdef(object):
                     sself.id = TaskID.get( sself.name, str(sself.point) )
                 else:
                     sself.point = None
-                    # this task is out of sequence bounds (caller much
+                    # this task is out of sequence bounds (caller must
                     # check for a point of None)
                     return
             else:
@@ -372,13 +365,13 @@ class taskdef(object):
             sself.outputs.register()
 
             if stop_point:
-                # cycling tasks with a final cycle point set
-                super( sself.__class__, sself ).__init__(
-                    initial_state, stop_point, validate=validate )
+                # Manually inserted tasks may have a final cycle point set.
+                super(sself.__class__, sself).__init__(
+                    initial_state, stop_point, validate=validate)
             else:
-                # TODO ISO - is this OK for vanished Async tasks?
                 sself.stop_point = None
-                super( sself.__class__, sself ).__init__( initial_state, validate=validate )
+                super(sself.__class__, sself).__init__(
+                        initial_state, validate=validate)
 
             sself.suite_polling_cfg = self.suite_polling_cfg
             sself.reconfigure_me = False

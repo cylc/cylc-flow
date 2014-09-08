@@ -43,9 +43,13 @@ from cylc.mp_pool import mp_pool, CMD_TYPE_JOB_SUBMISSION
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
-Submit a single task to run just as it would be submitted by its suite.
-Task messaging commands will print to stdout but will not attempt to
-communicate with the suite (which does not need to be running).
+Submit a single task to run just as it would be submitted by its suite.  Task
+messaging commands will print to stdout but will not attempt to communicate
+with the suite (which does not need to be running).
+
+For tasks present in the suite graph the given cycle point is adjusted up to
+the next valid cycle point for the task. For tasks defined under runtime but
+not present in the graph, the given cycle point is assumed to be valid.
 
 WARNING: do not 'cylc submit' a task that is running in its suite at the
 same time - both instances will attempt to write to the same job logs."""
@@ -165,7 +169,7 @@ JobFile.suite_task_env = suite_task_env
 
 point = get_point(point_string)
 try:
-    # try to get a graphed task of the given name
+    # Try to get a graphed task of the given name.
     task_proxy = config.get_task_proxy(
         task_name, point, 'waiting', stop_point=None, startup=True,
         submit_num=0, exists=False
@@ -175,11 +179,8 @@ except TaskNotDefinedError, x:
             '" type and validity are not constrained by the graph.'
     print >> sys.stderr, "Continuing under the assumption that the given task ID is valid."
     try:
-        # try to get an ungraphed task of the given name
-        task_proxy = config.get_task_proxy_raw(
-            task_name, point, 'waiting', stop_point=None, startup=True,
-            submit_num=0, exists=False
-        )
+        # Try to get an ungraphed task of the given name.
+        task_proxy = config.get_task_proxy_raw(task_name, point)
     except TaskNotDefinedError, y:
         raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 
@@ -187,7 +188,7 @@ if options.dry_run:
     task_proxy.get_command( dry_run=True )
     sys.exit(0)
 
-proc_pool = mp_pool(nproc=1)
+proc_pool = mp_pool(pool_size=1)
 cmd_spec = (CMD_TYPE_JOB_SUBMISSION, task_proxy.get_command())
 capture_first_line = task_proxy.job_sub_method_name=='background'
 proc_pool.put_command(
