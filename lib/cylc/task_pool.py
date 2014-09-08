@@ -630,27 +630,14 @@ class pool(object):
                 itask.reset_state_held()
 
     def release_all_tasks(self):
-        # TODO ISO - check that we're not still holding tasks beyond suite
-        # stop time (no point as finite-range tasks now disappear beyond
-        # their stop time).
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
-                #if self.stop_point and itask.point > self.stop_point:
-                #    # this task has passed the suite stop time
-                #    itask.log(INFO, "Not releasing (beyond suite stop
-                #    cycle) " + str(self.stop_point))
-                #elif itask.stop_point and itask.point > itask.stop_point:
-                #    # this task has passed its own stop time
-                #    itask.log(INFO, "Not releasing (beyond task stop
-                #    cycle) " + str(itask.stop_point))
-                #else:
-                # release this task
-                itask.reset_state_waiting()
-
-        # TODO - write a separate method for cancelling a stop time:
-        #if self.stop_point:
-        #    self.log.warning("UNSTOP: unsetting suite stop time")
-        #    self.stop_point = None
+                if self.stop_point and itask.point > self.stop_point:
+                    # Don't release task: beyond suite stop point.
+                    continue
+                else:
+                    # Release task.
+                    itask.reset_state_waiting()
 
     def get_failed_tasks(self):
         failed = []
@@ -917,14 +904,9 @@ class pool(object):
 
     def task_succeeded(self, id):
         res = False
-        name, point_string = TaskID.split(id)
         for itask in self.get_tasks():
-            iname, ipoint_string = TaskID.split(itask.id)
-            # TODO ISO - check the following works
-            if (itask.name == name and
-                    get_point(point_string) == get_point(ipoint_string)):
-                if itask.state.is_currently('succeeded'):
-                    res = True
+            if itask.id == id and itask.state.is_currently('succeeded'):
+                res = True
                 break
         return res
 
