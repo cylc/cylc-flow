@@ -32,9 +32,8 @@ class TriggerExpressionError( Exception ):
 
 class conditional_prerequisites(object):
 
-    # TODO ISO: how does this work??
     # Extracts T from "foo.T succeeded" etc.
-    CYCLE_POINT_RE = re.compile( '^\w+\.(\d+).*$' ) # 
+    CYCLE_POINT_RE = re.compile('^\w+\.(\S+) .*$')
 
     def __init__( self, owner_id, start_point=None ):
         self.owner_id = owner_id
