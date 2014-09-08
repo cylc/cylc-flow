@@ -335,7 +335,7 @@ class taskdef(object):
                     sself.id = TaskID.get( sself.name, str(sself.point) )
                 else:
                     sself.point = None
-                    # this task is out of sequence bounds (caller much
+                    # this task is out of sequence bounds (caller must
                     # check for a point of None)
                     return
             else:

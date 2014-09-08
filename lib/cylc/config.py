@@ -1770,7 +1770,7 @@ class config( object ):
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
-            raise SuiteConfigError, "Task not found: " + name
+            raise TaskNotDefinedError, "Task not found: " + name
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
@@ -1797,28 +1797,25 @@ class config( object ):
 
         return taskd
 
-    def get_task_proxy( self, name, point, state, stop_point, startup,
-                        submit_num, exists ):
+    def get_task_proxy(self, name, point, state, stop_point, startup,
+                        submit_num, exists):
         try:
             tdef = self.taskdefs[name]
         except KeyError:
-            raise TaskNotDefinedError("ERROR, No such task name: " + name )
-        return tdef.get_task_class()( point, state, stop_point, startup,
-                                      submit_num=submit_num, exists=exists )
+            raise TaskNotDefinedError("ERROR, task not found: " + name)
+        return tdef.get_task_class()(point, state, stop_point, startup,
+                                      submit_num=submit_num, exists=exists)
 
-    def get_task_proxy_raw( self, name, point, state, stop_point, startup,
-                            submit_num, exists ):
-        # Used by 'cylc submit' to submit tasks defined by runtime
-        # config but not currently present in the graph (so we must
-        # assume that the given point is valid for the task).
+    def get_task_proxy_raw(self, name, point):
+        # Used by 'cylc submit' to submit tasks defined under runtime but not
+        # present in the graph. Assume the given point is valid for the task.
+        point = point.standardise()
         try:
-            truntime = self.cfg['runtime'][name]
+            tdef = self.get_taskdef(name)
         except KeyError:
-            raise TaskNotDefinedError("ERROR, task not defined: " + name )
-        tdef = self.get_taskdef( name )
-        # TODO ISO - TEST THIS (did set 'tdef.hours' from point)
-        return tdef.get_task_class()( point, state, stop_point, startup,
-                                      submit_num=submit_num, exists=exists )
+            raise TaskNotDefinedError("ERROR, task not found: " + name)
+        # (startup=False stops the adjustment of cycle point by the graph)
+        return tdef.get_task_class()(point, 'waiting', None, False, 0, False)
 
     def get_task_class( self, name ):
         return self.taskdefs[name].get_task_class()
