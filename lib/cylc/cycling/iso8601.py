@@ -185,6 +185,11 @@ class ISO8601Interval(IntervalBase):
         """Return a null interval."""
         return ISO8601Interval("P0Y")
 
+    @classmethod
+    def get_null_offset(cls):
+        """Return a null offset."""
+        return ISO8601Interval("+P0Y")
+
     def get_inferred_child(self, string):
         """Return an instance with 'string' amounts of my non-zero units."""
         interval = interval_parse(self.value)

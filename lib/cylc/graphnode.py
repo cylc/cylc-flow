@@ -147,7 +147,7 @@ class graphnode( object ):
             raise GraphNodeError( 'Illegal graph node: ' + node )
             
         if self.offset_is_from_ict and not offset_string:
-            offset_string = str(get_interval_cls().get_null())
+            offset_string = str(get_interval_cls().get_null_offset())
         if offset_string:
             self.intercycle = True
             if prev_format:
