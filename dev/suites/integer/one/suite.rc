@@ -2,12 +2,12 @@
 [scheduling]
     initial cycle point = 1
     final cycle point = 16
-    runahead limit = 12
+    runahead limit = P12
     cycling mode = integer
     [[special tasks]]
         sequential = seq
     [[dependencies]]
-        [[[ R/c0/P3 ]]]
+        [[[ P3 ]]]
             graph = """
              seq => foo        # sequential task
         foo[-P3] => foo        # prev instance trigger
@@ -18,11 +18,11 @@
 
         foo[-P3]:out1 => on_toast # message outputs
                     """
-        [[[ R/c1/P3 ]]]
+        [[[ R/+P1/P3 ]]]
             graph = woo
-        [[[ R/c2/P3 ]]]
+        [[[ +P2/P3 ]]]
             graph = woo
-        [[[ R/c6/P6 ]]]
+        [[[ 7/P6 ]]]
             graph = """
          foo[-P3] => qux       # every second cycle
                     """

@@ -11,4 +11,5 @@
     [[a,c]]
         command scripting = "true"
     [[stopper]]
-        command scripting = "cylc shutdown $CYLC_SUITE_REG_NAME a.2010010106; sleep 5"
+        command scripting = """
+cylc shutdown $CYLC_SUITE_REG_NAME a.2010010106; sleep 5"""

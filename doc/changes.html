@@ -47,6 +47,71 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.0.0"/>
+    <h2>6.0.0</h2>
+    
+    <p>6.0.0 saw the <b>ISO 8601 date-time cycling syntax refactor</b>, which
+    introduced ISO 8601-derived replacement syntax for date-times, dependency
+    sections, graph offsets, and timeouts, amongst other things. This allowed:
+    </p>
+    <ul>
+        <li><b>specific task dependencies at any cycle point</b> - special
+        behaviour at the last cycle point, the second cycle point, midway
+        through...</li>
+        <li><b>replacement of start-up and mixed-async tasks</b> with tasks
+        that run only at initial/near-initial cycle points</li>
+        <li><b>extremely flexible cycling</b> - cycle <b>sub-hourly</b>, every
+        1 day 1 second, every Christmas...</li>
+        <li><b>360-day, 365-day, 366-day calendar support</b> for date-time
+        cycling</li>
+        <li>using prehistoric or futuristic date-times</li>
+        <li>formal time zone awareness</li>
+        <li>specify a final cycle point relative to the initial cycle point,
+        e.g. 3 months later</li>
+        <li>specify dependence on tasks near the initial cycle point from
+        other cycle points</li>
+        <li>backwards compatibility with the cylc 5 syntax (now deprecated).
+        </li>
+        <li><b>cylc 5to6</b> command to help convert cylc 5 suites to cylc 6.</li>
+    </ul>
+    <p>Other changes:</p>
+    <ul>
+        <li><b>work/ and log/job restructure</b> - now based around CYCLE
+        subdirectories</li>
+        <li><b>new <samp>log/job/CYCLE/TASK_NAME/SUBMIT_NUM/job-activity.log
+        </samp> file</b> to store a job's submission, poll, kill, and event
+        hook output</li>
+        <li><b>rename site.rc and user.rc configs to <samp>global.rc</samp>
+        </b></li>
+        <li><b>runahead task pool</b> - tasks that used to be in the
+        <em>runahead</em> state are now in a separate internal pool and
+        aren't visible in the GUI</li>
+        <li><b>use processes instead of threads</b></li>
+        <li><b>use ~30% less CPU time</b> for busy suites compared to 5.4.14
+        </li>
+        <li><b>integer cycling</b> - cycle over integers, not just date-times
+        <li><b>cycle point subgraphs</b> - support grouping by cycle point in
+        cylc graph and the cylc gui Graph View</li>
+        <li><b>cylc gui family state icon</b></li>
+        <li><b>cylc gui text view layout improvement</b></li>
+        <li><b>remove async repeating tasks</b> in favour of integer cycling
+        solutions</li>
+        <li>export <samp>CYLC_TASK_SUBMIT_NUMBER</samp> for use in task
+        scripts</li>
+        <li>(developer) automated Travis testing support</li>
+        <li>implicit cycling is no longer supported</li>
+        <li>more flexible runahead limiting algorithm, based around a maximum
+        number of active cycle points</li>
+        <li>deprecated <samp>--tag</samp> options to some cylc commands in
+        favour of <samp>--point</samp></li>
+        <li>deprecated cylc cycletime in favour of cylc cycle-point</li>
+        <li>improved vim syntax file</li>
+        <li>fix passphrase creation on reregister</li>
+        <li>remove lockserver</li>
+        <li>cylc scan: default timeout</li>
+        <li>fix handling of missing nested include-files</li>
+    </ul>
+
 <a name="5.4.14"/>
     <h2>5.4.14</h2>
 
