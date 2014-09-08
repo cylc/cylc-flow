@@ -54,7 +54,6 @@ class cycling( task ):
         self.stop_point = stop_point
 
     def next_point( self ):
-        print self.__class__.name, self.__class__.sequences
         p_next = None
         adjusted = []
         for seq in self.__class__.sequences:
