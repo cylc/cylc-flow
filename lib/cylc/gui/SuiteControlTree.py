@@ -236,7 +236,7 @@ Text Treeview suite control interface.
             cb = gtk.CheckButton(task_state.labels[st])
             tooltip = gtk.Tooltips()
             tooltip.enable()
-            tooltip.set_tip(cb, "Filter by task state %s" % st)
+            tooltip.set_tip(cb, "Filter by task state = %s" % st)
  
             box.pack_start(icon, expand=False)
             box.pack_start(cb, expand=False)
