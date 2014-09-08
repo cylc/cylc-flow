@@ -3032,23 +3032,20 @@ For more Stop options use the Control menu.""" )
 
     def run_suite_graph( self, w, show_ns=False ):
         if show_ns:
-            command = ( "cylc graph --notify-completion --namespaces " + \
-                        self.cfg.template_vars_opts + " " + self.get_remote_run_opts() + \
-                        " " + self.cfg.suite )
+            command = "cylc graph --notify-completion -n %s %s %s" % (
+                       self.cfg.template_vars_opts,
+                       self.get_remote_run_opts(),
+                       self.cfg.suite)
             foo = gcapture_tmpfile( command, self.cfg.cylc_tmpdir )
             self.gcapture_windows.append(foo)
             foo.run()
         else:
-            # don't bother getting [visualization] start and stop cycles
-            # from the suite definition to insert in the popup. The
-            # suite has to be parsed again for the graph and doing that
-            # twice is bad for very large suites. (We could provide a
-            # load button as the suite start popup does).
-            graph_suite_popup( self.cfg.suite, self.command_help, None, None,
-                               self.get_remote_run_opts(), self.gcapture_windows,
-                               self.cfg.cylc_tmpdir,
-                               self.cfg.template_vars_opts,
-                               parent_window=self.window )
+            # TODO - a "load" button as for suite startup cycle points.
+            graph_suite_popup(
+                    self.cfg.suite, self.command_help, None, None,
+                    self.get_remote_run_opts(), self.gcapture_windows,
+                    self.cfg.cylc_tmpdir, self.cfg.template_vars_opts,
+                    parent_window=self.window )
 
     def run_suite_info( self, w ):
         command = ( "cylc show --notify-completion" + self.get_remote_run_opts() + \

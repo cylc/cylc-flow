@@ -93,12 +93,13 @@ class TaskNotDefinedError( SuiteConfigError ):
 # TODO: separate config for run and non-run purposes?
 
 class config( object ):
-    def __init__( self, suite, fpath, template_vars=[],
+    def __init__(self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             validation=False, strict=False, collapsed=[],
             cli_initial_point_string=None, cli_start_point_string=None,
             is_restart=False, is_reload=False,
-            write_proc=True ):
+            write_proc=True,
+            vis_start_string=None, vis_stop_string=None):
 
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
@@ -119,6 +120,8 @@ class config( object ):
         self.clock_offsets = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
+        self.vis_start_point_string = vis_start_string
+        self.vis_stop_point_string = vis_stop_string
 
         self.sequences = []
         self.actual_first_point = None
@@ -451,6 +454,12 @@ class config( object ):
                 if foot not in self.feet:
                     self.feet.append(foot)
 
+        # CLI override for visualization settings.
+        if self.vis_start_point_string:
+            self.cfg['visualization']['initial cycle point'] = self.vis_start_point_string
+        if self.vis_stop_point_string:
+            self.cfg['visualization']['final cycle point'] = self.vis_stop_point_string
+
         # For static visualization, start point defaults to suite initial
         # point; stop point must be explicit with initial point, or None.
         if self.cfg['visualization']['initial cycle point'] is None:
@@ -464,6 +473,12 @@ class config( object ):
                         "  (it must be defined with an initial cycle point)")
                 self.cfg['visualization']['final cycle point'] = None
 
+        vfcp = get_point(self.cfg['visualization']['final cycle point'])
+        sfcp = get_point(self.cfg['scheduling']['final cycle point'])
+        if vfcp is not None and sfcp is not None:
+            if vfcp > sfcp:
+                self.cfg['visualization']['final cycle point'] = str(sfcp)
+ 
     def check_env_names( self ):
         # check for illegal environment variable names
          bad = {}
@@ -1524,10 +1539,20 @@ class config( object ):
         
         return edges
 
-    def get_graph( self, start_point_string, stop_point_string, raw=False,
-                   group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-                   group_all=False, ungroup_all=False, ignore_suicide=False,
-                   subgraphs_on=False ):
+    def get_graph(self, start_point_string=None, stop_point_string=None,
+            raw=False, group_nodes=[], ungroup_nodes=[],
+            ungroup_recursive=False, group_all=False, ungroup_all=False,
+            ignore_suicide=False, subgraphs_on=False):
+
+        # If graph extent is not given, use visualization settings.
+        if start_point_string is None:
+            start_point_string = self.cfg['visualization']['initial cycle point']
+        if stop_point_string is None:
+            stop_point_string = self.cfg['visualization']['final cycle point']
+        if stop_point_string is not None:
+            if get_point(stop_point_string) < get_point(start_point_string):
+                # Avoid a null graph. 
+                stop_point_string = start_point_string
 
         gr_edges = self.get_graph_raw(
             start_point_string, stop_point_string, raw,

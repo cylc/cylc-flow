@@ -1465,39 +1465,42 @@ Run the polling \lstinline=cylc suite-state= command in verbose output mode.
 
 \subsection{[visualization]}
 
-Configuration of suite graphing and, where applicable, the gcylc graph view.
-Graphviz documentation of node shapes and so on can be found at
-http://www.graphviz.org/Documentation.php.
+Configuration of suite graphing for the \lstinline=cylc graph= command (graph
+extent, styling, and initial family-collapsed state) and the gcylc graph view
+(initial family-collapsed state). Graphviz documentation of node shapes
+and so on can be found at http://www.graphviz.org/Documentation.php.
 
 \subsubsection[initial cycle point]{[visualization] $\rightarrow$ initial cycle point}
 
-The cycle point at which to start the suite graph.
+The initial cycle point for graph plotting.
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
     \item {\em default:} the suite initial cycle point
 \end{myitemize}
-Use this to start plotting the suite graph from a point after the initial cycle
-point.
+The visualization initial cycle point gets adjusted up if necessary to the
+suite initial cycling point.
 
 \subsubsection[final cycle point]{[visualization] $\rightarrow$ final cycle point}
 
-An explicit cycle point at which to end the suite graph. This is deprecated in
-favour of {\em number of cycle points} (below).
+The final cycle point for graph plotting. This is deprecated in favour of  
+{\em number of cycle points} relative to the start point (below).
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
     \item {\em default:} (none)
 \end{myitemize}
+The visualization final cycle point gets adjusted down if necessary to the
+suite final cycling point.
 
 \subsubsection[number of cycle points]{[visualization] $\rightarrow$ number of cycle points}
 
-The number of cycle points, starting from the initial one, after which to end
-the suite graph. This setting can be overridden by the deprecated visualization
-{\em final cycle point} (above).
+The number of cycle points to graph from the start point. This can be
+overridden by the deprecated visualization {\em final cycle point} (above).
 \begin{myitemize}
     \item {\em type:} integer
     \item {\em default:} 3
 \end{myitemize}
-
+The visualization final cycle point gets adjusted down if necessary to the
+suite final cycling point.
 
 \subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}
 

@@ -45,7 +45,9 @@ class CylcDotViewerCommon( xdot.DotWindow ):
             self.suiterc = config.config( self.suite, self.file,
                     template_vars=self.template_vars,
                     template_vars_file=self.template_vars_file,
-                    is_reload=is_reload, collapsed=collapsed )
+                    is_reload=is_reload, collapsed=collapsed,
+                    vis_start_string=self.start_point_string,
+                    vis_stop_string=self.stop_point_string)
         except Exception, x:
             print >> sys.stderr, "Failed - parsing error?"
             print >> sys.stderr, x
@@ -286,24 +288,23 @@ class MyDotWindow( CylcDotViewerCommon ):
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, template_vars,
-                 template_vars_file,  watch, start_point_string,
-                 stop_point_string, orientation="TB",
-                 subgraphs_on=False):
+    def __init__(self, suite, suiterc, start_point_string,
+            stop_point_string, template_vars, template_vars_file,  watch,
+            orientation="TB", subgraphs_on=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.suiterc = None
-        self.start_point_string = start_point_string
         self.raw = False
-        self.stop_point_string = stop_point_string
         self.watch = []
         self.orientation = orientation
         self.subgraphs_on = subgraphs_on
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
         self.ignore_suicide = False
+        self.start_point_string = start_point_string
+        self.stop_point_string = stop_point_string
 
         gtk.Window.__init__(self)
 
@@ -434,23 +435,8 @@ class MyDotWindow( CylcDotViewerCommon ):
         suite_polling_tasks = self.suiterc.suite_polling_tasks
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
-        if self.start_point_string is not None:
-            # CLI overrode graph start point...
-            start = self.start_point_string
-            if self.stop_point_string is None:
-                # Force use of computed stop point to avoid a large gap between
-                # CLI start and in-suite stop.
-                stop = None
-            else:
-                # CLI overrode stop point too.
-                stop = self.stop_point_string
-        else:
-            # No CLI override: use in-suite values.
-            start = self.suiterc.cfg['visualization']['initial cycle point']
-            stop = self.suiterc.cfg['visualization']['final cycle point']
 
         graph = self.suiterc.get_graph(
-                start, stop,
                 raw=self.raw, group_nodes=group_nodes,
                 ungroup_nodes=ungroup_nodes,
                 ungroup_recursive=ungroup_recursive,

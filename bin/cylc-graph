@@ -82,26 +82,28 @@ def grouping( w, name, window, un, recursive ):
         else:
             window.get_graph( ungroup_nodes=[name], ungroup_recursive=False )
 
-parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START [STOP]]
+parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START[STOP]]
      Plot the suite.rc dependency graph for SUITE.
        2/ cylc [prep] graph [OPTIONS] -f,--file FILE
      Plot the specified dot-language graph file.
 
-Plot cylc dependency graphs in a pannable, zoomable viewer.
+Plot suite dependency graphs in an interactive graph viewer.
 
-START and STOP points override [visualization] initial and final cycle points
-from the suite definition.
+If START is given it overrides "[visualization] initial cycle point" to
+determine the start point of the graph, which defaults to the suite initial
+cycle point. If STOP is given it overrides "[visualization] final cycle point"
+to determine the end point of the graph, which defaults to the graph start
+point plus "[visualization] number of cycle points" (which defaults to 3).
+The graph start and end points are adjusted up and down to the suite initial
+and final cycle points, respectively, if necessary.
 
 The viewer updates automatically when the suite.rc file is saved during
-editing. Supply the optional initial and final cycle point arguments to
-override the suite.rc file, which overrides the system defaults (if only
-an initial cycle point is supplied, only that cycle point will be graphed).
-The "Save" button generates an image of the current view, of format (e.g.
-png, svg, jpg, eps) determined by the filename extension. If the chosen
+editing. The "Save" button generates an image of the current view, of format
+(e.g. png, svg, jpg, eps) determined by the filename extension. If the chosen
 format is not available a dialog box will show those that are available.
 
-If an output filename is specified in the options, the viewer will not
-open and a graph representation will be output to the filename.
+If the optional output filename is specified, the viewer will not open and
+a graph will be written directly to the file.
 
 GRAPH VIEWER CONTROLS:
     * Center on a node: left-click.
@@ -123,14 +125,7 @@ GRAPH VIEWER CONTROLS:
     * "recursive ungroup" - ungroup all families below this node.""",
     jset=True, prep=True, argdoc = [('[SUITE]', 'Suite name or path'),
         ('[START]', 'Initial cycle point to plot (default=2999010100)'),
-        ('[STOP]', 'Final cycle point to plot (default=2999010123)') ])
-
-#parser.add_option( "-l", "--live",
-#    help="Update image in real time if the source file changes. Otherwise "
-#    "the user can hit the viewer Refresh button.  This option is OFF by "
-#    "default because the graph will recenter when refreshed, which is "
-#    "unhelpful if you are studying a panned, zoomed image.",
-#    action="store_true", default=False, dest="updatelive" )
+        ('[STOP]', 'Final cycle point to plot (default=2999010123)')])
 
 parser.add_option( "-n", "--namespaces",
     help="Plot the suite namespace inheritance hierarchy "
@@ -151,7 +146,7 @@ parser.add_option( "--output-format",
          "e.g. png, svg, jpg, eps, dot.",
     metavar="FORMAT", action="store", default=None, dest="output_format" )
 
-( options, args ) = parser.parse_args()
+(options, args) = parser.parse_args()
 
 # import modules that require gtk now, so that a display is not needed
 # just to get command help (e.g. when running make on a post-commit hook
@@ -184,7 +179,6 @@ if options.filename:
         print >> sys.stderr, x
         sys.exit(1)
     window.connect( 'destroy', gtk.main_quit)
-    #if options.updatelive:
     # checking periodically for file changed
     gobject.timeout_add(1000, window.update, file)
     gtk.main()
@@ -194,27 +188,20 @@ should_hide_gtk_window = (options.output_filename is not None)
 
 suite, suiterc, watchers = parser.get_suite()
 
-# parse and plot the suite.rc dependency graph
-if len(args) < 1 or len(args) > 3:
-    parser.error( "Argument list should be: SUITE [START [STOP]]" )
+start_point_string = stop_point_string = None
+if len(args) >= 2:
+    start_point_string = args[1]
+if len(args) == 3:
+    stop_point_string = args[2]
 
 if options.namespaces:
     window = MyDotWindow2( suite, suiterc, options.templatevars,
                            options.templatevars_file, watchers,
                            should_hide=should_hide_gtk_window )
 else:
-    # SUITE DEPENDENCY GRAPH
-    start_point_string = None
-    stop_point_string = None
-
-    if len(args) > 1:
-        start_point_string = args[1]
-        if len(args) == 3:
-            stop_point_string = args[2]
-
-    window = MyDotWindow( suite, suiterc, options.templatevars,
-                          options.templatevars_file, watchers,
-                          start_point_string, stop_point_string )
+    window = MyDotWindow(suite, suiterc, start_point_string,
+            stop_point_string, options.templatevars,
+            options.templatevars_file, watchers)
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
@@ -226,7 +213,5 @@ if options.output_filename:
 
 window.connect( 'destroy', gtk.main_quit)
 
-#if options.updatelive:
-# checking periodically for file changed
 gobject.timeout_add(1000, window.update)
 gtk.main()
