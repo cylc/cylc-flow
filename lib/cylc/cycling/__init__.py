@@ -139,6 +139,8 @@ class IntervalBase(object):
     Note: "cmp_" not "cmp", etc. They should also provide:
      * self.get_null, which is a method to extract the null interval of
     this type.
+     * self.get_null_offset, which is a method to extract a null offset
+    relative to a PointBase object.
      * self.get_inferred_child to generate an offset from an input
     without units using the current units of the instance (if any).
 

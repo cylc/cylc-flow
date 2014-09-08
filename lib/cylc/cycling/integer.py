@@ -22,7 +22,9 @@ Integer cycling by point, interval, and sequence classes.
 import re
 
 from cylc.cycling import (
-    PointBase, IntervalBase, SequenceBase, PointParsingError)
+    PointBase, IntervalBase, SequenceBase, PointParsingError,
+    IntervalParsingError
+)
 from cylc.time_parser import CylcMissingContextPointError
 
 CYCLER_TYPE_INTEGER = "integer"
@@ -55,48 +57,58 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 #         1: repeat n times between START and END
 #         3: start at START, keep adding INTV (if n, only for n points)
 #         4: start at END, keep subtracting INTV (if n, only for n points)
-           
+
+RE_COMPONENTS = {
+    "end": "(?P<end>[^PR/][^/]*)",
+    "intv": "(?P<intv>P[^/]*)",
+    "reps_1": "R(?P<reps>1)",
+    "reps": "R(?P<reps>\d+)",
+    "start": "(?P<start>[^PR/][^/]*)"
+}
+
 RECURRENCE_FORMAT_RECS = [
-    (re.compile(regex), format_num) for (regex, format_num) in [
+    (re.compile(regex % RE_COMPONENTS), format_num)
+     for (regex, format_num) in [
         # START (not supported)
-        # (r"^(?P<start>[^PR/][^/]*)$", 3),
+        # (r"^%(start)s$", 3),
         # Rn/START/END
         # e.g. R3/0/10
-        (r"^R(?P<reps>\d+)/(?P<start>[^PR/][^/]*)/(?P<end>[^PR/][^/]*)$", 1),
+        (r"^%(reps)s/%(start)s/%(end)s$", 1),
         # START/INTV, implies R/START/INTV
         # e.g. +P5/P3, 2/P2
-        (r"^(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)/?$", 3),
+        (r"^%(start)s/%(intv)s/?$", 3),
         # INTV, implies R/INITIAL/INTV
         # e.g. P3, P10
-        (r"^(?P<intv>P[^/]*)$", 3),
+        (r"^%(intv)s$", 3),
         # INTV/END, implies R/INTV/END, count backwards from END
         # e.g. P3/-P1
-        (r"^(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
+        (r"^%(intv)s/%(end)s$", 4),
         # Rn/START (not supported)
-        # (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/?$", 3),
+        # (r"^%(reps)s?/%(start)s/?$", 3),
         # but: R1/START (supported)
         # e.g. R1/5, R1/+P3
-        (r"^R(?P<reps>1)?/(?P<start>[^PR/][^/]*)/?$", 3),
-        (r"^R(?P<reps>\d+)?/(?P<start>[^PR/][^/]*)/(?P<intv>P[^/]*)$", 3),
+        (r"^%(reps_1)s?/%(start)s/?$", 3),
+        (r"^%(reps)s?/%(start)s/%(intv)s$", 3),
         # Rn/START/INTV
         # e.g. R2/3/P3
-        (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
+        (r"^%(reps)s?/(?P<start>)/%(intv)s$", 3),
         # Rn/INTV/END
         # e.g. R5/P2/10, R7/P1/+P20
-        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
+        (r"^%(reps)s?/%(intv)s/%(end)s$", 4),
         # Rn/INTV, implies R/INTV/FINAL
         # e.g. R5/P2, R7/P1
-        (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
+        (r"^%(reps)s?/%(intv)s/?$", 4),
         # R1, repeat once at INITIAL
         # e.g. R1, R1/
-        (r"^R(?P<reps>1)/?(?P<start>$)", 3),
+        (r"^%(reps_1)s/?(?P<start>$)", 3),
         # R1//END, repeat once at END.
         # e.g. R1//-P2
-        (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
+        (r"^%(reps_1)s//%(end)s$", 4)
     ]
 ]
 
 REC_RELATIVE_POINT = re.compile("^[-+]P\d+$")
+REC_INTERVAL = re.compile("^[-+]?P\d+$")
 
 
 class IntegerPoint(PointBase):
@@ -122,7 +134,7 @@ class IntegerPoint(PointBase):
     def sub(self, other):
         """Subtract other.value from self.value as integers."""
         if isinstance(other, IntegerPoint):
-            return IntegerInterval(int(self) - int(other))
+            return IntegerInterval.from_integer(int(self) - int(other))
         return IntegerPoint(int(self) - int(other))
 
     def standardise(self):
@@ -146,28 +158,41 @@ class IntegerInterval(IntervalBase):
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_INTEGER
 
     @classmethod
+    def from_integer(cls, integer):
+        """Return an instance of this class using integer."""
+        if integer < 0:
+            value = "-P" + str(abs(integer))
+        else:
+            value = "P" + str(integer)
+        return IntegerInterval(value)
+
+    @classmethod
     def get_null(cls):
         """Return a null interval."""
         return IntegerInterval("P0")
 
+    @classmethod
+    def get_null_offset(cls):
+        """Return a null offset."""
+        return IntegerInterval("+P0")
+
     def get_inferred_child(self, string):
         """For a given string, infer the offset given my instance units."""
-        return IntegerInterval(string)
+        try:
+            IntegerInterval.from_integer(int(string))
+        except (TypeError, ValueError):
+            return IntegerInterval(string)
 
     def __init__(self, value):
-        if isinstance(value, basestring) and "P" not in value:
-            value = int(value)
-        if isinstance(value, int):
-            if value < 0:
-                value = "-P" + str(abs(value))
-            else:
-                value = "P" + str(value)
+        if (not isinstance(value, basestring) or
+                not REC_INTERVAL.search(value)):
+            raise IntervalParsingError("IntegerInterval", repr(value))
         super(IntegerInterval, self).__init__(value)
 
     def add(self, other):
         """Add other to self as integers (point or interval)."""
         if isinstance(other, IntegerInterval):
-            return IntegerInterval(int(self) + int(other))
+            return IntegerInterval.from_integer(int(self) + int(other))
         return IntegerPoint(int(self) + int(other))
 
     def cmp_(self, other):
@@ -176,11 +201,11 @@ class IntegerInterval(IntervalBase):
 
     def sub(self, other):
         """Subtract other from self as integers."""
-        return IntegerInterval(int(self) - int(other))
+        return IntegerInterval.from_integer(int(self) - int(other))
 
     def __abs__(self):
         # Return an interval with absolute values for all properties.
-        return IntegerInterval(abs(int(self)))
+        return IntegerInterval.from_integer(abs(int(self)))
 
     def __int__(self):
         # Provide a nice way to use the string self.value in calculations.
@@ -188,7 +213,7 @@ class IntegerInterval(IntervalBase):
 
     def __mul__(self, factor):
         # Return an interval with all properties multiplied by factor.
-        return IntegerInterval(int(self) * factor)
+        return IntegerInterval.from_integer(int(self) * factor)
 
     def __nonzero__(self):
         # Return True if the interval has any non-zero properties.
@@ -229,7 +254,7 @@ class IntegerSequence(SequenceBase):
         self.i_step = None
 
         # offset must be stored to compute the runahead limit
-        self.i_offset = IntegerInterval('0')
+        self.i_offset = IntegerInterval('P0')
 
         matched_recurrence = False
 
@@ -280,8 +305,10 @@ class IntegerSequence(SequenceBase):
                     # use p_start as an on-sequence reference
                     remainder = (int(self.p_context_stop - self.p_start) %
                                  int(self.i_step))
-                    self.p_stop = self.p_context_stop - IntegerInterval(
-                        remainder)
+                    self.p_stop = (
+                        self.p_context_stop - IntegerInterval.from_integer(
+                            remainder)
+                    )
         elif format_num == 1:
             # REPEAT/START/STOP
             if reps == 1:
@@ -289,7 +316,7 @@ class IntegerSequence(SequenceBase):
                 self.i_step = None
                 self.p_stop = self.p_start
             else:
-                self.i_step = IntegerInterval(
+                self.i_step = IntegerInterval.from_integer(
                     int(self.p_stop - self.p_start) / (reps - 1)
                 )
         else:
@@ -301,14 +328,16 @@ class IntegerSequence(SequenceBase):
                     self.p_start = self.p_stop
                     self.i_step = None
                 else:
-                    self.i_step = IntegerInterval(step)
+                    self.i_step = IntegerInterval(intv)
                     self.p_start = (
                         self.p_stop - self.i_step * (reps - 1))
             else:
                 remainder = (int(self.p_context_stop - self.p_start) %
                              int(self.i_step))
-                self.p_start = self.p_context_start - IntegerInterval(
-                    remainder)
+                self.p_start = (
+                    self.p_context_start - IntegerInterval.from_integer(
+                        remainder)
+                )
 
         if self.i_step and self.i_step < IntegerInterval.get_null():
             # (TODO - this should be easy to handle but needs testing)
@@ -321,7 +350,10 @@ class IntegerSequence(SequenceBase):
             # start from first point >= context start
             remainder = (
                 int(self.p_context_start - self.p_start) % int(self.i_step))
-            self.p_start = self.p_context_start + IntegerInterval(remainder)
+            self.p_start = (
+                self.p_context_start + IntegerInterval.from_integer(
+                    remainder)
+            )
             # if i_step is None here, points will just be None (out of bounds)
 
         if (self.i_step and self.p_stop and self.p_context_stop and
@@ -331,7 +363,7 @@ class IntegerSequence(SequenceBase):
                 int(self.p_context_stop - self.p_start) % int(self.i_step))
             self.p_stop = (
                 self.p_context_stop - self.i_step +
-                IntegerInterval(remainder)
+                IntegerInterval.from_interval(remainder)
             )
             # if i_step is None here, points will just be None (out of bounds)
 
@@ -360,7 +392,8 @@ class IntegerSequence(SequenceBase):
             # offset is a multiple of step
             return
         # shift to 0 < offset < interval
-        i_offset = IntegerInterval(int(i_offset) % int(self.i_step))
+        i_offset = IntegerInterval.from_integer(
+            int(i_offset) % int(self.i_step))
         self.i_offset = i_offset
         self.p_start += i_offset  # can be negative
         if self.p_start < self.p_context_start:
@@ -400,7 +433,7 @@ class IntegerSequence(SequenceBase):
             return None
         i = int(point - self.p_start) % int(self.i_step)
         if i:
-            prev_point = point - IntegerInterval(str(i))
+            prev_point = point - IntegerInterval.from_integer(i)
         else:
             prev_point = point - self.i_step
         return self._get_point_in_bounds(prev_point)
@@ -429,7 +462,7 @@ class IntegerSequence(SequenceBase):
             else:
                 return None
         i = int(point - self.p_start) % int(self.i_step)
-        next_point = point + self.i_step - IntegerInterval(i)
+        next_point = point + self.i_step - IntegerInterval.from_integer(i)
         return self._get_point_in_bounds(next_point)
 
     def get_next_point_on_sequence(self, point):
@@ -476,11 +509,13 @@ def init_from_cfg(cfg):
     pass
 
 
-def get_point_relative(offset_string, base_point):
-    """Create a point from offset_string applied to base_point."""
-    # This is fine so long as it is called deliberately
-    # (absolute and relative integers look the same).
-    return base_point + IntegerInterval(offset_string)
+def get_point_relative(point_expr, context_point):
+    """Create a point from relative_string applied to base_point."""
+    if REC_RELATIVE_POINT.search(point_expr):
+        # This is a relative point expression e.g. '+P2' or '-P12'.
+        return context_point + IntegerInterval(point_expr)
+    # This is an absolute point expression e.g. '4'.
+    return IntegerPoint(point_expr)
 
 
 def get_point_from_expression(point_expr, context_point, is_required=False):
@@ -493,11 +528,7 @@ def get_point_from_expression(point_expr, context_point, is_required=False):
         return None
     if point_expr is None:
         return context_point
-    if REC_RELATIVE_POINT.search(point_expr):
-        # This is a relative point expression e.g. '+P2' or '-P12'.
-        return context_point + IntegerInterval(point_expr)
-    # This is an absolute point expression e.g. '4'.
-    return IntegerPoint(point_expr)
+    return get_point_relative(point_expr, context_point)
 
 
 def test():
@@ -508,7 +539,7 @@ def test():
     #sequence = IntegerSequence('R2/c4/c6', 1, 10)
     #sequence = IntegerSequence('R2/P2/c6', 1, 10)
 
-    sequence.set_offset(IntegerInterval('4'))
+    sequence.set_offset(IntegerInterval('P4'))
 
     start = sequence.p_start
     stop = sequence.p_stop
@@ -528,7 +559,7 @@ def test():
     sequence1 = IntegerSequence('R/c1/P1', 1, 10)
     sequence2 = IntegerSequence('R/c1/P1', 1, 10)
     print sequence1 == sequence2
-    sequence2.set_offset(IntegerInterval('-2'))
+    sequence2.set_offset(IntegerInterval('-P2'))
     print sequence1 == sequence2
 
 
