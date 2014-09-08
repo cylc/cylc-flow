@@ -1482,25 +1482,24 @@ suite initial cycling point.
 
 \subsubsection[final cycle point]{[visualization] $\rightarrow$ final cycle point}
 
-The final cycle point for graph plotting. This is deprecated in favour of  
-{\em number of cycle points} relative to the start point (below).
+An explicit final cycle point for graph plotting. If used, this overrides the
+preferred {\em number of cycle points} (below).
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
     \item {\em default:} (none)
 \end{myitemize}
 The visualization final cycle point gets adjusted down if necessary to the
-suite final cycling point.
+suite final cycle point.
 
 \subsubsection[number of cycle points]{[visualization] $\rightarrow$ number of cycle points}
 
-The number of cycle points to graph from the start point. This can be
-overridden by the deprecated visualization {\em final cycle point} (above).
+The number of cycle points to graph starting from the visualization initial
+cycle point. This is the preferred way of defining the graph end point, but
+it can be overridden by an explicit {\em final cycle point} (above).
 \begin{myitemize}
     \item {\em type:} integer
     \item {\em default:} 3
 \end{myitemize}
-The visualization final cycle point gets adjusted down if necessary to the
-suite final cycling point.
 
 \subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}
 
