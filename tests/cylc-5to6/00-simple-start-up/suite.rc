@@ -1,0 +1,52 @@
+description = Simple cylc 5 suite using start-up tasks.
+title = Simple start-up suite.
+[cylc]
+    abort if any task fails = False
+    log resolved dependencies = False
+    UTC mode = True
+    [[dummy mode]]
+        disable suite event hooks = True
+    [[event hooks]]
+        timeout = 1440
+        timeout handler = true
+        abort if timeout handler fails = False
+    [[reference test]]
+        live mode suite timeout = 120
+        dummy mode suite timeout = 60.0
+        simulation mode suite timeout = 60
+[scheduling]
+    initial cycle time = 2014010100
+    final cycle time = 2014010400
+    runahead limit = 6
+    [[dependencies]]
+        [[[0]]]
+            graph = foo_midnight[T-24] & cold_foo => foo_midnight
+        [[[0, 12]]]
+            graph = foo_twelves[T-12] & cold_foo => foo_twelves
+        [[[6]]]
+            graph = foo_dawn[T-24] & cold_foo => foo_dawn
+        [[[Daily(20131231 ,2)  ]]] 
+            graph = "foo_d => bar_d" 
+        [[[Monthly(201402,1)]]] 
+            graph = "foo_m[T-2] => bar_m & foo_m" 
+        [[[  Yearly( 2010 , 3 ) ]]] 
+            graph = "foo_y => bar_y"
+    [[special tasks]]
+        start-up = cold_foo
+[runtime]
+    [[root]]
+        command scripting = true
+        retry delays = 0.5, 10, 30, 5*60, 2*180, 1440
+        [[[event hooks]]]
+            execution timeout = 180
+            submission timeout = 360
+        [[[suite state polling]]]
+            interval = 5
+        [[[job submission]]]
+            shell = /bin/bash
+            command template = 
+            method = background
+            retry delays = 5
+[visualization]
+    initial cycle point = 2014010100
+    final cycle point = 2014010206

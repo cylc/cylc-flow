@@ -1,0 +1,87 @@
+#!/bin/bash
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Transform a cylc 5 suite rc file into a cylc 6 suite rc file where possible.
+
+usage() {
+    cat <<eof
+USAGE: cylc [prep] 5to6 FILE
+
+Suggest changes to a cylc 5 suite file to make it more cylc 6 compatible.
+This may be a suite.rc file, an include file, or a suite.rc.processed file.
+
+By default, print the changed file to stdout. Lines that have been changed
+are marked with '# UPGRADE'. These marker comments are purely for your own
+information and should not be included in any changes you make. In
+particular, they may break continuation lines.
+
+Lines with '# UPGRADE CHANGE' have been altered.
+Lines with '# UPGRADE ... INFO' indicate that manual change is needed.
+
+You may want to run 'cylc validate' on your suite to see the automatic
+start-up/mixed async replacement R1* section(s). The validity of these can
+be highly dependent on the initial cycle point choice (e.g. whether it is
+T00 or T12).
+
+This command works best for hour-based cycling - it will always convert
+e.g. 'foo[T-6]' to 'foo[-PT6H]', even where this is in a monthly or yearly
+cycling section graph.
+
+This command is an aid, and is not an auto-upgrader or a substitute for
+reading the documentation. The suggested changes must be understood and
+checked by hand.
+
+Example usage:
+
+# Print out a file path (FILE) with suggested changes to stdout.
+cylc 5to6 FILE
+
+# Replace the file with the suggested changes file.
+cylc 5to6 FILE > FILE
+
+# Save a copy of the changed file.
+cylc 5to6 FILE > FILE.5to6
+
+# Show the diff of the changed file vs the original file.
+diff - <(cylc 5to6 FILE) <FILE
+
+Options:
+  -h, --help   Print this help message and exit.
+eof
+}
+
+# handle long --help
+if [[ $@ == *\-\-help ]]; then
+    usage
+    exit 0
+fi
+
+while getopts "h" opt; do
+    case $opt in
+        h )
+            usage
+            exit 0
+            ;;
+        ? )
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+sed -f $(dirname $0)/../conf/5to6/5to6.sedfile $1
