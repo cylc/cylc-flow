@@ -50,6 +50,9 @@ PREV_DATE_TIME_FORMAT = "%Y%m%d%H"
 PREV_DATE_TIME_REC = re.compile("^\d{10}$")
 NEW_DATE_TIME_REC = re.compile("T")
 
+WARNING_PARSE_EXPANDED_YEAR_DIGITS = (
+    "(incompatible with [cylc]cycle point num expanded year digits = %s ?)")
+
 
 class SuiteSpecifics(object):
 
@@ -117,8 +120,12 @@ class ISO8601Point(PointBase):
         try:
             self.value = str(point_parse(self.value))
         except ValueError as exc:
-            print "standardise %s" % exc
-            raise PointParsingError(type(self), self.value)
+            if self.value.startswith("+") or self.value.startswith("-"):
+                message = WARNING_PARSE_EXPANDED_YEAR_DIGITS % (
+                    SuiteSpecifics.NUM_EXPANDED_YEAR_DIGITS)
+            else:
+                message = str(exc)
+            raise PointParsingError(type(self), self.value, message)
         return self
 
     def sub(self, other):
