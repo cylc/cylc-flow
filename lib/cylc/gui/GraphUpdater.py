@@ -301,23 +301,21 @@ class GraphUpdater(threading.Thread):
 
         start_time = self.global_summary['start time']
 
-        rawx = None
-        # TODO ISO: necessary to have checks here?
-        if start_time == None or oldest > start_time:
-            rawx = True
-        else:
-            # (show cold start tasks)
-            rawx = False
-
         extra_node_ids = {}
 
-        # TODO - remote connection exception handling?
         try:
             res = self.updater.sinfo.get(
                     'graph raw', oldest, newest,
-                    rawx, self.group, self.ungroup, self.ungroup_recursive,
+                    self.group, self.ungroup, self.ungroup_recursive,
+                    self.group_all, self.ungroup_all)
+        except TypeError:
+            # Back compat with pre cylc-6 suite daemons.
+            res = self.updater.sinfo.get(
+                    'graph raw', oldest, newest,
+                    False, self.group, self.ungroup, self.ungroup_recursive,
                     self.group_all, self.ungroup_all)
         except Exception:  # PyroError
+            raise
             return False
 
         # backward compatibility for old suite daemons still running

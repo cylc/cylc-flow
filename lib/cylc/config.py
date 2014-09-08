@@ -1414,7 +1414,7 @@ class config( object ):
             self.actual_first_point = point
         return self.actual_first_point
 
-    def get_graph_raw( self, start_point_string, stop_point_string, raw=False,
+    def get_graph_raw( self, start_point_string, stop_point_string,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
@@ -1466,12 +1466,10 @@ class config( object ):
         gr_edges = {}
         start_point = get_point(start_point_string)
         actual_first_point = self.get_actual_first_point(start_point)
-        startup_exclude_list = self.get_coldstart_task_list()
 
         # For the computed stop point, we store n_points of each sequence,
         # and then cull later to the first n_points over all sequences.
         n_points = self.cfg['visualization']['number of cycle points']
-
         if stop_point_string is not None:
             stop_point = get_point(stop_point_string)
         else:
@@ -1500,11 +1498,9 @@ class config( object ):
                     break
                 not_initial_cycle = (point != i_point)
 
-                r_id = e.get_right(point, start_point, not_initial_cycle, raw,
-                                   startup_exclude_list)
-                l_id = e.get_left( point, start_point, not_initial_cycle, raw,
-                                   startup_exclude_list,
-                                   e.sequence.get_interval())
+                r_id = e.get_right(point, start_point)
+                l_id = e.get_left(point, start_point, e.sequence.get_interval())
+
                 action = True
                 if l_id == None and r_id == None:
                     # Nothing to add to the graph.
@@ -1540,9 +1536,9 @@ class config( object ):
         return edges
 
     def get_graph(self, start_point_string=None, stop_point_string=None,
-            raw=False, group_nodes=[], ungroup_nodes=[],
-            ungroup_recursive=False, group_all=False, ungroup_all=False,
-            ignore_suicide=False, subgraphs_on=False):
+            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
+            group_all=False, ungroup_all=False, ignore_suicide=False,
+            subgraphs_on=False):
 
         # If graph extent is not given, use visualization settings.
         if start_point_string is None:
@@ -1555,7 +1551,7 @@ class config( object ):
                 stop_point_string = start_point_string
 
         gr_edges = self.get_graph_raw(
-            start_point_string, stop_point_string, raw,
+            start_point_string, stop_point_string,
             group_nodes, ungroup_nodes, ungroup_recursive,
             group_all, ungroup_all
         )
@@ -1566,9 +1562,9 @@ class config( object ):
             graph.add_cycle_point_subgraphs( gr_edges )
         return graph
 
-    def get_node_labels( self, start_point_string, stop_point_string, raw ):
+    def get_node_labels( self, start_point_string, stop_point_string):
         graph = self.get_graph( start_point_string, stop_point_string,
-                                raw=raw, ungroup_all=True )
+                                ungroup_all=True )
         return [ i.attr['label'].replace('\\n','.') for i in graph.nodes() ]
 
     def close_families( self, nlid, nrid ):
