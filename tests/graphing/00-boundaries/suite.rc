@@ -1,0 +1,15 @@
+
+[cylc]
+    cycle point time zone = +12
+
+[scheduling]
+    initial cycle point = 20140808T00
+    [[dependencies]]
+       [[[R//PT6H]]] # (= [[[PT6H]]])
+            graph = foo
+       [[[T00]]]
+            graph = foo => bar
+
+[visualization]
+    number of cycle points = 3
+

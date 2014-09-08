@@ -45,7 +45,9 @@ class CylcDotViewerCommon( xdot.DotWindow ):
             self.suiterc = config.config( self.suite, self.file,
                     template_vars=self.template_vars,
                     template_vars_file=self.template_vars_file,
-                    is_reload=is_reload, collapsed=collapsed )
+                    is_reload=is_reload, collapsed=collapsed,
+                    vis_start_string=self.start_point_string,
+                    vis_stop_string=self.stop_point_string)
         except Exception, x:
             print >> sys.stderr, "Failed - parsing error?"
             print >> sys.stderr, x
@@ -280,30 +282,27 @@ class MyDotWindow( CylcDotViewerCommon ):
             <toolitem action="LeftToRight"/>
             <toolitem action="Subgraphs"/>
             <toolitem action="IgnoreSuicide"/>
-            <toolitem action="IgnoreColdStart"/>
             <separator expand="true"/>
             <toolitem action="Save"/>
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, suiterc, template_vars,
-                 template_vars_file,  watch, start_point_string,
-                 stop_point_string, orientation="TB",
-                 subgraphs_on=False):
+    def __init__(self, suite, suiterc, start_point_string, stop_point_string,
+            template_vars, template_vars_file,  watch, orientation="TB",
+            subgraphs_on=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.suiterc = None
-        self.start_point_string = start_point_string
-        self.raw = False
-        self.stop_point_string = stop_point_string
         self.watch = []
         self.orientation = orientation
         self.subgraphs_on = subgraphs_on
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
         self.ignore_suicide = False
+        self.start_point_string = start_point_string
+        self.stop_point_string = stop_point_string
 
         gtk.Window.__init__(self)
 
@@ -368,10 +367,6 @@ class MyDotWindow( CylcDotViewerCommon ):
             ('IgnoreSuicide', gtk.STOCK_CANCEL, 'Ignore Suicide Triggers',
              None, 'Ignore Suicide Triggers', self.on_igsui),
         ))
-        actiongroup.add_toggle_actions((
-            ('IgnoreColdStart', gtk.STOCK_YES, 'Ignore Cold Start Tasks',
-             None, 'Ignore Cold Start Tasks', self.on_igcol),
-        ))
 
         # Add the actiongroup to the uimanager
         uimanager.insert_action_group(actiongroup, 0)
@@ -432,18 +427,10 @@ class MyDotWindow( CylcDotViewerCommon ):
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.triggering_families
         suite_polling_tasks = self.suiterc.suite_polling_tasks
-
-        if self.start_point_string != None and self.stop_point_string != None:
-            one = self.start_point_string
-            two = self.stop_point_string
-        else:
-            one = str(
-                self.suiterc.cfg['visualization']['initial cycle point'])
-            two = str(
-                self.suiterc.cfg['visualization']['final cycle point'])
-
-        graph = self.suiterc.get_graph( one, two,
-                raw=self.raw, group_nodes=group_nodes,
+        # Note this is used by "cylc graph" but not gcylc.
+        # self.start_ and self.stop_point_string come from CLI.
+        graph = self.suiterc.get_graph(
+                group_nodes=group_nodes,
                 ungroup_nodes=ungroup_nodes,
                 ungroup_recursive=ungroup_recursive,
                 group_all=group_all, ungroup_all=ungroup_all,
@@ -475,10 +462,6 @@ class MyDotWindow( CylcDotViewerCommon ):
  
     def on_igsui( self, toolitem ):
         self.ignore_suicide = toolitem.get_active()
-        self.get_graph()
-
-    def on_igcol( self, toolitem ):
-        self.raw = toolitem.get_active()
         self.get_graph()
 
     def save_action( self, toolitem ):

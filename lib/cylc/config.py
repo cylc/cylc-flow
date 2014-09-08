@@ -93,12 +93,13 @@ class TaskNotDefinedError( SuiteConfigError ):
 # TODO: separate config for run and non-run purposes?
 
 class config( object ):
-    def __init__( self, suite, fpath, template_vars=[],
+    def __init__(self, suite, fpath, template_vars=[],
             template_vars_file=None, owner=None, run_mode='live',
             validation=False, strict=False, collapsed=[],
             cli_initial_point_string=None, cli_start_point_string=None,
             is_restart=False, is_reload=False,
-            write_proc=True ):
+            write_proc=True,
+            vis_start_string=None, vis_stop_string=None):
 
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
@@ -119,6 +120,8 @@ class config( object ):
         self.clock_offsets = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
+        self.vis_start_point_string = vis_start_string
+        self.vis_stop_point_string = vis_stop_string
 
         self.sequences = []
         self.actual_first_point = None
@@ -387,22 +390,8 @@ class config( object ):
         if self.validation:
             self.check_tasks()
 
-        # initial and final cycles for visualization
-        vict = self.cfg['visualization']['initial cycle point'] or \
-                str(self.get_actual_first_point(self.start_point))
-        self.cfg['visualization']['initial cycle point'] = vict
-
-        vict_rh = None
-        v_runahead_limit = self.custom_runahead_limit
-        if vict and v_runahead_limit:
-            vict_rh = str( get_point( vict ) + v_runahead_limit )
-        
-        vfct = self.cfg['visualization']['final cycle point'] or vict_rh or vict
-        self.cfg['visualization']['final cycle point'] = vfct
-
         ngs = self.cfg['visualization']['node groups']
-
-        # If any existing node group member is a family, include its descendants too.
+        # If a node group member is a family, include its descendants too.
         replace = {}
         for ng, mems in ngs.items():
             replace[ng] = []
@@ -465,6 +454,31 @@ class config( object ):
                 if foot not in self.feet:
                     self.feet.append(foot)
 
+        # CLI override for visualization settings.
+        if self.vis_start_point_string:
+            self.cfg['visualization']['initial cycle point'] = self.vis_start_point_string
+        if self.vis_stop_point_string:
+            self.cfg['visualization']['final cycle point'] = self.vis_stop_point_string
+
+        # For static visualization, start point defaults to suite initial
+        # point; stop point must be explicit with initial point, or None.
+        if self.cfg['visualization']['initial cycle point'] is None:
+            self.cfg['visualization']['initial cycle point'] = (
+                    self.cfg['scheduling']['initial cycle point'])
+            # If viz initial point is None don't accept a final point.
+            if self.cfg['visualization']['final cycle point'] is not None:
+                if flags.verbose:
+                    print >> sys.stderr, (
+                        "WARNING: ignoring [visualization]final cycle point\n"
+                        "  (it must be defined with an initial cycle point)")
+                self.cfg['visualization']['final cycle point'] = None
+
+        vfcp = get_point(self.cfg['visualization']['final cycle point'])
+        sfcp = get_point(self.cfg['scheduling']['final cycle point'])
+        if vfcp is not None and sfcp is not None:
+            if vfcp > sfcp:
+                self.cfg['visualization']['final cycle point'] = str(sfcp)
+ 
     def check_env_names( self ):
         # check for illegal environment variable names
          bad = {}
@@ -1246,7 +1260,7 @@ class config( object ):
             conditional = True
 
         for left in left_nodes:
-            e = graphing.edge( left, right, seq, False, suicide, conditional )
+            e = graphing.edge( left, right, seq, suicide, conditional )
             self.edges.append(e)
 
     def generate_taskdefs( self, line, left_nodes, right, section, seq,
@@ -1425,7 +1439,7 @@ class config( object ):
             self.actual_first_point = point
         return self.actual_first_point
 
-    def get_graph_raw( self, start_point_string, stop_point_string, raw=False,
+    def get_graph_raw( self, start_point_string, stop_point_string,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
@@ -1474,45 +1488,50 @@ class config( object ):
                             self.closed_families.remove(fam)
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
-        gr_edges = []
+        gr_edges = {}
+        start_point = get_point(start_point_string)
+        actual_first_point = self.get_actual_first_point(start_point)
 
-        start_point = get_point( start_point_string )
-
-        actual_first_point = self.get_actual_first_point( start_point )
-
-        startup_exclude_list = self.get_coldstart_task_list()
-
-        stop = get_point( stop_point_string )
+        # For the computed stop point, we store n_points of each sequence,
+        # and then cull later to the first n_points over all sequences.
+        n_points = self.cfg['visualization']['number of cycle points']
+        if stop_point_string is not None:
+            stop_point = get_point(stop_point_string)
+        else:
+            stop_point = None
 
         for e in self.edges:
             # Get initial cycle point for this sequence
-            i_point = e.sequence.get_first_point( start_point )
+            i_point = e.sequence.get_first_point(start_point)
             if i_point is None:
                 # out of bounds
                 continue
             point = deepcopy(i_point)
-
+            new_points = []
             while True: 
                 # Loop over cycles generated by this sequence
-                if not point or point > stop:
+                if point is None:
+                    # Out of sequence bounds.
                     break
+                if point not in new_points:
+                    new_points.append(point)
+                if stop_point is not None and point > stop_point:
+                    # Beyond requested final cycle point.
+                    break
+                if stop_point is None and len(new_points) > n_points:
+                    # Take n_points cycles from each sequence.
+                    break
+                not_initial_cycle = (point != i_point)
 
-                not_initial_cycle = ( point != i_point )
-
-                r_id = e.get_right(point, start_point, not_initial_cycle, raw,
-                                   startup_exclude_list )
-                l_id = e.get_left( point, start_point, not_initial_cycle, raw,
-                                   startup_exclude_list,
-                                   e.sequence.get_interval() )
+                r_id = e.get_right(point, start_point)
+                l_id = e.get_left(point, start_point, e.sequence.get_interval())
 
                 action = True
-
                 if l_id == None and r_id == None:
-                    # nothing to add to the graph
+                    # Nothing to add to the graph.
                     action = False
-
-                if l_id != None and not e.sasl:
-                    # check that l_id is not earlier than start time
+                if l_id != None:
+                    # Check that l_id is not earlier than start time.
                     tmp, lpoint_string = TaskID.split(l_id)
                     ## NOTE BUG GITHUB #919
                     ##sct = start_point
@@ -1520,36 +1539,57 @@ class config( object ):
                     lct = get_point(lpoint_string)
                     if sct > lct:
                         action = False
-
                 if action:
-                    nl, nr = self.close_families( l_id, r_id )
-                    gr_edges.append( ( nl, nr, False, e.suicide, e.conditional ) )
+                    nl, nr = self.close_families(l_id, r_id)
+                    if point not in gr_edges:
+                        gr_edges[point] = []
+                    gr_edges[point].append((nl, nr, False, e.suicide, e.conditional))
+                # Increment the cycle point.
+                point = e.sequence.get_next_point_on_sequence(point)
 
-                # increment the cycle point
-                point = e.sequence.get_next_point_on_sequence( point )
+        edges = []
+        if stop_point is None:
+            # Prune to n_points points in total.
+            points = gr_edges.keys()
+            for point in sorted(points)[:n_points]:
+                edges.extend(gr_edges[point])
+        else:
+            values = gr_edges.values()
+            # Flatten nested list.
+            edges = [i for sublist in values for i in sublist]
+        
+        return edges
 
-        return gr_edges
+    def get_graph(self, start_point_string=None, stop_point_string=None,
+            group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
+            group_all=False, ungroup_all=False, ignore_suicide=False,
+            subgraphs_on=False):
 
-    def get_graph( self, start_point_string, stop_point_string, raw=False,
-                   group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-                   group_all=False, ungroup_all=False, ignore_suicide=False,
-                   subgraphs_on=False ):
+        # If graph extent is not given, use visualization settings.
+        if start_point_string is None:
+            start_point_string = self.cfg['visualization']['initial cycle point']
+        if stop_point_string is None:
+            stop_point_string = self.cfg['visualization']['final cycle point']
+        if stop_point_string is not None:
+            if get_point(stop_point_string) < get_point(start_point_string):
+                # Avoid a null graph. 
+                stop_point_string = start_point_string
 
         gr_edges = self.get_graph_raw(
-            start_point_string, stop_point_string, raw,
+            start_point_string, stop_point_string,
             group_nodes, ungroup_nodes, ungroup_recursive,
             group_all, ungroup_all
         )
-
-        graph = graphing.CGraph( self.suite, self.suite_polling_tasks, self.cfg['visualization'] )
+        graph = graphing.CGraph(
+                self.suite, self.suite_polling_tasks, self.cfg['visualization'])
         graph.add_edges( gr_edges, ignore_suicide )
         if subgraphs_on:
             graph.add_cycle_point_subgraphs( gr_edges )
         return graph
 
-    def get_node_labels( self, start_point_string, stop_point_string, raw ):
+    def get_node_labels( self, start_point_string, stop_point_string):
         graph = self.get_graph( start_point_string, stop_point_string,
-                                raw=raw, ungroup_all=True )
+                                ungroup_all=True )
         return [ i.attr['label'].replace('\\n','.') for i in graph.nodes() ]
 
     def close_families( self, nlid, nrid ):

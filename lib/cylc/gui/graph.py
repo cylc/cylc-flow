@@ -36,13 +36,11 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
 
     window = gtk.Window()
     window.set_border_width(5)
-    window.set_title( "Plot Suite Dependency Graph")
+    window.set_title( "cylc graph " + reg)
     window.set_transient_for( parent_window )
     window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 
     vbox = gtk.VBox()
-
-    label = gtk.Label("SUITE: " + reg )
 
     label = gtk.Label("[START]: " )
     start_entry = gtk.Entry()
@@ -67,40 +65,31 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
     cancel_button = gtk.Button( "_Close" )
     cancel_button.connect("clicked", lambda x: window.destroy() )
     ok_button = gtk.Button( "_Graph" )
-    ok_button.connect(
-              "clicked",
-              lambda w: graph_suite( reg,
-                                     start_entry.get_text(),
-                                     stop_entry.get_text(),
-                                     graph_opts,  gcapture_windows,
-                                     tmpdir, template_opts, parent_window ) )
+    ok_button.connect("clicked",
+              lambda w: graph_suite(
+                  reg,
+                  start_entry.get_text(),
+                  stop_entry.get_text(),
+                  graph_opts,  gcapture_windows,
+                  tmpdir, template_opts, parent_window))
 
     help_button = gtk.Button( "_Help" )
     help_button.connect("clicked", cmd_help, 'prep', 'graph' )
 
     hbox = gtk.HBox()
-    hbox.pack_start( ok_button, False )
-    hbox.pack_end( cancel_button, False )
-    hbox.pack_end( help_button, False )
-    vbox.pack_start( hbox )
+    hbox.pack_start(ok_button, False)
+    hbox.pack_end(cancel_button, False)
+    hbox.pack_end(help_button, False)
+    vbox.pack_start(hbox)
 
-    window.add( vbox )
+    window.add(vbox)
     window.show_all()
 
 
-def graph_suite( reg, start, stop, graph_opts,
-                 gcapture_windows, tmpdir, template_opts, window=None ):
+def graph_suite(reg, start, stop, graph_opts,
+        gcapture_windows, tmpdir, template_opts, window=None):
     """Launch the cylc graph command with some options."""
     options = graph_opts
-
-    # TODO ISO - RESTORE CYCLE TIME CHECKING on start and stop?
-    if stop != '':
-        if start == '':
-            warning_dialog(
-                    "You cannot override Final Cycle without " +
-                    "overriding Initial Cycle.").warn()
-            return False
-
     options += ' ' + reg + ' ' + start + ' ' + stop
     command = "cylc graph --notify-completion " + template_opts + " " + options
     foo = gcapture_tmpfile( command, tmpdir )

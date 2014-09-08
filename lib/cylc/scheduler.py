@@ -391,9 +391,9 @@ class scheduler(object):
         # single-inheritance hierarchy based on first parents
         return deepcopy(self.config.get_first_parent_ancestors(pruned) )
 
-    def info_get_graph_raw( self, cto, ctn, raw, group_nodes, ungroup_nodes,
+    def info_get_graph_raw( self, cto, ctn, group_nodes, ungroup_nodes,
             ungroup_recursive, group_all, ungroup_all ):
-        return self.config.get_graph_raw( cto, ctn, raw, group_nodes,
+        return self.config.get_graph_raw( cto, ctn, group_nodes,
                 ungroup_nodes, ungroup_recursive, group_all, ungroup_all), \
                         self.config.suite_polling_tasks, \
                         self.config.leaves, self.config.feet

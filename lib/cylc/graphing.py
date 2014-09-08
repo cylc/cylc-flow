@@ -224,42 +224,28 @@ class CGraph( CGraphPlain ):
 
 
 class edge( object):
-    def __init__( self, left, right, sequence, sasl=False, suicide=False,
+    def __init__( self, left, right, sequence, suicide=False,
                   conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
         self.left = left
         self.right = right
         self.sequence = sequence
-        self.sasl = sasl
         self.suicide = suicide
         self.conditional = conditional
 
-    def get_right( self, inpoint, start_point, not_first_cycle, raw,
-                   startup_only ):
+    def get_right( self, inpoint, start_point):
         inpoint_string = str(inpoint)
         if self.right == None:
             return None
-        first_cycle = not not_first_cycle
-        if self.right in startup_only:
-            if not first_cycle or raw:
-                return None
 
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
         return TaskID.get( self.right, inpoint_string )
 
-    def get_left( self, inpoint, start_point, not_first_cycle, raw,
-                  startup_only, base_interval ):
-
-        first_cycle = not not_first_cycle
-
+    def get_left( self, inpoint, start_point, base_interval ):
         # strip off special outputs
         left = re.sub( ':[\w-]+', '', self.left )
-
-        if left in startup_only:
-            if not first_cycle or raw:
-                return None
 
         left_graphnode = graphnode(left, base_interval=base_interval)
         if left_graphnode.offset_is_from_ict:

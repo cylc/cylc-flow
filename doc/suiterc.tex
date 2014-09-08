@@ -1465,24 +1465,40 @@ Run the polling \lstinline=cylc suite-state= command in verbose output mode.
 
 \subsection{[visualization]}
 
-Configuration of suite graphing and, where applicable, the gcylc graph view.
-Graphviz documentation of node shapes and so on can be found at
-http://www.graphviz.org/Documentation.php.
+Configuration of suite graphing for the \lstinline=cylc graph= command (graph
+extent, styling, and initial family-collapsed state) and the gcylc graph view
+(initial family-collapsed state). Graphviz documentation of node shapes
+and so on can be found at http://www.graphviz.org/Documentation.php.
 
 \subsubsection[initial cycle point]{[visualization] $\rightarrow$ initial cycle point}
 
-The cycle point from which to start the suite graph.
+The initial cycle point for graph plotting.
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
-    \item {\em default:} the suite initial cycle point or 2999010100
+    \item {\em default:} the suite initial cycle point
 \end{myitemize}
+The visualization initial cycle point gets adjusted up if necessary to the
+suite initial cycling point.
 
 \subsubsection[final cycle point]{[visualization] $\rightarrow$ final cycle point}
 
-The cycle point at which to end the suite graph.
+An explicit final cycle point for graph plotting. If used, this overrides the
+preferred {\em number of cycle points} (below).
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time representation (e.g. CCYYMMDDThhmm)
-    \item {\em default:} the visualization initial cycle point plus the default runahead limit
+    \item {\em default:} (none)
+\end{myitemize}
+The visualization final cycle point gets adjusted down if necessary to the
+suite final cycle point.
+
+\subsubsection[number of cycle points]{[visualization] $\rightarrow$ number of cycle points}
+
+The number of cycle points to graph starting from the visualization initial
+cycle point. This is the preferred way of defining the graph end point, but
+it can be overridden by an explicit {\em final cycle point} (above).
+\begin{myitemize}
+    \item {\em type:} integer
+    \item {\em default:} 3
 \end{myitemize}
 
 \subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}
@@ -1603,41 +1619,3 @@ assignment.
    foo = 'style=filled'
 \end{lstlisting}
 \end{myitemize}
-
-\subsubsection[{[[}runtime graph{]]}]{[visualization] $\rightarrow$ [[runtime graph]]}
-
-Cylc can generate graphs of dependencies resolved at run time, i.e.\ what
-actually triggers off what as the suite runs. This feature is retained
-mainly for development and debugging purposes. You can use simulation
-mode or dummy mode to generate runtime graphs very quickly.
-
-\paragraph[enable]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ enable}
-
-Runtime graphing is disabled by default.
-\begin{myitemize}
-    \item {\em type:} boolean
-    \item {\em default:} False
-\end{myitemize}
-
-\paragraph[directory]{[visualization] $\rightarrow$ [[runtime graph]] $\rightarrow$ directory}
-
-Where to put the runtime graph file, \lstinline=runtime-graph.dot=.
-
-\begin{myitemize}
-    \item {\em type:} string (a valid directory path, may contain environment variables)
-    \item {\em default:} \lstinline=$CYLC_SUITE_DEF_PATH/graphing=
-\end{myitemize}
-
-\subsection{Default Suite Configuration}
-\label{SuiteDefaults}
-
-Cylc provides, via \lstinline=$CYLC_DIR/conf/suiterc/*.spec=, sensible
-default values for many configuration items so that most users will not
-need to explicitly configure log directories and so on. The defaults are
-sufficient, in fact, to allow test suites defined by dependency graph
-alone (command scripting, for example, defaults to printing a simple
-message, sleeping for a few seconds, and then exiting).
-
-The \lstinline=cylc get-suite-config= command parses a suite definition and
-retrieves configuration values for individual items, sections, or entire
-suites.

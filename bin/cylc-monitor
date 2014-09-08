@@ -39,9 +39,6 @@ from cylc.task_state import task_state
 from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
 from cylc.command_prep import prep_pyro
 import cylc.flags
-from cylc.wallclock import (
-    get_current_time_string, get_time_string_from_unix_time
-)
 
 compress = True
 
@@ -136,8 +133,8 @@ try:
             alerted2 = False
             alerted3 = False
 
-            dt = glbl[ 'last_updated' ]
-            dt = get_time_string_from_unix_time(dt)
+            dt = str(glbl['last_updated'])
+            dt = re.sub('\.\d+', '', dt)
             run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
