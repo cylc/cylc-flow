@@ -129,8 +129,8 @@ class IntegerPoint(PointBase):
         """Format self.value into a standard representation and check it."""
         try:
             self.value = str(int(self))
-        except (TypeError, ValueError):
-            raise PointParsingError(type(self), self.value)
+        except (TypeError, ValueError) as exc:
+            raise PointParsingError(type(self), self.value, exc)
         return self
 
     def __int__(self):

@@ -33,7 +33,7 @@ class PointParsingError(ValueError):
 
     """An error raised when a point has an incorrect value."""
 
-    ERROR_MESSAGE = "Incompatible value for {0}: {1}"
+    ERROR_MESSAGE = "Incompatible value for {0}: {1}: {2}"
 
     def __str__(self):
         return self.ERROR_MESSAGE.format(*self.args)
