@@ -8,7 +8,7 @@ with previous cycles if the data comes in quickly."""
 
 # you can monitor output processing with:
 # $ watch -n 1 \
-#    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/SUITE/work"
+#    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/<SUITE>/work"
 
 {% set N_DATASETS = 5 %}
 
@@ -20,6 +20,8 @@ with previous cycles if the data comes in quickly."""
     cycling mode = integer
     initial cycle point = 1
     final cycle point = {{N_DATASETS}}
+    max active cycle points = 5
+    # runahead limit = P5 # (alternative limiting method)
     [[dependencies]]
         [[[R1]]] # first cycle
             graph = prep => satsim & get_data
@@ -28,7 +30,7 @@ with previous cycles if the data comes in quickly."""
     # Processing chain for each dataset
     get_data => proc1 => proc2 => products
     # As one dataset is retrieved, start waiting on another.
-    get_data[-1] => get_data"""
+    get_data[-P1] => get_data"""
         [[[R1//{{N_DATASETS}}]]] # last cycle
             graph = products => collate
 
