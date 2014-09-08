@@ -64,8 +64,8 @@ title = Simple start-up suite.
         dummy mode suite timeout = PT1H # UPGRADE CHANGE: ISO 8601 durations
         simulation mode suite timeout = PT1H # UPGRADE CHANGE: ISO 8601 durations
 [scheduling]
-    initial cycle point = 20140101T00
-    final cycle point = 20140104T00
+    initial cycle point = 20140101T00 # UPGRADE CHANGE: ISO 8601, 'time' -> 'point'
+    final cycle point = 20140104T00 # UPGRADE CHANGE: ISO 8601, 'time' -> 'point'
     runahead limit = PT6H # UPGRADE CHANGE: ISO 8601 cycle duration
     [[dependencies]]
         [[[T00]]] # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations

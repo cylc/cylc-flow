@@ -18,7 +18,7 @@
 #
 #
 # Convert 'cycle time' to 'cycle point'.
-s/^\( *\)\(initial\|final\) cycle time *= *\(.*\)/\1\2 cycle point = \2 # UPGRADE CHANGE: ISO 8601, 'time' -> 'point'/g
+s/^\( *\)\(initial\|final\) cycle time *= *\(.*\)/\1\2 cycle point = \3 # UPGRADE CHANGE: ISO 8601, 'time' -> 'point'/g
 #
 # Convert 'cycle point' to use ISO 8601 date-time notation.
 s/^\( *\)\(initial\|final\) cycle point = \([0-9]\{8\}\)\([0-9][0-9].*\)/\1\2 cycle point = \3T\4/g
@@ -34,6 +34,11 @@ s/^\( *\)\(\[\[\[ *Monthly *( *[0-9]\+ *, *\)\([0-9]\+\)\( *) *\]\]\].*\)/\1\2\3
 #
 # Warn for yearly cycling sections.
 s/^\( *\)\(\[\[\[ *Yearly *( *[0-9]\+ *, *\)\([0-9]\+\)\( *) *\]\]\].*\)/\1\2\3\4 # UPGRADE INFO: manually convert. [[[P\3Y]]]?\n\1    # UPGRADE INFO: change any mistaken [-PTnH] to [-PnY]./g
+#
+# Warn for hardcoded cycler.
+/^ *cycling *= [A-Z][A-Za-z]\+ *$/{
+    s/= *\([A-Z][A-Za-z]\+ *$\)/= \1  # UPGRADE INFO: change [[[m,n]]] dependency sections to [[[\1(m,n)]]] and re-run cylc 5to6./g; :foo; n; bfoo; q;
+}
 #
 # Convert hourly offsets in the graph text: [T-6] to [-PT6H], etc.
 /\[T[-+][0-9]\+\]/{s/\[T\([-+]\)\([0-9]\+\)\]/[\1PT\2H\]/g; s/$/ # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)/g}

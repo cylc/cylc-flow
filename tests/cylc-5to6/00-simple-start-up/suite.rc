@@ -15,8 +15,8 @@ title = Simple start-up suite.
         dummy mode suite timeout = 60.0
         simulation mode suite timeout = 60
 [scheduling]
-    initial cycle point = 2014010100
-    final cycle point = 2014010400
+    initial cycle time = 2014010100
+    final cycle time = 2014010400
     runahead limit = 6
     [[dependencies]]
         [[[0]]]
