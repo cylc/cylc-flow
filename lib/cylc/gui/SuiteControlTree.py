@@ -112,8 +112,9 @@ Text Treeview suite control interface.
             for box in subbox.get_children():
                 try:
                     icon, cb = box.get_children()
-                except ValueError:
-                    # subbox2 has a null entry to line things up.
+                except (ValueError, AttributeError):
+                    # ValueError: a null entry to line things up.
+                    # AttributeError: filter_entry box (handled below).
                     pass
                 else:
                     if not cb.get_active():
@@ -233,6 +234,10 @@ Text Treeview suite control interface.
             box = gtk.HBox()
             icon = dotm.get_image(st)
             cb = gtk.CheckButton(task_state.labels[st])
+            tooltip = gtk.Tooltips()
+            tooltip.enable()
+            tooltip.set_tip(cb, "Filter by task state %s" % st)
+ 
             box.pack_start(icon, expand=False)
             box.pack_start(cb, expand=False)
             cnt += 1
@@ -246,6 +251,19 @@ Text Treeview suite control interface.
                 cb.set_active(True)
             cb.connect('toggled', self.check_tfilter_buttons)
         
+        self.filter_entry = EntryTempText()
+        self.filter_entry.set_width_chars(7)
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        self.filter_entry.set_temp_text( "filter" )
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(self.filter_entry,
+                "Filter by task name.\n"
+                "Enter a sub-string or regex and hit Enter\n"
+                "(to reset, clear the entry and hit Enter)")
+        subbox2.pack_start(self.filter_entry)
+        cnt += 1
+
         if cnt % 2 != 0:
             # subbox2 needs another entry to line things up.
             subbox2.pack_start(gtk.HBox(), expand=False, fill=True)
@@ -255,6 +273,7 @@ Text Treeview suite control interface.
         vbox = gtk.VBox()
         vbox.pack_start(sw, True)
         vbox.pack_end(filter_hbox, False)
+
 
         return vbox
 
@@ -390,17 +409,6 @@ Text Treeview suite control interface.
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
         self._set_tooltip( self.group_toolbutton, "Tree View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
-
-        self.filter_entry = EntryTempText()
-        self.filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-        self.filter_entry.set_temp_text( "filter" )
-        filter_toolitem = gtk.ToolItem()
-        filter_toolitem.add(self.filter_entry)
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Tree View - Filter tasks by name\n(enter a sub-string or regex)")
-        items.append(filter_toolitem)
 
         return items
 
