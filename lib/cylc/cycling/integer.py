@@ -149,6 +149,9 @@ class IntegerPoint(PointBase):
         # Provide a nice way to use the string self.value in calculations.
         return int(self.value)
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class IntegerInterval(IntervalBase):
 

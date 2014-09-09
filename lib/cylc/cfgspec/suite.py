@@ -31,6 +31,7 @@ from cylc.syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
+from cylc.cycling.integer import REC_INTERVAL as REC_INTEGER_INTERVAL
 
 "Define all legal items and values for cylc suite definition files."
 
@@ -42,6 +43,12 @@ def _coerce_cycleinterval( value, keys, args ):
     if value.isdigit():
         # Old runahead limit format.
         set_syntax_version(VERSION_PREV,
+                           "integer interval for %s" % itemstr(
+                               keys[:-1], keys[-1], value))
+        return value
+    if REC_INTEGER_INTERVAL.match(value):
+        # New integer cycling format.
+        set_syntax_version(VERSION_NEW,
                            "integer interval for %s" % itemstr(
                                keys[:-1], keys[-1], value))
         return value
