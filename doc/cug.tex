@@ -2648,17 +2648,13 @@ the line; it cannot be followed by trailing spaces or a comment.
 
 \lstset{language=transcript}
 
-\subsubsection{Graph Types (VALIDITY)}
+\subsubsection{Graph Types}
 \label{GraphTypes}
 
 A suite definition can contain multiple graph strings that are combined
-to generate the final graph. There are different graph VALIDITY section
-headings for cycling, one-off asynchronous, and repeating asynchronous
-tasks. Additionally, there may be multiple graph strings under different
-VALIDITY sections for cycling tasks with different dependencies at
-different cycle points.
+to generate the final graph.
 
-\paragraph{One-off (Non-Cycling) Tasks}
+\paragraph{One-off (Non-Cycling)}
 
 Figure~\ref{fig-test1} shows a small suite of one-off non-cycling
 tasks; these all share a single cycle point (\lstinline=1=) and don't spawn
@@ -2668,7 +2664,7 @@ successors (once they're all finished the suite just exits).  The integer
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = some one-off asynchronous tasks
+title = some one-off tasks
 [scheduling]
     [[dependencies]]
         graph = "foo => bar & baz => qux"
@@ -2685,11 +2681,11 @@ title = some one-off asynchronous tasks
 \label{fig-test1}
 \end{figure}
 
-\paragraph{Cycling Tasks}
+\paragraph{Cycling Graphs}
 
-For cycling tasks the graph VALIDITY section heading defines a sequence of
-cycle points for which the subsequent graph section is valid.
-Figure~\ref{fig-test2} shows a small suite of cycling tasks.
+For cycling tasks the graph section heading defines a sequence of cycle points
+for which the subsequent graph section is valid.  Figure~\ref{fig-test2} shows
+a small suite of cycling tasks.
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
@@ -3195,7 +3191,7 @@ as usual.
 \begin{minipage}[b]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
-title = asynchronous automated recovery
+title = automated failure recovery
 description = """
 Model task failure triggers diagnosis
 and recovery tasks, which take themselves
@@ -6739,7 +6735,7 @@ Setting & Pre-Cylc-6 & Cylc-6+ \\
 \subsection{Runahead Limit}
 \label{cylc-6-migration-runahead-limit}
 
-See Section \ref{runahead limit}.
+See~\ref{runahead limit}.
 
 The \lstinline=[scheduling]runahead limit= setting was written as a number of
 hours in pre-cylc-6 suites. This is now in ISO 8601 format for date-time
@@ -6754,7 +6750,7 @@ configure how many cycle points can run at once (default \lstinline=3=). See
 \subsection{Cycle Time/Cycle Point}
 \label{cylc-6-migration-cycle-point}
 
-See Section \ref{initial cycle point}.
+See~\ref{initial cycle point}.
 
 The following suite.rc settings have changed name (Table
 \ref{cylc-6-migration-cycle-point-time-table}):
@@ -6799,13 +6795,12 @@ Setting & Pre-Cylc-6 & Cylc-6+ \\
 \subsection{Cycling}
 \label{cylc-6-migration-cycling}
 
-Start-up tasks and mixed-asynchronous tasks have been removed from cylc 6, and
-using cold-start tasks is no longer recommended. Instead, you should
-use the initial/repeat-once notation as detailed in Sections
-\ref{initial-non-repeating-r1-tasks} and \ref{AdvancedStartingUp}.
+Start-up tasks and ``repeating asynchronous'' tasks have been removed from cylc
+6, and use of cold-start tasks is no longer recommended. Instead, you should
+use the initial/repeat-once notation as detailed
+in~\ref{initial-non-repeating-r1-tasks} and~\ref{AdvancedStartingUp}.
 
-For genuinely repeating tasks with hours-based cycling (not start-up or
-asynchronous or cold-start) the syntax has only minor changes:
+For repeating tasks with hour-based cycling the syntax has only minor changes:
 
 Pre-cylc-6:
 \lstset{language=suiterc}
