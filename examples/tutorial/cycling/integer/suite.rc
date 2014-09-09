@@ -1,0 +1,19 @@
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = 3
+    [[dependencies]]
+        [[[R1]]] # = R1/1/?
+            graph = start => foo
+        [[[P1]]] # = R/1/P1
+            graph = foo[-P1] => foo => bar
+        [[[R2/P1]]] # = R2/P1/3
+            graph = bar => stop
+
+[visualization]
+    [[node attributes]]
+        start = "style=filled", "fillcolor=skyblue"
+        foo = "style=filled", "fillcolor=slategray"
+        bar = "style=filled", "fillcolor=seagreen3"
+        stop = "style=filled", "fillcolor=orangered"
