@@ -6124,30 +6124,11 @@ suite.rc file.
 
 \subsection{Make Suites Portable}
 
-If every task in a suite is configured to put its output under
-\lstinline=$HOME= (i.e.\ the environment variable, literally, not the
-explicit path to your home directory; and similarly for temporary
-directories, etc.) then other users will be able to copy the suite and
-run it immediately, after merely ensuring that any external input files
-are in the right place.
-
-For the ultimate in portability, construct suites in which all task I/O
-paths are dynamically configured to be user and suite (registration)
-specific, e.g.
-\begin{lstlisting}
-$HOME/output/$CYLC_SUITE_REG_PATH
-\end{lstlisting}
-(these variables are automatically exported to the task execution
-environment by cylc - see~\ref{TaskExecutionEnvironment}). Then you can run
-multiple instances of the suite
-at once (even under the same user account) without changing anything,
-and they will not interfere with each other.
-
-{\em You can test changes to a portable suite safely by making a quick copy
-of it in a temporary directory, then modifying and running the test copy
-without fear of corrupting the output directories, suite logs, and
-suite state, of the original.}
-
+If all task I/O is specified relative to the suite share or task work
+directories (\lstinline=$CYLC_SUITE_SHARE_DIRECTORY= and
+\lstinline=$CYLC_TASK_WORK_DIRECTORY=) then you should be able to run multiple
+copies of the suite without interference between them, and other users should
+be able to copy the suite and run it too with minimal or no modification.
 
 \subsection{Make Tasks As Self-Contained As Possible}
 
@@ -6161,39 +6142,40 @@ task exactly as its suite would, in terms of both job submission method
 and execution environment.}  For example, every task should create its
 own output directories if they do not already exist, instead of assuming
 their existence due to the action of some other task; then you will be
-able to run single tasks without having to manually create output
-directories first.
-
-\begin{lstlisting}
-# manual task scripting:
-  # 1/ create $OUTDIR if it doesn't already exist:
-  mkdir -p $OUTDIR
-  # 2/ create the parent directory of $OUTFILE if it doesn't exist:
-  mkdir -p $( dirname $OUTFILE )
-
-# OR using the cylc checkvars utility:
-  # 1/ check vars are defined, and create directories if necessary:
-  cylc util checkvars -c OUTDIR1 OUTDIR2 #...
-  # 2/ check vars are defined, and create parent dirs if necessary:
-  cylc util checkvars -p OUTFILE1 OUTFILE2 #...
-\end{lstlisting}
+able to run those tasks without manually creating their output directories
+first.
 
 \subsection{Make Suites As Self-Contained As Possible}
 
-The only compulsory content of a cylc suite definition directory is the
-\lstinline=suite.rc= file. However, you can store whatever you
-like in a suite definition directory;\footnote{If you copy a suite using
-cylc commands or GUI the entire suite definition directory
-will be copied.} other files there will be ignored by cylc but
-suite tasks can access them via the
-\lstinline=$CYLC_SUITE_DEF_PATH= variable that cylc automatically
-exports into the task execution environment. Disk space is cheap - if
-all programs, ancillary files, control files (etc.) required by the
-suite are stored in the suite
-definition directory instead of having the suite reference external
-build directories (etc.), you can turn the directory into a revision
-control repository and be virtually assured of the ability to exactly
-reproduce earlier versions, regardless of suite complexity.
+Tasks can of course run or use external files. In some cases this may be
+necessary, but it does leave suites vulnerable to external breakages.  Files
+stored under the suite definition directory can be accessed via
+\lstinline=$CYLC_SUITE_DEF_PATH=, and the suite bin directory is automatically
+added to \lstinline=$PATH= in the task execution environment.  It is therefore
+possible for a suite to be completely self-contained (aside from exposure to
+the network, filesystem, and OS) if every file needed by its tasks is stored
+under the suite definition directory.
+
+\subsubsection{Distinguish Between Source and Installed Suites}
+
+If you have multiple suites there may be a tradeoff between self-containment
+and duplication of task scripts etc., but this doesn't particularly matter if
+you use a deployment or installation system that automatically extracts,
+builds, and installs suite components (scripts, executables, control files,
+etc.) from external revision control repositories prior to, or at the start of,
+the suite run.  The idea is that the suite definition, along with any files
+stored and version-controlled with it, should be extracted to a source location
+before a run. The suite source location, which provides access to the
+repository can be used for further suite development.  At run time the content
+of the suite definition directory should be installed by your deployment system
+to an ``installed suite'' location from which the suite will be executed (the
+default suite run directory is ideal for this).  The deployment system may be
+able to handle installation of external files too, or this can be done by
+special deployment tasks at suite start-up.  This clean separation of source
+and installed suites makes self-containment easier to achieve and allows
+development to continue without interfering with running installed suites.
+Rose~\ref{Rose} provides tools to facilitate this mode of working.
+
 
 \subsection{Orderly Product Generation?}
 \label{OrderlyProductGeneration}
