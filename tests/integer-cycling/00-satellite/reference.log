@@ -1,0 +1,98 @@
+2014-09-09T16:03:10+12 INFO - port:7766
+2014-09-09T16:03:10+12 INFO - Suite starting at 2014-09-09T16:03:10+12
+2014-09-09T16:03:10+12 INFO - Log event clock: real time
+2014-09-09T16:03:10+12 INFO - Run mode: live
+2014-09-09T16:03:10+12 INFO - Initial point: 1
+2014-09-09T16:03:10+12 INFO - Final point: 3
+2014-09-09T16:03:10+12 INFO - Cold Start 1
+2014-09-09T16:03:10+12 INFO - [prep.1] -triggered off []
+2014-09-09T16:03:11+12 INFO - 12669
+2014-09-09T16:03:11+12 INFO - [prep.1] -submit_method_id=12669
+2014-09-09T16:03:11+12 INFO - [prep.1] -submission succeeded
+2014-09-09T16:03:11+12 INFO - [prep.1] -(current:submitted)> prep.1 started at 2014-09-09T16:03:10+12
+2014-09-09T16:03:11+12 INFO - [prep.1] -(current:running)> prep.1 succeeded at 2014-09-09T16:03:10+12
+2014-09-09T16:03:12+12 INFO - [get_data.1] -triggered off ['prep.1']
+2014-09-09T16:03:12+12 INFO - [satsim.1] -triggered off ['prep.1']
+2014-09-09T16:03:13+12 INFO - 12714
+2014-09-09T16:03:13+12 INFO - [get_data.1] -submit_method_id=12714
+2014-09-09T16:03:13+12 INFO - [get_data.1] -submission succeeded
+2014-09-09T16:03:13+12 INFO - 12717
+2014-09-09T16:03:13+12 INFO - [satsim.1] -submit_method_id=12717
+2014-09-09T16:03:13+12 INFO - [satsim.1] -submission succeeded
+2014-09-09T16:03:13+12 INFO - [get_data.1] -(current:submitted)> get_data.1 started at 2014-09-09T16:03:12+12
+2014-09-09T16:03:13+12 INFO - [satsim.1] -(current:submitted)> satsim.1 started at 2014-09-09T16:03:12+12
+2014-09-09T16:03:15+12 INFO - [get_data.1] -(current:running)> get_data.1 succeeded at 2014-09-09T16:03:14+12
+2014-09-09T16:03:16+12 INFO - [get_data.2] -triggered off ['get_data.1']
+2014-09-09T16:03:16+12 INFO - [proc1.1] -triggered off ['get_data.1']
+2014-09-09T16:03:17+12 INFO - 12810
+2014-09-09T16:03:17+12 INFO - [get_data.2] -submit_method_id=12810
+2014-09-09T16:03:17+12 INFO - [get_data.2] -submission succeeded
+2014-09-09T16:03:17+12 INFO - 12813
+2014-09-09T16:03:17+12 INFO - [proc1.1] -submit_method_id=12813
+2014-09-09T16:03:17+12 INFO - [proc1.1] -submission succeeded
+2014-09-09T16:03:17+12 INFO - [get_data.2] -(current:submitted)> get_data.2 started at 2014-09-09T16:03:16+12
+2014-09-09T16:03:17+12 INFO - [get_data.2] -(current:running)> get_data.2 succeeded at 2014-09-09T16:03:16+12
+2014-09-09T16:03:17+12 INFO - [proc1.1] -(current:submitted)> proc1.1 started at 2014-09-09T16:03:16+12
+2014-09-09T16:03:17+12 INFO - [proc1.1] -(current:running)> proc1.1 succeeded at 2014-09-09T16:03:16+12
+2014-09-09T16:03:18+12 INFO - [proc2.1] -triggered off ['proc1.1']
+2014-09-09T16:03:18+12 INFO - [get_data.3] -triggered off ['get_data.2']
+2014-09-09T16:03:18+12 INFO - [proc1.2] -triggered off ['get_data.2']
+2014-09-09T16:03:18+12 INFO - [satsim.1] -(current:running)> satsim.1 succeeded at 2014-09-09T16:03:17+12
+2014-09-09T16:03:19+12 INFO - 12917
+2014-09-09T16:03:19+12 INFO - [proc2.1] -submit_method_id=12917
+2014-09-09T16:03:19+12 INFO - [proc2.1] -submission succeeded
+2014-09-09T16:03:19+12 INFO - 12920
+2014-09-09T16:03:19+12 INFO - [get_data.3] -submit_method_id=12920
+2014-09-09T16:03:19+12 INFO - [get_data.3] -submission succeeded
+2014-09-09T16:03:19+12 INFO - 12926
+2014-09-09T16:03:19+12 INFO - [proc1.2] -submit_method_id=12926
+2014-09-09T16:03:19+12 INFO - [proc1.2] -submission succeeded
+2014-09-09T16:03:19+12 INFO - [proc2.1] -(current:submitted)> proc2.1 started at 2014-09-09T16:03:18+12
+2014-09-09T16:03:19+12 INFO - [proc2.1] -(current:running)> proc2.1 succeeded at 2014-09-09T16:03:19+12
+2014-09-09T16:03:19+12 INFO - [get_data.3] -(current:submitted)> get_data.3 started at 2014-09-09T16:03:18+12
+2014-09-09T16:03:19+12 INFO - [get_data.3] -(current:running)> get_data.3 succeeded at 2014-09-09T16:03:19+12
+2014-09-09T16:03:19+12 INFO - [proc1.2] -(current:submitted)> proc1.2 started at 2014-09-09T16:03:18+12
+2014-09-09T16:03:19+12 INFO - [proc1.2] -(current:running)> proc1.2 succeeded at 2014-09-09T16:03:19+12
+2014-09-09T16:03:20+12 INFO - [products.1] -triggered off ['proc2.1']
+2014-09-09T16:03:20+12 INFO - [proc1.3] -triggered off ['get_data.3']
+2014-09-09T16:03:20+12 INFO - [proc2.2] -triggered off ['proc1.2']
+2014-09-09T16:03:21+12 INFO - 13055
+2014-09-09T16:03:21+12 INFO - [products.1] -submit_method_id=13055
+2014-09-09T16:03:21+12 INFO - [products.1] -submission succeeded
+2014-09-09T16:03:21+12 INFO - 13058
+2014-09-09T16:03:21+12 INFO - [proc1.3] -submit_method_id=13058
+2014-09-09T16:03:21+12 INFO - [proc1.3] -submission succeeded
+2014-09-09T16:03:21+12 INFO - 13064
+2014-09-09T16:03:21+12 INFO - [proc2.2] -submit_method_id=13064
+2014-09-09T16:03:21+12 INFO - [proc2.2] -submission succeeded
+2014-09-09T16:03:21+12 INFO - [products.1] -(current:submitted)> products.1 started at 2014-09-09T16:03:20+12
+2014-09-09T16:03:21+12 INFO - [products.1] -(current:running)> products.1 succeeded at 2014-09-09T16:03:21+12
+2014-09-09T16:03:21+12 INFO - [proc1.3] -(current:submitted)> proc1.3 started at 2014-09-09T16:03:20+12
+2014-09-09T16:03:21+12 INFO - [proc1.3] -(current:running)> proc1.3 succeeded at 2014-09-09T16:03:21+12
+2014-09-09T16:03:21+12 INFO - [proc2.2] -(current:submitted)> proc2.2 started at 2014-09-09T16:03:20+12
+2014-09-09T16:03:21+12 INFO - [proc2.2] -(current:running)> proc2.2 succeeded at 2014-09-09T16:03:21+12
+2014-09-09T16:03:22+12 INFO - [proc2.3] -triggered off ['proc1.3']
+2014-09-09T16:03:22+12 INFO - [products.2] -triggered off ['proc2.2']
+2014-09-09T16:03:23+12 INFO - 13192
+2014-09-09T16:03:23+12 INFO - [proc2.3] -submit_method_id=13192
+2014-09-09T16:03:23+12 INFO - [proc2.3] -submission succeeded
+2014-09-09T16:03:23+12 INFO - 13195
+2014-09-09T16:03:23+12 INFO - [products.2] -submit_method_id=13195
+2014-09-09T16:03:23+12 INFO - [products.2] -submission succeeded
+2014-09-09T16:03:23+12 INFO - [proc2.3] -(current:submitted)> proc2.3 started at 2014-09-09T16:03:22+12
+2014-09-09T16:03:23+12 INFO - [proc2.3] -(current:running)> proc2.3 succeeded at 2014-09-09T16:03:22+12
+2014-09-09T16:03:23+12 INFO - [products.2] -(current:submitted)> products.2 started at 2014-09-09T16:03:22+12
+2014-09-09T16:03:23+12 INFO - [products.2] -(current:running)> products.2 succeeded at 2014-09-09T16:03:22+12
+2014-09-09T16:03:24+12 INFO - [products.3] -triggered off ['proc2.3']
+2014-09-09T16:03:25+12 INFO - 13286
+2014-09-09T16:03:25+12 INFO - [products.3] -submit_method_id=13286
+2014-09-09T16:03:25+12 INFO - [products.3] -submission succeeded
+2014-09-09T16:03:25+12 INFO - [products.3] -(current:submitted)> products.3 started at 2014-09-09T16:03:24+12
+2014-09-09T16:03:25+12 INFO - [products.3] -(current:running)> products.3 succeeded at 2014-09-09T16:03:24+12
+2014-09-09T16:03:26+12 INFO - [collate.3] -triggered off ['products.3']
+2014-09-09T16:03:27+12 INFO - 13333
+2014-09-09T16:03:27+12 INFO - [collate.3] -submit_method_id=13333
+2014-09-09T16:03:27+12 INFO - [collate.3] -submission succeeded
+2014-09-09T16:03:27+12 INFO - [collate.3] -(current:submitted)> collate.3 started at 2014-09-09T16:03:26+12
+2014-09-09T16:03:27+12 INFO - [collate.3] -(current:running)> collate.3 succeeded at 2014-09-09T16:03:26+12
+2014-09-09T16:03:28+12 INFO - Suite shutting down at 2014-09-09T16:03:28+12

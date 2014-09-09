@@ -1,6 +1,6 @@
 #!Jinja2
 
-title = Demonstrates real time satellite data processing
+title = Test suite based on the satellite data processing example
 description = """
 Each successive integer cycle retrieves and processes the next
 arbitrarily timed and arbitrarily labelled dataset, in parallel
@@ -10,18 +10,23 @@ with previous cycles if the data comes in quickly."""
 # $ watch -n 1 \
 #    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/<SUITE>/work"
 
-{% set N_DATASETS = 5 %}
+{% set N_DATASETS = 3 %}
 
 # define shared directories (could use runtime namespaces for this)
 {% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}
 {% set PRODUCT_DIR = "$CYLC_SUITE_SHARE_DIR/products" %}
 
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT40S
+
 [scheduling]
     cycling mode = integer
     initial cycle point = 1
     final cycle point = {{N_DATASETS}}
-    max active cycle points = 5
-    # runahead limit = P5 # (alternative limiting method)
+    max active cycle points = 3
+    #runahead limit = P3 # (alternative limiting method)
     [[dependencies]]
         [[[R1]]] # first cycle
             graph = prep => satsim & get_data
@@ -49,7 +54,7 @@ datasets after random durations."""
 COUNT=0
 while true; do
     (( COUNT == {{N_DATASETS}} )) && break
-    sleep $(( 1 + RANDOM % 10 ))
+    sleep $(( 1 + RANDOM % 5 ))
     touch {{DATA_IN_DIR}}/dataset-$(date +%s).raw
     (( COUNT += 1 ))
 done"""
@@ -58,7 +63,7 @@ done"""
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        pre-command scripting = sleep 10
+        #pre-command scripting = sleep 10
 
     [[get_data]]
         inherit = WORKDIR
