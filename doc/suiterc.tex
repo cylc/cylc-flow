@@ -540,15 +540,13 @@ for listing all member tasks.
 
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
-Clock-triggered tasks wait on a wall clock time specified as an offset
-{\em in hours} relative to their own cycle point, in addition to any
-dependence they have on other tasks. Generally speaking, only tasks that
-wait on external real time data need to be clock-triggered.  Note that
-in computing the trigger time the full wall clock time and cycle point
-are compared, not just hours and minutes of the day, so when running a
-suite in catchup/delayed operation, or over historical periods,
-clock-triggered tasks will not constrain the suite at all until they
-catch up to the wall clock.
+Clock-triggered tasks wait on a wall clock time specified as an offset from
+their own cycle point, in addition to dependence on other tasks.
+Clock-triggers can be used to make tasks that wait on external real time
+data trigger at the expected time of data availability, or to make suite
+polling tasks trigger at the expected time of the remote suite event.
+In delayed or historical operation clock-triggered tasks do not constrain the
+suite until they catch up to the wall clock.
 
 \begin{myitemize}
     \item {\em type:} list of task or family names with offsets expressed as an
@@ -664,8 +662,8 @@ our ISO 8601 derived sequence syntax, or similar for integer cycling:
 \begin{myitemize}
     \item {\em examples:}
         \begin{myitemize}
-            \item hours-of-the-day date-time cycling:
-                \lstinline@[[[T00,T06,T12,T18]]]@ or \lstinline@[[[ PT6H ]]]@
+            \item date-time cycling:
+                \lstinline@[[[T00,T06,T12,T18]]]@ or \lstinline@[[[PT6H]]]@
             \item integer cycling (stepped by 2):
                 \lstinline@[[[P2]]]@
         \end{myitemize}

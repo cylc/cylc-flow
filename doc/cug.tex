@@ -3904,10 +3904,11 @@ $CYLC_SUITE_INITIAL_CYCLE_POINT
 $CYLC_SUITE_FINAL_CYCLE_POINT
 \end{lstlisting}
 Tasks can use these to determine whether or not they are running
-in the first or final cycles.
+in the first or final cycles. Note however that \lstinline=R1= graph
+sections are now the preferred way to get different behaviour at suite
+start-up or shutdown.
 
 \lstset{language=transcript}
-
 
 \paragraph{Environment Variable Evaluation}
 
@@ -5576,22 +5577,19 @@ suite.rc file.
 
 \subsubsection[CYLC\_SUITE\_INITIAL\_CYCLE\_POINT]{The Environment Variable CYLC\_SUITE\_INITIAL\_CYCLE\_POINT}
 
-In the case of {\em cold starts only} the initial cycle point will also
-be passed through to task execution environments as
-\lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT=.  The intended use of this
-variable is to allow tasks to determine whether they are running in the
-initial cold-start cycle point (when different behaviour may be required) or
-in a normal mid-run cycle point. {\em This is not done for warm starts}
-because a warm start is really an implicit restart - it does not
-reference a particular previous suite state but it does assume that a
-previous cycle point (for each task) has been run and completed entirely.
-It follows that in a warm start tasks are really in a normal mid-run
-cycle point, and because no actual previous state is referenced
-\lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT= gets the value
-\lstinline=None=. After a cold-start, however, the value of the
-environment variable does persist across restarts because the original
-cold-start cycle point is stored in suite state dump files.
+In the case of a {\em cold start only} the initial cycle point is passed
+through to task execution environments as
+\lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT=. The value is then stored in
+suite state dumps and persists across restarts, but it does get wiped out (set
+to \lstinline=None=) after a warm start, because a warm start is really an
+implicit restart - all previous state information is lost, except that the
+previous cycle is asssumed to have completed.
 
+The \lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT= variable allows tasks to
+determine if they are running in the initial cold-start cycle point, when
+different behaviour may be required, or in a normal mid-run cycle point.
+Note however that an initial \lstinline=R1= graph section is now the preferred
+way to get different behaviour at suite start-up.
 
 \subsection{The Simulation And Dummy Run Modes}
 \label{SimulationMode}
@@ -6017,17 +6015,16 @@ easily handle a large number of tasks, however, so there are definite
 advantages to fine-graining:
 
 \begin{myitemize}
-    \item a more modular and transparent suite.
+    \item A more modular and transparent suite.
 
-    \item better functional parallelism (multiple tasks running
-        at the same time).
+    \item More functional parallelism (multiple tasks running
+        at once).
 
-    \item faster debugging and failure recovery: rerun just the tasks(s)
+    \item Faster debugging and failure recovery: rerun just the tasks(s)
         that failed.
 
-    \item code reuse: similar tasks can often call the same script or
-        command with differing task-specific input parameters
-        (consider tasks that move files around, for example).
+    \item More code reuse: similar tasks may be able to call the same
+        underlying same script or command with differing input parameters.
 
 \end{myitemize}
 
@@ -6043,227 +6040,220 @@ re-triggering it within the running suite, when debugging a problem.
 
 \subsection{Make Models Re-runnable}
 
-If a warm-cycled model simply overwrites its restart files in each
-run, the only cycle point that can subsequently run is the next one. This
-is dangerous because if, accidentally or otherwise, the task runs for the
-wrong cycle point, its restart files will be corrupted such that the correct
-cycle point can no longer run (probably necessitating a cold-start).
-Instead, consider organising restart files by cycle point with a file
-or directory naming convention, and keep them in a simple rolling
-archive. Then, given availability of external inputs, you can
-easily rerun the task for any cycle point still in the restart archive.
+If a warm-cycled model uses the exact same file names for its restart files
+regardless of current cycle point, the only cycle point that can subsequently
+run successfully is the next one. Instead, restart files should be labelled
+with current cycle point and maintained in a simple rolling archive.  Then you
+can easily rerun the task for any cycle point still in the archive.
 
-\subsection{Avoid Unnecessary Previous-Instance Dependence}
+\subsection{Avoid False Dependence}
 \label{LimitPID}
 
-If a cycling task does not generate files required by its own successor,
-then for maximum scheduling efficiency successive instances of it should
-be able to run in parallel if the opportunity arises.
+If a task does not depend on files generated by another task then generally
+speaking it should not trigger off that task in the suite scheduling graph.
+Unnecessary dependence between tasks restricts functional parallelism at run
+time, and it makes the suite more difficult to understand.  If you need to
+restrict the number of tasks that are active at once, use runahead limiting
+(\ref{RunaheadLimit}) and internal queues (\ref{InternalQueues}).
 
-If such a task would interfere with its own siblings for internal reasons,
-however, perhaps by use of a hardwired non cycle dependent temporary file or
-similar, then it can be forced to run sequentially -
-see~\ref{SequentialTasks}.
 
-\subsection{Put Task Cycle Point In All Output File Paths}
+\subsection{Put Task Cycle Point In Output File Paths}
 \label{PutCycleTimeinIO}
 
 Putting task cycle point in output file or directory names makes archiving and
-cleanup easier, and it facilitates task re-runnability and avoidance of
-previous-instance dependence (above) by ensuring that important files do not
-get overwritten by the next cycle point.
+cleanup easier, and it facilitates re-runnability by ensuring that important
+files do not get overwritten from one cycle to the next.
 
-The \lstinline=cylc cycle-point= command computes offsets (in hours, days,
-months, and years) from a given or current date-time cycle point, and
-optionally inserts the resulting computed date-time, or components of it, into
-a given filename template string.
+The \lstinline=cylc cycle-point= command computes offsets from a given or
+current cycle point, and can insert the resulting computed date-time into
+a filename template string.
 
-\subsection{How To Manage Input/Output File Dependencies}
+\subsection{Managing Input/Output File Dependencies}
 \label{HandlingDependencies}
 
-Dependencies between tasks usually, though not always, take the form of
-files generated by one task that are used by other tasks. It is possible
-to manage these files across a suite without hard wiring I/O locations
-and therefore compromising suite flexibility and portability.
+Dependence between tasks usually, although not always, take the form of
+files generated by one task and used by others. It is possible to manage these
+files across a suite without compromising suite flexibility and portability with
+hard wired I/O locations.
 
-\begin{myitemize}
+\subsubsection{Common I/O Workspaces}
 
-\item {\bf Use A Common I/O Workspace}
+You may be able to have all tasks, or groups of tasks that need to cooperate,
+read and write from a common workspace, thereby avoiding the need to explicitly
+move files around.  The suite share directory
+(\lstinline=$CYLC_SUITE_SHARE_DIR=) is provided for this purpose.
+Similarly, task work directories are private to each task by default but they
+can be shared to allow multiple tasks to simply read and write from their
+current working directory. Even if you use other custom I/O directories, define
+their locations in the suite.rc file rather than hard wiring them into task
+implementation.  Shared workspace locations can be passed to tasks as needed
+without modifying the task implementation, like this:
 
-For small suites you may be able to have all tasks read and write from a
-common workspace, thereby avoiding the need to move common files around.
-You should be able to define the workspace location once in the suite.rc
-file rather than hard wiring it into the task implementations.
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+   [[SHARE]]
+      [[[environment]]]
+         WORKDIR = $CYLC_SUITE_SHARE_DIR/workspace1
+   [[foo]]
+      inherit = SHARE
+      command scripting = generate-data.exe
+      [[[environment]]]
+         MY_OUTPUT_DIR = $WORKDIR
+   [[bar]]
+      inherit = SHARE
+      command scripting = use-data.exe
+      [[[environment]]]
+         MY_INPUT_DIR = $WORKDIR
+\end{lstlisting}
 
-\item {\bf Add Connector Tasks To The Suite}
+\subsubsection{Connector Tasks}
 
-Tasks can be added to a suite to move files from A's output directory to
-B's input directory, and so on.  Many connector tasks may be able
-to call the same file transfer script or command, with task-dependent
-input parameters defined in the suite.rc file.
+Special tasks can be used to move files around, from one task's output
+directory to another's input directory.  This should only be necessary across
+host or filesystem boundaries, however; otherwise simply reference shared
+locations as shown above.
 
-\item {\bf Dynamic Configuration Of I/O Paths}
+\subsection{Reuse Task Implementation}
 
-Whether or not your suite uses a single common workspace, passing common
-I/O paths to tasks via variables defined once in the suite.rc file should
-allow you to avoid using connector tasks at all, except where it is
-necessary to transfer files between machines, or similar.
-
-\end{myitemize}
-
-\subsection{Use Generic Task Scripts}
-
-If your suite contains multiple logically distinct tasks that actually
-have similar functionality (e.g.\ for moving files around, or for
-generating similar products from the output of several similar models)
-have the corresponding cylc tasks all call the same command, script, or
-executable - just provide different input parameters
-via the task command scripting and/or execution environment, in the
-suite.rc file.
+If your suite contains multiple logically distinct tasks that have similar
+functionality (e.g.\ tasks that move files around or generate similar products
+from different datasets) just have them all call the same underlying command,
+script, or executable, but provide different input parameters as required.
 
 
 \subsection{Make Suites Portable}
 
-If all task I/O is specified relative to the suite share or task work
-directories (\lstinline=$CYLC_SUITE_SHARE_DIRECTORY= and
-\lstinline=$CYLC_TASK_WORK_DIRECTORY=) then you should be able to run multiple
-copies of the suite without interference between them, and other users should
-be able to copy the suite and run it too with minimal or no modification.
+If all I/O is automatically done in suite-specific locations, such as the under
+suite share and work directories (\lstinline=$CYLC_SUITE_SHARE_DIRECTORY=
+and \lstinline=$CYLC_TASK_WORK_DIRECTORY=), you should be able to run multiple
+copies of the same suite without interference between them, and other users
+should be able to copy and run your suites with minimal modification.
 
-\subsection{Make Tasks As Self-Contained As Possible}
+\subsection{Make Tasks As Independent As Possible}
 
-Where possible, no task should rely on the action of another task,
-except for the prerequisites embodied in the suite dependency graph that
-it has no choice but to depend on. If this rule is followed, your suite
-will be as flexible as possible in terms of being able to run single
-tasks, or subsets of the suite, whilst debugging or developing new
-features.\footnote{The \lstinline=cylc submit= command runs a single
-task exactly as its suite would, in terms of both job submission method
-and execution environment.}  For example, every task should create its
-own output directories if they do not already exist, instead of assuming
-their existence due to the action of some other task; then you will be
-able to run those tasks without manually creating their output directories
-first.
+Where possible a task should not rely on the action of another task, except for
+the inputs embodied in the suite dependency graph that it has no choice but to
+depend on. This makes it as easy as possible to run single tasks alone during
+suite development and debugging. For example, tasks should create their own
+output directories if necessary rather than assuming their existence due to the
+action of another task.  Note that if the existing task implementation does not
+handle output directory creation you can do it in suite
+\lstinline=pre-command scripting= or similar.
 
 \subsection{Make Suites As Self-Contained As Possible}
 
-Tasks can of course run or use external files. In some cases this may be
-necessary, but it does leave suites vulnerable to external breakages.  Files
-stored under the suite definition directory can be accessed via
-\lstinline=$CYLC_SUITE_DEF_PATH=, and the suite bin directory is automatically
-added to \lstinline=$PATH= in the task execution environment.  It is therefore
-possible for a suite to be completely self-contained (aside from exposure to
-the network, filesystem, and OS) if every file needed by its tasks is stored
-under the suite definition directory.
+Tasks can (of course) run external commands, scripts, and executables; and they
+can read or otherwise make use of external files. In some cases this may be
+necessary, but it does leave suites vulnerable to external breakages.
+Alternatively, suites can be more or less completely self-contained (aside from
+exposure to network, filesystem, and OS problems) if they have private copies
+of every file they need at run time.  Tasks can access files stored under their
+suite definition directory via \lstinline=$CYLC_SUITE_DEF_PATH=, and the suite
+bin directory is automatically added to \lstinline=$PATH= in the task execution
+environment. If you have multiple suites there may be a tradeoff between
+self-containment and duplication of files, but this does not particularly
+matter if you can automatically extract, build, and install suite files from
+external repositories prior to, or at the start of, a suite run. 
 
 \subsubsection{Distinguish Between Source and Installed Suites}
 
-If you have multiple suites there may be a tradeoff between self-containment
-and duplication of task scripts etc., but this doesn't particularly matter if
-you use a deployment or installation system that automatically extracts,
-builds, and installs suite components (scripts, executables, control files,
-etc.) from external revision control repositories prior to, or at the start of,
-the suite run.  The idea is that the suite definition, along with any files
-stored and version-controlled with it, should be extracted to a source location
-before a run. The suite source location, which provides access to the
-repository can be used for further suite development.  At run time the content
-of the suite definition directory should be installed by your deployment system
-to an ``installed suite'' location from which the suite will be executed (the
-default suite run directory is ideal for this).  The deployment system may be
-able to handle installation of external files too, or this can be done by
-special deployment tasks at suite start-up.  This clean separation of source
-and installed suites makes self-containment easier to achieve and allows
-development to continue without interfering with running installed suites.
-Rose~\ref{Rose} provides tools to facilitate this mode of working.
+A suite definition and any files stored with it should be version controlled,
+and a particular revision extracted before a run. The extracted source suite
+will be a repository clone or working copy, depending on your choice of
+revision control software, and can be used for further development. The source
+files should then be {\em installed} to another location where the suite will
+actually be executed (the cylc suite run directory is ideal for this).
+External files may also be installed into the suite at this time, prior to the
+run, or by special deployment tasks that run at suite start-up. This makes
+self-containment easier to achieve, and the clean separation of source and
+installed suite allows further development without breaking a running suite.
+Rose (\ref{Rose}) supports this mode of working with cylc suites.
 
 
 \subsection{Orderly Product Generation?}
-\label{OrderlyProductGeneration}
+\label{OrderlyProductGeneration} 
 
-Correct scheduling is not equivalent to ``orderly generation of products
-by cycle point date-time''.  Under cylc, a product generation task will
-trigger as soon as its prerequisites are satisfied (i.e.\ when its input files
-are ready, generally) regardless of whether other tasks with the same cycle
-point have finished or have yet to run. If your product delivery or
-presentation system demands that all products for one cycle point are uploaded
-(or whatever) before any from the next cycle point, then be aware that this
-may be quite inefficient if your suite is ever faced with catching up from a
-significant delay or running over historical data.
+Correct scheduling is not necessarily equivalent to orderly generation of
+products in strict date-time order. Under cylc a product generation task will
+trigger as soon as its private prerequisites are satisfied regardless of
+whether other tasks at the same cycle point have finished or have yet to run.
+If your product presentation system demands that all products are uploaded in
+order, then be aware that this may be quite inefficient if your suite ever has
+to catch up from a delay or run over historical data, but if necessary you can
+force tasks to run in the right order even if their true dependencies do not
+require that. One way to do this is to declare the product upload task to be
+{\em sequential}, which is equivalent to making it depend on its own previous
+instance (see~\ref{SequentialTasks}).
 
-If you must, however, you can introduce artificial dependencies into
-your suite to ensure that the final products never arrive out of
-sequence.  One way of doing this would be to have a final ``product
-upload'' task that depends on completion of all the real product
-generation tasks at the same cycle point, and then declare it to be sequential
-(see~\ref{SequentialTasks}.
+\subsection{Use Of Clock-Triggered Tasks}
+\label{ClockTriggeredTasks}
 
-\subsection{Clock-triggered Tasks Wait On External Data}
+Most tasks submit as soon as their prerequisites (task triggers) are satisfied,
+but {\em clock-triggered} tasks also wait on a wall clock time expressed as an
+offset from their cycle point. For example, task \lstinline=foo= below will
+trigger (other dependencies allowing) 2 hours after the wall clock time passes
+its cycle point (which in this case must be a date-time).
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[special tasks]]
+        clock-triggered = foo(PT2H)
+\end{lstlisting} 
 
-All tasks in a cylc suite know their own private cycle point, which is usually
-a date-time, but most don't care about the wall clock time - they just run
-when their prerequisites are satisfied. The exception to this is
-{\em clock-triggered} tasks, which wait on a wall clock time expressed as an
-offset from their own cycle point date-time as a real-life date-time, in
-addition to any other prerequisites. The usual purpose of these tasks is to
-retrieve real time data from the external world, triggering at roughly the
-expected time of availability of the data. Triggering the task at the right
-time is up to cylc, but the task itself should go into a check-and-wait loop
-in case the data is delayed; only on successful detection or retrieval should
-the task report success and then exit (or perhaps report failure and
-then exit if the data has not arrived by some cutoff time).
+Tasks that wait on external real time data should have a clock-trigger to delay
+submission until roughly the expected time of data availability, otherwise they
+may clutter up batch scheduler queues by submitting hours earlier. Similarly,
+suite polling tasks (for inter-suite dependence in real time operation) should
+use a clock-trigger to delay their submission until the expected time of the 
+remote suite event.
+
+\subsection{Tasks That Wait On Something}
+
+Some tasks wait on external events and therefore need to repeatedly check and
+wait for the event before reporting eventual success (or perhaps failure after
+a timeout). For example, a task that waits for a file to appear on an ftp
+server. Typically these should be clock-triggered tasks (see above), but once
+triggered there are two ways to handle the repeated checking: the task itself
+could implement a check-and-wait loop; or you could just configure multiple
+retries for the task, in the suite definition (see~\ref{TaskRetries}).
 
 \subsection{Do Not Treat Real Time Operation As Special}
 
-Cylc suites, without modification, can handle real time and delayed
-operation equally well.
+Cylc suites, without modification, can handle real time and delayed operation
+equally well.  In caught-up real time operation, clock-triggered tasks
+constrain the behaviour of the whole suite, or at least of any tasks
+downstream of them in the dependency graph.  In delayed or historical operation
+clock-triggered tasks will not constrain the suite at all, and cylc's cycle
+point interleaving abilities come to the fore, because the clock-trigger times
+have already passed. But if a clock-triggered task catches up to the wall
+clock, it will automatically wait again. In this way cylc suites naturally 
+transition between delayed and real time operation as required.
 
-In real time operation clock-triggered tasks constrain the
-behaviour of the whole suite, or at least of all tasks
-downstream of them in the dependency graph.
+\subsection{Factor Out Common Configuration}
 
-In delayed operation (whether due to an actual delay in an operational
-suite or because you're running an historical trial) clock-triggered
-tasks will not constrain the suite at all, and cylc's cycle interleaving
-abilities come to the fore, because their trigger times have already
-passed.  But if a clock-triggered task happens to catch up to the wall
-clock, it will automatically wait again. In this way a cylc suite
-naturally and seamlessly transitions between delayed and real time
-operation as required.
+To help avoid suite maintenance errors in the future, properties shared by
+multiple tasks (job submission settings, environment variables, command
+scripting, etc.) should be defined only once, using runtime inheritance
+(\ref{NIORP}) or Jinja2 variables (\ref{Jinja2}).
 
+Multiple inheritance is efficient when tasks share many properties, but Jinja2
+variables may be preferred when a small number of properties are shared by
+tasks that don't have anything else in common (e.g.\ a single environment
+variable for the location of a shared file).
 
-    \subsection{Factor Out Common Configuration}
+For environment variables in particular it may be tempting to define all
+variables for all tasks once under \lstinline=[root]=, but this is analagous to
+overuse of global variables in programming and it can make it difficult to
+determine which variables matter to which tasks. Environment filters
+(\ref{EnvironmentFilter}) can be used to make this safer, but generally
+it is best to provide each task with only the variables that it needs. It is
+difficult to be sure if a task really needs a variable that is passed to it,
+but you can be sure that it does not use a variable that is not passed to it.
 
-        Properties shared by multiple tasks (job submission settings,
-        environment variables, command scripting, etc.) should ideally
-        be defined only once.  Cylc supports several ways of achieving
-        this:
-
-        \begin{myitemize}
-            \item {\em Multiple inheritance} under \lstinline@[runtime]@
-                - shared items can be put into namespaces inherited by
-                related tasks.
-
-            \item {\em Jinja2 variables} can be defined once and
-                referenced throughout the suite definition.
-        \end{myitemize}
-
-        Multiple inheritance is very efficient when tasks share many
-        properties. Jinja2 variables are more efficient when single items
-        are shared by just a few tasks that don't have anything else in
-        common (e.g.\ an environment variable for the location of a
-        shared file).
-
-        For environment variables in particular it may be tempting to
-        define all variables for all tasks once under
-        \lstinline=[root]=, but this is somewhat analagous to overuse of
-        global variables in programming and it can make it difficult to
-        determine which variables matter to which tasks. Environment
-        filters can be used to make this safer, however
-        (see~\ref{EnvironmentFilter}).
-
-        Finally, Jinja2 can also be used to avoid defining intermediate
-        environment variables for the sole purpose of deriving other
-        environment variables at task run time. Instead of this:
+Finally, Jinja2 can also be used to avoid polluting task environments with 
+variables used for the sole purpose of deriving other variables at task
+run time. Instead of this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -6286,8 +6276,8 @@ operation as required.
             BAR_OUTPUT_DIR={{ OUTPUT_DIR }}/bar
 \end{lstlisting}
 
-        If the values of these Jinja2 variables are needed in external
-        scripts, just translate them directly in environment sections:
+If the values of these Jinja2 variables are needed in external
+scripts, just translate them directly in environment sections:
 \lstset{language=suiterc}
 \begin{lstlisting}
     [[[environment]]]
@@ -6295,22 +6285,20 @@ operation as required.
 \end{lstlisting}
 
 
-      \subsection{Use The Graph For Scheduling}
+\subsection{Use The Graph For Scheduling}
 
-          If you find yourself writing runtime scripting to get a task
-          to change its behaviour significantly from one cycle point to
-          the next, consider that the graph is usually the proper place
-          to express this sort of thing. Use different task names, but
-          have them inherit common properties from a family namespace to
-          avoid duplication.  Instead of this:
+If you find yourself writing runtime scripting to change a task's behaviour
+in some cycle points, consider that the graph is usually the proper place to
+express this sort of thing. Use different task names, but have them inherit
+common properties to avoid duplication.  Instead of this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
         [[[T00,T06,T12,T18]]]
-            graph = "foo => bar => baz"
+            graph = "foo => shout => baz"
 [runtime]
-    [[bar]]
+    [[shout]]
         command scripting = """
 if [[ $( cylc cycle-point --print-hour ) == 06 || \
       $( cylc cycle-point --print-hour ) == 18 ]]; then
@@ -6327,38 +6315,37 @@ echo $SENTENCE"""
 [scheduling]
     [[dependencies]]
         [[[T00,T12]]]
-            graph = "foo => bar_a => baz"
+            graph = "foo => shout_dog => baz"
         [[[T06,T18]]]
-            graph = "foo => bar_b => baz"
+            graph = "foo => shout_fox => baz"
 [runtime]
-    [[BAR]]
+    [[SHOUT]]
         # (... other config...)
         command scripting = "echo $SENTENCE"
-    [[bar_a]]
-        inherit = BAR
+    [[shout_fox]]
+        inherit = SHOUT
         [[[environment]]]
             SENTENCE = "the quick brown fox"
-    [[bar_b]]
-        inherit = BAR
+    [[shout_dog]]
+        inherit = SHOUT
         [[[environment]]]
             SENTENCE = "the lazy dog"
 \end{lstlisting}
 
-    Similarly, if your task has a different behaviour at the initial or final
-    cycle point, consider using an \lstinline=R1= syntax to separate out the
-    functionality.
+Similarly, if your task has a different behaviour at the initial or final
+cycle point, consider using an \lstinline=R1= syntax to separate out the
+functionality.
 
-        \subsection{Use Suite Visualization}
+\subsection{Use Suite Visualization}
 
-    Effective visualization can make complex suites easier to
-    understand. Collapsible task families for visualization are defined
-    by the {\em first parents} in the runtime namespace hierarchy. Tasks
-    should generally be grouped into visualization families that reflect their purpose
-    within the structure of the suite rather than technical detail
-    such as common job submission method or task host. This often coincides
-    nicely with common configuration inheritance requirements, but if it
-    doesn't you can use an empty namespace as a first parent for
-    visualization:
+Effective visualization can make complex suites easier to understand.
+Collapsible task families for visualization are defined by the {\em first
+parents} in the runtime namespace hierarchy. Tasks should generally be grouped
+into visualization families that reflect their purpose within the structure of
+the suite rather than technical detail such as common job submission method or
+task host. This often coincides nicely with common configuration inheritance
+requirements, but if it doesn't you can use an empty namespace as a first
+parent for visualization:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -6378,10 +6365,9 @@ echo $SENTENCE"""
 
 \section{Style Guide}
 
-Good style is arguably just a matter of taste.  That said, for
-collaborative development of complex systems it is important to settle
-on a clear and consistent style. You may find the following suggestions
-useful.
+Good style is to some extent a matter of taste.  That said, for collaborative
+development of complex systems it is important to settle on a clear and
+consistent style. You may find the following suggestions useful.
 
 \subsection{Line Indentation}
 
