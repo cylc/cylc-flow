@@ -1729,16 +1729,16 @@ automatically detect unforeseen errors.
 So far we've considered non-cycling tasks, which finish without spawning
 a successor.
 
-Cycling is usually based around iterating through date-time or integer
-sequences. A cycling task may run at each cycle point in a given sequence
-(cycle). For example, a sequence might be a set of date-times every 6 hours
-starting from a particular date-time. A cycling task may run for each
-date-time item (cycle point) in that sequence.
+Cycling is based around iterating through date-time or integer sequences. A
+cycling task may run at each cycle point in a given sequence (cycle). For
+example, a sequence might be a set of date-times every 6 hours starting from a
+particular date-time. A cycling task may run for each date-time item (cycle
+point) in that sequence.
 
-There may be multiple instances of this type of task running in parallel,
-if the opportunity arises and their dependencies allow it. Alternatively,
-a sequence can be defined with only one valid cycle point - in that case, a
-task belonging to that sequence may only run once.
+There may be multiple instances of this type of task running in parallel, if
+the opportunity arises and their dependencies allow it. Alternatively, a
+sequence can be defined with only one valid cycle point - in that case, a task
+belonging to that sequence may only run once.
 
 Open the \lstinline=tut.cycling.one= suite:
 \lstset{language=suiterc}
@@ -1748,8 +1748,8 @@ The difference between cycling and non-cycling suites is all in the
 \lstinline=[runtime]= section alone for now (this will result in
 cycling dummy tasks).  Note that the graph is now defined under a new
 section heading that makes each task under it have a succession of cycle points
-(times) ending in $00$ or $12$ hours, between specified initial and final cycle
-points (or indefinitely, if no final cycle point is given), as shown in
+ending in $00$ or $12$ hours, between specified initial and final cycle
+points (or indefinitely if no final cycle point is given), as shown in
 Figure~\ref{fig-tut-one}.
 
 \begin{figure}
@@ -1762,22 +1762,36 @@ Figure~\ref{fig-tut-one}.
 \end{figure}
 
 \lstset{language=transcript}
-If you run this suite instances of \lstinline=foo= will spawn in
-parallel out to the {\em runahead limit}, and each \lstinline=bar=
-will trigger off the corresponding instance of \lstinline=foo= at the
-same cycle point.  The runahead limit prevents uncontrolled spawning of
-cycling tasks in suites that are not constrained by clock triggers in
-real time operation.  The default limit is twice the shortest cycling
-interval in the suite.
 
-Experiment with \lstinline=tut.cycling.one= to see how cycling tasks
-work.
+If you run this suite instances of \lstinline=foo= will spawn in parallel out
+to the {\em runahead limit}, and each \lstinline=bar= will trigger off the
+corresponding instance of \lstinline=foo= at the same cycle point.  The
+runahead limit, which defaults to a few cycles but is configurable, prevents
+uncontrolled spawning of cycling tasks in suites that are not constrained by
+clock triggers in real time operation.
+
+Experiment with \lstinline=tut.cycling.one= to see how cycling tasks work.
+
+\paragraph{ISO 8601 Date-Time Syntax}
+
+The suite above is a very simple example of a cycling workflow. More generally,
+cylc comprehensively supports the ISO 8601 standard for date-time instants,
+intervals, and sequences.  Cycling graph sections can be specified using full
+ISO 8601 recurrence expressions, but these may be simplified using context 
+information from the suite. One form of the recurrence syntax looks like
+\lstinline=Rn/start-date-time/period= (\lstinline=Rn= means repeat
+\lstinline=n= times). In the example above, if the initial cycle point
+is always at 00 or 12 hours then \lstinline=[[[T00,T12]]]= could be
+written as \lstinline=[[[PT12H]]]=, which is short for
+\lstinline=[[[R/initial-cycle-point/P12H/]]]= - i.e.\ repeat indefinitely every
+12 hours starting at the initial cycle point.
 
 \begin{myitemize}
     %Q Runahead factor now
-    \item The suite runahead limit is configurable - see~\ref{RunaheadLimit}.
-    \item Other date-time cycling is also supported (multihourly, daily,
- monthly, yearly...) - see~\ref{AdvancedCycling}.
+    \item For a comprehensive description of ISO 8601 based date-time cycling,
+        see~\ref{AdvancedCycling} 
+    \item For more on runahead limiting in cycling suites,
+        see~\ref{RunaheadLimit}.
 \end{myitemize}
 
 \subsubsection{Inter-Cycle-Point Triggers}
@@ -1798,8 +1812,10 @@ to the previous example:
 For any given cycle point in the sequence defined by the
 cycling graph section heading, \lstinline=bar= triggers off
 \lstinline=foo= as before, but now \lstinline=foo= triggers off its own
-previous instance \lstinline=foo[-PT12H]=. Figure~\ref{fig-tut-two} shows
-how this connects the cycling graph sections together.
+previous instance \lstinline=foo[-PT12H]=.  Date-time offsets in
+inter-cycle-point triggers are expressed as ISO 8601 intervals (12 hours
+in this case).  Figure~\ref{fig-tut-two} shows how this connects the cycling
+graph sections together.
 \begin{figure}
     \begin{center}
         \includegraphics[width=0.5\textwidth]{graphics/png/orig/tut-two.png}
@@ -1807,11 +1823,6 @@ how this connects the cycling graph sections together.
     \caption{The \lstinline=tut.cycling.two= suite}
 \label{fig-tut-two}
 \end{figure}
-
-Note that the \lstinline=[[[T00,T12]]]= (at 00 and 12 hours) syntax could be
-written as \lstinline=[[[PT12H]]]= (repeat every 12 hours, starting at the
-initial cycle point) provided that the initial cycle point was always at 00 and
-12 hours.
 
 Experiment with this suite to see how inter-cycle-point triggers work.
 Note that the first instance of \lstinline=foo=, at suite start-up, will
@@ -1846,10 +1857,6 @@ no date-time, Cylc will use the initial cycle point date-time by default,
 which is what we want. We've also missed out specifying the period - this is
 set by cylc to a zero amount of time in this case (as it never
 repeats, this is not significant).
-
-There is a full primer for cycling syntax later in the user guide, which also
-explains how the other syntax in this example (\lstinline=T00= and
-\lstinline=T06=) is consistent with this.
 
 For example, in \lstinline=tut.cycling.three=:
 \lstset{language=suiterc}
@@ -1907,10 +1914,57 @@ prep.20130808T0000+13 => foo.20130808T0000+13
 \label{fig-tut-three}
 \end{figure}
 
-For another way to make something different happen at start-up, see 
-{\em cold start tasks} in~\ref{SpecialColdStartTasks}.
+\begin{myitemize}
+    \item \lstinline=R1= tasks can also be used to make something special
+        happen at suite shutdown, or at any single cycle point throughout the
+        suite run. For a full primer on cycling syntax,
+        see~\ref{AdvancedCycling}.
+    \item For another way to make something different happen at start-up, see 
+        {\em cold start tasks} in~\ref{SpecialColdStartTasks}.
+\end{myitemize}
+
+
+\subsubsection{Integer Cycling}
+\label{TutInteger}
+\hilight{ suite: \lstinline=tut.cycling.integer= }
+\vspace{3mm}
+
+Cylc can do also do integer cycling for repeating workflows that are not
+date-time based.
+
+Open the \lstinline=tut.cycling.integer= suite, which is plotted in
+Figure~\ref{fig-tut-int}.
+\lstset{language=suiterc}
+\lstinputlisting{../examples/tutorial/cycling/integer/suite.rc}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.65\textwidth]{graphics/png/orig/tut-cyc-int.png}
+    \end{center}
+    \caption{The \lstinline=tut.cycling.integer= suite}
+\label{fig-tut-int}
+\end{figure}
+
+The integer cycling notation is intended to look similar to the ISO 8601
+date-time notation, but it is simpler for obvious reasons.  The example suite
+illustrates two recurrence forms,
+\lstinline=Rn/start-point/period= and
+\lstinline=Rn/period/stop-point=, simplified somewhat using suite context
+information (namely the initial and final cycle points).  The first form is
+used to run one special task called \lstinline=start= at start-up, and for the
+main cycling body of the suite; and the second form to run another special task
+called \lstinline=stop= in the final two cycles.  The \lstinline=P= character
+denotes period (interval) just like in the date-time notation.
+\lstinline=R/1/P2= would generate the sequence of points \lstinline=1,3,5,...=.
+
+\begin{myitemize}
+    \item For more on integer cycling, including a more realistic usage example
+        see ~\ref{IntegerCycling}.
+\end{myitemize}
 
 \subsection{Jinja2}
+\hilight{ suite: \lstinline=tut.oneoff.jinja2= }
+\vspace{3mm}
 
 Cylc has built in support for the Jinja2 template processor, which
 allows us to embed code in suite definitions to generate the
@@ -2953,7 +3007,7 @@ a single \lstinline=prep= task, at a single cycle.
 We can write this using a special case of the \lstinline=task[-interval]= syntax -
 if the interval is null, this implies the task at the initial cycle point.
 
-For example, we can write our suite like this:
+For example, we can write our suite like~\ref{fig-test4}.
 
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
@@ -3000,6 +3054,87 @@ For example, we can write our suite like this:
 
 This neatly expresses what we want - a task running at the initial cycle point
 that has one-off dependencies with other task sets at different cycles.
+
+
+\subparagraph{Integer Cycling}
+\label{IntegerCycling}
+
+In addition to non-repeating and date-time cycling workflows, cylc can do
+integer cycling for repeating workflows that are not date-time based.
+
+To construct an integer cycling suite, set
+\lstinline@[scheduling]cycling mode = integer@, and specify integer values for
+the initial and (optional) final cycle points. The notation for intervals,
+offsets, and recurrences (sequences) is similar to the date-time cycling
+notation, except for the simple integer values.
+
+The full integer recurrence expressions supported are:
+\begin{myitemize}
+    \item \lstinline@Rn/start-point/interval # e.g. R3/1/P2@
+    \item \lstinline@Rn/interval/end-point # e.g. R3/P2/9@
+\end{myitemize}
+But, as for date-time cycling, sequence start and end points can be omitted
+where suite initial and final cycle points can be assumed.  Some examples:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        # Note: task names are meaningless.
+
+        # Run once at the initial cycle point
+        [[[ R1 ]]] # short for R1/initial-point/?
+            graph = "prep => foo"
+
+        # Repeat with step 1 from the initial cycle point
+        [[[ P1 ]]] # short for R/initial-point/P1
+            graph = "foo => bar"
+
+        # Repeat with step 5 from the initial cycle point
+        [[[ P5 ]]] # short for R/initial-point/P5
+            graph = "foo => bar"
+
+        # Repeat twice with step 3 from the initial cycle point
+        [[[ R2//P2 ]]] # short for R2/initial-point/P2
+            graph = "foo => bar"
+
+        # Repeat with step 2, from 1 after the initial cycle point
+        [[[ R/+P1/P2 ]]]
+            graph = "foo => bar"
+
+        # Repeat twice with step 2, to the final cycle point
+        [[[ R2/P2 ]]] # short for R2/P2/final-point
+            graph = "bar => stopping"
+
+        # Run once at the final cycle point
+        [[[ R1/P0 ]]] # short for R1/P0/final-point
+            graph = "bar => stop"
+\end{lstlisting}
+
+The tutorial illustrates integer cycling in~\ref{TutInteger}, and
+\lstinline=$CYLC_DIR/examples/satellite/= is a
+self-contained example of a realistic use for integer cycling. It simulates
+the processing of incoming satellite data: each new dataset arrives after a
+random (as far as the suite is concerned) interval, and is labeled by an
+arbitrary (as far as the suite is concerned) ID in the filename. A task called
+\lstinline=get_data= at the top of the repeating workflow waits on the next
+dataset and, when it finds one, moves it to a cycle-point-specific shared
+workspace for processing by the downstream tasks. When \lstinline=get_data.1=
+finishes, \lstinline=get_data.2= triggers and begins waiting for the next
+dataset at the same time as the downstream tasks in cycle point 1 are
+processing the first one, and so on. In this way multiple datasets can be
+processed at once if they happen to come in quickly. A single shutdown task
+runs at the end of the final cycle to collate results. The suite graph is
+shown in Figure~\ref{fig-satellite}.
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.4\textwidth]{graphics/png/orig/satellite.png}
+    \end{center}
+    \caption{The \lstinline=examples/satellite= integer suite}
+\label{fig-satellite}
+\end{figure}
+
 
 \subsubsection{Trigger Types}
 \label{TriggerTypes}
@@ -6788,7 +6923,7 @@ and~\ref{AdvancedStartingUp}.
 
 {\em Repeating asynchronous tasks} have also been removed because non date-time
 workflows can now be handled more easily with integer cycling. See for instance
-the satellite data processing example suite in~\ref{IntegerSatelliteExample}.
+the satellite data processing example documented in~\ref{IntegerCycling}.
 
 For repeating tasks with hour-based cycling the syntax has only minor changes:
 
@@ -6816,7 +6951,7 @@ Pre-cylc-6:
 Hour-based cycling section names are easy enough to convert, as seen in Table
 \ref{cylc-6-migration-cycling-hours-table}.
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Hourly Cycling Sections}
 \centering
 \begin{tabular}{ l l }
@@ -6833,7 +6968,7 @@ Pre-Cylc-6 & Cylc-6+ \\
 The graph text in hour-based cycling is also easy to convert, as seen in
 Table \ref{cylc-6-migration-cycling-hours-offset-table}.
 
-\begin{table}[h]
+\begin{table}[ht]
 \caption{Hourly Cycling Offsets}
 \centering
 \begin{tabular}{ l l }

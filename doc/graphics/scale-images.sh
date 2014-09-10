@@ -31,9 +31,9 @@ set -e
 # "different" binary files each time.
 mkdir -p png/scaled
 for PNG in $( ls png/orig/ ); do
-    #if [[ ! -f png/scaled/$PNG ]]; then
+    if [[ ! -f png/scaled/$PNG ]]; then
     echo "scaling $PNG"
     convert -resize '600>' png/orig/$PNG png/scaled/$PNG
-    #fi
+    fi
 done
 
