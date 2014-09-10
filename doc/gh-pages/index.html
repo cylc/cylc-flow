@@ -65,12 +65,8 @@
 
     <p class="p3"><span>
         Cylc's suite design paradigm is simple and intuitive: configure 
-        task scheduling using a dependency graph, then configure
+        task scheduling with a dependency graph, then configure
         task runtime properties in an efficient inheritance hierarchy.
-        This 
-        <a href="screenshots/simple-suiterc.png">suite definition</a>,
-        for example, defines a suite with this
-<a href="screenshots/QuickStartB-graph18.png">dependency graph</a>.
     </span></p>
 
     <p class="p1"><span>
@@ -78,18 +74,17 @@
         cycles, dependencies allowing. Suites seamlessly transition
         between delayed and real time operation, they flow around
         delayed or failed tasks, and they adapt to insertion and
-        removal of tasks at run time.     </span></p>
+        removal of tasks at run time.
+    </span></p>
 
     <div id="screenshots">
         <h4 class="foo"><span>Screen Shots</span></h4>
         <ul>
-            <li> <a href="screenshots/suiterc-jinja2.png">A suite definition in the vim editor</a></li>
-            <li> <a href="screenshots/graph-viewer.png">Interactive suite graph viewer</a></li>
-            <li> <a href="screenshots/control1.png">The gcylc GUI, dot and text views</a></li>
-            <li> <a href="screenshots/control2.png">The gcylc GUI, graph and text views</a></li>
-            <li> <a href="screenshots/gsummary.png">The multi-suite state summary GUI</a></li>
-            <li> <a href="screenshots/ecox-1.png">A large suite graphed by cylc</a></li>
-            <li> <a href="screenshots/NZLAM-catchup.png">Tasks from multiple cycles running at once</a></li>
+            <li> <a href="screenshots/graph-viewer.png">Interactive suite graph viewer</a>
+            <li> <a href="screenshots/gcylc-graph-and-dot-views.png">The gcylc GUI, graph and dot views</a>
+            <li> <a href="screenshots/gcylc-text-view.png">The gcylc GUI, text view</a>
+            <li> <a href="screenshots/gsummary.png">The multi-suite state summary GUI</a>
+            <li> <a href="screenshots/ecox-1.png">A large-ish suite graphed by cylc</a>
         </ul>
 
     <p class="nav"><span><a href="#">(back to top)</a></span></p>
@@ -101,15 +96,15 @@
 	<div id="navlist">
         <h3 class="select"><span>Navigation:</span></h3>
         <ul>
-            <li> <a href="#overview">Overview</a> </li>
-            <li> <a href="#who">Who's Using Cylc?</a> </li>
-            <li> <a href="#features">Features</a> </li>
-            <li> <a href="#requirements">Requirements</a> </li>
-            <li> <a href="#download">Download</a> </li>
-            <li> <a href="#installation">Installation</a> </li>
-            <li> <a href="#documentation">Documentation</a> </li>
-            <li> <a href="#support">Support</a> </li>
-            <li> <a href="#development">Development</a> </li>
+            <li> <a href="#overview">Overview</a> 
+            <li> <a href="#who">Who's Using Cylc?</a> 
+            <li> <a href="#features">Features</a> 
+            <li> <a href="#requirements">Requirements</a> 
+            <li> <a href="#download">Download</a> 
+            <li> <a href="#installation">Installation</a> 
+            <li> <a href="#documentation">Documentation</a> 
+            <li> <a href="#support">Support</a> 
+            <li> <a href="#development">Development</a> 
     </ul>
 </div> <!--navlist-->
 
@@ -117,6 +112,7 @@
                
 	<div id="mainpage">
 
+        <br />
 		<div id="who">
 			<h3><span>Who's Using Cylc So Far?</span></h3>
 
@@ -130,12 +126,12 @@
     </span></p>
 
             <ul>
-                <li> <a href="http://www.niwa.co.nz">NIWA</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> </li>
-                <li> <a href="http://www.metoffice.gov.uk">Met Office (UK)</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> </li>
-                <li> <a href="http://www.nrlmry.navy.mil">NRL Marine Meteorology Division</a> (USA)</li>
-                <li> <a href="http://www.mpimet.mpg.de">Max Planck Institute for Meteorology</a> (Germany) </li>
-                <li> <a href="http://www.bom.gov.au">Bureau of Meteorology</a> (Australia)  - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> </li>
-                <li> <a href="http://www.gfdl.noaa.gov">GFDL</a> (NOAA/Princeton University, USA)</li>
+                <li> <a href="http://www.niwa.co.nz">NIWA</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
+                <li> <a href="http://www.metoffice.gov.uk">Met Office (UK)</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
+                <li> <a href="http://www.nrlmry.navy.mil">NRL Marine Meteorology Division</a> (USA)
+                <li> <a href="http://www.mpimet.mpg.de">Max Planck Institute for Meteorology</a> (Germany) 
+                <li> <a href="http://www.bom.gov.au">Bureau of Meteorology</a> (Australia)  - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
+                <li> <a href="http://www.gfdl.noaa.gov">GFDL</a> (NOAA/Princeton University, USA)
             </ul>
 
             <p class="nav"><span><a href="#">(back to top)</a></span></p>
@@ -147,25 +143,28 @@
 
             <p class="p1"><span>First, see the <a href="#overview">Overview</a> above.</span></p>
 				<ul>
-                    <li> Unified <b>command line interface</b>: <code>cylc COMMAND [OPTIONS] [ARGS]</code>.</li>
-                    <li> Multi-view <b>graphical user interface</b> with collapsing task families.</li>
-                    <li> Clean separation of task <b>scheduling</b> and <b>runtime</b> configuration.</li>
-                    <li> Efficient configuration of task runtime properties by <b>multiple inheritance</b>.</li>
-                    <li> <b>Distributed suites</b> - submit different tasks by different methods to different hosts.</li>
-                    <li> <b>Remote control</b> - interact with suites running on other hosts.</li>
-                    <li> <b>task cycling</b> - hours-of-the-day; and stepped daily, monthly, and yearly.</li>
-                    <li> Handles <b>several thousand tasks</b> in a single suite.</li>
-                    <li> <b>Inter-suite dependence</b> - triggering tasks off tasks in other suites. </li>
-                    <li> <b>Suite validation</b> - catch many errors prior to run time.</li>
-                    <li> Suite <b>cold-start</b>, <b>warm-start</b>, and <b>restart</b>.</li>
-                    <li> <b>Conditional triggering</b>.</li>
-                    <li> <b>Task family triggering</b>.</li>
-                    <li> <b>Automated failure recovery</b>.</li>
-                    <li> <b>Task and suite event hooks and timeouts</b> for central alerting.</li>
-                    <li> <b>Simulation and dumy modes</b> - get the scheduling right without running real tasks.</li>
-                    <li> Supports the <b>Jinja2 Template Processor</b> in suite definitions.</li>
-                    <li> <b>Internal Queues</b> to limit the number of simultaneously active tasks.</li>
-                    <li> <b>Task Poll and Kill</b> for supported job submission methods.</li>
+                    <li> <b>Date-time cycling</b> - supports the <b>ISO 8601 date-time standard</b>.
+                    <li> <b>Integer cycling</b> for repeating non date-time workflows.
+                    <li> <b>Non-repeating workflows</b>
+                    <li> Unified <b>command line interface</b>: <code>cylc COMMAND [OPTIONS] [ARGS]</code>.
+                    <li> Multi-view <b>graphical user interface</b> with collapsing task families.
+                    <li> Clean separation of <b>scheduling</b> and <b>runtime</b> configuration.
+                    <li> Efficient configuration of task runtime properties by <b>multiple inheritance</b>.
+                    <li> <b>Distributed suites</b> - run tasks on multiple hosts.
+                    <li> Supports many different job submission methods (PBS, slurm, etc.).
+                    <li> Handles <b>several thousand tasks</b> in a single suite.
+                    <li> <b>Inter-suite dependence</b> - triggering tasks off tasks in other suites. 
+                    <li> <b>Suite validation</b> - catch many errors prior to run time.
+                    <li> Advanced <b>restart</b> capability - determines what
+                    happened to running tasks while the suite daemon was down.
+                    <li> <b>Conditional triggering</b>.
+                    <li> <b>Task family triggering</b>.
+                    <li> <b>Automated failure recovery</b>.
+                    <li> <b>Task and suite event hooks and timeouts</b> for central alerting.
+                    <li> <b>Simulation and dummy modes</b> - get the scheduling right without running real tasks.
+                    <li> Supports use of the <b>Jinja2 Template Processor</b> in suite definitions.
+                    <li> <b>Internal Queues</b> to limit the number of simultaneously active tasks.
+                    <li> <b>Task Poll and Kill</b> for supported job submission methods.
 				</ul>
 
     <p class="nav"><span><a href="#">(back to top)</a></span></p>
@@ -177,29 +176,29 @@
     <h3><span>Requirements</span></h3>
 
     <ul>
-        <li> Operating System: Linux or Unix</li>
+        <li> Operating System: Linux or Unix
 
-        <li> Python 2-series, version: 2.5 or later.x as yet).</li>
+        <li> Python 2.6 or later (but not 3.x as yet).
 <!-- <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup> -->
         
         <li> <a href="http://www.pygtk.org">PyGTK</a>, 
         a Python wrapper for the GTK+ graphical user
-        interface toolkit, included in most Linux Distributions.</li>
+        interface toolkit, included in most Linux Distributions.
         
         <li> <a href="https://pypi.python.org/pypi/Pyro/">Pyro 3</a>
-        (Python Remote Objects) - latest version 3.16.</li>
+        (Python Remote Objects) - latest version 3.16.
         
         <li> The <a href="http://www.graphviz.org">graphviz</a> graph
-        layout engine (latest version tested: 2.28.0).</li>
+        layout engine (latest version tested: 2.28.0).
 
         <li> <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>, 
-        a python interface to graphviz (latest version tested: 1.1). </li>
+        a python interface to graphviz (latest version tested: 1.1). 
 
-        <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template processor for Python.</li>
+        <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template processor for Python.
 
         <li> <b>LaTeX</b> (for <code>pdflatex</code>) and <b>tex4ht</b>
         (for <code>htlatex</code>) - needed to generate PDF and HTML
-        copies of the Cylc User Guide from the LaTeX source files.</li>
+        copies of the Cylc User Guide from the LaTeX source files.
     </ul>
 
 <p class="p1"><span>
@@ -248,8 +247,8 @@
             held online in HTML format:</span></p>
 
         <ul>
-            <li> <a href="html/multi/cug-html.html">Cylc User Guide (HTML multi-page)</a> </li>
-            <li> <a href="html/single/cug-html.html">Cylc User Guide (HTML single-page)</a> </li>
+            <li> <a href="html/multi/cug-html.html">Cylc User Guide (HTML multi-page)</a> 
+            <li> <a href="html/single/cug-html.html">Cylc User Guide (HTML single-page)</a> 
         </ul>
 
         <p class="p2"><span>These documents, and a <b>PDF</b> version,
