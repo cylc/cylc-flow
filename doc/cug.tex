@@ -5717,8 +5717,8 @@ through to task execution environments as
 \lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT=. The value is then stored in
 suite state dumps and persists across restarts, but it does get wiped out (set
 to \lstinline=None=) after a warm start, because a warm start is really an
-implicit restart - all previous state information is lost, except that the
-previous cycle is asssumed to have completed.
+implicit restart in which all state information is lost (except that the
+previous cycle is assumed to have completed).
 
 The \lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT= variable allows tasks to
 determine if they are running in the initial cold-start cycle point, when
