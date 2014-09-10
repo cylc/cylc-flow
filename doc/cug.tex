@@ -6365,11 +6365,13 @@ parent for visualization:
 
 \section{Style Guide}
 
-Good style is to some extent a matter of taste.  That said, for collaborative
+Good style is to some extent a matter of taste. That said, for collaborative
 development of complex systems it is important to settle on a clear and
-consistent style. You may find the following suggestions useful.
+consistent style, and you may find the following suggestions useful. Note that
+the boundary between this section (style) and the previous (design) is somewhat
+arbitrary.
 
-\subsection{Line Indentation}
+\subsection{Indentation}
 
 The suite.rc file format consists of \lstinline@item = value@ pairs
 under nested section headings. Clear indentation is the best way to show
@@ -6386,17 +6388,19 @@ local nesting level inside large blocks.
         a short item = value1
         a very very long item = value2
 \end{lstlisting}
-    Don't align \lstinline@item = value@ pairs on the \lstinline@=@ character:
+Don't align \lstinline@item = value@ pairs on the \lstinline@=@ character -
+this does not show nesting level clearly and it pushes everything off to
+the right:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [SECTION]
              a short item = value1
     a very very long item = value2
 \end{lstlisting}
-This does not show nesting level clearly, and long items push everything off to
-the right. The following layout does preserves proper indentation, but the
-whole block will need reformatting if an even longer item is added (or the
-current longest one removed or renamed) in the future:
+
+The following layout does preserve proper indentation on the left,
+but the whole block may need reformatting after changing one line, which
+pollutes your revision history with spurious changes:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [SECTION]
@@ -6486,7 +6490,12 @@ echo Goodbye World!"""
 \end{lstlisting}
    \end{myitemize}
 
-    \subsection{Comments}
+\subsection{Comments}
+
+Comments should be {\em minimal}, but not too minimal. If context and clear
+item names will do, leave it at that. Extremely verbose comments tend to be
+neglected and eventually get out of sync with the code, a result that may be
+worse than having no comments at all.
 
     \begin{myitemize}
         \item {\em Indent line comments} to section or item level, as
@@ -6495,25 +6504,26 @@ echo Goodbye World!"""
         \item Avoid {\em numbered comments} - future changes can create a
             renumbering nightmare.
 
-        \item Avoid {\em unnecessary comments} - if these are not kept up
-            to date with code changes the result is misleading, which is
-            worse than having no comments at all.
-            If context and clear item or variable names will do, leave
-            it at that.
-
         \item Avoid {\em full page width ``section divider'' comments} -
             these assume a particular line width, which can be a problem
             for text editors that auto line break on a smaller line width.
 
+        \item Use the \lstinline=title= and \lstinline=description= items
+            instead of comments to describe tasks and families under
+            \lstinline=[runtime]= - these get displayed by mouse hover in
+            gcylc.
+
     \end{myitemize}
 
-    \subsection{Other}
+\subsection{Line Length}
 
-        \begin{myitemize}
-         \item Avoid {\em very long lines} if possible - these affect
-             readability and may be a problem for auto-line-breaking
-             text editors.  Line continuation markers can be used
-             anywhere in a suite definition to break up long lines:
+Keep to the standard maximum line length of 79 characters where possible.  Very
+long lines affect readability, may pose a problem for auto-line-breaking in
+text editors, and make side-by-side diff display less effective.
+
+\begin{myitemize}
+    \item Line continuation markers can be used anywhere to break up long
+        lines:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -6535,17 +6545,25 @@ Graph lines can also be split up without line breaks, like this:
                    four => five six => seven => eight"""
 \end{lstlisting}
 
-            \item Use a {\em naming convention} for runtime namespaces:
-                uppercase names for families and lower case for tasks,
-                so that you can tell which is which at a glance.
+\end{myitemize}
 
-            \item Don't bother writing command scripting that prints
-                all task input variables to stdout - there is a
-                maintenance cost to this, and for little benefit because
-                a task's job script (containing the variable definitions)
-                can be view just as easily as its output logs.
+\subsection{Task Naming Convention}
 
-        \end{myitemize}
+Use \lstinline=UPPERCASE_NAMES= for families and \lstinline=lowercase_names=
+for tasks, so that you can tell which is which at a glance.
+
+\begin{myitemize}
+    \item Put the most general components of task names first, for natural
+        grouping in the GUI (under alphanumeric sorting) and in listings, e.g.\
+        \lstinline=obsproc_sonde=, \lstinline=obsproc_radar=.
+\end{myitemize}
+
+\subsection{Inlined Task Scripting}
+
+Trivial task scripting may be inlined in the suite definition but anything
+more should be written to a script file. This keeps the suite definition tidy,
+it allows proper shell-mode text editing, and it allows separate command line
+testing of the script during development or debugging.
 
 \pagebreak
 
