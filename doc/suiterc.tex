@@ -4,9 +4,9 @@
 \lstset{language=bash}
 
 This appendix defines all legal suite definition config items.
-Embedded Jinja2 code (see Section~\ref{Jinja2}) must process to a valid
-raw suite.rc file. See also Section~\ref{SuiteRCFile} for a descriptive
-overview of suite.rc files, including syntax (Section~\ref{Syntax}).
+Embedded Jinja2 code (see~\ref{Jinja2}) must process to a valid
+raw suite.rc file. See also~\ref{SuiteRCFile} for a descriptive
+overview of suite.rc files, including syntax (\ref{Syntax}).
 
 \subsection{Top Level Items}
 
@@ -21,7 +21,7 @@ window and can be retrieved at run time with the
 
 \begin{myitemize}
 \item {\em type:} single line string
-\item {\em default:} ``No title provided''
+\item {\em default:} (none)
 \end{myitemize}
 
 \subsubsection{description}
@@ -31,7 +31,7 @@ right-click menu, or at run time with the \lstinline=cylc show= command.
 
 \begin{myitemize}
 \item {\em type:} multi-line string
-\item {\em default:} ``No description provided''
+\item {\em default:} (none)
 \end{myitemize}
 
 \subsection{[cylc]}
@@ -173,7 +173,7 @@ used for cylc testing and development.
 
 Cylc has internal ``hooks'' to which you can attach handlers that are
 called by the suite daemon whenever certain events occur. This section
-configures suite event hooks; see Section~\ref{TaskEventHandling} for
+configures suite event hooks; see~\ref{TaskEventHandling} for
 task event hooks.
 
 Event handlers can send an email or an SMS, call a pager, intervene in
@@ -314,8 +314,7 @@ parser is concerned these are just suite configuration items).
 Reference tests are finite-duration suite runs that abort with non-zero
 exit status if cylc fails, if any task fails, if the suite times
 out, or if a shutdown event handler that (by default) compares the test
-run with a reference run reports failure. See {\em Automated Reference Test
-Suites}, Section~\ref{AutoRefTests}.
+run with a reference run reports failure. See~\ref{AutoRefTests}.
 
 \paragraph[suite shutdown event handler]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ suite shutdown event handler}
 
@@ -467,7 +466,7 @@ the \ref{cycle-point-time-zone} if that is set.
 \label{runahead limit}
 
 Runahead limiting prevents the fastest tasks in a suite from getting too far
-ahead of the slowest ones, as documented in Section~\ref{RunaheadLimit}.
+ahead of the slowest ones, as documented in~\ref{RunaheadLimit}.
 
 This config item specifies a hard limit as a cycle interval between the
 slowest and fastest tasks. It is deprecated in favour of the newer default 
@@ -484,7 +483,7 @@ limiting by \lstinline=max active cycle points= (\ref{max active cycle points}).
 \label{max active cycle points}
 
 Runahead limiting prevents the fastest tasks in a suite from getting too far
-ahead of the slowest ones, as documented in Section~\ref{RunaheadLimit}.
+ahead of the slowest ones, as documented in~\ref{RunaheadLimit}.
 
 This config item supersedes the deprecated hard \lstinline=runahead limit= 
 (\ref{runahead limit}). It allows up to \lstinline=N= (default 3) consecutive
@@ -504,7 +503,7 @@ active tasks (submitted or running) can be limited, per queue. By
 default a single queue called {\em default} is defined, with all tasks
 assigned to it and no limit. To use a single queue for the whole suite
 just set the limit on the {\em default} queue as required.
-See also Section~\ref{InternalQueues}.
+See also~\ref{InternalQueues}.
 
 \paragraph[{[[[}\_\_QUEUE\_\_{]]]}]{[scheduling] $\rightarrow$ [[queues]] $\rightarrow$ [[[\_\_QUEUE\_\_]]]}
 
@@ -541,15 +540,13 @@ for listing all member tasks.
 
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
-Clock-triggered tasks wait on a wall clock time specified as an offset
-{\em in hours} relative to their own cycle point, in addition to any
-dependence they have on other tasks. Generally speaking, only tasks that
-wait on external real time data need to be clock-triggered.  Note that
-in computing the trigger time the full wall clock time and cycle point
-are compared, not just hours and minutes of the day, so when running a
-suite in catchup/delayed operation, or over historical periods,
-clock-triggered tasks will not constrain the suite at all until they
-catch up to the wall clock.
+Clock-triggered tasks wait on a wall clock time specified as an offset from
+their own cycle point, in addition to dependence on other tasks.
+Clock-triggers can be used to make tasks that wait on external real time
+data trigger at the expected time of data availability, or to make suite
+polling tasks trigger at the expected time of the remote suite event.
+In delayed or historical operation clock-triggered tasks do not constrain the
+suite until they catch up to the wall clock.
 
 \begin{myitemize}
     \item {\em type:} list of task or family names with offsets expressed as an
@@ -564,8 +561,8 @@ catch up to the wall clock.
 Sequential tasks are automatically given dependence on their own
 predecessor. This is equivalent to use of explicit inter-cycle triggers
 in the graph, except that the automatic version does not show in suite
-graph visualization. For more on sequential tasks see
-Sections~\ref{SequentialTasks} and~\ref{LimitPID}.
+graph visualization. For more on sequential tasks see~\ref{SequentialTasks}
+and~\ref{LimitPID}.
 
 \begin{myitemize}
     \item {\em type:} list of task or family names
@@ -644,51 +641,43 @@ tasks, may be required.
 
 The suite dependency graph is defined under this section.  You can plot
 the dependency graph as you work on it, with \lstinline=cylc graph= or
-by right clicking on the suite in the db viewer.  See also
-Section~\ref{ConfiguringScheduling}.
+by right clicking on the suite in the db viewer.  See
+also~\ref{ConfiguringScheduling}.
 
 \paragraph[graph]{ [scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ graph }
 
-The dependency graph for any one-off asynchronous (non-cycling) tasks in
-the suite goes here. This can be used to construct a suite of one-off
-tasks (e.g.\ build jobs and related processing) that just completes and
-then exits, or an initial suite section that completes prior to the
-cycling tasks starting (if you make the first cycling tasks depend on
-the last one-off ones). But note that synchronous {\em start-up} tasks
-can also be used for the latter purpose.  See Section~\ref{GraphDescrip}
-below for graph string syntax, and Section~\ref{ConfiguringScheduling}.
+The dependency graph for a completely non-cycling suites can go here.
+See also~\ref{GraphDescrip} below and~\ref{ConfiguringScheduling}, for graph
+string syntax.
 \begin{myitemize}
     \item {\em type:} string
-    \item {\em example:} (see Section~\ref{GraphDescrip} below)
+    \item {\em example:} (see~\ref{GraphDescrip} below)
 \end{myitemize}
 
-\paragraph[{[[[}\_\_VALIDITY\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]]}
+\paragraph[{[[[}\_\_RECURRENCE\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_RECURRENCE\_\_]]]}
 
-\_\_VALIDITY\_\_ section headings define the sequence of cycle points for
+\_\_RECURRENCE\_\_ section headings define the sequence of cycle points for
 which the subsequent graph section is valid. These should be specified in
-our ISO 8601 derived sequence syntax:
+our ISO 8601 derived sequence syntax, or similar for integer cycling:
 \begin{myitemize}
     \item {\em examples:}
         \begin{myitemize}
-            \item hours-of-the-day cycling: \lstinline@[[[T00,T06,T12,T18]]]@ or \lstinline@[[[ PT6H ]]]@
-            \item stepped daily cycling: \lstinline@[[[P1D]]]@
-            \item stepped monthly cycling: \lstinline@[[[P2M]]]@
-            \item stepped yearly cycling: \lstinline@[[[P3Y]]]@
+            \item date-time cycling:
+                \lstinline@[[[T00,T06,T12,T18]]]@ or \lstinline@[[[PT6H]]]@
+            \item integer cycling (stepped by 2):
+                \lstinline@[[[P2]]]@
         \end{myitemize}
     \item {\em default:} (none)
 \end{myitemize}
 
-See Section~\ref{GraphTypes}, {\em Graph Types} for the meaning of the
-stepped cycler arguments, how multiple graph sections combine within a
-single suite, and so on.
+See~\ref{GraphTypes} for more on recurrence expressions, and how multiple graph
+sections combine.
 
-\subparagraph[graph]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_VALIDITY\_\_]]] $\rightarrow$ graph }
+\subparagraph[graph]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_RECURRENCE\_\_]]] $\rightarrow$ graph }
 \label{GraphDescrip}
 
-The dependency graph for the specified validity section (described just
-above) goes here. Syntax examples follow; see also
-Sections~\ref{ConfiguringScheduling} ({\em Configuring Scheduling})
-and~\ref{TriggerTypes} ({\em Trigger Types}).
+The dependency graph for a given recurrence section goes here. Syntax examples
+follow; see also~\ref{ConfiguringScheduling} and~\ref{TriggerTypes}.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -722,8 +711,7 @@ configuration can be factored out in a multiple-inheritance hierarchy of
 runtime namespaces that culminates in the tasks of the suite. Order of
 precedence is determined by the C3 linearization algorithm as used to
 find the {\em method resolution order} in Python language class
-hiearchies. For details and examples see Section~\ref{NIORP}, {\em
-Runtime Properties}.
+hiearchies. For details and examples see~\ref{NIORP}.
 
 \subsubsection[{[[}\_\_NAME\_\_{]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]]}
 
@@ -770,7 +758,7 @@ with the \lstinline=cylc show= command.
 
 \begin{myitemize}
 \item {\em type:} single line string
-\item {\em root default:} ``No title provided''
+\item {\em root default:} (none)
 \end{myitemize}
 
 \paragraph[description]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ description}
@@ -780,7 +768,7 @@ A multi-line description of this namespace, retrievable from running tasks with 
 
 \begin{myitemize}
 \item {\em type:} multi-line string
-\item {\em root default:} ``No description provided''
+\item {\em root default:} (none)
 \end{myitemize}
 
 
@@ -891,7 +879,7 @@ submitted state.
 
 For the polling task communications method this overrides the default
 submission polling interval in the site/user config files
-(Section~\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
+(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
 polling is not done by default but it can still be configured here as a
 regular check on the health of submitted tasks.
 
@@ -899,7 +887,7 @@ Each list value is used in turn until the last, which is used repeatedly
 until finished.
 
 {\em Detaching tasks cannot be polled or killed by the suite daemon -
-see Section~\ref{DetachingTasks}.}
+see~\ref{DetachingTasks}.}
 
 \begin{myitemize}
     \item {\em type:} list of ISO 8601 duration/interval representations,
@@ -920,7 +908,7 @@ running state.
 
 For the polling task communications method this overrides the default
 execution polling interval in the site/user config files
-(Section~\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
+(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
 polling is not done by default but it can still be configured here as a
 regular check on the health of submitted tasks.
 
@@ -928,7 +916,7 @@ Each list value is used in turn until the last, which is used repeatedly
 until finished.
 
 {\em Detaching tasks cannot be polled or killed by the suite daemon -
-see Section~\ref{DetachingTasks}.}
+see~\ref{DetachingTasks}.}
 
 \begin{myitemize}
     \item {\em type:} list of ISO 8601 duration/interval representations,
@@ -946,8 +934,7 @@ is finished then cylc cannot arrange for the task to automatically
 signal when it has succeeded or failed. In such cases you must use this
 configuration item to tell cylc not to arrange for automatic completion
 messaging, and insert some minimal completion messaging yourself in
-appropriate places in the task implementation (see
-Section~\ref{DetachingTasks}).
+appropriate places in the task implementation (see~\ref{DetachingTasks}).
 
 \begin{myitemize}
 \item {\em type:} boolean
@@ -981,8 +968,7 @@ executed again cylc will put the task back into the running state and
 continue as normal when the started message is received. This can be
 used to handle HPC-style job preemption wherein a resource manager may
 kill a running task and reschedule it to run again later, to make way
-for a job with higher immediate priority. See also
-Section~\ref{PreemptionHPC}, {\em Handling Job Preemption}
+for a job with higher immediate priority. See also~\ref{PreemptionHPC}
 \begin{myitemize}
 \item {\em type:} boolean
 \item {\em default:} False
@@ -1049,9 +1035,8 @@ This section configures the means by which cylc submits task job scripts to run.
 \subparagraph[method]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method}
 \label{RuntimeJobSubMethods}
 
-See {\em Task Job Submission} (Section~\ref{TaskJobSubmission})
-for how job submission works, and how to define new methods.
-Cylc has a number of built in job submission methods:
+See~\ref{TaskJobSubmission} for how job submission works, and how to define
+new methods.  Cylc has a number of built in job submission methods:
 \begin{myitemize}
 \item {\em type:} string
 \item {\em legal values:}
@@ -1186,7 +1171,7 @@ interpretation on the remote host.
 
 Cylc has internal ``hooks'' to which you can attach handlers that are
 called by the suite daemon whenever certain events occur. This section
-configures task event hooks; see Section~\ref{SuiteEventHandling} for
+configures task event hooks; see~\ref{SuiteEventHandling} for
 suite event hooks.
 
 Event handlers can send an email or an SMS, call a pager, intervene
@@ -1277,8 +1262,7 @@ The user defined task execution environment. Variables defined here can
 refer to cylc suite and task identity variables, which are exported
 earlier in the task job script, and variable assignment expressions can
 use cylc utility commands because access to cylc is also configured
-earlier in the script.  See also {\em Task Execution Environment},
-Section~\ref{TaskExecutionEnvironment}.
+earlier in the script.  See also~\ref{TaskExecutionEnvironment}.
 
 \subparagraph[\_\_VARIABLE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]] $\rightarrow$ \_\_VARIABLE\_\_}
 \label{AppendixTaskExecutionEnvironment}
@@ -1296,7 +1280,7 @@ parser is concerned these are just normal configuration items).
 \item {\em type:} string
 \item {\em default:} (none)
 \item {\em legal values:} depends to some extent on the task job
-    submission shell (Section~\ref{JobSubShell}).
+    submission shell (\ref{JobSubShell}).
 \item {\em examples}, for the bash shell:
    \begin{myitemize}
        \item \lstinline@FOO = $HOME/bar/baz@
@@ -1367,8 +1351,8 @@ Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.
 \item {\em default:} (none)
 \end{myitemize}
 
-Example directives for the built-in job submission methods are shown in
-Section~\ref{AvailableMethods}.
+Example directives for the built-in job submission methods are shown
+in~\ref{AvailableMethods}.
 
 \paragraph[{[[[}outputs{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]]}
 
@@ -1396,7 +1380,8 @@ See~\ref{MessageTriggers} for more information.
 \paragraph[{[[[}suite state polling{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]]}
 
 \lstset{language=transcript}
-Configure automatic suite polling tasks as described in Section~\ref{SuiteStatePolling}. The
+Configure automatic suite polling tasks as described
+in~\ref{SuiteStatePolling}. The
 items in this section reflect the options and defaults of the
 \lstinline=cylc suite-state= command, except that the target suite name and the
 \lstinline=--task=, \lstinline=--cycle=, and \lstinline=--status= options are
