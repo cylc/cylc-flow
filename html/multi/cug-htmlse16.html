@@ -7,33 +7,37 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-06-07 09:53:00"> 
+<meta name="date" content="2014-09-10 22:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 6253--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6498--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse17.html" >next</a>] [<a 
 href="cug-htmlse15.html" >prev</a>] [<a 
 href="cug-htmlse15.html#tailcug-htmlse15.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse16.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse16.html" >up</a>] </p></div>
-   <h3 class="sectionHead"><span class="titlemark">16   </span> <a 
- id="x17-20800016"></a>Style Guide</h3>
-   <div class="sectionTOCS">
+<!--l. 6498--><p class="indent" >    <h3 id="16" class="sectionHead"><span class="titlemark"> <a href="#16">16</a>  <a 
+ id="x17-20900016"></a>Style Guide </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >16.1 <a 
-href="#x17-20900016.1">Line Indentation</a></span>
+href="#x17-21000016.1">Indentation</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >16.2 <a 
-href="#x17-21000016.2">Comments</a></span>
+href="#x17-21100016.2">Comments</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >16.3 <a 
-href="#x17-21100016.3">Other</a></span>
+href="#x17-21200016.3">Line Length</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >16.4 <a 
+href="#x17-21300016.4">Task Naming Convention</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >16.5 <a 
+href="#x17-21400016.5">Inlined Task Scripting</a></span>
    </div>
-<!--l. 6255--><p class="indent" >   Good style is arguably just a matter of taste. That said, for collaborative development of complex
-systems it is important to settle on a clear and consistent style. You may find the following suggestions
-useful.
-<!--l. 6260--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">16.1   </span> <a 
- id="x17-20900016.1"></a>Line Indentation</h4>
-<!--l. 6262--><p class="noindent" >The suite.rc file format consists of <span class="lstinline"><span 
+<!--l. 6500--><p class="indent" >   Good style is to some extent a matter of taste. That said, for collaborative development of complex systems
+it is important to settle on a clear and consistent style, and you may find the following suggestions
+useful. Note that the boundary between this section (style) and the previous (design) is somewhat
+arbitrary.
+<!--l. 6506--><p class="noindent" >
+<!--l. 6506--><p class="indent" >    <h4 id="16.1" class="subsectionHead"> <span class="titlemark"> <a href="#16.1"> 16.1</a>  <a 
+ id="x17-21000016.1"></a>Indentation </span></h4>
+<!--l. 6508--><p class="indent" >   The suite.rc file format consists of <span class="lstinline"><span 
 class="pcrr7t-">item</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -42,14 +46,14 @@ class="pcrr7t-">value</span></span> pairs under nested section headings. Clear i
 best way to show local nesting level inside large blocks.
      <ul class="itemize1">
      <li class="itemize">Indent suite.rc syntax four spaces per nesting level.
-     <!--l. 6270-->
-     <div class="lstlisting" id="listing-212"><span class="label"><a 
- id="x17-209001r1"></a></span><span 
+     <!--l. 6516-->
+     <div class="lstlisting" id="listing-220"><span class="label"><a 
+ id="x17-210001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">SECTION</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209002r2"></a></span><span 
+ id="x17-210002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -66,7 +70,7 @@ class="pcrr7t-">brown</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fox</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209003r3"></a></span><span 
+ id="x17-210003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -75,7 +79,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">SUBSECTION</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209004r4"></a></span><span 
+ id="x17-210004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -94,7 +98,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">value1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209005r5"></a></span><span 
+ id="x17-210005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -118,20 +122,21 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">value2</span>
      
      </div>
-     <!--l. 6277--><p class="noindent" >Don&#8217;t align <span class="lstinline"><span 
+     <!--l. 6523--><p class="noindent" >Don&#8217;t align <span class="lstinline"><span 
 class="pcrr7t-">item</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">value</span></span> pairs on the <span class="lstinline"><span 
-class="pcrr7t-">=</span></span> character:  <!--l. 6279-->
-     <div class="lstlisting" id="listing-213"><span class="label"><a 
- id="x17-209006r1"></a></span><span 
+class="pcrr7t-">=</span></span> character - this does not show nesting level clearly and it pushes
+     everything off to the right:  <!--l. 6527-->
+     <div class="lstlisting" id="listing-221"><span class="label"><a 
+ id="x17-210006r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">SECTION</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209007r2"></a></span><span 
+ id="x17-210007r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -155,7 +160,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">value1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209008r3"></a></span><span 
+ id="x17-210008r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -175,15 +180,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">value2</span>
      
      </div>
-     <!--l. 6284--><p class="noindent" >This does not show nesting level clearly, and long items push everything off to the right. The following may be
-     acceptable though as it preserves proper indentation:  <!--l. 6288-->
-     <div class="lstlisting" id="listing-214"><span class="label"><a 
- id="x17-209009r1"></a></span><span 
+     <!--l. 6533--><p class="noindent" >The following layout does preserve proper indentation on the left, but the whole block may need
+     reformatting after changing one line, which pollutes your revision history with spurious changes:
+     <!--l. 6537-->
+     <div class="lstlisting" id="listing-222"><span class="label"><a 
+ id="x17-210009r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">SECTION</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209010r2"></a></span><span 
+ id="x17-210010r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -207,7 +213,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">value1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209011r3"></a></span><span 
+ id="x17-210011r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -231,25 +237,25 @@ class="pcrr7t-">value2</span>
      <li class="itemize">Set your text editor to convert <span 
 class="cmti-10">TAB characters </span>to spaces - tabs may be displayed differently in different
      editors, so a mixture of space and tab indentations can render to a mess.
-     </li>
-     <li class="itemize"><span 
-class="cmti-10">Line comments </span>should be indented to the same level as the section or item they refer to. Consistent local
-     indentation makes block re-indentation operations easier in text editors.
                                                                                          
 
                                                                                          
      </li>
      <li class="itemize"><span 
+class="cmti-10">Line comments </span>should be indented to the same level as the section or item they refer to. Consistent local
+     indentation makes block re-indentation operations easier in text editors.
+     </li>
+     <li class="itemize"><span 
 class="cmti-10">Command scripting strings </span>are interpreted by the associated task job script, not by cylc, so strictly speaking
      their internal lines should not be indented as if part of the suite.rc syntax. This, for example,
-     <!--l. 6307-->
-     <div class="lstlisting" id="listing-215"><span class="label"><a 
- id="x17-209012r1"></a></span><span 
+     <!--l. 6556-->
+     <div class="lstlisting" id="listing-223"><span class="label"><a 
+ id="x17-210012r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209013r2"></a></span><span 
+ id="x17-210013r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -258,7 +264,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209014r3"></a></span><span 
+ id="x17-210014r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -275,7 +281,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209015r4"></a></span><span 
+ id="x17-210015r4"></a></span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
@@ -286,7 +292,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209016r5"></a></span><span 
+ id="x17-210016r5"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Goodbye</span><span 
@@ -298,14 +304,14 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
      
      </div>
-     <!--l. 6314--><p class="noindent" >is preferred over this (or similar):  <!--l. 6316-->
-     <div class="lstlisting" id="listing-216"><span class="label"><a 
- id="x17-209017r1"></a></span><span 
+     <!--l. 6563--><p class="noindent" >is preferred over this (or similar):  <!--l. 6565-->
+     <div class="lstlisting" id="listing-224"><span class="label"><a 
+ id="x17-210017r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209018r2"></a></span><span 
+ id="x17-210018r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -314,7 +320,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209019r3"></a></span><span 
+ id="x17-210019r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -332,7 +338,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209020r4"></a></span><span 
+ id="x17-210020r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -352,7 +358,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209021r5"></a></span><span 
+ id="x17-210021r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -372,7 +378,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209022r6"></a></span><span 
+ id="x17-210022r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -405,20 +411,20 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
      
      </div>
-     <!--l. 6324--><p class="noindent" >The extra whitespace here translates directly to spurious indentation in the task job script. As it happens this
+     <!--l. 6573--><p class="noindent" >The extra whitespace here translates directly to spurious indentation in the task job script. As it happens this
      is just an aesthetic problem in bash scripts, but for Python job scripts (which cylc may support in the future)
      it would be a technical error.
      </li>
      <li class="itemize">The positioning of string-delimiting triple quotes is of no practical consequence either, but the following
      forms are suggested for the same reason - to avoid including spurious whitespace in the string:
-     <!--l. 6333-->
-     <div class="lstlisting" id="listing-217"><span class="label"><a 
- id="x17-209023r1"></a></span><span 
+     <!--l. 6582-->
+     <div class="lstlisting" id="listing-225"><span class="label"><a 
+ id="x17-210023r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209024r2"></a></span><span 
+ id="x17-210024r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -427,7 +433,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209025r3"></a></span><span 
+ id="x17-210025r3"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -441,7 +447,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">best</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209026r4"></a></span><span 
+ id="x17-210026r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -458,7 +464,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209027r5"></a></span><span 
+ id="x17-210027r5"></a></span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
@@ -469,7 +475,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209028r6"></a></span><span 
+ id="x17-210028r6"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Goodbye</span><span 
@@ -480,7 +486,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209029r7"></a></span><span 
+ id="x17-210029r7"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -501,7 +507,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">line</span><span 
 class="pcrro7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209030r8"></a></span><span 
+ id="x17-210030r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -525,7 +531,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209031r9"></a></span><span 
+ id="x17-210031r9"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Goodbye</span><span 
@@ -536,7 +542,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209032r10"></a></span><span 
+ id="x17-210032r10"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -563,7 +569,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">character</span><span 
 class="pcrro7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209033r11"></a></span><span 
+ id="x17-210033r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -581,7 +587,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209034r12"></a></span><span 
+ id="x17-210034r12"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Hello</span><span 
@@ -589,7 +595,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">World</span><span 
 class="pcrr7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209035r13"></a></span><span 
+ id="x17-210035r13"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Goodbye</span><span 
@@ -604,14 +610,14 @@ class="pcrr7t-">"</span>
      </li>
      <li class="itemize">Multiline dependency <span class="lstinline"><span 
 class="pcrr7t-">graph</span></span> strings have no meaning outside of the suite definition, so they can be free-form
-     in order to most clearly present the structure of the suite:  <!--l. 6353-->
-     <div class="lstlisting" id="listing-218"><span class="label"><a 
- id="x17-209036r1"></a></span><span 
+     in order to most clearly present the structure of the suite:  <!--l. 6602-->
+     <div class="lstlisting" id="listing-226"><span class="label"><a 
+ id="x17-210036r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209037r2"></a></span><span 
+ id="x17-210037r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -620,7 +626,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209038r3"></a></span><span 
+ id="x17-210038r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -637,7 +643,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209039r4"></a></span><span 
+ id="x17-210039r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -655,7 +661,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qux</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209040r5"></a></span><span 
+ id="x17-210040r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -668,7 +674,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">recovery</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209041r6"></a></span><span 
+ id="x17-210041r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -682,7 +688,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">recover</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209042r7"></a></span><span 
+ id="x17-210042r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -707,9 +713,9 @@ class="pcrr7t-">"</span>
      </li>
      <li class="itemize">Embedded <span 
 class="cmti-10">Jinja2 </span>code is not part of the suite.rc syntax, so it should be indented from the left margin on its
-     own terms.  <!--l. 6366-->
-     <div class="lstlisting" id="listing-219"><span class="label"><a 
- id="x17-209043r1"></a></span><span 
+     own terms.  <!--l. 6615-->
+     <div class="lstlisting" id="listing-227"><span class="label"><a 
+ id="x17-210043r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -718,7 +724,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">OPS</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209044r2"></a></span><span 
+ id="x17-210044r2"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">for</span><span 
@@ -731,7 +737,7 @@ class="pcrr7t-">OPS_TASKS</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209045r3"></a></span><span 
+ id="x17-210045r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -743,7 +749,7 @@ class="pcrr7t-">T</span><span
 class="pcrr7t-">}}</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209046r4"></a></span><span 
+ id="x17-210046r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -758,7 +764,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">OPS</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209047r5"></a></span><span 
+ id="x17-210047r5"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -771,7 +777,7 @@ class="pcrro7t-">#</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">...</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-209048r6"></a></span><span 
+ id="x17-210048r6"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">endfor</span><span 
@@ -780,43 +786,50 @@ class="pcrr7t-">%}</span>
      
      </div>
      </li></ul>
-<!--l. 6376--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">16.2   </span> <a 
- id="x17-21000016.2"></a>Comments</h4>
+<!--l. 6625--><p class="noindent" >
+<!--l. 6625--><p class="indent" >    <h4 id="16.2" class="subsectionHead"> <span class="titlemark"> <a href="#16.2"> 16.2</a>  <a 
+ id="x17-21100016.2"></a>Comments </span></h4>
+<!--l. 6627--><p class="indent" >   Comments should be <span 
+class="cmti-10">minimal</span>, but not too minimal. If context and clear item names will do, leave it at that.
+Extremely verbose comments tend to be neglected and eventually get out of sync with the code, a result that may
+be worse than having no comments at all.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">Indent line comments </span>to section or item level, as described above.
      </li>
      <li class="itemize">Avoid <span 
 class="cmti-10">numbered comments </span>- future changes can create a renumbering nightmare.
-                                                                                         
-
-                                                                                         
-     </li>
-     <li class="itemize">Avoid  <span 
-class="cmti-10">unnecessary comments </span>-  if  these  are  not  kept  up  to  date  with  code  changes  the  result  is
-     misleading, which is worse than having no comments at all. If context and clear item or variable names
-     will do, leave it at that.
      </li>
      <li class="itemize">Avoid <span 
 class="cmti-10">full page width &#8220;section divider&#8221; comments </span>- these assume a particular line width, which can be
      a problem for text editors that auto line break on a smaller line width.
+     </li>
+     <li class="itemize">Use the <span class="lstinline"><span 
+class="pcrr7t-">title</span></span> and <span class="lstinline"><span 
+class="pcrr7t-">description</span></span> items instead of comments to describe tasks and families under
+     <span class="lstinline"><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span></span> - these get displayed by mouse hover in gcylc.
      </li></ul>
-<!--l. 6397--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">16.3   </span> <a 
- id="x17-21100016.3"></a>Other</h4>
+<!--l. 6650--><p class="noindent" >
+<!--l. 6650--><p class="indent" >    <h4 id="16.3" class="subsectionHead"> <span class="titlemark"> <a href="#16.3"> 16.3</a>  <a 
+ id="x17-21200016.3"></a>Line Length </span></h4>
+<!--l. 6652--><p class="indent" >   Keep to the standard maximum line length of 79 characters where possible. Very long lines affect
+readability, may pose a problem for auto-line-breaking in text editors, and make side-by-side diff display less
+effective.
      <ul class="itemize1">
-     <li class="itemize">Avoid <span 
-class="cmti-10">very long lines </span>if possible - these affect readability and may be a problem for auto-line-breaking text
-     editors. Line continuation markers can be used anywhere in a suite definition to break up long lines:
-     <!--l. 6405-->
-     <div class="lstlisting" id="listing-220"><span class="label"><a 
- id="x17-211001r1"></a></span><span 
+     <li class="itemize">Line continuation markers can be used anywhere to break up long lines:  <!--l. 6660-->
+     <div class="lstlisting" id="listing-228"><span class="label"><a 
+ id="x17-212001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211002r2"></a></span><span 
+ id="x17-212002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -825,7 +838,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211003r3"></a></span><span 
+ id="x17-212003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -855,7 +868,7 @@ class="pcrr7t-">three</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211004r4"></a></span><span 
+ id="x17-212004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -887,12 +900,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">eight</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211005r5"></a></span><span 
+ id="x17-212005r5"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211006r6"></a></span><span 
+ id="x17-212006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -901,7 +914,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">MY_TASKS</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211007r7"></a></span><span 
+ id="x17-212007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -924,7 +937,7 @@ class="pcrr7t-">,</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211008r8"></a></span><span 
+ id="x17-212008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -943,7 +956,7 @@ class="pcrr7t-">eight</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211009r9"></a></span><span 
+ id="x17-212009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -959,14 +972,14 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">MY_TASKS</span>
      
      </div>
-     <!--l. 6416--><p class="noindent" >Graph lines can also be split up without line breaks, like this:  <!--l. 6418-->
-     <div class="lstlisting" id="listing-221"><span class="label"><a 
- id="x17-211010r1"></a></span><span 
+     <!--l. 6671--><p class="noindent" >Graph lines can also be split up without line breaks, like this:  <!--l. 6673-->
+     <div class="lstlisting" id="listing-229"><span class="label"><a 
+ id="x17-212010r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211011r2"></a></span><span 
+ id="x17-212011r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -975,7 +988,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211012r3"></a></span><span 
+ id="x17-212012r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1009,7 +1022,7 @@ class="pcrr7t-">=&#x003E;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">four</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x17-211013r4"></a></span><span 
+ id="x17-212013r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1049,15 +1062,25 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
      
      </div>
-     </li>
-     <li class="itemize">Use a <span 
-class="cmti-10">naming convention </span>for runtime namespaces: uppercase names for families and lower case for tasks, so
-     that you can tell which is which at a glance.
-     </li>
-     <li class="itemize">Don&#8217;t bother writing command scripting that prints all task input variables to stdout - there is a maintenance
-     cost to this, and for little benefit because a task&#8217;s job script (containing the variable definitions) can be view
-     just as easily as its output logs.
      </li></ul>
+<!--l. 6682--><p class="noindent" >
+<!--l. 6682--><p class="indent" >    <h4 id="16.4" class="subsectionHead"> <span class="titlemark"> <a href="#16.4"> 16.4</a>  <a 
+ id="x17-21300016.4"></a>Task Naming Convention </span></h4>
+<!--l. 6684--><p class="indent" >   Use <span class="lstinline"><span 
+class="pcrr7t-">UPPERCASE_NAMES</span></span> for families and <span class="lstinline"><span 
+class="pcrr7t-">lowercase_names</span></span> for tasks, so that you can tell which is which at a
+glance.
+     <ul class="itemize1">
+     <li class="itemize">Put  the  most  general  components  of  task  names  first,  for  natural  grouping  in  the  GUI  (under
+     alphanumeric sorting) and in listings, e.g.&#x00A0;<span class="lstinline"><span 
+class="pcrr7t-">obsproc_sonde</span></span>, <span class="lstinline"><span 
+class="pcrr7t-">obsproc_radar</span></span>.</li></ul>
+<!--l. 6693--><p class="noindent" >
+<!--l. 6693--><p class="indent" >    <h4 id="16.5" class="subsectionHead"> <span class="titlemark"> <a href="#16.5"> 16.5</a>  <a 
+ id="x17-21400016.5"></a>Inlined Task Scripting </span></h4>
+<!--l. 6695--><p class="indent" >   Trivial task scripting may be inlined in the suite definition but anything more should be written to a script file.
+This keeps the suite definition tidy, it allows proper shell-mode text editing, and it allows separate command line
+testing of the script during development or debugging.
                                                                                          
 
                                                                                          

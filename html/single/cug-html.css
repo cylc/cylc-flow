@@ -21,9 +21,9 @@
 .cmti-7{font-size:70%; font-style: italic;}
 .pcrr8c-{ font-family: monospace;}
 .pcrr8c-{ font-family: monospace;}
-.pcrb7t-{ font-family: monospace; font-weight: bold;}
 .pcrro7t-{font-family: monospace;    font-style: oblique;}
 .pcrro8c-{ font-family: monospace;    font-style: oblique;}
+.pcrb7t-{ font-family: monospace; font-weight: bold;}
 .pcrr7t-x-x-80{font-size:80%;font-family: monospace;}
 .pcrr8c-x-x-80{font-size:80%; font-family: monospace;}
 .pcrr8c-x-x-80{ font-family: monospace;}
@@ -168,9 +168,9 @@ div#colorbox8{background-color:#FFFF00;}
 div#colorbox9{background-color:#FFFF00;}
 div#colorbox10{background-color:#FFFF00;}
 div#colorbox11{background-color:#FFFF00;}
-div#colorbox12{background-color:#FFFF00;}
-div#colorbox13{background-color:#FFFF00;}
-div#colorbox14{background-color:#FFFF00;}
+span#colorbox12{background-color:#FFFF00;}
+span#colorbox13{background-color:#FFFF00;}
+span#colorbox14{background-color:#FFFF00;}
 div#colorbox15{background-color:#FFFF00;}
 /* end css.sty */
 

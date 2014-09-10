@@ -7,501 +7,502 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-06-07 09:53:00"> 
+<meta name="date" content="2014-09-10 22:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5863--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6136--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse16.html" >next</a>] [<a 
 href="cug-htmlse14.html" >prev</a>] [<a 
 href="cug-htmlse14.html#tailcug-htmlse14.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse15.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse15.html" >up</a>] </p></div>
-   <h3 class="sectionHead"><span class="titlemark">15   </span> <a 
- id="x16-19100015"></a>Suite Design Principles</h3>
-   <div class="sectionTOCS">
+<!--l. 6136--><p class="indent" >    <h3 id="15" class="sectionHead"><span class="titlemark"> <a href="#15">15</a>  <a 
+ id="x16-18800015"></a>Suite Design Principles </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >15.1 <a 
-href="#x16-19200015.1">Make Fine-Grained Suites</a></span>
+href="#x16-18900015.1">Make Fine-Grained Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.2 <a 
-href="#x16-19300015.2">Make Tasks Rerunnable</a></span>
+href="#x16-19000015.2">Make Tasks Re-runnable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.3 <a 
-href="#x16-19400015.3">Make Models Rerunnable</a></span>
+href="#x16-19100015.3">Make Models Re-runnable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.4 <a 
-href="#x16-19500015.4">Avoid Unnecessary Previous-Instance Dependence</a></span>
+href="#x16-19200015.4">Avoid False Dependence</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.5 <a 
-href="#x16-19600015.5">Put Task Cycle Time In All Output File Paths</a></span>
+href="#x16-19300015.5">Put Task Cycle Point In Output File Paths</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.6 <a 
-href="#x16-19700015.6">How To Manage Input/Output File Dependencies</a></span>
+href="#x16-19400015.6">Managing Input/Output File Dependencies</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.7 <a 
-href="#x16-19800015.7">Use Generic Task Scripts</a></span>
+href="#x16-19700015.7">Reuse Task Implementation</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.8 <a 
-href="#x16-19900015.8">Make Suites Portable</a></span>
+href="#x16-19800015.8">Make Suites Portable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.9 <a 
-href="#x16-20000015.9">Make Tasks As Self-Contained As Possible</a></span>
+href="#x16-19900015.9">Make Tasks As Independent As Possible</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.10 <a 
-href="#x16-20100015.10">Make Suites As Self-Contained As Possible</a></span>
+href="#x16-20000015.10">Make Suites As Self-Contained As Possible</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.11 <a 
 href="#x16-20200015.11">Orderly Product Generation?</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.12 <a 
-href="#x16-20300015.12">Clock-triggered Tasks Wait On External Data</a></span>
+href="#x16-20300015.12">Use Of Clock-Triggered Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.13 <a 
-href="#x16-20400015.13">Do Not Treat Real Time Operation As Special</a></span>
+href="#x16-20400015.13">Tasks That Wait On Something</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.14 <a 
-href="#x16-20500015.14">Factor Out Common Configuration</a></span>
+href="#x16-20500015.14">Do Not Treat Real Time Operation As Special</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.15 <a 
-href="#x16-20600015.15">Use The Graph For Scheduling</a></span>
+href="#x16-20600015.15">Factor Out Common Configuration</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.16 <a 
-href="#x16-20700015.16">Use Suite Visualization</a></span>
+href="#x16-20700015.16">Use The Graph For Scheduling</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >15.17 <a 
+href="#x16-20800015.17">Use Suite Visualization</a></span>
    </div>
-<!--l. 5868--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.1   </span> <a 
- id="x16-19200015.1"></a>Make Fine-Grained Suites</h4>
-<!--l. 5871--><p class="noindent" >A suite can contain a small number of large, internally complex tasks; a large number of small, simple tasks; or
+<!--l. 6141--><p class="noindent" >
+<!--l. 6141--><p class="indent" >    <h4 id="15.1" class="subsectionHead"> <span class="titlemark"> <a href="#15.1"> 15.1</a>  <a 
+ id="x16-18900015.1"></a>Make Fine-Grained Suites </span></h4>
+<!--l. 6144--><p class="indent" >   A suite can contain a small number of large, internally complex tasks; a large number of small, simple tasks; or
 anything in between. Cylc can easily handle a large number of tasks, however, so there are definite advantages to
 fine-graining:
      <ul class="itemize1">
-     <li class="itemize">a more modular and transparent suite.
+     <li class="itemize">A more modular and transparent suite.
      </li>
-     <li class="itemize">better functional parallelism (multiple tasks running at the same time).
+     <li class="itemize">More functional parallelism (multiple tasks running at once).
      </li>
-     <li class="itemize">faster debugging and failure recovery: rerun just the tasks(s) that failed.
+     <li class="itemize">Faster debugging and failure recovery: rerun just the tasks(s) that failed.
      </li>
-     <li class="itemize">code reuse: similar tasks can often call the same script or command with differing task-specific input
-     parameters (consider tasks that move files around, for example).
+     <li class="itemize">More code reuse: similar tasks may be able to call the same underlying same script or command with
+     differing input parameters.
      </li></ul>
                                                                                          
 
                                                                                          
-<!--l. 5891--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.2   </span> <a 
- id="x16-19300015.2"></a>Make Tasks Rerunnable</h4>
-<!--l. 5893--><p class="noindent" >It should be possible to rerun a task by simply resubmitting it for the same cycle time. In other words, failure at any
-point during execution of a task should not render a rerun impossible by corrupting the state of some internal-use
-file, or whatever. It is difficult to overstate the usefulness of being able to rerun the same task multiple times, either
-outside of the suite with <span class="lstinline"><span 
+<!--l. 6163--><p class="noindent" >
+<!--l. 6163--><p class="indent" >    <h4 id="15.2" class="subsectionHead"> <span class="titlemark"> <a href="#15.2"> 15.2</a>  <a 
+ id="x16-19000015.2"></a>Make Tasks Re-runnable </span></h4>
+<!--l. 6165--><p class="indent" >   It should be possible to rerun a task by simply resubmitting it for the same cycle point. In other words, failure at
+any point during execution of a task should not render a rerun impossible by corrupting the state of some
+internal-use file, or whatever. It is difficult to overstate the usefulness of being able to rerun the same task multiple
+times, either outside of the suite with <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">submit</span></span>, or by retriggering it within the running suite, when debugging a
-problem.
-<!--l. 5901--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.3   </span> <a 
- id="x16-19400015.3"></a>Make Models Rerunnable</h4>
-<!--l. 5903--><p class="noindent" >If a warm-cycled model simply overwrites its restart files in each run, the only cycle that can subsequently run is the
-next one. This is dangerous because if, accidentally or otherwise, the task runs for the wrong cycle time, its restart
-files will be corrupted such that the correct cycle can no longer run (probably necessitating a cold-start). Instead,
-consider organising restart files by cycle time, through a file or directory naming convention, and keep them in a
-simple rolling archive (cylc&#8217;s filename templating and housekeeping utilities can easily do this for you). Then,
-given availability of external inputs, you can easily rerun the task for any cycle still in the restart
-archive.
-<!--l. 5915--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.4   </span> <a 
- id="x16-19500015.4"></a>Avoid Unnecessary Previous-Instance Dependence</h4>
-<!--l. 5918--><p class="noindent" >If a cycling task does not generate files required by its own successor, then for maximum scheduling efficiency
-successive instances of it should be able to run in parallel if the opportunity arises.
-<!--l. 5922--><p class="indent" >   If such a task would interfere with its own siblings for internal reasons, however, perhaps by use of a hardwired
-non cycle time dependent temporary file or similar, then it can be forced to run sequentially - see
-Section&#x00A0;<a 
-href="cug-htmlse9.html#x10-980009.3.4.11">9.3.4.11<!--tex4ht:ref: SequentialTasks --></a>.
-<!--l. 5927--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.5   </span> <a 
- id="x16-19600015.5"></a>Put Task Cycle Time In All Output File Paths</h4>
-<!--l. 5930--><p class="noindent" >Putting task cycle time in output file or directory names makes archiving and cleanup easier, and it facilitates task
-re-runnability and avoidance of previous-instance dependence (above) by ensuring that important files do not get
-overwritten by the next cycle.
-<!--l. 5935--><p class="indent" >   The <span class="lstinline"><span 
+class="pcrr7t-">submit</span></span>, or by re-triggering it within the running suite, when
+debugging a problem.
+<!--l. 6173--><p class="noindent" >
+<!--l. 6173--><p class="indent" >    <h4 id="15.3" class="subsectionHead"> <span class="titlemark"> <a href="#15.3"> 15.3</a>  <a 
+ id="x16-19100015.3"></a>Make Models Re-runnable </span></h4>
+<!--l. 6175--><p class="indent" >   If a warm-cycled model uses the exact same file names for its restart files regardless of current cycle point, the
+only cycle point that can subsequently run successfully is the next one. Instead, restart files should be labelled with
+current cycle point and maintained in a simple rolling archive. Then you can easily rerun the task for any cycle
+point still in the archive.
+<!--l. 6181--><p class="noindent" >
+<!--l. 6181--><p class="indent" >    <h4 id="15.4" class="subsectionHead"> <span class="titlemark"> <a href="#15.4"> 15.4</a>  <a 
+ id="x16-19200015.4"></a>Avoid False Dependence </span></h4>
+<!--l. 6184--><p class="indent" >   If a task does not depend on files generated by another task then generally speaking it should not
+trigger off that task in the suite scheduling graph. Unnecessary dependence between tasks restricts
+functional parallelism at run time, and it makes the suite more difficult to understand. If you need to
+restrict the number of tasks that are active at once, use runahead limiting (<a 
+href="cug-htmlse12.html#x13-17100012.12">12.12<!--tex4ht:ref: RunaheadLimit --></a>) and internal queues
+(<a 
+href="cug-htmlse12.html#x13-17200012.13">12.13<!--tex4ht:ref: InternalQueues --></a>).
+<!--l. 6192--><p class="noindent" >
+<!--l. 6192--><p class="indent" >    <h4 id="15.5" class="subsectionHead"> <span class="titlemark"> <a href="#15.5"> 15.5</a>  <a 
+ id="x16-19300015.5"></a>Put Task Cycle Point In Output File Paths </span></h4>
+<!--l. 6195--><p class="indent" >   Putting task cycle point in output file or directory names makes archiving and cleanup easier, and it
+facilitates re-runnability by ensuring that important files do not get overwritten from one cycle to the
+next.
+<!--l. 6199--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycletime</span></span> command computes offsets (in hours, days, months, and years) from a given or current
-cycle time, and optionally inserts the resulting computed cycle time, or components of it, into a given filename
-template string.
-<!--l. 5940--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.6   </span> <a 
- id="x16-19700015.6"></a>How To Manage Input/Output File Dependencies</h4>
-<!--l. 5943--><p class="noindent" >Dependencies between tasks usually, though not always, take the form of files generated by one task that are used
-by other tasks. It is possible to manage these files across a suite without hard wiring I/O locations and therefore
-compromising suite flexibility and portability.
-     <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmbx-10">Use A Common I/O Workspace</span>
-     <!--l. 5952--><p class="noindent" >For small suites you may be able to have all tasks read and write from a common workspace, thereby
-     avoiding the need to move common files around. You should be able to define the workspace location
-     once in the suite.rc file rather than hard wiring it into the task implementations.
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">point</span></span> command computes offsets from a given or current cycle point, and can insert the
+resulting computed date-time into a filename template string.
+<!--l. 6203--><p class="noindent" >
+<!--l. 6203--><p class="indent" >    <h4 id="15.6" class="subsectionHead"> <span class="titlemark"> <a href="#15.6"> 15.6</a>  <a 
+ id="x16-19400015.6"></a>Managing Input/Output File Dependencies </span></h4>
+<!--l. 6206--><p class="indent" >   Dependence between tasks usually, although not always, take the form of files generated by one task and used by
+others. It is possible to manage these files across a suite without compromising suite flexibility and portability with
+hard wired I/O locations.
+<!--l. 6211--><p class="noindent" >
+<!--l. 6211--><p class="indent" >    <h4 id="15.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#15.6.1"> 15.6.1</a>  <a 
+ id="x16-19500015.6.1"></a>Common I/O Workspaces </span></h4>
+<!--l. 6213--><p class="indent" >   You may be able to have all tasks, or groups of tasks that need to cooperate, read and write from a
+common workspace, thereby avoiding the need to explicitly move files around. The suite share directory
+(<span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_SHARE_DIR</span></span>) is provided for this purpose. Similarly, task work directories are private to each task
+by default but they can be shared to allow multiple tasks to simply read and write from their current working
+directory. Even if you use other custom I/O directories, define their locations in the suite.rc file rather than hard
+wiring them into task implementation. Shared workspace locations can be passed to tasks as needed without
                                                                                          
 
                                                                                          
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">Add Connector Tasks To The Suite</span>
-     <!--l. 5959--><p class="noindent" >Tasks can be added to a suite to move files from A&#8217;s output directory to B&#8217;s input directory, and
-     so on. Many connector tasks may be able to call the same file transfer script or command, with
-     task-dependendent input parameters defined in the suite.rc file.
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">Dynamic Configuration Of I/O Paths</span>
-     <!--l. 5966--><p class="noindent" >Whether or not your suite uses a single common workspace, passing common I/O paths to tasks via
-     variables defined once in the suite.rc file should allow you to avoid using connector tasks at all, except
-     where it is necessary to transfer files between machines, or similar.
-     </li></ul>
-<!--l. 5973--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.7   </span> <a 
- id="x16-19800015.7"></a>Use Generic Task Scripts</h4>
-<!--l. 5975--><p class="noindent" >If your suite contains multiple logically distinct tasks that actually have similar functionality (e.g.&#x00A0;for moving files
-around, or for generating similar products from the output of several similar models) have the corresponding cylc
-tasks all call the same command, script, or executable - just provide different input parameters via the task
-command scripting and/or execution environment, in the suite.rc file.
-<!--l. 5984--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.8   </span> <a 
- id="x16-19900015.8"></a>Make Suites Portable</h4>
-<!--l. 5986--><p class="noindent" >If every task in a suite is configured to put its output under <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span></span> (i.e.&#x00A0;the environment variable, literally, not the
-explicit path to your home directory; and similarly for temporary directories, etc.) then other users will be able to
-copy the suite and run it immediately, after merely ensuring that any external input files are in the right
-place.
-<!--l. 5993--><p class="indent" >   For the ultimate in portability, construct suites in which all task I/O paths are dynamically configured to be user
-and suite (registration) specific, e.g. <!--l. 5996-->
-   <div class="lstlisting" id="listing-203"><span class="label"><a 
- id="x16-199001r1"></a></span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">HOME</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">output</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_SUITE_REG_PATH</span>
-   
-   </div>
-<!--l. 5999--><p class="indent" >   (these variables are automatically exported to the task execution environment by cylc - see <span 
-class="cmti-10">Task Execution</span>
-<span 
-class="cmti-10">Environment</span>, Section&#x00A0;<a 
-href="cug-htmlse9.html#x10-1100009.4.7">9.4.7<!--tex4ht:ref: TaskExecutionEnvironment --></a>). Then you can run multiple instances of the suite at once (even under the same user
-account) without changing anything, and they will not interfere with each other.
-<!--l. 6006--><p class="indent" >   <span 
-class="cmti-10">You can test changes to a portable suite safely by making a quick copy of it in a temporary directory, then</span>
-<span 
-class="cmti-10">modifying and running the test copy without fear of corrupting the output directories, suite logs, and suite state, of</span>
-<span 
-class="cmti-10">the original.</span>
-<!--l. 6012--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.9   </span> <a 
- id="x16-20000015.9"></a>Make Tasks As Self-Contained As Possible</h4>
-<!--l. 6014--><p class="noindent" >Where possible, no task should rely on the action of another task, except for the prerequisites embodied in the suite
-dependency graph that it has no choice but to depend on. If this rule is followed, your suite will be as flexible as
-possible in terms of being able to run single tasks, or subsets of the suite, whilst debugging or developing new
-features.<span class="footnote-mark"><a 
-href="#fn6x0" id="fn6x0-bk"><sup class="textsuperscript">6</sup></a></span><a 
- id="x16-200001f6"></a>
-For example, every task should create its own output directories if they do not already exist, instead of assuming
-their existence due to the action of some other task; then you will be able to run single tasks without having to
-manually create output directories first.
-                                                                                         
-
-                                                                                         
-   <!--l. 6027-->
-   <div class="lstlisting" id="listing-204"><span class="label"><a 
- id="x16-200002r1"></a></span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">manual</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">task</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">scripting</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200003r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1/</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">create</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">OUTDIR</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">if</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">it</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">doesn</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">t</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">already</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">exist</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200004r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">mkdir</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">p</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">OUTDIR</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200005r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2/</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">create</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">the</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">parent</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">directory</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">of</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">OUTFILE</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">if</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">it</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">doesn</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">t</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">exist</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200006r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">mkdir</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">p</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">(</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">dirname</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">OUTFILE</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">)</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200007r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200008r7"></a></span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">OR</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">using</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">the</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">checkvars</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">utility</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200009r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1/</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">check</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">vars</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">are</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">defined</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">and</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">create</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">directories</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">if</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">necessary</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200010r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">util</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">checkvars</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">c</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">OUTDIR1</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">OUTDIR2</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">...</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200011r10"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2/</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">check</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">vars</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">are</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">defined</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">and</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">create</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">parent</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">dirs</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">if</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">necessary</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-200012r11"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">util</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">checkvars</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">p</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">OUTFILE1</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">OUTFILE2</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">#</span><span 
-class="pcrr7t-">...</span>
-   
-   </div>
-<!--l. 6041--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.10   </span> <a 
- id="x16-20100015.10"></a>Make Suites As Self-Contained As Possible</h4>
-<!--l. 6043--><p class="noindent" >The only compulsory content of a cylc suite definition directory is the <span class="lstinline"><span 
-class="pcrr7t-">suite</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">rc</span></span> file. However, you can store whatever you like in a
-suite definition directory;<span class="footnote-mark"><a 
-href="#fn7x0" id="fn7x0-bk"><sup class="textsuperscript">7</sup></a></span><a 
- id="x16-201001f7"></a>
-other files there will be ignored by cylc but suite tasks can access them via the <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_SUITE_DEF_PATH</span></span> variable
-that cylc automatically exports into the task execution environment. Disk space is cheap - if all programs, ancillary
-files, control files (etc.) required by the suite are stored in the suite definition directory instead of having
-the suite reference external build directories (etc.), you can turn the directory into a revision control
-repository and be virtually assured of the ability to exactly reproduce earlier versions, regardless of suite
-complexity.
-<!--l. 6058--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.11   </span> <a 
- id="x16-20200015.11"></a>Orderly Product Generation?</h4>
-<!--l. 6061--><p class="noindent" >Correct scheduling is not equivalent to &#8220;orderly generation of products by cycle time&#8221;. Under cylc, a product
-generation task will trigger as soon as its prerequisites are satisfied (i.e.&#x00A0;when its input files are ready,
-generally) regardless of whether other tasks with the same cycle time have finished or have yet to
-run. If your product delivery or presentation system demands that all products for one cycle time
-are uploaded (or whatever) before any from the next cycle, then be aware that this may be quite
-inefficient if your suite is ever faced with catching up from a significant delay or running over historical
-data.
-<!--l. 6071--><p class="indent" >   If you must, however, you can introduce artificial dependencies into your suite to ensure that the final products
-never arrive out of sequence. One way of doing this would be to have a final &#8220;product upload&#8221; task that depends on
-completion of all the real product generation tasks at the same cycle time, and then declare it to be sequential (see
-Section&#x00A0;<a 
-href="cug-htmlse9.html#x10-980009.3.4.11">9.3.4.11<!--tex4ht:ref: SequentialTasks --></a>.
-<!--l. 6078--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.12   </span> <a 
- id="x16-20300015.12"></a>Clock-triggered Tasks Wait On External Data</h4>
-<!--l. 6080--><p class="noindent" >All tasks in a cylc suite know their own private cycle time, but most don&#8217;t care about the wall clock time - they just
-run when their prerequisites are satisfied. The exception to this is <span 
-class="cmti-10">clock-triggered </span>tasks, which wait on a wall clock
-time expressed as an offset from their own cycle time, in addition to any other prerequisites. The usual purpose of
-these tasks is to retrieve real time data from the external world, triggering at roughly the expected time of
-availability of the data. Triggering the task at the right time is up to cylc, but the task itself should go into a
-check-and-wait loop in case the data is delayed; only on successful detection or retrieval should the task report
-success and then exit (or perhaps report failure and then exit if the data has not arrived by some cutoff
-time).
-<!--l. 6093--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.13   </span> <a 
- id="x16-20400015.13"></a>Do Not Treat Real Time Operation As Special</h4>
-<!--l. 6095--><p class="noindent" >Cylc suites, without modification, can handle real time and delayed operation equally well.
-                                                                                         
-
-                                                                                         
-<!--l. 6098--><p class="indent" >   In real time operation clock-triggered tasks constrain the behaviour of the whole suite, or at least of all tasks
-downstream of them in the dependency graph.
-<!--l. 6102--><p class="indent" >   In delayed operation (whether due to an actual delay in an operational suite or because you&#8217;re running an
-historical trial) clock-triggered tasks will not constrain the suite at all, and cylc&#8217;s cycle interleaving abilities come to
-the fore, because their trigger times have already passed. But if a clock-triggered task happens to catch up to the
-wall clock, it will automatically wait again. In this way a cylc suite naturally and seamlessly transitions between
-delayed and real time operation as required.
-<!--l. 6112--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.14   </span> <a 
- id="x16-20500015.14"></a>Factor Out Common Configuration</h4>
-<!--l. 6114--><p class="noindent" >Properties shared by multiple tasks (job submission settings, environment variables, command scripting, etc.) should
-ideally be defined only once. Cylc supports several ways of achieving this:
-     <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmti-10">Multiple inheritance </span>under <span class="lstinline"><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span></span> - shared items can be put into namespaces inherited by related
-     tasks.
-     </li>
-     <li class="itemize"><span 
-class="cmti-10">Jinja2 variables </span>can be defined once and referenced throughout the suite definition.</li></ul>
-<!--l. 6128--><p class="indent" >   Multiple inheritance is very efficient when tasks share many properties. Jinja2 variables are more efficient when
-single items are shared by just a few tasks that don&#8217;t have anything else in common (e.g.&#x00A0;an environment variable
-for the location of a shared file).
-<!--l. 6134--><p class="indent" >   For environment variables in particular it may be tempting to define all variables for all tasks once under
-<span class="lstinline"><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">root</span><span 
-class="pcrr7t-">]</span></span>, but this is somewhat analagous to overuse of global variables in programming and it can make it difficult
-to determine which variables matter to which tasks. Environment filters (Section&#x00A0;<a 
-href="cug-htmlse17.html#x18-309000A.4.1.22">A.4.1.22<!--tex4ht:ref: EnvironmentFilter --></a>) can be used to make this
-safer, however.
-<!--l. 6142--><p class="indent" >   Finally, Jinja2 can also be used to avoid defining intermediate environment variables for the sole purpose of
-deriving other environment variables at task run time. Instead of this:  <!--l. 6146-->
-   <div class="lstlisting" id="listing-205"><span class="label"><a 
- id="x16-205001r1"></a></span><span 
+modifying the task implementation, like this:
+   <!--l. 6225-->
+   <div class="lstlisting" id="listing-211"><span class="label"><a 
+ id="x16-195001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205002r2"></a></span><span 
+ id="x16-195002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">SHARE</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">environment</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">WORKDIR</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_SHARE_DIR</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">workspace1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">inherit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">SHARE</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">command</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">scripting</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">generate</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">exe</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">environment</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">MY_OUTPUT_DIR</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">WORKDIR</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195010r10"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">bar</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195011r11"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">inherit</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">SHARE</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195012r12"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">command</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">scripting</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">use</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">data</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">exe</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195013r13"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">environment</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-195014r14"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">MY_INPUT_DIR</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">WORKDIR</span>
+   
+   </div>
+<!--l. 6242--><p class="noindent" >
+<!--l. 6242--><p class="indent" >    <h4 id="15.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#15.6.2"> 15.6.2</a>  <a 
+ id="x16-19600015.6.2"></a>Connector Tasks </span></h4>
+<!--l. 6244--><p class="indent" >   Special tasks can be used to move files around, from one task&#8217;s output directory to another&#8217;s input directory.
+This should only be necessary across host or filesystem boundaries, however; otherwise simply reference shared
+locations as shown above.
+<!--l. 6249--><p class="noindent" >
+<!--l. 6249--><p class="indent" >    <h4 id="15.7" class="subsectionHead"> <span class="titlemark"> <a href="#15.7"> 15.7</a>  <a 
+ id="x16-19700015.7"></a>Reuse Task Implementation </span></h4>
+<!--l. 6251--><p class="indent" >   If your suite contains multiple logically distinct tasks that have similar functionality (e.g.&#x00A0;tasks that move files
+around or generate similar products from different datasets) just have them all call the same underlying command,
+script, or executable, but provide different input parameters as required.
+<!--l. 6257--><p class="noindent" >
+<!--l. 6257--><p class="indent" >    <h4 id="15.8" class="subsectionHead"> <span class="titlemark"> <a href="#15.8"> 15.8</a>  <a 
+ id="x16-19800015.8"></a>Make Suites Portable </span></h4>
+<!--l. 6259--><p class="indent" >   If all I/O is automatically done in suite-specific locations, such as the under suite share and work directories
+(<span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_SHARE_DIRECTORY</span></span> and <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_TASK_WORK_DIRECTORY</span></span>), you should be able to run multiple
+copies of the same suite without interference between them, and other users should be able to copy and run your
+suites with minimal modification.
+<!--l. 6265--><p class="noindent" >
+<!--l. 6265--><p class="indent" >    <h4 id="15.9" class="subsectionHead"> <span class="titlemark"> <a href="#15.9"> 15.9</a>  <a 
+ id="x16-19900015.9"></a>Make Tasks As Independent As Possible </span></h4>
+<!--l. 6267--><p class="indent" >   Where possible a task should not rely on the action of another task, except for the inputs embodied in the suite
+dependency graph that it has no choice but to depend on. This makes it as easy as possible to run single tasks alone
+during suite development and debugging. For example, tasks should create their own output directories if necessary
+rather than assuming their existence due to the action of another task. Note that if the existing task
+implementation does not handle output directory creation you can do it in suite <span class="lstinline"><span 
+class="pcrr7t-">pre</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">command</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">scripting</span></span> or
+similar.
+<!--l. 6276--><p class="noindent" >
+<!--l. 6276--><p class="indent" >    <h4 id="15.10" class="subsectionHead"> <span class="titlemark"> <a href="#15.10"> 15.10</a>  <a 
+ id="x16-20000015.10"></a>Make Suites As Self-Contained As Possible </span></h4>
+<!--l. 6278--><p class="indent" >   Tasks can (of course) run external commands, scripts, and executables; and they can read or otherwise make use
+of external files. In some cases this may be necessary, but it does leave suites vulnerable to external breakages.
+Alternatively, suites can be more or less completely self-contained (aside from exposure to network, filesystem, and
+OS problems) if they have private copies of every file they need at run time. Tasks can access files stored under their
+suite definition directory via <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">CYLC_SUITE_DEF_PATH</span></span>, and the suite bin directory is automatically
+added to <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">PATH</span></span> in the task execution environment. If you have multiple suites there may be a tradeoff
+between self-containment and duplication of files, but this does not particularly matter if you can
+automatically extract, build, and install suite files from external repositories prior to, or at the start of, a suite
+                                                                                         
+
+                                                                                         
+run.
+<!--l. 6291--><p class="noindent" >
+<!--l. 6291--><p class="indent" >    <h4 id="15.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#15.10.1"> 15.10.1</a>  <a 
+ id="x16-20100015.10.1"></a>Distinguish Between Source and Installed Suites </span></h4>
+<!--l. 6293--><p class="indent" >   A suite definition and any files stored with it should be version controlled, and a particular revision extracted
+before a run. The extracted source suite will be a repository clone or working copy, depending on your choice of
+revision control software, and can be used for further development. The source files should then be <span 
+class="cmti-10">installed </span>to
+another location where the suite will actually be executed (the cylc suite run directory is ideal for this). External
+files may also be installed into the suite at this time, prior to the run, or by special deployment tasks that run at
+suite start-up. This makes self-containment easier to achieve, and the clean separation of source and installed suite
+allows further development without breaking a running suite. Rose (<a 
+href="cug-htmlse14.html#x15-18700014.1">14.1<!--tex4ht:ref: Rose --></a>) supports this mode of working with cylc
+suites.
+<!--l. 6306--><p class="noindent" >
+<!--l. 6306--><p class="indent" >    <h4 id="15.11" class="subsectionHead"> <span class="titlemark"> <a href="#15.11"> 15.11</a>  <a 
+ id="x16-20200015.11"></a>Orderly Product Generation? </span></h4>
+<!--l. 6309--><p class="indent" >   Correct scheduling is not necessarily equivalent to orderly generation of products in strict date-time order. Under
+cylc a product generation task will trigger as soon as its private prerequisites are satisfied regardless of whether
+other tasks at the same cycle point have finished or have yet to run. If your product presentation system demands
+that all products are uploaded in order, then be aware that this may be quite inefficient if your suite ever has to
+catch up from a delay or run over historical data, but if necessary you can force tasks to run in the right
+order even if their true dependencies do not require that. One way to do this is to declare the product
+upload task to be <span 
+class="cmti-10">sequential</span>, which is equivalent to making it depend on its own previous instance
+(see&#x00A0;<a 
+href="cug-htmlse9.html#x10-980009.3.4.12">9.3.4.12<!--tex4ht:ref: SequentialTasks --></a>).
+<!--l. 6321--><p class="noindent" >
+<!--l. 6321--><p class="indent" >    <h4 id="15.12" class="subsectionHead"> <span class="titlemark"> <a href="#15.12"> 15.12</a>  <a 
+ id="x16-20300015.12"></a>Use Of Clock-Triggered Tasks </span></h4>
+<!--l. 6324--><p class="indent" >   Most tasks submit as soon as their prerequisites (task triggers) are satisfied, but <span 
+class="cmti-10">clock-triggered </span>tasks also wait
+on a wall clock time expressed as an offset from their cycle point. For example, task <span class="lstinline"><span 
+class="pcrr7t-">foo</span></span> below will trigger (other
+dependencies allowing) 2 hours after the wall clock time passes its cycle point (which in this case must be a
+date-time).  <!--l. 6330-->
+   <div class="lstlisting" id="listing-212"><span class="label"><a 
+ id="x16-203001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">scheduling</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-203002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">special</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tasks</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-203003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">clock</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">triggered</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">PT2H</span><span 
+class="pcrr7t-">)</span>
+   
+   </div>
+<!--l. 6336--><p class="indent" >   Tasks that wait on external real time data should have a clock-trigger to delay submission until roughly the
+expected time of data availability, otherwise they may clutter up batch scheduler queues by submitting hours earlier.
+Similarly, suite polling tasks (for inter-suite dependence in real time operation) should use a clock-trigger to delay
+their submission until the expected time of the remote suite event.
+<!--l. 6343--><p class="noindent" >
+<!--l. 6343--><p class="indent" >    <h4 id="15.13" class="subsectionHead"> <span class="titlemark"> <a href="#15.13"> 15.13</a>  <a 
+ id="x16-20400015.13"></a>Tasks That Wait On Something </span></h4>
+<!--l. 6345--><p class="indent" >   Some tasks wait on external events and therefore need to repeatedly check and wait for the event
+before reporting eventual success (or perhaps failure after a timeout). For example, a task that waits
+for a file to appear on an ftp server. Typically these should be clock-triggered tasks (see above), but
+once triggered there are two ways to handle the repeated checking: the task itself could implement a
+check-and-wait loop; or you could just configure multiple retries for the task, in the suite definition
+(see&#x00A0;<a 
+href="cug-htmlse12.html#x13-17300012.14">12.14<!--tex4ht:ref: TaskRetries --></a>).
+                                                                                         
+
+                                                                                         
+<!--l. 6353--><p class="noindent" >
+<!--l. 6353--><p class="indent" >    <h4 id="15.14" class="subsectionHead"> <span class="titlemark"> <a href="#15.14"> 15.14</a>  <a 
+ id="x16-20500015.14"></a>Do Not Treat Real Time Operation As Special </span></h4>
+<!--l. 6355--><p class="indent" >   Cylc suites, without modification, can handle real time and delayed operation equally well. In caught-up real
+time operation, clock-triggered tasks constrain the behaviour of the whole suite, or at least of any tasks downstream
+of them in the dependency graph. In delayed or historical operation clock-triggered tasks will not constrain the suite
+at all, and cylc&#8217;s cycle point interleaving abilities come to the fore, because the clock-trigger times
+have already passed. But if a clock-triggered task catches up to the wall clock, it will automatically
+wait again. In this way cylc suites naturally transition between delayed and real time operation as
+required.
+<!--l. 6365--><p class="noindent" >
+<!--l. 6365--><p class="indent" >    <h4 id="15.15" class="subsectionHead"> <span class="titlemark"> <a href="#15.15"> 15.15</a>  <a 
+ id="x16-20600015.15"></a>Factor Out Common Configuration </span></h4>
+<!--l. 6367--><p class="indent" >   To help avoid suite maintenance errors in the future, properties shared by multiple tasks (job submission
+settings, environment variables, command scripting, etc.) should be defined only once, using runtime inheritance
+(<a 
+href="cug-htmlse9.html#x10-1010009.4">9.4<!--tex4ht:ref: NIORP --></a>) or Jinja2 variables (<a 
+href="cug-htmlse9.html#x10-1220009.6">9.6<!--tex4ht:ref: Jinja2 --></a>).
+<!--l. 6372--><p class="indent" >   Multiple inheritance is efficient when tasks share many properties, but Jinja2 variables may be preferred when a
+small number of properties are shared by tasks that don&#8217;t have anything else in common (e.g.&#x00A0;a single environment
+variable for the location of a shared file).
+<!--l. 6377--><p class="indent" >   For environment variables in particular it may be tempting to define all variables for all tasks once under
+<span class="lstinline"><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">root</span><span 
+class="pcrr7t-">]</span></span>, but this is analagous to overuse of global variables in programming and it can make it difficult to
+determine which variables matter to which tasks. Environment filters (<a 
+href="cug-htmlse17.html#x18-302000A.4.1.22">A.4.1.22<!--tex4ht:ref: EnvironmentFilter --></a>) can be used to make this safer, but
+generally it is best to provide each task with only the variables that it needs. It is difficult to be sure if a task really
+needs a variable that is passed to it, but you can be sure that it does not use a variable that is not passed to
+it.
+<!--l. 6386--><p class="indent" >   Finally, Jinja2 can also be used to avoid polluting task environments with variables used for the sole purpose of
+deriving other variables at task run time. Instead of this:  <!--l. 6390-->
+   <div class="lstlisting" id="listing-213"><span class="label"><a 
+ id="x16-206001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x16-206002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -510,7 +511,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">root</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205003r3"></a></span><span 
+ id="x16-206003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -523,7 +524,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">environment</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205004r4"></a></span><span 
+ id="x16-206004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -544,7 +545,7 @@ class="pcrr7t-">top</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">outputdir</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205005r5"></a></span><span 
+ id="x16-206005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -553,7 +554,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205006r6"></a></span><span 
+ id="x16-206006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -566,7 +567,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">environment</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205007r7"></a></span><span 
+ id="x16-206007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -586,7 +587,7 @@ class="pcrr7t-">OUTPUT_DIR</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205008r8"></a></span><span 
+ id="x16-206008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -607,9 +608,9 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">bar</span>
    
    </div>
-<!--l. 6156--><p class="indent" >   do this:  <!--l. 6158-->
-   <div class="lstlisting" id="listing-206"><span class="label"><a 
- id="x16-205009r1"></a></span><span 
+<!--l. 6400--><p class="indent" >   do this:  <!--l. 6402-->
+   <div class="lstlisting" id="listing-214"><span class="label"><a 
+ id="x16-206009r1"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">set</span><span 
@@ -629,12 +630,12 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">%}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205010r2"></a></span><span 
+ id="x16-206010r2"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205011r3"></a></span><span 
+ id="x16-206011r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -643,7 +644,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205012r4"></a></span><span 
+ id="x16-206012r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -656,7 +657,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">environment</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205013r5"></a></span><span 
+ id="x16-206013r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -677,7 +678,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">}}/</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205014r6"></a></span><span 
+ id="x16-206014r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -699,10 +700,10 @@ class="pcrr7t-">}}/</span><span
 class="pcrr7t-">bar</span>
    
    </div>
-<!--l. 6167--><p class="indent" >   If the values of these Jinja2 variables are needed in external scripts, just translate them directly in environment
-sections:  <!--l. 6170-->
-   <div class="lstlisting" id="listing-207"><span class="label"><a 
- id="x16-205015r1"></a></span><span 
+<!--l. 6411--><p class="indent" >   If the values of these Jinja2 variables are needed in external scripts, just translate them directly in environment
+sections:  <!--l. 6414-->
+   <div class="lstlisting" id="listing-215"><span class="label"><a 
+ id="x16-206015r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -711,7 +712,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">environment</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-205016r2"></a></span><span 
+ id="x16-206016r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -731,23 +732,22 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">}}</span>
    
    </div>
-<!--l. 6176--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.15   </span> <a 
- id="x16-20600015.15"></a>Use The Graph For Scheduling</h4>
-<!--l. 6178--><p class="noindent" >If you find yourself writing runtime scripting to get a task to change its behaviour significantly from one cycle to the
-next, consider that the graph is usually the proper place to express this sort of thing. Use different task names, but
-have them inherit common properties from a family namespace to avoid duplication. Instead of this:
-<!--l. 6185-->
+<!--l. 6420--><p class="noindent" >
+<!--l. 6420--><p class="indent" >    <h4 id="15.16" class="subsectionHead"> <span class="titlemark"> <a href="#15.16"> 15.16</a>  <a 
+ id="x16-20700015.16"></a>Use The Graph For Scheduling </span></h4>
+<!--l. 6422--><p class="indent" >   If you find yourself writing runtime scripting to change a task&#8217;s behaviour in some cycle points, consider that the
+graph is usually the proper place to express this sort of thing. Use different task names, but have them inherit
+common properties to avoid duplication. Instead of this:  <!--l. 6427-->
                                                                                          
 
                                                                                          
-   <div class="lstlisting" id="listing-208"><span class="label"><a 
- id="x16-206001r1"></a></span><span 
+   <div class="lstlisting" id="listing-216"><span class="label"><a 
+ id="x16-207001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206002r2"></a></span><span 
+ id="x16-207002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -756,7 +756,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206003r3"></a></span><span 
+ id="x16-207003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -766,10 +766,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">0,6,12,18</span><span 
+class="pcrr7t-">T00</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T06</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T12</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T18</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206004r4"></a></span><span 
+ id="x16-207004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -791,28 +797,28 @@ class="pcrr7t-">foo</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">bar</span><span 
+class="pcrr7t-">shout</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">baz</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206005r5"></a></span><span 
+ id="x16-207005r5"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206006r6"></a></span><span 
+ id="x16-207006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
-class="pcrr7t-">bar</span><span 
+class="pcrr7t-">shout</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206007r7"></a></span><span 
+ id="x16-207007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -831,7 +837,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206008r8"></a></span><span 
+ id="x16-207008r8"></a></span><span 
 class="pcrr7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
@@ -841,7 +847,9 @@ class="pcrr7t-">(</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycletime</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">point</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">print</span><span 
@@ -858,7 +866,7 @@ class="pcrr7t-">||</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206009r9"></a></span><span 
+ id="x16-207009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -870,7 +878,9 @@ class="pcrr7t-">(</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycletime</span><span 
+class="pcrr7t-">cycle</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">point</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">print</span><span 
@@ -887,7 +897,7 @@ class="pcrr7t-">]];</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206010r10"></a></span><span 
+ id="x16-207010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -904,10 +914,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">fox</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206011r11"></a></span><span 
+ id="x16-207011r11"></a></span><span 
 class="pcrr7t-">else</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206012r12"></a></span><span 
+ id="x16-207012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -922,10 +932,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">dog</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206013r13"></a></span><span 
+ id="x16-207013r13"></a></span><span 
 class="pcrr7t-">fi</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206014r14"></a></span><span 
+ id="x16-207014r14"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr8c-">$</span><span 
@@ -934,7 +944,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206015r15"></a></span><span 
+ id="x16-207015r15"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -952,14 +962,14 @@ class="pcrro7t-">config</span><span
 class="pcrro7t-">...)</span>
    
    </div>
-<!--l. 6202--><p class="indent" >   do this:  <!--l. 6204-->
-   <div class="lstlisting" id="listing-209"><span class="label"><a 
- id="x16-206016r1"></a></span><span 
+<!--l. 6444--><p class="indent" >   do this:  <!--l. 6446-->
+   <div class="lstlisting" id="listing-217"><span class="label"><a 
+ id="x16-207016r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206017r2"></a></span><span 
+ id="x16-207017r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -968,7 +978,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206018r3"></a></span><span 
+ id="x16-207018r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -978,10 +988,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">0,12</span><span 
+class="pcrr7t-">T00</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T12</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206019r4"></a></span><span 
+ id="x16-207019r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1003,14 +1015,14 @@ class="pcrr7t-">foo</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">bar_a</span><span 
+class="pcrr7t-">shout_dog</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">baz</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206020r5"></a></span><span 
+ id="x16-207020r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1020,10 +1032,12 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">6,18</span><span 
+class="pcrr7t-">T06</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T18</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206021r6"></a></span><span 
+ id="x16-207021r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1045,28 +1059,28 @@ class="pcrr7t-">foo</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">bar_b</span><span 
+class="pcrr7t-">shout_fox</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">baz</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206022r7"></a></span><span 
+ id="x16-207022r7"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206023r8"></a></span><span 
+ id="x16-207023r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
-class="pcrr7t-">BAR</span><span 
+class="pcrr7t-">SHOUT</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206024r9"></a></span><span 
+ id="x16-207024r9"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1084,7 +1098,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">config</span><span 
 class="pcrro7t-">...)</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206025r10"></a></span><span 
+ id="x16-207025r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1106,16 +1120,16 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">SENTENCE</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206026r11"></a></span><span 
+ id="x16-207026r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
-class="pcrr7t-">bar_a</span><span 
+class="pcrr7t-">shout_fox</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206027r12"></a></span><span 
+ id="x16-207027r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1128,9 +1142,9 @@ class="pcrr7t-">inherit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">BAR</span><span 
+class="pcrr7t-">SHOUT</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206028r13"></a></span><span 
+ id="x16-207028r13"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1143,7 +1157,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">environment</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206029r14"></a></span><span 
+ id="x16-207029r14"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1170,16 +1184,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">fox</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206030r15"></a></span><span 
+ id="x16-207030r15"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
-class="pcrr7t-">bar_b</span><span 
+class="pcrr7t-">shout_dog</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206031r16"></a></span><span 
+ id="x16-207031r16"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1192,9 +1206,9 @@ class="pcrr7t-">inherit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">BAR</span><span 
+class="pcrr7t-">SHOUT</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206032r17"></a></span><span 
+ id="x16-207032r17"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1207,7 +1221,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">environment</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-206033r18"></a></span><span 
+ id="x16-207033r18"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1233,23 +1247,26 @@ class="pcrr7t-">dog</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 6225--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">15.16   </span> <a 
- id="x16-20700015.16"></a>Use Suite Visualization</h4>
-<!--l. 6227--><p class="noindent" >Effective visualization can make complex suites easier to understand. Collapsible task families for visualization are
-defined by the <span 
-class="cmti-10">first parents </span>in the runtime namespace hierarchy. Tasks should generally be grouped into visualization
-families that reflect their purpose within the structure of the suite rather than technical detail such as common job
-submission method or task host. This often coincides nicely with common configuration inheritance
+<!--l. 6467--><p class="indent" >   Similarly, if your task has a different behaviour at the initial or final cycle point, consider using an <span class="lstinline"><span 
+class="pcrr7t-">R1</span></span> syntax to
+separate out the functionality.
+<!--l. 6471--><p class="noindent" >
+<!--l. 6471--><p class="indent" >    <h4 id="15.17" class="subsectionHead"> <span class="titlemark"> <a href="#15.17"> 15.17</a>  <a 
+ id="x16-20800015.17"></a>Use Suite Visualization </span></h4>
+<!--l. 6473--><p class="indent" >   Effective visualization can make complex suites easier to understand. Collapsible task families for visualization
+are defined by the <span 
+class="cmti-10">first parents </span>in the runtime namespace hierarchy. Tasks should generally be grouped into
+visualization families that reflect their purpose within the structure of the suite rather than technical detail such as
+common job submission method or task host. This often coincides nicely with common configuration inheritance
 requirements, but if it doesn&#8217;t you can use an empty namespace as a first parent for visualization:
-<!--l. 6237-->
-   <div class="lstlisting" id="listing-210"><span class="label"><a 
- id="x16-207001r1"></a></span><span 
+<!--l. 6482-->
+   <div class="lstlisting" id="listing-218"><span class="label"><a 
+ id="x16-208001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207002r2"></a></span><span 
+ id="x16-208002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1258,7 +1275,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">OBSPROC</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207003r3"></a></span><span 
+ id="x16-208003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1273,7 +1290,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">obs3</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207004r4"></a></span><span 
+ id="x16-208004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1289,14 +1306,14 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">OBSPROC</span>
    
    </div>
-<!--l. 6243--><p class="indent" >   and you can demote parents from primary to secondary:  <!--l. 6245-->
-   <div class="lstlisting" id="listing-211"><span class="label"><a 
- id="x16-207005r1"></a></span><span 
+<!--l. 6488--><p class="indent" >   and you can demote parents from primary to secondary:  <!--l. 6490-->
+   <div class="lstlisting" id="listing-219"><span class="label"><a 
+ id="x16-208005r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207006r2"></a></span><span 
+ id="x16-208006r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1305,7 +1322,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">HOSTX</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207007r3"></a></span><span 
+ id="x16-208007r3"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1330,7 +1347,7 @@ class="pcrro7t-">host</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">HOSTX</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207008r4"></a></span><span 
+ id="x16-208008r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1339,7 +1356,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207009r5"></a></span><span 
+ id="x16-208009r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1361,23 +1378,12 @@ class="pcrr7t-">HOSTX</span>
                                                                                          
 
                                                                                          
-   <div class="footnotes"><!--l. 6021--><p class="indent" >  <span class="footnote-mark"><a 
-href="#fn6x0-bk" id="fn6x0"><sup class="textsuperscript">6</sup></a></span><span 
-class="cmr-8">The </span><span class="lstinline"><span 
-class="pcrr7t-x-x-80">cylc</span><span 
-class="pcrr7t-x-x-80">&#x00A0;</span><span 
-class="pcrr7t-x-x-80">submit</span></span> <span 
-class="cmr-8">command runs a single task exactly as its suite would, in terms of both job submission method and execution</span>
-<span 
-class="cmr-8">environment.</span><!--l. 6047--><p class="indent" > <span class="footnote-mark"><a 
-href="#fn7x0-bk" id="fn7x0"><sup class="textsuperscript">7</sup></a></span><span 
-class="cmr-8">If you copy a suite using cylc commands or GUI the entire suite definition directory will be copied.</span>                         </div>
-<!--l. 6253--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6498--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse16.html" >next</a>] [<a 
 href="cug-htmlse14.html" >prev</a>] [<a 
 href="cug-htmlse14.html#tailcug-htmlse14.html" >prev-tail</a>] [<a 
 href="cug-htmlse15.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse15.html" >up</a>] </p></div>
-<!--l. 6253--><p class="indent" >   <a 
+<!--l. 6498--><p class="indent" >   <a 
  id="tailcug-htmlse15.html"></a>   
 </body></html> 

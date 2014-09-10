@@ -7,19 +7,18 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-06-07 09:53:00"> 
+<meta name="date" content="2014-09-10 22:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 382--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 381--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse3.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-   <h3 class="sectionHead"><span class="titlemark">3   </span> <a 
- id="x4-90003"></a>Required Software</h3>
-   <div class="sectionTOCS">
+<!--l. 381--><p class="indent" >    <h3 id="3" class="sectionHead"><span class="titlemark"> <a href="#3">3</a>  <a 
+ id="x4-90003"></a>Required Software </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >3.1 <a 
 href="#x4-100003.1">Known Version Compatibility Issues</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >3.2 <a 
@@ -27,7 +26,7 @@ href="#x4-130003.2">Other Software Used Internally By Cylc</a></span>
    </div>
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">Cylc</span>, the version associated with this document is: 5.4.14 . <br 
+class="cmbx-10">Cylc</span>, the version associated with this document is: 6.0.0beta2-122-g666a9 . <br 
 class="newline" />Cylc can be downloaded from from GitHub: <a 
 href="http://cylc.github.com/cylc" class="url" ><span 
 class="pcrr7t-">http://cylc.github.com/cylc</span></a>
@@ -36,7 +35,7 @@ class="pcrr7t-">http://cylc.github.com/cylc</span></a>
 class="cmbx-10">OS: A Linux or Unix variant (including, reportedly, Apple OS X).</span>
      </li>
      <li class="itemize"><span 
-class="cmbx-10">The Python Language, version 2.5 or later, but not 3.x yet</span>. <br 
+class="cmbx-10">The Python Language, version 2.6 or later, but not 3.x yet</span>. <br 
 class="newline" /><a 
 href="http://python.org" class="url" ><span 
 class="pcrr7t-">http://python.org</span></a>
@@ -57,7 +56,7 @@ class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</
 class="newline" /><a 
 href="http://sqlite.org" class="url" ><span 
 class="pcrr7t-">http://sqlite.org</span></a></li></ul>
-<!--l. 403--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
+<!--l. 402--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
 graphing, the gcylc GUI, or template processing <span 
 class="cmti-10">but this is not recommended, and without Jinja2 you will not be able</span>
 <span 
@@ -90,14 +89,14 @@ class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></li></ul>
                                                                                          
 
                                                                                          
-<!--l. 424--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
+<!--l. 423--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
 class="cmti-10">devel </span>packages for the
 pygraphviz build:
      <ul class="itemize1">
      <li class="itemize">python-devel
      </li>
      <li class="itemize">graphviz-devel</li></ul>
-<!--l. 432--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+<!--l. 431--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
 class="E">E</span>X</span></span>source by running <span class="lstinline"><span 
 class="pcrr7t-">make</span></span> in the top level cylc directory after
 download. The following <span class="TEX">T<span 
@@ -111,12 +110,12 @@ OS or distribution-dependent):
      <li class="itemize">texlive-framed
      </li>
      <li class="itemize">texlive-preprint (for fullpage.sty, formerly in tetex)</li></ul>
-<!--l. 443--><p class="noindent" >And for HTML versions of the User Guide:
+<!--l. 442--><p class="noindent" >And for HTML versions of the User Guide:
      <ul class="itemize1">
      <li class="itemize">texlive-tex4ht
      </li>
      <li class="itemize">ImageMagick (for image scaling)</li></ul>
-<!--l. 450--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
+<!--l. 449--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
 class="cmti-10">ordered dictionary </span>data structures. Significant speedup in
 parsing large suites can be had by installing the fast C-coded <span class="lstinline"><span 
 class="pcrr7t-">ordereddict</span></span> module by Anthon van der
@@ -129,7 +128,7 @@ href="http://www.xs4all.nl/~anthon/Python/ordereddict" class="url" ><span
 class="pcrr7t-">http://www.xs4all.nl/</span><span 
 class="pcrr7t-">~</span><span 
 class="pcrr7t-">anthon/Python/ordereddict</span></a></li></ul>
-<!--l. 458--><p class="noindent" ><span 
+<!--l. 457--><p class="noindent" ><span 
 class="cmti-10">This module is currently included with cylc </span>under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -137,25 +136,25 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">ext</span></span>, and is built by the top level cylc Makefile. If you
 install the resulting library appropriately cylc will automatically use it in place of a slower Python implementation
 of the ordered dictionary structure.
-<!--l. 464--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">3.1   </span> <a 
- id="x4-100003.1"></a>Known Version Compatibility Issues</h4>
-<!--l. 466--><p class="noindent" >Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
-<!--l. 468--><p class="indent" >   For distributed suites the Pyro versions installed on all suite or task hosts must be mutually compatible. Using
+<!--l. 463--><p class="noindent" >
+<!--l. 463--><p class="indent" >    <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
+ id="x4-100003.1"></a>Known Version Compatibility Issues </span></h4>
+<!--l. 465--><p class="indent" >   Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
+<!--l. 467--><p class="indent" >   For distributed suites the Pyro versions installed on all suite or task hosts must be mutually compatible. Using
 identical Pyro versions guarantees compatibility but may not be strictly necessary because cylc uses Pyro rather
 minimally.
                                                                                          
 
                                                                                          
-<!--l. 473--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">3.1.1   </span> <a 
- id="x4-110003.1.1"></a>Pyro 3.9 and Earlier</h5>
-<!--l. 475--><p class="noindent" >Beware of Linux distributions that come packaged with old Pyro versions. Pyro 3.9 and earlier is not compatible
+<!--l. 472--><p class="noindent" >
+<!--l. 472--><p class="indent" >    <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
+ id="x4-110003.1.1"></a>Pyro 3.9 and Earlier </span></h4>
+<!--l. 474--><p class="indent" >   Beware of Linux distributions that come packaged with old Pyro versions. Pyro 3.9 and earlier is not compatible
 with the new-style Python classes used in cylc. It has been reported that Ubuntu 10.04 (Lucid Lynx), released in
 September 2009, suffers from this problem. Surprisingly, so does Ubuntu 11.10 (Oneiric Ocelot), released in October
 2011 - and therefore, presumably, all earlier Ubuntu releases. Attempting to run a suite with Pyro 3.9 or earlier
 installed results in the following Python traceback:
-   <!--l. 485-->
+   <!--l. 484-->
    <div class="lstlisting" id="listing-1"><span class="label"><a 
  id="x4-11001r1"></a></span><span 
 class="pcrr7t-">Traceback</span><span 
@@ -192,7 +191,7 @@ class="pcrr7t-">line</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">232,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">in</span><span 
+class="pcrr7t-">in</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">module</span><span 
@@ -229,7 +228,7 @@ class="pcrr7t-">line</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">92,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">in</span><span 
+class="pcrr7t-">in</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">__init__</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
@@ -270,7 +269,7 @@ class="pcrr7t-">line</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">141,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">in</span><span 
+class="pcrr7t-">in</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-11007r7"></a></span><span 
 class="pcrr7t-">__init__</span><span 
@@ -304,7 +303,7 @@ class="pcrr7t-">line</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">141,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">in</span><span 
+class="pcrr7t-">in</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">load_tasks_cold</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
@@ -329,8 +328,7 @@ class="pcrr7t-">,</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">waiting</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">,</span><span 
+class="pcrr7t-">',</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-11011r11"></a></span><span 
 class="pcrr7t-">stopctime</span><span 
@@ -370,14 +368,14 @@ class="pcrr7t-">line</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1252,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">in</span><span 
+class="pcrr7t-">in</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-11013r13"></a></span><span 
 class="pcrr7t-">get_task_proxy</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-11014r14"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">return</span><span 
+class="pcrr7t-">return</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">self</span><span 
 class="pcrr7t-">.</span><span 
@@ -428,19 +426,16 @@ class="pcrr7t-">line</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">453,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">in</span><span 
+class="pcrr7t-">in</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-11017r17"></a></span><span 
 class="pcrr7t-">tclass_init</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x4-11018r18"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrb7t-">print</span><span 
+class="pcrr7t-">print</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">,</span><span 
+class="pcrr7t-">'-',</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">sself</span><span 
 class="pcrr7t-">.</span><span 
@@ -494,10 +489,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">1</span>
    
    </div>
-<!--l. 508--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">3.1.2   </span> <a 
- id="x4-120003.1.2"></a>Apple Mac OSX</h5>
-<!--l. 510--><p class="noindent" >It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
+<!--l. 507--><p class="noindent" >
+<!--l. 507--><p class="indent" >    <h4 id="3.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.2"> 3.1.2</a>  <a 
+ id="x4-120003.1.2"></a>Apple Mac OSX </span></h4>
+<!--l. 509--><p class="indent" >   It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
 constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
 to solve the problem:
      <ul class="itemize1">
@@ -523,7 +518,7 @@ class="pcrr7t-">&#x003E;-</span><span
 class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
 class="pcrr7t-">&#x003C;/</span><span 
 class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 518-->
+class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 517-->
      <div class="lstlisting" id="listing-2"><span class="label"><a 
  id="x4-12001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
@@ -597,7 +592,7 @@ class="pcrr7t-">&#x003E;</span>
      
      </div>
      </li>
-     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 527-->
+     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 526-->
      <div class="lstlisting" id="listing-3"><span class="label"><a 
  id="x4-12007r1"></a></span><span 
 class="pcrr7t-">%</span><span 
@@ -657,10 +652,10 @@ class="pcrr7t-">plist</span>
      
      </div>
      </li></ul>
-<!--l. 536--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">3.2   </span> <a 
- id="x4-130003.2"></a>Other Software Used Internally By Cylc</h4>
-<!--l. 538--><p class="noindent" >Cylc has incorporated a custom-modified version the <span 
+<!--l. 535--><p class="noindent" >
+<!--l. 535--><p class="indent" >    <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
+ id="x4-130003.2"></a>Other Software Used Internally By Cylc </span></h4>
+<!--l. 537--><p class="indent" >   Cylc has incorporated a custom-modified version the <span 
 class="cmti-10">xdot </span>graph viewer (<a 
 href="http://code.google.com/p/jrfonseca/wiki/XDot" class="url" ><span 
 class="pcrr7t-">http://code.google.com/p/jrfonseca/wiki/XDot</span></a>,
@@ -668,12 +663,12 @@ LGPL license).
                                                                                          
 
                                                                                          
-   <!--l. 542--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 541--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 542--><p class="indent" >   <a 
+<!--l. 541--><p class="indent" >   <a 
  id="tailcug-htmlse3.html"></a>   
 </body></html> 

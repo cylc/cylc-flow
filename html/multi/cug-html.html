@@ -3,7 +3,7 @@
 <html > 
 <head>   <title>The Cylc Suite Engine
 User Guide
-5.4.14
+6.0.0beta2-122-g666a9
 GNU GPL v3.0 Software License
 Copyright (C) 2008-2014 Hilary Oliver, NIWA</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
@@ -11,7 +11,7 @@ Copyright (C) 2008-2014 Hilary Oliver, NIWA</title>
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-06-07 09:53:00"> 
+<meta name="date" content="2014-09-10 22:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -22,13 +22,13 @@ Copyright (C) 2008-2014 Hilary Oliver, NIWA</title>
 
 <h2 class="titleHead">The Cylc Suite Engine<br />
 User Guide<br />
-5.4.14 <br />
+6.0.0beta2-122-g666a9 <br />
 GNU GPL v3.0 Software License<br />
 Copyright (C) 2008-2014 Hilary Oliver, NIWA</h2>
 <div class="author" ><span 
 class="cmr-12">Hilary Oliver</span></div><br />
 <div class="date" ><span 
-class="cmr-12">June 7, 2014</span></div>
+class="cmr-12">September 10, 2014</span></div>
 
 <img 
 src="../../graphics/png/scaled/logo.png" alt="PIC"  
@@ -40,7 +40,7 @@ src="../../graphics/png/scaled/niwa-colour-small.png" alt="PIC"
 
                                                                                          
    </div>
-<!--l. 188--><p class="noindent" ><span 
+<!--l. 219--><p class="noindent" ><span 
 class="cmbx-12x-x-120">Contents</span>
    <div class="tableofcontents">
    <span class="sectionToc" >1 <a 
@@ -75,7 +75,8 @@ href="cug-htmlse4.html#x5-190004.4" id="QQ2-5-33">Local User Installation</a></s
 href="cug-htmlse4.html#x5-210004.5" id="QQ2-5-35">Upgrading To New Cylc Versions</a></span>
 <br />   <span class="sectionToc" >5 <a 
 href="cug-htmlse5.html#x6-220005" id="QQ2-6-36">On The Meaning Of <span 
-class="cmti-10">Cycle Time </span>In Cylc</a></span>
+class="cmti-10">Cycle  </span>and <span 
+class="cmti-10">Cycle Point </span>In Cylc</a></span>
 <br />   <span class="sectionToc" >6 <a 
 href="cug-htmlse6.html#x7-230006" id="QQ2-7-37">Site And User Configuration Files</a></span>
 <br />   <span class="sectionToc" >7 <a 
@@ -127,230 +128,244 @@ href="cug-htmlse7.html#x8-510007.22" id="QQ2-8-71">External Task Scripts</a></sp
 <br />   &#x00A0;<span class="subsectionToc" >7.23 <a 
 href="cug-htmlse7.html#x8-520007.23" id="QQ2-8-74">Cycling Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >7.24 <a 
-href="cug-htmlse7.html#x8-570007.24" id="QQ2-8-83">Jinja2</a></span>
+href="cug-htmlse7.html#x8-570007.24" id="QQ2-8-85">Jinja2</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >7.25 <a 
-href="cug-htmlse7.html#x8-580007.25" id="QQ2-8-85">Task Retry On Failure</a></span>
+href="cug-htmlse7.html#x8-580007.25" id="QQ2-8-87">Task Retry On Failure</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >7.26 <a 
-href="cug-htmlse7.html#x8-590007.26" id="QQ2-8-87">Other Users&#8217; Suites</a></span>
+href="cug-htmlse7.html#x8-590007.26" id="QQ2-8-89">Other Users&#8217; Suites</a></span>
                                                                                          
 
                                                                                          
 <br />   &#x00A0;<span class="subsectionToc" >7.27 <a 
-href="cug-htmlse7.html#x8-600007.27" id="QQ2-8-88">Searching A Suite</a></span>
+href="cug-htmlse7.html#x8-600007.27" id="QQ2-8-90">Searching A Suite</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >7.28 <a 
-href="cug-htmlse7.html#x8-610007.28" id="QQ2-8-89">Other Things To Try</a></span>
+href="cug-htmlse7.html#x8-610007.28" id="QQ2-8-91">Other Things To Try</a></span>
 <br />   <span class="sectionToc" >8 <a 
-href="cug-htmlse8.html#x9-620008" id="QQ2-9-90">Suite Name Registration And Passphrases</a></span>
+href="cug-htmlse8.html#x9-620008" id="QQ2-9-92">Suite Name Registration And Passphrases</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >8.1 <a 
-href="cug-htmlse8.html#x9-630008.1" id="QQ2-9-91">Database Operations</a></span>
+href="cug-htmlse8.html#x9-630008.1" id="QQ2-9-93">Database Operations</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >8.2 <a 
-href="cug-htmlse8.html#x9-640008.2" id="QQ2-9-92">Suite Passphrases</a></span>
+href="cug-htmlse8.html#x9-640008.2" id="QQ2-9-94">Suite Passphrases</a></span>
 <br />   <span class="sectionToc" >9 <a 
-href="cug-htmlse9.html#x10-650009" id="QQ2-10-93">Suite Definition</a></span>
+href="cug-htmlse9.html#x10-650009" id="QQ2-10-95">Suite Definition</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.1 <a 
-href="cug-htmlse9.html#x10-660009.1" id="QQ2-10-94">Suite Definition Directories</a></span>
+href="cug-htmlse9.html#x10-660009.1" id="QQ2-10-96">Suite Definition Directories</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.2 <a 
-href="cug-htmlse9.html#x10-670009.2" id="QQ2-10-95">Suite.rc File Overview</a></span>
+href="cug-htmlse9.html#x10-670009.2" id="QQ2-10-97">Suite.rc File Overview</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.3 <a 
-href="cug-htmlse9.html#x10-750009.3" id="QQ2-10-103">Scheduling - Dependency Graphs</a></span>
+href="cug-htmlse9.html#x10-750009.3" id="QQ2-10-105">Scheduling - Dependency Graphs</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.4 <a 
-href="cug-htmlse9.html#x10-1020009.4" id="QQ2-10-138">Runtime - Task Configuration</a></span>
+href="cug-htmlse9.html#x10-1010009.4" id="QQ2-10-139">Runtime - Task Configuration</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.5 <a 
-href="cug-htmlse9.html#x10-1210009.5" id="QQ2-10-159">Visualization</a></span>
+href="cug-htmlse9.html#x10-1200009.5" id="QQ2-10-160">Visualization</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.6 <a 
-href="cug-htmlse9.html#x10-1230009.6" id="QQ2-10-162">Jinja2</a></span>
+href="cug-htmlse9.html#x10-1220009.6" id="QQ2-10-163">Jinja2</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.7 <a 
-href="cug-htmlse9.html#x10-1280009.7" id="QQ2-10-170">Special Placeholder Variables</a></span>
+href="cug-htmlse9.html#x10-1270009.7" id="QQ2-10-171">Omitting Tasks At Runtime</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >9.8 <a 
-href="cug-htmlse9.html#x10-1290009.8" id="QQ2-10-171">Omitting Tasks At Runtime</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >9.9 <a 
-href="cug-htmlse9.html#x10-1300009.9" id="QQ2-10-172">Naked Dummy Tasks And Strict Validation</a></span>
+href="cug-htmlse9.html#x10-1280009.8" id="QQ2-10-172">Naked Dummy Tasks And Strict Validation</a></span>
 <br />   <span class="sectionToc" >10 <a 
-href="cug-htmlse10.html#x11-13100010" id="QQ2-11-173">Task Implementation</a></span>
+href="cug-htmlse10.html#x11-12900010" id="QQ2-11-173">Task Implementation</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.1 <a 
-href="cug-htmlse10.html#x11-13200010.1" id="QQ2-11-174">Inlined Tasks</a></span>
+href="cug-htmlse10.html#x11-13000010.1" id="QQ2-11-174">Inlined Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.2 <a 
-href="cug-htmlse10.html#x11-13300010.2" id="QQ2-11-175">Returning Proper Error Status</a></span>
+href="cug-htmlse10.html#x11-13100010.2" id="QQ2-11-175">Returning Proper Error Status</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.3 <a 
-href="cug-htmlse10.html#x11-13400010.3" id="QQ2-11-176">Reporting Internal (Message) Outputs</a></span>
+href="cug-htmlse10.html#x11-13200010.3" id="QQ2-11-176">Other Task Messages</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.4 <a 
-href="cug-htmlse10.html#x11-13500010.4" id="QQ2-11-178">Other Task Messages</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >10.5 <a 
-href="cug-htmlse10.html#x11-13600010.5" id="QQ2-11-179">Detaching Tasks</a></span>
+href="cug-htmlse10.html#x11-13300010.4" id="QQ2-11-177">Detaching Tasks</a></span>
 <br />   <span class="sectionToc" >11 <a 
-href="cug-htmlse11.html#x12-13900011" id="QQ2-12-186">Task Job Submission, Poll and Kill</a></span>
+href="cug-htmlse11.html#x12-13600011" id="QQ2-12-184">Task Job Submission</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.1 <a 
-href="cug-htmlse11.html#x12-14000011.1" id="QQ2-12-187">Job Poll And Kill Support</a></span>
+href="cug-htmlse11.html#x12-13700011.1" id="QQ2-12-185">Task Job Scripts</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.2 <a 
-href="cug-htmlse11.html#x12-14200011.2" id="QQ2-12-189">Task Job Scripts</a></span>
+href="cug-htmlse11.html#x12-13800011.2" id="QQ2-12-186">Supported Job Submission Methods</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.3 <a 
-href="cug-htmlse11.html#x12-14300011.3" id="QQ2-12-190">Supported Job Submission Methods</a></span>
+href="cug-htmlse11.html#x12-14700011.3" id="QQ2-12-195">Task stdout And stderr Logs</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.4 <a 
-href="cug-htmlse11.html#x12-15200011.4" id="QQ2-12-199">Task stdout And stderr Logs</a></span>
+href="cug-htmlse11.html#x12-14800011.4" id="QQ2-12-196">Overriding The Job Submission Command</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.5 <a 
-href="cug-htmlse11.html#x12-15300011.5" id="QQ2-12-200">Overriding The Job Submission Command</a></span>
+href="cug-htmlse11.html#x12-14900011.5" id="QQ2-12-197">Job Polling</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.6 <a 
-href="cug-htmlse11.html#x12-15400011.6" id="QQ2-12-201">Defining New Job Submission Methods</a></span>
+href="cug-htmlse11.html#x12-15000011.6" id="QQ2-12-198">Job Killing</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >11.7 <a 
+href="cug-htmlse11.html#x12-15100011.7" id="QQ2-12-199">Defining New Job Submission Methods</a></span>
 <br />   <span class="sectionToc" >12 <a 
-href="cug-htmlse12.html#x13-15700012" id="QQ2-13-204">Running Suites</a></span>
+href="cug-htmlse12.html#x13-15400012" id="QQ2-13-202">Running Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.1 <a 
-href="cug-htmlse12.html#x13-15800012.1" id="QQ2-13-205">How Tasks Interact With Running Suites</a></span>
+href="cug-htmlse12.html#x13-15500012.1" id="QQ2-13-203">Suite Start-up</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.2 <a 
-href="cug-htmlse12.html#x13-16000012.2" id="QQ2-13-207">Alternatives To Polling When Routing Is Blocked</a></span>
+href="cug-htmlse12.html#x13-15900012.2" id="QQ2-13-207">How Tasks Interact With Running Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.3 <a 
-href="cug-htmlse12.html#x13-16100012.3" id="QQ2-13-208">Task Host Communications Configuration</a></span>
+href="cug-htmlse12.html#x13-16100012.3" id="QQ2-13-209">Alternatives To Polling When Routing Is Blocked</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.4 <a 
-href="cug-htmlse12.html#x13-16200012.4" id="QQ2-13-209">How Commands Interact With Running Suites</a></span>
+href="cug-htmlse12.html#x13-16200012.4" id="QQ2-13-210">Task Host Communications Configuration</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.5 <a 
-href="cug-htmlse12.html#x13-16300012.5" id="QQ2-13-210">Connection Authentication</a></span>
+href="cug-htmlse12.html#x13-16300012.5" id="QQ2-13-211">How Commands Interact With Running Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.6 <a 
-href="cug-htmlse12.html#x13-16500012.6" id="QQ2-13-212">How Tasks Get Access To Cylc</a></span>
+href="cug-htmlse12.html#x13-16400012.6" id="QQ2-13-212">Connection Authentication</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.7 <a 
-href="cug-htmlse12.html#x13-16600012.7" id="QQ2-13-213">Restarting Suites</a></span>
+href="cug-htmlse12.html#x13-16600012.7" id="QQ2-13-214">How Tasks Get Access To Cylc</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.8 <a 
-href="cug-htmlse12.html#x13-16700012.8" id="QQ2-13-214">Task States</a></span>
+href="cug-htmlse12.html#x13-16700012.8" id="QQ2-13-215">Restarting Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.9 <a 
-href="cug-htmlse12.html#x13-16800012.9" id="QQ2-13-215">Remote Control - Passphrases and Network Ports</a></span>
+href="cug-htmlse12.html#x13-16800012.9" id="QQ2-13-216">Task States</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.10 <a 
-href="cug-htmlse12.html#x13-16900012.10" id="QQ2-13-216">Ensemble Suites, Job Submission, and Network Timeouts</a></span>
+href="cug-htmlse12.html#x13-16900012.10" id="QQ2-13-217">Remote Control - Passphrases and Network Ports</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.11 <a 
-href="cug-htmlse12.html#x13-17200012.11" id="QQ2-13-219">Internal Queues And The Runahead Limit</a></span>
+href="cug-htmlse12.html#x13-17000012.11" id="QQ2-13-218">Network Connection Timeouts</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.12 <a 
-href="cug-htmlse12.html#x13-17500012.12" id="QQ2-13-223">Automatic Task Retry On Failure</a></span>
+href="cug-htmlse12.html#x13-17100012.12" id="QQ2-13-219">Runahead Limiting</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.13 <a 
-href="cug-htmlse12.html#x13-17600012.13" id="QQ2-13-224">Suite And Task Event Handling</a></span>
+href="cug-htmlse12.html#x13-17200012.13" id="QQ2-13-220">Limiting Active Tasks With Internal Queues</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.14 <a 
-href="cug-htmlse12.html#x13-17700012.14" id="QQ2-13-225">Reloading The Suite Definition At Runtime</a></span>
+href="cug-htmlse12.html#x13-17300012.14" id="QQ2-13-222">Automatic Task Retry On Failure</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.15 <a 
-href="cug-htmlse12.html#x13-17800012.15" id="QQ2-13-226">Handling Job Preemption</a></span>
+href="cug-htmlse12.html#x13-17400012.15" id="QQ2-13-223">Suite And Task Event Handling</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.16 <a 
-href="cug-htmlse12.html#x13-17900012.16" id="QQ2-13-227">Runtime Settings Broadcast and Communication Between Tasks</a></span>
+href="cug-htmlse12.html#x13-17500012.16" id="QQ2-13-224">Reloading The Suite Definition At Runtime</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.17 <a 
-href="cug-htmlse12.html#x13-18000012.17" id="QQ2-13-228">The Meaning And Use Of Initial Cycle Time</a></span>
+href="cug-htmlse12.html#x13-17600012.17" id="QQ2-13-225">Handling Job Preemption</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.18 <a 
-href="cug-htmlse12.html#x13-18200012.18" id="QQ2-13-230">The Simulation And Dummy Run Modes</a></span>
+href="cug-htmlse12.html#x13-17700012.18" id="QQ2-13-226">Runtime Settings Broadcast and Communication Between Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.19 <a 
-href="cug-htmlse12.html#x13-18500012.19" id="QQ2-13-233">Automated Reference Test Suites</a></span>
+href="cug-htmlse12.html#x13-17800012.19" id="QQ2-13-227">The Meaning And Use Of Initial Cycle Point</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.20 <a 
-href="cug-htmlse12.html#x13-18700012.20" id="QQ2-13-235">Triggering Off Tasks In Other Suites</a></span>
+href="cug-htmlse12.html#x13-18000012.20" id="QQ2-13-229">The Simulation And Dummy Run Modes</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >12.21 <a 
+href="cug-htmlse12.html#x13-18200012.21" id="QQ2-13-231">Automated Reference Test Suites</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >12.22 <a 
+href="cug-htmlse12.html#x13-18400012.22" id="QQ2-13-233">Triggering Off Tasks In Other Suites</a></span>
 <br />   <span class="sectionToc" >13 <a 
-href="cug-htmlse13.html#x14-18800013" id="QQ2-14-236">Other Topics In Brief</a></span>
+href="cug-htmlse13.html#x14-18500013" id="QQ2-14-234">Other Topics In Brief</a></span>
+                                                                                         
+
+                                                                                         
 <br />   <span class="sectionToc" >14 <a 
-href="cug-htmlse14.html#x15-18900014" id="QQ2-15-237">Suite Storage, Discovery, Revision Control, and Deployment</a></span>
-                                                                                         
-
-                                                                                         
+href="cug-htmlse14.html#x15-18600014" id="QQ2-15-235">Suite Storage, Discovery, Revision Control, and Deployment</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >14.1 <a 
-href="cug-htmlse14.html#x15-19000014.1" id="QQ2-15-238">Rose</a></span>
+href="cug-htmlse14.html#x15-18700014.1" id="QQ2-15-236">Rose</a></span>
 <br />   <span class="sectionToc" >15 <a 
-href="cug-htmlse15.html#x16-19100015" id="QQ2-16-239">Suite Design Principles</a></span>
+href="cug-htmlse15.html#x16-18800015" id="QQ2-16-237">Suite Design Principles</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.1 <a 
-href="cug-htmlse15.html#x16-19200015.1" id="QQ2-16-240">Make Fine-Grained Suites</a></span>
+href="cug-htmlse15.html#x16-18900015.1" id="QQ2-16-238">Make Fine-Grained Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.2 <a 
-href="cug-htmlse15.html#x16-19300015.2" id="QQ2-16-241">Make Tasks Rerunnable</a></span>
+href="cug-htmlse15.html#x16-19000015.2" id="QQ2-16-239">Make Tasks Re-runnable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.3 <a 
-href="cug-htmlse15.html#x16-19400015.3" id="QQ2-16-242">Make Models Rerunnable</a></span>
+href="cug-htmlse15.html#x16-19100015.3" id="QQ2-16-240">Make Models Re-runnable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.4 <a 
-href="cug-htmlse15.html#x16-19500015.4" id="QQ2-16-243">Avoid Unnecessary Previous-Instance Dependence</a></span>
+href="cug-htmlse15.html#x16-19200015.4" id="QQ2-16-241">Avoid False Dependence</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.5 <a 
-href="cug-htmlse15.html#x16-19600015.5" id="QQ2-16-244">Put Task Cycle Time In All Output File Paths</a></span>
+href="cug-htmlse15.html#x16-19300015.5" id="QQ2-16-242">Put Task Cycle Point In Output File Paths</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.6 <a 
-href="cug-htmlse15.html#x16-19700015.6" id="QQ2-16-245">How To Manage Input/Output File Dependencies</a></span>
+href="cug-htmlse15.html#x16-19400015.6" id="QQ2-16-243">Managing Input/Output File Dependencies</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.7 <a 
-href="cug-htmlse15.html#x16-19800015.7" id="QQ2-16-246">Use Generic Task Scripts</a></span>
+href="cug-htmlse15.html#x16-19700015.7" id="QQ2-16-246">Reuse Task Implementation</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.8 <a 
-href="cug-htmlse15.html#x16-19900015.8" id="QQ2-16-247">Make Suites Portable</a></span>
+href="cug-htmlse15.html#x16-19800015.8" id="QQ2-16-247">Make Suites Portable</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.9 <a 
-href="cug-htmlse15.html#x16-20000015.9" id="QQ2-16-248">Make Tasks As Self-Contained As Possible</a></span>
+href="cug-htmlse15.html#x16-19900015.9" id="QQ2-16-248">Make Tasks As Independent As Possible</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.10 <a 
-href="cug-htmlse15.html#x16-20100015.10" id="QQ2-16-249">Make Suites As Self-Contained As Possible</a></span>
+href="cug-htmlse15.html#x16-20000015.10" id="QQ2-16-249">Make Suites As Self-Contained As Possible</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.11 <a 
-href="cug-htmlse15.html#x16-20200015.11" id="QQ2-16-250">Orderly Product Generation?</a></span>
+href="cug-htmlse15.html#x16-20200015.11" id="QQ2-16-251">Orderly Product Generation?</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.12 <a 
-href="cug-htmlse15.html#x16-20300015.12" id="QQ2-16-251">Clock-triggered Tasks Wait On External Data</a></span>
+href="cug-htmlse15.html#x16-20300015.12" id="QQ2-16-252">Use Of Clock-Triggered Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.13 <a 
-href="cug-htmlse15.html#x16-20400015.13" id="QQ2-16-252">Do Not Treat Real Time Operation As Special</a></span>
+href="cug-htmlse15.html#x16-20400015.13" id="QQ2-16-253">Tasks That Wait On Something</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.14 <a 
-href="cug-htmlse15.html#x16-20500015.14" id="QQ2-16-253">Factor Out Common Configuration</a></span>
+href="cug-htmlse15.html#x16-20500015.14" id="QQ2-16-254">Do Not Treat Real Time Operation As Special</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.15 <a 
-href="cug-htmlse15.html#x16-20600015.15" id="QQ2-16-254">Use The Graph For Scheduling</a></span>
+href="cug-htmlse15.html#x16-20600015.15" id="QQ2-16-255">Factor Out Common Configuration</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >15.16 <a 
-href="cug-htmlse15.html#x16-20700015.16" id="QQ2-16-255">Use Suite Visualization</a></span>
+href="cug-htmlse15.html#x16-20700015.16" id="QQ2-16-256">Use The Graph For Scheduling</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >15.17 <a 
+href="cug-htmlse15.html#x16-20800015.17" id="QQ2-16-257">Use Suite Visualization</a></span>
 <br />   <span class="sectionToc" >16 <a 
-href="cug-htmlse16.html#x17-20800016" id="QQ2-17-256">Style Guide</a></span>
+href="cug-htmlse16.html#x17-20900016" id="QQ2-17-258">Style Guide</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >16.1 <a 
-href="cug-htmlse16.html#x17-20900016.1" id="QQ2-17-257">Line Indentation</a></span>
+href="cug-htmlse16.html#x17-21000016.1" id="QQ2-17-259">Indentation</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >16.2 <a 
-href="cug-htmlse16.html#x17-21000016.2" id="QQ2-17-258">Comments</a></span>
+href="cug-htmlse16.html#x17-21100016.2" id="QQ2-17-260">Comments</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >16.3 <a 
-href="cug-htmlse16.html#x17-21100016.3" id="QQ2-17-259">Other</a></span>
+href="cug-htmlse16.html#x17-21200016.3" id="QQ2-17-261">Line Length</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >16.4 <a 
+href="cug-htmlse16.html#x17-21300016.4" id="QQ2-17-262">Task Naming Convention</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >16.5 <a 
+href="cug-htmlse16.html#x17-21400016.5" id="QQ2-17-263">Inlined Task Scripting</a></span>
 <br />   <span class="sectionToc" >A <a 
-href="cug-htmlse17.html#x18-212000A" id="QQ2-18-260">Suite.rc Reference</a></span>
+href="cug-htmlse17.html#x18-215000A" id="QQ2-18-264">Suite.rc Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.1 <a 
-href="cug-htmlse17.html#x18-213000A.1" id="QQ2-18-261">Top Level Items</a></span>
+href="cug-htmlse17.html#x18-216000A.1" id="QQ2-18-265">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.2 <a 
-href="cug-htmlse17.html#x18-216000A.2" id="QQ2-18-264">[cylc]</a></span>
+href="cug-htmlse17.html#x18-219000A.2" id="QQ2-18-268">[cylc]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.3 <a 
-href="cug-htmlse17.html#x18-250000A.3" id="QQ2-18-298">[scheduling]</a></span>
+href="cug-htmlse17.html#x18-243000A.3" id="QQ2-18-292">[scheduling]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.4 <a 
-href="cug-htmlse17.html#x18-271000A.4" id="QQ2-18-319">[runtime]</a></span>
+href="cug-htmlse17.html#x18-264000A.4" id="QQ2-18-313">[runtime]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.5 <a 
-href="cug-htmlse17.html#x18-323000A.5" id="QQ2-18-371">[visualization]</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >A.6 <a 
-href="cug-htmlse17.html#x18-340000A.6" id="QQ2-18-388">Special Placeholder Variables In Suite Definitions</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >A.7 <a 
-href="cug-htmlse17.html#x18-341000A.7" id="QQ2-18-389">Default Suite Configuration</a></span>
+href="cug-htmlse17.html#x18-316000A.5" id="QQ2-18-365">[visualization]</a></span>
 <br />   <span class="sectionToc" >B <a 
-href="cug-htmlse18.html#x19-342000B" id="QQ2-19-390">Site And User Config File Reference</a></span>
+href="cug-htmlse18.html#x19-330000B" id="QQ2-19-379">Site And User Config File Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.1 <a 
-href="cug-htmlse18.html#x19-343000B.1" id="QQ2-19-391">Top Level Items</a></span>
+href="cug-htmlse18.html#x19-331000B.1" id="QQ2-19-380">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.2 <a 
-href="cug-htmlse18.html#x19-351000B.2" id="QQ2-19-399">[task messaging]</a></span>
+href="cug-htmlse18.html#x19-340000B.2" id="QQ2-19-389">[task messaging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.3 <a 
-href="cug-htmlse18.html#x19-355000B.3" id="QQ2-19-403">[suite logging]</a></span>
+href="cug-htmlse18.html#x19-344000B.3" id="QQ2-19-393">[suite logging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.4 <a 
-href="cug-htmlse18.html#x19-359000B.4" id="QQ2-19-407">[documentation]</a></span>
+href="cug-htmlse18.html#x19-348000B.4" id="QQ2-19-397">[documentation]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.5 <a 
-href="cug-htmlse18.html#x19-368000B.5" id="QQ2-19-416">[document viewers]</a></span>
+href="cug-htmlse18.html#x19-357000B.5" id="QQ2-19-406">[document viewers]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.6 <a 
-href="cug-htmlse18.html#x19-371000B.6" id="QQ2-19-419">[editors]</a></span>
+href="cug-htmlse18.html#x19-360000B.6" id="QQ2-19-409">[editors]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.7 <a 
-href="cug-htmlse18.html#x19-374000B.7" id="QQ2-19-422">[Pyro]</a></span>
+href="cug-htmlse18.html#x19-363000B.7" id="QQ2-19-412">[Pyro]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.8 <a 
-href="cug-htmlse18.html#x19-378000B.8" id="QQ2-19-426">[hosts]</a></span>
+href="cug-htmlse18.html#x19-367000B.8" id="QQ2-19-416">[hosts]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.9 <a 
-href="cug-htmlse18.html#x19-385000B.9" id="QQ2-19-433">[suite host self-identification] </a></span>
+href="cug-htmlse18.html#x19-374000B.9" id="QQ2-19-423">[suite host self-identification] </a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.10 <a 
-href="cug-htmlse18.html#x19-389000B.10" id="QQ2-19-437">[suite host scanning]</a></span>
+href="cug-htmlse18.html#x19-378000B.10" id="QQ2-19-427">[suite host scanning]</a></span>
 <br />   <span class="sectionToc" >C <a 
-href="cug-htmlse19.html#x20-391000C" id="QQ2-20-439">Gcylc Config File Reference</a></span>
+href="cug-htmlse19.html#x20-380000C" id="QQ2-20-429">Gcylc Config File Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >C.1 <a 
-href="cug-htmlse19.html#x20-392000C.1" id="QQ2-20-440">Top Level Items</a></span>
+href="cug-htmlse19.html#x20-381000C.1" id="QQ2-20-430">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >C.2 <a 
-href="cug-htmlse19.html#x20-398000C.2" id="QQ2-20-446">[themes]</a></span>
+href="cug-htmlse19.html#x20-387000C.2" id="QQ2-20-436">[themes]</a></span>
 <br />   <span class="sectionToc" >D <a 
-href="cug-htmlse20.html#x21-403000D" id="QQ2-21-451">Command Reference</a></span>
+href="cug-htmlse20.html#x21-392000D" id="QQ2-21-441">Command Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >D.1 <a 
-href="cug-htmlse20.html#x21-404000D.1" id="QQ2-21-453">Command Categories</a></span>
+href="cug-htmlse20.html#x21-393000D.1" id="QQ2-21-443">Command Categories</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >D.2 <a 
-href="cug-htmlse20.html#x21-416000D.2" id="QQ2-21-476">Commands</a></span>
+href="cug-htmlse20.html#x21-405000D.2" id="QQ2-21-466">Commands</a></span>
 <br />   <span class="sectionToc" >E <a 
-href="cug-htmlse21.html#x22-490000E" id="QQ2-22-623">The Cylc Lockserver</a></span>
+href="cug-htmlse21.html#x22-478000E" id="QQ2-22-611">The gcylc Graph View</a></span>
 <br />   <span class="sectionToc" >F <a 
-href="cug-htmlse22.html#x23-491000F" id="QQ2-23-624">The gcylc Graph View</a></span>
-<br />   <span class="sectionToc" >G <a 
-href="cug-htmlse23.html#x24-492000G" id="QQ2-24-625">Cylc Project README File</a></span>
-<br />   <span class="sectionToc" >H <a 
-href="cug-htmlse24.html#x25-493000H" id="QQ2-25-627">Cylc Project INSTALL File</a></span>
+href="cug-htmlse22.html#x23-479000F" id="QQ2-23-612">Cylc README File</a></span>
                                                                                          
 
                                                                                          
+<br />   <span class="sectionToc" >G <a 
+href="cug-htmlse23.html#x24-480000G" id="QQ2-24-614">Cylc INSTALL File</a></span>
+<br />   <span class="sectionToc" >H <a 
+href="cug-htmlse24.html#x25-481000H" id="QQ2-25-616">Cylc Development History - Major Changes</a></span>
 <br />   <span class="sectionToc" >I <a 
-href="cug-htmlse25.html#x26-494000I" id="QQ2-26-629">Cylc Development History - Major Changes</a></span>
+href="cug-htmlse25.html#x26-482000I" id="QQ2-26-617">Pyro</a></span>
 <br />   <span class="sectionToc" >J <a 
-href="cug-htmlse26.html#x27-495000J" id="QQ2-27-630">Pyro</a></span>
+href="cug-htmlse26.html#x27-483000J" id="QQ2-27-618">Cylc 6 Migration Reference</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >J.1 <a 
+href="cug-htmlse26.html#x27-484000J.1" id="QQ2-27-619">Timeouts and Delays</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >J.2 <a 
+href="cug-htmlse26.html#x27-485000J.2" id="QQ2-27-621">Runahead Limit</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >J.3 <a 
+href="cug-htmlse26.html#x27-486000J.3" id="QQ2-27-622">Cycle Time/Cycle Point</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >J.4 <a 
+href="cug-htmlse26.html#x27-487000J.4" id="QQ2-27-625">Cycling</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >J.5 <a 
+href="cug-htmlse26.html#x27-488000J.5" id="QQ2-27-628">No Implicit Creation of Tasks by Offset Triggers</a></span>
 <br />   <span class="sectionToc" >K <a 
-href="cug-htmlse27.html#x28-496000K" id="QQ2-28-631">GNU GENERAL PUBLIC LICENSE v3.0</a></span>
+href="cug-htmlse27.html#x28-489000K" id="QQ2-28-629">GNU GENERAL PUBLIC LICENSE v3.0</a></span>
    </div>
 
 
@@ -378,7 +393,7 @@ href="cug-htmlse27.html#x28-496000K" id="QQ2-28-631">GNU GENERAL PUBLIC LICENSE 
 
 
 
-<!--l. 196--><p class="noindent" ><span class="next">[<a 
+<!--l. 227--><p class="noindent" ><span class="next">[<a 
 href="cug-htmlse1.html" id="tailcug-html" >next</a>]</span> 
 </body></html> 
 

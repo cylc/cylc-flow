@@ -7,48 +7,42 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-06-07 09:53:00"> 
+<meta name="date" content="2014-09-10 22:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 4193--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 4519--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse11.html" >next</a>] [<a 
 href="cug-htmlse9.html" >prev</a>] [<a 
 href="cug-htmlse9.html#tailcug-htmlse9.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse10.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse10.html" >up</a>] </p></div>
-   <h3 class="sectionHead"><span class="titlemark">10   </span> <a 
- id="x11-13100010"></a>Task Implementation</h3>
-   <div class="sectionTOCS">
+<!--l. 4519--><p class="indent" >    <h3 id="10" class="sectionHead"><span class="titlemark"> <a href="#10">10</a>  <a 
+ id="x11-12900010"></a>Task Implementation </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >10.1 <a 
-href="#x11-13200010.1">Inlined Tasks</a></span>
+href="#x11-13000010.1">Inlined Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.2 <a 
-href="#x11-13300010.2">Returning Proper Error Status</a></span>
+href="#x11-13100010.2">Returning Proper Error Status</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.3 <a 
-href="#x11-13400010.3">Reporting Internal (Message) Outputs</a></span>
+href="#x11-13200010.3">Other Task Messages</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.4 <a 
-href="#x11-13500010.4">Other Task Messages</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >10.5 <a 
-href="#x11-13600010.5">Detaching Tasks</a></span>
+href="#x11-13300010.4">Detaching Tasks</a></span>
    </div>
-<!--l. 4196--><p class="indent" >   Existing tasks (models, scripts, etc.) can be used by cylc without any modification, with the following few
-exceptions:
+<!--l. 4522--><p class="indent" >   Existing scripts or executables can be used as cylc tasks without any modification, unless:
      <ul class="itemize1">
-     <li class="itemize">tasks that do not return error status on error
+     <li class="itemize">they do not return error status on failure
      </li>
-     <li class="itemize">tasks with internal outputs that others need to trigger off before the task is finished
-     </li>
-     <li class="itemize">tasks that spawn internal processes and then detach and exit early</li></ul>
-<!--l. 4205--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">10.1   </span> <a 
- id="x11-13200010.1"></a>Inlined Tasks</h4>
-<!--l. 4207--><p class="noindent" >Simple tasks can be entirely implemented within the suite.rc file - task <span 
+     <li class="itemize">they detach early after spawning other internal processes</li></ul>
+<!--l. 4529--><p class="noindent" >
+<!--l. 4529--><p class="indent" >    <h4 id="10.1" class="subsectionHead"> <span class="titlemark"> <a href="#10.1"> 10.1</a>  <a 
+ id="x11-13000010.1"></a>Inlined Tasks </span></h4>
+<!--l. 4531--><p class="indent" >   Simple tasks can be entirely implemented within the suite.rc file - task <span 
 class="cmti-10">command scripting </span>can be a multi-line
 string.
-<!--l. 4210--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">10.2   </span> <a 
- id="x11-13300010.2"></a>Returning Proper Error Status</h4>
-<!--l. 4212--><p class="noindent" >Tasks should abort with non-zero exit status if a fatal error occurs (this is just standard coding practice anyway).
+<!--l. 4534--><p class="noindent" >
+<!--l. 4534--><p class="indent" >    <h4 id="10.2" class="subsectionHead"> <span class="titlemark"> <a href="#10.2"> 10.2</a>  <a 
+ id="x11-13100010.2"></a>Returning Proper Error Status </span></h4>
+<!--l. 4536--><p class="indent" >   Tasks should abort with non-zero exit status if a fatal error occurs (this is just good coding practice anyway).
 This allows cylc&#8217;s task job scripts to automatically trap errors and send a <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -60,16 +54,16 @@ class="pcrr7t-">set</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span></span> option can be used in lieu of explicit error checks for every command:
-<!--l. 4219-->
-   <div class="lstlisting" id="listing-155"><span class="label"><a 
- id="x11-133001r1"></a></span><span 
+<!--l. 4543-->
+   <div class="lstlisting" id="listing-163"><span class="label"><a 
+ id="x11-131001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-133002r2"></a></span><span 
+ id="x11-131002r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -84,7 +78,7 @@ class="pcrro7t-">on</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">error</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-133003r3"></a></span><span 
+ id="x11-131003r3"></a></span><span 
 class="pcrr7t-">mkdir</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">/</span><span 
@@ -112,495 +106,19 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">status</span>
    
    </div>
-                                                                                         
-
-                                                                                         
-<!--l. 4225--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">10.3   </span> <a 
- id="x11-13400010.3"></a>Reporting Internal (Message) Outputs</h4>
-<!--l. 4228--><p class="noindent" >If a task has <span 
-class="cmti-10">internal outputs </span>that others need to trigger off before the task is finished, then it must report
-completion of those outputs to the suite daemon. These messages must exactly match corresponding <span 
-class="cmti-10">outputs</span>
-registered for the task in the suite definition, and for cycling tasks they should contain the cycle time in order to
-distinguish between the outputs of different instances of the same task.
-<!--l. 4236--><p class="indent" >   The &#8220;outputs&#8221; example is a self-contained suite that illustrates this:  <!--l. 4238--><div class="lstinputlisting">
-<a 
- id="x11-134001"></a>
-   <span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134002r1"></a></span><span 
-class="pcrr7t-">title</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">triggering</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">off</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">internal</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">task</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">outputs</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134003r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134004r3"></a></span><span 
-class="pcrr7t-">description</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134005r4"></a></span><span 
-class="pcrr7t-">This</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">is</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">a</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">self</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">contained</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">example</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">(</span><span 
-class="pcrr7t-">task</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">implementation</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">including</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">output</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134006r5"></a></span><span 
-class="pcrr7t-">messaging</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">is</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">entirely</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">contained</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">within</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">the</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">suite</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">definition</span><span 
-class="pcrr7t-">).</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134007r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134008r7"></a></span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">scheduling</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134009r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">initial</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycle</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2010080806</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134010r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">final</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycle</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2010080812</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134011r10"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[</span><span 
-class="pcrr7t-">dependencies</span><span 
-class="pcrr7t-">]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134012r11"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">0,12</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134013r12"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">graph</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134014r13"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">out1</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">bar</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134015r14"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">out2</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">baz</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134016r15"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134017r16"></a></span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134018r17"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134019r18"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">command</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">scripting</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134020r19"></a></span><span 
-class="pcrr7t-">echo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">HELLO</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134021r20"></a></span><span 
-class="pcrr7t-">sleep</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">10</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134022r21"></a></span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">message</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">uploaded</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">file</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">set</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">for</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134023r22"></a></span><span 
-class="pcrr7t-">sleep</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">10</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134024r23"></a></span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">message</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_TASK_NAME</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">uploaded</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">file</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">set</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">for</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134025r24"></a></span><span 
-class="pcrr7t-">sleep</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">10</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134026r25"></a></span><span 
-class="pcrr7t-">echo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">BYE</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134027r26"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">outputs</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134028r27"></a></span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">[</span><span 
-class="pcrro7t-">T</span><span 
-class="pcrro7t-">]</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">is</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">replaced</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">by</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">actual</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">cycle</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">time</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">at</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">run</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">time</span><span 
-class="pcrro7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134029r28"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">out1</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">uploaded</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">file</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">set</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">for</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">T</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-134030r29"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">out2</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">uploaded</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">file</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">set</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">for</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">T</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">"</span>
-   
-   </div>
-<!--l. 4239--><p class="noindent" >Compare the registered message string, which uses <span class="lstinline"><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">T</span><span 
-class="pcrr7t-">]</span></span> as a placeholder for the cycle time, with the actual message
-emitted by the task, which uses <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_TASK_CYCLE_TIME</span></span>. The registered message string is held in the suite
-daemon to be matched with incoming task messages - it cannot contain shell variables because is never interpreted
-by the shell.
-<!--l. 4246--><p class="indent" >   See <span 
-class="cmti-10">Model Restart Dependencies </span>(Section&#x00A0;<a 
-href="cug-htmlse9.html#x10-1010009.3.5">9.3.5<!--tex4ht:ref: ModelRestartDependencies --></a>) for an example that uses cycle time offsets in message
-outputs.
-<!--l. 4250--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">10.4   </span> <a 
- id="x11-13500010.4"></a>Other Task Messages</h4>
-<!--l. 4252--><p class="noindent" >General (non-output) messages can also be sent to report progress, warnings, and so on, e.g.:  <!--l. 4255-->
-   <div class="lstlisting" id="listing-156"><span class="label"><a 
- id="x11-135001r1"></a></span><span 
+<!--l. 4550--><p class="noindent" >
+<!--l. 4550--><p class="indent" >    <h4 id="10.3" class="subsectionHead"> <span class="titlemark"> <a href="#10.3"> 10.3</a>  <a 
+ id="x11-13200010.3"></a>Other Task Messages </span></h4>
+<!--l. 4552--><p class="indent" >   General (non-output) messages can also be sent to report progress, warnings, and so on, e.g.:  <!--l. 4555-->
+   <div class="lstlisting" id="listing-164"><span class="label"><a 
+ id="x11-132001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135002r2"></a></span><span 
+ id="x11-132002r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">a</span><span 
@@ -625,7 +143,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">suite</span><span 
 class="pcrro7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135003r3"></a></span><span 
+ id="x11-132003r3"></a></span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">task</span><span 
@@ -650,7 +168,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">here</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135004r4"></a></span><span 
+ id="x11-132004r4"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">information</span><span 
@@ -673,7 +191,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">suite</span><span 
 class="pcrro7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135005r5"></a></span><span 
+ id="x11-132005r5"></a></span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">task</span><span 
@@ -691,16 +209,19 @@ class="pcrr7t-">foo</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 4263--><p class="indent" >   Explanatory messages can be sent before aborting on error:  <!--l. 4265-->
-   <div class="lstlisting" id="listing-157"><span class="label"><a 
- id="x11-135006r1"></a></span><span 
+<!--l. 4563--><p class="indent" >   Explanatory messages can be sent before aborting on error:  <!--l. 4565-->
+                                                                                         
+
+                                                                                         
+   <div class="lstlisting" id="listing-165"><span class="label"><a 
+ id="x11-132006r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135007r2"></a></span><span 
+ id="x11-132007r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -715,7 +236,7 @@ class="pcrro7t-">on</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">error</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135008r3"></a></span><span 
+ id="x11-132008r3"></a></span><span 
 class="pcrb7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">!</span><span 
@@ -730,7 +251,7 @@ class="pcrr7t-">;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrb7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135009r4"></a></span><span 
+ id="x11-132009r4"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -763,7 +284,7 @@ class="pcrro7t-">-</span><span
 class="pcrro7t-">e</span><span 
 class="pcrro7t-">')</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135010r5"></a></span><span 
+ id="x11-132010r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -794,7 +315,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">dir</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135011r6"></a></span><span 
+ id="x11-132011r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -829,26 +350,26 @@ class="pcrro7t-">failed</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">message</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135012r7"></a></span><span 
+ id="x11-132012r7"></a></span><span 
 class="pcrb7t-">fi</span>
    
    </div>
-<!--l. 4274--><p class="indent" >   Or equivalently, with different syntax:  <!--l. 4276-->
-   <div class="lstlisting" id="listing-158"><span class="label"><a 
- id="x11-135013r1"></a></span><span 
+<!--l. 4574--><p class="indent" >   Or equivalently, with different syntax:  <!--l. 4576-->
+   <div class="lstlisting" id="listing-166"><span class="label"><a 
+ id="x11-132013r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135014r2"></a></span><span 
+ id="x11-132014r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135015r3"></a></span><span 
+ id="x11-132015r3"></a></span><span 
 class="pcrr7t-">mkdir</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">/</span><span 
@@ -875,7 +396,7 @@ class="pcrro7t-">OR</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">operator</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135016r4"></a></span><span 
+ id="x11-132016r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -906,7 +427,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">dir</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135017r5"></a></span><span 
+ id="x11-132017r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -915,26 +436,26 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135018r6"></a></span><span 
+ id="x11-132018r6"></a></span><span 
 class="pcrr7t-">}</span>
    
    </div>
-<!--l. 4284--><p class="indent" >   But not this:  <!--l. 4286-->
-   <div class="lstlisting" id="listing-159"><span class="label"><a 
- id="x11-135019r1"></a></span><span 
+<!--l. 4584--><p class="indent" >   But not this:  <!--l. 4586-->
+   <div class="lstlisting" id="listing-167"><span class="label"><a 
+ id="x11-132019r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135020r2"></a></span><span 
+ id="x11-132020r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135021r3"></a></span><span 
+ id="x11-132021r3"></a></span><span 
 class="pcrr7t-">mkdir</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">/</span><span 
@@ -956,7 +477,7 @@ class="pcrro7t-">-</span><span
 class="pcrro7t-">e</span><span 
 class="pcrro7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135022r4"></a></span><span 
+ id="x11-132022r4"></a></span><span 
 class="pcrb7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
@@ -988,7 +509,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">reached</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135023r5"></a></span><span 
+ id="x11-132023r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1019,7 +540,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">dir</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135024r6"></a></span><span 
+ id="x11-132024r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1028,22 +549,19 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-135025r7"></a></span><span 
+ id="x11-132025r7"></a></span><span 
 class="pcrb7t-">fi</span>
    
    </div>
-<!--l. 4295--><p class="indent" >   If critical errors are not reported in this way task failures will still be detected and logged by cylc, but you may
-have to examine task logs to determine what the problem was.
-<!--l. 4299--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">10.5   </span> <a 
- id="x11-13600010.5"></a>Detaching Tasks</h4>
-<!--l. 4302--><p class="noindent" >If a task spawns another job internally and then detaches and exits without seeing the spawned process through,
+<!--l. 4595--><p class="indent" >   If critical errors are not reported in this way task failures will still be detected and logged by the suite daemon,
+but you may have to examine task logs to determine what the problem was.
+<!--l. 4599--><p class="noindent" >
+<!--l. 4599--><p class="indent" >    <h4 id="10.4" class="subsectionHead"> <span class="titlemark"> <a href="#10.4"> 10.4</a>  <a 
+ id="x11-13300010.4"></a>Detaching Tasks </span></h4>
+<!--l. 4602--><p class="indent" >   If a task spawns another job internally and then detaches and exits without seeing the spawned process through,
 you must arrange for the detached process to send its own completion messages, because the cylc-generated job
 script cannot know when it is finished.
-                                                                                         
-
-                                                                                         
-<!--l. 4307--><p class="indent" >   First check that you can&#8217;t &#8220;reconnect&#8221; the detaching process. If it is a background shell process, for instance, just
+<!--l. 4607--><p class="indent" >   First check that you can&#8217;t &#8220;reconnect&#8221; the detaching process. If it is a background shell process, for instance, just
 run it in the foreground instead. For loadleveler jobs the <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">s</span></span> option prevents <span class="lstinline"><span 
@@ -1054,18 +572,18 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">sync</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">yes</span></span> has the same effect. Section&#x00A0;<a 
-href="cug-htmlse11.html#x12-15300011.5">11.5<!--tex4ht:ref: CommandTemplate --></a> shows how to override
-job submission command template to achieve this.
-<!--l. 4315--><p class="indent" >   If the detaching process cannot be reconnected, disable cylc&#8217;s automatic completion messaging:
-<!--l. 4318-->
-   <div class="lstlisting" id="listing-160"><span class="label"><a 
- id="x11-136001r1"></a></span><span 
+class="pcrr7t-">yes</span></span> has the same effect. For how to override the job submission
+command template see&#x00A0;<a 
+href="cug-htmlse11.html#x12-14800011.4">11.4<!--tex4ht:ref: CommandTemplate --></a>.
+<!--l. 4615--><p class="indent" >   If the detaching process cannot be reconnected, disable cylc&#8217;s automatic completion messaging:
+<!--l. 4618-->
+   <div class="lstlisting" id="listing-168"><span class="label"><a 
+ id="x11-133001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136002r2"></a></span><span 
+ id="x11-133002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1074,7 +592,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136003r3"></a></span><span 
+ id="x11-133003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1089,7 +607,7 @@ class="pcrr7t-">completion</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">False</span><span 
+class="pcrr7t-">True</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1099,26 +617,26 @@ class="pcrro7t-">is</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">a</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">detching</span><span 
+class="pcrro7t-">detaching</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">task</span>
    
    </div>
-<!--l. 4324--><p class="indent" >   The cylc messaging commands are called like this:  <!--l. 4326-->
-   <div class="lstlisting" id="listing-161"><span class="label"><a 
- id="x11-136004r1"></a></span><span 
+<!--l. 4624--><p class="indent" >   The cylc messaging commands are called like this:  <!--l. 4626-->
+   <div class="lstlisting" id="listing-169"><span class="label"><a 
+ id="x11-133004r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136005r2"></a></span><span 
+ id="x11-133005r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">...</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136006r3"></a></span><span 
+ id="x11-133006r3"></a></span><span 
 class="pcrb7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr8c-">$</span><span 
@@ -1127,28 +645,7 @@ class="pcrr7t-">;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrb7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136007r4"></a></span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">release</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">my</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">task</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">lock</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">report</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">success</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136008r5"></a></span><span 
+ id="x11-133007r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1159,7 +656,7 @@ class="pcrr7t-">task</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">succeeded</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136009r6"></a></span><span 
+ id="x11-133008r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1168,31 +665,10 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">0</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136010r7"></a></span><span 
+ id="x11-133009r6"></a></span><span 
 class="pcrb7t-">else</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136011r8"></a></span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">release</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">my</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">task</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">lock</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">and</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">report</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">failed</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136012r9"></a></span><span 
+ id="x11-133010r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1215,7 +691,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">found</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136013r10"></a></span><span 
+ id="x11-133011r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1224,61 +700,65 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136014r11"></a></span><span 
+ id="x11-133012r9"></a></span><span 
 class="pcrb7t-">fi</span>
    
    </div>
-<!--l. 4339--><p class="indent" >   They read environment variables that identify the calling task and the target suite, so the task execution
-environment must be propagated to the deatched process.
-<!--l. 4343--><p class="indent" >   One way to handle this is to write a <span 
+<!--l. 4637--><p class="indent" >   They read environment variables that identify the calling task and the target suite, so the task execution
+environment must be propagated to the detached process.
+<!--l. 4641--><p class="indent" >   One way to handle this is to write a <span 
 class="cmti-10">task wrapper </span>that modifies a copy of the detaching native job scripts, on the
 fly, to insert completion messaging in the appropriate places. An advantage of this method is that you don&#8217;t need to
 permanently modify the model or its associated native scripting for cylc. Another is that you can
 configure the native job setup for a single test case (running it without cylc) and then have your custom
 wrapper modify the standalone test case on the fly with suite, task, and cycle-specific parameters as
 required.
-<!--l. 4352--><p class="indent" >   To make this easier, for tasks that declare manual completion messaging cylc makes non user-defined
+<!--l. 4650--><p class="indent" >   To make this easier, for tasks that declare manual completion messaging cylc makes non user-defined
 environment scripting available in a variable <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_ENVIRONMENT</span></span>, the value of which can be inserted
 at the appropriate point in the task scripts (just prior to calling the cylc messaging commands as
 above).<span class="footnote-mark"><a 
 href="#fn4x0" id="fn4x0-bk"><sup class="textsuperscript">4</sup></a></span><a 
- id="x11-136015f4"></a>
-<!--l. 4362--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">10.5.1   </span> <a 
- id="x11-13700010.5.1"></a>Detaching Tasks And Polling</h5>
-<!--l. 4364--><p class="noindent" >Another reason to avoid detaching tasks if possible is that they cannot be polled or killed because there is no way
-for cylc to determine the job ID of the detached process. Attempted polling of a detaching task will just result in
-cylc logging a warning message.
-<!--l. 4369--><p class="noindent" >
-   <h5 class="subsubsectionHead"><span class="titlemark">10.5.2   </span> <a 
- id="x11-13800010.5.2"></a>A Custom Detaching Task Wrapper Example</h5>
-<!--l. 4371--><p class="noindent" >The <span 
+ id="x11-133013f4"></a>
+                                                                                         
+
+                                                                                         
+<!--l. 4660--><p class="noindent" >
+<!--l. 4660--><p class="indent" >    <h4 id="10.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#10.4.1"> 10.4.1</a>  <a 
+ id="x11-13400010.4.1"></a>Detaching Tasks And Polling </span></h4>
+<!--l. 4662--><p class="indent" >   Another reason to avoid detaching tasks if possible is that they cannot be polled or killed because there is no
+way for cylc to determine the job ID of the detached process. Attempted polling of a detaching task will just result
+in cylc logging a warning message.
+<!--l. 4667--><p class="noindent" >
+<!--l. 4667--><p class="indent" >    <h4 id="10.4.2" class="subsubsectionHead"><span class="titlemark"> <a href="#10.4.2"> 10.4.2</a>  <a 
+ id="x11-13500010.4.2"></a>A Custom Detaching Task Wrapper Example </span></h4>
+<!--l. 4669--><p class="indent" >   The <span 
 class="cmti-10">detaching </span>example suite contains a script <span class="lstinline"><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">sh</span></span> that runs a pseudo model as follows:  <!--l. 4374--><div class="lstinputlisting">
+class="pcrr7t-">sh</span></span> that runs a pseudo model as follows:
+<!--l. 4672--><div class="lstinputlisting">
 <a 
- id="x11-138001"></a>
+ id="x11-135001"></a>
    <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138002r1"></a></span><span 
+ id="x11-135002r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138003r2"></a></span><span 
+ id="x11-135003r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138004r3"></a></span><span 
+ id="x11-135004r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138005r4"></a></span><span 
+ id="x11-135005r4"></a></span><span 
 class="pcrr7t-">MODEL</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">"</span><span 
@@ -1289,7 +769,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">true</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138006r5"></a></span><span 
+ id="x11-135006r5"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">MODEL</span><span 
 class="pcrro7t-">="</span><span 
@@ -1313,9 +793,9 @@ class="pcrro7t-">model</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">failure</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138007r6"></a></span><span 
+ id="x11-135007r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138008r7"></a></span><span 
+ id="x11-135008r7"></a></span><span 
 class="pcrb7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
@@ -1331,7 +811,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">executable</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138009r8"></a></span><span 
+ id="x11-135009r8"></a></span><span 
 class="pcrb7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
@@ -1348,13 +828,13 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_VERSION</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138010r9"></a></span><span 
+ id="x11-135010r9"></a></span><span 
 class="pcrb7t-">eval</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">MODEL</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138011r10"></a></span><span 
+ id="x11-135011r10"></a></span><span 
 class="pcrb7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
@@ -1367,31 +847,31 @@ class="pcrr7t-">done</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 4375--><p class="noindent" >this is in turn executed by a script <span class="lstinline"><span 
+<!--l. 4673--><p class="noindent" >this is in turn executed by a script <span class="lstinline"><span 
 class="pcrr7t-">run</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span> that detaches immediately after job submission (i.e.&#x00A0;it exits before
-the model executable actually runs): <!--l. 4378--><div class="lstinputlisting">
+the model executable actually runs): <!--l. 4676--><div class="lstinputlisting">
 <a 
- id="x11-138014"></a>
+ id="x11-135012"></a>
    <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138015r1"></a></span><span 
+ id="x11-135013r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138016r2"></a></span><span 
+ id="x11-135014r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138017r3"></a></span><span 
+ id="x11-135015r3"></a></span><span 
 class="pcrb7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
@@ -1417,7 +897,7 @@ class="pcrr7t-">now</span><span
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138018r4"></a></span><span 
+ id="x11-135016r4"></a></span><span 
 class="pcrr7t-">SCRIPT</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">model</span><span 
@@ -1441,7 +921,7 @@ class="pcrro7t-">to</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">submit</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138019r5"></a></span><span 
+ id="x11-135017r5"></a></span><span 
 class="pcrr7t-">OUT</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr8c-">$</span><span 
@@ -1467,7 +947,7 @@ class="pcrro7t-">log</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">paths</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138020r6"></a></span><span 
+ id="x11-135018r6"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">submit</span><span 
@@ -1480,9 +960,9 @@ class="pcrro7t-">and</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">detach</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138021r7"></a></span><span 
+ id="x11-135019r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138022r8"></a></span><span 
+ id="x11-135020r8"></a></span><span 
 class="pcrr7t-">MY_TMPDIR</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr8c-">$</span><span 
@@ -1496,9 +976,9 @@ class="pcrr7t-">:-/</span><span
 class="pcrr7t-">tmp</span><span 
 class="pcrr7t-">}}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138023r9"></a></span><span 
+ id="x11-135021r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138024r10"></a></span><span 
+ id="x11-135022r10"></a></span><span 
 class="pcrr7t-">RES</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr8c-">$</span><span 
@@ -1509,7 +989,7 @@ class="pcrr8c-">$$</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">txt</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138025r11"></a></span><span 
+ id="x11-135023r11"></a></span><span 
 class="pcrr7t-">(</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">at</span><span 
@@ -1519,7 +999,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x003C;&#x003C;</span><span 
 class="pcrr7t-">EOF</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138026r12"></a></span><span 
+ id="x11-135024r12"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">SCRIPT</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1533,10 +1013,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">ERR</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138027r13"></a></span><span 
+ id="x11-135025r13"></a></span><span 
 class="pcrr7t-">EOF</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138028r14"></a></span><span 
+ id="x11-135026r14"></a></span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x003E;</span><span 
@@ -1546,7 +1026,7 @@ class="pcrr7t-">RES</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">2&#x003E;&amp;1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138029r15"></a></span><span 
+ id="x11-135027r15"></a></span><span 
 class="pcrb7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">grep</span><span 
@@ -1565,7 +1045,7 @@ class="pcrr7t-">;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrb7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138030r16"></a></span><span 
+ id="x11-135028r16"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1585,7 +1065,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">running</span><span 
 class="pcrr7t-">!'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138031r17"></a></span><span 
+ id="x11-135029r17"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1594,10 +1074,10 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138032r18"></a></span><span 
+ id="x11-135030r18"></a></span><span 
 class="pcrb7t-">fi</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138033r19"></a></span><span 
+ id="x11-135031r19"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">model</span><span 
@@ -1629,7 +1109,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">scheduler</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138034r20"></a></span><span 
+ id="x11-135032r20"></a></span><span 
 class="pcrb7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
@@ -1643,20 +1123,17 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">done</span><span 
 class="pcrr7t-">"</span>
    
-                                                                                         
-
-                                                                                         
    </div>
-<!--l. 4379--><p class="noindent" ><span 
+<!--l. 4677--><p class="noindent" ><span 
 class="cmti-10">Note that your </span><span 
 class="cmbx-10">at </span><span 
 class="cmti-10">scheduler daemon must be up if you want to test this suite.</span>
-<!--l. 4382--><p class="indent" >   Here&#8217;s a cylc suite to run this unruly model:  <!--l. 4384--><div class="lstinputlisting">
+<!--l. 4680--><p class="indent" >   Here&#8217;s a cylc suite to run this unruly model:  <!--l. 4682--><div class="lstinputlisting">
 <a 
- id="x11-138035"></a>
+ id="x11-135033"></a>
    <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138036r1"></a></span><span 
+ id="x11-135034r1"></a></span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -1677,9 +1154,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Example</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138037r2"></a></span><span 
+ id="x11-135035r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138038r3"></a></span><span 
+ id="x11-135036r3"></a></span><span 
 class="pcrr7t-">description</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -1707,7 +1184,7 @@ class="pcrr7t-">submits</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">a</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138039r4"></a></span><span 
+ id="x11-135037r4"></a></span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1732,7 +1209,7 @@ class="pcrr7t-">we</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">have</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138040r5"></a></span><span 
+ id="x11-135038r5"></a></span><span 
 class="pcrr7t-">to</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">handle</span><span 
@@ -1761,14 +1238,14 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138041r6"></a></span><span 
+ id="x11-135039r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138042r7"></a></span><span 
+ id="x11-135040r7"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138043r8"></a></span><span 
+ id="x11-135041r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1777,13 +1254,14 @@ class="pcrr7t-">initial</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cycle</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
+class="pcrr7t-">point</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2011010106</span><span 
+class="pcrr7t-">20110101</span><span 
+class="pcrr7t-">T06</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138044r9"></a></span><span 
+ id="x11-135042r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1792,13 +1270,14 @@ class="pcrr7t-">final</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cycle</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">time</span><span 
+class="pcrr7t-">point</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2011010200</span><span 
+class="pcrr7t-">20110102</span><span 
+class="pcrr7t-">T00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138045r10"></a></span><span 
+ id="x11-135043r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1809,7 +1288,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">tasks</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138046r11"></a></span><span 
+ id="x11-135044r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1824,7 +1303,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138047r12"></a></span><span 
+ id="x11-135045r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1833,7 +1312,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138048r13"></a></span><span 
+ id="x11-135046r13"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1843,10 +1322,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">0,6,12,18</span><span 
+class="pcrr7t-">T00</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T06</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T12</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">T18</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138049r14"></a></span><span 
+ id="x11-135047r14"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1863,14 +1348,14 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138050r15"></a></span><span 
+ id="x11-135048r15"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138051r16"></a></span><span 
+ id="x11-135049r16"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138052r17"></a></span><span 
+ id="x11-135050r17"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1879,7 +1364,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138053r18"></a></span><span 
+ id="x11-135051r18"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1896,7 +1381,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">True</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138054r19"></a></span><span 
+ id="x11-135052r19"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1934,7 +1419,7 @@ class="pcrro7t-">custom</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">wrapper</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138055r20"></a></span><span 
+ id="x11-135053r20"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1947,7 +1432,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">environment</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138056r21"></a></span><span 
+ id="x11-135054r21"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1983,7 +1468,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">suite</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138057r22"></a></span><span 
+ id="x11-135055r22"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2005,7 +1490,7 @@ class="pcrr7t-">CYLC_SUITE_DEF_PATH</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">native</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138058r23"></a></span><span 
+ id="x11-135056r23"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -2039,7 +1524,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">stderr</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138059r24"></a></span><span 
+ id="x11-135057r24"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2059,7 +1544,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_TASK_LOG_ROOT</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138060r25"></a></span><span 
+ id="x11-135058r25"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2087,33 +1572,33 @@ class="pcrr7t-">PREFIX</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 4386--><p class="noindent" >The suite invokes the task by means of the custom wrapper <span class="lstinline"><span 
+<!--l. 4684--><p class="noindent" >The suite invokes the task by means of the custom wrapper <span class="lstinline"><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">wrapper</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span> which modifies, on the fly, a
-temporary copy of the model&#8217;s native job scripts as described above: <!--l. 4389--><div class="lstinputlisting">
+temporary copy of the model&#8217;s native job scripts as described above: <!--l. 4687--><div class="lstinputlisting">
 <a 
- id="x11-138063"></a>
+ id="x11-135059"></a>
    <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138064r1"></a></span><span 
+ id="x11-135060r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138065r2"></a></span><span 
+ id="x11-135061r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138066r3"></a></span><span 
+ id="x11-135062r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138067r4"></a></span><span 
+ id="x11-135063r4"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">A</span><span 
@@ -2143,7 +1628,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">suite</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138068r5"></a></span><span 
+ id="x11-135064r5"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">See</span><span 
@@ -2163,9 +1648,9 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">information</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138069r6"></a></span><span 
+ id="x11-135065r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138070r7"></a></span><span 
+ id="x11-135066r7"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Check</span><span 
@@ -2173,7 +1658,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">inputs</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138071r8"></a></span><span 
+ id="x11-135067r8"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">location</span><span 
@@ -2189,7 +1674,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">scripts</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138072r9"></a></span><span 
+ id="x11-135068r9"></a></span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">util</span><span 
@@ -2201,7 +1686,7 @@ class="pcrr7t-">d</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">NATIVESCRIPTS</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138073r10"></a></span><span 
+ id="x11-135069r10"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">path</span><span 
@@ -2219,7 +1704,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">stderr</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138074r11"></a></span><span 
+ id="x11-135070r11"></a></span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">util</span><span 
@@ -2228,9 +1713,9 @@ class="pcrr7t-">checkvars</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">PREFIX</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138075r12"></a></span><span 
+ id="x11-135071r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138076r13"></a></span><span 
+ id="x11-135072r13"></a></span><span 
 class="pcrr7t-">MY_TMPDIR</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr8c-">$</span><span 
@@ -2244,7 +1729,7 @@ class="pcrr7t-">:-/</span><span
 class="pcrr7t-">tmp</span><span 
 class="pcrr7t-">}}</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138077r14"></a></span><span 
+ id="x11-135073r14"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Get</span><span 
@@ -2266,7 +1751,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">scripts</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138078r15"></a></span><span 
+ id="x11-135074r15"></a></span><span 
 class="pcrr7t-">TDIR</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr8c-">$</span><span 
@@ -2275,7 +1760,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">detach</span><span 
 class="pcrr8c-">$$</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138079r16"></a></span><span 
+ id="x11-135075r16"></a></span><span 
 class="pcrr7t-">mkdir</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -2284,7 +1769,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">TDIR</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138080r17"></a></span><span 
+ id="x11-135076r17"></a></span><span 
 class="pcrr7t-">cp</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr8c-">$</span><span 
@@ -2294,9 +1779,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">TDIR</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138081r18"></a></span><span 
+ id="x11-135077r18"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138082r19"></a></span><span 
+ id="x11-135078r19"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Insert</span><span 
@@ -2319,7 +1804,7 @@ class="pcrro7t-">.</span><span
 class="pcrro7t-">sh</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138083r20"></a></span><span 
+ id="x11-135079r20"></a></span><span 
 class="pcrr7t-">SRCH</span><span 
 class="pcrr7t-">='</span><span 
 class="pcrb7t-">echo</span><span 
@@ -2338,7 +1823,7 @@ class="pcrr7t-">executable</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138084r21"></a></span><span 
+ id="x11-135080r21"></a></span><span 
 class="pcrr7t-">perl</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -2374,9 +1859,9 @@ class="pcrr7t-">model</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138085r22"></a></span><span 
+ id="x11-135081r22"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138086r23"></a></span><span 
+ id="x11-135082r23"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Task</span><span 
@@ -2404,7 +1889,7 @@ class="pcrro7t-">don</span><span
 class="pcrro7t-">'</span><span 
 class="pcrro7t-">t</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138087r24"></a></span><span 
+ id="x11-135083r24"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">want</span><span 
@@ -2427,11 +1912,11 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">shell</span><span 
 class="pcrro7t-">!</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138088r25"></a></span><span 
+ id="x11-135084r25"></a></span><span 
 class="pcrr7t-">MSG</span><span 
 class="pcrr7t-">='</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138089r26"></a></span><span 
+ id="x11-135085r26"></a></span><span 
 class="pcrb7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
@@ -2447,7 +1932,7 @@ class="pcrr7t-">]];</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrb7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138090r27"></a></span><span 
+ id="x11-135086r27"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2473,7 +1958,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">failed</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138091r28"></a></span><span 
+ id="x11-135087r28"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2481,10 +1966,10 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138092r29"></a></span><span 
+ id="x11-135088r29"></a></span><span 
 class="pcrb7t-">else</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138093r30"></a></span><span 
+ id="x11-135089r30"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2494,7 +1979,7 @@ class="pcrr7t-">task</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">succeeded</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138094r31"></a></span><span 
+ id="x11-135090r31"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2502,11 +1987,11 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">0</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138095r32"></a></span><span 
+ id="x11-135091r32"></a></span><span 
 class="pcrb7t-">fi</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138096r33"></a></span><span 
+ id="x11-135092r33"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Insert</span><span 
@@ -2531,7 +2016,7 @@ class="pcrro7t-">.</span><span
 class="pcrro7t-">sh</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138097r34"></a></span><span 
+ id="x11-135093r34"></a></span><span 
 class="pcrr7t-">SRCH</span><span 
 class="pcrr7t-">='</span><span 
 class="pcrb7t-">echo</span><span 
@@ -2546,7 +2031,7 @@ class="pcrr7t-">done</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138098r35"></a></span><span 
+ id="x11-135094r35"></a></span><span 
 class="pcrr7t-">perl</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -2582,9 +2067,9 @@ class="pcrr7t-">model</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138099r36"></a></span><span 
+ id="x11-135095r36"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138100r37"></a></span><span 
+ id="x11-135096r37"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Point</span><span 
@@ -2613,7 +2098,7 @@ class="pcrro7t-">.</span><span
 class="pcrro7t-">sh</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138101r38"></a></span><span 
+ id="x11-135097r38"></a></span><span 
 class="pcrr7t-">SRCH</span><span 
 class="pcrr7t-">='</span><span 
 class="pcrr7t-">SCRIPT</span><span 
@@ -2623,7 +2108,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">sh</span><span 
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138102r39"></a></span><span 
+ id="x11-135098r39"></a></span><span 
 class="pcrr7t-">perl</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -2658,9 +2143,9 @@ class="pcrr7t-">model</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138103r40"></a></span><span 
+ id="x11-135099r40"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138104r41"></a></span><span 
+ id="x11-135100r41"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Execute</span><span 
@@ -2678,7 +2163,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">process</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138105r42"></a></span><span 
+ id="x11-135101r42"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">TDIR</span><span 
 class="pcrr7t-">/</span><span 
@@ -2704,9 +2189,9 @@ class="pcrr7t-">detached</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">err</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138106r43"></a></span><span 
+ id="x11-135102r43"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138107r44"></a></span><span 
+ id="x11-135103r44"></a></span><span 
 class="pcrb7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
@@ -2733,13 +2218,13 @@ class="pcrr7t-">TDIR</span><span
 class="pcrr7t-">}!</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138108r45"></a></span><span 
+ id="x11-135104r45"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">EOF</span>
    
    </div>
-<!--l. 4391--><p class="noindent" >If you run this suite, or submit the model task alone with <span class="lstinline"><span 
+<!--l. 4689--><p class="noindent" >If you run this suite, or submit the model task alone with <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">submit</span></span>, you&#8217;ll find that the usual job submission log
@@ -2750,7 +2235,7 @@ class="cmti-10">at </span>scheduler (their location is determined by the <span c
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PREFIX</span></span> variable in the suite.rc
 file).
-<!--l. 4400--><p class="indent" >   It should not be difficult to adapt this example to real tasks with detaching internal job submission. You will
+<!--l. 4698--><p class="indent" >   It should not be difficult to adapt this example to real tasks with detaching internal job submission. You will
 probably also need to replace other parameters, such as model input and output filenames, with suite- and
 cycle-appropriate values, but exactly the same technique can be used: identify which job script needs to be modified
 and use text processing tools (such as the single line <span 
@@ -2759,7 +2244,7 @@ job.
                                                                                          
 
                                                                                          
-   <div class="footnotes"><!--l. 4360--><p class="indent" >    <span class="footnote-mark"><a 
+   <div class="footnotes"><!--l. 4658--><p class="indent" >    <span class="footnote-mark"><a 
 href="#fn4x0-bk" id="fn4x0"><sup class="textsuperscript">4</sup></a></span><span 
 class="cmr-8">Note that </span><span class="lstinline"><span 
 class="pcrr8c-x-x-80">$</span><span 
@@ -2769,12 +2254,12 @@ class="cmr-8">is a string containing embedded newline characters and it has to b
 class="cmr-8">handled accordingly. In the bash shell, for instance, it should be echoed in quotes to avoid concatenation to a single</span>
 <span 
 class="cmr-8">line.</span>                                                                                                                                                                </div>
-<!--l. 4410--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 4708--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse11.html" >next</a>] [<a 
 href="cug-htmlse9.html" >prev</a>] [<a 
 href="cug-htmlse9.html#tailcug-htmlse9.html" >prev-tail</a>] [<a 
 href="cug-htmlse10.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse10.html" >up</a>] </p></div>
-<!--l. 4410--><p class="indent" >   <a 
+<!--l. 4708--><p class="indent" >   <a 
  id="tailcug-htmlse10.html"></a>    
 </body></html> 

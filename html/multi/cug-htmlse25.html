@@ -1,56 +1,42 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Cylc Development History - Major Changes</title> 
+<head><title>Pyro</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-06-07 09:53:00"> 
+<meta name="date" content="2014-09-10 22:59:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 6552--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6796--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse26.html" >next</a>] [<a 
 href="cug-htmlse24.html" >prev</a>] [<a 
 href="cug-htmlse24.html#tailcug-htmlse24.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse25.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse25.html" >up</a>] </p></div>
-   <h3 class="sectionHead"><span class="titlemark">I   </span> <a 
- id="x26-494000I"></a>Cylc Development History - Major Changes</h3>
-   <div class="sectionTOCS">
+<!--l. 6796--><p class="indent" >    <h3 id="I" class="sectionHead"><span class="titlemark"> <a href="#I">I</a>  <a 
+ id="x26-482000I"></a>Pyro </span></h3> <div class="sectionTOCS">
    </div>
-     <ul class="itemize1">
-     <li class="itemize"><span 
-class="cmbx-10">pre-cylc-3 </span>- early versions focused on the new scheduling algorithm. A suite was a collection of &#8220;task
-     definition files&#8221; that encoded the prerequisites and outputs of each task, exposing cylc&#8217;s self-organising
-     nature. Tasks could be transferred from one suite to another by simply copying their taskdef files over
-     and checking prerequisite and output consistency. Global suite structure was not easy to discern until
-     run time (although cylc-2 could generate resolved run time dependency graphs).
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">cylc-3 </span>- a new suite design interface: dependency graph and task runtime properties defined in a single
-     structured, validated, configuration file - the suite.rc file; graphical user interface; suite graphing.
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">cylc-4 </span>- refined and organized the suite.rc file structure; task runtime properties defined by an efficient
-     inheritance hierarchy; support for the Jinja2 template processor in suite definitions.
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">cylc-5 </span>- multi-threading for continuous network request handling and job submission; more task states
-     to distinguish job submission from execution; dependence between suites via new suite run databases;
-     polling and killing of real task jobs; polling as task communications option.
-     </li></ul>
+<!--l. 6799--><p class="indent" >   Pyro (Python Remote Objects) is a widely used open source objected oriented Remote Procedure Call
+technology developed by Irmen de Jong.
+<!--l. 6802--><p class="indent" >   Earlier versions of cylc used the Pyro Nameserver to marshal communication between client programs
+(tasks, commands, viewers, etc.) and their target suites. This worked well, but in principle it provided a
+route for one suite or user on the network to bring down all running suites by killing the nameserver.
+Consequently cylc now uses Pyro simply as a lightweight object oriented wrapper for direct network socket
+communication between client programs and their target suites - all suites are thus entirely isolated from one
+another.
                                                                                          
 
                                                                                          
-   <!--l. 6583--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6811--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse26.html" >next</a>] [<a 
 href="cug-htmlse24.html" >prev</a>] [<a 
 href="cug-htmlse24.html#tailcug-htmlse24.html" >prev-tail</a>] [<a 
 href="cug-htmlse25.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse25.html" >up</a>] </p></div>
-<!--l. 6583--><p class="indent" >   <a 
+<!--l. 6811--><p class="indent" >   <a 
  id="tailcug-htmlse25.html"></a>  
 </body></html> 
