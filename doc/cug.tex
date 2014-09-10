@@ -340,37 +340,36 @@ previous section, emerges naturally at run time.
 %\pagebreak
 \section{Cylc Screenshots}
 
-
 \begin{figure}
     \begin{center}
-        \includegraphics[height=0.35\textheight]{graphics/png/orig/suiterc-jinja2.png}]
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/gcylc-graph-and-dot-views.png}
     \end{center}
-    \caption[A cylc suite definition in the {\em vim} editor]{\scriptsize
-    A cylc suite definition in the {\em vim} editor.}
-    \label{fig-cylc-vim}
+\caption[gcylc graph and dot views]{\scriptsize gcylc graph and dot views.}
+\label{fig-gcylc-1}
 \end{figure}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/orig/control1.png}
+        \includegraphics[width=0.8\textwidth]{graphics/png/orig/gcylc-text-view.png}
     \end{center}
-\caption[gcylc dot and text views]{\scriptsize gcylc dot and text views.}
-\label{fig-control1}
+\caption[gcylc text view]{\scriptsize gcylc text view.}
+\label{fig-gcylc-2}
 \end{figure}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{graphics/png/orig/control2.png}
+        \includegraphics[width=0.6\textwidth]{graphics/png/orig/gsummary.png}
     \end{center}
-\caption[gcylc graph and text views]{\scriptsize gcylc graph and text views.}
-\label{fig-control2}
+\caption[gsummary multi-suite state summary GUI]{\scriptsize gsummary multi-suite state summary GUI.}
+\label{fig-gsummary}
 \end{figure}
+
 
 \begin{figure}
     \begin{center}
         \includegraphics[width=\textwidth]{graphics/png/orig/ecox-1.png}
     \end{center}
-\caption[A large suite graphed by cylc]{\scriptsize A large suite graphed by cylc.}
+\caption[A large-ish suite graphed by cylc]{\scriptsize A large-ish suite graphed by cylc.}
 \label{fig-ecox-1}
 \end{figure}
 
@@ -2425,10 +2424,7 @@ Jinja2 (\ref{Jinja2}) also has template inclusion functionality.
 \label{SyntaxHighlighting}
 
 \lstset{language=transcript}
-Cylc comes with a syntax file to configure suite.rc syntax
-highlighting and section folding in the {\em vim} editor, as shown in
-Figure~\ref{fig-cylc-vim}. We also have an {\em emacs} font-lock mode,
-and syntax files for the {\em gedit} and {\em kate} editors:
+Cylc comes with syntax files for a number of text editors:
 \lstset{language=transcript}
 \begin{lstlisting}
 $CYLC_DIR/conf/cylc.vim     # vim
