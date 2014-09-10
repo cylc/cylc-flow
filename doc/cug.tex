@@ -1774,16 +1774,17 @@ Experiment with \lstinline=tut.cycling.one= to see how cycling tasks work.
 
 \paragraph{ISO 8601 Date-Time Syntax}
 
-The suite above is a very simple example of a cycling workflow. More generally,
-cylc comprehensively supports the ISO 8601 standard for date-time instants,
-intervals, and sequences.  Cycling graph sections can be specified using full
-ISO 8601 recurrence expressions, but these may be simplified using context 
-information from the suite. One form of the recurrence syntax looks like
+The suite above is a very simple example of a cycling date-time workflow. More
+generally, cylc comprehensively supports the ISO 8601 standard for date-time
+instants, intervals, and sequences.  Cycling graph sections can be specified
+using full ISO 8601 recurrence expressions, but these may be simplified
+by assuming context information from the suite - namely initial and final cycle
+points. One form of the recurrence syntax looks like
 \lstinline=Rn/start-date-time/period= (\lstinline=Rn= means repeat
 \lstinline=n= times). In the example above, if the initial cycle point
 is always at 00 or 12 hours then \lstinline=[[[T00,T12]]]= could be
 written as \lstinline=[[[PT12H]]]=, which is short for
-\lstinline=[[[R/initial-cycle-point/P12H/]]]= - i.e.\ repeat indefinitely every
+\lstinline=[[[R/initial-cycle-point/PT12H/]]]= - i.e.\ repeat indefinitely every
 12 hours starting at the initial cycle point.
 
 \begin{myitemize}
