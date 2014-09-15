@@ -29,26 +29,22 @@ parser = OptionParser( usage = """cylc [util] cycle-point [OPTIONS] [POINT]
 Cycle point date-time offset computation, and filename templating.
 
 Filename templating replaces elements of a template string with corresponding
-elements of the current or given cycle point. It can be used to generate
-filenames that contain the cycle point.
+elements of the current or given cycle point.
 
-Note that the template string format changed between cylc-5 and cylc-6, but
-is backward compatible.  If a 10-digit pre cylc-6 cycle time is detected, the
-template string may contain 'YYYY' for year, 'MM' for month, 'DD' for day, and
-'HH' for hour.
+The template string format changed at cylc-6, but is backward compatible.
 
-# Example template format for pre cylc-6 cycle times:
-cylc cyclepoint 2010080800 --template foo-YYYY-MM-DD-HH.nc
-foo-2010-08-08-00.nc
+If a 10-digit pre cylc-6 cycle time is detected, the template string
+elements are 'YYYY' (year), 'MM' (month), 'DD' (day), and 'HH' (hour):
+  % cylc cyclepoint 2010080800 --template foo-YYYY-MM-DD-HH.nc
+  foo-2010-08-08-00.nc
 
-# Example template format for post cylc-6 cycle points:
-cylc cyclepoint 2010080T800 --template foo-CCYY-MM-DD-Thh.nc
-foo-2010-08-08-T00.nc
-# OR:
-cylc cyclepoint 2010080T800 --template foo-%Y-%m-%d-Thh.nc
-foo-2010-08-08-T00.nc
+Otherwise (cylc-6+) use ISO 8601 or posix date-time format elements:
+  % cylc cyclepoint 2010080T800 --template foo-CCYY-MM-DD-Thh.nc
+  foo-2010-08-08-T00.nc
+  % cylc cyclepoint 2010080T800 --template foo-%Y-%m-%d-Thh.nc
+  foo-2010-08-08-T00.nc
 
-Examples:
+Other examples:
 
 1) print offset from an explicit cycle point:
   % cylc [util] cycle-point --offset-hours=6 20100823T1800Z
