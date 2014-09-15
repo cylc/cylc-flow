@@ -26,7 +26,27 @@ from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc [util] cycle-point [OPTIONS] [POINT]
 
-Arithmetic date-time cycle point offset computation, and filename templating.
+Cycle point date-time offset computation, and filename templating.
+
+Filename templating replaces elements of a template string with corresponding
+elements of the current or given cycle point. It can be used to generate
+filenames that contain the cycle point.
+
+Note that the template string format changed between cylc-5 and cylc-6, but
+is backward compatible.  If a 10-digit pre cylc-6 cycle time is detected, the
+template string may contain 'YYYY' for year, 'MM' for month, 'DD' for day, and
+'HH' for hour.
+
+# Example template format for pre cylc-6 cycle times:
+cylc cyclepoint 2010080800 --template foo-YYYY-MM-DD-HH.nc
+foo-2010-08-08-00.nc
+
+# Example template format for post cylc-6 cycle points:
+cylc cyclepoint 2010080T800 --template foo-CCYY-MM-DD-Thh.nc
+foo-2010-08-08-T00.nc
+# OR:
+cylc cyclepoint 2010080T800 --template foo-%Y-%m-%d-Thh.nc
+foo-2010-08-08-T00.nc
 
 Examples:
 
@@ -41,12 +61,12 @@ Examples:
 
 3) cycle point filename templating, explicit template:
   % export CYLC_TASK_CYCLE_POINT=2010-08
-  % cylc cycle-point --offset-years=2 --template=foo-YYYY-MM.nc
+  % cylc cycle-point --offset-years=2 --template=foo-CCYY-MM.nc
   foo-2012-08.nc
 
 4) cycle point filename templating, template in a variable:
   % export CYLC_TASK_CYCLE_POINT=2010-08
-  % export MYTEMPLATE=foo-YYYY-MM.nc
+  % export MYTEMPLATE=foo-CCYY-MM.nc
   % cylc cycle-point --offset-years=2 --template=MYTEMPLATE
   foo-2012-08.nc
 
@@ -88,7 +108,7 @@ parser.add_option( "--num-expanded-year-digits", metavar="NUMBER",
               "result"),
         action="store", default=0, dest="num_expanded_year_digits" )
 
-parser.add_option( "--print-year", help="Print only YYYY of result",
+parser.add_option( "--print-year", help="Print only CCYY of result",
         action="store_true", default=False, dest="print_year" )
 
 parser.add_option( "--print-month", help="Print only MM of result",
@@ -154,9 +174,15 @@ else:
     if n_chosen != 0 and n_chosen != 1:
         parser.error( "Choose NONE or ONE of print_(year|month|day|hour)" )
 
-if (template is None and re.match("\d{10}$", cycle_point_string)):
+if re.match("\d{10}$", cycle_point_string):
     # Auto-detect prev Cylc format.
-    template="%Y%m%d%H"
+    if template is None:
+        template="%Y%m%d%H"
+    else:
+        template = template.replace("YYYY", "%Y")
+        template = template.replace("MM", "%m")
+        template = template.replace("DD", "%d")
+        template = template.replace("HH", "%H")
 
 cylc.cycling.iso8601.init(
     num_expanded_year_digits=options.num_expanded_year_digits,
