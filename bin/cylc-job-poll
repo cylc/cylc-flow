@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# DEBUGGING: with 'set -x' output will be printed to cylc stderr in
+# debug mode (the poll succeeded hook prints command stderr output to
+# suite stderr).
+"""cylc [control] job-poll ST-FILE
+
+Poll a submitted or running job by inspecting its status file.
+
+"""
+
+
+import os
+import sys
+from cylc.CylcOptionParsers import cop
+from cylc.job_submission.job_submit import JobSubmit
+import cylc.TaskID
+
+
+def main():
+    """CLI main."""
+    parser = cop(__doc__, argdoc=[("ST-FILE", "the task status file")])
+    (options, args) = parser.parse_args()
+
+    st_file_path = args[0]
+    # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
+    st_file_path_strs = st_file_path.rsplit(os.sep, 6)
+    task_id = st_file_path_strs[4] + cylc.TaskID.DELIM + st_file_path_strs[3]
+    suite_run_dir = st_file_path_strs[0]
+
+    statuses = {}
+    try:
+        for line in open(st_file_path):
+            key, value = line.strip().split("=", 1)
+            statuses[key] = value
+    except IOError:
+        return sys.stdout.write("polled %s submission failed\n" % (task_id))
+
+    if (statuses.get("CYLC_JOB_EXIT_TIME") and
+            statuses.get("CYLC_JOB_EXIT") == "SUCCEEDED"):
+        return sys.stdout.write("polled %s succeeded at %s\n" % (
+            task_id, statuses["CYLC_JOB_EXIT_TIME"]))
+
+    if statuses.get("CYLC_JOB_EXIT_TIME") and statuses.get("CYLC_JOB_EXIT"):
+        return sys.stdout.write("polled %s failed at %s\n" % (
+            task_id, statuses["CYLC_JOB_EXIT_TIME"]))
+
+    if ("CYLC_JOB_SUBMIT_METHOD" not in statuses or
+            "CYLC_JOB_SUBMIT_METHOD_ID" not in statuses):
+        return sys.stdout.write("polled %s submission failed\n" % (task_id))
+
+    job_sys_proc_cls = JobSubmit.get_class(
+        statuses["CYLC_JOB_SUBMIT_METHOD"], suite_run_dir)
+    job_sys_proc_cls.__init__ = lambda self: None
+    job_sys_proc = job_sys_proc_cls()
+    is_in_job_sys = job_sys_proc.poll(statuses["CYLC_JOB_SUBMIT_METHOD_ID"])
+
+    if is_in_job_sys and "CYLC_JOB_INIT_TIME" in statuses:
+        return sys.stdout.write("polled %s started at %s\n" % (
+            task_id, statuses["CYLC_JOB_INIT_TIME"]))
+
+    if is_in_job_sys:
+        return sys.stdout.write("polled %s submitted\n" % (task_id))
+
+    if "CYLC_JOB_INIT_TIME" in statuses:
+        return sys.stdout.write("polled %s failed at unknown-time\n" % (
+            task_id))
+
+    # Submitted but disappeared
+    return sys.stdout.write("polled %s submission failed\n" % (task_id))
+
+
+if __name__ == "__main__":
+    main()

@@ -404,24 +404,7 @@ class pool(object):
         self.log.debug('%d task(s) de-queued' % len(readytogo))
 
         for itask in readytogo:
-            itask.set_state_ready()
-            if self.run_mode == 'simulation':
-                itask.job_submission_succeeded()
-                continue
-            try:
-                cmd = itask.get_command(overrides=self.wireless.get(itask.id))
-            except Exception, e:
-                # Could be a bad command template.
-                itask.log(ERROR, "Failed to construct job submission command")
-                itask.command_log("SUBMIT", err=str(e))
-                itask.job_submission_failed()
-            else:
-                # Queue the job submission command for execution.
-                cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
-                self.proc_pool.put_command(
-                        cmd_spec,
-                        itask.job_submission_callback,
-                        itask.job_sub_method_name)
+            itask.submit(overrides=self.wireless.get(itask.id))
 
         return readytogo
 

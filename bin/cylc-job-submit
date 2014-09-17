@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc [task] job-submit [--remote-mode] JOB-FILE-PATH
+
+Submit a job file.
+
+"""
+
+
+from cylc.CylcOptionParsers import cop
+from cylc.job_submission.job_submit import JobSubmit
+from cylc.mkdir_p import mkdir_p
+import os
+import stat
+import sys
+
+
+LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
+LINE_PREFIX_JOB_SYS = "# Job submit method: "
+LINE_PREFIX_JOB_SYS_CMD_TMPL = "# Job submit command template: "
+
+
+def main():
+    """CLI main."""
+
+    # Parse command line
+    parser = cop(
+        __doc__,
+        argdoc=[("JOB-FILE-PATH", "the path of the job file")])
+    parser.add_option(
+        "--remote-mode",
+        help="Is this being run on a remote job host?",
+        action="store_true", dest="remote_mode", default=False)
+    opts, args = parser.parse_args()
+
+    job_file_path = args[0]
+    job_file_dir = os.path.dirname(job_file_path)
+    # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job
+    suite_run_dir = job_file_path.rsplit(os.sep, 6)[0]
+
+    job_sys = None
+    job_sys_cmd_tmpl = None
+    if opts.remote_mode:
+        # If remote mode, write job file, content from STDIN
+        # Modify job script's CYLC_DIR for this host.
+        # Extract job submission method and job submission command template.
+        mkdir_p(job_file_dir)
+        job_file = open(job_file_path + ".tmp", "w")
+        while True:  # Note: "for line in sys.stdin:" may hang
+            line = sys.stdin.readline()
+            if not line:
+                sys.stdin.close()
+                break
+            if line.strip().startswith(LINE_PREFIX_CYLC_DIR):
+                line = (
+                    line[0:line.find(LINE_PREFIX_CYLC_DIR)] +
+                    LINE_PREFIX_CYLC_DIR + "'%s'\n" % os.environ["CYLC_DIR"])
+            elif line.startswith(LINE_PREFIX_JOB_SYS):
+                job_sys = line.replace(LINE_PREFIX_JOB_SYS, "").strip()
+            elif line.startswith(LINE_PREFIX_JOB_SYS_CMD_TMPL):
+                job_sys_cmd_tmpl = line.replace(
+                    LINE_PREFIX_JOB_SYS_CMD_TMPL, "").strip()
+            job_file.write(line)
+        job_file.close()
+        os.rename(job_file_path + ".tmp", job_file_path)
+        os.chmod(job_file_path, (
+            os.stat(job_file_path).st_mode |
+            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
+    else:  # local mode
+        for line in open(job_file_path):
+            if line.startswith(LINE_PREFIX_JOB_SYS):
+                job_sys = line.replace(LINE_PREFIX_JOB_SYS, "").strip()
+            elif line.startswith(LINE_PREFIX_JOB_SYS_CMD_TMPL):
+                job_sys_cmd_tmpl = line.replace(
+                    LINE_PREFIX_JOB_SYS_CMD_TMPL, "").strip()
+
+    # Create NN symbolic link, if necessary
+    submit_num_str = os.path.basename(job_file_dir)
+    nn_path = os.path.join(os.path.dirname(job_file_dir), "NN")
+    try:
+        os.unlink(nn_path)
+    except OSError:
+        pass
+    os.symlink(submit_num_str, nn_path)
+
+    # Start new status file
+    job_status_file = open(job_file_path + ".status", "w")
+    job_status_file.write("CYLC_JOB_SUBMIT_METHOD=%s\n" % job_sys)
+    job_status_file.close()
+
+    # Submit job
+    job_sys_proc_cls = JobSubmit.get_class(job_sys, suite_run_dir)
+    job_sys_proc_cls.__init__ = lambda self: None
+    job_sys_proc = job_sys_proc_cls()
+    ret_code, out, err = job_sys_proc.submit(job_file_path, job_sys_cmd_tmpl)
+    if err:
+        sys.stderr.write(err)
+    if out:
+        sys.stdout.write(out)
+    if out or err:
+        job_sys_id = job_sys_proc.get_id(out, err)
+
+        # Append status file with job ID
+        job_status_file = open(job_file_path + ".status", "a")
+        job_status_file.write("CYLC_JOB_SUBMIT_METHOD_ID=%s\n" % job_sys_id)
+        job_status_file.close()
+
+    sys.exit(ret_code)
+
+
+if __name__ == "__main__":
+    main()

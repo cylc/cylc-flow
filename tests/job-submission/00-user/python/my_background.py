@@ -17,7 +17,6 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.job_submission.background import background
-from subprocess import Popen, PIPE
 
-class my_background( background ):
+class my_background(background):
     pass

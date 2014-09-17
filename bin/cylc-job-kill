@@ -15,24 +15,36 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""cylc [control] job-kill ST-FILE
+
+Kill a submitted or running job by inspecting its status file.
+
+"""
+
+import os
 
 from cylc.CylcOptionParsers import cop
+from cylc.job_submission.job_submit import JobSubmit
+
 
 def main():
-    parser = cop(
-            r"cylc [control] job-kill ST-FILE JOB-SYS JOB-ID" +
-            r"Kill a submitted or running job.",
-            argdoc=[("ST-FILE", "the task status file"),
-                    ("JOB-SYS", "the name of the job submission system"),
-                    ("JOB-ID", "the job ID in the job submission system")])
+    """CLI main."""
+    parser = cop(__doc__, argdoc=[("ST-FILE", "the task status file")])
 
-    (options, args) = parser.parse_args()
-    st_file, job_sys, job_id = args
-    mod = __import__("cylc.job_submission." + job_sys, fromlist=[job_sys])
-    job_sys_proc_cls = getattr(mod, job_sys)
+    st_file_path = parser.parse_args()[1][0]
+    # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
+    suite_run_dir = st_file_path.rsplit(os.sep, 6)[0]
+
+    job_sys = None
+    for line in open(st_file_path):
+        if line.startswith("CYLC_JOB_SUBMIT_METHOD="):
+            job_sys = line.strip().split("=", 1)[1]
+            break
+    job_sys_proc_cls = JobSubmit.get_class(job_sys, suite_run_dir)
     job_sys_proc_cls.__init__ = lambda self: None
     job_sys_proc = job_sys_proc_cls()
-    job_sys_proc.kill(job_id, st_file)
+    job_sys_proc.kill(st_file_path)
+
 
 if __name__ == "__main__":
     main()

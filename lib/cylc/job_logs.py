@@ -19,6 +19,7 @@
 
 import os
 import logging
+from shutil import rmtree
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.mkdir_p import mkdir_p
@@ -43,7 +44,8 @@ class CommandLogger(object):
     JOB_LOG_FMT_M = "%(timestamp)s %(mesg_type)s:\n\n%(mesg)s\n"
 
     @classmethod
-    def get_create_job_log_path(cls, suite, task_name, task_point, submit_num):
+    def get_create_job_log_path(
+            cls, suite, task_name, task_point, submit_num, new_mode=False):
         """Return a new job log path on the suite host, in two parts.
 
         /part1/part2
@@ -64,6 +66,12 @@ class CommandLogger(object):
         the_rest = os.path.join(the_rest_dir, "job")
 
         local_log_dir = os.path.join(suite_job_log_dir, the_rest_dir)
+
+        if new_mode:
+            try:
+                rmtree(local_log_dir)
+            except OSError:
+                pass
 
         mkdir_p(local_log_dir)
         target = os.path.join(os.path.dirname(local_log_dir), "NN")

@@ -27,43 +27,43 @@ Derived classes define the particular job submission method.
 """
 
 import os
-import sys
-import stat
+from signal import SIGKILL
 import socket
+import stat
+from subprocess import check_call, Popen, PIPE
+import sys
 
-import cylc.flags
 from cylc.job_submission.jobfile import JobFile
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
 from cylc.envvar import expandvars
-from cylc.command_env import pr_scripting_sl
 
 
 class JobSubmit(object):
     """Base class for method-specific job script and submission command."""
 
-    LOCAL_COMMAND_TEMPLATE = "(%(command)s)"
+    COMMAND = None
+    EXEC_KILL = None
+    EXEC_SUBMIT = None
+    REC_ID_FROM_ERR = None
+    REC_ID_FROM_OUT = None
 
-    # For remote jobs copy the job file to a temporary file and
-    # then rename it, in case of a common filesystem (else this
-    # is trouble: 'ssh HOST "cat > $DIR/foo.sh" < $DIR/foo.sh').
-    REMOTE_COMMAND_TEMPLATE = (
-        " '" +
-        pr_scripting_sl +
-        "; " +
-        # Retry "mkdir" once to avoid race to create log/job/CYCLE/
-        " (mkdir -p %(jobfile_dir)s || mkdir -p %(jobfile_dir)s)" +
-        " && rm -f $(dirname %(jobfile_dir)s)/NN"
-        " && ln -s $(basename %(jobfile_dir)s) $(dirname %(jobfile_dir)s)/NN"
-        " && cat >%(jobfile_path)s.tmp" +
-        " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
-        " && chmod +x %(jobfile_path)s" +
-        " && rm -f %(jobfile_path)s.status" +
-        " && (%(command)s)" +
-        "'")
+    @classmethod
+    def get_class(cls, name, suite_run_dir=None):
+        """Return the class for the job submission method "name"."""
+        if suite_run_dir:
+            suite_py = os.path.join(suite_run_dir, "python")
+            if os.path.isdir(suite_py) and suite_py not in sys.path:
+                sys.path.append(suite_py)
+        for key in ["cylc.job_submission." + name, name]:
+            try:
+                return getattr(__import__(key, fromlist=[key]), name)
+            except ImportError:
+                if key == name:
+                    raise
 
-    def __init__(self, task_id, suite, jobconfig, submit_num):
+    def __init__(self, task_id, suite, jobconfig):
 
         self.jobconfig = jobconfig
 
@@ -80,9 +80,6 @@ class JobSubmit(object):
 
         task_host = jobconfig.get('task host')
         task_owner = jobconfig.get('task owner')
-
-        self.remote_shell_template = GLOBAL_CFG.get_host_item(
-            'remote shell template', task_host, task_owner)
 
         if is_remote_host(task_host) or is_remote_user(task_owner):
             self.local = False
@@ -103,7 +100,7 @@ class JobSubmit(object):
                 self.task_owner)
 
             remote_jobfile_path = os.path.join(
-                    remote_job_log_dir, common_job_log_path)
+                remote_job_log_dir, common_job_log_path)
 
             # Remote log files
             self.stdout_file = remote_jobfile_path + ".out"
@@ -193,15 +190,6 @@ class JobSubmit(object):
         """Derived class can set self.jobconfig['job vacation signal']."""
         return
 
-    def construct_job_submit_command(self):
-        """DERIVED CLASSES MUST OVERRIDE THIS METHOD to construct
-
-        self.command, the command to submit the job script to
-        run by the derived class job submission method.
-
-        """
-        raise NotImplementedError('ERROR: no job submission command defined!')
-
     def filter_output(self, out, err):
         """Filter the stdout/stderr from a job submission command.
 
@@ -212,12 +200,55 @@ class JobSubmit(object):
         return out, err
 
     def get_id(self, out, err):
-        """Get the job submit ID from a job submission command output.
+        """Get the job submit ID from a job submission command output."""
+        if self.REC_ID_FROM_ERR:
+            text = err
+            rec_id = self.REC_ID_FROM_ERR
+        elif self.REC_ID_FROM_OUT:
+            text = out
+            rec_id = self.REC_ID_FROM_OUT
+        else:
+            raise NotImplementedError()
+        for line in str(text).splitlines():
+            match = rec_id.match(line)
+            if match:
+                return match.group("id")
+
+    def kill(self, st_file):
+        """Kill a job."""
+        if not self.EXEC_KILL:
+            raise NotImplementedError()
+        for line in open(st_file):
+            if line.startswith("CYLC_JOB_SUBMIT_METHOD_ID="):
+                job_sys_id = line.strip().split("=", 1)[1]
+                return check_call([self.EXEC_KILL, job_sys_id])
+
+    @classmethod
+    def kill_proc_group(cls, st_file):
+        """Kill the job process group, for e.g. "background" and "at" jobs."""
+        for line in open(st_file):
+            if line.startswith("CYLC_JOB_PID="):
+                pid = line.strip().split("=", 1)[1]
+                os.killpg(int(pid), SIGKILL)
+                return 0
+        return 1
+
+    def submit(self, job_file_path, command_template=None):
+        """Submit the job.
 
         Derived classes should override this method.
 
         """
-        raise NotImplementedError()
+        if command_template:
+            command = command_template % {"job": job_file_path}
+            proc = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+        else:
+            if not self.EXEC_SUBMIT:
+                raise NotImplementedError()
+            proc = Popen(
+                [self.EXEC_SUBMIT, job_file_path], stdout=PIPE, stderr=PIPE)
+        out, err = proc.communicate()
+        return (proc.wait(), out, err)
 
     def write_jobscript(self):
         """ submit the task and return the process ID of the job
@@ -235,41 +266,3 @@ class JobSubmit(object):
         mode = (os.stat(self.local_jobfile_path).st_mode |
                 stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         os.chmod(self.local_jobfile_path, mode)
-
-    def get_job_submission_command(self, dry_run=False):
-        """Construct the command to submit the jobfile to run"""
-        # (Exceptions here caught in task_pool.py).
-        self.construct_job_submit_command()
-        if self.local:
-            command = self.LOCAL_COMMAND_TEMPLATE % {
-                "jobfile_path": self.jobfile_path,
-                "command": self.command}
-        else:
-            command = self.REMOTE_COMMAND_TEMPLATE % {
-                "jobfile_dir": os.path.dirname(self.jobfile_path),
-                "jobfile_path": self.jobfile_path,
-                "command": self.command}
-            if self.task_owner:
-                destination = self.task_owner + "@" + self.task_host
-            else:
-                destination = self.task_host
-            command = self.remote_shell_template % destination + command
-
-        # execute the local command to submit the job
-        if dry_run:
-            # this is needed by the 'cylc jobscript' command:
-            print "JOB SCRIPT: " + self.local_jobfile_path
-            print "THIS IS A DRY RUN. HERE'S HOW I WOULD SUBMIT THE TASK:"
-            print 'SUBMIT:', command
-            return None
-
-        # Ensure old job's status files do not get left behind
-        st_file_path = self.jobfile_path + ".status"
-        if os.path.exists(st_file_path):
-            os.unlink(st_file_path)
-
-        if not self.local:
-            # direct the local jobfile across the ssh tunnel via stdin
-            command = command + ' < ' + self.local_jobfile_path
-
-        return command

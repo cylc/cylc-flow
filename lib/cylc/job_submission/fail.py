@@ -17,18 +17,13 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from job_submit import JobSubmit
+from time import sleep
+
 
 class fail( JobSubmit ):
-    """
-This is a fake job submission that deliberately fails, used for cylc
-development purposes.
-    """
-    # stdin redirection (< /dev/null) allows background execution
-    # even on a remote host - ssh can exit without waiting for the
-    # remote process to finish.
-    COMMAND_TEMPLATE = "sleep 10; /bin/false"
-    def construct_job_submit_command( self ):
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.__class__.COMMAND_TEMPLATE
-        self.command = command_template
+    """Sleep and fail, used for development testing."""
+
+    def submit(self, job_file_path, _=None):
+        """Sleep and fail."""
+        sleep(10.0)
+        return (1, None, None)

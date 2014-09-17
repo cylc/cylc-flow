@@ -258,8 +258,9 @@ task_commands['started'] = ['started', 'task-started']
 task_commands['message'] = ['message', 'task-message']
 task_commands['succeeded'] = ['succeeded', 'task-succeeded']
 task_commands['failed'] = ['failed', 'task-failed']
-task_commands['get-job-status'] = ['get-job-status']
+task_commands['job-poll'] = ['job-poll']
 task_commands['job-kill'] = ['job-kill']
+task_commands['job-submit'] = ['job-submit']
 
 all_commands = OrderedDict()
 for dct in [
@@ -418,8 +419,9 @@ comsum['message'] = '(task messaging) Report task messages'
 comsum['succeeded'] = '(task messaging) Report task succeeded'
 comsum['failed'] = '(task messaging) Report task failed'
 comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
-comsum['get-job-status'] = '(Internal) Retrieve job status for a task'
+comsum['job-poll'] = '(Internal) Retrieve job status for a task'
 comsum['job-kill'] = '(Internal) Kill a job for a task'
+comsum['job-submit'] = '(Internal) Submit a job'
 
 # utility
 comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'

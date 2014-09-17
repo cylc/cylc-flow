@@ -21,12 +21,12 @@ from task_types import task, clocktriggered
 from job_submission.jobfile import JobFile
 from suite_host import get_suite_host
 from owner import user
-from shutil import copy as shcopy
+from shutil import copy as shcopy, copytree, rmtree
 from copy import deepcopy
 import datetime, time
 import port_scan
 import logging
-import re, os, sys, shutil, traceback
+import re, os, sys, traceback
 from state_summary import state_summary
 from passphrase import passphrase
 from suite_id import identifier
@@ -263,41 +263,30 @@ class scheduler(object):
         self.state_dumper.set_cts( self.initial_point, self.final_point )
         self.configure_suite_environment()
 
-        # Write suite contact environment variables.
+        # Write suite contact environment variables and link suite python
         # 1) local file (os.path.expandvars is called automatically for local)
-        suite_run_dir = GLOBAL_CFG.get_derived_host_item(self.suite, 'suite run directory')
+        suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            self.suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
         f = open(env_file_path, 'wb')
         for key, value in self.suite_contact_env.items():
             f.write("%s=%s\n" % (key, value))
         f.close()
+
+        suite_py = os.path.join(self.suite_dir, "python")
+        if (os.path.realpath(self.suite_dir)
+                != os.path.realpath(suite_run_dir) and
+                os.path.isdir(suite_py)):
+            suite_run_py = os.path.join(suite_run_dir, "python")
+            try:
+                rmtree(suite_run_py)
+            except OSError:
+                pass
+            copytree(suite_py, suite_run_py)
+
         # 2) restart only: copy to other accounts with still-running tasks
-        r_suite_run_dir = os.path.expandvars(
-                GLOBAL_CFG.get_derived_host_item(self.suite, 'suite run directory'))
         for user_at_host in self.old_user_at_host_set:
-            # Reinstate suite contact file to each old job's user@host
-            if '@' in user_at_host:
-                owner, host = user_at_host.split('@', 1)
-            else:
-                owner, host = None, user_at_host
-            if (owner, host) in [(None, 'localhost'), (user, 'localhost')]:
-                continue
-            r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-                                self.suite,
-                                'suite run directory',
-                                host,
-                                owner)
-            r_env_file_path = '%s:%s/cylc-suite-env' % (
-                                user_at_host,
-                                r_suite_run_dir)
-            self.log.info('Installing %s' % r_env_file_path)
-            cmd1 = (['ssh'] + task.task.SUITE_CONTACT_ENV_SSH_OPTS +
-                    [user_at_host, 'mkdir', '-p', r_suite_run_dir])
-            cmd2 = (['scp'] + task.task.SUITE_CONTACT_ENV_SSH_OPTS +
-                    [env_file_path, r_env_file_path])
-            for cmd in [cmd1, cmd2]:
-                subprocess.check_call(cmd)
-            task.task.suite_contact_env_hosts.append( user_at_host )
+            task.task.init_remote_suite_run_dir(self.suite, user_at_host)
 
         self.already_timed_out = False
         if self.config.cfg['cylc']['event hooks']['timeout']:

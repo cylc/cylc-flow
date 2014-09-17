@@ -1,0 +1,17 @@
+title = Job script: suite to environment test
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT0.5M
+        dummy mode suite timeout = PT0.5M
+        simulation mode suite timeout = PT0.5M
+
+[scheduling]
+    [[dependencies]]
+        graph = foo
+
+[runtime]
+    [[foo]]
+        command scripting = printenv FOO BAR BAZ
+        [[[remote]]]
+            host = localhost

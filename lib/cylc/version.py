@@ -32,6 +32,7 @@ if os.path.isdir( gitd ) or os.path.isfile( gitd ):
     res = run_get_stdout.run_get_stdout( script )
     if res[0]:
         cylc_version = res[1][0]
+        os.environ["CYLC_VERSION"] = cylc_version
     else:
         raise SystemExit( "Failed to get version number!")
 
@@ -39,9 +40,8 @@ else:
     # We're running in a raw cylc source tree, so read the version
     # file created by 'make' after unpacking the tarball.
     try:
-        f = open( vfile )
-        cylc_version = f.readline().rstrip()
-        f.close()
+        cylc_version = open(vfile).readline().rstrip()
+        os.environ["CYLC_VERSION"] = cylc_version
     except IOError, x:
         print >> sys.stderr, x
         print >> sys.stderr, "\n*** ERROR, failed to read the cylc VERSION file.***\n"

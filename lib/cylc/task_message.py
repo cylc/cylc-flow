@@ -26,7 +26,6 @@ from time import sleep
 from remote import remrun
 from cylc.passphrase import passphrase
 from cylc.wallclock import get_current_time_string
-from cylc import cylc_mode
 import cylc.flags
 
 class message(object):
