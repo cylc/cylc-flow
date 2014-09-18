@@ -1,5 +1,9 @@
 title = "Old Cylc Admin Test Suite"
 
+# TODO: this ancient suite has been updated for cylc-6+ cycling, but it could
+# do with a more general rewrite (e.g. to use the suite share and work dirs in
+# the modern way, for shared workspaces).
+
 #        B[-PT6H]-> B -> E
 #                / \
 #  X & A[-PT6H]-> A   -> D
@@ -41,17 +45,20 @@ title = "Old Cylc Admin Test Suite"
                     """
 [runtime]
     [[root]]
-        command scripting = ${CYLC_TASK_NAME}.sh
+        command scripting = """
+mkdir -p $INPUT_DIR $OUTPUT_DIR
+${CYLC_TASK_NAME}.sh"""
         [[[environment]]]
             #TASK_EXE_SECONDS = $( cylc rnd 1 15 )
             TASK_EXE_SECONDS = 0 # fast
-            WORKSPACE  = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
+            WORKSPACE  = $CYLC_SUITE_SHARE_DIR
             RUNNING    = $WORKSPACE/running
             INPUT_DIR  = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
 
     [[Model]]
         description = "Model task"
+        pre-command scripting = mkdir -p $RUNNING_DIR
         [[[environment]]]
             RUNNING_DIR = $RUNNING/$CYLC_TASK_NAME
 

@@ -16,7 +16,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set -e
+set -eu
 
 usage() {
     echo "Usage: cylc [util] scp-transfer [OPTIONS]"
@@ -54,8 +54,6 @@ elif [[ $# -gt 1 ]]; then
     echo "ERROR: The only legal option is '-v'"
     exit 1
 fi
-
-cylc util checkvars SRCE DEST || exit 1
 
 for T in $SRCE; do
     # get destination corresponding to this target

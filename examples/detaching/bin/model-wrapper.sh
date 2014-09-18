@@ -1,14 +1,9 @@
 #/bin/bash
-set -e
+
+set -eu
 
 # A custom wrapper for the 'model' task from the detaching example suite.
 # See the Cylc User Guide for more information.
-
-# Check inputs:
-# location of pristine native job scripts:
-cylc util checkvars -d NATIVESCRIPTS
-# path prefix for model stdout and stderr:
-cylc util checkvars PREFIX
 
 MY_TMPDIR=${CYLC_TMPDIR:-${TMPDIR:-/tmp}}
 # Get a temporary copy of the native job scripts:

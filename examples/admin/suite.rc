@@ -1,19 +1,17 @@
 title = "Cylc Admin Test Suite"
 
-# THIS WAS USED AS AN ALL-PURPOSE TEST IN THE EARLY DAYS OF CYLC
-# BEFORE THE AUTOMATED TEST BATTERY.
+# This suite was used as an all-purpose test in the early days of cylc, before
+# the automated test battery. It is a working versino of the suite used as an
+# example in the User Guide introduction chapter.
 
-#        B[T-6]-> B -> E   
-#                / \   
-#  X & A[T-6]-> A   -> D 
-#                \ /    
-#        C[T-6]-> C -> F 
-#       
+# TODO: rewrite this suite for cylc-6+ cycling and to use shared workspaces
+# based on the suite work and share directories.
 
-description = """This is an implementation of the example suite that
-illustrates the Cylc User Guide introductory section. It is copied 
-on the fly then used by 'cylc admin test-suite' and should not be
-modified unless you know what you're doing."""
+#        B[T-6]-> B -> E
+#                / \ 
+#  X & A[T-6]-> A   -> D
+#                \ /
+#        C[T-6]-> C -> F
 
 [scheduling]
     initial cycle point = 2013
@@ -36,16 +34,19 @@ modified unless you know what you're doing."""
                     prep => X & ColdA & ColdB & ColdC"""
 [runtime]
     [[root]]
-        command scripting = ${CYLC_TASK_NAME}.sh
+        command scripting = """
+mkdir -p $INPUT_DIR $OUTPUT_DIR
+${CYLC_TASK_NAME}.sh"""
         [[[environment]]]
             TASK_EXE_SECONDS = 10
-            WORKSPACE  = /tmp/$USER/$CYLC_SUITE_REG_NAME/common
+            WORKSPACE  = $CYLC_SUITE_SHARE_DIR
             RUNNING    = $WORKSPACE/running
             INPUT_DIR  = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
 
     [[Model]]
         description = "Model task"
+        pre-command scripting = mkdir -p $RUNNING_DIR
         [[[environment]]]
             RUNNING_DIR = $RUNNING/$CYLC_TASK_NAME
 

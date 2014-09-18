@@ -23,9 +23,7 @@
 # Python's standard os.makedirs() fails if the directory already exists.
 # We can check to see if it exists before calling os.makedirs(), but
 # this causes a potential race condition: if another process creates the
-# target directory between the check and the call.  In fact I've run
-# into this exact problem with simultaneous use of 'cute checkvars -c'
-# in a family of similar tasks.
+# target directory between the check and the call.
 
 # Judging from discussion on the Python dev list in 2010, this problem
 # will be fixed in Python 3.?.  For now we have to roll our own ...
