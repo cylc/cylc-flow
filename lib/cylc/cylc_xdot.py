@@ -85,6 +85,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
         self.orientation = orientation
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
+        self.start_point_string = None
+        self.stop_point_string = None
 
         gtk.Window.__init__(self)
 
