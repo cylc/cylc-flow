@@ -1,0 +1,10 @@
+
+[scheduling]
+   [[dependencies]]
+      graph = FAM
+[runtime]
+   [[TOP]]
+   [[FAM]]
+      inherit = TOP
+   [[f1,f2,f3]]
+      inherit = FAM

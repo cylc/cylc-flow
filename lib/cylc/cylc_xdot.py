@@ -85,6 +85,8 @@ class MyDotWindow2( CylcDotViewerCommon ):
         self.orientation = orientation
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
+        self.start_point_string = None
+        self.stop_point_string = None
 
         gtk.Window.__init__(self)
 
@@ -92,7 +94,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
 
         window = self
 
-        window.set_title('Suite Runtime Namespace Graph Viewer')
+        window.set_title('Cylc Suite Runtime Inheritance Graph Viewer')
         window.set_default_size(512, 512)
         window.set_icon( util.get_icon() )
 
@@ -111,15 +113,6 @@ class MyDotWindow2( CylcDotViewerCommon ):
         # Create an ActionGroup
         actiongroup = gtk.ActionGroup('Actions')
         self.actiongroup = actiongroup
-
-        # create new stock icons for group and ungroup actions
-        imagedir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
-        factory = gtk.IconFactory()
-        for i in [ 'group', 'ungroup' ]:
-            pixbuf = gtk.gdk.pixbuf_new_from_file( imagedir + '/' + i + '.png' )
-            iconset = gtk.IconSet(pixbuf)
-            factory.add( i, iconset )
-        factory.add_default()
 
         # Create actions
         actiongroup.add_actions((
@@ -150,11 +143,6 @@ class MyDotWindow2( CylcDotViewerCommon ):
         vbox.pack_start(toolbar, False)
         vbox.pack_start(self.widget)
 
-        #eb = gtk.EventBox()
-        #eb.add( gtk.Label( "right-click on nodes to control family grouping" ) )
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
-        #vbox.pack_start( eb, False )
-
         self.set_focus(self.widget)
 
         # find all suite.rc include-files
@@ -181,7 +169,7 @@ class MyDotWindow2( CylcDotViewerCommon ):
                 time.sleep(1)
 
     def get_graph( self ):
-        title = self.suite + ' runtime namespace inheritance graph'
+        title = self.suite + ': runtime inheritance graph'
         graph = CGraphPlain( title )
         graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
@@ -310,7 +298,7 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         window = self
 
-        window.set_title('Suite Dependency Graph Viewer')
+        window.set_title('Cylc Suite Dependency Graph Viewer')
         window.set_default_size(512, 512)
         window.set_icon( util.get_icon() )
         vbox = gtk.VBox()

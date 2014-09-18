@@ -1,0 +1,13 @@
+edge FAM fsolid
+edge FAM fsolid
+edge FAM fsolid
+edge TOP FAM solid
+edge root TOP solid
+graph 
+node FAM FAM filled box royalblue
+node TOP TOP filled box royalblue
+node f ffilled box royalblue
+node f ffilled box royalblue
+node f ffilled box royalblue
+node root root filled box royalblue
+stop
