@@ -1,10 +1,6 @@
 #!/bin/bash
 
-set -e
-
-cylc checkvars  TASK_EXE_SECONDS
-cylc checkvars -d INPUT_DIR
-cylc checkvars -c OUTPUT_DIR RUNNING_DIR
+set -eu
 
 # CHECK INPUT FILES EXIST
 ONE=$INPUT_DIR/precipitation-${CYLC_TASK_CYCLE_TIME}.nc

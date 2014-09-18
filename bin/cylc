@@ -206,7 +206,6 @@ control_commands['broadcast'] = ['broadcast', 'bcast']
 
 utility_commands = OrderedDict()
 utility_commands['cycle-point'] = ['cycle-point', 'cyclepoint', 'datetime','cycletime']
-utility_commands['checkvars'] = ['checkvars']
 utility_commands['random'] = ['random', 'rnd']
 utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
@@ -424,7 +423,6 @@ comsum['job-kill'] = '(Internal) Kill a job for a task'
 
 # utility
 comsum['cycle-point'] = 'Cycle point arithmetic and filename templating'
-comsum['checkvars'] = 'Check required environment variables en masse'
 comsum['random'] = 'Generate a random integer within a given range'
 comsum['jobscript'] = 'Generate a task job script and print it to stdout'
 comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
