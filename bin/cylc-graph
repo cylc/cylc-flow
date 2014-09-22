@@ -97,13 +97,12 @@ point plus "[visualization] number of cycle points" (which defaults to 3).
 The graph start and end points are adjusted up and down to the suite initial
 and final cycle points, respectively, if necessary.
 
-The viewer updates automatically when the suite.rc file is saved during
-editing. The "Save" button generates an image of the current view, of format
-(e.g. png, svg, jpg, eps) determined by the filename extension. If the chosen
-format is not available a dialog box will show those that are available.
+The "Save" button generates an image of the current view, of format (e.g. png,
+svg, jpg, eps) determined by the filename extension. If the chosen format is
+not available a dialog box will show those that are available.
 
-If the optional output filename is specified, the viewer will not open and
-a graph will be written directly to the file.
+If the optional output filename is specified, the viewer will not open and a
+graph will be written directly to the file.
 
 GRAPH VIEWER CONTROLS:
     * Center on a node: left-click.
@@ -186,7 +185,7 @@ if options.filename:
 
 should_hide_gtk_window = (options.output_filename is not None)
 
-suite, suiterc, watchers = parser.get_suite()
+suite, suiterc, junk = parser.get_suite()
 
 start_point_string = stop_point_string = None
 if len(args) >= 2:
@@ -195,23 +194,24 @@ if len(args) == 3:
     stop_point_string = args[2]
 
 if options.namespaces:
-    window = MyDotWindow2( suite, suiterc, options.templatevars,
-                           options.templatevars_file, watchers,
-                           should_hide=should_hide_gtk_window )
+    window = MyDotWindow2(suite, suiterc, options.templatevars,
+            options.templatevars_file, 
+            should_hide=should_hide_gtk_window)
 else:
     window = MyDotWindow(suite, suiterc, start_point_string,
             stop_point_string, options.templatevars,
-            options.templatevars_file, watchers)
+            options.templatevars_file,
+            should_hide=should_hide_gtk_window)
 
 window.widget.connect( 'clicked', on_url_clicked, window )
 
 window.get_graph()
 
 if options.output_filename:
-    window.graph.draw( options.output_filename, prog="dot" )
+    window.graph.draw(options.output_filename, prog="dot")
     sys.exit(0)
 
-window.connect( 'destroy', gtk.main_quit)
+window.connect('destroy', gtk.main_quit)
 
 gobject.timeout_add(1000, window.update)
 gtk.main()
