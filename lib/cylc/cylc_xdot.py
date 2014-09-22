@@ -32,9 +32,8 @@ Cylc-modified xdot windows for the "cylc graph" command.
 TODO - factor more commonality out of MyDotWindow, MyDotWindow2
 """
 
-class CylcDotViewerCommon( xdot.DotWindow ):
-    def load_config( self ):
-        print 'loading the suite definition'
+class CylcDotViewerCommon(xdot.DotWindow):
+    def load_config(self):
         if self.suiterc:
             is_reload = True
             collapsed = self.suiterc.closed_families
@@ -42,7 +41,7 @@ class CylcDotViewerCommon( xdot.DotWindow ):
             is_reload = False
             collapsed = []
         try:
-            self.suiterc = config.config( self.suite, self.file,
+            self.suiterc = config.config(self.suite, self.file,
                     template_vars=self.template_vars,
                     template_vars_file=self.template_vars_file,
                     is_reload=is_reload, collapsed=collapsed,
@@ -55,7 +54,7 @@ class CylcDotViewerCommon( xdot.DotWindow ):
         self.inherit = self.suiterc.get_parent_lists()
         return True
 
-class MyDotWindow2( CylcDotViewerCommon ):
+class MyDotWindow2(CylcDotViewerCommon):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
     # used by "cylc graph" to plot runtime namespace graphs
 
@@ -69,19 +68,19 @@ class MyDotWindow2( CylcDotViewerCommon ):
             <separator name="LeftToRightSep"/>
             <toolitem action="LeftToRight"/>
             <separator expand="true"/>
+            <toolitem action="Refresh"/>
             <toolitem action="Save"/>
         </toolbar>
     </ui>
     '''
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file, watch, orientation="TB",
-            should_hide=False ):
+            template_vars_file, orientation="TB",
+            should_hide=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.suiterc = None
-        self.watch = []
         self.orientation = orientation
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
@@ -114,13 +113,18 @@ class MyDotWindow2( CylcDotViewerCommon ):
         actiongroup = gtk.ActionGroup('Actions')
         self.actiongroup = actiongroup
 
-        # Create actions
         actiongroup.add_actions((
-            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In', self.widget.on_zoom_in),
-            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out', self.widget.on_zoom_out),
-            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit', self.widget.on_zoom_fit),
-            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100', self.widget.on_zoom_100),
-            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action ),
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In',
+                self.widget.on_zoom_in),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out',
+                self.widget.on_zoom_out),
+            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit',
+                self.widget.on_zoom_fit),
+            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100',
+                self.widget.on_zoom_100),
+            ('Refresh', gtk.STOCK_REFRESH, None, None, 'Refresh',
+                self.on_refresh),
+            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action),
         ))
         actiongroup.add_toggle_actions((
             ('LeftToRight', gtk.STOCK_JUMP_TO, 'Left-to-Right',
@@ -145,28 +149,9 @@ class MyDotWindow2( CylcDotViewerCommon ):
 
         self.set_focus(self.widget)
 
-        # find all suite.rc include-files
-        self.rc_mtimes = {}
-        self.rc_last_mtimes = {}
-        for rc in watch:
-            while True:
-                try:
-                    self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
-                except OSError:
-                    # this happens occasionally when the file is being edited ...
-                    print >> sys.stderr, "Failed to get rc file mod time, trying again in 1 second"
-                    time.sleep(1)
-                else:
-                    #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
-                    break
-
         if not should_hide:
             self.show_all()
-        while True:
-            if self.load_config():
-                break
-            else:
-                time.sleep(1)
+        self.load_config()
 
     def get_graph( self ):
         title = self.suite + ': runtime inheritance graph'
@@ -227,31 +212,14 @@ class MyDotWindow2( CylcDotViewerCommon ):
         self.orientation = orientation
         self.get_graph()
 
-    def update(self):
-        # if any suite config file has changed, reparse the graph
-        reparse = False
-        for rc in self.rc_last_mtimes:
-            while True:
-                try:
-                    rct= os.stat(rc).st_mtime
-                except OSError:
-                    # this happens occasionally when the file is being edited ...
-                    print "Failed to get rc file mod time, trying again in 1 second"
-                    time.sleep(1)
-                else:
-                    if rct != self.rc_last_mtimes[rc]:
-                        reparse = True
-                        print 'FILE CHANGED:', rc
-                        self.rc_last_mtimes[rc] = rct
-                    break
-        if reparse:
-            while True:
-                if self.load_config():
-                    break
-                else:
-                    time.sleep(1)
-            self.get_graph()
+    def on_refresh(self, w):
+        self.load_config()
+        self.get_graph()
         return True
+
+    def update(self):
+        pass
+
 
 class MyDotWindow( CylcDotViewerCommon ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
@@ -271,19 +239,19 @@ class MyDotWindow( CylcDotViewerCommon ):
             <toolitem action="Subgraphs"/>
             <toolitem action="IgnoreSuicide"/>
             <separator expand="true"/>
+            <toolitem action="Refresh"/>
             <toolitem action="Save"/>
         </toolbar>
     </ui>
     '''
     def __init__(self, suite, suiterc, start_point_string, stop_point_string,
-            template_vars, template_vars_file,  watch, orientation="TB",
-            subgraphs_on=False):
+            template_vars, template_vars_file, orientation="TB",
+            subgraphs_on=False, should_hide=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
         self.file = suiterc
         self.suiterc = None
-        self.watch = []
         self.orientation = orientation
         self.subgraphs_on = subgraphs_on
         self.template_vars = template_vars
@@ -326,22 +294,22 @@ class MyDotWindow( CylcDotViewerCommon ):
             factory.add( i, iconset )
         factory.add_default()
 
-        # Create actions
         actiongroup.add_actions((
-            ('ZoomIn', gtk.STOCK_ZOOM_IN, None,
-             None, 'Zoom In', self.widget.on_zoom_in),
-            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None,
-             None, 'Zoom Out', self.widget.on_zoom_out),
-            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None,
-             None, 'Zoom Fit', self.widget.on_zoom_fit),
-            ('Zoom100', gtk.STOCK_ZOOM_100, None,
-             None, 'Zoom 100', self.widget.on_zoom_100),
-            ('Group', 'group', 'Group',
-             None, 'Group All Families', self.group_all),
-            ('UnGroup', 'ungroup', 'Ungroup',
-             None, 'Ungroup All Families', self.ungroup_all),
-            ('Save', gtk.STOCK_SAVE_AS,
-             'Save', None, 'Save', self.save_action ),
+            ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, 'Zoom In',
+                self.widget.on_zoom_in),
+            ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, 'Zoom Out',
+                self.widget.on_zoom_out),
+            ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, 'Zoom Fit',
+                self.widget.on_zoom_fit),
+            ('Zoom100', gtk.STOCK_ZOOM_100, None, None, 'Zoom 100',
+                self.widget.on_zoom_100),
+            ('Group', 'group', 'Group', None, 'Group All Families',
+                self.group_all),
+            ('UnGroup', 'ungroup', 'Ungroup', None, 'Ungroup All Families',
+                self.ungroup_all),
+            ('Refresh', gtk.STOCK_REFRESH, None, None, 'Refresh',
+                self.on_refresh),
+            ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action),
         ))
         actiongroup.add_toggle_actions((
             ('LeftToRight', gtk.STOCK_JUMP_TO, 'Left-to-Right',
@@ -382,27 +350,9 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         self.set_focus(self.widget)
 
-        # find all suite.rc include-files
-        self.rc_mtimes = {}
-        self.rc_last_mtimes = {}
-        for rc in watch:
-            while True:
-                try:
-                    self.rc_last_mtimes[rc] = os.stat(rc).st_mtime
-                except OSError:
-                    # this happens occasionally when the file is being edited ...
-                    print >> sys.stderr, "Failed to get rc file mod time, trying again in 1 second"
-                    time.sleep(1)
-                else:
-                    #self.rc_mtimes[rc] = self.rc_last_mtimes[rc]
-                    break
-
-        self.show_all()
-        while True:
-            if self.load_config():
-                break
-            else:
-                time.sleep(1)
+        if not should_hide:
+            self.show_all()
+        self.load_config()
 
     def group_all( self, w ):
         self.get_graph( group_all=True )
@@ -485,31 +435,13 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.orientation = orientation
         self.get_graph()
 
-    def update(self):
-        # if any suite config file has changed, reparse the graph
-        reparse = False
-        for rc in self.rc_last_mtimes:
-            while True:
-                try:
-                    rct= os.stat(rc).st_mtime
-                except OSError:
-                    # this happens occasionally when the file is being edited ...
-                    print "Failed to get rc file mod time, trying again in 1 second"
-                    time.sleep(1)
-                else:
-                    if rct != self.rc_last_mtimes[rc]:
-                        reparse = True
-                        print 'FILE CHANGED:', rc
-                        self.rc_last_mtimes[rc] = rct
-                    break
-        if reparse:
-            while True:
-                if self.load_config():
-                    break
-                else:
-                    time.sleep(1)
-            self.get_graph()
+    def on_refresh(self, w):
+        self.load_config()
+        self.get_graph()
         return True
+
+    def update(self):
+        pass
 
 
 class DotTipWidget(xdot.DotWidget):
@@ -523,6 +455,8 @@ class DotTipWidget(xdot.DotWidget):
 
 
 class xdot_widgets(object):
+    """Used only by the GUI graph view."""
+
     def __init__(self):
         self.graph = xdot.Graph()
 
@@ -530,10 +464,6 @@ class xdot_widgets(object):
 
         self.widget = DotTipWidget()
 
-        #open_button = gtk.Button( stock=gtk.STOCK_OPEN )
-        #open_button.connect( 'clicked', self.on_open)
-        #reload_button = gtk.Button( stock=gtk.STOCK_REFRESH )
-        #reload_button.connect('clicked', self.on_reload),
         zoomin_button = gtk.Button( stock=gtk.STOCK_ZOOM_IN )
         zoomin_button.connect('clicked', self.widget.on_zoom_in)
         zoomout_button = gtk.Button( stock=gtk.STOCK_ZOOM_OUT )
@@ -549,15 +479,12 @@ class xdot_widgets(object):
         self.graph_update_button.set_sensitive(False)
 
         bbox = gtk.HButtonBox()
-        #bbox.add( open_button )
-        #bbox.add( reload_button )
         bbox.add( zoomin_button )
         bbox.add( zoomout_button )
         bbox.add( zoomfit_button )
         bbox.add( zoom100_button )
         bbox.add( self.graph_disconnect_button )
         bbox.add( self.graph_update_button )
-        #bbox.set_layout(gtk.BUTTONBOX_END)
         bbox.set_layout(gtk.BUTTONBOX_SPREAD)
 
         self.vbox.pack_start(self.widget)
@@ -565,17 +492,6 @@ class xdot_widgets(object):
 
     def get( self ):
         return self.vbox
-
-    def update(self, filename):
-        if not hasattr(self, "last_mtime"):
-            self.last_mtime = None
-
-        current_mtime = os.stat(filename).st_mtime
-        if current_mtime != self.last_mtime:
-            self.last_mtime = current_mtime
-            self.open_file(filename)
-
-        return True
 
     def set_filter(self, filter):
         self.widget.set_filter(filter)
@@ -598,42 +514,6 @@ class xdot_widgets(object):
             # disable automatic zoom-to-fit on update
             #self.widget.zoom_to_fit()
             pass
-
-    def open_file(self, filename):
-        try:
-            fp = file(filename, 'rt')
-            self.set_dotcode(fp.read(), filename)
-            fp.close()
-        except IOError, ex:
-            dlg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
-                                    message_format=str(ex),
-                                    buttons=gtk.BUTTONS_OK)
-            dlg.set_title('Dot Viewer')
-            dlg.run()
-            dlg.destroy()
-
-    def on_open(self, action):
-        chooser = gtk.FileChooserDialog(title="Open dot File",
-                                        action=gtk.FILE_CHOOSER_ACTION_OPEN,
-                                        buttons=(gtk.STOCK_CANCEL,
-                                                 gtk.RESPONSE_CANCEL,
-                                                 gtk.STOCK_OPEN,
-                                                 gtk.RESPONSE_OK))
-        chooser.set_default_response(gtk.RESPONSE_OK)
-        filter = gtk.FileFilter()
-        filter.set_name("Graphviz dot files")
-        filter.add_pattern("*.dot")
-        chooser.add_filter(filter)
-        filter = gtk.FileFilter()
-        filter.set_name("All files")
-        filter.add_pattern("*")
-        chooser.add_filter(filter)
-        if chooser.run() == gtk.RESPONSE_OK:
-            filename = chooser.get_filename()
-            chooser.destroy()
-            self.open_file(filename)
-        else:
-            chooser.destroy()
 
     def on_reload(self, action):
         self.widget.reload()
