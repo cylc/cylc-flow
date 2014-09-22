@@ -35,7 +35,7 @@ class start( scheduler ):
 Start a suite run from scratch, wiping out any previous suite state. To
 restart from a previous state see 'cylc restart --help'.
 
-The scheduler runs in daemon mode unless you specify n/--no-detach or --debug.
+The scheduler runs in daemon mode unless you specify --no-detach or --debug.
 
 Any dependence on cycle points earlier than the start cycle point is ignored.
 
