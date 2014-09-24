@@ -33,6 +33,7 @@ class background(JobSubmit):
 
     """
 
+    IS_BG_SUBMIT = True
     REC_ID_FROM_OUT = re.compile(r"""\A(?P<id>\d+)\Z""")
 
     def get_id(self, out, err):

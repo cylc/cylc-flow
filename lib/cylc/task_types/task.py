@@ -785,7 +785,7 @@ class task(object):
             "job-submit",
             args=[self.job_sub_method.jobfile_path],
             callback=self.job_submission_callback,
-            is_bg_submit=self.job_sub_method_name == "background",
+            is_bg_submit=self.job_sub_method.IS_BG_SUBMIT,
             stdin_file_path=self.job_sub_method.local_jobfile_path)
 
     def _prepare_submit(self, overrides=None):

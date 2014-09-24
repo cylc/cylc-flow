@@ -46,6 +46,7 @@ class JobSubmit(object):
     COMMAND = None
     EXEC_KILL = None
     EXEC_SUBMIT = None
+    IS_BG_SUBMIT = False
     REC_ID_FROM_ERR = None
     REC_ID_FROM_OUT = None
 

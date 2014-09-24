@@ -77,7 +77,10 @@ def _execute_shell_command(
         cmd_result['EXIT'] = 1
         cmd_result['ERR'] = str(exc)
     else:
-        if is_bg_submit:  # is background job submit
+        # Does this command behave like a background job submit where:
+        # 1. The process should print its job ID to STDOUT.
+        # 2. The process should then continue in background.
+        if is_bg_submit:  # behave like background job submit?
             # Capture just the echoed PID then move on.
             cmd_result['EXIT'] = 0
             cmd_result['OUT'] = pipe.stdout.readline().rstrip()
