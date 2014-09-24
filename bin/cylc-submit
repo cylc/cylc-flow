@@ -188,10 +188,11 @@ if not options.dry_run:
     proc_pool = mp_pool(pool_size=1)
     task_proxy.__class__.proc_pool = proc_pool
 
-task_proxy.submit(dry_run=True)
+task_proxy.submit(dry_run=options.dry_run)
 
 if not options.dry_run:
+    while proc_pool.unhandled_results:
+        proc_pool.handle_results_async()
     proc_pool.close()
     proc_pool.join()
-    proc_pool.handle_results_async()
     print 'Job ID:', task_proxy.submit_method_id
