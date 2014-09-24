@@ -3,7 +3,7 @@ edge "xyzzy.20140101T0300Z" "bar.20140101T0300Z" solid
 edge "xyzzy.20140101T0600Z" "bar.20140101T0600Z" solid
 edge "xyzzy.20140101T0900Z" "bar.20140101T0900Z" solid
 edge "xyzzy.20140101T1200Z" "bar.20140101T1200Z" solid
-graph 
+graph
 node "bar.20140101T0000Z" "bar\n20140101T0000Z" unfilled box black
 node "bar.20140101T0300Z" "bar\n20140101T0300Z" unfilled box black
 node "bar.20140101T0600Z" "bar\n20140101T0600Z" unfilled box black

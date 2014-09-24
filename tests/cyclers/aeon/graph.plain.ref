@@ -1,5 +1,5 @@
 edge "big_bang.-138000000000229T0530Z" "count_the_aeons.-138000000000229T0530Z" solid
-graph 
+graph
 node "big_bang.-138000000000229T0530Z" "big_bang\n-138000000000229T0530Z" unfilled box black
 node "count_the_aeons.+002000000000229T0530Z" "count_the_aeons\n+002000000000229T0530Z" unfilled box black
 node "count_the_aeons.+012000000000229T0530Z" "count_the_aeons\n+012000000000229T0530Z" unfilled box black

@@ -5,7 +5,7 @@ edge "foo.20131231T2330Z" "foo.20140101T0000Z" solid
 edge "foo.20140101T0000Z" "bar.20140101T0000Z" solid
 edge "foo.20140101T0000Z" "foo.20140101T0030Z" solid
 edge "foo.20140101T0030Z" "bar.20140101T0030Z" solid
-graph 
+graph
 node "bar.20131231T2300Z" "bar\n20131231T2300Z" unfilled box black
 node "bar.20131231T2330Z" "bar\n20131231T2330Z" unfilled box black
 node "bar.20140101T0000Z" "bar\n20140101T0000Z" unfilled box black

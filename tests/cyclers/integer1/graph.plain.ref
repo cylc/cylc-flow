@@ -41,7 +41,7 @@ edge "woo.14" "foo.13" solid
 edge "woo.15" "foo.16" solid
 edge "woo.17" "bar.16" solid
 edge "woo.17" "foo.16" solid
-graph 
+graph
 node "bar.1" "bar\n1" filled ellipse black
 node "bar.4" "bar\n4" filled ellipse black
 node "bar.7" "bar\n7" filled ellipse black

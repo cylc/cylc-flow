@@ -208,7 +208,10 @@ window.widget.connect( 'clicked', on_url_clicked, window )
 window.get_graph()
 
 if options.output_filename:
-    window.graph.draw(options.output_filename, prog="dot")
+    if options.output_filename == "-":
+        window.graph.draw(sys.stdout, format="plain", prog="dot")
+    else:
+        window.graph.draw(options.output_filename, prog="dot")
     sys.exit(0)
 
 window.connect('destroy', gtk.main_quit)

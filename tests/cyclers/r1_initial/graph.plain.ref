@@ -2,7 +2,7 @@ edge "cold_foo.20140101T0000Z" "foo.20140101T0000Z" solid
 edge "foo.20140101T0000Z" "foo.20140101T1200Z" solid
 edge "foo.20140101T1200Z" "foo.20140102T0000Z" solid
 edge "foo.20140102T0000Z" "foo.20140102T1200Z" solid
-graph 
+graph
 node "cold_foo.20140101T0000Z" "cold_foo\n20140101T0000Z" unfilled box black
 node "foo.20140101T0000Z" "foo\n20140101T0000Z" unfilled box black
 node "foo.20140101T1200Z" "foo\n20140101T1200Z" unfilled box black

@@ -1,5 +1,5 @@
 edge "foo.20140808T0000+12" "bar.20140808T0000+12" solid
-graph 
+graph
 node "bar.20140808T0000+12" "bar\n20140808T0000+12" unfilled box black
 node "foo.20140808T0000+12" "foo\n20140808T0000+12" unfilled box black
 node "foo.20140808T0600+12" "foo\n20140808T0600+12" unfilled box black

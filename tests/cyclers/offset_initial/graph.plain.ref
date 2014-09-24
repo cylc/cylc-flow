@@ -1,7 +1,7 @@
 edge "bar.20140102T0000Z" "baz.20140102T0000Z" solid
 edge "bar.20140102T0600Z" "baz.20140102T0600Z" solid
 edge "bar.20140102T1200Z" "baz.20140102T1200Z" solid
-graph 
+graph
 node "bar.20140102T0000Z" "bar\n20140102T0000Z" unfilled box black
 node "bar.20140102T0600Z" "bar\n20140102T0600Z" unfilled box black
 node "bar.20140102T1200Z" "bar\n20140102T1200Z" unfilled box black
