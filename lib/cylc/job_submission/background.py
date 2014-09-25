@@ -62,11 +62,11 @@ class background(JobSubmit):
             [job_file_path], stdout=out_file, stderr=err_file,
             preexec_fn=os.setpgrp)
         # Send PID info back to suite
-        sys.stdout.write("CYLC_JOB_SUBMIT_METHOD_ID=%s\n" % proc.pid)
+        sys.stdout.write("%d\n" % proc.pid)
         sys.stdout.flush()
         # Write PID info to status file
         job_status_file = open(job_file_path + ".status", "a")
-        job_status_file.write("CYLC_JOB_SUBMIT_METHOD_ID=%s\n" % proc.pid)
+        job_status_file.write("CYLC_JOB_SUBMIT_METHOD_ID=%d\n" % proc.pid)
         job_status_file.close()
         # Wait for job
         ret_code = proc.wait()

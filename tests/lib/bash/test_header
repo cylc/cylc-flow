@@ -58,6 +58,9 @@
 #         Create a suite called '__cylc__test__${SUITE_NAME}__' in $TEST_DIR.
 #     purge_suite SUITE_NAME
 #         Tidy up test directories for SUITE_NAME.
+#     poll COMMAND
+#         Run COMMAND in 1 second intervals for a minute until COMMAND returns
+#         a non-zero value.
 #     skip N SKIP_REASON
 #         echo "ok $((++T)) # skip SKIP_REASON" N times.
 #     skip_all SKIP_REASON
@@ -304,6 +307,13 @@ function purge_suite() {
             rm -rf $TEST_DIR/$SUITE_NAME/
         fi
     fi
+}
+
+function poll() {
+    local TIMEOUT=$(($(date +%s) + 60)) # wait 1 minute
+    while (($(date +%s) < TIMEOUT)) && eval "$@"; do
+        sleep 1
+    done
 }
 
 function skip() {
