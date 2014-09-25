@@ -18,7 +18,7 @@
 # Test "cylc submit" a background task.
 . $(dirname $0)/test_header
 
-CYLC_TEST_HOST=
+CYLC_TEST_HOST='localhost'
 if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
     CONF_KEY='remote host'
     if [[ "${TEST_NAME_BASE}" == *remote-with-shared-fs* ]]; then
@@ -29,13 +29,25 @@ if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
         skip_all "[test battery]${CONF_KEY} not set"
     fi
     CYLC_TEST_HOST="${HOST}"
-    SSH="ssh -oBatchMode=yes -oConnectTimeout=5 ${CYLC_TEST_HOST}"
 fi
 CYLC_TEST_JOB_SUBMIT_METHOD='background'
+CYLC_TEST_DIRECTIVES=
 if [[ "${TEST_NAME_BASE}" == ??-at* ]]; then
     CYLC_TEST_JOB_SUBMIT_METHOD='at'
+elif [[ "${TEST_NAME_BASE}" == ??-loadleveler* ]]; then
+    CYLC_TEST_JOB_SUBMIT_METHOD='loadleveler'
+    ITEM_KEY='[test battery][directives]loadleveler host'
+    CYLC_TEST_HOST="$(cylc get-global-config "--item=${ITEM_KEY}")"
+    if [[ -z "${CYLC_TEST_HOST}" ]]; then
+        skip_all "${ITEM_KEY} not set"
+    fi
+    ITEM_KEY='[test battery][directives]loadleveler directives'
+    CYLC_TEST_DIRECTIVES="$(cylc get-global-config "--item=${ITEM_KEY}")"
 fi
-CYLC_TEST_DIRECTIVES=
+SSH=
+if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
+    SSH="ssh -oBatchMode=yes -oConnectTimeout=5 ${CYLC_TEST_HOST}"
+fi
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
@@ -53,7 +65,7 @@ run_ok "${TEST_NAME_BASE}" \
     "--set=CYLC_TEST_DIRECTIVES=${CYLC_TEST_DIRECTIVES}" \
     "${SUITE_NAME}" 'foo.1'
 SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-if [[ -n ${CYLC_TEST_HOST:-} ]]; then
+if [[ -n "${SSH}" ]]; then
     SUITE_DIR="${SUITE_DIR#"${HOME}/"}"
     ST_FILE="${SUITE_DIR}/log/job/1/foo/01/job.status"
     poll ! $SSH "grep -q 'CYLC_JOB_SUBMIT_METHOD_ID=' \"${ST_FILE}\"" 2>/dev/null
@@ -69,7 +81,7 @@ Job ID: ${JOB_ID}
 __OUT__
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
-if [[ -n ${CYLC_TEST_HOST:-} ]]; then
+if [[ -n "${SSH}" ]]; then
     poll ! $SSH "grep -q 'CYLC_JOB_EXIT=' \"${ST_FILE}\"" 2>/dev/null
 else
     poll ! grep -q 'CYLC_JOB_EXIT=' "${ST_FILE}" 2>/dev/null
