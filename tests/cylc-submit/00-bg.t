@@ -44,9 +44,18 @@ elif [[ "${TEST_NAME_BASE}" == ??-loadleveler* ]]; then
     ITEM_KEY='[test battery][directives]loadleveler directives'
     CYLC_TEST_DIRECTIVES="$(cylc get-global-config "--item=${ITEM_KEY}")"
 fi
+export CYLC_CONF_DIR=
 SSH=
 if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
     SSH="ssh -oBatchMode=yes -oConnectTimeout=5 ${CYLC_TEST_HOST}"
+    CYLC_TEST_HOST_CYLC_DIR="$(ssh_install_cylc "${CYLC_TEST_HOST}")"
+    mkdir -p 'conf'
+    cat >"conf/global.rc" <<__GLOBAL_RC__
+[hosts]
+    [[${CYLC_TEST_HOST}]]
+        cylc executable = ${CYLC_TEST_HOST_CYLC_DIR}/bin/cylc
+__GLOBAL_RC__
+    export CYLC_CONF_DIR="${PWD}/conf"
 fi
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -56,13 +65,11 @@ run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate \
     "--set=CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     "--set=CYLC_TEST_JOB_SUBMIT_METHOD=${CYLC_TEST_JOB_SUBMIT_METHOD}" \
-    "--set=CYLC_TEST_DIRECTIVES=${CYLC_TEST_DIRECTIVES}" \
     "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}" \
     cylc submit \
     "--set=CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
     "--set=CYLC_TEST_JOB_SUBMIT_METHOD=${CYLC_TEST_JOB_SUBMIT_METHOD}" \
-    "--set=CYLC_TEST_DIRECTIVES=${CYLC_TEST_DIRECTIVES}" \
     "${SUITE_NAME}" 'foo.1'
 SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 if [[ -n "${SSH}" ]]; then

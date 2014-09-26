@@ -65,12 +65,15 @@
 #         echo "ok $((++T)) # skip SKIP_REASON" N times.
 #     skip_all SKIP_REASON
 #         echo "1..0 # SKIP SKIP_REASON" and exit.
+#     ssh_install_cylc HOST
+#         Install cylc on a remote host.
 #-------------------------------------------------------------------------------
 set -eu
 
 FAILURES=0
 SIGNALS="EXIT INT"
 TEST_DIR=
+TEST_RHOST_CYLC_DIR=
 function FINALLY() {
     for S in $SIGNALS; do
         trap '' $S
@@ -78,6 +81,11 @@ function FINALLY() {
     if [[ -n $TEST_DIR ]]; then
         cd ~
         rm -rf $TEST_DIR
+    fi
+    if [[ -n "${TEST_RHOST_CYLC_DIR}" ]]; then
+        cd ~
+        ssh -oBatchMode=yes -oConnectTimeout=5 "${TEST_RHOST_CYLC_DIR%%:*}" \
+            rm -rf "${TEST_RHOST_CYLC_DIR#*:}"
     fi
     if (($FAILURES > 0)); then
         echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" >&2
@@ -328,6 +336,23 @@ function skip() {
 function skip_all() {
     echo "1..0 # SKIP $@"
     exit
+}
+
+function ssh_install_cylc() {
+    local RHOST="${1}"
+    local RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
+    TEST_RHOST_CYLC_DIR="${RHOST}:${RHOST_CYLC_DIR}"
+    rsync -a '--exclude=*.pyc' "${CYLC_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
+    echo "${RHOST_CYLC_DIR}"
+}
+
+function _ssh_mkdtemp_cylc_dir() {
+    local RHOST="${1}"
+    ssh -oBatchMode=yes -oConnectTimeout=5 "${RHOST}" python - <<'__PYTHON__'
+import os
+from tempfile import mkdtemp
+print mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-")
+__PYTHON__
 }
 
 CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}

@@ -18,8 +18,5 @@
             job_type = serial
             notification = never
             wall_clock_limit = 120,60
-{% if CYLC_TEST_DIRECTIVES %}
-            {{CYLC_TEST_DIRECTIVES}}
-{% endif %}
 {% endif %}
 {% endif %}
