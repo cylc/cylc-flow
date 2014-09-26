@@ -48,12 +48,12 @@ export CYLC_CONF_DIR=
 SSH=
 if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
     SSH="ssh -oBatchMode=yes -oConnectTimeout=5 ${CYLC_TEST_HOST}"
-    CYLC_TEST_HOST_CYLC_DIR="$(ssh_install_cylc "${CYLC_TEST_HOST}")"
+    ssh_install_cylc "${CYLC_TEST_HOST}"
     mkdir -p 'conf'
     cat >"conf/global.rc" <<__GLOBAL_RC__
 [hosts]
     [[${CYLC_TEST_HOST}]]
-        cylc executable = ${CYLC_TEST_HOST_CYLC_DIR}/bin/cylc
+        cylc executable = ${TEST_RHOST_CYLC_DIR#*:}/bin/cylc
 __GLOBAL_RC__
     export CYLC_CONF_DIR="${PWD}/conf"
 fi
@@ -90,6 +90,7 @@ cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 if [[ -n "${SSH}" ]]; then
     poll ! $SSH "grep -q 'CYLC_JOB_EXIT=' \"${ST_FILE}\"" 2>/dev/null
+    $SSH "rm -r ${SUITE_DIR}" 2>/dev/null
 else
     poll ! grep -q 'CYLC_JOB_EXIT=' "${ST_FILE}" 2>/dev/null
 fi

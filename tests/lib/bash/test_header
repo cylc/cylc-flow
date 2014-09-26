@@ -83,9 +83,8 @@ function FINALLY() {
         rm -rf $TEST_DIR
     fi
     if [[ -n "${TEST_RHOST_CYLC_DIR}" ]]; then
-        cd ~
         ssh -oBatchMode=yes -oConnectTimeout=5 "${TEST_RHOST_CYLC_DIR%%:*}" \
-            rm -rf "${TEST_RHOST_CYLC_DIR#*:}"
+            "rm -fr ${TEST_RHOST_CYLC_DIR#*:}"
     fi
     if (($FAILURES > 0)); then
         echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" >&2
@@ -343,7 +342,6 @@ function ssh_install_cylc() {
     local RHOST_CYLC_DIR=$(_ssh_mkdtemp_cylc_dir "${RHOST}")
     TEST_RHOST_CYLC_DIR="${RHOST}:${RHOST_CYLC_DIR}"
     rsync -a '--exclude=*.pyc' "${CYLC_DIR}"/* "${RHOST}:${RHOST_CYLC_DIR}/"
-    echo "${RHOST_CYLC_DIR}"
 }
 
 function _ssh_mkdtemp_cylc_dir() {
