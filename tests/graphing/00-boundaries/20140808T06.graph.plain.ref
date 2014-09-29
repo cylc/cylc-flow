@@ -1,4 +1,4 @@
-graph 
+graph
 node "foo.20140808T0600+12" "foo\n20140808T0600+12" unfilled box black
 node "foo.20140808T1200+12" "foo\n20140808T1200+12" unfilled box black
 node "foo.20140808T1800+12" "foo\n20140808T1800+12" unfilled box black

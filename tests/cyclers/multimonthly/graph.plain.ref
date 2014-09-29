@@ -28,7 +28,7 @@ edge "foo.10001101T0000Z" "foo.10001201T0000Z" solid
 edge "foo.10001201T0000Z" "bar.10001201T0000Z" solid
 edge "foo.10001201T0000Z" "foo.10010101T0000Z" solid
 edge "foo.10010101T0000Z" "bar.10010101T0000Z" solid
-graph 
+graph
 node "bar.10000101T0000Z" "bar\n10000101T0000Z" unfilled box black
 node "bar.10000201T0000Z" "bar\n10000201T0000Z" unfilled box black
 node "bar.10000301T0000Z" "bar\n10000301T0000Z" unfilled box black

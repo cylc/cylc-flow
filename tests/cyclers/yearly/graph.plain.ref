@@ -3,7 +3,7 @@ edge "foo.20050123T1200Z" "foo.20060123T1200Z" solid
 edge "foo.20060123T1200Z" "bar.20060123T1200Z" solid
 edge "foo.20060123T1200Z" "foo.20070123T1200Z" solid
 edge "foo.20070123T1200Z" "bar.20070123T1200Z" solid
-graph 
+graph
 node "bar.20050123T1200Z" "bar\n20050123T1200Z" unfilled box black
 node "bar.20060123T1200Z" "bar\n20060123T1200Z" unfilled box black
 node "bar.20070123T1200Z" "bar\n20070123T1200Z" unfilled box black
