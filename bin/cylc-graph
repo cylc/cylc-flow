@@ -203,8 +203,7 @@ else:
             options.templatevars_file,
             should_hide=should_hide_gtk_window)
 
-window.widget.connect( 'clicked', on_url_clicked, window )
-
+window.widget.connect('clicked', on_url_clicked, window)
 window.get_graph()
 
 if options.output_filename:
@@ -212,6 +211,4 @@ if options.output_filename:
     sys.exit(0)
 
 window.connect('destroy', gtk.main_quit)
-
-gobject.timeout_add(1000, window.update)
 gtk.main()
