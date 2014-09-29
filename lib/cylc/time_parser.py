@@ -88,6 +88,7 @@ class CylcTimeParser(object):
         (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
+        (r"^R(?P<reps>\d+)?//(?P<end>[^PR/][^/]*)$", 4),
         (r"^R(?P<reps>1)/?(?P<start>$)", 3),
         (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
     ]
@@ -237,12 +238,24 @@ class CylcTimeParser(object):
                 if end_offset is not None:
                     end_point += end_offset
 
+            if (start_point is None and repetitions is None and
+                   interval is not None and
+                   context_start_point is not None):
+                # isodatetime only reverses bounded end-point recurrences.
+                # This is unbounded, and will come back in reverse order.
+                # We need to reverse it.
+                start_point = end_point
+                while start_point > context_start_point:
+                    start_point -= interval
+                end_point = None
+
             return isodatetime.data.TimeRecurrence(
-                         repetitions=repetitions,
-                         start_point=start_point,
-                         duration=interval,
-                         end_point=end_point
-            )
+                repetitions=repetitions,
+                start_point=start_point,
+                duration=interval,
+                end_point=end_point
+            )         
+            
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
     def _get_interval_from_expression(self, expr, context=None):

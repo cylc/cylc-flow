@@ -98,6 +98,8 @@ RECURRENCE_FORMAT_RECS = [
         # Rn/INTV, implies R/INTV/FINAL
         # e.g. R5/P2, R7/P1
         (r"^%(reps)s?/%(intv)s/?$", 4),
+        # Rn//END (not supported)
+        #(r"^%(reps_1)s//%(end)s$", 4),
         # R1, repeat once at INITIAL
         # e.g. R1, R1/
         (r"^%(reps_1)s/?(?P<start>$)", 3),
