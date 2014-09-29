@@ -260,28 +260,31 @@ class config( object ):
             self.initial_point.standardise()
 
         if self.cfg['scheduling']['final cycle point'] is not None:
-            final_point = None
-            # Is the final "point"(/interval) relative to initial?
-            if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
-                if "P" in self.cfg['scheduling']['final cycle point']:
-                    # Relative, integer cycling.
-                    final_point = get_point_relative(
-                            self.cfg['scheduling']['final cycle point'],
-                        self.initial_point).standardise()
+            if self.cfg['scheduling']['final cycle point'].strip() is "":
+                self.cfg['scheduling']['final cycle point'] = None
             else:
-                try:
-                    # Relative, ISO8601 cycling.
-                    final_point = get_point_relative(
-                            self.cfg['scheduling']['final cycle point'],
+                final_point = None
+                # Is the final "point"(/interval) relative to initial?
+                if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
+                    if "P" in self.cfg['scheduling']['final cycle point']:
+                        # Relative, integer cycling.
+                        final_point = get_point_relative(
+                                self.cfg['scheduling']['final cycle point'],
                             self.initial_point).standardise()
-                except ValueError:
-                    # (not relative)
-                    pass
-            if final_point is None:
-                # Must be absolute.
-                final_point = get_point(
-                        self.cfg['scheduling']['final cycle point']).standardise()
-            self.cfg['scheduling']['final cycle point'] = str(final_point)
+                else:
+                    try:
+                        # Relative, ISO8601 cycling.
+                        final_point = get_point_relative(
+                                self.cfg['scheduling']['final cycle point'],
+                                self.initial_point).standardise()
+                    except ValueError:
+                        # (not relative)
+                        pass
+                if final_point is None:
+                    # Must be absolute.
+                    final_point = get_point(
+                            self.cfg['scheduling']['final cycle point']).standardise()
+                self.cfg['scheduling']['final cycle point'] = str(final_point)
 
         self.start_point = (
             get_point(self._cli_start_point_string) or self.initial_point)

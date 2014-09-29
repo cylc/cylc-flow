@@ -1,0 +1,13 @@
+[cylc]
+    UTC mode = True
+
+[scheduling]
+    initial cycle point = 20100808T06
+    final cycle point =
+    [[dependencies]]
+        [[[T06]]]
+            graph = foo
+[runtime]
+    [[foo]]
+        command scripting = sleep 5
+
