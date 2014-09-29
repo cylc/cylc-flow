@@ -31,6 +31,7 @@ Some notes:
 
 import time
 import logging
+from pipes import quote
 from subprocess import Popen, PIPE
 import multiprocessing
 
@@ -50,15 +51,18 @@ JOB_SKIPPED_FLAG = 999
 STOP_JOB_SUBMISSION = multiprocessing.Value('i', FALSE)
 
 
-def _execute_shell_command(
-        cmd_type, cmd_str, is_bg_submit=None, stdin_file_path=None, env=None,
+def _run_command(
+        cmd_type, cmd, is_bg_submit=None, stdin_file_path=None, env=None,
         shell=False):
     """Execute a shell command and capture its output and exit status."""
 
-    cmd_result = {'CMD': cmd_str, 'EXIT': None, 'OUT': None, 'ERR': None}
+    cmd_result = {'CMD': cmd, 'EXIT': None, 'OUT': None, 'ERR': None}
 
     if cylc.flags.debug:
-        print cmd_str
+        if shell:
+            print cmd
+        else:
+            print ' '.join([quote(cmd_str) for cmd_str in cmd])
 
     if (STOP_JOB_SUBMISSION.value == TRUE
             and cmd_type == CMD_TYPE_JOB_SUBMISSION):
@@ -70,8 +74,8 @@ def _execute_shell_command(
         stdin_file = None
         if stdin_file_path:
             stdin_file = open(stdin_file_path)
-        pipe = Popen(
-            cmd_str, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
+        proc = Popen(
+            cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
             env=env, shell=shell)
     except (IOError, OSError) as exc:
         cmd_result['EXIT'] = 1
@@ -83,17 +87,17 @@ def _execute_shell_command(
         if is_bg_submit:  # behave like background job submit?
             # Capture just the echoed PID then move on.
             cmd_result['EXIT'] = 0
-            cmd_result['OUT'] = pipe.stdout.readline().rstrip()
+            cmd_result['OUT'] = proc.stdout.readline().rstrip()
             # Check if submission is OK or not
             if not cmd_result['OUT']:
-                ret_code = pipe.poll()
+                ret_code = proc.poll()
                 if ret_code is not None:
-                    cmd_result['OUT'], cmd_result['ERR'] = pipe.communicate()
+                    cmd_result['OUT'], cmd_result['ERR'] = proc.communicate()
                     cmd_result['EXIT'] = ret_code
         else:
-            cmd_result['EXIT'] = pipe.wait()
+            cmd_result['EXIT'] = proc.wait()
             if cmd_result['EXIT'] is not None:
-                cmd_result['OUT'], cmd_result['ERR'] = pipe.communicate()
+                cmd_result['OUT'], cmd_result['ERR'] = proc.communicate()
 
     return cmd_result
 
@@ -115,18 +119,18 @@ class mp_pool(object):
         self.unhandled_results = []
 
     def put_command(
-            self, cmd_type, cmd_str, callback, is_bg_submit=False,
+            self, cmd_type, cmd, callback, is_bg_submit=False,
             stdin_file_path=None, env=None, shell=False):
         """Queue a new shell command to execute."""
         try:
             result = self.pool.apply_async(
-                _execute_shell_command,
-                (cmd_type, cmd_str, is_bg_submit, stdin_file_path, env, shell))
+                _run_command,
+                (cmd_type, cmd, is_bg_submit, stdin_file_path, env, shell))
         except AssertionError as exc:
             self.log.warning("%s\n  %s\n %s" % (
                 str(exc),
                 "Rejecting command (pool closed)",
-                cmd_str))
+                cmd))
         else:
             if callback:
                 self.unhandled_results.append((result, callback))

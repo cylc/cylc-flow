@@ -121,7 +121,7 @@ class JobFile(object):
         # error trapping so that profile errors do not abort the job
         handle.write('\n\nprelude() {')
         keys = GLOBAL_CFG.get_host_item(
-            'suite to job environment', self.host, self.owner)
+            'extra job environment', self.host, self.owner)
         for key in keys + ['CYLC_DIR', 'CYLC_VERSION']:
             if key in os.environ:
                 handle.write("\n    export %s='%s'" % (key, os.environ[key]))

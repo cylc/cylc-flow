@@ -1,3 +1,3 @@
 [hosts]
     [[localhost]]
-        suite to job environment = FOO, BAR, BAZ
+        extra job environment = FOO, BAR, BAZ
