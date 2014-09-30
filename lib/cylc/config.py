@@ -207,7 +207,7 @@ class config( object ):
         # by repeated namespace depends on this).
         newruntime = OrderedDict()
         for key, val in self.cfg['runtime'].items():
-            if re.search(',', key):
+            if ',' in key:
                 for name in re.split(' *, *', key.rstrip(', ')):
                     if name not in newruntime:
                         newruntime[name] = OrderedDict()
