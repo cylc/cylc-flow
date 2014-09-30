@@ -209,9 +209,13 @@ class config( object ):
         for key, val in self.cfg['runtime'].items():
             if re.search(',', key):
                 for name in re.split(' *, *', key.rstrip(', ')):
-                    newruntime[name] = pdeepcopy(val)
+                    if name not in newruntime:
+                        newruntime[name] = OrderedDict()
+                    replicate(newruntime[name], val)
             else:
-                newruntime[key] = val
+                if key not in newruntime:
+                    newruntime[key] = OrderedDict()
+                replicate(newruntime[key], val)
         self.cfg['runtime'] = newruntime
         self.ns_defn_order = newruntime.keys()
 
