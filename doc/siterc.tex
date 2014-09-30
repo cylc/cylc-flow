@@ -492,10 +492,21 @@ invoked via \lstinline=ssh= on this host.
 \item {\em localhost default:} \lstinline@cylc@
 \end{myitemize}
 
-\paragraph[extra job environment]{[hosts] $\rightarrow$ HOST $\rightarrow$ extra job environment }
+\paragraph[global initial scripting]{[hosts] $\rightarrow$ HOST $\rightarrow$ global initial scripting }
+
+If specified, the value of this setting will be inserted to just before the
+\lstinline=initial scripting= section of all job scripts that are to be
+submitted to the specified remote host.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em localhost default:} \lstinline@""@
+\end{myitemize}
+
+\paragraph[copyable environment variables]{[hosts] $\rightarrow$ HOST $\rightarrow$ copyable environment variables }
 
 A list containing the names of the environment variables that can and/or need
-to be passed from the suite daemon to a job.
+to be copied from the suite daemon to a job.
 
 \begin{myitemize}
 \item {\em type:} string\_list

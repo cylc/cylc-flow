@@ -1,0 +1,7 @@
+[hosts]
+    [[localhost]]
+        global initial scripting = """
+export FOO=foo
+export BAR=bar
+export BAZ=baz
+"""

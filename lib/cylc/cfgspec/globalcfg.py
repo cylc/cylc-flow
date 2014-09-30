@@ -92,7 +92,8 @@ SPEC = {
             'remote shell template'       : vdr( vtype='string', default='ssh -oBatchMode=yes -oConnectTimeout=10 %s' ),
             'use login shell'             : vdr( vtype='boolean', default=True ),
             'cylc executable'             : vdr( vtype='string', default='cylc'  ),
-            'extra job environment'    : vdr( vtype='string_list', default=[] ),
+            'global initial scripting'    : vdr( vtype='string', default='' ),
+            'copyable environment variables': vdr(vtype='string_list', default=[]),
             },
         '__MANY__' : {
             'run directory'               : vdr( vtype='string'  ),
@@ -102,7 +103,8 @@ SPEC = {
             'remote shell template'       : vdr( vtype='string'  ),
             'use login shell'             : vdr( vtype='boolean' ),
             'cylc executable'             : vdr( vtype='string'  ),
-            'extra job environment'    : vdr( vtype='string_list', default=[] ),
+            'global initial scripting'    : vdr( vtype='string'  ),
+            'copyable environment variables': vdr(vtype='string_list', default=[]),
             },
         },
 

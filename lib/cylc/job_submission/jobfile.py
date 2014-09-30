@@ -121,7 +121,7 @@ class JobFile(object):
         # error trapping so that profile errors do not abort the job
         handle.write('\n\nprelude() {')
         keys = GLOBAL_CFG.get_host_item(
-            'extra job environment', self.host, self.owner)
+            'copyable environment variables', self.host, self.owner)
         for key in keys + ['CYLC_DIR', 'CYLC_VERSION']:
             if key in os.environ:
                 handle.write("\n    export %s='%s'" % (key, os.environ[key]))
@@ -199,10 +199,14 @@ unset S""")
 
     def _write_initial_scripting(self, handle):
         """Initial scripting."""
-        if not self.jobconfig['initial scripting']:
-            return
-        handle.write("\n\n# INITIAL SCRIPTING:\n")
-        handle.write(self.jobconfig['initial scripting'])
+        global_initial_scripting = GLOBAL_CFG.get_host_item(
+            'global initial scripting', self.host, self.owner)
+        if global_initial_scripting:
+            handle.write("\n\n# GLOBAL INITIAL SCRIPTING:\n")
+            handle.write(global_initial_scripting)
+        if self.jobconfig['initial scripting']:
+            handle.write("\n\n# INITIAL SCRIPTING:\n")
+            handle.write(self.jobconfig['initial scripting'])
 
     def _write_environment_1(self, handle):
         """Suite and task environment."""
