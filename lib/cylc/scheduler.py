@@ -245,7 +245,7 @@ class scheduler(object):
             self.log.info( 'Start point: ' + str(self.start_point) )
         self.log.info( 'Final point: ' + str(self.final_point) )
 
-        self.pool = pool( self.suite, self.db, self.final_point, self.config,
+        self.pool = pool( self.suite, self.db, self.view_db, self.final_point, self.config,
                           self.pyro, self.log, self.run_mode, self.proc_pool )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
@@ -647,8 +647,10 @@ class scheduler(object):
             run_dir = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
+                self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True, primary_db=False)
             else:
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
+                self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, primary_db=False)
 
             self.hold_suite_now = False
             self.hold_time = None
@@ -1053,6 +1055,7 @@ class scheduler(object):
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:
             self.db.close()
+            self.view_db.close()
 
         if getattr(self, "config", None) is not None:
             # run shutdown handlers

@@ -21,6 +21,7 @@ from time import sleep
 import os
 import shutil
 import sqlite3
+import stat
 import sys
 from threading import Thread
 from Queue import Queue
@@ -216,10 +217,13 @@ class CylcRuntimeDAO(object):
                       BROADCAST_SETTINGS: None}
 
 
-    def __init__(self, suite_dir=None, new_mode=False):
+    def __init__(self, suite_dir=None, new_mode=False, primary_db=True):
         if suite_dir is None:
             suite_dir = os.getcwd()
-        self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
+        if primary_db:
+            self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
+        else:
+            self.db_file_name = os.path.join(suite_dir, 'state', self.DB_FILE_BASE_NAME)
         # create the host directory if necessary
         try:
             mkdir_p( suite_dir )
@@ -238,6 +242,9 @@ class CylcRuntimeDAO(object):
             new_mode = True
         if new_mode:
             self.create()
+            # Restrict the primary database to user access only
+            if primary_db:
+                os.chmod(self.db_file_name, stat.S_IRUSR | stat.S_IWUSR)
         self.c = ThreadedCursor(self.db_file_name)
 
     def close(self):

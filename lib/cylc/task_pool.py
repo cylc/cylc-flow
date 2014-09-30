@@ -50,7 +50,7 @@ from broadcast import broadcast
 
 
 class pool(object):
-    def __init__(self, suite, db, stop_point, config, pyro, log, run_mode, proc_pool):
+    def __init__(self, suite, db, view_db, stop_point, config, pyro, log, run_mode, proc_pool):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -58,6 +58,7 @@ class pool(object):
         self.stop_point = stop_point
         self.reconfiguring = False
         self.db = db
+        self.view_db = view_db
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_future_offset = None
@@ -717,9 +718,21 @@ class pool(object):
             if self.db.c.is_alive():
                 self.db.run_db_op(d)
             elif self.db.c.exception:
+                self.view_db.close()
                 raise self.db.c.exception
             else:
-                raise SchedulerError('An unexpected error occurred while writing to the database')
+                raise SchedulerError('An unexpected error occurred while writing to the suite database')
+
+        # we should filter down to only recording the utility relevent
+        # entries in the viewable database following database refactoring
+        for d in db_opers:
+            if self.view_db.c.is_alive():
+                self.view_db.run_db_op(d)
+            elif self.view_db.c.exception:
+                self.db.close()
+                raise self.view_db.c.exception
+            else:
+                raise SchedulerError('An unexpected error occurred while writing to the viewable database')
 
     def force_spawn(self, itask):
         # TODO - THIS SHOULD BE IN task.py?
