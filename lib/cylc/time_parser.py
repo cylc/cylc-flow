@@ -88,6 +88,7 @@ class CylcTimeParser(object):
         (r"^R(?P<reps>\d+)?/(?P<start>)/(?P<intv>P[^/]*)$", 3),
         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/(?P<end>[^PR/][^/]*)$", 4),
         (r"^R(?P<reps>\d+)?/(?P<intv>P[^/]*)/?$", 4),
+        (r"^R(?P<reps>\d+)?//(?P<end>[^PR/][^/]*)$", 4),
         (r"^R(?P<reps>1)/?(?P<start>$)", 3),
         (r"^R(?P<reps>1)//(?P<end>[^PR/][^/]*)$", 4)
     ]
@@ -237,12 +238,24 @@ class CylcTimeParser(object):
                 if end_offset is not None:
                     end_point += end_offset
 
+            if (start_point is None and repetitions is None and
+                   interval is not None and
+                   context_start_point is not None):
+                # isodatetime only reverses bounded end-point recurrences.
+                # This is unbounded, and will come back in reverse order.
+                # We need to reverse it.
+                start_point = end_point
+                while start_point > context_start_point:
+                    start_point -= interval
+                end_point = None
+
             return isodatetime.data.TimeRecurrence(
-                         repetitions=repetitions,
-                         start_point=start_point,
-                         duration=interval,
-                         end_point=end_point
-            )
+                repetitions=repetitions,
+                start_point=start_point,
+                duration=interval,
+                end_point=end_point
+            )         
+            
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
     def _get_interval_from_expression(self, expr, context=None):
@@ -452,21 +465,21 @@ class TestRecurrenceSuite(unittest.TestCase):
 
     def test_fourth_recurrence_format(self):
         """Test the fourth ISO 8601 recurrence format."""
-        tests = [("PT6H/20000101T0500Z", "R/PT6H/20000101T0500Z"),
-                 ("P12D/+P2W", "R/P12D/20010520T1000Z"),
-                 ("P1W/-P1M1D", "R/P1W/20010405T1000Z"),
-                 ("P6D/T12+02", "R/P6D/20010506T1000Z"),
-                 ("P6DT12H/01T00+02", "R/P6DT12H/20010531T2200Z"),
-                 ("R/P1D/20010506T1200+0200", "R/P1D/20010506T1000Z"),
-                 ("R/PT5M/+PT2M", "R/PT5M/20010506T1002Z"),
-                 ("R/P20Y/-P20Y", "R/P20Y/19810506T1000Z"),
-                 ("R/P3YT2H/T18-02", "R/P3YT2H/20010506T2000Z"),
-                 ("R/PT3H/31T", "R/PT3H/20010531T0000Z"),
-                 ("R5/P1Y/", "R5/P1Y/20010506T1000Z"),
+        tests = [("PT6H/20000101T0500Z", "R/19991226T0500Z/PT6H"),
+                 ("P12D/+P2W", "R/19991221T1000Z/P12D"),
+                 ("R2/P1W/-P1M1D", "R2/P1W/20010405T1000Z"),
+                 ("R3/P6D/T12+02", "R3/P6D/20010506T1000Z"),
+                 ("R4/P6DT12H/01T00+02", "R4/P6DT12H/20010531T2200Z"),
+                 ("R5/P1D/20010506T1200+0200", "R5/P1D/20010506T1000Z"),
+                 ("R6/PT5M/+PT2M", "R6/PT5M/20010506T1002Z"),
+                 ("R7/P20Y/-P20Y", "R7/P20Y/19810506T1000Z"),
+                 ("R8/P3YT2H/T18-02", "R8/P3YT2H/20010506T2000Z"),
+                 ("R9/PT3H/31T", "R9/PT3H/20010531T0000Z"),
+                 ("R10/P1Y/", "R10/P1Y/20010506T1000Z"),
                  ("R3/P2Y/02T", "R3/P2Y/20010602T0000Z"),
-                 ("R/P2Y", "R/P2Y/20010506T1000Z"),
+                 ("R/P2Y", "R/19990506T1000Z/P2Y"),
                  ("R48/PT2H", "R48/PT2H/20010506T1000Z"),
-                 ("R/P21Y/", "R/P21Y/20010506T1000Z")]
+                 ("R100/P21Y/", "R100/P21Y/20010506T1000Z")]
         for test in tests:
             if len(test) == 2:
                 expression, ctrl_data = test
