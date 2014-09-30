@@ -34,7 +34,7 @@ from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import trigger
-from parsec.util import replicate, pdeepcopy
+from parsec.util import replicate
 import TaskID
 from C3MRO import C3
 from parsec.OrderedDict import OrderedDict
