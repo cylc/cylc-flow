@@ -29,7 +29,7 @@ TEST_NAME=$TEST_NAME_BASE-run
 ln -s reference.log.run $TEST_DIR/$SUITE_NAME/reference.log
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 # Number of dumps
-run_ok $TEST_NAME-n-dumps test $(find $SUITE_DIR/state -type f | wc -l) -eq 10
+run_ok $TEST_NAME-n-dumps test $(find $SUITE_DIR/state -type f | wc -l) -eq 11
 # Contents in dump before restart
 grep -e '^initial cycle' -e '^final cycle' -e 't1\.' \
     $SUITE_DIR/state/state >$TEST_NAME.state
@@ -50,7 +50,7 @@ STATE_USED_TO_RESTART=$(readlink $(echo $SUITE_DIR/state/state-restart*))
 run_ok $TEST_NAME.state-restart \
     test $STATE_BEFORE_RESTART = $STATE_USED_TO_RESTART
 # Number of dumps
-run_ok $TEST_NAME-n-dumps test $(find $SUITE_DIR/state -type f | wc -l) -eq 20
+run_ok $TEST_NAME-n-dumps test $(find $SUITE_DIR/state -type f | wc -l) -eq 21
 # Contents in dump at final cycle
 grep -e '^initial cycle' -e '^final cycle' -e 't1\.' \
     $SUITE_DIR/state/state >$TEST_NAME.state

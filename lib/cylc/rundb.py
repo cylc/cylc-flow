@@ -111,11 +111,15 @@ class ThreadedCursor(Thread):
                               "\trequest: %s\n\targs: %s")
         self.generic_err_msg = ("%s:%s occurred while trying to run:\n"+
                               "\trequest: %s\n\targs: %s")
+        self.db_not_found_err = ("Database Not Found Error:\n"+
+                                 "\tNo database found at %s")
     def run(self):
         cnx = sqlite3.connect(self.db, timeout=10.0)
         cursor = cnx.cursor()
         counter = 1
         while True:
+            if not os.path.exists(self.db):
+                raise Exception(self.db_not_found_err%self.db)
             if (counter % 10) == 0 or self.reqs.qsize() == 0:
                 counter = 0
                 attempt = 0
