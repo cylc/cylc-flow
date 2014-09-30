@@ -1,0 +1,12 @@
+[scheduling]
+   [[dependencies]]
+       graph = FAMILY
+[runtime]
+   [[FAMILY]]
+   [[m1,m2,m3]]
+      inherit = FAMILY
+      [[[environment]]]
+         FOO = foo
+   [[m2]]
+      [[[environment]]]
+         FOO = bar
