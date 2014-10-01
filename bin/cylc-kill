@@ -48,7 +48,7 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'command-interface' )
-    prompt( 'Kill task ' + name + ' a ' + point_string + ' in ' + suite, options.force )
+    prompt( 'Kill task ' + name + ' at ' + point_string + ' in ' + suite, options.force )
     result = proxy.put( 'kill tasks', name, point_string, options.is_family )
 
 except Exception, x:
