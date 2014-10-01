@@ -1,0 +1,20 @@
+edge "cold_foo.2014010100" "start_foo_six.2014010100" solid
+edge "cold_foo.2014010100" "start_foo_three.2014010103" solid
+edge "start_foo_six.2014010100" "foo_six.2014010100" solid
+edge "start_foo_three.2014010103" "foo_three.2014010103" solid
+graph 
+node "cold_foo.2014010100" "cold_foo\n2014010100" unfilled box black
+node "foo_six.2014010100" "foo_six\n2014010100" unfilled box black
+node "foo_six.2014010106" "foo_six\n2014010106" unfilled box black
+node "foo_six.2014010112" "foo_six\n2014010112" unfilled box black
+node "foo_six.2014010118" "foo_six\n2014010118" unfilled box black
+node "foo_six.2014010200" "foo_six\n2014010200" unfilled box black
+node "foo_six.2014010206" "foo_six\n2014010206" unfilled box black
+node "foo_three.2014010103" "foo_three\n2014010103" unfilled box black
+node "foo_three.2014010109" "foo_three\n2014010109" unfilled box black
+node "foo_three.2014010115" "foo_three\n2014010115" unfilled box black
+node "foo_three.2014010121" "foo_three\n2014010121" unfilled box black
+node "foo_three.2014010203" "foo_three\n2014010203" unfilled box black
+node "start_foo_six.2014010100" "start_foo_six\n2014010100" unfilled box black
+node "start_foo_three.2014010103" "start_foo_three\n2014010103" unfilled box black
+stop
