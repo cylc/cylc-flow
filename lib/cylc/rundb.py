@@ -225,9 +225,9 @@ class CylcRuntimeDAO(object):
         if suite_dir is None:
             suite_dir = os.getcwd()
         if primary_db:
-            self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
-        else:
             self.db_file_name = os.path.join(suite_dir, 'state', self.DB_FILE_BASE_NAME)
+        else:
+            self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
         # create the host directory if necessary
         try:
             mkdir_p( suite_dir )
