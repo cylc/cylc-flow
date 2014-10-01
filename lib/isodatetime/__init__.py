@@ -16,4 +16,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-----------------------------------------------------------------------------
 
-__version__ = "2014.08.0-8-ga7f42b1"
+__version__ = "2014.08.0-10-gd477d0b"
