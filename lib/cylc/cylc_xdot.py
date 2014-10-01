@@ -217,9 +217,6 @@ class MyDotWindow2(CylcDotViewerCommon):
         self.get_graph()
         return True
 
-    def update(self):
-        pass
-
 
 class MyDotWindow( CylcDotViewerCommon ):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
@@ -439,9 +436,6 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.load_config()
         self.get_graph()
         return True
-
-    def update(self):
-        pass
 
 
 class DotTipWidget(xdot.DotWidget):

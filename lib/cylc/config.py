@@ -34,7 +34,7 @@ from print_tree import print_tree
 from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import trigger
-from parsec.util import replicate, pdeepcopy
+from parsec.util import replicate
 import TaskID
 from C3MRO import C3
 from parsec.OrderedDict import OrderedDict
@@ -199,30 +199,25 @@ class config( object ):
         if 'root' not in self.cfg['runtime']:
             self.cfg['runtime']['root'] = {}
 
-        self.ns_defn_order = self.cfg['runtime'].keys()
-
+        # Replace [runtime][name1,name2,...] with separate namespaces.
         if flags.verbose:
             print "Expanding [runtime] name lists"
-        # If a runtime section heading is a list of names then the
-        # subsequent config applies to each member.
-        for item in self.cfg['runtime'].keys():
-            if re.search( ',', item ):
-                # list of task names
-                # remove trailing commas and spaces
-                tmp = item.rstrip(', ')
-                task_names = re.split(' *, *', tmp )
+        # This requires expansion into a new OrderedDict to preserve the
+        # correct order of the final list of namespaces (add-or-override
+        # by repeated namespace depends on this).
+        newruntime = OrderedDict()
+        for key, val in self.cfg['runtime'].items():
+            if ',' in key:
+                for name in re.split(' *, *', key.rstrip(', ')):
+                    if name not in newruntime:
+                        newruntime[name] = OrderedDict()
+                    replicate(newruntime[name], val)
             else:
-                # a single task name
-                continue
-            # generate task configuration for each list member
-            for name in task_names:
-                self.cfg['runtime'][name] = pdeepcopy( self.cfg['runtime'][item] )
-            # delete the original multi-task section
-            del self.cfg['runtime'][item]
-            # replace in the definition order list too (TODO - not nec. after #829?)
-            i = self.ns_defn_order.index(item)
-            self.ns_defn_order.remove(item)
-            self.ns_defn_order[i:i] = task_names
+                if key not in newruntime:
+                    newruntime[key] = OrderedDict()
+                replicate(newruntime[key], val)
+        self.cfg['runtime'] = newruntime
+        self.ns_defn_order = newruntime.keys()
 
         # check var names before inheritance to avoid repetition
         self.check_env_names()
@@ -260,28 +255,31 @@ class config( object ):
             self.initial_point.standardise()
 
         if self.cfg['scheduling']['final cycle point'] is not None:
-            final_point = None
-            # Is the final "point"(/interval) relative to initial?
-            if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
-                if "P" in self.cfg['scheduling']['final cycle point']:
-                    # Relative, integer cycling.
-                    final_point = get_point_relative(
-                            self.cfg['scheduling']['final cycle point'],
-                        self.initial_point).standardise()
+            if self.cfg['scheduling']['final cycle point'].strip() is "":
+                self.cfg['scheduling']['final cycle point'] = None
             else:
-                try:
-                    # Relative, ISO8601 cycling.
-                    final_point = get_point_relative(
-                            self.cfg['scheduling']['final cycle point'],
+                final_point = None
+                # Is the final "point"(/interval) relative to initial?
+                if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
+                    if "P" in self.cfg['scheduling']['final cycle point']:
+                        # Relative, integer cycling.
+                        final_point = get_point_relative(
+                                self.cfg['scheduling']['final cycle point'],
                             self.initial_point).standardise()
-                except ValueError:
-                    # (not relative)
-                    pass
-            if final_point is None:
-                # Must be absolute.
-                final_point = get_point(
-                        self.cfg['scheduling']['final cycle point']).standardise()
-            self.cfg['scheduling']['final cycle point'] = str(final_point)
+                else:
+                    try:
+                        # Relative, ISO8601 cycling.
+                        final_point = get_point_relative(
+                                self.cfg['scheduling']['final cycle point'],
+                                self.initial_point).standardise()
+                    except ValueError:
+                        # (not relative)
+                        pass
+                if final_point is None:
+                    # Must be absolute.
+                    final_point = get_point(
+                            self.cfg['scheduling']['final cycle point']).standardise()
+                self.cfg['scheduling']['final cycle point'] = str(final_point)
 
         self.start_point = (
             get_point(self._cli_start_point_string) or self.initial_point)

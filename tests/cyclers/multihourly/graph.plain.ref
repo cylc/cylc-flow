@@ -44,7 +44,7 @@ edge "foo.20000202T0500+13" "foo.20000202T0800+13" solid
 edge "foo.20000202T0800+13" "bar.20000202T0800+13" solid
 edge "foo.20000202T0800+13" "foo.20000202T1100+13" solid
 edge "foo.20000202T1100+13" "bar.20000202T1100+13" solid
-graph 
+graph
 node "bar.20000131T1400+13" "bar\n20000131T1400+13" unfilled box black
 node "bar.20000131T1700+13" "bar\n20000131T1700+13" unfilled box black
 node "bar.20000131T2000+13" "bar\n20000131T2000+13" unfilled box black

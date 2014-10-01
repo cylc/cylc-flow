@@ -20,7 +20,7 @@ edge "foo.20001029T0100Z" "foo.20001129T0100Z" solid
 edge "foo.20001129T0100Z" "bar.20001129T0100Z" solid
 edge "foo.20001129T0100Z" "foo.20001229T0100Z" solid
 edge "foo.20001229T0100Z" "bar.20001229T0100Z" solid
-graph 
+graph
 node "bar.20000131T0100Z" "bar\n20000131T0100Z" unfilled box black
 node "bar.20000229T0100Z" "bar\n20000229T0100Z" unfilled box black
 node "bar.20000329T0100Z" "bar\n20000329T0100Z" unfilled box black
