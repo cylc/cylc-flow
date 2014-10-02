@@ -7,24 +7,24 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-09-10 23:15:00"> 
+<meta name="date" content="2014-10-02 16:21:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 2124--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 2123--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse9.html" >next</a>] [<a 
 href="cug-htmlse7.html" >prev</a>] [<a 
 href="cug-htmlse7.html#tailcug-htmlse7.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse8.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse8.html" >up</a>] </p></div>
-<!--l. 2124--><p class="indent" >    <h3 id="8" class="sectionHead"><span class="titlemark"> <a href="#8">8</a>  <a 
+<!--l. 2123--><p class="indent" >    <h3 id="8" class="sectionHead"><span class="titlemark"> <a href="#8">8</a>  <a 
  id="x9-620008"></a>Suite Name Registration And Passphrases </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >8.1 <a 
 href="#x9-630008.1">Database Operations</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >8.2 <a 
 href="#x9-640008.2">Suite Passphrases</a></span>
    </div>
-<!--l. 2127--><p class="indent" >   Cylc commands target suites via names registered in a <span 
+<!--l. 2126--><p class="indent" >   Cylc commands target suites via names registered in a <span 
 class="cmti-10">suite name database </span>located at <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
@@ -34,7 +34,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">REGDB</span><span 
 class="pcrr7t-">/</span></span>.
 Suite names are hierarchical like directory paths, allowing nested tree-like grouping, but use the &#8216;.&#8217; character as a
-delimiter. This : <!--l. 2131-->
+delimiter. This : <!--l. 2130-->
    <div class="lstlisting" id="listing-69"><span class="label"><a 
  id="x9-62001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -161,14 +161,14 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">Region1</span>
    
    </div>
-<!--l. 2141--><p class="indent" >   Suite titles held in the name database are parsed from the suite definition at the time of initial suite registration.
+<!--l. 2140--><p class="indent" >   Suite titles held in the name database are parsed from the suite definition at the time of initial suite registration.
 If you change the title later use <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">db</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">refresh</span></span> to update the database.
-<!--l. 2145--><p class="indent" >   Name groups are entirely virtual, they do not need to be explicitly created before use, and they automatically
+<!--l. 2144--><p class="indent" >   Name groups are entirely virtual, they do not need to be explicitly created before use, and they automatically
 disappear if all tasks are removed from them. From the listing above, for example, to move the suite
 <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
@@ -178,7 +178,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">region2</span></span> into the <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">test</span></span> group: <!--l. 2150-->
+class="pcrr7t-">test</span></span> group: <!--l. 2149-->
    <div class="lstlisting" id="listing-70"><span class="label"><a 
  id="x9-62008r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -292,7 +292,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Region2</span>
    
    </div>
-<!--l. 2161--><p class="indent" >   And to move <span class="lstinline"><span 
+<!--l. 2160--><p class="indent" >   And to move <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">test</span><span 
@@ -300,7 +300,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">region2</span></span> into a new group <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">para</span></span>: <!--l. 2162-->
+class="pcrr7t-">para</span></span>: <!--l. 2161-->
    <div class="lstlisting" id="listing-71"><span class="label"><a 
  id="x9-62017r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -419,13 +419,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Region2</span>
    
    </div>
-<!--l. 2175--><p class="indent" >   Currently you cannot explicitly indicate a group name on the command line by appending a dot character.
+<!--l. 2174--><p class="indent" >   Currently you cannot explicitly indicate a group name on the command line by appending a dot character.
 Rather, in database operations such as copy, reregister, or unregister, the identity of the source item (group or suite)
 is inferred from the content of the database; and if the source item is a group, so must the target be a
 group (or it will be, in the case of an item that will be created by the operation). This means that you
 cannot copy a single suite into a group that does not exist yet unless you specify the entire target suite
 name.
-<!--l. 2184--><p class="indent" >   <span class="lstinline"><span 
+<!--l. 2183--><p class="indent" >   <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">db</span><span 
@@ -434,12 +434,12 @@ class="pcrr7t-">register</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span> shows a number of other examples.
-<!--l. 2186--><p class="noindent" >
-<!--l. 2186--><p class="indent" >    <h4 id="8.1" class="subsectionHead"> <span class="titlemark"> <a href="#8.1"> 8.1</a>  <a 
+<!--l. 2185--><p class="noindent" >
+<!--l. 2185--><p class="indent" >    <h4 id="8.1" class="subsectionHead"> <span class="titlemark"> <a href="#8.1"> 8.1</a>  <a 
  id="x9-630008.1"></a>Database Operations </span></h4>
-<!--l. 2188--><p class="indent" >   On the command line, the &#8216;database&#8217; (or &#8216;db&#8217;) command category contains commands to implement the
+<!--l. 2187--><p class="indent" >   On the command line, the &#8216;database&#8217; (or &#8216;db&#8217;) command category contains commands to implement the
 aforementioned operations.
-   <!--l. 2192-->
+   <!--l. 2191-->
    <div class="lstlisting" id="listing-72"><span class="label"><a 
  id="x9-63001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -746,7 +746,7 @@ class="pcrr7t-">suites</span>
 
                                                                                          
    </div>
-<!--l. 2215--><p class="indent" >   Groups of suites (at any level in the name hierarchy) can be deleted, copied, imported, and exported; as well as
+<!--l. 2214--><p class="indent" >   Groups of suites (at any level in the name hierarchy) can be deleted, copied, imported, and exported; as well as
 individual suites. To do this, just use suite group names as source and/or target for operations, as appropriate. For
 instance, if a group <span class="lstinline"><span 
 class="pcrr7t-">foo</span><span 
@@ -762,7 +762,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">qux</span></span>, you can copy a single suite
-like this:  <!--l. 2222-->
+like this:  <!--l. 2221-->
    <div class="lstlisting" id="listing-73"><span class="label"><a 
  id="x9-63021r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -786,8 +786,8 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">suites</span>
    
    </div>
-<!--l. 2225--><p class="indent" >   (resulting in a new suite <span class="lstinline"><span 
-class="pcrr7t-">boo</span></span>); or the group like this:  <!--l. 2227-->
+<!--l. 2224--><p class="indent" >   (resulting in a new suite <span class="lstinline"><span 
+class="pcrr7t-">boo</span></span>); or the group like this:  <!--l. 2226-->
    <div class="lstlisting" id="listing-74"><span class="label"><a 
  id="x9-63022r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -809,13 +809,13 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">suites</span>
    
    </div>
-<!--l. 2230--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
+<!--l. 2229--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">baz</span></span> and <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">qux</span></span>); or the group like this:  <!--l. 2232-->
+class="pcrr7t-">qux</span></span>); or the group like this:  <!--l. 2231-->
    <div class="lstlisting" id="listing-75"><span class="label"><a 
  id="x9-63023r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -835,7 +835,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">suites</span>
    
    </div>
-<!--l. 2235--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
+<!--l. 2234--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">bar</span><span 
@@ -854,40 +854,40 @@ class="pcrr7t-">copy</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span> has some explicit examples.
-<!--l. 2240--><p class="indent" >   The same functionality is also available by right-clicking on suites or groups in the gcylc &#8220;Open Registered
+<!--l. 2239--><p class="indent" >   The same functionality is also available by right-clicking on suites or groups in the gcylc &#8220;Open Registered
 Suite&#8221; dialog.
-<!--l. 2243--><p class="noindent" >
-<!--l. 2243--><p class="indent" >    <h4 id="8.2" class="subsectionHead"> <span class="titlemark"> <a href="#8.2"> 8.2</a>  <a 
+<!--l. 2242--><p class="noindent" >
+<!--l. 2242--><p class="indent" >    <h4 id="8.2" class="subsectionHead"> <span class="titlemark"> <a href="#8.2"> 8.2</a>  <a 
  id="x9-640008.2"></a>Suite Passphrases </span></h4>
-<!--l. 2245--><p class="indent" >   Any client process that connects to a running suite (this includes task messaging and user-invoked interrogation
+<!--l. 2244--><p class="indent" >   Any client process that connects to a running suite (this includes task messaging and user-invoked interrogation
 and control commands) must authenticate with a secure passphrase that has been loaded by the suite. A random
 passphrase is generated automatically in the suite definition directory at registration time if one does not already
 exist there. For the default Pyro-based connection method the passphrase file must be distributed to other
 accounts that host running tasks or from which you need monitoring or control access to the running
 suite.
-<!--l. 2254--><p class="indent" >   Alternatively, cylc can be configured to,
+<!--l. 2253--><p class="indent" >   Alternatively, cylc can be configured to,
      <ol  class="enumerate1" >
      <li 
   class="enumerate" id="x9-64002x1">use ssh to re-invoke task messaging commands on the suite host; or
      </li>
      <li 
   class="enumerate" id="x9-64004x2">use a one-way polling mechanism for tracking task progress.</li></ol>
-<!--l. 2259--><p class="noindent" >Neither of these methods require the suite passphrase to be installed on the task host. For ssh re-invocation ssh keys
+<!--l. 2258--><p class="noindent" >Neither of these methods require the suite passphrase to be installed on the task host. For ssh re-invocation ssh keys
 must be installed for the task-to-suite direction in addition to the suite-to-task setup already required for job
 submission. The automatic polling mechanism can be used as a last resort for hosts that do not allow routing back
 to the suite host for pyro or ssh. It can also be used as regular health check on submitted tasks under the other
 communications methods.
-<!--l. 2267--><p class="indent" >   See&#x00A0;<a 
+<!--l. 2266--><p class="indent" >   See&#x00A0;<a 
 href="cug-htmlse12.html#x13-15400012">12<!--tex4ht:ref: RunningSuites --></a> for more detail on cylc client/server communications, and how to use it.
                                                                                          
 
                                                                                          
-   <!--l. 2272--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 2271--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse9.html" >next</a>] [<a 
 href="cug-htmlse7.html" >prev</a>] [<a 
 href="cug-htmlse7.html#tailcug-htmlse7.html" >prev-tail</a>] [<a 
 href="cug-htmlse8.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse8.html" >up</a>] </p></div>
-<!--l. 2272--><p class="indent" >   <a 
+<!--l. 2271--><p class="indent" >   <a 
  id="tailcug-htmlse8.html"></a>   
 </body></html> 

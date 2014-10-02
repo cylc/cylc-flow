@@ -7,17 +7,17 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-09-10 23:15:00"> 
+<meta name="date" content="2014-10-02 16:21:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 6498--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6497--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse17.html" >next</a>] [<a 
 href="cug-htmlse15.html" >prev</a>] [<a 
 href="cug-htmlse15.html#tailcug-htmlse15.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse16.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse16.html" >up</a>] </p></div>
-<!--l. 6498--><p class="indent" >    <h3 id="16" class="sectionHead"><span class="titlemark"> <a href="#16">16</a>  <a 
+<!--l. 6497--><p class="indent" >    <h3 id="16" class="sectionHead"><span class="titlemark"> <a href="#16">16</a>  <a 
  id="x17-20900016"></a>Style Guide </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >16.1 <a 
 href="#x17-21000016.1">Indentation</a></span>
@@ -30,14 +30,14 @@ href="#x17-21300016.4">Task Naming Convention</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >16.5 <a 
 href="#x17-21400016.5">Inlined Task Scripting</a></span>
    </div>
-<!--l. 6500--><p class="indent" >   Good style is to some extent a matter of taste. That said, for collaborative development of complex systems
+<!--l. 6499--><p class="indent" >   Good style is to some extent a matter of taste. That said, for collaborative development of complex systems
 it is important to settle on a clear and consistent style, and you may find the following suggestions
 useful. Note that the boundary between this section (style) and the previous (design) is somewhat
 arbitrary.
-<!--l. 6506--><p class="noindent" >
-<!--l. 6506--><p class="indent" >    <h4 id="16.1" class="subsectionHead"> <span class="titlemark"> <a href="#16.1"> 16.1</a>  <a 
+<!--l. 6505--><p class="noindent" >
+<!--l. 6505--><p class="indent" >    <h4 id="16.1" class="subsectionHead"> <span class="titlemark"> <a href="#16.1"> 16.1</a>  <a 
  id="x17-21000016.1"></a>Indentation </span></h4>
-<!--l. 6508--><p class="indent" >   The suite.rc file format consists of <span class="lstinline"><span 
+<!--l. 6507--><p class="indent" >   The suite.rc file format consists of <span class="lstinline"><span 
 class="pcrr7t-">item</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -46,7 +46,7 @@ class="pcrr7t-">value</span></span> pairs under nested section headings. Clear i
 best way to show local nesting level inside large blocks.
      <ul class="itemize1">
      <li class="itemize">Indent suite.rc syntax four spaces per nesting level.
-     <!--l. 6516-->
+     <!--l. 6515-->
      <div class="lstlisting" id="listing-220"><span class="label"><a 
  id="x17-210001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -122,14 +122,14 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">value2</span>
      
      </div>
-     <!--l. 6523--><p class="noindent" >Don&#8217;t align <span class="lstinline"><span 
+     <!--l. 6522--><p class="noindent" >Don&#8217;t align <span class="lstinline"><span 
 class="pcrr7t-">item</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">value</span></span> pairs on the <span class="lstinline"><span 
 class="pcrr7t-">=</span></span> character - this does not show nesting level clearly and it pushes
-     everything off to the right:  <!--l. 6527-->
+     everything off to the right:  <!--l. 6526-->
      <div class="lstlisting" id="listing-221"><span class="label"><a 
  id="x17-210006r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -180,9 +180,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">value2</span>
      
      </div>
-     <!--l. 6533--><p class="noindent" >The following layout does preserve proper indentation on the left, but the whole block may need
+     <!--l. 6532--><p class="noindent" >The following layout does preserve proper indentation on the left, but the whole block may need
      reformatting after changing one line, which pollutes your revision history with spurious changes:
-     <!--l. 6537-->
+     <!--l. 6536-->
      <div class="lstlisting" id="listing-222"><span class="label"><a 
  id="x17-210009r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -248,7 +248,7 @@ class="cmti-10">Line comments </span>should be indented to the same level as the
      <li class="itemize"><span 
 class="cmti-10">Command scripting strings </span>are interpreted by the associated task job script, not by cylc, so strictly speaking
      their internal lines should not be indented as if part of the suite.rc syntax. This, for example,
-     <!--l. 6556-->
+     <!--l. 6555-->
      <div class="lstlisting" id="listing-223"><span class="label"><a 
  id="x17-210012r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -304,7 +304,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
      
      </div>
-     <!--l. 6563--><p class="noindent" >is preferred over this (or similar):  <!--l. 6565-->
+     <!--l. 6562--><p class="noindent" >is preferred over this (or similar):  <!--l. 6564-->
      <div class="lstlisting" id="listing-224"><span class="label"><a 
  id="x17-210017r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -411,13 +411,13 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
      
      </div>
-     <!--l. 6573--><p class="noindent" >The extra whitespace here translates directly to spurious indentation in the task job script. As it happens this
+     <!--l. 6572--><p class="noindent" >The extra whitespace here translates directly to spurious indentation in the task job script. As it happens this
      is just an aesthetic problem in bash scripts, but for Python job scripts (which cylc may support in the future)
      it would be a technical error.
      </li>
      <li class="itemize">The positioning of string-delimiting triple quotes is of no practical consequence either, but the following
      forms are suggested for the same reason - to avoid including spurious whitespace in the string:
-     <!--l. 6582-->
+     <!--l. 6581-->
      <div class="lstlisting" id="listing-225"><span class="label"><a 
  id="x17-210023r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -610,7 +610,7 @@ class="pcrr7t-">"</span>
      </li>
      <li class="itemize">Multiline dependency <span class="lstinline"><span 
 class="pcrr7t-">graph</span></span> strings have no meaning outside of the suite definition, so they can be free-form
-     in order to most clearly present the structure of the suite:  <!--l. 6602-->
+     in order to most clearly present the structure of the suite:  <!--l. 6601-->
      <div class="lstlisting" id="listing-226"><span class="label"><a 
  id="x17-210036r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -713,7 +713,7 @@ class="pcrr7t-">"</span>
      </li>
      <li class="itemize">Embedded <span 
 class="cmti-10">Jinja2 </span>code is not part of the suite.rc syntax, so it should be indented from the left margin on its
-     own terms.  <!--l. 6615-->
+     own terms.  <!--l. 6614-->
      <div class="lstlisting" id="listing-227"><span class="label"><a 
  id="x17-210043r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -786,10 +786,10 @@ class="pcrr7t-">%}</span>
      
      </div>
      </li></ul>
-<!--l. 6625--><p class="noindent" >
-<!--l. 6625--><p class="indent" >    <h4 id="16.2" class="subsectionHead"> <span class="titlemark"> <a href="#16.2"> 16.2</a>  <a 
+<!--l. 6624--><p class="noindent" >
+<!--l. 6624--><p class="indent" >    <h4 id="16.2" class="subsectionHead"> <span class="titlemark"> <a href="#16.2"> 16.2</a>  <a 
  id="x17-21100016.2"></a>Comments </span></h4>
-<!--l. 6627--><p class="indent" >   Comments should be <span 
+<!--l. 6626--><p class="indent" >   Comments should be <span 
 class="cmti-10">minimal</span>, but not too minimal. If context and clear item names will do, leave it at that.
 Extremely verbose comments tend to be neglected and eventually get out of sync with the code, a result that may
 be worse than having no comments at all.
@@ -815,14 +815,14 @@ class="pcrr7t-">[</span><span
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span></span> - these get displayed by mouse hover in gcylc.
      </li></ul>
-<!--l. 6650--><p class="noindent" >
-<!--l. 6650--><p class="indent" >    <h4 id="16.3" class="subsectionHead"> <span class="titlemark"> <a href="#16.3"> 16.3</a>  <a 
+<!--l. 6649--><p class="noindent" >
+<!--l. 6649--><p class="indent" >    <h4 id="16.3" class="subsectionHead"> <span class="titlemark"> <a href="#16.3"> 16.3</a>  <a 
  id="x17-21200016.3"></a>Line Length </span></h4>
-<!--l. 6652--><p class="indent" >   Keep to the standard maximum line length of 79 characters where possible. Very long lines affect
+<!--l. 6651--><p class="indent" >   Keep to the standard maximum line length of 79 characters where possible. Very long lines affect
 readability, may pose a problem for auto-line-breaking in text editors, and make side-by-side diff display less
 effective.
      <ul class="itemize1">
-     <li class="itemize">Line continuation markers can be used anywhere to break up long lines:  <!--l. 6660-->
+     <li class="itemize">Line continuation markers can be used anywhere to break up long lines:  <!--l. 6659-->
      <div class="lstlisting" id="listing-228"><span class="label"><a 
  id="x17-212001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -972,7 +972,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">MY_TASKS</span>
      
      </div>
-     <!--l. 6671--><p class="noindent" >Graph lines can also be split up without line breaks, like this:  <!--l. 6673-->
+     <!--l. 6670--><p class="noindent" >Graph lines can also be split up without line breaks, like this:  <!--l. 6672-->
      <div class="lstlisting" id="listing-229"><span class="label"><a 
  id="x17-212010r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -1063,10 +1063,10 @@ class="pcrr7t-">"</span>
      
      </div>
      </li></ul>
-<!--l. 6682--><p class="noindent" >
-<!--l. 6682--><p class="indent" >    <h4 id="16.4" class="subsectionHead"> <span class="titlemark"> <a href="#16.4"> 16.4</a>  <a 
+<!--l. 6681--><p class="noindent" >
+<!--l. 6681--><p class="indent" >    <h4 id="16.4" class="subsectionHead"> <span class="titlemark"> <a href="#16.4"> 16.4</a>  <a 
  id="x17-21300016.4"></a>Task Naming Convention </span></h4>
-<!--l. 6684--><p class="indent" >   Use <span class="lstinline"><span 
+<!--l. 6683--><p class="indent" >   Use <span class="lstinline"><span 
 class="pcrr7t-">UPPERCASE_NAMES</span></span> for families and <span class="lstinline"><span 
 class="pcrr7t-">lowercase_names</span></span> for tasks, so that you can tell which is which at a
 glance.
@@ -1075,10 +1075,10 @@ glance.
      alphanumeric sorting) and in listings, e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">obsproc_sonde</span></span>, <span class="lstinline"><span 
 class="pcrr7t-">obsproc_radar</span></span>.</li></ul>
-<!--l. 6693--><p class="noindent" >
-<!--l. 6693--><p class="indent" >    <h4 id="16.5" class="subsectionHead"> <span class="titlemark"> <a href="#16.5"> 16.5</a>  <a 
+<!--l. 6692--><p class="noindent" >
+<!--l. 6692--><p class="indent" >    <h4 id="16.5" class="subsectionHead"> <span class="titlemark"> <a href="#16.5"> 16.5</a>  <a 
  id="x17-21400016.5"></a>Inlined Task Scripting </span></h4>
-<!--l. 6695--><p class="indent" >   Trivial task scripting may be inlined in the suite definition but anything more should be written to a script file.
+<!--l. 6694--><p class="indent" >   Trivial task scripting may be inlined in the suite definition but anything more should be written to a script file.
 This keeps the suite definition tidy, it allows proper shell-mode text editing, and it allows separate command line
 testing of the script during development or debugging.
                                                                                          
