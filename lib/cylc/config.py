@@ -1717,8 +1717,11 @@ class config( object ):
                     left, left_output, right = dep
                     if left in back_comp_initial_tasks:
                         # Start-up/Async tasks now always run at R1.
-                        back_comp_initial_dep_points[(left, None, None)] = [
-                            initial_point]
+                        pure_left_dep = (left, None, None)
+                        back_comp_initial_dep_points.setdefault(
+                            pure_left_dep, [])
+                        back_comp_initial_dep_points[pure_left_dep].append(
+                            first_point)
                     # Sort out the dependencies on R1 at R1/some-time.
                     back_comp_initial_dep_points.setdefault(tuple(dep), [])
                     back_comp_initial_dep_points[tuple(dep)].append(
@@ -1731,8 +1734,14 @@ class config( object ):
             left, left_output, right = dep
             graph_text = left
             if not at_initial_point:
-                # Reference left at the initial point.
-                graph_text += "[^]"
+                # Reference the initial left task.
+                left_points = (
+                    back_comp_initial_dep_points[(left, None, None)])
+                left_min_point = min(left_points)
+                if left_min_point == initial_point:
+                    graph_text += "[^]"
+                elif left_min_point != first_common_point:
+                    graph_text += "[%s]" % left_min_point
             if left_output:
                 graph_text += ":" + left_output
             if right:
