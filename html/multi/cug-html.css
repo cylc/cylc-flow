@@ -27,8 +27,6 @@
 .pcrr7t-x-x-80{font-size:80%;font-family: monospace;}
 .pcrr8c-x-x-80{font-size:80%; font-family: monospace;}
 .pcrr8c-x-x-80{ font-family: monospace;}
-.cmcsc-10x-x-144{font-size:144%;}
-.small-caps{font-variant: small-caps; }
 @media print {span.next {visibility:hidden;}}
 p.noindent { text-indent: 0em }
 td p.noindent { text-indent: 0em; margin-top:0em; }

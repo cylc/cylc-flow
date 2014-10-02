@@ -38,12 +38,11 @@
         </div> <!--pageHeader-->
 
         <div id="banner">
-            <p class="p1"><span>Cylc (<em>"silk"</em>) is a <b>suite engine</b>
-                or <b>workflow engine</b>, and <b>meta-scheduler</b>. For 
-                repeating workflows (date-time or integer based) cylc handles
-                inter-cycle dependence explicitly and can therefore interleave
-                tasks from many cycles, dependencies allowing, for efficient
-                scheduling. It can also be used for non-cycling suites.
+            <p class="p1"><span><b>The cylc suite engine</b> (<em>"silk"</em>) 
+                is a <b>workflow engine</b> and <b>meta-scheduler</b>. It
+                specialises in cycling (regularly repeating) workflows such as
+                those used in weather forecasting and climate modeling, but it
+                can also be used for non-cycling suites.
                 <b>Cylc is free software under the GNU GPL v3 license.</b>
             </span></p> 
 
@@ -58,7 +57,7 @@
             <div id="preamble">
 
                 <div class="warning">
-                    Latest Release: <a href="#download">6.0.1</a> (2014-10-02) <a href="changes.html">changes</a>
+                    Latest Release: <a href="#download">6.0.1</a> (2014-10-03) <a href="changes.html">changes</a>
                 </div>
 
                 <a id="overview"></a>
@@ -70,9 +69,16 @@
                     task runtime properties in an efficient inheritance hierarchy.
                 </span></p>
 
+                <p class="p3"><span>
+                    Cylc handles inter-cycle dependence explicitly and can
+                    therefore interleave tasks from multiple cycles for
+                    efficient scheduling.                
+                </span></p>
+
                 <p class="p1"><span>
-                    Cylc suites flow around delayed or failed tasks, dependencies allowing,
-                    and they adapt to insertion and removal of tasks at run time.
+                    Cylc suites flow around delayed or failed tasks,
+                    dependencies allowing, and they adapt to insertion and
+                    removal of tasks at run time.
                 </span></p>
 
                 <div id="screenshots">
