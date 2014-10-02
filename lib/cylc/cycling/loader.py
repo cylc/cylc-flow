@@ -112,3 +112,14 @@ def init_cyclers(cfg):
     if DefaultCycler.TYPE in Calendar.MODES:
         DefaultCycler.TYPE = ISO8601_CYCLING_TYPE
     INIT_FUNCTIONS[DefaultCycler.TYPE](cfg)
+
+
+def standardise_point_string(point_string, cycling_type=None):
+    """Return a standardised version of point_string."""
+    if point_string is None:
+        return None
+    point = get_point(point_string, cycling_type=cycling_type)
+    if point is not None:
+        point.standardise()
+        point_string = str(point)
+    return point_string

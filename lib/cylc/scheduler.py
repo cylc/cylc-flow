@@ -54,7 +54,7 @@ from exceptions import SchedulerStop, SchedulerError
 from wallclock import (
     now, get_current_time_string, get_seconds_as_interval_string)
 from cycling import PointParsingError
-from cycling.loader import get_point
+from cycling.loader import get_point, standardise_point_string
 import isodatetime.data
 import isodatetime.parsers
 
@@ -442,6 +442,7 @@ class scheduler(object):
 
     def command_release_task( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )
+        point_string = standardise_point_string(point_string)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [ TaskID.get(i, point_string) for i in matches ]
@@ -451,6 +452,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
+        point_string = standardise_point_string(point_string)
         task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.poll_tasks( task_ids )
 
@@ -458,6 +460,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
+        point_string = standardise_point_string(point_string)
         task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.kill_tasks( task_ids )
 
@@ -468,6 +471,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
+        point_string = standardise_point_string(point_string)
         task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.hold_tasks( task_ids )
 
@@ -476,7 +480,9 @@ class scheduler(object):
 
     def command_hold_after_point_string( self, point_string ):
         """TODO - not currently used, add to the cylc hold command"""
-        self.hold_suite( get_point(point_string) )
+        point = get_point(point_string)
+        point.standardise()
+        self.hold_suite( point )
         self.log.info(
             "The suite will pause when all tasks have passed " + point_string)
 
@@ -487,12 +493,15 @@ class scheduler(object):
         return True, 'OK'
 
     def command_remove_cycle( self, point_string, spawn ):
-        self.pool.remove_entire_cycle( get_point(point_string) ,spawn )
+        point = get_point(point_string)
+        point.standardise()
+        self.pool.remove_entire_cycle( point, spawn )
 
     def command_remove_task( self, name, point_string, is_family, spawn ):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
+        point_string = standardise_point_string(point_string)
         task_ids = [ TaskID.get(i, point_string) for i in matches ]
         self.pool.remove_tasks( task_ids, spawn )
 
