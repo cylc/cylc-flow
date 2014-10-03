@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [control] job-kill ST-FILE
 
-(This command is for internal use. User should use "cylc kill".) Read the job
+(This command is for internal use. Users should use "cylc kill".) Read the job
 status file to obtain the name of the job system and the job ID in the system.
 Invoke the relevant job system command to ask the job system to remove and
 terminate the job.

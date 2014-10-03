@@ -28,6 +28,9 @@ import cylc.TaskID
 class JobFile(object):
     """Write task job files."""
 
+    LINE_PREFIX_JOB_SYS = "# Job submit method: "
+    LINE_PREFIX_JOB_SYS_CMD_TMPL = "# Job submit command template: "
+
     # These are set by the scheduler object at start-up:
     suite_env = None       # static variables not be be changed below
     suite_task_env = None  # copy and change below
@@ -79,22 +82,16 @@ class JobFile(object):
 
     def _write_header(self, handle):
         """Write job script header."""
-        if not self.jobconfig['command template']:
-            command_template = ""
-        data = {
-            'shell': self.jobconfig['job script shell'],
-            'suite': self.suite,
-            'task_id': self.task_id,
-            'job_submit_method': self.job_submission_method,
-            'job_submit_command_template': command_template}
-        handle.write(
-            r"""#!%(shell)s
-#
-# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Suite: %(suite)s
-# Task: %(task_id)s
-# Job submit method: %(job_submit_method)s
-# Job submit command template: %(job_submit_command_template)s""" % data)
+        handle.write("#!" + self.jobconfig['job script shell'])
+        handle.write("\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
+        for prefix, value in [
+                ("# Suite: ", self.suite),
+                ("# Task: ", self.task_id),
+                (self.LINE_PREFIX_JOB_SYS, self.job_submission_method),
+                (self.LINE_PREFIX_JOB_SYS_CMD_TMPL,
+                 self.jobconfig['command template'])]:
+            if value:
+                handle.write("\n" + prefix + value)
 
     def _write_directives(self, handle):
         """Job directives."""

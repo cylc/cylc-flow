@@ -4,7 +4,6 @@
 # Suite: ##suitename##
 # Task: foo.1
 # Job submit method: background
-# Job submit command template: 
 
 echo "JOB SCRIPT STARTING"
 

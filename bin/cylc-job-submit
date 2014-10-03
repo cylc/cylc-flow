@@ -24,6 +24,7 @@ Submit a job file.
 
 
 from cylc.CylcOptionParsers import cop
+from cylc.job_submission.jobfile import JobFile
 from cylc.job_submission.job_submit import JobSubmit
 from cylc.mkdir_p import mkdir_p
 import os
@@ -31,6 +32,7 @@ import stat
 import sys
 
 
+LINE_UPDATE_CYLC_DIR = "# N.B. CYLC_DIR has been updated on the remote host\n"
 LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
 LINE_PREFIX_JOB_SYS = "# Job submit method: "
 LINE_PREFIX_JOB_SYS_CMD_TMPL = "# Job submit command template: "
@@ -68,14 +70,17 @@ def main():
                 sys.stdin.close()
                 break
             if line.strip().startswith(LINE_PREFIX_CYLC_DIR):
+                old_line = line
                 line = (
                     line[0:line.find(LINE_PREFIX_CYLC_DIR)] +
                     LINE_PREFIX_CYLC_DIR + "'%s'\n" % os.environ["CYLC_DIR"])
-            elif line.startswith(LINE_PREFIX_JOB_SYS):
-                job_sys = line.replace(LINE_PREFIX_JOB_SYS, "").strip()
-            elif line.startswith(LINE_PREFIX_JOB_SYS_CMD_TMPL):
+                if old_line != line:
+                    job_file.write(LINE_UPDATE_CYLC_DIR)
+            elif line.startswith(JobFile.LINE_PREFIX_JOB_SYS):
+                job_sys = line.replace(JobFile.LINE_PREFIX_JOB_SYS, "").strip()
+            elif line.startswith(JobFile.LINE_PREFIX_JOB_SYS_CMD_TMPL):
                 job_sys_cmd_tmpl = line.replace(
-                    LINE_PREFIX_JOB_SYS_CMD_TMPL, "").strip()
+                    JobFile.LINE_PREFIX_JOB_SYS_CMD_TMPL, "").strip()
             job_file.write(line)
         job_file.close()
         os.rename(job_file_path + ".tmp", job_file_path)
@@ -84,11 +89,11 @@ def main():
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
     else:  # local mode
         for line in open(job_file_path):
-            if line.startswith(LINE_PREFIX_JOB_SYS):
-                job_sys = line.replace(LINE_PREFIX_JOB_SYS, "").strip()
-            elif line.startswith(LINE_PREFIX_JOB_SYS_CMD_TMPL):
+            if line.startswith(JobFile.LINE_PREFIX_JOB_SYS):
+                job_sys = line.replace(JobFile.LINE_PREFIX_JOB_SYS, "").strip()
+            elif line.startswith(JobFile.LINE_PREFIX_JOB_SYS_CMD_TMPL):
                 job_sys_cmd_tmpl = line.replace(
-                    LINE_PREFIX_JOB_SYS_CMD_TMPL, "").strip()
+                    JobFile.LINE_PREFIX_JOB_SYS_CMD_TMPL, "").strip()
 
     # Create NN symbolic link, if necessary
     submit_num_str = os.path.basename(job_file_dir)
