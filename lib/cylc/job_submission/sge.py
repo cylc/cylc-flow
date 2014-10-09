@@ -71,16 +71,4 @@ class sge( JobSubmit ):
 
     def poll( self, jid ):
         """Return 0 if jid is in the queueing system, 1 otherwise."""
-        proc = Popen(["qstat", "-j", jid], stdout=PIPE)
-        if proc.wait():
-            return 1
-        out, err = proc.communicate()
-        # "qstat ID" returns something like:
-        #     job-ID  prior ...
-        #     ------------- ...
-        #      304 0.60500  ...
-        for line in out.splitlines():
-            items = line.strip().split(None, 1)
-            if items and (items[0] == jid or items[0].startswith(jid + ".")):
-                return 0
-        return 1
+        check_call(["qstat", "-j", jid])
