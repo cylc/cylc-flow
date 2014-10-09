@@ -140,7 +140,6 @@ class remrun(object):
                 TextWrapper(subsequent_indent='\t').wrap(command_str))
 
         try:
-            print command
             popen = subprocess.Popen(command)
         except OSError, exc:
             sys.exit("ERROR: remote command invocation failed %s" % str(exc))
