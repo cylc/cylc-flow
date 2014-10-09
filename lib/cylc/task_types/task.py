@@ -467,8 +467,6 @@ class task( object ):
             msg = ('ignoring job kill result, unexpected task state: %s'
                     % self.state.get_status())
             self.log(WARNING, msg)
-            with open(file_err, 'a') as f:
-                f.write("WARNING:" + msg)
  
     def event_handler_callback(self, result):
         out   = result['OUT']
