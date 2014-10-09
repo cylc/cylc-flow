@@ -141,7 +141,7 @@ class remrun(object):
 
         try:
             popen = subprocess.Popen(command)
-        except OSError, exc:
+        except OSError as exc:
             sys.exit("ERROR: remote command invocation failed %s" % str(exc))
 
         res = popen.wait()

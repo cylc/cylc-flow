@@ -21,7 +21,6 @@ import Queue
 import os
 import re
 import time
-import datetime
 import subprocess
 from copy import copy
 from random import randrange
@@ -52,23 +51,6 @@ from cylc.mp_pool import (
 )
 import shlex
 import traceback
-
-
-cylc_mode = 'scheduler'
-poll_suffix_re = re.compile(
-    ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
-
-
-def displaytd(td):
-    # Display a python timedelta sensibly.
-    # Default for str(td) of -5 sec is '-1 day, 23:59:55' !
-    d, s, m = td.days, td.seconds, td.microseconds
-    secs = d * 24 * 3600 + s + m / 10**6
-    if secs < 0:
-        res = '-' + str(datetime.timedelta(0, - secs, 0))
-    else:
-        res = str(td)
-    return res
 
 
 class PollTimer(object):
@@ -126,6 +108,11 @@ class task(object):
     #  3) EXECUTION TRY NUMBER increments only when task execution fails,
     # if execution retries are configured; and is passed to task
     # environments to allow changed behaviour after previous failures.
+
+    POLL_SUFFIX_RE = re.compile(
+        ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
+
+    single_task_mode = False
 
     intercycle = False
     is_clock_triggered = False
@@ -191,7 +178,7 @@ class task(object):
             owner, host = None, user_at_host
         if ((owner, host) in [(None, 'localhost'), (user, 'localhost')] or
                 host in cls._INIT_SUITE_HOSTS or
-                cylc_mode != 'scheduler'):
+                cls.single_task_mode):
             return
 
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
@@ -233,7 +220,6 @@ class task(object):
     def __init__(self, state, validate=False):
         # Call this AFTER derived class initialisation
 
-        class_vars = {}
         self.state = task_state.task_state(state)
         self.manual_trigger = False
 
@@ -340,13 +326,18 @@ class task(object):
                         submit_method=None, submit_method_id=None,
                         status=None):
         call = cylc.rundb.RecordStateObject(
-            name, str(cycle),
+            name,
+            str(cycle),
             time_created_string=time_created_string,
             time_updated_string=time_updated_string,
             submit_num=submit_num,
-            is_manual_submit=is_manual_submit, try_num=try_num,
-            host=host, submit_method=submit_method,
-            submit_method_id=submit_method_id, status=status)
+            is_manual_submit=is_manual_submit,
+            try_num=try_num,
+            host=host,
+            submit_method=submit_method,
+            submit_method_id=submit_method_id,
+            status=status
+        )
         self.db_queue.append(call)
         self.db_items = True
 
@@ -535,6 +526,7 @@ class task(object):
         if db_update:
             self.record_db_event(event=db_event, message=db_msg)
 
+        rtconfig = self.__class__.rtconfig
         if (self.__class__.run_mode != 'live' or
                 (self.__class__.run_mode == 'simulation' and
                     rtconfig['simulation mode']['disable task event hooks']) or
@@ -681,7 +673,7 @@ class task(object):
         self.retry_delay_timer_timeout = None
         self.sub_retry_delay_timer_timeout = None
 
-    def set_from_rtconfig(self, cfg={}):
+    def set_from_rtconfig(self, cfg=None):
         """Some [runtime] config requiring consistency checking on reload,
         and self variables requiring updating for the same."""
         # this is first called from class init (see taskdef.py)
@@ -720,18 +712,11 @@ class task(object):
             self.sub_retry_delays = copy(self.sub_retry_delays_orig)
 
         rrange = rtconfig['simulation mode']['run time range']
-        ok = True
         if len(rrange) != 2:
-            ok = False
-        try:
-            res = [rrange[0], rrange[1]]
-        except:
-            ok = False
-        if not ok:
             raise Exception("ERROR, " + self.name + ": simulation mode " +
                             "run time range should be ISO 8601-compatible")
         try:
-            self.sim_mode_run_length = randrange(res[0], res[1])
+            self.sim_mode_run_length = randrange(rrange[0], rrange[1])
         except Exception, exc:
             traceback.print_exc(exc)
             raise Exception(
@@ -991,7 +976,6 @@ class task(object):
             job_sub_method = job_sub_method_cls(
                 self.id, self.suite_name, jobconfig)
         except Exception, exc:
-            raise
             # currently a bad hostname will fail out here due to an
             # is_remote_host() test
             raise Exception('Failed to create job_sub_method\n  ' + str(exc))
@@ -1147,7 +1131,7 @@ class task(object):
 
         # remove the remote event time (or "unknown-time" from polling) from
         # the end:
-        message = poll_suffix_re.sub('', message)
+        message = self.POLL_SUFFIX_RE.sub('', message)
 
         # Remove the prepended task ID.
         content = message.replace(self.id + ' ', '')
@@ -1249,7 +1233,6 @@ class task(object):
             self.summary['started_time_string'] = None
             self.sub_try_number = 0
             self.sub_retry_delays = copy(self.sub_retry_delays_orig)
-            self.execution_poll_timer.timer_start = None
             self.job_vacated = True
 
         else:
