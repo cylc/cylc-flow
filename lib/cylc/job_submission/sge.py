@@ -71,4 +71,4 @@ class sge( JobSubmit ):
 
     def poll( self, jid ):
         """Return 0 if jid is in the queueing system, 1 otherwise."""
-        check_call(["qstat", "-j", jid])
+        check_call(["qstat", "-j", jid], stdout=PIPE)
