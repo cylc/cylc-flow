@@ -81,6 +81,8 @@ class pool(object):
         self.pool_changed = []
         self.rhpool_changed = []
 
+        self._held = False
+
         self.held_future_tasks = []
 
         self.wireless = broadcast(config.get_linearized_ancestors())
@@ -119,6 +121,7 @@ class pool(object):
             return False
 
         # add in held state if beyond the suite stop point
+
         if self.stop_point and itask.point > self.stop_point:
             itask.log(INFO, "holding (beyond suite stop point) " + str(self.stop_point))
             itask.reset_state_held()
@@ -134,6 +137,8 @@ class pool(object):
         elif self.task_has_future_trigger_overrun(itask):
             itask.log(INFO, "holding (future trigger beyond stop point)")
             self.held_future_tasks.append(itask.id)
+            itask.reset_state_held()
+        elif self._held:
             itask.reset_state_held()
 
         # add to the runahead pool
@@ -625,11 +630,13 @@ class pool(object):
 
     def hold_all_tasks(self):
         self.log.info("Holding all waiting or queued tasks now")
+        self._held = True
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                 itask.reset_state_held()
 
     def release_all_tasks(self):
+        self._held = False
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
                 if self.stop_point and itask.point > self.stop_point:
