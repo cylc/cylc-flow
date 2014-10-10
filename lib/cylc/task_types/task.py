@@ -527,12 +527,7 @@ class task(object):
         if db_update:
             self.record_db_event(event=db_event, message=db_msg)
 
-        rtconfig = self.__class__.rtconfig
-        if (self.__class__.run_mode != 'live' or
-                (self.__class__.run_mode == 'simulation' and
-                    rtconfig['simulation mode']['disable task event hooks']) or
-                (self.__class__.run_mode == 'dummy' and
-                    rtconfig['dummy mode']['disable task event hooks'])):
+        if self.__class__.run_mode != 'live':
             return
 
         handlers = self.event_hooks[event + ' handler']
