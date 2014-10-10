@@ -39,7 +39,7 @@ from cylc.gui.DotMaker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.owner import user
 from cylc.registration import localdb
-from cylc.version import cylc_version
+from cylc.version import CYLC_VERSION
 
 
 PYRO_TIMEOUT = 2
@@ -259,7 +259,7 @@ def launch_about_dialog(program_name, hosts):
     else:
         comments_text = program_name + "\n" + hosts_text
 
-    about.set_version(cylc_version)
+    about.set_version(CYLC_VERSION)
     about.set_copyright("Copyright (C) 2008-2014 Hilary Oliver, NIWA")
     about.set_comments(comments_text)
     about.set_icon(get_icon())
