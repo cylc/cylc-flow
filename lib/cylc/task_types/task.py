@@ -72,7 +72,8 @@ class PollTimer(object):
                 self.log(
                     WARNING,
                     '(polling comms) using default %s polling intervals' %
-                    self.name)
+                    self.name
+                )
             if set_timer:
                 self.set_timer()
 
