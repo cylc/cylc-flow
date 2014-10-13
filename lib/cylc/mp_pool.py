@@ -35,6 +35,7 @@ from pipes import quote
 from subprocess import Popen, PIPE
 import multiprocessing
 
+from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 
@@ -86,10 +87,17 @@ def _run_command(
         # 2. The process should then continue in background.
         if is_bg_submit:  # behave like background job submit?
             # Capture just the echoed PID then move on.
+            # N.B. Some hosts print garbage to STDOUT when going through a
+            # login shell, so we want to try a few lines
             cmd_result['EXIT'] = 0
-            cmd_result['OUT'] = proc.stdout.readline().rstrip()
+            cmd_result['OUT'] = ""
+            for _ in range(10):  # Try 10 lines
+                line = proc.stdout.readline()
+                cmd_result['OUT'] += line
+                if line.startswith(BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID):
+                    break
             # Check if submission is OK or not
-            if not cmd_result['OUT']:
+            if not cmd_result['OUT'].rstrip():
                 ret_code = proc.poll()
                 if ret_code is not None:
                     cmd_result['OUT'], cmd_result['ERR'] = proc.communicate()

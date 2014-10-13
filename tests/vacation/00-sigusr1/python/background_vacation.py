@@ -17,10 +17,10 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from cylc.job_submission.background import background
+from cylc.batch_sys_handlers.background import BgCommandHandler
 
 
-class background_vacation(background):
+class MyBgCommandHandler(BgCommandHandler):
 
     """Job submission class for use by test battery.
 
@@ -28,6 +28,10 @@ class background_vacation(background):
 
     """
 
-    def set_job_vacation_signal( self ):
-        """Set self.jobconfig['job vacation signal'] = 'USR1'"""
-        self.jobconfig['job vacation signal'] = 'USR1'
+    VACATION_SIGNAL = "USR1"
+
+    def get_vacation_signal(self, _):
+        return self.VACATION_SIGNAL
+
+
+BATCH_SYS_HANDLER = MyBgCommandHandler()

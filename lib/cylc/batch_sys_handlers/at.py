@@ -15,15 +15,15 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Implement "at now" job submission."""
+"""Logic to submit jobs to the "at" batch system."""
 
-from cylc.job_submission.job_submit import JobSubmit
 import re
 from subprocess import Popen, PIPE
 
 
-class at(JobSubmit):
-    """
+class AtCommandHandler(object):
+    """Logic to submit jobs to the "at" batch system.
+
     Submit the task job script to the simple 'at' scheduler. Note that
     (1) the 'atd' daemon service must be running; (2) the atq command
     does not report if the job is running or not.
@@ -36,16 +36,18 @@ class at(JobSubmit):
            command template = 'echo "%s 1>%s 2>%s" | at now + 2 minutes'
     """
 
+    CAN_KILL_PROC_GROUP = True
     # N.B. The perl command ensures that the job script is executed in its own
     # process group, which allows the job script and its child processes to be
     # killed correctly.
-    COMMAND_TEMPLATE = (
-        "echo \"perl -e 'setpgrp(0,0);exec(@ARGV)'" +
-        " '%(job)s' 1>'%(job)s.out' 2>'%(job)s.err'\" | at now")
+    KILL_CMD = "atrm"
+    POLL_CMD = "atq"
     REC_ERR_FILTERS = [
         re.compile("warning: commands will be executed using /bin/sh")]
-    EXEC_KILL = "atrm"
-    REC_ID_FROM_ERR = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
+    REC_ID_FROM_SUBMIT_ERR = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
+    _CMD_TMPL = (
+        r"exec perl -e 'setpgrp(0,0);exec(@ARGV)'" +
+        r" '%(job)s' 1>'%(job)s.out' 2>'%(job)s.err'")
 
     # atq properties:
     #   * stdout is "job-num date hour queue username", e.g.:
@@ -53,7 +55,7 @@ class at(JobSubmit):
     #   * queue is '=' if running
     #
 
-    def filter_output(self, out, err):
+    def filter_submit_output(self, out, err):
         """Suppress at's routine output to stderr.
 
         Otherwises we get warning messages that suggest something is wrong.
@@ -65,51 +67,35 @@ class at(JobSubmit):
 
         """
 
-        if out is not None:
-            out_lines = out.split()
-        else:
-            out_lines = []
         new_err = ""
-        new_out = ""
         if err:
-            for line in err.splitlines():
-                if self.REC_ID_FROM_ERR.match(line):
-                    out_lines.append(line)
+            for line in err.splitlines(True):
+                if self.REC_ID_FROM_SUBMIT_ERR.match(line):
+                    out += line
                 elif any([rec.match(line) for rec in self.REC_ERR_FILTERS]):
                     continue
                 else:
-                    new_err += line + "\n"
-        new_out = "\n".join(out_lines)
-        return new_out, new_err
-
-    def kill(self, st_file):
-        """Kill the job."""
-        if self.kill_proc_group(st_file):  # return 1
-            JobSubmit.kill(self, st_file)
+                    new_err += line
+        return out, new_err
 
     @classmethod
-    def poll(cls, jid):
-        """Return True if jid is in the queueing system."""
-        proc = Popen(["atq"], stdout=PIPE)
-        if proc.wait():
-            return 1
-        out = proc.communicate()[0]
+    def filter_poll_output(cls, out, job_id):
+        """Return True if job_id is in the queueing system."""
         # "atq" returns something like this:
         #     5347	2013-11-22 10:24 a daisy
         #     499	2013-12-22 16:26 a daisy
         # "jid" is in queue if it matches column 1 of a row.
         for line in out.splitlines():
             items = line.strip().split(None, 1)
-            if items and items[0] == jid:
+            if items and items[0] == job_id:
                 return True
         return False
 
-    def submit(self, job_file_path, command_template=None):
-        """Construct a command to submit this job to run."""
+    def submit(self, job_file_path):
+        """Run the "job_file_path" with "at now"."""
+        proc = Popen(["at", "now"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        proc.stdin.write(self._CMD_TMPL % {"job": job_file_path})
+        return proc
 
-        if not command_template:
-            command_template = self.COMMAND_TEMPLATE
-        command = command_template % {"job": job_file_path}
-        proc = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-        out, err = proc.communicate()
-        return (proc.wait(), out, err)
+
+BATCH_SYS_HANDLER = AtCommandHandler()

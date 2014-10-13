@@ -20,6 +20,7 @@
 import Queue
 import os
 import re
+import socket
 import time
 import subprocess
 from copy import copy
@@ -29,6 +30,7 @@ from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 
 from cylc import task_state
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.envvar import expandvars
 from cylc.owner import user
 from cylc.job_logs import CommandLogger
 import cylc.rundb
@@ -41,7 +43,10 @@ from cylc.wallclock import (
 )
 from cylc.task_receiver import msgqueue
 from cylc.host_select import get_task_host
-from cylc.job_submission.job_submit import JobSubmit
+from cylc.job_file import JOB_FILE
+from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+from cylc.owner import is_remote_user
+from cylc.suite_host import is_remote_host
 from parsec.util import pdeepcopy, poverride
 from cylc.mp_pool import (
     CMD_TYPE_EVENT_HANDLER,
@@ -221,6 +226,7 @@ class task(object):
     def __init__(self, state, validate=False):
         # Call this AFTER derived class initialisation
 
+        self.job_conf = None
         self.state = task_state.task_state(state)
         self.manual_trigger = False
 
@@ -258,6 +264,9 @@ class task(object):
         self.sub_retry = None
         self.sub_retry_delay_timer_timeout = None
 
+        self.namespace_hierarchy = ''
+        self.is_coldstart = False
+
         self.message_queue = msgqueue()
         self.db_queue = []
         self.db_items = False
@@ -275,8 +284,7 @@ class task(object):
         self.user_at_host = self.task_host
 
         self.submit_method_id = None
-        self.job_sub_method_name = None
-        self.job_sub_method = None
+        self.batch_sys_name = None
         self.job_vacated = False
 
         self.submission_poll_timer = None
@@ -453,23 +461,21 @@ class task(object):
         self.set_status('queued')
 
     def job_submission_callback(self, result):
-        out, err = result['OUT'], result['ERR']
-        status = result['EXIT']
-        # Get filtered output for logging purposes.
-        f_out, f_err = self.job_sub_method.filter_output(
-            result['OUT'], result['ERR'])
-        self.command_log("SUBMIT", f_out, f_err)
-        if status != 0:
-            if status == JOB_SKIPPED_FLAG:
+        out = ""
+        for line in result['OUT'].splitlines(True):
+            if line.startswith(BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "="):
+                self.submit_method_id = line.strip().replace(
+                    BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "=", "")
+            else:
+                out += line
+        self.command_log("SUBMIT", out, result['ERR'])
+        if result['EXIT'] != 0:
+            if result['EXIT'] == JOB_SKIPPED_FLAG:
                 pass
             else:
                 self.job_submission_failed()
             return
-        try:
-            self.submit_method_id = self.job_sub_method.get_id(out, err)
-        except NotImplementedError:
-            pass
-        else:
+        if self.submit_method_id:
             self.log(INFO, 'submit_method_id=' + self.submit_method_id)
             self.record_db_update(
                 "task_states", self.name, str(self.point),
@@ -509,7 +515,7 @@ class task(object):
             msg = ('ignoring job kill result, unexpected task state: %s'
                    % self.state.get_status())
             self.log(WARNING, msg)
- 
+
     def event_handler_callback(self, result):
         out = result['OUT']
         err = result['ERR']
@@ -748,6 +754,7 @@ class task(object):
         # Prepare the job submit command
         try:
             self._prepare_submit(overrides=overrides)
+            JOB_FILE.write(self.job_conf)
         except Exception, exc:
             # Could be a bad command template.
             if flags.debug:
@@ -758,16 +765,16 @@ class task(object):
             return
 
         if dry_run:
-            print "JOB SCRIPT=" + self.job_sub_method.local_jobfile_path
+            print "JOB SCRIPT=" + self.job_conf['local job file path']
             return
 
         return self._run_job_command(
             CMD_TYPE_JOB_SUBMISSION,
             "job-submit",
-            args=[self.job_sub_method.jobfile_path],
+            args=[self.job_conf['job file path']],
             callback=self.job_submission_callback,
-            is_bg_submit=self.job_sub_method.IS_BG_SUBMIT,
-            stdin_file_path=self.job_sub_method.local_jobfile_path)
+            is_bg_submit=BATCH_SYS_MANAGER.is_bg_submit(self.batch_sys_name),
+            stdin_file_path=self.job_conf['local job file path'])
 
     def _prepare_submit(self, overrides=None):
         """Get the job submission command.
@@ -802,15 +809,7 @@ class task(object):
         # get new stdout/stderr logfiles and not overwrite the old ones.
 
         # dynamic instantiation - don't know job sub method till run time.
-        self.job_sub_method_name = rtconfig['job submission']['method']
-        try:
-            job_sub_method_cls = JobSubmit.get_class(self.job_sub_method_name)
-        except ImportError:
-            self.log(
-                ERROR,
-                'cannot import job submission module ' +
-                self.job_sub_method_name)
-            raise
+        self.batch_sys_name = rtconfig['job submission']['method']
 
         command = rtconfig['command scripting']
         use_manual = rtconfig['manual completion']
@@ -871,79 +870,47 @@ class task(object):
 
         self.record_db_update(
             "task_states", self.name, str(self.point),
-            submit_method=self.job_sub_method_name, host=self.user_at_host
+            submit_method=self.batch_sys_name, host=self.user_at_host
         )
-        jobconfig = {
-            'directives': rtconfig['directives'],
-            'initial scripting': rtconfig['initial scripting'],
-            'environment scripting': rtconfig['environment scripting'],
-            'runtime environment': rtconfig['environment'],
-            'remote suite path': (
-                rtconfig['remote']['suite definition directory']),
-            'job script shell': rtconfig['job submission']['shell'],
-            'command template': rtconfig['job submission']['command template'],
-            'work sub-directory': rtconfig['work sub-directory'],
+        self._populate_job_conf(
+            rtconfig, local_jobfile_path, common_job_log_path)
+        self.job_conf.update({
             'use manual completion': use_manual,
             'pre-command scripting': precommand,
             'command scripting': command,
             'post-command scripting': postcommand,
-            'namespace hierarchy': self.namespace_hierarchy,
-            'submission try number': self.sub_try_number,
-            'try number': self.try_number,
-            'absolute submit number': self.submit_num,
-            'is cold-start': self.is_coldstart,
-            'task owner': self.task_owner,
-            'task host': self.task_host,
-            'log files': self.logfiles,
-            'local job file path': local_jobfile_path,
-            'common job log path': common_job_log_path
-        }
+        })
 
-        self.job_sub_method = job_sub_method_cls(
-            self.id, self.suite_name, jobconfig)
-
-        self.job_sub_method.write_jobscript()
-        return
-
-    def _presubmit(self):
+    def _prepare_manip(self):
         """A cut down version of prepare_submit().
 
         This provides access to job poll commands before the task is submitted,
         for polling in the submitted state or on suite restart.
 
         """
-        if self.job_sub_method:
-            return self.job_sub_method
-
         if self.user_at_host:
             if "@" in self.user_at_host:
                 self.task_owner, self.task_host = (
                     self.user_at_host.split('@', 1))
             else:
                 self.task_host = self.user_at_host
-        # TODO - refactor to get easier access to polling commands!
-
-        rtconfig = pdeepcopy(self.__class__.rtconfig)
-
         local_job_log_dir, common_job_log_path = (
             CommandLogger.get_create_job_log_path(
                 self.suite_name, self.name, self.point, self.submit_num))
         local_jobfile_path = os.path.join(
             local_job_log_dir, common_job_log_path)
+        rtconfig = pdeepcopy(self.__class__.rtconfig)
+        self._populate_job_conf(
+            rtconfig, local_jobfile_path, common_job_log_path)
 
-        # dynamic instantiation - don't know job sub method till run time.
-        self.job_sub_method_name = rtconfig['job submission']['method']
-
-        try:
-            job_sub_method_cls = JobSubmit.get_class(self.job_sub_method_name)
-        except ImportError:
-            self.log(
-                ERROR,
-                'cannot import job submission module ' +
-                self.job_sub_method_name)
-            raise
-
-        jobconfig = {
+    def _populate_job_conf(
+            self, rtconfig, local_jobfile_path, common_job_log_path):
+        """Populate the configuration for submitting or manipulating a job."""
+        self.batch_sys_name = rtconfig['job submission']['method']
+        self.job_conf = {
+            'suite name': self.suite_name,
+            'task id': self.id,
+            'batch system name': rtconfig['job submission']['method'],
             'directives': rtconfig['directives'],
             'initial scripting': rtconfig['initial scripting'],
             'environment scripting': rtconfig['environment scripting'],
@@ -951,31 +918,63 @@ class task(object):
             'remote suite path': (
                 rtconfig['remote']['suite definition directory']),
             'job script shell': rtconfig['job submission']['shell'],
-            'command template': rtconfig['job submission']['command template'],
+            'batch submit command template': (
+                rtconfig['job submission']['command template']),
             'work sub-directory': rtconfig['work sub-directory'],
             'use manual completion': False,
             'pre-command scripting': '',
             'command scripting': '',
             'post-command scripting': '',
-            'namespace hierarchy': '',
-            'submission try number': 1,
-            'try number': 1,
+            'namespace hierarchy': self.namespace_hierarchy,
+            'submission try number': self.sub_try_number,
+            'try number': self.try_number,
             'absolute submit number': self.submit_num,
-            'is cold-start': False,
-            'task owner': self.task_owner,
-            'task host': self.task_host,
+            'is cold-start': self.is_coldstart,
+            'owner': self.task_owner,
+            'host': self.task_host,
             'log files': self.logfiles,
+            'common job log path': common_job_log_path,
             'local job file path': local_jobfile_path,
-            'common job log path': common_job_log_path
+            'job file path': local_jobfile_path,
         }
-        try:
-            job_sub_method = job_sub_method_cls(
-                self.id, self.suite_name, jobconfig)
-        except Exception, exc:
-            # currently a bad hostname will fail out here due to an
-            # is_remote_host() test
-            raise Exception('Failed to create job_sub_method\n  ' + str(exc))
-        return job_sub_method
+
+        logfiles = self.job_conf['log files']
+        logfiles.add_path(local_jobfile_path)
+
+        if not self.job_conf['host']:
+            self.job_conf['host'] = socket.gethostname()
+
+        if (is_remote_host(self.job_conf['host']) or
+                is_remote_user(self.job_conf['owner'])):
+            remote_job_log_dir = GLOBAL_CFG.get_derived_host_item(
+                self.suite_name,
+                'suite job log directory',
+                self.task_host,
+                self.task_owner)
+
+            remote_path = os.path.join(
+                remote_job_log_dir, self.job_conf['common job log path'])
+
+            # Used in command construction:
+            self.job_conf['job file path'] = remote_path
+
+            # Record paths of remote log files for access by gui
+            # N.B. Need to consider remote log files in shared file system
+            #      accessible from the suite daemon, mounted under the same
+            #      path or otherwise.
+            prefix = self.job_conf['host'] + ':' + remote_path
+            if self.job_conf['owner']:
+                prefix = self.job_conf['owner'] + "@" + prefix
+            logfiles.add_path(prefix + '.out')
+            logfiles.add_path(prefix + '.err')
+        else:
+            # interpolate environment variables in extra logs
+            for idx in range(len(logfiles.paths)):
+                logfiles.paths[idx] = expandvars(logfiles.paths[idx])
+
+            # Record paths of local log files for access by gui
+            logfiles.add_path(self.job_conf['job file path'] + '.out')
+            logfiles.add_path(self.job_conf['job file path'] + '.err')
 
     def check_timers(self):
         # not called in simulation mode
@@ -1364,13 +1363,14 @@ class task(object):
             return
 
         # Ensure settings are ready for manipulation on suite restart, etc
-        job_sub_method = self._presubmit()
+        if self.job_conf is None:
+            self._prepare_manip()
 
         # Invoke the manipulation
         return self._run_job_command(
             CMD_TYPE_JOB_POLL_KILL,
             cmd_key,
-            args=[job_sub_method.jobfile_path + ".status"],
+            args=[self.job_conf["job file path"] + ".status"],
             callback=callback)
 
     def _run_job_command(
