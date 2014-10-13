@@ -5,11 +5,11 @@
 
 [scheduling]
     [[dependencies]]
-        graph = "foo"
+        graph = foo
 
 [runtime]
     [[foo]]
-        command scripting = "true" # quick
+        command scripting = true # quick
         [[[job submission]]]
             # use python/my_background.py:my_background
             method = my_background

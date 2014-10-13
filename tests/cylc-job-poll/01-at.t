@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc get-job-status, "at" jobs
+# Test cylc job-poll, "at" jobs
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 12
@@ -36,21 +36,27 @@ function get_real_job_id() {
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-null
 # A non-existent status file
-T_ST_FILE=$PWD/$TEST_NAME.1.status
+T_ST_FILE="${PWD}/1/${TEST_NAME}/01/job.status"
+mkdir -p "${PWD}/1/${TEST_NAME}/01"
 T_JOB_ID=$(get_fake_job_id)
-run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE at $T_JOB_ID
+run_ok $TEST_NAME cylc job-poll "${T_ST_FILE}"
 cmp_ok $TEST_NAME.stdout <<__OUT__
-polled $TEST_NAME submission failed
+polled ${TEST_NAME}.1 submission failed
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-submitted
 # A non-existent status file
-T_ST_FILE=$PWD/$TEST_NAME.1.status
-# Give it a real PID
+T_ST_FILE="${PWD}/1/${TEST_NAME}/01/job.status"
+mkdir -p "${PWD}/1/${TEST_NAME}/01"
 T_JOB_ID=$(get_real_job_id)
-run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE at $T_JOB_ID
+cat >"${T_ST_FILE}" <<__STATUS__
+CYLC_JOB_SUBMIT_METHOD=at
+CYLC_JOB_SUBMIT_METHOD_ID=${T_JOB_ID}
+__STATUS__
+# Give it a real PID
+run_ok $TEST_NAME cylc job-poll "${T_ST_FILE}"
 cmp_ok $TEST_NAME.stdout <<__OUT__
-polled $TEST_NAME submitted
+polled ${TEST_NAME}.1 submitted
 __OUT__
 atrm $T_JOB_ID 2>/dev/null
 #-------------------------------------------------------------------------------
@@ -58,65 +64,77 @@ TEST_NAME=$TEST_NAME_BASE-started
 # Give it a real PID
 T_JOB_ID=$(get_real_job_id)
 # Status file
-T_ST_FILE=$PWD/$TEST_NAME.1.status
+T_ST_FILE="${PWD}/1/${TEST_NAME}/01/job.status"
+mkdir -p "${PWD}/1/${TEST_NAME}/01"
 T_INIT_TIME=$(date +%FT%H:%M:%S)
-cat >$T_ST_FILE <<__STATUS__
+cat >"${T_ST_FILE}" <<__STATUS__
+CYLC_JOB_SUBMIT_METHOD=at
+CYLC_JOB_SUBMIT_METHOD_ID=${T_JOB_ID}
 CYLC_JOB_PID=$T_JOB_ID
 CYLC_JOB_INIT_TIME=$T_INIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE at $T_JOB_ID
+run_ok $TEST_NAME cylc job-poll "${T_ST_FILE}"
 cmp_ok $TEST_NAME.stdout <<__OUT__
-polled $TEST_NAME started at $T_INIT_TIME
+polled ${TEST_NAME}.1 started at $T_INIT_TIME
 __OUT__
 atrm $T_JOB_ID 2>/dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-succeeded
 T_JOB_ID=$(get_fake_job_id)
 # Status file
-T_ST_FILE=$PWD/$TEST_NAME.1.status
+T_ST_FILE="${PWD}/1/${TEST_NAME}/01/job.status"
+mkdir -p "${PWD}/1/${TEST_NAME}/01"
 T_INIT_TIME=$(date +%FT%H:%M:%S)
 T_EXIT_TIME=$(date +%FT%H:%M:%S)
-cat >$T_ST_FILE <<__STATUS__
+cat >"${T_ST_FILE}" <<__STATUS__
+CYLC_JOB_SUBMIT_METHOD=at
+CYLC_JOB_SUBMIT_METHOD_ID=${T_JOB_ID}
 CYLC_JOB_PID=$T_JOB_ID
 CYLC_JOB_INIT_TIME=$T_INIT_TIME
 CYLC_JOB_EXIT=SUCCEEDED
 CYLC_JOB_EXIT_TIME=$T_EXIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE at $T_JOB_ID
+run_ok $TEST_NAME cylc job-poll "${T_ST_FILE}"
 cmp_ok $TEST_NAME.stdout <<__OUT__
-polled $TEST_NAME succeeded at $T_EXIT_TIME
+polled ${TEST_NAME}.1 succeeded at $T_EXIT_TIME
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-failed
 T_JOB_ID=$(get_fake_job_id)
 # Status file
-T_ST_FILE=$PWD/$TEST_NAME.1.status
+T_ST_FILE="${PWD}/1/${TEST_NAME}/01/job.status"
+mkdir -p "${PWD}/1/${TEST_NAME}/01"
 T_INIT_TIME=$(date +%FT%H:%M:%S)
 T_EXIT_TIME=$(date +%FT%H:%M:%S)
-cat >$T_ST_FILE <<__STATUS__
+cat >"${T_ST_FILE}" <<__STATUS__
+CYLC_JOB_SUBMIT_METHOD=at
+CYLC_JOB_SUBMIT_METHOD_ID=${T_JOB_ID}
 CYLC_JOB_PID=$T_JOB_ID
 CYLC_JOB_INIT_TIME=$T_INIT_TIME
 CYLC_JOB_EXIT=ERR
 CYLC_JOB_EXIT_TIME=$T_EXIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE at $T_JOB_ID
+run_ok $TEST_NAME cylc job-poll "${T_ST_FILE}"
 cmp_ok $TEST_NAME.stdout <<__OUT__
-polled $TEST_NAME failed at $T_EXIT_TIME
+polled ${TEST_NAME}.1 failed at $T_EXIT_TIME
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-failed-bad
 T_JOB_ID=$(get_fake_job_id)
 # Status file
-T_ST_FILE=$PWD/$TEST_NAME.1.status
+T_ST_FILE="${PWD}/1/${TEST_NAME}/01/job.status"
+mkdir -p "${PWD}/1/${TEST_NAME}/01"
 T_INIT_TIME=$(date +%FT%H:%M:%S)
 T_EXIT_TIME=$(date +%FT%H:%M:%S)
-cat >$T_ST_FILE <<__STATUS__
+cat >"${T_ST_FILE}" <<__STATUS__
+CYLC_JOB_SUBMIT_METHOD=at
+CYLC_JOB_SUBMIT_METHOD_ID=${T_JOB_ID}
 CYLC_JOB_PID=$T_JOB_ID
 CYLC_JOB_INIT_TIME=$T_INIT_TIME
 __STATUS__
-run_ok $TEST_NAME cylc get-job-status $TEST_NAME $T_ST_FILE at $T_JOB_ID
+run_ok $TEST_NAME cylc job-poll "${T_ST_FILE}"
 cmp_ok $TEST_NAME.stdout <<__OUT__
-polled $TEST_NAME failed at unknown-time
+polled ${TEST_NAME}.1 failed at unknown-time
 __OUT__
 #-------------------------------------------------------------------------------
 exit

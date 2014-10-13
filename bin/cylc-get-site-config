@@ -18,7 +18,6 @@
 
 import sys
 from optparse import OptionParser
-from cylc.version import cylc_version
 import cylc.flags
 from parsec.util import itemstr
 

@@ -31,7 +31,7 @@ from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 import cylc.TaskID
 from cylc.cycling.loader import get_point
-from cylc.task_types import task
+from cylc.task_types.task import task
 from cylc.suite_host import get_suite_host, get_hostname
 from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
@@ -122,7 +122,7 @@ slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
 slog.pimp()
 
-task.cylc_mode = 'submit'
+task.single_task_mode = True
 
 ict = config.cfg['scheduling']['initial cycle point']
 fct = config.cfg['scheduling']['final cycle point'  ]
@@ -184,16 +184,15 @@ except TaskNotDefinedError, x:
     except TaskNotDefinedError, y:
         raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
 
-if options.dry_run:
-    task_proxy.get_command( dry_run=True )
-    sys.exit(0)
+if not options.dry_run:
+    proc_pool = mp_pool(pool_size=1)
+    task_proxy.__class__.proc_pool = proc_pool
 
-proc_pool = mp_pool(pool_size=1)
-cmd_spec = (CMD_TYPE_JOB_SUBMISSION, task_proxy.get_command())
-capture_first_line = task_proxy.job_sub_method_name=='background'
-proc_pool.put_command(
-        cmd_spec, task_proxy.job_submission_callback, capture_first_line)
-proc_pool.close()
-proc_pool.join()
-proc_pool.handle_results_async()
-print 'Job ID:', task_proxy.submit_method_id
+task_proxy.submit(dry_run=options.dry_run)
+
+if not options.dry_run:
+    while proc_pool.unhandled_results:
+        proc_pool.handle_results_async()
+    proc_pool.close()
+    proc_pool.join()
+    print 'Job ID:', task_proxy.submit_method_id

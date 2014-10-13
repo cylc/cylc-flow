@@ -22,7 +22,7 @@ if remrun().execute():
     sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-from cylc.version import cylc_version
+from cylc.version import CYLC_VERSION
 from cylc.config import config
 import cylc.flags
 
@@ -71,4 +71,4 @@ except Exception,x:
         raise
     raise SystemExit(x)
 
-print "Valid for cylc-" + cylc_version
+print "Valid for cylc-" + CYLC_VERSION

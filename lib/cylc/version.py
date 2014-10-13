@@ -18,33 +18,39 @@
 
 """Determine the cylc version string; repository or raw source distribution."""
 
-import os, sys
-import run_get_stdout
+import os
+from cylc.run_get_stdout import run_get_stdout
 
-cylc_dir = os.environ['CYLC_DIR']
-vfile = os.path.join( cylc_dir, 'VERSION' )
-gitd = os.path.join( cylc_dir, '.git' )
 
-if os.path.isdir( gitd ) or os.path.isfile( gitd ):
-    # We're running in a cylc git repository, so dynamically determine
-    # the cylc version string.
-    script = os.path.join( cylc_dir, 'admin', 'get-repo-version' )
-    res = run_get_stdout.run_get_stdout( script )
-    if res[0]:
-        cylc_version = res[1][0]
+def _get_cylc_version():
+    """Determine and return cylc version string."""
+
+    cylc_dir = os.environ['CYLC_DIR']
+
+    if os.path.exists(os.path.join(cylc_dir, ".git")):
+        # We're running in a cylc git repository, so dynamically determine
+        # the cylc version string.
+        res = run_get_stdout(
+            os.path.join(cylc_dir, "admin", "get-repo-version"))
+        if res[0]:
+            return res[1][0]
+        else:
+            raise SystemExit("Failed to get version number!")
+
     else:
-        raise SystemExit( "Failed to get version number!")
+        # We're running in a raw cylc source tree, so read the version
+        # file created by 'make' after unpacking the tarball.
+        try:
+            for line in open(os.path.join(cylc_dir, 'VERSION')):
+                return line.rstrip()
+        except IOError:
+            raise SystemExit(
+                "*** ERROR, failed to read the cylc VERSION file.***\n" +
+                "Please inform your cylc admin user.\n" +
+                "This file should have been created by running 'make' or\n" +
+                "'make version' after unpacking the cylc release tarball.\n" +
+                "ABORTING")
 
-else:
-    # We're running in a raw cylc source tree, so read the version
-    # file created by 'make' after unpacking the tarball.
-    try:
-        f = open( vfile )
-        cylc_version = f.readline().rstrip()
-        f.close()
-    except IOError, x:
-        print >> sys.stderr, x
-        print >> sys.stderr, "\n*** ERROR, failed to read the cylc VERSION file.***\n"
-        print >> sys.stderr, """Please inform your cylc admin user. This file should have been created
-by running 'make' or 'make version' after unpacking the cylc release tarball."""
-        sys.exit("ABORTING")
+
+CYLC_VERSION = _get_cylc_version()
+os.environ["CYLC_VERSION"] = CYLC_VERSION

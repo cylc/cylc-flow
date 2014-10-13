@@ -18,54 +18,23 @@
 """Implement background job submission."""
 
 from cylc.job_submission.job_submit import JobSubmit
-from cylc.command_env import pr_scripting_sl
 import os
-from signal import SIGKILL
+import re
 from subprocess import Popen, PIPE
+import sys
 
 
 class background(JobSubmit):
+    """Background job submission.
+
+    Runs the task in a background process. Uses 'wait' to prevent exit before
+    the job is finished (which would be a problem for remote background jobs at
+    sites that do not allow unattended jobs on login nodes).
+
     """
-    Background 'job submission' runs the task directly in the background
-    (with '&') so that we can get the job PID (with $!) but then uses
-    'wait' to prevent exit before the job is finished (which would be a
-    problem for remote background jobs at sites that do not allow
-    unattended jobs on login nodes):
-      % ssh user@host 'job-script & echo $!; wait'
-    (We have to override the general command templates to achieve this)."""
 
-    LOCAL_COMMAND_TEMPLATE = "( %(command)s & echo $!; wait )"
-
-    REMOTE_COMMAND_TEMPLATE = (
-        " '" +
-        pr_scripting_sl +
-        "; " +
-        # Retry "mkdir" once to avoid race to create log/job/CYCLE/
-        " (mkdir -p %(jobfile_dir)s || mkdir -p %(jobfile_dir)s)" +
-        " && rm -f $(dirname %(jobfile_dir)s)/NN"
-        " && ln -s $(basename %(jobfile_dir)s) $(dirname %(jobfile_dir)s)/NN"
-        " && cat >%(jobfile_path)s.tmp" +
-        " && mv %(jobfile_path)s.tmp %(jobfile_path)s" +
-        " && chmod +x %(jobfile_path)s" +
-        " && rm -f %(jobfile_path)s.status" +
-        " && ( %(command)s & echo $!; wait )" +
-        "'")
-
-    # N.B. The perl command ensures that the job script is executed in its own
-    # process group, which allows the job script and its child processes to be
-    # killed correctly.
-    COMMAND_TEMPLATE = (
-        "perl -e \"setpgrp(0,0);exec(@ARGV)\" %s </dev/null 1>%s 2>%s")
-
-    def construct_job_submit_command(self):
-        """
-        Construct a command to submit this job to run.
-        """
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.__class__.COMMAND_TEMPLATE
-        self.command = command_template % (
-            self.jobfile_path, self.stdout_file, self.stderr_file)
+    IS_BG_SUBMIT = True
+    REC_ID_FROM_OUT = re.compile(r"""\A(?P<id>\d+)\Z""")
 
     def get_id(self, out, err):
         """
@@ -75,12 +44,32 @@ class background(JobSubmit):
         """
         return out.strip()
 
-    @classmethod
-    def kill(cls, jid, _=None):
+    def kill(self, st_file):
         """Kill the job."""
-        os.killpg(int(jid), SIGKILL)
+        return self.kill_proc_group(st_file)
 
     @classmethod
     def poll(cls, jid):
-        """Return 0 if jid is in the queueing system, 1 otherwise."""
-        return Popen(["ps", jid], stdout=PIPE).wait()
+        """Return True if jid is in the queueing system."""
+        return Popen(["ps", jid], stdout=PIPE).wait() == 0
+
+    @classmethod
+    def submit(cls, job_file_path, _=None):
+        """Submit "job_file_path"."""
+        out_file = open(job_file_path + ".out", "wb")
+        err_file = open(job_file_path + ".err", "wb")
+        proc = Popen(
+            [job_file_path], stdout=out_file, stderr=err_file,
+            preexec_fn=os.setpgrp)
+        # Send PID info back to suite
+        sys.stdout.write("%d\n" % proc.pid)
+        sys.stdout.flush()
+        # Write PID info to status file
+        job_status_file = open(job_file_path + ".status", "a")
+        job_status_file.write("CYLC_JOB_SUBMIT_METHOD_ID=%d\n" % proc.pid)
+        job_status_file.close()
+        # Wait for job
+        ret_code = proc.wait()
+        out_file.close()
+        err_file.close()
+        return (ret_code, None, None)

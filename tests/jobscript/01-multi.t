@@ -41,7 +41,7 @@ run_ok $TEST_NAME cylc jobscript $SUITE_NAME bar.1
 cp $TEST_NAME.stdout bar.jobfile
 grep -A1 "PRE-COMMAND SCRIPTING" bar.jobfile > bar.pre_cmd
 cmp_ok bar.pre_cmd $TEST_SOURCE_DIR/multi/bar.pre
-grep -A1 "POST COMMAND SCRIPTING" bar.jobfile > bar.post_cmd
+grep -A1 "POST-COMMAND SCRIPTING" bar.jobfile > bar.post_cmd
 cmp_ok bar.post_cmd $TEST_SOURCE_DIR/multi/bar.post
 run_ok $TEST_NAME.env grep 'MESSAGE="hello"' bar.jobfile
 #-------------------------------------------------------------------------------
@@ -69,28 +69,28 @@ TEST_NAME=$TEST_NAME_BASE-check-hum
 # check hum has correctly set post-command scripting
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME hum.1
 cp $TEST_NAME.stdout hum.jobfile
-grep -A1 "POST COMMAND SCRIPTING" hum.jobfile > hum.post_cmd
+grep -A1 "POST-COMMAND SCRIPTING" hum.jobfile > hum.post_cmd
 cmp_ok hum.post_cmd $TEST_SOURCE_DIR/multi/hum.post
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-bug
 # check bug has correctly inherited command scripting from FAM4
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME bug.1
 cp $TEST_NAME.stdout bug.jobfile
-grep -A1 "TASK COMMAND SCRIPTING" bug.jobfile > bug.task_cmd
+grep -A1 "COMMAND SCRIPTING" bug.jobfile > bug.task_cmd
 cmp_ok bug.task_cmd $TEST_SOURCE_DIR/multi/bug.cmd
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-reg
 # check reg has correctly overridden command scripting
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME reg.1
 cp $TEST_NAME.stdout reg.jobfile
-grep -A1 "TASK COMMAND SCRIPTING" reg.jobfile > reg.task_cmd
+grep -A1 "COMMAND SCRIPTING" reg.jobfile > reg.task_cmd
 cmp_ok reg.task_cmd $TEST_SOURCE_DIR/multi/reg.cmd
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-exp
 # check exp has correctly inherited command scripting from FAM4,FAM5
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME exp.1
 cp $TEST_NAME.stdout exp.jobfile
-grep -A1 "TASK COMMAND SCRIPTING" exp.jobfile > exp.task_cmd
+grep -A1 "COMMAND SCRIPTING" exp.jobfile > exp.task_cmd
 cmp_ok exp.task_cmd $TEST_SOURCE_DIR/multi/exp.cmd
 
 purge_suite $SUITE_NAME
