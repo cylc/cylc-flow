@@ -27,12 +27,13 @@ remove and terminate the job.
 
 from cylc.CylcOptionParsers import cop
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+import sys
 
 
 def main():
     """CLI main."""
     parser = cop(__doc__, argdoc=[("ST-FILE", "the task status file")])
-    BATCH_SYS_MANAGER.job_kill(parser.parse_args()[1][0])
+    sys.exit(BATCH_SYS_MANAGER.job_kill(parser.parse_args()[1][0]))
 
 
 if __name__ == "__main__":

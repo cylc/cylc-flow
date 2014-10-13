@@ -82,7 +82,7 @@ import os
 import shlex
 from signal import SIGKILL
 import stat
-from subprocess import check_call, Popen, PIPE
+from subprocess import call, Popen, PIPE
 import sys
 from cylc.mkdir_p import mkdir_p
 import cylc.TaskID
@@ -133,8 +133,6 @@ class BatchSysManager(object):
         batch_sys = self.get_inst(job_conf['batch system name'])
         if job_conf['directives'] and hasattr(batch_sys, "format_directives"):
             return batch_sys.format_directives(job_conf)
-        else:
-            return []
 
     def get_vacation_signal(self, job_conf):
         """Return the vacation signal for a job file."""
@@ -147,7 +145,11 @@ class BatchSysManager(object):
         return getattr(self.get_inst(batch_sys_name), "IS_BG_SUBMIT", False)
 
     def job_kill(self, st_file_path):
-        """Kill a job."""
+        """Ask batch system to terminate the job specified in "st_file_path".
+
+        Return 0 on success, non-zero return code on failure.
+
+        """
         # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
         self.configure_suite_run_dir(st_file_path.rsplit(os.sep, 6)[0])
         st_file = open(st_file_path)
@@ -168,12 +170,15 @@ class BatchSysManager(object):
             for line in st_file:
                 if line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
                     job_id = line.strip().split("=", 1)[1]
-                    return check_call(
-                        shlex.split(batch_sys.KILL_CMD) + [job_id])
+                    return call(shlex.split(batch_sys.KILL_CMD) + [job_id])
         return 1
 
     def job_poll(self, st_file_path):
-        """Poll status of a job."""
+        """Poll status of the job specified in the "st_file_path".
+
+        Return a status string that can be recognised by the suite.
+
+        """
         # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
         st_file_path_strs = st_file_path.rsplit(os.sep, 6)
         task_id = (
@@ -225,9 +230,19 @@ class BatchSysManager(object):
         return "polled %s submission failed\n" % (task_id)
 
     def job_submit(self, job_file_path, remote_mode):
-        """Submit the job.
+        """Submit a job file.
 
-        Derived classes should override this method.
+        "job_file_path" is a string containing the path to the job file.
+        "remote_mode" is a boolean to indicate if submit is being initiated on
+        a remote job host.
+
+        Return a 4-element tuple (ret_code, out, err, job_id) where:
+        "ret_code" is the integer return code of the job submit command.
+        "out" is a string containing the standard output of the job submit
+        command.
+        "err" is a string containing the standard error output of the job
+        submit command.
+        "job_id" is a string containing the ID of the job submitted.
 
         """
         # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job
