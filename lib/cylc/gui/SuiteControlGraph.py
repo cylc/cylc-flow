@@ -23,7 +23,7 @@ from GraphUpdater import GraphUpdater
 from warning_dialog import warning_dialog, info_dialog
 from cylc.cylc_xdot import xdot_widgets
 from cylc.task_state import task_state
-import cylc.TaskID
+from cylc.task_id import TaskID
 from gcapture import gcapture_tmpfile
 
 
@@ -123,7 +123,7 @@ Dependency graph suite control interface.
         self.t.quit = True
 
     def right_click_menu( self, event, task_id, type='live task' ):
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
 
         menu = gtk.Menu()
         menu_root = gtk.MenuItem( task_id )
@@ -519,7 +519,7 @@ Dependency graph suite control interface.
 #            window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
 #        vbox = gtk.VBox()
 #
-#        name, point_string = cylc.TaskID.split( id )
+#        name, point_string = TaskID.split(id)
 #        # TODO - do we need to check that oldest_point_string is defined yet?
 #
 #        #diff_pre = ctime - self.t.oldest_ctime.hours

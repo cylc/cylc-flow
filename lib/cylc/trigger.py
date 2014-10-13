@@ -18,7 +18,7 @@
 
 import re
 
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point_relative)
 from cylc.task_state import task_state
@@ -133,5 +133,5 @@ Task triggers, used to generate prerequisite messages.
             elif self.graph_offset_string:
                 point = get_point_relative(
                     self.graph_offset_string, point)
-            preq = cylc.TaskID.get(self.task_name, str(point)) + ' ' + self.builtin
+            preq = TaskID.get(self.task_name, point) + ' ' + self.builtin
         return preq, point

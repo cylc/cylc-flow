@@ -24,7 +24,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -38,7 +38,7 @@ error status. For tasks, success means the task proxy is currently in
 the 'running' state.""",
     pyro=True,
     argdoc=[('REG', 'Suite name'),
-            ('[TASK]', 'Task NAME'+cylc.TaskID.DELIM+'CYCLE_POINT')])
+            ('[TASK]', 'Task ' + TaskID.SYNTAX)])
 
 parser.add_option( "--print-ports",
         help="Print the port range from the cylc site config file.",
@@ -70,8 +70,8 @@ if len(args) == 1:
 
 # cylc ping SUITE TASKID
 task_id = args[1]
-if not cylc.TaskID.is_valid_id( task_id ):
-    sys.exit( "Invalid task ID: " + task_id )
+if not TaskID.is_valid_id(task_id):
+    sys.exit("Invalid task ID: " + task_id)
 
 try:
     res, msg = proxy.get( 'ping task', task_id )

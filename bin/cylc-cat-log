@@ -18,12 +18,11 @@
 
 import sys
 from cylc.remote import remrun
-import cylc.TaskID
-from subprocess import Popen, PIPE
 if remrun().execute():
     sys.exit(0)
 
 import re, os
+from subprocess import Popen, PIPE
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
 from cylc.rundb import CylcRuntimeDAO
@@ -31,6 +30,7 @@ from cylc.suite_logging import suite_log
 from cylc.suite_output import suite_output
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
+from cylc.task_id import TaskID
 
 parser = cop( """cylc [info] cat-log|log [OPTIONS] ARGS
 Print various log files for suites and tasks that are currently running,
@@ -69,7 +69,7 @@ owner = options.db_owner
 if len(args) == 2:
     # task log requested
     taskid = args[1]
-    task, point = cylc.TaskID.split(taskid)
+    task, point = TaskID.split(taskid)
     log_dir = os.path.join(point, task, "%02d" % int(options.tryext), "job")
 
     suite_run_dir = GLOBAL_CFG.get_derived_host_item(

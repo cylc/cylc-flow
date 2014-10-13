@@ -21,7 +21,7 @@ from copy import deepcopy
 from datetime import datetime
 import logging, os, sys
 import cPickle as pickle
-import TaskID
+from cylc.task_id import TaskID
 from cycling.loader import get_point
 from rundb import RecordBroadcastObject
 from wallclock import get_current_time_string
@@ -37,7 +37,6 @@ class broadcast( Pyro.core.ObjBase ):
         self.log = logging.getLogger('main')
         self.settings = {}
         self.last_settings = self.get_dump()
-        self.new_settings = False
         self.settings_queue = []
         self.linearized_ancestors = linearized_ancestors
         Pyro.core.ObjBase.__init__(self)
@@ -94,7 +93,6 @@ class broadcast( Pyro.core.ObjBase ):
             self.settings_queue.append(RecordBroadcastObject(
                 current_time_string, self.get_dump() ))
             self.last_settings = self.settings
-            self.new_settings = True
 
         return ( True, 'OK' )
 
@@ -103,7 +101,7 @@ class broadcast( Pyro.core.ObjBase ):
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, point_string = TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
 
         ret = {}
         # The order is:
@@ -160,19 +158,14 @@ class broadcast( Pyro.core.ObjBase ):
                 self.get_dump()
             ))
             self.last_settings = self.settings
-            self.new_settings = True
 
     def dump( self, FILE ):
         # write broadcast variables to the suite state dump file
         FILE.write( pickle.dumps( self.settings) + '\n' )
 
     def get_db_ops(self):
-        ops = []
-        for d in self.settings_queue:
-            if d.to_run:
-                ops.append(d)
-                d.to_run = False
-        self.new_settings = False
+        ops = self.settings_queue
+        self.settings_queue = []
         return ops
 
     def get_dump( self ):

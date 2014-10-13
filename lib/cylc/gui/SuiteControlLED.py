@@ -22,7 +22,7 @@ import gobject
 from DotUpdater import DotUpdater
 from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client
-import cylc.TaskID
+from cylc.task_id import TaskID
 from util import EntryTempText
 from warning_dialog import warning_dialog
 
@@ -98,7 +98,7 @@ LED suite control interface.
             point_string = treeview.get_model().get_value(
                 r_iter, point_string_column )
 
-        task_id = cylc.TaskID.get( name, point_string )
+        task_id = TaskID.get(name, point_string)
 
         is_fam = (name in self.t.descendants)
 

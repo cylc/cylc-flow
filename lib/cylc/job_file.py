@@ -22,7 +22,7 @@ import re
 import stat
 import StringIO
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 
 
@@ -247,7 +247,7 @@ unset S""")
         comms = GLOBAL_CFG.get_host_item(
             'task communication method', job_conf['host'], job_conf['owner'])
 
-        task_name, point_string = cylc.TaskID.split(job_conf['task id'])
+        task_name, point_string = TaskID.split(job_conf['task id'])
         handle.write("\n\n# CYLC TASK ENVIRONMENT:")
         handle.write("\nexport CYLC_TASK_COMMS_METHOD=" + comms)
         handle.write("\nexport CYLC_TASK_CYCLE_POINT=" + point_string)

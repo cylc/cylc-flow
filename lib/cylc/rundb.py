@@ -49,7 +49,6 @@ class UpdateObject(object):
         args.append(cycle)
         self.s_fmt = s_fmt % {"table": table, "cols": cols}
         self.args = args
-        self.to_run = True
 
 
 class RecordBroadcastObject(object):
@@ -58,7 +57,6 @@ class RecordBroadcastObject(object):
         """Records a dumped string in the broadcast table"""
         self.s_fmt = "INSERT INTO broadcast_settings VALUES(?, ?)"
         self.args = [time_string, dump_string]
-        self.to_run = True
 
 
 class RecordEventObject(object):
@@ -68,7 +66,6 @@ class RecordEventObject(object):
         self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)"
         self.args = [name, cycle, get_current_time_string(),
                      submit_num, event, message, misc]
-        self.to_run = True
 
 
 class RecordStateObject(object):
@@ -84,7 +81,6 @@ class RecordStateObject(object):
         self.args = [name, cycle, time_created_string, time_updated_string,
                      submit_num, is_manual_submit, try_num, host,
                      submit_method, submit_method_id, status]
-        self.to_run = True
 
 
 class BulkDBOperObject(object):

@@ -18,7 +18,7 @@
 
 import Pyro.core
 import logging
-import TaskID
+from cylc.task_id import TaskID
 import time
 from datetime import datetime
 import flags
@@ -53,11 +53,11 @@ class state_summary( Pyro.core.ObjBase ):
         task_states = {}
 
         for task in tasks:
-            task_summary[ task.id ] = task.get_state_summary()
-            name, point_string = TaskID.split( task.id )
+            task_summary[ task.ident ] = task.get_state_summary()
+            name, point_string = TaskID.split(task.ident)
             point_string = str(point_string)
             task_states.setdefault(point_string, {})
-            task_states[point_string][name] = task_summary[task.id]['state']
+            task_states[point_string][name] = task_summary[task.ident]['state']
             task_name_list.append(name)
 
         task_name_list = list(set(task_name_list))
@@ -82,7 +82,7 @@ class state_summary( Pyro.core.ObjBase ):
                     c_fam_task_states[parent].append(state)
 
             for fam, child_states in c_fam_task_states.items():
-                f_id = TaskID.get( fam, point_string )
+                f_id = TaskID.get(fam, point_string)
                 state = extract_group_state(child_states)
                 if state is None:
                     continue
@@ -191,10 +191,10 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
             sub_states.setdefault( state, 0 )
             sub_states[state] += 1
         elif this_id in fam_state_summary:
-            name, point_string = TaskID.split( this_id )
+            name, point_string = TaskID.split(this_id)
             sub_text += prefix + fam_state_summary[this_id]['state']
             for child in reversed( sorted( id_family_map[name] ) ):
-                child_id = TaskID.get( child, point_string )
+                child_id = TaskID.get(child, point_string)
                 stack.insert( 0, ( child_id, depth + 1 ) )
         if not prefix_text:
             prefix_text = sub_text.strip()

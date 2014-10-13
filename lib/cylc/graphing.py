@@ -21,7 +21,7 @@ ImportError due to pygraphviz/graphviz not being installed."""
 
 import re
 import pygraphviz
-import TaskID
+from cylc.task_id import TaskID
 from cycling.loader import get_point, get_point_relative, get_interval
 from graphnode import graphnode
 
@@ -39,7 +39,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.suite_polling_tasks = suite_polling_tasks
 
     def node_attr_by_taskname( self, node_string ):
-        name, point_string = TaskID.split( node_string )
+        name, point_string = TaskID.split(node_string)
         if name in self.task_attr:
             return self.task_attr[name]
         else:
@@ -50,7 +50,7 @@ class CGraphPlain( pygraphviz.AGraph ):
 
     def style_node( self, node_string, autoURL, base=False ):
         node = self.get_node( node_string )
-        name, point_string = TaskID.split( node_string )
+        name, point_string = TaskID.split(node_string)
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
@@ -241,7 +241,7 @@ class edge( object):
         # strip off special outputs
         self.right = re.sub( ':\w+', '', self.right )
 
-        return TaskID.get( self.right, inpoint_string )
+        return TaskID.get(self.right, inpoint_string)
 
     def get_left( self, inpoint, start_point, base_interval ):
         # strip off special outputs
@@ -257,4 +257,4 @@ class edge( object):
             point = inpoint
         name = left_graphnode.name
 
-        return TaskID.get( name, str(point) )
+        return TaskID.get(name, point)

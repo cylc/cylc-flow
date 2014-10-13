@@ -261,7 +261,7 @@ function graph_suite() {
     # Sort the result to "natural order".
     cylc graph '--output-file=-' "${SUITE_NAME}" "$@" \
         | perl -p -e '
-            s/\s+\b[.0-9\-]+(?:e[+\-][.0-9]+)?\b//gmsx;
+            s/\s+[+\-]?[0-9]+(?:\.[0-9]+)?(?:e[+\-][.0-9]+)?\b//gmsx;
             s/^((?:node|edge).*)\s+\w+/$1/msx;' \
         | sort -V  >"${OUTPUT_FILE}"
 }

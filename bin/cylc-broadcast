@@ -29,7 +29,7 @@ from cylc.task_message import message
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
 from cylc.print_tree import print_tree
-import cylc.TaskID as TaskID
+from cylc.task_id import TaskID
 from parsec.validate import validate
 from cylc.cfgspec.suite import SPEC
 import cylc.flags
@@ -148,7 +148,7 @@ parser.add_option( "-d", "--display",
 
 parser.add_option( "-k", "--display-task", metavar="TASKID",
         help="Print active broadcasts for a given task "
-        "(NAME"+TaskID.DELIM+"CYCLE_POINT).",
+        "(" + TaskID.SYNTAX + ").",
         action="store", default=None, dest="showtask" )
 
 parser.add_option( "-b", "--box",
@@ -189,9 +189,9 @@ except Exception, x:
 if options.show or options.showtask:
     if options.showtask:
         try:
-            name, point_string = options.showtask.split(TaskID.DELIM)
+            name, point_string = TaskID.split(options.showtask)
         except ValueError:
-            parser.error( "TASKID must be NAME"+TaskID.DELIM+"CYCLE_POINT" )
+            parser.error("TASKID must be " + TaskID.SYNTAX)
     try:
         settings = proxy.get( options.showtask )
     except Exception,x:

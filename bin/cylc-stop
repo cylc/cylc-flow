@@ -24,7 +24,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
@@ -148,7 +148,7 @@ if options.wall_clock:
     shutdown_arg = options.wall_clock
 elif shutdown_at:
     # STOP argument detected
-    if cylc.TaskID.is_valid_id( shutdown_arg ):
+    if TaskID.is_valid_id(shutdown_arg):
         # is a task ID
         method = 'stop after task'
         prompt_text = 'Set shutdown after task %s' % shutdown_arg

@@ -21,12 +21,13 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
+import datetime
 import os
 from cylc.CylcOptionParsers import cop
 from cylc.scheduler import scheduler
 from cylc.run import main
 from cylc.command_prep import prep_file
-import datetime
+from cylc.task_proxy import TaskProxySequenceBoundsError
 
 class start( scheduler ):
     def __init__( self ):
@@ -118,13 +119,11 @@ warm start unless you use special cold-start tasks. See "Suite Start-up" and
             if self.start_point is None:
                 # No start cycle point at which to load cycling tasks.
                 continue
-            itask = self.config.get_task_proxy(
-                name, self.start_point, 'waiting', stop_point=None,
-                startup=True, submit_num=0, exists=False
-            )
-            if not itask.point:
-                self.log.debug( "Not loading " + name + " (out of sequence bounds)" )
-                del itask
+            try:
+                itask = self.config.get_task_proxy(
+                    name, self.start_point, 'waiting', is_startup=True)
+            except TaskProxySequenceBoundsError as exc:
+                self.log.debug(str(exc))
                 continue
             if name in coldstart_tasks and self.options.warm:
                 itask.state.set_status( 'succeeded' )

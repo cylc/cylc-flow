@@ -25,7 +25,7 @@ if '--use-ssh' in sys.argv[1:]:
 
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
@@ -36,7 +36,7 @@ descriptions, current state of task prerequisites and outputs and, for
 clock-triggered tasks, whether or not the trigger time is up yet.""",
     pyro=True, noforce=True,
     argdoc=[('REG', 'Suite name'),
-            ('[NAME['+cylc.TaskID.DELIM+'CYCLE_POINT]]', 'Task name or ID')])
+            ('[' + TaskID.SYNTAX_OPT_POINT + ']', 'Task name or ID')])
 
 (options, args) = parser.parse_args()
 
@@ -49,7 +49,7 @@ prnt_id = False
 if len(args) == 2:
     target = args[1]
     try:
-        name, point_string = cylc.TaskID.split( target )
+        name, point_string = TaskID.split(target)
     except ValueError:
         # just a task name
         prnt_name = True

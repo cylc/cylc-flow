@@ -20,7 +20,7 @@ import re
 import sys
 import subprocess
 import time
-import cylc.TaskID
+from cylc.task_id import TaskID
 
 
 def get_stop_state(suite, owner=None, host=None):
@@ -90,7 +90,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
             continue
         try:
             ( task_id, info ) = line.split(' : ')
-            ( name, point_string ) = cylc.TaskID.split( task_id )
+            name, point_string = TaskID.split(task_id)
         except ValueError:
             continue
         except Exception as e:

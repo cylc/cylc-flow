@@ -18,7 +18,7 @@
 
 import sys
 from cylc.remote import remrun
-import cylc.TaskID
+from cylc.task_id import TaskID
 
 if remrun().execute():
     sys.exit(0)
@@ -40,7 +40,7 @@ def on_url_clicked( widget, url, event, window ):
     right_click_menu( event, url, type='live task', window=window )
 
 def right_click_menu( event, task_id, type='live task', window=None ):
-    name, point_string = cylc.TaskID.split( task_id )
+    name, point_string = TaskID.split(task_id)
 
     menu = gtk.Menu()
     menu_root = gtk.MenuItem( task_id )

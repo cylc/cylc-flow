@@ -16,19 +16,21 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cycling.loader import get_interval, get_interval_cls
-from syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
+from cylc.cycling.loader import get_interval, get_interval_cls
+from cylc.syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
+from cylc.task_id import TaskID
 import re
 
 # Previous node format.
 NODE_PREV_RE = re.compile(
-    r"""^(\w+)          # Task name
-        \s*             # Optional whitespace
+    r"^" +
+    r"(" + TaskID.NAME_RE + r")" +
+    r"""\s*             # Optional whitespace
         (?:\[           # Begin optional [offset] syntax, start [
          \s*            # Optional whitespace
          T              # T as in T-6, T+1, etc
          \s*            # Optional whitespace
-         ([+-])         # Either + or - in e.g. T-6, T+1
+         ([+\-])        # Either + or - in e.g. T-6, T+1
          (\s*\w+)       # Offset amount
          \s*            # Optional whitespace
          \]             # End ]
@@ -36,12 +38,13 @@ NODE_PREV_RE = re.compile(
         (:[\w-]+){0,1}  # Optional type (e.g. :fail, :finish-all)
         $               # End
     """, re.X)
-              
+
 # Cylc's ISO 8601 format.
 NODE_ISO_RE = re.compile(
-    r"""^(\w+)       # Task name
-        (?:\[        # Begin optional [offset] syntax
-         (?!T[+-])   # Do not match a 'T-' or 'T+' (this is the old format)
+    r"^" +
+    r"(" + TaskID.NAME_RE + r")" +
+    r"""(?:\[        # Begin optional [offset] syntax
+         (?!T[+\-])  # Do not match a 'T-' or 'T+' (this is the old format)
          ([^\]]+)    # Continue until next ']'
          \]          # Stop at next ']'
         )?           # End optional [offset] syntax]
@@ -50,8 +53,9 @@ NODE_ISO_RE = re.compile(
 
 # Cylc's ISO 8601 initial cycle point based format
 NODE_ISO_ICT_RE = re.compile(
-    r"""^(\w+)       # Task name
-        \[           # Begin square bracket syntax
+    r"^" +
+    r"(" + TaskID.NAME_RE + r")" +
+    r"""\[           # Begin square bracket syntax
         \^           # Initial cycle point offset marker
         ([^\]]*)     # Optional ^offset syntax
         \]           # End square bracket syntax
@@ -98,7 +102,7 @@ class graphnode( object ):
         self.offset_is_from_ict = False
         self.offset_is_irregular = False
         self.is_absolute = False
-        
+
         m = re.match( NODE_ISO_ICT_RE, node )
         if m:
             # node looks like foo[^], foo[^-P4D], foo[^]:fail, etc.
@@ -127,7 +131,8 @@ class graphnode( object ):
                     raise GraphNodeError( 'Illegal graph node: ' + node )
                 # node looks like foo[T-6], foo[T-12]:fail...
                 name, sign, offset_string, outp = m.groups()
-                offset_string = sign + offset_string
+                if sign and offset_string:
+                    offset_string = sign + offset_string
                 prev_format = True
                 set_syntax_version(
                     VERSION_PREV,
@@ -145,7 +150,7 @@ class graphnode( object ):
             self.name = name
         else:
             raise GraphNodeError( 'Illegal graph node: ' + node )
-            
+
         if self.offset_is_from_ict and not offset_string:
             offset_string = str(get_interval_cls().get_null_offset())
         if offset_string:

@@ -17,7 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, os, sys
-import taskdef
+from cylc.taskdef import TaskDef, TaskDefError
 from cylc.cfgspec.suite import get_suitecfg
 from cylc.cycling.loader import (get_point, get_point_relative,
                                  get_interval, get_interval_cls,
@@ -35,12 +35,13 @@ from prerequisites.conditionals import TriggerExpressionError
 from regpath import RegPath
 from trigger import trigger
 from parsec.util import replicate
-import TaskID
+from cylc.task_id import TaskID
 from C3MRO import C3
 from parsec.OrderedDict import OrderedDict
 import flags
 from syntax_flags import (
     SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
+from cylc.task_proxy import TaskProxy
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -84,11 +85,15 @@ class SuiteConfigError( Exception ):
     """
     def __init__( self, msg ):
         self.msg = msg
+
     def __str__( self ):
         return repr(self.msg)
 
-class TaskNotDefinedError( SuiteConfigError ):
-    pass
+class TaskNotDefinedError(SuiteConfigError):
+    """A named task not defined."""
+
+    def __str__(self):
+        return "Task not found: " + self.args[0]
 
 # TODO: separate config for run and non-run purposes?
 
@@ -482,7 +487,7 @@ class config( object ):
         if vfcp is not None and sfcp is not None:
             if vfcp > sfcp:
                 self.cfg['visualization']['final cycle point'] = str(sfcp)
- 
+
     def check_env_names( self ):
         # check for illegal environment variable names
          bad = {}
@@ -917,8 +922,12 @@ class config( object ):
             print "Instantiating tasks to check trigger expressions"
         for name in self.taskdefs.keys():
             try:
-                itask = self.taskdefs[name].get_task_class()(
-                        self.start_point, 'waiting', None, True, validate=True)
+                itask = TaskProxy(
+                    self.taskdefs[name],
+                    self.start_point,
+                    'waiting',
+                    is_startup=True,
+                    validate_mode=True)
             except TypeError, x:
                 # This should not happen as we now explicitly catch use of
                 # synchronous special tasks in an asynchronous graph.  But in
@@ -934,7 +943,7 @@ class config( object ):
                 continue
 
             # warn for purely-implicit-cycling tasks (these are deprecated).
-            if itask.__class__.sequences == itask.__class__.implicit_sequences:
+            if itask.tdef.sequences == itask.tdef.implicit_sequences:
                 print >> sys.stderr, (
                     "WARNING, " + name + ": not explicitly defined in " +
                     "dependency graphs (deprecated)"
@@ -950,7 +959,7 @@ class config( object ):
                 print >> sys.stderr, x
                 raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
             if flags.verbose:
-                print "  + " + itask.id + " ok"
+                print "  + " + itask.ident + " ok"
 
         # Check custom command scripting is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
@@ -1009,7 +1018,7 @@ class config( object ):
                             tasks_to_prune=None,
                             return_all_dependencies=False ):
         """Extract dependent pairs from the suite.rc dependency text.
-        
+
         Extract dependent pairs from the suite.rc textual dependency
         graph to use in constructing graphviz graphs.
 
@@ -1262,7 +1271,7 @@ class config( object ):
                 self.generate_triggers(lexpression, pruned_left_nodes,
                                         right_name, seq, suicide)
         return special_dependencies
-            
+
 
     def generate_edges( self, lexpression, left_nodes, right, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
@@ -1313,9 +1322,9 @@ class config( object ):
             if name not in self.taskdefs:
                 try:
                     self.taskdefs[ name ] = self.get_taskdef( name )
-                except taskdef.DefinitionError, x:
+                except TaskDefError as exc:
                     print >> sys.stderr, line
-                    raise SuiteConfigError, str(x)
+                    raise SuiteConfigError(str(exc))
 
             if name in self.suite_polling_tasks:
                 self.taskdefs[name].suite_polling_cfg = {
@@ -1379,9 +1388,6 @@ class config( object ):
             lnode = graphnode(left, base_interval=base_interval)
             ltaskdef = self.taskdefs[lnode.name]
 
-            if lnode.intercycle:
-                ltaskdef.intercycle = True
-
             if lnode.offset_is_from_ict:
                 first_point = get_point_relative(
                     lnode.offset_string, self.initial_point)
@@ -1395,7 +1401,6 @@ class config( object ):
                         (str(-(last_point - first_point)), seq))
                 cycle_point = first_point
             elif lnode.intercycle:
-                ltaskdef.intercycle = True
                 if lnode.offset_is_irregular:
                     offset_tuple = (lnode.offset_string, seq)
                 else:
@@ -1524,7 +1529,7 @@ class config( object ):
                 continue
             point = deepcopy(i_point)
             new_points = []
-            while True: 
+            while True:
                 # Loop over cycles generated by this sequence
                 if point is None:
                     # Out of sequence bounds.
@@ -1573,7 +1578,7 @@ class config( object ):
             values = gr_edges.values()
             # Flatten nested list.
             edges = [i for sublist in values for i in sublist]
-        
+
         return edges
 
     def get_graph(self, start_point_string=None, stop_point_string=None,
@@ -1588,7 +1593,7 @@ class config( object ):
             stop_point_string = self.cfg['visualization']['final cycle point']
         if stop_point_string is not None:
             if get_point(stop_point_string) < get_point(start_point_string):
-                # Avoid a null graph. 
+                # Avoid a null graph.
                 stop_point_string = start_point_string
 
         gr_edges = self.get_graph_raw(
@@ -1653,7 +1658,7 @@ class config( object ):
 
         return nl, nr
 
-    def load_graph( self ):
+    def load_graph(self):
         if flags.verbose:
             print "Parsing the dependency graph"
 
@@ -1740,7 +1745,7 @@ class config( object ):
                         first_point)
 
         back_comp_initial_section_graphs = {}
-        for dep in sorted(back_comp_initial_dep_points):           
+        for dep in sorted(back_comp_initial_dep_points):
             first_common_point = min(back_comp_initial_dep_points[dep])
             at_initial_point = (first_common_point == initial_point)
             left, left_output, right = dep
@@ -1785,8 +1790,8 @@ class config( object ):
                 section_seq_map=section_seq_map, tasks_to_prune=[]
             )
 
-    def parse_graph( self, section, graph, section_seq_map=None,
-                     tasks_to_prune=None, return_all_dependencies=False ):
+    def parse_graph(self, section, graph, section_seq_map=None,
+                    tasks_to_prune=None, return_all_dependencies=False):
         """Parse a multi-line graph string for section.
 
         section should be a string like "R1" or "T00".
@@ -1818,17 +1823,13 @@ class config( object ):
             self.sequences.append(seq)
 
         # split the graph string into successive lines
-        lines = re.split( '\s*\n\s*', graph )
         special_dependencies = []
-        for xline in lines:
+        for xline in graph.splitlines():
             # strip comments
-            line = re.sub( '#.*', '', xline )
+            line = re.sub('#.*', '', xline).strip()
             # ignore blank lines
-            if re.match( '^\s*$', line ):
+            if not line:
                 continue
-            # strip leading or trailing spaces
-            line = re.sub( '^\s*', '', line )
-            line = re.sub( '\s*$', '', line )
             # generate pygraphviz graph nodes and edges, and task definitions
             special_dependencies.extend(self.process_graph_line(
                 line, section, seq, offset_seq_map,
@@ -1837,25 +1838,23 @@ class config( object ):
             ))
         return special_dependencies
 
-    def get_taskdef( self, name ):
-        # (DefinitionError caught above)
-
-        # get the dense task runtime
+    def get_taskdef(self, name):
+        """Get the dense task runtime."""
+        # (TaskDefError caught above)
         try:
             rtcfg = self.cfg['runtime'][name]
         except KeyError:
-            raise TaskNotDefinedError, "Task not found: " + name
+            raise TaskNotDefinedError(name)
         # We may want to put in some handling for cases of changing the
         # initial cycle via restart (accidentally or otherwise).
 
         # Get the taskdef object for generating the task proxy class
-        taskd = taskdef.taskdef(
-            name, rtcfg, self.run_mode, self.start_point)
+        taskd = TaskDef(name, rtcfg, self.run_mode, self.start_point)
 
         # TODO - put all taskd.foo items in a single config dict
         # Set cold-start task indicators.
         if name in self.cfg['scheduling']['special tasks']['cold-start']:
-            taskd.modifiers.append( 'oneoff' )
+            taskd.modifiers.append('oneoff')
             taskd.is_coldstart = True
 
         # Set clock-triggered tasks.
@@ -1863,33 +1862,23 @@ class config( object ):
             taskd.modifiers.append('clocktriggered')
             taskd.clocktrigger_offset = self.clock_offsets[name]
 
-        taskd.sequential = name in self.cfg['scheduling']['special tasks']['sequential']
+        taskd.sequential = (
+            name in self.cfg['scheduling']['special tasks']['sequential'])
 
-        foo = copy(self.runtime['linearized ancestors'][ name ])
+        foo = copy(self.runtime['linearized ancestors'][name])
         foo.reverse()
         taskd.namespace_hierarchy = foo
 
         return taskd
 
-    def get_task_proxy(self, name, point, state, stop_point, startup,
-                        submit_num, exists):
+    def get_task_proxy(self, name, *args, **kwargs):
+        """Return a task proxy for a named task."""
         try:
             tdef = self.taskdefs[name]
         except KeyError:
-            raise TaskNotDefinedError("ERROR, task not found: " + name)
-        return tdef.get_task_class()(point, state, stop_point, startup,
-                                      submit_num=submit_num, exists=exists)
+            raise TaskNotDefinedError(name)
+        return TaskProxy(tdef, *args, **kwargs)
 
-    def get_task_proxy_raw(self, name, point):
-        # Used by 'cylc submit' to submit tasks defined under runtime but not
-        # present in the graph. Assume the given point is valid for the task.
-        point = point.standardise()
-        try:
-            tdef = self.get_taskdef(name)
-        except KeyError:
-            raise TaskNotDefinedError("ERROR, task not found: " + name)
-        # (startup=False stops the adjustment of cycle point by the graph)
-        return tdef.get_task_class()(point, 'waiting', None, False, 0, False)
-
-    def get_task_class( self, name ):
-        return self.taskdefs[name].get_task_class()
+    def describe(self, name):
+        """Return a string that describe the named task."""
+        return self.taskdefs[name].describe()
