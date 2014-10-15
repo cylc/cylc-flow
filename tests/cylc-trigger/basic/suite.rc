@@ -1,0 +1,11 @@
+[scheduling]
+    [[dependencies]]
+        graph = "foo => bar"
+[runtime]
+    [[foo]]
+        command scripting = """
+            cylc trigger $CYLC_SUITE_NAME bar 1
+            sleep 10
+            cylc stop $CYLC_SUITE_NAME
+            sleep 10
+        """
