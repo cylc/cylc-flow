@@ -831,7 +831,8 @@ class pool(object):
         for itask in self.get_tasks():
             if itask.id in ids:
                 itask.manual_trigger = True
-                itask.reset_state_ready()
+                if not itask.state.is_currently('queued'):
+                    itask.reset_state_ready()
 
     def check_task_timers(self):
         for itask in self.get_tasks():
