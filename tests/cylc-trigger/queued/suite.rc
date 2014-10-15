@@ -1,0 +1,20 @@
+[scheduling]
+    [[queues]]
+        [[[my_queue]]]
+            limit = 1
+            members = METASYNTACTIC
+    [[dependencies]]
+        graph = "foo:start => bar"
+[runtime]
+    [[METASYNTACTIC]]
+    [[foo]]
+        inherit = METASYNTACTIC
+        command scripting = """
+            sleep 10
+            cylc trigger $CYLC_SUITE_NAME bar 1
+            sleep 10
+            cylc stop $CYLC_SUITE_NAME
+            sleep 10
+        """
+    [[bar]]
+        inherit = METASYNTACTIC

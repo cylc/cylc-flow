@@ -1,0 +1,24 @@
+2014-10-14T16:46:25+01 INFO - port:7777
+2014-10-14T16:46:25+01 INFO - Suite starting at 2014-10-14T16:46:25+01
+2014-10-14T16:46:26+01 INFO - Log event clock: real time
+2014-10-14T16:46:26+01 INFO - Run mode: live
+2014-10-14T16:46:26+01 INFO - Initial point: 1
+2014-10-14T16:46:26+01 INFO - Final point: 1
+2014-10-14T16:46:26+01 INFO - Cold Start 1
+2014-10-14T16:46:26+01 INFO - [foo.1] -initiate job-submit
+2014-10-14T16:46:26+01 INFO - [foo.1] -triggered off []
+2014-10-14T16:46:27+01 INFO - 12266
+2014-10-14T16:46:27+01 INFO - [foo.1] -submit_method_id=12266
+2014-10-14T16:46:27+01 INFO - [foo.1] -submission succeeded
+2014-10-14T16:46:27+01 INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-10-14T16:46:26+01
+2014-10-14T16:46:38+01 INFO - Command succeeded: trigger task(bar,1,False)
+2014-10-14T16:46:39+01 INFO - [bar.1] -initiate job-submit
+2014-10-14T16:46:39+01 INFO - [bar.1] -triggered off ['foo.1']
+2014-10-14T16:46:40+01 INFO - 12378
+2014-10-14T16:46:40+01 INFO - [bar.1] -submit_method_id=12378
+2014-10-14T16:46:40+01 INFO - [bar.1] -submission succeeded
+2014-10-14T16:46:40+01 INFO - [bar.1] -(current:submitted)> bar.1 started at 2014-10-14T16:46:39+01
+2014-10-14T16:46:48+01 INFO - Command succeeded: stop cleanly(False)
+2014-10-14T16:46:49+01 INFO - [bar.1] -(current:running)> bar.1 succeeded at 2014-10-14T16:46:48+01
+2014-10-14T16:46:58+01 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-10-14T16:46:58+01
+2014-10-14T16:46:59+01 INFO - Suite shutting down at 2014-10-14T16:46:59+01
