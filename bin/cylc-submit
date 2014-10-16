@@ -33,7 +33,6 @@ import cylc.TaskID
 from cylc.cycling.loader import get_point
 from cylc.task_types.task import task
 from cylc.suite_host import get_suite_host, get_hostname
-from cylc.port_scan import SuiteIdentificationError
 from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log

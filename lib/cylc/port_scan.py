@@ -213,7 +213,7 @@ def check_port( suite, pphrase, port, owner=user, host=get_hostname(), pyro_time
             print >> sys.stderr, ' NOT ' + suite + ' ' + owner + ' ' + host + ' ' + port
             raise OtherSuiteFoundError, "ERROR: Found another suite"
 
-def scan( host=get_hostname(), db=None, pyro_timeout=None, silent=False ):
+def scan(host=get_hostname(), db=None, pyro_timeout=None):
     #print 'SCANNING PORTS'
     # scan all cylc Pyro ports for cylc suites
 
@@ -238,7 +238,7 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, silent=False ):
         else:
             my_passphrases[ rg ] = pp
 
-    suites = []
+    results = []
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         before = datetime.datetime.now()
         try:
@@ -262,11 +262,8 @@ def scan( host=get_hostname(), db=None, pyro_timeout=None, silent=False ):
         except:
             raise
         else:
-            if not silent:
-                # used by cylc db viewer scanning for running suites
-                print name, owner, host, port
             if flags.verbose:
                 after = datetime.datetime.now()
                 print "Pyro connection on port " +str(port) + " took: " + str( after - before )
-            suites.append( ( name, port ) )
-    return suites
+            results.append((name, owner, host, port))
+    return results
