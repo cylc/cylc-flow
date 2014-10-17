@@ -52,4 +52,4 @@ class sge(JobSubmit):
     @classmethod
     def poll(cls, jid):
         """Return True if jid is in the queueing system."""
-        return not Popen(["qstat", "-j", jid], stdout=PIPE).wait()
+        return Popen(["qstat", "-j", jid], stdout=PIPE).wait()
