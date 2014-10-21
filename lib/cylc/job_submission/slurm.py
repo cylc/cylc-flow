@@ -15,63 +15,46 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""SLURM job submission."""
 
 import re
-from job_submit import JobSubmit
+from cylc.job_submission.job_submit import JobSubmit
+from subprocess import Popen, PIPE
 
-class slurm( JobSubmit ):
-    """
-SLURM job submission.
-    """
 
-    COMMAND_TEMPLATE = "sbatch %s"
-    REC_ID = re.compile(r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
+class slurm(JobSubmit):
+    """SLURM job submission."""
 
-    def set_directives( self ):
+    EXEC_KILL = "scancel"
+    EXEC_SUBMIT = "sbatch"
+    REC_ID_FROM_OUT = re.compile(r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
+
+    def set_directives(self):
         self.jobconfig['directive prefix'] = "#SBATCH"
-        self.jobconfig['directive final']  = None
+        self.jobconfig['directive final'] = None
         self.jobconfig['directive connector'] = "="
 
         defaults = {}
-        defaults[ '--job-name' ] = self.task_id
+        defaults['--job-name'] = self.task_id
         # Replace literal '$HOME' in stdout and stderr file paths with ''
         # because environment variables are not interpreted in directives.
         # (For remote tasks the local home directory path is replaced
         # with '$HOME' in config.py).
-        defaults[ '--output' ] = re.sub( '\$HOME/', '', self.stdout_file )
-        defaults[ '--error' ]  = re.sub( '\$HOME/', '', self.stderr_file )
+        defaults['--output'] = re.sub('\$HOME/', '', self.stdout_file)
+        defaults['--error'] = re.sub('\$HOME/', '', self.stderr_file)
 
         # In case the user wants to override the above defaults:
-        for d,val in self.jobconfig['directives'].items():
-            defaults[ d ] = val
+        for key, val in self.jobconfig['directives'].items():
+            defaults[key] = val
         self.jobconfig['directives'] = defaults
 
-    def construct_job_submit_command( self ):
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.__class__.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path )
-
-    def get_id( self, out, err ):
-        """
-        Extract the job submit ID from job submission command
-        output.
-        """
-        for line in str(out).splitlines():
-            match = self.REC_ID.match(line)
-            if match:
-                return match.group("id")
-
-    def kill( self, jid, st_file=None ):
-        """Kill the job."""
-        check_call(["scancel", jid])
-
-    def poll( self, jid ):
-        """Return 0 if jid is in the queueing system, 1 otherwise."""
+    @classmethod
+    def poll(cls, jid):
+        """Return True if jid is in the queueing system."""
         proc = Popen(["squeue", "-j", jid], stdout=PIPE)
         if proc.wait():
-            return 1
-        out, err = proc.communicate()
+            return False
+        out = proc.communicate()[0]
         # "squeue -j ID" returns something like:
         #
         #  JOBID PARTITION     NAME     USER  ST       TIME  NODES NODELIST(REASON)
@@ -80,5 +63,5 @@ SLURM job submission.
         for line in out.splitlines():
             items = line.strip().split(None, 1)
             if items and (items[0] == jid):
-                return 0
-        return 1
+                return True
+        return False

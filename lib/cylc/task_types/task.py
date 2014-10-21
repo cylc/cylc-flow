@@ -15,14 +15,12 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Task Proxy and related."""
 
 import Queue
 import os
-import sys
 import re
 import time
-import sys
-import datetime
 import subprocess
 from copy import copy
 from random import randrange
@@ -36,75 +34,68 @@ from cylc.job_logs import CommandLogger
 import cylc.rundb
 import cylc.flags as flags
 from cylc.wallclock import (
-        get_current_time_string,
-        get_time_string_from_unix_time,
-        get_seconds_as_interval_string,
-        RE_DATE_TIME_FORMAT_EXTENDED
+    get_current_time_string,
+    get_time_string_from_unix_time,
+    get_seconds_as_interval_string,
+    RE_DATE_TIME_FORMAT_EXTENDED
 )
 from cylc.task_receiver import msgqueue
-from cylc.command_env import cv_scripting_sl
 from cylc.host_select import get_task_host
+from cylc.job_submission.job_submit import JobSubmit
 from parsec.util import pdeepcopy, poverride
 from cylc.mp_pool import (
-        CMD_TYPE_EVENT_HANDLER,
-        CMD_TYPE_JOB_POLL_KILL,
-        JOB_SKIPPED_FLAG
+    CMD_TYPE_EVENT_HANDLER,
+    CMD_TYPE_JOB_POLL_KILL,
+    CMD_TYPE_JOB_SUBMISSION,
+    JOB_SKIPPED_FLAG
 )
+import shlex
+import traceback
 
-cylc_mode = 'scheduler'
-poll_suffix_re = re.compile(
-    ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
 
-def displaytd( td ):
-    # Display a python timedelta sensibly.
-    # Default for str(td) of -5 sec is '-1 day, 23:59:55' !
-    d, s, m = td.days, td.seconds, td.microseconds
-    secs = d * 24 * 3600 + s + m / 10**6
-    if secs < 0:
-        res = '-' + str( datetime.timedelta( 0, - secs, 0 ))
-    else:
-        res = str(td)
-    return res
+class PollTimer(object):
 
-class PollTimer( object ):
-
-    def __init__( self, intervals, defaults, name, log ):
-        self.intervals = copy( deque(intervals) )
-        self.default_intervals = deque( defaults )
+    def __init__(self, intervals, defaults, name, log):
+        self.intervals = copy(deque(intervals))
+        self.default_intervals = deque(defaults)
         self.name = name
         self.log = log
         self.current_interval = None
         self.timeout = None
 
-    def set_host( self, host, set_timer=False ):
+    def set_host(self, host, set_timer=False):
         # the polling comms method is host-specific
-        if GLOBAL_CFG.get_host_item( 'task communication method', host ) == "poll":
+        if GLOBAL_CFG.get_host_item(
+                'task communication method', host) == "poll":
             if not self.intervals:
                 self.intervals = copy(self.default_intervals)
-                self.log(WARNING, '(polling comms) using default ' + self.name + ' polling intervals' )
+                self.log(
+                    WARNING,
+                    '(polling comms) using default %s polling intervals' %
+                    self.name
+                )
             if set_timer:
                 self.set_timer()
 
-    def set_timer( self ):
+    def set_timer(self):
         try:
-            self.current_interval = self.intervals.popleft() # seconds
+            self.current_interval = self.intervals.popleft()  # seconds
         except IndexError:
             # no more intervals, keep the last one
             pass
 
         if self.current_interval:
-            self.log(INFO, 'setting ' + self.name + ' poll timer for ' + str(self.current_interval) + ' seconds' )
+            self.log(INFO, 'setting %s poll timer for %d seconds' % (
+                self.name, self.current_interval))
             self.timeout = time.time() + self.current_interval
         else:
             self.timeout = None
 
-    def get( self ):
-        if not self.timeout:
-            return False
-        return (time.time() > self.timeout)
+    def get(self):
+        return self.timeout and time.time() > self.timeout
 
 
-class task( object ):
+class task(object):
     """The cylc task proxy base class"""
 
     # RETRY LOGIC:
@@ -119,55 +110,103 @@ class task( object ):
     # if execution retries are configured; and is passed to task
     # environments to allow changed behaviour after previous failures.
 
+    POLL_SUFFIX_RE = re.compile(
+        ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
+
+    single_task_mode = False
+
     intercycle = False
     is_clock_triggered = False
 
     proc_pool = None
 
-    suite_contact_env_hosts = []
+    _INIT_SUITE_HOSTS = []
     suite_contact_env = {}
     event_handler_env = {}
-    SUITE_CONTACT_ENV_SSH_OPTS = ['-oBatchMode=yes', '-oConnectTimeout=10']
 
     mean_total_elapsed_time = None
     sequences = []
     implicit_sequences = []
 
     @classmethod
-    def describe( cls ):
+    def describe(cls):
         return cls.title + '\n' + cls.description
 
     @classmethod
-    def set_class_var( cls, item, value ):
+    def set_class_var(cls, item, value):
         # set the value of a class variable
         # that will be written to the state dump file
         try:
-            cls.class_vars[ item ] = value
+            cls.class_vars[item] = value
         except AttributeError:
             cls.class_vars = {}
-            cls.class_vars[ item ] = value
+            cls.class_vars[item] = value
 
     @classmethod
-    def get_class_var( cls, item ):
+    def get_class_var(cls, item):
         # get the value of a class variable that is
         # written to the state dump file
         try:
-            return cls.class_vars[ item ]
+            return cls.class_vars[item]
         except:
             raise AttributeError
 
     @classmethod
-    def dump_class_vars( cls, FILE ):
+    def dump_class_vars(cls, handle):
         # dump special class variables to the state dump file
         try:
             result = ''
             for key in cls.class_vars:
-                result += key + '=' + str( cls.class_vars[ key ] ) + ', '
-            result = result.rstrip( ', ' )
-            FILE.write( 'class ' + cls.__name__ + ' : ' + result + '\n')
+                result += key + '=' + str(cls.class_vars[key]) + ', '
+            result = result.rstrip(', ')
+            handle.write('class ' + cls.__name__ + ' : ' + result + '\n')
         except AttributeError:
             # class has no class_vars defined
             pass
+
+    @classmethod
+    def init_remote_suite_run_dir(cls, suite_name, user_at_host):
+        """Initialise suite run dir on a user@host.
+
+        Create SUITE_RUN_DIR/log/job/ if necessary.
+        Install suite contact environment file.
+        Install suite python modules.
+
+        """
+        if '@' in user_at_host:
+            owner, host = user_at_host.split('@', 1)
+        else:
+            owner, host = None, user_at_host
+        if ((owner, host) in [(None, 'localhost'), (user, 'localhost')] or
+                host in cls._INIT_SUITE_HOSTS or
+                cls.single_task_mode):
+            return
+
+        suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            suite_name, 'suite run directory')
+        sources = [os.path.join(suite_run_dir, "cylc-suite-env")]
+        suite_run_py = os.path.join(suite_run_dir, "python")
+        if os.path.isdir(suite_run_py):
+            sources.append(suite_run_py)
+        r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            suite_name, 'suite run directory', host, owner)
+        r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
+            suite_name, 'suite job log directory', host, owner)
+        getLogger('main').log(INFO, 'Initialising %s:%s' % (
+            user_at_host, r_suite_run_dir))
+
+        ssh_tmpl = GLOBAL_CFG.get_host_item(
+            'remote shell template', host, owner)
+        scp_tmpl = GLOBAL_CFG.get_host_item(
+            'remote copy template', host, owner)
+
+        cmd1 = shlex.split(ssh_tmpl % user_at_host) + [
+            'mkdir -p "%s" "%s"' % (r_suite_run_dir, r_log_job_dir)]
+        cmd2 = shlex.split(scp_tmpl) + ["-r"] + sources + [
+            user_at_host + ":" + r_suite_run_dir + "/"]
+        for cmd in [cmd1, cmd2]:
+            subprocess.check_call(cmd)
+        cls._INIT_SUITE_HOSTS.append(user_at_host)
 
     @classmethod
     def update_mean_total_elapsed_time(cls, t_started, t_succeeded):
@@ -179,12 +218,10 @@ class task( object ):
         mtet_sec = sum(cls.elapsed_times) / len(cls.elapsed_times)
         cls.mean_total_elapsed_time = mtet_sec
 
-
-    def __init__( self, state, validate=False ):
+    def __init__(self, state, validate=False):
         # Call this AFTER derived class initialisation
 
-        class_vars = {}
-        self.state = task_state.task_state( state )
+        self.state = task_state.task_state(state)
         self.manual_trigger = False
 
         self.stop_point = None
@@ -198,18 +235,18 @@ class task( object ):
         self.started_time = None
         self.finished_time = None
         self.summary = {
-                'latest_message': self.latest_message,
-                'submitted_time': None,
-                'submitted_time_string': None,
-                'started_time': None,
-                'started_time_string': None,
-                'finished_time': None,
-                'finished_time_string': None,
-                'name': self.name,
-                'description': self.description,
-                'title': self.title,
-                'label': str(self.point),
-                'logfiles': self.logfiles.get_paths()
+            'latest_message': self.latest_message,
+            'submitted_time': None,
+            'submitted_time_string': None,
+            'started_time': None,
+            'started_time_string': None,
+            'finished_time': None,
+            'finished_time_string': None,
+            'name': self.name,
+            'description': self.description,
+            'title': self.title,
+            'label': str(self.point),
+            'logfiles': self.logfiles.get_paths()
         }
         self.retries_configured = False
 
@@ -245,11 +282,11 @@ class task( object ):
         self.submission_poll_timer = None
         self.execution_poll_timer = None
 
-        self.logger = getLogger( "main" )
+        self.logger = getLogger("main")
         self.command_logger = CommandLogger(
-                self.suite_name, self.name, self.point)
+            self.suite_name, self.name, self.point)
 
-        if self.validate: # if in validate mode bypass db operations
+        if self.validate:  # if in validate mode bypass db operations
             self.submit_num = 0
         else:
             if not self.exists:
@@ -269,8 +306,7 @@ class task( object ):
         self.logger.log(lvl, msg)
 
     def command_log(self, log_type, out=None, err=None):
-        self.command_logger.append_to_log(
-                self.submit_num, log_type, out, err)
+        self.command_logger.append_to_log(self.submit_num, log_type, out, err)
 
     def record_db_event(self, event="", message=""):
         call = cylc.rundb.RecordEventObject(
@@ -290,13 +326,19 @@ class task( object ):
                         is_manual_submit=None, try_num=None, host=None,
                         submit_method=None, submit_method_id=None,
                         status=None):
-        call = cylc.rundb.RecordStateObject(name, str(cycle),
-                     time_created_string=time_created_string,
-                     time_updated_string=time_updated_string,
-                     submit_num=submit_num,
-                     is_manual_submit=is_manual_submit, try_num=try_num,
-                     host=host, submit_method=submit_method,
-                     submit_method_id=submit_method_id, status=status)
+        call = cylc.rundb.RecordStateObject(
+            name,
+            str(cycle),
+            time_created_string=time_created_string,
+            time_updated_string=time_updated_string,
+            submit_num=submit_num,
+            is_manual_submit=is_manual_submit,
+            try_num=try_num,
+            host=host,
+            submit_method=submit_method,
+            submit_method_id=submit_method_id,
+            status=status
+        )
         self.db_queue.append(call)
         self.db_items = True
 
@@ -309,7 +351,7 @@ class task( object ):
                 item.to_run = False
         return ops
 
-    def retry_delay_done( self ):
+    def retry_delay_done(self):
         done = False
         now_time = time.time()
         if self.retry_delay_timer_timeout:
@@ -320,8 +362,8 @@ class task( object ):
                 done = True
         return done
 
-    def ready_to_run( self ):
-        if self.state.is_currently('queued'): # ready by definition
+    def ready_to_run(self):
+        if self.state.is_currently('queued'):  # ready by definition
             return True
         elif (self.state.is_currently('waiting') and
                 self.prerequisites.all_satisfied()):
@@ -332,20 +374,19 @@ class task( object ):
         else:
             return False
 
-    def get_resolved_dependencies( self ):
+    def get_resolved_dependencies(self):
         """report who I triggered off"""
         # Used by the test-battery log comparator
         dep = []
         satby = self.prerequisites.get_satisfied_by()
         for label in satby.keys():
-            dep.append( satby[ label ] )
+            dep.append(satby[label])
         # order does not matter here; sort to allow comparison with
         # reference run task with lots of near-simultaneous triggers.
         dep.sort()
         return dep
 
-
-    def unfail( self ):
+    def unfail(self):
         # if a task is manually reset remove any previous failed message
         # or on later success it will be seen as an incomplete output.
         failed_msg = self.id + " failed"
@@ -355,30 +396,30 @@ class task( object ):
         if self.outputs.exists(failed_msg):
             self.outputs.remove(failed_msg)
 
-    def turn_off_timeouts( self ):
+    def turn_off_timeouts(self):
         self.submission_timer_timeout = None
         self.execution_timer_timeout = None
 
-    def reset_state_ready( self ):
-        self.set_status( 'waiting' )
+    def reset_state_ready(self):
+        self.set_status('waiting')
         self.record_db_event(event="reset to ready")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
 
-    def reset_state_waiting( self ):
+    def reset_state_waiting(self):
         # waiting and all prerequisites UNsatisified.
-        self.set_status( 'waiting' )
+        self.set_status('waiting')
         self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
 
-    def reset_state_succeeded( self, manual=True ):
+    def reset_state_succeeded(self, manual=True):
         # all prerequisites satisified and all outputs complete
-        self.set_status( 'succeeded' )
+        self.set_status('succeeded')
         if manual:
             self.record_db_event(event="reset to succeeded")
         else:
@@ -390,33 +431,33 @@ class task( object ):
         self.turn_off_timeouts()
         self.outputs.set_all_completed()
 
-    def reset_state_failed( self ):
+    def reset_state_failed(self):
         # all prerequisites satisified and no outputs complete
-        self.set_status( 'failed' )
+        self.set_status('failed')
         self.record_db_event(event="reset to failed")
         self.prerequisites.set_all_satisfied()
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
         self.turn_off_timeouts()
-        self.outputs.add( self.id + ' failed', completed=True )
+        self.outputs.add(self.id + ' failed', completed=True)
 
-    def reset_state_held( self ):
-        self.set_status( 'held' )
+    def reset_state_held(self):
+        self.set_status('held')
         self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
 
-    def set_state_ready( self ):
-        self.set_status( 'ready' )
+    def set_state_ready(self):
+        self.set_status('ready')
 
-    def set_state_queued( self ):
-        self.set_status( 'queued' )
+    def set_state_queued(self):
+        self.set_status('queued')
 
     def job_submission_callback(self, result):
         out, err = result['OUT'], result['ERR']
         status = result['EXIT']
         # Get filtered output for logging purposes.
         f_out, f_err = self.job_sub_method.filter_output(
-                result['OUT'], result['ERR'])
+            result['OUT'], result['ERR'])
         self.command_log("SUBMIT", f_out, f_err)
         if status != 0:
             if status == JOB_SKIPPED_FLAG:
@@ -430,8 +471,9 @@ class task( object ):
             pass
         else:
             self.log(INFO, 'submit_method_id=' + self.submit_method_id)
-            self.record_db_update("task_states", self.name,
-                str(self.point), submit_method_id=self.submit_method_id)
+            self.record_db_update(
+                "task_states", self.name, str(self.point),
+                submit_method_id=self.submit_method_id)
         self.job_submission_succeeded()
 
     def job_poll_callback(self, result):
@@ -451,8 +493,8 @@ class task( object ):
             self.process_incoming_message(('NORMAL', out.strip()))
 
     def job_kill_callback(self, result):
-        out   = result['OUT']
-        err   = result['ERR']
+        out = result['OUT']
+        err = result['ERR']
         self.command_log("KILL", out, err)
         if result['EXIT'] != 0:
             self.log(WARNING, 'job kill failed')
@@ -465,69 +507,70 @@ class task( object ):
             self.job_execution_failed()
         else:
             msg = ('ignoring job kill result, unexpected task state: %s'
-                    % self.state.get_status())
+                   % self.state.get_status())
             self.log(WARNING, msg)
-            with open(file_err, 'a') as f:
-                f.write("WARNING:" + msg)
  
     def event_handler_callback(self, result):
-        out   = result['OUT']
-        err   = result['ERR']
+        out = result['OUT']
+        err = result['ERR']
         self.command_log("EVENT", out, err)
         if result['EXIT'] != 0:
-            self.log (WARNING, 'event handler failed:\n  ' + result['CMD'])
+            self.log(WARNING, 'event handler failed:\n  ' + result['CMD'])
             return
 
-    def handle_event( self, event, descr=None, db_update=True, db_event=None, db_msg=None ):
-        # extra args for inconsistent use between events, logging, and db updates
+    def handle_event(
+            self, event, descr=None, db_update=True, db_event=None,
+            db_msg=None):
+        # extra args for inconsistent use between events, logging, and db
+        # updates
         db_event = db_event or event
         if db_update:
-            self.record_db_event(event=db_event, message=db_msg )
+            self.record_db_event(event=db_event, message=db_msg)
 
-        if self.__class__.run_mode != 'live' or \
-                ( self.__class__.run_mode == 'simulation' and \
-                        rtconfig['simulation mode']['disable task event hooks'] ) or \
-                ( self.__class__.run_mode == 'dummy' and \
-                        rtconfig['dummy mode']['disable task event hooks'] ):
+        if self.__class__.run_mode != 'live':
             return
- 
-        handlers = self.event_hooks[ event + ' handler' ]
+
+        handlers = self.event_hooks[event + ' handler']
         if handlers:
-            self.log(DEBUG, "Queueing " + event + " event handler(s)" )
+            self.log(DEBUG, "Queueing " + event + " event handler(s)")
             for handler in handlers:
-                self.log(DEBUG, "Queueing " + event + " event handler" )
+                self.log(DEBUG, "Queueing " + event + " event handler")
                 cmd = ""
-                for var, val in self.__class__.event_handler_env.items():
-                    cmd += var + '=' + val + ' '
-                cmd += " ".join( [handler, "'" + event + "'", self.suite_name, self.id, "'" + descr + "'"] )
-                cmd_spec = ( CMD_TYPE_EVENT_HANDLER, cmd )
-                self.__class__.proc_pool.put_command( cmd_spec, self.event_handler_callback )
+                env = None
+                if self.__class__.event_handler_env:
+                    env = dict(os.environ)
+                    env.update(self.__class__.event_handler_env)
+                cmd = "%s '%s' '%s' '%s' '%s'" % (
+                    handler, event, self.suite_name, self.id, descr)
+                self.__class__.proc_pool.put_command(
+                    CMD_TYPE_EVENT_HANDLER, cmd, self.event_handler_callback,
+                    env=env, shell=True)
 
     def job_submission_failed(self):
-        self.log(ERROR, 'submission failed' )
+        self.log(ERROR, 'submission failed')
         self.submit_method_id = None
         try:
             sub_retry_delay = self.sub_retry_delays.popleft()
         except IndexError:
             # No submission retry lined up: definitive failure.
             flags.pflag = True
-            outp = self.id + " submit-failed" # hack: see github #476
-            self.outputs.add( outp )
-            self.outputs.set_completed( outp )
-            self.set_status( 'submit-failed' )
-            self.handle_event( 'submission failed', 'job submission failed' )
+            outp = self.id + " submit-failed"  # hack: see github #476
+            self.outputs.add(outp)
+            self.outputs.set_completed(outp)
+            self.set_status('submit-failed')
+            self.handle_event('submission failed', 'job submission failed')
         else:
             # There is a submission retry lined up.
             self.sub_retry_delay = sub_retry_delay
             delay_msg = "submit-retrying in %s" % (
                 get_seconds_as_interval_string(sub_retry_delay))
             msg = "job submission failed, " + delay_msg
-            self.log(INFO, msg )
+            self.log(INFO, msg)
 
             self.sub_retry_delay_timer_timeout = (
                 time.time() + sub_retry_delay)
             self.sub_try_number += 1
-            self.set_status( 'submit-retrying' )
+            self.set_status('submit-retrying')
             self.record_db_event(event="submission failed",
                                  message=delay_msg)
             self.prerequisites.set_all_satisfied()
@@ -535,31 +578,31 @@ class task( object ):
 
             # TODO - is this record is redundant with that in handle_event?
             self.record_db_event(
-                    event="submission failed",
-                    message="submit-retrying in " + str(sub_retry_delay))
-            self.handle_event( 'submission retry', msg )
+                event="submission failed",
+                message="submit-retrying in " + str(sub_retry_delay))
+            self.handle_event('submission retry', msg)
 
     def job_submission_succeeded(self):
-        self.log(INFO, 'submission succeeded' )
+        self.log(INFO, 'submission succeeded')
         if self.__class__.run_mode == 'simulation':
             self.started_time = time.time()
             self.summary['started_time'] = self.started_time
             self.summary['started_time_string'] = (
-                    get_time_string_from_unix_time(self.started_time))
+                get_time_string_from_unix_time(self.started_time))
             self.outputs.set_completed(self.id + " started")
             self.set_status('running')
             return
 
         outp = self.id + ' submitted'
-        if not self.outputs.is_completed( outp ):
-            self.outputs.set_completed( outp )
+        if not self.outputs.is_completed(outp):
+            self.outputs.set_completed(outp)
             # Allow submitted tasks to spawn even if nothing else is happening.
             flags.pflag = True
 
         self.submitted_time = time.time()
         self.summary['submitted_time'] = self.submitted_time
         self.summary['submitted_time_string'] = (
-                get_time_string_from_unix_time(self.submitted_time))
+            get_time_string_from_unix_time(self.submitted_time))
         self.summary['submit_method_id'] = self.submit_method_id
         self.summary['host'] = self.task_host
         if self.submit_method_id:
@@ -570,7 +613,7 @@ class task( object ):
         self.summary['latest_message'] = (
             self.latest_message.replace(self.id, "", 1).strip())
         self.handle_event(
-                'submitted', 'job submitted', db_event='submission succeeded')
+            'submitted', 'job submitted', db_event='submission succeeded')
 
         if self.state.is_currently('ready'):
             # The 'started' message can arrive before this.
@@ -584,12 +627,12 @@ class task( object ):
             else:
                 self.submission_timer_timeout = None
             self.submission_poll_timer.set_timer()
-            
-    def job_execution_failed( self ):
+
+    def job_execution_failed(self):
         self.finished_time = time.time()
         self.summary['finished_time'] = self.finished_time
         self.summary['finished_time_string'] = (
-                get_time_string_from_unix_time(self.finished_time))
+            get_time_string_from_unix_time(self.finished_time))
         self.execution_timer_timeout = None
         try:
             retry_delay = self.retry_delays.popleft()
@@ -598,10 +641,10 @@ class task( object ):
             # Note the 'failed' output is only added if needed.
             flags.pflag = True
             msg = self.id + ' failed'
-            self.outputs.add( msg )
-            self.outputs.set_completed( msg )
-            self.set_status( 'failed' )
-            self.handle_event( 'failed', 'job failed' )
+            self.outputs.add(msg)
+            self.outputs.set_completed(msg)
+            self.set_status('failed')
+            self.handle_event('failed', 'job failed')
 
         else:
             # There is a retry lined up
@@ -609,23 +652,24 @@ class task( object ):
             delay_msg = "retrying in %s" % (
                 get_seconds_as_interval_string(retry_delay))
             msg = "job failed, " + delay_msg
-            self.log(INFO, msg )
+            self.log(INFO, msg)
             self.retry_delay_timer_timeout = (
                 time.time() + retry_delay)
             self.try_number += 1
             self.set_status('retrying')
             self.prerequisites.set_all_satisfied()
             self.outputs.set_all_incomplete()
-            self.handle_event( 'retry', msg, db_msg= "retrying in " + str( retry_delay) )
+            self.handle_event(
+                'retry', msg, db_msg="retrying in " + str(retry_delay))
 
-    def reset_manual_trigger( self ):
+    def reset_manual_trigger(self):
         # call immediately after manual trigger flag used
         self.manual_trigger = False
         # unset any retry delay timers
         self.retry_delay_timer_timeout = None
         self.sub_retry_delay_timer_timeout = None
 
-    def set_from_rtconfig( self, cfg={} ):
+    def set_from_rtconfig(self, cfg=None):
         """Some [runtime] config requiring consistency checking on reload,
         and self variables requiring updating for the same."""
         # this is first called from class init (see taskdef.py)
@@ -644,50 +688,47 @@ class task( object ):
             self.retries_configured = True
             # TODO - saving the retry delay lists here is not necessary
             # (it can be handled like the polling interval lists).
-            if self.__class__.run_mode == 'live' or \
-                ( self.__class__.run_mode == 'simulation' and not rtconfig['simulation mode']['disable retries'] ) or \
-                ( self.__class__.run_mode == 'dummy' and not rtconfig['dummy mode']['disable retries'] ):
+            if (self.__class__.run_mode == 'live' or
+                    (self.__class__.run_mode == 'simulation' and
+                        not rtconfig['simulation mode']['disable retries']) or
+                    (self.__class__.run_mode == 'dummy' and
+                        not rtconfig['dummy mode']['disable retries'])):
                 # note that a *copy* of the retry delays list is needed
                 # so that all instances of the same task don't pop off
                 # the same deque (but copy of rtconfig above solves this).
-                self.retry_delays = deque( rtconfig['retry delays'] )
-                self.sub_retry_delays_orig = deque( rtconfig['job submission']['retry delays'])
+                self.retry_delays = deque(rtconfig['retry delays'])
+                self.sub_retry_delays_orig = deque(
+                    rtconfig['job submission']['retry delays'])
             else:
                 self.retry_delays = deque()
                 self.sub_retry_delays_orig = deque()
 
             # retain the original submission retry deque for re-use in
             # case execution fails and submission tries start over.
-            self.sub_retry_delays = copy( self.sub_retry_delays_orig )
+            self.sub_retry_delays = copy(self.sub_retry_delays_orig)
 
         rrange = rtconfig['simulation mode']['run time range']
-        ok = True
         if len(rrange) != 2:
-            ok = False
+            raise Exception("ERROR, " + self.name + ": simulation mode " +
+                            "run time range should be ISO 8601-compatible")
         try:
-            res = [rrange[0],rrange[1]]
-        except:
-            ok = False
-        if not ok:
-            raise Exception, ("ERROR, " + self.name + ": simulation mode " +
-                              "run time range should be ISO 8601-compatible")
-        try:
-            self.sim_mode_run_length = randrange( res[0], res[1] )
-        except Exception, x:
-            print >> sys.stderr, x
-            raise Exception, "ERROR: simulation mode task run time range must be [MIN,MAX)"
+            self.sim_mode_run_length = randrange(rrange[0], rrange[1])
+        except Exception, exc:
+            traceback.print_exc(exc)
+            raise Exception(
+                "ERROR: simulation mode task run time range must be [MIN,MAX)")
 
         self.event_hooks = rtconfig['event hooks']
 
-        self.submission_poll_timer = PollTimer( \
-                    copy( rtconfig['submission polling intervals']), 
-                    copy( GLOBAL_CFG.get( ['submission polling intervals'] )),
-                    'submission', self.log )
+        self.submission_poll_timer = PollTimer(
+            copy(rtconfig['submission polling intervals']),
+            copy(GLOBAL_CFG.get(['submission polling intervals'])),
+            'submission', self.log)
 
-        self.execution_poll_timer = PollTimer( \
-                    copy( rtconfig['execution polling intervals']), 
-                    copy( GLOBAL_CFG.get( ['execution polling intervals'] )),
-                   'execution', self.log )
+        self.execution_poll_timer = PollTimer(
+            copy(rtconfig['execution polling intervals']),
+            copy(GLOBAL_CFG.get(['execution polling intervals'])),
+            'execution', self.log)
 
     def increment_submit_num(self):
         self.log(DEBUG, "incrementing submit number")
@@ -696,51 +737,80 @@ class task( object ):
         self.record_db_update("task_states", self.name, str(self.point),
                               submit_num=self.submit_num)
 
-    def get_command( self, dry_run=False, overrides={} ):
+    def submit(self, dry_run=False, overrides=None):
+        """Submit a job for this task."""
+        self.set_state_ready()
+
+        if self.__class__.run_mode == 'simulation':
+            self.job_submission_succeeded()
+            return
+
+        # Prepare the job submit command
+        try:
+            self._prepare_submit(overrides=overrides)
+        except Exception, exc:
+            # Could be a bad command template.
+            if flags.debug:
+                traceback.print_exc(exc)
+            self.log(ERROR, "Failed to construct job submission command")
+            self.command_log("SUBMIT", err=str(exc))
+            self.job_submission_failed()
+            return
+
+        if dry_run:
+            print "JOB SCRIPT=" + self.job_sub_method.local_jobfile_path
+            return
+
+        return self._run_job_command(
+            CMD_TYPE_JOB_SUBMISSION,
+            "job-submit",
+            args=[self.job_sub_method.jobfile_path],
+            callback=self.job_submission_callback,
+            is_bg_submit=self.job_sub_method.IS_BG_SUBMIT,
+            stdin_file_path=self.job_sub_method.local_jobfile_path)
+
+    def _prepare_submit(self, overrides=None):
         """Get the job submission command.
 
         Exceptions here are caught in the task pool module.
-        
+
         """
         self.increment_submit_num()
 
         local_job_log_dir, common_job_log_path = (
-                CommandLogger.get_create_job_log_path(
-                self.suite_name, self.name, self.point, self.submit_num))
+            CommandLogger.get_create_job_log_path(
+                self.suite_name,
+                self.name,
+                self.point,
+                self.submit_num,
+                new_mode=True))
         local_jobfile_path = os.path.join(
-                local_job_log_dir, common_job_log_path)
+            local_job_log_dir, common_job_log_path)
 
-        rtconfig = pdeepcopy( self.__class__.rtconfig )
-        poverride( rtconfig, overrides )
+        rtconfig = pdeepcopy(self.__class__.rtconfig)
+        poverride(rtconfig, overrides)
 
-        self.set_from_rtconfig( rtconfig )
+        self.set_from_rtconfig(rtconfig)
 
         if len(self.env_vars) > 0:
             # Add in any instance-specific environment variables
             # (not currently used?)
-            rtconfig['environment'].update( self.env_vars )
+            rtconfig['environment'].update(self.env_vars)
 
         # construct the job_sub_method here so that a new one is used if
         # the task is re-triggered by the suite operator - so it will
         # get new stdout/stderr logfiles and not overwrite the old ones.
 
         # dynamic instantiation - don't know job sub method till run time.
-        module_name = rtconfig['job submission']['method']
-        self.job_sub_method_name = module_name
-
-        class_name  = module_name
+        self.job_sub_method_name = rtconfig['job submission']['method']
         try:
-            # try to import built-in job submission classes first
-            mod = __import__( 'cylc.job_submission.' + module_name, fromlist=[class_name] )
+            job_sub_method_cls = JobSubmit.get_class(self.job_sub_method_name)
         except ImportError:
-            try:
-                # else try for user-defined job submission classes, in sys.path
-                mod = __import__( module_name, fromlist=[class_name] )
-            except ImportError, x:
-                self.log(ERROR, 'cannot import job submission module ' + class_name )
-                raise
-
-        job_sub_method_class = getattr( mod, class_name )
+            self.log(
+                ERROR,
+                'cannot import job submission module ' +
+                self.job_sub_method_name)
+            raise
 
         command = rtconfig['command scripting']
         use_manual = rtconfig['manual completion']
@@ -770,9 +840,13 @@ class task( object ):
                 comstr += " --interval=" + str(int(
                     rtconfig['suite state polling']['interval']))
             if rtconfig['suite state polling']['max-polls']:
-                comstr += " --max-polls=" + str(rtconfig['suite state polling']['max-polls'])
+                comstr += (
+                    " --max-polls=" +
+                    str(rtconfig['suite state polling']['max-polls']))
             if rtconfig['suite state polling']['run-dir']:
-                comstr += " --run-dir=" + str(rtconfig['suite state polling']['run-dir'])
+                comstr += (
+                    " --run-dir=" +
+                    str(rtconfig['suite state polling']['run-dir']))
             comstr += " " + self.suite_polling_cfg['suite']
             command = "echo " + comstr + "\n" + comstr
 
@@ -780,9 +854,9 @@ class task( object ):
         # because dynamic host selection may be used.
 
         # host may be None (= run task on suite host)
-        self.task_host = get_task_host( rtconfig['remote']['host'] )
+        self.task_host = get_task_host(rtconfig['remote']['host'])
         if self.task_host != "localhost":
-            self.log(INFO, "Task host: " + self.task_host )
+            self.log(INFO, "Task host: " + self.task_host)
 
         self.task_owner = rtconfig['remote']['owner']
 
@@ -790,189 +864,162 @@ class task( object ):
             self.user_at_host = self.task_owner + "@" + self.task_host
         else:
             self.user_at_host = self.task_host
-        self.submission_poll_timer.set_host( self.task_host )
-        self.execution_poll_timer.set_host( self.task_host )
+        self.submission_poll_timer.set_host(self.task_host)
+        self.execution_poll_timer.set_host(self.task_host)
 
-        if self.task_host not in self.__class__.suite_contact_env_hosts and \
-                self.user_at_host != 'localhost' and cylc_mode == 'scheduler':
-            # If the suite contact file has not been copied to user@host
-            # host yet, do so.
-            suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-                                self.suite_name,
-                                'suite run directory')
-            env_file_path = os.path.join(suite_run_dir, 'cylc-suite-env')
-            r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-                                self.suite_name,
-                                'suite run directory',
-                                self.task_host,
-                                self.task_owner)
-            r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
-                self.suite_name,
-                'suite job log directory',
-                self.task_host,
-                self.task_owner)
-            r_env_file_path = '%s:%s/cylc-suite-env' % (
-                                self.user_at_host,
-                                r_suite_run_dir)
-            self.log(INFO, 'Installing %s' % r_env_file_path)
-            cmd1 = (['ssh'] + self.SUITE_CONTACT_ENV_SSH_OPTS +
-                    [self.user_at_host, 'mkdir', '-p', r_suite_run_dir,
-                     r_log_job_dir])
-            cmd2 = (['scp'] + self.SUITE_CONTACT_ENV_SSH_OPTS +
-                    [env_file_path, r_env_file_path])
-            # A bad hostname will fail first here.
-            for cmd in [cmd1, cmd2]:
-                subprocess.check_call(cmd)
-            self.__class__.suite_contact_env_hosts.append( self.task_host )
+        self.init_remote_suite_run_dir(self.suite_name, self.user_at_host)
 
         self.record_db_update(
             "task_states", self.name, str(self.point),
-            submit_method=module_name, host=self.user_at_host
+            submit_method=self.job_sub_method_name, host=self.user_at_host
         )
         jobconfig = {
-                'directives': rtconfig['directives'],
-                'initial scripting': rtconfig['initial scripting'],
-                'environment scripting': rtconfig['environment scripting'],
-                'runtime environment': rtconfig['environment'],
-                'remote suite path': rtconfig['remote']['suite definition directory'],
-                'job script shell': rtconfig['job submission']['shell'],
-                'command template': rtconfig['job submission']['command template'],
-                'work sub-directory': rtconfig['work sub-directory'],
-                'use manual completion': use_manual,
-                'pre-command scripting': precommand,
-                'command scripting': command,
-                'post-command scripting': postcommand,
-                'namespace hierarchy': self.namespace_hierarchy,
-                'submission try number': self.sub_try_number,
-                'try number': self.try_number,
-                'absolute submit number': self.submit_num,
-                'is cold-start': self.is_coldstart,
-                'task owner': self.task_owner,
-                'task host': self.task_host,
-                'log files': self.logfiles,
-                'local job file path': local_jobfile_path,
-                'common job log path': common_job_log_path
+            'directives': rtconfig['directives'],
+            'initial scripting': rtconfig['initial scripting'],
+            'environment scripting': rtconfig['environment scripting'],
+            'runtime environment': rtconfig['environment'],
+            'remote suite path': (
+                rtconfig['remote']['suite definition directory']),
+            'job script shell': rtconfig['job submission']['shell'],
+            'command template': rtconfig['job submission']['command template'],
+            'work sub-directory': rtconfig['work sub-directory'],
+            'use manual completion': use_manual,
+            'pre-command scripting': precommand,
+            'command scripting': command,
+            'post-command scripting': postcommand,
+            'namespace hierarchy': self.namespace_hierarchy,
+            'submission try number': self.sub_try_number,
+            'try number': self.try_number,
+            'absolute submit number': self.submit_num,
+            'is cold-start': self.is_coldstart,
+            'task owner': self.task_owner,
+            'task host': self.task_host,
+            'log files': self.logfiles,
+            'local job file path': local_jobfile_path,
+            'common job log path': common_job_log_path
         }
 
-        self.job_sub_method = job_sub_method_class(
-                self.id, self.suite_name, jobconfig, str(self.submit_num))
+        self.job_sub_method = job_sub_method_cls(
+            self.id, self.suite_name, jobconfig)
 
         self.job_sub_method.write_jobscript()
-        return self.job_sub_method.get_job_submission_command(dry_run)
+        return
 
-    def presubmit(self, owner, host, subnum):
-        """A cut down version of get_command().
-        
+    def _presubmit(self):
+        """A cut down version of prepare_submit().
+
         This provides access to job poll commands before the task is submitted,
         for polling in the submitted state or on suite restart.
-        
+
         """
+        if self.job_sub_method:
+            return self.job_sub_method
+
+        if self.user_at_host:
+            if "@" in self.user_at_host:
+                self.task_owner, self.task_host = (
+                    self.user_at_host.split('@', 1))
+            else:
+                self.task_host = self.user_at_host
         # TODO - refactor to get easier access to polling commands!
 
         rtconfig = pdeepcopy(self.__class__.rtconfig)
 
         local_job_log_dir, common_job_log_path = (
-                CommandLogger.get_create_job_log_path(
+            CommandLogger.get_create_job_log_path(
                 self.suite_name, self.name, self.point, self.submit_num))
         local_jobfile_path = os.path.join(
-                local_job_log_dir, common_job_log_path)
+            local_job_log_dir, common_job_log_path)
 
         # dynamic instantiation - don't know job sub method till run time.
-        module_name = rtconfig['job submission']['method']
-        self.job_sub_method_name = module_name
+        self.job_sub_method_name = rtconfig['job submission']['method']
 
-        class_name  = module_name
         try:
-            # try to import built-in job submission classes first
-            mod = __import__(
-                    'cylc.job_submission.' + module_name,
-                    fromlist=[class_name])
+            job_sub_method_cls = JobSubmit.get_class(self.job_sub_method_name)
         except ImportError:
-            try:
-                # else try for user-defined job submission classes, in sys.path
-                mod = __import__(module_name, fromlist=[class_name])
-            except ImportError, x:
-                self.log(
-                        ERROR,
-                        'cannot import job submission module ' + class_name)
-                raise
-
-        job_sub_method_class = getattr(mod, class_name)
+            self.log(
+                ERROR,
+                'cannot import job submission module ' +
+                self.job_sub_method_name)
+            raise
 
         jobconfig = {
-                'directives': rtconfig['directives'],
-                'initial scripting': rtconfig['initial scripting'],
-                'environment scripting': rtconfig['environment scripting'],
-                'runtime environment': rtconfig['environment'],
-                'remote suite path': rtconfig['remote']['suite definition directory'],
-                'job script shell': rtconfig['job submission']['shell'],
-                'command template': rtconfig['job submission']['command template'],
-                'work sub-directory': rtconfig['work sub-directory'],
-                'use manual completion': False,
-                'pre-command scripting': '',
-                'command scripting': '',
-                'post-command scripting': '',
-                'namespace hierarchy': '',
-                'submission try number': 1,
-                'try number': 1,
-                'absolute submit number': subnum,
-                'is cold-start': False,
-                'task owner': owner,
-                'task host': host,
-                'log files': self.logfiles,
-                'local job file path': local_jobfile_path,
-                'common job log path': common_job_log_path
+            'directives': rtconfig['directives'],
+            'initial scripting': rtconfig['initial scripting'],
+            'environment scripting': rtconfig['environment scripting'],
+            'runtime environment': rtconfig['environment'],
+            'remote suite path': (
+                rtconfig['remote']['suite definition directory']),
+            'job script shell': rtconfig['job submission']['shell'],
+            'command template': rtconfig['job submission']['command template'],
+            'work sub-directory': rtconfig['work sub-directory'],
+            'use manual completion': False,
+            'pre-command scripting': '',
+            'command scripting': '',
+            'post-command scripting': '',
+            'namespace hierarchy': '',
+            'submission try number': 1,
+            'try number': 1,
+            'absolute submit number': self.submit_num,
+            'is cold-start': False,
+            'task owner': self.task_owner,
+            'task host': self.task_host,
+            'log files': self.logfiles,
+            'local job file path': local_jobfile_path,
+            'common job log path': common_job_log_path
         }
         try:
-            job_sub_method = job_sub_method_class(
-                    self.id, self.suite_name, jobconfig, str(subnum))
-        except Exception, x:
-            raise
-            # currently a bad hostname will fail out here due to an is_remote_host() test
-            raise Exception('Failed to create job_sub_method\n  ' + str(x))
+            job_sub_method = job_sub_method_cls(
+                self.id, self.suite_name, jobconfig)
+        except Exception, exc:
+            # currently a bad hostname will fail out here due to an
+            # is_remote_host() test
+            raise Exception('Failed to create job_sub_method\n  ' + str(exc))
         return job_sub_method
 
-    def check_timers( self ):
+    def check_timers(self):
         # not called in simulation mode
-        if self.state.is_currently( 'submitted' ):
+        if self.state.is_currently('submitted'):
             self.check_submission_timeout()
             if self.submission_poll_timer:
                 if self.submission_poll_timer.get():
                     self.poll()
                     self.submission_poll_timer.set_timer()
-        elif self.state.is_currently( 'running' ):
+        elif self.state.is_currently('running'):
             self.check_execution_timeout()
             if self.execution_poll_timer:
                 if self.execution_poll_timer.get():
                     self.poll()
                     self.execution_poll_timer.set_timer()
 
-    def check_submission_timeout( self ):
+    def check_submission_timeout(self):
         # only called if in the 'submitted' state
         if self.submission_timer_timeout is None:
             # (explicit None in case of a zero timeout!)
             # no timer set
             return
 
-        # if timed out, log warning, poll, queue event handler, and turn off the timer
+        # if timed out, log warning, poll, queue event handler, and turn off
+        # the timer
         if time.time() > self.submission_timer_timeout:
             msg = 'job submitted %s ago, but has not started' % (
                 get_seconds_as_interval_string(
                     self.event_hooks['submission timeout'])
             )
-            self.log(WARNING, msg )
+            self.log(WARNING, msg)
             self.poll()
-            self.handle_event( 'submission timeout', msg )
+            self.handle_event('submission timeout', msg)
             self.submission_timer_timeout = None
 
-    def check_execution_timeout( self ):
+    def check_execution_timeout(self):
         # only called if in the 'running' state
         if self.execution_timer_timeout is None:
             # (explicit None in case of a zero timeout!)
             # no timer set
             return
 
-        # if timed out: log warning, poll, queue event handler, and turn off the timer
+        # if timed out: log warning, poll, queue event handler, and turn off
+        # the timer
         if time.time() > self.execution_timer_timeout:
             if self.event_hooks['reset timer']:
                 # the timer is being re-started by put messages
@@ -981,68 +1028,66 @@ class task( object ):
                 msg = 'job started %s ago, but has not finished'
             msg = msg % get_seconds_as_interval_string(
                 self.event_hooks['execution timeout'])
-            self.log(WARNING, msg )
+            self.log(WARNING, msg)
             self.poll()
-            self.handle_event( 'execution timeout', msg )
+            self.handle_event('execution timeout', msg)
             self.execution_timer_timeout = None
 
-    def sim_time_check( self ):
+    def sim_time_check(self):
         timeout = self.started_time + self.sim_mode_run_length
         if time.time() > timeout:
             if self.__class__.rtconfig['simulation mode']['simulate failure']:
-                self.message_queue.put( 'NORMAL', self.id + ' submitted' )
-                self.message_queue.put( 'CRITICAL', self.id + ' failed' )
+                self.message_queue.put('NORMAL', self.id + ' submitted')
+                self.message_queue.put('CRITICAL', self.id + ' failed')
             else:
-                self.message_queue.put( 'NORMAL', self.id + ' submitted' )
-                self.message_queue.put( 'NORMAL', self.id + ' succeeded' )
+                self.message_queue.put('NORMAL', self.id + ' submitted')
+                self.message_queue.put('NORMAL', self.id + ' succeeded')
             return True
         else:
             return False
 
-    def set_all_internal_outputs_completed( self ):
-        if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
+    def set_all_internal_outputs_completed(self):
+        if self.reject_if_failed('set_all_internal_outputs_completed'):
             return
-        self.log(DEBUG, 'setting all internal outputs completed' )
+        self.log(DEBUG, 'setting all internal outputs completed')
         for message in self.outputs.completed:
-            if message != self.id + ' started' and \
-                    message != self.id + ' succeeded' and \
-                    message != self.id + ' completed':
-                self.message_queue.put( 'NORMAL', message )
+            if (message != self.id + ' started' and
+                    message != self.id + ' succeeded' and
+                    message != self.id + ' completed'):
+                self.message_queue.put('NORMAL', message)
 
-    def is_complete( self ):  # not needed?
-        if self.outputs.all_completed():
-            return True
-        else:
-            return False
+    def is_complete(self):  # not needed?
+        return self.outputs.all_completed()
 
-    def reject_if_failed( self, message ):
+    def reject_if_failed(self, message):
         if self.state.is_currently('failed'):
             if self.__class__.rtconfig['enable resurrection']:
                 self.log(
-                        WARNING,
-                        'message receive while failed: I am returning from the dead!'
+                    WARNING,
+                    'message receive while failed:' +
+                    ' I am returning from the dead!'
                 )
                 return False
             else:
                 self.log(
-                        WARNING,
-                        'rejecting a message received while in the failed state:'
+                    WARNING,
+                    'rejecting a message received while in the failed state:'
                 )
-                self.log(WARNING, '  ' + message )
+                self.log(WARNING, '  ' + message)
             return True
         else:
             return False
 
-    def process_incoming_messages( self ):
+    def process_incoming_messages(self):
         queue = self.message_queue.get_queue()
         while queue.qsize() > 0:
             try:
-                self.process_incoming_message( queue.get(block=False) )
+                self.process_incoming_message(queue.get(block=False))
             except Queue.Empty:
                 break
             queue.task_done()
 
-    def process_incoming_message( self, (priority, message) ):
+    def process_incoming_message(self, (priority, message)):
         """
         Parse incoming task messages and update task state - unless the
         current message is late (out of order) and would set the state
@@ -1050,56 +1095,59 @@ class task( object ):
         """
         # TODO - formalize state ordering, for: 'if new_state < old_state'
 
-        # Log incoming messages with '>' to distinguish non-message log entries.
+        # Log incoming messages with '>' to distinguish non-message log entries
         self.log(
-                CommandLogger.LOGGING_PRIORITY[priority],
-                '(current:' + self.state.get_status() + ')> ' + message
+            CommandLogger.LOGGING_PRIORITY[priority],
+            '(current:' + self.state.get_status() + ')> ' + message
         )
         # always update the suite state summary for latest message
         self.latest_message = message
-        self.summary[ 'latest_message' ] = (
+        self.summary['latest_message'] = (
             self.latest_message.replace(self.id, "", 1).strip())
         flags.iflag = True
 
-        if self.reject_if_failed( message ):
+        if self.reject_if_failed(message):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
         msg_was_polled = False
-        if message.startswith( 'polled ' ):
-            if not self.state.is_currently( 'submitted', 'running' ):
+        if message.startswith('polled '):
+            if not self.state.is_currently('submitted', 'running'):
                 # Polling can take a few seconds or more, so it is
                 # possible for a poll result to come in after a task
                 # finishes normally (success or failure) - in which case
                 # we should ignore the poll result.
-                self.log(WARNING, "Ignoring late poll result: task is not active" ) 
+                self.log(
+                    WARNING,
+                    "Ignoring late poll result: task is not active")
                 return
             # remove polling prefix and treat as a normal task message
             msg_was_polled = True
             message = message[7:]
 
-        # remove the remote event time (or "unknown-time" from polling) from the end:
-        message = poll_suffix_re.sub( '', message )
+        # remove the remote event time (or "unknown-time" from polling) from
+        # the end:
+        message = self.POLL_SUFFIX_RE.sub('', message)
 
         # Remove the prepended task ID.
-        content = message.replace( self.id + ' ', '' )
+        content = message.replace(self.id + ' ', '')
 
         # If the message matches a registered output, record it as completed.
-        if self.outputs.exists( message ):
-            if not self.outputs.is_completed( message ):
+        if self.outputs.exists(message):
+            if not self.outputs.is_completed(message):
                 flags.pflag = True
-                self.outputs.set_completed( message )
+                self.outputs.set_completed(message)
                 self.record_db_event(event="output completed", message=content)
             elif content == 'started' and self.job_vacated:
                 self.job_vacated = False
-                self.log(WARNING, "Vacated job restarted: " + message )
+                self.log(WARNING, "Vacated job restarted: " + message)
             elif not msg_was_polled:
-                # This output has already been reported complete.
-                # Not an error condition - maybe the network was down for a bit.
-                # Ok for polling as multiple polls *should* produce the same result.
+                # This output has already been reported complete. Not an error
+                # condition - maybe the network was down for a bit. Ok for
+                # polling as multiple polls *should* produce the same result.
                 self.log(
-                        WARNING,
-                        "Unexpected output (already completed):\n  " + message)
+                    WARNING,
+                    "Unexpected output (already completed):\n  " + message)
 
         if priority == 'WARNING':
             self.handle_event('warning', content, db_update=False)
@@ -1121,7 +1169,7 @@ class task( object ):
             self.started_time = time.time()
             self.summary['started_time'] = self.started_time
             self.summary['started_time_string'] = (
-                    get_time_string_from_unix_time(self.started_time))
+                get_time_string_from_unix_time(self.started_time))
             execution_timeout = self.event_hooks['execution timeout']
             if execution_timeout:
                 self.execution_timer_timeout = (
@@ -1147,10 +1195,10 @@ class task( object ):
             self.finished_time = time.time()
             self.summary['finished_time'] = self.finished_time
             self.summary['finished_time_string'] = (
-                    get_time_string_from_unix_time(self.finished_time))
+                get_time_string_from_unix_time(self.finished_time))
             # Update mean elapsed time only on task succeeded.
             self.__class__.update_mean_total_elapsed_time(
-                    self.started_time, self.finished_time)
+                self.started_time, self.finished_time)
             self.set_status('succeeded')
             self.handle_event("succeeded", "job succeeded")
             if not self.outputs.all_completed():
@@ -1170,7 +1218,7 @@ class task( object ):
         elif content.startswith("Task job script received signal"):
             # capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=content)
- 
+
         elif content.startswith("Task job script vacated by signal"):
             flags.pflag = True
             self.set_status('submitted')
@@ -1181,7 +1229,6 @@ class task( object ):
             self.summary['started_time_string'] = None
             self.sub_try_number = 0
             self.sub_retry_delays = copy(self.sub_retry_delays_orig)
-            self.execution_poll_timer.timer_start = None
             self.job_vacated = True
 
         else:
@@ -1189,48 +1236,49 @@ class task( object ):
             #  * general non-output/progress messages
             #  * poll messages that repeat previous results
             # Note that all messages are logged already at the top.
-            self.log(DEBUG, '(current:' + self.state.get_status() + ') unhandled: ' + content )
+            self.log(DEBUG, '(current: %s) unhandled: %s' % (
+                self.state.get_status(), content))
 
-    def set_status( self, status ):
+    def set_status(self, status):
         if status != self.state.get_status():
             flags.iflag = True
-            self.log(DEBUG, '(setting:' + status + ')' )
-            self.state.set_status( status )
+            self.log(DEBUG, '(setting:' + status + ')')
+            self.state.set_status(status)
             self.record_db_update(
                 "task_states", self.name, str(self.point),
                 submit_num=self.submit_num, try_num=self.try_number,
                 status=status
             )
 
-    def update( self, reqs ):
+    def update(self, reqs):
         for req in reqs.get_list():
             if req in self.prerequisites.get_list():
                 # req is one of my prerequisites
                 if reqs.is_satisfied(req):
-                    self.prerequisites.set_satisfied( req )
+                    self.prerequisites.set_satisfied(req)
 
-    def dump_state( self, FILE ):
+    def dump_state(self, handle):
         # Write state information to the state dump file
         # This must be compatible with __init__() on reload
-        FILE.write( self.id + ' : ' + self.state.dump() + '\n' )
+        handle.write(self.id + ' : ' + self.state.dump() + '\n')
 
-    def spawn( self, state ):
+    def spawn(self, state):
         self.state.set_spawned()
-        next = self.next_point()
-        if next:
-            successor = self.__class__( next, state )
+        next_point = self.next_point()
+        if next_point:
+            successor = self.__class__(next_point, state)
             # propagate task stop time
             successor.stop_point = self.stop_point
             return successor
         else:
-            # next instance is out of the sequence bounds
+            # next_point instance is out of the sequence bounds
             return None
 
-    def has_spawned( self ):
+    def has_spawned(self):
         # the one off task type modifier overrides this.
         return self.state.has_spawned()
 
-    def ready_to_spawn( self ):
+    def ready_to_spawn(self):
         """Spawn on submission - prevents uncontrolled spawning but
         allows successive instances to run in parallel.
             A task can only fail after first being submitted, therefore
@@ -1240,115 +1288,112 @@ class task( object ):
             # (note that oneoff tasks pretend to have spawned already)
             return False
         return self.state.is_currently(
-                'submitted', 'running', 'succeeded', 'failed', 'retrying')
+            'submitted', 'running', 'succeeded', 'failed', 'retrying')
 
-    def done( self ):
+    def done(self):
         # return True if task has succeeded and spawned
-        if self.state.is_currently('succeeded') and self.state.has_spawned():
-            return True
-        else:
-            return False
+        return (
+            self.state.is_currently('succeeded') and self.state.has_spawned())
 
-    def get_state_summary( self ):
+    def get_state_summary(self):
         # derived classes can call this method and then
         # add more information to the summary if necessary.
         self.summary['state'] = self.state.get_status()
         self.summary['spawned'] = self.state.has_spawned()
         self.summary['mean total elapsed time'] = (
-                self.__class__.mean_total_elapsed_time)
+            self.__class__.mean_total_elapsed_time)
         return self.summary
 
-    def not_fully_satisfied( self ):
+    def not_fully_satisfied(self):
         if not self.prerequisites.all_satisfied():
             return True
         if not self.suicide_prerequisites.all_satisfied():
             return True
         return False
 
-    def satisfy_me( self, outputs ):
-        self.prerequisites.satisfy_me( outputs )
+    def satisfy_me(self, outputs):
+        self.prerequisites.satisfy_me(outputs)
         if self.suicide_prerequisites.count() > 0:
-            self.suicide_prerequisites.satisfy_me( outputs )
+            self.suicide_prerequisites.satisfy_me(outputs)
 
-    def adjust_point( self, point ):
+    def adjust_point(self, point):
         # Override to modify initial point if necessary.
         return point
 
-    def next_point( self ):
+    def next_point(self):
         # derived classes override this to compute next valid cycle point.
         return None
 
-    def poll( self ):
+    def poll(self):
         """Poll my live task job and update status accordingly."""
+        return self._manip_job_status("job-poll", self.job_poll_callback)
+
+    def kill(self):
+        """Kill current job of this task."""
+        return self._manip_job_status(
+            "job-kill", self.job_kill_callback, ['running', 'submitted'])
+
+    def _manip_job_status(self, cmd_key, callback, ok_states=None):
+        """Manipulate the job status, e.g. poll or kill."""
+        # No real jobs in simulation mode
         if self.__class__.run_mode == 'simulation':
-            # No real task to poll
             return
+        # Check that task states are compatible with the manipulation
+        if ok_states and not self.state.is_currently(*ok_states):
+            self.log(
+                WARNING,
+                'Can only do %s when in %s states' % (cmd_key, str(ok_states)))
+            return
+        # No submit method ID: should not happen
         if not self.submit_method_id:
-            self.log(WARNING, 'No job submit ID to poll!' )
+            self.log(CRITICAL, 'No submit method ID')
             return
+        # Detached tasks
         if self.__class__.rtconfig['manual completion']:
             self.log(
-                    WARNING,
-                    "Detaching tasks can't be polled (job ID unknown)")
+                WARNING,
+                "Cannot %s detaching tasks (job ID unknown)" % (cmd_key))
             return
 
-        job_sub_method = self.job_sub_method
-        if not job_sub_method:
-            if self.user_at_host:
-                if "@" in self.user_at_host:
-                    self.task_owner, self.task_host = self.user_at_host.split('@', 1)
-                else:
-                    self.task_host = self.user_at_host
-            job_sub_method = self.presubmit(self.task_owner, self.task_host, self.submit_num)
+        # Ensure settings are ready for manipulation on suite restart, etc
+        job_sub_method = self._presubmit()
 
-        cmd_tmpl = ("cylc get-job-status %(task_id)s %(status_file)s " +
-                    "%(job_sys)s %(job_id)s")
-        cmd = cmd_tmpl % {
-            "task_id": self.id,
-            "status_file": job_sub_method.jobfile_path + ".status",
-            "job_sys": job_sub_method.__class__.__name__,
-            "job_id": self.submit_method_id}
-        if self.user_at_host not in [user + '@localhost', 'localhost']:
-            cmd = cv_scripting_sl + "; " + cmd
-            cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
+        # Invoke the manipulation
+        return self._run_job_command(
+            CMD_TYPE_JOB_POLL_KILL,
+            cmd_key,
+            args=[job_sub_method.jobfile_path + ".status"],
+            callback=callback)
 
-        self.log(INFO, 'polling now' )
-        cmd_spec = ( CMD_TYPE_JOB_POLL_KILL, cmd )
-        self.__class__.proc_pool.put_command( cmd_spec, self.job_poll_callback )
+    def _run_job_command(
+            self, cmd_type, cmd_key, args, callback, is_bg_submit=None,
+            stdin_file_path=None):
+        """Run a job command, e.g. submit, poll, kill, etc.
 
-    def kill( self ):
-        if self.__class__.run_mode == 'simulation':
-            # No real task to kill
-            return
-        if not self.state.is_currently('running', 'submitted' ):
-            self.log(WARNING, 'Only submitted or running tasks can be killed.' )
-            return
-        if not self.submit_method_id:
-            # should not happen
-            self.log(CRITICAL, 'No submit method ID' )
-            return
-        if self.__class__.rtconfig['manual completion']:
-            self.log(
-                WARNING, "Detaching tasks can't be killed (job ID unknown)")
-            return
+        Run a job command with the multiprocess pool.
 
-        job_sub_method = self.job_sub_method
-        if not job_sub_method:
-            if self.user_at_host:
-                if "@" in self.user_at_host:
-                    self.task_owner, self.task_host = self.user_at_host.split('@', 1)
-                else:
-                    self.task_host = self.user_at_host
-            job_sub_method = self.presubmit(self.task_owner, self.task_host, self.submit_num)
+        """
+        if self.user_at_host in [user + '@localhost', 'localhost']:
+            cmd = ["cylc", cmd_key] + list(args)
+        else:  # if it is a remote job
+            ssh_tmpl = GLOBAL_CFG.get_host_item(
+                'remote shell template', self.task_host, self.task_owner)
+            r_cylc = GLOBAL_CFG.get_host_item(
+                'cylc executable', self.task_host, self.task_owner)
+            sh_tmpl = "CYLC_VERSION='%s' "
+            if GLOBAL_CFG.get_host_item(
+                    'use login shell', self.task_host, self.task_owner):
+                sh_tmpl += "bash -lc 'exec \"$0\" \"$@\"' \"%s\" '%s'"
+            else:
+                sh_tmpl += "\"%s\" '%s'"
+            sh_cmd = sh_tmpl % (os.environ['CYLC_VERSION'], r_cylc, cmd_key)
+            if stdin_file_path:
+                sh_cmd += " --remote-mode"
+            for arg in args:
+                sh_cmd += ' "%s"' % (arg)
+            cmd = shlex.split(ssh_tmpl % str(self.user_at_host)) + [sh_cmd]
 
-        cmd = ("cylc job-kill %(status_file)s %(job_sys)s %(job_id)s" % {
-            "status_file": job_sub_method.jobfile_path + ".status",
-            "job_sys": job_sub_method.__class__.__name__,
-            "job_id": self.submit_method_id})
-        if self.user_at_host != user + '@localhost':
-            cmd = cv_scripting_sl + "; " + cmd
-            cmd = 'ssh -oBatchMode=yes ' + self.user_at_host + " '" + cmd + "'"
-
-        self.log(INFO, "Killing job" )
-        cmd_spec = (CMD_TYPE_JOB_POLL_KILL, cmd)
-        self.__class__.proc_pool.put_command(cmd_spec, self.job_kill_callback)
+        # Queue the command for execution
+        self.log(INFO, "initiate %s" % (cmd_key))
+        return self.__class__.proc_pool.put_command(
+            cmd_type, cmd, callback, is_bg_submit, stdin_file_path)

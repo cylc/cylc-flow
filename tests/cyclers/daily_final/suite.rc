@@ -1,0 +1,14 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20140101
+    final cycle point = 20140102T12
+    [[dependencies]]
+        [[[ R//T00 ]]]
+            graph = "daily_foo"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 20140101
+    final cycle point = 20140102T12

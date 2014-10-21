@@ -317,9 +317,9 @@ Dependency graph suite control interface.
         image = gtk.image_new_from_stock( gtk.STOCK_LEAVE_FULLSCREEN,
                                           gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.subgraphs_button.set_icon_widget( image )
+        self.subgraphs_button.set_label( "Subgraphs" )
         self.subgraphs_button.connect(
             'clicked', self.toggle_cycle_point_subgraphs )
-        self.subgraphs_button.set_label( None )
         self._set_tooltip(
             self.subgraphs_button,
             "Graph View - Click to organise by cycle point"

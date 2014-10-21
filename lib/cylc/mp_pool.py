@@ -15,15 +15,6 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import time
-import logging
-import subprocess
-import multiprocessing
-
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-import flags
-
 """Process pool to execute shell commands for the suite daemon.
 
 In debug mode, commands are printed to stdout before execution.
@@ -38,30 +29,40 @@ Some notes:
   (early versions of this module gave a choice of process or thread).
 """
 
-CMD_TYPE_JOB_SUBMISSION=0
-CMD_TYPE_JOB_POLL_KILL=1
-CMD_TYPE_EVENT_HANDLER=2
+import time
+import logging
+from pipes import quote
+from subprocess import Popen, PIPE
+import multiprocessing
 
-TRUE=1
-FALSE=0
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+import cylc.flags
+
+
+CMD_TYPE_JOB_SUBMISSION = 0
+CMD_TYPE_JOB_POLL_KILL = 1
+CMD_TYPE_EVENT_HANDLER = 2
+
+TRUE = 1
+FALSE = 0
 JOB_SKIPPED_FLAG = 999
 
 # Shared memory flag.
-STOP_JOB_SUBMISSION = multiprocessing.Value('i',FALSE)
+STOP_JOB_SUBMISSION = multiprocessing.Value('i', FALSE)
 
 
-def execute_shell_command(cmd_spec, job_sub_method=None):
+def _run_command(
+        cmd_type, cmd, is_bg_submit=None, stdin_file_path=None, env=None,
+        shell=False):
     """Execute a shell command and capture its output and exit status."""
 
-    cmd_type, cmd_string = cmd_spec
-    cmd_result = {
-            'CMD': cmd_string,
-            'EXIT': None,
-            'OUT': None,
-            'ERR': None}
+    cmd_result = {'CMD': cmd, 'EXIT': None, 'OUT': None, 'ERR': None}
 
-    if flags.debug:
-        print cmd_string
+    if cylc.flags.debug:
+        if shell:
+            print cmd
+        else:
+            print ' '.join([quote(cmd_str) for cmd_str in cmd])
 
     if (STOP_JOB_SUBMISSION.value == TRUE
             and cmd_type == CMD_TYPE_JOB_SUBMISSION):
@@ -70,26 +71,33 @@ def execute_shell_command(cmd_spec, job_sub_method=None):
         return cmd_result
 
     try:
-        p = subprocess.Popen(cmd_string, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, shell=True)
-    except Exception as e:
+        stdin_file = None
+        if stdin_file_path:
+            stdin_file = open(stdin_file_path)
+        proc = Popen(
+            cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
+            env=env, shell=shell)
+    except (IOError, OSError) as exc:
         cmd_result['EXIT'] = 1
-        cmd_result['ERR' ] = str(e)
+        cmd_result['ERR'] = str(exc)
     else:
-        if job_sub_method == "background":
+        # Does this command behave like a background job submit where:
+        # 1. The process should print its job ID to STDOUT.
+        # 2. The process should then continue in background.
+        if is_bg_submit:  # behave like background job submit?
             # Capture just the echoed PID then move on.
             cmd_result['EXIT'] = 0
-            cmd_result['OUT'] = p.stdout.readline().rstrip()
+            cmd_result['OUT'] = proc.stdout.readline().rstrip()
             # Check if submission is OK or not
             if not cmd_result['OUT']:
-                ret_code = p.poll()
+                ret_code = proc.poll()
                 if ret_code is not None:
-                    cmd_result['OUT'], cmd_result['ERR'] = p.communicate()
+                    cmd_result['OUT'], cmd_result['ERR'] = proc.communicate()
                     cmd_result['EXIT'] = ret_code
         else:
-            cmd_result['EXIT'] = p.wait()
+            cmd_result['EXIT'] = proc.wait()
             if cmd_result['EXIT'] is not None:
-                cmd_result['OUT'], cmd_result['ERR'] = p.communicate()
+                cmd_result['OUT'], cmd_result['ERR'] = proc.communicate()
 
     return cmd_result
 
@@ -110,20 +118,22 @@ class mp_pool(object):
         self.pool = multiprocessing.Pool(processes=self.pool_size)
         self.unhandled_results = []
 
-    def put_command(self, cmd_spec, callback, job_sub_method=None):
+    def put_command(
+            self, cmd_type, cmd, callback, is_bg_submit=False,
+            stdin_file_path=None, env=None, shell=False):
         """Queue a new shell command to execute."""
-        cmd_type, cmd_string = cmd_spec
         try:
             result = self.pool.apply_async(
-                execute_shell_command,(cmd_spec, job_sub_method))
-        except AssertionError as e:
+                _run_command,
+                (cmd_type, cmd, is_bg_submit, stdin_file_path, env, shell))
+        except AssertionError as exc:
             self.log.warning("%s\n  %s\n %s" % (
-                str(e),
+                str(exc),
                 "Rejecting command (pool closed)",
-                cmd_string))
+                cmd))
         else:
             if callback:
-                self.unhandled_results.append((result,callback))
+                self.unhandled_results.append((result, callback))
 
     def handle_results_async(self):
         """Pass any available results to their associated callback."""
@@ -131,13 +141,15 @@ class mp_pool(object):
         for item in self.unhandled_results:
             res, callback = item
             if res.ready():
-                val=res.get()
+                val = res.get()
                 callback(val)
             else:
-                still_to_do.append((res,callback))
+                still_to_do.append((res, callback))
         self.unhandled_results = still_to_do
 
-    def stop_job_submission(self):
+    @classmethod
+    def stop_job_submission(cls):
+        """Set STOP_JOB_SUBMISSION flag."""
         STOP_JOB_SUBMISSION.value = TRUE
 
     def close(self):
@@ -165,50 +177,55 @@ class mp_pool(object):
     def is_dead(self):
         """Have all my workers exited yet?"""
         # Warning: accesses multiprocessing.Pool internal state
-        for p in self.pool._pool:
-            if p.is_alive():
+        for pool in self.pool._pool:
+            if pool.is_alive():
                 return False
         return True
 
 
-if __name__ == '__main__':
+def main():
     """Manual test playground."""
 
-    import sys
     log = logging.getLogger("main")
-    log.setLevel(logging.INFO) # or logging.DEBUG
+    log.setLevel(logging.INFO)  # or logging.DEBUG
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
     log.addHandler(handler)
 
     def print_result(result):
+        """Print result"""
         if result['OUT']:
-            log.info( 'result> ' + result['OUT'].strip() )
+            log.info('result> ' + result['OUT'].strip())
         if result['ERR']:
-            log.info( 'FAILED> ' + result['CMD'] )
-            log.info( result['ERR'].strip() )
+            log.info('FAILED> ' + result['CMD'])
+            log.info(result['ERR'].strip())
 
     pool = mp_pool(3)
 
-    for i in range(0,3):
+    for i in range(3):
         com = "sleep 5 && echo Hello from JOB " + str(i)
-        pool.put_command((CMD_TYPE_JOB_SUBMISSION,com), print_result)
+        pool.put_command(CMD_TYPE_JOB_SUBMISSION, com, print_result)
         com = "sleep 5 && echo Hello from POLL " + str(i)
-        pool.put_command((CMD_TYPE_JOB_POLL_KILL,com), print_result)
+        pool.put_command(CMD_TYPE_JOB_POLL_KILL, com, print_result)
         com = "sleep 5 && echo Hello from HANDLER " + str(i)
-        pool.put_command((CMD_TYPE_EVENT_HANDLER,com), print_result)
+        pool.put_command(CMD_TYPE_EVENT_HANDLER, com, print_result)
         com = "sleep 5 && echo Hello from HANDLER && badcommand"
-        pool.put_command((CMD_TYPE_EVENT_HANDLER,com), print_result)
+        pool.put_command(CMD_TYPE_EVENT_HANDLER, com, print_result)
 
-    log.info( '  sleeping' )
+    log.info('  sleeping')
     time.sleep(3)
     pool.handle_results_async()
-    log.info( '  sleeping' )
+    log.info('  sleeping')
     time.sleep(3)
     pool.close()
     #pool.terminate()
     pool.handle_results_async()
-    log.info( '  sleeping' )
+    log.info('  sleeping')
     time.sleep(3)
     pool.join()
     pool.handle_results_async()
+
+
+if __name__ == '__main__':
+    import sys
+    main()

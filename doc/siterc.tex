@@ -436,16 +436,26 @@ See above for default polling intervals for the poll method.
 \item {\em localhost default:} pyro
 \end{myitemize}
 
+\paragraph[remote copy template]{[hosts] $\rightarrow$ HOST $\rightarrow$ remote copy template }
+
+A string for the command used to copy files to a remote host. This is not used
+on the suite host unless you run local tasks under another user account.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em localhost default:} \lstinline@scp -oBatchMode=yes -oConnectTimeout=10@
+\end{myitemize}
+
 \paragraph[remote shell template]{[hosts] $\rightarrow$ HOST $\rightarrow$ remote shell template }
 
-A string template, containing \lstinline@%s@ as a placeholder for the host name,
+A string template, containing \lstinline@\%s@ as a placeholder for the host name,
 for the command used to invoke commands on this host.
 This is not used on the suite host unless you run local tasks under
 another user account.
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em localhost default:} \lstinline@ssh -oBatchMode=yes %s@ )
+\item {\em localhost default:} \lstinline@ssh -oBatchMode=yes -oConnectTimeout=10 \%s@
 \end{myitemize}
 
 \paragraph[use login shell]{[hosts] $\rightarrow$ HOST $\rightarrow$ use login shell }
@@ -465,15 +475,42 @@ start login shells, so you can turn off this behaviour to get,
 which will use the default shell on the remote machine,
 sourcing \lstinline=~/.bashrc= (or \lstinline=~/.cshrc=) to set up the
 environment.
-In either case \lstinline=$PATH= on the remote machine should include
-\lstinline@$CYLC_DIR/bin@ in order for the remote cylc program to be found.
-
-{\em NOTE: this setting does not currently apply to job submission
-commands (which execute on the suite host to submit remote tasks). }
 
 \begin{myitemize}
 \item {\em type:} boolean
 \item {\em localhost default:} true
+\end{myitemize}
+
+\paragraph[cylc executable]{[hosts] $\rightarrow$ HOST $\rightarrow$ cylc executable }
+
+The \lstinline=cylc= executable on a remote host.
+Specify a full path if \lstinline=cylc= is not in \lstinline=\$PATH= when it is
+invoked via \lstinline=ssh= on this host.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em localhost default:} \lstinline@cylc@
+\end{myitemize}
+
+\paragraph[global initial scripting]{[hosts] $\rightarrow$ HOST $\rightarrow$ global initial scripting }
+
+If specified, the value of this setting will be inserted to just before the
+\lstinline=initial scripting= section of all job scripts that are to be
+submitted to the specified remote host.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em localhost default:} \lstinline@""@
+\end{myitemize}
+
+\paragraph[copyable environment variables]{[hosts] $\rightarrow$ HOST $\rightarrow$ copyable environment variables }
+
+A list containing the names of the environment variables that can and/or need
+to be copied from the suite daemon to a job.
+
+\begin{myitemize}
+\item {\em type:} string\_list
+\item {\em localhost default:} \lstinline@[]@
 \end{myitemize}
 
 \subsection{[suite host self-identification] }

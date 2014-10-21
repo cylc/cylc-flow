@@ -1,0 +1,94 @@
+2014-10-01T09:58:28Z INFO - port:7767
+2014-10-01T09:58:28Z INFO - Suite starting at 2014-10-01T09:58:28Z
+2014-10-01T09:58:28Z INFO - Log event clock: real time
+2014-10-01T09:58:28Z INFO - Run mode: live
+2014-10-01T09:58:28Z INFO - Initial point: 2014010100
+2014-10-01T09:58:28Z INFO - Final point: 2014010206
+2014-10-01T09:58:28Z INFO - Cold Start 2014010100
+2014-10-01T09:58:28Z INFO - [cold_foo.2014010100] -triggered off []
+2014-10-01T09:58:29Z INFO - 24782
+2014-10-01T09:58:29Z INFO - [cold_foo.2014010100] -submit_method_id=24782
+2014-10-01T09:58:29Z INFO - [cold_foo.2014010100] -submission succeeded
+2014-10-01T09:58:29Z INFO - [cold_foo.2014010100] -(current:submitted)> cold_foo.2014010100 started at 2014-10-01T09:58:28Z
+2014-10-01T09:58:30Z INFO - [cold_foo.2014010100] -(current:running)> cold_foo.2014010100 succeeded at 2014-10-01T09:58:29Z
+2014-10-01T09:58:31Z INFO - [start_foo_three.2014010103] -triggered off ['cold_foo.2014010100']
+2014-10-01T09:58:31Z INFO - [start_foo_six.2014010100] -triggered off ['cold_foo.2014010100']
+2014-10-01T09:58:32Z INFO - 24886
+2014-10-01T09:58:32Z INFO - [start_foo_three.2014010103] -submit_method_id=24886
+2014-10-01T09:58:32Z INFO - [start_foo_three.2014010103] -submission succeeded
+2014-10-01T09:58:32Z INFO - 24889
+2014-10-01T09:58:32Z INFO - [start_foo_six.2014010100] -submit_method_id=24889
+2014-10-01T09:58:32Z INFO - [start_foo_six.2014010100] -submission succeeded
+2014-10-01T09:58:32Z INFO - [start_foo_three.2014010103] -(current:submitted)> start_foo_three.2014010103 started at 2014-10-01T09:58:31Z
+2014-10-01T09:58:32Z INFO - [start_foo_six.2014010100] -(current:submitted)> start_foo_six.2014010100 started at 2014-10-01T09:58:31Z
+2014-10-01T09:58:33Z INFO - [start_foo_three.2014010103] -(current:running)> start_foo_three.2014010103 succeeded at 2014-10-01T09:58:32Z
+2014-10-01T09:58:33Z INFO - [start_foo_six.2014010100] -(current:running)> start_foo_six.2014010100 succeeded at 2014-10-01T09:58:32Z
+2014-10-01T09:58:34Z INFO - [foo_six.2014010100] -triggered off ['start_foo_six.2014010100']
+2014-10-01T09:58:34Z INFO - [foo_three.2014010103] -triggered off ['start_foo_three.2014010103']
+2014-10-01T09:58:35Z INFO - 25110
+2014-10-01T09:58:35Z INFO - [foo_six.2014010100] -submit_method_id=25110
+2014-10-01T09:58:35Z INFO - [foo_six.2014010100] -submission succeeded
+2014-10-01T09:58:35Z INFO - 25114
+2014-10-01T09:58:35Z INFO - [foo_three.2014010103] -submit_method_id=25114
+2014-10-01T09:58:35Z INFO - [foo_three.2014010103] -submission succeeded
+2014-10-01T09:58:35Z INFO - [foo_six.2014010100] -(current:submitted)> foo_six.2014010100 started at 2014-10-01T09:58:34Z
+2014-10-01T09:58:35Z INFO - [foo_three.2014010103] -(current:submitted)> foo_three.2014010103 started at 2014-10-01T09:58:34Z
+2014-10-01T09:58:36Z INFO - [foo_six.2014010106] -triggered off []
+2014-10-01T09:58:36Z INFO - [foo_six.2014010100] -(current:running)> foo_six.2014010100 succeeded at 2014-10-01T09:58:35Z
+2014-10-01T09:58:36Z INFO - [foo_three.2014010103] -(current:running)> foo_three.2014010103 succeeded at 2014-10-01T09:58:35Z
+2014-10-01T09:58:37Z INFO - 25375
+2014-10-01T09:58:37Z INFO - [foo_six.2014010106] -submit_method_id=25375
+2014-10-01T09:58:37Z INFO - [foo_six.2014010106] -submission succeeded
+2014-10-01T09:58:37Z INFO - [foo_three.2014010109] -triggered off []
+2014-10-01T09:58:37Z INFO - [foo_six.2014010106] -(current:submitted)> foo_six.2014010106 started at 2014-10-01T09:58:36Z
+2014-10-01T09:58:38Z INFO - 25511
+2014-10-01T09:58:38Z INFO - [foo_three.2014010109] -submit_method_id=25511
+2014-10-01T09:58:38Z INFO - [foo_three.2014010109] -submission succeeded
+2014-10-01T09:58:38Z INFO - [foo_six.2014010112] -triggered off []
+2014-10-01T09:58:38Z INFO - [foo_six.2014010106] -(current:running)> foo_six.2014010106 succeeded at 2014-10-01T09:58:37Z
+2014-10-01T09:58:38Z INFO - [foo_three.2014010109] -(current:submitted)> foo_three.2014010109 started at 2014-10-01T09:58:38Z
+2014-10-01T09:58:39Z INFO - 25627
+2014-10-01T09:58:39Z INFO - [foo_six.2014010112] -submit_method_id=25627
+2014-10-01T09:58:39Z INFO - [foo_six.2014010112] -submission succeeded
+2014-10-01T09:58:39Z INFO - [foo_three.2014010115] -triggered off []
+2014-10-01T09:58:39Z INFO - [foo_six.2014010112] -(current:submitted)> foo_six.2014010112 started at 2014-10-01T09:58:38Z
+2014-10-01T09:58:39Z INFO - [foo_six.2014010112] -(current:running)> foo_six.2014010112 succeeded at 2014-10-01T09:58:39Z
+2014-10-01T09:58:39Z INFO - [foo_three.2014010109] -(current:running)> foo_three.2014010109 succeeded at 2014-10-01T09:58:38Z
+2014-10-01T09:58:40Z INFO - 25732
+2014-10-01T09:58:40Z INFO - [foo_three.2014010115] -submit_method_id=25732
+2014-10-01T09:58:40Z INFO - [foo_three.2014010115] -submission succeeded
+2014-10-01T09:58:40Z INFO - [foo_six.2014010118] -triggered off []
+2014-10-01T09:58:40Z INFO - [foo_three.2014010115] -(current:submitted)> foo_three.2014010115 started at 2014-10-01T09:58:40Z
+2014-10-01T09:58:40Z INFO - [foo_three.2014010115] -(current:running)> foo_three.2014010115 succeeded at 2014-10-01T09:58:40Z
+2014-10-01T09:58:41Z INFO - 25838
+2014-10-01T09:58:41Z INFO - [foo_six.2014010118] -submit_method_id=25838
+2014-10-01T09:58:41Z INFO - [foo_six.2014010118] -submission succeeded
+2014-10-01T09:58:41Z INFO - [foo_three.2014010121] -triggered off []
+2014-10-01T09:58:41Z INFO - [foo_six.2014010118] -(current:submitted)> foo_six.2014010118 started at 2014-10-01T09:58:41Z
+2014-10-01T09:58:41Z INFO - [foo_six.2014010118] -(current:running)> foo_six.2014010118 succeeded at 2014-10-01T09:58:41Z
+2014-10-01T09:58:42Z INFO - 25943
+2014-10-01T09:58:42Z INFO - [foo_three.2014010121] -submit_method_id=25943
+2014-10-01T09:58:42Z INFO - [foo_three.2014010121] -submission succeeded
+2014-10-01T09:58:42Z INFO - [foo_six.2014010200] -triggered off []
+2014-10-01T09:58:42Z INFO - [foo_three.2014010121] -(current:submitted)> foo_three.2014010121 started at 2014-10-01T09:58:42Z
+2014-10-01T09:58:42Z INFO - [foo_three.2014010121] -(current:running)> foo_three.2014010121 succeeded at 2014-10-01T09:58:42Z
+2014-10-01T09:58:43Z INFO - 26048
+2014-10-01T09:58:43Z INFO - [foo_six.2014010200] -submit_method_id=26048
+2014-10-01T09:58:43Z INFO - [foo_six.2014010200] -submission succeeded
+2014-10-01T09:58:43Z INFO - [foo_three.2014010203] -triggered off []
+2014-10-01T09:58:43Z INFO - [foo_six.2014010200] -(current:submitted)> foo_six.2014010200 started at 2014-10-01T09:58:43Z
+2014-10-01T09:58:43Z INFO - [foo_six.2014010200] -(current:running)> foo_six.2014010200 succeeded at 2014-10-01T09:58:43Z
+2014-10-01T09:58:44Z INFO - 26153
+2014-10-01T09:58:44Z INFO - [foo_three.2014010203] -submit_method_id=26153
+2014-10-01T09:58:44Z INFO - [foo_three.2014010203] -submission succeeded
+2014-10-01T09:58:44Z INFO - [foo_six.2014010206] -triggered off []
+2014-10-01T09:58:44Z INFO - [foo_three.2014010209] -holding (beyond suite stop point) 2014010206
+2014-10-01T09:58:44Z INFO - [foo_three.2014010203] -(current:submitted)> foo_three.2014010203 started at 2014-10-01T09:58:44Z
+2014-10-01T09:58:44Z INFO - [foo_three.2014010203] -(current:running)> foo_three.2014010203 succeeded at 2014-10-01T09:58:44Z
+2014-10-01T09:58:45Z INFO - 26258
+2014-10-01T09:58:45Z INFO - [foo_six.2014010206] -submit_method_id=26258
+2014-10-01T09:58:45Z INFO - [foo_six.2014010206] -submission succeeded
+2014-10-01T09:58:45Z INFO - [foo_six.2014010212] -holding (beyond suite stop point) 2014010206
+2014-10-01T09:58:45Z INFO - [foo_six.2014010206] -(current:submitted)> foo_six.2014010206 started at 2014-10-01T09:58:45Z
+2014-10-01T09:58:45Z INFO - [foo_six.2014010206] -(current:running)> foo_six.2014010206 succeeded at 2014-10-01T09:58:45Z
+2014-10-01T09:58:46Z INFO - Suite shutting down at 2014-10-01T09:58:46Z

@@ -1,0 +1,3 @@
+[hosts]
+    [[localhost]]
+        copyable environment variables = FOO, BAR, BAZ

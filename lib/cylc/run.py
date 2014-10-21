@@ -20,14 +20,14 @@
 
 import sys
 from daemonize import daemonize
-from version import cylc_version
+from version import CYLC_VERSION
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import flags
 from exceptions import SchedulerStop, SchedulerError
 
 def print_blurb():
     lines = []
-    lines.append( " The Cylc Suite Engine [" + cylc_version + "] " )
+    lines.append( " The Cylc Suite Engine [" + CYLC_VERSION + "] " )
     lines.append( " Copyright (C) 2008-2014 Hilary Oliver, NIWA " )
 
     lic = """

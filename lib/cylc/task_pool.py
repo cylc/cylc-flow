@@ -82,6 +82,8 @@ class pool(object):
         self.pool_changed = []
         self.rhpool_changed = []
 
+        self.is_held = False
+
         self.held_future_tasks = []
 
         self.wireless = broadcast(config.get_linearized_ancestors())
@@ -120,6 +122,7 @@ class pool(object):
             return False
 
         # add in held state if beyond the suite stop point
+
         if self.stop_point and itask.point > self.stop_point:
             itask.log(INFO, "holding (beyond suite stop point) " + str(self.stop_point))
             itask.reset_state_held()
@@ -135,6 +138,8 @@ class pool(object):
         elif self.task_has_future_trigger_overrun(itask):
             itask.log(INFO, "holding (future trigger beyond stop point)")
             self.held_future_tasks.append(itask.id)
+            itask.reset_state_held()
+        elif self.is_held:
             itask.reset_state_held()
 
         # add to the runahead pool
@@ -400,24 +405,7 @@ class pool(object):
         self.log.debug('%d task(s) de-queued' % len(readytogo))
 
         for itask in readytogo:
-            itask.set_state_ready()
-            if self.run_mode == 'simulation':
-                itask.job_submission_succeeded()
-                continue
-            try:
-                cmd = itask.get_command(overrides=self.wireless.get(itask.id))
-            except Exception, e:
-                # Could be a bad command template.
-                itask.log(ERROR, "Failed to construct job submission command")
-                itask.command_log("SUBMIT", err=str(e))
-                itask.job_submission_failed()
-            else:
-                # Queue the job submission command for execution.
-                cmd_spec = (CMD_TYPE_JOB_SUBMISSION, cmd)
-                self.proc_pool.put_command(
-                        cmd_spec,
-                        itask.job_submission_callback,
-                        itask.job_sub_method_name)
+            itask.submit(overrides=self.wireless.get(itask.id))
 
         return readytogo
 
@@ -626,11 +614,13 @@ class pool(object):
 
     def hold_all_tasks(self):
         self.log.info("Holding all waiting or queued tasks now")
+        self.is_held = True
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
                 itask.reset_state_held()
 
     def release_all_tasks(self):
+        self.is_held = False
         for itask in self.get_tasks(all=True):
             if itask.state.is_currently('held'):
                 if self.stop_point and itask.point > self.stop_point:
@@ -854,7 +844,8 @@ class pool(object):
         for itask in self.get_tasks():
             if itask.id in ids:
                 itask.manual_trigger = True
-                itask.reset_state_ready()
+                if not itask.state.is_currently('queued'):
+                    itask.reset_state_ready()
 
     def check_task_timers(self):
         for itask in self.get_tasks():

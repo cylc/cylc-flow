@@ -24,14 +24,14 @@ from . import timezone
 
 DATE_EXPRESSIONS = {
     "basic": {
-        "complete": u"""
+        "complete": """
 CCYYMMDD
 +XCCYYMMDD  # '+' stands for either '+' or '-'
 CCYYDDD
 +XCCYYDDD
 CCYYWwwD
 +XCCYYWwwD""",
-        "reduced": u"""
+        "reduced": """
 CCYY-MM       # Deviation? Not clear if "basic" or "extended" in standard.
 CCYY
 CC
@@ -40,7 +40,7 @@ CC
 +XCC
 CCYYWww
 +XCCYYWww""",
-        "truncated": u"""
+        "truncated": """
 -YYMM
 -YY
 --MMDD
@@ -58,19 +58,19 @@ YYWww
 -W-D
 """    },
     "extended": {
-        "complete": u"""
+        "complete": """
 CCYY-MM-DD
 +XCCYY-MM-DD
 CCYY-DDD
 +XCCYY-DDD
 CCYY-Www-D
 +XCCYY-Www-D""",
-        "reduced": u"""
+        "reduced": """
 CCYY-MM
 +XCCYY-MM
 CCYY-Www
 +XCCYY-Www""",
-        "truncated": u"""
+        "truncated": """
 -YY-MM
 --MM-DD
 YY-MM-DD
@@ -85,7 +85,7 @@ YY-Www
 }
 TIME_EXPRESSIONS = {
     "basic": {
-        "complete": u"""
+        "complete": """
 # No Time Zone
 hhmmss
 
@@ -97,14 +97,14 @@ hhmmss.tt
 hhmm.nn
 hh.ii
 """,
-        "reduced": u"""
+        "reduced": """
 # No Time Zone
 hhmm
 hh
 
 # No Time Zone - decimals
 """,
-        "truncated": u"""
+        "truncated": """
 # No Time Zone
 -mmss
 -mm
@@ -119,7 +119,7 @@ hh
 --ss.tt
 """    },
     "extended": {
-        "complete": u"""
+        "complete": """
 # No Time Zone
 hh:mm:ss
 
@@ -131,12 +131,12 @@ hh:mm:ss.tt
 hh:mm.nn
 hh.ii          # Deviation? Not allowed in standard ?
 """,
-        "reduced": u"""
+        "reduced": """
 # No Time Zone
 hh:mm
 hh             # Deviation? Not allowed in standard ?
 """,
-        "truncated": u"""
+        "truncated": """
 # No Time Zone
 -mm:ss
 -mm             # Deviation? Not allowed in standard ?
@@ -152,12 +152,12 @@ hh             # Deviation? Not allowed in standard ?
 """    }
 }
 TIME_ZONE_EXPRESSIONS = {
-    "basic": u"""
+    "basic": """
 Z
 +hh
 +hhmm
 """,
-    "extended": u"""
+    "extended": """
 Z
 +hh             # Deviation? Not allowed in standard?
 +hh:mm
@@ -165,71 +165,71 @@ Z
 }
 TIME_DESIGNATOR = "T"
 _DATE_TRANSLATE_INFO = [
-    (u"\+(?=X)", "(?P<year_sign>[-+])",
+    ("\+(?=X)", "(?P<year_sign>[-+])",
      "%(year_sign)s", "year_sign"),
-    (u"CC", "(?P<century>\d\d)",
+    ("CC", "(?P<century>\d\d)",
      "%(century)02d", "century"),
-    (u"YY", "(?P<year_of_century>\d\d)",
+    ("YY", "(?P<year_of_century>\d\d)",
      "%(year_of_century)02d", "year_of_century"),
-    (u"MM", "(?P<month_of_year>\d\d)",
+    ("MM", "(?P<month_of_year>\d\d)",
      "%(month_of_year)02d", "month_of_year"),
-    (u"DDD", "(?P<day_of_year>\d\d\d)",
+    ("DDD", "(?P<day_of_year>\d\d\d)",
      "%(day_of_year)03d", "day_of_year"),
-    (u"DD", "(?P<day_of_month>\d\d)",
+    ("DD", "(?P<day_of_month>\d\d)",
      "%(day_of_month)02d", "day_of_month"),
-    (u"Www", "W(?P<week_of_year>\d\d)",
+    ("Www", "W(?P<week_of_year>\d\d)",
      "W%(week_of_year)02d", "week_of_year"),
-    (u"D", "(?P<day_of_week>\d)",
+    ("D", "(?P<day_of_week>\d)",
      "%(day_of_week)01d", "day_of_week"),
-    (u"z", "(?P<year_of_decade>\d)",
+    ("z", "(?P<year_of_decade>\d)",
      "%(year_of_decade)01d", "year_of_decade"),
-    (u"^---", "(?P<truncated>---)",
+    ("^---", "(?P<truncated>---)",
      "---", None),
-    (u"^--", "(?P<truncated>--)",
+    ("^--", "(?P<truncated>--)",
      "--", None),
-    (u"^-", "(?P<truncated>-)",
+    ("^-", "(?P<truncated>-)",
      "-", None)
 ]
 _TIME_TRANSLATE_INFO = [
-    (u"(?<=^hh)mm", "(?P<minute_of_hour>\d\d)",
+    ("(?<=^hh)mm", "(?P<minute_of_hour>\d\d)",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    (u"(?<=^hh:)mm", "(?P<minute_of_hour>\d\d)",
+    ("(?<=^hh:)mm", "(?P<minute_of_hour>\d\d)",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    (u"(?<=^-)mm", "(?P<minute_of_hour>\d\d)",
+    ("(?<=^-)mm", "(?P<minute_of_hour>\d\d)",
      "%(minute_of_hour)02d", "minute_of_hour"),
-    (u"^hh", "(?P<hour_of_day>\d\d)",
+    ("^hh", "(?P<hour_of_day>\d\d)",
      "%(hour_of_day)02d", "hour_of_day"),
-    (u",ii", ",(?P<hour_of_day_decimal>\d+)",
+    (",ii", ",(?P<hour_of_day_decimal>\d+)",
      ",%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
-    (u"\.ii", "\.(?P<hour_of_day_decimal>\d+)",
+    ("\.ii", "\.(?P<hour_of_day_decimal>\d+)",
      ".%(hour_of_day_decimal_string)s", "hour_of_day_decimal_string"),
-    (u",nn", ",(?P<minute_of_hour_decimal>\d+)",
+    (",nn", ",(?P<minute_of_hour_decimal>\d+)",
      ",%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
-    (u"\.nn", "\.(?P<minute_of_hour_decimal>\d+)",
+    ("\.nn", "\.(?P<minute_of_hour_decimal>\d+)",
      ".%(minute_of_hour_decimal_string)s", "minute_of_hour_decimal_string"),
-    (u"ss", "(?P<second_of_minute>\d\d)",
+    ("ss", "(?P<second_of_minute>\d\d)",
      "%(second_of_minute)02d", "second_of_minute"),
-    (u",tt", ",(?P<second_of_minute_decimal>\d+)",
+    (",tt", ",(?P<second_of_minute_decimal>\d+)",
      ",%(second_of_minute_decimal_string)s",
      "second_of_minute_decimal_string"),
-    (u"\.tt", "\.(?P<second_of_minute_decimal>\d+)",
+    ("\.tt", "\.(?P<second_of_minute_decimal>\d+)",
      ".%(second_of_minute_decimal_string)s",
      "second_of_minute_decimal_string"),
-    (u"^--", "(?P<truncated>--)",
+    ("^--", "(?P<truncated>--)",
      "--", None),
-    (u"^-", "(?P<truncated>-)",
+    ("^-", "(?P<truncated>-)",
      "-", None)
 ]
 _TIME_ZONE_TRANSLATE_INFO = [
-    (u"mm", "(?P<time_zone_minute>\d\d)",
+    ("mm", "(?P<time_zone_minute>\d\d)",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    (u"mm", "(?P<time_zone_minute>\d\d)",
+    ("mm", "(?P<time_zone_minute>\d\d)",
      "%(time_zone_minute_abs)02d", "time_zone_minute_abs"),
-    (u"hh", "(?P<time_zone_hour>\d\d)",
+    ("hh", "(?P<time_zone_hour>\d\d)",
      "%(time_zone_hour_abs)02d", "time_zone_hour_abs"),
-    (u"\+", "(?P<time_zone_sign>[-+])",
+    ("\+", "(?P<time_zone_sign>[-+])",
      "%(time_zone_sign)s", "time_zone_sign"),
-    (u"Z", "(?P<time_zone_utc>Z)",
+    ("Z", "(?P<time_zone_utc>Z)",
      "Z", None)
 ]
 
@@ -283,7 +283,7 @@ class StrftimeSyntaxError(ValueError):
 def get_date_translate_info(num_expanded_year_digits=2):
     expanded_year_digit_regex = "\d" * num_expanded_year_digits
     return _DATE_TRANSLATE_INFO + [
-        (u"X",
+        ("X",
          "(?P<expanded_year>" + expanded_year_digit_regex + ")",
          "%(expanded_year_digits)0" + str(num_expanded_year_digits) + "d",
          "expanded_year_digits")

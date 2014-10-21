@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html>
-		<head>
-				<title>Cylc Change Log Summary</title>
-				<link rel="stylesheet" href="changes.css">
-		</head>
+<head>
+<title>Cylc Change Log Summary</title>
+<link rel="stylesheet" href="changes.css">
+</head>
 
 <body>
 
@@ -15,37 +15,72 @@
 <div class="rbox">
 <h3 style="margin:10px">versions</h3>
 <ul>
-		<li><a href="#">TOP</a></li>
-		<li><a href="#5.4.14">5.4.14</a></li>
-		<li><a href="#5.4.13">5.4.13</a></li>
-		<li><a href="#5.4.12">5.4.12</a></li>
-		<li><a href="#5.4.11">5.4.11</a></li>
-		<li><a href="#5.4.10">5.4.10</a></li>
-		<li><a href="#5.4.9">5.4.9</a></li>
-		<li><a href="#5.4.8">5.4.8</a></li>
-		<li><a href="#5.4.7">5.4.7</a></li>
-		<li><a href="#5.4.6">5.4.6</a></li>
-		<li><a href="#5.4.5">5.4.5</a></li>
-		<li><a href="#5.4.4">5.4.4</a></li>
-		<li><a href="#5.4.3">5.4.3</a></li>
-		<li><a href="#5.4.2">5.4.2</a></li>
-		<li><a href="#5.4.1">5.4.1</a></li>
-		<li><a href="#5.4.0">5.4.0</a></li>
-		<li><a href="#5.3.0">5.3.0</a></li>
-		<li><a href="#5.2.0">5.2.0</a></li>
-		<li><a href="#5.1.1">5.1.1</a></li>
-		<li><a href="#5.1.0">5.1.0</a></li>
-		<li><a href="#5.0.3">5.0.3</a></li>
-		<li><a href="#5.0.2">5.0.2</a></li>
-		<li><a href="#5.0.1">5.0.1</a></li>
-		<li><a href="#5.0.0">5.0.0</a></li>
-		<li><a href="#old">old</a></li>
+    <li><a href="#">TOP</a></li>
+    <li><a href="#6.0.1">6.0.1</a></li>
+    <li><a href="#6.0.0">6.0.0</a></li>
+    <li><a href="#5.4.14">5.4.14</a></li>
+    <li><a href="#5.4.13">5.4.13</a></li>
+    <li><a href="#5.4.12">5.4.12</a></li>
+    <li><a href="#5.4.11">5.4.11</a></li>
+    <li><a href="#5.4.10">5.4.10</a></li>
+    <li><a href="#5.4.9">5.4.9</a></li>
+    <li><a href="#5.4.8">5.4.8</a></li>
+    <li><a href="#5.4.7">5.4.7</a></li>
+    <li><a href="#5.4.6">5.4.6</a></li>
+    <li><a href="#5.4.5">5.4.5</a></li>
+    <li><a href="#5.4.4">5.4.4</a></li>
+    <li><a href="#5.4.3">5.4.3</a></li>
+    <li><a href="#5.4.2">5.4.2</a></li>
+    <li><a href="#5.4.1">5.4.1</a></li>
+    <li><a href="#5.4.0">5.4.0</a></li>
+    <li><a href="#5.3.0">5.3.0</a></li>
+    <li><a href="#5.2.0">5.2.0</a></li>
+    <li><a href="#5.1.1">5.1.1</a></li>
+    <li><a href="#5.1.0">5.1.0</a></li>
+    <li><a href="#5.0.3">5.0.3</a></li>
+    <li><a href="#5.0.2">5.0.2</a></li>
+    <li><a href="#5.0.1">5.0.1</a></li>
+    <li><a href="#5.0.0">5.0.0</a></li>
+    <li><a href="#old">old</a></li>
 </ul>
 </div>
 
-
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+
+<a name="6.0.1"/>
+    <h2>6.0.1</h2>
+    
+    <p>Minor bug fixes and improvements since cylc-6.</p>
+    <ul>
+        <li><b>standardise cycle point formats</b> entered on the CLI for 
+        commands such as <code>cylc kill</code>, so that the exact same format
+        as the running suite is not required.
+        <li><b>provide a workaround for
+            <a href="http://bugs.python.org/issue2646">a bug in Python 2.6.2</a></b>
+        that was triggered by cylc-6. Symptom: a Python traceback and
+        <code>TypeError: __init__() keywords must be strings</code>
+        <li><b>provide staggered cold-start backward compatibility for cylc-5</b>
+        <li><b>fix repeat-section override behaviour for members of runtime
+            namepace lists</b>, e.g. <code>[runtime][[m1,m2,m3]]</code>
+            (configure 3 tasks at once) then <code>[runtime][[m2]]</code>
+            (add or override configuration for one of them)
+        <li><b>fix an explicit null final cycle point being interpreted as
+            a null offset from initial cycle point</b>, <code>final cycle point
+            = #(nothing)</code> (it should mean no final cycle point)
+        <li><b>add a refresh button for the <code>cycl graph</code> viewer</b>
+        to replace auto-reload on detection of changed suite definition
+        <li><b>fix namespace graphing</b> (<code>cylc graph -n SUITE</code>)
+        broken in cylc-6
+        <li><b>removed the old <code>cylc check-vars</code> utility</b> - just
+        use <code>set -eu</code> in task scripting
+        <li><b>made the <code>cylc cyclepoint</code> utility backward
+            compatible for the cylc-5 cycle point format</b> YYYYMMDDHH
+            (deprecated as <code>cylc cycletime</code>)
+        <li><b>handle unbounded recurrences based on the final
+            cycle point</b>
+    </ul>
 
 <a name="6.0.0"/>
     <h2>6.0.0</h2>

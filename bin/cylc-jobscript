@@ -42,17 +42,18 @@ usage() {
     echo "  TASK        - Task ID (NAME.CYCLE_POINT)"
 }
 
-for arg in $@; do
-    if [[ $arg == '-h' ]] || [[ $arg == '--help' ]]; then
+for arg in "${@}"; do
+    if [[ "${arg}" == '-h' ]] || [[ "${arg}" == '--help' ]]; then
         usage
         exit 0
     fi
 done
 
-JOBSCRIPT=$( cylc submit --dry-run $@ | grep 'JOB SCRIPT' | sed -e 's/.*: //' )
-if [[ -z $JOBSCRIPT ]]; then
+JOBSCRIPT=$(cylc submit --dry-run "${@}" | awk -F= '$1 == "JOB SCRIPT" {print $2}')
+if [[ -z "${JOBSCRIPT}" ]]; then
     echo "ERROR: no jobscript generated" >&2
     exit 1
 fi
-echo "Task Job Script Generated: $JOBSCRIPT" >&2 # (only send script contents to stdout)
-cat $JOBSCRIPT
+# (only send script contents to stdout)
+echo "Task Job Script Generated: ${JOBSCRIPT}" >&2
+exec less "${JOBSCRIPT}"

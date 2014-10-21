@@ -1,0 +1,19 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle time = 20140101
+    final cycle time = 2014010206
+    [[special tasks]]
+        start-up = start_foo_six, start_foo_three
+    [[dependencies]]
+        graph = "cold_foo"
+        [[[ 0, 6, 12, 18 ]]]
+            graph = "cold_foo => start_foo_six => foo_six"
+        [[[ 3, 9, 15, 21 ]]]
+            graph = "cold_foo => start_foo_three => foo_three"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle time = 20140101
+    final cycle time = 2014010206

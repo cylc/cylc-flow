@@ -1,0 +1,4 @@
+graph 
+node "daily_foo.20140101T0000Z" "daily_foo\n20140101T0000Z" unfilled box black
+node "daily_foo.20140102T0000Z" "daily_foo\n20140102T0000Z" unfilled box black
+stop

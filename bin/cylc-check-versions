@@ -19,7 +19,7 @@
 import sys, os, re
 from subprocess import Popen, PIPE
 from cylc.CylcOptionParsers import cop
-from cylc.version import cylc_version
+from cylc.version import CYLC_VERSION
 from cylc.config import config, SuiteConfigError
 from cylc.run_get_stdout import run_get_stdout
 from cylc.host_select import get_task_host
@@ -28,7 +28,7 @@ import cylc.flags
 parser = cop( usage = """cylc [discovery] check-versions [OPTIONS] ARGS
 
 Check the version of cylc invoked on each of SUITE's task host accounts
-when CYLC_VERSION is set to """ + cylc_version + """ (i.e. *this* version).
+when CYLC_VERSION is set to """ + CYLC_VERSION + """ (i.e. *this* version).
 Different versions are reported but are not considered an error unless
 the -e|--error option is specified, because different cylc versions are
 not necessarily (nor usually) incompatible.
@@ -40,13 +40,13 @@ default, or (like tasks) a particular version if $CYLC_VERSION is defined.
 
 Remote cylc versions are interrogated like this:
   ssh user@host \\
-     "bash --login -c 'CYLC_VERSION=""" + cylc_version + """ cylc -v'"
+     "bash --login -c 'CYLC_VERSION=""" + CYLC_VERSION + """ cylc -v'"
 A login shell is used because task job scripts currently source login
 scripts explicitly at start-up to configure access to cylc.""",
 prep=True, jset=True )
 
 parser.add_option( "-e", "--error", help="Exit with error status "
-        "if " + cylc_version + " is not available on all remote accounts.",
+        "if " + CYLC_VERSION + " is not available on all remote accounts.",
         action="store_true", default=False, dest="error" )
 
 ( options, args ) = parser.parse_args(remove_opts=['--host','--user'])
@@ -83,7 +83,7 @@ if cylc.flags.verbose:
         print " ", ac
 
 # remote command to interrogate cylc version
-rcom = "bash --login -c 'CYLC_VERSION=" + cylc_version + " cylc -v'"
+rcom = "bash --login -c 'CYLC_VERSION=" + CYLC_VERSION + " cylc -v'"
 
 # interrogate each account
 warn = {}
@@ -99,7 +99,7 @@ for ac in accounts:
         out = res[1][0]
         if cylc.flags.verbose:
             print ' ', out
-        if out != cylc_version:
+        if out != CYLC_VERSION:
             warn[ac] = out
     else:
         print >> sys.stderr, 'ERROR ' + ac + ':'
@@ -108,9 +108,9 @@ for ac in accounts:
 # report results
 if not warn:
     if contacted:
-        print "All", contacted, "accounts have cylc-" + cylc_version
+        print "All", contacted, "accounts have cylc-" + CYLC_VERSION
 else:
-    print "WARNING: failed to invoke cylc-" + cylc_version + " on " + str(len(warn.keys())) + " accounts:"
+    print "WARNING: failed to invoke cylc-" + CYLC_VERSION + " on " + str(len(warn.keys())) + " accounts:"
     m = max( [ len(ac) for ac in warn.keys() ] )
     for ac,warning in warn.items():
         print ' ', ac.ljust(m), warning

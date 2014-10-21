@@ -1,14 +1,27 @@
 #!/bin/bash
-
+#
 # ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
-# Task 'foo.1' in suite '##suitename##'
-# Job submission method: 'background'
+# Suite: ##suitename##
+# Task: foo.1
+# Job submit method: background
 
 echo "JOB SCRIPT STARTING"
 
-export CYLC_VERSION=
-test -f /etc/profile && . /etc/profile 1>/dev/null 2>&1
-test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1
+prelude() {
+    export CYLC_DIR=
+    export CYLC_VERSION=
+    for FILE_NAME in \
+        "${HOME}/.cylc/job-init-env.sh" \
+        "${CYLC_DIR}/conf/job-init-env.sh" \
+        "${CYLC_DIR}/conf/job-init-env-default.sh"
+    do
+        if [[ -f "${FILE_NAME}" ]]; then
+            . "${FILE_NAME}" 1>/dev/null 2>&1
+            break
+        fi
+    done
+}
+prelude
 
 # TRAP ERROR SIGNALS:
 set -u # Fail when using an undefined variable
@@ -23,7 +36,7 @@ TRAP_FAIL_SIGNAL() {
     if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
         {
             echo "CYLC_JOB_EXIT=$SIGNAL"
-            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%S'
+            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
         } >>$CYLC_TASK_LOG_ROOT.status
     fi
     cylc task failed "Task job script received signal $@"
@@ -96,8 +109,8 @@ export E_ONE E_TWO E_THR E_FOU E_FIV
 # SEND TASK STARTED MESSAGE:
 {
     echo "CYLC_JOB_PID=$$"
-    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%S'
-} >$CYLC_TASK_LOG_ROOT.status
+    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
+} >>$CYLC_TASK_LOG_ROOT.status
 cylc task started
 
 # SHARE DIRECTORY CREATE:
@@ -117,13 +130,14 @@ echo "  Suite Owner : $CYLC_SUITE_OWNER"
 echo "  Task ID     : $CYLC_TASK_ID"
 if [[ $(uname) == AIX ]]; then
     # on AIX the hostname command has no '-f' option
-    echo "  Task Host   : $(hostname).$(namerslv -sn 2>/dev/null | awk '{print $2}')"
+    DOMAIN=$(namerslv -sn 2>/dev/null | awk '{print $2}')
+    echo "  Task Host   : $(hostname).${DOMAIN}"
 else
     echo "  Task Host   : $(hostname -f)"
 fi
 echo "  Task Owner  : $USER"
 echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
-echo ""
+echo
 
 # PRE-COMMAND SCRIPTING:
 echo "HELLO FROM PRE-COMMAND SCRIPTING"
@@ -138,7 +152,7 @@ echo E_FIV is $E_FIV
 # define a variable
 export VAR_PreCS=precs
 
-# TASK COMMAND SCRIPTING:
+# COMMAND SCRIPTING:
 echo "HELLO FROM COMMAND SCRIPTING"
 # initial scripting must be done:
 echo VAR_IS is $VAR_IS
@@ -153,7 +167,7 @@ echo E_FIV is $E_FIV
 # define a variable
 export VAR_CS=var_cs
 
-# POST COMMAND SCRIPTING:
+# POST-COMMAND SCRIPTING:
 echo "HELLO FROM POST-COMMAND SCRIPTING"
 # initial scripting must be done:
 echo VAR_IS is $VAR_IS
@@ -180,7 +194,7 @@ rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true
 # SEND TASK SUCCEEDED MESSAGE:
 {
     echo 'CYLC_JOB_EXIT=SUCCEEDED'
-    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%S'
+    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
 } >>$CYLC_TASK_LOG_ROOT.status
 cylc task succeeded
 

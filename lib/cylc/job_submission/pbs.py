@@ -15,68 +15,52 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"PBS qsub job submission."
 
 import re
-from job_submit import JobSubmit
-from subprocess import check_call, Popen, PIPE
+from cylc.job_submission.job_submit import JobSubmit
+from subprocess import Popen, PIPE
 
-class pbs( JobSubmit ):
+
+class pbs(JobSubmit):
 
     "PBS qsub job submission."
 
-    COMMAND_TEMPLATE = "qsub %s"
+    EXEC_KILL = "qdel"
+    EXEC_SUBMIT = "qsub"
+    REC_ID_FROM_OUT = re.compile(r"""\A\s*(?P<id>\S+)\s*\Z""")
 
-    def set_directives( self ):
+    def set_directives(self):
         self.jobconfig['directive prefix'] = "#PBS"
-        self.jobconfig['directive final']  = None
+        self.jobconfig['directive final'] = None
         self.jobconfig['directive connector'] = " "
 
         defaults = {}
-        defaults[ '-N' ] = self.task_id
+        defaults['-N'] = self.task_id
         # Replace literal '$HOME' in stdout and stderr file paths with ''
         # because environment variables are not interpreted in directives.
         # (For remote tasks the local home directory path is replaced
         # with '$HOME' in config.py).
-        defaults[ '-o' ] = re.sub( '\$HOME/', '', self.stdout_file )
-        defaults[ '-e' ] = re.sub( '\$HOME/', '', self.stderr_file )
+        defaults['-o'] = re.sub('\$HOME/', '', self.stdout_file)
+        defaults['-e'] = re.sub('\$HOME/', '', self.stderr_file)
 
         # In case the user wants to override the above defaults:
-        for d,val in self.jobconfig['directives'].items():
-            defaults[ d ] = val
+        for key, val in self.jobconfig['directives'].items():
+            defaults[key] = val
         # PBS requires jobs names <= 15 characters
         # This restriction has been removed at PBS version 11
         # but truncating to 15 chars should not cause any harm.
-        if len( defaults[ '-N' ] ) > 15:
-            defaults[ '-N' ] = defaults[ '-N' ][:15]
+        if len(defaults['-N']) > 15:
+            defaults['-N'] = defaults['-N'][:15]
         self.jobconfig['directives'] = defaults
 
-    def construct_job_submit_command( self ):
-        """
-        Construct a command to submit this job to run.
-        """
-        command_template = self.job_submit_command_template
-        if not command_template:
-            command_template = self.__class__.COMMAND_TEMPLATE
-        self.command = command_template % ( self.jobfile_path )
-
-    def get_id( self, out, err ):
-        """
-        Extract the job submit ID from job submission command
-        output. For PBS jobs the submission command returns
-        the process ID to stdout.
-        """
-        return out.strip()
-
-    def kill( self, jid, st_file=None ):
-        """Kill the job."""
-        check_call(["qdel", jid])
-
-    def poll( self, jid ):
-        """Return 0 if jid is in the queueing system, 1 otherwise."""
+    @classmethod
+    def poll(cls, jid):
+        """Return True if jid is in the queueing system."""
         proc = Popen(["qstat", jid], stdout=PIPE)
         if proc.wait():
-            return 1
-        out, err = proc.communicate()
+            return False
+        out = proc.communicate()[0]
         # "qstat ID" returns something like:
         #     Job id            Name             ...
         #     ----------------  ---------------- ...
@@ -84,5 +68,5 @@ class pbs( JobSubmit ):
         for line in out.splitlines():
             items = line.strip().split(None, 1)
             if items and (items[0] == jid or items[0].startswith(jid + ".")):
-                return 0
-        return 1
+                return True
+        return False

@@ -50,7 +50,7 @@ from util import (get_icon, get_image_dir, get_logo, EntryTempText,
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
 import cylc.TaskID
-from cylc.version import cylc_version
+from cylc.version import CYLC_VERSION
 from cylc.strftime import strftime
 from option_group import controlled_option_group
 from color_rotator import rotator
@@ -1017,7 +1017,7 @@ been defined for this suite""").inform()
             if gtk.gtk_version[1] >= 12:
                 # set_program_name() was added in PyGTK 2.12
                 about.set_program_name( "cylc" )
-        about.set_version( cylc_version )
+        about.set_version( CYLC_VERSION )
         about.set_copyright( "Copyright (C) 2008-2014 Hilary Oliver, NIWA" )
 
         about.set_comments(
