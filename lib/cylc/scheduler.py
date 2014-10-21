@@ -1154,6 +1154,7 @@ class scheduler(object):
                 f_matches = families[name]
             except KeyError:
                 # regex match
+                f_matches = []
                 for fam, mems in families.items():
                     if re.match( name, fam ):
                         f_matches += mems
