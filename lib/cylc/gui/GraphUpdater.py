@@ -372,7 +372,7 @@ class GraphUpdater(threading.Thread):
 
         # FAMILIES
         if needs_redraw:
-            non_proxy_point_strings = set()
+            non_base_point_strings = set()
             point_string_nodes = {}
             for node in self.graphw.nodes():
                 node_id = node.get_name()
@@ -380,7 +380,7 @@ class GraphUpdater(threading.Thread):
                 point_string_nodes.setdefault(point_string, [])
                 point_string_nodes[point_string].append(node)
                 if node_id in self.state_summary:
-                    non_proxy_point_strings.add(point_string)
+                    non_base_point_strings.add(point_string)
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
@@ -389,7 +389,7 @@ class GraphUpdater(threading.Thread):
 
             # CROPPING
             if self.crop:
-                # Crop every proxy node.
+                # Crop every base node.
                 for node in self.graphw.nodes():
                     #if node in self.rem_nodes:
                     #    continue
@@ -399,10 +399,10 @@ class GraphUpdater(threading.Thread):
                     if node.get_name() not in self.state_summary:
                         self.rem_nodes.append(node)
             else:
-                # Crop every proxy node in purely-proxy-node cycle points.
-                pure_proxy_point_strings = (
-                    set(point_string_nodes) - non_proxy_point_strings)
-                for point_string in pure_proxy_point_strings:
+                # Crop every base node in purely-base-node cycle points.
+                pure_base_point_strings = (
+                    set(point_string_nodes) - non_base_point_strings)
+                for point_string in pure_base_point_strings:
                     for node in point_string_nodes[point_string]:
                         self.rem_nodes.append(node)
 
