@@ -1,0 +1,24 @@
+2014-10-21T10:21:25Z INFO - port:7766
+2014-10-21T10:21:25Z INFO - Suite starting at 2014-10-21T10:21:25Z
+2014-10-21T10:21:25Z INFO - Log event clock: real time
+2014-10-21T10:21:25Z INFO - Run mode: live
+2014-10-21T10:21:25Z INFO - Initial point: 20141009T0000Z
+2014-10-21T10:21:25Z INFO - Final point: None
+2014-10-21T10:21:25Z INFO - Cold Start 20141009T0000Z
+2014-10-21T10:21:25Z INFO - [holdrelease.20141009T0000Z] -initiate job-submit
+2014-10-21T10:21:25Z INFO - [holdrelease.20141009T0000Z] -triggered off []
+2014-10-21T10:21:26Z INFO - 22349
+2014-10-21T10:21:26Z INFO - [holdrelease.20141009T0000Z] -submit_method_id=22349
+2014-10-21T10:21:26Z INFO - [holdrelease.20141009T0000Z] -submission succeeded
+2014-10-21T10:21:26Z INFO - [holdrelease.20141009T0000Z] -(current:submitted)> holdrelease.20141009T0000Z started at 2014-10-21T10:21:26Z
+2014-10-21T10:21:32Z INFO - Command succeeded: hold task now(STUFF,20141009T0000Z,True)
+2014-10-21T10:21:37Z INFO - [holdrelease.20141009T0000Z] -(current:running)> holdrelease.20141009T0000Z succeeded at 2014-10-21T10:21:37Z
+2014-10-21T10:21:38Z INFO - [stop.20141009T0000Z] -initiate job-submit
+2014-10-21T10:21:38Z INFO - [stop.20141009T0000Z] -triggered off ['holdrelease.20141009T0000Z']
+2014-10-21T10:21:39Z INFO - 22471
+2014-10-21T10:21:39Z INFO - [stop.20141009T0000Z] -submit_method_id=22471
+2014-10-21T10:21:39Z INFO - [stop.20141009T0000Z] -submission succeeded
+2014-10-21T10:21:39Z INFO - [stop.20141009T0000Z] -(current:submitted)> stop.20141009T0000Z started at 2014-10-21T10:21:39Z
+2014-10-21T10:21:40Z INFO - [stop.20141009T0000Z] -(current:running)> stop.20141009T0000Z succeeded at 2014-10-21T10:21:40Z
+2014-10-21T10:21:40Z INFO - Command succeeded: stop cleanly(False)
+2014-10-21T10:21:41Z INFO - Suite shutting down at 2014-10-21T10:21:41Z
