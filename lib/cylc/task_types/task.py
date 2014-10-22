@@ -1231,6 +1231,14 @@ class task(object):
             self.sub_retry_delays = copy(self.sub_retry_delays_orig)
             self.job_vacated = True
 
+        elif content == "submission failed":
+            # This can arrive via a poll.
+            outp = self.id + ' submitted'
+            if self.outputs.is_completed(outp):
+                self.outputs.remove(outp)
+            self.submission_timer_timeout = None
+            self.job_submission_failed()
+
         else:
             # Unhandled messages. These include:
             #  * general non-output/progress messages

@@ -1,0 +1,41 @@
+2014-10-22T10:14:15+01 INFO - port:7766
+2014-10-22T10:14:15+01 INFO - Suite starting at 2014-10-22T10:14:15+01
+2014-10-22T10:14:15+01 INFO - Log event clock: real time
+2014-10-22T10:14:15+01 INFO - Run mode: live
+2014-10-22T10:14:15+01 INFO - Initial point: 1
+2014-10-22T10:14:15+01 INFO - Final point: 1
+2014-10-22T10:14:15+01 INFO - Cold Start 1
+2014-10-22T10:14:15+01 INFO - [foo.1] -initiate job-submit
+2014-10-22T10:14:15+01 INFO - [foo.1] -triggered off []
+2014-10-22T10:14:16+01 INFO - job 117689 at 2014-10-23 12:00
+2014-10-22T10:14:16+01 INFO - [foo.1] -submit_method_id=117689
+2014-10-22T10:14:16+01 INFO - [foo.1] -submission succeeded
+2014-10-22T10:14:16+01 INFO - [kill_foo_submit.1] -initiate job-submit
+2014-10-22T10:14:16+01 INFO - [kill_foo_submit.1] -triggered off ['foo.1']
+2014-10-22T10:14:17+01 INFO - 11559
+2014-10-22T10:14:17+01 INFO - [kill_foo_submit.1] -submit_method_id=11559
+2014-10-22T10:14:17+01 INFO - [kill_foo_submit.1] -submission succeeded
+2014-10-22T10:14:18+01 INFO - [kill_foo_submit.1] -(current:submitted)> kill_foo_submit.1 started at 2014-10-22T10:14:17+01
+2014-10-22T10:14:23+01 INFO - [kill_foo_submit.1] -(current:running)> kill_foo_submit.1 succeeded at 2014-10-22T10:14:22+01
+2014-10-22T10:14:24+01 INFO - [poll_foo.1] -initiate job-submit
+2014-10-22T10:14:24+01 INFO - [poll_foo.1] -triggered off ['kill_foo_submit.1']
+2014-10-22T10:14:25+01 INFO - 11780
+2014-10-22T10:14:25+01 INFO - [poll_foo.1] -submit_method_id=11780
+2014-10-22T10:14:25+01 INFO - [poll_foo.1] -submission succeeded
+2014-10-22T10:14:25+01 INFO - [poll_foo.1] -(current:submitted)> poll_foo.1 started at 2014-10-22T10:14:25+01
+2014-10-22T10:14:31+01 INFO - [poll_foo.1] -(current:running)> poll_foo.1 succeeded at 2014-10-22T10:14:30+01
+2014-10-22T10:14:31+01 INFO - [foo.1] -initiate job-poll
+2014-10-22T10:14:31+01 INFO - Command succeeded: poll tasks(foo,1,False)
+2014-10-22T10:14:32+01 INFO - polled foo.1 submission failed
+
+2014-10-22T10:14:32+01 INFO - [foo.1] -(current:submitted)> polled foo.1 submission failed
+2014-10-22T10:14:32+01 ERROR - [foo.1] -submission failed
+2014-10-22T10:14:32+01 INFO - [stop.1] -initiate job-submit
+2014-10-22T10:14:32+01 INFO - [stop.1] -triggered off ['foo.1']
+2014-10-22T10:14:33+01 INFO - 11909
+2014-10-22T10:14:33+01 INFO - [stop.1] -submit_method_id=11909
+2014-10-22T10:14:33+01 INFO - [stop.1] -submission succeeded
+2014-10-22T10:14:33+01 INFO - [stop.1] -(current:submitted)> stop.1 started at 2014-10-22T10:14:33+01
+2014-10-22T10:14:34+01 INFO - [stop.1] -(current:running)> stop.1 succeeded at 2014-10-22T10:14:33+01
+2014-10-22T10:14:34+01 INFO - Command succeeded: stop cleanly(False)
+2014-10-22T10:14:35+01 INFO - Suite shutting down at 2014-10-22T10:14:35+01

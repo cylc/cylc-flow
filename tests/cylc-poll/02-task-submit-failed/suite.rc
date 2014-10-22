@@ -1,0 +1,23 @@
+[scheduling]
+    [[dependencies]]
+        graph = """
+            foo:submit => kill_foo_submit => poll_foo
+            foo:submit-fail => stop
+        """
+            
+[runtime]
+    [[foo]]
+        [[[job submission]]] 
+            method = at
+            command template = 'echo "%s" | at noon tomorrow'
+    [[poll_foo]]
+        command scripting = sleep 5; cylc poll $CYLC_SUITE_NAME foo 1
+    [[stop]]
+        command scripting = cylc stop $CYLC_SUITE_NAME
+    [[kill_foo_submit]]
+        command scripting = """
+            sleep 5
+            ID=$(sed -n "s/^CYLC_JOB_SUBMIT_METHOD_ID=//p" \
+                 $CYLC_SUITE_RUN_DIR/log/job/1/foo/01/job.status)
+            atrm $ID
+        """
