@@ -647,6 +647,13 @@ class scheduler(object):
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
                 self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True, primary_db=False)
             else:
+                # Backwards compatibility code for restarting at move to new db location
+                # should be deleted at database refactoring
+                primary = os.path.join(run_dir, 'state', cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
+                viewable = os.path.join(run_dir, cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
+                if not os.path.exists(primary) and os.path.exists(viewable):
+                    print "copying across old suite database to state directory"
+                    shcopy(viewable, primary)
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
                 self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, primary_db=False)
 
