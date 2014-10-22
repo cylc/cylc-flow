@@ -11,5 +11,6 @@ baz.2014050200 : status=succeeded, spawned=true
 baz.2014050206 : status=waiting, spawned=false
 foo.2014050200 : status=succeeded, spawned=true
 foo.2014050206 : status=waiting, spawned=false
-qux.2014050206 : status=running, spawned=false
+qux.2014050206 : status=running, spawned=true
+qux.2014050212 : status=runahead, spawned=false
 wibble.2014050206 : status=waiting, spawned=false
