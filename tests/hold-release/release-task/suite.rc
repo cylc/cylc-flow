@@ -1,0 +1,33 @@
+#!jinja2
+
+title = "release tasks test suite"
+
+description = """One task that holds then selectively releases tasks in the
+first cycle point of the suite."""
+
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+[scheduling]
+    initial cycle point = 20141009T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = holdrelease => foo & stop
+        [[[P1D]]]
+            graph = """
+                foo => bar
+            """
+[runtime]
+    [[holdrelease]]
+        command scripting = """
+sleep 5
+cylc hold $CYLC_SUITE_NAME
+sleep 5
+# Release tasks in the first cycle point.
+cylc release $CYLC_SUITE_NAME {{ RELEASE_MATCH }} 20141009T0000Z
+"""
+    [[foo,bar]]
+        command scripting = true
+    [[stop]]
+        command scripting = cylc stop $CYLC_SUITE_NAME

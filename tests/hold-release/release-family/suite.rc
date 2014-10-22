@@ -1,0 +1,40 @@
+#!jinja2
+
+title = "release family test suite"
+
+description = """One task that holds then selectively releases a family in the
+first cycle point of the suite.."""
+
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+[scheduling]
+    initial cycle point = 20141009T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = holdrelease => foo & unrelated
+        [[[P1D]]]
+            graph = """
+                foo => bar => stop
+            """
+[runtime]
+    [[holdrelease]]
+        command scripting = """
+sleep 5
+cylc hold $CYLC_SUITE_NAME
+sleep 5
+# Release a family in the first cycle point.
+cylc release --family $CYLC_SUITE_NAME {{ RELEASE_MATCH }} 20141009T0000Z
+"""
+    [[STUFF]]
+    [[UNRELATED]]
+    [[foo,bar]]
+        inherit = STUFF
+        command scripting = true
+    [[stop]]
+        inherit = STUFF
+        command scripting = cylc stop $CYLC_SUITE_NAME
+    [[unrelated]]
+        inherit = UNRELATED
+        command scripting = true
