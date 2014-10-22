@@ -309,7 +309,6 @@ determine what happened to them while the suite was down."""
         taskstates = {}
         task_point_strings = []
         for line in task_lines:
-
             if re.match( '^class', line ):
                 # class variables
                 [ left, right ] = line.split( ' : ' )
@@ -339,9 +338,13 @@ determine what happened to them while the suite was down."""
                 id = new_id
             tasknames[name] = True
             if 'status=submitting,' in state:
-                # backward compabitility for state dumps generated prior to #787
+                # backward compatibility for state dumps generated prior to #787
                 state = state.replace('status=submitting,',
                                       'status=ready,', 1)
+            if 'status=runahead,' in state:
+                # backward compatibility for pre-cylc-6 state dumps.
+                state = state.replace(
+                    'status=runahead,', 'status=waiting,', 1)
             try:
                 task_state(state)
             except Exception as e:
