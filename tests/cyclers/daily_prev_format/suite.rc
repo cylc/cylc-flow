@@ -1,0 +1,15 @@
+[cylc]
+    cycle point format = %Y%m%d%H
+    UTC mode = True
+[scheduling]
+    initial cycle point = 2014080800 # no T
+    final cycle point = 2014081000
+    [[dependencies]]
+        [[[PT12H]]]
+            graph = "foo[-PT12H] => foo"
+[runtime]
+    [[foo]]
+        command scripting = true
+[visualization]
+    initial cycle point = 2014080800
+    final cycle point = 2014081000

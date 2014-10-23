@@ -536,7 +536,8 @@ def init_from_cfg(cfg):
         (final_cycle_point is not None and
          PREV_DATE_TIME_REC.search(final_cycle_point))
     )
-    if has_prev_format_cycle_point:
+    if (has_prev_format_cycle_point and
+            custom_dump_format != PREV_DATE_TIME_FORMAT):
         set_syntax_version(
             VERSION_PREV,
             "initial/final cycle point format: CCYYMMDDhh"

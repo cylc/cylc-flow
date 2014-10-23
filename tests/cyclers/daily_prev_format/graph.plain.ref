@@ -1,0 +1,11 @@
+edge "foo.2014080800" "foo.2014080812" solid
+edge "foo.2014080812" "foo.2014080900" solid
+edge "foo.2014080900" "foo.2014080912" solid
+edge "foo.2014080912" "foo.2014081000" solid
+graph
+node "foo.2014080800" "foo\n2014080800" unfilled box black
+node "foo.2014080812" "foo\n2014080812" unfilled box black
+node "foo.2014080900" "foo\n2014080900" unfilled box black
+node "foo.2014080912" "foo\n2014080912" unfilled box black
+node "foo.2014081000" "foo\n2014081000" unfilled box black
+stop
