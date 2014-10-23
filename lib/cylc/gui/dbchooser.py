@@ -226,10 +226,12 @@ class db_updater(threading.Thread):
     def running_choices_changed( self ):
         if not PyroInstalled:
             return
-        # (name, port)
-        suites = scan( pyro_timeout=self.pyro_timeout, silent=True )
-        if suites != self.running_choices:
-            self.running_choices = suites
+        # [(name, owner, host, port)]
+        results = scan(pyro_timeout=self.pyro_timeout)
+        choices = [(result[0], result[3]) for result in results]
+        choices.sort()
+        if choices != self.running_choices:
+            self.running_choices = choices
             return True
         else:
             return False

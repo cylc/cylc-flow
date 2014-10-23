@@ -1,0 +1,10 @@
+[cylc]
+    [[event hooks]]
+        timeout = PT2M
+        abort on timeout = True
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        command scripting = false

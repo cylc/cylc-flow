@@ -47,24 +47,24 @@ PYRO_TIMEOUT = 2
 
 def get_host_suites(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts and their running suites."""
-    if owner is None:
-        owner = user
     host_suites_map = {}
     if timeout is None:
         timeout = PYRO_TIMEOUT
-    for host in hosts:
-        host_suites_map[host] = []
-        command = ["cylc", "scan", "--host=%s" % host,
-                   "--user=%s" % owner, "--pyro-timeout=%s" % timeout]
-        popen = subprocess.Popen( command,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE )
-        stdout = popen.stdout.read()
-        res = popen.wait()
-        if res == 0 and stdout:
-            for line in stdout.splitlines():
-                if line:
-                    host_suites_map[host].append(line.split()[0])
+    command = ["cylc", "scan", "--pyro-timeout=%s" % timeout]
+    if owner:
+        command.append("--owner=%s" % owner)
+    if hosts:
+        command += hosts
+    popen = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    res = popen.wait()
+    if res == 0:
+        for line in popen.communicate()[0].splitlines():
+            if line:
+                name, _, host, _ = line.split()
+                if host not in host_suites_map:
+                    host_suites_map[host] = []
+                host_suites_map[host].append(name)
     return host_suites_map
 
 
@@ -339,10 +339,7 @@ class SummaryApp(object):
         set_exception_hook_dialog("cylc gsummary")
         setup_icons()
         if not hosts:
-            try:
-                hosts = GLOBAL_CFG.get( ["suite host scanning","hosts"] )
-            except KeyError:
-                hosts = ["localhost"]
+            hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
         self.hosts = hosts
         if owner is None:
             owner = user
@@ -858,8 +855,8 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
     stop_summaries = copy.deepcopy(prev_stop_summaries)
     current_time = time.time()
     current_suites = []
-    for host in hosts:
-        for suite in host_suites[host]:
+    for host, suites in host_suites.items():
+        for suite in suites:
             status_tasks = get_status_tasks(host, suite,
                                             owner=owner)
             if status_tasks is None:

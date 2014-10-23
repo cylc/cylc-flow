@@ -24,7 +24,6 @@ from owner import user
 from shutil import copy as shcopy, copytree, rmtree
 from copy import deepcopy
 import datetime, time
-import port_scan
 import logging
 import re, os, sys, traceback
 from state_summary import state_summary

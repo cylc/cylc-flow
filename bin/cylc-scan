@@ -15,46 +15,96 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute():
-        sys.exit(0)
-
-from cylc.port_scan import scan
-from cylc.CylcOptionParsers import cop
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-
-parser = cop( """cylc [discovery] scan [OPTIONS]
+"""cylc [discovery] scan [OPTIONS] [HOSTS ...]
 
 Detect running suites by port scanning.  Use --verbose to see (with "connection
 denied") suites owned by others too.
 
 WARNING: a suite suspended with Ctrl-Z will cause port scans to hang for all
-users until timing out (see --pyro-timeout, default 60 seconds).""",
-pyro=True, noforce=True, argdoc=[], auto_add=False)
+users until timing out (see --pyro-timeout, default 60 seconds)."""
 
-parser.add_option( "--print-ports",
-        help="Print the port range from the site config file "
-        "($CYLC_DIR/conf/global.rc).",
-        action="store_true",default=False, dest="print_ports" )
+import sys
+if "--use-ssh" in sys.argv[1:]:
+    sys.argv.remove("--use-ssh")
+    from cylc.remote import remrun
+    if remrun().execute():
+        sys.exit(0)
 
-parser.add_std_options()
-parser.remove_option("--pyro-timeout")
-parser.add_option( "--pyro-timeout", metavar='SEC',
-        help="Set a timeout for network connections "
-        "to running suites. The default is 60 seconds.",
-        action="store", default=60, dest="pyro_timeout" )
-
-( options, args ) = parser.parse_args()
+from multiprocessing import cpu_count, Pool
+from time import sleep
+from cylc.port_scan import scan
+from cylc.CylcOptionParsers import cop
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
-if options.print_ports:
-    base = GLOBAL_CFG.get( ['pyro','base port'] )
-    range = GLOBAL_CFG.get( ['pyro','maximum number of ports'] )
-    print base, '<= port <=', base + range
-    sys.exit(0)
+def main():
+    """Implement "cylc scan"."""
+    parser = cop(
+        __doc__,
+        pyro=True,
+        noforce=True,
+        argdoc=[("[HOSTS ...]", "hosts to scan instead of the default ones")],
+        auto_add=False)
 
-suites = scan( options.host, options.db, options.pyro_timeout )
+    parser.add_option(
+        "--print-ports",
+        help=(
+            "Print the port range from the site config file "
+            "($CYLC_DIR/conf/global.rc)."),
+        action="store_true",
+        default=False,
+        dest="print_ports")
+
+    parser.add_std_options()
+    parser.remove_option("--pyro-timeout")
+    parser.add_option(
+        "--pyro-timeout",
+        metavar="SEC",
+        help=(
+            "Set a timeout for network connections " +
+            "to running suites. The default is 60 seconds."),
+        action="store",
+        default=60,
+        dest="pyro_timeout")
+
+    options, args = parser.parse_args()
+
+    if options.print_ports:
+        base = GLOBAL_CFG.get(["pyro", "base port"])
+        max_num_ports = GLOBAL_CFG.get(["pyro", "maximum number of ports"])
+        print base, "<= port <=", base + max_num_ports
+        sys.exit(0)
+
+    for scan_result in scan_all(args, options.db, options.pyro_timeout):
+        print "%s %s %s %s" % scan_result
+
+
+def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
+    """Scan all hosts."""
+    if not hosts:
+        hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
+    proc_pool_size = GLOBAL_CFG.get(["process pool size"])
+    if proc_pool_size is None:
+        proc_pool_size = cpu_count()
+    if proc_pool_size > len(hosts):
+        proc_pool_size = len(hosts)
+    proc_pool = Pool(proc_pool_size)
+    async_results = {}
+    for host in hosts:
+        async_results[host] = proc_pool.apply_async(
+            scan, [host, reg_db_path, pyro_timeout])
+    proc_pool.close()
+    scan_results = []
+    while async_results:
+        sleep(0.05)
+        for host, async_result in async_results.items():
+            if async_result.ready():
+                async_results.pop(host)
+                scan_results.extend(async_result.get())
+    proc_pool.join()
+    scan_results.sort()
+    return scan_results
+
+
+if __name__ == "__main__":
+    main()
