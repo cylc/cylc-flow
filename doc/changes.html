@@ -16,6 +16,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.0.2">6.0.2</a></li>
     <li><a href="#6.0.1">6.0.1</a></li>
     <li><a href="#6.0.0">6.0.0</a></li>
     <li><a href="#5.4.14">5.4.14</a></li>
@@ -48,6 +49,24 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.0.2"/>
+    <h2>6.0.2</h2>
+    
+    <p>Minor bug fixes and improvements since cylc-6.0.1</p>
+    <ul>
+				<li> handle tasks in the cylc-5 <code>runahead</code> state properly,
+				when restarting from a cylc-5 suite, 
+				<li> fixed polling of tasks whose job submission failed
+				<li> fixed reporting of task log file locations after a suite reload
+				<li> fixed use of a family name regex in the <code>cylc release</code>
+				command.
+				<li> gcylc graph view: crop entire cycle points from the graph if they
+				contain only base nodes (i.e. nodes with no corresponding task proxy),
+				even if earlier cycle points are not empty (typically R1 tasks rendered
+				immortal by ongoing dependence on them)
+				<li> fixed job polling under the SGE batch scheduler
+				<li> stopped newly spawned tasks from running if the suite is held
+    </ul>
 
 <a name="6.0.1"/>
     <h2>6.0.1</h2>
