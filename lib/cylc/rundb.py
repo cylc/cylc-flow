@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
+import errno
 from time import sleep
 import os
 import shutil
@@ -118,8 +119,6 @@ class ThreadedCursor(Thread):
         cursor = cnx.cursor()
         counter = 1
         while True:
-            if not os.path.exists(self.db):
-                raise Exception(self.db_not_found_err%self.db)
             if (counter % 10) == 0 or self.reqs.qsize() == 0:
                 counter = 0
                 attempt = 0
@@ -318,6 +317,8 @@ class CylcRuntimeDAO(object):
             return row
 
     def run_db_op(self, db_oper):
+        if not os.path.exists(self.db_file_name):
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), self.db_file_name)
         if isinstance(db_oper, BulkDBOperObject):
             self.c.execute(db_oper.s_fmt, db_oper.args, bulk=True)
         else:

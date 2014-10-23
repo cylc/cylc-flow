@@ -652,7 +652,7 @@ class scheduler(object):
                 primary = os.path.join(run_dir, 'state', cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
                 viewable = os.path.join(run_dir, cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
                 if not os.path.exists(primary) and os.path.exists(viewable):
-                    print "copying across old suite database to state directory"
+                    print "[info] copying across old suite database to state directory"
                     shcopy(viewable, primary)
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
                 self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, primary_db=False)
@@ -874,7 +874,11 @@ class scheduler(object):
                     seconds = time.time() - main_loop_start_time
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            self.pool.process_queued_task_messages()
+            try:
+                self.pool.process_queued_task_messages()
+            except OSError as err:
+                self.shutdown(str(err))
+                raise
 
             self.process_command_queue()
 
