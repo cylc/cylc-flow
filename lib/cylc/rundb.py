@@ -17,10 +17,12 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
+import errno
 from time import sleep
 import os
 import shutil
 import sqlite3
+import stat
 import sys
 from threading import Thread
 from Queue import Queue
@@ -110,6 +112,8 @@ class ThreadedCursor(Thread):
                               "\trequest: %s\n\targs: %s")
         self.generic_err_msg = ("%s:%s occurred while trying to run:\n"+
                               "\trequest: %s\n\targs: %s")
+        self.db_not_found_err = ("Database Not Found Error:\n"+
+                                 "\tNo database found at %s")
     def run(self):
         cnx = sqlite3.connect(self.db, timeout=10.0)
         cursor = cnx.cursor()
@@ -216,10 +220,13 @@ class CylcRuntimeDAO(object):
                       BROADCAST_SETTINGS: None}
 
 
-    def __init__(self, suite_dir=None, new_mode=False):
+    def __init__(self, suite_dir=None, new_mode=False, primary_db=True):
         if suite_dir is None:
             suite_dir = os.getcwd()
-        self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
+        if primary_db:
+            self.db_file_name = os.path.join(suite_dir, 'state', self.DB_FILE_BASE_NAME)
+        else:
+            self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
         # create the host directory if necessary
         try:
             mkdir_p( suite_dir )
@@ -238,6 +245,9 @@ class CylcRuntimeDAO(object):
             new_mode = True
         if new_mode:
             self.create()
+            # Restrict the primary database to user access only
+            if primary_db:
+                os.chmod(self.db_file_name, stat.S_IRUSR | stat.S_IWUSR)
         self.c = ThreadedCursor(self.db_file_name)
 
     def close(self):
@@ -307,6 +317,8 @@ class CylcRuntimeDAO(object):
             return row
 
     def run_db_op(self, db_oper):
+        if not os.path.exists(self.db_file_name):
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), self.db_file_name)
         if isinstance(db_oper, BulkDBOperObject):
             self.c.execute(db_oper.s_fmt, db_oper.args, bulk=True)
         else:

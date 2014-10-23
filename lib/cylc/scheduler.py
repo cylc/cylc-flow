@@ -244,7 +244,7 @@ class scheduler(object):
             self.log.info( 'Start point: ' + str(self.start_point) )
         self.log.info( 'Final point: ' + str(self.final_point) )
 
-        self.pool = pool( self.suite, self.db, self.final_point, self.config,
+        self.pool = pool( self.suite, self.db, self.view_db, self.final_point, self.config,
                           self.pyro, self.log, self.run_mode, self.proc_pool )
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
@@ -644,8 +644,17 @@ class scheduler(object):
             run_dir = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
+                self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True, primary_db=False)
             else:
+                # Backwards compatibility code for restarting at move to new db location
+                # should be deleted at database refactoring
+                primary = os.path.join(run_dir, 'state', cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
+                viewable = os.path.join(run_dir, cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
+                if not os.path.exists(primary) and os.path.exists(viewable):
+                    print "[info] copying across old suite database to state directory"
+                    shcopy(viewable, primary)
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
+                self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, primary_db=False)
 
             self.hold_suite_now = False
             self.hold_time = None
@@ -864,7 +873,11 @@ class scheduler(object):
                     seconds = time.time() - main_loop_start_time
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
-            self.pool.process_queued_task_messages()
+            try:
+                self.pool.process_queued_task_messages()
+            except OSError as err:
+                self.shutdown(str(err))
+                raise
 
             self.process_command_queue()
 
@@ -1050,6 +1063,7 @@ class scheduler(object):
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:
             self.db.close()
+            self.view_db.close()
 
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
