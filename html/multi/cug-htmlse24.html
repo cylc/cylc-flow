@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Cylc Development History - Major Changes</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html,fn-in,2,next --> 
+<meta name="src" content="cug-html.tex"> 
+<meta name="date" content="2014-10-23 14:04:00"> 
+<link rel="stylesheet" type="text/css" href="cug-html.css"> 
+</head><body 
+>
+   <!--l. 6759--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse25.html" >next</a>] [<a 
+href="cug-htmlse23.html" >prev</a>] [<a 
+href="cug-htmlse23.html#tailcug-htmlse23.html" >prev-tail</a>] [<a 
+href="#tailcug-htmlse24.html">tail</a>] [<a 
+href="cug-html.html#cug-htmlse24.html" >up</a>] </p></div>
+<!--l. 6759--><p class="indent" >    <h3 id="H" class="sectionHead"><span class="titlemark"> <a href="#H">H</a>  <a 
+ id="x25-480000H"></a>Cylc Development History - Major Changes </span></h3> <div class="sectionTOCS">
+   </div>
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmbx-10">pre-cylc-3 </span>- early versions focused on the new scheduling algorithm. A suite was a collection of &#8220;task
+     definition files&#8221; that encoded the prerequisites and outputs of each task, exposing cylc&#8217;s self-organising
+     nature. Tasks could be transferred from one suite to another by simply copying their taskdef files over
+     and checking prerequisite and output consistency. Global suite structure was not easy to discern until
+     run time (although cylc-2 could generate resolved run time dependency graphs).
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">cylc-3 </span>- a new suite design interface: dependency graph and task runtime properties defined in a single
+     structured, validated, configuration file - the suite.rc file; graphical user interface; suite graphing.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">cylc-4 </span>- refined and organized the suite.rc file structure; task runtime properties defined by an efficient
+     inheritance hierarchy; support for the Jinja2 template processor in suite definitions.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">cylc-5 </span>- multi-threading for continuous network request handling and job submission; more task states
+     to distinguish job submission from execution; dependence between suites via new suite run databases;
+     polling and killing of real task jobs; polling as task communications option.
+     </li>
+     <li class="itemize"><span 
+class="cmbx-10">cylc-6 </span>- specification of all date-times and cycling workflows via the ISO8601 date-times, durations,
+     and recurrence expressions; integer cycling; a multi-process pool to execute job submissions, event
+     handlers, and poll and kill commands.
+     </li></ul>
+                                                                                         
+
+                                                                                         
+   <!--l. 6795--><div class="crosslinks"><p class="noindent">[<a 
+href="cug-htmlse25.html" >next</a>] [<a 
+href="cug-htmlse23.html" >prev</a>] [<a 
+href="cug-htmlse23.html#tailcug-htmlse23.html" >prev-tail</a>] [<a 
+href="cug-htmlse24.html" >front</a>] [<a 
+href="cug-html.html#cug-htmlse24.html" >up</a>] </p></div>
+<!--l. 6795--><p class="indent" >   <a 
+ id="tailcug-htmlse24.html"></a>  
+</body></html> 
