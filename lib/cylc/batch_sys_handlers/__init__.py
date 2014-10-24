@@ -1,1 +1,1 @@
-"""This package contains various handlers for batch systems."""
+"""This package contains handlers for various batch systems."""

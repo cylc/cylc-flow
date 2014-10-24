@@ -147,7 +147,7 @@ class BatchSysManager(object):
     def job_kill(self, st_file_path):
         """Ask batch system to terminate the job specified in "st_file_path".
 
-        Return 0 on success, non-zero return code on failure.
+        Return zero on success, non-zero on failure.
 
         """
         # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status

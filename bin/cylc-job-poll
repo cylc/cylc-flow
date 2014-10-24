@@ -17,8 +17,9 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """cylc [control] job-poll ST-FILE
 
-Poll a submitted or running job by inspecting its status file and possibly
-querying the batch system to see if the job is still alive or not.
+(This command is for internal use. Users should use "cylc poll".) Poll a
+submitted or running job by inspecting its status file and possibly querying
+the batch system to see if the job is still alive or not.
 
 """
 

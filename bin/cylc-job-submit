@@ -18,6 +18,7 @@
 
 """cylc [task] job-submit [--remote-mode] JOB-FILE-PATH
 
+(This command is for internal use. Users should use "cylc submit".)
 Submit a job file.
 
 """

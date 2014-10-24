@@ -28,12 +28,12 @@ class AtCommandHandler(object):
     (1) the 'atd' daemon service must be running; (2) the atq command
     does not report if the job is running or not.
 
-    How to make tasks stays in the queue for a while:
+    How to make tasks stays in the queue until tea time:
     [runtime]
       [[MyTask]]
         [[[job submission]]]
            method = at
-           command template = 'echo "%s 1>%s 2>%s" | at now + 2 minutes'
+           command template = 'echo "%(job)s 1>%(job)s 2>%(job)s" | at teatime'
     """
 
     CAN_KILL_PROC_GROUP = True

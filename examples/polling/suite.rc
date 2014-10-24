@@ -21,4 +21,4 @@ as the suite runs, filtering for the word 'poll'.
         [[[job submission]]]
             method = at
             # stay 'submitted' for up to a minute:
-            command template = 'echo "%s 1>%s 2>%s" | at now + 1 minutes'
+            command template = 'echo "%(job)s 1>%(job)s 2>%(job)s" | at now + 1 minutes'
