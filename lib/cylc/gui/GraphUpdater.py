@@ -379,7 +379,8 @@ class GraphUpdater(threading.Thread):
                 name, point_string = cylc.TaskID.split( node_id )
                 point_string_nodes.setdefault(point_string, [])
                 point_string_nodes[point_string].append(node)
-                if node_id in self.state_summary:
+                if (node_id in self.state_summary or
+                        node_id in self.fam_state_summary):
                     non_base_point_strings.add(point_string)
                 if name in self.all_families:
                     if name in self.triggering_families:
