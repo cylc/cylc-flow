@@ -15,46 +15,31 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Implement background job submission."""
+"""Background job submission and manipulation."""
 
-from cylc.job_submission.job_submit import JobSubmit
 import os
 import re
-from subprocess import Popen, PIPE
+from subprocess import Popen
 import sys
+from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 
 
-class background(JobSubmit):
-    """Background job submission.
+class BgCommandHandler(object):
+    """Background job submission and manipulation.
 
-    Runs the task in a background process. Uses 'wait' to prevent exit before
+    Run a task job as a background process. Uses 'wait' to prevent exit before
     the job is finished (which would be a problem for remote background jobs at
     sites that do not allow unattended jobs on login nodes).
 
     """
 
+    CAN_KILL_PROC_GROUP = True
     IS_BG_SUBMIT = True
-    REC_ID_FROM_OUT = re.compile(r"""\A(?P<id>\d+)\Z""")
-
-    def get_id(self, out, err):
-        """
-        Extract the job process ID from job submission command
-        output. For background jobs the submission command simply
-        echoes the process ID to stdout as described above.
-        """
-        return out.strip()
-
-    def kill(self, st_file):
-        """Kill the job."""
-        return self.kill_proc_group(st_file)
+    POLL_CMD = "ps"
+    REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A(?P<id>\d+)\Z""")
 
     @classmethod
-    def poll(cls, jid):
-        """Return True if jid is in the queueing system."""
-        return Popen(["ps", jid], stdout=PIPE).wait() == 0
-
-    @classmethod
-    def submit(cls, job_file_path, _=None):
+    def submit(cls, job_file_path):
         """Submit "job_file_path"."""
         out_file = open(job_file_path + ".out", "wb")
         err_file = open(job_file_path + ".err", "wb")
@@ -62,14 +47,21 @@ class background(JobSubmit):
             [job_file_path], stdout=out_file, stderr=err_file,
             preexec_fn=os.setpgrp)
         # Send PID info back to suite
-        sys.stdout.write("%d\n" % proc.pid)
+        sys.stdout.write("%(pid)d\n%(key)s=%(pid)d\n" % {
+            "key": BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID,
+            "pid": proc.pid,
+        })
         sys.stdout.flush()
         # Write PID info to status file
         job_status_file = open(job_file_path + ".status", "a")
-        job_status_file.write("CYLC_JOB_SUBMIT_METHOD_ID=%d\n" % proc.pid)
+        job_status_file.write("%s=%d\n" % (
+            BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID, proc.pid))
         job_status_file.close()
         # Wait for job
-        ret_code = proc.wait()
+        proc.communicate()
         out_file.close()
         err_file.close()
-        return (ret_code, None, None)
+        return proc
+
+
+BATCH_SYS_HANDLER = BgCommandHandler()

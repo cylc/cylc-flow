@@ -17,36 +17,28 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Write task job files."""
 
-from copy import deepcopy
 import os
 import re
+import stat
 import StringIO
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.TaskID
+from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 
 
 class JobFile(object):
+
     """Write task job files."""
 
-    LINE_PREFIX_JOB_SYS = "# Job submit method: "
-    LINE_PREFIX_JOB_SYS_CMD_TMPL = "# Job submit command template: "
+    def __init__(self):
+        self.suite_env = {}
 
-    # These are set by the scheduler object at start-up:
-    suite_env = None       # static variables not be be changed below
-    suite_task_env = None  # copy and change below
+    def set_suite_env(self, suite_env):
+        """Configure suite environment for all job files."""
+        self.suite_env.clear()
+        self.suite_env.update(suite_env)
 
-    def __init__(
-            self, suite, log_root, job_submission_method, task_id, jobconfig):
-
-        self.log_root = log_root
-        self.job_submission_method = job_submission_method
-        self.task_id = task_id
-        self.jobconfig = jobconfig
-        self.suite = suite
-        self.owner = jobconfig['task owner']
-        self.host = jobconfig['task host']
-
-    def write(self, path):
+    def write(self, job_conf):
         """Write each job script section in turn."""
 
         ############# !!!!!!!! WARNING !!!!!!!!!!! #####################
@@ -60,69 +52,70 @@ class JobFile(object):
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
 
-        handle = open(path, 'wb')
-        self._write_header(handle)
-        self._write_directives(handle)
-        self._write_prelude(handle)
-        self._write_err_trap(handle)
-        self._write_initial_scripting(handle)
-        self._write_environment_1(handle)
-        self._write_enviro_scripting(handle)
+        handle = open(job_conf['local job file path'], 'wb')
+        self._write_header(handle, job_conf)
+        self._write_directives(handle, job_conf)
+        self._write_prelude(handle, job_conf)
+        self._write_err_trap(handle, job_conf)
+        self._write_initial_scripting(handle, job_conf)
+        self._write_environment_1(handle, job_conf)
+        self._write_enviro_scripting(handle, job_conf)
         # suite bin access must be before runtime environment
         # because suite bin commands may be used in variable
         # assignment expressions: FOO=$(command args).
-        self._write_suite_bin_access(handle)
-        self._write_environment_2(handle)
-        self._write_task_started(handle)
-        self._write_manual_environment(handle)
-        self._write_identity_scripting(handle)
-        self._write_command_scriptings(handle)
-        self._write_epilogue(handle)
+        self._write_suite_bin_access(handle, job_conf)
+        self._write_environment_2(handle, job_conf)
+        self._write_task_started(handle, job_conf)
+        self._write_manual_environment(handle, job_conf)
+        self._write_identity_scripting(handle, job_conf)
+        self._write_command_scriptings(handle, job_conf)
+        self._write_epilogue(handle, job_conf)
         handle.close()
+        # make it executable
+        mode = (
+            os.stat(job_conf['local job file path']).st_mode |
+            stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        os.chmod(job_conf['local job file path'], mode)
 
-    def _write_header(self, handle):
+    @classmethod
+    def _write_header(cls, handle, job_conf):
         """Write job script header."""
-        handle.write("#!" + self.jobconfig['job script shell'])
+        handle.write("#!" + job_conf['job script shell'])
         handle.write("\n#\n# ++++ THIS IS A CYLC TASK JOB SCRIPT ++++")
         for prefix, value in [
-                ("# Suite: ", self.suite),
-                ("# Task: ", self.task_id),
-                (self.LINE_PREFIX_JOB_SYS, self.job_submission_method),
-                (self.LINE_PREFIX_JOB_SYS_CMD_TMPL,
-                 self.jobconfig['command template'])]:
+                ("# Suite: ", job_conf['suite name']),
+                ("# Task: ", job_conf['task id']),
+                (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SYS_NAME,
+                 job_conf['batch system name']),
+                (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
+                 job_conf['batch submit command template'])]:
             if value:
                 handle.write("\n" + prefix + value)
 
-    def _write_directives(self, handle):
+    @classmethod
+    def _write_directives(cls, handle, job_conf):
         """Job directives."""
-        directives = self.jobconfig['directives']
-        prefix = self.jobconfig['directive prefix']
-        if not directives or not prefix:
-            return
-        final = self.jobconfig['directive final']
-        connector = self.jobconfig['directive connector']
+        lines = BATCH_SYS_MANAGER.format_directives(job_conf)
+        if lines:
+            handle.write('\n\n# DIRECTIVES:')
+            for line in lines:
+                handle.write('\n' + line)
 
-        handle.write("\n\n# DIRECTIVES:")
-        for key, value in directives.items():
-            if value:
-                handle.write('\n%s %s%s%s' % (prefix, key, connector, value))
-            else:
-                handle.write('\n%s %s' % (prefix, key))
-        if final:
-            handle.write('\n' + final)
-
-    def _write_prelude(self, handle):
+    @classmethod
+    def _write_prelude(cls, handle, job_conf):
         """Job script prelude."""
         handle.write('\n\necho "JOB SCRIPT STARTING"')
         # set cylc version and source profile scripts before turning on
         # error trapping so that profile errors do not abort the job
         handle.write('\n\nprelude() {')
         keys = GLOBAL_CFG.get_host_item(
-            'copyable environment variables', self.host, self.owner)
+            'copyable environment variables',
+            job_conf['host'], job_conf['owner'])
         for key in keys + ['CYLC_DIR', 'CYLC_VERSION']:
             if key in os.environ:
                 handle.write("\n    export %s='%s'" % (key, os.environ[key]))
-        handle.write(r'''
+        handle.write(
+            r'''
     for FILE_NAME in \
         "${HOME}/.cylc/job-init-env.sh" \
         "${CYLC_DIR}/conf/job-init-env.sh" \
@@ -136,7 +129,8 @@ class JobFile(object):
 }
 prelude''')
 
-    def _write_err_trap(self, handle):
+    @classmethod
+    def _write_err_trap(cls, handle, job_conf):
         """Write error trap.
 
         Note that all job-file scripting must be bash- and ksh-compatible,
@@ -170,11 +164,12 @@ for S in $FAIL_SIGNALS; do
 done
 unset S""")
 
-        if self.jobconfig['job vacation signal']:
+        vacation_signal = BATCH_SYS_MANAGER.get_vacation_signal(job_conf)
+        if vacation_signal:
             handle.write(r"""
 
 # TRAP VACATION SIGNALS:
-VACATION_SIGNALS='""" + self.jobconfig['job vacation signal'] + r"""'
+VACATION_SIGNALS='""" + vacation_signal + r"""'
 TRAP_VACATION_SIGNAL() {
     typeset SIGNAL=$1
     echo "Received signal $SIGNAL" >&2
@@ -194,68 +189,75 @@ for S in $VACATION_SIGNALS; do
 done
 unset S""")
 
-    def _write_initial_scripting(self, handle):
+    @classmethod
+    def _write_initial_scripting(cls, handle, job_conf):
         """Initial scripting."""
         global_initial_scripting = GLOBAL_CFG.get_host_item(
-            'global initial scripting', self.host, self.owner)
+            'global initial scripting', job_conf["host"], job_conf["owner"])
         if global_initial_scripting:
             handle.write("\n\n# GLOBAL INITIAL SCRIPTING:\n")
             handle.write(global_initial_scripting)
-        if self.jobconfig['initial scripting']:
-            handle.write("\n\n# INITIAL SCRIPTING:\n")
-            handle.write(self.jobconfig['initial scripting'])
+        if not job_conf['initial scripting']:
+            return
+        handle.write("\n\n# INITIAL SCRIPTING:\n")
+        handle.write(job_conf['initial scripting'])
 
-    def _write_environment_1(self, handle):
+    def _write_environment_1(self, handle, job_conf):
         """Suite and task environment."""
         handle.write("\n\n# CYLC SUITE ENVIRONMENT:")
 
         # write the static suite variables
-        for var, val in sorted(self.__class__.suite_env.items()):
+        for var, val in sorted(self.suite_env.items()):
             handle.write("\nexport " + var + "=" + str(val))
 
-        if str(self.__class__.suite_env.get('CYLC_UTC')) == 'True':
+        if str(self.suite_env.get('CYLC_UTC')) == 'True':
             handle.write("\nexport TZ=UTC")
 
         handle.write("\n")
         # override and write task-host-specific suite variables
         suite_work_dir = GLOBAL_CFG.get_derived_host_item(
-            self.suite, 'suite work directory', self.host, self.owner)
-        st_env = deepcopy(self.__class__.suite_task_env)
+            job_conf['suite name'], 'suite work directory',
+            job_conf['host'], job_conf['owner'])
+        st_env = {}
         st_env['CYLC_SUITE_RUN_DIR'] = GLOBAL_CFG.get_derived_host_item(
-            self.suite, 'suite run directory', self.host, self.owner)
+            job_conf['suite name'], 'suite run directory',
+            job_conf['host'], job_conf['owner'])
         st_env['CYLC_SUITE_WORK_DIR'] = suite_work_dir
         st_env['CYLC_SUITE_SHARE_DIR'] = GLOBAL_CFG.get_derived_host_item(
-            self.suite, 'suite share directory', self.host, self.owner)
+            job_conf['suite name'], 'suite share directory',
+            job_conf['host'], job_conf['owner'])
         # DEPRECATED
         st_env['CYLC_SUITE_SHARE_PATH'] = '$CYLC_SUITE_SHARE_DIR'
-        rsp = self.jobconfig['remote suite path']
+        rsp = job_conf['remote suite path']
         if rsp:
             st_env['CYLC_SUITE_DEF_PATH'] = rsp
         else:
             # replace home dir with '$HOME' for evaluation on the task host
             st_env['CYLC_SUITE_DEF_PATH'] = re.sub(
-                os.environ['HOME'], '$HOME', st_env['CYLC_SUITE_DEF_PATH'])
+                os.environ['HOME'], '$HOME',
+                self.suite_env['CYLC_SUITE_DEF_PATH_ON_SUITE_HOST'])
         for var, val in sorted(st_env.items()):
             handle.write("\nexport " + var + "=" + str(val))
 
         task_work_dir = os.path.join(
-            suite_work_dir, self.jobconfig['work sub-directory'])
+            suite_work_dir, job_conf['work sub-directory'])
 
         use_login_shell = GLOBAL_CFG.get_host_item(
-            'use login shell', self.host, self.owner)
+            'use login shell', job_conf['host'], job_conf['owner'])
         comms = GLOBAL_CFG.get_host_item(
-            'task communication method', self.host, self.owner)
+            'task communication method', job_conf['host'], job_conf['owner'])
 
-        task_name, point_string = cylc.TaskID.split(self.task_id)
+        task_name, point_string = cylc.TaskID.split(job_conf['task id'])
         handle.write("\n\n# CYLC TASK ENVIRONMENT:")
         handle.write("\nexport CYLC_TASK_COMMS_METHOD=" + comms)
         handle.write("\nexport CYLC_TASK_CYCLE_POINT=" + point_string)
         handle.write("\nexport CYLC_TASK_CYCLE_TIME=" + point_string)
-        handle.write("\nexport CYLC_TASK_ID=" + self.task_id)
+        handle.write("\nexport CYLC_TASK_ID=" + job_conf['task id'])
         handle.write(
             "\nexport CYLC_TASK_IS_COLDSTART=" +
-            str(self.jobconfig['is cold-start']))
-        handle.write("\nexport CYLC_TASK_LOG_ROOT=" + self.log_root)
+            str(job_conf['is cold-start']))
+        handle.write(
+            "\nexport CYLC_TASK_LOG_ROOT=" + job_conf['job file path'])
         handle.write(
             "\nexport CYLC_TASK_MSG_MAX_TRIES=" +
             str(GLOBAL_CFG.get(['task messaging', 'maximum number of tries'])))
@@ -268,36 +270,37 @@ unset S""")
         handle.write("\nexport CYLC_TASK_NAME=" + task_name)
         handle.write(
             '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' +
-            ' '.join(self.jobconfig['namespace hierarchy']) + '"')
+            ' '.join(job_conf['namespace hierarchy']) + '"')
         handle.write(
             "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell))
         handle.write(
             "\nexport CYLC_TASK_SUBMIT_NUMBER=" +
-            str(self.jobconfig['absolute submit number']))
+            str(job_conf['absolute submit number']))
         handle.write(
             "\nexport CYLC_TASK_TRY_NUMBER=" +
-            str(self.jobconfig['try number']))
+            str(job_conf['try number']))
         handle.write("\nexport CYLC_TASK_WORK_DIR=" + task_work_dir)
         # DEPRECATED
         handle.write("\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR")
 
-    def _write_enviro_scripting(self, handle):
+    @classmethod
+    def _write_enviro_scripting(cls, handle, job_conf):
         """Environment scripting."""
-        if not self.jobconfig['environment scripting']:
+        if not job_conf['environment scripting']:
             return
         handle.write("\n\n# ENVIRONMENT SCRIPTING:\n")
-        handle.write(self.jobconfig['environment scripting'])
+        handle.write(job_conf['environment scripting'])
 
     @classmethod
-    def _write_suite_bin_access(cls, handle):
+    def _write_suite_bin_access(cls, handle, _):
         """Suite bin/ directory access."""
         handle.write(
             "\n\n# ACCESS TO THE SUITE BIN DIRECTORY:" +
             "\nexport PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH")
 
-    def _write_environment_2(self, handle):
+    def _write_environment_2(self, handle, job_conf):
         """Run time environment part 2."""
-        env = self.jobconfig['runtime environment']
+        env = job_conf['runtime environment']
         if not env:
             return
 
@@ -356,7 +359,7 @@ unset S""")
         return expr
 
     @classmethod
-    def _write_task_started(cls, handle):
+    def _write_task_started(cls, handle, _):
         """Script to send start message and create work directory."""
         handle.write(r"""
 
@@ -375,12 +378,12 @@ mkdir -p $(dirname $CYLC_TASK_WORK_DIR) || true
 mkdir -p $CYLC_TASK_WORK_DIR
 cd $CYLC_TASK_WORK_DIR""")
 
-    def _write_manual_environment(self, handle):
+    def _write_manual_environment(self, handle, job_conf):
         """Write a transferable environment for detaching tasks."""
-        if not self.jobconfig['use manual completion']:
+        if not job_conf['use manual completion']:
             return
         strio = StringIO.StringIO()
-        self._write_environment_1(strio)
+        self._write_environment_1(strio, job_conf)
         # now escape quotes in the environment string
         value = strio.getvalue()
         strio.close()
@@ -394,7 +397,7 @@ cd $CYLC_TASK_WORK_DIR""")
         handle.write('\nexport CYLC_SUITE_ENVIRONMENT="' + value + '"')
 
     @classmethod
-    def _write_identity_scripting(cls, handle):
+    def _write_identity_scripting(cls, handle, _):
         """Write script for suite and task identity."""
         handle.write(r"""
 
@@ -416,17 +419,19 @@ echo "  Task Owner  : $USER"
 echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
 echo""")
 
-    def _write_command_scriptings(self, handle):
+    @classmethod
+    def _write_command_scriptings(cls, handle, job_conf):
         """Write pre-command, command and post-command scriptings."""
         for prefix in ['pre-', '', 'post-']:
-            value = self.jobconfig[prefix + 'command scripting']
+            value = job_conf[prefix + 'command scripting']
             if value:
                 handle.write("\n\n# %sCOMMAND SCRIPTING:\n%s" % (
                     prefix.upper(), value))
 
-    def _write_epilogue(self, handle):
+    @classmethod
+    def _write_epilogue(cls, handle, job_conf):
         """Write epilogue."""
-        if self.jobconfig['use manual completion']:
+        if job_conf['use manual completion']:
             handle.write(r"""
 
 # (detaching task: cannot safely remove the WORK DIRECTORY here)
@@ -453,3 +458,6 @@ echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
 trap '' EXIT
 
 #EOF""")
+
+
+JOB_FILE = JobFile()

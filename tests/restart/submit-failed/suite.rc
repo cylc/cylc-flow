@@ -46,7 +46,7 @@
         [[[job submission]]] 
             method = at
             # 'yesterday' is an invalid at time!
-            command template = at yesterday -f %s %s %s
+            command template = echo '%(job)s 1>%(job)s.out 2>%(job)s.err' | at yesterday
     [[force_restart]]
         pre-command scripting = """
             # We need to make sure that the results stay consistent.

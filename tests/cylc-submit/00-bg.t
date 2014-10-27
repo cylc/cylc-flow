@@ -30,12 +30,12 @@ if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
     fi
     CYLC_TEST_HOST="${HOST}"
 fi
-CYLC_TEST_JOB_SUBMIT_METHOD='background'
+CYLC_TEST_BATCH_SYS_NAME='background'
 CYLC_TEST_DIRECTIVES=
 if [[ "${TEST_NAME_BASE}" == ??-at* ]]; then
-    CYLC_TEST_JOB_SUBMIT_METHOD='at'
+    CYLC_TEST_BATCH_SYS_NAME='at'
 elif [[ "${TEST_NAME_BASE}" == ??-loadleveler* ]]; then
-    CYLC_TEST_JOB_SUBMIT_METHOD='loadleveler'
+    CYLC_TEST_BATCH_SYS_NAME='loadleveler'
     ITEM_KEY='[test battery][directives]loadleveler host'
     CYLC_TEST_HOST="$(cylc get-global-config "--item=${ITEM_KEY}")"
     if [[ -z "${CYLC_TEST_HOST}" ]]; then
@@ -54,6 +54,7 @@ if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
 [hosts]
     [[${CYLC_TEST_HOST}]]
         cylc executable = ${TEST_RHOST_CYLC_DIR#*:}/bin/cylc
+        use login shell = False
 __GLOBAL_RC__
     export CYLC_CONF_DIR="${PWD}/conf"
 fi
@@ -64,24 +65,24 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate \
     "--set=CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
-    "--set=CYLC_TEST_JOB_SUBMIT_METHOD=${CYLC_TEST_JOB_SUBMIT_METHOD}" \
+    "--set=CYLC_TEST_BATCH_SYS_NAME=${CYLC_TEST_BATCH_SYS_NAME}" \
     "${SUITE_NAME}"
 run_ok "${TEST_NAME_BASE}" \
     cylc submit \
     "--set=CYLC_TEST_HOST=${CYLC_TEST_HOST}" \
-    "--set=CYLC_TEST_JOB_SUBMIT_METHOD=${CYLC_TEST_JOB_SUBMIT_METHOD}" \
+    "--set=CYLC_TEST_BATCH_SYS_NAME=${CYLC_TEST_BATCH_SYS_NAME}" \
     "${SUITE_NAME}" 'foo.1'
 SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 if [[ -n "${SSH}" ]]; then
     SUITE_DIR="${SUITE_DIR#"${HOME}/"}"
     ST_FILE="${SUITE_DIR}/log/job/1/foo/01/job.status"
-    poll ! $SSH "grep -q 'CYLC_JOB_SUBMIT_METHOD_ID=' \"${ST_FILE}\"" 2>/dev/null
+    poll ! $SSH "grep -q 'CYLC_BATCH_SYS_JOB_ID=' \"${ST_FILE}\"" 2>/dev/null
     JOB_ID=$($SSH "cat \"${ST_FILE}\"" \
-        | awk -F= '$1 == "CYLC_JOB_SUBMIT_METHOD_ID" {print $2}')
+        | awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}')
 else
     ST_FILE="${SUITE_DIR}/log/job/1/foo/01/job.status"
-    poll ! grep -q 'CYLC_JOB_SUBMIT_METHOD_ID=' "${ST_FILE}" 2>/dev/null
-    JOB_ID=$(awk -F= '$1 == "CYLC_JOB_SUBMIT_METHOD_ID" {print $2}' "${ST_FILE}")
+    poll ! grep -q 'CYLC_BATCH_SYS_JOB_ID=' "${ST_FILE}" 2>/dev/null
+    JOB_ID=$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${ST_FILE}")
 fi
 cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
 Job ID: ${JOB_ID}

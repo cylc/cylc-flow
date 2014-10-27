@@ -1091,11 +1091,7 @@ shell$ cylc run --debug tut.oneoff.basic
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-( perl -e "setpgrp(0,0);exec(@ARGV)"
-  /home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job </dev/null
-    1>/home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.out
-    2>/home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job.err &
-    echo $!; wait )
+cylc job-submit /home/oliverh/cylc-run/tut.oneoff.basic/log/job/1/hello/01/job
 'Finished'
 Suite shutting down at 2014-08-14T13:26:52+12
 DONE
@@ -1217,11 +1213,7 @@ job submission command printed to stdout:
 * you are welcome to redistribute it under certain conditions. Details:*
 *          `cylc license conditions'; `cylc license warranty'          *
 ************************************************************************
-(echo "perl -e \"setpgrp(0,0);exec(@ARGV)\"
-  /home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job
-    1>/home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job.out
-    2>/home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job.err"
-    | at now)
+cylc job-submit /home/oliverh/cylc-run/tut.oneoff.jobsub/log/job/1/hello/01/job
 'Finished'
 Suite shutting down at 2014-08-14T14:14:43+12
 DONE
@@ -1373,21 +1365,10 @@ to run there by the configured job submission method:
 \begin{lstlisting}
 shell$ cylc run --debug tut.oneoff.remote
 # ...
-ssh -oBatchMode=yes wrh-1.niwa.co.nz 'test -f /etc/profile && . /etc/profile
-  1>/dev/null 2>&1; test -f $HOME/.profile && . $HOME/.profile 1>/dev/null 2>&1;
-  (mkdir -p $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01 ||
-   mkdir -p $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01) &&
-   cat >$HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.tmp &&
-   mv $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.tmp
-     $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job &&
-   chmod +x $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job &&
-   rm -f $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.status &&
-   ( perl -e "setpgrp(0,0);exec(@ARGV)"
-     $HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job </dev/null
-       1>$HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.out
-       2>$HOME/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job.err &
-       echo $!; wait)' < 
-  /home/oliverh/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job
+ssh -oBatchMode=yes -oConnectTimeout=10 wrh-1.niwa.co.nz\
+'CYLC_VERSION='"'"'6.1.0'"'"\
+' "/opt/cylc/bin/cylc" '"'"'job-submit'"'"\
+' --remote-mode "/home/oliverh/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job"'
 \end{lstlisting}
 (Don't be intimated by this - it really quite straightforward and would appear
 much simpler if the job log path was shorter!). Remote task job logs are
@@ -4972,15 +4953,11 @@ Tasks can be killed on demand by right-clicking on them in gcylc or using the
 \subsection{Defining New Job Submission Methods}
 \label{DefiningNewJobSubmissionMethods}
 
-Defining a new job submission method requires a little Python
+Defining a new handler for a new job submission method requires a little Python
 programming. You can derive (in the sense of object oriented programming
-inheritance) new methods from one of the existing ones, or directly from
-cylc's job submission base class,
-\lstset{language=transcript}
-\begin{lstlisting}
-$CYLC_DIR/lib/cylc/job_submission/job_submit.py
-\end{lstlisting}
-using the existing job submission methods as examples.
+inheritance) new classes from one of the existing ones, or simply write a new
+one using the existing ones as examples. Full reference can be found in the
+header \lstinline=cylc.batch_sys_manager= module.
 \lstset{language=Python}
 
 \subsubsection{An Example}
@@ -4992,20 +4969,15 @@ prefix from \lstinline=#PBS= to \lstinline=#QSUB=:
 \begin{lstlisting}
 #!/usr/bin/env python
 
-# to import from outside of the cylc source tree:
-from cylc.job_submission.pbs import pbs
-# OR, from $CYLC_DIR/lib/cylc/job_submission
-# from pbs import pbs
+from cylc.batch_sys_handlers.pbs import PBSHandler
 
-class qsub( pbs ):
-    """
-This is a user-defined job submission method that overrides the '#PBS'
-directive prefix of the built-in pbs method.
-    """
-    def set_directives( self ):
-        pbs.set_directives( self )
-        # override the '#PBS' directive prefix
-        self.directive_prefix = "#QSUB"
+
+class QSUBHandler(PBSHandler):
+    """A user defined batch system handler."""
+    DIRECTIVE_PREFIX = "#QSUB "
+
+
+BATCH_SYSTEM_HANDLER = QSUBHandler()
 \end{lstlisting}
 
 To check that this works correctly save the new source file to
@@ -5023,9 +4995,10 @@ use it in a suite definition:
         [[[job submission]]]
             method = qsub
         [[[directives]]]
-            -I = bar=baz
-            -l = 'nodes=1,walltime=00:01:00'
-            -cwd = ' '
+            -l nodes = 1
+            -l walltime = 00:01:00
+            -q = long
+            -V =
 \end{lstlisting}
 and generate a job script to see the resulting directives:
 \lstset{language=transcript}
@@ -5033,11 +5006,12 @@ and generate a job script to see the resulting directives:
 shell$ cylc db reg test $HOME/test
 shell$ cylc jobscript test a | grep QSUB
 #QSUB -e /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.err
-#QSUB -l nodes=1,walltime=00:01:00
+#QSUB -l nodes=1
+#QSUB -l walltime=00:01:00
 #QSUB -o /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.out
 #QSUB -N a.1
-#QSUB -I bar=baz
-#QSUB -cwd
+#QSUB -q long
+#QSUB -V
 \end{lstlisting}
 
 \subsubsection{Where To Put New Job Submission Modules}
@@ -5052,7 +5026,7 @@ source tree:
         directory.
     \item any directory in, or added to, your \lstinline=PYTHONPATH=
         environment variable.
-    \item in the \lstinline=lib/cylc/job_submission= directory of
+    \item in the \lstinline=lib/cylc/job_sys_handlers= directory of
         the cylc source tree.
 \end{myitemize}
 Note that the form of the import statement at the top of the new
@@ -5340,6 +5314,18 @@ a cylc installation) then set \lstinline=$CYLC_VERSION= to the desired
 version. In the case of developers wishing to run their own copy
 of cylc rather than a centrally installed one, set \lstinline=$CYLC_HOME=
 to point to your cylc copy.
+
+Access to the cylc executable for different hosts can be configured using
+the site and user global configuration files.
+If the environment for running the cylc executable is only set up correctly in
+a login shell for a given host, you can set the
+\lstinline=[hosts] $\rightarrow$ HOST $\rightarrow$ cylc executable=
+setting for the relevant host to \lstinline=True=.
+(This is the default behaviour.)
+If the environment is already correct without the login shell, but the cylc
+executable is not in \lstinline=$PATH=, then the
+\lstinline=[hosts] $\rightarrow$ HOST $\rightarrow$ cylc executable=
+setting can be used to specify the path to the cylc executable.
 
 \subsection{Restarting Suites}
 \label{RestartingSuites}

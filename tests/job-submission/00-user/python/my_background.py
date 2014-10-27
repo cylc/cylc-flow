@@ -16,7 +16,11 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.job_submission.background import background
+from cylc.batch_sys_handlers.background import BgCommandHandler
 
-class my_background(background):
+
+class MyBgCommandHandler(BgCommandHandler):
     pass
+
+
+BATCH_SYS_HANDLER = MyBgCommandHandler()
