@@ -9,11 +9,13 @@
 
     <contexts>
       <context name="File" attribute="Normal Text" lineEndContext="#stay">
-        <!-- To regenerate this keyword list, run something like:
-        sed "/^#/d; /^[^=]*$/d; /__many__/d; s/^ *\([^=]*\) =.*$/        <RegExpr attribute='Keyword' String=' \1 '\/>/g" ~fcm/cylc-head/conf/suiterc/* | sort -r | uniq
+        <!-- To regenerate this keyword list, create a minimal suite.rc file and run something like:
+        cylc get-config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<RegExpr attribute='Keyword' String=' \1 '\/>/g"
         The sort is in reverse order to allow longer keywords to take precedence over sub-sets. -->
         <RegExpr attribute='Keyword' String=' work sub-directory '/>
         <RegExpr attribute='Keyword' String=' warning handler '/>
+        <RegExpr attribute='Keyword' String=' verbose mode '/>
+        <RegExpr attribute='Keyword' String=' user '/>
         <RegExpr attribute='Keyword' String=' use node color for labels '/>
         <RegExpr attribute='Keyword' String=' use node color for edges '/>
         <RegExpr attribute='Keyword' String=' title '/>
@@ -26,74 +28,72 @@
         <RegExpr attribute='Keyword' String=' submission timeout handler '/>
         <RegExpr attribute='Keyword' String=' submission timeout '/>
         <RegExpr attribute='Keyword' String=' submission retry handler '/>
+        <RegExpr attribute='Keyword' String=' submission polling intervals '/>
         <RegExpr attribute='Keyword' String=' submission failed handler '/>
         <RegExpr attribute='Keyword' String=' startup handler '/>
         <RegExpr attribute='Keyword' String=' started handler '/>
         <RegExpr attribute='Keyword' String=' start-up '/>
-        <RegExpr attribute='Keyword' String=' simultaneous instances '/>
         <RegExpr attribute='Keyword' String=' simulation mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' simulate failure '/>
         <RegExpr attribute='Keyword' String=' shutdown handler '/>
         <RegExpr attribute='Keyword' String=' shell '/>
         <RegExpr attribute='Keyword' String=' sequential '/>
         <RegExpr attribute='Keyword' String=' runahead limit '/>
+        <RegExpr attribute='Keyword' String=' run-dir '/>
         <RegExpr attribute='Keyword' String=' run time range '/>
         <RegExpr attribute='Keyword' String=' retry handler '/>
         <RegExpr attribute='Keyword' String=' retry delays '/>
         <RegExpr attribute='Keyword' String=' reset timer '/>
         <RegExpr attribute='Keyword' String=' required run mode '/>
-        <RegExpr attribute='Keyword' String=' rate '/>
         <RegExpr attribute='Keyword' String=' pre-command scripting '/>
         <RegExpr attribute='Keyword' String=' post-command scripting '/>
         <RegExpr attribute='Keyword' String=' owner '/>
-        <RegExpr attribute='Keyword' String=' one-off '/>
-        <RegExpr attribute='Keyword' String=' offset '/>
+        <RegExpr attribute='Keyword' String=' number of cycle points '/>
         <RegExpr attribute='Keyword' String=' method '/>
-        <RegExpr attribute='Keyword' String=' members '/>
+        <RegExpr attribute='Keyword' String=' max-polls '/>
+        <RegExpr attribute='Keyword' String=' max active cycle points '/>
         <RegExpr attribute='Keyword' String=' manual completion '/>
         <RegExpr attribute='Keyword' String=' log resolved dependencies '/>
         <RegExpr attribute='Keyword' String=' live mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' limit '/>
+        <RegExpr attribute='Keyword' String=' interval '/>
         <RegExpr attribute='Keyword' String=' initial scripting '/>
-        <RegExpr attribute='Keyword' String=' initial cycle time '/>
+        <RegExpr attribute='Keyword' String=' initial cycle point '/>
         <RegExpr attribute='Keyword' String=' inherit '/>
         <RegExpr attribute='Keyword' String=' include at start-up '/>
+        <RegExpr attribute='Keyword' String=' include '/>
         <RegExpr attribute='Keyword' String=' host '/>
-        <RegExpr attribute='Keyword' String=' graph '/>
-        <RegExpr attribute='Keyword' String=' final cycle time '/>
+        <RegExpr attribute='Keyword' String=' force run mode '/>
+        <RegExpr attribute='Keyword' String=' final cycle point '/>
         <RegExpr attribute='Keyword' String=' failed handler '/>
         <RegExpr attribute='Keyword' String=' extra log files '/>
-        <RegExpr attribute='Keyword' String=' explicit restart outputs '/>
         <RegExpr attribute='Keyword' String=' expected task failures '/>
         <RegExpr attribute='Keyword' String=' execution timeout handler '/>
         <RegExpr attribute='Keyword' String=' execution timeout '/>
+        <RegExpr attribute='Keyword' String=' execution polling intervals '/>
         <RegExpr attribute='Keyword' String=' exclude at start-up '/>
+        <RegExpr attribute='Keyword' String=' exclude '/>
         <RegExpr attribute='Keyword' String=' environment scripting '/>
         <RegExpr attribute='Keyword' String=' enable resurrection '/>
         <RegExpr attribute='Keyword' String=' enable live graph movie '/>
-        <RegExpr attribute='Keyword' String=' enable '/>
         <RegExpr attribute='Keyword' String=' dummy mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' disable task event hooks '/>
-        <RegExpr attribute='Keyword' String=' disable task elimination '/>
         <RegExpr attribute='Keyword' String=' disable suite event hooks '/>
         <RegExpr attribute='Keyword' String=' disable retries '/>
         <RegExpr attribute='Keyword' String=' disable pre-command scripting '/>
         <RegExpr attribute='Keyword' String=' disable post-command scripting '/>
-        <RegExpr attribute='Keyword' String=' disable '/>
-        <RegExpr attribute='Keyword' String=' directory '/>
         <RegExpr attribute='Keyword' String=' description '/>
-        <RegExpr attribute='Keyword' String=' delay between batches '/>
         <RegExpr attribute='Keyword' String=' default node attributes '/>
         <RegExpr attribute='Keyword' String=' default edge attributes '/>
-        <RegExpr attribute='Keyword' String=' daemon '/>
-        <RegExpr attribute='Keyword' String=' cycling '/>
-        <RegExpr attribute='Keyword' String=' cutoff '/>
+        <RegExpr attribute='Keyword' String=' cycling mode '/>
+        <RegExpr attribute='Keyword' String=' cycle point time zone '/>
+        <RegExpr attribute='Keyword' String=' cycle point num expanded year digits '/>
+        <RegExpr attribute='Keyword' String=' cycle point format '/>
         <RegExpr attribute='Keyword' String=' command template '/>
         <RegExpr attribute='Keyword' String=' command scripting '/>
         <RegExpr attribute='Keyword' String=' collapsed families '/>
         <RegExpr attribute='Keyword' String=' cold-start '/>
         <RegExpr attribute='Keyword' String=' clock-triggered '/>
-        <RegExpr attribute='Keyword' String=' batch size '/>
         <RegExpr attribute='Keyword' String=' allow task failures '/>
         <RegExpr attribute='Keyword' String=' abort on timeout '/>
         <RegExpr attribute='Keyword' String=' abort if timeout handler fails '/>
