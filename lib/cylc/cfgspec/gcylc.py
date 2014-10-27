@@ -60,7 +60,7 @@ SPEC = {
 def upg( cfg, descr ):
     u = upgrader(cfg, descr )
     u.deprecate( '5.4.3', ['themes','__MANY__', 'submitting'], ['themes','__MANY__', 'ready'] )
-    u.deprecate( '5.4.3', ['themes','__MANY__', 'runahead'], ['themes','__MANY__', 'waiting'] )
+    u.deprecate( '6.0.0', ['themes','__MANY__', 'runahead'], ['themes','__MANY__', 'waiting'] )
     u.upgrade()
 
 class gconfig( config ):
