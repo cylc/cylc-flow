@@ -33,19 +33,20 @@ class AtCommandHandler(object):
       [[MyTask]]
         [[[job submission]]]
            method = at
-           command template = 'echo "%(job)s 1>%(job)s 2>%(job)s" | at teatime'
+           command template = at teatime
     """
 
     CAN_KILL_PROC_GROUP = True
     # N.B. The perl command ensures that the job script is executed in its own
     # process group, which allows the job script and its child processes to be
     # killed correctly.
-    KILL_CMD = "atrm"
-    POLL_CMD = "atq"
+    KILL_CMD_TMPL = "atrm '%(job_id)s'"
+    POLL_CMD_TMPL = "atq"
     REC_ERR_FILTERS = [
         re.compile("warning: commands will be executed using /bin/sh")]
     REC_ID_FROM_SUBMIT_ERR = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
-    _CMD_TMPL = (
+    SUBMIT_CMD_TMPL = "at now"
+    SUBMIT_CMD_STDIN_TMPL = (
         r"exec perl -e 'setpgrp(0,0);exec(@ARGV)'" +
         r" '%(job)s' 1>'%(job)s.out' 2>'%(job)s.err'")
 
@@ -90,12 +91,6 @@ class AtCommandHandler(object):
             if items and items[0] == job_id:
                 return True
         return False
-
-    def submit(self, job_file_path):
-        """Run the "job_file_path" with "at now"."""
-        proc = Popen(["at", "now"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        proc.stdin.write(self._CMD_TMPL % {"job": job_file_path})
-        return proc
 
 
 BATCH_SYS_HANDLER = AtCommandHandler()

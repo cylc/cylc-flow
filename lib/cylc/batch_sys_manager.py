@@ -30,15 +30,16 @@ Each batch system handler class should instantiate with no argument, and may
 have the following constants and methods:
 
 batch_sys.filter_poll_output(out, job_id) => boolean
-    * If this method is available, it will be called after the
-      batch_sys.POLL_CMD is called and returns zero. The method should read the
+    * If this method is available, it will be called after the batch system's
+      poll command is called and returns zero. The method should read the
       output to see if job_id is still alive in the batch system, and return
-      True if so.
+      True if so. See also "batch_sys.POLL_CMD_TMPL".
 
 batch_sys.filter_submit_output(out, err) => new_out, new_err
     * Filter the standard output and standard error of the job submission
       command. This is useful if the job submission command returns information
-      that should just be ignored.
+      that should just be ignored. See also "batch_sys.SUBMIT_CMD_TMPL" and
+      "batch_sys.SUBMIT_CMD_STDIN_TMPL".
 
 batch_sys.get_vacation_signal(job_conf) => str
     * If relevant, return a string containing the name of the signal that
@@ -59,21 +60,34 @@ batch_sys.CAN_KILL_PROC_GROUP
     * A boolean to indicate whether it is possible to kill the job by sending
       a signal to its Unix process group.
 
-batch_sys.KILL_CMD
-    * The batch system command to remove and terminate a job ID.
+batch_sys.KILL_CMD_TMPL
+    *  A Python string template for getting the batch system command to remove
+       and terminate a job ID. The command is formed using the logic:
+           batch_sys.KILL_CMD_TMPL % {"job_id": job_id}
 
-batch_sys.POLL_CMD
-    * The batch system command to determine whether a job is alive, or to list
-      jobs.
+batch_sys.POLL_CMD_TMPL
+    * A Python string template for getting the batch system command to
+      determine whether a job is alive, or to list jobs. The command is formed
+      using the logic:
+           batch_sys.POLL_CMD_TMPL % {"job_id": job_id}
+      See also "batch_sys.filter_poll_output".
 
 batch_sys.REC_ID_FROM_SUBMIT_ERR
 batch_sys.REC_ID_FROM_SUBMIT_OUT
     * A regular expression (compiled) to extract the job "id" from the standard
       output or standard error of the job submission command.
 
-batch_sys.SUBMIT_CMD
-    * The batch system command to submit a job file. See also
-      "batch_sys.job_submit".
+batch_sys.SUBMIT_CMD_TMPL
+    * A Python string template for getting the batch system command to submit a
+      job file. The command is formed using the logic:
+          batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}
+      See also "batch_sys.job_submit" and "batch_sys.SUBMIT_CMD_STDIN_TMPL".
+
+batch_sys.SUBMIT_CMD_STDIN_TMPL
+    * The template string for getting the STDIN for the batch system command to
+      submit a job file. The value to write to STDIN is formed using the logic:
+          batch_sys.SUBMIT_CMD_STDIN_TMPL % {"job": job_file_path}
+      See also "batch_sys.job_submit" and "batch_sys.SUBMIT_CMD".
 
 """
 
@@ -166,11 +180,12 @@ class BatchSysManager(object):
                     pid = line.strip().split("=", 1)[1]
                     os.killpg(int(pid), SIGKILL)
                     return 0
-        if hasattr(batch_sys, "KILL_CMD"):
+        if hasattr(batch_sys, "KILL_CMD_TMPL"):
             for line in st_file:
                 if line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
                     job_id = line.strip().split("=", 1)[1]
-                    return call(shlex.split(batch_sys.KILL_CMD) + [job_id])
+                    return call(shlex.split(
+                        batch_sys.KILL_CMD_TMPL % {"job_id": job_id}))
         return 1
 
     def job_poll(self, st_file_path):
@@ -210,7 +225,9 @@ class BatchSysManager(object):
         # Ask batch system if job is still alive or not
         batch_sys = self.get_inst(statuses[self.CYLC_BATCH_SYS_NAME])
         job_id = statuses[self.CYLC_BATCH_SYS_JOB_ID]
-        proc = Popen(shlex.split(batch_sys.POLL_CMD) + [job_id], stdout=PIPE)
+        proc = Popen(
+            shlex.split(batch_sys.POLL_CMD_TMPL % {"job_id": job_id}),
+            stdout=PIPE)
         is_in_batch_sys = (proc.wait() == 0)
         if is_in_batch_sys and hasattr(batch_sys, "filter_poll_output"):
             is_in_batch_sys = batch_sys.filter_poll_output(
@@ -273,16 +290,25 @@ class BatchSysManager(object):
 
         # Submit job
         batch_sys = self.get_inst(batch_sys_name)
+        proc_stdin_arg = None
+        proc_stdin_value = None
+        if hasattr(batch_sys, "SUBMIT_CMD_STDIN_TMPL"):
+            proc_stdin_value = batch_sys.SUBMIT_CMD_STDIN_TMPL % {
+                "job": job_file_path}
+            proc_stdin_arg = PIPE
         if batch_submit_cmd_tmpl:
             batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
-            proc = Popen(batch_sys_cmd, stdout=PIPE, stderr=PIPE, shell=True)
+            proc = Popen(
+                batch_sys_cmd,
+                stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE, shell=True)
         elif hasattr(batch_sys, "submit"):
             proc = batch_sys.submit(job_file_path)
         else:
             proc = Popen(
-                [batch_sys.SUBMIT_CMD, job_file_path],
-                stdout=PIPE, stderr=PIPE)
-        out, err = proc.communicate()
+                shlex.split(
+                    batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}),
+                stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
+        out, err = proc.communicate(proc_stdin_value)
 
         # Filter submit command output, if relevant
         # Get job ID, if possible

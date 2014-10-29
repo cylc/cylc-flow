@@ -24,13 +24,13 @@ class SLURMHandler(object):
     """SLURM job submission and manipulation."""
 
     DIRECTIVE_PREFIX = "#SBATCH "
-    KILL_CMD = "scancel"
+    KILL_CMD_TMPL = "scancel '%(job_id)s'"
     # N.B. The "squeue -j JOB_ID" command returns 1 if JOB_ID is no longer in
     # the system, so there is no need to filter its output.
-    POLL_CMD = "squeue -j"
+    POLL_CMD_TMPL = "squeue -j '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(
         r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
-    SUBMIT_CMD = "sbatch"
+    SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""

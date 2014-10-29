@@ -25,13 +25,13 @@ class LoadlevelerHandler(object):
     "Loadleveler job submission"
 
     DIRECTIVE_PREFIX = "# @ "
-    KILL_CMD = "llcancel"
-    POLL_CMD = "llq -f%id"
+    KILL_CMD_TMPL = "llcancel '%(job_id)s'"
+    POLL_CMD_TMPL = "llq -f%%id '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(
         r"""\Allsubmit:\sThe\sjob\s"(?P<id>[^"]+)"\s""")
     REC_ERR_FILTERS = [
         re.compile("^llsubmit: Processed command file through Submit Filter:")]
-    SUBMIT_CMD = "llsubmit"
+    SUBMIT_CMD_TMPL = "llsubmit '%(job)s'"
     VACATION_SIGNAL = "USR1"
 
     def format_directives(self, job_conf):
