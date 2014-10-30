@@ -1,0 +1,25 @@
+2014-10-29T15:19:51Z INFO - port:7766
+2014-10-29T15:19:51Z INFO - Suite starting at 2014-10-29T15:19:51Z
+2014-10-29T15:19:51Z INFO - Log event clock: real time
+2014-10-29T15:19:51Z INFO - Run mode: live
+2014-10-29T15:19:51Z INFO - Initial point: 1
+2014-10-29T15:19:51Z INFO - Final point: 1
+2014-10-29T15:19:51Z INFO - Cold Start 1
+2014-10-29T15:19:51Z INFO - [reloader.1] -initiate job-submit
+2014-10-29T15:19:51Z INFO - [reloader.1] -triggered off []
+2014-10-29T15:19:52Z INFO - 22986
+2014-10-29T15:19:52Z INFO - [reloader.1] -submit_method_id=22986
+2014-10-29T15:19:52Z INFO - [reloader.1] -submission succeeded
+2014-10-29T15:19:52Z INFO - [reloader.1] -(current:submitted)> reloader.1 started at 2014-10-29T15:19:52Z
+2014-10-29T15:19:53Z INFO - Command succeeded: reload suite()
+2014-10-29T15:19:54Z INFO - RELOADING TASK DEFINITION FOR foo.1
+2014-10-29T15:20:04Z INFO - [reloader.1] -(current:running)> reloader.1 succeeded at 2014-10-29T15:20:03Z
+2014-10-29T15:20:05Z INFO - RELOADING TASK DEFINITION FOR reloader.1
+2014-10-29T15:20:05Z INFO - [foo.1] -initiate job-submit
+2014-10-29T15:20:05Z INFO - [foo.1] -triggered off ['reloader.1']
+2014-10-29T15:20:06Z INFO - 23120
+2014-10-29T15:20:06Z INFO - [foo.1] -submit_method_id=23120
+2014-10-29T15:20:06Z INFO - [foo.1] -submission succeeded
+2014-10-29T15:20:06Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-10-29T15:20:06Z
+2014-10-29T15:20:07Z INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-10-29T15:20:07Z
+2014-10-29T15:20:08Z INFO - Suite shutting down at 2014-10-29T15:20:08Z
