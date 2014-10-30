@@ -279,8 +279,10 @@ class pool(object):
             self.log.critical(itask.id + ' cannot be removed (unknown error)')
             return
         # remove from queue
-        queue = self.myq[itask.name]
-        del self.queues[queue][itask.id]
+        queue = self.myq.get(itask.name)
+        if queue is not None:
+            # queue can be None if a task is removed in a reload.
+            del self.queues[queue][itask.id]
         del self.pool[itask.point][itask.id]
         if not self.pool[itask.point]:
             del self.pool[itask.point]
@@ -479,7 +481,9 @@ class pool(object):
         self.new_queues = {}
         for queue in self.queues:
             for id,itask in self.queues[queue].items():
-                myq = self.myq[itask.name]
+                myq = self.myq.get(itask.name)
+                if myq is None:
+                    continue
                 if myq not in self.new_queues:
                     self.new_queues[myq] = {}
                 self.new_queues[myq][id] = itask

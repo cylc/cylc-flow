@@ -1,0 +1,22 @@
+title = "test reloading after manually removing a task."
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = PT30S
+[scheduling]
+    [[dependencies]]
+        graph = """
+            reloader => remove_me => foo
+        """
+[runtime]
+    [[reloader]]
+        command scripting = """
+            sed -i "s/remove_me =>//g" $CYLC_SUITE_DEF_PATH/suite.rc
+            cylc reload $CYLC_SUITE_NAME
+            sleep 10
+        """
+    [[remove_me]]
+        command scripting = false
+    [[foo]]
+        command scripting = true
