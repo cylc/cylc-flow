@@ -51,7 +51,6 @@ try:
             UndefinedError,
             TemplateSyntaxError)
 except ImportError:
-    raise
     jinja2_disabled = True
 else:
     jinja2_disabled = False
@@ -99,7 +98,7 @@ _TRIPLE_QUOTE = {
 
 
 class ParseError( Exception ):
-    def __init__(self, reason, index=None, line=None, prefix="ParseError"):
+    def __init__(self, reason, index=None, line=None, prefix="ParseError: "):
         self.msg = prefix + reason
         if index:
             self.msg += " (line " + str(index+1) + ")"
