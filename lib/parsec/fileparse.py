@@ -16,7 +16,10 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, re
+import os
+import sys
+import re
+import traceback
 
 from OrderedDict import OrderedDict
 from include import inline, IncludeFileNotFoundError
@@ -41,8 +44,14 @@ parsec config file parsing:
 """
 
 try:
-    from Jinja2Support import Jinja2Process, TemplateError, TemplateSyntaxError
+    from Jinja2Support import (
+            Jinja2Process,
+            TemplateError,
+            TemplateNotFound,
+            UndefinedError,
+            TemplateSyntaxError)
 except ImportError:
+    raise
     jinja2_disabled = True
 else:
     jinja2_disabled = False
@@ -88,9 +97,10 @@ _TRIPLE_QUOTE = {
     '"""': (_SINGLE_LINE_DOUBLE, _MULTI_LINE_DOUBLE),
 }
 
+
 class ParseError( Exception ):
-    def __init__( self, reason, index=None, line=None ):
-        self.msg = "ParseError: " + reason
+    def __init__(self, reason, index=None, line=None, prefix="ParseError"):
+        self.msg = prefix + reason
         if index:
             self.msg += " (line " + str(index+1) + ")"
         if line:
@@ -251,21 +261,26 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
             if cylc.flags.verbose:
                 print "Processing with Jinja2"
             try:
-                flines = Jinja2Process( flines, fdir,
-                        template_vars, template_vars_file )
-            except TemplateSyntaxError, x:
-                lineno = x.lineno + 1  # (flines array starts from 0)
-                msg = "Jinja2 Syntax Error (line " + str(lineno) + ")"
-                msg += "\n   " + flines[x.lineno].strip()
-                # TODO - make "view" function independent of cylc:
-                msg += "\n(line numbers match 'cylc view -i')"
-                raise ParseError(msg)
-            except TemplateError, x:
-                print >> sys.stderr, 'Jinja2 Template Error:', x
-                raise ParseError(repr(x))
-            except TypeError, x:
-                print >> sys.stderr, 'Jinja2 Type Error:', x
-                raise ParseError(repr(x))
+                flines = Jinja2Process(
+                        flines, fdir, template_vars, template_vars_file)
+            except (
+                    TemplateSyntaxError,
+                    TemplateNotFound,
+                    TemplateError,
+                    TypeError, 
+                    UndefinedError) as exc:
+                # Jinja2 syntax errors get location info in exc.lineno,
+                # but for other Jinja2 errors we have to print the end of the
+                # exception traceback to get useful diagnostic information.
+                # For full exception info: traceback.print_exc()
+                exc_lines = traceback.format_exc().splitlines()
+                suffix = []
+                for line in reversed(exc_lines):
+                    suffix.append(line)
+                    if re.match("\s*File", line):
+                        break
+                msg = '\n'.join(reversed(suffix))
+                raise ParseError(msg, prefix="Jinja2 Error:\n")
 
     # concatenate continuation lines
     if do_contin:
