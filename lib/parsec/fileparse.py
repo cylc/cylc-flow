@@ -268,10 +268,7 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
                     TemplateError,
                     TypeError, 
                     UndefinedError) as exc:
-                # Jinja2 syntax errors get location info in exc.lineno,
-                # but for other Jinja2 errors we have to print the end of the
-                # exception traceback to get useful diagnostic information.
-                # For full exception info: traceback.print_exc()
+                # Extract diagnostic info from the end of the Jinja2 traceback.
                 exc_lines = traceback.format_exc().splitlines()
                 suffix = []
                 for line in reversed(exc_lines):
