@@ -610,6 +610,7 @@ class task(object):
         self.summary['submitted_time_string'] = (
             get_time_string_from_unix_time(self.submitted_time))
         self.summary['submit_method_id'] = self.submit_method_id
+        self.summary['batch_sys_name'] = self.batch_sys_name
         self.summary['host'] = self.task_host
         if self.submit_method_id:
             self.latest_message = "%s submitted as '%s'" % (

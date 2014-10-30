@@ -291,6 +291,7 @@ class TreeUpdater(threading.Thread):
                 # Use "*" (or "" for family rows) until slot is populated
                 # and for pre cylc-6 back compat for host and job ID cols.
                 job_id = summary[id].get('submit_method_id')
+                batch_sys_name = summary[id].get('batch_sys_name')
                 host = summary[id].get('host')
                 message = summary[ id ].get('latest_message')
                 if message is not None and last_update_date is not None:
@@ -298,11 +299,13 @@ class TreeUpdater(threading.Thread):
                 if id in self.fam_state_summary:
                     dot_type = 'family'
                     job_id = job_id or ""
+                    batch_sys_name = batch_sys_name or ""
                     host = host or ""
                     message = message or ""
                 else:
                     dot_type = 'task'
                     job_id = job_id or "*"
+                    batch_sys_name = batch_sys_name or "*"
                     host = host or "*"
                     message = message or "*"
 
@@ -312,7 +315,7 @@ class TreeUpdater(threading.Thread):
                     icon = self.dots[dot_type]['unknown']
 
                 dest[point_string][name] = [
-                        state, host, job_id,
+                        state, host, batch_sys_name, job_id,
                         t_info['submitted_time_string'],
                         t_info['started_time_string'],
                         t_info['finished_time_string'],
