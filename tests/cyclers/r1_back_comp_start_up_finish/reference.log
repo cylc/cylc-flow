@@ -1,0 +1,33 @@
+2014-10-30T14:37:53Z INFO - port:7767
+2014-10-30T14:37:53Z INFO - Suite starting at 2014-10-30T14:37:53Z
+2014-10-30T14:37:53Z INFO - Log event clock: real time
+2014-10-30T14:37:53Z INFO - Run mode: live
+2014-10-30T14:37:53Z INFO - Initial point: 2014010100
+2014-10-30T14:37:53Z INFO - Final point: 2014010200
+2014-10-30T14:37:53Z INFO - Cold Start 2014010100
+2014-10-30T14:37:53Z INFO - [my_start_up.2014010100] -initiate job-submit
+2014-10-30T14:37:53Z INFO - [my_start_up.2014010100] -triggered off []
+2014-10-30T14:37:54Z INFO - 23965
+
+2014-10-30T14:37:54Z INFO - [my_start_up.2014010100] -submit_method_id=23965
+2014-10-30T14:37:54Z INFO - [my_start_up.2014010100] -submission succeeded
+2014-10-30T14:37:54Z INFO - [my_start_up.2014010100] -(current:submitted)> my_start_up.2014010100 started at 2014-10-30T14:37:53Z
+2014-10-30T14:37:55Z INFO - [my_start_up.2014010100] -(current:running)> my_start_up.2014010100 succeeded at 2014-10-30T14:37:54Z
+2014-10-30T14:37:56Z INFO - [my_task.2014010100] -initiate job-submit
+2014-10-30T14:37:56Z INFO - [my_task.2014010100] -triggered off ['my_start_up.2014010100']
+2014-10-30T14:37:57Z INFO - 24075
+
+2014-10-30T14:37:57Z INFO - [my_task.2014010100] -submit_method_id=24075
+2014-10-30T14:37:57Z INFO - [my_task.2014010100] -submission succeeded
+2014-10-30T14:37:57Z INFO - [my_task.2014010100] -(current:submitted)> my_task.2014010100 started at 2014-10-30T14:37:56Z
+2014-10-30T14:37:58Z INFO - [my_task.2014010200] -initiate job-submit
+2014-10-30T14:37:58Z INFO - [my_task.2014010200] -triggered off []
+2014-10-30T14:37:58Z INFO - [my_task.2014010100] -(current:running)> my_task.2014010100 succeeded at 2014-10-30T14:37:57Z
+2014-10-30T14:37:59Z INFO - 24186
+
+2014-10-30T14:37:59Z INFO - [my_task.2014010200] -submit_method_id=24186
+2014-10-30T14:37:59Z INFO - [my_task.2014010200] -submission succeeded
+2014-10-30T14:37:59Z INFO - [my_task.2014010300] -holding (beyond suite stop point) 2014010200
+2014-10-30T14:37:59Z INFO - [my_task.2014010200] -(current:submitted)> my_task.2014010200 started at 2014-10-30T14:37:58Z
+2014-10-30T14:38:00Z INFO - [my_task.2014010200] -(current:running)> my_task.2014010200 succeeded at 2014-10-30T14:37:59Z
+2014-10-30T14:38:01Z INFO - Suite shutting down at 2014-10-30T14:38:01Z

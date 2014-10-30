@@ -1,0 +1,18 @@
+[scheduling]
+    initial cycle time = 2014010100
+    final cycle time = 2014010200
+    [[special tasks]]
+        start-up = my_start_up
+    [[dependencies]]
+        [[[0]]]
+            graph = """
+my_start_up:finish => my_task
+# Leads to a sneaky OR dependency:
+# my_start_up:succeed | my_start_up:fail => my_task
+"""
+
+[runtime]
+    [[root]]
+        command scripting=true
+    [[my_start_up]]
+    [[my_task]]

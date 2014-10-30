@@ -1229,8 +1229,16 @@ class config( object ):
                     if (left_name in tasks_to_prune or
                             return_all_dependencies or
                             right_name in tasks_to_prune):
-                        special_dependencies.append(
-                            (left_name, left_output, right_name))
+                        special_dep = (left_name, left_output, right_name)
+                        if (left_name + ":finish" in orig_line and
+                                left_output in ["succeed", "fail"]):
+                            # Handle 'finish' explicitly to avoid OR cases.
+                            special_dep = (left_name, "finish", right_name)
+                            if special_dep not in special_dependencies:
+                                # Avoid repeating for succeed and fail.
+                                special_dependencies.append(special_dep)
+                        else:
+                            special_dependencies.append(special_dep)
                     if left_name in tasks_to_prune:
                         pruned_left_nodes.remove(left_node)
 
@@ -1348,6 +1356,10 @@ class config( object ):
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
+            return
+        
+        if not left_nodes:
+            # Nothing actually remains to trigger right.
             return
 
         base_interval = seq.get_interval()
@@ -1743,7 +1755,11 @@ class config( object ):
                 elif left_min_point != first_common_point:
                     graph_text += "[%s]" % left_min_point
             if left_output:
-                graph_text += ":" + left_output
+                if left_output == "finish":
+                    graph_text = (graph_text + ":succeed" + " | " +
+                                  graph_text + ":fail")
+                else:
+                    graph_text += ":" + left_output
             if right:
                 graph_text += " => " + right
             if at_initial_point:
