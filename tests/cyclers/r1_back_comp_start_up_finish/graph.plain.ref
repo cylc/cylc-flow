@@ -1,0 +1,6 @@
+edge "my_start_up.2014010100" "my_task.2014010100" solid
+graph
+node "my_start_up.2014010100" "my_start_up\n2014010100" unfilled box black
+node "my_task.2014010100" "my_task\n2014010100" unfilled box black
+node "my_task.2014010200" "my_task\n2014010200" unfilled box black
+stop
