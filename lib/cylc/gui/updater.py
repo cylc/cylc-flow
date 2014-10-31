@@ -131,11 +131,11 @@ class Updater(threading.Thread):
         self.last_update_time = time()
 
     def _retrieve_hierarchy_info(self):
-        self.ancestors = self.sinfo.get('first-parent ancestors' )
-        self.ancestors_pruned = self.sinfo.get( 'first-parent ancestors', True )
-        self.descendants = self.sinfo.get( 'first-parent descendants' )
-        self.all_families = self.sinfo.get( 'all families' )
-        self.triggering_families = self.sinfo.get( 'triggering families' )
+        self.ancestors = self.sinfo.get('first-parent ancestors')
+        self.ancestors_pruned = self.sinfo.get('first-parent ancestors', True)
+        self.descendants = self.sinfo.get('first-parent descendants')
+        self.all_families = self.sinfo.get('all families')
+        self.triggering_families = self.sinfo.get('triggering families')
 
     def _reconnect( self ):
         try:
