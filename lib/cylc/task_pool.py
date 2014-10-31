@@ -294,10 +294,8 @@ class TaskPool(object):
                 itask.identity + ' cannot be removed (unknown error)')
             return
         # remove from queue
-        queue = self.myq[itask.tdef.name]
-        if queue is not None:
-            # queue can be None if a task is removed in a reload.
-            del self.queues[queue][itask.identity]
+        if itask.tdef.name in self.myq:  # A reload can remove a task
+            del self.queues[self.myq[itask.tdef.name]][itask.identity]
         del self.pool[itask.point][itask.identity]
         if not self.pool[itask.point]:
             del self.pool[itask.point]
@@ -498,12 +496,12 @@ class TaskPool(object):
         new_queues = {}
         for queue in self.queues:
             for id_, itask in self.queues[queue].items():
-                myq = self.myq[itask.tdef.name]
-                if myq is None:
+                if itask.tdef.name not in self.myq:
                     continue
-                if myq not in new_queues:
-                    new_queues[myq] = {}
-                new_queues[myq][id_] = itask
+                key = self.myq[itask.tdef.name]
+                if key not in new_queues:
+                    new_queues[key] = {}
+                new_queues[key][id_] = itask
         self.queues = new_queues
 
         for itask in self.get_tasks(all_tasks=True):
