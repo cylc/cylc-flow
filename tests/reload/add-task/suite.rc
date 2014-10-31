@@ -1,0 +1,22 @@
+title = "Test insertion of a task added by a reload."
+# Don't run this suite in-place: it modifies itself.
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = PT30S
+
+[scheduling]
+   [[dependencies]]
+       graph = reloader
+
+[runtime]
+   [[root]]
+      command scripting = true
+   [[reloader]]
+      command scripting = """
+sed -i "s/\(graph = reloader\)\s*$/\1 => add_me/" $CYLC_SUITE_DEF_PATH/suite.rc
+cylc reload $CYLC_SUITE_NAME
+cylc insert $CYLC_SUITE_NAME add_me 1
+sleep 10
+        """

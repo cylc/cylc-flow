@@ -130,6 +130,13 @@ class Updater(threading.Thread):
     def _flag_new_update( self ):
         self.last_update_time = time()
 
+    def _retrieve_hierarchy_info(self):
+        self.ancestors = self.sinfo.get('first-parent ancestors')
+        self.ancestors_pruned = self.sinfo.get('first-parent ancestors', True)
+        self.descendants = self.sinfo.get('first-parent descendants')
+        self.all_families = self.sinfo.get('all families')
+        self.triggering_families = self.sinfo.get('triggering families')
+
     def _reconnect( self ):
         try:
             client = cylc_pyro_client.client(
@@ -142,12 +149,7 @@ class Updater(threading.Thread):
             self.god = client.get_proxy( 'state_summary' )
             self.sinfo = client.get_proxy( 'suite-info' )
             self.log = client.get_proxy( 'log' )
-            # on reconnection retrieve static info
-            self.ancestors = self.sinfo.get('first-parent ancestors' )
-            self.ancestors_pruned = self.sinfo.get( 'first-parent ancestors', True )
-            self.descendants = self.sinfo.get( 'first-parent descendants' )
-            self.all_families = self.sinfo.get( 'all families' )
-            self.triggering_families = self.sinfo.get( 'triggering families' )
+            self._retrieve_hierarchy_info()
             self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except Exception, x:
             # (port file not found, if suite not running)
@@ -235,6 +237,7 @@ class Updater(threading.Thread):
             try:
                 [glbl, states, fam_states] = self.god.get_state_summary()
                 self.task_list = self.god.get_task_name_list()
+                self._retrieve_hierarchy_info() # may change on reload
             except (Pyro.errors.ProtocolError, Pyro.errors.NamingError):
                 gobject.idle_add( self.connection_lost )
                 return False
