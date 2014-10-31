@@ -18,7 +18,14 @@
 
 import os, sys, re
 import glob
-from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, TemplateError, StrictUndefined
+from jinja2 import (
+        Environment,
+        FileSystemLoader,
+        TemplateSyntaxError,
+        TemplateError,
+        TemplateNotFound,
+        UndefinedError,
+        StrictUndefined)
 import cylc.flags
 
 """cylc support for the Jinja2 template processor. Importing code should
