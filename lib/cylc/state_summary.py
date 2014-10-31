@@ -53,11 +53,12 @@ class state_summary( Pyro.core.ObjBase ):
         task_states = {}
 
         for task in tasks:
-            task_summary[ task.ident ] = task.get_state_summary()
-            name, point_string = TaskID.split(task.ident)
+            task_summary[ task.identity ] = task.get_state_summary()
+            name, point_string = TaskID.split(task.identity)
             point_string = str(point_string)
             task_states.setdefault(point_string, {})
-            task_states[point_string][name] = task_summary[task.ident]['state']
+            task_states[point_string][name] = (
+                task_summary[task.identity]['state'])
             task_name_list.append(name)
 
         task_name_list = list(set(task_name_list))

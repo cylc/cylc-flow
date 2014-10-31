@@ -116,12 +116,12 @@ class TaskProxy(object):
             self.point = min(adjusted)
             self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
                 self.point, self.tdef.intercycle_offsets)
-            self.ident = TaskID.get(self.tdef.name, self.point)
+            self.identity = TaskID.get(self.tdef.name, self.point)
         else:
             self.point = start_point
             self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
                 self.point, self.tdef.intercycle_offsets)
-            self.ident = TaskID.get(self.tdef.name, self.point)
+            self.identity = TaskID.get(self.tdef.name, self.point)
 
         # prerequisites
         self.prerequisites = prerequisites(self.tdef.start_point)
@@ -134,7 +134,7 @@ class TaskProxy(object):
             self.logfiles.add_path(lfile)
 
         # outputs
-        self.outputs = outputs(self.ident)
+        self.outputs = outputs(self.identity)
         for outp in self.tdef.outputs:
             msg = outp.get(self.point)
             if not self.outputs.exists(msg):
@@ -234,8 +234,8 @@ class TaskProxy(object):
         # valid member of sequenceX's sequence of cycle points.
 
         # 1) non-conditional triggers
-        ppre = plain_prerequisites(self.ident, self.tdef.start_point)
-        spre = plain_prerequisites(self.ident, self.tdef.start_point)
+        ppre = plain_prerequisites(self.identity, self.tdef.start_point)
+        spre = plain_prerequisites(self.identity, self.tdef.start_point)
 
         if self.tdef.sequential:
             # For tasks declared 'sequential' we automatically add a
@@ -303,7 +303,7 @@ class TaskProxy(object):
                     # just above)
                     continue
                 cpre = conditional_prerequisites(
-                    self.ident, self.tdef.start_point)
+                    self.identity, self.tdef.start_point)
                 for label in ctrig:
                     trig = ctrig[label]
                     if trig.graph_offset_string is not None:
@@ -323,7 +323,7 @@ class TaskProxy(object):
 
     def log(self, lvl=INFO, msg=""):
         """Log a message of this task proxy."""
-        msg = "[%s] -%s" % (self.ident, msg)
+        msg = "[%s] -%s" % (self.identity, msg)
         self.logger.log(lvl, msg)
 
     def command_log(self, log_type, out=None, err=None):
@@ -436,10 +436,10 @@ class TaskProxy(object):
         later success it will be seen as an incomplete output.
 
         """
-        failed_msg = self.ident + " failed"
+        failed_msg = self.identity + " failed"
         if self.outputs.exists(failed_msg):
             self.outputs.remove(failed_msg)
-        failed_msg = self.ident + "submit-failed"
+        failed_msg = self.identity + "submit-failed"
         if self.outputs.exists(failed_msg):
             self.outputs.remove(failed_msg)
 
@@ -500,7 +500,7 @@ class TaskProxy(object):
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
         self.turn_off_timeouts()
-        self.outputs.add(self.ident + ' failed', completed=True)
+        self.outputs.add(self.identity + ' failed', completed=True)
 
     def reset_state_held(self):
         """Reset state to "held"."""
@@ -599,7 +599,7 @@ class TaskProxy(object):
                     env = dict(os.environ)
                     env.update(TaskProxy.event_handler_env)
                 cmd = "%s '%s' '%s' '%s' '%s'" % (
-                    handler, event, self.suite_name, self.ident, descr)
+                    handler, event, self.suite_name, self.identity, descr)
                 SuiteProcPool.get_inst().put_command(
                     CMD_TYPE_EVENT_HANDLER, cmd, self.event_handler_callback,
                     env=env, shell=True)
@@ -613,7 +613,7 @@ class TaskProxy(object):
         except IndexError:
             # No submission retry lined up: definitive failure.
             flags.pflag = True
-            outp = self.ident + " submit-failed"  # hack: see github #476
+            outp = self.identity + " submit-failed"  # hack: see github #476
             self.outputs.add(outp)
             self.outputs.set_completed(outp)
             self.set_status('submit-failed')
@@ -649,11 +649,11 @@ class TaskProxy(object):
             self.summary['started_time'] = self.started_time
             self.summary['started_time_string'] = (
                 get_time_string_from_unix_time(self.started_time))
-            self.outputs.set_completed(self.ident + " started")
+            self.outputs.set_completed(self.identity + " started")
             self.set_status('running')
             return
 
-        outp = self.ident + ' submitted'
+        outp = self.identity + ' submitted'
         if not self.outputs.is_completed(outp):
             self.outputs.set_completed(outp)
             # Allow submitted tasks to spawn even if nothing else is happening.
@@ -668,11 +668,11 @@ class TaskProxy(object):
         self.summary['host'] = self.task_host
         if self.submit_method_id:
             self.latest_message = "%s submitted as '%s'" % (
-                self.ident, self.submit_method_id)
+                self.identity, self.submit_method_id)
         else:
             self.latest_message = outp
         self.summary['latest_message'] = (
-            self.latest_message.replace(self.ident, "", 1).strip())
+            self.latest_message.replace(self.identity, "", 1).strip())
         self.handle_event(
             'submitted', 'job submitted', db_event='submission succeeded')
 
@@ -704,7 +704,7 @@ class TaskProxy(object):
             # No retry lined up: definitive failure.
             # Note the 'failed' output is only added if needed.
             flags.pflag = True
-            msg = self.ident + ' failed'
+            msg = self.identity + ' failed'
             self.outputs.add(msg)
             self.outputs.set_completed(msg)
             self.set_status('failed')
@@ -963,7 +963,7 @@ class TaskProxy(object):
         self.batch_sys_name = rtconfig['job submission']['method']
         self.job_conf = {
             'suite name': self.suite_name,
-            'task id': self.ident,
+            'task id': self.identity,
             'batch system name': rtconfig['job submission']['method'],
             'directives': rtconfig['directives'],
             'initial scripting': rtconfig['initial scripting'],
@@ -1095,11 +1095,11 @@ class TaskProxy(object):
         timeout = self.started_time + self.sim_mode_run_length
         if time.time() > timeout:
             if self.tdef.rtconfig['simulation mode']['simulate failure']:
-                self.message_queue.put('NORMAL', self.ident + ' submitted')
-                self.message_queue.put('CRITICAL', self.ident + ' failed')
+                self.message_queue.put('NORMAL', self.identity + ' submitted')
+                self.message_queue.put('CRITICAL', self.identity + ' failed')
             else:
-                self.message_queue.put('NORMAL', self.ident + ' submitted')
-                self.message_queue.put('NORMAL', self.ident + ' succeeded')
+                self.message_queue.put('NORMAL', self.identity + ' submitted')
+                self.message_queue.put('NORMAL', self.identity + ' succeeded')
             return True
         else:
             return False
@@ -1114,9 +1114,9 @@ class TaskProxy(object):
             return
         self.log(DEBUG, 'setting all internal outputs completed')
         for message in self.outputs.completed:
-            if (message != self.ident + ' started' and
-                    message != self.ident + ' succeeded' and
-                    message != self.ident + ' completed'):
+            if (message != self.identity + ' started' and
+                    message != self.identity + ' succeeded' and
+                    message != self.identity + ' completed'):
                 self.message_queue.put('NORMAL', message)
 
     def reject_if_failed(self, message):
@@ -1170,7 +1170,7 @@ class TaskProxy(object):
         # always update the suite state summary for latest message
         self.latest_message = message
         self.summary['latest_message'] = (
-            self.latest_message.replace(self.ident, "", 1).strip())
+            self.latest_message.replace(self.identity, "", 1).strip())
         flags.iflag = True
 
         if self.reject_if_failed(message):
@@ -1197,7 +1197,7 @@ class TaskProxy(object):
         message = self.POLL_SUFFIX_RE.sub('', message)
 
         # Remove the prepended task ID.
-        content = message.replace(self.ident + ' ', '')
+        content = message.replace(self.identity + ' ', '')
 
         # If the message matches a registered output, record it as completed.
         if self.outputs.exists(message):
@@ -1300,7 +1300,7 @@ class TaskProxy(object):
 
         elif content == "submission failed":
             # This can arrive via a poll.
-            outp = self.ident + ' submitted'
+            outp = self.identity + ' submitted'
             if self.outputs.is_completed(outp):
                 self.outputs.remove(outp)
             self.submission_timer_timeout = None
@@ -1329,7 +1329,7 @@ class TaskProxy(object):
 
     def dump_state(self, handle):
         """Write state information to the state dump file."""
-        handle.write(self.ident + ' : ' + self.state.dump() + '\n')
+        handle.write(self.identity + ' : ' + self.state.dump() + '\n')
 
     def spawn(self, state):
         """Spawn the successor of this task proxy."""

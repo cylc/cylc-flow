@@ -959,7 +959,7 @@ class config( object ):
                 print >> sys.stderr, x
                 raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
             if flags.verbose:
-                print "  + " + itask.ident + " ok"
+                print "  + " + itask.identity + " ok"
 
         # Check custom command scripting is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:

@@ -893,8 +893,9 @@ class scheduler(object):
             if self.reference_test_mode:
                 if len( self.ref_test_allowed_failures ) > 0:
                     for itask in self.pool.get_failed_tasks():
-                        if itask.ident not in self.ref_test_allowed_failures:
-                            print >> sys.stderr, itask.ident
+                        if (itask.identity not in
+                                self.ref_test_allowed_failures):
+                            print >>sys.stderr, itask.identity
                             raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
 
             # check submission and execution timeout and polling timers

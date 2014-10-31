@@ -94,7 +94,7 @@ class SuiteStateDumper(object):
                 if tasks is None and self.pool is not None:
                     tasks = self.pool.get_tasks(all_tasks=True)
                 if tasks is not None:
-                    for itask in sorted(tasks, key=lambda t: t.ident):
+                    for itask in sorted(tasks, key=lambda t: t.identity):
                         itask.dump_state(handle)
 
                 # To generate "OSError [Errno 9] bad file descriptor",

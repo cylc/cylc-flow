@@ -481,7 +481,7 @@ determine what happened to them while the suite was down."""
 
             else:
                 raise Exception(
-                    'ERROR: unknown task state for %s' % itask.ident)
+                    'ERROR: unknown task state for %s' % itask.identity)
 
             self.pool.add_to_runahead_pool( itask )
 
