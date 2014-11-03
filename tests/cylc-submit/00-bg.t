@@ -24,8 +24,8 @@ if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
     if [[ "${TEST_NAME_BASE}" == *remote-with-shared-fs* ]]; then
         CONF_KEY='remote host with shared fs'
     fi
-    if ! HOST="$(cylc get-global-config "--item=[test battery]${CONF_KEY}")"
-    then
+    HOST="$(cylc get-global-config "--item=[test battery]${CONF_KEY}")"
+    if [[ -z "${HOST}" ]]; then
         skip_all "[test battery]${CONF_KEY} not set"
     fi
     CYLC_TEST_HOST="${HOST}"
