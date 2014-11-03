@@ -128,7 +128,6 @@ determine what happened to them while the suite was down."""
         (dp1   # (Broadcast pickle string)
         .      # (Broadcast pickle string)
         Begin task states
-        class <classname>: item1=value1, item2=value2, ...
         <task_id> : <state>
         <task_id> : <state>
           ...

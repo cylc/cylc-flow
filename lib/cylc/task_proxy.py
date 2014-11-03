@@ -210,7 +210,7 @@ class TaskProxy(object):
             self.suite_name, self.tdef.name, self.point)
 
         if not validate_mode:  # if in validate mode bypass db operations
-            if self.state.is_currently("waiting") and submit_num == 0:
+            if self.state.is_currently("waiting") and self.submit_num == 0:
                 self.record_db_state()
             if self.submit_num > 0:
                 self.record_db_update(
@@ -388,15 +388,13 @@ class TaskProxy(object):
                     self.state.is_currently('submit-retrying', 'retrying') and
                     self.retry_delay_done()
                 )
-            ) and
-            (
-                "clocktriggered" not in self.tdef.modifiers or
-                self.start_time_reached()
-            )
+            ) and self.start_time_reached()
         )
 
     def start_time_reached(self):
         """Has this task reached its clock trigger time?"""
+        if self.tdef.clocktrigger_offset is None:
+            return True
         if self.point_as_seconds is None:
             iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.point))
             iso_clocktrigger_offset = cylc.cycling.iso8601.interval_parse(
@@ -1352,7 +1350,7 @@ class TaskProxy(object):
         failed will result in it spawning.
 
         """
-        if "oneoff" in self.tdef.modifiers:
+        if self.tdef.is_coldstart:
             self.state.set_spawned()
         return not self.state.has_spawned() and self.state.is_currently(
             'submitted', 'running', 'succeeded', 'failed', 'retrying')

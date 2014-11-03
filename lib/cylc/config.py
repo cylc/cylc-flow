@@ -928,12 +928,6 @@ class config( object ):
                     'waiting',
                     is_startup=True,
                     validate_mode=True)
-            except TypeError, x:
-                # This should not happen as we now explicitly catch use of
-                # synchronous special tasks in an asynchronous graph.  But in
-                # principle a clash of multiply inherited base classes due to
-                # choice of "special task" modifiers could cause a TypeError.
-                raise SuiteConfigError('(inconsistent use of special tasks?)')
             except Exception, x:
                 raise SuiteConfigError(
                     'ERROR, failed to instantiate task %s: %s' % (name, x))
@@ -1854,12 +1848,10 @@ class config( object ):
         # TODO - put all taskd.foo items in a single config dict
         # Set cold-start task indicators.
         if name in self.cfg['scheduling']['special tasks']['cold-start']:
-            taskd.modifiers.append('oneoff')
             taskd.is_coldstart = True
 
         # Set clock-triggered tasks.
         if name in self.clock_offsets:
-            taskd.modifiers.append('clocktriggered')
             taskd.clocktrigger_offset = self.clock_offsets[name]
 
         taskd.sequential = (

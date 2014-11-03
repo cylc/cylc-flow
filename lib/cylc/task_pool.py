@@ -990,7 +990,7 @@ class TaskPool(object):
                 found = True
                 extra_info = {}
                 # extra info for clocktriggered tasks
-                if "clocktriggered" in itask.tdef.modifiers:
+                if itask.tdef.clocktrigger_offset is not None:
                     extra_info['Clock trigger time reached'] = (
                         itask.start_time_reached())
                     extra_info['Triggers at'] = itask.delayed_start_str

@@ -57,8 +57,6 @@ if TaskID.is_valid_id(dep):
     msg = dep + ' succeeded'
 else:
     msg = dep
-    print >> sys.stderr, "WARNING: DEP should be a prerequisite but looks like a task ID"
-    print >> sys.stderr, msg
 
 if not TaskID.is_valid_id(task_id):
     sys.exit("Invalid task ID: " + task_id)

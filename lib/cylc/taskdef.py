@@ -58,11 +58,10 @@ class TaskDef(object):
         self.max_future_prereq_offset = None
         self.intercycle_offsets = []
         self.sequential = False
-        self.modifiers = []
         self.is_coldstart = False
         self.suite_polling_cfg = {}
 
-        self.clocktriggered_offset = None
+        self.clocktrigger_offset = None
         self.namespace_hierarchy = []
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = {}

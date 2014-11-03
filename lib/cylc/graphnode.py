@@ -30,7 +30,7 @@ NODE_PREV_RE = re.compile(
          \s*            # Optional whitespace
          T              # T as in T-6, T+1, etc
          \s*            # Optional whitespace
-         ([+\-])        # Either + or - in e.g. T-6, T+1
+         ([+-])         # Either + or - in e.g. T-6, T+1
          (\s*\w+)       # Offset amount
          \s*            # Optional whitespace
          \]             # End ]
@@ -44,7 +44,7 @@ NODE_ISO_RE = re.compile(
     r"^" +
     r"(" + TaskID.NAME_RE + r")" +
     r"""(?:\[        # Begin optional [offset] syntax
-         (?!T[+\-])  # Do not match a 'T-' or 'T+' (this is the old format)
+         (?!T[+-])   # Do not match a 'T-' or 'T+' (this is the old format)
          ([^\]]+)    # Continue until next ']'
          \]          # Stop at next ']'
         )?           # End optional [offset] syntax]
