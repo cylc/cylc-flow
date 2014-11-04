@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-10-23 14:04:00"> 
+<meta name="date" content="2014-11-05 12:14:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -36,9 +36,9 @@ href="#x19-363000B.7">[Pyro]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.8 <a 
 href="#x19-367000B.8">[hosts]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.9 <a 
-href="#x19-374000B.9">[suite host self-identification] </a></span>
+href="#x19-378000B.9">[suite host self-identification] </a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.10 <a 
-href="#x19-378000B.10">[suite host scanning]</a></span>
+href="#x19-382000B.10">[suite host scanning]</a></span>
    </div>
 <!--l. 7--><p class="indent" >   This section defines all legal items and values for cylc site and user config files. See <span 
 class="cmti-10">Site And User Config Files</span>
@@ -801,9 +801,35 @@ class="cmbx-10">[hosts] </span><span
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
 class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">remote copy template </span></span>
+   A string for the command used to copy files to a remote host. This is not used on the suite host unless you run
+local tasks under another user account.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">localhost default: </span><span class="lstinline"><span 
+class="pcrr7t-">scp</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">oBatchMode</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">yes</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">oConnectTimeout</span><span 
+class="pcrr7t-">=10</span></span></li></ul>
+<!--l. 449--><p class="noindent" >
+<!--l. 449--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-373000B.8.1.5"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOST </span><span 
+class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">remote shell template </span></span>
    A string template, containing <span class="lstinline"><span 
-class="pcrr7t-">%</span><span 
+class="pcrr7t-">\%</span><span 
 class="pcrr7t-">s</span></span> as a placeholder for the host name, for the command used to invoke
 commands on this host. This is not used on the suite host unless you run local tasks under another user
 account.
@@ -820,21 +846,25 @@ class="pcrr7t-">oBatchMode</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">yes</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">%</span><span 
-class="pcrr7t-">s</span></span> )</li></ul>
-<!--l. 451--><p class="noindent" >
-<!--l. 451--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-373000B.8.1.5"></a><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">oConnectTimeout</span><span 
+class="pcrr7t-">=10</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">\%</span><span 
+class="pcrr7t-">s</span></span></li></ul>
+<!--l. 461--><p class="noindent" >
+<!--l. 461--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-374000B.8.1.6"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">use login shell </span></span>
    Whether to use a login shell or not for remote command invocation. By default cylc runs remote ssh commands
-using a login shell, <!--l. 455--><div class="lstlisting">
+using a login shell, <!--l. 465--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-373001r1"></a></span><span 
+ id="x19-374001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -853,7 +883,7 @@ class="pcrr7t-">...'</span>
 
 
    </div>
-<!--l. 458--><p class="indent" >   which will source <span class="lstinline"><span 
+<!--l. 468--><p class="indent" >   which will source <span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">etc</span><span 
 class="pcrr7t-">/</span><span 
@@ -861,10 +891,10 @@ class="pcrr7t-">profile</span></span> and <span class="lstinline"><span
 class="pcrr7t-">~/.</span><span 
 class="pcrr7t-">profile</span></span> to set up the user environment. However, for security
 reasons some institutions do not allow unattended commands to start login shells, so you can turn off this behaviour
-to get, <!--l. 462--><div class="lstlisting">
+to get, <!--l. 472--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-373002r1"></a></span><span 
+ id="x19-374002r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -878,44 +908,97 @@ class="pcrr7t-">...'</span>
 
 
    </div>
-<!--l. 465--><p class="indent" >   which will use the default shell on the remote machine, sourcing <span class="lstinline"><span 
+<!--l. 475--><p class="indent" >   which will use the default shell on the remote machine, sourcing <span class="lstinline"><span 
 class="pcrr7t-">~/.</span><span 
 class="pcrr7t-">bashrc</span></span> (or <span class="lstinline"><span 
 class="pcrr7t-">~/.</span><span 
 class="pcrr7t-">cshrc</span></span>) to set up the
-environment. In either case <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">PATH</span></span> on the remote machine should include <span class="lstinline"><span 
-class="pcrr8c-">$</span><span 
-class="pcrr7t-">CYLC_DIR</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">bin</span></span> in order for the remote
-cylc program to be found.
-<!--l. 471--><p class="indent" >   <span 
-class="cmti-10">NOTE: this setting does not currently apply to job submission commands (which execute on the suite host to</span>
-<span 
-class="cmti-10">submit remote tasks).</span>
+environment.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span>true</li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 479--><p class="noindent" >
-<!--l. 479--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
- id="x19-374000B.9"></a>[suite host self-identification]  </span></h4>
-<!--l. 481--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
+<!--l. 484--><p class="noindent" >
+<!--l. 484--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-375000B.8.1.7"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOST </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">cylc executable </span></span>
+   The <span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span> executable on a remote host. Specify a full path if <span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span> is not in <span class="lstinline"><span 
+class="pcrr7t-">\</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">PATH</span></span> when it is invoked via <span class="lstinline"><span 
+class="pcrr7t-">ssh</span></span>
+on this host.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">localhost default: </span><span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span></li></ul>
+<!--l. 495--><p class="noindent" >
+<!--l. 495--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-376000B.8.1.8"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOST </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">global initial scripting </span></span>
+   If specified, the value of this setting will be inserted to just before the <span class="lstinline"><span 
+class="pcrr7t-">initial</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">scripting</span></span> section of all job
+scripts that are to be submitted to the specified remote host.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">localhost default: </span><span class="lstinline"><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span></span></li></ul>
+<!--l. 506--><p class="noindent" >
+<!--l. 506--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-377000B.8.1.9"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOST </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">copyable environment variables </span></span>
+   A list containing the names of the environment variables that can and/or need to be copied from the suite
+daemon to a job.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string_list
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">localhost default: </span><span class="lstinline"><span 
+class="pcrr7t-">[]</span></span></li></ul>
+<!--l. 516--><p class="noindent" >
+<!--l. 516--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
+ id="x19-378000B.9"></a>[suite host self-identification]  </span></h4>
+<!--l. 518--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_HOST</span></span>)
 so that task messages can target the right suite on the right host.
-<!--l. 489--><p class="noindent" >
-<!--l. 489--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
- id="x19-375000B.9.1"></a>[suite host self-identification] <span 
+                                                                                         
+
+                                                                                         
+<!--l. 526--><p class="noindent" >
+<!--l. 526--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
+ id="x19-379000B.9.1"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>method  </span></h4>
-<!--l. 491--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
+<!--l. 528--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
 class="cmti-10">name </span>method cylc asks the
 suite host for its host name. This should resolve on remote task hosts to the IP address of the suite host; if it
 doesn&#8217;t, adjust network settings or use one of the other methods. For the <span 
@@ -952,11 +1035,11 @@ class="cmti-10">host</span>, below)</li></ul>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>name</li></ul>
-<!--l. 513--><p class="noindent" >
-<!--l. 513--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
- id="x19-376000B.9.2"></a>[suite host self-identification] <span 
+<!--l. 550--><p class="noindent" >
+<!--l. 550--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
+ id="x19-380000B.9.2"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>target  </span></h4>
-<!--l. 515--><p class="indent" >   This item is required for the <span 
+<!--l. 552--><p class="indent" >   This item is required for the <span 
 class="cmti-10">address </span>self-identification method. If your suite host sees the internet, a common
 address such as <span class="lstinline"><span 
 class="pcrr7t-">google</span><span 
@@ -971,34 +1054,34 @@ class="cmti-10">default: </span><span class="lstinline"><span
 class="pcrr7t-">google</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">com</span></span></li></ul>
-<!--l. 525--><p class="noindent" >
-<!--l. 525--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
- id="x19-377000B.9.3"></a>[suite host self-identification] <span 
+<!--l. 562--><p class="noindent" >
+<!--l. 562--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
+ id="x19-381000B.9.3"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>host  </span></h4>
-<!--l. 527--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
+<!--l. 564--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
 class="cmti-10">hardwired</span>
 self-identification method.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string (host name or IP address)
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 534--><p class="noindent" >
-<!--l. 534--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
- id="x19-378000B.10"></a>[suite host scanning] </span></h4>
-<!--l. 536--><p class="indent" >   Utilities such as <span class="lstinline"><span 
+<!--l. 571--><p class="noindent" >
+<!--l. 571--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
+ id="x19-382000B.10"></a>[suite host scanning] </span></h4>
+<!--l. 573--><p class="indent" >   Utilities such as <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">gsummary</span></span> need to scan hosts for running suites.
-<!--l. 539--><p class="noindent" >
-<!--l. 539--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
- id="x19-379000B.10.1"></a>[suite host scanning] <span 
+                                                                                         
+
+                                                                                         
+<!--l. 576--><p class="noindent" >
+<!--l. 576--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
+ id="x19-383000B.10.1"></a>[suite host scanning] <span 
 class="cmsy-10">&#x2192; </span>hosts  </span></h4>
-<!--l. 541--><p class="indent" >   A list of hosts to scan for running suites.
+<!--l. 578--><p class="indent" >   A list of hosts to scan for running suites.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>comma-separated list of host names or IP addresses.

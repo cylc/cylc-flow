@@ -7,17 +7,17 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-10-23 14:04:00"> 
+<meta name="date" content="2014-11-05 12:14:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 5067--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5041--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse13.html" >next</a>] [<a 
 href="cug-htmlse11.html" >prev</a>] [<a 
 href="cug-htmlse11.html#tailcug-htmlse11.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse12.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse12.html" >up</a>] </p></div>
-<!--l. 5067--><p class="indent" >    <h3 id="12" class="sectionHead"><span class="titlemark"> <a href="#12">12</a>  <a 
+<!--l. 5041--><p class="indent" >    <h3 id="12" class="sectionHead"><span class="titlemark"> <a href="#12">12</a>  <a 
  id="x13-15400012"></a>Running Suites </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >12.1 <a 
 href="#x13-15500012.1">Suite Start-up</a></span>
@@ -64,14 +64,14 @@ href="#x13-18200012.21">Automated Reference Test Suites</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >12.22 <a 
 href="#x13-18400012.22">Triggering Off Tasks In Other Suites</a></span>
    </div>
-<!--l. 5070--><p class="indent" >   This chapter currently features a diverse collection of topics related to running suites. Please also see the
+<!--l. 5044--><p class="indent" >   This chapter currently features a diverse collection of topics related to running suites. Please also see the
 Tutorial (<a 
 href="cug-htmlse7.html#x8-240007">7<!--tex4ht:ref: Tutorial --></a>) and command documentation (<a 
-href="cug-htmlse20.html#x21-392000D">D<!--tex4ht:ref: CommandReference --></a>), and experiment with plenty of examples.
-<!--l. 5075--><p class="noindent" >
-<!--l. 5075--><p class="indent" >    <h4 id="12.1" class="subsectionHead"> <span class="titlemark"> <a href="#12.1"> 12.1</a>  <a 
+href="cug-htmlse20.html#x21-396000D">D<!--tex4ht:ref: CommandReference --></a>), and experiment with plenty of examples.
+<!--l. 5049--><p class="noindent" >
+<!--l. 5049--><p class="indent" >    <h4 id="12.1" class="subsectionHead"> <span class="titlemark"> <a href="#12.1"> 12.1</a>  <a 
  id="x13-15500012.1"></a>Suite Start-up </span></h4>
-<!--l. 5078--><p class="indent" >   There are three ways to start a suite running: <span 
+<!--l. 5052--><p class="indent" >   There are three ways to start a suite running: <span 
 class="cmti-10">cold start </span>and <span 
 class="cmti-10">warm start</span>, which start from scratch; and <span 
 class="cmti-10">restart</span>,
@@ -80,7 +80,7 @@ cold and warm start, except that a warm start should start from a point beyond t
 the suite. Special cold-start tasks are only needed if you want to be able to cold-start individual tasks again in the
 middle of a suite run - see&#x00A0;<a 
 href="cug-htmlse9.html#x10-970009.3.4.11">9.3.4.11<!--tex4ht:ref: SpecialColdStartTasks --></a>.
-<!--l. 5087--><p class="indent" >   Once a suite is up and running it is typically a restart that is needed most often (but see also <span class="lstinline"><span 
+<!--l. 5061--><p class="indent" >   Once a suite is up and running it is typically a restart that is needed most often (but see also <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">reload</span></span>).
@@ -89,10 +89,10 @@ decide that&#8217;s what you really intended.
                                                                                          
 
                                                                                          
-<!--l. 5092--><p class="noindent" >
-<!--l. 5092--><p class="indent" >    <h4 id="12.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.1.1"> 12.1.1</a>  <a 
+<!--l. 5066--><p class="noindent" >
+<!--l. 5066--><p class="indent" >    <h4 id="12.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.1.1"> 12.1.1</a>  <a 
  id="x13-15600012.1.1"></a>Cold Start </span></h4>
-<!--l. 5094--><p class="indent" >   A cold start is the primary way to start a suite run from scratch:  <!--l. 5096--><div class="lstlisting">
+<!--l. 5068--><p class="indent" >   A cold start is the primary way to start a suite run from scratch:  <!--l. 5070--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-156001r1"></a></span><span 
@@ -111,16 +111,16 @@ class="pcrr7t-">]</span>
 
 
    </div>
-<!--l. 5099--><p class="indent" >   The initial cycle point may be specified on the command line or in the suite.rc file. The scheduler starts by
+<!--l. 5073--><p class="indent" >   The initial cycle point may be specified on the command line or in the suite.rc file. The scheduler starts by
 loading the first instance of each task at the suite initial cycle point, or at the next valid point for the
 task, including any special cold-start tasks (see the note on cold-start tasks at the beginning of this
 section).
-<!--l. 5105--><p class="noindent" >
-<!--l. 5105--><p class="indent" >    <h4 id="12.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#12.1.2"> 12.1.2</a>  <a 
+<!--l. 5079--><p class="noindent" >
+<!--l. 5079--><p class="indent" >    <h4 id="12.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#12.1.2"> 12.1.2</a>  <a 
  id="x13-15700012.1.2"></a>Restart </span></h4>
-<!--l. 5107--><p class="indent" >   A restart starts a suite run from the state recorded at the end of a previous run. This allows restarting a suite
+<!--l. 5081--><p class="indent" >   A restart starts a suite run from the state recorded at the end of a previous run. This allows restarting a suite
 that was shut down or killed, without rerunning tasks that were already completed, or which were already submitted
-or running when the suite went down.  <!--l. 5112--><div class="lstlisting">
+or running when the suite went down.  <!--l. 5086--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-157001r1"></a></span><span 
@@ -139,18 +139,18 @@ class="pcrr7t-">]</span>
 
 
    </div>
-<!--l. 5115--><p class="indent" >   For a restart, the scheduler starts by loading each task in its recorded state. The most recent state is loaded by
+<!--l. 5089--><p class="indent" >   For a restart, the scheduler starts by loading each task in its recorded state. The most recent state is loaded by
 default, but earlier state files can be specified on the command line. Any tasks recorded as &#8216;submitted&#8217;
 or &#8216;running&#8217; will be polled automatically to determine what happened to them while the suite was
 down.
-<!--l. 5121--><p class="noindent" >
-<!--l. 5121--><p class="indent" >    <h4 id="12.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#12.1.3"> 12.1.3</a>  <a 
+<!--l. 5095--><p class="noindent" >
+<!--l. 5095--><p class="indent" >    <h4 id="12.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#12.1.3"> 12.1.3</a>  <a 
  id="x13-15800012.1.3"></a>Warm Start </span></h4>
-<!--l. 5123--><p class="indent" >   A warm start runs a suite from scratch like a cold start, but from a given cycle point that is later than the
+<!--l. 5097--><p class="indent" >   A warm start runs a suite from scratch like a cold start, but from a given cycle point that is later than the
 suite&#8217;s initial cycle point. It can be considered an inferior alternative to a restart because it may result in some tasks
 rerunning. A warm start may be required if a restart is not possible because the suite state files were
 accidentally deleted (for instance). The warm start cycle point must be given on the command line:
-<!--l. 5130--><div class="lstlisting">
+<!--l. 5104--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-158001r1"></a></span><span 
@@ -172,14 +172,14 @@ class="pcrr7t-">]</span>
 
 
    </div>
-<!--l. 5133--><p class="indent" >   In this case the scheduler starts by loading a first instance of each task at the warm start cycle point, or at the
+<!--l. 5107--><p class="indent" >   In this case the scheduler starts by loading a first instance of each task at the warm start cycle point, or at the
 next valid point for the task, and any special cold-start tasks are loaded in the &#8216;succeeded&#8217; state (this is merely a
 device to satisfy any initial dependence on the cold-start tasks, which are assumed not to be needed for a warm
 start; see the note on cold-start tasks at the beginning of this section).
-<!--l. 5140--><p class="noindent" >
-<!--l. 5140--><p class="indent" >    <h4 id="12.2" class="subsectionHead"> <span class="titlemark"> <a href="#12.2"> 12.2</a>  <a 
+<!--l. 5114--><p class="noindent" >
+<!--l. 5114--><p class="indent" >    <h4 id="12.2" class="subsectionHead"> <span class="titlemark"> <a href="#12.2"> 12.2</a>  <a 
  id="x13-15900012.2"></a>How Tasks Interact With Running Suites </span></h4>
-<!--l. 5143--><p class="indent" >   Cylc has three ways of tracking the progress of tasks, configured per task host in the site and user
+<!--l. 5117--><p class="indent" >   Cylc has three ways of tracking the progress of tasks, configured per task host in the site and user
 global config files (<a 
 href="cug-htmlse6.html#x7-230006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a>). All three methods can be used on different task hosts within the same suite if
 necessary.
@@ -207,22 +207,22 @@ class="cmbx-10">ssh: </span>for  tasks  hosts  that  block  access  to  the  net
   class="enumerate" id="x13-159008x2"><span 
 class="cmbx-10">polling: </span>for task hosts that do not allow return routing to the suite host for Pyro or ssh, cylc can poll tasks at
      configurable intervals, using passwordless ssh.</li></ol>
-<!--l. 5166--><p class="indent" >   The Pyro communication method is the default because it is the most direct and efficient; the ssh method
+<!--l. 5140--><p class="indent" >   The Pyro communication method is the default because it is the most direct and efficient; the ssh method
 inserts an extra step in the process (command re-invocation on the suite host); and task polling is the
 least efficient because results are checked at predetermined intervals, not when task events actually
 occur.
-<!--l. 5172--><p class="noindent" >
-<!--l. 5172--><p class="indent" >    <h4 id="12.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.2.1"> 12.2.1</a>  <a 
+<!--l. 5146--><p class="noindent" >
+<!--l. 5146--><p class="indent" >    <h4 id="12.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.2.1"> 12.2.1</a>  <a 
  id="x13-16000012.2.1"></a>Task Polling </span></h4>
-<!--l. 5174--><p class="indent" >   Be careful to avoid spamming task hosts with polling commands. Each poll opens (and then closes) a new ssh
+<!--l. 5148--><p class="indent" >   Be careful to avoid spamming task hosts with polling commands. Each poll opens (and then closes) a new ssh
 connection.
-<!--l. 5177--><p class="indent" >   Polling intervals are configurable under <span class="lstinline"><span 
+<!--l. 5151--><p class="indent" >   Polling intervals are configurable under <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span></span> because they should may depend on the expected execution
 time. For instance, a task that typically takes an hour to run might be polled every 10 minutes initially, and then
 every minute toward the end of its run. Interval values are used in turn until the last value, which is used repeatedly
-until finished:  <!--l. 5185--><div class="lstlisting">
+until finished:  <!--l. 5159--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-160001r1"></a></span><span 
@@ -377,18 +377,18 @@ class="pcrr7t-">PT1M</span>
 
 
    </div>
-<!--l. 5194--><p class="indent" >   A list of intervals with optional multipliers can be used for both submission and execution polling, although a
+<!--l. 5168--><p class="indent" >   A list of intervals with optional multipliers can be used for both submission and execution polling, although a
 single value is probably sufficient for submission polling. If these items are not configured default values
 from site and user global config will be used for the polling task communication method; polling is
 not done by default under the other task communications methods (but it can still be used if you
 like).
-<!--l. 5202--><p class="indent" >   Polling is also done automatically once on job submission and execution timeouts, to see if the timed-out task
+<!--l. 5176--><p class="indent" >   Polling is also done automatically once on job submission and execution timeouts, to see if the timed-out task
 has failed or not; and on suite restarts, to see what happened to any tasks that were orphaned when the suite went
 down.
-<!--l. 5207--><p class="noindent" >
-<!--l. 5207--><p class="indent" >    <h4 id="12.3" class="subsectionHead"> <span class="titlemark"> <a href="#12.3"> 12.3</a>  <a 
+<!--l. 5181--><p class="noindent" >
+<!--l. 5181--><p class="indent" >    <h4 id="12.3" class="subsectionHead"> <span class="titlemark"> <a href="#12.3"> 12.3</a>  <a 
  id="x13-16100012.3"></a>Alternatives To Polling When Routing Is Blocked </span></h4>
-<!--l. 5209--><p class="indent" >   If Pyro and ssh ports are blocked but you don&#8217;t want to use polling from the suite host,
+<!--l. 5183--><p class="indent" >   If Pyro and ssh ports are blocked but you don&#8217;t want to use polling from the suite host,
      <ul class="itemize1">
      <li class="itemize">it has been suggested that network <span 
 class="cmti-10">port forwarding </span>may provide a solution;
@@ -401,10 +401,10 @@ class="cmti-10">port forwarding </span>may provide a solution;
      </li>
      <li class="itemize">it is possible to run cylc itself on HPC login nodes, but depending on what software is installed there
      this may preclude use of the gcylc GUI and suite visualization tools.</li></ul>
-<!--l. 5221--><p class="noindent" >
-<!--l. 5221--><p class="indent" >    <h4 id="12.4" class="subsectionHead"> <span class="titlemark"> <a href="#12.4"> 12.4</a>  <a 
+<!--l. 5195--><p class="noindent" >
+<!--l. 5195--><p class="indent" >    <h4 id="12.4" class="subsectionHead"> <span class="titlemark"> <a href="#12.4"> 12.4</a>  <a 
  id="x13-16200012.4"></a>Task Host Communications Configuration </span></h4>
-<!--l. 5223--><p class="indent" >   Here are the default site and user global config items relevant to task state tracking (see these with
+<!--l. 5197--><p class="indent" >   Here are the default site and user global config items relevant to task state tracking (see these with
 <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -413,7 +413,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">site</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">config</span></span>):
-   <!--l. 5227--><div class="lstlisting">
+   <!--l. 5201--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-162001r1"></a></span><span 
@@ -1406,37 +1406,37 @@ class="pcrr7t-">1.0</span>
 
 
    </div>
-<!--l. 5278--><p class="noindent" >
-<!--l. 5278--><p class="indent" >    <h4 id="12.5" class="subsectionHead"> <span class="titlemark"> <a href="#12.5"> 12.5</a>  <a 
+<!--l. 5252--><p class="noindent" >
+<!--l. 5252--><p class="indent" >    <h4 id="12.5" class="subsectionHead"> <span class="titlemark"> <a href="#12.5"> 12.5</a>  <a 
  id="x13-16300012.5"></a>How Commands Interact With Running Suites </span></h4>
-<!--l. 5280--><p class="indent" >   User-invoked commands that connect to running suites can also choose between direct communication across
+<!--l. 5254--><p class="indent" >   User-invoked commands that connect to running suites can also choose between direct communication across
 network sockets (Pyro) and re-invocation of commands on the suite host using passwordless ssh (there is a
 <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">use</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">ssh</span></span> command option for this purpose).
-<!--l. 5285--><p class="indent" >   The gcylc GUI requires direct Pyro connections to its target suite. If that is not possible, run gcylc on the suite
+<!--l. 5259--><p class="indent" >   The gcylc GUI requires direct Pyro connections to its target suite. If that is not possible, run gcylc on the suite
 host.
-<!--l. 5289--><p class="noindent" >
-<!--l. 5289--><p class="indent" >    <h4 id="12.6" class="subsectionHead"> <span class="titlemark"> <a href="#12.6"> 12.6</a>  <a 
+<!--l. 5263--><p class="noindent" >
+<!--l. 5263--><p class="indent" >    <h4 id="12.6" class="subsectionHead"> <span class="titlemark"> <a href="#12.6"> 12.6</a>  <a 
  id="x13-16400012.6"></a>Connection Authentication </span></h4>
-<!--l. 5292--><p class="indent" >   All Pyro connections to a running suite (task messaging and user-invoked commands) must authenticate with an
+<!--l. 5266--><p class="indent" >   All Pyro connections to a running suite (task messaging and user-invoked commands) must authenticate with an
 arbitrary single line of text in a file called <span class="lstinline"><span 
 class="pcrr7t-">passphrase</span></span>, which will be found and used automatically if installed
 properly - see below. A secure MD5 checksum, not the raw passphrase, is passed across the network. A random
 passphrase is generated in the suite definition directory when a suite is registered, but you can create your own if
 you wish.
-<!--l. 5300--><p class="indent" >   For ssh task messaging and user command re-invocation, on the other hand, the suite passphrase is
+<!--l. 5274--><p class="indent" >   For ssh task messaging and user command re-invocation, on the other hand, the suite passphrase is
 only required on the suite host account but ssh keys must be installed for passwordless connections
 instead.
-<!--l. 5304--><p class="noindent" >
-<!--l. 5304--><p class="indent" >    <h4 id="12.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.6.1"> 12.6.1</a>  <a 
+<!--l. 5278--><p class="noindent" >
+<!--l. 5278--><p class="indent" >    <h4 id="12.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.6.1"> 12.6.1</a>  <a 
  id="x13-16500012.6.1"></a>Suite Pyro Passphrase Locations </span></h4>
-<!--l. 5307--><p class="indent" >   Suite passphrases currently have to be installed manually to all task host accounts that use the Pyro
+<!--l. 5281--><p class="indent" >   Suite passphrases currently have to be installed manually to all task host accounts that use the Pyro
 communication method (see above); and also to accounts used to run commands that interact directly with the suite
 via Pyro.
-<!--l. 5312--><p class="indent" >   Legal passphrase locations, in order of preference, are:
+<!--l. 5286--><p class="indent" >   Legal passphrase locations, in order of preference, are:
      <ol  class="enumerate1" >
      <li 
   class="enumerate" id="x13-165002x1"><span class="lstinline"><span 
@@ -1486,7 +1486,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">SUITE_NAME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">passphrase</span></span></li></ol>
-<!--l. 5319--><p class="noindent" >Remote tasks know the location of the remote suite definition directory (if one exists) through their execution
+<!--l. 5293--><p class="noindent" >Remote tasks know the location of the remote suite definition directory (if one exists) through their execution
 environment. Local (suite host) user command invocations can find the suite definition directory in the suite name
 database. Remote user command invocations, however, cannot interrogate the database on the command host
 because the suite will not be registered there (cylc cannot assume that the command host shares a common
@@ -1497,10 +1497,10 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">/.</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span></span>.
-<!--l. 5330--><p class="noindent" >
-<!--l. 5330--><p class="indent" >    <h4 id="12.7" class="subsectionHead"> <span class="titlemark"> <a href="#12.7"> 12.7</a>  <a 
+<!--l. 5304--><p class="noindent" >
+<!--l. 5304--><p class="indent" >    <h4 id="12.7" class="subsectionHead"> <span class="titlemark"> <a href="#12.7"> 12.7</a>  <a 
  id="x13-16600012.7"></a>How Tasks Get Access To Cylc </span></h4>
-<!--l. 5333--><p class="indent" >   Running tasks need access to cylc via <span class="lstinline"><span 
+<!--l. 5307--><p class="indent" >   Running tasks need access to cylc via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PATH</span></span>, principally for the task messaging commands. To allow this, the
 first thing a task job script does is set <span class="lstinline"><span 
@@ -1521,10 +1521,55 @@ their own copy of cylc rather than a centrally installed one, set <span class="l
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_HOME</span></span> to point to your cylc
 copy.
-<!--l. 5344--><p class="noindent" >
-<!--l. 5344--><p class="indent" >    <h4 id="12.8" class="subsectionHead"> <span class="titlemark"> <a href="#12.8"> 12.8</a>  <a 
+<!--l. 5318--><p class="indent" >   Access to the cylc executable for different hosts can be configured using the site and user global configuration
+files. If the environment for running the cylc executable is only set up correctly in a login shell for a given host, you
+can set the <span class="lstinline"><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">hosts</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">rightarrow</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">HOST</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">rightarrow</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">executable</span></span> setting for the relevant host
+to <span class="lstinline"><span 
+class="pcrr7t-">True</span></span>. (This is the default behaviour.) If the environment is already correct without the login shell, but the cylc
+executable is not in <span class="lstinline"><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">PATH</span></span>, then the <span class="lstinline"><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">hosts</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">rightarrow</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">HOST</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">rightarrow</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">executable</span></span>
+setting can be used to specify the path to the cylc executable.
+<!--l. 5330--><p class="noindent" >
+<!--l. 5330--><p class="indent" >    <h4 id="12.8" class="subsectionHead"> <span class="titlemark"> <a href="#12.8"> 12.8</a>  <a 
  id="x13-16700012.8"></a>Restarting Suites </span></h4>
-<!--l. 5347--><p class="indent" >   A restarted suite (see <span class="lstinline"><span 
+<!--l. 5333--><p class="indent" >   A restarted suite (see <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">restart</span><span 
@@ -1532,15 +1577,15 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span>) is initialized from a previous recorded suite state dump so that
 it can carry on from wherever it got to before being shut down or killed.
-<!--l. 5351--><p class="indent" >   Tasks that were recorded in the submitted or running states are now automatically polled on restart, to see if
+<!--l. 5337--><p class="indent" >   Tasks that were recorded in the submitted or running states are now automatically polled on restart, to see if
 they are still submitted (e.g. waiting in a PBS batch queue or similar), still running, or if they finished (succeeded or
 failed) while the suite was down.
-<!--l. 5356--><p class="indent" >   Tasks recorded in the failed state at shutdown are not automatically resubmitted on restarting the suite, in case
+<!--l. 5342--><p class="indent" >   Tasks recorded in the failed state at shutdown are not automatically resubmitted on restarting the suite, in case
 the underlying problem has not been addressed yet.
-<!--l. 5360--><p class="noindent" >
-<!--l. 5360--><p class="indent" >    <h4 id="12.9" class="subsectionHead"> <span class="titlemark"> <a href="#12.9"> 12.9</a>  <a 
+<!--l. 5346--><p class="noindent" >
+<!--l. 5346--><p class="indent" >    <h4 id="12.9" class="subsectionHead"> <span class="titlemark"> <a href="#12.9"> 12.9</a>  <a 
  id="x13-16800012.9"></a>Task States </span></h4>
-<!--l. 5362--><p class="indent" >   As a suite runs its task proxies may pass through the following states:
+<!--l. 5348--><p class="indent" >   As a suite runs its task proxies may pass through the following states:
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmbx-10">waiting </span>- prerequisites not satisfied yet (note that clock-triggered tasks also wait on their trigger time).
@@ -1554,6 +1599,9 @@ href="#x13-17200012.13">12.13<!--tex4ht:ref: InternalQueues --></a>).
      <li class="itemize"><span 
 class="cmbx-10">held </span>- will not be submitted even if ready to run. Tasks that spawn past the final cycle point are held
      automatically.
+                                                                                         
+
+                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmbx-10">ready </span>- ready to run (prerequisites satisfied) and handed to cylc&#8217;s job submission sub-system.
@@ -1561,9 +1609,6 @@ class="cmbx-10">ready </span>- ready to run (prerequisites satisfied) and handed
      <li class="itemize"><span 
 class="cmbx-10">submitted </span>- submitted to run, but not executing yet (could be waiting in an external batch scheduler
      queue).
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmbx-10">submit-failed </span>- job submission failed <span 
@@ -1593,21 +1638,21 @@ class="cmbx-10">retrying </span>- job execution failed, but an execution retry w
 class="cmti-10">failed </span>state
      if all configured execution retries are exhausted.
      </li></ul>
-<!--l. 5403--><p class="indent" >   Note that greyed-out &#8220;base graph nodes&#8221; in the gcylc graph view do not represent task states; they are displayed
+<!--l. 5389--><p class="indent" >   Note that greyed-out &#8220;base graph nodes&#8221; in the gcylc graph view do not represent task states; they are displayed
 to fill out the graph structure where corresponding task proxies do not currently exist in the live task
 pool.
-<!--l. 5408--><p class="indent" >   For manual task state reset purposes <span 
+<!--l. 5394--><p class="indent" >   For manual task state reset purposes <span 
 class="cmbx-10">ready </span>is a pseudo-state that means <span 
 class="cmti-10">waiting </span>with all prerequisites
 satisfied.
-<!--l. 5412--><p class="noindent" >
-<!--l. 5412--><p class="indent" >    <h4 id="12.10" class="subsectionHead"> <span class="titlemark"> <a href="#12.10"> 12.10</a>  <a 
+<!--l. 5398--><p class="noindent" >
+<!--l. 5398--><p class="indent" >    <h4 id="12.10" class="subsectionHead"> <span class="titlemark"> <a href="#12.10"> 12.10</a>  <a 
  id="x13-16900012.10"></a>Remote Control - Passphrases and Network Ports </span></h4>
-<!--l. 5415--><p class="indent" >   Connecting to a running suite requires knowing the <span 
+<!--l. 5401--><p class="indent" >   Connecting to a running suite requires knowing the <span 
 class="cmti-10">network port </span>it is listening on, and the <span 
 class="cmti-10">suite passphrase </span>to
 authenticate with once a connection is made to the port.
-<!--l. 5419--><p class="indent" >   Suites write their port number to <span class="lstinline"><span 
+<!--l. 5405--><p class="indent" >   Suites write their port number to <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/.</span><span 
@@ -1622,14 +1667,14 @@ href="#fn5x0" id="fn5x0-bk"><sup class="textsuperscript">5</sup></a></span><a
  id="x13-169001f5"></a>
 An exception to this is the messaging commands called by tasks. Running tasks know the port number from the
 execution environment provided by the suite (via the task job script).
-<!--l. 5428--><p class="indent" >   So, to connect to a suite running on another account you must install the suite passphrase (<a 
+<!--l. 5414--><p class="indent" >   So, to connect to a suite running on another account you must install the suite passphrase (<a 
 href="#x13-16500012.6.1">12.6.1<!--tex4ht:ref: passphrases --></a>), and configure
 passwordless ssh so that the port number can be retrieved from the remote port file. Then use the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">user</span></span> and
 <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
-class="pcrr7t-">host</span></span> command options to connect:  <!--l. 5434--><div class="lstlisting">
+class="pcrr7t-">host</span></span> command options to connect:  <!--l. 5420--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-169002r1"></a></span><span 
@@ -1654,8 +1699,8 @@ class="pcrr7t-">SUITE</span>
 
 
    </div>
-<!--l. 5437--><p class="indent" >   If you know the port number of the target suite, give it on the command line to prevent the port-retrieving ssh
-connection being attempted:  <!--l. 5440--><div class="lstlisting">
+<!--l. 5423--><p class="indent" >   If you know the port number of the target suite, give it on the command line to prevent the port-retrieving ssh
+connection being attempted:  <!--l. 5426--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-169003r1"></a></span><span 
@@ -1685,17 +1730,17 @@ class="pcrr7t-">SUITE</span>
 
 
    </div>
-<!--l. 5444--><p class="indent" >   Possession of a suite passphrase gives full control over the suite, and ssh access to the port file also implies full
-access to the suite host account, so it is recommended that this only be used to interact with your own suites
-running on other hosts. We plan to implement finer-grained authentication in the future to allow suite owners to
-grant read-only access to others.
                                                                                          
 
                                                                                          
-<!--l. 5453--><p class="noindent" >
-<!--l. 5453--><p class="indent" >    <h4 id="12.11" class="subsectionHead"> <span class="titlemark"> <a href="#12.11"> 12.11</a>  <a 
+<!--l. 5430--><p class="indent" >   Possession of a suite passphrase gives full control over the suite, and ssh access to the port file also implies full
+access to the suite host account, so it is recommended that this only be used to interact with your own suites
+running on other hosts. We plan to implement finer-grained authentication in the future to allow suite owners to
+grant read-only access to others.
+<!--l. 5439--><p class="noindent" >
+<!--l. 5439--><p class="indent" >    <h4 id="12.11" class="subsectionHead"> <span class="titlemark"> <a href="#12.11"> 12.11</a>  <a 
  id="x13-17000012.11"></a>Network Connection Timeouts </span></h4>
-<!--l. 5455--><p class="indent" >   A connection timeout can be set in site and user global config files (see&#x00A0;<a 
+<!--l. 5441--><p class="indent" >   A connection timeout can be set in site and user global config files (see&#x00A0;<a 
 href="cug-htmlse6.html#x7-230006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a>) so that messaging commands cannot
 hang indefinitely if the suite is not responding (this can be caused by suspending a suite with Ctrl-Z) thereby
 preventing the task from completing. The same can be done on the command line for other suite-connecting user
@@ -1704,10 +1749,10 @@ class="pcrr7t-">--</span><span
 class="pcrr7t-">pyro</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">timeout</span></span> option.
-<!--l. 5462--><p class="noindent" >
-<!--l. 5462--><p class="indent" >    <h4 id="12.12" class="subsectionHead"> <span class="titlemark"> <a href="#12.12"> 12.12</a>  <a 
+<!--l. 5448--><p class="noindent" >
+<!--l. 5448--><p class="indent" >    <h4 id="12.12" class="subsectionHead"> <span class="titlemark"> <a href="#12.12"> 12.12</a>  <a 
  id="x13-17100012.12"></a>Runahead Limiting </span></h4>
-<!--l. 5465--><p class="indent" >   Runahead limiting prevents the fastest tasks in a suite from getting too far ahead of the slowest ones. Newly
+<!--l. 5451--><p class="indent" >   Runahead limiting prevents the fastest tasks in a suite from getting too far ahead of the slowest ones. Newly
 spawned tasks are released to the task pool only when they fall below the runahead limit. A low runhead limit can
 prevent cylc from interleaving cycles, but it will not stall a suite unless it fails to extend out past a future trigger
 (see&#x00A0;<a 
@@ -1715,29 +1760,29 @@ href="cug-htmlse9.html#x10-960009.3.4.10">9.3.4.10<!--tex4ht:ref: InterCyclePoin
 clock-triggers to spawn far ahead of the pack, which could have performance implications for the suite daemon
 when running very large suites. Succeeded and failed tasks are ignored when computing the runahead
 limit.
-<!--l. 5475--><p class="indent" >   The preferred runahead limiting mechanism restricts the number of consecutive active cycle points. The default
+<!--l. 5461--><p class="indent" >   The preferred runahead limiting mechanism restricts the number of consecutive active cycle points. The default
 value is three active cycle points; see&#x00A0;<a 
 href="cug-htmlse17.html#x18-248000A.3.5">A.3.5<!--tex4ht:ref: max active cycle points --></a>. Alternatively the interval between the slowest and fastest tasks can be
 specified as hard limit; see&#x00A0;<a 
 href="cug-htmlse17.html#x18-247000A.3.4">A.3.4<!--tex4ht:ref: runahead limit --></a>.
-<!--l. 5481--><p class="noindent" >
-<!--l. 5481--><p class="indent" >    <h4 id="12.13" class="subsectionHead"> <span class="titlemark"> <a href="#12.13"> 12.13</a>  <a 
+<!--l. 5467--><p class="noindent" >
+<!--l. 5467--><p class="indent" >    <h4 id="12.13" class="subsectionHead"> <span class="titlemark"> <a href="#12.13"> 12.13</a>  <a 
  id="x13-17200012.13"></a>Limiting Active Tasks With Internal Queues </span></h4>
-<!--l. 5484--><p class="indent" >   Large suites can potentially overwhelm task hosts by submitting too many tasks at once. You can prevent this
+<!--l. 5470--><p class="indent" >   Large suites can potentially overwhelm task hosts by submitting too many tasks at once. You can prevent this
 with <span 
 class="cmti-10">internal queues</span>, which limit the number of tasks that can be active (submitted or running) at the some
 time.
-<!--l. 5489--><p class="indent" >   A queue is defined by a <span 
+<!--l. 5475--><p class="indent" >   A queue is defined by a <span 
 class="cmti-10">name</span>; a <span 
 class="cmti-10">limit</span>, which is the maximum number of active tasks allowed for the queue; and a
 list of <span 
 class="cmti-10">members</span>, assigned by task or family name.
-<!--l. 5493--><p class="indent" >   Queue configuration is done under the [scheduling] section of the suite.rc file (like dependencies, internal queues
+<!--l. 5479--><p class="indent" >   Queue configuration is done under the [scheduling] section of the suite.rc file (like dependencies, internal queues
 constrain <span 
 class="cmti-10">when </span>a task runs).
-<!--l. 5496--><p class="indent" >   By default every task is assigned to the <span 
+<!--l. 5482--><p class="indent" >   By default every task is assigned to the <span 
 class="cmti-10">default </span>queue, which by default has a zero limit (interpreted by cylc as
-no limit). To use a single queue for the whole suite just set the default queue limit:  <!--l. 5500--><div class="lstlisting">
+no limit). To use a single queue for the whole suite just set the default queue limit:  <!--l. 5486--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-172001r1"></a></span><span 
@@ -1820,7 +1865,7 @@ class="pcrr7t-">5</span>
 
 
    </div>
-<!--l. 5507--><p class="indent" >   To use additional queues just name each one, set their limits, and assign members: <!--l. 5509--><div class="lstlisting">
+<!--l. 5493--><p class="indent" >   To use additional queues just name each one, set their limits, and assign members: <!--l. 5495--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-172006r1"></a></span><span 
@@ -1897,13 +1942,16 @@ class="pcrr7t-">baz</span>
 
 
    </div>
-<!--l. 5516--><p class="indent" >   Any tasks not assigned to a particular queue will remain in the default queue. The <span 
+<!--l. 5502--><p class="indent" >   Any tasks not assigned to a particular queue will remain in the default queue. The <span 
 class="cmti-10">queues </span>example suite
 illustrates how queues work by running two task trees side by side (as seen in the graph GUI) each limited to 2 and
 3 tasks respectively:
+                                                                                         
+
+                                                                                         
 <a 
  id="x13-172011"></a>
-   <!--l. 5521--><pre class="listings"><!--l. 5521--><div class="lstinputlisting"><span 
+   <!--l. 5507--><pre class="listings"><!--l. 5507--><div class="lstinputlisting"><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-172012r1"></a></span><span 
 class="pcrr7t-">title</span><span 
@@ -2392,28 +2440,25 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">fam2</span></div>
    </pre>
-                                                                                         
-
-                                                                                         
-<!--l. 5523--><p class="noindent" >
-<!--l. 5523--><p class="indent" >    <h4 id="12.14" class="subsectionHead"> <span class="titlemark"> <a href="#12.14"> 12.14</a>  <a 
+<!--l. 5509--><p class="noindent" >
+<!--l. 5509--><p class="indent" >    <h4 id="12.14" class="subsectionHead"> <span class="titlemark"> <a href="#12.14"> 12.14</a>  <a 
  id="x13-17300012.14"></a>Automatic Task Retry On Failure </span></h4>
-<!--l. 5526--><p class="indent" >   See also&#x00A0;<a 
+<!--l. 5512--><p class="indent" >   See also&#x00A0;<a 
 href="cug-htmlse17.html#x18-274000A.4.1.9">A.4.1.9<!--tex4ht:ref: RefRetries --></a> in the <span 
 class="cmti-10">Suite.rc Reference</span>.
-<!--l. 5528--><p class="indent" >   Tasks can be configured with a list of &#8220;retry delay&#8221; periods, as ISO 8601 durations, such that if a task fails it will
+<!--l. 5514--><p class="indent" >   Tasks can be configured with a list of &#8220;retry delay&#8221; periods, as ISO 8601 durations, such that if a task fails it will
 go into a temporary <span 
 class="cmti-10">retrying </span>state and then automatically resubmit itself after the next specified delay period
 expires. A usage example is shown in the suite listed below under&#x00A0;<a 
 href="#x13-17400012.15">12.15<!--tex4ht:ref: EventHandling --></a>.
-<!--l. 5534--><p class="noindent" >
-<!--l. 5534--><p class="indent" >    <h4 id="12.15" class="subsectionHead"> <span class="titlemark"> <a href="#12.15"> 12.15</a>  <a 
+<!--l. 5520--><p class="noindent" >
+<!--l. 5520--><p class="indent" >    <h4 id="12.15" class="subsectionHead"> <span class="titlemark"> <a href="#12.15"> 12.15</a>  <a 
  id="x13-17400012.15"></a>Suite And Task Event Handling </span></h4>
-<!--l. 5537--><p class="indent" >   See also&#x00A0;<a 
+<!--l. 5523--><p class="indent" >   See also&#x00A0;<a 
 href="cug-htmlse17.html#x18-227000A.2.8">A.2.8<!--tex4ht:ref: SuiteEventHandling --></a> and&#x00A0;<a 
 href="cug-htmlse17.html#x18-295000A.4.1.20">A.4.1.20<!--tex4ht:ref: TaskEventHandling --></a> in the <span 
 class="cmti-10">Suite.rc Reference</span>.
-<!--l. 5540--><p class="indent" >   Cylc can call nominated event handlers when certain suite or task events occur. This is intended to facilitate
+<!--l. 5526--><p class="indent" >   Cylc can call nominated event handlers when certain suite or task events occur. This is intended to facilitate
 centralized alerting and automated handling of critical events. Event handlers can send an email or an
 SMS, call a pager, and so on; or intervene in the operation of their own suite using cylc commands.
 <span class="lstinline"><span 
@@ -2434,12 +2479,12 @@ class="pcrr7t-">email</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">task</span></span> are example event handlers packaged with
 cylc.
-<!--l. 5548--><p class="indent" >   Event handlers can be located in the suite bin directory, otherwise it is up to you to ensure their location is in
+<!--l. 5534--><p class="indent" >   Event handlers can be located in the suite bin directory, otherwise it is up to you to ensure their location is in
 <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PATH</span></span> (in the shell in which cylc runs, on the suite host).
-<!--l. 5552--><p class="indent" >   Task event handlers are passed the following arguments by the suite daemon:
-   <!--l. 5554--><div class="lstlisting">
+<!--l. 5538--><p class="indent" >   Task event handlers are passed the following arguments by the suite daemon:
+   <!--l. 5540--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-174001r1"></a></span><span 
@@ -2461,7 +2506,7 @@ class="pcrr7t-">MESSAGE</span>
 
 
    </div>
-<!--l. 5557--><p class="indent" >   where EVENT is one of the following:
+<!--l. 5543--><p class="indent" >   where EVENT is one of the following:
      <ul class="itemize1">
      <li class="itemize">&#8216;submitted&#8217; - the job submit command was successful
      </li>
@@ -2480,29 +2525,29 @@ class="pcrr7t-">MESSAGE</span>
      <li class="itemize">&#8216;failed&#8217; - the task failed
      </li>
      <li class="itemize">&#8216;retry&#8217; - the task failed but will retry
+                                                                                         
+
+                                                                                         
      </li>
      <li class="itemize">&#8216;execution timeout&#8217; - task execution timed out</li></ul>
-<!--l. 5571--><p class="noindent" >MESSAGE, if provided, describes what has happened, and TASKID identifies the task (<span class="lstinline"><span 
+<!--l. 5557--><p class="noindent" >MESSAGE, if provided, describes what has happened, and TASKID identifies the task (<span class="lstinline"><span 
 class="pcrr7t-">NAME</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">CYCLE</span></span> for cycling
 tasks).
-<!--l. 5574--><p class="indent" >   The retry event occurs if a task fails and has any remaining retries configured (see&#x00A0;<a 
+<!--l. 5560--><p class="indent" >   The retry event occurs if a task fails and has any remaining retries configured (see&#x00A0;<a 
 href="#x13-17300012.14">12.14<!--tex4ht:ref: TaskRetries --></a>). The event handler will
 be called as soon as the task fails, not after the retry delay period when it is resubmitted.
-                                                                                         
-
-                                                                                         
-<!--l. 5579--><p class="indent" >   <span 
+<!--l. 5565--><p class="indent" >   <span 
 class="cmti-10">Note that event handlers are called by cylc itself, not by the running tasks </span>so if you wish to pass them
 additional information via the environment you must use [cylc] <span 
 class="cmsy-10">&#x2192; </span>[[environment]], not task runtime
 environments.
-<!--l. 5584--><p class="indent" >   Here is an example suite that tests the <span 
+<!--l. 5570--><p class="indent" >   Here is an example suite that tests the <span 
 class="cmti-10">retry </span>and <span 
 class="cmti-10">failed </span>events. The handler in this case simply echoes its
 command line arguments to suite stdout.
-   <!--l. 5589--><div class="lstlisting">
+   <!--l. 5575--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-174002r1"></a></span><span 
@@ -2828,10 +2873,10 @@ class="pcrr7t-">"</span>
 
 
    </div>
-<!--l. 5614--><p class="noindent" >
-<!--l. 5614--><p class="indent" >    <h4 id="12.16" class="subsectionHead"> <span class="titlemark"> <a href="#12.16"> 12.16</a>  <a 
+<!--l. 5600--><p class="noindent" >
+<!--l. 5600--><p class="indent" >    <h4 id="12.16" class="subsectionHead"> <span class="titlemark"> <a href="#12.16"> 12.16</a>  <a 
  id="x13-17500012.16"></a>Reloading The Suite Definition At Runtime </span></h4>
-<!--l. 5616--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 5602--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">reload</span></span> command reloads the suite definition at run time. This allows: (a) changing task config such
@@ -2839,7 +2884,7 @@ as command scripting or environment; (b) adding tasks to, or removing them from,
 run time - without shutting the suite down and restarting it. (It is easy to shut down and restart
 cylc suites, but reloading may be useful if you don&#8217;t want to wait for long-running tasks to finish
 first).
-<!--l. 5624--><p class="indent" >   Note that <span 
+<!--l. 5610--><p class="indent" >   Note that <span 
 class="cmti-10">defined tasks </span>can be already be added to or removed from a running suite with the &#8217;cylc insert&#8217; and
 &#8217;cylc remove&#8217; commands; the reload command allows addition and removal of <span 
 class="cmti-10">task definitions</span>. If a new task is
@@ -2848,10 +2893,10 @@ cycle point) into the running suite. If a task definition (and its use in the gr
 the of the deleted type will run their course after the reload but new instances will not be spawned. Changes to a
 task definition will only take effect when the next task instance is spawned (existing instances will not be
 affected).
-<!--l. 5636--><p class="noindent" >
-<!--l. 5636--><p class="indent" >    <h4 id="12.17" class="subsectionHead"> <span class="titlemark"> <a href="#12.17"> 12.17</a>  <a 
+<!--l. 5622--><p class="noindent" >
+<!--l. 5622--><p class="indent" >    <h4 id="12.17" class="subsectionHead"> <span class="titlemark"> <a href="#12.17"> 12.17</a>  <a 
  id="x13-17600012.17"></a>Handling Job Preemption </span></h4>
-<!--l. 5639--><p class="indent" >   Some HPC facilities allow job preemption: the resource manager can kill or suspend running low priority jobs in
+<!--l. 5625--><p class="indent" >   Some HPC facilities allow job preemption: the resource manager can kill or suspend running low priority jobs in
 order to make way for high priority jobs. The preempted jobs may then be automatically restarted by the resource
 manager, from the same point (if suspended) or requeued to run again from the start (if killed). If a running cylc
 task gets suspended or hard-killed (<span class="lstinline"><span 
@@ -2870,7 +2915,10 @@ sending messages) - a warning will be logged and the task will remain in the fai
 you know that preemption is possible on your system you can tell cylc that affected tasks should be
 resurrected from the dead, to carry on as normal if progress messages start coming in again after a
 failure:
-   <!--l. 5659--><div class="lstlisting">
+   <!--l. 5645--><div class="lstlisting">
+
+
+
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-176001r1"></a></span><span 
@@ -2940,16 +2988,13 @@ class="pcrro7t-">...</span>
 
 
    </div>
-<!--l. 5669--><p class="indent" >   To test this in any suite, manually kill a running task then, after cylc registers the task failed, resubmit the
+<!--l. 5655--><p class="indent" >   To test this in any suite, manually kill a running task then, after cylc registers the task failed, resubmit the
 killed job manually by cutting-and-pasting the original job submission command from the suite stdout
 stream.
-                                                                                         
-
-                                                                                         
-<!--l. 5674--><p class="noindent" >
-<!--l. 5674--><p class="indent" >    <h4 id="12.18" class="subsectionHead"> <span class="titlemark"> <a href="#12.18"> 12.18</a>  <a 
+<!--l. 5660--><p class="noindent" >
+<!--l. 5660--><p class="indent" >    <h4 id="12.18" class="subsectionHead"> <span class="titlemark"> <a href="#12.18"> 12.18</a>  <a 
  id="x13-17700012.18"></a>Runtime Settings Broadcast and Communication Between Tasks </span></h4>
-<!--l. 5676--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 5662--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">broadcast</span></span> command overrides <span class="lstinline"><span 
@@ -2961,18 +3006,18 @@ information from one task to another normally takes place via the filesystem, i.
 embodied in inter-task dependencies). Variables (and any other runtime settings) may be broadcast to all
 subsequent tasks, or targeted specifically at a specific task, all subsequent tasks with a given name, or all tasks with
 a given cycle point; see broadcast command help for details.
-<!--l. 5687--><p class="indent" >   Broadcast settings targeted at a specific task ID or cycle point expire and are forgotten as the suite
+<!--l. 5673--><p class="indent" >   Broadcast settings targeted at a specific task ID or cycle point expire and are forgotten as the suite
 moves on. Un-targeted variables and those targetted at a task name persist throughout the suite run,
 even across restarts, unless manually cleared using the broadcast command - and so should be used
 sparingly.
-<!--l. 5693--><p class="noindent" >
-<!--l. 5693--><p class="indent" >    <h4 id="12.19" class="subsectionHead"> <span class="titlemark"> <a href="#12.19"> 12.19</a>  <a 
+<!--l. 5679--><p class="noindent" >
+<!--l. 5679--><p class="indent" >    <h4 id="12.19" class="subsectionHead"> <span class="titlemark"> <a href="#12.19"> 12.19</a>  <a 
  id="x13-17800012.19"></a>The Meaning And Use Of Initial Cycle Point </span></h4>
-<!--l. 5695--><p class="indent" >   When a suite is started with the <span class="lstinline"><span 
+<!--l. 5681--><p class="indent" >   When a suite is started with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">run</span></span> command (cold or warm start) the cycle point at which it starts can
-be given on the command line or hardwired into the suite.rc file: <!--l. 5698--><div class="lstlisting">
+be given on the command line or hardwired into the suite.rc file: <!--l. 5684--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-178001r1"></a></span><span 
@@ -2987,7 +3032,7 @@ class="pcrr7t-">T06Z</span>
 
 
    </div>
-<!--l. 5701--><p class="indent" >   or, <!--l. 5702--><div class="lstlisting">
+<!--l. 5687--><p class="indent" >   or, <!--l. 5688--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-178002r1"></a></span><span 
@@ -3013,11 +3058,11 @@ class="pcrr7t-">T06Z</span>
 
 
    </div>
-<!--l. 5706--><p class="indent" >   An initial cycle given on the command line will override one in the suite.rc file.
-<!--l. 5709--><p class="noindent" >
-<!--l. 5709--><p class="indent" >    <h4 id="12.19.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.19.1"> 12.19.1</a>  <a 
+<!--l. 5692--><p class="indent" >   An initial cycle given on the command line will override one in the suite.rc file.
+<!--l. 5695--><p class="noindent" >
+<!--l. 5695--><p class="indent" >    <h4 id="12.19.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.19.1"> 12.19.1</a>  <a 
  id="x13-17900012.19.1"></a>The Environment Variable CYLC_SUITE_INITIAL_CYCLE_POINT </span></h4>
-<!--l. 5711--><p class="indent" >   In the case of a <span 
+<!--l. 5697--><p class="indent" >   In the case of a <span 
 class="cmti-10">cold start only </span>the initial cycle point is passed through to task execution environments as
 <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -3026,17 +3071,20 @@ restarts, but it does get wiped out (set to <span class="lstinline"><span
 class="pcrr7t-">None</span></span>) after a warm start, because a warm start is really an
 implicit restart in which all state information is lost (except that the previous cycle is assumed to have
 completed).
-<!--l. 5719--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 5705--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_INITIAL_CYCLE_POINT</span></span> variable allows tasks to determine if they are running in the
 initial cold-start cycle point, when different behaviour may be required, or in a normal mid-run cycle point. Note
 however that an initial <span class="lstinline"><span 
 class="pcrr7t-">R1</span></span> graph section is now the preferred way to get different behaviour at suite
 start-up.
-<!--l. 5725--><p class="noindent" >
-<!--l. 5725--><p class="indent" >    <h4 id="12.20" class="subsectionHead"> <span class="titlemark"> <a href="#12.20"> 12.20</a>  <a 
+                                                                                         
+
+                                                                                         
+<!--l. 5711--><p class="noindent" >
+<!--l. 5711--><p class="indent" >    <h4 id="12.20" class="subsectionHead"> <span class="titlemark"> <a href="#12.20"> 12.20</a>  <a 
  id="x13-18000012.20"></a>The Simulation And Dummy Run Modes </span></h4>
-<!--l. 5728--><p class="indent" >   Since cylc-4.6.0 any cylc suite can run in <span 
+<!--l. 5714--><p class="indent" >   Since cylc-4.6.0 any cylc suite can run in <span 
 class="cmti-10">live</span>, <span 
 class="cmti-10">simulation</span>, or <span 
 class="cmti-10">dummy </span>mode. Prior to that release simulation mode
@@ -3045,9 +3093,6 @@ suite, to get the scheduling right without running real tasks, but running dummy
 much value over a pure simulation (in which no tasks are submitted at all) because all job submission
 configuration has to be ignored and most task job script sections have to be cut out to avoid any
 code that could potentially be specific to the intended task host. So at 4.6.0 we replaced this with a
-                                                                                         
-
-                                                                                         
 pure simulation mode (task proxies go through the <span 
 class="cmti-10">running </span>state automatically within cylc, and no
 dummy tasks are submitted to run) and a new dummy mode in which only the real task command
@@ -3056,8 +3101,8 @@ host and in the same execution environment. A successful dummy run confirms not 
 scheduling works correctly but also tests real job submission, communication from remote task hosts,
 and the real task job scripts (in which errors such as use of undefined variables will cause a task to
 fail).
-<!--l. 5748--><p class="indent" >   The run mode, which defaults to <span 
-class="cmti-10">live</span>, is set on the command line (for run and restart):  <!--l. 5751--><div class="lstlisting">
+<!--l. 5734--><p class="indent" >   The run mode, which defaults to <span 
+class="cmti-10">live</span>, is set on the command line (for run and restart):  <!--l. 5737--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-180001r1"></a></span><span 
@@ -3077,7 +3122,7 @@ class="pcrr7t-">SUITE</span>
 
 
    </div>
-<!--l. 5754--><p class="indent" >   but you can configure the suite to force a particular run mode,  <!--l. 5756--><div class="lstlisting">
+<!--l. 5740--><p class="indent" >   but you can configure the suite to force a particular run mode,  <!--l. 5742--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-180002r1"></a></span><span 
@@ -3102,11 +3147,11 @@ class="pcrr7t-">simulation</span>
 
 
    </div>
-<!--l. 5760--><p class="indent" >   This can be used, for example, for demo suites that necessarily run out of their original context; or to
+<!--l. 5746--><p class="indent" >   This can be used, for example, for demo suites that necessarily run out of their original context; or to
 temporarily prevent accidental execution of expensive real tasks during suite development.
-<!--l. 5764--><p class="indent" >   Dummy mode task command scripting just prints a message and sleeps for ten seconds by default, but you can
+<!--l. 5750--><p class="indent" >   Dummy mode task command scripting just prints a message and sleeps for ten seconds by default, but you can
 override this behaviour for particular tasks or task groups if you like. Here&#8217;s how to make a task sleep for twenty
-seconds and then fail in dummy mode:  <!--l. 5769--><div class="lstlisting">
+seconds and then fail in dummy mode:  <!--l. 5755--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-180004r1"></a></span><span 
@@ -3225,8 +3270,8 @@ class="pcrr7t-">"</span>
 
 
    </div>
-<!--l. 5781--><p class="indent" >   Finally, in simulation mode each task takes between 1 and 15 seconds to &#8220;run&#8221; by default, but you can also alter
-this for particular tasks or groups of tasks:  <!--l. 5785--><div class="lstlisting">
+<!--l. 5767--><p class="indent" >   Finally, in simulation mode each task takes between 1 and 15 seconds to &#8220;run&#8221; by default, but you can also alter
+this for particular tasks or groups of tasks:  <!--l. 5771--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-180013r1"></a></span><span 
@@ -3292,7 +3337,7 @@ class="pcrro7t-">)</span>
 
 
    </div>
-<!--l. 5791--><p class="indent" >   Note that to get a failed simulation or dummy mode task to succeed on re-triggering, just change the suite.rc file
+<!--l. 5777--><p class="indent" >   Note that to get a failed simulation or dummy mode task to succeed on re-triggering, just change the suite.rc file
 appropriately and reload the suite definition at run time with <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3300,15 +3345,18 @@ class="pcrr7t-">reload</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">SUITE</span></span> before re-triggering the
 task.
-<!--l. 5796--><p class="indent" >   Dummy mode is equivalent to commenting out each task&#8217;s command scripting to expose the default
+<!--l. 5782--><p class="indent" >   Dummy mode is equivalent to commenting out each task&#8217;s command scripting to expose the default
 scripting.
-<!--l. 5799--><p class="noindent" >
-<!--l. 5799--><p class="indent" >    <h4 id="12.20.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.20.1"> 12.20.1</a>  <a 
+<!--l. 5785--><p class="noindent" >
+<!--l. 5785--><p class="indent" >    <h4 id="12.20.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.20.1"> 12.20.1</a>  <a 
  id="x13-18100012.20.1"></a>Restarting Suites With A Different Run Mode? </span></h4>
-<!--l. 5801--><p class="indent" >   The run mode is recorded in the suite state dump file. Cylc will not let you <span 
+<!--l. 5787--><p class="indent" >   The run mode is recorded in the suite state dump file. Cylc will not let you <span 
 class="cmti-10">restart </span>a non-live mode suite in live
 mode, or vice versa - any attempt to do the former would certainly be a mistake (because the simulation mode
 dummy tasks do not generate any of the real outputs depended on by downstream live tasks), and the latter, while
+                                                                                         
+
+                                                                                         
 feasible, would corrupt the live state dump by turning it over to simulation mode. The easiest way to test a live
 suite in simulation mode, if you don&#8217;t want to obliterate the current state dump by doing a cold or warm start (as
 opposed to a restart from the previous state) is to take a quick copy of the suite and run the copy in simulation
@@ -3317,19 +3365,16 @@ this:
      <ol  class="enumerate1" >
      <li 
   class="enumerate" id="x13-181002x1">Back up the live mode suite state dump file.
-                                                                                         
-
-                                                                                         
      </li>
      <li 
   class="enumerate" id="x13-181004x2">Edit the mode line in the state dump and restart in simulation mode.
      </li>
      <li 
   class="enumerate" id="x13-181006x3">Later, restart the live suite from the restored live state dump back up.</li></ol>
-<!--l. 5923--><p class="noindent" >
-<!--l. 5923--><p class="indent" >    <h4 id="12.21" class="subsectionHead"> <span class="titlemark"> <a href="#12.21"> 12.21</a>  <a 
+<!--l. 5909--><p class="noindent" >
+<!--l. 5909--><p class="indent" >    <h4 id="12.21" class="subsectionHead"> <span class="titlemark"> <a href="#12.21"> 12.21</a>  <a 
  id="x13-18200012.21"></a>Automated Reference Test Suites </span></h4>
-<!--l. 5926--><p class="indent" >   Reference tests are finite-duration suite runs that abort with non-zero exit status if any of the following
+<!--l. 5912--><p class="indent" >   Reference tests are finite-duration suite runs that abort with non-zero exit status if any of the following
 conditions occur (by default):
      <ul class="itemize1">
      <li class="itemize">cylc fails
@@ -3339,7 +3384,7 @@ conditions occur (by default):
      <li class="itemize">the suite times out (e.g.&#x00A0;a task dies without reporting failure)
      </li>
      <li class="itemize">a nominated shutdown event handler exits with error status</li></ul>
-<!--l. 5936--><p class="indent" >   The default shutdown event handler for reference tests is <span class="lstinline"><span 
+<!--l. 5922--><p class="indent" >   The default shutdown event handler for reference tests is <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">hook</span><span 
@@ -3350,24 +3395,24 @@ class="pcrr7t-">triggering</span></span> which compares
 task triggering information (what triggers off what at run time) in the test run suite log to that from an earlier
 reference run, disregarding the timing and order of events - which can vary according to the external queueing
 conditions, runahead limit, and so on.
-<!--l. 5943--><p class="indent" >   To prepare a reference log for a suite, run it with the <span class="lstinline"><span 
+<!--l. 5929--><p class="indent" >   To prepare a reference log for a suite, run it with the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">reference</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">log</span></span> option, and manually verify the
 correctness of the reference run.
-<!--l. 5947--><p class="indent" >   To reference test a suite, just run it (in dummy mode for the most comprehensive test without running real
+<!--l. 5933--><p class="indent" >   To reference test a suite, just run it (in dummy mode for the most comprehensive test without running real
 tasks) with the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">reference</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">test</span></span> option.
-<!--l. 5951--><p class="indent" >   A battery of automated reference tests is used to test cylc before posting a new release version. Reference tests
+<!--l. 5937--><p class="indent" >   A battery of automated reference tests is used to test cylc before posting a new release version. Reference tests
 can also be used at cylc upgrade time to check that the upgrade will not break your own complex suites - the
 triggering check will catch any bug that causes a task to run when it shouldn&#8217;t, for instance; even in a dummy mode
 reference test the full task job script (sans real command scripting) has to execute successfully on the proper task
 host by the proper job submission method.
-<!--l. 5960--><p class="indent" >   Reference tests can be configured with the following settings:  <!--l. 5962--><div class="lstlisting">
+<!--l. 5946--><p class="indent" >   Reference tests can be configured with the following settings:  <!--l. 5948--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-182001r1"></a></span><span 
@@ -3514,17 +3559,20 @@ class="pcrr7t-">PT2M</span>
 
 
    </div>
-<!--l. 5973--><p class="noindent" >
-<!--l. 5973--><p class="indent" >    <h4 id="12.21.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.21.1"> 12.21.1</a>  <a 
+                                                                                         
+
+                                                                                         
+<!--l. 5959--><p class="noindent" >
+<!--l. 5959--><p class="indent" >    <h4 id="12.21.1" class="subsubsectionHead"><span class="titlemark"> <a href="#12.21.1"> 12.21.1</a>  <a 
  id="x13-18300012.21.1"></a>Roll-your-own Reference Tests </span></h4>
-<!--l. 5975--><p class="indent" >   If the default reference test is not sufficient for your needs, firstly note that you can override the default
+<!--l. 5961--><p class="indent" >   If the default reference test is not sufficient for your needs, firstly note that you can override the default
 shutdown event handler, and secondly that the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">reference</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">test</span></span> option is merely a short cut to the following
 suite.rc settings which can also be set manually if you wish:
-   <!--l. 5982--><div class="lstlisting">
+   <!--l. 5968--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-183001r1"></a></span><span 
@@ -3642,13 +3690,10 @@ class="pcrr7t-">True</span>
 
 
    </div>
-                                                                                         
-
-                                                                                         
-<!--l. 5993--><p class="noindent" >
-<!--l. 5993--><p class="indent" >    <h4 id="12.22" class="subsectionHead"> <span class="titlemark"> <a href="#12.22"> 12.22</a>  <a 
+<!--l. 5979--><p class="noindent" >
+<!--l. 5979--><p class="indent" >    <h4 id="12.22" class="subsectionHead"> <span class="titlemark"> <a href="#12.22"> 12.22</a>  <a 
  id="x13-18400012.22"></a>Triggering Off Tasks In Other Suites </span></h4>
-<!--l. 5996--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 5982--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">suite</span><span 
@@ -3664,7 +3709,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span> for command options and
 defaults.
-<!--l. 6001--><p class="indent" >   The suite graph notation also allows you to define local tasks that, in effect, represent tasks in other suites by
+<!--l. 5987--><p class="indent" >   The suite graph notation also allows you to define local tasks that, in effect, represent tasks in other suites by
 automatically polling for them using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3676,7 +3721,7 @@ task <span class="lstinline"><span
 class="pcrr7t-">foo</span></span> in another suite called <span class="lstinline"><span 
 class="pcrr7t-">other</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">suite</span></span>: <!--l. 6006--><div class="lstlisting">
+class="pcrr7t-">suite</span></span>: <!--l. 5992--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-184001r1"></a></span><span 
@@ -3742,13 +3787,13 @@ class="pcrr7t-">"</span>
 
 
    </div>
-<!--l. 6012--><p class="indent" >   Local task <span class="lstinline"><span 
+<!--l. 5998--><p class="indent" >   Local task <span class="lstinline"><span 
 class="pcrr7t-">FOO</span></span> will poll for the success of <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> in suite <span class="lstinline"><span 
 class="pcrr7t-">other</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">suite</span></span> at the same cycle point. Other task states
-can be polled like this, <!--l. 6015--><div class="lstlisting">
+can be polled like this, <!--l. 6001--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-184005r1"></a></span><span 
@@ -3778,7 +3823,7 @@ class="pcrr7t-">"</span>
 
 
    </div>
-<!--l. 6019--><p class="indent" >   Default polling parameters (the maximum number of polls and the interval between them) are printed by
+<!--l. 6005--><p class="indent" >   Default polling parameters (the maximum number of polls and the interval between them) are printed by
 <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3788,7 +3833,7 @@ class="pcrr7t-">state</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span>. These can be configured if necessary under the local polling task runtime section:
-<!--l. 6023--><div class="lstlisting">
+<!--l. 6009--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-184006r1"></a></span><span 
@@ -3926,15 +3971,15 @@ class="pcrr7t-">PT10S</span>
 
 
    </div>
-<!--l. 6035--><p class="indent" >   The remote suite does not have to be running when polling commences (or at all if the remote condition has
+<!--l. 6021--><p class="indent" >   The remote suite does not have to be running when polling commences (or at all if the remote condition has
 already been achieved) because the command interrogates the suite run database, not the suite server
 process.
-<!--l. 6040--><p class="indent" >   For suites owned by others or those with run databases in non-standard locations use the <span class="lstinline"><span 
+<!--l. 6026--><p class="indent" >   For suites owned by others or those with run databases in non-standard locations use the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">run</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">dir</span></span> option or,
-in-suite, <!--l. 6042--><div class="lstlisting">
+in-suite, <!--l. 6028--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-184015r1"></a></span><span 
@@ -4004,14 +4049,17 @@ class="pcrr7t-">directory</span>
 
 
    </div>
-<!--l. 6049--><p class="indent" >   To trigger off remote tasks with different cycle points just arrange for the local polling task to be on the same
+<!--l. 6035--><p class="indent" >   To trigger off remote tasks with different cycle points just arrange for the local polling task to be on the same
 cycling sequence as the remote task that it represents. For instance, if local task <span class="lstinline"><span 
 class="pcrr7t-">cat</span></span> cycles 6-hourly
 at <span class="lstinline"><span 
 class="pcrr7t-">0,6,12,18</span></span> but needs to trigger off a remote task <span class="lstinline"><span 
 class="pcrr7t-">dog</span></span> with cycle points of <span class="lstinline"><span 
 class="pcrr7t-">3,9,15,21</span></span> hours,
-<!--l. 6055--><div class="lstlisting">
+<!--l. 6041--><div class="lstlisting">
+
+
+
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x13-184019r1"></a></span><span 
@@ -4083,7 +4131,7 @@ class="pcrr7t-">"</span>
 
 
    </div>
-<!--l. 6061--><p class="indent" >   This results in <span class="lstinline"><span 
+<!--l. 6047--><p class="indent" >   This results in <span class="lstinline"><span 
 class="pcrr7t-">DOG</span></span> having cycle points of <span class="lstinline"><span 
 class="pcrr7t-">3,9,15,21</span></span> - the sames as <span class="lstinline"><span 
 class="pcrr7t-">dog</span></span> in <span class="lstinline"><span 
@@ -4093,7 +4141,7 @@ class="pcrr7t-">suite</span></span>.
                                                                                          
 
                                                                                          
-   <div class="footnotes"><!--l. 5424--><p class="indent" >    <span class="footnote-mark"><a 
+   <div class="footnotes"><!--l. 5410--><p class="indent" >    <span class="footnote-mark"><a 
 href="#fn5x0-bk" id="fn5x0"><sup class="textsuperscript">5</sup></a></span><span 
 class="cmr-8">If you accidentally delete a port file while a suite is running, use </span><span class="lstinline"><span 
 class="pcrr7t-x-x-80">cylc</span><span 
@@ -4105,12 +4153,12 @@ class="cmr-8">command line (</span><span class="lstinline"><span
 class="pcrr7t-x-x-80">--</span><span 
 class="pcrr7t-x-x-80">port</span></span><span 
 class="cmr-8">) or rewrite the port file manually.</span>                                                                                          </div>
-<!--l. 6066--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 6052--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse13.html" >next</a>] [<a 
 href="cug-htmlse11.html" >prev</a>] [<a 
 href="cug-htmlse11.html#tailcug-htmlse11.html" >prev-tail</a>] [<a 
 href="cug-htmlse12.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse12.html" >up</a>] </p></div>
-<!--l. 6066--><p class="indent" >   <a 
+<!--l. 6052--><p class="indent" >   <a 
  id="tailcug-htmlse12.html"></a>   
 </body></html> 
