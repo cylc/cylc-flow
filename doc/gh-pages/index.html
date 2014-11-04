@@ -146,30 +146,39 @@
 
                 <p class="p1"><span>First, see the <a href="#overview">Overview</a> above.</span></p>
                 <ul>
-                    <li> <b>ISO 8601 date-time cycling</b>
-                    <li> <b>Integer cycling</b>
-                    <li> Supports tasks that run only at the initial and final
-                    cycle points, or at any point or points between. 
                     <li> Unified <b>command line interface</b>: <code>cylc COMMAND [OPTIONS] [ARGS]</code>.
                     <li> Multi-view <b>graphical user interface</b> with collapsible task families.
                     <li> Clean separation of <b>scheduling</b> and <b>runtime</b> configuration.
-                    <li> Efficient configuration of task runtime properties by
-                    <b>multiple inheritance</b>.
+                    <ul>
+                        <li> efficient scheduling configuration by <b>dependency graph</b>
+                        <li> efficient task runtime configuration by <b>multiple inheritance</b>
+                    </ul>
                     <li> <b>Distributed suites</b> - run tasks on multiple hosts.
                     <li> Supports many different job submission methods (PBS, slurm, etc.).
+                    <li> <b>cycling workflows</b>
+                    <ul>
+                        <li> ISO 8601 compliant <b>date-time cycling</b> - easily
+                        generate sequences from minutes to billions of years, future or past. 
+                        <li> <b>Integer cycling</b>
+                        <li> <b>Inter-cycle triggers</b> allow automatic
+                        cycle-interleaving (dependencies allowing)
+                    </ul>
+                    <li> Supports tasks that run only at the initial and final
+                    cycle points, or at any point or points between. 
                     <li> Handles <b>several thousand tasks</b> in a single suite.
                     <li> <b>Inter-suite dependence</b> - triggering tasks off tasks in other suites. 
                     <li> <b>Suite validation</b> - catch many errors prior to run time.
-                    <li> Advanced <b>restart</b> capability - determines what
-                    happened to running tasks while the suite daemon was down.
+                    <li> Advanced <b>restart</b> capability - cylc can restart from any
+                    point in a workflow, and can determine what happened to
+                    submitted or running tasks while the suite was down.
                     <li> <b>Conditional triggering</b>.
                     <li> <b>Task family triggering</b>.
-                    <li> <b>Automated failure recovery</b>.
+                    <li> <b>Automated failure recovery</b> by task retry or alternate workflows (via suicide triggers).
                     <li> <b>Task and suite event hooks and timeouts</b> for central alerting.
                     <li> <b>Simulation and dummy modes</b> - get the scheduling right without running real tasks.
                     <li> Supports use of the <b>Jinja2 Template Processor</b> in suite definitions.
                     <li> <b>Internal Queues</b> to limit the number of simultaneously active tasks.
-                    <li> <b>Task Poll and Kill</b> for supported job submission methods.
+                    <li> <b>Task Poll and Kill</b> for all supported job submission methods.
                 </ul>
 
                 <p class="nav"><span><a href="#">(back to top)</a></span></p>
