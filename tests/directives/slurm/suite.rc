@@ -12,22 +12,22 @@
                    rem2:start => killer => !rem2
                    """
 [runtime]
-    [[LLSETTINGS]]
+    [[SLURM_SETTINGS]]
         [[[job submission]]]
-            method = loadleveler
+            method = slurm
         [[[directives]]]
-            class            = serial
-            job_type         = serial
-            notification     = error
-            wall_clock_limit = '120,60'
+            --time = 02:00
+            --nodes = 1
+            --tasks-per-node = 1
+            --cpus-per-task = 1
             {{SITE_DIRECTIVES}}
         [[[remote]]]
             host = {{ HOST }}
     [[rem1]]
-        inherit = LLSETTINGS
+        inherit = SLURM_SETTINGS
         command scripting = "sleep 10; true"
     [[rem2]]
-        inherit = LLSETTINGS
+        inherit = SLURM_SETTINGS
         command scripting = "sleep 30"
     [[killer]]
         command scripting = cylc kill $CYLC_SUITE_NAME rem2 1 -f; sleep 10

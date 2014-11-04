@@ -15,38 +15,50 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test killing of jobs submitted to loadleveler.
+# Test killing of jobs submitted to loadleveler, slurm, pbs...
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-export CYLC_TEST_HOST=$( \
-    cylc get-global-config -i '[test battery][directives]loadleveler host')
-if [[ -z $CYLC_TEST_HOST ]]; then
-    skip_all '[test battery][directives]loadleveler host: not defined'
-fi
-N_TESTS=2
-set_test_number $N_TESTS
-export CYLC_TEST_DIRECTIVES=$( \
-    cylc get-global-config \
-    -i '[test battery][directives][loadleveler directives]')
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-set -eu
-if [[ $CYLC_TEST_HOST != 'localhost' ]]; then
-    SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-    $SSH $CYLC_TEST_HOST \
-        "mkdir -p .cylc/$SUITE_NAME/ && cat >.cylc/$SUITE_NAME/passphrase" \
-        <$TEST_DIR/$SUITE_NAME/passphrase
-fi
-set +eu
+set_test_number 2
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-if [[ $CYLC_TEST_HOST != 'localhost' ]]; then
-    $SSH $CYLC_TEST_HOST \
-        "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"
+if [[ "${TEST_NAME_BASE}" == ??-loadleveler* ]]; then
+    BATCH_SYS_NAME='loadleveler'
+elif [[ "${TEST_NAME_BASE}" == ??-slurm* ]]; then
+    BATCH_SYS_NAME='slurm'
+elif [[ "${TEST_NAME_BASE}" == ??-pbs* ]]; then
+    BATCH_SYS_NAME='pbs'
 fi
-purge_suite $SUITE_NAME
-exit
+export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
+    "[test battery][directives]$BATCH_SYS_NAME host")
+export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \
+    "[test battery][directives][$BATCH_SYS_NAME directives]")
+if [[ -n $CYLC_TEST_BATCH_TASK_HOST && $CYLC_TEST_BATCH_TASK_HOST != None ]]; then
+    # check the host is reachable
+    if ping -c 1 $CYLC_TEST_BATCH_TASK_HOST 1>/dev/null 2>&1; then
+        install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+#-------------------------------------------------------------------------------
+# copy across passphrase as not all remote hosts will have a shared file system
+# the .cylc location is used as registration and run directory won't be the same
+        SSH='ssh'
+        if [[ $CYLC_TEST_BATCH_TASK_HOST != 'localhost' ]]; then
+            SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
+        fi
+        $SSH $CYLC_TEST_BATCH_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
+        scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_TEST_BATCH_TASK_HOST:.cylc/$SUITE_NAME/passphrase
+#-------------------------------------------------------------------------------
+        TEST_NAME=$TEST_NAME_BASE-validate
+        run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+        TEST_NAME=$TEST_NAME_BASE-run
+        suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+#-------------------------------------------------------------------------------
+        purge_suite $SUITE_NAME
+        if [[ -n $SUITE_NAME ]]; then
+            $SSH $CYLC_TEST_BATCH_TASK_HOST rm -rf .cylc/$SUITE_NAME
+        fi
+    else
+        skip 2 "Host "$CYLC_TEST_BATCH_TASK_HOST" unreachable"
+    fi
+else
+    skip 2 "[directive tests]$BATCH_SYS_NAME host not defined"
+fi
+unset CYLC_TEST_BATCH_TASK_HOST BATCH_SYS_NAME CYLC_TEST_BATCH_SITE_DIRECTIVES

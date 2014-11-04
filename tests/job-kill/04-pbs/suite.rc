@@ -15,13 +15,10 @@
             host={{environ["CYLC_TEST_BATCH_TASK_HOST"]}}
 {% endif %}
         [[[job submission]]]
-            method=loadleveler
+            method=pbs
         [[[directives]]]
-            class=serial
-            job_type=serial
-            notification=never
-            resources=ConsumableCpus(1) ConsumableMemory(64mb)
-            wall_clock_limit=180,120
+            -l walltime=120
+            -l select=1:ncpus=1:mem=10mb
 {% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
             {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
 {% endif %}

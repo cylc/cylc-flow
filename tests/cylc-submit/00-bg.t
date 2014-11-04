@@ -31,18 +31,26 @@ if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
     CYLC_TEST_HOST="${HOST}"
 fi
 CYLC_TEST_BATCH_SYS_NAME='background'
+CONFIGURED_SYS_NAME=
 CYLC_TEST_DIRECTIVES=
 if [[ "${TEST_NAME_BASE}" == ??-at* ]]; then
     CYLC_TEST_BATCH_SYS_NAME='at'
 elif [[ "${TEST_NAME_BASE}" == ??-loadleveler* ]]; then
-    CYLC_TEST_BATCH_SYS_NAME='loadleveler'
-    ITEM_KEY='[test battery][directives]loadleveler host'
+    CONFIGURED_SYS_NAME='loadleveler'
+elif [[ "${TEST_NAME_BASE}" == ??-slurm* ]]; then
+    CONFIGURED_SYS_NAME='slurm'
+elif [[ "${TEST_NAME_BASE}" == ??-pbs* ]]; then
+    CONFIGURED_SYS_NAME='pbs'
+fi
+if [[ -n $CONFIGURED_SYS_NAME ]]; then
+    ITEM_KEY="[test battery][directives]$CONFIGURED_SYS_NAME host"
     CYLC_TEST_HOST="$(cylc get-global-config "--item=${ITEM_KEY}")"
     if [[ -z "${CYLC_TEST_HOST}" ]]; then
         skip_all "${ITEM_KEY} not set"
     fi
-    ITEM_KEY='[test battery][directives]loadleveler directives'
+    ITEM_KEY="[test battery][directives]$CONFIGURED_SYS_NAME directives"
     CYLC_TEST_DIRECTIVES="$(cylc get-global-config "--item=${ITEM_KEY}")"
+    CYLC_TEST_BATCH_SYS_NAME=$CONFIGURED_SYS_NAME
 fi
 export CYLC_CONF_DIR=
 SSH=

@@ -16,7 +16,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test restarting a simple suite using loadleveler with a retrying task
-#     This test requires a [directive-tests]loadleveler-host entry in 
+#     This test requires a specific host [test battery] entry in 
 #     site/user config in order to run, otherwise it will be bypassed
 #-------------------------------------------------------------------------------
 TEST_BASE_PATH=$(cd $(dirname $0) && pwd)/03-retrying.t
@@ -25,12 +25,21 @@ TEST_BASE_PATH=$(cd $(dirname $0) && pwd)/03-retrying.t
 export TEST_DIR
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
-export CYLC_LL_TEST_TASK_HOST=$(cylc get-global-config -i '[test battery][directives]loadleveler host')
-export CYLC_LL_TEST_SITE_DIRECTIVES=$(cylc get-global-config -i '[test battery][directives][loadleveler directives]')
-if [[ -n $CYLC_LL_TEST_TASK_HOST && $CYLC_LL_TEST_TASK_HOST != 'None' ]]
+if [[ "${TEST_NAME_BASE}" == ??-*-loadleveler* ]]; then
+    BATCH_SYS_NAME='loadleveler'
+elif [[ "${TEST_NAME_BASE}" == ??-*-slurm* ]]; then
+    BATCH_SYS_NAME='slurm'
+elif [[ "${TEST_NAME_BASE}" == ??-*-pbs* ]]; then
+    BATCH_SYS_NAME='pbs'
+fi
+export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
+    "[test battery][directives]$BATCH_SYS_NAME host")
+export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \
+    "[test battery][directives][$BATCH_SYS_NAME directives]")
+if [[ -n $CYLC_TEST_BATCH_TASK_HOST && $CYLC_TEST_BATCH_TASK_HOST != 'None' ]]
 then
     # check the host is reachable
-    if ping -c 1 $CYLC_LL_TEST_TASK_HOST 1>/dev/null 2>&1; then
+    if ping -c 1 $CYLC_TEST_BATCH_TASK_HOST 1>/dev/null 2>&1; then
         . $TEST_BASE_PATH
     else
         set_test_number 0
@@ -38,4 +47,4 @@ then
 else
     set_test_number 0
 fi
-unset CYLC_LL_TEST_TASK_HOST
+unset BATCH_SYS_NAME CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
