@@ -19,7 +19,7 @@
 from cylc import cylc_pyro_client, dump, graphing
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
-import cylc.TaskID
+from cylc.task_id import TaskID
 from copy import deepcopy
 import gobject
 import os
@@ -343,7 +343,7 @@ class GraphUpdater(threading.Thread):
         for id in self.state_summary:
             if not any( id in edge for edge in gr_edges ):
                 # this node is not present in the main graph
-                name, point_string = cylc.TaskID.split( id )
+                name, point_string = TaskID.split(id)
                 if any( [ name in self.descendants[fam] for fam in self.all_families ] ):
                     # must be a member of a collapsed family, don't graph it
                     omit.append(name)
@@ -376,7 +376,7 @@ class GraphUpdater(threading.Thread):
             point_string_nodes = {}
             for node in self.graphw.nodes():
                 node_id = node.get_name()
-                name, point_string = cylc.TaskID.split( node_id )
+                name, point_string = TaskID.split(node_id)
                 point_string_nodes.setdefault(point_string, [])
                 point_string_nodes[point_string].append(node)
                 if (node_id in self.state_summary or
@@ -410,7 +410,7 @@ class GraphUpdater(threading.Thread):
             # FILTERING:
             for node in self.graphw.nodes():
                 id = node.get_name()
-                name, point_string = cylc.TaskID.split( id )
+                name, point_string = TaskID.split(id)
                 if self.filter_exclude:
                     if re.search( self.filter_exclude, name ):
                         if node not in self.rem_nodes:
@@ -446,7 +446,7 @@ class GraphUpdater(threading.Thread):
                 # Now that we have family state coloring with family
                 # member states listed in tool-tips, don't draw
                 # off-graph family members:
-                name, point_string = cylc.TaskID.split( id )
+                name, point_string = TaskID.split(id)
                 if name in omit:
                     # (see above)
                     continue

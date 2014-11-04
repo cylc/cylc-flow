@@ -17,7 +17,8 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc_pyro_server import pyro_server
-from cylc.task_types import task, clocktriggered
+from cylc.job_host import RemoteJobHostManager
+from cylc.task_proxy import TaskProxy
 from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
 from cylc.owner import user
@@ -31,29 +32,29 @@ from passphrase import passphrase
 from suite_id import identifier
 from config import config
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from port_file import port_file, PortFileExistsError, PortFileError
-from regpath import RegPath
-from CylcError import TaskNotFoundError, SchedulerError
-from RunEventHandler import RunHandler
-from LogDiagnosis import LogSpec
-from suite_state_dumping import dumper
-from suite_logging import suite_log
+from cylc.port_file import port_file, PortFileExistsError, PortFileError
+from cylc.regpath import RegPath
+from cylc.CylcError import TaskNotFoundError, SchedulerError
+from cylc.RunEventHandler import RunHandler
+from cylc.LogDiagnosis import LogSpec
+from cylc.suite_state_dumping import SuiteStateDumper
+from cylc.suite_logging import suite_log
 import threading
-from suite_cmd_interface import comqueue
-from suite_info_interface import info_interface
-from suite_log_interface import log_interface
-import TaskID
-from task_pool import pool
+from cylc.suite_cmd_interface import comqueue
+from cylc.suite_info_interface import info_interface
+from cylc.suite_log_interface import log_interface
+from cylc.task_id import TaskID
+from cylc.task_pool import TaskPool
 import flags
 import cylc.rundb
 from Queue import Queue, Empty
 import subprocess
-from mp_pool import mp_pool
+from cylc.mp_pool import SuiteProcPool
 from exceptions import SchedulerStop, SchedulerError
 from wallclock import (
     now, get_current_time_string, get_seconds_as_interval_string)
-from cycling import PointParsingError
-from cycling.loader import get_point, standardise_point_string
+from cylc.cycling import PointParsingError
+from cylc.cycling.loader import get_point, standardise_point_string
 import isodatetime.data
 import isodatetime.parsers
 
@@ -101,7 +102,6 @@ class scheduler(object):
         self.suite_state = None
         self.command_queue = None
         self.pool = None
-        self.proc_pool = None
         self.request_handler = None
         self.pyro = None
         self.state_dumper = None
@@ -156,7 +156,7 @@ class scheduler(object):
         self.parse_commandline()
 
     def configure( self ):
-        self.proc_pool = mp_pool()
+        SuiteProcPool.get_inst()  # initialise the singleton
         # read-only commands to expose directly to the network
         self.info_commands = {
                 'ping suite'        : self.info_ping_suite,
@@ -244,8 +244,9 @@ class scheduler(object):
             self.log.info( 'Start point: ' + str(self.start_point) )
         self.log.info( 'Final point: ' + str(self.final_point) )
 
-        self.pool = pool( self.suite, self.db, self.view_db, self.final_point, self.config,
-                          self.pyro, self.log, self.run_mode, self.proc_pool )
+        self.pool = TaskPool(
+            self.suite, self.db, self.view_db, self.final_point, self.config,
+            self.pyro, self.log, self.run_mode)
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
@@ -285,7 +286,8 @@ class scheduler(object):
 
         # 2) restart only: copy to other accounts with still-running tasks
         for user_at_host in self.old_user_at_host_set:
-            task.task.init_remote_suite_run_dir(self.suite, user_at_host)
+            RemoteJobHostManager.get_inst().init_suite_run_dir(
+                self.suite, user_at_host)
 
         self.already_timed_out = False
         if self.config.cfg['cylc']['event hooks']['timeout']:
@@ -330,12 +332,9 @@ class scheduler(object):
     def _task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
         name = name_or_id
-        if TaskID.DELIM in name_or_id:
-            name, point_string = TaskID.split(name_or_id)
-        if name in self.config.get_task_name_list():
-            return True
-        else:
-            return False
+        if TaskID.is_valid_id(name_or_id):
+            name = TaskID.split(name_or_id)[0]
+        return name in self.config.get_task_name_list()
 
     def info_ping_suite( self ):
         return True
@@ -353,7 +352,7 @@ class scheduler(object):
         info = {}
         for name in task_names:
             if self._task_type_exists( name ):
-                info[ name ] = self.config.get_task_class( name ).describe()
+                info[ name ] = self.config.describe(name)
             else:
                 info[ name ] = ['ERROR: no such task type']
         return info
@@ -396,15 +395,16 @@ class scheduler(object):
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
-        self.proc_pool.stop_job_submission()
+        SuiteProcPool.get_inst().stop_job_submission()
         if kill_active_tasks:
             self.pool.kill_active_tasks()
         self.shut_down_cleanly = True
 
     def command_stop_now(self):
         """Shutdown immediately."""
-        self.proc_pool.stop_job_submission()
-        self.proc_pool.terminate()
+        proc_pool = SuiteProcPool.get_inst()
+        proc_pool.stop_job_submission()
+        proc_pool.terminate()
         raise SchedulerStop("Stopping NOW")
 
     def command_set_stop_after_point( self, point_string ):
@@ -433,7 +433,7 @@ class scheduler(object):
         point_string = standardise_point_string(point_string)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.release_tasks( task_ids )
 
     def command_poll_tasks( self, name, point_string, is_family ):
@@ -441,7 +441,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.poll_tasks( task_ids )
 
     def command_kill_tasks( self, name, point_string, is_family ):
@@ -449,7 +449,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.kill_tasks( task_ids )
 
     def command_release_suite( self ):
@@ -460,7 +460,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.hold_tasks( task_ids )
 
     def command_hold_suite( self ):
@@ -490,7 +490,7 @@ class scheduler(object):
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.remove_tasks( task_ids, spawn )
 
     def command_insert_task( self, name, point_string, is_family,
@@ -498,7 +498,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
 
         try:
             point = get_point(point_string).standardise()
@@ -522,14 +522,12 @@ class scheduler(object):
                 return
 
         for task_id in task_ids:
-            name, task_point_string = TaskID.split( task_id )
+            name, task_point_string = TaskID.split(task_id)
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
             new_task = self.config.get_task_proxy(
-                name, point, 'waiting', stop_point, startup=False,
+                name, point, 'waiting', stop_point,
                 submit_num=self.db.get_task_current_submit_num(
                     name, task_point_string),
-                exists=self.db.get_task_state_exists(
-                    name, task_point_string)
             )
             if new_task:
                 self.pool.add_to_runahead_pool( new_task )
@@ -567,7 +565,7 @@ class scheduler(object):
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
 
-        # update state dumper state
+        # update state SuiteStateDumper state
         self.state_dumper.set_cts( self.initial_point, self.final_point )
 
     def parse_commandline( self ):
@@ -638,8 +636,9 @@ class scheduler(object):
             self.run_mode = self.config.run_mode
 
         if not reconfigure:
-            self.state_dumper = dumper( self.suite, self.run_mode,
-                                        self.initial_point, self.final_point )
+            self.state_dumper = SuiteStateDumper(
+                self.suite, self.run_mode, self.initial_point,
+                self.final_point)
 
             run_dir = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
@@ -676,8 +675,6 @@ class scheduler(object):
 
             self.command_queue = comqueue( self.control_commands.keys() )
             self.pyro.connect( self.command_queue, 'command-interface' )
-
-            task.task.proc_pool = self.proc_pool
 
             self.info_interface = info_interface( self.info_commands )
             self.pyro.connect( self.info_interface, 'suite-info' )
@@ -735,7 +732,6 @@ class scheduler(object):
         # Pass these to the job script generation code.
         JOB_FILE.set_suite_env(self.suite_env)
         # And pass contact env to the task module
-        task.task.suite_contact_env = self.suite_contact_env
 
         # make suite vars available to [cylc][environment]:
         for var, val in self.suite_env.items():
@@ -749,7 +745,7 @@ class scheduler(object):
         cenv['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH']
 
         # make [cylc][environment] available to task event handlers in worker processes
-        task.task.event_handler_env = cenv
+        TaskProxy.event_handler_env = cenv
         # make [cylc][environment] available to suite event handlers in this process
         for var, val in cenv.items():
             os.environ[var] = val
@@ -821,14 +817,15 @@ class scheduler(object):
         abort = self.config.cfg['cylc']['event hooks']['abort if startup handler fails']
         self.run_event_handlers( 'startup', abort, 'suite starting' )
 
+        proc_pool = SuiteProcPool.get_inst()
         while True: # MAIN LOOP
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
             if self.shut_down_now:
                 warned = False
-                while not self.proc_pool.is_dead():
-                    self.proc_pool.handle_results_async()
+                while not proc_pool.is_dead():
+                    proc_pool.handle_results_async()
                     if not warned:
                         print "Waiting for the command process pool to empty for shutdown"
                         print "(you can \"stop now\" to shut down immediately if you like)."
@@ -845,7 +842,7 @@ class scheduler(object):
 
             self.pool.release_runahead_tasks()
 
-            self.proc_pool.handle_results_async()
+            proc_pool.handle_results_async()
 
             if self.process_tasks():
                 if flags.debug:
@@ -896,8 +893,9 @@ class scheduler(object):
             if self.reference_test_mode:
                 if len( self.ref_test_allowed_failures ) > 0:
                     for itask in self.pool.get_failed_tasks():
-                        if itask.id not in self.ref_test_allowed_failures:
-                            print >> sys.stderr, itask.id
+                        if (itask.identity not in
+                                self.ref_test_allowed_failures):
+                            print >>sys.stderr, itask.identity
                             raise SchedulerError( 'A task failed unexpectedly: not in allowed failures list' )
 
             # check submission and execution timeout and polling timers
@@ -911,7 +909,7 @@ class scheduler(object):
 
             if ((self.shut_down_cleanly or self.pool.check_auto_shutdown()) and 
                     self.pool.no_active_tasks()):
-                self.proc_pool.close()
+                proc_pool.close()
                 self.shut_down_now = True
 
             if self.options.profile_mode:
@@ -1024,12 +1022,13 @@ class scheduler(object):
             print '\nCOPYING REFERENCE LOG to suite definition directory'
             shcopy( self.logfile, self.reflogfile)
 
-        if self.proc_pool:
-            if not self.proc_pool.is_dead():
+        proc_pool = SuiteProcPool.get_inst()
+        if proc_pool:
+            if not proc_pool.is_dead():
                 # e.g. KeyboardInterrupt
-                self.proc_pool.terminate()
-            self.proc_pool.join()
-            self.proc_pool.handle_results_async()
+                proc_pool.terminate()
+            proc_pool.join()
+            proc_pool.handle_results_async()
 
         if self.pool:
             self.pool.shutdown()
@@ -1149,7 +1148,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.trigger_tasks( task_ids )
 
     def get_matching_tasks( self, name, is_family=False ):
@@ -1190,7 +1189,7 @@ class scheduler(object):
         matches = self.get_matching_tasks( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        task_ids = [ TaskID.get(i, point_string) for i in matches ]
+        task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.reset_task_states( task_ids, state )
 
     def command_add_prerequisite( self, task_id, message ):

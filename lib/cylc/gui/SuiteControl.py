@@ -49,7 +49,7 @@ from util import (get_icon, get_image_dir, get_logo, EntryTempText,
                            EntryDialog, setup_icons, set_exception_hook_dialog)
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
 from cylc.strftime import strftime
 from option_group import controlled_option_group
@@ -875,11 +875,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if stoptask_id == '':
                 warning_dialog( "ERROR: No stop task ID entered", self.window ).warn()
                 return
-            if not cylc.TaskID.is_valid_id( stoptask_id ):
+            if not TaskID.is_valid_id(stoptask_id):
                 warning_dialog(
                     "ERROR: Bad task ID (%s): %s" % (
-                        cylc.TaskID.get( "TASK", "CYCLE_POINT"),
-                        stoptask_id
+                        TaskID.SYNTAX, stoptask_id,
                     ),
                     self.window
                 ).warn()
@@ -1092,7 +1091,7 @@ The Cylc Suite Engine.
 
     def _get_right_click_menu_items( self, task_id, task_is_family=False ):
         # Return the default menu items for a task
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
 
         items = []
 
@@ -1339,7 +1338,7 @@ The Cylc Suite Engine.
         vbox.pack_start( label, True )
 
         label = gtk.Label(
-            'DEP (NAME' + cylc.TaskID.DELIM + 'CYCLE_POINT or message)' )
+            'DEP (' + TaskID.SYNTAX + ' or message)' )
 
         entry = gtk.Entry()
 
@@ -1368,19 +1367,16 @@ The Cylc Suite Engine.
 
     def add_prerequisite( self, w, entry, window, task_id ):
         dep = entry.get_text()
-        m = re.match( '^(\w+)' + cylc.TaskID.DELIM_RE + '(\w+)$', dep )
-        if m:
-            #name, point_string = m.groups()
+        if TaskID.is_valid_id(dep):
             msg = dep + ' succeeded'
         else:
             msg = dep
 
         try:
-            (name, cycle ) = cylc.TaskID.split( task_id )
+            name, cycle = TaskID.split(task_id)
         except ValueError:
             warning_dialog(
-                "ERROR, Task or Group ID must be " +
-                cylc.TaskID.get( "NAME", "CYCLE_POINT" ),
+                "ERROR, Task or Group ID must be " + TaskID.SYNTAX,
                 self.window
             ).warn()
             return
@@ -1532,7 +1528,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
         try:
             if stop:
                 result = self.get_pyro( 'command-interface' ).put(
@@ -1553,7 +1549,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro( 'command-interface' ).put(
                 'trigger task', name, point_string, is_family)
@@ -1569,7 +1565,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro( 'command-interface' ).put(
                 'poll tasks', name, point_string, is_family)
@@ -1585,7 +1581,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id ):
             return
 
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro( 'command-interface' ).put(
                 'kill tasks', name, point_string, is_family)
@@ -1601,7 +1597,7 @@ shown here in the state they were in at the time of triggering.''' )
             return False
         cmd = "reset"
 
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
         msg = "reset " + task_id + " to " + state +"?"
         if not self.get_confirmation( cmd, task_id, msg ):
             return
@@ -1622,7 +1618,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id, msg ):
             return
 
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro( 'command-interface' ).put(
                 'remove task', name, point_string, is_family, True)
@@ -1638,7 +1634,7 @@ shown here in the state they were in at the time of triggering.''' )
         if not self.get_confirmation( cmd, task_id, msg ):
             return
 
-        name, point_string = cylc.TaskID.split( task_id )
+        name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro( 'command-interface' ).put(
                 'remove task', name, point_string, is_family, False)
@@ -1741,8 +1737,7 @@ shown here in the state they were in at the time of triggering.''' )
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
-        label = gtk.Label( 'STOP (task ' +
-                           cylc.TaskID.get( 'NAME', 'CYCLE_POINT' ) + ')' )
+        label = gtk.Label('STOP (task ' + TaskID.SYNTAX + ')')
         tt_box.pack_start( label, True )
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)

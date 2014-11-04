@@ -25,7 +25,7 @@ from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
 from cylc.task_state import task_state
 from cylc.gui.DotMaker import DotMaker
-import cylc.TaskID
+from cylc.task_id import TaskID
 
 class ControlTree(object):
     """
@@ -305,7 +305,7 @@ Text Treeview suite control interface.
             # must have clicked on the top level point_string
             return
 
-        task_id = cylc.TaskID.get( name, point_string )
+        task_id = TaskID.get(name, point_string)
 
         is_fam = (name in self.t.descendants)
 

@@ -99,7 +99,7 @@ import stat
 from subprocess import call, Popen, PIPE
 import sys
 from cylc.mkdir_p import mkdir_p
-import cylc.TaskID
+from cylc.task_id import TaskID
 
 
 class BatchSysManager(object):
@@ -196,8 +196,7 @@ class BatchSysManager(object):
         """
         # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
         st_file_path_strs = st_file_path.rsplit(os.sep, 6)
-        task_id = (
-            st_file_path_strs[4] + cylc.TaskID.DELIM + st_file_path_strs[3])
+        task_id = TaskID.get(st_file_path_strs[4], st_file_path_strs[3])
         self.configure_suite_run_dir(st_file_path_strs[0])
 
         statuses = {}

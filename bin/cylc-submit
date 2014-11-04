@@ -29,16 +29,16 @@ from cylc.execute import execute
 from cylc.job_file import JOB_FILE
 from cylc.config import config, SuiteConfigError, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc.cycling.loader import get_point
-from cylc.task_types.task import task
+from cylc.job_host import RemoteJobHostManager
 from cylc.suite_host import get_suite_host, get_hostname
 from cylc.regpath import RegPath
 from cylc.command_prep import prep_file
 from cylc.suite_logging import suite_log
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
-from cylc.mp_pool import mp_pool, CMD_TYPE_JOB_SUBMISSION
+from cylc.mp_pool import SuiteProcPool, CMD_TYPE_JOB_SUBMISSION
 
 usage = """cylc [task] submit|single [OPTIONS] ARGS
 
@@ -58,9 +58,7 @@ def commandline_parser():
         usage, jset=True,
         argdoc=[
             ("REG", "Suite name"),
-            ("TASK",
-             "Target task (" + cylc.TaskID.get("NAME", "CYCLE_POINT") +
-             ")"),
+            ("TASK", "Target task (" + TaskID.SYNTAX + ")"),
         ]
     )
 
@@ -92,10 +90,10 @@ suite_dir = os.path.dirname(suiterc)
 sys.path.append( os.path.join( suite_dir, 'python' ))
 
 # check task
-if not cylc.TaskID.is_valid_id( task_id ):
-    sys.exit("Invalid task ID " + task_id )
+if not TaskID.is_valid_id(task_id):
+    sys.exit("Invalid task ID " + task_id)
 
-task_name, point_string = cylc.TaskID.split( task_id )
+task_name, point_string = TaskID.split(task_id)
 
 # load suite config
 try:
@@ -121,7 +119,7 @@ slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
 slog.pimp()
 
-task.single_task_mode = True
+RemoteJobHostManager.get_inst().single_task_mode = True
 
 ict = config.cfg['scheduling']['initial cycle point']
 fct = config.cfg['scheduling']['final cycle point'  ]
@@ -165,26 +163,17 @@ suite_task_env = {
 
 JOB_FILE.set_suite_env(suite_env)
 
-point = get_point(point_string)
+point = get_point(point_string).standardise()
 try:
     # Try to get a graphed task of the given name.
     task_proxy = config.get_task_proxy(
-        task_name, point, 'waiting', stop_point=None, startup=True,
-        submit_num=0, exists=False
-    )
+        task_name, point.standardise(), 'waiting', is_startup=True)
 except TaskNotDefinedError, x:
-    print >> sys.stderr, 'WARNING: "' + task_name + \
-            '" type and validity are not constrained by the graph.'
-    print >> sys.stderr, "Continuing under the assumption that the given task ID is valid."
-    try:
-        # Try to get an ungraphed task of the given name.
-        task_proxy = config.get_task_proxy_raw(task_name, point)
-    except TaskNotDefinedError, y:
-        raise SystemExit('ERROR: task "' + task_name + '" runtime is not defined either, aborting.')
+    raise SystemExit(
+        'ERROR: task "%s" runtime is not defined, aborting.' % task_name)
 
 if not options.dry_run:
-    proc_pool = mp_pool(pool_size=1)
-    task_proxy.__class__.proc_pool = proc_pool
+    proc_pool = SuiteProcPool.get_inst(pool_size=1)
 
 task_proxy.submit(dry_run=options.dry_run)
 

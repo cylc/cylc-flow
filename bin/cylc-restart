@@ -26,11 +26,11 @@ import os, re
 from cylc.config import TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 from cylc.scheduler import scheduler
-from cylc.suite_state_dumping import dumper
+from cylc.suite_state_dumping import SuiteStateDumper
 from cylc.task_state import task_state
 from cylc.run import main
 from cylc.command_prep import prep_file
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc.cycling.loader import get_point, DefaultCycler, ISO8601_CYCLING_TYPE
 from cylc.wallclock import get_current_time_string
 
@@ -103,7 +103,7 @@ determine what happened to them while the suite was down."""
         """Return the state file path that we are restarting from."""
         my_dumper = self.state_dumper
         if my_dumper is None:
-            my_dumper = dumper(self.suite)
+            my_dumper = SuiteStateDumper(self.suite)
         base_name = my_dumper.BASE_NAME
         file_name = base_name
         dir_name = my_dumper.dir_name
@@ -128,7 +128,6 @@ determine what happened to them while the suite was down."""
         (dp1   # (Broadcast pickle string)
         .      # (Broadcast pickle string)
         Begin task states
-        class <classname>: item1=value1, item2=value2, ...
         <task_id> : <state>
         <task_id> : <state>
           ...
@@ -309,21 +308,10 @@ determine what happened to them while the suite was down."""
         taskstates = {}
         task_point_strings = []
         for line in task_lines:
-            if re.match( '^class', line ):
-                # class variables
-                [ left, right ] = line.split( ' : ' )
-                [ junk, classname ] = left.split( ' ' )
-                cls = self.config.get_task_class( classname )
-                pairs = right.split( ', ' )
-                for pair in pairs:
-                    [ item, value ] = pair.split( '=' )
-                    cls.set_class_var( item, value )
-                continue
-
             # instance variables
             try:
                 ( id, state ) = line.split(' : ')
-                ( name, point_string ) = cylc.TaskID.split(id)
+                name, point_string = TaskID.split(id)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
@@ -332,7 +320,7 @@ determine what happened to them while the suite was down."""
                     DefaultCycler.TYPE == ISO8601_CYCLING_TYPE):
                 # A state file from a pre-cylc-6 with mixed-async graphing.
                 point_string = str(self.start_point)
-                new_id = cylc.TaskID.get(name, point_string)
+                new_id = TaskID.get(name, point_string)
                 print >> sys.stderr, (
                     "WARNING: converting %s to %s" % (id, new_id))
                 id = new_id
@@ -394,16 +382,13 @@ determine what happened to them while the suite was down."""
             print " +", id
             try:
                 # startup is True only for a cold start
-                if name in cycleinfo[point_string].keys():
-                    submit_num = cycleinfo[point_string][name]
-                else:
-                    submit_num = 0
-                exists = name in cycleinfo[point_string].keys()
+                submit_num = cycleinfo[point_string].get(name, 0)
                 
                 itask = self.config.get_task_proxy(
-                    name, get_point(point_string), state,
-                    stop_point=None, startup=False,
-                    submit_num=submit_num, exists=exists
+                    name,
+                    get_point(point_string),
+                    state,
+                    submit_num=submit_num,
                 )
             except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)
@@ -495,7 +480,7 @@ determine what happened to them while the suite was down."""
 
             else:
                 raise Exception(
-                    'ERROR: unknown task state for %s' % itask.id)
+                    'ERROR: unknown task state for %s' % itask.identity)
 
             self.pool.add_to_runahead_pool( itask )
 

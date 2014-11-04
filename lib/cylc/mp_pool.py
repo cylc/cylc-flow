@@ -110,8 +110,22 @@ def _run_command(
     return cmd_result
 
 
-class mp_pool(object):
+class SuiteProcPool(object):
     """Use a process pool to execute shell commands."""
+
+    _INSTANCE = None
+
+    @classmethod
+    def get_inst(cls, pool_size=None):
+        """Return a singleton instance.
+
+        On 1st call, instantiate the singleton. The argument "pool_size" is
+        only relevant on 1st call.
+
+        """
+        if cls._INSTANCE is None:
+            cls._INSTANCE = cls(pool_size)
+        return cls._INSTANCE
 
     def __init__(self, pool_size=None):
         self.pool_size = (

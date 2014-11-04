@@ -15,42 +15,45 @@
 #C:
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Manage the task pool of a suite.
+
+All new task proxies (including spawned ones) are added first to the runahead
+pool, which does not participate in dependency matching and is not visible in
+the GUI. Tasks are then released to the task pool if not beyond the current
+runahead limit.
+
+check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
+runahead pool too.
+
+TODO - spawn-on-submit means a only one waiting instance of each task exists,
+in the pool, so if a new stop cycle is set we just need to check waiting pool
+tasks against the new stop cycle.
+
+restart: runahead tasks are all in the 'waiting' state and will be reloaded
+as such, on restart, into the runahead pool.
+
+"""
 
 import sys
-import TaskID
-from task_types import task
-from task_state import task_state
-from broker import broker
-import flags
-from Pyro.errors import NamingError, ProtocolError
-from mp_pool import CMD_TYPE_JOB_SUBMISSION
-from logging import ERROR, WARNING, DEBUG, INFO
+from cylc.task_state import task_state
+from cylc.broker import broker
+import cylc.flags
+from Pyro.errors import NamingError
+from logging import WARNING, DEBUG, INFO
 
 import cylc.rundb
 from cylc.cycling.loader import (
-    get_point, get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
-from CylcError import SchedulerError, TaskNotFoundError
-from prerequisites.plain_prerequisites import plain_prerequisites
-from broadcast import broadcast
-
-# All new task proxies (including spawned ones) are added first to the runahead
-# pool, which does not participate in dependency matching and is not visible in
-# the GUI. Tasks are then released to the task pool if not beyond the current
-# runahead limit.
-
-# check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
-# runahead pool too.
-
-# TODO - spawn-on-submit means a only one waiting instance of each task exists,
-# in the pool, so if a new stop cycle is set we just need to check waiting pool
-# tasks against the new stop cycle.
-
-# restart: runahead tasks are all in the 'waiting' state and will be reloaded
-# as such, on restart, into the runahead pool.
+    get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
+from cylc.CylcError import SchedulerError, TaskNotFoundError
+from cylc.prerequisites.plain_prerequisites import plain_prerequisites
+from cylc.broadcast import broadcast
 
 
-class pool(object):
-    def __init__(self, suite, db, view_db, stop_point, config, pyro, log, run_mode, proc_pool):
+class TaskPool(object):
+    """Task pool of a suite."""
+
+    def __init__(
+            self, suite, db, view_db, stop_point, config, pyro, log, run_mode):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
@@ -71,7 +74,6 @@ class pool(object):
         self.config = config
 
         self.pool = {}
-        self.proc_pool = proc_pool
         self.runahead_pool = {}
         self.myq = {}
         self.queues = {}
@@ -103,28 +105,36 @@ class pool(object):
 
     def add_to_runahead_pool(self, itask):
         """Add a new task to the runahead pool if possible.
+
         Tasks whose recurrences allow them to spawn beyond the suite
         stop point are added to the pool in the held state, ready to be
-        released if the suite stop point is changed."""
+        released if the suite stop point is changed.
+
+        """
 
         # do not add if a task with the same ID already exists
         # e.g. an inserted task caught up with an existing one
-        if self.id_exists(itask.id):
-            self.log.warning(itask.id + ' cannot be added to pool: task ID already exists')
+        if self.id_exists(itask.identity):
+            self.log.warning(
+                itask.identity +
+                ' cannot be added to pool: task ID already exists')
             del itask
             return False
 
         # do not add if an inserted task is beyond its own stop point
         # (note this is not the same as recurrence bounds)
         if itask.stop_point and itask.point > itask.stop_point:
-            self.log.info(itask.id + ' not adding to pool: beyond task stop cycle')
+            self.log.info(
+                itask.identity + ' not adding to pool: beyond task stop cycle')
             del itask
             return False
 
         # add in held state if beyond the suite stop point
 
         if self.stop_point and itask.point > self.stop_point:
-            itask.log(INFO, "holding (beyond suite stop point) " + str(self.stop_point))
+            itask.log(
+                INFO,
+                "holding (beyond suite stop point) " + str(self.stop_point))
             itask.reset_state_held()
 
         # TODO ISO - restore this functionality
@@ -133,28 +143,29 @@ class pool(object):
         #    str(self.hold_time))
         #    itask.reset_state_held()
 
-        # add in held state if a future trigger goes beyond the suite stop point
-        # (note this only applies to tasks below the suite stop point themselves)
+        # add in held state if a future trigger goes beyond the suite stop
+        # point (note this only applies to tasks below the suite stop point
+        # themselves)
         elif self.task_has_future_trigger_overrun(itask):
             itask.log(INFO, "holding (future trigger beyond stop point)")
-            self.held_future_tasks.append(itask.id)
+            self.held_future_tasks.append(itask.identity)
             itask.reset_state_held()
         elif self.is_held:
             itask.reset_state_held()
 
         # add to the runahead pool
         self.runahead_pool.setdefault(itask.point, {})
-        self.runahead_pool[itask.point][itask.id] = itask
+        self.runahead_pool[itask.point][itask.identity] = itask
         self.rhpool_changed = True
         return True
 
-    def get_task_proxy(self, *args, **kwargs):
-        return self.config.get_task_proxy(*args, **kwargs)
-
     def release_runahead_tasks(self):
-        # compute runahead base: the oldest task not succeeded or failed
-        # (excludes finished and includes runahead-limited tasks so a
-        # low limit cannot stall the suite).
+        """Compute runahead base
+
+        The oldest task not succeeded or failed (excludes finished and includes
+        runahead-limited tasks so a low limit cannot stall the suite).
+
+        """
 
         if not self.runahead_pool:
             return
@@ -163,7 +174,7 @@ class pool(object):
 
         points = []
         for point, itasks in sorted(
-                self.get_tasks_by_point(all=True).items()):
+                self.get_tasks_by_point(all_tasks=True).items()):
             has_unfinished_itasks = False
             for itask in itasks:
                 if not itask.state.is_currently('failed', 'succeeded'):
@@ -189,7 +200,7 @@ class pool(object):
             sequence_points = []
             for sequence in self.config.sequences:
                 point = runahead_base_point
-                for i in range(limit):
+                for _ in range(limit):
                     point = sequence.get_next_point(point)
                     if point is None:
                         break
@@ -232,34 +243,36 @@ class pool(object):
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
-        queue = self.myq[itask.name]
+        queue = self.myq[itask.tdef.name]
         if queue not in self.queues:
             self.queues[queue] = {}
-        self.queues[queue][itask.id] = itask
+        self.queues[queue][itask.identity] = itask
         self.pool.setdefault(itask.point, {})
-        self.pool[itask.point][itask.id] = itask
+        self.pool[itask.point][itask.identity] = itask
         self.pool_changed = True
-        flags.pflag = True
+        cylc.flags.pflag = True
         itask.log(DEBUG, "released to the task pool")
-        del self.runahead_pool[itask.point][itask.id]
+        del self.runahead_pool[itask.point][itask.identity]
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
         self.rhpool_changed = True
         try:
-            self.pyro.connect(itask.message_queue, itask.id)
-        except Exception, x:
-            if flags.debug:
+            self.pyro.connect(itask.message_queue, itask.identity)
+        except Exception, exc:
+            if cylc.flags.debug:
                 raise
-            print >> sys.stderr, x
+            print >> sys.stderr, exc
             self.log.warning(
-                '%s cannot be added (use --debug and see stderr)' % itask.id)
+                '%s cannot be added (use --debug and see stderr)' %
+                itask.identity)
             return False
-        if itask.max_future_prereq_offset is not None:
+        if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
 
     def remove(self, itask, reason=None):
+        """Remove a task proxy from the pool."""
         try:
-            del self.runahead_pool[itask.point][itask.id]
+            del self.runahead_pool[itask.point][itask.identity]
         except KeyError:
             pass
         else:
@@ -270,20 +283,20 @@ class pool(object):
 
         try:
             self.pyro.disconnect(itask.message_queue)
-        except NamingError, x:
-            print >> sys.stderr, x
-            self.log.critical(itask.id + ' cannot be removed (task not found)')
+        except NamingError, exc:
+            print >> sys.stderr, exc
+            self.log.critical(
+                itask.identity + ' cannot be removed (task not found)')
             return
-        except Exception, x:
-            print >> sys.stderr, x
-            self.log.critical(itask.id + ' cannot be removed (unknown error)')
+        except Exception, exc:
+            print >> sys.stderr, exc
+            self.log.critical(
+                itask.identity + ' cannot be removed (unknown error)')
             return
         # remove from queue
-        queue = self.myq.get(itask.name)
-        if queue is not None:
-            # queue can be None if a task is removed in a reload.
-            del self.queues[queue][itask.id]
-        del self.pool[itask.point][itask.id]
+        if itask.tdef.name in self.myq:  # A reload can remove a task
+            del self.queues[self.myq[itask.tdef.name]][itask.identity]
+        del self.pool[itask.point][itask.identity]
         if not self.pool[itask.point]:
             del self.pool[itask.point]
         self.pool_changed = True
@@ -291,11 +304,11 @@ class pool(object):
         if reason:
             msg += " (" + reason + ")"
         itask.log(DEBUG, msg)
-        if itask.max_future_prereq_offset is not None:
+        if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
         del itask
 
-    def get_tasks(self, all=False):
+    def get_tasks(self, all_tasks=False):
         """ Return the current list of task proxies."""
 
         # Regenerate the task lists on demand only if they have changed
@@ -307,10 +320,10 @@ class pool(object):
             self.pool_changed = False
             self.pool_list = []
             for queue in self.queues:
-                for id,t in self.queues[queue].items():
-                    self.pool_list.append(t)
+                for itask in self.queues[queue].values():
+                    self.pool_list.append(itask)
 
-        if all:
+        if all_tasks:
             if self.rhpool_changed:
                 self.rhpool_changed = False
                 self.rhpool_list = []
@@ -321,13 +334,13 @@ class pool(object):
         else:
             return self.pool_list
 
-    def get_tasks_by_point(self, all=False):
+    def get_tasks_by_point(self, all_tasks=False):
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
         for point, itask_id_map in self.pool.items():
             point_itasks[point] = itask_id_map.values()
 
-        if not all:
+        if not all_tasks:
             return point_itasks
 
         for point, itask_id_map in self.runahead_pool.items():
@@ -335,13 +348,13 @@ class pool(object):
             point_itasks[point].extend(itask_id_map.values())
         return point_itasks
 
-    def id_exists(self, id):
+    def id_exists(self, id_):
         """Check if task id is in the runahead_pool or pool"""
-        for point, itask_ids in self.runahead_pool.items():
-            if id in itask_ids:
+        for itask_ids in self.runahead_pool.values():
+            if id_ in itask_ids:
                 return True
         for queue in self.queues:
-            if id in self.queues[queue]:
+            if id_ in self.queues[queue]:
                 return True
         return False
 
@@ -372,7 +385,7 @@ class pool(object):
                 # only need to check that unqueued tasks are ready
                 if itask.manual_trigger or itask.ready_to_run():
                     # queue the task
-                    itask.set_state_queued()
+                    itask.set_status('queued')
                     if itask.manual_trigger:
                         itask.reset_manual_trigger()
 
@@ -386,7 +399,8 @@ class pool(object):
             tasks = self.queues[queue].values()
             if n_limit:
                 for itask in tasks:
-                    if itask.state.is_currently('ready','submitted','running'):
+                    if itask.state.is_currently(
+                            'ready', 'submitted', 'running'):
                         n_active += 1
                 n_release = n_limit - n_active
 
@@ -407,12 +421,12 @@ class pool(object):
         self.log.debug('%d task(s) de-queued' % len(readytogo))
 
         for itask in readytogo:
-            itask.submit(overrides=self.wireless.get(itask.id))
+            itask.submit(overrides=self.wireless.get(itask.identity))
 
         return readytogo
 
     def task_has_future_trigger_overrun(self, itask):
-        # check for future triggers extending beyond the final cycle
+        """Check for future triggers extending beyond the final cycle."""
         if not self.stop_point:
             return False
         for pct in set(itask.prerequisites.get_target_points()):
@@ -421,6 +435,7 @@ class pool(object):
         return False
 
     def set_runahead(self, interval=None):
+        """Set the runahead."""
         if isinstance(interval, int) or isinstance(interval, basestring):
             # The unit is assumed to be hours (backwards compatibility).
             interval = str(interval)
@@ -458,38 +473,38 @@ class pool(object):
         """Calculate the latest required future trigger offset."""
         max_offset = None
         for itask in self.get_tasks():
-            if (itask.max_future_prereq_offset is not None and
+            if (itask.tdef.max_future_prereq_offset is not None and
                     (max_offset is None or
-                     itask.max_future_prereq_offset > max_offset)):
-                max_offset = itask.max_future_prereq_offset
+                     itask.tdef.max_future_prereq_offset > max_offset)):
+                max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
     def reconfigure(self, config, stop_point):
-
+        """Set the task pool to reload mode."""
         self.reconfiguring = True
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_num_active_cycle_points = (
             config.get_max_num_active_cycle_points())
         self.config = config
-        self.stop_point = stop_point  # TODO: Any point in using set_stop_point?
+        self.stop_point = stop_point
 
         # reassign live tasks from the old queues to the new.
-        # self.queues[queue][id] = task
+        # self.queues[queue][id_] = task
         self.qconfig = config.cfg['scheduling']['queues']
         self.assign_queues()
-        self.new_queues = {}
+        new_queues = {}
         for queue in self.queues:
-            for id,itask in self.queues[queue].items():
-                myq = self.myq.get(itask.name)
-                if myq is None:
+            for id_, itask in self.queues[queue].items():
+                if itask.tdef.name not in self.myq:
                     continue
-                if myq not in self.new_queues:
-                    self.new_queues[myq] = {}
-                self.new_queues[myq][id] = itask
-        self.queues = self.new_queues
+                key = self.myq[itask.tdef.name]
+                if key not in new_queues:
+                    new_queues[key] = {}
+                new_queues[key][id_] = itask
+        self.queues = new_queues
 
-        for itask in self.get_tasks(all=True):
+        for itask in self.get_tasks(all_tasks=True):
             itask.reconfigure_me = True
 
         # find any old tasks that have been removed from the suite
@@ -502,9 +517,10 @@ class pool(object):
         config.adopt_orphans(self.orphans)
 
     def reload_taskdefs(self):
+        """Reload task definitions."""
         found = False
-        for itask in self.get_tasks(all=True):
-            if itask.state.is_currently('ready', 'submitted','running'):
+        for itask in self.get_tasks(all_tasks=True):
+            if itask.state.is_currently('ready', 'submitted', 'running'):
                 # do not reload active tasks as it would be possible to
                 # get a task proxy incompatible with the running task
                 if itask.reconfigure_me:
@@ -512,24 +528,30 @@ class pool(object):
                 continue
             if itask.reconfigure_me:
                 itask.reconfigure_me = False
-                if itask.name in self.orphans:
+                if itask.tdef.name in self.orphans:
                     # orphaned task
-                    if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
+                    if itask.state.is_currently(
+                            'waiting', 'queued', 'submit-retrying',
+                            'retrying'):
                         # if not started running yet, remove it.
                         self.remove(itask, '(task orphaned by suite reload)')
                     else:
-                        # set spawned already so it won't carry on into the future
+                        # set spawned already so it won't carry on into the
+                        # future
                         itask.state.set_spawned()
-                        self.log.warning('orphaned task will not continue: ' + itask.id)
+                        self.log.warning(
+                            'orphaned task will not continue: ' +
+                            itask.identity)
                 else:
-                    self.log.info('RELOADING TASK DEFINITION FOR ' + itask.id)
-                    new_task = self.get_task_proxy(
-                        itask.name, itask.point, itask.state.get_status(),
-                        None, itask.startup,
-                        submit_num=self.db.get_task_current_submit_num(
-                            itask.name, str(itask.point)),
-                        exists=self.db.get_task_state_exists(
-                            itask.name, str(itask.point)))
+                    self.log.info(
+                        'RELOADING TASK DEFINITION FOR ' + itask.identity)
+                    new_task = self.config.get_task_proxy(
+                        itask.tdef.name,
+                        itask.point,
+                        itask.state.get_status(),
+                        stop_point=itask.stop_point,
+                        submit_num=itask.submit_num,
+                    )
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
@@ -557,14 +579,14 @@ class pool(object):
                     elif itask.state.is_currently('submit-retrying'):
                         new_task.sub_retry_delay = itask.sub_retry_delay
                         new_task.sub_retry_delays = itask.sub_retry_delays
-                        new_task.sub_retry_delays_orig = itask.sub_retry_delays_orig
+                        new_task.sub_retry_delays_orig = (
+                            itask.sub_retry_delays_orig)
                         new_task.sub_retry_delay_timer_timeout = (
                             itask.sub_retry_delay_timer_timeout)
 
                     new_task.try_number = itask.try_number
                     new_task.sub_try_number = itask.sub_try_number
                     new_task.submit_num = itask.submit_num
-
 
                     self.remove(itask, '(suite definition reload)')
                     self.add_to_runahead_pool(new_task)
@@ -579,8 +601,8 @@ class pool(object):
             if (self.stop_point and itask.point > self.stop_point and
                     itask.state.is_currently('waiting', 'queued')):
                 itask.log(WARNING,
-                           "not running (beyond suite stop cycle) " +
-                           str(self.stop_point))
+                          "not running (beyond suite stop cycle) " +
+                          str(self.stop_point))
                 itask.reset_state_held()
 
     def no_active_tasks(self):
@@ -589,9 +611,9 @@ class pool(object):
                 return False
         return True
 
-    def poll_tasks(self,ids):
+    def poll_tasks(self, ids):
         for itask in self.get_tasks():
-            if itask.id in ids:
+            if itask.identity in ids:
                 # (state check done in task module)
                 itask.poll()
 
@@ -600,33 +622,35 @@ class pool(object):
             if itask.state.is_currently('submitted', 'running'):
                 itask.kill()
 
-    def kill_tasks(self,ids):
+    def kill_tasks(self, ids):
         for itask in self.get_tasks():
-            if itask.id in ids:
+            if itask.identity in ids:
                 # (state check done in task module)
                 itask.kill()
 
     def hold_tasks(self, ids):
-        for itask in self.get_tasks(all=True):
-            if itask.id in ids:
-                if itask.state.is_currently('waiting', 'queued', 'submit-retrying', 'retrying'):
+        for itask in self.get_tasks(all_tasks=True):
+            if itask.identity in ids:
+                if itask.state.is_currently(
+                        'waiting', 'queued', 'submit-retrying', 'retrying'):
                     itask.reset_state_held()
 
-    def release_tasks(self,ids):
-        for itask in self.get_tasks(all=True):
-            if itask.id in ids and itask.state.is_currently('held'):
+    def release_tasks(self, ids):
+        for itask in self.get_tasks(all_tasks=True):
+            if itask.identity in ids and itask.state.is_currently('held'):
                 itask.reset_state_waiting()
 
     def hold_all_tasks(self):
         self.log.info("Holding all waiting or queued tasks now")
         self.is_held = True
-        for itask in self.get_tasks(all=True):
-            if itask.state.is_currently('queued','waiting','submit-retrying', 'retrying'):
+        for itask in self.get_tasks(all_tasks=True):
+            if itask.state.is_currently(
+                    'queued', 'waiting', 'submit-retrying', 'retrying'):
                 itask.reset_state_held()
 
     def release_all_tasks(self):
         self.is_held = False
-        for itask in self.get_tasks(all=True):
+        for itask in self.get_tasks(all_tasks=True):
             if itask.state.is_currently('held'):
                 if self.stop_point and itask.point > self.stop_point:
                     # Don't release task: beyond suite stop point.
@@ -649,9 +673,12 @@ class pool(object):
         return False
 
     def match_dependencies(self):
-        # run time dependency negotiation: tasks attempt to get their
-        # prerequisites satisfied by other tasks' outputs.
-        # BROKERED NEGOTIATION is O(n) in number of tasks.
+        """Run time dependency negotiation.
+
+        Tasks attempt to get their prerequisites satisfied by other tasks'
+        outputs. BROKERED NEGOTIATION is O(n) in number of tasks.
+
+        """
 
         self.broker.reset()
 
@@ -663,6 +690,7 @@ class pool(object):
                 self.broker.negotiate(itask)
 
     def process_queued_task_messages(self):
+        """Save queued task messages to persistent storage."""
         state_recorders = []
         state_updaters = []
         event_recorders = []
@@ -670,25 +698,25 @@ class pool(object):
 
         for itask in self.get_tasks():
             itask.process_incoming_messages()
-            # if incoming messages have resulted in new database operations grab them
-            if itask.db_items:
-                opers = itask.get_db_ops()
-                for oper in opers:
-                    if isinstance(oper, cylc.rundb.UpdateObject):
-                        state_updaters += [oper]
-                    elif isinstance(oper, cylc.rundb.RecordStateObject):
-                        state_recorders += [oper]
-                    elif isinstance(oper, cylc.rundb.RecordEventObject):
-                        event_recorders += [oper]
-                    else:
-                        other += [oper]
+            # if incoming messages have resulted in new database operations
+            # grab them
+            for oper in itask.get_db_ops():
+                if isinstance(oper, cylc.rundb.UpdateObject):
+                    state_updaters += [oper]
+                elif isinstance(oper, cylc.rundb.RecordStateObject):
+                    state_recorders += [oper]
+                elif isinstance(oper, cylc.rundb.RecordEventObject):
+                    event_recorders += [oper]
+                else:
+                    other += [oper]
 
-        #precedence is record states > update_states > record_events > anything_else
+        # precedence is record states > update_states > record_events >
+        # anything_else
         db_ops = state_recorders + state_updaters + event_recorders + other
         # compact the set of operations
         if len(db_ops) > 1:
             db_opers = [db_ops[0]]
-            for i in range(1,len(db_ops)):
+            for i in range(1, len(db_ops)):
                 if db_opers[-1].s_fmt == db_ops[i].s_fmt:
                     if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
                         db_opers[-1].add_oper(db_ops[i])
@@ -704,33 +732,35 @@ class pool(object):
 
         # record any broadcast settings to be dumped out
         if self.wireless:
-            if self.wireless.new_settings:
-                db_ops = self.wireless.get_db_ops()
-                for d in db_ops:
-                    db_opers += [d]
+            for db_oper in self.wireless.get_db_ops():
+                db_opers += [db_oper]
 
-        for d in db_opers:
+        for db_oper in db_opers:
             if self.db.c.is_alive():
-                self.db.run_db_op(d)
+                self.db.run_db_op(db_oper)
             elif self.db.c.exception:
                 self.view_db.close()
                 raise self.db.c.exception
             else:
-                raise SchedulerError('An unexpected error occurred while writing to the suite database')
+                raise SchedulerError(
+                    'An unexpected error occurred while writing to the ' +
+                    'suite database')
 
         # we should filter down to only recording the utility relevent
         # entries in the viewable database following database refactoring
-        for d in db_opers:
+        for db_oper in db_opers:
             if self.view_db.c.is_alive():
-                self.view_db.run_db_op(d)
+                self.view_db.run_db_op(db_oper)
             elif self.view_db.c.exception:
                 self.db.close()
                 raise self.view_db.c.exception
             else:
-                raise SchedulerError('An unexpected error occurred while writing to the viewable database')
+                raise SchedulerError(
+                    'An unexpected error occurred while writing to the ' +
+                    'viewable database')
 
     def force_spawn(self, itask):
-        # TODO - THIS SHOULD BE IN task.py?
+        """Spawn successor of itask."""
         if itask.state.has_spawned():
             return None
         itask.state.set_spawned()
@@ -742,6 +772,7 @@ class pool(object):
             return None
 
     def spawn_tasks(self):
+        """Spawn successors of tasks in pool."""
         for itask in self.get_tasks():
             if itask.ready_to_spawn():
                 self.force_spawn(itask)
@@ -751,22 +782,24 @@ class pool(object):
         for itask in self.get_tasks():
             if itask.suicide_prerequisites.count() != 0:
                 if itask.suicide_prerequisites.all_satisfied():
-                    if itask.state.is_currently('ready', 'submitted', 'running'):
+                    if itask.state.is_currently(
+                            'ready', 'submitted', 'running'):
                         itask.log(WARNING, 'suiciding while active')
                     else:
                         itask.log(INFO, 'suiciding')
                     self.force_spawn(itask)
                     self.remove(itask, 'suicide')
 
-    def _get_earliest_unsatisfied_cycle_point(self):
+    def _get_earliest_unsatisfied_point(self):
+        """Get earliest unsatisfied cycle point."""
         cutoff = None
-        for itask in self.get_tasks(all=True):
+        for itask in self.get_tasks(all_tasks=True):
             # this has to consider tasks in the runahead pool too, e.g.
             # ones that have just spawned and not been released yet.
             if itask.state.is_currently('waiting', 'held'):
                 if cutoff is None or itask.point < cutoff:
                     cutoff = itask.point
-            elif not itask.has_spawned():
+            elif not itask.state.has_spawned():
                 # (e.g. 'ready')
                 nxt = itask.next_point()
                 if nxt is not None and (cutoff is None or nxt < cutoff):
@@ -774,19 +807,22 @@ class pool(object):
         return cutoff
 
     def remove_spent_tasks(self):
-        """
-        Remove cycling tasks no longer needed to satisfy others' prerequisites.
-        Each task proxy knows its "cleanup cutoff" from the graph. For example:
+        """Remove cycling tasks that are no longer needed.
+
+        Remove cycling tasks that are no longer needed to satisfy others'
+        prerequisites.  Each task proxy knows its "cleanup cutoff" from the
+        graph. For example:
           graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
         implies foo's cutoff is T+12: if foo has succeeded and spawned,
         it can be removed if no unsatisfied task proxy exists with
         T<=T+12. Note this only uses information about the cycle point of
         downstream dependents - if we used specific IDs instead spent
         tasks could be identified and removed even earlier).
+
         """
 
         # first find the cycle point of the earliest unsatisfied task
-        cutoff = self._get_earliest_unsatisfied_cycle_point()
+        cutoff = self._get_earliest_unsatisfied_point()
 
         if not cutoff:
             return
@@ -804,20 +840,26 @@ class pool(object):
             self.remove(itask)
 
     def reset_task_states(self, ids, state):
-        # we only allow resetting to a subset of available task states
+        """Reset task states.
+
+        We only allow resetting to a subset of available task states
+
+        """
         if state not in task_state.legal_for_reset:
-            raise SchedulerError, 'Illegal reset state: ' + state
+            raise SchedulerError('Illegal reset state: ' + state)
 
         tasks = []
         for itask in self.get_tasks():
-            if itask.id in ids:
+            if itask.identity in ids:
                 tasks.append(itask)
 
         for itask in tasks:
             if itask.state.is_currently('ready'):
-                # Currently can't reset a 'ready' task in the job submission thread!
-                self.log.warning("A 'ready' task cannot be reset: " + itask.id)
-            itask.log(INFO,"resetting to " + state + " state")
+                # Currently can't reset a 'ready' task in the job submission
+                # thread!
+                self.log.warning(
+                    "A 'ready' task cannot be reset: " + itask.identity)
+            itask.log(INFO, "resetting to " + state + " state")
             if state == 'ready':
                 itask.reset_state_ready()
             elif state == 'waiting':
@@ -840,14 +882,14 @@ class pool(object):
 
     def remove_tasks(self, ids, spawn):
         for itask in self.get_tasks():
-            if itask.id in ids:
+            if itask.identity in ids:
                 if spawn:
                     self.force_spawn(itask)
                 self.remove(itask, 'by request')
 
     def trigger_tasks(self, ids):
         for itask in self.get_tasks():
-            if itask.id in ids:
+            if itask.identity in ids:
                 itask.manual_trigger = True
                 if not itask.state.is_currently('queued'):
                     itask.reset_state_ready()
@@ -859,7 +901,7 @@ class pool(object):
     def check_auto_shutdown(self):
         """Check if we should do a normal automatic shutdown."""
         shutdown = True
-        for itask in self.get_tasks(all=True):
+        for itask in self.get_tasks(all_tasks=True):
             if self.stop_point is None:
                 # Don't if any unsucceeded task exists.
                 if not itask.state.is_currently('succeeded'):
@@ -868,7 +910,7 @@ class pool(object):
             elif (itask.point <= self.stop_point and
                     not itask.state.is_currently('succeeded')):
                 # Don't if any unsucceeded task exists < stop point...
-                if itask.id not in self.held_future_tasks:
+                if itask.identity not in self.held_future_tasks:
                     # ...unless it has a future trigger extending > stop point.
                     shutdown = False
                     break
@@ -878,7 +920,8 @@ class pool(object):
         sim_task_succeeded = False
         for itask in self.get_tasks():
             if itask.state.is_currently('running'):
-                # set sim-mode tasks to "succeeded" after their alotted run time
+                # set sim-mode tasks to "succeeded" after their alotted run
+                # time
                 if itask.sim_time_check():
                     sim_task_succeeded = True
         return sim_task_succeeded
@@ -892,8 +935,11 @@ class pool(object):
                 self.pyro.disconnect(itask.message_queue)
 
     def waiting_tasks_ready(self):
-        # waiting tasks can become ready for internal reasons:
-        # namely clock-triggers or retry-delay timers
+        """Waiting tasks can become ready for internal reasons.
+
+        Namely clock-triggers or retry-delay timers
+
+        """
         result = False
         for itask in self.get_tasks():
             if itask.ready_to_run():
@@ -901,29 +947,29 @@ class pool(object):
                 break
         return result
 
-    def add_prereq_to_task(self, id, msg):
+    def add_prereq_to_task(self, id_, msg):
         for itask in self.get_tasks():
-            if itask.id == id:
+            if itask.identity == id_:
+                prereq = plain_prerequisites(id_)
+                prereq.add(msg)
+                itask.prerequisites.add_requisites(prereq)
                 break
         else:
-            raise TaskNotFoundError, "Task not present in suite: " + id
-        pp = plain_prerequisites(id)
-        pp.add(msg)
-        itask.prerequisites.add_requisites(pp)
+            raise TaskNotFoundError("Task not present in suite: " + id_)
 
-    def task_succeeded(self, id):
+    def task_succeeded(self, id_):
         res = False
         for itask in self.get_tasks():
-            if itask.id == id and itask.state.is_currently('succeeded'):
+            if itask.identity == id_ and itask.state.is_currently('succeeded'):
                 res = True
                 break
         return res
 
-    def ping_task(self, id):
+    def ping_task(self, id_):
         found = False
         running = False
         for itask in self.get_tasks():
-            if itask.id == id:
+            if itask.identity == id_:
                 found = True
                 if itask.state.is_currently('running'):
                     running = True
@@ -939,54 +985,61 @@ class pool(object):
         info = {}
         found = False
         for itask in self.get_tasks():
-            id = itask.id
-            if id in ids:
+            id_ = itask.identity
+            if id_ in ids:
                 found = True
                 extra_info = {}
                 # extra info for clocktriggered tasks
-                try:
-                    extra_info['Clock trigger time reached'] = itask.start_time_reached()
+                if itask.tdef.clocktrigger_offset is not None:
+                    extra_info['Clock trigger time reached'] = (
+                        itask.start_time_reached())
                     extra_info['Triggers at'] = itask.delayed_start_str
-                except AttributeError:
-                    # not a clocktriggered task
-                    pass
 
-                info[ id ] = [ itask.prerequisites.dump(), itask.outputs.dump(), extra_info ]
+                info[id_] = [
+                    itask.prerequisites.dump(),
+                    itask.outputs.dump(),
+                    extra_info,
+                ]
         if not found:
             self.log.warning('task state info request: task(s) not found')
         return info
 
-    def purge_tree(self, id, stop):
-        # Remove an entire dependancy tree rooted on the target task,
-        # through to the given stop time (inclusive). In general this
-        # involves tasks that do not even exist yet within the pool.
+    def purge_tree(self, id_, stop):
+        """Remove an entire dependency tree.
 
-        # Method: trigger the target task *virtually* (i.e. without
-        # running the real task) by: setting it to the succeeded state,
-        # setting all of its outputs completed, and forcing it to spawn.
-        # (this is equivalent to instantaneous successful completion as
-        # far as cylc is concerned). Then enter the normal dependency
-        # negotation process to trace the downstream effects of this,
-        # also triggering subsequent tasks virtually. Each time a task
-        # triggers mark it as a dependency of the target task for later
-        # deletion (but not immmediate deletion because other downstream
-        # tasks may still trigger off its outputs).  Downstream tasks
-        # (freshly spawned or not) are not triggered if they have passed
-        # the stop time, and the process is stopped is soon as a
-        # dependency negotation round results in no new tasks
-        # triggering.
+        Remove an entire dependency tree rooted on the target task,
+        through to the given stop time (inclusive). In general this
+        involves tasks that do not even exist yet within the pool.
 
-        # Finally, reset the prerequisites of all tasks spawned during
-        # the purge to unsatisfied, since they may have been satisfied
-        # by the purged tasks in the "virtual" dependency negotiations.
-        # TODO - THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
-        # ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
-        # so we should explicitly record the tasks that get satisfied
-        # during the purge.
+        Method: trigger the target task *virtually* (i.e. without
+        running the real task) by: setting it to the succeeded state,
+        setting all of its outputs completed, and forcing it to spawn.
+        (this is equivalent to instantaneous successful completion as
+        far as cylc is concerned). Then enter the normal dependency
+        negotation process to trace the downstream effects of this,
+        also triggering subsequent tasks virtually. Each time a task
+        triggers mark it as a dependency of the target task for later
+        deletion (but not immmediate deletion because other downstream
+        tasks may still trigger off its outputs).  Downstream tasks
+        (freshly spawned or not) are not triggered if they have passed
+        the stop time, and the process is stopped is soon as a
+        dependency negotation round results in no new tasks
+        triggering.
 
+        Finally, reset the prerequisites of all tasks spawned during
+        the purge to unsatisfied, since they may have been satisfied
+        by the purged tasks in the "virtual" dependency negotiations.
 
-        # Purge is an infrequently used power tool, so print
-        # comprehensive information on what it does to stdout.
+        TODO - THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
+        ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
+        so we should explicitly record the tasks that get satisfied
+        during the purge.
+
+        Purge is an infrequently used power tool, so print
+        comprehensive information on what it does to stdout.
+
+        """
+
         print
         print "PURGE ALGORITHM RESULTS:"
 
@@ -994,19 +1047,19 @@ class pool(object):
         spawn = []
 
         print 'ROOT TASK:'
-        for itask in self.get_tasks(all=True):
+        for itask in self.get_tasks(all_tasks=True):
             # Find the target task
-            if itask.id == id:
+            if itask.identity == id_:
                 # set it succeeded
-                print '  Setting', itask.id, 'succeeded'
+                print '  Setting', itask.identity, 'succeeded'
                 itask.reset_state_succeeded(manual=False)
                 # force it to spawn
-                print '  Spawning', itask.id
-                foo = self.force_spawn(itask)
-                if foo:
-                    spawn.append(foo)
+                print '  Spawning', itask.identity
+                spawned = self.force_spawn(itask)
+                if spawned:
+                    spawn.append(spawned)
                 # mark it for later removal
-                print '  Marking', itask.id, 'for deletion'
+                print '  Marking', itask.identity, 'for deletion'
                 die.append(itask)
                 break
 
@@ -1016,38 +1069,42 @@ class pool(object):
         while something_triggered:
             self.match_dependencies()
             something_triggered = False
-            for itask in sorted(self.get_tasks(all=True), key=lambda t: t.id):
+            for itask in sorted(
+                    self.get_tasks(all_tasks=True), key=lambda t: t.identity):
                 if itask.point > stop:
                     continue
                 if itask.ready_to_run():
                     something_triggered = True
-                    print '  Triggering', itask.id
+                    print '  Triggering', itask.identity
                     itask.reset_state_succeeded(manual=False)
-                    print '  Spawning', itask.id
-                    foo = self.force_spawn(itask)
-                    if foo:
-                        spawn.append(foo)
-                    print '  Marking', itask.id, 'for deletion'
+                    print '  Spawning', itask.identity
+                    spawned = self.force_spawn(itask)
+                    if spawned:
+                        spawn.append(spawned)
+                    print '  Marking', itask.identity, 'for deletion'
                     # remove these later (their outputs may still be needed)
                     die.append(itask)
                 elif itask.suicide_prerequisites.count() > 0:
                     if itask.suicide_prerequisites.all_satisfied():
-                        print '  Spawning virtually activated suicide task', itask.id
+                        print (
+                            '  Spawning virtually activated suicide task ' +
+                            itask.identity)
                         self.force_spawn(itask)
-                        # remove these now (not setting succeeded; outputs not needed)
-                        print '  Suiciding', itask.id, 'now'
+                        # remove these now (not setting succeeded; outputs not
+                        # needed)
+                        print '  Suiciding', itask.identity, 'now'
                         self.remove(itask, 'purge')
             self.release_runahead_tasks()
         # reset any prerequisites "virtually" satisfied during the purge
         print 'RESETTING spawned tasks to unsatisified:'
         for itask in spawn:
-            print '  ', itask.id
+            print '  ', itask.identity
             itask.prerequisites.set_all_unsatisfied()
 
         # finally, purge all tasks marked as depending on the target
         print 'REMOVING PURGED TASKS:'
         for itask in die:
-            print '  ', itask.id
+            print '  ', itask.identity
             self.remove(itask, 'purge')
 
         print 'PURGE DONE'

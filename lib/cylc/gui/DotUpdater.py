@@ -23,7 +23,7 @@ import string
 import threading
 from time import sleep
 
-import cylc.TaskID
+from cylc.task_id import TaskID
 from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from copy import deepcopy
@@ -122,7 +122,7 @@ class DotUpdater(threading.Thread):
         state_summary.update(self.fam_state_summary)
 
         for id_ in state_summary:
-            name, point_string = cylc.TaskID.split( id_ )
+            name, point_string = TaskID.split(id_)
             if point_string not in self.point_strings:
                 self.point_strings.append(point_string)
         try:
@@ -139,7 +139,7 @@ class DotUpdater(threading.Thread):
                 name = val[-2]
                 if name not in self.task_list:
                     for point_string in self.point_strings:
-                        task_id = cylc.TaskID.get( name, point_string )
+                        task_id = TaskID.get(name, point_string)
                         if task_id in state_summary:
                             self.task_list.append( name )
                             break
@@ -290,7 +290,7 @@ class DotUpdater(threading.Thread):
             if col_index == 0:
                 task_id = name
             else:
-                task_id = cylc.TaskID.get( name, point_string )
+                task_id = TaskID.get(name, point_string)
         else:
             try:
                 point_string = self.point_strings[path[0]]
@@ -303,7 +303,7 @@ class DotUpdater(threading.Thread):
                     name = self.led_headings[col_index]
                 except IndexError:
                     return False
-                task_id = cylc.TaskID.get( name, point_string )
+                task_id = TaskID.get(name, point_string)
         if task_id != self._prev_tooltip_task_id:
             self._prev_tooltip_task_id = task_id
             tooltip.set_text(None)
@@ -329,7 +329,7 @@ class DotUpdater(threading.Thread):
         tasks_by_point_string = {}
         tasks_by_name = {}
         for id_ in state_summary:
-            name, point_string = cylc.TaskID.split( id_ )
+            name, point_string = TaskID.split(id_)
             tasks_by_point_string.setdefault( point_string, [] )
             tasks_by_point_string[point_string].append(name)
             tasks_by_name.setdefault( name, [] )
@@ -348,7 +348,7 @@ class DotUpdater(threading.Thread):
                 state_list = []
                 for point_string in self.point_strings:
                     if point_string in point_strings_for_tasks:
-                        task_id = cylc.TaskID.get(name, point_string)
+                        task_id = TaskID.get(name, point_string)
                         state = state_summary[task_id]['state']
                         if task_id in self.fam_state_summary:
                             dot_type = 'family'
@@ -367,7 +367,7 @@ class DotUpdater(threading.Thread):
                 tasks_at_point_string = tasks_by_point_string[point_string]
                 state_list = []
                 for name in self.task_list:
-                    task_id = cylc.TaskID.get(name, point_string)
+                    task_id = TaskID.get(name, point_string)
                     if task_id in self.fam_state_summary:
                         dot_type = 'family'
                     else:
