@@ -11,11 +11,13 @@
 <div class="page">
 
 <h1>Cylc Change Log Summary</h1>
+<p><a href="index.html">(back to index)</a></p>
 
 <div class="rbox">
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.1.0">6.1.0</a></li>
     <li><a href="#6.0.2">6.0.2</a></li>
     <li><a href="#6.0.1">6.0.1</a></li>
     <li><a href="#6.0.0">6.0.0</a></li>
@@ -49,6 +51,63 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.1.0"/>
+    <h2>6.1.0</h2>
+    
+		<h3>6.1.0 enhancements</h3>
+    <ul>
+				<li> Suite daemon memory footprint reduced by 7-8%.
+				<li> <code>- + % @</code> characters are now allowed in task names.
+				<li> Print more information about Jinja2 errors.
+				<li> String templates for overriding batch system specific commands
+				have changed.
+				<li> Updated syntax highlighting for the Kate and gedit editors.
+				<li> Show job batch system name in gcylc text view.
+				<li> If using the legacy cycle point format <code>%Y%m%d%H</code>,
+				allow <code>initial/final cycle point</code> in the same format. 
+				<li> The <code>cylc scan</code> command now scans multiple hosts, like
+				<code>cylc gsummary</code> as configured in site/user config files.
+				<li> There are now two suite-run databases: the original is for
+				read-only use by external processes; a new one under the suite state
+				directory is for private use by the suite daemon.
+				<li> Job submission improvements:
+				<ul>
+						<li> new site/user config item <code>cylc executable</code> allows
+						you to explicitly configure the location of cylc on remote hosts.
+						<li> job files now site/user configurable via
+						<code>$HOME/.cylc/job-init-env.sh</code>, 
+						<code>$CYLC_DIR/conf/job-init-env.sh</code>, 
+						<code>$CYLC_DIR/conf/job-init-env-default.sh</code>
+						<li> (i.e. we no longer rely on sourcing <code>/etc/profile</code>
+						and <code>$HOME/.profile</code> - but still done for back compat)
+						<li> job submission is now handled by a cylc command on the task
+						host rather than an elaborate shell command generated on the suite
+						host
+						<li> new site/user config item <code>remote copy template</code>
+						for configuration the <code>scp</code> command for copying files to
+						remote hosts
+						<li> the site/user config items <code>remote shell template</code>
+						and <code>use login shell</code> are now used for job submission.
+						<li> new site/user config item <code>suite to job
+								environment</code>: a list of environment variables to be
+						passed from a suite to its jobs.
+				</ul>
+		</ul>
+	
+		<h3>6.1.0 fixes</h3>
+    <ul>
+				<li> Fixed crash after a reload that removes tasks from the suite
+				definition (required a restart to recover).
+				<li> Fixed display of new tasks in the gcylc dot and text views
+				after a suite reload that adds tasks to the suite definition.
+				<li> Fixed automatic upgrade by cylc-6 of cylc-5
+				<code>startup-task:finish</code> triggers.
+				<li> Fixed a bug introduced to gcylc at 6.0.2: the graph view
+				displayed nothing in grouped mode if all nodes were families.
+				<li> Fixed backward compatibility for cylc-5 <code>gcylc.rc</code>
+				files (was broken by the old cylc-5 'runahead' task state).
+		</ul>
+	
 <a name="6.0.2"/>
     <h2>6.0.2</h2>
     
