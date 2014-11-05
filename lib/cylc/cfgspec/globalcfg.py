@@ -30,9 +30,6 @@ import cylc.flags
 
 "Cylc site and user configuration file spec."
 
-SITE_FILE = os.path.join( os.environ['CYLC_DIR'], 'conf', 'siterc', 'site.rc' )
-USER_FILE = os.path.join( os.environ['HOME'], '.cylc', 'user.rc' )
-
 SPEC = {
     'process pool size'                   : vdr( vtype='integer', default=None ),
     'temporary directory'                 : vdr( vtype='string' ),
