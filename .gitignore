@@ -27,6 +27,7 @@ ext/ordereddict-0.4.5/build
 
 # site configuration and processed configuration
 conf/job-init-env.sh
+conf/global.rc*
 conf/siterc
 conf/*/*.rc.processed
 
