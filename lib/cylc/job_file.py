@@ -410,8 +410,8 @@ echo "  Suite Owner : $CYLC_SUITE_OWNER"
 echo "  Task ID     : $CYLC_TASK_ID"
 if [[ $(uname) == AIX ]]; then
     # on AIX the hostname command has no '-f' option
-    CYLC_DOMAIN=$(namerslv -sn 2>/dev/null | awk '{print $2}')
-    echo "  Task Host   : $(hostname).${CYLC_DOMAIN}"
+    __TMP_DOMAIN=$(namerslv -sn 2>/dev/null | awk '{print $2}')
+    echo "  Task Host   : $(hostname).${__TMP_DOMAIN}"
 else
     echo "  Task Host   : $(hostname -f)"
 fi
