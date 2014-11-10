@@ -27,7 +27,9 @@ from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from parsec.config import config
-from cylc.syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
+from cylc.syntax_flags import (
+    set_syntax_version, VERSION_PREV, VERSION_NEW, SyntaxVersionError
+)
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
@@ -167,9 +169,12 @@ def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
         interval = interval_parser.parse(value)
     except ValueError:
         raise IllegalValueError("ISO 8601 interval", keys, value)
-    set_syntax_version(VERSION_NEW,
-                       "ISO 8601 interval: %s" % itemstr(
-                           keys[:-1], keys[-1], value))
+    try:
+        set_syntax_version(VERSION_NEW,
+                           "ISO 8601 interval: %s" % itemstr(
+                               keys[:-1], keys[-1], value))
+    except SyntaxVersionError as exc:
+        raise Exception(str(exc))
     days, seconds = interval.get_days_and_seconds()
     seconds += days * Calendar.default().SECONDS_IN_DAY
     return seconds
