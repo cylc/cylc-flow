@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "WARNING: cylc checkvars HAS BEEN OBSOLETED" >&2
+echo "WARNING:  use 'set -eu' in task scripting" >&2

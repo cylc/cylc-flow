@@ -209,6 +209,8 @@ utility_commands['cycle-point'] = ['cycle-point', 'cyclepoint', 'datetime','cycl
 utility_commands['random'] = ['random', 'rnd']
 utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
+utility_commands['checkvars'] = ['checkvars']
+utility_commands['housekeeping'] = ['housekeeping']
 
 hook_commands = OrderedDict()
 hook_commands['email-suite'] = ['email-suite']
@@ -429,6 +431,8 @@ comsum['random'] = 'Generate a random integer within a given range'
 comsum['jobscript'] = 'Generate a task job script and print it to stdout'
 comsum['scp-transfer'] = 'Scp-based file transfer for cylc suites'
 comsum['suite-state'] = 'Query the task states in a suite'
+comsum['checkvars'] = 'OBSELETED: THIS COMMAND DOES NOTHING'
+comsum['housekeeping'] = 'DEPRECATED: FOR LEGACY CYCLE-TIME FORMAT ONLY'
 
 # hook
 comsum['email-task'] = 'A task event hook script that sends email alerts'
