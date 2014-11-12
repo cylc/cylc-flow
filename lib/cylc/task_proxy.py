@@ -98,7 +98,8 @@ class TaskProxy(object):
 
     def __init__(
             self, tdef, start_point, initial_state, stop_point=None,
-            is_startup=False, validate_mode=False, submit_num=0):
+            is_startup=False, validate_mode=False, submit_num=0,
+            is_reload=False):
         self.tdef = tdef
         self.submit_num = submit_num
 
@@ -209,8 +210,11 @@ class TaskProxy(object):
         self.command_logger = CommandLogger(
             self.suite_name, self.tdef.name, self.point)
 
-        if not validate_mode:  # if in validate mode bypass db operations
-            if self.state.is_currently("waiting") and self.submit_num == 0:
+        if not validate_mode:
+            # (on reload, the db entry already exists)
+            if not is_reload and (
+                    self.state.is_currently("waiting") and
+                    self.submit_num == 0):
                 self.record_db_state()
             if self.submit_num > 0:
                 self.record_db_update(

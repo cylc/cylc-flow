@@ -551,6 +551,7 @@ class TaskPool(object):
                         itask.state.get_status(),
                         stop_point=itask.stop_point,
                         submit_num=itask.submit_num,
+                        is_reload=True
                     )
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
