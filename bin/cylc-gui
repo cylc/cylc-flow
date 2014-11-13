@@ -47,10 +47,11 @@ To see current configuration settings use "cylc get-gui-config".""",
 pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
 
 parser.add_option("-r", "--restricted",
-        help="Restrict display to the most important and typically least "
-        "populous task states: submitted, submit-failed, submit-retrying, "
-        "running, failed, retrying; and disable the graph view. "
-        "This may be useful for very large suites.",
+        help="Restrict display to 'active' task states: submitted, "
+        "submit-failed, submit-retrying, running, failed, retrying; "
+        "and disable the graph view.  This may be needed for very large "
+        "suites. The state summary icons in the status bar still "
+        "represent all task proxies.",
         action="store_true", default=False, dest="restricted")
 
 ( options, args ) = parser.parse_args()

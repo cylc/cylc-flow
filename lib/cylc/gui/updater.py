@@ -247,8 +247,8 @@ class Updater(threading.Thread):
                         (i, j) for i, j in states.items() if j['state'] in
                         task_state.legal_for_restricted_monitoring)
 
-            self.task_list = list(set([i.split('.')[0] for i in states.keys()]))
-
+            self.task_list = list(set([t['name'] for t in states.values()]))
+ 
             if not glbl:
                 self.task_list = []
                 return False
