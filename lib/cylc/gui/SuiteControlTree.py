@@ -230,7 +230,13 @@ Text Treeview suite control interface.
 
         dotm = DotMaker(self.theme, size='small')
         cnt = 0
-        for st in task_state.legal:
+
+        if self.updater.big_suite:
+            task_states = task_state.legal_for_big_suite_monitoring
+        else:
+            task_states = task_state.legal
+
+        for st in task_states:
             box = gtk.HBox()
             icon = dotm.get_image(st)
             cb = gtk.CheckButton(task_state.labels[st])
@@ -273,7 +279,6 @@ Text Treeview suite control interface.
         vbox = gtk.VBox()
         vbox.pack_start(sw, True)
         vbox.pack_end(filter_hbox, False)
-
 
         return vbox
 

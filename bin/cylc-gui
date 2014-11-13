@@ -46,6 +46,13 @@ $HOME/.cylc/gcylc.rc and follow the instructions in the file.
 To see current configuration settings use "cylc get-gui-config".""",
 pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
 
+parser.add_option("-b", "--big-suite",
+        help="For very large suites: only display the most important "
+        "and least populous task states: submitted, submit-failed, "
+        "submit-retrying, running, failed, retrying; and disable the "
+        "graph view.",
+        action="store_true", default=False, dest="big_suite")
+
 ( options, args ) = parser.parse_args()
 
 # import modules that require gtk now, so that a display is not needed
@@ -74,9 +81,10 @@ else:
     suite = None
 
 try:
-    app = ControlApp( suite, options.db, options.owner,
+    app = ControlApp(suite, options.db, options.owner,
             options.host, options.port, options.pyro_timeout,
-            options.templatevars, options.templatevars_file )
+            options.templatevars, options.templatevars_file,
+            options.big_suite)
 except Exception, x:
     if cylc.flags.debug:
         raise
