@@ -31,6 +31,7 @@ if '--use-ssh' in sys.argv[1:]:
 import os, re
 from copy import copy
 from time import sleep
+import datetime
 from cylc import cylc_pyro_client
 from cylc.passphrase import SecurityError
 from cylc.CylcOptionParsers import cop
@@ -48,16 +49,25 @@ A terminal-based suite monitor that updates the current state of all
 tasks in real time. It is effective even for quite large suites if
 '--align' is not used.""", pyro=True, noforce=True )
 
-parser.add_option( "-a", "--align",
+parser.add_option("-a", "--align",
         help="Align columns by task name. This option "
         "is only useful for small suites.",
-        action="store_true", default=False, dest="align_columns" )
+        action="store_true", default=False, dest="align_columns")
+
+parser.add_option("-b", "--big-suite",
+        help="For very large suites: only display the most important "
+        "and least populous task states: submitted, submit-failed, "
+        "submit-retrying, running, failed, retrying.",
+        action="store_true", default=False, dest="big_suite")
 
 ( options, args ) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-states = task_state.legal
+if options.big_suite:
+    states = task_state.legal_for_big_suite_monitoring
+else:
+    states = task_state.legal
 
 key = ''
 for state in states:
@@ -130,11 +140,15 @@ try:
                 sleep(1)
                 continue
 
+            if options.big_suite:
+                states = dict(
+                        (i, j) for i, j in states.items() if j['state'] in
+                        task_state.legal_for_big_suite_monitoring)
+ 
             alerted2 = False
             alerted3 = False
 
-            dt = str(glbl['last_updated'])
-            dt = re.sub('\.\d+', '', dt)
+            dt = datetime.datetime.fromtimestamp(glbl['last_updated']).strftime("%H:%M:%S")
             run_mode = glbl[ 'run_mode' ]
             paused = glbl['paused']
             stopping = glbl['stopping']
@@ -218,23 +232,25 @@ try:
 
             # last time state summary was updated by cylc (only happens
             # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:                                            ' + '\033[1;38m' + dt + ctrl_end )
+            blit.append( 'suite state summary last updated at ' + '\033[1;38m' + dt + ctrl_end )
 
             foo = 'mode: ' + run_mode
             baz = header
             baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
             blit.append( baz )
 
+            foo = '_'*len(header)
             if stopping:
-                foo = '___________________________________________________________________________________S_T_O_P_P_I_N_G'
+                end = 'S_T_O_P_P_I_N_G'
             elif paused:
-                foo = '_______________________________________________________________________________________P_A_U_S_E_D'
+                end = 'P_A_U_S_E_D'
             elif will_pause_at:
-                foo = '____________________________________________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
+                end = 'P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
-                foo = '__________________________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
+                end = 'S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
-                foo = '_____________________________________________________________________________________R_U_N_N_I_N_G'
+                end = 'R_U_N_N_I_N_G'
+            foo = foo[:-len(end)] + end
 
             #blit.append( '\033[1;33;44m' + foo + ctrl_end )
             blit.append( '\033[1;31m' + foo + ctrl_end )
