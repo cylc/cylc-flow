@@ -62,7 +62,7 @@ class task_state(object):
         'fail' : 'failed'
     }
 
-    legal_for_big_suite_monitoring = [
+    legal_for_restricted_monitoring = [
         'submitted',
         'submit-failed',
         'submit-retrying',

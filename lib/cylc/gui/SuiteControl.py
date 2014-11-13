@@ -385,12 +385,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS_ORDERED.append( "graph" )
 
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
-            template_vars, template_vars_file, big_suite):
+            template_vars, template_vars_file, restricted_display):
 
         gobject.threads_init()
 
         set_exception_hook_dialog("gcylc")
-        self.big_suite = big_suite
+        self.restricted_display = restricted_display
 
         self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
@@ -453,8 +453,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.window.add( bigbox )
         title = "gcylc"
-        if self.big_suite:
-            title += " -b (restricted display for large suites)"
+        if self.restricted_display:
+            title += " -r (restricted display)"
         self.window.set_title(title)
 
         self.window.show_all()
@@ -469,8 +469,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if self.cfg.host != socket.getfqdn():
             title += " - " + self.cfg.host
         title += " - gcylc"
-        if self.big_suite:
-            title += " -b (restricted display for large suites)"
+        if self.restricted_display:
+            title += " -r (restricted display)"
         self.window.set_title( title )
         self.cfg.reset(suite)
 
@@ -480,7 +480,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         if self.updater is not None:
             self.updater.stop()
-        self.updater = Updater(self.cfg, self.info_bar, self.big_suite)
+        self.updater = Updater(self.cfg, self.info_bar, self.restricted_display)
         self.updater.start()
 
         self.restart_views()
@@ -2355,7 +2355,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         graph_view0_item._viewname = "graph"
         graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
         graph_view0_item.connect( 'toggled', self._cb_change_view0_menu )
-        if graphing_disabled or self.big_suite:
+        if graphing_disabled or self.restricted_display:
             graph_view0_item.set_sensitive(False)
 
         self.view_menu_views0 = [ text_view0_item, dot_view0_item, graph_view0_item ]
@@ -2393,7 +2393,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         graph_view1_item._viewname = "graph"
         graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        if graphing_disabled or self.big_suite:
+        if graphing_disabled or self.restricted_display:
             graph_view1_item.set_sensitive(False)
 
         self.view_menu_views1 = [ no_view1_item, text_view1_item, dot_view1_item, graph_view1_item ]
@@ -2821,7 +2821,7 @@ This is what my suite does:..."""
         pixlist0 = gtk.ListStore( gtk.gdk.Pixbuf, str )
         pixlist1 = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
         view_items = []
-        if self.big_suite and 'graph' in views:
+        if self.restricted_display and 'graph' in views:
             views.remove('graph')
         for v in views:
             pixbuf = gtk.gdk.pixbuf_new_from_file( self.cfg.imagedir + self.VIEW_ICON_PATHS[v] )

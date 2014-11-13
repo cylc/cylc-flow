@@ -54,18 +54,19 @@ parser.add_option("-a", "--align",
         "is only useful for small suites.",
         action="store_true", default=False, dest="align_columns")
 
-parser.add_option("-b", "--big-suite",
-        help="For very large suites: only display the most important "
-        "and least populous task states: submitted, submit-failed, "
-        "submit-retrying, running, failed, retrying.",
-        action="store_true", default=False, dest="big_suite")
+parser.add_option("-r", "--restricted",
+        help="Restrict display to the most important and typically least "
+        "populous task states: submitted, submit-failed, submit-retrying, "
+        "running, failed, retrying. "
+        "This may be useful for very large suites.",
+        action="store_true", default=False, dest="restricted")
 
 ( options, args ) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-if options.big_suite:
-    states = task_state.legal_for_big_suite_monitoring
+if options.restricted:
+    states = task_state.legal_for_restricted_monitoring
 else:
     states = task_state.legal
 
@@ -140,10 +141,10 @@ try:
                 sleep(1)
                 continue
 
-            if options.big_suite:
+            if options.restricted:
                 states = dict(
                         (i, j) for i, j in states.items() if j['state'] in
-                        task_state.legal_for_big_suite_monitoring)
+                        task_state.legal_for_restricted_monitoring)
  
             alerted2 = False
             alerted3 = False

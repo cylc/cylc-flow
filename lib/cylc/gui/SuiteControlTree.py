@@ -231,8 +231,8 @@ Text Treeview suite control interface.
         dotm = DotMaker(self.theme, size='small')
         cnt = 0
 
-        if self.updater.big_suite:
-            task_states = task_state.legal_for_big_suite_monitoring
+        if self.updater.restricted_display:
+            task_states = task_state.legal_for_restricted_monitoring
         else:
             task_states = task_state.legal
 

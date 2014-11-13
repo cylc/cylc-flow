@@ -89,7 +89,7 @@ class Updater(threading.Thread):
 
     """Retrieve information about the running or stopped suite."""
 
-    def __init__(self, cfg, info_bar, big_suite=False):
+    def __init__(self, cfg, info_bar, restricted_display):
 
         super(Updater, self).__init__()
 
@@ -126,7 +126,7 @@ class Updater(threading.Thread):
         self._reconnect()
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
-        self.big_suite = big_suite
+        self.restricted_display = restricted_display
 
     def _flag_new_update( self ):
         self.last_update_time = time()
@@ -242,10 +242,10 @@ class Updater(threading.Thread):
                 gobject.idle_add( self.connection_lost )
                 return False
 
-            if self.big_suite:
+            if self.restricted_display:
                 states = dict(
                         (i, j) for i, j in states.items() if j['state'] in
-                        task_state.legal_for_big_suite_monitoring)
+                        task_state.legal_for_restricted_monitoring)
 
             self.task_list = list(set([i.split('.')[0] for i in states.keys()]))
 

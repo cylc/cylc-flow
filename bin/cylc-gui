@@ -46,12 +46,12 @@ $HOME/.cylc/gcylc.rc and follow the instructions in the file.
 To see current configuration settings use "cylc get-gui-config".""",
 pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
 
-parser.add_option("-b", "--big-suite",
-        help="For very large suites: only display the most important "
-        "and least populous task states: submitted, submit-failed, "
-        "submit-retrying, running, failed, retrying; and disable the "
-        "graph view.",
-        action="store_true", default=False, dest="big_suite")
+parser.add_option("-r", "--restricted",
+        help="Restrict display to the most important and typically least "
+        "populous task states: submitted, submit-failed, submit-retrying, "
+        "running, failed, retrying; and disable the graph view. "
+        "This may be useful for very large suites.",
+        action="store_true", default=False, dest="restricted")
 
 ( options, args ) = parser.parse_args()
 
@@ -84,7 +84,7 @@ try:
     app = ControlApp(suite, options.db, options.owner,
             options.host, options.port, options.pyro_timeout,
             options.templatevars, options.templatevars_file,
-            options.big_suite)
+            options.restricted)
 except Exception, x:
     if cylc.flags.debug:
         raise
