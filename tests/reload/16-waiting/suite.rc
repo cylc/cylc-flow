@@ -1,0 +1,35 @@
+title = Test reload waiting task integrity error
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT0.5M
+        dummy mode suite timeout = PT0.5M
+        simulation mode suite timeout = PT0.5M
+
+[scheduling]
+    [[dependencies]]
+        graph = """
+sleeping-waiter => waiter
+sleeping-waiter:start => reloader
+"""
+
+[runtime]
+    [[sleeping-waiter]]
+        command scripting = """
+touch 'file'
+while [[ -e 'file' ]]; do
+    sleep 1
+done
+"""
+    [[waiter]]
+        command scripting = true
+    [[reloader]]
+        command scripting = """
+cylc reload "${CYLC_SUITE_NAME}"
+while ! grep -q 'RELOADING TASK DEFINITION FOR waiter\.1' \
+    "${CYLC_SUITE_LOG_DIR}/log"
+do
+    sleep 1
+done
+rm -f "${CYLC_SUITE_WORK_DIR}/1/sleeping-waiter/file"
+"""
