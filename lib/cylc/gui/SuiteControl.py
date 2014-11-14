@@ -391,6 +391,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         set_exception_hook_dialog("gcylc")
         self.restricted_display = restricted_display
+        if self.restricted_display:
+            if "graph" in self.__class__.VIEWS:
+                del self.__class__.VIEWS["graph"]
+            if "graph" in self.__class__.VIEWS_ORDERED:
+                self.__class__.VIEWS_ORDERED.remove('graph')
 
         self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
@@ -427,7 +432,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start( self.menu_bar, False )
 
         self.initial_views = gcfg.get( ['initial views'] )
-        if graphing_disabled:
+        if graphing_disabled or self.restricted_display:
             try:
                 self.initial_views.remove("graph")
             except ValueError:
@@ -2821,8 +2826,6 @@ This is what my suite does:..."""
         pixlist0 = gtk.ListStore( gtk.gdk.Pixbuf, str )
         pixlist1 = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
         view_items = []
-        if self.restricted_display and 'graph' in views:
-            views.remove('graph')
         for v in views:
             pixbuf = gtk.gdk.pixbuf_new_from_file( self.cfg.imagedir + self.VIEW_ICON_PATHS[v] )
             pixlist0.append( ( pixbuf, v ) )
