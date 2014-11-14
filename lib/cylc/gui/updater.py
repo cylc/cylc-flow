@@ -246,6 +246,9 @@ class Updater(threading.Thread):
                 states = dict(
                         (i, j) for i, j in states.items() if j['state'] in
                         task_state.legal_for_restricted_monitoring)
+                fam_states = dict(
+                        (i, j) for i, j in fam_states.items() if j['state'] in
+                        task_state.legal_for_restricted_monitoring)
 
             self.task_list = list(set([t['name'] for t in states.values()]))
  
