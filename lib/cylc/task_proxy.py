@@ -67,6 +67,7 @@ from cylc.mp_pool import (
 )
 from cylc.task_id import TaskID
 from cylc.task_output_logs import logfiles
+from cylc.wallclock import get_time_string_from_unix_time
 
 
 class TaskProxySequenceBoundsError(ValueError):
@@ -411,8 +412,8 @@ class TaskProxy(object):
                 self.point_as_seconds += utc_offset_in_seconds
             self.delayed_start = (
                 self.point_as_seconds + clocktrigger_offset_as_seconds)
-            self.delayed_start_str = str(
-                self.point + self.tdef.clocktrigger_offset)
+            self.delayed_start_str = get_time_string_from_unix_time(
+                self.delayed_start)
         return time.time() > self.delayed_start
 
     def get_resolved_dependencies(self):
