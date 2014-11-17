@@ -929,7 +929,7 @@ class scheduler(object):
 
     def update_state_summary(self):
         self.suite_state.update(
-                self.pool.get_tasks(), 
+                self.pool.get_tasks(incl_runahead=False), 
                 self.pool.get_min_point(), self.pool.get_max_point(),
                 self.paused(),
                 self.will_pause_at(),
