@@ -35,7 +35,7 @@
         {%- if BATCH_SYS_NAME == 'loadleveler' %}
             class            = serial
             job_type         = serial
-            wall_clock_limit = '20,15'
+            wall_clock_limit = '60,30'
         {%- elif BATCH_SYS_NAME == 'slurm' %}
             --time = 20
         {%- elif BATCH_SYS_NAME == 'pbs' %}
