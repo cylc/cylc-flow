@@ -32,7 +32,7 @@ TEST_NAME=$TEST_NAME_BASE-max-cycle
 DB=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db
 run_ok $TEST_NAME sqlite3 $DB "select max(cycle) from task_states"
 cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
-20100101T1200Z
+20100101T1800Z
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-timeout

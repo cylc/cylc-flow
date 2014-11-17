@@ -18,7 +18,7 @@
             graph = "run_ok"
         # T05...
         [[[T05]]]
-            graph = "never_run"
+            graph = "run_ok_2"
 [runtime]
     [[foo]]
         command scripting = false
