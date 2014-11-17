@@ -698,7 +698,7 @@ class TaskPool(object):
         event_recorders = []
         other = []
 
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all_tasks=True):
             itask.process_incoming_messages()
             # if incoming messages have resulted in new database operations
             # grab them
