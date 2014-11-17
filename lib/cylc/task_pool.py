@@ -686,22 +686,25 @@ class TaskPool(object):
 
         self.broker.register(self.get_tasks())
 
-        for itask in self.get_tasks():
+        for itask in self.get_tasks(all_tasks=False):
             # try to satisfy itask if not already satisfied.
             if itask.not_fully_satisfied():
                 self.broker.negotiate(itask)
 
     def process_queued_task_messages(self):
-        """Save queued task messages to persistent storage."""
+        """Handle incoming task messages for each task proxy."""
+        for itask in self.get_tasks():
+            itask.process_incoming_messages()
+ 
+    def process_queued_db_ops(self):
+        """Handle queued db operations for each task proxy."""
         state_recorders = []
         state_updaters = []
         event_recorders = []
         other = []
 
         for itask in self.get_tasks(all_tasks=True):
-            itask.process_incoming_messages()
-            # if incoming messages have resulted in new database operations
-            # grab them
+            # (runahead pool tasks too, to get new state recorders).
             for oper in itask.get_db_ops():
                 if isinstance(oper, cylc.rundb.UpdateObject):
                     state_updaters += [oper]

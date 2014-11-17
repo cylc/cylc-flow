@@ -869,8 +869,9 @@ class scheduler(object):
                     seconds = time.time() - main_loop_start_time
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
+            self.pool.process_queued_task_messages()
             try:
-                self.pool.process_queued_task_messages()
+                self.pool.process_queued_db_ops()
             except OSError as err:
                 self.shutdown(str(err))
                 raise
