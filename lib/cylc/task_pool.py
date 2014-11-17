@@ -588,6 +588,7 @@ class TaskPool(object):
                     new_task.try_number = itask.try_number
                     new_task.sub_try_number = itask.sub_try_number
                     new_task.submit_num = itask.submit_num
+                    new_task.db_queue = itask.db_queue
 
                     self.remove(itask, '(suite definition reload)')
                     self.add_to_runahead_pool(new_task)
