@@ -102,6 +102,7 @@ class TaskProxy(object):
             is_reload=False):
         self.tdef = tdef
         self.submit_num = submit_num
+        self.validate_mode = validate_mode
 
         if is_startup:
             # adjust up to the first on-sequence cycle point
@@ -210,15 +211,14 @@ class TaskProxy(object):
         self.command_logger = CommandLogger(
             self.suite_name, self.tdef.name, self.point)
 
-        if not validate_mode:
-            # (on reload, the db entry already exists)
-            if not is_reload and (
-                    self.state.is_currently("waiting") and
-                    self.submit_num == 0):
-                self.record_db_state()
-            if self.submit_num > 0:
-                self.record_db_update(
-                    "task_states", status=self.state.get_status())
+        # Create the initial db state entry created at task proxy init. A
+        # reloaded proxy already has a state entry, by definition.
+        if not is_reload:
+            self.record_db_state()
+
+        if self.submit_num > 0:
+            self.record_db_update(
+                "task_states", status=self.state.get_status())
 
         self.reconfigure_me = False
         self.event_hooks = None
@@ -336,6 +336,9 @@ class TaskProxy(object):
 
     def record_db_event(self, event="", message=""):
         """Record an event to the DB."""
+        if self.validate_mode:
+            # Don't touch the db during validation.
+            return
         self.db_queue.append(cylc.rundb.RecordEventObject(
             self.tdef.name, str(self.point), self.submit_num, event, message,
             self.user_at_host
@@ -343,11 +346,17 @@ class TaskProxy(object):
 
     def record_db_update(self, table, **kwargs):
         """Record an update to the DB."""
+        if self.validate_mode:
+            # Don't touch the db during validation.
+            return
         self.db_queue.append(cylc.rundb.UpdateObject(
             table, self.tdef.name, str(self.point), **kwargs))
 
     def record_db_state(self):
         """Record state to DB."""
+        if self.validate_mode:
+            # Don't touch the db during validation.
+            return
         self.db_queue.append(cylc.rundb.RecordStateObject(
             self.tdef.name,
             str(self.point),
