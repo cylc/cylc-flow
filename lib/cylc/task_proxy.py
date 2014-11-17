@@ -211,8 +211,8 @@ class TaskProxy(object):
         self.command_logger = CommandLogger(
             self.suite_name, self.tdef.name, self.point)
 
-        # Create the initial db state entry created at task proxy init. A
-        # reloaded proxy already has a state entry, by definition.
+        # An initial db state entry is created at task proxy init. On reloading
+        # or restarting the suite, the task proxies already have this db entry.
         if not is_reload:
             self.record_db_state()
 
