@@ -1,0 +1,53 @@
+2013/09/20 15:17:44 INFO - Thread-2 start (Event Handler Submission)
+2013/09/20 15:17:44 INFO - Thread-3 start (Poll and Kill Command Submission)
+2013/09/20 15:17:44 INFO - port:7766
+2013/09/20 15:17:44 INFO - Suite starting at 2013-09-20 15:17:44.087054
+2013/09/20 15:17:44 INFO - Log event clock: real time
+2013/09/20 15:17:44 INFO - Run mode: live
+2013/09/20 15:17:44 INFO - Initial point: 1
+2013/09/20 15:17:44 INFO - Final point: 1
+2013/09/20 15:17:44 INFO - Thread-4 start (Job Submission)
+2013/09/20 15:17:44 INFO - Thread-5 start (Request Handling)
+2013/09/20 15:17:44 INFO - [rem1.1] -(setting:submitting)
+2013/09/20 15:17:44 INFO - [rem1.1] -triggered off []
+2013/09/20 15:17:45 INFO - [rem1.1] -Task host: remotehost
+2013/09/20 15:17:45 INFO - [rem1.1] -Copying suite contact file to remotehost
+2013/09/20 15:17:45 INFO - [rem1.1] -(current:submitting)> rem1.1 submitting now
+2013/09/20 15:17:48 INFO - [rem1.1] -(current:submitting)> rem1.1 submission succeeded
+2013/09/20 15:17:48 INFO - [rem1.1] -(setting:submitted)
+2013/09/20 15:17:48 INFO - [rem1.1] -(current:submitted)> rem1.1 submit_method_id=e004.3230768
+2013/09/20 15:17:55 INFO - [rem1.1] -(current:submitted)> rem1.1 started at 2013-09-20T14:17:54
+2013/09/20 15:17:55 INFO - [rem1.1] -(setting:running)
+2013/09/20 15:18:06 INFO - [rem1.1] -(current:running)> rem1.1 succeeded at 2013-09-20T14:18:05
+2013/09/20 15:18:06 INFO - [rem1.1] -(setting:succeeded)
+2013/09/20 15:18:06 INFO - [rem2.1] -(setting:submitting)
+2013/09/20 15:18:06 INFO - [rem2.1] -triggered off ['rem1.1']
+2013/09/20 15:18:06 INFO - [rem2.1] -Task host: remotehost
+2013/09/20 15:18:07 INFO - [rem2.1] -(current:submitting)> rem2.1 submitting now
+2013/09/20 15:18:08 INFO - [rem2.1] -(current:submitting)> rem2.1 submission succeeded
+2013/09/20 15:18:08 INFO - [rem2.1] -(setting:submitted)
+2013/09/20 15:18:08 INFO - [rem2.1] -(current:submitted)> rem2.1 submit_method_id=e001.3041834
+2013/09/20 15:18:14 INFO - [rem2.1] -(current:submitted)> rem2.1 started at 2013-09-20T14:18:13
+2013/09/20 15:18:14 INFO - [rem2.1] -(setting:running)
+2013/09/20 15:18:14 INFO - [killer.1] -(setting:submitting)
+2013/09/20 15:18:14 INFO - [killer.1] -triggered off ['rem2.1']
+2013/09/20 15:18:15 INFO - [killer.1] -(current:submitting)> killer.1 submitting now
+2013/09/20 15:18:15 INFO - [killer.1] -(current:submitting)> killer.1 submission succeeded
+2013/09/20 15:18:15 INFO - [killer.1] -(setting:submitted)
+2013/09/20 15:18:15 INFO - [killer.1] -(current:submitted)> killer.1 submit_method_id=1349
+2013/09/20 15:18:16 INFO - [killer.1] -(current:submitted)> killer.1 started at 2013-09-20T15:18:15
+2013/09/20 15:18:16 INFO - [killer.1] -(setting:running)
+2013/09/20 15:18:17 CRITICAL - [rem2.1] -Killing job
+2013/09/20 15:18:17 INFO - Command succeeded: kill tasks(rem2,1,False)
+2013/09/20 15:18:19 INFO - [rem2.1] -(current:running)> kill command succeeded
+2013/09/20 15:18:19 INFO - [rem2.1] -(setting:failed)
+2013/09/20 15:18:23 CRITICAL - [rem2.1] -(current:failed)> Task job script received signal TERM at 2013-09-20T14:18:22
+2013/09/20 15:18:23 WARNING - [rem2.1] -rejecting a message received while in the failed state:
+2013/09/20 15:18:23 WARNING - [rem2.1] -  Task job script received signal TERM at 2013-09-20T14:18:22
+2013/09/20 15:18:23 CRITICAL - [rem2.1] -(current:failed)> rem2.1 failed at 2013-09-20T14:18:22
+2013/09/20 15:18:23 WARNING - [rem2.1] -rejecting a message received while in the failed state:
+2013/09/20 15:18:23 WARNING - [rem2.1] -  rem2.1 failed at 2013-09-20T14:18:22
+2013/09/20 15:18:27 INFO - [killer.1] -(current:running)> killer.1 succeeded at 2013-09-20T15:18:27
+2013/09/20 15:18:27 INFO - [killer.1] -(setting:succeeded)
+2013/09/20 15:18:28 INFO - All non-cycling tasks have succeeded
+2013/09/20 15:18:28 INFO - Suite shutting down at 2013-09-20 15:18:28.348368

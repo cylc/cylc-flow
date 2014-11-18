@@ -25,17 +25,17 @@ set_test_number 13
 install_suite $TEST_NAME_BASE submit-failed
 TEST_SUITE_RUN_OPTIONS=
 SUITE_TIMEOUT=240
-if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' ]]; then
-    ssh $CYLC_LL_TEST_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
-    scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_LL_TEST_TASK_HOST:.cylc/$SUITE_NAME/passphrase
-    export CYLC_LL_TEST_SITE_DIRECTIVES CYLC_LL_TEST_TASK_HOST
-    TEST_SUITE_RUN_OPTIONS="--set=USE_LOADLEVELER=true"
+if [[ -n ${CYLC_TEST_BATCH_TASK_HOST:-} && ${CYLC_TEST_BATCH_TASK_HOST:-} != 'None' ]]; then
+    ssh $CYLC_TEST_BATCH_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
+    scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_TEST_BATCH_TASK_HOST:.cylc/$SUITE_NAME/passphrase
+    export CYLC_TEST_BATCH_SITE_DIRECTIVES CYLC_TEST_BATCH_TASK_HOST
+    TEST_SUITE_RUN_OPTIONS="--set=BATCH_SYS_NAME=$BATCH_SYS_NAME"
     SUITE_TIMEOUT=900
 fi
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
@@ -145,6 +145,6 @@ tidy|2013092306|1|1|succeeded
 __DB_DUMP__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' && -n $SUITE_NAME ]]; then
-    ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
+if [[ -n ${CYLC_TEST_BATCH_TASK_HOST:-} && ${CYLC_TEST_BATCH_TASK_HOST:-} != 'None' && -n $SUITE_NAME ]]; then
+    ssh $CYLC_TEST_BATCH_TASK_HOST rm -rf .cylc/$SUITE_NAME
 fi

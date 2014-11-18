@@ -4,7 +4,7 @@
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 2.5 # minutes
+       live mode suite timeout = 3.5 # minutes
        expected task failures = rem2.1
 [scheduling]
     [[dependencies]]
@@ -12,22 +12,20 @@
                    rem2:start => killer => !rem2
                    """
 [runtime]
-    [[LLSETTINGS]]
+    [[PBS_SETTINGS]]
         [[[job submission]]]
-            method = loadleveler
+            method = pbs
         [[[directives]]]
-            class            = serial
-            job_type         = serial
-            notification     = error
-            wall_clock_limit = '120,60'
+            -l walltime=00:60:00
+            -l cput=00:02:00
             {{SITE_DIRECTIVES}}
         [[[remote]]]
             host = {{ HOST }}
     [[rem1]]
-        inherit = LLSETTINGS
+        inherit = PBS_SETTINGS
         command scripting = "sleep 10; true"
     [[rem2]]
-        inherit = LLSETTINGS
+        inherit = PBS_SETTINGS
         command scripting = "sleep 30"
     [[killer]]
         command scripting = cylc kill $CYLC_SUITE_NAME rem2 1 -f; sleep 10
