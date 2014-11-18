@@ -19,6 +19,8 @@
 from copy import deepcopy
 import datetime
 import gobject
+import gtk
+import itertools
 import threading
 from time import sleep
 
@@ -58,6 +60,9 @@ class TreeUpdater(threading.Thread):
         self.last_update_time = None
         self.ancestors = {}
         self.descendants = []
+        self._prev_id_named_paths = {}
+        self._prev_data = {}
+        self._prev_fam_data = {}
 
         self.autoexpand_states = [ 'queued', 'ready', 'submitted', 'running', 'failed' ]
         self._last_autoexpand_me = []
@@ -191,8 +196,20 @@ class TreeUpdater(threading.Thread):
 
         tetc_cached_ids_left = set(self._id_tetc_cache)
         
-        for summary, dest in [(self.updater.state_summary, new_data),
-                              (self.updater.fam_state_summary, new_fam_data)]:
+        id_named_paths = {}
+
+        should_rebuild_tree = False
+        update_row_ids = []
+        task_row_ids_left = set()
+        for point_string, name_paths in self._prev_id_named_paths.items():
+            for name in name_paths:
+                task_row_ids_left.add((point_string, name))
+
+        for summary, dest, prev, is_fam in [
+                (self.updater.state_summary, new_data,
+                 self._prev_data, False),
+                (self.updater.fam_state_summary, new_fam_data,
+                 self._prev_fam_data, True)]:
             # Populate new_data and new_fam_data.
             for id in summary:
                 name, point_string = TaskID.split(id)
@@ -296,7 +313,7 @@ class TreeUpdater(threading.Thread):
                 message = summary[ id ].get('latest_message')
                 if message is not None and last_update_date is not None:
                     message = message.replace(last_update_date + "T", "", 1)
-                if id in self.fam_state_summary:
+                if is_fam:
                     dot_type = 'family'
                     job_id = job_id or ""
                     batch_sys_name = batch_sys_name or ""
@@ -314,77 +331,178 @@ class TreeUpdater(threading.Thread):
                 except KeyError:
                     icon = self.dots[dot_type]['unknown']
 
-                dest[point_string][name] = [
-                        state, host, batch_sys_name, job_id,
-                        t_info['submitted_time_string'],
-                        t_info['started_time_string'],
-                        t_info['finished_time_string'],
-                        t_info['mean_total_elapsed_time_string'],
-                        message, icon
+                new_info = [
+                    state, host, batch_sys_name, job_id,
+                    t_info['submitted_time_string'],
+                    t_info['started_time_string'],
+                    t_info['finished_time_string'],
+                    t_info['mean_total_elapsed_time_string'],
+                    message, icon
                 ]
+                dest[point_string][name] = new_info
+                prev_info = prev.get(point_string, {}).get(name)
+                if prev_info is None:
+                    should_rebuild_tree = True
+
+                if prev_info != new_info:
+                    if is_fam and name == "root":
+                        name = point_string
+                    update_row_ids.append((point_string, name, is_fam))
+
+                if not is_fam:
+                    families = list(self.ancestors[name])
+                    families.sort(lambda x, y: (y in self.ancestors[x]) -
+                                               (x in self.ancestors[y]))
+                    if "root" in families:
+                        families.remove("root")
+                    if name in families:
+                        families.remove(name)
+                    if not self.should_group_families:
+                        families = []
+                    named_path = families + [name]
+                    id_named_paths.setdefault(point_string, {})
+                    id_named_paths[point_string][name] = named_path
+                    prev_named_path = self._prev_id_named_paths.get(
+                        point_string, {}).get(name)
+                    if prev_named_path != named_path:
+                        # Some task ids need to be added or moved.
+                        should_rebuild_tree = True
+                    if (point_string, name) in task_row_ids_left:
+                        task_row_ids_left.remove((point_string, name))
+
+        if task_row_ids_left:
+            # Some task ids need to be removed.
+            should_rebuild_tree = True
 
         for id in tetc_cached_ids_left:
             # These ids were not present in the summary - so clear them.
             self._id_tetc_cache.pop(id)
 
         tree_data = {}
-        self.ttreestore.clear()
+        row_id_iters = {}
+        self.ttreestore.foreach(self._cache_row_id_iters, row_id_iters)
+        
         point_strings = new_data.keys()
         point_strings.sort()
+        columns = range(self.ttreestore.get_n_columns())
+        
+        if should_rebuild_tree:
+            # Carefully synchronise the tree with new information.
+            for i, point_string in enumerate(point_strings):
+                p_data = [ None ] * 7
+                if "root" in new_fam_data[point_string]:
+                    p_data = new_fam_data[point_string]["root"]
+                p_path = (i,)
+                p_row_id = (point_string, point_string)
+                p_data = list(p_row_id) + p_data
+                p_iter = self._update_model( self.ttreestore, columns, p_path,
+                                             p_row_id, p_data, row_id_iters)
 
-        for point_string in point_strings:
-            f_data = [ None ] * 7
-            if "root" in new_fam_data[point_string]:
-                f_data = new_fam_data[point_string]["root"]
-            piter = self.ttreestore.append(
-                None, [ point_string, point_string ] + f_data )
-            family_iters = {}
-            name_iters = {}
-            task_named_paths = []
-            for name in new_data[ point_string ].keys():
-                # The following line should filter by allowed families.
-                families = list(self.ancestors[name])
-                families.sort(lambda x, y: (y in self.ancestors[x]) -
-                                           (x in self.ancestors[y]))
-                if "root" in families:
-                    families.remove("root")
-                if name in families:
-                    families.remove(name)
-                if not self.should_group_families:
-                    families = []
-                task_path = families + [name]
-                task_named_paths.append(task_path)
 
-            # Sorting here every time the treeview is updated makes
-            # definition sort order the default "unsorted" order
-            # (any column-click sorting is done on top of this).
-            if self.cfg.use_defn_order and self.updater.ns_defn_order:
-                task_named_paths.sort( key=lambda x: map( self.updater.dict_ns_defn_order.get, x ) )
-            else:
-                task_named_paths.sort()
+                task_named_paths = id_named_paths.get(point_string, {}).values()
 
-            for named_path in task_named_paths:
-                name = named_path[-1]
-                state = new_data[point_string][name][0]
-                self._update_path_info( piter, state, name )
-                f_iter = piter
-                for i, fam in enumerate(named_path[:-1]):
-                    # Construct family tree for this task.
-                    if fam in family_iters:
-                        # Family already in tree
-                        f_iter = family_iters[fam]
+                # Sorting here every time the treeview is updated makes
+                # definition sort order the default "unsorted" order
+                # (any column-click sorting is done on top of this).
+                if self.cfg.use_defn_order and self.updater.ns_defn_order:
+                    task_named_paths.sort(
+                        key=lambda x: map(
+                            self.updater.dict_ns_defn_order.get, x)
+                    )
+                else:
+                    task_named_paths.sort()
+
+                family_num_children = {}
+                family_paths = {point_string: p_path}
+                family_iters = {}
+
+                for named_path in task_named_paths:
+                    name = named_path[-1]
+                    state = new_data[point_string][name][0]
+                    self._update_path_info( p_iter, state, name )
+
+                    f_iter = p_iter
+                    f_path = p_path
+                    fam = None
+                    for i, fam in enumerate(named_path[:-1]):
+                        # Construct family tree for this task.
+                        if fam in family_iters:
+                            # Family already in tree
+                            f_iter = family_iters[fam]
+                            f_path = family_paths[fam]
+                        else:
+                            # Add family to tree
+                            f_data = [ None ] * 7
+                            if fam in new_fam_data[point_string]:
+                                f_data = new_fam_data[point_string][fam]
+                            if i > 0:
+                                parent_fam = named_path[i - 1]
+                            else:
+                                parent_fam = point_string
+                            family_num_children.setdefault(parent_fam, 0)
+                            family_num_children[parent_fam] += 1
+                            f_row_id = ( point_string, fam )
+                            f_data = list(f_row_id) + f_data
+                            f_path = tuple(
+                                list(family_paths[parent_fam]) +
+                                [family_num_children[parent_fam] - 1]
+                            )
+                            f_iter = self._update_model(
+                                self.ttreestore, columns, f_path, f_row_id,
+                                f_data, row_id_iters
+                            )
+                            family_iters[fam] = f_iter
+                            family_paths[fam] = f_path
+                        self._update_path_info( f_iter, state, name )
+                    # Add task to tree
+                    parent_fam = fam
+                    family_num_children.setdefault(parent_fam, 0)
+                    family_num_children[parent_fam] += 1
+                    t_path = tuple(
+                        list(f_path) + [family_num_children[parent_fam] - 1]
+                    )
+                    t_row_id = (point_string, name)
+                    t_data = list(t_row_id) + new_data[point_string][name]
+                    self._update_model(
+                        self.ttreestore, columns, t_path, t_row_id, t_data,
+                        row_id_iters
+                    )
+            delete_items = row_id_iters.items()
+            # Sort reversed by path, to get children before parents.
+            delete_items.sort(key=lambda x: x[1][1], reverse=True)
+            if delete_items:
+                row_id_iters = {}
+                self.ttreestore.foreach(
+                    self._cache_row_id_iters, row_id_iters)
+            for delete_row_id, prev_location in delete_items:
+                real_location = row_id_iters.get(delete_row_id)
+                if real_location is None:
+                    continue
+                delete_iter, delete_path = real_location
+                if self.ttreestore.iter_is_valid(delete_iter):
+                    path = self.ttreestore.get_path(delete_iter)
+                    self.ttreestore.remove(delete_iter)
+        else:  # not should_rebuild_tree
+            # Update the tree in place - no row has been added or deleted.
+            for point_string, name, is_fam in sorted(update_row_ids):
+                if is_fam:
+                    if name == point_string:
+                        data = new_fam_data[point_string]["root"]
                     else:
-                        # Add family to tree
-                        f_data = [ None ] * 7
-                        if fam in new_fam_data[point_string]:
-                            f_data = new_fam_data[point_string][fam]
-                        f_iter = self.ttreestore.append(
-                                      f_iter, [ point_string, fam ] + f_data )
-                        family_iters[fam] = f_iter
-                    self._update_path_info( f_iter, state, name )
-                # Add task to tree
-                self.ttreestore.append(
-                    f_iter, [ point_string, name ] + new_data[point_string][name])
+                        data = new_fam_data[point_string][name]
+                else:
+                    data = new_data[point_string][name]
+                try:
+                    iter_, path = row_id_iters[(point_string, name)]
+                except KeyError:
+                    if not is_fam:
+                        raise
+                    # If a family, this is just an ungraphed one.
+                    continue
+                set_data = [point_string, name] + data
+                set_args = itertools.chain(*zip(columns, set_data))
+                self.ttreestore.set(iter_, *set_args)
+                row_id_iters.pop((point_string, name), None)
         if self.autoexpand:
             autoexpand_me = self._get_autoexpand_rows()
             for row_id in list(autoexpand_me):
@@ -400,8 +518,63 @@ class TreeUpdater(threading.Thread):
 
         # Expand all the rows that were user-expanded or need auto-expansion.
         model.foreach( self._expand_row, expand_me )
-
+        self._prev_id_named_paths = id_named_paths
+        self._prev_data = new_data
+        self._prev_fam_data = new_fam_data
         return False
+
+    def _cache_row_id_iters( self, model, path, iter_, row_id_iters ):
+        # Cache a row id and its TreeIter and path in row_id_iters.
+        row_id = self._get_row_id(model, path)
+        row_id_iters[row_id] = (iter_, path)
+
+    def _update_model( self, model, columns, path, row_id, data,
+                       old_row_id_iters ):
+        old_row_id_iters.pop(row_id, None)
+        try:
+            iter_ = model.get_iter(path)
+        except ValueError:
+            # 'Invalid tree path' in dest model.
+            # We can safely append to the parent, assuming update_model is
+            # called in path order.
+            if path[:-1]:
+                parent_iter = model.get_iter(path[:-1])
+            else:
+                # Root level.
+                parent_iter = None
+            iter_ = model.append(parent_iter, data)
+            return iter_
+
+        dest_row_id = self._get_row_id(model, path)
+        dest_data = model.get(iter_, *columns)
+
+        if dest_data == data:
+            # This row is OK already.
+            return iter_
+
+        if dest_row_id == row_id:
+            # Update the row in-place.
+            set_args = itertools.chain(*zip(columns, data))
+            model.set(iter_, *set_args)
+            return iter_
+
+        # Destroy invalid row ids, then add.
+        parent_iter = model.iter_parent(iter_)
+        next_iter = iter_.copy()
+        old_row_id_iters.pop(dest_row_id, None)
+        
+        while model.remove(next_iter):
+            # next_iter is silently updated here.
+            next_path = model.get_path(next_iter)
+            next_row_id = self._get_row_id(model, next_path)
+            if next_row_id == row_id:
+                # We found the right id, lower down.
+                set_args = itertools.chain(*zip(columns, data))
+                model.set(next_iter, *set_args)
+                return next_iter
+            old_row_id_iters.pop(next_row_id, None)
+        iter_ = model.append(parent_iter, data)
+        return iter_
 
     def _get_row_id( self, model, rpath ):
         # Record a rows first two values.
