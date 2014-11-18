@@ -543,7 +543,10 @@ class TaskProxy(object):
             self.command_log("POLL", err=msg)
         else:
             # poll results emulate task messages
-            self.process_incoming_message(('NORMAL', out.strip()))
+            for line in out.splitlines():
+                if line.startswith('polled %s' % (self.identity)):
+                    self.process_incoming_message(('NORMAL', line))
+                    break
 
     def job_kill_callback(self, result):
         """Callback on job kill."""
