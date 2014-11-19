@@ -62,17 +62,13 @@ parser.add_option( "-w","--with-titles",
         help="Print namespaces titles too.",
         action="store_true", default=False, dest="titles" )
 
-parser.add_option( "-c", "--cycles",
-        help="Print the task IDs of the tasks that would actually "
-        "be created in the START [through STOP] cycles (or '1's "
-        "for non-cycling tasks).",
-        metavar="START[,STOP]", action="store", default=None,
-        dest="crange" )
+parser.add_option("-p", "--points",
+        help="Print actual task IDs from the START [through STOP] cycle "
+        "points.", metavar="START[,STOP]", action="store", default=None,
+        dest="crange")
 
-parser.add_option( "--cold",
-        help="With -c/--range, print tasks as if for a cold-start "
-        "from the START cycle (default False).",
-        action="store_false", default=True, dest="crange_raw" )
+parser.add_option( "-c", "--cycles", help="(deprecated: use -p/--points).",
+        metavar="START[,STOP]", action="store", default=None, dest="crange")
 
 (options, args) = parser.parse_args()
 
@@ -112,7 +108,7 @@ try:
     if options.tree:
         config.print_first_parent_tree( pretty=options.box, titles=options.titles )
     elif options.crange:
-        node_labels = config.get_node_labels( tr_start, tr_stop, raw=options.crange_raw )
+        node_labels = config.get_node_labels( tr_start, tr_stop )
         node_labels.sort()
         for nl in node_labels:
             print nl
