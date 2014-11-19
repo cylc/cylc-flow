@@ -1,0 +1,31 @@
+[cylc]
+   UTC mode = True
+[scheduling]
+   initial cycle point = 20140808T00
+   [[dependencies]]
+      [[[P1D]]]
+         graph = """
+      fido[-P1D] => fido
+      fido => cujo & manny"""
+[runtime]
+   [[not-used]]
+      title = "an unused namespace"
+   [[MAMMAL]]
+      title = "a clade of endothermic amniotes"
+   [[FICTIONAL]]
+      title = "something made-up"
+   [[DOG]]
+      title = "a canid that is known as man's best friend"
+      inherit = MAMMAL
+   [[POODLE]]
+      title = "a ridiculous-looking dog owned by idiots"
+      inherit = DOG
+   [[fido]]
+      title = "a large black and white spotted dog"
+      inherit = DOG
+   [[cujo]]
+      title = "a fearsome man-eating poodle"
+      inherit = POODLE, FICTIONAL
+   [[manny]]
+      title = "a large hairy mammoth"
+      inherit = MAMMAL, FICTIONAL
