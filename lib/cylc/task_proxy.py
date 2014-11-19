@@ -661,6 +661,14 @@ class TaskProxy(object):
             flags.pflag = True
 
         self.submitted_time = time.time()
+
+        self.summary['started_time'] = None
+        self.summary['started_time_string'] = None
+        self.started_time = None
+        self.summary['finished_time'] = None
+        self.summary['finished_time_string'] = None
+        self.finished_time = None
+
         self.summary['submitted_time'] = self.submitted_time
         self.summary['submitted_time_string'] = (
             get_time_string_from_unix_time(self.submitted_time))
