@@ -384,12 +384,18 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS["graph"] = ControlGraph
         VIEWS_ORDERED.append( "graph" )
 
-    def __init__( self, suite, db, owner, host, port, pyro_timeout,
-            template_vars, template_vars_file ):
+    def __init__(self, suite, db, owner, host, port, pyro_timeout,
+            template_vars, template_vars_file, restricted_display):
 
         gobject.threads_init()
 
         set_exception_hook_dialog("gcylc")
+        self.restricted_display = restricted_display
+        if self.restricted_display:
+            if "graph" in self.__class__.VIEWS:
+                del self.__class__.VIEWS["graph"]
+            if "graph" in self.__class__.VIEWS_ORDERED:
+                self.__class__.VIEWS_ORDERED.remove('graph')
 
         self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
@@ -426,7 +432,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start( self.menu_bar, False )
 
         self.initial_views = gcfg.get( ['initial views'] )
-        if graphing_disabled:
+        if graphing_disabled or self.restricted_display:
             try:
                 self.initial_views.remove("graph")
             except ValueError:
@@ -451,7 +457,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start( hbox, False )
 
         self.window.add( bigbox )
-        self.window.set_title( "gcylc" )
+        title = "gcylc"
+        if self.restricted_display:
+            title += " -r (restricted display)"
+        self.window.set_title(title)
 
         self.window.show_all()
 
@@ -465,6 +474,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if self.cfg.host != socket.getfqdn():
             title += " - " + self.cfg.host
         title += " - gcylc"
+        if self.restricted_display:
+            title += " -r (restricted display)"
         self.window.set_title( title )
         self.cfg.reset(suite)
 
@@ -474,7 +485,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         if self.updater is not None:
             self.updater.stop()
-        self.updater = Updater(self.cfg, self.info_bar)
+        self.updater = Updater(self.cfg, self.info_bar, self.restricted_display)
         self.updater.start()
 
         self.restart_views()
@@ -2349,8 +2360,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         graph_view0_item._viewname = "graph"
         graph_view0_item.set_active( self.DEFAULT_VIEW == "graph" )
         graph_view0_item.connect( 'toggled', self._cb_change_view0_menu )
-
-        if graphing_disabled:
+        if graphing_disabled or self.restricted_display:
             graph_view0_item.set_sensitive(False)
 
         self.view_menu_views0 = [ text_view0_item, dot_view0_item, graph_view0_item ]
@@ -2388,7 +2398,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         graph_view1_item._viewname = "graph"
         graph_view1_item.connect( 'toggled', self._cb_change_view1_menu )
 
-        if graphing_disabled:
+        if graphing_disabled or self.restricted_display:
             graph_view1_item.set_sensitive(False)
 
         self.view_menu_views1 = [ no_view1_item, text_view1_item, dot_view1_item, graph_view1_item ]
@@ -2817,9 +2827,9 @@ This is what my suite does:..."""
         pixlist1 = gtk.ListStore( gtk.gdk.Pixbuf, str, bool, bool )
         view_items = []
         for v in views:
-             pixbuf = gtk.gdk.pixbuf_new_from_file( self.cfg.imagedir + self.VIEW_ICON_PATHS[v] )
-             pixlist0.append( ( pixbuf, v ) )
-             pixlist1.append( ( pixbuf, v, True, False ) )
+            pixbuf = gtk.gdk.pixbuf_new_from_file( self.cfg.imagedir + self.VIEW_ICON_PATHS[v] )
+            pixlist0.append( ( pixbuf, v ) )
+            pixlist1.append( ( pixbuf, v, True, False ) )
         pixlist1.insert( 0, ( pixbuf, "None", False, True ) )
         # Primary view chooser
         self.tool_bar_view0.set_model( pixlist0 )

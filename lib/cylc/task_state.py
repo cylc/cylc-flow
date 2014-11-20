@@ -62,6 +62,15 @@ class task_state(object):
         'fail' : 'failed'
     }
 
+    legal_for_restricted_monitoring = [
+        'submitted',
+        'submit-failed',
+        'submit-retrying',
+        'running',
+        'failed',
+        'retrying'
+    ] 
+
     @classmethod
     def is_legal(cls, state):
         return state in cls.legal

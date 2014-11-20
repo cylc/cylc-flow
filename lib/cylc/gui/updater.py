@@ -89,7 +89,7 @@ class Updater(threading.Thread):
 
     """Retrieve information about the running or stopped suite."""
 
-    def __init__(self, cfg, info_bar ):
+    def __init__(self, cfg, info_bar, restricted_display):
 
         super(Updater, self).__init__()
 
@@ -126,6 +126,7 @@ class Updater(threading.Thread):
         self._reconnect()
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
+        self.restricted_display = restricted_display
 
     def _flag_new_update( self ):
         self.last_update_time = time()
@@ -236,12 +237,21 @@ class Updater(threading.Thread):
         if update_summaries:
             try:
                 [glbl, states, fam_states] = self.god.get_state_summary()
-                self.task_list = self.god.get_task_name_list()
                 self._retrieve_hierarchy_info() # may change on reload
             except (Pyro.errors.ProtocolError, Pyro.errors.NamingError):
                 gobject.idle_add( self.connection_lost )
                 return False
 
+            if self.restricted_display:
+                states = dict(
+                        (i, j) for i, j in states.items() if j['state'] in
+                        task_state.legal_for_restricted_monitoring)
+                fam_states = dict(
+                        (i, j) for i, j in fam_states.items() if j['state'] in
+                        task_state.legal_for_restricted_monitoring)
+
+            self.task_list = list(set([t['name'] for t in states.values()]))
+ 
             if not glbl:
                 self.task_list = []
                 return False

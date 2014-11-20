@@ -150,7 +150,6 @@ class GraphUpdater(threading.Thread):
             return False
 
         self.updater.set_update(False)
-        self.task_list = deepcopy(self.updater.task_list)
         self.live_graph_movie = self.updater.live_graph_movie
         self.live_graph_dir = self.updater.live_graph_dir
         states_full = deepcopy(self.updater.state_summary)

@@ -162,7 +162,6 @@ class scheduler(object):
                 'ping suite'        : self.info_ping_suite,
                 'ping task'         : self.info_ping_task,
                 'suite info'        : self.info_get_suite_info,
-                'task list'         : self.info_get_task_list,
                 'task info'         : self.info_get_task_info,
                 'all families'      : self.info_get_all_families,
                 'triggering families' : self.info_get_triggering_families,
@@ -344,9 +343,6 @@ class scheduler(object):
 
     def info_get_suite_info( self ):
         return [ self.config.cfg['title'], user ]
-
-    def info_get_task_list( self, logit=True ):
-        return self.config.get_task_name_list()
 
     def info_get_task_info( self, task_names ):
         info = {}

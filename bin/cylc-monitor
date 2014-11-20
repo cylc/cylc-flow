@@ -34,38 +34,36 @@ from time import sleep
 from cylc import cylc_pyro_client
 from cylc.passphrase import SecurityError
 from cylc.CylcOptionParsers import cop
-from cylc.strftime import strftime
 from cylc.task_state import task_state
+from cylc.wallclock import get_time_string_from_unix_time
 from Pyro.errors import ProtocolError,TimeoutError,ConnectionClosedError
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
-compress = True
+parser = cop("""cylc [info] monitor [OPTIONS] ARGS
 
-parser = cop( """cylc [info] monitor [OPTIONS] ARGS
+A terminal-based suite monitor.""", pyro=True, noforce=True)
 
-A terminal-based suite monitor that updates the current state of all
-tasks in real time. It is effective even for quite large suites if
-'--align' is not used.""", pyro=True, noforce=True )
+parser.add_option("-a", "--align",
+        help="Align task names. Only useful for small suites.",
+        action="store_true", default=False, dest="align_columns")
 
-parser.add_option( "-a", "--align",
-        help="Align columns by task name. This option "
-        "is only useful for small suites.",
-        action="store_true", default=False, dest="align_columns" )
+parser.add_option("-r", "--restricted",
+        help="Restrict display to 'active' task states: submitted, "
+        "submit-failed, submit-retrying, running, failed, retrying. "
+        "This may be needed for very large suites. The state summary "
+        "line still represents all task proxies.",
+        action="store_true", default=False, dest="restricted")
 
 ( options, args ) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-states = task_state.legal
-
-key = ''
-for state in states:
-    ctrl = task_state.ctrl[state]
-    ctrl_end = task_state.ctrl_end
-    key += ctrl + state + ctrl_end + ' '
-key = key.rstrip()
-header = ' ' * len(' '.join(states)) # must ignore ctrl chars
+legend = ''
+for state in task_state.legal:
+    legend += "%s%s%s " % (task_state.ctrl[state], state, task_state.ctrl_end)
+legend = legend.rstrip()
+len_header = sum(len(s) for s in task_state.legal) + len(task_state.legal) - 1 
 
 alerted = False
 alerted2 = False
@@ -73,206 +71,172 @@ alerted3 = False
 
 try:
     while True:
-        # connect to remote state summary object
         try:
-            proxy = cylc_pyro_client.client( suite, pphrase,
-                    options.owner, options.host, options.pyro_timeout,
-                    options.port ).get_proxy( 'state_summary' )
-        except SecurityError, x:
+            proxy = cylc_pyro_client.client(
+                    suite, pphrase, options.owner, options.host,
+                    options.pyro_timeout, options.port
+                    ).get_proxy('state_summary')
+        except SecurityError as exc:
             if cylc.flags.debug:
                 raise
-            raise SystemExit(x)
-        except Exception, x:
+            raise SystemExit(exc)
+        except Exception as exc:
             if not alerted:
-                print "\n\033[1;37;41mfailed to connect" + ctrl_end
-                print >> sys.stderr, x
+                print "\n\033[1;37;41mfailed to connect%s" % (
+                        task_state.ctrl_end)
+                print >> sys.stderr, exc 
                 alerted = True
-            #raise
-            # if no connection, try again to connect
+            # Try again to connect.
             sleep(1)
             continue
         else:
-            # timeout (sec) determines max wait for an answer from proxy.
             proxy._setTimeout(60)
-
         alerted = False
 
         while True:
-            # continual redisplay loop
-
-            # get state summary, task names, cycle points
             try:
-                [glbl, states, fam_states] = proxy.get_state_summary()
-
+                [glbl, task_summaries, fam_summaries] = proxy.get_state_summary()
             except TimeoutError:
                 if not alerted3:
-                    print "\n\033[1;37;41mconnection timed out" + ctrl_end
+                    print "\n\033[1;37;41mconnection timed out%s" % (
+                            task_state.ctrl_end)
                     alerted3 = True
-                # if timed out, try again on same connection
+                # Try again on same connection.
                 sleep(1)
                 continue
-                #break
-
             except ConnectionClosedError:
                 if not alerted2:
-                    print "\n\033[1;37;41mconnection closed" + ctrl_end
+                    print "\n\033[1;37;41mconnection closed%s" % (
+                            task_state.ctrl_end)
                     alerted2 = True
                 sleep(1)
-                # if connection lost, try to reconnect
+                # Try to reconnect.
                 break
-
             except ProtocolError:
                 if not alerted:
-                    print "\n\033[1;37;41mfailed to connect" + ctrl_end
+                    print "\n\033[1;37;41mfailed to connect%s" % (
+                            task_state.ctrl_end)
                     alerted = True
-                #raise
-                # wh'th'fu'?
                 sleep(1)
                 continue
 
+            states = [
+                    t["state"] for t in task_summaries.values() if (
+                    "state" in t)]
+            state_count = {}
+            for state in states:
+                state_count.setdefault(state, 0)
+                state_count[state] += 1
+            state_totals = state_count.items()
+            state_totals.sort()
+            state_totals.sort(lambda x, y: cmp(y[1], x[1]))
+
+            n_tasks_total = len(states) 
+            if options.restricted:
+                task_summaries = dict(
+                        (i, j) for i, j in task_summaries.items() if (
+                        j['state'] in
+                        task_state.legal_for_restricted_monitoring))
+ 
             alerted2 = False
             alerted3 = False
 
-            dt = str(glbl['last_updated'])
-            dt = re.sub('\.\d+', '', dt)
-            run_mode = glbl[ 'run_mode' ]
+            try:
+                updated_at = get_time_string_from_unix_time(
+                        glbl['last_updated'])
+            except (TypeError, ValueError):
+                # Older suite.
+                updated_at = glbl['last_updated'].isoformat()
+
+            run_mode = glbl['run_mode']
             paused = glbl['paused']
             stopping = glbl['stopping']
             will_pause_at = glbl['will_pause_at']
             will_stop_at = glbl['will_stop_at']
 
-            task_ids = states.keys()
-            n_tasks_all = len( task_ids )
-            task_ids.sort()
-
-            seen_time = {}
-            seen_name = {}
-            point_string_list = []
-            name_list = []
-
-            for task_id in task_ids:
-
-                name = states[ task_id ][ 'name' ]
-                point_string = states[ task_id ][ 'label' ]
-
-                if point_string not in seen_time.keys():
-                    seen_time[ point_string ] = True
-                    point_string_list.append( point_string )
-
-                if name not in seen_name.keys():
-                    seen_name[ name ] = True
-                    name_list.append( name )
-
-            n_task_types = len( name_list )
-
-            # initialize a dict-of-dicts to store display information
-            # for all tasks at each current cycle point
-            #   task_info[ point_string ][ task_name ] = info
             task_info = {}
-            for rt in point_string_list:
-                task_info[ rt ] = {}
-                for name in name_list:
-                    # initialise with blank string of the same size as
-                    # the real info that we will use below
-                    tmp = name + '*'  # name plus abdication indicator
-                    tmp = re.sub( '.', ' ', tmp )
-                    task_info[ rt ][name] = tmp
-
-            # now loop through all tasks in the suite and assign their
-            # display info to the correct place in the task_info structure
+            name_list = set()
+            task_ids = task_summaries.keys()
             for task_id in task_ids:
+                name = task_summaries[task_id]['name']
+                point_string = task_summaries[task_id]['label']
+                state = task_summaries[task_id]['state']
+                name_list.add(name)
+                if point_string not in task_info:
+                    task_info[point_string] = {}
+                task_info[point_string][name] = "%s%s%s" % (
+                        task_state.ctrl[state], name, task_state.ctrl_end)
 
-                name = states[ task_id ][ 'name' ]
-                point_string = states[ task_id ][ 'label' ]
-
-                name     =      states[ task_id ][ 'name' ]
-                state    =      states[ task_id ][ 'state' ]
-
-                if not states[ task_id ][ 'spawned' ]:
-                    # identify any tasks that have not spawned yet
-                    abd = '*'
-                else:
-                    # space of same length
-                    abd = ' '
-
-                # color displayed info according to run status
-                ctrl_start = task_state.ctrl[state]
-                # construct the display string for this task
-                task_info[ point_string ][ name ] = (
-                    ctrl_start + name + ctrl_end + abd)
-
-            # construct an array of lines to blit to the screen
-
-            # MONITOR HEADER and CURRENT TIME
+            # Construct lines to blit to the screen.
             blit = []
-            blitlines = {}
-            # SUITE NAME, NUMBER OF TASKS, RUN MODE
-            foo = header
-            bar = suite + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
-            foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
-            foo = re.sub( '.{' + str(len(suite)) + '}$', suite, foo )
+            prefix = suite
+            suffix = "%d tasks" % n_tasks_total
+            title_str = ' ' * len_header
+            title_str = prefix + title_str[len(prefix):]
+            title_str = '\033[1;37;44m%s%s%s' % (
+                    title_str[:-len(suffix)], suffix, task_state.ctrl_end)
+            blit.append(title_str)
 
-            blit.append( '\033[1;37;44m' + foo + ctrl_end )
+            blit.append(legend)
 
-            blit.append( key )
+            mode_str = "%s mode" % run_mode
+            if options.restricted:
+                mode_str = "%s %srestricted display%s" % (
+                        mode_str, task_state.ctrl['failed'],
+                        task_state.ctrl_end)
+            blit.append(mode_str)
 
-            # last time state summary was updated by cylc (only happens
-            # when task processing is invoked).
-            blit.append( 'suite state summary last updated at:                                            ' + '\033[1;38m' + dt + ctrl_end )
+            updated_str = "last update: %s%s%s" % (
+                    '\033[1;38m', updated_at, task_state.ctrl_end)
+            blit.append(updated_str)
 
-            foo = 'mode: ' + run_mode
-            baz = header
-            baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
-            blit.append( baz )
+            summary = 'state summary:'
+            for state, tot in state_totals:
+                summary += ' %s %d %s' % (
+                        task_state.ctrl[state], tot, task_state.ctrl_end)
+            blit.append(summary)
 
             if stopping:
-                foo = '___________________________________________________________________________________S_T_O_P_P_I_N_G'
+                suffix = 'S_T_O_P_P_I_N_G'
             elif paused:
-                foo = '_______________________________________________________________________________________P_A_U_S_E_D'
+                suffix = 'P_A_U_S_E_D'
             elif will_pause_at:
-                foo = '____________________________________________________________________P_A_U_S_I_N_G__A_T__' + will_pause_at
+                suffix = 'P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
-                foo = '__________________________________________________________________S_T_O_P_P_I_N_G__A_T__' + will_stop_at
+                suffix = 'S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
-                foo = '_____________________________________________________________________________________R_U_N_N_I_N_G'
+                suffix = 'R_U_N_N_I_N_G'
+            divider_str = '_'*len_header
+            divider_str = "\033[1;31m%s%s%s" % (
+                    divider_str[:-len(suffix)], suffix, task_state.ctrl_end)
+            blit.append(divider_str)
 
-            #blit.append( '\033[1;33;44m' + foo + ctrl_end )
-            blit.append( '\033[1;31m' + foo + ctrl_end )
-
-            # construct a line of text to display for each cycle point
-            for rt in point_string_list:
-                indx = rt
-                line = '\033[1;34m' + rt + ctrl_end
-
-                # add info for each task to the line
-                for name in name_list:
-                    disp = task_info[rt][name]
-                    if not options.align_columns and re.match( '^\s+$', disp ):
-                        # don't add white space unless align_columns has
-                        # been requested by the user
+            # Info by cycle point.
+            blitlines = {}
+            for point_str, val in task_info.items():
+                indx = point_str
+                line = "%s%s%s" % (
+                        '\033[1;34m', point_str, task_state.ctrl_end)
+                for name, info in val.items():
+                    if not options.align_columns and re.match('^\s+$', info):
                         pass
                     else:
-                        line = line + ' ' + disp
-
-                #blit.append( line )
+                        line = "%s %s" % (line, info)
                 blitlines[indx] = line
 
-            # clear screen and blit the new information up
-            os.system( "clear" )
-            print '\n'.join( blit )
+            # Clear screen and blit the new information.
+            os.system("clear")
+            print '\n'.join(blit)
             indxs = blitlines.keys()
             try:
-                int( indxs[1] )
+                int(indxs[1])
             except:
                 indxs.sort()
             else:
                 indxs.sort(key=int)
             for ix in indxs:
                 print blitlines[ix]
-            # sleep here determines minimum display time before trying to
-            # update the information and redisplay it (?).
             sleep(1)
-
 
 except KeyboardInterrupt:
     sys.exit(0)
