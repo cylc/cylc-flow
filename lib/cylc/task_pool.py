@@ -150,7 +150,7 @@ class TaskPool(object):
             itask.log(INFO, "holding (future trigger beyond stop point)")
             self.held_future_tasks.append(itask.identity)
             itask.reset_state_held()
-        elif self.is_held:
+        elif self.is_held and not itask.state.is_currently("succeeded", "failed"):
             itask.reset_state_held()
 
         # add to the runahead pool
