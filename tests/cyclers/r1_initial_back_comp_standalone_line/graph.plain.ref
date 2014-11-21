@@ -1,0 +1,7 @@
+edge "cold_foo.2014010100" "foo_midnight.2014010100" solid
+edge "foo_midnight.2014010100" "foo_midnight.2014010200" solid
+graph
+node "cold_foo.2014010100" "cold_foo\n2014010100" unfilled box black
+node "foo_midnight.2014010100" "foo_midnight\n2014010100" unfilled box black
+node "foo_midnight.2014010200" "foo_midnight\n2014010200" unfilled box black
+stop

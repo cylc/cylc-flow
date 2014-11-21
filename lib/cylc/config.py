@@ -1257,7 +1257,7 @@ class config( object ):
                         left_edge_nodes = [right_name]
                         right_edge_node = None
                     self.generate_edges(lexpression, left_edge_nodes,
-                                         right_edge_node, seq, suicide)
+                                        right_edge_node, seq, suicide)
                 self.generate_taskdefs(orig_line, pruned_left_nodes,
                                         right_name, section,
                                         seq, offset_seq_map,
@@ -1275,8 +1275,9 @@ class config( object ):
             conditional = True
 
         for left in left_nodes:
-            e = graphing.edge( left, right, seq, suicide, conditional )
-            self.edges.append(e)
+            if left is not None:
+                e = graphing.edge( left, right, seq, suicide, conditional )
+                self.edges.append(e)
 
     def generate_taskdefs( self, line, left_nodes, right, section, seq,
                            offset_seq_map, base_interval ):
