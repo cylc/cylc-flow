@@ -150,7 +150,8 @@ class TaskPool(object):
             itask.log(INFO, "holding (future trigger beyond stop point)")
             self.held_future_tasks.append(itask.identity)
             itask.reset_state_held()
-        elif self.is_held:
+        elif self.is_held and itask.state.is_currently("waiting"):
+            # hold newly-spawned tasks in a held suite (e.g. due to manual triggering of a held task)
             itask.reset_state_held()
 
         # add to the runahead pool
