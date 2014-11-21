@@ -110,6 +110,8 @@ class ThreadedCursor(Thread):
                               "\trequest: %s\n\targs: %s")
         self.db_not_found_err = ("Database Not Found Error:\n"+
                                  "\tNo database found at %s")
+        self.retry_warning = ("[WARNING] retrying database operation on %s - retry %s \n"+
+                              "\trequest: %s\n\targs: %s")
     def run(self):
         cnx = sqlite3.connect(self.db, timeout=10.0)
         cursor = cnx.cursor()
@@ -152,6 +154,7 @@ class ThreadedCursor(Thread):
                     if attempt >= self.max_commit_attempts:
                         self.exception = e
                         raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
+                    print >> sys.stderr, self.retry_warning%(self.db, str(attempt), req, arg)
                     sleep(1)
                 except Exception as e:
                     # Capture all other integrity errors and raise more helpful message
@@ -159,6 +162,7 @@ class ThreadedCursor(Thread):
                     if attempt >= self.max_commit_attempts:
                         self.exception = e
                         raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
+                    print >> sys.stderr, self.retry_warning%(self.db, str(attempt), req, arg)
                     sleep(1)
             counter += 1
         cnx.commit()
