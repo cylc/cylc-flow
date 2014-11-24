@@ -389,6 +389,7 @@ determine what happened to them while the suite was down."""
                     get_point(point_string),
                     state,
                     submit_num=submit_num,
+                    is_reload=True
                 )
             except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)

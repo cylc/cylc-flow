@@ -1,0 +1,6 @@
+2014-11-13T10:12:31Z INFO - Initial point: 1
+2014-11-13T10:12:31Z INFO - Final point: 1
+2014-11-13T10:12:31Z INFO - Cold Start 1
+2014-11-13T10:12:31Z INFO - [sleeping-waiter.1] -triggered off []
+2014-11-13T10:12:34Z INFO - [reloader.1] -triggered off ['sleeping-waiter.1']
+2014-11-13T10:12:40Z INFO - [waiter.1] -triggered off ['sleeping-waiter.1']
