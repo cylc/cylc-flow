@@ -151,10 +151,16 @@ def get_time_string(date_time, display_sub_seconds=False,
                 hours=TIME_ZONE_LOCAL_UTC_OFFSET_HOURS,
                 minutes=TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
             )
-    elif use_basic_format:
-        time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
     else:
-        time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
+        if use_basic_format:
+            time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
+        else:
+            time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
+        if not date_time_is_local:
+            diff_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
+            diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            date_time = date_time + timedelta(
+                hours=diff_hours, minutes=diff_minutes)
     if use_basic_format:
         date_time_format_string = DATE_TIME_FORMAT_BASIC
         if display_sub_seconds:
@@ -189,12 +195,12 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
     to use as the time zone designator.
 
     """
-    date_time = datetime.fromtimestamp(unix_time)
+    date_time = datetime.utcfromtimestamp(unix_time)
     return get_time_string(date_time,
                            display_sub_seconds=display_sub_seconds,
                            use_basic_format=use_basic_format,
                            override_use_utc=None,
-                           date_time_is_local=True,
+                           date_time_is_local=False,
                            custom_time_zone_info=custom_time_zone_info)
 
 
