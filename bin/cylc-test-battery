@@ -77,9 +77,12 @@ if [[ "$PWD" != "$CYLC_DIR" ]]; then
     cd "$CYLC_DIR"
 fi
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
-    NPROC=$(python -c 'import multiprocessing as mpc; print mpc.cpu_count()')
-    exec prove -j "$NPROC" -s -r ${TESTS:-tests lib/parsec/tests}
+    NPROC=$(cylc get-global-config '--item=process pool size')
+    if [[ -z "${NPROC}" ]]; then
+        NPROC=$(python -c 'import multiprocessing as mp; print mp.cpu_count()')
+    fi
+    exec prove -j "$NPROC" -s -r ${TESTS:-tests}
 else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
-    exec prove -s -r ${TESTS:-tests lib/parsec/tests}
+    exec prove -s -r ${TESTS:-tests}
 fi
