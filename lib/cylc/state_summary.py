@@ -22,7 +22,7 @@ from cylc.task_id import TaskID
 import time
 from datetime import datetime
 import flags
-from wallclock import now, TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
+from wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
 
 
 

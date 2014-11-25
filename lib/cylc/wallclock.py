@@ -62,7 +62,7 @@ TIME_ZONE_UTC_INFO = {
 
 
 def now(override_use_utc=None):
-    """Return a datetime.datetime object representing the current time.
+    """Return a current-time datetime.datetime and a UTC timezone flag.
 
     Keyword arguments:
     override_use_utc (default None) - a boolean (or None) that, if
@@ -72,9 +72,9 @@ def now(override_use_utc=None):
 
     """
     if override_use_utc or (override_use_utc is None and flags.utc):
-        return datetime.utcnow()
+        return datetime.utcnow(), True
     else:
-        return datetime.now()
+        return datetime.now(), False
 
 
 def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
@@ -93,9 +93,10 @@ def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
     most useful for filenames where ":" may cause problems.
 
     """
-    date_time = now(override_use_utc=override_use_utc)
+    date_time, date_time_is_local = now(override_use_utc=override_use_utc)
     return get_time_string(date_time, display_sub_seconds=display_sub_seconds,
                            override_use_utc=override_use_utc,
+                           date_time_is_local=date_time_is_local,
                            use_basic_format=use_basic_format)
 
 
