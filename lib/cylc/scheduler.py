@@ -52,7 +52,7 @@ import subprocess
 from cylc.mp_pool import SuiteProcPool
 from exceptions import SchedulerStop, SchedulerError
 from wallclock import (
-    now, get_current_time_string, get_seconds_as_interval_string)
+    get_current_time_string, get_seconds_as_interval_string)
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
 import isodatetime.data

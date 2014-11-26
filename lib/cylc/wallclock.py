@@ -72,9 +72,9 @@ def now(override_use_utc=None):
 
     """
     if override_use_utc or (override_use_utc is None and flags.utc):
-        return datetime.utcnow(), True
+        return datetime.utcnow(), False
     else:
-        return datetime.now(), False
+        return datetime.now(), True
 
 
 def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
