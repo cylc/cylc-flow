@@ -21,10 +21,8 @@ usage() {
 USAGE: cylc test-battery [OPTIONS] [FILES or DIRECTORIES] -- [prove OPTIONS]
 
 Run automated cylc and parsec tests under [FILES or DIRECTORIES].
-Test locations default to the following directory trees:
+Test locations default to the following directory tree:
   $CYLC_DIR/tests/
-and
-  $CYLC_DIR/lib/parsec/tests/
 
 Some tests (e.g. those specific to particular batch schedulers) can be
 configured in your site/user config file. A few others still submit jobs
@@ -39,14 +37,19 @@ Requirements:
 Suite run directories are cleaned up on the suite host (but not on
 remote task hosts) for passing tests - otherwise they are left alone.
 
-By default $N tests are run at once, in parallel. On slow or loaded
+By default the command uses the number of processors in your system to
+determine the number of tests to run in parallel. This may be anti-social
+on systems shared with many other users. On slow or loaded
 machines this may result in some test failures due to timeouts intended
 to catch problems that can prevent a suite from shutting down normally.
-Use the "-j N" option to change the amount of concurrency.
+In such cases, you can change the amount of concurrency by setting either:
+  * the "-j N" option, or
+  * the "process pool size = N" option in the site/user global
+    configuration.
 
 To output stderr from failed tests to the terminal, export
 CYLC_TEST_DEBUG=true before running this command. To perform comparison
-tests using "xdiff -D", export CYLC_TEST_DEBUG_CMP=true.
+tests using "xxdiff -D", export CYLC_TEST_DEBUG_CMP=true.
 
 For more information see "Reference Tests" in the User Guide.
 
@@ -54,7 +57,7 @@ Options:
   -h, --help   Print this help message and exit.
 
 Options after '--' are passed through to "prove".
-E.g. to run N tests at once, in parallel (default $N):
+E.g. to run N tests at once, in parallel:
   cylc test-battery -- -j N      
 eof
 }
@@ -77,9 +80,12 @@ if [[ "$PWD" != "$CYLC_DIR" ]]; then
     cd "$CYLC_DIR"
 fi
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
-    NPROC=$(python -c 'import multiprocessing as mpc; print mpc.cpu_count()')
-    exec prove -j "$NPROC" -s -r ${TESTS:-tests lib/parsec/tests}
+    NPROC=$(cylc get-global-config '--item=process pool size')
+    if [[ -z "${NPROC}" ]]; then
+        NPROC=$(python -c 'import multiprocessing as mp; print mp.cpu_count()')
+    fi
+    exec prove -j "$NPROC" -s -r ${TESTS:-tests}
 else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
-    exec prove -s -r ${TESTS:-tests lib/parsec/tests}
+    exec prove -s -r ${TESTS:-tests}
 fi
