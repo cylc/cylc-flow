@@ -38,6 +38,7 @@ run_ok $TEST_NAME cylc validate \
     --set=TEST_SHOW_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH" \
     --set=TZ_OFFSET_BASIC="$TZ_OFFSET_BASIC" "$SUITE_NAME"
 #-------------------------------------------------------------------------------
+sed 's/$TZ_OFFSET_BASIC/'"$TZ_OFFSET_BASIC/g" reference-untz.log >reference.log
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug \
     --set=TEST_SHOW_OUTPUT_PATH="$TEST_SHOW_OUTPUT_PATH" \
