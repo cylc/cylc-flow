@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.1.1">6.1.1</a></li>
     <li><a href="#6.1.0">6.1.0</a></li>
     <li><a href="#6.0.2">6.0.2</a></li>
     <li><a href="#6.0.1">6.0.1</a></li>
@@ -51,6 +52,30 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.1.1"/>
+    <h2>6.1.1</h2>
+
+		<h3>6.1.1 enhancements</h3>
+  		<ul>
+				<li> new restricted monitoring mode for very large suites (by command
+				line option) for <code>cylc gui</code> and <code>cylc monitor</code>
+				<li> display clock triggers with finer resolution than the suite cycle
+				point format, if necessary
+		</ul>
+    
+		<h3>6.1.1 fixes</h3>
+  		<ul>
+				<li> if reloading a held suite, don't set finished tasks to the held
+				state.
+				<li> fixed the <code>cylc list</code> command option for listing 
+				specific task instances between given cycle points
+				<li> prevent "database integrity" warnings when reloading tasks in the
+				'waiting' state
+				<li> renamed a potentially conflicting internal-use variable called
+				<code>$DOMAIN</code> in task job scripts
+				<li> other minor fixes
+		</ul>
+  	
 <a name="6.1.0"/>
     <h2>6.1.0</h2>
     
