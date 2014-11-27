@@ -11,7 +11,7 @@ set -e
 YY=$(date +%y)
 
 OLD="Copyright \(C\) 2008-20\d\d Hilary Oliver, NIWA"
-NEW="Copyright (C) 2008-20$YY Hilary Oliver, NIWA"
+NEW="Copyright (C) 2008-20$YY NIWA"
 
 FILES=$@
 for FILE in $FILES; do
