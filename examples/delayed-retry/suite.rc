@@ -3,7 +3,7 @@
         graph = "foo => bar"
 [runtime]
     [[foo]]
-        retry delays = 0.1, 0.1, 0.1
+        retry delays = 3*PT6S
         command scripting = """
 sleep 10
 if (( CYLC_TASK_TRY_NUMBER < 3 )); then
