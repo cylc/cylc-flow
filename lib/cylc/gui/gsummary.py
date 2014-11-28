@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2014 Hilary Oliver, NIWA
+#C: Copyright (C) 2008-2014 NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
@@ -260,7 +260,7 @@ def launch_about_dialog(program_name, hosts):
         comments_text = program_name + "\n" + hosts_text
 
     about.set_version(CYLC_VERSION)
-    about.set_copyright("Copyright (C) 2008-2014 Hilary Oliver, NIWA")
+    about.set_copyright("Copyright (C) 2008-2014 NIWA")
     about.set_comments(comments_text)
     about.set_icon(get_icon())
     about.run()
