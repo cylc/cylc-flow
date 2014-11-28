@@ -40,7 +40,9 @@ from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.owner import user
 from cylc.registration import localdb
 from cylc.version import CYLC_VERSION
-
+from operator import itemgetter
+from itertools import groupby
+from cylc.task_state import task_state
 
 PYRO_TIMEOUT = 2
 
@@ -81,15 +83,16 @@ def get_status_tasks(host, suite, owner=None):
     res = popen.wait()
     if res != 0:
         return None
-    status_tasks = {}
+    task_cycle_statuses = []
     for line in stdout.rpartition("Begin task states")[2].splitlines():
         task_result = re.match("([^ ]+) : status=([^,]+), spawned", line)
         if not task_result:
             continue
         task, status = task_result.groups()
-        status_tasks.setdefault(status, [])
-        status_tasks[status].append(task)
-    return status_tasks
+        task_order = task.split(".")
+        task_order.append(status)
+        task_cycle_statuses.append(tuple(task_order))
+    return task_cycle_statuses
 
 
 def get_summary_menu(suite_host_tuples,
@@ -354,8 +357,7 @@ class SummaryApp(object):
         self.theme = gcfg.get( ['themes', self.theme_name] )
 
         self.dots = DotMaker(self.theme)
-        suite_treemodel = gtk.TreeStore(*([str, str, bool, str, int] +
-            [str] * 20))
+        suite_treemodel = gtk.TreeStore(str, str, bool, str, int, str, str)
         self._prev_tooltip_location_id = None
         self.suite_treeview = gtk.TreeView(suite_treemodel)
 
@@ -364,7 +366,7 @@ class SummaryApp(object):
         cell_text_host = gtk.CellRendererText()
         host_name_column.pack_start(cell_text_host, expand=False)
         host_name_column.set_cell_data_func(
-                  cell_text_host, self._set_cell_text_host)
+                    cell_text_host, self._set_cell_text_host)
         host_name_column.set_sort_column_id(0)
         host_name_column.set_visible(False)
 
@@ -381,7 +383,7 @@ class SummaryApp(object):
         cell_text_title = gtk.CellRendererText()
         suite_title_column.pack_start(cell_text_title, expand=False)
         suite_title_column.set_cell_data_func(
-                   cell_text_title, self._set_cell_text_title)
+                    cell_text_title, self._set_cell_text_title)
         suite_title_column.set_sort_column_id(3)
         suite_title_column.set_visible(False)
 
@@ -394,20 +396,30 @@ class SummaryApp(object):
         time_column.set_sort_column_id(4)
         time_column.set_visible(False)
 
-        # Construct the status column.
-        status_column = gtk.TreeViewColumn("Status")
-        status_column.set_sort_column_id(5)
-        for i in range(5, 25):
-            cell_pixbuf_state = gtk.CellRendererPixbuf()
-            status_column.pack_start(cell_pixbuf_state, expand=False)
-            status_column.set_cell_data_func(
-                   cell_pixbuf_state, self._set_cell_pixbuf_state, i)
-
         self.suite_treeview.append_column(host_name_column)
         self.suite_treeview.append_column(suite_name_column)
         self.suite_treeview.append_column(suite_title_column)
         self.suite_treeview.append_column(time_column)
+
+      # Construct the status column.
+        status_column = gtk.TreeViewColumn("Status")
+        status_column.set_sort_column_id(5)
+        status_column_info = 6
+        cycle_column_info = 5
+        cell_text_cycle = gtk.CellRendererText()
+        status_column.pack_start(cell_text_cycle, expand=False)
+        status_column.set_cell_data_func(
+                cell_text_cycle, self._set_cell_text_cycle,
+                cycle_column_info)
         self.suite_treeview.append_column(status_column)
+        distinct_states = len(task_state.legal)
+        for i in range(distinct_states):
+            cell_pixbuf_state = gtk.CellRendererPixbuf()
+            status_column.pack_start(cell_pixbuf_state, expand=False)
+            status_column.set_cell_data_func(
+                    cell_pixbuf_state, self._set_cell_pixbuf_state,
+                    (status_column_info, i))
+
         self.suite_treeview.show()
         if hasattr(self.suite_treeview, "set_has_tooltip"):
             self.suite_treeview.set_has_tooltip(True)
@@ -426,8 +438,8 @@ class SummaryApp(object):
         scrolled_window.show()
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
         self.updater = SummaryAppUpdater(self.hosts, suite_treemodel,
-                                         owner=self.owner,
-                                         poll_interval=poll_interval)
+                        self.suite_treeview, owner=self.owner,
+                        poll_interval=poll_interval)
         self.updater.start()
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
@@ -513,11 +525,20 @@ class SummaryApp(object):
                                                                     x, y)
         model = self.suite_treeview.get_model()
         iter_ = model.get_iter(path)
-        host = model.get_value(iter_, 0)
-        suite = model.get_value(iter_, 1)
+        parent_iter = model.iter_parent(iter_)
+        if parent_iter is None:
+            host = model.get_value(iter_, 0)
+            suite = model.get_value(iter_, 1)
+            child_row_number = None
+        else:
+            host = model.get_value(parent_iter, 0)
+            suite = model.get_value(parent_iter, 1)
+            child_row_number = path[-1]
         update_time = model.get_value(iter_, 4)
 
-        location_id = (host, suite, update_time, column.get_title())
+        location_id = (host, suite, update_time, column.get_title(),
+                       child_row_number)
+
         if location_id != self._prev_tooltip_location_id:
             self._prev_tooltip_location_id = location_id
             tooltip.set_text(None)
@@ -530,17 +551,21 @@ class SummaryApp(object):
                 update_time)
             tooltip.set_text("Info retrieved at " + str(time_point))
             return True
+
         if column.get_title() != "Status":
             tooltip.set_text(None)
             return False
         state_texts = []
-        for i in range(5, 25):
-            state_text = model.get_value(iter_, i)
-            if state_text is None:
-                break
-            status, number = state_text.rsplit(" ", 1)
-            state_texts.append(number + " " + status)
-        text = "Tasks: " + ", ".join(state_texts)
+        status_column_info = 6
+        state_text = model.get_value(iter_, status_column_info)
+        if state_text is None:
+            tooltip.set_text(None)
+            return False
+        info = re.findall('\D+\d+', state_text)
+        for status_number in info:
+            status, number = status_number.rsplit(" ", 1)
+            state_texts.append(number + " " + status.strip())
+            text = "Tasks: " + ", ".join(state_texts)
         tooltip.set_text(text)
         return True
 
@@ -550,17 +575,23 @@ class SummaryApp(object):
         column.set_visible(not is_visible)
         return False
 
-    def _set_cell_pixbuf_state(self, column, cell, model, iter_, index):
-        state_info = model.get_value(iter_, index)
-        if state_info is None:
-            cell.set_property("pixbuf", None)
+    def _set_cell_pixbuf_state(self, column, cell, model, iter_, index_tuple):
+        status_column_info, index = index_tuple
+        state_info = model.get_value(iter_, status_column_info)
+        if state_info is not None:
+            is_stopped = model.get_value(iter_, 2)
+            info = re.findall('\D+\d+', state_info)
+            if index < len(info):
+                state, num_tasks = info[index].rsplit(" ", 1)
+                icon = self.dots.get_icon(state.strip(), is_stopped=is_stopped)
+                cell.set_property("visible", True)
+            else:
+                icon = None
+                cell.set_property("visible", False)
+        else:
+            icon = None
             cell.set_property("visible", False)
-            return
-        is_stopped = model.get_value(iter_, 2)
-        state, num_tasks = state_info.rsplit(" ", 1)
-        icon = self.dots.get_icon(state, is_stopped=is_stopped)
         cell.set_property("pixbuf", icon)
-        cell.set_property("visible", True)
 
     def _set_cell_text_host(self, column, cell, model, iter_):
         host = model.get_value(iter_, 0)
@@ -588,6 +619,12 @@ class SummaryApp(object):
         is_stopped = model.get_value(iter_, 2)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", time_string)
+
+    def _set_cell_text_cycle(self, column, cell, model, iter_, active_cycle):
+        cycle = model.get_value(iter_, active_cycle)
+        is_stopped = model.get_value(iter_, 2)
+        cell.set_property("sensitive", not is_stopped)
+        cell.set_property("text", cycle)
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
@@ -779,12 +816,38 @@ class SummaryAppUpdater(BaseSummaryUpdater):
 
     """Update the summary app."""
 
-    def __init__(self, hosts, suite_treemodel, owner=None,
+    def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
+        self.suite_treeview = suite_treeview
         self._fetch_suite_titles()
         super(SummaryAppUpdater, self).__init__(hosts, owner=owner,
                                                 poll_interval=poll_interval)
+
+    def _add_expanded_row(self, view, rpath, row_ids):
+        """Add user-expanded rows to a list of suite and hosts to be
+        expanded."""
+        model = view.get_model()
+        row_iter = model.get_iter(rpath)
+        row_id = model.get(row_iter, 0, 1)
+        row_ids.append(row_id)
+        return False
+
+    def _expand_row(self, model, rpath, row_iter, row_ids):
+        """Expand a row if it matches rose_ids suite and host."""
+        point_string_name_tuple = model.get(row_iter, 0, 1)
+        if point_string_name_tuple in row_ids:
+            self.suite_treeview.expand_to_path(rpath)
+        return False
+
+    def _get_user_expanded_row_ids(self):
+        """Return a list of user-expanded row point_strings and names."""
+        names = []
+        model = self.suite_treeview.get_model()
+        if model is None or model.get_iter_first() is None:
+            return names
+        self.suite_treeview.map_expanded_rows(self._add_expanded_row, names)
+        return names
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
@@ -793,6 +856,7 @@ class SummaryAppUpdater(BaseSummaryUpdater):
 
     def update(self, update_time=None):
         """Update the Applet."""
+        row_ids = self._get_user_expanded_row_ids()
         statuses = copy.deepcopy(self.statuses)
         stop_summaries = copy.deepcopy(self.stop_summaries)
         if update_time is None:
@@ -808,22 +872,47 @@ class SummaryAppUpdater(BaseSummaryUpdater):
         self._fetch_suite_titles()
         for suite, host in suite_host_tuples:
             if suite in statuses.get(host, {}):
-                status_map_items = statuses[host][suite].items()
+                status_map_items = statuses[host][suite]
                 is_stopped = False
                 suite_time = update_time
             else:
                 info = stop_summaries[host][suite]
                 status_map, suite_time = info
-                status_map_items = status_map.items()
+                status_map_items = status_map
                 is_stopped = True
-            status_map_items.sort()
-            status_map_items.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
-            states = [s[0] + " " + str(len(s[1])) for s in status_map_items]
+            states_list = [item[2] for item in (sorted(status_map_items,
+                           key=itemgetter(2)))]
+            states = [key + " " + str(len(list(group))) for key, group in
+                      groupby(states_list)]
+            cycle_status = []
+            cycle_list = []
+            cycle_sort = sorted(status_map_items, key=itemgetter(1, 2))
+            for key, group in groupby(cycle_sort, itemgetter(1)):
+                cycle_sort_3 = [item[1] for item in list(group)]
+                cycles = [key for key, group in groupby(cycle_sort_3)]
+                cycle_list.append(cycles[0])
+            for key, group in groupby(cycle_sort, itemgetter(1)):
+                cycle_sort_2 = [item[2] for item in list(group)]
+                cycle_statuse = [key + " " + str(len(list(group)))
+                                 for key, group in groupby(cycle_sort_2)]
+                cycle_status.append(tuple(cycle_statuse))
             title = self.suite_titles.get(suite)
             model_data = [host, suite, is_stopped, title, suite_time]
-            model_data += states[:20]
-            model_data += [None] * (25 - len(model_data))
-            self.suite_treemodel.append(None, model_data)
+            model_data += [None]
+            distinct_states = len(task_state.legal)
+            model_data += [' '.join(states[:distinct_states])]
+            parent_iter = self.suite_treemodel.append(None, model_data)
+            for i in range(len(cycle_list)):
+                try:
+                    active_cycle = cycle_status[i]
+                    model_data = [None, None, is_stopped, None, suite_time]
+                    model_data += [cycle_list[i]]
+                    model_data += [' '.join(active_cycle[:distinct_states])]
+                except:
+                    model_data += [None]
+                    model_data += [None]
+                self.suite_treemodel.append(parent_iter, model_data)
+        self.suite_treemodel.foreach(self._expand_row, row_ids)
         return False
 
     def _fetch_suite_titles(self):
