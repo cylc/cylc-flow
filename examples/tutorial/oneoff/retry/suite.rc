@@ -4,7 +4,7 @@ title = "A task with automatic retry on failure"
         graph = "hello"
 [runtime]
     [[hello]]
-        retry delays = 2*0.1 # retry twice after 0.1 minute delays
+        retry delays = 2*PT6S # retry twice after 6-second delays
         command scripting = """
 sleep 10
 if [[ $CYLC_TASK_TRY_NUMBER < 3 ]]; then

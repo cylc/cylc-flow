@@ -1,15 +1,11 @@
 
 title = "gcylc task state color theme demo"
-description = """This suite contrives to use every possible task state,
+description = """Generate a lot of possible task states,
 to show what they look like live in gcylc."""
 
 [scheduling]
-    initial cycle point = 2012080800
-    final cycle point = 2012081200
-    # Set a runahead limit halfway to the final cycle, in order to see
-    # tasks in the 'runahead' state (twice the min cycling interval is
-    # the default anyway: 48 hours in this case). 
-    runahead limit = 48 
+    initial cycle point = 20120808T00
+    final cycle point = 20120812T00
     [[queues]]
         # Use internal queues to see tasks in the "queued" state
         [[[fam_queue]]]
@@ -18,9 +14,9 @@ to show what they look like live in gcylc."""
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
-        [[[0]]]
+        [[[T00]]]
             graph =  """
-    cfoo | foo[T-24] => foo => family
+    cfoo | foo[-P1D] => foo => family
     family:finish-all => bar
     foo => bad & bad2 & bad_good
     bar => !bad & !bad2
@@ -36,7 +32,7 @@ to show what they look like live in gcylc."""
     [[m_x]]
         inherit = family
         title = "this task succeeds on the second try "
-        retry delays = 0.3
+        retry delays = PT18S
         command scripting = """
 sleep 10
 if [[ $CYLC_TASK_TRY_NUMBER < 2 ]]; then
@@ -47,20 +43,20 @@ fi"""
         title = "A task that tries and fails twice"
         description = """Failed instances of this task are removed from the suite
 at the end of each cycle by a suicide trigger."""
-        retry delays = 0.2
+        retry delays = PT12S
         command scripting = "sleep 10; exit 1"
     [[bad2]]
         title = "A task that fails to submit twice"
         [[[job submission]]]
             method = fail
-            retry delays = 0.3
+            retry delays = PT18S
     [[bad_good]]
         title = "A task successfully submits on the second try "
         description = """Uses a retry event handler to broadcast a new job
 submission method for the retry."""
         [[[job submission]]]
             method = fail
-            retry delays = 0.3
+            retry delays = PT18S
         [[[event hooks]]]
             submission retry handler = change-my-job-sub-method.sh
  
