@@ -1,0 +1,14 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
+[scheduling]
+    [[dependencies]]
+        graph = t1
+[runtime]
+    [[t1]]
+        command scripting = """
+MY_HOST_IP="$(hostname -i)"
+grep -F -q "CYLC_SUITE_HOST=$MY_HOST_IP" "${CYLC_SUITE_RUN_DIR}/cylc-suite-env"
+"""
