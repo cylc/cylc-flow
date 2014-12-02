@@ -53,6 +53,9 @@ NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
 # TODO - unify this with task_state.py:
 TRIGGER_TYPES = [ 'submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish' ]
+FAM_TRIGGER_TYPES = (
+    [trig_type + "-any" for trig_type in TRIGGER_TYPES] +
+    [trig_type + "-all" for trig_type in TRIGGER_TYPES])
 
 try:
     import graphing
@@ -1104,9 +1107,9 @@ class config( object ):
                 continue
 
             # Replace family triggers with member triggers
-            for trig_type in TRIGGER_TYPES:
-                line = self.replace_family_triggers( line, fam, members, ':'+trig_type + '-all' )
-                line = self.replace_family_triggers( line, fam, members, ':'+trig_type + '-any' )
+            for trig_type in FAM_TRIGGER_TYPES:
+                line = self.replace_family_triggers(
+                    line, fam, members, ':' + trig_type)
 
             if re.search( r"\b" + fam + r"\b:", line ):
                 # fam:illegal
@@ -1123,7 +1126,7 @@ class config( object ):
 
         # any remaining use of '-all' or '-any' implies a family trigger
         # on a non-family task, which is illegal.
-        if '-a' in line: # ('-' is not legal in task names so this gets both cases)
+        if any([":" + trig_type in line for trig_type in FAM_TRIGGER_TYPES]):
             print >> sys.stderr, line
             raise SuiteConfigError, "ERROR: family triggers cannot be used on non-family namespaces"
 
