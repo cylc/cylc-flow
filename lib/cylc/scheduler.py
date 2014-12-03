@@ -171,6 +171,7 @@ class scheduler(object):
                 'do live graph movie'       : self.info_do_live_graph_movie,
                 'graph raw'         : self.info_get_graph_raw,
                 'task requisites'   : self.info_get_task_requisites,
+                'get cylc version'  : self.info_get_cylc_version
                 }
 
         # control commands to expose indirectly via a command queue
@@ -338,6 +339,10 @@ class scheduler(object):
 
     def info_ping_suite( self ):
         return True
+
+    def info_get_cylc_version(self):
+        """Return the cylc version running this suite daemon."""
+        return CYLC_VERSION
 
     def info_ping_task( self, task_id ):
         return self.pool.ping_task( task_id )
