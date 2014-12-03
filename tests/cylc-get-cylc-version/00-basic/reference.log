@@ -1,0 +1,16 @@
+2014-12-03T15:40:50+13 INFO - port:7766
+2014-12-03T15:40:50+13 INFO - Suite starting at 2014-12-03T15:40:50+13
+2014-12-03T15:40:50+13 INFO - Log event clock: real time
+2014-12-03T15:40:50+13 INFO - Run mode: live
+2014-12-03T15:40:50+13 INFO - Initial point: 1
+2014-12-03T15:40:50+13 INFO - Final point: 1
+2014-12-03T15:40:50+13 INFO - Cold Start 1
+2014-12-03T15:40:50+13 INFO - [foo.1] -initiate job-submit
+2014-12-03T15:40:50+13 INFO - [foo.1] -triggered off []
+2014-12-03T15:40:51+13 INFO - 30514
+
+2014-12-03T15:40:51+13 INFO - [foo.1] -submit_method_id=30514
+2014-12-03T15:40:51+13 INFO - [foo.1] -submission succeeded
+2014-12-03T15:40:51+13 INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-12-03T15:40:50+13
+2014-12-03T15:40:52+13 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-12-03T15:40:51+13
+2014-12-03T15:40:53+13 INFO - Suite shutting down at 2014-12-03T15:40:53+13

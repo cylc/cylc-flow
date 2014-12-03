@@ -1,0 +1,18 @@
+title = Test for the get-cylc-version command.
+description = """A task compares its own cylc version to that running the
+test suite (should be the same)."""
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT30S
+[scheduling]
+    [[dependencies]]
+            graph = foo
+[runtime]
+    [[root]]
+        command scripting = """
+CYLC_VERSION_1=$(cylc --version)
+CYLC_VERSION_2=$(cylc get-cylc-version $CYLC_SUITE_NAME)
+if [[ $CYLC_VERSION_1 != $CYLC_VERSION_2 ]]; then
+   exit 1
+fi"""
