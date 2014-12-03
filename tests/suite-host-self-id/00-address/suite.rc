@@ -1,3 +1,4 @@
+#!Jinja2
 [cylc]
     UTC mode = True
     [[reference test]]
@@ -9,6 +10,5 @@
 [runtime]
     [[t1]]
         command scripting = """
-MY_HOST_IP="$(hostname -i)"
-grep -F -q "CYLC_SUITE_HOST=$MY_HOST_IP" "${CYLC_SUITE_RUN_DIR}/cylc-suite-env"
+grep -F -q "CYLC_SUITE_HOST={{MY_HOST_IP}}" "${CYLC_SUITE_RUN_DIR}/cylc-suite-env"
 """

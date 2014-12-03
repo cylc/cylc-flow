@@ -21,7 +21,13 @@
 set_test_number 2
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+#-------------------------------------------------------------------------------
+MY_INET_TARGET=$( \
+    cylc get-global-config '--item=[suite host self-identification]target')
+MY_HOST_IP=$(python -m cylc.suite_host "${MY_INET_TARGET}")
+
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate "${SUITE_NAME}" "--set=MY_HOST_IP=${MY_HOST_IP}"
 
 mkdir 'conf'
 cat >'conf/global.rc' <<'__GLOBALCFG__'
@@ -30,7 +36,9 @@ cat >'conf/global.rc' <<'__GLOBALCFG__'
 __GLOBALCFG__
 export CYLC_CONF_PATH="${PWD}/conf"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
+    cylc run --reference-test --debug "${SUITE_NAME}" \
+    "--set=MY_HOST_IP=${MY_HOST_IP}"
+#-------------------------------------------------------------------------------
 
 purge_suite "${SUITE_NAME}"
 exit
