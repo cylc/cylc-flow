@@ -22,6 +22,7 @@ from cylc.task_proxy import TaskProxy
 from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
 from cylc.owner import user
+from cylc.version import CYLC_VERSION
 from shutil import copy as shcopy, copytree, rmtree
 from copy import deepcopy
 import datetime, time
@@ -706,10 +707,11 @@ class scheduler(object):
         # Contact details for remote tasks, written to file on task
         # hosts because the details can change on restarting a suite.
         self.suite_contact_env = {
-                'CYLC_SUITE_NAME'        : self.suite_env['CYLC_SUITE_NAME' ],
-                'CYLC_SUITE_HOST'        : self.suite_env['CYLC_SUITE_HOST' ],
-                'CYLC_SUITE_OWNER'       : self.suite_env['CYLC_SUITE_OWNER'],
-                'CYLC_SUITE_PORT'        : self.suite_env['CYLC_SUITE_PORT' ],
+                'CYLC_SUITE_NAME' : self.suite_env['CYLC_SUITE_NAME'],
+                'CYLC_SUITE_HOST' : self.suite_env['CYLC_SUITE_HOST'],
+                'CYLC_SUITE_OWNER' : self.suite_env['CYLC_SUITE_OWNER'],
+                'CYLC_SUITE_PORT' : self.suite_env['CYLC_SUITE_PORT'],
+                'CYLC_VERSION' : CYLC_VERSION
                 }
 
         # Set local values of variables that are potenitally task-specific
