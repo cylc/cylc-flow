@@ -22,6 +22,7 @@ from cylc.task_proxy import TaskProxy
 from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
 from cylc.owner import user
+from cylc.version import CYLC_VERSION
 from shutil import copy as shcopy, copytree, rmtree
 from copy import deepcopy
 import datetime, time
@@ -159,43 +160,44 @@ class scheduler(object):
         SuiteProcPool.get_inst()  # initialise the singleton
         # read-only commands to expose directly to the network
         self.info_commands = {
-                'ping suite'        : self.info_ping_suite,
-                'ping task'         : self.info_ping_task,
-                'suite info'        : self.info_get_suite_info,
-                'task info'         : self.info_get_task_info,
-                'all families'      : self.info_get_all_families,
+                'ping suite' : self.info_ping_suite,
+                'ping task' : self.info_ping_task,
+                'suite info' : self.info_get_suite_info,
+                'task info' : self.info_get_task_info,
+                'all families' : self.info_get_all_families,
                 'triggering families' : self.info_get_triggering_families,
-                'first-parent ancestors'    : self.info_get_first_parent_ancestors,
-                'first-parent descendants'  : self.info_get_first_parent_descendants,
-                'do live graph movie'       : self.info_do_live_graph_movie,
-                'graph raw'         : self.info_get_graph_raw,
-                'task requisites'   : self.info_get_task_requisites,
+                'first-parent ancestors' : self.info_get_first_parent_ancestors,
+                'first-parent descendants' : self.info_get_first_parent_descendants,
+                'do live graph movie' : self.info_do_live_graph_movie,
+                'graph raw' : self.info_get_graph_raw,
+                'task requisites' : self.info_get_task_requisites,
+                'get cylc version' : self.info_get_cylc_version
                 }
 
         # control commands to expose indirectly via a command queue
         self.control_commands = {
-                'stop cleanly'          : self.command_set_stop_cleanly,
-                'stop now'              : self.command_stop_now,
-                'stop after point'      : self.command_set_stop_after_point,
+                'stop cleanly' : self.command_set_stop_cleanly,
+                'stop now' : self.command_stop_now,
+                'stop after point' : self.command_set_stop_after_point,
                 'stop after clock time' : self.command_set_stop_after_clock_time,
-                'stop after task'       : self.command_set_stop_after_task,
-                'release suite'         : self.command_release_suite,
-                'release task'          : self.command_release_task,
-                'remove cycle'          : self.command_remove_cycle,
-                'remove task'           : self.command_remove_task,
-                'hold suite now'        : self.command_hold_suite,
-                'hold task now'         : self.command_hold_task,
-                'set runahead'          : self.command_set_runahead,
-                'set verbosity'         : self.command_set_verbosity,
-                'purge tree'            : self.command_purge_tree,
-                'reset task state'      : self.command_reset_task_state,
-                'trigger task'          : self.command_trigger_task,
-                'nudge suite'           : self.command_nudge,
-                'insert task'           : self.command_insert_task,
-                'reload suite'          : self.command_reload_suite,
-                'add prerequisite'      : self.command_add_prerequisite,
-                'poll tasks'            : self.command_poll_tasks,
-                'kill tasks'            : self.command_kill_tasks,
+                'stop after task' : self.command_set_stop_after_task,
+                'release suite' : self.command_release_suite,
+                'release task' : self.command_release_task,
+                'remove cycle' : self.command_remove_cycle,
+                'remove task' : self.command_remove_task,
+                'hold suite now' : self.command_hold_suite,
+                'hold task now' : self.command_hold_task,
+                'set runahead' : self.command_set_runahead,
+                'set verbosity' : self.command_set_verbosity,
+                'purge tree' : self.command_purge_tree,
+                'reset task state' : self.command_reset_task_state,
+                'trigger task' : self.command_trigger_task,
+                'nudge suite' : self.command_nudge,
+                'insert task' : self.command_insert_task,
+                'reload suite' : self.command_reload_suite,
+                'add prerequisite' : self.command_add_prerequisite,
+                'poll tasks' : self.command_poll_tasks,
+                'kill tasks' : self.command_kill_tasks,
                 }
 
         # run dependency negotation etc. after these commands
@@ -337,6 +339,10 @@ class scheduler(object):
 
     def info_ping_suite( self ):
         return True
+
+    def info_get_cylc_version(self):
+        """Return the cylc version running this suite daemon."""
+        return CYLC_VERSION
 
     def info_ping_task( self, task_id ):
         return self.pool.ping_task( task_id )
@@ -706,10 +712,11 @@ class scheduler(object):
         # Contact details for remote tasks, written to file on task
         # hosts because the details can change on restarting a suite.
         self.suite_contact_env = {
-                'CYLC_SUITE_NAME'        : self.suite_env['CYLC_SUITE_NAME' ],
-                'CYLC_SUITE_HOST'        : self.suite_env['CYLC_SUITE_HOST' ],
-                'CYLC_SUITE_OWNER'       : self.suite_env['CYLC_SUITE_OWNER'],
-                'CYLC_SUITE_PORT'        : self.suite_env['CYLC_SUITE_PORT' ],
+                'CYLC_SUITE_NAME' : self.suite_env['CYLC_SUITE_NAME'],
+                'CYLC_SUITE_HOST' : self.suite_env['CYLC_SUITE_HOST'],
+                'CYLC_SUITE_OWNER' : self.suite_env['CYLC_SUITE_OWNER'],
+                'CYLC_SUITE_PORT' : self.suite_env['CYLC_SUITE_PORT'],
+                'CYLC_VERSION' : CYLC_VERSION
                 }
 
         # Set local values of variables that are potenitally task-specific

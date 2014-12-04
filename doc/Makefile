@@ -47,7 +47,7 @@ cmdx = $(cmds:%=commands/%.txt)
 
 $(cmdx): commands/%.txt: ../bin/cylc-%
 	if test ! -d commands; then mkdir -p commands/; fi
-	$(subst cylc-,cylc ,$<) --help > $@
+	$(patsubst ../bin/cylc-%,../bin/cylc %,$<) --help > $@
 
 $(catx): categories/%.txt: ../bin/cylc
 	if test ! -d categories; then mkdir -p categories/; fi

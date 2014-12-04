@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+#C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+#C: Copyright (C) 2008-2014 NIWA
+#C:
+#C: This program is free software: you can redistribute it and/or modify
+#C: it under the terms of the GNU General Public License as published by
+#C: the Free Software Foundation, either version 3 of the License, or
+#C: (at your option) any later version.
+#C:
+#C: This program is distributed in the hope that it will be useful,
+#C: but WITHOUT ANY WARRANTY; without even the implied warranty of
+#C: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#C: GNU General Public License for more details.
+#C:
+#C: You should have received a copy of the GNU General Public License
+#C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute():
+        sys.exit(0)
+
+from cylc.CylcOptionParsers import cop
+from cylc.task_id import TaskID
+from cylc import cylc_pyro_client
+from cylc.command_prep import prep_pyro
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+import cylc.flags
+
+parser = cop("""cylc [info] get-cylc-version [OPTIONS] ARGS
+
+Interrogate running suite REG to find what version of cylc is running it.
+
+Note: to find the cylc version at your command line, use "cylc -v".""",
+    pyro=True,
+    argdoc=[('REG', 'Suite name')])
+
+(options, args) = parser.parse_args()
+
+suite, pphrase = prep_pyro(args[0], options).execute()
+
+try:
+    proxy = cylc_pyro_client.client(
+            suite, pphrase, options.owner, options.host, options.pyro_timeout,
+            options.port).get_proxy('suite-info')
+    res = proxy.get('get cylc version')
+except Exception, x:
+    if cylc.flags.debug:
+        raise
+    sys.exit(x)
+else:
+    print res

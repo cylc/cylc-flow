@@ -173,6 +173,7 @@ information_commands['dump'] = ['dump']
 information_commands['cat-state'] = ['cat-state']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
+information_commands['get-cylc-version'] = ['get-cylc-version']
 
 information_commands['documentation'] = ['documentation', 'browse']
 information_commands['monitor'] = ['monitor']
@@ -387,6 +388,7 @@ comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
 comsum['get-gui-config'] = 'Print gcylc configuration items'
+comsum['get-cylc-version'] = 'Get the cylc-version running a daemon'
 comsum['gsummary'] = 'Summary GUI for monitoring multiple suites'
 comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'
 # control

@@ -32,10 +32,8 @@ import cylc.flags
 
 parser = cop( """cylc [discovery] ping [OPTIONS] ARGS
 
-If suite REG (or task TASK in it) is running, exit (silently, unless
--v,--verbose is specified); else print an error message and exit with
-error status. For tasks, success means the task proxy is currently in
-the 'running' state.""",
+If suite REG is running or TASK in suite REG is currently in the 'running'
+state exit with success status, else exit with error status.""",
     pyro=True,
     argdoc=[('REG', 'Suite name'),
             ('[TASK]', 'Task ' + TaskID.SYNTAX)])
