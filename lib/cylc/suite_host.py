@@ -94,7 +94,7 @@ def get_suite_host():
         if method == 'name':
             suite_host = hostname
         elif method == 'address':
-            suite_host = host_ip_address
+            suite_host = get_host_ip_address()
         elif method == 'hardwired':
             if not hardwired:
                 sys.exit( 'ERROR, no hardwired hostname is configured' )
