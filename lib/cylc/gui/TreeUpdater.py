@@ -377,8 +377,6 @@ class TreeUpdater(threading.Thread):
                     if prev_named_path != named_path:
                         # New task or location for the task, rebuild tree.
                         should_rebuild_tree = True
-                    if (point_string, name) in task_row_ids_left:
-                        task_row_ids_left.remove((point_string, name))
 
         if task_row_ids_left:
             # Some previous task ids need deleting, so rebuild the tree.
@@ -443,7 +441,7 @@ class TreeUpdater(threading.Thread):
 
                     f_iter = p_iter
                     f_path = p_path
-                    fam = None
+                    fam = point_string
                     for i, fam in enumerate(named_path[:-1]):
                         # Construct family nesting for this task.
                         if fam in family_iters:
@@ -524,7 +522,7 @@ class TreeUpdater(threading.Thread):
                 except KeyError:
                     if not is_fam:
                         raise
-                    # Families are not always shown, so this is OK. 
+                    # Families are not always shown, so this is OK.
                     continue
                 set_data = [point_string, name] + data
                 set_args = itertools.chain(*zip(columns, set_data))
