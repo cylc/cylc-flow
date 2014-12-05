@@ -81,7 +81,7 @@ def validate( cfig, spec, keys=[] ):
         specval = spec[speckey]
         if isinstance( val, dict ) and isinstance( specval, dict):
             validate( val, spec[speckey], keys+[key] )
-        elif val and not isinstance( specval, dict):
+        elif val is not None and not isinstance( specval, dict):
             # (if val is null we're only checking item validity)
             cfig[key] = spec[speckey].check( val, keys+[key] )
         else:
@@ -148,14 +148,14 @@ def _strip_and_unquote( keys, value ):
         else:
             raise IllegalValueError( "string", keys, value )
 
-    elif value[0] == '"':
+    elif value.startswith('"'):
         m = re.match( _DQ_VALUE, value )
         if m:
             value = m.groups()[0]
         else:
             raise IllegalValueError( "string", keys, value )
 
-    elif value[0] == "'":
+    elif value.startswith("'"):
         m = re.match( _SQ_VALUE, value )
         if m:
             value = m.groups()[0]
@@ -182,13 +182,13 @@ def _unquoted_list_parse( keys, value ):
         pos = m.end(0)
 
 def _strip_and_unquote_list( keys, value ):
-    if value[0] == '"':
+    if value.startswith('"'):
         # double-quoted values
         m = _DQV.match( value )
         if m:
             value = m.groups()[0]
         values = re.findall( _DQ_L_VALUE, value )
-    elif value[0] == "'":
+    elif value.startswith("'"):
         # single-quoted values
         m = _SQV.match( value )
         if m:
