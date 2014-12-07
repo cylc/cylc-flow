@@ -24,7 +24,7 @@ res = cfg.get( sparse=True)
 for expected in res[rcname].keys():
 
     vals = cfg.get( [rcname, expected], sparse=True ).values()
-    expected = re.sub( 'COMMA', ',', expected )
+    expected = expected.replace('COMMA', ',').replace('NULL', '')
 
     if rcname == 'boolean':
         expected = ( expected == 'True' ) or False
@@ -42,7 +42,10 @@ for expected in res[rcname].keys():
         expected = [float(i) for i in expected.split('_')]
 
     elif rcname == 'string_list':
-        expected = expected.split('_')
+        if expected:
+            expected = expected.split('_')
+        else:
+            expected = []
 
     if vals.count(expected) != len( vals ):
         print >> sys.stderr, vals, ' is not all ', expected

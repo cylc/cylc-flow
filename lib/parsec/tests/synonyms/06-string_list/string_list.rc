@@ -22,3 +22,7 @@
         item 2 = "the,c1", "quick , c2"  , "brown,c3", "fox,c4",   # comment
         item 3 = "the,c1", "quick , c2"  , "brown,c3",\
     "fox,c4",   # comment
+
+    [[NULL]]
+        item 1 =
+        item 2 = # comment
