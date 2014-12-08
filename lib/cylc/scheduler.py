@@ -435,13 +435,17 @@ class scheduler(object):
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.release_tasks( task_ids )
 
-    def command_poll_tasks( self, name, point_string, is_family ):
-        matches = self.get_matching_tasks( name, is_family )
-        if not matches:
-            raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.poll_tasks( task_ids )
+    def command_poll_tasks(self, name, point_string, is_family):
+        """Poll all tasks or a task/family if options are provided."""
+        if name == "None" and point_string == "None":
+            self.pool.poll_tasks()
+        else:
+            matches = self.get_matching_tasks(name, is_family)
+            if not matches:
+                raise TaskNotFoundError, "No matching tasks found: " + name
+            point_string = standardise_point_string(point_string)
+            task_ids = [TaskID.get(i, point_string) for i in matches]
+            self.pool.poll_tasks(task_ids)
 
     def command_kill_tasks( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )

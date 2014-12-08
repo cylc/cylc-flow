@@ -1,0 +1,62 @@
+title = "Test suite for task state change on poll result."
+description = """Task run_kill fails silently - it will be stuck in 'running'
+unless polled. Task run_kill goes to Task submit_hold. Task poll_check_kill 
+then polls all to find if any tasks have failed, allowing run_kill to suicide
+via a :fail trigger. Task submit_hold is an idle task which is killed after
+Task poll_check_kill succeds by Task poll_now. Task poll_now then polls all
+to find if any tasks, allowing submit_hold to suicide via a :submit-fail
+trigger, and the suite to shut down successfully."""
+
+[cylc]
+   UTC mode = True
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = PT2M # minutes
+       expected task failures = run_kill.20141207T0000Z,\
+                                run_kill.20141208T0000Z,\
+                                submit_hold.20141207T0000Z,\
+                                submit_hold.20141208T0000Z
+       
+[scheduling]
+    initial cycle point = 20141207T0000Z
+    final cycle point   = 20141208T0000Z
+    [[dependencies]]
+        [[[T00]]]
+            graph = """
+        run_kill[-P1D]:fail => run_kill:start => submit_hold
+        run_kill:fail => !run_kill
+        submit_hold:submit => poll_check_kill => poll_now
+        submit_hold:submit-fail => !submit_hold
+        """
+
+[runtime]
+    [[run_kill]]
+        command scripting = """
+trap '' EXIT # die silently 
+exit 0"""
+    [[poll_check_kill]]
+        command scripting = """
+            cylc poll $CYLC_SUITE_NAME
+
+            while test $(grep "\[submit_hold.${CYLC_TASK_CYCLE_POINT}\] -submission succeeded
+\[run_kill.${CYLC_TASK_CYCLE_POINT}\] -suiciding" ${CYLC_SUITE_LOG_DIR%suite}suite/log -c) -ne 2 ; do
+                sleep 2
+            done
+
+            eval $(grep "^CYLC_BATCH_SYS_JOB_ID="\
+ ${CYLC_SUITE_LOG_DIR%suite}job/$CYLC_TASK_CYCLE_POINT/submit_hold/NN/job.status)
+            echo $CYLC_BATCH_SYS_JOB_ID
+            atrm  $CYLC_BATCH_SYS_JOB_ID
+
+        """
+    [[poll_now]]
+        command scripting = """ 
+            cylc poll $CYLC_SUITE_NAME
+       """
+        [[[job submission]]]
+            method           = at
+            
+    [[submit_hold]]
+        [[[job submission]]]
+            method           = at
+            command template = at now + 2 minutes

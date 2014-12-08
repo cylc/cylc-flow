@@ -29,10 +29,10 @@ from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
-parser = cop( """cylc [control] poll [OPTIONS] ARGS
+parser = cop("""cylc [control] poll [OPTIONS] ARGS
 
-Poll a 'submitted' or 'running' task to verify its status. If a job was
-killed by external means this will update the suite accordingly.
+Poll a 'submitted' or 'running' or 'all' task(s) to verify the status(es).
+If a job was killed by external means this will update the suite accordingly.
 
 Note that automatic job polling can used to track task status on task
 hosts that do not allow any communication by RPC (pyro) or ssh back to
@@ -41,16 +41,20 @@ the suite host - see site/user config file documentation.
 Polling is also done automatically on restarting a suite, for any tasks
 that were recorded as submitted or running when the suite went down.
 """ + multitask_usage, pyro=True, multitask=True,
-        argdoc=[ ('REG', 'Suite name'),
-            ('MATCH', 'Task or family name matching regular expression'),
-            ('POINT', 'Task cycle point (e.g. date-time or integer)') ])
+        argdoc=[('REG', 'Suite name'),
+            ('[MATCH]', 'Task or family name matching regular expression'),
+            ('[POINT]', 'Task cycle point (e.g. date-time or integer)')])
 
 (options, args) = parser.parse_args()
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+suite, pphrase = prep_pyro(args[0], options).execute()
 
-name = args[1]
-point_string = args[2]
+if len(args) == 3:
+    name = args[1]
+    point_string = args[2]
+else:
+    name = str(None)
+    point_string = str(None)
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
