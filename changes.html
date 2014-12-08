@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.1.2">6.1.2</a></li>
     <li><a href="#6.1.1">6.1.1</a></li>
     <li><a href="#6.1.0">6.1.0</a></li>
     <li><a href="#6.0.2">6.0.2</a></li>
@@ -51,6 +52,31 @@
 
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+<a name="6.1.2"/>
+    <h2>6.1.2</h2>
+
+		<h3>6.1.2 enhancements</h3>
+  		<ul>
+                <li> In the <code>cylc gsummary</code> GUI, suite state
+                summaries can now be expanded to show the summary state for
+                each active cycle point.
+                <li> A new command <code>cylc get-cylc-version SUITE</code>
+                reports the version of cylc running the targetted suite
+                daemon.
+                <li> Updated some example suites to cylc-6 format.
+        </ul>
+    
+        <h3>6.1.3 fixes</h3>
+  		<ul>
+            <li> Fixed the <code>suite host self-identification = address</code>
+            global config setting (it causes the suite host to be identified
+            by IP address rather than host name in task job scripts).
+            <li> Allow "-a" in task names (this character combination broke
+            graph processing).
+            <li> Handle explicitly-set null values properly in list-value
+            config items.
+        </ul>
 
 <a name="6.1.1"/>
     <h2>6.1.1</h2>

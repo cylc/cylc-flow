@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2014-11-27 13:02:00"> 
+<meta name="date" content="2014-12-09 00:33:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -135,9 +135,8 @@ wiring them into task implementation. Shared workspace locations can be passed t
 
                                                                                          
 modifying the task implementation, like this:
-   <!--l. 6210--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+   <!--l. 6210-->
+   <div class="lstlisting" id="listing-210"><span class="label"><a 
  id="x16-195001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -316,8 +315,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">WORKDIR</span>
-
-
+   
    </div>
 <!--l. 6227--><p class="noindent" >
 <!--l. 6227--><p class="indent" >    <h4 id="15.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#15.6.2"> 15.6.2</a>  <a 
@@ -409,9 +407,8 @@ class="cmti-10">clock-triggered </span>tasks also wait
 on a wall clock time expressed as an offset from their cycle point. For example, task <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> below will trigger (other
 dependencies allowing) 2 hours after the wall clock time passes its cycle point (which in this case must be a
-date-time).  <!--l. 6315--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+date-time).  <!--l. 6315-->
+   <div class="lstlisting" id="listing-211"><span class="label"><a 
  id="x16-203001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -447,8 +444,7 @@ class="pcrr7t-">foo</span><span
 class="pcrr7t-">(</span><span 
 class="pcrr7t-">PT2H</span><span 
 class="pcrr7t-">)</span>
-
-
+   
    </div>
 <!--l. 6321--><p class="indent" >   Tasks that wait on external real time data should have a clock-trigger to delay submission until roughly the
 expected time of data availability, otherwise they may clutter up batch scheduler queues by submitting hours earlier.
@@ -499,9 +495,8 @@ generally it is best to provide each task with only the variables that it needs.
 needs a variable that is passed to it, but you can be sure that it does not use a variable that is not passed to
 it.
 <!--l. 6371--><p class="indent" >   Finally, Jinja2 can also be used to avoid polluting task environments with variables used for the sole purpose of
-deriving other variables at task run time. Instead of this:  <!--l. 6375--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+deriving other variables at task run time. Instead of this:  <!--l. 6375-->
+   <div class="lstlisting" id="listing-212"><span class="label"><a 
  id="x16-206001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -611,12 +606,10 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">OUTPUT_DIR</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">bar</span>
-
-
+   
    </div>
-<!--l. 6385--><p class="indent" >   do this:  <!--l. 6387--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6385--><p class="indent" >   do this:  <!--l. 6387-->
+   <div class="lstlisting" id="listing-213"><span class="label"><a 
  id="x16-206009r1"></a></span><span 
 class="pcrr7t-">{%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -705,13 +698,11 @@ class="pcrr7t-">OUTPUT_DIR</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">}}/</span><span 
 class="pcrr7t-">bar</span>
-
-
+   
    </div>
 <!--l. 6396--><p class="indent" >   If the values of these Jinja2 variables are needed in external scripts, just translate them directly in environment
-sections:  <!--l. 6399--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+sections:  <!--l. 6399-->
+   <div class="lstlisting" id="listing-214"><span class="label"><a 
  id="x16-206015r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -739,20 +730,18 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">OUTPUT_DIR</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">}}</span>
-
-
+   
    </div>
 <!--l. 6405--><p class="noindent" >
 <!--l. 6405--><p class="indent" >    <h4 id="15.16" class="subsectionHead"> <span class="titlemark"> <a href="#15.16"> 15.16</a>  <a 
  id="x16-20700015.16"></a>Use The Graph For Scheduling </span></h4>
 <!--l. 6407--><p class="indent" >   If you find yourself writing runtime scripting to change a task&#8217;s behaviour in some cycle points, consider that the
 graph is usually the proper place to express this sort of thing. Use different task names, but have them inherit
-common properties to avoid duplication. Instead of this:  <!--l. 6412--><div class="lstlisting">
+common properties to avoid duplication. Instead of this:  <!--l. 6412-->
+                                                                                         
 
-
-
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+                                                                                         
+   <div class="lstlisting" id="listing-215"><span class="label"><a 
  id="x16-207001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -848,7 +837,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207008r8"></a></span></span><span 
+ id="x16-207008r8"></a></span><span 
 class="pcrr7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
@@ -877,7 +866,7 @@ class="pcrr7t-">||</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207009r9"></a></span></span><span 
+ id="x16-207009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -908,7 +897,7 @@ class="pcrr7t-">]];</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207010r10"></a></span></span><span 
+ id="x16-207010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -925,10 +914,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">fox</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207011r11"></a></span></span><span 
+ id="x16-207011r11"></a></span><span 
 class="pcrr7t-">else</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207012r12"></a></span></span><span 
+ id="x16-207012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -943,10 +932,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">dog</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207013r13"></a></span></span><span 
+ id="x16-207013r13"></a></span><span 
 class="pcrr7t-">fi</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x16-207014r14"></a></span></span><span 
+ id="x16-207014r14"></a></span><span 
 class="pcrr7t-">echo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr8c-">$</span><span 
@@ -971,12 +960,10 @@ class="pcrro7t-">other</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">config</span><span 
 class="pcrro7t-">...)</span>
-
-
+   
    </div>
-<!--l. 6429--><p class="indent" >   do this:  <!--l. 6431--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6429--><p class="indent" >   do this:  <!--l. 6431-->
+   <div class="lstlisting" id="listing-216"><span class="label"><a 
  id="x16-207016r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
@@ -1258,8 +1245,7 @@ class="pcrr7t-">lazy</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">dog</span><span 
 class="pcrr7t-">"</span>
-
-
+   
    </div>
 <!--l. 6452--><p class="indent" >   Similarly, if your task has a different behaviour at the initial or final cycle point, consider using an <span class="lstinline"><span 
 class="pcrr7t-">R1</span></span> syntax to
@@ -1273,9 +1259,8 @@ class="cmti-10">first parents </span>in the runtime namespace hierarchy. Tasks s
 visualization families that reflect their purpose within the structure of the suite rather than technical detail such as
 common job submission method or task host. This often coincides nicely with common configuration inheritance
 requirements, but if it doesn&#8217;t you can use an empty namespace as a first parent for visualization:
-<!--l. 6467--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6467-->
+   <div class="lstlisting" id="listing-217"><span class="label"><a 
  id="x16-208001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1319,12 +1304,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">OBSPROC</span>
-
-
+   
    </div>
-<!--l. 6473--><p class="indent" >   and you can demote parents from primary to secondary:  <!--l. 6475--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+<!--l. 6473--><p class="indent" >   and you can demote parents from primary to secondary:  <!--l. 6475-->
+   <div class="lstlisting" id="listing-218"><span class="label"><a 
  id="x16-208005r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -1390,8 +1373,7 @@ class="pcrr7t-">None</span><span
 class="pcrr7t-">,</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">HOSTX</span>
-
-
+   
    </div>
                                                                                          
 
