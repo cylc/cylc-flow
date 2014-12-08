@@ -71,9 +71,6 @@ class GraphUpdater(threading.Thread):
         self.best_fit = False # If True, xdot will zoom to page size
         self.normal_fit = False # if True, xdot will zoom to 1.0 scale
         self.crop = False
-        self.filter_include = None
-        self.filter_exclude = None
-        self.state_filter = None
         self.subgraphs_on = False # If True, organise by cycle point.
 
         self.descendants = {}
@@ -289,8 +286,6 @@ class GraphUpdater(threading.Thread):
 
         start_time = self.global_summary['start time']
 
-        extra_node_ids = {}
-
         try:
             res = self.updater.sinfo.get(
                     'graph raw', oldest, newest,
@@ -302,8 +297,8 @@ class GraphUpdater(threading.Thread):
                     'graph raw', oldest, newest,
                     False, self.group, self.ungroup, self.ungroup_recursive,
                     self.group_all, self.ungroup_all)
-        except Exception:  # PyroError
-            raise
+        except Exception as exc:  # PyroError?
+            print >> sys.stderr, str(exc)
             return False
 
         # backward compatibility for old suite daemons still running
@@ -325,165 +320,98 @@ class GraphUpdater(threading.Thread):
                 self.have_leaves_and_feet = True
                 gr_edges, suite_polling_tasks, self.leaves, self.feet = res
 
-        # find nodes not present in the main graph
-        extra_ids = []
-        omit = []
-        for id in self.state_summary:
-            if not any( id in edge for edge in gr_edges ):
-                # this node is not present in the main graph
-                name, point_string = TaskID.split(id)
-                if any( [ name in self.descendants[fam] for fam in self.all_families ] ):
-                    # must be a member of a collapsed family, don't graph it
-                    omit.append(name)
-                    continue
-                state = self.state_summary[id]['state']
-                if state in ['submitted','submit-failed','running','failed']:
-                    if id not in extra_ids:
-                        extra_ids.append( id )
-
-        current_id = self.get_graph_id( gr_edges, extra_ids )
+        current_id = self.get_graph_id(gr_edges)
         needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
-            self.graphw = graphing.CGraphPlain( self.cfg.suite, suite_polling_tasks )
-            self.graphw.add_edges( gr_edges, ignore_suicide=self.ignore_suicide )
-            if self.subgraphs_on:
-                self.graphw.add_cycle_point_subgraphs( gr_edges )
+            self.graphw = graphing.CGraphPlain(self.cfg.suite, suite_polling_tasks)
+            self.graphw.add_edges(gr_edges, ignore_suicide=self.ignore_suicide)
 
-        for n in self.graphw.nodes(): # base node defaults
-            n.attr['style'] = 'filled'
-            n.attr['color'] = '#888888'
-            n.attr['fillcolor'] = 'white'
-            n.attr['fontcolor'] = '#888888'
+            # Remove nodes (incl. base nodes) representing filtered-out tasks.
+            if (self.updater.filter_name_string or
+                self.updater.filter_states_excl):
+                nodes_to_remove = set()
+                for node in self.graphw.nodes():
+                    id = node.get_name()
+                    name, point_string = TaskID.split(id)
+                    if name not in self.all_families:
+                        if id not in self.updater.state_summary:
+                            nodes_to_remove.add(node)
+                    else:
+                        # Remove family nodes if members are filtered out.
+                        remove = True
+                        for mem in self.descendants[name]:
+                            mem_id = TaskID.get(mem, point_string)
+                            if mem_id in self.updater.state_summary:
+                                remove = False
+                                break
+                        if remove:
+                            nodes_to_remove.add(node)
+                self.graphw.remove_nodes_from(list(nodes_to_remove))
+ 
+            # Base node cropping.
+            nodes_to_remove = set()
+            if self.crop:
+                # Remove all base nodes.
+                for node in self.graphw.nodes():
+                    if node.get_name() not in self.state_summary:
+                        nodes_to_remove.add(node)
+            else:
+                # Remove cycle points containing only base nodes.
+                non_base_point_strings = set()
+                point_string_nodes = {}
+                for node in self.graphw.nodes():
+                    node_id = node.get_name()
+                    name, point_string = TaskID.split(node_id)
+                    point_string_nodes.setdefault(point_string, [])
+                    point_string_nodes[point_string].append(node)
+                    if (node_id in self.state_summary or
+                            node_id in self.fam_state_summary):
+                        non_base_point_strings.add(point_string)
+                pure_base_point_strings = (
+                    set(point_string_nodes) - non_base_point_strings)
+                for point_string in pure_base_point_strings:
+                    for node in point_string_nodes[point_string]:
+                        nodes_to_remove.add(node)
+            self.graphw.remove_nodes_from(list(nodes_to_remove))
 
-        self.rem_nodes = []
+            # TODO - remove base nodes only connected to other base nodes?
 
-        # FAMILIES
-        if needs_redraw:
-            non_base_point_strings = set()
-            point_string_nodes = {}
+            # Make family nodes octagons.
             for node in self.graphw.nodes():
                 node_id = node.get_name()
                 name, point_string = TaskID.split(node_id)
-                point_string_nodes.setdefault(point_string, [])
-                point_string_nodes[point_string].append(node)
-                if (node_id in self.state_summary or
-                        node_id in self.fam_state_summary):
-                    non_base_point_strings.add(point_string)
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
                     else:
                         node.attr['shape'] = 'tripleoctagon'
 
-            # CROPPING
-            if self.crop:
-                # Crop every base node.
-                for node in self.graphw.nodes():
-                    #if node in self.rem_nodes:
-                    #    continue
-                    #if node.get_name() not in self.state_summary and \
-                        # len( self.graphw.successors( node )) == 0:
-                        # self.remove_empty_nodes( node )
-                    if node.get_name() not in self.state_summary:
-                        self.rem_nodes.append(node)
-            else:
-                # Crop every base node in purely-base-node cycle points.
-                pure_base_point_strings = (
-                    set(point_string_nodes) - non_base_point_strings)
-                for point_string in pure_base_point_strings:
-                    for node in point_string_nodes[point_string]:
-                        self.rem_nodes.append(node)
+            if self.subgraphs_on:
+                self.graphw.add_cycle_point_subgraphs(gr_edges)
 
-            # FILTERING:
-            for node in self.graphw.nodes():
-                id = node.get_name()
-                name, point_string = TaskID.split(id)
-                if self.filter_exclude:
-                    if re.search( self.filter_exclude, name ):
-                        if node not in self.rem_nodes:
-                            self.rem_nodes.append(node)
-                if self.filter_include:
-                    if not re.search( self.filter_include, name ):
-                        if node not in self.rem_nodes:
-                            self.rem_nodes.append(node)
-                if self.state_filter:
-                    if id in self.state_summary:
-                        state = self.state_summary[id]['state']
-                        if state in self.state_filter:
-                            if node not in self.rem_nodes:
-                                self.rem_nodes.append(node)
-
-            # remove_nodes_from( nbunch ) - nbunch is any iterable container.
-            self.graphw.remove_nodes_from( self.rem_nodes )
+        # Set base node style defaults
+        for node in self.graphw.nodes():
+            node.attr['style'] = 'filled'
+            node.attr['color'] = '#888888'
+            node.attr['fillcolor'] = 'white'
+            node.attr['fontcolor'] = '#888888'
 
         for id in self.state_summary:
-
             try:
-                node = self.graphw.get_node( id )
+                node = self.graphw.get_node(id)
             except KeyError:
-                # This live task proxy is not represented in the graph.
-                # But it is live so if its state is deemed interesting
-                # plot it off to the right of the main graph.
-
-                # Tasks in this category include: members of collapsed
-                # families; tasks outside of the current focus range (if
-                # one is set), inserted tasks that are defined under
-                # [runtime] but not used in the suite graph.
-
-                # Now that we have family state coloring with family
-                # member states listed in tool-tips, don't draw
-                # off-graph family members:
-                name, point_string = TaskID.split(id)
-                if name in omit:
-                    # (see above)
-                    continue
-
-                if id not in self.graph_warned or not self.graph_warned[id]:
-                    print >> sys.stderr, 'WARNING: ' + id + ' is outside of the main graph.'
-                    self.graph_warned[id] = True
-
-                state = self.state_summary[id]['state']
-                if state == 'submitted' or state == 'running' or  state == 'failed' or state == 'held':
-                    if state not in extra_node_ids:
-                        extra_node_ids[state] = [id]
-                    else:
-                        extra_node_ids[state].append(id)
-                    continue
-                else:
-                    continue
-
-            self.set_live_node_attr( node, id )
+                continue
+            self.set_live_node_attr(node, id)
 
         for id in self.fam_state_summary:
             try:
-                node = self.graphw.get_node( id )
+                node = self.graphw.get_node(id)
             except:
                 continue
-            self.set_live_node_attr( node, id )
-
-        # TODO - ?optional transitive reduction:
-        # self.graphw.tred()
+            self.set_live_node_attr(node, id)
 
         self.graphw.graph_attr['rankdir'] = self.orientation
-
-        # process extra nodes (important nodes outside of focus range,
-        # and family members that aren't plotted in the main graph).
-
-        if needs_redraw:
-            for state in extra_node_ids:
-                for id in extra_node_ids[state]:
-                    self.graphw.cylc_add_node( id, True )
-                    node = self.graphw.get_node(id)
-                    self.set_live_node_attr( node, id, shape='box')
-
-                # add invisible edges to force vertical alignment
-                for i in range( len(extra_node_ids[state])):
-                   if i == len(extra_node_ids[state]) -1:
-                       break
-                   self.graphw.cylc_add_edge( extra_node_ids[state][i],
-                           extra_node_ids[state][i+1], True, style='invis')
-
         self.action_required = False
 
         if self.write_dot_frames:
@@ -495,11 +423,9 @@ class GraphUpdater(threading.Thread):
         self.prev_graph_id = current_id
         return not needs_redraw
 
-    def get_graph_id( self, edges, extra_ids ):
+    def get_graph_id(self, edges):
         """If any of these quantities change, the graph should be redrawn."""
-        states = self.state_filter
-        if self.state_filter:
-            states = set(self.state_filter)
-        return ( set( edges ), set( extra_ids ), self.crop,
-                 self.filter_exclude, self.filter_include, states,
-                 self.orientation, self.ignore_suicide, self.subgraphs_on )
+        return (set(edges), self.crop,
+                set(self.updater.filter_states_excl),
+                self.updater.filter_name_string,
+                self.orientation, self.ignore_suicide, self.subgraphs_on)

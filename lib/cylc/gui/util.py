@@ -23,8 +23,7 @@ import traceback
 import gtk
 
 
-class EntryTempText( gtk.Entry ):
-
+class EntryTempText(gtk.Entry):
     """Class to add temporary text to an entry that vanishes on focus."""
 
     temp_colour = gtk.gdk.color_parse("grey")
@@ -44,11 +43,9 @@ class EntryTempText( gtk.Entry ):
     def set_text(self, text):
         """Wrapper for standard set_text - control colour."""
         if text == self.temp_text:
-            if not hasattr(self, "original colour"):
-                self.original_colour = self.style.text[gtk.STATE_NORMAL]
             self.modify_text(gtk.STATE_NORMAL, self.temp_colour)
         else:
-            self.modify_text(gtk.STATE_NORMAL, self.original_colour)
+            self.modify_text(gtk.STATE_NORMAL, None)
         super(EntryTempText, self).set_text(text)
 
     def get_text(self):

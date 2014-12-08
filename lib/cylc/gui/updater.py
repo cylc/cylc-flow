@@ -22,6 +22,7 @@ from cylc.gui.DotMaker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
 from cylc.wallclock import get_time_string_from_unix_time
+from cylc.task_id import TaskID
 import gobject
 import gtk
 import Pyro
@@ -104,7 +105,9 @@ class Updater(threading.Thread):
         self.err_log_size = 0
         self.task_list = []
         self.state_summary = {}
+        self.full_state_summary = {}
         self.fam_state_summary = {}
+        self.full_fam_state_summary = {}
         self.all_families = {}
         self.triggering_families = {}
         self.global_summary = {}
@@ -125,6 +128,8 @@ class Updater(threading.Thread):
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
         self.restricted_display = restricted_display
+        self.filter_name_string = ''
+        self.filter_states_excl = []
 
     def _flag_new_update( self ):
         self.last_update_time = time()
@@ -171,7 +176,9 @@ class Updater(threading.Thread):
     def connection_lost( self ):
         self._summary_update_time = None
         self.state_summary = {}
+        self.full_state_summary = {}
         self.fam_state_summary = {}
+        self.full_fam_state_summary = {}
         self.status = "stopped"
         self.connected = False
         self._flag_new_update()
@@ -191,8 +198,6 @@ class Updater(threading.Thread):
             self._no_update_event.set()
 
     def update(self):
-        #print "Attempting Update"
-
         if self.god is None:
             gobject.idle_add( self.connection_lost )
             return False
@@ -239,37 +244,20 @@ class Updater(threading.Thread):
                 gobject.idle_add( self.connection_lost )
                 return False
 
-            if self.restricted_display:
-                states = dict(
-                        (i, j) for i, j in states.items() if j['state'] in
-                        task_state.legal_for_restricted_monitoring)
-                fam_states = dict(
-                        (i, j) for i, j in fam_states.items() if j['state'] in
-                        task_state.legal_for_restricted_monitoring)
-
-            self.task_list = list(set([t['name'] for t in states.values()]))
- 
             if not glbl:
                 self.task_list = []
                 return False
 
-            self.task_list.sort()
-
             if glbl['stopping']:
                 self.status = 'stopping'
-
             elif glbl['paused']:
                 self.status = 'held'
-
             elif glbl['will_pause_at']:
                 self.status = 'hold at ' + glbl[ 'will_pause_at' ]
-
             elif glbl['will_stop_at']:
                 self.status = 'running to ' + glbl[ 'will_stop_at' ]
-
             else:
                 self.status = 'running'
-
             self.mode = glbl['run_mode']
 
             if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
@@ -277,7 +265,7 @@ class Updater(threading.Thread):
                 nsdo = glbl['namespace definition order']
                 if self.ns_defn_order != nsdo:
                     self.ns_defn_order = nsdo
-                    self.dict_ns_defn_order = dict( zip( nsdo, range(0,len(nsdo))))
+                    self.dict_ns_defn_order = dict(zip(nsdo, range(0,len(nsdo))))
 
             try:
                 self.dt = get_time_string_from_unix_time(glbl['last_updated'])
@@ -285,12 +273,67 @@ class Updater(threading.Thread):
                 # Older suite...
                 self.dt = glbl['last_updated'].isoformat()
             self.global_summary = glbl
-            self.state_summary = states
-            self.fam_state_summary = fam_states
+
+            if self.restricted_display:
+                states = self.filter_for_restricted_display(states)
+
+            self.full_state_summary = states
+            self.full_fam_state_summary = fam_states
+            self.refilter()
 
         if update_summaries or err_log_changed:
             return True
         return False
+
+    def filter_by_name(self, states):
+        return dict(
+                (i, j) for i, j in states.items() if
+                self.filter_name_string in j['name'] or
+                re.search(self.filter_name_string, j['name']))
+
+    def filter_by_state(self, states):
+        return dict(
+                (i, j) for i, j in states.items() if
+                j['state'] not in self.filter_states_excl)
+
+    def filter_families(self, families):
+        """Remove family summaries if no members are present."""
+        # TODO - IS THERE ANY NEED TO DO THIS?
+        fam_states = {}
+        for fam_id, summary in families.items():
+            name, point_string = TaskID.split(fam_id)
+            remove = True
+            for mem in self.descendants[name]:
+                mem_id = TaskID.get(mem, point_string)
+                if mem_id in self.state_summary:
+                    remove = False
+                    break
+            if not remove:
+                fam_states[fam_id] = summary
+        return fam_states
+
+    def filter_for_restricted_display(self, states):
+        return dict(
+                (i, j) for i, j in states.items() if j['state'] in
+                task_state.legal_for_restricted_monitoring)
+
+    def refilter(self):
+        """filter from the full state summary"""
+        if self.filter_name_string or self.filter_states_excl:
+            states = self.full_state_summary
+            if self.filter_name_string:
+                states = self.filter_by_name(states)
+            if self.filter_states_excl:
+                states = self.filter_by_state(states)
+            self.state_summary = states
+            fam_states = self.full_fam_state_summary
+            self.fam_state_summary = self.filter_families(fam_states)
+        else:
+            self.state_summary = self.full_state_summary
+            self.fam_state_summary = self.full_fam_state_summary
+        self.task_list = list(set([t['name'] for t in self.state_summary.values()]))
+        self.task_list.sort()
+
 
     def update_globals( self ):
         self.info_bar.set_state( self.global_summary.get( "states", [] ) )

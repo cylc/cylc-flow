@@ -21,10 +21,7 @@ import os, re
 import gobject
 from TreeUpdater import TreeUpdater
 from gcapture import gcapture_tmpfile
-from util import EntryTempText
 from warning_dialog import warning_dialog, info_dialog
-from cylc.task_state import task_state
-from cylc.gui.DotMaker import DotMaker
 from cylc.task_id import TaskID
 
 class ControlTree(object):
@@ -51,88 +48,12 @@ Text Treeview suite control interface.
         main_box = gtk.VBox()
         main_box.pack_start( self.treeview_widgets(), expand=True, fill=True )
 
-        self.tfilt = ''
-
         self.t = TreeUpdater(
                 self.cfg, self.updater, self.ttreeview, self.ttree_paths,
                 self.info_bar, self.theme, self.dot_size
         )
         self.t.start()
         return main_box
-
-    def visible_cb(self, model, iter ):
-        # visibility result determined by state matching active check
-        # buttons: set visible if model value NOT in filter_states;
-        # and matching name against current name filter setting.
-        # (state result: sres; name result: nres)
-
-        point_string = model.get_value(iter, 0 )
-        name = model.get_value(iter, 1)
-        if name is None or point_string is None:
-            return True
-        name = re.sub( r'<.*?>', '', name )
-
-        if point_string == name:
-            # Cycle-time line (not state etc.)
-            return True
-
-         # Task or family.
-        state = model.get_value(iter, 2 )
-        if state is not None:
-            state = re.sub( r'<.*?>', '', state )
-        sres = state not in self.tfilter_states
-
-        if not self.tfilt:
-            nres = True
-        elif self.tfilt in name:
-            # tfilt is any substring of name
-            nres = True
-        elif re.search( self.tfilt, name ):
-            # full regex match
-            nres = True
-        else:
-            nres = False
-
-        if model.iter_has_child( iter ):
-            # Family.
-            path = model.get_path( iter )
-
-            sub_st = self.ttree_paths.get( path, {} ).get( 'states', [] )
-            sres = sres or any([t not in self.tfilter_states for t in sub_st])
-
-            if self.tfilt:
-                sub_nm = self.ttree_paths.get( path, {} ).get( 'names', [] )
-                nres = nres or any([self.tfilt in n for n in sub_nm])
-
-        return sres and nres
-
-    def check_tfilter_buttons(self, tb):
-        del self.tfilter_states[:]
-        for subbox in self.tfilterbox.get_children():
-            for box in subbox.get_children():
-                try:
-                    icon, cb = box.get_children()
-                except (ValueError, AttributeError):
-                    # ValueError: a null entry to line things up.
-                    # AttributeError: filter_entry box (handled below).
-                    pass
-                else:
-                    if not cb.get_active():
-                        # sub '_' from button label keyboard mnemonics
-                        self.tfilter_states.append( re.sub('_', '', cb.get_label()))
-        self.tmodelfilter.refilter()
-
-    def check_filter_entry( self, e ):
-        ftext = self.filter_entry.get_text()
-        try:
-            re.compile(ftext)
-        except re.error as exc:
-            warning_dialog(
-                "Bad filter regex: '%s': error: %s" % (ftext, exc)).warn()
-            self.tfilt = ""
-        else:
-            self.tfilt = ftext
-        self.tmodelfilter.refilter()
 
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
@@ -166,27 +87,12 @@ Text Treeview suite control interface.
         self.t.autoexpand = not self.t.autoexpand
 
     def treeview_widgets( self ):
-        # Treeview of current suite state, with filtering and sorting.
-        # sorting is handled somewhat manually because the simple method
-        # of interposing a TreeModelSort at the top:
-        #   treestore = gtk.TreeStore(str, ...)
-        #   tms = gtk.TreeModelSort( treestore )   #\
-        #   tmf = tms.filter_new()                 #-- or other way round?
-        #   tv = gtk.TreeView()
-        #   tv.set_model(tms)
-        # failed to produce correct results (the data displayed was not
-        # consistently what should have been displayed given the
-        # filtering in use) although the exact same code worked for a
-        # liststore.
-
         self.sort_col_num = 0
-
         self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str, str, str, str, gtk.gdk.Pixbuf)
-        self.tmodelfilter = self.ttreestore.filter_new()
-        self.tmodelfilter.set_visible_func(self.visible_cb)
-        self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
         self.ttreeview = gtk.TreeView()
         self.ttreeview.set_rules_hint(True)
+        self.tmodelfilter = self.ttreestore.filter_new() # TODO - REMOVE FILTER HERE?
+        self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
         self.ttreeview.set_model(self.tmodelsort)
 
         ts = self.ttreeview.get_selection()
@@ -220,65 +126,8 @@ Text Treeview suite control interface.
         sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         sw.add(self.ttreeview)
 
-        self.tfilterbox = gtk.VBox()
-        subbox1 = gtk.HBox(homogeneous=True)
-        subbox2 = gtk.HBox(homogeneous=True)
-        self.tfilterbox.pack_start(subbox1)
-        self.tfilterbox.pack_start(subbox2)
-
-        self.tfilter_states = []
-
-        dotm = DotMaker(self.theme, size='small')
-        cnt = 0
-
-        if self.updater.restricted_display:
-            task_states = task_state.legal_for_restricted_monitoring
-        else:
-            task_states = task_state.legal
-
-        for st in task_states:
-            box = gtk.HBox()
-            icon = dotm.get_image(st)
-            cb = gtk.CheckButton(task_state.labels[st])
-            tooltip = gtk.Tooltips()
-            tooltip.enable()
-            tooltip.set_tip(cb, "Filter by task state = %s" % st)
- 
-            box.pack_start(icon, expand=False)
-            box.pack_start(cb, expand=False)
-            cnt += 1
-            if cnt > (len(task_state.legal) + 1)//2:
-                subbox2.pack_start(box, expand=False, fill=True)
-            else:
-                subbox1.pack_start(box, expand=False, fill=True)
-            if st in self.tfilter_states:
-                cb.set_active(False)
-            else:
-                cb.set_active(True)
-            cb.connect('toggled', self.check_tfilter_buttons)
-        
-        self.filter_entry = EntryTempText()
-        self.filter_entry.set_width_chars(7)
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-        self.filter_entry.set_temp_text( "filter" )
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(self.filter_entry,
-                "Filter by task name.\n"
-                "Enter a sub-string or regex and hit Enter\n"
-                "(to reset, clear the entry and hit Enter)")
-        subbox2.pack_start(self.filter_entry)
-        cnt += 1
-
-        if cnt % 2 != 0:
-            # subbox2 needs another entry to line things up.
-            subbox2.pack_start(gtk.HBox(), expand=False, fill=True)
-
-        filter_hbox = gtk.HBox()
-        filter_hbox.pack_start(self.tfilterbox, True, True, 10)
         vbox = gtk.VBox()
         vbox.pack_start(sw, True)
-        vbox.pack_end(filter_hbox, False)
 
         return vbox
 
@@ -365,6 +214,9 @@ Text Treeview suite control interface.
         lv.quit()
         self.quitters.remove( lv )
         w.destroy()
+
+    def refresh(self):
+        self.t.update_gui()
 
     def get_menuitems( self ):
         """Return the menu items specific to this view."""

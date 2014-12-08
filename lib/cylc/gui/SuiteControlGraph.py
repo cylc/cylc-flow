@@ -232,6 +232,11 @@ Dependency graph suite control interface.
             col.set_sort_order(gtk.SORT_ASCENDING)
         self.ttreestore.set_sort_column_id(n, col.get_sort_order())
 
+    def refresh(self):
+        self.t.update()
+        self.t.best_fit = True
+        self.t.action_required = True
+
     def get_menuitems( self ):
         """Return the menu items specific to this view."""
         items = []
@@ -243,12 +248,6 @@ Dependency graph suite control interface.
         items.append( crop_item )
         crop_item.set_active( self.t.crop )
         crop_item.connect( 'activate', self.toggle_crop )
-
-        menu_filter_item = gtk.ImageMenuItem( 'Task _Filtering ...' )
-        img = gtk.image_new_from_stock(  gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU )
-        menu_filter_item.set_image(img)
-        items.append( menu_filter_item )
-        menu_filter_item.connect( 'activate', self.filter_popup )
 
         self.menu_group_item = gtk.ImageMenuItem( '_Group All Families' )
         img = gtk.image_new_from_stock(  'group', gtk.ICON_SIZE_MENU )
@@ -417,103 +416,6 @@ Dependency graph suite control interface.
 
     def toggle_ignore_suicide_triggers( self, w ):
         self.t.ignore_suicide = not self.t.ignore_suicide
-        self.t.action_required = True
-
-    def filter_popup( self, w ):
-        window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL,
-                gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title( "Task Filtering")
-        parent_window = self.xdot.widget.get_toplevel()
-        if isinstance(parent_window, gtk.Window):
-            window.set_transient_for( parent_window )
-            window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-        vbox = gtk.VBox()
-
-        # TODO - error checking on date range given
-        box = gtk.HBox()
-        label = gtk.Label( 'Exclude (regex)' )
-        box.pack_start( label, True )
-        exclude_entry = gtk.Entry()
-        box.pack_start (exclude_entry, True)
-        vbox.pack_start( box )
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Include (regex)' )
-        box.pack_start( label, True )
-        include_entry = gtk.Entry()
-        box.pack_start (include_entry, True)
-        vbox.pack_start( box )
-
-        filterbox = gtk.HBox()
-
-        # to initially filter out 'succeeded' and 'waiting' tasks
-        #filter_states = [ 'waiting', 'succeeded' ]
-        for st in task_state.legal:
-            b = gtk.CheckButton( task_state.labels[st] )
-            filterbox.pack_start(b)
-            #if st in filter_states:
-            #    b.set_active(False)
-            #else:
-            b.set_active(True)
-
-        vbox.pack_start( filterbox )
-
-        cancel_button = gtk.Button( "_Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-
-        reset_button = gtk.Button( "_Reset (No Filtering)" )
-        reset_button.connect("clicked", self.filter_reset )
-
-        apply_button = gtk.Button( "_Apply" )
-        apply_button.connect("clicked", self.filter,
-                exclude_entry, include_entry, filterbox)
-
-        hbox = gtk.HBox()
-        hbox.pack_start( apply_button, False )
-        hbox.pack_start( reset_button, False )
-        hbox.pack_end( cancel_button, False )
-        #hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
-
-    def filter_reset( self, w):
-        self.t.filter_include = None
-        self.t.filter_exclude = None
-        self.t.state_filter = None
-        self.t.action_required = True
-
-    def filter( self, w, excl_e, incl_e, fbox ):
-        filters = {}
-        filters["excl"] = excl_e.get_text()
-        filters["incl"] = incl_e.get_text()
-        for filt_name, filt in filters.items():
-            if not filt:
-                filters[filt_name] = None
-                continue
-            try:
-                re.compile( filt )
-            except re.error as exc:
-                warning_dialog(
-                    'Bad filter regex: %s: error: %s' % (filt, exc)).warn()
-                filters[filt_name] = None
-
-        self.t.filter_include = filters["incl"]
-        self.t.filter_exclude = filters["excl"]
-
-        fstates = []
-        for b in fbox.get_children():
-            if not b.get_active():
-                # sub '_' from button label keyboard mnemonics
-                fstates.append( re.sub('_', '', b.get_label()))
-        if len(fstates) > 0:
-            self.t.state_filter = fstates
-        else:
-            self.t.state_filter = None
-
         self.t.action_required = True
 
 #    def focused_timezoom_popup( self, w, id ):

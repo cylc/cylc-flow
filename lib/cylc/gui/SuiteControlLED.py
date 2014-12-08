@@ -142,18 +142,6 @@ LED suite control interface.
 
         return True
 
-    def check_filter_entry( self, e ):
-        ftext = self.filter_entry.get_text()
-        try:
-            re.compile(ftext)
-        except re.error as exc:
-            warning_dialog(
-                'Bad filter regex: %s: error: %s' % (ftext, exc)).warn()
-            self.t.filter = ""
-        else:
-            self.t.filter = ftext
-        self.t.action_required = True
-
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
         group_on = toggle_item.get_active()
@@ -218,6 +206,10 @@ LED suite control interface.
         self.quitters.remove( lv )
         w.destroy()
 
+    def refresh(self):
+        self.t.update()
+        self.t.action_required = True
+
     def _set_tooltip( self, widget, tip_text ):
         # Convenience function to add hover over text to a widget.
         tip = gtk.Tooltips()
@@ -263,16 +255,5 @@ LED suite control interface.
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
         self._set_tooltip( self.group_toolbutton, "Dot View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
-
-        self.filter_entry = EntryTempText()
-        self.filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-        self.filter_entry.set_temp_text( "filter" )
-        filter_toolitem = gtk.ToolItem()
-        filter_toolitem.add(self.filter_entry)
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name\n(enter a sub-string or regex)")
-        items.append(filter_toolitem)
 
         return items

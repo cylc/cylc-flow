@@ -55,7 +55,6 @@ class DotUpdater(threading.Thread):
         self.fam_state_summary = {}
         self.ancestors_pruned = {}
         self.descendants = []
-        self.filter = ""
         self.point_strings = []
 
         self.led_headings = []
@@ -149,23 +148,19 @@ class DotUpdater(threading.Thread):
         else:
             self.task_list.sort()
 
-        if self.filter:
-            self.task_list = [
-                t for t in self.task_list
-                if self.filter in t or re.search( self.filter, t )]
         return True
 
     def set_led_headings( self ):
-        if self.should_transpose_view:
-            new_headings = [ 'Name' ] + self.point_strings
+        if not self.should_transpose_view:
+            new_headings = ['Name'] + self.point_strings
         else:
-            new_headings = ['Tag' ] + self.task_list
+            new_headings = ['Point'] + self.task_list
         if new_headings == self.led_headings:
             return False
         self.led_headings = new_headings
         tvcs = self.led_treeview.get_columns()
         labels = []
-        for n in range( 1, len(self.led_headings) ):
+        for n in range(1, len(self.led_headings)):
             text = self.led_headings[n]
             tip = self.led_headings[n]
             if self.should_hide_headings:
@@ -242,10 +237,10 @@ class DotUpdater(threading.Thread):
 
         self.led_treeview.set_model( self.led_liststore )
 
-        if self.should_transpose_view:
-            tvc = gtk.TreeViewColumn( 'Name' )
+        if not self.should_transpose_view:
+            tvc = gtk.TreeViewColumn('Name')
         else:
-            tvc = gtk.TreeViewColumn( 'Cycle' )
+            tvc = gtk.TreeViewColumn('Point')
 
         cr = gtk.CellRendererText()
         tvc.pack_start( cr, False )
@@ -319,7 +314,6 @@ class DotUpdater(threading.Thread):
         return True
 
     def update_gui( self ):
-        #print "Updating GUI"
         new_data = {}
         state_summary = {}
         state_summary.update( self.state_summary )
