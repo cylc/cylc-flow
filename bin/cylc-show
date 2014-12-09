@@ -116,7 +116,7 @@ if prnt_id:
         print 'PREREQUISITES (- => not satisfied):'
         if len( pre ) == 0:
             print '  (None)'
-        for item in pre:
+        for item in sorted(pre):
             [ msg, state ] = item
             if state:
                 descr = '  + '
@@ -127,7 +127,7 @@ if prnt_id:
         print 'OUTPUTS (- => not completed):'
         if len( out ) == 0:
             print '  (None)'
-        for item in out:
+        for item in sorted(out):
             [ msg, state ] = item
             if state:
                 descr = '  + '

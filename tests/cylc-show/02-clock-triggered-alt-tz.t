@@ -40,9 +40,9 @@ TASK foo.20140808T0900Z in suite $SUITE_NAME:
 PREREQUISITES (- => not satisfied):
   - show.20140808T0900Z succeeded
 OUTPUTS (- => not completed):
-  - foo.20140808T0900Z succeeded
   - foo.20140808T0900Z started
   - foo.20140808T0900Z submitted
+  - foo.20140808T0900Z succeeded
 Other:
   o  Clock trigger time reached ... True
   o  Triggers at ... 2014-08-08T09:05:00Z
