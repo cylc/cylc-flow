@@ -100,7 +100,6 @@ class DotUpdater(threading.Thread):
             return False
 
         self.last_update_time = self.updater.last_update_time
-
         self.updater.set_update(False)
 
         self.state_summary = deepcopy(self.updater.state_summary)
@@ -108,19 +107,10 @@ class DotUpdater(threading.Thread):
         self.ancestors_pruned = deepcopy(self.updater.ancestors_pruned)
         self.descendants = deepcopy(self.updater.descendants)
 
-        if not self.should_group_families:
-            self.task_list = deepcopy(self.updater.task_list)
-        else:
-            self.task_list = []
-
         self.updater.set_update(True)
 
         self.point_strings = []
-        state_summary = {}
-        state_summary.update(self.state_summary)
-        state_summary.update(self.fam_state_summary)
-
-        for id_ in state_summary:
+        for id_ in self.state_summary:
             name, point_string = TaskID.split(id_)
             if point_string not in self.point_strings:
                 self.point_strings.append(point_string)
@@ -130,18 +120,18 @@ class DotUpdater(threading.Thread):
             # iso cycle points
             self.point_strings.sort()
 
-        if self.should_group_families:
-            for key, val in self.ancestors_pruned.items():
-                if key == 'root':
-                    continue
-                # highest level family name (or plain task) above root
-                name = val[-2]
-                if name not in self.task_list:
-                    for point_string in self.point_strings:
-                        task_id = TaskID.get(name, point_string)
-                        if task_id in state_summary:
-                            self.task_list.append( name )
-                            break
+        if not self.should_group_families:
+            # Display the full task list.
+            self.task_list = deepcopy(self.updater.task_list)
+        else:
+            # Replace tasks with their top level family name.
+            self.task_list = []
+            for task_id in self.state_summary:
+                name, point_string = TaskID.split(task_id)
+                # Family name below root, or task name.
+                item = self.ancestors_pruned[name][-2]
+                if item not in self.task_list:
+                    self.task_list.append(item)
 
         if self.cfg.use_defn_order and self.updater.ns_defn_order and self.defn_order_on:
             self.task_list = [ i for i in self.updater.ns_defn_order if i in self.task_list ]
