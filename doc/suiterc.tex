@@ -1539,10 +1539,9 @@ internal \lstinline@=@ character.
 
 \subsubsection[enable live graph movie]{[visualization] $\rightarrow$ enable live graph movie}
 
-If True, the gcylc graph-view write out a dot-language graph file on
-every change; these can be post-processed into a movie
-showing how the suite evolves. The frames will be written to the run
-time graph directory (see below).
+If True, the gcylc graph-view will write a dot-language graph file to the suite
+share directory on every change. These can be post-processed into a movie
+showing how the suite evolves, by \lstinline=$CYLC_DIR/dev/bin/live-graph-movie.sh=. 
 
 \begin{myitemize}
     \item {\em type:} boolean

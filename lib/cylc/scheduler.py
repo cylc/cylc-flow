@@ -374,7 +374,8 @@ class scheduler(object):
         return deepcopy(self.config.get_first_parent_descendants())
 
     def info_do_live_graph_movie( self ):
-        return ( self.config.cfg['visualization']['enable live graph movie'], self.suite_dir )
+        return (self.config.cfg['visualization']['enable live graph movie'],
+                self.share_dir)
 
     def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents
@@ -642,7 +643,10 @@ class scheduler(object):
                 self.suite, self.run_mode, self.initial_point,
                 self.final_point)
 
-            run_dir = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' )
+            run_dir = GLOBAL_CFG.get_derived_host_item(
+                    self.suite, 'suite run directory' )
+            self.share_dir = GLOBAL_CFG.get_derived_host_item(
+                self.suite, 'suite share directory')
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
                 self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True, primary_db=False)
@@ -726,7 +730,7 @@ class scheduler(object):
         self.suite_task_env = {
                 'CYLC_SUITE_RUN_DIR'    : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' ),
                 'CYLC_SUITE_WORK_DIR'   : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite work directory' ),
-                'CYLC_SUITE_SHARE_DIR'  : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite share directory' ),
+                'CYLC_SUITE_SHARE_DIR'  : self.share_dir,
                 'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
                 'CYLC_SUITE_DEF_PATH'   : self.suite_dir
                 }

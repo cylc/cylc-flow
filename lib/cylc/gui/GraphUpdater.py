@@ -498,10 +498,10 @@ class GraphUpdater(threading.Thread):
         self.action_required = False
 
         if self.live_graph_movie:
-            self.graph_frame_count += 1
-            arg = os.path.join( self.live_graph_dir, 'live' + '-' + \
+            arg = os.path.join( self.live_graph_dir, 'frame' + '-' + \
                     str( self.graph_frame_count ) + '.dot' )
-            self.graphw.write( arg )
+            self.graphw.write(arg)
+            self.graph_frame_count += 1
 
         self.prev_graph_id = current_id
         return not needs_redraw
