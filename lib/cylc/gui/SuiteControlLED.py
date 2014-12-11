@@ -89,7 +89,7 @@ LED suite control interface.
         if column_index == 0:
             return False
 
-        if self.t.is_transposed:
+        if not self.t.is_transposed:
             point_string = self.t.led_headings[column_index]
             name = treeview.get_model().get_value( r_iter, 0 )
         else:
@@ -120,10 +120,10 @@ LED suite control interface.
         group_item.connect( 'toggled', self.toggle_grouping )
         group_item.show()
 
-        transpose_menu_item = gtk.CheckMenuItem( 'Toggle _Transpose View' )
-        transpose_menu_item.set_active( self.t.should_transpose_view )
-        menu.append( transpose_menu_item )
-        transpose_menu_item.connect( 'toggled', self.toggle_transpose )
+        transpose_menu_item = gtk.CheckMenuItem('Toggle _Transpose View')
+        transpose_menu_item.set_active(self.t.should_transpose_view)
+        menu.append(transpose_menu_item)
+        transpose_menu_item.connect('toggled', self.toggle_transpose)
         transpose_menu_item.show()
 
         if self.cfg.use_defn_order:
@@ -176,14 +176,14 @@ LED suite control interface.
             self.headings_menu_item.set_active( headings_off )
         self.t.action_required = True
 
-    def toggle_transpose( self, toggle_item ):
+    def toggle_transpose(self, toggle_item):
         """Toggle transpose (rows-as-columns, etc) table view."""
         transpose_on = toggle_item.get_active()
         if transpose_on == self.t.should_transpose_view:
             return False
         self.t.should_transpose_view = transpose_on
         if toggle_item != self.transpose_menu_item:
-            self.transpose_menu_item.set_active( transpose_on )
+            self.transpose_menu_item.set_active(transpose_on)
         self.t.action_required = True
         return False
 
@@ -230,10 +230,10 @@ LED suite control interface.
         items.append( self.group_menu_item )
         self.group_menu_item.connect( 'toggled', self.toggle_grouping )
 
-        self.transpose_menu_item = gtk.CheckMenuItem( 'Toggle _Transpose View' )
-        self.transpose_menu_item.set_active( self.t.should_transpose_view )
-        items.append( self.transpose_menu_item )
-        self.transpose_menu_item.connect( 'toggled', self.toggle_transpose )
+        self.transpose_menu_item = gtk.CheckMenuItem('Toggle _Transpose View')
+        self.transpose_menu_item.set_active(self.t.should_transpose_view)
+        items.append(self.transpose_menu_item)
+        self.transpose_menu_item.connect('toggled', self.toggle_transpose)
 
         if self.cfg.use_defn_order:
             self.defn_order_menu_item = gtk.CheckMenuItem( 'Toggle _Definition Order' )
@@ -262,7 +262,7 @@ LED suite control interface.
         self.transpose_toolbutton.set_icon_widget(g_image)
         self.transpose_toolbutton.set_label("Transpose")
         self.transpose_toolbutton.connect('toggled', self.toggle_transpose)
-        items.append( self.transpose_toolbutton )
-        self._set_tooltip( self.transpose_toolbutton, "Dot View - Click to transpose view" )
+        items.append(self.transpose_toolbutton)
+        self._set_tooltip(self.transpose_toolbutton, "Dot View - Click to transpose view")
 
         return items

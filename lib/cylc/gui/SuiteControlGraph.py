@@ -262,7 +262,7 @@ Dependency graph suite control interface.
         self.menu_ungroup_item.connect( 'activate', self.group_all, False )
 
         menu_left_to_right_item = gtk.CheckMenuItem(
-            '_Left-to-right Graphing' )
+            '_Transpose Graph' )
         items.append( menu_left_to_right_item )
         menu_left_to_right_item.set_active( self.t.orientation == "LR" )
         menu_left_to_right_item.connect( 'activate',
@@ -318,7 +318,8 @@ Dependency graph suite control interface.
         self._set_tooltip( self.ungroup_toolbutton, "Graph View - Click to ungroup all task families" )
         items.append( self.ungroup_toolbutton )
 
-        self.transpose_toolbutton = gtk.ToolButton()
+        self.transpose_toolbutton = gtk.ToggleToolButton()
+        self.transpose_toolbutton.set_active(False)
         g_image = gtk.image_new_from_stock('transpose', gtk.ICON_SIZE_SMALL_TOOLBAR)
         self.transpose_toolbutton.set_icon_widget( g_image )
         self.transpose_toolbutton.set_label("Transpose")

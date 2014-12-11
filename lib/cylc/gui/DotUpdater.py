@@ -175,7 +175,7 @@ class DotUpdater(threading.Thread):
                 label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
-        if self.should_transpose_view:
+        if not self.should_transpose_view:
             types = [str] + [gtk.gdk.Pixbuf] * len( self.point_strings )
             num_new_columns = len(types)
         else:
@@ -238,7 +238,7 @@ class DotUpdater(threading.Thread):
 
         self.led_treeview.append_column( tvc )
 
-        if self.should_transpose_view:
+        if not self.should_transpose_view:
             data_range = range(1, len( self.point_strings ) + 1)
         else:
             data_range = range(1, len( self.task_list ) + 1)
@@ -264,7 +264,7 @@ class DotUpdater(threading.Thread):
         x, y = self.led_treeview.convert_widget_to_bin_window_coords(x, y)
         path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
         col_index = self.led_treeview.get_columns().index(column)
-        if self.is_transposed:
+        if not self.is_transposed:
             iter_ = self.led_treeview.get_model().get_iter(path)
             name = self.led_treeview.get_model().get_value(iter_, 0)
             try:
@@ -324,7 +324,7 @@ class DotUpdater(threading.Thread):
         names.sort()
         tvcs = self.led_treeview.get_columns()
 
-        if self.is_transposed:
+        if not self.is_transposed:
             for name in self.task_list:
                 point_strings_for_tasks = tasks_by_name.get(name, [])
                 if not point_strings_for_tasks:
