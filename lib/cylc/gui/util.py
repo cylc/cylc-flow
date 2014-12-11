@@ -142,7 +142,7 @@ def set_exception_hook_dialog(program_name=None):
 
 def setup_icons():
     """Set up some extra stock icons for better PyGTK compatibility."""
-    # create a new stock icon for the 'group' action
+    # create a new stock icon for the 'group' and 'transpose' actions
     root_img_dir = get_image_dir()
     pixbuf = get_icon()
     gcylc_iconset = gtk.IconSet(pixbuf)
@@ -150,8 +150,11 @@ def setup_icons():
     grp_iconset = gtk.IconSet(pixbuf)
     pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/ungroup.png' )
     ungrp_iconset = gtk.IconSet(pixbuf)
+    pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/transpose.png' )
+    transpose_iconset = gtk.IconSet(pixbuf)
     factory = gtk.IconFactory()
     factory.add( 'gcylc', gcylc_iconset )
     factory.add( 'group', grp_iconset )
     factory.add( 'ungroup', ungrp_iconset )
+    factory.add( 'transpose', transpose_iconset )
     factory.add_default()

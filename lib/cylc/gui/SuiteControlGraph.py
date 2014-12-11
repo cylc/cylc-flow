@@ -318,6 +318,14 @@ Dependency graph suite control interface.
         self._set_tooltip( self.ungroup_toolbutton, "Graph View - Click to ungroup all task families" )
         items.append( self.ungroup_toolbutton )
 
+        self.transpose_toolbutton = gtk.ToolButton()
+        g_image = gtk.image_new_from_stock('transpose', gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.transpose_toolbutton.set_icon_widget( g_image )
+        self.transpose_toolbutton.set_label("Transpose")
+        self.transpose_toolbutton.connect('clicked', self.toggle_left_to_right_mode)
+        self._set_tooltip(self.transpose_toolbutton, "Graph View - Click to transpose graph")
+        items.append(self.transpose_toolbutton)
+
         self.subgraphs_button = gtk.ToggleToolButton()
         image = gtk.image_new_from_stock( gtk.STOCK_LEAVE_FULLSCREEN,
                                           gtk.ICON_SIZE_SMALL_TOOLBAR )
@@ -412,6 +420,7 @@ Dependency graph suite control interface.
             self.t.orientation = "LR"  # Left -> right ordering
         elif self.t.orientation == "LR":
             self.t.orientation = "TB"
+        self.t.best_fit = True
         self.t.action_required = True
 
     def toggle_ignore_suicide_triggers( self, w ):

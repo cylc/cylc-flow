@@ -87,6 +87,8 @@ class MyDotWindow2(CylcDotViewerCommon):
         self.start_point_string = None
         self.stop_point_string = None
 
+        util.setup_icons()
+
         gtk.Window.__init__(self)
 
         self.graph = xdot.Graph()
@@ -127,8 +129,8 @@ class MyDotWindow2(CylcDotViewerCommon):
             ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action),
         ))
         actiongroup.add_toggle_actions((
-            ('LeftToRight', gtk.STOCK_JUMP_TO, 'Left-to-Right',
-             None, 'Left-to-right Graphing', self.on_left_to_right),
+            ('LeftToRight', 'transpose', 'Transpose',
+             None, 'Transpose the graph', self.on_left_to_right),
         ))
 
         # Add the actiongroup to the uimanager
@@ -257,6 +259,8 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.start_point_string = start_point_string
         self.stop_point_string = stop_point_string
 
+        util.setup_icons()
+
         gtk.Window.__init__(self)
 
         self.graph = xdot.Graph()
@@ -309,8 +313,8 @@ class MyDotWindow( CylcDotViewerCommon ):
             ('Save', gtk.STOCK_SAVE_AS, None, None, 'Save', self.save_action),
         ))
         actiongroup.add_toggle_actions((
-            ('LeftToRight', gtk.STOCK_JUMP_TO, 'Left-to-Right',
-             None, 'Left-to-right Graphing', self.on_left_to_right),
+            ('LeftToRight', 'transpose', 'Transpose',
+             None, 'Transpose the graph', self.on_left_to_right),
         ))
         actiongroup.add_toggle_actions((
             ('Subgraphs', gtk.STOCK_LEAVE_FULLSCREEN, 'Cycle Point Subgraphs',
