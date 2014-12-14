@@ -36,7 +36,7 @@ SPEC = {
     'ungrouped views' : vdr( vtype='string_list', default=[] ),
     'use theme'       : vdr( vtype='string', default="default" ),
     'dot icon size'   : vdr( vtype='string', default="medium",
-                             options=["small","medium","large"]),
+                             options=["small","medium","large", "extra large"]),
     'sort by definition order' : vdr( vtype='boolean', default=True ), 
     'themes' : {
         '__MANY__' : {

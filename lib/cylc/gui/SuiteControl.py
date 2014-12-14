@@ -2286,7 +2286,7 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         dot_sizemenu = gtk.Menu()
         dot_size_item.set_submenu(dot_sizemenu)
 
-        dot_sizes = ['small', 'medium', 'large']
+        dot_sizes = ['small', 'medium', 'large', 'extra large']
         dot_size_items = {}
         self.dot_size = gcfg.get(['dot icon size'])
         dot_size_items[self.dot_size] = gtk.RadioMenuItem(
