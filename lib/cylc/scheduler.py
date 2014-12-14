@@ -168,7 +168,6 @@ class scheduler(object):
                 'triggering families' : self.info_get_triggering_families,
                 'first-parent ancestors' : self.info_get_first_parent_ancestors,
                 'first-parent descendants' : self.info_get_first_parent_descendants,
-                'do live graph movie' : self.info_do_live_graph_movie,
                 'graph raw' : self.info_get_graph_raw,
                 'task requisites' : self.info_get_task_requisites,
                 'get cylc version' : self.info_get_cylc_version
@@ -372,10 +371,6 @@ class scheduler(object):
     def info_get_first_parent_descendants( self ):
         # families for single-inheritance hierarchy based on first parents
         return deepcopy(self.config.get_first_parent_descendants())
-
-    def info_do_live_graph_movie( self ):
-        return (self.config.cfg['visualization']['enable live graph movie'],
-                self.share_dir)
 
     def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents

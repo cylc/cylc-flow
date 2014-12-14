@@ -98,8 +98,6 @@ class Updater(threading.Thread):
         self.cfg = cfg
         self.info_bar = info_bar
 
-        self.live_graph_movie = False
-        self.live_graph_dir = None
         self._summary_update_time = None
         self.err_log_lines = []
         self._err_num_log_lines = 10
@@ -151,7 +149,6 @@ class Updater(threading.Thread):
             self.sinfo = client.get_proxy( 'suite-info' )
             self.log = client.get_proxy( 'log' )
             self._retrieve_hierarchy_info()
-            self.live_graph_movie, self.live_graph_dir = self.sinfo.get( 'do live graph movie' )
         except Exception, x:
             # (port file not found, if suite not running)
             if self.stop_summary is None:
