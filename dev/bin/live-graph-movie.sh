@@ -24,7 +24,7 @@ EOF
 #  * http://wiki.webmproject.org/howtos/convert-png-frames-to-webm-video
 #  * http://www.webmproject.org/docs/encoder-parameters/
 
-if [ $1 == "-h" -o $1 == "--help" -o $1 == "help" ]; then
+if [[ $1 == "-h" || $1 == "--help" || $1 == "help" ]]; then
     usage
     exit 0
 fi
@@ -58,7 +58,7 @@ for DOT_ORIG in $(ls -v frame-*.dot); do
     N_OLD=${TMP#frame-}
     printf -v N_NEW "$FORMAT" $(( 10#$N_OLD ))
     DOT_NEW=frame-${N_NEW}.dot
-    if [ "$N_NEW" != "$N_OLD" ]; then
+    if [[ "$N_NEW" != "$N_OLD" ]]; then
         PADDED=true
         echo -ne \\r
         CMD="mv $DOT_ORIG $DOT_NEW"
