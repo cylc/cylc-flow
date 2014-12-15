@@ -105,7 +105,7 @@ class TaskDef(object):
         Must be called after all graph sequences added.
         """
         if len(self.sequences) == 0 and self.used_in_offset_trigger:
-            raise TaskDefError("no cycling sequences defined for %s" % self.name)
+            raise TaskDefError("No cycling sequences defined for %s" % self.name)
 
     @classmethod
     def get_cleanup_cutoff_point(cls, my_point, offset_sequence_tuples):
