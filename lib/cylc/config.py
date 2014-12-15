@@ -895,6 +895,12 @@ class config( object ):
         # Tasks (a) may be defined but not used (e.g. commented out of the graph)
         # Tasks (b) may not be defined in (a), in which case they are dummied out.
 
+        for taskdef in self.taskdefs.values():
+            try:
+                taskdef.check_for_explicit_cycling()
+            except TaskDefError as exc:
+                raise SuiteConfigError(str(exc))
+ 
         if flags.verbose:
             print "Checking for defined tasks not used in the graph"
             for name in self.cfg['runtime']:
@@ -1332,6 +1338,7 @@ class config( object ):
 
             if not my_taskdef_node.is_absolute:
                 if offset_string:
+                    self.taskdefs[name].used_in_offset_trigger = True
                     if SyntaxVersion.VERSION == VERSION_PREV:
                         # Implicit cycling means foo[T+6] generates a +6 sequence.
                         if offset_string in offset_seq_map:

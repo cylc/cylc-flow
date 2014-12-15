@@ -32,12 +32,12 @@ from cylc.task_id import TaskID
 class TaskDefError(Exception):
     """Exception raise for errors in TaskDef initialization."""
 
-    def __init__(self, name):
-        Exception.__init__(self, name)
-        self.name = name
+    def __init__(self, msg):
+        Exception.__init__(self, msg)
+        self.msg = msg
 
     def __str__(self):
-        return "ERROR: Illegal task name: %s" + self.name
+        return "ERROR: %s" % self.msg 
 
 
 class TaskDef(object):
@@ -45,7 +45,7 @@ class TaskDef(object):
 
     def __init__(self, name, rtcfg, run_mode, start_point):
         if not TaskID.is_valid_name(name):
-            raise TaskDefError(name)
+            raise TaskDefError("Illegal task name: %s" % name)
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg
@@ -53,6 +53,7 @@ class TaskDef(object):
 
         self.sequences = []
         self.implicit_sequences = []  # Implicit sequences are deprecated.
+        self.used_in_offset_trigger = False
 
         # some defaults
         self.max_future_prereq_offset = None
@@ -97,6 +98,14 @@ class TaskDef(object):
     def describe(self):
         """Return a string that describes the current task."""
         return "%(title)s\n%(description)s" % self.rtconfig
+
+    def check_for_explicit_cycling(self):
+        """Check for explicitly somewhere.
+
+        Must be called after all graph sequences added.
+        """
+        if len(self.sequences) == 0 and self.used_in_offset_trigger:
+            raise TaskDefError("cycling is not defined for %s" % self.name)
 
     @classmethod
     def get_cleanup_cutoff_point(cls, my_point, offset_sequence_tuples):
