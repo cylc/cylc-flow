@@ -79,7 +79,7 @@ class GraphUpdater(threading.Thread):
         self.descendants = {}
         self.all_families = []
         self.triggering_families = []
-        self.live_graph_movie = False
+        self.write_dot_frames = False
 
         self.prev_graph_id = ()
 
@@ -150,8 +150,6 @@ class GraphUpdater(threading.Thread):
             return False
 
         self.updater.set_update(False)
-        self.live_graph_movie = self.updater.live_graph_movie
-        self.live_graph_dir = self.updater.live_graph_dir
         states_full = deepcopy(self.updater.state_summary)
         fam_states_full = deepcopy(self.updater.fam_state_summary)
         self.ancestors = deepcopy(self.updater.ancestors)
@@ -161,16 +159,7 @@ class GraphUpdater(threading.Thread):
         self.global_summary = deepcopy(self.updater.global_summary)
         self.updater.set_update(True)
 
-        if self.last_update_time is None:
-            self.first_update = True
-            if self.live_graph_movie:
-                try:
-                    mkdir_p( self.live_graph_dir )
-                except Exception, x:
-                    print >> sys.stderr, x
-                    print >> sys.stderr, "Disabling live graph movie"
-                    self.live_graph_movie = False
-
+        self.first_update = (self.last_update_time is None)
         self.last_update_time = self.updater.last_update_time
 
         # The graph layout is not stable even when (py)graphviz is
@@ -497,11 +486,11 @@ class GraphUpdater(threading.Thread):
 
         self.action_required = False
 
-        if self.live_graph_movie:
+        if self.write_dot_frames:
+            arg = os.path.join(self.cfg.share_dir, 'frame' + '-' +
+                    str(self.graph_frame_count) + '.dot')
+            self.graphw.write(arg)
             self.graph_frame_count += 1
-            arg = os.path.join( self.live_graph_dir, 'live' + '-' + \
-                    str( self.graph_frame_count ) + '.dot' )
-            self.graphw.write( arg )
 
         self.prev_graph_id = current_id
         return not needs_redraw

@@ -283,6 +283,12 @@ Dependency graph suite control interface.
         igsui_item.set_active( self.t.ignore_suicide )
         igsui_item.connect( 'activate', self.toggle_ignore_suicide_triggers )
 
+        self.menu_frames_item = gtk.CheckMenuItem('_Write Graph Frames')
+        items.append(self.menu_frames_item)
+        self.menu_frames_item.set_active(self.t.write_dot_frames)
+        self.menu_frames_item.connect(
+                'activate', self.toggle_write_dot_frames)
+
         return items
 
     def _set_tooltip( self, widget, tip_text ):
@@ -386,6 +392,9 @@ Dependency graph suite control interface.
     def toggle_crop( self, w ):
         self.t.crop = not self.t.crop
         self.t.action_required = True
+
+    def toggle_write_dot_frames(self, w):
+        self.t.write_dot_frames = not self.t.write_dot_frames
 
     def toggle_cycle_point_subgraphs( self, toggle_item ):
         subgraphs_on = toggle_item.get_active()

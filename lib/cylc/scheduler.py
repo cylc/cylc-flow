@@ -168,7 +168,6 @@ class scheduler(object):
                 'triggering families' : self.info_get_triggering_families,
                 'first-parent ancestors' : self.info_get_first_parent_ancestors,
                 'first-parent descendants' : self.info_get_first_parent_descendants,
-                'do live graph movie' : self.info_do_live_graph_movie,
                 'graph raw' : self.info_get_graph_raw,
                 'task requisites' : self.info_get_task_requisites,
                 'get cylc version' : self.info_get_cylc_version
@@ -372,9 +371,6 @@ class scheduler(object):
     def info_get_first_parent_descendants( self ):
         # families for single-inheritance hierarchy based on first parents
         return deepcopy(self.config.get_first_parent_descendants())
-
-    def info_do_live_graph_movie( self ):
-        return ( self.config.cfg['visualization']['enable live graph movie'], self.suite_dir )
 
     def info_get_first_parent_ancestors( self, pruned=False ):
         # single-inheritance hierarchy based on first parents
@@ -642,7 +638,8 @@ class scheduler(object):
                 self.suite, self.run_mode, self.initial_point,
                 self.final_point)
 
-            run_dir = GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' )
+            run_dir = GLOBAL_CFG.get_derived_host_item(
+                    self.suite, 'suite run directory' )
             if not self.is_restart:     # create new suite_db file (and dir) if needed
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True)
                 self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, new_mode=True, primary_db=False)
@@ -724,12 +721,11 @@ class scheduler(object):
         # are overridden by tasks prior to job submission, but in
         # principle they could be needed locally by event handlers:
         self.suite_task_env = {
-                'CYLC_SUITE_RUN_DIR'    : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite run directory' ),
-                'CYLC_SUITE_WORK_DIR'   : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite work directory' ),
-                'CYLC_SUITE_SHARE_DIR'  : GLOBAL_CFG.get_derived_host_item( self.suite, 'suite share directory' ),
+                'CYLC_SUITE_RUN_DIR' : GLOBAL_CFG.get_derived_host_item(self.suite, 'suite run directory'),
+                'CYLC_SUITE_WORK_DIR' : GLOBAL_CFG.get_derived_host_item(self.suite, 'suite work directory'),
+                'CYLC_SUITE_SHARE_DIR' : GLOBAL_CFG.get_derived_host_item(self.suite, 'suite share directory'),
                 'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
-                'CYLC_SUITE_DEF_PATH'   : self.suite_dir
-                }
+                'CYLC_SUITE_DEF_PATH' : self.suite_dir}
         # (note global config automatically expands environment variables in local paths)
 
         # Pass these to the job script generation code.

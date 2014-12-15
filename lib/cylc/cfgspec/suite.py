@@ -369,7 +369,6 @@ SPEC = {
         'use node color for labels'           : vdr( vtype='boolean', default=False ),
         'default node attributes'             : vdr( vtype='string_list', default=['style=unfilled', 'color=black', 'shape=box']),
         'default edge attributes'             : vdr( vtype='string_list', default=['color=black']),
-        'enable live graph movie'             : vdr( vtype='boolean', default=False ),
         'node groups' : {
             '__MANY__'                        : vdr( vtype='string_list', default=[] ),
             },
@@ -386,6 +385,7 @@ def upg( cfg, descr ):
     u.obsolete( '5.4.7', ['scheduling','special tasks','explicit restart outputs'] )
     u.obsolete( '5.4.11', ['cylc', 'accelerated clock'] )
     u.obsolete( '6.0.0', ['visualization', 'runtime graph'] )
+    u.obsolete('6.1.3', ['visualization', 'enable live graph movie'])
     u.obsolete( '6.0.0', ['development'] )
     u.deprecate(
         '6.0.0',

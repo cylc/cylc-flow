@@ -75,7 +75,6 @@
         <RegExpr attribute='Keyword' String=' exclude '/>
         <RegExpr attribute='Keyword' String=' environment scripting '/>
         <RegExpr attribute='Keyword' String=' enable resurrection '/>
-        <RegExpr attribute='Keyword' String=' enable live graph movie '/>
         <RegExpr attribute='Keyword' String=' dummy mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' disable task event hooks '/>
         <RegExpr attribute='Keyword' String=' disable suite event hooks '/>
