@@ -1,0 +1,17 @@
+title = suite with missing explicit definition of foo
+description = should define cycling implicitly in cylc-5 back compat mode.
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = 30 # seconds
+
+[scheduling]
+   initial cycle point = 2014080800
+   final cycle point = 2014081000
+   [[dependencies]]
+       [[[00]]]
+          graph = foo[T-24] => bar
+
+[runtime]
+   [[foo,bar]]
+       command scripting = /bin/true
