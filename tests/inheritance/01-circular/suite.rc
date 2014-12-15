@@ -1,0 +1,16 @@
+title = a suite with circular inheritance
+description = should fail validation
+
+[scheduling]
+   [[dependencies]]
+      graph = foo
+
+[runtime]
+   [[A]]
+      inherit = B
+   [[B]]
+      inherit = C
+   [[C]]
+      inherit = B
+   [[foo]]
+      inherit = A
