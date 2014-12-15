@@ -1,0 +1,19 @@
+title = "Test suite for initial cycle point less than final."
+description = """Task are not important here but the cycl points are.
+Initial is set to greater than the final and the suite should report the
+error."""
+
+[cylc]
+   [[reference test]]
+       required run mode = live
+       
+[scheduling]
+    initial cycle point = 20141208T0000Z
+    final cycle point   = 20141207T0000Z
+    [[dependencies]]
+        [[[T00]]]
+            graph = A => B
+    
+[runtime]
+    [[A]]
+    [[B]]

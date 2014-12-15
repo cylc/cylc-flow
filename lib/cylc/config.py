@@ -262,6 +262,8 @@ class config( object ):
         else:
             self.initial_point.standardise()
 
+        final_point = None
+
         if self.cfg['scheduling']['final cycle point'] is not None:
             if self.cfg['scheduling']['final cycle point'].strip() is "":
                 self.cfg['scheduling']['final cycle point'] = None
@@ -288,6 +290,11 @@ class config( object ):
                     final_point = get_point(
                             self.cfg['scheduling']['final cycle point']).standardise()
                 self.cfg['scheduling']['final cycle point'] = str(final_point)
+
+        if final_point is not None and self.initial_point > final_point:
+            raise SuiteConfigError("The initial cycle point:" +
+                str(self.initial_point) + " is after the final cycle point:" +
+                str(final_point) + ".")
 
         self.start_point = (
             get_point(self._cli_start_point_string) or self.initial_point)
