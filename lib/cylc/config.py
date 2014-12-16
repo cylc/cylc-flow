@@ -17,6 +17,7 @@
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, os, sys
+import traceback
 from cylc.taskdef import TaskDef, TaskDefError
 from cylc.cfgspec.suite import get_suitecfg
 from cylc.cycling.loader import (get_point, get_point_relative,
@@ -581,8 +582,19 @@ class config( object ):
         c3_single = C3( first_parents )
 
         for name in self.cfg['runtime']:
-            self.runtime['linearized ancestors'][name] = c3.mro(name)
-            self.runtime['first-parent ancestors'][name] = c3_single.mro(name)
+            try:
+                self.runtime['linearized ancestors'][name] = c3.mro(name)
+                self.runtime['first-parent ancestors'][name] = c3_single.mro(name)
+            except RuntimeError as exc:
+                if flags.debug:
+                    raise
+                exc_lines =  traceback.format_exc().splitlines()
+                if exc_lines[-1].startswith(
+                    "RuntimeError: maximum recursion depth exceeded"):
+                    sys.stderr.write("ERROR: circular [runtime] inheritance?\n")
+                else:
+                    sys.stderr.write("ERROR: %s\n" % str(exc))
+                sys.exit(1)
 
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
