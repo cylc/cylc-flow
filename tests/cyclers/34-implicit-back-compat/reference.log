@@ -1,0 +1,58 @@
+2014-12-16T10:41:54+13 INFO - port:7766
+2014-12-16T10:41:54+13 INFO - Suite starting at 2014-12-16T10:41:54+13
+2014-12-16T10:41:54+13 INFO - Log event clock: real time
+2014-12-16T10:41:54+13 INFO - Run mode: live
+2014-12-16T10:41:54+13 INFO - Initial point: 2014080800
+2014-12-16T10:41:54+13 INFO - Final point: 2014081000
+2014-12-16T10:41:54+13 INFO - Cold Start 2014080800
+2014-12-16T10:41:54+13 INFO - [foo.2014080800] -initiate job-submit
+2014-12-16T10:41:54+13 INFO - [bar.2014080800] -initiate job-submit
+2014-12-16T10:41:54+13 INFO - [foo.2014080800] -triggered off []
+2014-12-16T10:41:54+13 INFO - [bar.2014080800] -triggered off []
+2014-12-16T10:41:55+13 INFO - 51677
+
+2014-12-16T10:41:55+13 INFO - [foo.2014080800] -submit_method_id=51677
+2014-12-16T10:41:55+13 INFO - [foo.2014080800] -submission succeeded
+2014-12-16T10:41:55+13 INFO - 51707
+
+2014-12-16T10:41:55+13 INFO - [bar.2014080800] -submit_method_id=51707
+2014-12-16T10:41:55+13 INFO - [bar.2014080800] -submission succeeded
+2014-12-16T10:41:55+13 INFO - [foo.2014080800] -(current:submitted)> foo.2014080800 started at 2014-12-16T10:41:55+13
+2014-12-16T10:41:55+13 INFO - [foo.2014080800] -(current:running)> foo.2014080800 succeeded at 2014-12-16T10:41:55+13
+2014-12-16T10:41:55+13 INFO - [bar.2014080800] -(current:submitted)> bar.2014080800 started at 2014-12-16T10:41:55+13
+2014-12-16T10:41:55+13 INFO - [bar.2014080800] -(current:running)> bar.2014080800 succeeded at 2014-12-16T10:41:55+13
+2014-12-16T10:41:56+13 INFO - [foo.2014080900] -initiate job-submit
+2014-12-16T10:41:56+13 INFO - [bar.2014080900] -initiate job-submit
+2014-12-16T10:41:56+13 INFO - [foo.2014080900] -triggered off []
+2014-12-16T10:41:56+13 INFO - [bar.2014080900] -triggered off ['foo.2014080800']
+2014-12-16T10:41:57+13 INFO - 51778
+
+2014-12-16T10:41:57+13 INFO - [foo.2014080900] -submit_method_id=51778
+2014-12-16T10:41:57+13 INFO - [foo.2014080900] -submission succeeded
+2014-12-16T10:41:57+13 INFO - 51808
+
+2014-12-16T10:41:57+13 INFO - [bar.2014080900] -submit_method_id=51808
+2014-12-16T10:41:57+13 INFO - [bar.2014080900] -submission succeeded
+2014-12-16T10:41:57+13 INFO - [foo.2014080900] -(current:submitted)> foo.2014080900 started at 2014-12-16T10:41:57+13
+2014-12-16T10:41:57+13 INFO - [foo.2014080900] -(current:running)> foo.2014080900 succeeded at 2014-12-16T10:41:57+13
+2014-12-16T10:41:57+13 INFO - [bar.2014080900] -(current:submitted)> bar.2014080900 started at 2014-12-16T10:41:57+13
+2014-12-16T10:41:57+13 INFO - [bar.2014080900] -(current:running)> bar.2014080900 succeeded at 2014-12-16T10:41:57+13
+2014-12-16T10:41:58+13 INFO - [foo.2014081000] -initiate job-submit
+2014-12-16T10:41:58+13 INFO - [bar.2014081000] -initiate job-submit
+2014-12-16T10:41:58+13 INFO - [foo.2014081000] -triggered off []
+2014-12-16T10:41:58+13 INFO - [bar.2014081000] -triggered off ['foo.2014080900']
+2014-12-16T10:41:59+13 INFO - 51879
+
+2014-12-16T10:41:59+13 INFO - [foo.2014081000] -submit_method_id=51879
+2014-12-16T10:41:59+13 INFO - [foo.2014081000] -submission succeeded
+2014-12-16T10:41:59+13 INFO - 51909
+
+2014-12-16T10:41:59+13 INFO - [bar.2014081000] -submit_method_id=51909
+2014-12-16T10:41:59+13 INFO - [bar.2014081000] -submission succeeded
+2014-12-16T10:41:59+13 INFO - [foo.2014081100] -holding (beyond suite stop point) 2014081000
+2014-12-16T10:41:59+13 INFO - [bar.2014081100] -holding (beyond suite stop point) 2014081000
+2014-12-16T10:41:59+13 INFO - [foo.2014081000] -(current:submitted)> foo.2014081000 started at 2014-12-16T10:41:59+13
+2014-12-16T10:41:59+13 INFO - [foo.2014081000] -(current:running)> foo.2014081000 succeeded at 2014-12-16T10:41:59+13
+2014-12-16T10:41:59+13 INFO - [bar.2014081000] -(current:submitted)> bar.2014081000 started at 2014-12-16T10:41:59+13
+2014-12-16T10:41:59+13 INFO - [bar.2014081000] -(current:running)> bar.2014081000 succeeded at 2014-12-16T10:41:59+13
+2014-12-16T10:42:01+13 INFO - Suite shutting down at 2014-12-16T10:42:00+13

@@ -1,0 +1,10 @@
+title = suite with missing explicit definition of foo
+description = should fail validation in cylc-6
+
+[scheduling]
+   initial cycle point = 20140808T00
+   [[dependencies]]
+       [[[P1D]]]
+          graph = foo[-P1D] => bar
+[runtime]
+   [[foo,bar]]
