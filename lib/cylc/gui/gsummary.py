@@ -70,8 +70,8 @@ def get_host_suites(hosts, timeout=None, owner=None):
     return host_suites_map
 
 
-def get_status_tasks(host, suite, owner=None):
-    """Return a dictionary of statuses and tasks, or None."""
+def get_task_cycle_statuses(host, suite, owner=None):
+    """Return a list of task, cycle, status tuples, or None."""
     if owner is None:
         owner = user
     command = ["cylc", "cat-state", "--host=%s" % host,
@@ -946,13 +946,13 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
     current_suites = []
     for host, suites in host_suites.items():
         for suite in suites:
-            status_tasks = get_status_tasks(host, suite,
-                                            owner=owner)
-            if status_tasks is None:
+            task_cycle_statuses = get_task_cycle_statuses(host, suite,
+                                                          owner=owner)
+            if task_cycle_statuses is None:
                 continue
             statuses.setdefault(host, {})
             statuses[host].setdefault(suite, {})
-            statuses[host][suite] = status_tasks
+            statuses[host][suite] = task_cycle_statuses
             if (host in stop_summaries and
                 suite in stop_summaries[host]):
                 stop_summaries[host].pop(suite)
@@ -960,8 +960,8 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
     for host, suite in prev_suites:
         if (host, suite) not in current_suites:
             stop_summaries.setdefault(host, {})
-            summary_statuses = get_status_tasks(host, suite,
-                                                owner=owner)
+            summary_statuses = get_task_cycle_statuses(host, suite,
+                                                       owner=owner)
             if summary_statuses is None:
                 continue
             stop_summaries[host][suite] = (summary_statuses,
