@@ -35,9 +35,8 @@ import warnings
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
-from cylc.gui.gsummary import (get_host_suites, get_status_tasks,
-                               get_summary_menu, launch_gcylc,
-                               launch_gsummary, BaseSummaryTimeoutUpdater)
+from cylc.gui.gsummary import (get_summary_menu, launch_gsummary,
+                               BaseSummaryTimeoutUpdater)
 from cylc.gui.SuiteControl import run_get_stdout
 from cylc.gui.DotMaker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
@@ -196,12 +195,15 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         compact_suite_statuses = []
         for suite, host in suite_host_tuples:
             if suite in statuses.get(host, {}):
-                status_map = statuses[host][suite]
+                task_cycle_states = statuses[host][suite]
                 is_stopped = False
             else:
                 info = stop_summaries[host][suite]
-                status_map, suite_time = info
+                task_cycle_states, suite_time = info
                 is_stopped = True
+            status_map = {}
+            for task, cycle, status in task_cycle_states:
+                status_map.setdefault(status, []).append(task + "." + cycle)
             status = extract_group_state(status_map.keys(),
                                          is_stopped=is_stopped)
             if number_mode:
