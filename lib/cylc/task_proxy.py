@@ -30,7 +30,7 @@ import shlex
 import traceback
 from isodatetime.timezone import get_local_time_zone
 
-from cylc import task_state
+from cylc.task_state import task_state
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.cycling.loader import get_interval_cls, get_point_relative
@@ -148,7 +148,8 @@ class TaskProxy(object):
         self.stop_point = stop_point
 
         self.job_conf = None
-        self.state = task_state.task_state(initial_state)
+        self.state = task_state(initial_state)
+        self.state_before_held = None  # state before being held
         self.manual_trigger = False
 
         self.latest_message = ""
@@ -516,9 +517,21 @@ class TaskProxy(object):
 
     def reset_state_held(self):
         """Reset state to "held"."""
+        self.state_before_held = task_state(self.state.get_status())
         self.set_status('held')
         self.turn_off_timeouts()
         self.record_db_event(event="reset to held")
+        self.log(INFO, '%s => held' % (self.state_before_held.get_status()))
+
+    def reset_state_unheld(self):
+        """Reset state to state before being "held"."""
+        if self.state_before_held is None:
+            return self.reset_state_waiting()
+        old_status = self.state_before_held.get_status()
+        self.set_status(old_status)
+        self.state_before_held = None
+        self.record_db_event(event="reset to %s" % (old_status))
+        self.log(INFO, 'held => %s' % (old_status))
 
     def job_submission_callback(self, result):
         """Callback on job submission."""

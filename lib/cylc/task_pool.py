@@ -641,7 +641,7 @@ class TaskPool(object):
     def release_tasks(self, ids):
         for itask in self.get_tasks(incl_runahead=True):
             if itask.identity in ids and itask.state.is_currently('held'):
-                itask.reset_state_waiting()
+                itask.reset_state_unheld()
 
     def hold_all_tasks(self):
         self.log.info("Holding all waiting or queued tasks now")
@@ -660,7 +660,7 @@ class TaskPool(object):
                     continue
                 else:
                     # Release task.
-                    itask.reset_state_waiting()
+                    itask.reset_state_unheld()
 
     def get_failed_tasks(self):
         failed = []
