@@ -1,0 +1,15 @@
+2014-12-17T15:48:59Z INFO - Initial point: 1
+2014-12-17T15:48:59Z INFO - Final point: 1
+2014-12-17T15:48:59Z INFO - Cold Start 1
+2014-12-17T15:48:59Z INFO - [t-retry-able.1] -triggered off []
+2014-12-17T15:49:00Z INFO - [t-hold-release.1] -triggered off ['t-retry-able.1']
+2014-12-17T15:49:01Z INFO - [t-retry-able.1] -job failed, retrying in PT15S
+2014-12-17T15:49:02Z INFO - [t-retry-able.1] -retrying => held
+2014-12-17T15:49:02Z INFO - Command succeeded: hold task now(t-retry-able,1,False)
+2014-12-17T15:49:03Z INFO - [t-retry-able.1] -held => retrying
+2014-12-17T15:49:03Z INFO - Command succeeded: release task(t-retry-able,1,False)
+2014-12-17T15:49:16Z INFO - [t-retry-able.1] -initiate job-submit
+2014-12-17T15:49:16Z INFO - [t-retry-able.1] -triggered off []
+2014-12-17T15:49:18Z INFO - [t-retry-able.1] -job failed, retrying in PT1S
+2014-12-17T15:49:19Z INFO - [t-retry-able.1] -triggered off []
+2014-12-17T15:49:22Z INFO - [t-analyse.1] -triggered off ['t-retry-able.1']

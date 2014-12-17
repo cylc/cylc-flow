@@ -1,0 +1,31 @@
+title = Test task retry - hold - release
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT1M30S
+        dummy mode suite timeout = PT1M30S
+        simulation mode suite timeout = PT1M30S
+
+[scheduling]
+    [[dependencies]]
+            graph = """
+t-retry-able:submit => t-hold-release
+t-retry-able => t-analyse
+"""
+
+[runtime]
+    [[t-retry-able]]
+        command scripting = ((CYLC_TASK_TRY_NUMBER >= 3))
+        retry delays = PT15S, 2*PT1S
+    [[t-hold-release]]
+        command scripting = """
+timeout 30s my-log-grepper '[t-retry-able.1] -job failed, retrying in PT15S'
+cylc hold "${CYLC_SUITE_NAME}" 't-retry-able' '1'
+timeout 30s my-log-grepper '[t-retry-able.1] -retrying => held'
+cylc release "${CYLC_SUITE_NAME}" 't-retry-able' '1'
+timeout 30s my-log-grepper '[t-retry-able.1] -held => retrying'
+"""
+    [[t-analyse]]
+        command scripting = """
+test "$(readlink "$(dirname "$0")/../../t-retry-able/NN")" = '03'
+"""
