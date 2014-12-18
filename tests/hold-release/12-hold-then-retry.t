@@ -15,7 +15,7 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test hold and release of a retrying task.
+# Test suite hold => retry and submit-retry => suite release
 . "$(dirname "$0")/test_header"
 
 set_test_number 2

@@ -632,35 +632,29 @@ class TaskPool(object):
                 itask.kill()
 
     def hold_tasks(self, ids):
+        """Hold tasks with IDs matching any item in "ids"."""
         for itask in self.get_tasks(incl_runahead=True):
             if itask.identity in ids:
-                if itask.state.is_currently(
-                        'waiting', 'queued', 'submit-retrying', 'retrying'):
-                    itask.reset_state_held()
+                itask.reset_state_held()
 
     def release_tasks(self, ids):
+        """Release held tasks with IDs matching any item in "ids"."""
         for itask in self.get_tasks(incl_runahead=True):
-            if itask.identity in ids and itask.state.is_currently('held'):
+            if itask.identity in ids:
                 itask.reset_state_unheld()
 
     def hold_all_tasks(self):
+        """Hold all tasks."""
         self.log.info("Holding all waiting or queued tasks now")
         self.is_held = True
         for itask in self.get_tasks(incl_runahead=True):
-            if itask.state.is_currently(
-                    'queued', 'waiting', 'submit-retrying', 'retrying'):
-                itask.reset_state_held()
+            itask.reset_state_held()
 
     def release_all_tasks(self):
+        """Release all held tasks."""
         self.is_held = False
         for itask in self.get_tasks(incl_runahead=True):
-            if itask.state.is_currently('held'):
-                if self.stop_point and itask.point > self.stop_point:
-                    # Don't release task: beyond suite stop point.
-                    continue
-                else:
-                    # Release task.
-                    itask.reset_state_unheld()
+            itask.reset_state_unheld()
 
     def get_failed_tasks(self):
         failed = []
