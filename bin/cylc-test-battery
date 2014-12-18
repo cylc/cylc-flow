@@ -47,9 +47,10 @@ In such cases, you can change the amount of concurrency by setting either:
   * the "process pool size = N" option in the site/user global
     configuration.
 
-To output stderr from failed tests to the terminal, export
-CYLC_TEST_DEBUG=true before running this command. To perform comparison
-tests using "xxdiff -D", export CYLC_TEST_DEBUG_CMP=true.
+To output stderr from failed tests to the terminal, "export CYLC_TEST_DEBUG=true"
+before running this command. By default, it uses "diff -u" to compare files.
+However, if an alternate command such as "xxdiff -D" is desirable (e.g. for
+debugging), "export CYLC_TEST_DIFF_CMD=xxdiff -D".
 
 For more information see "Reference Tests" in the User Guide.
 

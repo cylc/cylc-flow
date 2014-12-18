@@ -42,9 +42,11 @@
 #         and stderr in TEST_NAME.stdout and TEST_NAME.stderr.
 #         This is expected to have a non-zero return code, which ok's the test.
 #     cmp_ok FILE_TEST [FILE_CONTROL]
-#         Compare FILE_TEST with a file or stdin given by FILE_CONTROL
-#         (stdin if FILE_CONTROL is "-" or missing). If $CYLC_TEST_DEBUG_CMP
-#         is set, show differences using xxdiff.
+#         Compare FILE_TEST with a file or stdin given by FILE_CONTROL (stdin
+#         if FILE_CONTROL is "-" or missing). By default, it uses "diff -u" to
+#         compare files. However, if an alternate command such as "xxdiff -D"
+#         is desirable (e.g. for debugging),
+#         "export CYLC_TEST_DIFF_CMD=xxdiff -D".
 #     contains_ok FILE_TEST [FILE_CONTROL]
 #         Make sure that each line in FILE_TEST is present in FILE_CONTROL
 #         (stdin if FILE_CONTROL is "-" or missing).
@@ -177,12 +179,8 @@ function cmp_ok() {
     local FILE_TEST=$1
     local FILE_CONTROL=${2:--}
     local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
-    local CMP_COMMAND="diff -u"
-    if [[ -n ${CYLC_TEST_DEBUG_CMP:-} ]]; then
-        CMP_COMMAND="xxdiff -D"
-    fi
-    if $CMP_COMMAND "$FILE_TEST" "$FILE_CONTROL" \
-            1>$TEST_NAME.stderr 2>&1; then
+    local DIFF_CMD=${CYLC_TEST_DIFF_CMD:-'diff -u'}
+    if ${DIFF_CMD} "$FILE_TEST" "$FILE_CONTROL" 1>$TEST_NAME.stderr 2>&1; then
         ok $TEST_NAME
         return
     fi
