@@ -130,6 +130,8 @@ class Updater(threading.Thread):
         self.restricted_display = restricted_display
         self.filter_name_string = ''
         self.filter_states_excl = []
+        self.kept_task_ids = set()
+        self.filt_task_ids = set()
 
     def _flag_new_update( self ):
         self.last_update_time = time()
@@ -321,19 +323,24 @@ class Updater(threading.Thread):
         """filter from the full state summary"""
         if self.filter_name_string or self.filter_states_excl:
             states = self.full_state_summary
+            all_ids = set(states.keys())
             if self.filter_name_string:
                 states = self.filter_by_name(states)
             if self.filter_states_excl:
                 states = self.filter_by_state(states)
+            filtered_tasks = set(states.keys())
             self.state_summary = states
             fam_states = self.full_fam_state_summary
             self.fam_state_summary = self.filter_families(fam_states)
+            self.kept_task_ids = set(states.keys())
+            self.filt_task_ids = all_ids - self.kept_task_ids
         else:
             self.state_summary = self.full_state_summary
             self.fam_state_summary = self.full_fam_state_summary
+            self.filt_task_ids = set()
+            self.kept_task_ids = set(self.state_summary.keys())
         self.task_list = list(set([t['name'] for t in self.state_summary.values()]))
         self.task_list.sort()
-
 
     def update_globals( self ):
         self.info_bar.set_state( self.global_summary.get( "states", [] ) )

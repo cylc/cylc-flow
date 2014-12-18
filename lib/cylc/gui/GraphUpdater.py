@@ -327,7 +327,7 @@ class GraphUpdater(threading.Thread):
             self.graphw = graphing.CGraphPlain(self.cfg.suite, suite_polling_tasks)
             self.graphw.add_edges(gr_edges, ignore_suicide=self.ignore_suicide)
 
-            # Remove nodes (incl. base nodes) representing filtered-out tasks.
+            # Remove nodes representing filtered-out tasks.
             if (self.updater.filter_name_string or
                 self.updater.filter_states_excl):
                 nodes_to_remove = set()
@@ -335,14 +335,14 @@ class GraphUpdater(threading.Thread):
                     id = node.get_name()
                     name, point_string = TaskID.split(id)
                     if name not in self.all_families:
-                        if id not in self.updater.state_summary:
+                        if id in self.updater.filt_task_ids:
                             nodes_to_remove.add(node)
                     else:
-                        # Remove family nodes if members are filtered out.
+                        # Remove family nodes if all members filtered out.
                         remove = True
                         for mem in self.descendants[name]:
                             mem_id = TaskID.get(mem, point_string)
-                            if mem_id in self.updater.state_summary:
+                            if mem_id in self.updater.kept_task_ids:
                                 remove = False
                                 break
                         if remove:
