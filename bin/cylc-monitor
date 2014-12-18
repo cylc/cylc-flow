@@ -42,7 +42,7 @@ import cylc.flags
 
 parser = cop("""cylc [info] monitor [OPTIONS] ARGS
 
-A terminal-based suite monitor.""", pyro=True, noforce=True)
+A terminal-based live suite monitor.""", pyro=True, noforce=True)
 
 parser.add_option("-a", "--align",
         help="Align task names. Only useful for small suites.",
@@ -55,6 +55,10 @@ parser.add_option("-r", "--restricted",
         "line still represents all task proxies.",
         action="store_true", default=False, dest="restricted")
 
+parser.add_option("-o", "--once",
+        help="Show a single view then exit.",
+        action="store_true", default=False, dest="once")
+
 ( options, args ) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
@@ -63,7 +67,7 @@ legend = ''
 for state in task_state.legal:
     legend += "%s%s%s " % (task_state.ctrl[state], state, task_state.ctrl_end)
 legend = legend.rstrip()
-len_header = sum(len(s) for s in task_state.legal) + len(task_state.legal) - 1 
+len_header = sum(len(s) for s in task_state.legal) + len(task_state.legal) - 1
 
 alerted = False
 alerted2 = False
@@ -224,8 +228,8 @@ try:
                         line = "%s %s" % (line, info)
                 blitlines[indx] = line
 
-            # Clear screen and blit the new information.
-            os.system("clear")
+            if not options.once:
+                os.system("clear")
             print '\n'.join(blit)
             indxs = blitlines.keys()
             try:
@@ -236,7 +240,10 @@ try:
                 indxs.sort(key=int)
             for ix in indxs:
                 print blitlines[ix]
+            if options.once:
+                break
             sleep(1)
-
+        if options.once:
+            break
 except KeyboardInterrupt:
     sys.exit(0)
