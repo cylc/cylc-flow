@@ -150,6 +150,7 @@ class TaskProxy(object):
         self.job_conf = None
         self.state = task_state(initial_state)
         self.state_before_held = None  # state before being held
+        self.hold_on_retry = False
         self.manual_trigger = False
 
         self.latest_message = ""
@@ -449,6 +450,7 @@ class TaskProxy(object):
         later success it will be seen as an incomplete output.
 
         """
+        self.hold_on_retry = False
         failed_msg = self.identity + " failed"
         if self.outputs.exists(failed_msg):
             self.outputs.remove(failed_msg)
@@ -510,6 +512,7 @@ class TaskProxy(object):
         self.set_status('failed')
         self.record_db_event(event="reset to failed")
         self.prerequisites.set_all_satisfied()
+        self.hold_on_retry = False
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
         self.turn_off_timeouts()
@@ -517,14 +520,27 @@ class TaskProxy(object):
 
     def reset_state_held(self):
         """Reset state to "held"."""
-        self.state_before_held = task_state(self.state.get_status())
-        self.set_status('held')
-        self.turn_off_timeouts()
-        self.record_db_event(event="reset to held")
-        self.log(INFO, '%s => held' % (self.state_before_held.get_status()))
+        if self.state.is_currently(
+                'waiting', 'queued', 'submit-retrying', 'retrying'):
+            self.state_before_held = task_state(self.state.get_status())
+            self.set_status('held')
+            self.turn_off_timeouts()
+            self.record_db_event(event="reset to held")
+            self.log(INFO, '%s => held' % self.state_before_held.get_status())
+        elif self.state.is_currently('submitted', 'running'):
+            self.hold_on_retry = True
 
-    def reset_state_unheld(self):
-        """Reset state to state before being "held"."""
+    def reset_state_unheld(self, stop_point=None):
+        """Reset state to state before being "held".
+
+        If stop_point is not None, don't release task if it is beyond the stop
+        cycle point.
+
+        """
+        self.hold_on_retry = False
+        if (not self.state.is_currently('held') or
+                stop_point and self.point > stop_point):
+            return
         if self.state_before_held is None:
             return self.reset_state_waiting()
         old_status = self.state_before_held.get_status()
@@ -668,6 +684,8 @@ class TaskProxy(object):
                 event="submission failed",
                 message="submit-retrying in " + str(sub_retry_delay))
             self.handle_event('submission retry', msg)
+            if self.hold_on_retry:
+                self.reset_state_held()
 
     def job_submission_succeeded(self):
         """Handle job succeeded."""
@@ -753,14 +771,14 @@ class TaskProxy(object):
                 get_seconds_as_interval_string(retry_delay))
             msg = "job failed, " + delay_msg
             self.log(INFO, msg)
-            self.retry_delay_timer_timeout = (
-                time.time() + retry_delay)
+            self.retry_delay_timer_timeout = (time.time() + retry_delay)
             self.try_number += 1
             self.set_status('retrying')
             self.prerequisites.set_all_satisfied()
             self.outputs.set_all_incomplete()
-            self.handle_event(
-                'retry', msg, db_msg="retrying in " + str(retry_delay))
+            self.handle_event('retry', msg, db_msg=delay_msg)
+            if self.hold_on_retry:
+                self.reset_state_held()
 
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""
@@ -1294,6 +1312,7 @@ class TaskProxy(object):
             # Received a 'task succeeded' message
             # (submit* states in case of very fast submission and execution)
             self.execution_timer_timeout = None
+            self.hold_on_retry = False
             flags.pflag = True
             self.finished_time = time.time()
             self.summary['finished_time'] = self.finished_time

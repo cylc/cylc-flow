@@ -1,0 +1,6 @@
+#!/bin/bash
+set -eu
+while ! grep -q -F "$@" "${CYLC_SUITE_LOG_DIR}/log"; do
+    sleep 1
+done
+exit

@@ -1,0 +1,57 @@
+title = Test: run task - hold suite - task job retry - release suite
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT1M30S
+        dummy mode suite timeout = PT1M30S
+        simulation mode suite timeout = PT1M30S
+
+[scheduling]
+    [[dependencies]]
+        graph = """
+t-retry-able:start => t-hold
+t-submit-retry-able:submit => t-hold
+"""
+
+[runtime]
+    [[t-hold]]
+        command scripting = """
+# Silently kill off t-submit-retry-able
+T_ST_FILE="$(dirname "$0")/../../t-submit-retry-able/NN/job.status"
+atrm "$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${T_ST_FILE}")"
+# Hold the suite
+cylc hold "${CYLC_SUITE_NAME}"
+timeout 15 my-log-grepper 'Command succeeded: hold suite now()'
+# Poll t-submit-retry-able, should return submit-fail
+cylc poll "${CYLC_SUITE_NAME}" 't-submit-retry-able' '1'
+# Allow t-retry-able to continue
+rm -f "${CYLC_SUITE_RUN_DIR}/file"
+timeout 15 my-log-grepper '[t-retry-able.1] -retrying => held'
+timeout 15 my-log-grepper '[t-submit-retry-able.1] -submit-retrying => held'
+# No need to delay run in submit-retry
+cylc broadcast "${CYLC_SUITE_NAME}" \
+    -p '1' -n 't-submit-retry-able' -s '[job submission]command template=at now'
+# Release the suite
+cylc release "${CYLC_SUITE_NAME}"
+timeout 15 my-log-grepper '[t-retry-able.1] -held => retrying'
+timeout 15 my-log-grepper '[t-submit-retry-able.1] -held => submit-retrying'
+"""
+    [[t-retry-able]]
+        command scripting = """
+if ((CYLC_TASK_TRY_NUMBER == 1)); then
+    touch "${CYLC_SUITE_RUN_DIR}/file"
+    while [[ -e "${CYLC_SUITE_RUN_DIR}/file" ]]; do
+        sleep 1
+    done
+    false
+else
+    :
+fi
+"""
+        retry delays = PT5S
+    [[t-submit-retry-able]]
+        command scripting = true
+        [[[job submission]]]
+            method = at
+            command template = at now + 1 minute
+            retry delays = PT5S

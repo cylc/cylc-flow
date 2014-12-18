@@ -1,0 +1,8 @@
+2014-12-18T16:14:12Z INFO - Initial point: 1
+2014-12-18T16:14:12Z INFO - Final point: 1
+2014-12-18T16:14:12Z INFO - Cold Start 1
+2014-12-18T16:14:12Z INFO - [t-submit-retry-able.1] -triggered off []
+2014-12-18T16:14:12Z INFO - [t-retry-able.1] -triggered off []
+2014-12-18T16:14:15Z INFO - [t-hold.1] -triggered off ['t-retry-able.1', 't-submit-retry-able.1']
+2014-12-18T16:14:24Z INFO - [t-retry-able.1] -triggered off []
+2014-12-18T16:14:25Z INFO - [t-submit-retry-able.1] -triggered off []
