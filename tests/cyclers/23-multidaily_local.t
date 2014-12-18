@@ -38,7 +38,6 @@ graph_suite "$SUITE_NAME" "$SUITE_NAME.graph.plain"
 sed "s/Z/$CURRENT_TZ_UTC_OFFSET/g" \
     "$TEST_SOURCE_DIR/$CHOSEN_SUITE/graph.plain.ref" > graph.plain.local.ref
 cmp_ok "$SUITE_NAME.graph.plain" graph.plain.local.ref
-xxdiff -D "$SUITE_NAME.graph.plain" graph.plain.local.ref
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
