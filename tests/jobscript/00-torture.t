@@ -26,10 +26,11 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+CYLC_CONF_PATH= suite_run_ok $TEST_NAME \
+    cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-foo-jobscript-match
-run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.1
+CYLC_CONF_PATH= run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.1
 sed 's/\(export CYLC_.*=\).*/\1/g' $TEST_NAME.stdout >jobfile
 echo "" >> jobfile
 sed 's/##suitename##/'$SUITE_NAME'/' \
