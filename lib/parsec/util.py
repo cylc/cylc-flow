@@ -16,7 +16,8 @@
 #C: You should have received a copy of the GNU General Public License
 #C: along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import os
+import sys
 from copy import copy
 from OrderedDict import OrderedDict
 
@@ -46,20 +47,20 @@ def listjoin( lst, none_str='' ):
         else:
             return ', '.join( [ str(item) for item in lst ] )
 
-def printcfg( cfg, level=0, indent=0, prefix='', none_str='' ):
+def printcfg(cfg, level=0, indent=0, prefix='', none_str='', handle=sys.stdout):
     """
     Recursively pretty-print a parsec config item or section (nested
     dict), as returned by parse.config.get().
     """
-
+    spacer = '   '*indent
     if isinstance(cfg, list):
         # cfg is a single list value
-        print prefix + '   ' * indent + listjoin( cfg, none_str )
+        handle.write("%s%s%s\n" % (prefix, spacer, listjoin(cfg, none_str)))
     elif not isinstance(cfg,dict):
         # cfg is a single value
         if not cfg:
             cfg = none_str
-        print prefix + '   ' * indent +  str(cfg)
+        handle.write("%s%s%s\n" % (prefix, spacer, str(cfg)))
     else:
         # cfg is a possibly-nested section
         delayed=[]
@@ -77,14 +78,14 @@ def printcfg( cfg, level=0, indent=0, prefix='', none_str='' ):
                 else:
                     v = str(val)
                 # print "key = val"
-                print prefix + '   '*indent + str(key) + ' = ' + v
+                handle.write("%s%s%s = %s\n" % (prefix, spacer, str(key), v))
 
         for key,val in delayed:
             # print heading
             #if val != None:
-            print prefix + '   '*indent + '['*(level+1) + str(key) + ']'*(level+1)
+            handle.write("%s%s%s%s%s\n" % (prefix, spacer, '['*(level+1), str(key), ']'*(level+1)))
             # recurse into section
-            printcfg( val, level=level+1, indent=indent+1, prefix=prefix, none_str=none_str )
+            printcfg(val, level+1, indent+1, prefix, none_str, handle)
 
 def replicate( target, source ):
     """
