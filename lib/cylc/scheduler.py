@@ -629,6 +629,7 @@ class scheduler(object):
         except IOError as exc:
             print str(exc)
             raise SchedulerError("Unable to log the loaded suite definition")
+        handle.write("# cylc-version: %s\n" % CYLC_VERSION)
         printcfg(self.config.cfg, handle=handle)
         handle.close()
 
