@@ -469,6 +469,9 @@ class SummaryApp(object):
 
             iter_ = treemodel.get_iter(path)
             host, suite = treemodel.get(iter_, 0, 1)
+            if suite is None:
+                # On an expanded cycle point summary row, so get from parent.
+                host, suite = treemodel.get(treemodel.iter_parent(iter_),0,1)
             suite_host_tuples.append((suite, host))
 
         if event.type == gtk.gdk._2BUTTON_PRESS:
