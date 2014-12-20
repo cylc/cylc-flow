@@ -1,0 +1,8 @@
+execution polling intervals = PT0.2M, PT0.1M
+submission polling intervals = PT0.2M, PT0.1M
+[task messaging]
+   connection timeout = PT20S
+   retry interval = PT9S
+[hosts]
+   [[localhost]]
+      task communication method = poll

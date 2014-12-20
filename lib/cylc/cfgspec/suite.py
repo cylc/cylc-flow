@@ -153,7 +153,7 @@ def _coerce_final_cycletime( value, keys, args ):
     return value
 
 
-def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
+def coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote( keys, value )
     try:
@@ -180,11 +180,11 @@ def _coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     return seconds
 
 
-def _coerce_interval_list( value, keys, args, back_comp_unit_factor=1 ):
+def coerce_interval_list( value, keys, args, back_comp_unit_factor=1 ):
     """Coerce a list of intervals (or numbers: back-comp) into seconds."""
     values_list = _strip_and_unquote_list( keys, value )
     type_converter = (
-        lambda v: _coerce_interval(
+        lambda v: coerce_interval(
             v, keys, args,
             back_comp_unit_factor=back_comp_unit_factor
         )
@@ -198,14 +198,14 @@ coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
 coercers['cycleinterval'] = _coerce_cycleinterval
 coercers['final_cycletime'] = _coerce_final_cycletime
-coercers['interval'] = _coerce_interval
-coercers['interval_minutes'] = lambda *a: _coerce_interval(
+coercers['interval'] = coerce_interval
+coercers['interval_minutes'] = lambda *a: coerce_interval(
     *a, back_comp_unit_factor=60)
-coercers['interval_seconds'] = _coerce_interval
-coercers['interval_list'] = _coerce_interval_list
-coercers['interval_minutes_list'] = lambda *a: _coerce_interval_list(
+coercers['interval_seconds'] = coerce_interval
+coercers['interval_list'] = coerce_interval_list
+coercers['interval_minutes_list'] = lambda *a: coerce_interval_list(
     *a, back_comp_unit_factor=60)
-coercers['interval_seconds_list'] = _coerce_interval_list
+coercers['interval_seconds_list'] = coerce_interval_list
 
 
 SPEC = {

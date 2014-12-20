@@ -103,9 +103,10 @@ polling near the beginning and end of the anticipated task run time.
 Multipliers can be used as shorthand as in the example below.
 
 \begin{myitemize}
-\item {\em type:} list of float minutes with optional multipliers
-\item {\em default:} 1.0
-\item {\em example:} \lstinline@execution polling intervals = 5*1.0, 10*5.0, 5*1.0@
+\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default:}
+\item {\em example:} \lstinline@execution polling intervals = 5*PT1M, 10*PT5M, 5*PT1M@
 \end{myitemize}
 
 
@@ -121,8 +122,9 @@ values can be specified as for execution polling (above) but a single
 value is probably sufficient for job submission polling.
 
 \begin{myitemize}
-\item {\em type:} list of float minutes with optional multipliers
-\item {\em default:} 1.0 (single value)
+\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default:}
 \item {\em example:} (see the execution polling example above)
 \end{myitemize}
 
@@ -131,15 +133,15 @@ value is probably sufficient for job submission polling.
 This section contains configuration items that affect task-to-suite
 communications.
 
-\subsubsection[retry interval in seconds]{[task messaging] $\rightarrow$ retry interval in seconds}
+\subsubsection[retry interval]{[task messaging] $\rightarrow$ retry interval}
 
 If a send fails, the messaging code will retry after a configured
 delay interval.
 
 \begin{myitemize}
-\item {\em type:} float
-\item {\em minimum:} 1.0
-\item {\em default:} 5.0
+\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default:} PT5S
 \end{myitemize}
 
 \subsubsection[maximum number of tries]{[task messaging] $\rightarrow$ maximum number of tries}
@@ -153,16 +155,16 @@ configured number of tries.
 \item {\em default:} 7
 \end{myitemize}
 
-\subsubsection[connection timeout in seconds]{[task messaging] $\rightarrow$ connection timeout in seconds}
+\subsubsection[connection timeout]{[task messaging] $\rightarrow$ connection timeout}
 
 This is the same as the \lstinline=--pyro-timeout= option in cylc
 commands. Without a timeout Pyro connections to unresponsive
 suites can hang indefinitely (suites suspended with Ctrl-Z for instance).
 
 \begin{myitemize}
-\item {\em type:} float
-\item {\em minimum:} 1.0
-\item {\em default:} 30.0
+\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default:} PT30S
 \end{myitemize}
 
 \subsection{[suite logging]}

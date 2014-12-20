@@ -263,10 +263,10 @@ unset S""")
             str(GLOBAL_CFG.get(['task messaging', 'maximum number of tries'])))
         handle.write(
             "\nexport CYLC_TASK_MSG_RETRY_INTVL=" + str(GLOBAL_CFG.get(
-                ['task messaging', 'retry interval in seconds'])))
+                ['task messaging', 'retry interval'])))
         handle.write(
             "\nexport CYLC_TASK_MSG_TIMEOUT=" + str(GLOBAL_CFG.get(
-                ['task messaging', 'connection timeout in seconds'])))
+                ['task messaging', 'connection timeout'])))
         handle.write("\nexport CYLC_TASK_NAME=" + task_name)
         handle.write(
             '\nexport CYLC_TASK_NAMESPACE_HIERARCHY="' +
