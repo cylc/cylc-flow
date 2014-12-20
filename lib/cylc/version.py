@@ -29,8 +29,9 @@ def _get_cylc_version():
 
     if os.path.exists(os.path.join(cylc_dir, ".git")):
         # We're running in a cylc git repository, so dynamically determine
-        # the cylc version string.
-        res = run_get_stdout(
+        # the cylc version string.  Enclose the path in quotes to handle
+        # avoid failure when cylc_dir contains spaces.
+        res = run_get_stdout('"%s"' %
             os.path.join(cylc_dir, "admin", "get-repo-version"))
         if res[0]:
             return res[1][0]
