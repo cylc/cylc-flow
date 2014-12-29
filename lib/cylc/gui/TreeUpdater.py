@@ -183,7 +183,7 @@ class TreeUpdater(threading.Thread):
         model = self.ttreeview.get_model()
 
         # Retrieve any user-expanded rows so that we can expand them later.
-        # This may not be strictly necessary now that the tree isn't cleared.
+        # This is only really necessary for edge cases in tree reconstruction.
         expand_me = self._get_user_expanded_row_ids()
         daemon_time_zone_info = self.updater.global_summary.get(
             "daemon time zone info")
