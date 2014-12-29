@@ -23,6 +23,7 @@ from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
 from cylc.owner import user
 from cylc.version import CYLC_VERSION
+from parsec.util import printcfg
 from shutil import copy as shcopy, copytree, rmtree
 from copy import deepcopy
 import datetime, time
@@ -581,7 +582,6 @@ class scheduler(object):
         if self.options.genref:
             self.gen_reference_log = self.options.genref
 
-
     def configure_pyro( self ):
         # CONFIGURE SUITE PYRO SERVER
         self.pyro = pyro_server( self.suite, self.suite_dir,
@@ -597,13 +597,8 @@ class scheduler(object):
         except PortFileError,x:
             raise SchedulerError( str(x) )
 
-    def configure_suite( self, reconfigure=False ):
-        # LOAD SUITE CONFIG FILE
-
-        if self.is_restart:
-            self._cli_initial_point_string = (
-                self.get_state_initial_point_string())
-            self.do_process_tasks = True
+    def load_suiterc(self, reconfigure):
+        """Load and log the suite definition."""
 
         self.config = config(
             self.suite, self.suiterc,
@@ -613,6 +608,40 @@ class scheduler(object):
             cli_start_point_string=self._cli_start_point_string,
             is_restart=self.is_restart, is_reload=reconfigure
         )
+
+        # Dump the loaded suiterc for future reference.
+        cfg_logdir = GLOBAL_CFG.get_derived_host_item(
+            self.suite, 'suite config log directory')
+        time_str = get_current_time_string(
+            override_use_utc=True, use_basic_format=True,
+            display_sub_seconds=False
+        )
+        if reconfigure:
+            load_type = "reload"
+        elif self.is_restart:
+            load_type = "restart"
+        else:
+            load_type = "run"
+        base_name = "%s-%s.rc" % (time_str, load_type)
+        file_name = os.path.join(cfg_logdir, base_name)
+        try:
+            handle = open(file_name, "wb")
+        except IOError as exc:
+            print str(exc)
+            raise SchedulerError("Unable to log the loaded suite definition")
+        handle.write("# cylc-version: %s\n" % CYLC_VERSION)
+        printcfg(self.config.cfg, handle=handle)
+        handle.close()
+
+    def configure_suite( self, reconfigure=False ):
+        """Load and process the suite definition."""
+
+        if self.is_restart:
+            self._cli_initial_point_string = (
+                self.get_state_initial_point_string())
+            self.do_process_tasks = True
+
+        self.load_suiterc(reconfigure)
 
         # Initial and final cycle times - command line takes precedence.
         # self.config already alters the 'initial cycle point' for CLI.

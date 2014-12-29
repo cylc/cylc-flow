@@ -1,0 +1,22 @@
+#!Jinja2
+
+title = a suite that logs run, reload, and restart configs
+description = the weather is {{WEATHER | default("bad")}}
+
+[cylc]
+   [[event hooks]]
+      abort on timeout = True
+      timeout = PT30S
+
+[scheduling]
+   [[dependencies]]
+       graph = reloader => restarter
+[runtime]
+   [[reloader]]
+      command scripting = cylc reload $CYLC_SUITE_NAME
+   [[restarter]]
+      command scripting = """
+cylc stop --max-polls=10 --interval=2 --now $CYLC_SUITE_NAME
+cylc restart --set WEATHER=good $CYLC_SUITE_NAME
+sleep 10
+touch $CYLC_SUITE_RUN_DIR/suite-stopping"""
