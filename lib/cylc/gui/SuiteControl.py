@@ -24,6 +24,7 @@ import pango
 import os, re, sys
 import socket
 import subprocess
+from util import EntryTempText
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
 from dbchooser import dbchooser
@@ -421,6 +422,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.gcapture_windows = []
 
         self.log_colors = rotator()
+        hcolor = gcfg.get(['task filter highlight color'])
+        try:
+            self.filter_highlight_color = gtk.gdk.color_parse(hcolor)
+        except:
+            print >> sys.stderr, ("WARNING: bad gcylc.rc 'task filter "
+                "highlight color' (defaulting to yellow)")
+            self.filter_highlight_color = gtk.gdk.color_parse("yellow")
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 
@@ -443,8 +451,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if len(self.initial_views) == 0:
             self.initial_views = [self.VIEWS_ORDERED[0]]
 
-        self.create_tool_bar( )
-        bigbox.pack_start( self.tool_bar_box, False, False )
+        self.create_tool_bar()
+        bigbox.pack_start(self.tool_bar_box, False, False)
 
         self.tool_bar_box.set_sensitive(False)
 
@@ -453,8 +461,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.updater = None
 
         self.views_parent = gtk.VBox()
-        bigbox.pack_start( self.views_parent, True )
-
+        bigbox.pack_start(self.views_parent, True)
+        bigbox.pack_start(self.create_task_filter_box(), False, False)
         hbox = gtk.HBox()
         hbox.pack_start( self.info_bar, True )
         bigbox.pack_start( hbox, False )
@@ -2818,6 +2826,113 @@ This is what my suite does:..."""
                 bar_item = gtk.MenuItem( command )
                 com_menu.append( bar_item )
                 bar_item.connect( 'activate', self.command_help, category, command )
+
+    def check_task_filter_buttons(self, tb):
+        task_states = []
+        for subbox in self.task_filter_box.get_children():
+            for ebox in subbox.get_children():
+                box = ebox.get_children()[0]
+                try:
+                    icon, cb = box.get_children()
+                except (ValueError, AttributeError) as exc:
+                    # ValueError: this is the empty box to line things up.
+                    # AttributeError: this is the name filter entry box.
+                    pass
+                else:
+                    if cb.get_active():
+                        ebox.modify_bg(gtk.STATE_NORMAL, None)
+                    else:
+                        # Remove '_' (keyboard mnemonics) from state name.
+                        task_states.append(cb.get_label().replace('_',''))
+                        ebox.modify_bg(gtk.STATE_NORMAL, self.filter_highlight_color)
+
+        self.updater.filter_states_excl = task_states
+        self.updater.refilter()
+        self.refresh_views()
+
+    def check_filter_entry(self, e):
+        filter_text = self.filter_entry.get_text()
+        try:
+            re.compile(filter_text)
+        except re.error as exc:
+            warning_dialog(
+                "Bad filter regex: '%s': error: %s.\n"
+                "Enter a string literal or valid regular expression." % (
+                    filter_text, exc)).warn()
+            return
+        if filter_text != "":
+            self.filter_entry.modify_base(gtk.STATE_NORMAL,
+                    self.filter_highlight_color)
+        else:
+            self.filter_entry.modify_base(gtk.STATE_NORMAL, None)
+        self.updater.filter_name_string = filter_text
+        self.updater.refilter()
+        self.refresh_views()
+
+    def refresh_views(self):
+        for view in self.current_views:
+            if view is not None:
+                view.refresh()
+
+    def create_task_filter_box(self):
+        self.task_filter_box = gtk.VBox()
+        subbox1 = gtk.HBox(homogeneous=True)
+        subbox2 = gtk.HBox(homogeneous=True)
+        self.task_filter_box.pack_start(subbox1)
+        self.task_filter_box.pack_start(subbox2)
+        padbox = gtk.HBox()
+        padbox.pack_start( self.task_filter_box, padding=10 )
+        dotm = DotMaker(self.theme, size='small')
+        cnt = 0
+
+        if self.restricted_display:
+            task_states = task_state.legal_for_restricted_monitoring
+        else:
+            task_states = task_state.legal
+
+        for st in task_states:
+            ebox = gtk.EventBox()
+            box = gtk.HBox()
+            ebox.add(box)
+            icon = dotm.get_image(st)
+            cb = gtk.CheckButton(task_state.labels[st])
+            tooltip = gtk.Tooltips()
+            tooltip.enable()
+            tooltip.set_tip(cb, "Filter by task state = %s" % st)
+ 
+            box.pack_start(icon, expand=False)
+            box.pack_start(cb, expand=False)
+            cnt += 1
+            if cnt > (len(task_state.legal) + 1)//2:
+                subbox2.pack_start(ebox, expand=False, fill=True)
+            else:
+                subbox1.pack_start(ebox, expand=False, fill=True)
+            cb.set_active(True)
+            cb.connect('toggled', self.check_task_filter_buttons)
+        
+        self.filter_entry = EntryTempText()
+        self.filter_entry.set_width_chars(7)
+        self.filter_entry.connect( "activate", self.check_filter_entry )
+        self.filter_entry.set_temp_text( "filter" )
+        ebox = gtk.EventBox()
+        ebox.add(self.filter_entry)
+        subbox2.pack_start(ebox)
+        cnt += 1
+
+        if cnt % 2 != 0:
+            # subbox2 needs another entry to line things up.
+            ebox = gtk.EventBox()
+            ebox.add(gtk.HBox())
+            subbox2.pack_start(ebox, expand=False, fill=True)
+
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(self.filter_entry,
+                "Filter by task name.\n"
+                "Enter a sub-string or regex and hit Enter\n"
+                "(to reset, clear the entry and hit Enter)")
+
+        return padbox
 
     def create_tool_bar( self ):
         """Create the tool bar for the control GUI."""

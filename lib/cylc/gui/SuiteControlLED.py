@@ -89,7 +89,7 @@ LED suite control interface.
         if column_index == 0:
             return False
 
-        if self.t.is_transposed:
+        if not self.t.is_transposed:
             point_string = self.t.led_headings[column_index]
             name = treeview.get_model().get_value( r_iter, 0 )
         else:
@@ -120,10 +120,10 @@ LED suite control interface.
         group_item.connect( 'toggled', self.toggle_grouping )
         group_item.show()
 
-        transpose_menu_item = gtk.CheckMenuItem( 'Toggle _Transpose View' )
-        transpose_menu_item.set_active( self.t.should_transpose_view )
-        menu.append( transpose_menu_item )
-        transpose_menu_item.connect( 'toggled', self.toggle_transpose )
+        transpose_menu_item = gtk.CheckMenuItem('Toggle _Transpose View')
+        transpose_menu_item.set_active(self.t.should_transpose_view)
+        menu.append(transpose_menu_item)
+        transpose_menu_item.connect('toggled', self.toggle_transpose)
         transpose_menu_item.show()
 
         if self.cfg.use_defn_order:
@@ -141,18 +141,6 @@ LED suite control interface.
         # prevent a memory leak? But I'm not sure how to do this as yet.)
 
         return True
-
-    def check_filter_entry( self, e ):
-        ftext = self.filter_entry.get_text()
-        try:
-            re.compile(ftext)
-        except re.error as exc:
-            warning_dialog(
-                'Bad filter regex: %s: error: %s' % (ftext, exc)).warn()
-            self.t.filter = ""
-        else:
-            self.t.filter = ftext
-        self.t.action_required = True
 
     def toggle_grouping( self, toggle_item ):
         """Toggle grouping by visualisation families."""
@@ -188,14 +176,14 @@ LED suite control interface.
             self.headings_menu_item.set_active( headings_off )
         self.t.action_required = True
 
-    def toggle_transpose( self, toggle_item ):
+    def toggle_transpose(self, toggle_item):
         """Toggle transpose (rows-as-columns, etc) table view."""
         transpose_on = toggle_item.get_active()
         if transpose_on == self.t.should_transpose_view:
             return False
         self.t.should_transpose_view = transpose_on
         if toggle_item != self.transpose_menu_item:
-            self.transpose_menu_item.set_active( transpose_on )
+            self.transpose_menu_item.set_active(transpose_on)
         self.t.action_required = True
         return False
 
@@ -218,6 +206,10 @@ LED suite control interface.
         self.quitters.remove( lv )
         w.destroy()
 
+    def refresh(self):
+        self.t.update()
+        self.t.action_required = True
+
     def _set_tooltip( self, widget, tip_text ):
         # Convenience function to add hover over text to a widget.
         tip = gtk.Tooltips()
@@ -238,10 +230,10 @@ LED suite control interface.
         items.append( self.group_menu_item )
         self.group_menu_item.connect( 'toggled', self.toggle_grouping )
 
-        self.transpose_menu_item = gtk.CheckMenuItem( 'Toggle _Transpose View' )
-        self.transpose_menu_item.set_active( self.t.should_transpose_view )
-        items.append( self.transpose_menu_item )
-        self.transpose_menu_item.connect( 'toggled', self.toggle_transpose )
+        self.transpose_menu_item = gtk.CheckMenuItem('Toggle _Transpose View')
+        self.transpose_menu_item.set_active(self.t.should_transpose_view)
+        items.append(self.transpose_menu_item)
+        self.transpose_menu_item.connect('toggled', self.toggle_transpose)
 
         if self.cfg.use_defn_order:
             self.defn_order_menu_item = gtk.CheckMenuItem( 'Toggle _Definition Order' )
@@ -261,18 +253,16 @@ LED suite control interface.
         self.group_toolbutton.set_icon_widget( g_image )
         self.group_toolbutton.set_label( "Group" )
         self.group_toolbutton.connect( 'toggled', self.toggle_grouping )
-        self._set_tooltip( self.group_toolbutton, "Dot View - Click to group tasks by families" )
         items.append( self.group_toolbutton )
+        self._set_tooltip( self.group_toolbutton, "Dot View - Click to group tasks by families" )
 
-        self.filter_entry = EntryTempText()
-        self.filter_entry.set_width_chars( 7 )  # Reduce width in toolbar
-        self.filter_entry.connect( "activate", self.check_filter_entry )
-        self.filter_entry.set_temp_text( "filter" )
-        filter_toolitem = gtk.ToolItem()
-        filter_toolitem.add(self.filter_entry)
-        tooltip = gtk.Tooltips()
-        tooltip.enable()
-        tooltip.set_tip(filter_toolitem, "Dot View - Filter tasks by name\n(enter a sub-string or regex)")
-        items.append(filter_toolitem)
+        self.transpose_toolbutton = gtk.ToggleToolButton()
+        self.transpose_toolbutton.set_active(False)
+        g_image = gtk.image_new_from_stock('transpose', gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.transpose_toolbutton.set_icon_widget(g_image)
+        self.transpose_toolbutton.set_label("Transpose")
+        self.transpose_toolbutton.connect('toggled', self.toggle_transpose)
+        items.append(self.transpose_toolbutton)
+        self._set_tooltip(self.transpose_toolbutton, "Dot View - Click to transpose view")
 
         return items

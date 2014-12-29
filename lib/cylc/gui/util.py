@@ -23,8 +23,7 @@ import traceback
 import gtk
 
 
-class EntryTempText( gtk.Entry ):
-
+class EntryTempText(gtk.Entry):
     """Class to add temporary text to an entry that vanishes on focus."""
 
     temp_colour = gtk.gdk.color_parse("grey")
@@ -44,11 +43,9 @@ class EntryTempText( gtk.Entry ):
     def set_text(self, text):
         """Wrapper for standard set_text - control colour."""
         if text == self.temp_text:
-            if not hasattr(self, "original colour"):
-                self.original_colour = self.style.text[gtk.STATE_NORMAL]
             self.modify_text(gtk.STATE_NORMAL, self.temp_colour)
         else:
-            self.modify_text(gtk.STATE_NORMAL, self.original_colour)
+            self.modify_text(gtk.STATE_NORMAL, None)
         super(EntryTempText, self).set_text(text)
 
     def get_text(self):
@@ -145,7 +142,7 @@ def set_exception_hook_dialog(program_name=None):
 
 def setup_icons():
     """Set up some extra stock icons for better PyGTK compatibility."""
-    # create a new stock icon for the 'group' action
+    # create a new stock icon for the 'group' and 'transpose' actions
     root_img_dir = get_image_dir()
     pixbuf = get_icon()
     gcylc_iconset = gtk.IconSet(pixbuf)
@@ -153,8 +150,11 @@ def setup_icons():
     grp_iconset = gtk.IconSet(pixbuf)
     pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/ungroup.png' )
     ungrp_iconset = gtk.IconSet(pixbuf)
+    pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/transpose.png' )
+    transpose_iconset = gtk.IconSet(pixbuf)
     factory = gtk.IconFactory()
     factory.add( 'gcylc', gcylc_iconset )
     factory.add( 'group', grp_iconset )
     factory.add( 'ungroup', ungrp_iconset )
+    factory.add( 'transpose', transpose_iconset )
     factory.add_default()

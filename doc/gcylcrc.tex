@@ -78,6 +78,18 @@ definition order is not available at all.
 \item {\em default:} True
 \end{myitemize}
 
+\subsubsection{task filter highlight color}
+
+The color used to highlight active task filters in gcylc. It must be a name
+from the X11 rgb.txt file, e.g.\ \lstinline=SteelBlue=; or a
+{\em quoted} hexadecimal color code, e.g.\ \lstinline="#ff0000"= for red (quotes
+are required to prevent the hex code being interpreted as a comment).
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em default:} \lstinline=PowderBlue=
+\end{myitemize}
+
 \subsection{[themes]}
 
 This section may contain task state color theme definitions.
@@ -105,12 +117,13 @@ Set default icon attributes for all state icons in this theme.
 
 \begin{myitemize}
 \item {\em type:} string list (icon attributes)
-\item {\em legal values:} ``color=COLOR``, ``style=STYLE'', ``fontcolor=FONTCOLOR''
+\item {\em legal values:} \lstinline@"color=COLOR"@, \lstinline@"style=STYLE"@, \lstinline@"fontcolor=FONTCOLOR"@
 \item {\em default:} (none)
 \end{myitemize}
 
-For the attribute values, COLOR and FONTCOLOR are X color names or hex codes (e.g.
-\lstinline@#ff0000@ for red); and STYLE can be ``filled'' or ``unfilled''. 
+For the attribute values, COLOR and FONTCOLOR can be color names from the X11
+rgb.txt file, e.g.\ \lstinline=SteelBlue=; or hexadecimal color codes, e.g.
+\lstinline@#ff0000@ for red; and STYLE can be ``filled'' or ``unfilled''. 
 See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
 \lstinline@$CYLC_DIR/conf/gcylcrc/@ for examples. 
 
@@ -123,12 +136,12 @@ submitted, submit-failed, running, succeeded, failed, retrying, submit-retrying}
  
 \begin{myitemize}
 \item {\em type:} string list (icon attributes)
-\item {\em legal values:} ``color=COLOR``, ``style=STYLE'', ``fontcolor=FONTCOLOR''
+\item {\em legal values:} \lstinline@"color=COLOR"@, \lstinline@"style=STYLE"@, \lstinline@"fontcolor=FONTCOLOR"@
 \item {\em default:} (none)
 \end{myitemize}
 
-For the attribute values, COLOR and FONTCOLOR are X color names or hex codes (e.g.
-\lstinline@#ff0000@ for red); and STYLE can be ``filled'' or ``unfilled''. 
+For the attribute values, COLOR and FONTCOLOR can be color names from the X11
+rgb.txt file, e.g.\ \lstinline=SteelBlue=; or hexadecimal color codes, e.g.
+\lstinline@#ff0000@ for red; and STYLE can be ``filled'' or ``unfilled''. 
 See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
 \lstinline@$CYLC_DIR/conf/gcylcrc/@ for examples. 
-

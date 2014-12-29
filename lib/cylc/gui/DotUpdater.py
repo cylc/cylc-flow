@@ -55,7 +55,6 @@ class DotUpdater(threading.Thread):
         self.fam_state_summary = {}
         self.ancestors_pruned = {}
         self.descendants = []
-        self.filter = ""
         self.point_strings = []
 
         self.led_headings = []
@@ -101,7 +100,6 @@ class DotUpdater(threading.Thread):
             return False
 
         self.last_update_time = self.updater.last_update_time
-
         self.updater.set_update(False)
 
         self.state_summary = deepcopy(self.updater.state_summary)
@@ -109,19 +107,10 @@ class DotUpdater(threading.Thread):
         self.ancestors_pruned = deepcopy(self.updater.ancestors_pruned)
         self.descendants = deepcopy(self.updater.descendants)
 
-        if not self.should_group_families:
-            self.task_list = deepcopy(self.updater.task_list)
-        else:
-            self.task_list = []
-
         self.updater.set_update(True)
 
         self.point_strings = []
-        state_summary = {}
-        state_summary.update(self.state_summary)
-        state_summary.update(self.fam_state_summary)
-
-        for id_ in state_summary:
+        for id_ in self.state_summary:
             name, point_string = TaskID.split(id_)
             if point_string not in self.point_strings:
                 self.point_strings.append(point_string)
@@ -131,41 +120,37 @@ class DotUpdater(threading.Thread):
             # iso cycle points
             self.point_strings.sort()
 
-        if self.should_group_families:
-            for key, val in self.ancestors_pruned.items():
-                if key == 'root':
-                    continue
-                # highest level family name (or plain task) above root
-                name = val[-2]
-                if name not in self.task_list:
-                    for point_string in self.point_strings:
-                        task_id = TaskID.get(name, point_string)
-                        if task_id in state_summary:
-                            self.task_list.append( name )
-                            break
+        if not self.should_group_families:
+            # Display the full task list.
+            self.task_list = deepcopy(self.updater.task_list)
+        else:
+            # Replace tasks with their top level family name.
+            self.task_list = []
+            for task_id in self.state_summary:
+                name, point_string = TaskID.split(task_id)
+                # Family name below root, or task name.
+                item = self.ancestors_pruned[name][-2]
+                if item not in self.task_list:
+                    self.task_list.append(item)
 
         if self.cfg.use_defn_order and self.updater.ns_defn_order and self.defn_order_on:
             self.task_list = [ i for i in self.updater.ns_defn_order if i in self.task_list ]
         else:
             self.task_list.sort()
 
-        if self.filter:
-            self.task_list = [
-                t for t in self.task_list
-                if self.filter in t or re.search( self.filter, t )]
         return True
 
     def set_led_headings( self ):
-        if self.should_transpose_view:
-            new_headings = [ 'Name' ] + self.point_strings
+        if not self.should_transpose_view:
+            new_headings = ['Name'] + self.point_strings
         else:
-            new_headings = ['Tag' ] + self.task_list
+            new_headings = ['Point'] + self.task_list
         if new_headings == self.led_headings:
             return False
         self.led_headings = new_headings
         tvcs = self.led_treeview.get_columns()
         labels = []
-        for n in range( 1, len(self.led_headings) ):
+        for n in range(1, len(self.led_headings)):
             text = self.led_headings[n]
             tip = self.led_headings[n]
             if self.should_hide_headings:
@@ -190,7 +175,7 @@ class DotUpdater(threading.Thread):
                 label.set_text(label.get_text() + ' ')
 
     def ledview_widgets( self ):
-        if self.should_transpose_view:
+        if not self.should_transpose_view:
             types = [str] + [gtk.gdk.Pixbuf] * len( self.point_strings )
             num_new_columns = len(types)
         else:
@@ -242,10 +227,10 @@ class DotUpdater(threading.Thread):
 
         self.led_treeview.set_model( self.led_liststore )
 
-        if self.should_transpose_view:
-            tvc = gtk.TreeViewColumn( 'Name' )
+        if not self.should_transpose_view:
+            tvc = gtk.TreeViewColumn('Name')
         else:
-            tvc = gtk.TreeViewColumn( 'Cycle' )
+            tvc = gtk.TreeViewColumn('Point')
 
         cr = gtk.CellRendererText()
         tvc.pack_start( cr, False )
@@ -253,7 +238,7 @@ class DotUpdater(threading.Thread):
 
         self.led_treeview.append_column( tvc )
 
-        if self.should_transpose_view:
+        if not self.should_transpose_view:
             data_range = range(1, len( self.point_strings ) + 1)
         else:
             data_range = range(1, len( self.task_list ) + 1)
@@ -279,7 +264,7 @@ class DotUpdater(threading.Thread):
         x, y = self.led_treeview.convert_widget_to_bin_window_coords(x, y)
         path, column, cell_x, cell_y = self.led_treeview.get_path_at_pos(x, y)
         col_index = self.led_treeview.get_columns().index(column)
-        if self.is_transposed:
+        if not self.is_transposed:
             iter_ = self.led_treeview.get_model().get_iter(path)
             name = self.led_treeview.get_model().get_value(iter_, 0)
             try:
@@ -319,7 +304,6 @@ class DotUpdater(threading.Thread):
         return True
 
     def update_gui( self ):
-        #print "Updating GUI"
         new_data = {}
         state_summary = {}
         state_summary.update( self.state_summary )
@@ -340,7 +324,7 @@ class DotUpdater(threading.Thread):
         names.sort()
         tvcs = self.led_treeview.get_columns()
 
-        if self.is_transposed:
+        if not self.is_transposed:
             for name in self.task_list:
                 point_strings_for_tasks = tasks_by_name.get(name, [])
                 if not point_strings_for_tasks:
