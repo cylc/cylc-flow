@@ -42,33 +42,39 @@ import cylc.flags
 
 parser = cop("""cylc [info] monitor [OPTIONS] ARGS
 
-A terminal-based suite monitor.""", pyro=True, noforce=True)
+A terminal-based live suite monitor.""", pyro=True, noforce=True)
 
-parser.add_option("-a", "--align",
-        help="Align task names. Only useful for small suites.",
-        action="store_true", default=False, dest="align_columns")
+parser.add_option(
+    "-a", "--align",
+    help="Align task names. Only useful for small suites.",
+    action="store_true", default=False, dest="align_columns")
 
-parser.add_option("-r", "--restricted",
-        help="Restrict display to 'active' task states: submitted, "
-        "submit-failed, submit-retrying, running, failed, retrying. "
-        "This may be needed for very large suites. The state summary "
-        "line still represents all task proxies.",
-        action="store_true", default=False, dest="restricted")
+parser.add_option(
+    "-r", "--restricted",
+    help="Restrict display to 'active' task states: submitted, "
+    "submit-failed, submit-retrying, running, failed, retrying. "
+    "This may be needed for very large suites. The state summary "
+    "line still represents all task proxies.",
+    action="store_true", default=False, dest="restricted")
 
-( options, args ) = parser.parse_args()
+parser.add_option(
+    "-o", "--once",
+    help="Show a single view then exit.",
+    action="store_true", default=False, dest="once")
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+(options, args) = parser.parse_args()
+
+suite, pphrase = prep_pyro(args[0], options).execute()
 
 legend = ''
 for state in task_state.legal:
     legend += "%s%s%s " % (task_state.ctrl[state], state, task_state.ctrl_end)
 legend = legend.rstrip()
-len_header = sum(len(s) for s in task_state.legal) + len(task_state.legal) - 1 
+len_header = sum(len(s) for s in task_state.legal) + len(task_state.legal) - 1
 
 alerted = False
 alerted2 = False
 alerted3 = False
-
 try:
     while True:
         try:
@@ -95,7 +101,7 @@ try:
 
         while True:
             try:
-                [glbl, task_summaries, fam_summaries] = proxy.get_state_summary()
+                glbl, task_summaries, fam_summaries = proxy.get_state_summary()
             except TimeoutError:
                 if not alerted3:
                     print "\n\033[1;37;41mconnection timed out%s" % (
@@ -140,7 +146,6 @@ try:
  
             alerted2 = False
             alerted3 = False
-
             try:
                 updated_at = get_time_string_from_unix_time(
                         glbl['last_updated'])
@@ -176,7 +181,6 @@ try:
             title_str = '\033[1;37;44m%s%s%s' % (
                     title_str[:-len(suffix)], suffix, task_state.ctrl_end)
             blit.append(title_str)
-
             blit.append(legend)
 
             mode_str = "%s mode" % run_mode
@@ -224,8 +228,8 @@ try:
                         line = "%s %s" % (line, info)
                 blitlines[indx] = line
 
-            # Clear screen and blit the new information.
-            os.system("clear")
+            if not options.once:
+                os.system("clear")
             print '\n'.join(blit)
             indxs = blitlines.keys()
             try:
@@ -236,7 +240,10 @@ try:
                 indxs.sort(key=int)
             for ix in indxs:
                 print blitlines[ix]
+            if options.once:
+                break
             sleep(1)
-
+        if options.once:
+            break
 except KeyboardInterrupt:
     sys.exit(0)
