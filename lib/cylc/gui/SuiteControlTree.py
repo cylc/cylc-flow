@@ -113,8 +113,8 @@ Text Treeview suite control interface.
                 tvc.set_attributes(crp, pixbuf=11)
             cr = gtk.CellRendererText()
             tvc.pack_start(cr, True)
-            if n == 8:
-                tvc.set_attributes(cr, markup=n)
+            if n == 6 or n == 7 or n == 8:
+                tvc.set_cell_data_func(cr, self._set_cell_text_time, n)
             else:
                 tvc.set_attributes(cr, text=n)
             tvc.set_resizable(True)
@@ -237,6 +237,18 @@ Text Treeview suite control interface.
         tip = gtk.Tooltips()
         tip.enable()
         tip.set_tip( widget, tip_text )
+
+    def _set_cell_text_time(self, column, cell, model, iter_, n):
+        """Remove the date part if it matches the last update date."""
+        date_time_string = model.get_value(iter_, n)
+        if "T" in self.updater.dt:
+            last_update_date = self.updater.dt.split("T")[0]
+            date_time_string = date_time_string.replace(last_update_date
+                                                        + "T", "", 1)
+        if n == 8:
+            return cell.set_property("markup", date_time_string)
+        else:
+            return cell.set_property("text", date_time_string)
 
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""

@@ -273,13 +273,7 @@ class TreeUpdater(threading.Thread):
                     t_info['mean_total_elapsed_time_string'] = meant_string
 
                     for dt in tkeys:
-                        if t_info[dt] is not None:
-                            # Abbreviate time strings in context.
-                            t_info[dt] = (
-                                self._alter_date_time_string_for_context(
-                                    t_info[dt], last_update_date)
-                            )
-                        else:
+                        if t_info[dt] is None:
                             # Or (no time info yet) use an asterix.
                             t_info[dt] = "*"
 
