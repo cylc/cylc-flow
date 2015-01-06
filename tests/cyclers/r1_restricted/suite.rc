@@ -1,0 +1,19 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20130808T00
+    final cycle point = 20130808T18
+    [[dependencies]]
+        [[[R1]]]
+            graph = "setup_foo => foo"
+        [[[+PT6H/PT6H]]]
+            graph = "foo[-PT6H] => foo => bar"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 20130808T00
+    final cycle point = 20130808T18
+    [[node attributes]]
+        foo = "color=red"
+        bar = "color=orange"

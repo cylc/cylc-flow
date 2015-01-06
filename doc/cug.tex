@@ -3026,6 +3026,49 @@ For example, we can write our suite like~\ref{fig-test4}.
 This neatly expresses what we want - a task running at the initial cycle point
 that has one-off dependencies with other task sets at different cycles.
 
+Usually, we want to specify additional tasks and dependencies at the initial
+cycle point. What if we want our first cycle point to be entirely special, with
+some tasks missing compared to subsequent cycle points?
+
+In this example, \lstinline=bar= will not be run at the initial cycle point,
+but will still run at subsequent cycle points:
+
+\begin{figure}
+\begin{minipage}[b]{0.5\textwidth}
+\lstset{language=suiterc}
+\begin{lstlisting}
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20130808T00
+    final cycle point = 20130808T18
+    [[dependencies]]
+        [[[R1]]]
+            graph = "setup_foo => foo"
+        [[[+PT6H/PT6H]]]
+            graph = "foo[-PT6H] => foo => bar"
+[visualization]
+    initial cycle point = 20130808T00
+    final cycle point = 20130808T18
+    [[node attributes]]
+        foo = "color=red"
+        bar = "color=orange"
+\end{lstlisting}
+\lstset{language=transcript}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.5\textwidth}
+    \begin{center}
+        \includegraphics[width=\textwidth]{graphics/png/orig/test5.png}
+    \end{center}
+\end{minipage}
+\caption[Restricted First Cycle Point Suite]{
+    \scriptsize Restricted First Cycle Point Suite}
+\label{fig-test5}
+\end{figure}
+
+\lstinline=[[[+PT6H/PT6H]]]= means start at \lstinline=+PT6H= (6 hours after
+the initial cycle point) and then repeat every \lstinline=PT6H= (6 hours).
 
 \subparagraph{Integer Cycling}
 \label{IntegerCycling}
@@ -5089,21 +5132,27 @@ suite was down.
 \subsubsection{Warm Start}
 
 A warm start runs a suite from scratch like a cold start, but from a given
-cycle point that is later than the suite's initial cycle point. It can be
-considered an inferior alternative to a restart because it may result in some
-tasks rerunning.  A warm start may be required if a restart is not possible
-because the suite state files were accidentally deleted (for instance). The
-warm start cycle point must be given on the command line:
+cycle point that is later than the suite's initial cycle point. All tasks from
+the given cycle point will run. It can be considered an inferior alternative
+to a restart because it may result in some tasks rerunning.  A warm start may
+be required if a restart is not possible because the suite state files were
+accidentally deleted (for instance). The warm start cycle point must be given
+on the command line:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc run --warm SUITE [START_CYCLE_POINT]
 \end{lstlisting}
-In this case the scheduler starts by loading a first instance of each 
-task at the warm start cycle point, or at the next valid point for the task,
-and any special cold-start tasks are loaded in the `succeeded' state (this is
-merely a device to satisfy any initial dependence on the cold-start tasks, which
-are assumed not to be needed for a warm start; see the note on cold-start tasks
-at the beginning of this section).
+The original suite initial cycle point is preserved, but all tasks and
+dependencies before the given start cycle point are ignored.
+
+The scheduler starts by loading a first instance of each task at the warm
+start cycle point, or at the next valid point for the task. Special cold-start
+tasks are loaded in the `succeeded' state (this is merely a device to satisfy
+any initial dependence on the cold-start tasks, which are assumed not to be
+needed for a warm start; see the note on cold-start tasks at the beginning of
+this section). \lstinline=R1=-type tasks behave exactly the same as other
+tasks - if their cycle point is at or later than the given start cycle point,
+they will run; if not, they will be ignored.
 
 \subsection{How Tasks Interact With Running Suites}
 \label{TaskComms}
