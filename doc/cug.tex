@@ -3026,15 +3026,8 @@ For example, we can write our suite like~\ref{fig-test4}.
 This neatly expresses what we want - a task running at the initial cycle point
 that has one-off dependencies with other task sets at different cycles.
 
-Usually, we want to specify additional tasks and dependencies at the initial
-cycle point. What if we want our first cycle point to be entirely special, with
-some tasks missing compared to subsequent cycle points?
-
-In this example, \lstinline=bar= will not be run at the initial cycle point,
-but will still run at subsequent cycle points:
-
 \begin{figure}
-\begin{minipage}[b]{0.5\textwidth}
+\begin{minipage}[h]{0.5\textwidth}
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -3046,7 +3039,10 @@ but will still run at subsequent cycle points:
         [[[R1]]]
             graph = "setup_foo => foo"
         [[[+PT6H/PT6H]]]
-            graph = "foo[-PT6H] => foo => bar"
+            graph = """
+                foo[-PT6H] => foo
+                foo => bar
+            """
 [visualization]
     initial cycle point = 20130808T00
     final cycle point = 20130808T18
@@ -3057,7 +3053,7 @@ but will still run at subsequent cycle points:
 \lstset{language=transcript}
 \end{minipage}
 \hfill
-\begin{minipage}[b]{0.5\textwidth}
+\begin{minipage}[h]{0.5\textwidth}
     \begin{center}
         \includegraphics[width=\textwidth]{graphics/png/orig/test5.png}
     \end{center}
@@ -3067,8 +3063,17 @@ but will still run at subsequent cycle points:
 \label{fig-test5}
 \end{figure}
 
+
+A different kind of requirement is displayed in Figure \ref{fig-test5}.
+Usually, we want to specify additional tasks and dependencies at the initial
+cycle point. What if we want our first cycle point to be entirely special, with
+some tasks missing compared to subsequent cycle points?
+
+In Figure \ref{fig-test5}, \lstinline=bar= will not be run at the initial
+cycle point, but will still run at subsequent cycle points.
 \lstinline=[[[+PT6H/PT6H]]]= means start at \lstinline=+PT6H= (6 hours after
 the initial cycle point) and then repeat every \lstinline=PT6H= (6 hours).
+
 
 \subparagraph{Integer Cycling}
 \label{IntegerCycling}
