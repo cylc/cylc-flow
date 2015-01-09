@@ -1,0 +1,13 @@
+title = "Job script: no directives test for SLURM"
+
+[cylc]
+
+[scheduling]
+    [[dependencies]]
+        graph = foo
+
+[runtime]
+    [[foo]]
+        command scripting = echo hello
+        [[[job submission]]]
+            method = slurm
