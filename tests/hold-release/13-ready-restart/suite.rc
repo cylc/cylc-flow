@@ -1,0 +1,38 @@
+title = Restart with hold, with a task in ready state
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT1M
+        dummy mode suite timeout = PT1M
+        simulation mode suite timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = """
+foo => foo-1
+bar
+"""
+
+[runtime]
+    [[foo]]
+        command scripting = true
+    [[foo-1]]
+        command scripting = true
+        [[[job submission]]]
+            method = at
+            # A fake submission on 1st attempt
+            command template = sleep 10
+    [[bar]]
+        command scripting = """
+# Stop the suite as soon as job file of "foo-1" is in the ready state
+timeout 1m my-file-poll "${CYLC_SUITE_RUN_DIR}/log/job/1/foo-1/NN/job"
+cylc stop --now --max-polls=10 --interval=1 "${CYLC_SUITE_NAME}"
+# Restart the suite on hold
+cylc restart --hold "${CYLC_SUITE_NAME}"
+timeout 1m my-log-grepper 'Held on start-up (no tasks will be submitted)'
+# Modify the job submission command template for "foo-1"
+cylc broadcast "${CYLC_SUITE_NAME}" \
+    -p '1' -n 'foo-1' -s '[job submission]command template=at now'
+# Release the suite to run to completion
+cylc release "${CYLC_SUITE_NAME}"
+"""
