@@ -145,7 +145,7 @@ class BatchSysManager(object):
     def format_directives(self, job_conf):
         """Format the job directives for a job file, if relevant."""
         batch_sys = self.get_inst(job_conf['batch system name'])
-        if job_conf['directives'] and hasattr(batch_sys, "format_directives"):
+        if hasattr(batch_sys, "format_directives"):
             return batch_sys.format_directives(job_conf)
 
     def get_vacation_signal(self, job_conf):
