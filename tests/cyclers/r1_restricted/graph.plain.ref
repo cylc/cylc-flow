@@ -1,0 +1,17 @@
+edge "foo.20130808T0000Z" "foo.20130808T0600Z" solid
+edge "foo.20130808T0600Z" "bar.20130808T0600Z" solid
+edge "foo.20130808T0600Z" "foo.20130808T1200Z" solid
+edge "foo.20130808T1200Z" "bar.20130808T1200Z" solid
+edge "foo.20130808T1200Z" "foo.20130808T1800Z" solid
+edge "foo.20130808T1800Z" "bar.20130808T1800Z" solid
+edge "setup_foo.20130808T0000Z" "foo.20130808T0000Z" solid
+graph
+node "bar.20130808T0600Z" "bar\n20130808T0600Z" unfilled box orange
+node "bar.20130808T1200Z" "bar\n20130808T1200Z" unfilled box orange
+node "bar.20130808T1800Z" "bar\n20130808T1800Z" unfilled box orange
+node "foo.20130808T0000Z" "foo\n20130808T0000Z" unfilled box red
+node "foo.20130808T0600Z" "foo\n20130808T0600Z" unfilled box red
+node "foo.20130808T1200Z" "foo\n20130808T1200Z" unfilled box red
+node "foo.20130808T1800Z" "foo\n20130808T1800Z" unfilled box red
+node "setup_foo.20130808T0000Z" "setup_foo\n20130808T0000Z" unfilled box black
+stop

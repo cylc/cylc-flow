@@ -47,6 +47,8 @@ one-off cold-start tasks (see below).
 A "warm start" (-w/--warm) starts from a given cycle point that is later than
 the initial cycle point (specified in the suite.rc), and loads any cold-start
 tasks in the 'succeeded' state just to satisfy initial dependence on them.
+The original suite initial cycle point is preserved, but all tasks and
+dependencies before the given start cycle point are ignored.
 
 Aside from the starting cycle point there is no difference between cold and
 warm start unless you use special cold-start tasks. See "Suite Start-up" and
