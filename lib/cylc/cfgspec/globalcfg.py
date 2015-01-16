@@ -22,13 +22,30 @@ import shutil
 from tempfile import mkdtemp
 from parsec.config import config
 from parsec.validate import validator as vdr
+from parsec.validate import (
+    coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
+    IllegalValueError
+)
+from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
+from parsec.fileparse import parse
+from cylc.syntax_flags import (
+set_syntax_version, VERSION_PREV, VERSION_NEW, SyntaxVersionError
+)
+from isodatetime.data import Calendar
 from cylc.owner import user
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
+from cylc.cfgspec.suite import coerce_interval
+from cylc.cfgspec.suite import coerce_interval_list
+
 
 "Cylc site and user configuration file spec."
+
+coercers['interval_seconds'] = coerce_interval
+coercers['interval_minutes_list'] = lambda *a: coerce_interval_list(
+*a, back_comp_unit_factor=60)
 
 SPEC = {
     'process pool size'                   : vdr( vtype='integer', default=None ),
@@ -37,13 +54,14 @@ SPEC = {
     'disable interactive command prompts' : vdr( vtype='boolean', default=True ),
     'enable run directory housekeeping'   : vdr( vtype='boolean', default=False ),
     'run directory rolling archive length': vdr( vtype='integer', vmin=0, default=2 ),
-    'submission polling intervals'        : vdr( vtype='float_list', allow_zeroes=False, default=[1.0]),
-    'execution polling intervals'         : vdr( vtype='float_list', allow_zeroes=False, default=[1.0]),
+    'submission polling intervals'        : vdr( vtype='interval_minutes_list', default=[]),
+    'execution polling intervals'         : vdr( vtype='interval_minutes_list', default=[]),
 
     'task messaging' : {
-        'retry interval in seconds'       : vdr( vtype='float', vmin=1, default=5 ),
+        'retry interval'                  : vdr( vtype='interval_seconds', default=5),
         'maximum number of tries'         : vdr( vtype='integer', vmin=1, default=7 ),
-        'connection timeout in seconds'   : vdr( vtype='float', vmin=1, default=30 ),
+        'connection timeout'              : vdr( vtype='interval_seconds', default=30),
+
         },
 
     'suite logging' : {
@@ -152,7 +170,8 @@ def upg( cfg, descr ):
     u.obsolete(  '5.2.0', ['hosts','__MANY__', 'cylc bin directory'], ['hosts','__MANY__', 'cylc bin directory'] )
     u.deprecate( '5.2.0', ['hosts','__MANY__', 'use ssh messaging'], ['hosts','__MANY__', 'task communication method'], use_ssh )
     u.upgrade()
-
+    u.deprecate( '6.1.2', ['task messaging', 'connection timeout in seconds'], ['task messaging', 'connection timeout'] )
+    u.deprecate( '6.1.2', ['task messaging', 'retry interval in seconds'], ['task messaging', 'retry interval'] )
 
 class GlobalConfigError( Exception ):
     def __init__( self, msg ):

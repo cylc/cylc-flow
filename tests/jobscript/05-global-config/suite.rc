@@ -1,0 +1,23 @@
+title = """Job script: 
+suite to environment test execution and submission polling intervals, task communication method, connection timeout and retry interval the in global.rc"""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT2M
+        simulation mode suite timeout = PT2M
+
+[scheduling]
+    [[dependencies]]
+        graph = "foo & bar"
+    
+[runtime]
+    [[foo]]
+    [[bar]]
+        command scripting = "sleep 10"
+        submission polling intervals = PT0.1M
+        execution polling intervals = PT0.3M, 2*PT0.2M, PT0.1M
+        [[[job submission]]]
+            method = at
+            command template = at now + 1 minutes
+
+

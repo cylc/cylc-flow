@@ -1,0 +1,65 @@
+2015-01-06T11:46:00Z INFO - Initial point: 1
+2015-01-06T11:46:00Z INFO - Final point: 1
+2015-01-06T11:46:00Z INFO - Cold Start 1
+2015-01-06T11:46:00Z INFO - [bar.1] -initiate job-submit
+2015-01-06T11:46:00Z WARNING - [foo.1] -(polling comms) using default submission polling intervals
+2015-01-06T11:46:00Z WARNING - [foo.1] -(polling comms) using default execution polling intervals
+2015-01-06T11:46:00Z INFO - [foo.1] -initiate job-submit
+2015-01-06T11:46:00Z INFO - [bar.1] -triggered off []
+2015-01-06T11:46:00Z INFO - [foo.1] -triggered off []
+2015-01-06T11:46:01Z INFO - [bar.1] -submission succeeded
+2015-01-06T11:46:01Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:01Z INFO - [foo.1] -submission succeeded
+2015-01-06T11:46:01Z INFO - [foo.1] -setting submission poll timer for 12 seconds
+2015-01-06T11:46:07Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:07Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:08Z INFO - polled bar.1 submitted
+2015-01-06T11:46:08Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:13Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:13Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:13Z INFO - [foo.1] -initiate job-poll
+2015-01-06T11:46:13Z INFO - [foo.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:14Z INFO - polled bar.1 submitted
+2015-01-06T11:46:14Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:14Z INFO - polled foo.1 succeeded at 2015-01-06T11:46:07Z
+2015-01-06T11:46:14Z INFO - [foo.1] -(current:submitted)> polled foo.1 succeeded at 2015-01-06T11:46:07Z
+2015-01-06T11:46:14Z INFO - [foo.1] -Assuming non-reported outputs were completed:
+foo.1 started
+2015-01-06T11:46:19Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:19Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:20Z INFO - polled bar.1 submitted
+2015-01-06T11:46:20Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:25Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:25Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:26Z INFO - polled bar.1 submitted
+2015-01-06T11:46:26Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:31Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:31Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:32Z INFO - polled bar.1 submitted
+2015-01-06T11:46:32Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:37Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:37Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:38Z INFO - polled bar.1 submitted
+2015-01-06T11:46:38Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:43Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:43Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:44Z INFO - polled bar.1 submitted
+2015-01-06T11:46:44Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:49Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:49Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:50Z INFO - polled bar.1 submitted
+2015-01-06T11:46:50Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:46:55Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:46:55Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:46:56Z INFO - polled bar.1 submitted
+2015-01-06T11:46:56Z INFO - [bar.1] -(current:submitted)> polled bar.1 submitted
+2015-01-06T11:47:01Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:47:01Z INFO - [bar.1] -setting submission poll timer for 6 seconds
+2015-01-06T11:47:02Z INFO - polled bar.1 started at 2015-01-06T11:47:00Z
+2015-01-06T11:47:02Z INFO - [bar.1] -(current:submitted)> polled bar.1 started at 2015-01-06T11:47:00Z
+2015-01-06T11:47:02Z INFO - [bar.1] -setting execution poll timer for 18 seconds
+2015-01-06T11:47:20Z INFO - [bar.1] -initiate job-poll
+2015-01-06T11:47:20Z INFO - [bar.1] -setting execution poll timer for 12 seconds
+2015-01-06T11:47:21Z INFO - polled bar.1 succeeded at 2015-01-06T11:47:11Z
+2015-01-06T11:47:21Z INFO - [bar.1] -(current:running)> polled bar.1 succeeded at 2015-01-06T11:47:11Z
+2015-01-06T11:47:22Z INFO - Suite shutting down at 2015-01-06T11:47:22Z
