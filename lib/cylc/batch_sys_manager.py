@@ -41,6 +41,12 @@ batch_sys.filter_submit_output(out, err) => new_out, new_err
       that should just be ignored. See also "batch_sys.SUBMIT_CMD_TMPL" and
       "batch_sys.SUBMIT_CMD_STDIN_TMPL".
 
+batch_sys.get_fail_signals(job_conf) => list of strings
+    * Return a list of names of signals to trap for reporting errors. Default
+      is ["EXIT", "ERR", "TERM", "XCPU"]. ERR and EXIT are always recommended.
+      EXIT is used to report premature stopping of the job script, and its trap
+      is unset at the end of the script.
+
 batch_sys.get_vacation_signal(job_conf) => str
     * If relevant, return a string containing the name of the signal that
       indicates the job has been vacated by the batch system.
@@ -148,8 +154,15 @@ class BatchSysManager(object):
         if hasattr(batch_sys, "format_directives"):
             return batch_sys.format_directives(job_conf)
 
+    def get_fail_signals(self, job_conf):
+        """Return a list of failure signal names to trap in the job file."""
+        batch_sys = self.get_inst(job_conf['batch system name'])
+        if hasattr(batch_sys, "get_fail_signals"):
+            return batch_sys.get_fail_signals(job_conf)
+        return ["EXIT", "ERR", "TERM", "XCPU"]
+
     def get_vacation_signal(self, job_conf):
-        """Return the vacation signal for a job file."""
+        """Return the vacation signal name for a job file."""
         batch_sys = self.get_inst(job_conf['batch system name'])
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
