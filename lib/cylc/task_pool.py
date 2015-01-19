@@ -614,11 +614,13 @@ class TaskPool(object):
                 return False
         return True
 
-    def poll_tasks(self, ids):
+    def poll_tasks(self, ids=None):
         for itask in self.get_tasks(incl_runahead=False):
-            if itask.identity in ids:
-                # (state check done in task module)
-                itask.poll()
+            if itask.state.is_currently('running', 'submitted'):
+                if ids is None:
+                    itask.poll()
+                elif itask.identity in ids:
+                    itask.poll()
 
     def kill_active_tasks(self):
         for itask in self.get_tasks(incl_runahead=False):

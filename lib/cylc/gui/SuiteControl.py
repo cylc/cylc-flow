@@ -2141,6 +2141,12 @@ shown here in the state they were in at the time of triggering.''' )
         if not result[0]:
             warning_dialog( result[1], self.window ).warn()
 
+    def poll_all(self, w):
+        command = "cylc poll " + self.cfg.suite + " --host=" + self.cfg.host
+        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
+        self.gcapture_windows.append(foo)
+        foo.run()
+
     def reload_suite( self, w ):
         msg = """Reload the suite definition.
 This allows you change task runtime configuration and add
@@ -2467,6 +2473,12 @@ it tries to reconnect after increasingly long delays, to reduce network traffic.
         insert_item.set_image(img)
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
+
+        poll_item = gtk.ImageMenuItem('Poll All ...')
+        img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
+        poll_item.set_image(img)
+        start_menu.append(poll_item)
+        poll_item.connect('activate', self.poll_all)
 
         start_menu.append( gtk.SeparatorMenuItem() )
 

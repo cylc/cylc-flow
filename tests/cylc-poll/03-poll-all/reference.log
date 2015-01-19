@@ -1,0 +1,80 @@
+2015-01-15T05:33:20Z INFO - Initial point: 20141207T0000Z
+2015-01-15T05:33:20Z INFO - Final point: 20141208T0000Z
+2015-01-15T05:33:20Z INFO - Cold Start 20141207T0000Z
+2015-01-15T05:33:20Z INFO - [run_kill.20141207T0000Z] -initiate job-submit
+2015-01-15T05:33:20Z INFO - [run_kill.20141207T0000Z] -triggered off []
+2015-01-15T05:33:21Z INFO - [run_kill.20141207T0000Z] -submission succeeded
+2015-01-15T05:33:22Z INFO - [run_kill.20141207T0000Z] -(current:submitted)> run_kill.20141207T0000Z started at 2015-01-15T05:33:21Z
+2015-01-15T05:33:23Z INFO - [submit_hold.20141207T0000Z] -initiate job-submit
+2015-01-15T05:33:23Z INFO - [submit_hold.20141207T0000Z] -triggered off ['run_kill.20141207T0000Z']
+2015-01-15T05:33:25Z INFO - [submit_hold.20141207T0000Z] -submission succeeded
+2015-01-15T05:33:25Z INFO - [poll_check_kill.20141207T0000Z] -initiate job-submit
+2015-01-15T05:33:25Z INFO - [poll_check_kill.20141207T0000Z] -triggered off ['submit_hold.20141207T0000Z']
+2015-01-15T05:33:26Z INFO - [poll_check_kill.20141207T0000Z] -submission succeeded
+2015-01-15T05:33:27Z INFO - [poll_check_kill.20141207T0000Z] -(current:submitted)> poll_check_kill.20141207T0000Z started at 2015-01-15T05:33:26Z
+2015-01-15T05:33:27Z INFO - [poll_check_kill.20141207T0000Z] -initiate job-poll
+2015-01-15T05:33:27Z INFO - [run_kill.20141207T0000Z] -initiate job-poll
+2015-01-15T05:33:27Z INFO - [submit_hold.20141207T0000Z] -initiate job-poll
+2015-01-15T05:33:27Z INFO - Command succeeded: poll tasks(None,None,False)
+2015-01-15T05:33:28Z INFO - polled poll_check_kill.20141207T0000Z started at 2015-01-15T05:33:25Z
+2015-01-15T05:33:28Z INFO - [poll_check_kill.20141207T0000Z] -(current:running)> polled poll_check_kill.20141207T0000Z started at 2015-01-15T05:33:25Z
+2015-01-15T05:33:28Z INFO - polled run_kill.20141207T0000Z failed at unknown-time
+2015-01-15T05:33:28Z INFO - [run_kill.20141207T0000Z] -(current:running)> polled run_kill.20141207T0000Z failed at unknown-time
+2015-01-15T05:33:28Z INFO - polled submit_hold.20141207T0000Z submitted
+2015-01-15T05:33:28Z INFO - [submit_hold.20141207T0000Z] -(current:submitted)> polled submit_hold.20141207T0000Z submitted
+2015-01-15T05:33:28Z INFO - [run_kill.20141208T0000Z] -initiate job-submit
+2015-01-15T05:33:28Z INFO - [run_kill.20141208T0000Z] -triggered off ['run_kill.20141207T0000Z']
+2015-01-15T05:33:28Z INFO - [run_kill.20141207T0000Z] -suiciding
+2015-01-15T05:33:29Z INFO - [run_kill.20141208T0000Z] -submission succeeded
+2015-01-15T05:33:29Z INFO - [run_kill.20141209T0000Z] -holding (beyond suite stop point) 20141208T0000Z
+2015-01-15T05:33:29Z INFO - [run_kill.20141209T0000Z] -waiting => held
+2015-01-15T05:33:29Z INFO - [poll_check_kill.20141207T0000Z] -(current:running)> poll_check_kill.20141207T0000Z succeeded at 2015-01-15T05:33:29Z
+2015-01-15T05:33:30Z INFO - [poll_now.20141207T0000Z] -initiate job-submit
+2015-01-15T05:33:30Z INFO - [poll_now.20141207T0000Z] -triggered off ['poll_check_kill.20141207T0000Z']
+2015-01-15T05:33:30Z INFO - [run_kill.20141208T0000Z] -(current:submitted)> run_kill.20141208T0000Z started at 2015-01-15T05:33:29Z
+2015-01-15T05:33:31Z INFO - [poll_now.20141207T0000Z] -submission succeeded
+2015-01-15T05:33:31Z INFO - [submit_hold.20141208T0000Z] -initiate job-submit
+2015-01-15T05:33:31Z INFO - [submit_hold.20141208T0000Z] -triggered off ['run_kill.20141208T0000Z']
+2015-01-15T05:33:32Z INFO - [submit_hold.20141208T0000Z] -submission succeeded
+2015-01-15T05:33:32Z INFO - [poll_check_kill.20141208T0000Z] -initiate job-submit
+2015-01-15T05:33:32Z INFO - [poll_check_kill.20141208T0000Z] -triggered off ['submit_hold.20141208T0000Z']
+2015-01-15T05:33:32Z INFO - [submit_hold.20141209T0000Z] -holding (beyond suite stop point) 20141208T0000Z
+2015-01-15T05:33:32Z INFO - [submit_hold.20141209T0000Z] -waiting => held
+2015-01-15T05:33:32Z INFO - [poll_now.20141207T0000Z] -(current:submitted)> poll_now.20141207T0000Z started at 2015-01-15T05:33:31Z
+2015-01-15T05:33:32Z INFO - [poll_now.20141207T0000Z] -(current:running)> poll_now.20141207T0000Z succeeded at 2015-01-15T05:33:32Z
+2015-01-15T05:33:32Z INFO - [run_kill.20141208T0000Z] -initiate job-poll
+2015-01-15T05:33:32Z INFO - [submit_hold.20141208T0000Z] -initiate job-poll
+2015-01-15T05:33:32Z INFO - [submit_hold.20141207T0000Z] -initiate job-poll
+2015-01-15T05:33:32Z INFO - Command succeeded: poll tasks(None,None,False)
+2015-01-15T05:33:33Z INFO - [poll_check_kill.20141208T0000Z] -submission succeeded
+2015-01-15T05:33:33Z INFO - polled run_kill.20141208T0000Z failed at unknown-time
+2015-01-15T05:33:33Z INFO - [run_kill.20141208T0000Z] -(current:running)> polled run_kill.20141208T0000Z failed at unknown-time
+2015-01-15T05:33:33Z INFO - polled submit_hold.20141208T0000Z submitted
+2015-01-15T05:33:33Z INFO - [submit_hold.20141208T0000Z] -(current:submitted)> polled submit_hold.20141208T0000Z submitted
+2015-01-15T05:33:33Z INFO - polled submit_hold.20141207T0000Z submission failed
+
+2015-01-15T05:33:33Z INFO - [submit_hold.20141207T0000Z] -(current:submitted)> polled submit_hold.20141207T0000Z submission failed
+2015-01-15T05:33:33Z ERROR - [submit_hold.20141207T0000Z] -submission failed
+2015-01-15T05:33:33Z INFO - [poll_check_kill.20141209T0000Z] -holding (beyond suite stop point) 20141208T0000Z
+2015-01-15T05:33:33Z INFO - [poll_check_kill.20141209T0000Z] -waiting => held
+2015-01-15T05:33:33Z INFO - [run_kill.20141208T0000Z] -suiciding
+2015-01-15T05:33:33Z INFO - [submit_hold.20141207T0000Z] -suiciding
+2015-01-15T05:33:34Z INFO - [poll_check_kill.20141208T0000Z] -(current:submitted)> poll_check_kill.20141208T0000Z started at 2015-01-15T05:33:33Z
+2015-01-15T05:33:34Z INFO - [poll_check_kill.20141208T0000Z] -(current:running)> poll_check_kill.20141208T0000Z succeeded at 2015-01-15T05:33:34Z
+2015-01-15T05:33:34Z INFO - [submit_hold.20141208T0000Z] -initiate job-poll
+2015-01-15T05:33:34Z INFO - Command succeeded: poll tasks(None,None,False)
+2015-01-15T05:33:35Z INFO - polled submit_hold.20141208T0000Z submission failed
+2015-01-15T05:33:35Z INFO - [submit_hold.20141208T0000Z] -(current:submitted)> polled submit_hold.20141208T0000Z submission failed
+2015-01-15T05:33:35Z ERROR - [submit_hold.20141208T0000Z] -submission failed
+2015-01-15T05:33:35Z INFO - [poll_now.20141208T0000Z] -initiate job-submit
+2015-01-15T05:33:35Z INFO - [poll_now.20141208T0000Z] -triggered off ['poll_check_kill.20141208T0000Z']
+2015-01-15T05:33:35Z INFO - [submit_hold.20141208T0000Z] -suiciding
+2015-01-15T05:33:36Z INFO - [poll_now.20141208T0000Z] -submission succeeded
+2015-01-15T05:33:36Z INFO - [poll_now.20141209T0000Z] -holding (beyond suite stop point) 20141208T0000Z
+2015-01-15T05:33:36Z INFO - [poll_now.20141209T0000Z] -waiting => held
+2015-01-15T05:33:37Z INFO - [poll_now.20141208T0000Z] -(current:submitted)> poll_now.20141208T0000Z started at 2015-01-15T05:33:36Z
+2015-01-15T05:33:37Z INFO - [poll_now.20141208T0000Z] -initiate job-poll
+2015-01-15T05:33:37Z INFO - Command succeeded: poll tasks(None,None,False)
+2015-01-15T05:33:38Z INFO - polled poll_now.20141208T0000Z succeeded at 2015-01-15T05:33:37Z
+2015-01-15T05:33:38Z INFO - [poll_now.20141208T0000Z] -(current:running)> polled poll_now.20141208T0000Z succeeded at 2015-01-15T05:33:37Z
+2015-01-15T05:33:39Z INFO - Suite shutting down at 2015-01-15T05:33:39Z
