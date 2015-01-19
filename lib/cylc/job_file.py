@@ -138,11 +138,13 @@ prelude''')
         bash-specific "local".
 
         """
+        fail_signals_string = " ".join(
+            BATCH_SYS_MANAGER.get_fail_signals(job_conf))
         handle.write(r"""
 
 # TRAP ERROR SIGNALS:
 set -u # Fail when using an undefined variable
-FAIL_SIGNALS='EXIT ERR TERM XCPU'
+FAIL_SIGNALS='""" + fail_signals_string + """'
 TRAP_FAIL_SIGNAL() {
     typeset SIGNAL=$1
     echo "Received signal $SIGNAL" >&2

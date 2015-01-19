@@ -49,5 +49,22 @@ class SLURMHandler(object):
                 lines.append("%s%s" % (self.DIRECTIVE_PREFIX, key))
         return lines
 
+    def get_fail_signals(self, job_conf):
+        """Return a list of failure signal names to trap.
+
+        Do not include SIGTERM trapping, as SLURM tries to kill the
+        parent script directly with SIGTERM rather than the process
+        group as a whole. In these circumstances, this signal does
+        not get handled. Bash waits for the (unsignalled) child to
+        complete. This does not apply to jobs with proper 'steps'
+        (e.g. using srun within an sbatch script), which are properly
+        signalled.
+
+        XCPU isn't used by SLURM at the moment, but it's a valid way
+        to manually signal jobs using scancel or sbatch --signal.
+
+        """
+        return ["EXIT", "ERR", "XCPU"]
+
 
 BATCH_SYS_HANDLER = SLURMHandler()
