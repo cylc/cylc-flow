@@ -235,10 +235,6 @@ class scheduler(object):
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
         self.log.info( 'Suite starting at ' + get_current_time_string() )
-        if self.run_mode == 'live':
-            self.log.info( 'Log event clock: real time' )
-        else:
-            self.log.info( 'Log event clock: accelerated' )
         self.log.info( 'Run mode: ' + self.run_mode )
         self.log.info( 'Initial point: ' + str(self.initial_point) )
         if self.start_point != self.initial_point:
