@@ -567,10 +567,16 @@ class scheduler(object):
         # update state SuiteStateDumper state
         self.state_dumper.set_cts( self.initial_point, self.final_point )
 
-    def parse_commandline( self ):
+    def parse_commandline(self):
+        if self.options.run_mode not in [
+                'live',
+                'dummy',
+                'simulation'
+                ]:
+            self.parser.error(
+                    'Illegal run mode: %s\n' % self.options.run_mode)
         self.run_mode = self.options.run_mode
 
-        # LOGGING LEVEL
         if flags.debug:
             self.logging_level = logging.DEBUG
         else:
@@ -582,8 +588,7 @@ class scheduler(object):
         if self.options.genref:
             self.gen_reference_log = self.options.genref
 
-    def configure_pyro( self ):
-        # CONFIGURE SUITE PYRO SERVER
+    def configure_pyro(self):
         self.pyro = pyro_server( self.suite, self.suite_dir,
                 GLOBAL_CFG.get( ['pyro','base port'] ),
                 GLOBAL_CFG.get( ['pyro','maximum number of ports'] ) )
