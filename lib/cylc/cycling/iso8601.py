@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #C: THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-#C: Copyright (C) 2008-2014 NIWA
+#C: Copyright (C) 2008-2015 NIWA
 #C:
 #C: This program is free software: you can redistribute it and/or modify
 #C: it under the terms of the GNU General Public License as published by
