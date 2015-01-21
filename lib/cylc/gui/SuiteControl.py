@@ -845,23 +845,20 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             #else:
             #    info_dialog( result[1], self.window ).inform()
 
-    def stopsuite( self, bt, window, kill_cb,
-            stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
-            stoppoint_entry, stopclock_entry, stoptask_entry ):
+    def stopsuite(self, bt, window, kill_rb, stop_rb, stopat_rb, stopct_rb,
+            stoptt_rb, stopnow_rb, stoppoint_entry, stopclock_entry,
+            stoptask_entry):
         stop = False
         stopat = False
         stopnow = False
-        stopquick = False
         stopclock = False
         stoptask = False
-        killfirst = False
-
-        if kill_cb.get_active():
-            killfirst = True
+        stopkill = False
 
         if stop_rb.get_active():
             stop = True
-
+        elif kill_rb.get_active():
+            stopkill = True
         elif stopat_rb.get_active():
             stopat = True
             stop_point_string = stoppoint_entry.get_text()
@@ -870,32 +867,32 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                     "ERROR: No stop CYCLE_POINT entered", self.window
                 ).warn()
                 return
-
         elif stopnow_rb.get_active():
             stopnow = True
-
-        elif stopquick_rb.get_active():
-            stopquick = True
-
         elif stopct_rb.get_active():
             stopclock = True
             stopclock_time = stopclock_entry.get_text()
             if stopclock_time == '':
-                warning_dialog( "ERROR: No stop time entered", self.window ).warn()
+                warning_dialog(
+                        "ERROR: No stop time entered", self.window
+                        ).warn()
                 return
             try:
                 parser = TimePointParser()
                 timepoint = parser.parse(stopclock_time)
             except ValueError:
-                warning_dialog( "ERROR: Bad ISO 8601 date-time: " + stopclock_time,
-                                self.window ).warn()
+                warning_dialog(
+                        "ERROR: Bad ISO 8601 date-time: %s" % stopclock_time,
+                        self.window
+                        ).warn()
                 return
-
         elif stoptt_rb.get_active():
             stoptask = True
             stoptask_id = stoptask_entry.get_text()
             if stoptask_id == '':
-                warning_dialog( "ERROR: No stop task ID entered", self.window ).warn()
+                warning_dialog(
+                        "ERROR: No stop task ID entered", self.window
+                        ).warn()
                 return
             if not TaskID.is_valid_id(stoptask_id):
                 warning_dialog(
@@ -905,36 +902,31 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                     self.window
                 ).warn()
                 return
-            else:
-                stoptask_id = tid.getstr()
         else:
             # SHOULD NOT BE REACHED
-            warning_dialog( "ERROR: Bug in GUI?", self.window ).warn()
+            warning_dialog("ERROR: Bug in GUI?", self.window).warn()
             return
 
         window.destroy()
-
         try:
-            god = self.get_pyro( 'command-interface' )
+            god = self.get_pyro('command-interface')
             if stop:
-                result = god.put( 'stop cleanly', killfirst )
+                result = god.put('stop cleanly', False)
+            elif stopkill:
+                result = god.put('stop cleanly', True)
             elif stopat:
-                result = god.put( 'stop after point', stop_point_string )
+                result = god.put('stop after point', stop_point_string)
             elif stopnow:
-                result = god.put( 'stop now' )
-            elif stopquick:
-                result = god.put( 'stop quickly' )
+                result = god.put('stop now')
             elif stopclock:
-                result = god.put( 'stop after clock time', stopclock_time )
+                result = god.put('stop after clock time', stopclock_time)
             elif stoptask:
-                result = god.put( 'stop after task', stoptask_id )
+                result = god.put('stop after task', stoptask_id)
         except Exception, x:
-            warning_dialog( x.__str__(), self.window ).warn()
+            warning_dialog(x.__str__(), self.window).warn()
         else:
             if not result[0]:
-                warning_dialog( result[1], self.window ).warn()
-            #else:
-            #    info_dialog( result[1], self.window ).inform()
+                warning_dialog(result[1], self.window).warn()
 
     def load_point_strings( self, bt, startentry, stopentry ):
         item1 = " -i '[scheduling]initial cycle point'"
@@ -1294,7 +1286,7 @@ The Cylc Suite Engine.
         hbox = gtk.HBox()
         label = gtk.Label( 'HOURS' )
         hbox.pack_start( label, True )
-        hbox.pack_start (entry, True)
+        hbox.pack_start(entry, True)
         vbox.pack_start( hbox )
 
         cancel_button = gtk.Button( "_Cancel" )
@@ -1366,7 +1358,7 @@ The Cylc Suite Engine.
 
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
-        hbox.pack_start (entry, True)
+        hbox.pack_start(entry, True)
         vbox.pack_start( hbox )
 
         cancel_button = gtk.Button( "_Cancel" )
@@ -1694,127 +1686,167 @@ shown here in the state they were in at the time of triggering.''' )
         #else:
         #    info_dialog( result[1], self.window ).inform()
 
-    def stopsuite_popup( self, b ):
+    def stopsuite_popup(self, b):
         window = gtk.Window()
-        window.modify_bg( gtk.STATE_NORMAL,
-                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.modify_bg(
+                gtk.STATE_NORMAL,
+                gtk.gdk.color_parse(self.log_colors.get_color())
+                )
         window.set_border_width(5)
-        window.set_title( "Stop Suite")
-        window.set_transient_for( self.window )
-        window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+        window.set_title("Stop Suite Daemon %s" % self.cfg.suite)
+        window.set_transient_for(self.window)
+        window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
+
+        rb_vbox = gtk.VBox(spacing=15)
 
         vbox = gtk.VBox()
+        stop_rb = gtk.RadioButton(None, "Stop after _active tasks have finished")
+        label = gtk.Label("   cylc stop %s" % self.cfg.suite)
+        label.modify_font(pango.FontDescription("monospace"))
+        label.set_alignment(0,0)
+        vbox.pack_start(stop_rb)
+        vbox.pack_start(label)
+        rb_vbox.pack_start(vbox, True)
 
-        flabel = gtk.Label( "SUITE: " + self.cfg.suite )
-        vbox.pack_start (flabel, True)
+        vbox = gtk.VBox()
+        kill_rb = gtk.RadioButton(stop_rb, "Stop after _killing active tasks")
+        label = gtk.Label("   cylc stop --kill %s" % self.cfg.suite)
+        label.modify_font(pango.FontDescription("monospace"))
+        label.set_alignment(0,0)
+        vbox.pack_start(kill_rb, True)
+        vbox.pack_start(label, True)
+        rb_vbox.pack_start(vbox, True)
 
-        flabel = gtk.Label( "Stop the suite when?" )
-        vbox.pack_start (flabel, True)
+        vbox = gtk.VBox()
+        stopnow_rb = gtk.RadioButton(stop_rb,
+                "Stop _now (restart copes with orphaned tasks)")
+        label = gtk.Label("   cylc stop --now %s" % self.cfg.suite)
+        label.modify_font(pango.FontDescription("monospace"))
+        label.set_alignment(0,0)
+        vbox.pack_start(stopnow_rb, True)
+        vbox.pack_start(label, True)
+        rb_vbox.pack_start(vbox, True)
 
-
-        stop_rb = gtk.RadioButton( None, "After running tasks have finished" )
-        vbox.pack_start (stop_rb, True)
-
-        kill_cb = gtk.CheckButton( "    Kill active tasks first" )
-        vbox.pack_start (kill_cb, True)
-        kill_cb.set_active(False)
-        kill_cb.set_sensitive(True)
-
-        stopnow_rb = gtk.RadioButton( stop_rb, "NOW (see Help)" )
-        vbox.pack_start (stopnow_rb, True)
-
-        stopquick_rb = gtk.RadioButton( stop_rb, "Quickly (see Help)" )
-        vbox.pack_start (stopquick_rb, True)
-
-        stopat_rb = gtk.RadioButton(
-            stop_rb, "After all tasks have passed a given CYCLE_POINT" )
-        vbox.pack_start (stopat_rb, True)
+        vbox = gtk.VBox()
+        stopat_rb = gtk.RadioButton(stop_rb, "Stop after _cycle point")
+        label = gtk.Label("   cylc stop %s CYCLE_POINT" % self.cfg.suite)
+        label.modify_font(pango.FontDescription("monospace"))
+        label.set_alignment(0,0)
+        vbox.pack_start(stopat_rb, True)
+        vbox.pack_start(label, True)
+        rb_vbox.pack_start(vbox, True)
 
         st_box = gtk.HBox()
-        label = gtk.Label( "STOP CYCLE POINT" )
-        st_box.pack_start( label, True )
+        label = gtk.Label("      CYCLE_POINT ")
+        st_box.pack_start(label, False, False)
         stop_point_string_entry = gtk.Entry()
         stop_point_string_entry.set_max_length(14)
         stop_point_string_entry.set_sensitive(False)
         label.set_sensitive(False)
-        st_box.pack_start (stop_point_string_entry, True)
-        vbox.pack_start( st_box )
+        st_box.pack_start(stop_point_string_entry, True, True)
+        rb_vbox.pack_start(st_box)
 
-        stopct_rb = gtk.RadioButton( stop_rb, "After a given wall clock time" )
-        vbox.pack_start (stopct_rb, True)
+        vbox = gtk.VBox()
+        stopct_rb = gtk.RadioButton(stop_rb, "Stop after _date-time (e.g. CCYYMMDDThhmmZ)")
+        label = gtk.Label("   cylc stop %s DATE_TIME" % self.cfg.suite)
+        label.modify_font(pango.FontDescription("monospace"))
+        label.set_alignment(0,0)
+        vbox.pack_start(stopct_rb, True)
+        vbox.pack_start(label, True)
+        rb_vbox.pack_start(vbox, True)
 
         sc_box = gtk.HBox()
-        label = gtk.Label( 'STOP (ISO 8601 date-time e.g. CCYYMMDDThhmmZ)' )
-        sc_box.pack_start( label, True )
+        label = gtk.Label("      DATE_TIME ")
+        sc_box.pack_start(label, False, False)
         stopclock_entry = gtk.Entry()
         stopclock_entry.set_max_length(16)
         stopclock_entry.set_sensitive(False)
         label.set_sensitive(False)
-        sc_box.pack_start (stopclock_entry, True)
-        vbox.pack_start( sc_box )
+        sc_box.pack_start(stopclock_entry, True, True)
+        rb_vbox.pack_start(sc_box)
 
-        stoptt_rb = gtk.RadioButton( stop_rb, "After a given task finishes" )
-        vbox.pack_start (stoptt_rb, True)
+        vbox = gtk.VBox()
+        # Escape keyboard mnemonics.
+        syntax = (TaskID.SYNTAX).replace('_', '__')
+        stoptt_rb = gtk.RadioButton(stop_rb, "Stop after _task finishes (%s)" % syntax)
+        label = gtk.Label("   cylc stop %s TASK_ID" % self.cfg.suite)
+        label.modify_font(pango.FontDescription("monospace"))
+        label.set_alignment(0,0)
+        vbox.pack_start(stoptt_rb, True)
+        vbox.pack_start(label, True)
+        rb_vbox.pack_start(vbox, True)
 
         stop_rb.set_active(True)
 
         tt_box = gtk.HBox()
-        label = gtk.Label('STOP (task ' + TaskID.SYNTAX + ')')
-        tt_box.pack_start( label, True )
+        label = gtk.Label("      TASK_ID ")
+        tt_box.pack_start(label, False, False)
         stoptask_entry = gtk.Entry()
         stoptask_entry.set_sensitive(False)
         label.set_sensitive(False)
-        tt_box.pack_start (stoptask_entry, True)
-        vbox.pack_start( tt_box )
+        tt_box.pack_start(stoptask_entry, True, True)
+        rb_vbox.pack_start(tt_box)
 
-        stop_rb.connect( "toggled", self.stop_method, "stop", st_box, sc_box, tt_box, kill_cb )
-        stopat_rb.connect( "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box, kill_cb )
-        stopnow_rb.connect( "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box, kill_cb )
-        stopquick_rb.connect( "toggled", self.stop_method, "stopquick", st_box, sc_box, tt_box, kill_cb )
-        stopct_rb.connect( "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box, kill_cb )
-        stoptt_rb.connect( "toggled", self.stop_method, "stoptask", st_box, sc_box, tt_box, kill_cb )
+        stop_rb.connect(
+                "toggled", self.stop_method, "stop", st_box, sc_box, tt_box
+                )
+        stopat_rb.connect(
+                "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box
+                )
+        stopnow_rb.connect(
+                "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box)
+        stopct_rb.connect(
+                "toggled", self.stop_method, "stopclock", st_box, sc_box,
+                tt_box
+                )
+        stoptt_rb.connect(
+                "toggled", self.stop_method, "stoptask", st_box, sc_box,
+                tt_box
+                )
+        cancel_button = gtk.Button("_Cancel")
+        cancel_button.connect("clicked", lambda x: window.destroy())
 
-        cancel_button = gtk.Button( "_Cancel" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
+        stop_button = gtk.Button(" _OK ")
+        stop_button.connect(
+                "clicked", self.stopsuite, window, kill_rb, stop_rb, stopat_rb,
+                stopct_rb, stoptt_rb, stopnow_rb, stop_point_string_entry,
+                stopclock_entry, stoptask_entry
+                )
+        help_button = gtk.Button("_Help")
+        help_button.connect("clicked", self.command_help, "control", "stop")
 
-        stop_button = gtk.Button( "_Stop" )
-        stop_button.connect("clicked", self.stopsuite, window, kill_cb,
-                stop_rb, stopat_rb, stopct_rb, stoptt_rb, stopnow_rb, stopquick_rb,
-                stop_point_string_entry, stopclock_entry, stoptask_entry )
-
-        help_button = gtk.Button( "_Help" )
-        help_button.connect("clicked", self.command_help, "control", "stop" )
+        vbox = gtk.VBox()
 
         hbox = gtk.HBox()
-        hbox.pack_start( stop_button, False )
-        hbox.pack_end( cancel_button, False )
-        hbox.pack_end( help_button, False )
-        vbox.pack_start( hbox )
+        hbox.pack_start(rb_vbox, padding=10)
+        vbox.pack_start(hbox, padding=10)
 
-        window.add( vbox )
+        hbox = gtk.HBox()
+        hbox.pack_start(stop_button, False)
+        hbox.pack_end(cancel_button, False)
+        hbox.pack_end(help_button, False)
+        vbox.pack_start(hbox, True, True)
+        
+        window.add(vbox)
         window.show_all()
 
-    def stop_method( self, b, meth, st_box, sc_box, tt_box, kill_cb  ):
-        for ch in st_box.get_children() + sc_box.get_children() + tt_box.get_children():
-            ch.set_sensitive( False )
-        if meth == 'stop':
-            kill_cb.set_sensitive(True)
-        elif meth == 'stopnow' or meth == 'stopquick':
-            kill_cb.set_sensitive(False)
-        elif meth == 'stopat':
-            kill_cb.set_sensitive(False)
+    def stop_method(self, b, meth, st_box, sc_box, tt_box):
+        for ch in (
+                st_box.get_children() +
+                sc_box.get_children() +
+                tt_box.get_children()):
+            ch.set_sensitive(False)
+        if meth == 'stopat':
             for ch in st_box.get_children():
-                ch.set_sensitive( True )
+                ch.set_sensitive(True)
         elif meth == 'stopclock':
-            kill_cb.set_sensitive(False)
             for ch in sc_box.get_children():
-                ch.set_sensitive( True )
+                ch.set_sensitive(True)
         elif meth == 'stoptask':
-            kill_cb.set_sensitive(False)
             for ch in tt_box.get_children():
-                ch.set_sensitive( True )
+                ch.set_sensitive(True)
 
-    def hold_cb_toggled( self, b, box ):
+    def hold_cb_toggled(self, b, box):
         if b.get_active():
             box.set_sensitive(False)
         else:
@@ -1846,22 +1878,22 @@ shown here in the state they were in at the time of triggering.''' )
 
         box = gtk.HBox()
         coldstart_rb = gtk.RadioButton( None, "Cold-start" )
-        box.pack_start (coldstart_rb, True)
+        box.pack_start(coldstart_rb, True)
         restart_rb = gtk.RadioButton( coldstart_rb, "Restart" )
-        box.pack_start (restart_rb, True)
+        box.pack_start(restart_rb, True)
         warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm-start" )
-        box.pack_start (warmstart_rb, True)
+        box.pack_start(warmstart_rb, True)
         coldstart_rb.set_active(True)
         vbox.pack_start( box )
 
         box = gtk.HBox()
         box.pack_start(gtk.Label( 'Mode' ),True)
         mode_live_rb = gtk.RadioButton( None, "live" )
-        box.pack_start (mode_live_rb, True)
+        box.pack_start(mode_live_rb, True)
         mode_sim_rb = gtk.RadioButton( mode_live_rb, "simulation" )
-        box.pack_start (mode_sim_rb, True)
+        box.pack_start(mode_sim_rb, True)
         mode_dum_rb = gtk.RadioButton( mode_live_rb, "dummy" )
-        box.pack_start (mode_dum_rb, True)
+        box.pack_start(mode_dum_rb, True)
 
         mode_live_rb.set_active(True)
         vbox.pack_start( box )
@@ -1874,7 +1906,7 @@ shown here in the state they were in at the time of triggering.''' )
         ic_box.pack_start( label, True )
         point_string_entry = gtk.Entry()
         point_string_entry.set_max_length(20)
-        ic_box.pack_start (point_string_entry, True)
+        ic_box.pack_start(point_string_entry, True)
 
         nvbox.pack_start( ic_box )
 
@@ -1883,7 +1915,7 @@ shown here in the state they were in at the time of triggering.''' )
         fc_box.pack_start( label, True )
         stop_point_string_entry = gtk.Entry()
         stop_point_string_entry.set_max_length(20)
-        fc_box.pack_start (stop_point_string_entry, True)
+        fc_box.pack_start(stop_point_string_entry, True)
 
         nvbox.pack_start( fc_box )
 
@@ -1906,7 +1938,7 @@ shown here in the state they were in at the time of triggering.''' )
         statedump_entry.set_text( 'state' )
         statedump_entry.set_sensitive( False )
         label.set_sensitive( False )
-        is_box.pack_start (statedump_entry, True)
+        is_box.pack_start(statedump_entry, True)
         vbox.pack_start(is_box)
 
         coldstart_rb.connect( "toggled", self.startup_method, "cold", ic_box, is_box )
@@ -1921,7 +1953,7 @@ shown here in the state they were in at the time of triggering.''' )
         holdtime_entry = EntryTempText()
         holdtime_entry.set_temp_text("Hold after cycle")
         holdtime_entry.set_width_chars(14)
-        hold_box.pack_start (holdtime_entry, True)
+        hold_box.pack_start(holdtime_entry, True)
 
         hbox.pack_start( hold_cb )
         hbox.pack_start( hold_box )
@@ -1993,7 +2025,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         hbox = gtk.HBox()
         hbox.pack_start( label, True )
-        hbox.pack_start (entry, True)
+        hbox.pack_start(entry, True)
         vbox.pack_start( hbox )
 
         start_button = gtk.Button( "_Purge" )
@@ -2034,7 +2066,7 @@ shown here in the state they were in at the time of triggering.''' )
         hbox.pack_start( label, True )
         entry_point_string = gtk.Entry()
         entry_point_string.set_max_length(14)
-        hbox.pack_start (entry_point_string, True)
+        hbox.pack_start(entry_point_string, True)
         vbox.pack_start(hbox)
 
         go_button = gtk.Button( "Go" )
@@ -2072,7 +2104,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'MATCH' )
         hbox.pack_start( label, True )
         entry_match = gtk.Entry()
-        hbox.pack_start (entry_match, True)
+        hbox.pack_start(entry_match, True)
         vbox.pack_start(hbox)
 
         if "name" in kwargs:
@@ -2082,7 +2114,7 @@ shown here in the state they were in at the time of triggering.''' )
         label = gtk.Label( 'CYCLE_POINT' )
         hbox.pack_start( label, True )
         entry_point_string = gtk.Entry()
-        hbox.pack_start (entry_point_string, True)
+        hbox.pack_start(entry_point_string, True)
         vbox.pack_start(hbox)
 
         if "point_string" in kwargs:
@@ -2093,7 +2125,7 @@ shown here in the state they were in at the time of triggering.''' )
         hbox.pack_start( label, True )
         entry_stoppoint = gtk.Entry()
         entry_stoppoint.set_max_length(20)
-        hbox.pack_start (entry_stoppoint, True)
+        hbox.pack_start(entry_stoppoint, True)
         vbox.pack_start(hbox)
 
         help_button = gtk.Button( "_Help" )
@@ -2699,7 +2731,7 @@ echo '> DESCRIPTION:'; cylc get-suite-config --notify-completion -i description 
 
         yesbin_cb = gtk.CheckButton( "Also search suite bin directory" )
         yesbin_cb.set_active(True)
-        vbox.pack_start (yesbin_cb, True)
+        vbox.pack_start(yesbin_cb, True)
 
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
@@ -3020,11 +3052,11 @@ This is what my suite does:..."""
         stop_icon = gtk.image_new_from_stock( gtk.STOCK_MEDIA_STOP,
                                               gtk.ICON_SIZE_SMALL_TOOLBAR )
         self.stop_toolbutton = gtk.ToolButton( icon_widget=stop_icon )
-        self.stop_toolbutton.set_label("Stop")
+        self.stop_toolbutton.set_label("Stop Suite")
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip( self.stop_toolbutton,
-"""Stop Suite after all running tasks finish.
+"""Stop Suite after current active tasks finish.
 For more Stop options use the Control menu.""" )
         self.stop_toolbutton.connect( "clicked", self.stopsuite_default )
         self.tool_bars[0].insert(self.stop_toolbutton, 0)
