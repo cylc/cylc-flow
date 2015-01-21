@@ -411,7 +411,6 @@ class TreeUpdater(threading.Thread):
                     self.ttreestore, columns, p_path, p_row_id, p_data,
                     row_id_iters_left)
 
-
                 task_named_paths = id_named_paths.get(
                     point_string, {}).values()
 
