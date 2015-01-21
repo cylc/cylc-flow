@@ -6,11 +6,11 @@ set -e
 # USAGE:
 # cd $CYLC_DIR
 # find . -type f -not -path "./.*" | xargs dev/bin/updatecopyright.sh
-# (find path exclusion avoids .git directory!)
+# (find path exclusion avoids .git directory)
 
 YY=$(date +%y)
 
-OLD="Copyright \(C\) 2008-20\d\d Hilary Oliver, NIWA"
+OLD="Copyright \(C\) 2008-20\d\d NIWA"
 NEW="Copyright (C) 2008-20$YY NIWA"
 
 FILES=$@
