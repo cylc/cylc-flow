@@ -395,6 +395,7 @@ class scheduler(object):
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
         SuiteProcPool.get_inst().stop_job_submission()
+        TaskProxy.stop_sim_mode_job_submission = True
         if kill_active_tasks:
             self.pool.kill_active_tasks()
         self.shut_down_cleanly = True
@@ -403,6 +404,7 @@ class scheduler(object):
         """Shutdown immediately."""
         proc_pool = SuiteProcPool.get_inst()
         proc_pool.stop_job_submission()
+        TaskProxy.stop_sim_mode_job_submission = True
         proc_pool.terminate()
         raise SchedulerStop("Stopping NOW")
 
