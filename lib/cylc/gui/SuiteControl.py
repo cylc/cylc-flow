@@ -1719,7 +1719,7 @@ shown here in the state they were in at the time of triggering.''' )
 
         vbox = gtk.VBox()
         stopnow_rb = gtk.RadioButton(stop_rb,
-                "Stop _now (restart copes with orphaned tasks)")
+                "Stop _now (restart will follow up on orphaned tasks)")
         label = gtk.Label("   cylc stop --now %s" % self.cfg.suite)
         label.modify_font(pango.FontDescription("monospace"))
         label.set_alignment(0,0)
@@ -1747,7 +1747,7 @@ shown here in the state they were in at the time of triggering.''' )
         rb_vbox.pack_start(st_box)
 
         vbox = gtk.VBox()
-        stopct_rb = gtk.RadioButton(stop_rb, "Stop after _date-time (e.g. CCYYMMDDThhmmZ)")
+        stopct_rb = gtk.RadioButton(stop_rb, "Stop after _wall-clock date-time (e.g. CCYYMMDDThhmmZ)")
         label = gtk.Label("   cylc stop %s DATE_TIME" % self.cfg.suite)
         label.modify_font(pango.FontDescription("monospace"))
         label.set_alignment(0,0)
