@@ -1460,8 +1460,10 @@ class TaskProxy(object):
 
     def _manip_job_status(self, cmd_key, callback, ok_states=None):
         """Manipulate the job status, e.g. poll or kill."""
-        # No real jobs in simulation mode
+        # No real jobs in simulation mode.
         if self.tdef.run_mode == 'simulation':
+            if cmd_key == 'job-kill':
+                self.reset_state_failed()
             return
         # Check that task states are compatible with the manipulation
         if ok_states and not self.state.is_currently(*ok_states):
