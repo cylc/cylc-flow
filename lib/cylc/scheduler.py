@@ -935,12 +935,12 @@ class scheduler(object):
             if self.run_mode != 'simulation':
                 self.pool.check_task_timers()
 
-            if (self.stop_clock_done() or
-                    self.stop_task_done() or
-                    self.pool.check_auto_shutdown()):
+            auto_stop = self.pool.check_auto_shutdown()
+
+            if self.stop_clock_done() or self.stop_task_done() or auto_stop:
                 self.command_set_stop_cleanly()
 
-            if ((self.shut_down_cleanly or self.pool.check_auto_shutdown()) and 
+            if ((self.shut_down_cleanly or auto_stop) and 
                     self.pool.no_active_tasks()):
                 proc_pool.close()
                 self.shut_down_now = True
