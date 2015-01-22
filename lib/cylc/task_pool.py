@@ -359,7 +359,7 @@ class TaskPool(object):
                 return True
         return False
 
-    def process(self):
+    def submit_tasks(self):
         """
         1) queue tasks that are ready to run (prerequisites satisfied,
         clock-trigger time up) or if their manual trigger flag is set.
@@ -377,8 +377,6 @@ class TaskPool(object):
         after use so that two manual trigger ops are required to submit
         an initially unqueued task that is queue-limited.
         """
-
-        # (task state resets below are ok as this executes in main thread)
 
         # 1) queue unqueued tasks that are ready to run or manually forced
         for itask in self.get_tasks(incl_runahead=False):

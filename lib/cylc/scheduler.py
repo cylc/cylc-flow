@@ -883,7 +883,7 @@ class scheduler(object):
 
                 self.pool.match_dependencies()
 
-                ready_tasks = self.pool.process()
+                ready_tasks = self.pool.submit_tasks()
                 if (ready_tasks and
                         self.config.cfg['cylc']['log resolved dependencies']):
                     self.log_resolved_deps(ready_tasks)
@@ -1007,16 +1007,16 @@ class scheduler(object):
         if flags.pflag:
             process = True
             flags.pflag = False # reset
-            # a task changing state indicates new suite activity
-            # so reset the suite timer.
-            if self.config.cfg['cylc']['event hooks']['timeout'] and self.config.cfg['cylc']['event hooks']['reset timer']:
+            # New suite activity, so reset the suite timer.
+            if (self.config.cfg['cylc']['event hooks']['timeout'] and
+                    self.config.cfg['cylc']['event hooks']['reset timer']):
                 self.set_suite_timer()
 
-        elif self.pool.waiting_tasks_ready():
+        if self.pool.waiting_tasks_ready():
             process = True
 
-        elif self.run_mode == 'simulation':
-            process = self.pool.sim_time_check()
+        if self.run_mode == 'simulation' and self.pool.sim_time_check():
+            process = True
 
         ##if not process:
         ##    # If we neglect to set flags.pflag on some event that
