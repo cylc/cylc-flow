@@ -883,8 +883,10 @@ class scheduler(object):
 
                 self.pool.match_dependencies()
 
-                ready = self.pool.process()
-                self.process_resolved( ready )
+                ready_tasks = self.pool.process()
+                if (ready_tasks and
+                        self.config.cfg['cylc']['log resolved dependencies']):
+                    self.log_resolved_deps(ready_tasks)
 
                 self.pool.spawn_tasks()
 
@@ -969,14 +971,14 @@ class scheduler(object):
                 self.will_stop_at(), self.pool.custom_runahead_limit,
                 self.config.ns_defn_order)
 
-    def process_resolved(self, tasks):
-        # process resolved dependencies (what actually triggers off what
-        # at run time). Note 'triggered off' means 'prerequisites
-        # satisfied by', but necessarily 'started running' too.
-        for itask in tasks:
-            if self.config.cfg['cylc']['log resolved dependencies']:
-                itask.log(logging.INFO, 'triggered off %s' %
-                        str(itask.get_resolved_dependencies()))
+    def log_resolved_deps(self, ready_tasks):
+        """Log what triggered off what."""
+        # Used in reference tests.
+        for itask in ready_tasks:
+            itask.log(
+                    logging.INFO, 'triggered off %s' %
+                    str(itask.get_resolved_dependencies())
+                    )
 
     def check_suite_timer( self ):
         if self.already_timed_out:
