@@ -391,6 +391,7 @@ class scheduler(object):
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
         SuiteProcPool.get_inst().stop_job_submission()
+        TaskProxy.stop_sim_mode_job_submission = True
         if kill_active_tasks:
             self.pool.kill_active_tasks()
         self.shut_down_cleanly = True
@@ -399,6 +400,7 @@ class scheduler(object):
         """Shutdown immediately."""
         proc_pool = SuiteProcPool.get_inst()
         proc_pool.stop_job_submission()
+        TaskProxy.stop_sim_mode_job_submission = True
         proc_pool.terminate()
         raise SchedulerStop("Stopping NOW")
 
@@ -884,8 +886,10 @@ class scheduler(object):
 
                 self.pool.match_dependencies()
 
-                ready = self.pool.process()
-                self.process_resolved( ready )
+                ready_tasks = self.pool.submit_tasks()
+                if (ready_tasks and
+                        self.config.cfg['cylc']['log resolved dependencies']):
+                    self.log_resolved_deps(ready_tasks)
 
                 self.pool.spawn_tasks()
 
@@ -936,12 +940,12 @@ class scheduler(object):
             if self.run_mode != 'simulation':
                 self.pool.check_task_timers()
 
-            if (self.stop_clock_done() or
-                    self.stop_task_done() or
-                    self.pool.check_auto_shutdown()):
+            auto_stop = self.pool.check_auto_shutdown()
+
+            if self.stop_clock_done() or self.stop_task_done() or auto_stop:
                 self.command_set_stop_cleanly()
 
-            if ((self.shut_down_cleanly or self.pool.check_auto_shutdown()) and 
+            if ((self.shut_down_cleanly or auto_stop) and 
                     self.pool.no_active_tasks()):
                 proc_pool.close()
                 self.shut_down_now = True
@@ -970,14 +974,14 @@ class scheduler(object):
                 self.will_stop_at(), self.pool.custom_runahead_limit,
                 self.config.ns_defn_order)
 
-    def process_resolved(self, tasks):
-        # process resolved dependencies (what actually triggers off what
-        # at run time). Note 'triggered off' means 'prerequisites
-        # satisfied by', but necessarily 'started running' too.
-        for itask in tasks:
-            if self.config.cfg['cylc']['log resolved dependencies']:
-                itask.log(logging.INFO, 'triggered off %s' %
-                        str(itask.get_resolved_dependencies()))
+    def log_resolved_deps(self, ready_tasks):
+        """Log what triggered off what."""
+        # Used in reference tests.
+        for itask in ready_tasks:
+            itask.log(
+                    logging.INFO, 'triggered off %s' %
+                    str(itask.get_resolved_dependencies())
+                    )
 
     def check_suite_timer( self ):
         if self.already_timed_out:
@@ -1006,16 +1010,16 @@ class scheduler(object):
         if flags.pflag:
             process = True
             flags.pflag = False # reset
-            # a task changing state indicates new suite activity
-            # so reset the suite timer.
-            if self.config.cfg['cylc']['event hooks']['timeout'] and self.config.cfg['cylc']['event hooks']['reset timer']:
+            # New suite activity, so reset the suite timer.
+            if (self.config.cfg['cylc']['event hooks']['timeout'] and
+                    self.config.cfg['cylc']['event hooks']['reset timer']):
                 self.set_suite_timer()
 
-        elif self.pool.waiting_tasks_ready():
+        if self.pool.waiting_tasks_ready():
             process = True
 
-        elif self.run_mode == 'simulation':
-            process = self.pool.sim_time_check()
+        if self.run_mode == 'simulation' and self.pool.sim_time_check():
+            process = True
 
         ##if not process:
         ##    # If we neglect to set flags.pflag on some event that

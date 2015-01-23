@@ -96,6 +96,7 @@ class TaskProxy(object):
         ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
 
     event_handler_env = {}
+    stop_sim_mode_job_submission = False
 
     def __init__(
             self, tdef, start_point, initial_state, stop_point=None,
@@ -691,12 +692,17 @@ class TaskProxy(object):
         """Handle job succeeded."""
         self.log(INFO, 'submission succeeded')
         if self.tdef.run_mode == 'simulation':
-            self.started_time = time.time()
-            self.summary['started_time'] = self.started_time
-            self.summary['started_time_string'] = (
-                get_time_string_from_unix_time(self.started_time))
-            self.outputs.set_completed(self.identity + " started")
-            self.set_status('running')
+            if self.__class__.stop_sim_mode_job_submission:
+                # Real jobs that are ready to run are queued to the proc pool
+                # (i.e. the 'ready' state) but not submitted, before shutdown.
+                self.set_status('ready')
+            else:
+                self.started_time = time.time()
+                self.summary['started_time'] = self.started_time
+                self.summary['started_time_string'] = (
+                    get_time_string_from_unix_time(self.started_time))
+                self.outputs.set_completed(self.identity + " started")
+                self.set_status('running')
             return
 
         outp = self.identity + ' submitted'
@@ -1460,8 +1466,10 @@ class TaskProxy(object):
 
     def _manip_job_status(self, cmd_key, callback, ok_states=None):
         """Manipulate the job status, e.g. poll or kill."""
-        # No real jobs in simulation mode
+        # No real jobs in simulation mode.
         if self.tdef.run_mode == 'simulation':
+            if cmd_key == 'job-kill':
+                self.reset_state_failed()
             return
         # Check that task states are compatible with the manipulation
         if ok_states and not self.state.is_currently(*ok_states):
