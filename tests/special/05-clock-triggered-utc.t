@@ -45,4 +45,4 @@ HOUR=T$(cylc cycle-point $NOW --offset-hour=10 --print-hour)
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START \
     -s HOUR=$HOUR -s UTC_MODE=True -s OFFSET=PT0M -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
-#purge_suite $SUITE_NAME
+purge_suite $SUITE_NAME
