@@ -4,6 +4,7 @@ Initial is set to greater than the final and the suite should report the
 error."""
 
 [cylc]
+   UTC mode = True
    [[reference test]]
        required run mode = live
        
