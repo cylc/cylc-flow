@@ -25,7 +25,9 @@ import re, os
 from subprocess import Popen, PIPE
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_file
+from cylc.owner import is_remote_user
 from cylc.rundb import CylcRuntimeDAO
+from cylc.suite_host import is_remote_host
 from cylc.suite_logging import suite_log
 from cylc.suite_output import suite_output
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -91,7 +93,7 @@ if len(args) == 2:
     else:
         fpath = os.path.join( sjld, log_dir )
 
-    if host or owner:
+    if is_remote_host(host) or is_remote_user(owner):
         if host and owner:
             url = owner + '@' + host
         elif host:
