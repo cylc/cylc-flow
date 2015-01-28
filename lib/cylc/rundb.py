@@ -103,11 +103,6 @@ class ThreadedCursor(Thread):
         self.db=db
         self.db_dump_name = dump
         self.reqs=Queue.Queue()
-        # Probably best to reload queue prior to start() call
-        if restart:
-            self.load_queue()
-        self.start()
-        self.exception = None
         self.db_dump_msg = ("[INFO] Dumping database queue (%s items) to: %s")
         self.db_dump_load = ("[INFO] Loading dumped database queue (%s items) from: %s")
         self.integrity_msg = ("Database Integrity Error: %s:\n"+
@@ -119,6 +114,11 @@ class ThreadedCursor(Thread):
                                  "\tNo database found at %s")
         self.retry_warning = ("[WARNING] retrying database operation on %s - retry %s \n"+
                               "\trequest: %s\n\targs: %s")
+        if restart:
+            self.load_queue()
+        self.start()
+        self.exception = None
+
 
     def run(self):
         cnx = sqlite3.connect(self.db, timeout=10.0)
@@ -231,7 +231,7 @@ class ThreadedCursor(Thread):
         """Reload queue from a dump"""
         if os.path.exists(self.db_dump_name):
             dumped_queue = pickle.load( open( self.db_dump_name, "rb" ) )
-            print >> sys.stdout, self.db_dump_msg%(len(dumped_queue.keys()), str(self.db_dump_name))
+            print >> sys.stdout, self.db_dump_load%(len(dumped_queue.keys()), str(self.db_dump_name))
             for item in dumped_queue.keys():
                 self.execute(dumped_queue[item]['req'],
                              dumped_queue[item]['args'],
@@ -244,6 +244,7 @@ class CylcRuntimeDAO(object):
     """Access object for a Cylc suite runtime database."""
 
     DB_FILE_BASE_NAME = "cylc-suite.db"
+    DB_DUMP_BASE_NAME = "cylc_db_dump.p"
     TASK_EVENTS = "task_events"
     TASK_STATES = "task_states"
     BROADCAST_SETTINGS = "broadcast_settings"
@@ -284,11 +285,12 @@ class CylcRuntimeDAO(object):
         if suite_dir is None:
             suite_dir = os.getcwd()
         if primary_db:
-            self.db_file_name = os.path.join(suite_dir, 'state', self.DB_FILE_BASE_NAME)
-            self.db_dump_name = os.path.join(suite_dir, 'state', "db_dump.p")
+            prefix = os.path.join(suite_dir, 'state')
         else:
-            self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
-            self.db_dump_name = os.path.join(suite_dir, "db_dump.p")
+            prefix = suite_dir
+
+        self.db_file_name = os.path.join(prefix, self.DB_FILE_BASE_NAME)
+        self.db_dump_name = os.path.join(prefix, self.DB_DUMP_BASE_NAME)
         # create the host directory if necessary
         try:
             mkdir_p( suite_dir )
