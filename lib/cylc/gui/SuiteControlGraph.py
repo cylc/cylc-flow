@@ -402,7 +402,7 @@ Dependency graph suite control interface.
         self.t.action_required = True
 
     def toggle_write_dot_frames(self, w):
-        self.t.write_dot_frames = not self.t.write_dot_frames
+        self.t.toggle_write_dot_frames()
 
     def toggle_cycle_point_subgraphs( self, toggle_item ):
         subgraphs_on = toggle_item.get_active()

@@ -106,13 +106,12 @@ Class to hold initialisation data.
     """
     def __init__(self, suite, owner, host, port, db,
             pyro_timeout, template_vars, template_vars_file,
-            ungrouped_views, use_defn_order, share_dir):
+            ungrouped_views, use_defn_order):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
         self.db = db
-        self.share_dir = share_dir
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -387,8 +386,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS_ORDERED.append( "graph" )
 
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
-            template_vars, template_vars_file, restricted_display,
-            share_dir):
+            template_vars, template_vars_file, restricted_display):
 
         gobject.threads_init()
 
@@ -403,8 +401,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.cfg = InitData( suite, owner, host, port, db,
                 pyro_timeout, template_vars, template_vars_file,
                 gcfg.get(["ungrouped views"]),
-                gcfg.get(["sort by definition order"]),
-                share_dir)
+                gcfg.get(["sort by definition order"]))
 
         self.theme_name = gcfg.get( ['use theme'] )
         self.theme = gcfg.get( ['themes', self.theme_name ] )

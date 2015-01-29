@@ -20,6 +20,8 @@ from cylc import cylc_pyro_client, dump, graphing
 from cylc.mkdir_p import mkdir_p
 from cylc.state_summary import get_id_summary
 from cylc.task_id import TaskID
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.gui.warning_dialog import warning_dialog
 from copy import deepcopy
 import gobject
 import os
@@ -119,6 +121,20 @@ class GraphUpdater(threading.Thread):
             self.group_all = True
 
         self.graph_frame_count = 0
+        self.suite_share_dir = GLOBAL_CFG.get_derived_host_item(
+                self.cfg.suite, 'suite share directory')
+
+    def toggle_write_dot_frames(self):
+        self.write_dot_frames = not self.write_dot_frames
+        if self.write_dot_frames:
+            # Create local share dir if necessary (could be a remote suite).
+            try:
+                mkdir_p(self.suite_share_dir)
+            except Exception as exc:
+                gobject.idle_add(warning_dialog(
+                    "%s\nCannot create graph frames directory." % str(exc)).warn
+                    )
+                self.write_dot_frames = False
 
     def clear_graph( self ):
         self.prev_graph_id = ()
@@ -415,7 +431,7 @@ class GraphUpdater(threading.Thread):
         self.action_required = False
 
         if self.write_dot_frames:
-            arg = os.path.join(self.cfg.share_dir, 'frame' + '-' +
+            arg = os.path.join(self.suite_share_dir, 'frame' + '-' +
                     str(self.graph_frame_count) + '.dot')
             self.graphw.write(arg)
             self.graph_frame_count += 1
