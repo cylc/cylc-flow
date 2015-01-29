@@ -18,49 +18,51 @@
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
+    sys.argv.remove('--use-ssh')
     from cylc.remote import remrun
     if remrun().execute():
         sys.exit(0)
 
 import os
 from cylc.CylcOptionParsers import cop
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 
-sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
-sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../')
+sys.path.append(
+    os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
+sys.path.append(
+    os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../')
 
-parser = cop( """cylc gui [OPTIONS] [REG]
+parser = cop(
+    """cylc gui [OPTIONS] [REG]
 gcylc [OPTIONS] [REG]
 
 This is the cylc Graphical User Interface.
 
-Local suites can be opened and switched between from within gcylc. To
-connect to running remote suites (whose passphrase you have installed)
-you must currently use --host and/or --user on the gcylc command line.
+Local suites can be opened and switched between from within gcylc. To connect
+to running remote suites (whose passphrase you have installed) you must
+currently use --host and/or --user on the gcylc command line.
 
-Available task state color themes are shown under the View menu. To
-customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
-$HOME/.cylc/gcylc.rc and follow the instructions in the file.
+Available task state color themes are shown under the View menu. To customize
+themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to $HOME/.cylc/gcylc.rc and
+follow the instructions in the file.
 
 To see current configuration settings use "cylc get-gui-config".
 
-The graph view option, View -> Options -> "Write Graph Frames" writes a
-dot-language file to the suite share directory on every state change.
-These can be post-processed into a movie by
-\lstinline=$CYLC_DIR/dev/bin/live-graph-movie.sh=.""",
-pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name' )])
+In the graph view, View -> Options -> "Write Graph Frames" writes .dot graph
+files to the suite share directory (locally, for a remote suite). These can
+be processed into a movie by \$CYLC_DIR/dev/bin/live-graph-movie.sh=.""",
+    pyro=True, noforce=True, jset=True, argdoc=[('[REG]', 'Suite name')])
 
-parser.add_option("-r", "--restricted",
-        help="Restrict display to 'active' task states: submitted, "
-        "submit-failed, submit-retrying, running, failed, retrying; "
-        "and disable the graph view.  This may be needed for very large "
-        "suites. The state summary icons in the status bar still "
-        "represent all task proxies.",
-        action="store_true", default=False, dest="restricted")
+parser.add_option(
+    "-r", "--restricted",
+    help="Restrict display to 'active' task states: submitted, "
+    "submit-failed, submit-retrying, running, failed, retrying; "
+    "and disable the graph view.  This may be needed for very large "
+    "suites. The state summary icons in the status bar still "
+    "represent all task proxies.",
+    action="store_true", default=False, dest="restricted")
 
-( options, args ) = parser.parse_args()
+(options, args) = parser.parse_args()
 
 # import modules that require gtk now, so that a display is not needed
 # just to get command help (e.g. when running make on a post-commit hook
@@ -78,21 +80,22 @@ from cylc.gui.SuiteControl import ControlApp
 # attempt to determine their CWD.
 os.chdir(os.environ['HOME'])
 
-gtk.settings_get_default().set_long_property("gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
-gtk.settings_get_default().set_long_property("gtk-button-images", True, "main")
-gtk.settings_get_default().set_long_property("gtk-menu-images", True, "main")
+gtk.settings_get_default().set_long_property(
+    "gtk-toolbar-icon-size", gtk.ICON_SIZE_SMALL_TOOLBAR, "main")
+gtk.settings_get_default().set_long_property(
+    "gtk-button-images", True, "main")
+gtk.settings_get_default().set_long_property(
+    "gtk-menu-images", True, "main")
 
 if len(args) == 1:
     suite = args[0]
 else:
     suite = None
 
-share_dir = GLOBAL_CFG.get_derived_host_item(suite, 'suite share directory')
 try:
-    app = ControlApp(suite, options.db, options.owner,
-            options.host, options.port, options.pyro_timeout,
-            options.templatevars, options.templatevars_file,
-            options.restricted, share_dir=share_dir)
+    app = ControlApp(suite, options.db, options.owner, options.host,
+                     options.port, options.pyro_timeout, options.templatevars,
+                     options.templatevars_file, options.restricted)
 except Exception, x:
     if cylc.flags.debug:
         raise
