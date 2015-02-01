@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.2.0">6.2.0</a></li>
     <li><a href="#6.1.2">6.1.2</a></li>
     <li><a href="#6.1.1">6.1.1</a></li>
     <li><a href="#6.1.0">6.1.0</a></li>
@@ -53,6 +54,51 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.2.0"/>
+    <h2>6.2.0</h2>
+
+		<h3>6.2.0 enhancements</h3>
+  		<ul>
+					<li> Task state and name filtering now applies to all
+					<code>gcylc</code> views (previously it was just the text tree view).
+					<li> Optimized <code>gcylc</code> tree view updating - it is now
+					faster and smoother for very large active suites.
+					<li> Sort <code>gcylc</code> tree view date-time columns by date-time
+					value rather than as character strings.
+					<li> Added an option to <b>poll all active tasks</b> at once (via
+					the <code>gcylc</code> menu and the <code>cylc poll</code> command).
+					<li> Write parsed suite definitions, date-stamped, to the suite log
+					directory, on run, reload, and restart.
+					<li> A display-once option for the <code>cylc monitor</code>
+					in-terminal suite state display.
+					<li> Cleaned up the GUI suite shutdown dialog window.
+					<li> Improved error trapping for SLURM jobs.
+					<li> Added documentation of special/restricted/cold-start-only
+					initial cycle point behaviour, to the user guide.
+					<li> Accept ISO 8601 syntax for global configuration of task
+					messaging retry intervals.
+					<li> Fail validation of tasks with no explicit cycling defined (since
+					cylc-6.0.0, cycle point offsets in the graph no longer define 
+					cycling sequences for a task).
+					<li> New <em>extra large</em> dot size option for <code>gcylc</code>
+					task state icons (configured via <code>$HOME/.cylc/gcylc.rc</code>).
+					<li> Detect and fail circular runtime inheritance.
+					<li> Fail validation if a suite's initial cycle point is greater than
+					the final.
+					<li> Generate "graph movie" frames via a gcylc graph view menu option.
+			</ul>
+  	
+		<h3>6.2.0 fixes</h3>
+  		<ul>
+					<li> Fixed a bug (since 6.0.0) where jobs submitted to a batch
+					scheduler would have no output, error, or name directives, if no
+					directives were specified in the suite definition. 
+					<li> In simulation mode, properly stop the simulated submission of
+					jobs at suite shutdown.
+					<li> Fixed hold and release of retrying tasks.
+					<li> Fixed <code>cylc gpanel</code> start-up (broken in 6.1.2).
+			</ul>
+  
 <a name="6.1.2"/>
     <h2>6.1.2</h2>
 
