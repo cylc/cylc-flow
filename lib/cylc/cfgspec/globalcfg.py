@@ -57,6 +57,7 @@ SPEC = {
     'submission polling intervals'        : vdr( vtype='interval_minutes_list', default=[]),
     'execution polling intervals'         : vdr( vtype='interval_minutes_list', default=[]),
 
+    'task host select command timeout'    : vdr( vtype='interval_seconds', default=10),
     'task messaging' : {
         'retry interval'                  : vdr( vtype='interval_seconds', default=5),
         'maximum number of tries'         : vdr( vtype='integer', vmin=1, default=7 ),

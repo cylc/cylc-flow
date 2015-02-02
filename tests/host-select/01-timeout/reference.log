@@ -1,0 +1,6 @@
+2015-02-02T15:14:04Z INFO - Run mode: live
+2015-02-02T15:14:04Z INFO - Initial point: 1
+2015-02-02T15:14:04Z INFO - Final point: 1
+2015-02-02T15:14:04Z INFO - Cold Start 1
+2015-02-02T15:14:04Z ERROR - [foo.1] -submission failed
+2015-02-02T15:14:04Z INFO - [foo.1] -triggered off []

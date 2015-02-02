@@ -1,0 +1,17 @@
+#!Jinja2
+
+title = Test task host selection with a bad command
+
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT10S
+        expected task failures = foo.1
+[scheduling]
+    [[dependencies]]
+        graph = "foo:submit-fail => !foo"
+[runtime]
+    [[foo]]
+        command scripting = true
+        [[[remote]]]
+            host = $(sleep 2; echo 'localhost')

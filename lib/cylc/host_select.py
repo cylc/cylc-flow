@@ -15,12 +15,31 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Utility function to evaluate a task host string."""
 
-import os, re
+
+import os
+import re
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.run_get_stdout import run_get_stdout
 from cylc.suite_host import is_remote_host
 
-def get_task_host( cfg_item ):
+
+REC_COMMAND = re.compile(r"(`|\$\()\s*(.*)\s*(`|\))$")
+REC_ENVIRON = re.compile(r"^\$\{{0,1}(\w+)\}{0,1}$")
+
+
+class HostSelectError(Exception):
+    """Exception raised when "get_task_host" fails."""
+
+    FMT = "Host selection by %(host)s failed:\n  %(mesg)s"
+
+    def __str__(self):
+        host, mesg = self.args
+        return self.FMT % {"host": host, "mesg": mesg}
+
+
+def get_task_host(cfg_item):
     """Evaluate a task host string.
 
     E.g.:
@@ -45,28 +64,28 @@ def get_task_host( cfg_item ):
         return "localhost"
 
     # 1) host selection command: $(command) or `command`
-    m = re.match( '(`|\$\()\s*(.*)\s*(`|\))$', host )
-    if m:
+    match = REC_COMMAND.match(host)
+    if match:
         # extract the command and execute it
-        hs_command = m.groups()[1]
-        res = run_get_stdout( hs_command ) # (T/F,[lines])
-        if res[0]:
+        hs_command = match.groups()[1]
+        timeout = GLOBAL_CFG.get(["task host select command timeout"])
+        is_ok, outlines = run_get_stdout(hs_command, timeout)
+        if is_ok:
             # host selection command succeeded
-            host = res[1][0]
+            host = outlines[0]
         else:
             # host selection command failed
-            raise Exception("Host selection by " + host + " failed\n  " + '\n'.join(res[1]) )
+            raise HostSelectError(host, "\n".join(outlines))
 
     # 2) environment variable: ${VAR} or $VAR
     # (any quotes are stripped by file parsing)
-    n = re.match( '^\$\{{0,1}(\w+)\}{0,1}$', host )
-    if n:
-        var = n.groups()[0]
+    match = REC_ENVIRON.match(host)
+    if match:
+        name = match.groups()[0]
         try:
-            host = os.environ[var]
-        except KeyError, x:
-            raise Exception( "Host selection by " + host + " failed:\n  Variable not defined: " + str(x) )
-
+            host = os.environ[name]
+        except KeyError, exc:
+            raise HostSelectError(host, "Variable not defined: " + str(exc))
     try:
         if is_remote_host(host):
             return host

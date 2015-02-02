@@ -15,28 +15,52 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Provide a utility function to get STDOUT from a shell command."""
 
-import sys
-import subprocess
 
-def run_get_stdout( command ):
+from os import killpg, setpgrp
+from signal import SIGTERM
+from subprocess import Popen, PIPE
+from time import sleep, time
+
+
+POLL_DELAY = 0.1
+
+
+def run_get_stdout(command, timeout=None, poll_delay=None):
+    """Get standard output from a shell command.
+
+    If "timeout" is specified, it should be the number of seconds before
+    timeout.  On timeout, the command will be killed. The argument "poll_delay"
+    is only relevant if "timeout" is specified. It specifies the intervals in
+    number of seconds between polling for the completion of the command.
+
+    Return (True, [stdoutline1, ...]) on success.
+    Return (False, [err_msg, command]) on failure.
+
+    """
     try:
-        popen = subprocess.Popen( command, shell=True,
-                stderr=subprocess.PIPE, stdout=subprocess.PIPE )
-        out = popen.stdout.read()
-        err = popen.stderr.read()
+        popen = Popen(
+            command, shell=True, preexec_fn=setpgrp, stderr=PIPE, stdout=PIPE)
+        if timeout:
+            if poll_delay is None:
+                poll_delay = POLL_DELAY
+            timeout_time = time() + timeout
+            while popen.poll() is None:
+                if time() > timeout_time:
+                    killpg(popen.pid, SIGTERM)
+                    break
+                sleep(poll_delay)
+        out, err = popen.communicate()
         res = popen.wait()
         if res < 0:
             msg = "ERROR: command terminated by signal %d\n%s" % (res, err)
-            return (False, [msg,command])
-        elif res > 0:
-            msg = "ERROR: command failed %d\n%s" % (res,err)
             return (False, [msg, command])
-    except OSError, e:
+        elif res > 0:
+            msg = "ERROR: command failed %d\n%s" % (res, err)
+            return (False, [msg, command])
+    except OSError:  # should never do this with shell=True
         msg = "ERROR: command invocation failed"
         return (False, [msg, command])
     else:
-        # output is a string with newlines
-        # TODO - don't join out and err like this:
-        res = (out + err ).strip()
-        return ( True, res.split('\n') )
+        return (True, out.strip().splitlines())
