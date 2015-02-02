@@ -642,15 +642,6 @@ class TreeUpdater(threading.Thread):
         self.ttree_paths[path].setdefault( 'names', [] )
         self.ttree_paths[path]['names'].append( descendant_name )
 
-    def _alter_date_time_string_for_context(self, date_time_string,
-                                            context_date_time):
-        """Alter a date-time string based on a context date-time."""
-        if context_date_time is not None:
-            # Remove the date part if it matches the context date.
-            date_time_string = date_time_string.replace(
-                context_date_time + "T", "", 1)
-        return date_time_string
-
     def _get_autoexpand_rows( self ):
         # Return a list of rows that meet the auto-expansion criteria.
         autoexpand_me = []
