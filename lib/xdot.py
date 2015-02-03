@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+# Modification note for cylc: original version is 0.6, 27fbeb8 from
+# https://github.com/jrfonseca/xdot.py
+#
 '''Visualize dot graphs via the xdot format.'''
 
-__author__ = "Jose Fonseca"
-
-__version__ = "0.4"
+__author__ = "Jose Fonseca et al"
 
 
 import os
@@ -30,6 +30,7 @@ import math
 import colorsys
 import time
 import re
+import optparse
 
 import gobject
 import gtk
@@ -90,12 +91,11 @@ class Shape:
         else:
             return self.pen
 
+    def search_text(self, regexp):
+        return False
+
 
 class TextShape(Shape):
-
-    #fontmap = pangocairo.CairoFontMap()
-    #fontmap.set_resolution(72)
-    #context = fontmap.create_context()
 
     LEFT, CENTER, RIGHT = -1, 0, 1
 
@@ -119,33 +119,20 @@ class TextShape(Shape):
             # see http://lists.freedesktop.org/archives/cairo/2007-February/009688.html
             context = layout.get_context()
             fo = cairo.FontOptions()
-            try:
-                fo.set_antialias(cairo.ANTIALIAS_DEFAULT)
-                fo.set_hint_style(cairo.HINT_STYLE_NONE)
-                fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
-            except AttributeError:
-                # HJO: handle crappy cairo installation on SLES11, e.g:
-                # AttributeError: 'cairo.FontOptions' object has no attribute 'set_antialias'
-                pass
-
+            fo.set_antialias(cairo.ANTIALIAS_DEFAULT)
+            fo.set_hint_style(cairo.HINT_STYLE_NONE)
+            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
             try:
                 pangocairo.context_set_font_options(context, fo)
             except TypeError:
                 # XXX: Some broken pangocairo bindings show the error
                 # 'TypeError: font_options must be a cairo.FontOptions or None'
                 pass
-            except AttributeError:
-                # HJO: handle crappy cairo installation on SLES11
-                pass
 
             # set font
             font = pango.FontDescription()
             font.set_family(self.pen.fontname)
-            try:
-                font.set_absolute_size(self.pen.fontsize*pango.SCALE)
-            except:
-                # HJO: handle crappy cairo installation on SLES11
-                pass
+            font.set_absolute_size(self.pen.fontsize*pango.SCALE)
             layout.set_font_description(font)
 
             # set text
@@ -203,6 +190,33 @@ class TextShape(Shape):
             cr.move_to(x, self.y)
             cr.line_to(x+self.w, self.y)
             cr.stroke()
+
+    def search_text(self, regexp):
+        return regexp.search(self.t) is not None
+
+
+class ImageShape(Shape):
+
+    def __init__(self, pen, x0, y0, w, h, path):
+        Shape.__init__(self)
+        self.pen = pen.copy()
+        self.x0 = x0
+        self.y0 = y0
+        self.w = w
+        self.h = h
+        self.path = path
+
+    def draw(self, cr, highlight=False):
+        cr2 = gtk.gdk.CairoContext(cr)
+        pixbuf = gtk.gdk.pixbuf_new_from_file(self.path)
+        sx = float(self.w)/float(pixbuf.get_width())
+        sy = float(self.h)/float(pixbuf.get_height())
+        cr.save()
+        cr.translate(self.x0, self.y0 - self.h)
+        cr.scale(sx, sy)
+        cr2.set_source_pixbuf(pixbuf, 0, 0)
+        cr2.paint()
+        cr.restore()
 
 
 class EllipseShape(Shape):
@@ -317,6 +331,12 @@ class CompoundShape(Shape):
         for shape in self.shapes:
             shape.draw(cr, highlight=highlight)
 
+    def search_text(self, regexp):
+        for shape in self.shapes:
+            if shape.search_text(regexp):
+                return True
+        return False
+
 
 class Url(object):
 
@@ -345,6 +365,9 @@ class Element(CompoundShape):
     def __init__(self, shapes):
         CompoundShape.__init__(self, shapes)
 
+    def is_inside(self, x, y):
+        return False
+
     def get_url(self, x, y):
         return None
 
@@ -354,9 +377,10 @@ class Element(CompoundShape):
 
 class Node(Element):
 
-    def __init__(self, x, y, w, h, shapes, url):
+    def __init__(self, id, x, y, w, h, shapes, url):
         Element.__init__(self, shapes)
 
+        self.id = id
         self.x = x
         self.y = y
 
@@ -373,7 +397,6 @@ class Node(Element):
     def get_url(self, x, y):
         if self.url is None:
             return None
-        #print (x, y), (self.x1, self.y1), "-", (self.x2, self.y2)
         if self.is_inside(x, y):
             return Url(self, self.url)
         return None
@@ -382,6 +405,9 @@ class Node(Element):
         if self.is_inside(x, y):
             return Jump(self, self.x, self.y)
         return None
+
+    def __repr__(self):
+        return "<Node %s>" % self.id
 
 
 def square_distance(x1, y1, x2, y2):
@@ -400,12 +426,28 @@ class Edge(Element):
 
     RADIUS = 10
 
+    def is_inside_begin(self, x, y):
+        return square_distance(x, y, *self.points[0]) <= self.RADIUS*self.RADIUS
+
+    def is_inside_end(self, x, y):
+        return square_distance(x, y, *self.points[-1]) <= self.RADIUS*self.RADIUS
+
+    def is_inside(self, x, y):
+        if self.is_inside_begin(x, y):
+            return True
+        if self.is_inside_end(x, y):
+            return True
+        return False
+
     def get_jump(self, x, y):
-        if square_distance(x, y, *self.points[0]) <= self.RADIUS*self.RADIUS:
+        if self.is_inside_begin(x, y):
             return Jump(self, self.dst.x, self.dst.y, highlight=set([self, self.dst]))
-        if square_distance(x, y, *self.points[-1]) <= self.RADIUS*self.RADIUS:
+        if self.is_inside_end(x, y):
             return Jump(self, self.src.x, self.src.y, highlight=set([self, self.src]))
         return None
+
+    def __repr__(self):
+        return "<Edge %s -> %s>" % (self.src, self.dst)
 
 
 class Graph(Shape):
@@ -437,6 +479,14 @@ class Graph(Shape):
         for node in self.nodes:
             node.draw(cr, highlight=(node in highlight_items))
 
+    def get_element(self, x, y):
+        for node in self.nodes:
+            if node.is_inside(x, y):
+                return node
+        for edge in self.edges:
+            if edge.is_inside(x, y):
+                return edge
+
     def get_url(self, x, y):
         for node in self.nodes:
             url = node.get_url(x, y)
@@ -456,6 +506,14 @@ class Graph(Shape):
         return None
 
 
+BOLD = 1
+ITALIC = 2
+UNDERLINE = 4
+SUPERSCRIPT = 8
+SUBSCRIPT = 16
+STRIKE_THROUGH = 32
+
+
 class XDotAttrParser:
     """Parser for xdot drawing attributes.
     See also:
@@ -464,7 +522,7 @@ class XDotAttrParser:
 
     def __init__(self, parser, buf):
         self.parser = parser
-        self.buf = self.unescape(buf)
+        self.buf = buf
         self.pos = 0
         
         self.pen = Pen()
@@ -472,11 +530,6 @@ class XDotAttrParser:
 
     def __nonzero__(self):
         return self.pos < len(self.buf)
-
-    def unescape(self, buf):
-        buf = buf.replace('\\"', '"')
-        buf = buf.replace('\\n', '\n')
-        return buf
 
     def read_code(self):
         pos = self.buf.find(" ", self.pos)
@@ -486,19 +539,19 @@ class XDotAttrParser:
             self.pos += 1
         return res
 
-    def read_number(self):
+    def read_int(self):
         return int(self.read_code())
 
     def read_float(self):
         return float(self.read_code())
 
     def read_point(self):
-        x = self.read_number()
-        y = self.read_number()
+        x = self.read_float()
+        y = self.read_float()
         return self.transform(x, y)
 
     def read_text(self):
-        num = self.read_number()
+        num = self.read_int()
         pos = self.buf.find("-", self.pos) + 1
         self.pos = pos + num
         res = self.buf[pos:self.pos]
@@ -507,7 +560,7 @@ class XDotAttrParser:
         return res
 
     def read_polygon(self):
-        n = self.read_number()
+        n = self.read_int()
         p = []
         for i in range(n):
             x, y = self.read_point()
@@ -534,6 +587,9 @@ class XDotAttrParser:
             r, g, b = colorsys.hsv_to_rgb(h, s, v)
             a = 1.0
             return r, g, b, a
+        elif c1 == "[":
+            sys.stderr.write('warning: color gradients not supported yet\n')
+            return None
         else:
             return self.lookup_color(c)
 
@@ -563,7 +619,7 @@ class XDotAttrParser:
             a = 1.0
             return r, g, b, a
                 
-        sys.stderr.write("unknown color '%s'\n" % c)
+        sys.stderr.write("warning: unknown color '%s'\n" % c)
         return None
 
     def parse(self):
@@ -586,7 +642,7 @@ class XDotAttrParser:
                     lw = style.split("(")[1].split(")")[0]
                     lw = float(lw)
                     self.handle_linewidth(lw)
-                elif style in ("solid", "dashed","bold"):
+                elif style in ("solid", "dashed", "dotted"):
                     self.handle_linestyle(style)
             elif op == "F":
                 size = s.read_float()
@@ -594,19 +650,22 @@ class XDotAttrParser:
                 self.handle_font(size, name)
             elif op == "T":
                 x, y = s.read_point()
-                j = s.read_number()
-                w = s.read_number()
+                j = s.read_int()
+                w = s.read_float()
                 t = s.read_text()
                 self.handle_text(x, y, j, w, t)
+            elif op == "t":
+                f = s.read_int()
+                self.handle_font_characteristics(f)
             elif op == "E":
                 x0, y0 = s.read_point()
-                w = s.read_number()
-                h = s.read_number()
+                w = s.read_float()
+                h = s.read_float()
                 self.handle_ellipse(x0, y0, w, h, filled=True)
             elif op == "e":
                 x0, y0 = s.read_point()
-                w = s.read_number()
-                h = s.read_number()
+                w = s.read_float()
+                h = s.read_float()
                 self.handle_ellipse(x0, y0, w, h, filled=False)
             elif op == "L":
                 points = self.read_polygon()
@@ -623,9 +682,15 @@ class XDotAttrParser:
             elif op == "p":
                 points = self.read_polygon()
                 self.handle_polygon(points, filled=False)
+            elif op == "I":
+                x0, y0 = s.read_point()
+                w = s.read_float()
+                h = s.read_float()
+                path = s.read_text()
+                self.handle_image(x0, y0, w, h, path)
             else:
-                sys.stderr.write("unknown xdot opcode '%s'\n" % op)
-                break
+                sys.stderr.write("error: unknown xdot opcode '%s'\n" % op)
+                sys.exit(1)
 
         return self.shapes
     
@@ -642,16 +707,21 @@ class XDotAttrParser:
         self.pen.linewidth = linewidth
 
     def handle_linestyle(self, style):
-        if style == "bold":
-            self.pen.linewidth = 4
-        elif style == "solid":
+        if style == "solid":
             self.pen.dash = ()
         elif style == "dashed":
             self.pen.dash = (6, )       # 6pt on, 6pt off
+        elif style == "dotted":
+            self.pen.dash = (2, 4)       # 2pt on, 4pt off
 
     def handle_font(self, size, name):
         self.pen.fontsize = size
         self.pen.fontname = name
+
+    def handle_font_characteristics(self, flags):
+        # TODO
+        if flags != 0:
+            sys.stderr.write("warning: font characteristics not supported yet\n" % op)
 
     def handle_text(self, x, y, j, w, t):
         self.shapes.append(TextShape(self.pen, x, y, j, w, t))
@@ -661,6 +731,9 @@ class XDotAttrParser:
             # xdot uses this to mean "draw a filled shape with an outline"
             self.shapes.append(EllipseShape(self.pen, x0, y0, w, h, filled=True))
         self.shapes.append(EllipseShape(self.pen, x0, y0, w, h))
+
+    def handle_image(self, x0, y0, w, h, path):
+        self.shapes.append(ImageShape(self.pen, x0, y0, w, h, path))
 
     def handle_line(self, points):
         self.shapes.append(LineShape(self.pen, points))
@@ -937,10 +1010,11 @@ class DotLexer(Lexer):
             text = text.replace('\\\r', '')
             text = text.replace('\\\n', '')
             
-            text = text.replace('\\r', '\r')
-            text = text.replace('\\n', '\n')
-            text = text.replace('\\t', '\t')
-            text = text.replace('\\', '')
+            # quotes
+            text = text.replace('\\"', '"')
+
+            # layout engines recognize other escape codes (many non-standard)
+            # but we don't translate them here
 
             type = ID
 
@@ -1074,6 +1148,8 @@ class DotParser(Parser):
 
 class XDotParser(DotParser):
 
+    XDOTVERSION = '1.6'
+
     def __init__(self, xdotcode):
         lexer = DotLexer(buf = xdotcode)
         DotParser.__init__(self, lexer)
@@ -1086,26 +1162,34 @@ class XDotParser(DotParser):
 
     def handle_graph(self, attrs):
         if self.top_graph:
+            # Check xdot version
+            try:
+                xdotversion = attrs['xdotversion']
+            except KeyError:
+                pass
+            else:
+                if float(xdotversion) > float(self.XDOTVERSION):
+                    sys.stderr.write('warning: xdot version %s, but supported is %s\n' % (xdotversion, self.XDOTVERSION))
+
+            # Parse bounding box
             try:
                 bb = attrs['bb']
             except KeyError:
                 return
 
-            if not bb:
-                return
+            if bb:
+                xmin, ymin, xmax, ymax = map(float, bb.split(","))
 
-            xmin, ymin, xmax, ymax = map(float, bb.split(","))
+                self.xoffset = -xmin
+                self.yoffset = -ymax
+                self.xscale = 1.0
+                self.yscale = -1.0
+                # FIXME: scale from points to pixels
 
-            self.xoffset = -xmin
-            self.yoffset = -ymax
-            self.xscale = 1.0
-            self.yscale = -1.0
-            # FIXME: scale from points to pixels
+                self.width  = max(xmax - xmin, 1)
+                self.height = max(ymax - ymin, 1)
 
-            self.width = xmax - xmin
-            self.height = ymax - ymin
-
-            self.top_graph = False
+                self.top_graph = False
         
         for attr in ("_draw_", "_ldraw_", "_hdraw_", "_tdraw_", "_hldraw_", "_tldraw_"):
             if attr in attrs:
@@ -1127,7 +1211,7 @@ class XDotParser(DotParser):
                 parser = XDotAttrParser(self, attrs[attr])
                 shapes.extend(parser.parse())
         url = attrs.get('URL', None)
-        node = Node(x, y, w, h, shapes, url)
+        node = Node(id, x, y, w, h, shapes, url)
         self.node_by_name[id] = node
         if shapes:
             self.nodes.append(node)
@@ -1414,6 +1498,9 @@ class DotWidget(gtk.DrawingArea):
         self.connect("size-allocate", self.on_area_size_allocate)
 
         self.connect('key-press-event', self.on_key_press_event)
+        self.last_mtime = None
+
+        gobject.timeout_add(1000, self.update)
 
         self.x, self.y = 0.0, 0.0
         self.zoom_ratio = 1.0
@@ -1426,9 +1513,9 @@ class DotWidget(gtk.DrawingArea):
     def set_filter(self, filter):
         self.filter = filter
 
-    def set_dotcode(self, dotcode, filename='<stdin>'):
-        if isinstance(dotcode, unicode):
-            dotcode = dotcode.encode('utf8')
+    def run_filter(self, dotcode):
+        if not self.filter:
+            return dotcode
         p = subprocess.Popen(
             [self.filter, '-Txdot'],
             stdin=subprocess.PIPE,
@@ -1438,6 +1525,7 @@ class DotWidget(gtk.DrawingArea):
             universal_newlines=True
         )
         xdotcode, error = p.communicate(dotcode)
+        sys.stderr.write(error)
         if p.returncode != 0:
             dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                        message_format=error,
@@ -1445,10 +1533,19 @@ class DotWidget(gtk.DrawingArea):
             dialog.set_title('Dot Viewer')
             dialog.run()
             dialog.destroy()
+            return None
+        return xdotcode
+
+    def set_dotcode(self, dotcode, filename=None):
+        self.openfilename = None
+        if isinstance(dotcode, unicode):
+            dotcode = dotcode.encode('utf8')
+        xdotcode = self.run_filter(dotcode)
+        if xdotcode is None:
             return False
         try:
             self.set_xdotcode(xdotcode)
-        except ParseError, ex:
+        except ParseError as ex:
             dialog = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                        message_format=str(ex),
                                        buttons=gtk.BUTTONS_OK)
@@ -1457,11 +1554,14 @@ class DotWidget(gtk.DrawingArea):
             dialog.destroy()
             return False
         else:
+            if filename is None:
+                self.last_mtime = None
+            else:
+                self.last_mtime = os.stat(filename).st_mtime
             self.openfilename = filename
             return True
 
     def set_xdotcode(self, xdotcode):
-        #print xdotcode
         parser = XDotParser(xdotcode)
         self.graph = parser.parse()
         self.zoom_image(self.zoom_ratio, center=True)
@@ -1474,6 +1574,14 @@ class DotWidget(gtk.DrawingArea):
                 fp.close()
             except IOError:
                 pass
+
+    def update(self):
+        if self.openfilename is not None:
+            current_mtime = os.stat(self.openfilename).st_mtime
+            if current_mtime != self.last_mtime:
+                self.last_mtime = current_mtime
+                self.reload()
+        return True
 
     def do_expose_event(self, event):
         cr = self.window.cairo_create()
@@ -1515,6 +1623,10 @@ class DotWidget(gtk.DrawingArea):
             self.queue_draw()
 
     def zoom_image(self, zoom_ratio, center=False, pos=None):
+        # Constrain zoom ratio to a sane range to prevent numeric instability.
+        zoom_ratio = min(zoom_ratio, 1E4)
+        zoom_ratio = max(zoom_ratio, 1E-6)
+
         if center:
             self.x = self.graph.width/2
             self.y = self.graph.height/2
@@ -1533,10 +1645,13 @@ class DotWidget(gtk.DrawingArea):
         rect = self.get_allocation()
         width = abs(x1 - x2)
         height = abs(y1 - y2)
-        self.zoom_ratio = min(
-            float(rect.width)/float(width),
-            float(rect.height)/float(height)
-        )
+        if width == 0 and height == 0:
+            self.zoom_ratio *= self.ZOOM_INCREMENT
+        else:
+            self.zoom_ratio = min(
+                float(rect.width)/float(width),
+                float(rect.height)/float(height)
+            )
         self.zoom_to_fit_on_resize = False
         self.x = (x1 + x2) / 2
         self.y = (y1 + y2) / 2
@@ -1589,11 +1704,16 @@ class DotWidget(gtk.DrawingArea):
             self.y += self.POS_INCREMENT/self.zoom_ratio
             self.queue_draw()
             return True
-        if event.keyval == gtk.keysyms.Page_Up:
+        if event.keyval in (gtk.keysyms.Page_Up,
+                            gtk.keysyms.plus,
+                            gtk.keysyms.equal,
+                            gtk.keysyms.KP_Add):
             self.zoom_image(self.zoom_ratio * self.ZOOM_INCREMENT)
             self.queue_draw()
             return True
-        if event.keyval == gtk.keysyms.Page_Down:
+        if event.keyval in (gtk.keysyms.Page_Down,
+                            gtk.keysyms.minus,
+                            gtk.keysyms.KP_Subtract):
             self.zoom_image(self.zoom_ratio / self.ZOOM_INCREMENT)
             self.queue_draw()
             return True
@@ -1604,10 +1724,48 @@ class DotWidget(gtk.DrawingArea):
         if event.keyval == gtk.keysyms.r:
             self.reload()
             return True
+        if event.keyval == gtk.keysyms.f:
+            win = widget.get_toplevel()
+            find_toolitem = win.uimanager.get_widget('/ToolBar/Find')
+            textentry = find_toolitem.get_children()
+            win.set_focus(textentry[0])
+            return True
         if event.keyval == gtk.keysyms.q:
             gtk.main_quit()
             return True
+        if event.keyval == gtk.keysyms.p:
+            self.on_print()
+            return True
         return False
+
+    print_settings = None
+    def on_print(self, action=None):
+        print_op = gtk.PrintOperation()
+
+        if self.print_settings != None:
+            print_op.set_print_settings(self.print_settings)
+
+        print_op.connect("begin_print", self.begin_print)
+        print_op.connect("draw_page", self.draw_page)
+
+        res = print_op.run(gtk.PRINT_OPERATION_ACTION_PRINT_DIALOG, self.parent.parent)
+
+        if res == gtk.PRINT_OPERATION_RESULT_APPLY:
+            print_settings = print_op.get_print_settings()
+
+    def begin_print(self, operation, context):
+        operation.set_n_pages(1)
+        return True
+
+    def draw_page(self, operation, context, page_nr):
+        cr = context.get_cairo_context()
+
+        rect = self.get_allocation()
+        cr.translate(0.5*rect.width, 0.5*rect.height)
+        cr.scale(self.zoom_ratio, self.zoom_ratio)
+        cr.translate(-self.x, -self.y)
+
+        self.graph.draw(cr, highlight_items=self.highlight)
 
     def get_drag_action(self, event):
         state = event.state
@@ -1643,24 +1801,32 @@ class DotWidget(gtk.DrawingArea):
         return (time.time() < self.presstime + click_timeout
                 and math.hypot(deltax, deltay) < click_fuzz)
 
+    def on_click(self, element, event):
+        """Override this method in subclass to process
+        click events. Note that element can be None
+        (click on empty space)."""
+        return False
+
     def on_area_button_release(self, area, event):
         self.drag_action.on_button_release(event)
         self.drag_action = NullAction(self)
-        # HJO: need to allow right-click (button 3) in cylc:
-        #if event.button == 1 and self.is_click(event):
+        x, y = int(event.x), int(event.y)
         if self.is_click(event):
-            x, y = int(event.x), int(event.y)
-            if event.button == 3:
+            el = self.get_element(x, y)
+            if self.on_click(el, event):
+                return True
+
+            if event.button == 1:
                 url = self.get_url(x, y)
                 if url is not None:
                     self.emit('clicked', unicode(url.url), event)
-            else:
-                # button 1
-                jump = self.get_jump(x, y)
-                if jump is not None:
-                    self.animate_to(jump.x, jump.y)
+                else:
+                    jump = self.get_jump(x, y)
+                    if jump is not None:
+                        self.animate_to(jump.x, jump.y)
 
-            return True
+                return True
+
         if event.button == 1 or event.button == 2:
             return True
         return False
@@ -1698,6 +1864,10 @@ class DotWidget(gtk.DrawingArea):
         y += self.y
         return x, y
 
+    def get_element(self, x, y):
+        x, y = self.window2graph(x, y)
+        return self.graph.get_element(x, y)
+
     def get_url(self, x, y):
         x, y = self.window2graph(x, y)
         return self.graph.get_url(x, y)
@@ -1707,6 +1877,14 @@ class DotWidget(gtk.DrawingArea):
         return self.graph.get_jump(x, y)
 
 
+class FindMenuToolAction(gtk.Action):
+    __gtype_name__ = "FindMenuToolAction"
+
+    def __init__(self, *args, **kw):
+        gtk.Action.__init__(self, *args, **kw)
+        self.set_tool_item_type(gtk.ToolItem)
+
+
 class DotWindow(gtk.Window):
 
     ui = '''
@@ -1714,28 +1892,33 @@ class DotWindow(gtk.Window):
         <toolbar name="ToolBar">
             <toolitem action="Open"/>
             <toolitem action="Reload"/>
+            <toolitem action="Print"/>
             <separator/>
             <toolitem action="ZoomIn"/>
             <toolitem action="ZoomOut"/>
             <toolitem action="ZoomFit"/>
             <toolitem action="Zoom100"/>
+            <separator/>
+            <toolitem name="Find" action="Find"/>
         </toolbar>
     </ui>
     '''
 
-    def __init__(self):
+    base_title = 'Dot Viewer'
+
+    def __init__(self, widget=None):
         gtk.Window.__init__(self)
 
         self.graph = Graph()
 
         window = self
 
-        window.set_title('Dot Viewer')
+        window.set_title(self.base_title)
         window.set_default_size(512, 512)
         vbox = gtk.VBox()
         window.add(vbox)
 
-        self.widget = DotWidget()
+        self.widget = widget or DotWidget()
 
         # Create a UIManager instance
         uimanager = self.uimanager = gtk.UIManager()
@@ -1752,11 +1935,16 @@ class DotWindow(gtk.Window):
         actiongroup.add_actions((
             ('Open', gtk.STOCK_OPEN, None, None, None, self.on_open),
             ('Reload', gtk.STOCK_REFRESH, None, None, None, self.on_reload),
+            ('Print', gtk.STOCK_PRINT, None, None, "Prints the currently visible part of the graph", self.widget.on_print),
             ('ZoomIn', gtk.STOCK_ZOOM_IN, None, None, None, self.widget.on_zoom_in),
             ('ZoomOut', gtk.STOCK_ZOOM_OUT, None, None, None, self.widget.on_zoom_out),
             ('ZoomFit', gtk.STOCK_ZOOM_FIT, None, None, None, self.widget.on_zoom_fit),
             ('Zoom100', gtk.STOCK_ZOOM_100, None, None, None, self.widget.on_zoom_100),
         ))
+
+        find_action = FindMenuToolAction("Find", None,
+                                          "Find a node by name", None)
+        actiongroup.add_action(find_action)
 
         # Add the actiongroup to the uimanager
         uimanager.insert_action_group(actiongroup, 0)
@@ -1770,44 +1958,82 @@ class DotWindow(gtk.Window):
 
         vbox.pack_start(self.widget)
 
+        self.last_open_dir = "."
+
         self.set_focus(self.widget)
+
+        # Add Find text search
+        find_toolitem = uimanager.get_widget('/ToolBar/Find')
+        self.textentry = gtk.Entry(max=20)
+        self.textentry.set_icon_from_stock(0, gtk.STOCK_FIND)
+        find_toolitem.add(self.textentry)
+
+        self.textentry.set_activates_default(True)
+        self.textentry.connect ("activate", self.textentry_activate, self.textentry);
+        self.textentry.connect ("changed", self.textentry_changed, self.textentry);
 
         self.show_all()
 
-    def update(self, filename):
-        import os
-        if not hasattr(self, "last_mtime"):
-            self.last_mtime = None
+    def find_text(self, entry_text):
+        found_items = []
+        dot_widget = self.widget
+        regexp = re.compile(entry_text)
+        for node in dot_widget.graph.nodes:
+            if node.search_text(regexp):
+                found_items.append(node)
+        return found_items
 
-        current_mtime = os.stat(filename).st_mtime
-        if current_mtime != self.last_mtime:
-            self.last_mtime = current_mtime
-            self.open_file(filename)
+    def textentry_changed(self, widget, entry):
+        entry_text = entry.get_text()
+        dot_widget = self.widget        
+        if not entry_text:
+            dot_widget.set_highlight(None)
+            return
+        
+        found_items = self.find_text(entry_text)
+        dot_widget.set_highlight(found_items)
 
-        return True
+    def textentry_activate(self, widget, entry):
+        entry_text = entry.get_text()
+        dot_widget = self.widget        
+        if not entry_text:
+            dot_widget.set_highlight(None)
+            return;
+        
+        found_items = self.find_text(entry_text)
+        dot_widget.set_highlight(found_items)
+        if(len(found_items) == 1):
+            dot_widget.animate_to(found_items[0].x, found_items[0].y)
 
     def set_filter(self, filter):
         self.widget.set_filter(filter)
 
-    def set_dotcode(self, dotcode, filename='<stdin>'):
+    def set_dotcode(self, dotcode, filename=None):
         if self.widget.set_dotcode(dotcode, filename):
+            self.update_title(filename)
             self.widget.zoom_to_fit()
 
-    def set_xdotcode(self, xdotcode, filename='<stdin>'):
+    def set_xdotcode(self, xdotcode, filename=None):
         if self.widget.set_xdotcode(xdotcode):
-            self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            self.update_title(filename)
             self.widget.zoom_to_fit()
+        
+    def update_title(self, filename=None):
+        if filename is None:
+            self.set_title(self.base_title)
+        else:
+            self.set_title(os.path.basename(filename) + ' - ' + self.base_title)
 
     def open_file(self, filename):
         try:
             fp = file(filename, 'rt')
             self.set_dotcode(fp.read(), filename)
             fp.close()
-        except IOError, ex:
+        except IOError as ex:
             dlg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                     message_format=str(ex),
                                     buttons=gtk.BUTTONS_OK)
-            dlg.set_title('Dot Viewer')
+            dlg.set_title(self.base_title)
             dlg.run()
             dlg.destroy()
 
@@ -1819,6 +2045,7 @@ class DotWindow(gtk.Window):
                                                  gtk.STOCK_OPEN,
                                                  gtk.RESPONSE_OK))
         chooser.set_default_response(gtk.RESPONSE_OK)
+        chooser.set_current_folder(self.last_open_dir)
         filter = gtk.FileFilter()
         filter.set_name("Graphviz dot files")
         filter.add_pattern("*.dot")
@@ -1829,6 +2056,7 @@ class DotWindow(gtk.Window):
         chooser.add_filter(filter)
         if chooser.run() == gtk.RESPONSE_OK:
             filename = chooser.get_filename()
+            self.last_open_dir = chooser.get_current_folder()
             chooser.destroy()
             self.open_file(filename)
         else:
@@ -1838,17 +2066,41 @@ class DotWindow(gtk.Window):
         self.widget.reload()
 
 
-def main():
-    import optparse
+class OptionParser(optparse.OptionParser):
 
-    parser = optparse.OptionParser(
+    def format_epilog(self, formatter):
+        # Prevent stripping the newlines in epilog message
+        # http://stackoverflow.com/questions/1857346/python-optparse-how-to-include-additional-info-in-usage-output
+        return self.epilog
+
+
+def main():
+
+    parser = OptionParser(
         usage='\n\t%prog [file]',
-        version='%%prog %s' % __version__)
+        epilog='''
+Shortcuts:
+  Up, Down, Left, Right     scroll
+  PageUp, +, =              zoom in
+  PageDown, -               zoom out
+  R                         reload dot file
+  F                         find
+  Q                         quit
+  P                         print
+  Escape                    halt animation
+  Ctrl-drag                 zoom in/out
+  Shift-drag                zooms an area
+'''
+    )
     parser.add_option(
         '-f', '--filter',
         type='choice', choices=('dot', 'neato', 'twopi', 'circo', 'fdp'),
         dest='filter', default='dot',
         help='graphviz filter: dot, neato, twopi, circo, or fdp [default: %default]')
+    parser.add_option(
+        '-n', '--no-filter',
+        action='store_const', const=None, dest='filter',
+        help='assume input is already filtered into xdot format (use e.g. dot -Txdot)')
 
     (options, args) = parser.parse_args(sys.argv[1:])
     if len(args) > 1:
@@ -1857,12 +2109,14 @@ def main():
     win = DotWindow()
     win.connect('destroy', gtk.main_quit)
     win.set_filter(options.filter)
-    if len(args) >= 1:
+    if len(args) == 0:
+        if not sys.stdin.isatty():
+            win.set_dotcode(sys.stdin.read())
+    else:
         if args[0] == '-':
             win.set_dotcode(sys.stdin.read())
         else:
             win.open_file(args[0])
-            gobject.timeout_add(1000, win.update, args[0])
     gtk.main()
 
 
