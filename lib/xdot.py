@@ -1568,11 +1568,12 @@ class DotWidget(gtk.DrawingArea):
             dialog.destroy()
             return False
         else:
-            if filename is None:
+            if filename is None or filename == "<stdin>":
                 self.last_mtime = None
+                self.openfilename = None
             else:
                 self.last_mtime = os.stat(filename).st_mtime
-            self.openfilename = filename
+                self.openfilename = filename
             return True
 
     def set_xdotcode(self, xdotcode):
