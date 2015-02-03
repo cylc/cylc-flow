@@ -23,6 +23,8 @@ from TreeUpdater import TreeUpdater
 from gcapture import gcapture_tmpfile
 from warning_dialog import warning_dialog, info_dialog
 from cylc.task_id import TaskID
+from isodatetime.parsers import DurationParser
+
 
 class ControlTree(object):
     """
@@ -39,6 +41,7 @@ Text Treeview suite control interface.
         self.get_right_click_menu = get_right_click_menu
         self.log_colors = log_colors
         self.insert_task_popup = insert_task_popup
+        self.interval_parser = DurationParser()
 
         self.gcapture_windows = []
 
@@ -184,10 +187,10 @@ Text Treeview suite control interface.
 
         return True
 
-    def sort_column( self, model, iter1, iter2, col_num ):
+    def sort_column(self, model, iter1, iter2, col_num):
         cols = self.ttreeview.get_columns()
-        point_string1 = model.get_value( iter1 , 0 )
-        point_string2 = model.get_value( iter2, 0 )
+        point_string1 = model.get_value(iter1, 0)
+        point_string2 = model.get_value(iter2, 0)
         if point_string1 != point_string2:
             # TODO ISO: worth a proper comparison here?
             if cols[col_num].get_sort_order() == gtk.SORT_DESCENDING:
@@ -195,9 +198,25 @@ Text Treeview suite control interface.
             return cmp(point_string1, point_string2)
 
         # Columns do not include the cycle point (0th col), so add 1.
-        prop1 = model.get_value( iter1, col_num + 1 )
-        prop2 = model.get_value( iter2, col_num + 1 )
-        return cmp( prop1, prop2 )
+        if (col_num + 1) == 9:
+            prop1 = (model.get_value(iter1, col_num + 1))
+            prop2 = (model.get_value(iter2, col_num + 1))
+            prop1 = self._get_interval_in_seconds(prop1)
+            prop2 = self._get_interval_in_seconds(prop2)
+        else:
+            prop1 = model.get_value(iter1, col_num + 1)
+            prop2 = model.get_value(iter2, col_num + 1)
+        return cmp(prop1, prop2)
+
+    def _get_interval_in_seconds(self, val):
+        """Convert the IOS 8601 date/time to seconds."""
+        if val == "*" or val == "":
+            secsout = val
+        else:
+            interval = self.interval_parser.parse(val)
+            seconds = interval.get_seconds()
+            secsout = seconds
+        return secsout
 
     def change_sort_order( self, col, event=None, n=0 ):
         if hasattr(event, "button") and event.button != 1:
