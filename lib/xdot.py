@@ -119,20 +119,32 @@ class TextShape(Shape):
             # see http://lists.freedesktop.org/archives/cairo/2007-February/009688.html
             context = layout.get_context()
             fo = cairo.FontOptions()
-            fo.set_antialias(cairo.ANTIALIAS_DEFAULT)
-            fo.set_hint_style(cairo.HINT_STYLE_NONE)
-            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
+            try:
+                fo.set_antialias(cairo.ANTIALIAS_DEFAULT)
+                fo.set_hint_style(cairo.HINT_STYLE_NONE)
+                fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
+            except AttributeError:
+                # HJO: handle crappy cairo installation on SLES11, e.g:
+                # AttributeError: 'cairo.FontOptions' object has no attribute 'set_antialias'
+                pass
             try:
                 pangocairo.context_set_font_options(context, fo)
             except TypeError:
                 # XXX: Some broken pangocairo bindings show the error
                 # 'TypeError: font_options must be a cairo.FontOptions or None'
                 pass
+            except AttributeError:
+                # HJO: handle crappy cairo installation on SLES11
+                pass
 
             # set font
             font = pango.FontDescription()
             font.set_family(self.pen.fontname)
-            font.set_absolute_size(self.pen.fontsize*pango.SCALE)
+            try:
+                font.set_absolute_size(self.pen.fontsize*pango.SCALE)
+            except Exception:
+                # HJO: handle crappy cairo installation on SLES11
+                pass
             layout.set_font_description(font)
 
             # set text
@@ -642,7 +654,7 @@ class XDotAttrParser:
                     lw = style.split("(")[1].split(")")[0]
                     lw = float(lw)
                     self.handle_linewidth(lw)
-                elif style in ("solid", "dashed", "dotted"):
+                elif style in ("solid", "dashed", "bold", "dotted"):
                     self.handle_linestyle(style)
             elif op == "F":
                 size = s.read_float()
@@ -707,7 +719,9 @@ class XDotAttrParser:
         self.pen.linewidth = linewidth
 
     def handle_linestyle(self, style):
-        if style == "solid":
+        if style == "bold":
+            self.pen.linewidth = 4
+        elif style == "solid":
             self.pen.dash = ()
         elif style == "dashed":
             self.pen.dash = (6, )       # 6pt on, 6pt off
@@ -1810,17 +1824,18 @@ class DotWidget(gtk.DrawingArea):
     def on_area_button_release(self, area, event):
         self.drag_action.on_button_release(event)
         self.drag_action = NullAction(self)
+        # HJO: need to allow right-click (button 3) in cylc:
         x, y = int(event.x), int(event.y)
         if self.is_click(event):
             el = self.get_element(x, y)
             if self.on_click(el, event):
                 return True
 
-            if event.button == 1:
+            if event.button == 1 or event.button == 3:
                 url = self.get_url(x, y)
                 if url is not None:
                     self.emit('clicked', unicode(url.url), event)
-                else:
+                elif event.button == 1:
                     jump = self.get_jump(x, y)
                     if jump is not None:
                         self.animate_to(jump.x, jump.y)
@@ -1974,6 +1989,17 @@ class DotWindow(gtk.Window):
 
         self.show_all()
 
+    def update(self, filename):
+        if not hasattr(self, "last_mtime"):
+            self.last_mtime = None
+
+        current_mtime = os.stat(filename).st_mtime
+        if current_mtime != self.last_mtime:
+            self.last_mtime = current_mtime
+            self.open_file(filename)
+
+        return True
+
     def find_text(self, entry_text):
         found_items = []
         dot_widget = self.widget
@@ -2010,7 +2036,6 @@ class DotWindow(gtk.Window):
 
     def set_dotcode(self, dotcode, filename=None):
         if self.widget.set_dotcode(dotcode, filename):
-            self.update_title(filename)
             self.widget.zoom_to_fit()
 
     def set_xdotcode(self, xdotcode, filename=None):
@@ -2117,6 +2142,7 @@ Shortcuts:
             win.set_dotcode(sys.stdin.read())
         else:
             win.open_file(args[0])
+            gobject.timeout_add(1000, win.update, args[0])
     gtk.main()
 
 
