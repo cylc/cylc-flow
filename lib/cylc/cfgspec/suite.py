@@ -153,7 +153,8 @@ def _coerce_final_cycletime( value, keys, args ):
     return value
 
 
-def coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
+def coerce_interval(value, keys, args, back_comp_unit_factor=1,
+                    check_syntax_version=True):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote( keys, value )
     try:
@@ -161,32 +162,36 @@ def coerce_interval( value, keys, args, back_comp_unit_factor=1 ):
     except (TypeError, ValueError):
         pass
     else:
-        set_syntax_version(VERSION_PREV,
-                           "integer interval: %s" % itemstr(
-                               keys[:-1], keys[-1], value))
+        if check_syntax_version:
+            set_syntax_version(VERSION_PREV,
+                               "integer interval: %s" % itemstr(
+                                   keys[:-1], keys[-1], value))
         return backwards_compat_value
     try:
         interval = interval_parser.parse(value)
     except ValueError:
         raise IllegalValueError("ISO 8601 interval", keys, value)
-    try:
-        set_syntax_version(VERSION_NEW,
-                           "ISO 8601 interval: %s" % itemstr(
-                               keys[:-1], keys[-1], value))
-    except SyntaxVersionError as exc:
-        raise Exception(str(exc))
+    if check_syntax_version:
+        try:
+            set_syntax_version(VERSION_NEW,
+                               "ISO 8601 interval: %s" % itemstr(
+                                   keys[:-1], keys[-1], value))
+        except SyntaxVersionError as exc:
+            raise Exception(str(exc))
     days, seconds = interval.get_days_and_seconds()
     seconds += days * Calendar.default().SECONDS_IN_DAY
     return seconds
 
 
-def coerce_interval_list( value, keys, args, back_comp_unit_factor=1 ):
+def coerce_interval_list(value, keys, args, back_comp_unit_factor=1,
+                         check_syntax_version=True):
     """Coerce a list of intervals (or numbers: back-comp) into seconds."""
     values_list = _strip_and_unquote_list( keys, value )
     type_converter = (
         lambda v: coerce_interval(
             v, keys, args,
-            back_comp_unit_factor=back_comp_unit_factor
+            back_comp_unit_factor=back_comp_unit_factor,
+            check_syntax_version=check_syntax_version,
         )
     )
     seconds_list = _expand_list( values_list, keys, type_converter, True )

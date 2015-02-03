@@ -29,9 +29,6 @@ from parsec.validate import (
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
-from cylc.syntax_flags import (
-set_syntax_version, VERSION_PREV, VERSION_NEW, SyntaxVersionError
-)
 from isodatetime.data import Calendar
 from cylc.owner import user
 from cylc.envvar import expandvars
@@ -43,9 +40,11 @@ from cylc.cfgspec.suite import coerce_interval_list
 
 "Cylc site and user configuration file spec."
 
-coercers['interval_seconds'] = coerce_interval
-coercers['interval_minutes_list'] = lambda *a: coerce_interval_list(
-*a, back_comp_unit_factor=60)
+coercers['interval_seconds'] = (
+    lambda *args: coerce_interval(*args, check_syntax_version=False))
+coercers['interval_minutes_list'] = (
+    lambda *args: coerce_interval_list(*args, back_comp_unit_factor=60,
+                                       check_syntax_version=False))
 
 SPEC = {
     'process pool size'                   : vdr( vtype='integer', default=None ),
