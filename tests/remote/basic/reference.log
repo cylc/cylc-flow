@@ -1,11 +1,21 @@
-2012/08/24 13:40:20 INFO - Suite starting at 2012-08-24 13:40:20.373348
-2012/08/24 13:40:20 INFO - Log event clock: real time
-2012/08/24 13:40:20 INFO - Run mode: live
-2012/08/24 13:40:20 INFO - Initial point: None
-2012/08/24 13:40:20 INFO - Final point: None
-2012/08/24 13:40:20 WARNING - Calling startup event handler in the foreground
-2012/08/24 13:40:20 INFO - [foo.1] -job submitted
-2012/08/24 13:40:20 INFO - [foo.1] -triggered off []
-2012/08/24 13:40:21 INFO - [foo.1] -foo.1 started
-2012/08/24 13:40:31 INFO - [foo.1] -foo.1 succeeded
-2012/08/24 13:40:31 INFO - Suite shutting down at 2012-08-24 13:40:31.387626
+2015-02-03T15:12:56Z INFO - Suite starting at 2015-02-03T15:12:56Z
+2015-02-03T15:12:56Z INFO - Run mode: live
+2015-02-03T15:12:56Z INFO - Initial point: 1
+2015-02-03T15:12:56Z INFO - Final point: 1
+2015-02-03T15:12:56Z INFO - Cold Start 1
+2015-02-03T15:12:56Z INFO - Calling startup handler in the foreground
+2015-02-03T15:12:56Z INFO - [foo.1] -initiate job-submit
+2015-02-03T15:12:56Z INFO - [foo.1] -triggered off []
+
+2015-02-03T15:12:57Z INFO - [foo.1] -submit_method_id=12290
+2015-02-03T15:12:57Z INFO - [foo.1] -submission succeeded
+2015-02-03T15:12:58Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2015-02-03T15:12:57Z
+2015-02-03T15:12:58Z INFO - [foo.1] -(current:running)> foo.1 succeeded at 2015-02-03T15:12:57Z
+2015-02-03T15:12:59Z INFO - [bar.1] -initiate job-submit
+2015-02-03T15:12:59Z INFO - [bar.1] -triggered off ['foo.1']
+
+2015-02-03T15:13:00Z INFO - [bar.1] -submit_method_id=12403
+2015-02-03T15:13:00Z INFO - [bar.1] -submission succeeded
+2015-02-03T15:13:00Z INFO - [bar.1] -(current:submitted)> bar.1 started at 2015-02-03T15:13:00Z
+2015-02-03T15:13:01Z INFO - [bar.1] -(current:running)> bar.1 succeeded at 2015-02-03T15:13:00Z
+2015-02-03T15:13:02Z INFO - Suite shutting down at 2015-02-03T15:13:02Z

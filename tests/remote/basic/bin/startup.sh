@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 PPHRASE=$CYLC_SUITE_DEF_PATH/passphrase
-if [[ $CYLC_TEST_TASK_OWNER@$CYLC_TEST_TASK_HOST == $USER@localhost || $CYLC_TEST_TASK_OWNER@$CYLC_TEST_TASK_HOST == $USER@$(hostname) ]]; then
+if [[ $CYLC_TEST_TASK_OWNER@$CYLC_TEST_TASK_HOST == $USER@localhost || \
+      $CYLC_TEST_TASK_OWNER@$CYLC_TEST_TASK_HOST == $USER@$(hostname) ]]; then
     exit
 fi
 # copy the passphrase over in case this host does not use ssh messaging
