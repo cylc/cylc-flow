@@ -315,6 +315,9 @@ class CylcRuntimeDAO(object):
             # Clear out old db operations dump
             if os.path.exists(self.db_dump_name):
                 os.remove(self.db_dump_name)
+        else:
+            self.lock_check()
+
         self.c = ThreadedCursor(self.db_file_name, self.db_dump_name, not new_mode)
 
     def close(self):
@@ -340,6 +343,12 @@ class CylcRuntimeDAO(object):
             s += ")"
             res = c.execute(s)
         return
+
+    def lock_check(self):
+        """Try to create a dummy table"""
+        c = self.connect()
+        c.execute("CREATE TABLE lock_check (entry TEXT)")
+        c.execute("DROP TABLE lock_check")
 
     def get_task_submit_num(self, name, cycle):
         s_fmt = ("SELECT COUNT(*) FROM task_events" +
