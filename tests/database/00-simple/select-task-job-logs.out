@@ -1,0 +1,15 @@
+1|bar|1|job|job
+1|bar|1|job-activity.log|job-activity.log
+1|bar|1|job.err|job.err
+1|bar|1|job.out|job.out
+1|bar|1|job.status|job.status
+1|baz|1|job|job
+1|baz|1|job-activity.log|job-activity.log
+1|baz|1|job.err|job.err
+1|baz|1|job.out|job.out
+1|baz|1|job.status|job.status
+1|foo|1|job|job
+1|foo|1|job-activity.log|job-activity.log
+1|foo|1|job.err|job.err
+1|foo|1|job.out|job.out
+1|foo|1|job.status|job.status

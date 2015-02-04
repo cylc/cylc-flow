@@ -38,80 +38,85 @@ import multiprocessing
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
+from cylc.wallclock import get_current_time_string
 
 
-CMD_TYPE_JOB_SUBMISSION = 0
-CMD_TYPE_JOB_POLL_KILL = 1
-CMD_TYPE_EVENT_HANDLER = 2
-
-TRUE = 1
-FALSE = 0
-JOB_SKIPPED_FLAG = 999
-
-# Shared memory flag.
-STOP_JOB_SUBMISSION = multiprocessing.Value('i', FALSE)
-
-
-def _run_command(
-        cmd_type, cmd, is_bg_submit=None, stdin_file_path=None, env=None,
-        shell=False):
+def _run_command(ctx):
     """Execute a shell command and capture its output and exit status."""
 
-    cmd_result = {'CMD': cmd, 'EXIT': None, 'OUT': None, 'ERR': None}
-
     if cylc.flags.debug:
-        if shell:
-            print cmd
+        if ctx.cmd_kwargs.get('shell'):
+            print ctx.cmd
         else:
-            print ' '.join([quote(cmd_str) for cmd_str in cmd])
+            print ' '.join([quote(cmd_str) for cmd_str in ctx.cmd])
 
-    if (STOP_JOB_SUBMISSION.value == TRUE
-            and cmd_type == CMD_TYPE_JOB_SUBMISSION):
-        cmd_result['OUT'] = "job submission skipped (suite stopping)"
-        cmd_result['EXIT'] = JOB_SKIPPED_FLAG
-        return cmd_result
+    if (SuiteProcPool.STOP_JOB_SUBMISSION.value
+            and ctx.cmd_type == SuiteProcPool.JOB_SUBMIT):
+        ctx.err = "job submission skipped (suite stopping)"
+        ctx.ret_code = SuiteProcPool.JOB_SKIPPED_FLAG
+        ctx.timestamp = get_current_time_string()
+        return ctx
 
     try:
         stdin_file = None
-        if stdin_file_path:
-            stdin_file = open(stdin_file_path)
+        if ctx.cmd_kwargs.get('stdin_file_path'):
+            stdin_file = open(ctx.cmd_kwargs['stdin_file_path'])
         proc = Popen(
-            cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
-            env=env, shell=shell)
+            ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
+            env=ctx.cmd_kwargs.get('env'), shell=ctx.cmd_kwargs.get('shell'))
     except (IOError, OSError) as exc:
-        cmd_result['EXIT'] = 1
-        cmd_result['ERR'] = str(exc)
+        ctx.ret_code = 1
+        ctx.err = str(exc)
     else:
         # Does this command behave like a background job submit where:
         # 1. The process should print its job ID to STDOUT.
         # 2. The process should then continue in background.
-        if is_bg_submit:  # behave like background job submit?
+        if ctx.cmd_kwargs.get('is_bg_submit'):
             # Capture just the echoed PID then move on.
             # N.B. Some hosts print garbage to STDOUT when going through a
             # login shell, so we want to try a few lines
-            cmd_result['EXIT'] = 0
-            cmd_result['OUT'] = ""
+            ctx.ret_code = 0
+            ctx.out = ""
             for _ in range(10):  # Try 10 lines
                 line = proc.stdout.readline()
-                cmd_result['OUT'] += line
+                ctx.out += line
                 if line.startswith(BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID):
                     break
             # Check if submission is OK or not
-            if not cmd_result['OUT'].rstrip():
+            if not ctx.out.rstrip():
                 ret_code = proc.poll()
                 if ret_code is not None:
-                    cmd_result['OUT'], cmd_result['ERR'] = proc.communicate()
-                    cmd_result['EXIT'] = ret_code
+                    ctx.out, ctx.err = proc.communicate()
+                    ctx.ret_code = ret_code
         else:
-            cmd_result['EXIT'] = proc.wait()
-            if cmd_result['EXIT'] is not None:
-                cmd_result['OUT'], cmd_result['ERR'] = proc.communicate()
+            ctx.ret_code = proc.wait()
+            if ctx.ret_code is not None:
+                ctx.out, ctx.err = proc.communicate()
 
-    return cmd_result
+    ctx.timestamp = get_current_time_string()
+    return ctx
 
+
+class SuiteProcContext(object):
+    """Represent the context of a command to run."""
+
+    def __init__(self, cmd_type, cmd, **cmd_kwargs):
+        self.timestamp = get_current_time_string()
+        self.cmd_type = cmd_type
+        self.cmd = cmd
+        self.cmd_kwargs = cmd_kwargs
+
+        self.err = cmd_kwargs.get('err')
+        self.ret_code = cmd_kwargs.get('ret_code')
+        self.out = cmd_kwargs.get('out')
 
 class SuiteProcPool(object):
     """Use a process pool to execute shell commands."""
+
+    JOB_SUBMIT = "job-submit"
+    JOB_SKIPPED_FLAG = 999
+    # Shared memory flag.
+    STOP_JOB_SUBMISSION = multiprocessing.Value('i', 0)
 
     _INSTANCE = None
 
@@ -138,41 +143,34 @@ class SuiteProcPool(object):
         self.log.debug(
             "Initializing process pool, size %d" % self.pool_size)
         self.pool = multiprocessing.Pool(processes=self.pool_size)
-        self.unhandled_results = []
+        self.results = {}
 
-    def put_command(
-            self, cmd_type, cmd, callback, is_bg_submit=False,
-            stdin_file_path=None, env=None, shell=False):
+    def put_command(self, ctx, callback):
         """Queue a new shell command to execute."""
         try:
-            result = self.pool.apply_async(
-                _run_command,
-                (cmd_type, cmd, is_bg_submit, stdin_file_path, env, shell))
+            result = self.pool.apply_async(_run_command, [ctx])
         except AssertionError as exc:
             self.log.warning("%s\n  %s\n %s" % (
                 str(exc),
                 "Rejecting command (pool closed)",
-                cmd))
+                ctx.cmd))
         else:
-            if callback:
-                self.unhandled_results.append((result, callback))
+            self.results[id(result)] = (result, callback)
 
     def handle_results_async(self):
         """Pass any available results to their associated callback."""
-        still_to_do = []
-        for item in self.unhandled_results:
-            res, callback = item
-            if res.ready():
-                val = res.get()
-                callback(val)
-            else:
-                still_to_do.append((res, callback))
-        self.unhandled_results = still_to_do
+        for result_id, item in self.results.items():
+            result, callback = item
+            if result.ready():
+                self.results.pop(result_id)
+                value = result.get()
+                if callable(callback):
+                    callback(value)
 
     @classmethod
     def stop_job_submission(cls):
         """Set STOP_JOB_SUBMISSION flag."""
-        STOP_JOB_SUBMISSION.value = TRUE
+        cls.STOP_JOB_SUBMISSION.value = 1
 
     def close(self):
         """Close the pool to new commands."""
@@ -226,13 +224,13 @@ def main():
 
     for i in range(3):
         com = "sleep 5 && echo Hello from JOB " + str(i)
-        pool.put_command(CMD_TYPE_JOB_SUBMISSION, com, print_result)
+        pool.put_command(SuiteProcPool.JOB_SUBMIT, com, print_result)
         com = "sleep 5 && echo Hello from POLL " + str(i)
-        pool.put_command(CMD_TYPE_JOB_POLL_KILL, com, print_result)
+        pool.put_command("poll", com, print_result)
         com = "sleep 5 && echo Hello from HANDLER " + str(i)
-        pool.put_command(CMD_TYPE_EVENT_HANDLER, com, print_result)
+        pool.put_command("event-handler", com, print_result)
         com = "sleep 5 && echo Hello from HANDLER && badcommand"
-        pool.put_command(CMD_TYPE_EVENT_HANDLER, com, print_result)
+        pool.put_command("event-handler", com, print_result)
 
     log.info('  sleeping')
     time.sleep(3)

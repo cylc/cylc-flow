@@ -29,11 +29,14 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 T1_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
 
-grep_ok 'SUBMIT-OUT:' "${T1_ACTIVITY_LOG}"
-grep_ok 'KILL-ERR:' "${T1_ACTIVITY_LOG}"
+grep_ok '\[job-submit ret_code\] 0' "${T1_ACTIVITY_LOG}"
+grep_ok '\[job-kill err\]' "${T1_ACTIVITY_LOG}"
 grep_ok 'OSError: \[Errno 3\] No such process' "${T1_ACTIVITY_LOG}"
-grep_ok 'POLL-OUT: polled t1\.1 failed at unknown-time' "${T1_ACTIVITY_LOG}"
-grep_ok "EVENT-OUT: failed ${SUITE_NAME} t1\\.1 job failed" "${T1_ACTIVITY_LOG}"
+grep_ok '\[job-poll out\] polled t1\.1 failed at unknown-time' \
+    "${T1_ACTIVITY_LOG}"
+grep_ok \
+    "\\[('event-handler-00', 'failed', '01') out\\] failed ${SUITE_NAME} t1\\.1 job failed" \
+    "${T1_ACTIVITY_LOG}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

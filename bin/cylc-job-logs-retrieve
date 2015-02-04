@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""cylc [hook] job-logs-retrieve [OPTIONS] HOST:HOST-PATH LOCALHOST-PATH
+
+(This command is for internal use.)
+Retrieve logs from a remote host for a task job.
+
+"""
+
+
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.CylcOptionParsers import cop
+import os
+from subprocess import check_call
+import shlex
+
+
+def main():
+    """CLI main."""
+    # Options and arguments
+    opt_parser = cop(__doc__, argdoc=[
+        ("HOST:HOST-PATH", "Path to remote job logs directory"),
+        ("LOCALHOST-PATH", "Path to local job logs directory"),
+    ])
+    opt_parser.add_option("--max-size",
+        help="Don't transfer any file larger than SIZE.",
+        action="store", default="10M", dest="max_size", metavar="SIZE")
+    opts, args = opt_parser.parse_args()
+
+    # Determine the remote shell template to use
+    source, target = args
+    source_auth, source_path = source.split(":", 1)
+    if "@" in source_auth:
+        source_owner, source_host = source_auth.split("@", 1)
+    else:
+        source_owner, source_host = (None, source_auth)
+    ssh_tmpl = str(GLOBAL_CFG.get_host_item(
+        "remote shell template", source_host, source_owner)).replace(" %s", "")
+
+    # See if "job.out" file is available before retrieval
+    job_out_path = os.path.join(source_path, "job.out")
+    check_call(
+        shlex.split(ssh_tmpl) + [source_auth, "test -e \"%s\"" % job_out_path])
+
+    # Retrieve remote job logs
+    # N.B. "scp" does not have a "max-size" option.
+    check_call([
+        "rsync", "-a", "--rsh=" + ssh_tmpl, "--max-size=" + opts.max_size,
+        source + "/", target])
+
+
+if __name__ == "__main__":
+    main()

@@ -233,6 +233,8 @@ utility_commands['suite-state'] = ['suite-state']
 hook_commands = OrderedDict()
 hook_commands['email-suite'] = ['email-suite']
 hook_commands['email-task'] = ['email-task']
+hook_commands['event-mail'] = ['event-mail']
+hook_commands['job-logs-retrieve'] = ['job-logs-retrieve']
 hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = OrderedDict()
@@ -453,6 +455,9 @@ comsum['suite-state'] = 'Query the task states in a suite'
 # hook
 comsum['email-task'] = 'A task event hook script that sends email alerts'
 comsum['email-suite'] = 'A suite event hook script that sends email alerts'
+comsum['event-mail'] = '(Internal) Sends an email notification for an event'
+comsum['job-logs-retrieve'] = (
+    '(Internal) Retrieve logs from a remote host for a task job')
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
 def typo(str):

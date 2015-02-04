@@ -41,7 +41,7 @@ from cylc.network.suite_info import SuiteInfoClient
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.job_logs import CommandLogger
+from cylc.task_proxy import TaskProxy
 from cylc.task_id import TaskID
 import cylc.flags
 
@@ -97,8 +97,8 @@ if options.edit_run:
         sys.exit('ERROR: %s' % msg)
 
     # Get the current job file mtime, if the file exists.
-    jobfile_path = CommandLogger.get_latest_job_log(
-        suite, name, point_string)
+    jobfile_path = os.path.join(
+        TaskProxy.get_job_log_dir(suite, name, point_string), "job")
     try:
         jobfile_mtime = os.stat(jobfile_path).st_mtime
     except OSError:

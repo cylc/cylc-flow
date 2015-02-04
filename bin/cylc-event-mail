@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -eu
+
+usage() {
+    cat <<'__USAGE__'
+USAGE: cylc [hook] event-mail [OPTIONS] EVENT SUITE[.CYCLE.TASK[.SUBMIT]] ...
+
+(This command is for internal use.)
+Sends an email notification for an event.
+__USAGE__
+    exit "$@"
+}
+
+main() {
+    local TO="${USER}@${HOSTNAME}"
+    export sender="$TO"
+    export from="notifications@${HOSTNAME}"
+    while (($# > 0)); do
+        case "$1" in
+        --debug) set -x
+            shift 1
+            :;;
+        --from=*)
+            from="${1#*=}"
+            shift 1
+            :;;
+        --help) usage
+            :;;
+        --smtp=*)
+            export smtp="${1#*=}"
+            shift 1
+            :;;
+        --to=*)
+            TO="${1#*=}"
+            shift 1
+            :;;
+        --) shift 1
+            break
+            :;;
+        -*) usage 1
+            :;;
+        *)  break
+            :;;
+        esac
+    done
+
+    local EVENT="$1"
+    local NAME="$2"
+    shift 2
+    echo "mail -s \"[${EVENT}] ${NAME}\" \"${TO}\" <<<\"[${EVENT}] ${NAME}: $@\""
+    mail -s "[${EVENT}] ${NAME}" "${TO}" <<<"[${EVENT}] ${NAME}: $@"
+}
+
+main "$@"
+exit

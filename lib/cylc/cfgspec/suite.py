@@ -298,6 +298,8 @@ SPEC = {
                 'host'                        : vdr( vtype='string' ),
                 'owner'                       : vdr( vtype='string' ),
                 'suite definition directory'  : vdr( vtype='string' ),
+                'retrieve job log max size'   : vdr( vtype='string' ),
+                'retrieve job log retry delays': vdr( vtype='interval_minutes_list', default=[] ),
                 },
             'event hooks' : {
                 'expired handler'             : vdr( vtype='string_list', default=[] ),
@@ -314,6 +316,16 @@ SPEC = {
                 'execution timeout handler'   : vdr( vtype='string_list', default=[] ),
                 'execution timeout'           : vdr( vtype='interval_minutes'),
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
+                },
+            'events' : {
+                'handler'                     : vdr( vtype='string_list', default=[] ),
+                'handler events'              : vdr( vtype='string_list', default=[] ),
+                'handler retry delays'       : vdr( vtype='interval_minutes_list', default=[] ),
+                'mail events'                 : vdr( vtype='string_list', default=[] ),
+                'mail from'                   : vdr( vtype='string' ),
+                'mail retry delays'           : vdr( vtype='interval_minutes_list', default=[] ),
+                'mail smtp'                   : vdr( vtype='string' ),
+                'mail to'                     : vdr( vtype='string' ),
                 },
             'suite state polling' : {
                 'user'                        : vdr( vtype='string' ),

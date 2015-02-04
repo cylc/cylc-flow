@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Suite database content, a basic non-cycling suite of 3 tasks
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -36,6 +36,13 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
 NAME='select-task-events.out'
 sqlite3 "${DB_FILE}" 'SELECT name, cycle, event, message, misc FROM task_events' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-job-logs.out'
+sqlite3 "${DB_FILE}" \
+    'SELECT cycle, name, submit_num, key, path
+     FROM task_job_logs ORDER BY name, key' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
