@@ -35,7 +35,7 @@ from combo_logviewer import ComboLogViewer
 from warning_dialog import warning_dialog, info_dialog
 
 try:
-    from SuiteControlGraph import ControlGraph
+    from view_graph import ControlGraph
     from graph import graph_suite_popup
 except ImportError, x:
     # pygraphviz not installed
@@ -45,9 +45,9 @@ else:
     graphing_disabled = False
 
 from legend import ThemeLegendWindow
-from SuiteControlLED import ControlLED
-from SuiteControlTree import ControlTree
-from DotMaker import DotMaker
+from view_dot import ControlLED
+from view_tree import ControlTree
+from dot_maker import DotMaker
 from updater import Updater
 from util import (get_icon, get_image_dir, get_logo, EntryTempText,
                   EntryDialog, setup_icons, set_exception_hook_dialog)

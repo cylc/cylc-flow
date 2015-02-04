@@ -20,7 +20,7 @@ import os
 import re
 import gtk
 import gobject
-from GraphUpdater import GraphUpdater
+from updater_graph import GraphUpdater
 from warning_dialog import warning_dialog, info_dialog
 
 from cylc.cylc_xdot import xdot_widgets

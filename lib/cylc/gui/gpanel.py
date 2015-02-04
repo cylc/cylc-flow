@@ -37,8 +37,8 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.gui.gsummary import (get_summary_menu, launch_gsummary,
                                BaseSummaryTimeoutUpdater)
-from cylc.gui.SuiteControl import run_get_stdout
-from cylc.gui.DotMaker import DotMaker
+from cylc.gui.app_gcylc import run_get_stdout
+from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
 from cylc.owner import user
 from cylc.state_summary import extract_group_state
