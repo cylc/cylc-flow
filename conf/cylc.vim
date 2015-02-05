@@ -7,7 +7,8 @@
 "
 " 1) Put this file in $HOME/.vim/syntax/ directory.
 "
-" 2) Put the following in $HOME/.vimrc for file type recognition:
+" 2) Put the following in $HOME/.vimrc for file type recognition
+"    (without the leading "| characters):
 "
 "|augroup filetype
 "|  au! BufRead,BufnewFile *suite.rc   set filetype=cylc
@@ -19,7 +20,7 @@
 " 3) If you want to open files with syntax folds initially open, then
 "    also add the following line to your $HOME/.vimrc file:
 "
-"| set foldlevelstart=99
+"|if has("folding") | set foldlevelstart=99 | endif
 "
 " 4) Cylc syntax is linked to standard vim highlighting groups below (e.g.
 " comments: 'hi def link cylcComment Comment'). These can be customized in
