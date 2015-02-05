@@ -251,17 +251,7 @@ function graph_suite() {
     local SUITE_NAME="${1}"
     local OUTPUT_FILE="${2}"
     shift 2
-    # Strip graph coordinates.
-    # Some (older?) graphviz versions (e.g. 2.20.2) put two spaces before node
-    # coordinates instead of one.
-    # Different graphviz versions use "lightgrey" or "black" as the final word
-    # on node and edge lines.
-    # Sort the result to "natural order".
-    cylc graph '--output-file=-' "${SUITE_NAME}" "$@" \
-        | perl -p -e '
-            s/\s+[+\-]?[0-9]+(?:\.[0-9]+)?(?:e[+\-][.0-9]+)?\b//gmsx;
-            s/^((?:node|edge).*)\s+\w+/$1/msx;' \
-        | sort -V  >"${OUTPUT_FILE}"
+    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}"
 }
 
 function init_suite() {
