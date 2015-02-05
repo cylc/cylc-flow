@@ -20,7 +20,7 @@ import gtk
 #import pygtk
 #pygtk.require('2.0')
 
-from cylc.gui.DotMaker import DotMaker
+from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon
 from cylc.task_state import task_state
 

@@ -19,7 +19,7 @@
 import gtk
 import os, re
 import gobject
-from DotUpdater import DotUpdater
+from updater_dot import DotUpdater
 from gcapture import gcapture_tmpfile
 from cylc import cylc_pyro_client
 from cylc.task_id import TaskID

@@ -19,7 +19,7 @@
 import gtk
 import os, re
 import gobject
-from TreeUpdater import TreeUpdater
+from updater_tree import TreeUpdater
 from gcapture import gcapture_tmpfile
 from warning_dialog import warning_dialog, info_dialog
 from cylc.task_id import TaskID

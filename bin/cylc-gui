@@ -71,7 +71,7 @@ parser.add_option(
 import gtk
 import warnings
 warnings.filterwarnings('ignore', 'use the new', Warning)
-from cylc.gui.SuiteControl import ControlApp
+from cylc.gui.app_gcylc import ControlApp
 
 # Make current working directory be $HOME. Otherwise (1) if the user
 # attempts to start gcylc from a CWD that has been removed, Pyro will

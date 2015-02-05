@@ -24,7 +24,7 @@ import threading
 from time import sleep
 
 from cylc.task_id import TaskID
-from cylc.gui.DotMaker import DotMaker
+from cylc.gui.dot_maker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import isoformat_strftime
 from cylc.wallclock import (

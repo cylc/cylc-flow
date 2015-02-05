@@ -31,13 +31,13 @@ import threading
 from time import sleep
 
 
-def compare_dict_of_dict( one, two ):
+def compare_dict_of_dict(one, two):
     """Return True if one == two, else return False."""
     for key in one:
         if key not in two:
             return False
-        for subkey in one[ key ]:
-            if subkey not in two[ key ]:
+        for subkey in one[key]:
+            if subkey not in two[key]:
                 return False
             if one[key][subkey] != two[key][subkey]:
                 return False
@@ -45,8 +45,8 @@ def compare_dict_of_dict( one, two ):
     for key in two:
         if key not in one:
             return False
-        for subkey in two[ key ]:
-            if subkey not in one[ key ]:
+        for subkey in two[key]:
+            if subkey not in one[key]:
                 return False
             if two[key][subkey] != one[key][subkey]:
                 return False
@@ -55,7 +55,7 @@ def compare_dict_of_dict( one, two ):
 
 
 class GraphUpdater(threading.Thread):
-    def __init__(self, cfg, updater, theme, info_bar, xdot ):
+    def __init__(self, cfg, updater, theme, info_bar, xdot):
         super(GraphUpdater, self).__init__()
 
         self.quit = False
@@ -69,11 +69,11 @@ class GraphUpdater(threading.Thread):
         self.action_required = True
         self.oldest_point_string = None
         self.newest_point_string = None
-        self.orientation = "TB"  # Top to Bottom ordering of nodes, by default.
-        self.best_fit = False # If True, xdot will zoom to page size
-        self.normal_fit = False # if True, xdot will zoom to 1.0 scale
+        self.orientation = "TB"  # Top to Bottom ordering of nodes
+        self.best_fit = False  # zoom to page size
+        self.normal_fit = False  # zoom to 1.0 scale
         self.crop = False
-        self.subgraphs_on = False # If True, organise by cycle point.
+        self.subgraphs_on = False   # organise by cycle point.
 
         self.descendants = {}
         self.all_families = []
@@ -98,7 +98,7 @@ class GraphUpdater(threading.Thread):
         self.prev_graph_id = ()
 
         # empty graphw object:
-        self.graphw = graphing.CGraphPlain( self.cfg.suite )
+        self.graphw = graphing.CGraphPlain(self.cfg.suite)
 
         # TODO - handle failure to get a remote proxy in reconnect()
 
@@ -122,7 +122,7 @@ class GraphUpdater(threading.Thread):
 
         self.graph_frame_count = 0
         self.suite_share_dir = GLOBAL_CFG.get_derived_host_item(
-                self.cfg.suite, 'suite share directory')
+            self.cfg.suite, 'suite share directory')
 
     def toggle_write_dot_frames(self):
         self.write_dot_frames = not self.write_dot_frames
@@ -132,21 +132,23 @@ class GraphUpdater(threading.Thread):
                 mkdir_p(self.suite_share_dir)
             except Exception as exc:
                 gobject.idle_add(warning_dialog(
-                    "%s\nCannot create graph frames directory." % str(exc)).warn
+                    "%s\nCannot create graph frames directory." % (
+                        str(exc)).warn
                     )
+                )
                 self.write_dot_frames = False
 
-    def clear_graph( self ):
+    def clear_graph(self):
         self.prev_graph_id = ()
-        self.graphw = graphing.CGraphPlain( self.cfg.suite )
+        self.graphw = graphing.CGraphPlain(self.cfg.suite)
         self.normal_fit = True
         self.update_xdot()
         # gtk idle functions must return false or will be called multiple times
         return False
 
-    def get_summary( self, task_id ):
-        return get_id_summary( task_id, self.state_summary,
-                               self.fam_state_summary, self.descendants )
+    def get_summary(self, task_id):
+        return get_id_summary(task_id, self.state_summary,
+                              self.fam_state_summary, self.descendants)
 
     def update(self):
         if not self.updater.connected:
@@ -156,8 +158,8 @@ class GraphUpdater(threading.Thread):
             return False
         self.cleared = False
 
-        if ( self.last_update_time is not None and
-             self.last_update_time >= self.updater.last_update_time ):
+        if (self.last_update_time is not None and
+                self.last_update_time >= self.updater.last_update_time):
             if self.action_required:
                 return True
             return False
@@ -187,7 +189,7 @@ class GraphUpdater(threading.Thread):
         for id_ in states_full:
             if id_ not in states:
                 states[id_] = {}
-            states[id_]['name' ] = states_full[id_]['name' ]
+            states[id_]['name'] = states_full[id_]['name']
             # TODO: remove the following backwards compatibility condition.
             if 'description' in states_full[id_]:
                 states[id_]['description'] = states_full[id_]['description']
@@ -201,7 +203,7 @@ class GraphUpdater(threading.Thread):
         for id_ in fam_states_full:
             if id_ not in states:
                 f_states[id_] = {}
-            f_states[id_]['name' ] = fam_states_full[id_]['name' ]
+            f_states[id_]['name'] = fam_states_full[id_]['name']
             # TODO: remove the following backwards compatibility condition.
             if 'description' in fam_states_full[id_]:
                 f_states[id_]['description'] = (
@@ -219,7 +221,7 @@ class GraphUpdater(threading.Thread):
             return True
         elif self.graph_disconnect:
             return False
-        elif not compare_dict_of_dict( states, self.state_summary ):
+        elif not compare_dict_of_dict(states, self.state_summary):
             # state changed - implicitly includes family state change.
             #print 'STATE CHANGED'
             self.state_summary = states
@@ -237,15 +239,15 @@ class GraphUpdater(threading.Thread):
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
                 # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
                 # be unnecessary anyway (due to xdot internals?)
-                ################ gobject.idle_add( self.update_xdot )
-                    self.update_xdot( no_zoom=needed_no_redraw )
+                ################ gobject.idle_add(self.update_xdot)
+                    self.update_xdot(no_zoom=needed_no_redraw)
             sleep(0.2)
         else:
             pass
             ####print "Disconnecting task state info thread"
 
     def update_xdot(self, no_zoom=False):
-        self.xdot.set_dotcode( self.graphw.to_string(), no_zoom=True )
+        self.xdot.set_dotcode(self.graphw.to_string(), no_zoom=True)
         if self.first_update:
             self.xdot.widget.zoom_to_fit()
             self.first_update = False
@@ -253,10 +255,10 @@ class GraphUpdater(threading.Thread):
             self.xdot.widget.zoom_to_fit()
             self.best_fit = False
         elif self.normal_fit:
-            self.xdot.widget.zoom_image( 1.0, center=True )
+            self.xdot.widget.zoom_image(1.0, center=True)
             self.normal_fit = False
 
-    def set_live_node_attr( self, node, id, shape=None ):
+    def set_live_node_attr(self, node, id, shape=None):
         # override base graph URL to distinguish live tasks
         node.attr['URL'] = id
         if id in self.state_summary:
@@ -265,14 +267,14 @@ class GraphUpdater(threading.Thread):
             state = self.fam_state_summary[id]['state']
 
         try:
-            node.attr['style'    ] = 'bold,' + self.theme[state]['style']
+            node.attr['style'] = 'bold,' + self.theme[state]['style']
             node.attr['fillcolor'] = self.theme[state]['color']
-            node.attr['color'    ] = self.theme[state]['color' ]
+            node.attr['color'] = self.theme[state]['color']
             node.attr['fontcolor'] = self.theme[state]['fontcolor']
         except KeyError:
             # unknown state
-            node.attr['style'    ] = 'unfilled'
-            node.attr['color'    ] = 'black'
+            node.attr['style'] = 'unfilled'
+            node.attr['color'] = 'black'
             node.attr['fontcolor'] = 'black'
 
         if shape:
@@ -283,15 +285,15 @@ class GraphUpdater(threading.Thread):
         # (adding new ones, and nodes, if necessary)
         try:
             self.oldest_point_string = (
-                    self.global_summary['oldest cycle point string'])
+                self.global_summary['oldest cycle point string'])
             self.newest_point_string = (
-                    self.global_summary['newest cycle point string'])
+                self.global_summary['newest cycle point string'])
         except KeyError:
             # Pre cylc-6 back compat.
             self.oldest_point_string = (
-                    self.global_summary['oldest cycle time'])
+                self.global_summary['oldest cycle time'])
             self.newest_point_string = (
-                    self.global_summary['newest cycle time'])
+                self.global_summary['newest cycle time'])
 
         if self.focus_start_point_string:
             oldest = self.focus_start_point_string
@@ -304,34 +306,32 @@ class GraphUpdater(threading.Thread):
 
         try:
             res = self.updater.sinfo.get(
-                    'graph raw', oldest, newest,
-                    self.group, self.ungroup, self.ungroup_recursive,
-                    self.group_all, self.ungroup_all)
+                'graph raw', oldest, newest, self.group, self.ungroup,
+                self.ungroup_recursive, self.group_all, self.ungroup_all)
         except TypeError:
             # Back compat with pre cylc-6 suite daemons.
             res = self.updater.sinfo.get(
-                    'graph raw', oldest, newest,
-                    False, self.group, self.ungroup, self.ungroup_recursive,
-                    self.group_all, self.ungroup_all)
+                'graph raw', oldest, newest, False, self.group, self.ungroup,
+                self.ungroup_recursive, self.group_all, self.ungroup_all)
         except Exception as exc:  # PyroError?
             print >> sys.stderr, str(exc)
             return False
 
         # backward compatibility for old suite daemons still running
         self.have_leaves_and_feet = False
-        if isinstance( res, list ):
+        if isinstance(res, list):
             # prior to suite-polling tasks in 5.4.0
             gr_edges = res
             suite_polling_tasks = []
             self.leaves = []
             self.feet = []
         else:
-            if len( res ) == 2:
+            if len(res) == 2:
                 # prior to graph view grouping fix in 5.4.2
                 gr_edges, suite_polling_tasks = res
                 self.leaves = []
                 self.feet = []
-            elif len( res ) == 4:
+            elif len(res) == 4:
                 # 5.4.2 and later
                 self.have_leaves_and_feet = True
                 gr_edges, suite_polling_tasks, self.leaves, self.feet = res
@@ -340,12 +340,14 @@ class GraphUpdater(threading.Thread):
         needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
-            self.graphw = graphing.CGraphPlain(self.cfg.suite, suite_polling_tasks)
-            self.graphw.add_edges(gr_edges, ignore_suicide=self.ignore_suicide)
+            self.graphw = graphing.CGraphPlain(
+                self.cfg.suite, suite_polling_tasks)
+            self.graphw.add_edges(
+                gr_edges, ignore_suicide=self.ignore_suicide)
 
             # Remove nodes representing filtered-out tasks.
             if (self.updater.filter_name_string or
-                self.updater.filter_states_excl):
+                    self.updater.filter_states_excl):
                 nodes_to_remove = set()
                 for node in self.graphw.nodes():
                     id = node.get_name()
@@ -364,7 +366,7 @@ class GraphUpdater(threading.Thread):
                         if remove:
                             nodes_to_remove.add(node)
                 self.graphw.remove_nodes_from(list(nodes_to_remove))
- 
+
             # Base node cropping.
             nodes_to_remove = set()
             if self.crop:
@@ -431,8 +433,9 @@ class GraphUpdater(threading.Thread):
         self.action_required = False
 
         if self.write_dot_frames:
-            arg = os.path.join(self.suite_share_dir, 'frame' + '-' +
-                    str(self.graph_frame_count) + '.dot')
+            arg = os.path.join(
+                self.suite_share_dir, 'frame' + '-' +
+                str(self.graph_frame_count) + '.dot')
             self.graphw.write(arg)
             self.graph_frame_count += 1
 

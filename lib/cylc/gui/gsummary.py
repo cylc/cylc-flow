@@ -34,8 +34,8 @@ from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.gui.legend import ThemeLegendWindow
-from cylc.gui.SuiteControl import run_get_stdout
-from cylc.gui.DotMaker import DotMaker
+from cylc.gui.app_main import run_get_stdout
+from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.owner import user
 from cylc.registration import localdb
@@ -163,7 +163,7 @@ def get_summary_menu(suite_host_tuples,
         sep_item.show()
         menu.append(sep_item)
 
-    # Construct theme chooser items (same as cylc.gui.SuiteControl).
+    # Construct theme chooser items (same as cylc.gui.app_main).
     theme_item = gtk.ImageMenuItem('Theme')
     img = gtk.image_new_from_stock(gtk.STOCK_SELECT_COLOR, gtk.ICON_SIZE_MENU)
     theme_item.set_image(img)
@@ -252,7 +252,7 @@ def get_summary_menu(suite_host_tuples,
 
 
 def launch_about_dialog(program_name, hosts):
-    """Launch a modified version of the SuiteControl.py about dialog."""
+    """Launch a modified version of the app_main.py About dialog."""
     hosts_text = "Hosts monitored: " + ", ".join(hosts)
     comments_text = hosts_text
     about = gtk.AboutDialog()

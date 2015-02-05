@@ -18,7 +18,7 @@
 
 from cylc import cylc_pyro_client, dump
 from cylc.task_state import task_state
-from cylc.gui.DotMaker import DotMaker
+from cylc.gui.dot_maker import DotMaker
 from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
 from cylc.wallclock import get_time_string_from_unix_time
