@@ -18,7 +18,7 @@
 # Test host selection, with a command that times out.
 . "$(dirname "$0")/test_header"
 
-set_test_number 2
+set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -27,6 +27,7 @@ export CYLC_CONF_PATH="${PWD}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --reference-test --debug "${SUITE_NAME}"
-
+grep_ok 'ERROR: command timed out (>1s), terminated by signal 15' \
+    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
 purge_suite "${SUITE_NAME}"
 exit

@@ -24,6 +24,10 @@ from subprocess import Popen, PIPE
 from time import sleep, time
 
 
+ERR_TIMEOUT = "ERROR: command timed out (>%ds), terminated by signal %d\n%s"
+ERR_SIGNAL = "ERROR: command terminated by signal %d\n%s"
+ERR_RETCODE = "ERROR: command failed %d\n%s"
+ERR_OS = "ERROR: command invocation failed"
 POLL_DELAY = 0.1
 
 
@@ -42,6 +46,7 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
     try:
         popen = Popen(
             command, shell=True, preexec_fn=setpgrp, stderr=PIPE, stdout=PIPE)
+        is_killed_after_timeout = False
         if timeout:
             if poll_delay is None:
                 poll_delay = POLL_DELAY
@@ -49,18 +54,18 @@ def run_get_stdout(command, timeout=None, poll_delay=None):
             while popen.poll() is None:
                 if time() > timeout_time:
                     killpg(popen.pid, SIGTERM)
+                    is_killed_after_timeout = True
                     break
                 sleep(poll_delay)
         out, err = popen.communicate()
         res = popen.wait()
-        if res < 0:
-            msg = "ERROR: command terminated by signal %d\n%s" % (res, err)
-            return (False, [msg, command])
+        if res < 0 and is_killed_after_timeout:
+            return (False, [ERR_TIMEOUT % (timeout, -res, err), command])
+        elif res < 0:
+            return (False, [ERR_SIGNAL % (-res, err), command])
         elif res > 0:
-            msg = "ERROR: command failed %d\n%s" % (res, err)
-            return (False, [msg, command])
+            return (False, [ERR_RETCODE % (res, err), command])
     except OSError:  # should never do this with shell=True
-        msg = "ERROR: command invocation failed"
-        return (False, [msg, command])
+        return (False, [ERR_OS, command])
     else:
         return (True, out.strip().splitlines())
