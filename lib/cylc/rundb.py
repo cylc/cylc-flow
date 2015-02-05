@@ -20,14 +20,15 @@ from datetime import datetime
 import errno
 from time import sleep
 import os
+import Queue
 import shutil
 import sqlite3
 import stat
 import sys
 from threading import Thread
-from Queue import Queue
 from mkdir_p import mkdir_p
 from cylc.wallclock import get_current_time_string
+import cPickle as pickle
 
 
 class UpdateObject(object):
@@ -96,13 +97,14 @@ class BulkDBOperObject(object):
 
 
 class ThreadedCursor(Thread):
-    def __init__(self, db):
+    def __init__(self, db, dump, restart=False):
         super(ThreadedCursor, self).__init__()
         self.max_commit_attempts = 5
         self.db=db
-        self.reqs=Queue()
-        self.start()
-        self.exception = None
+        self.db_dump_name = dump
+        self.reqs=Queue.Queue()
+        self.db_dump_msg = ("[INFO] Dumping database queue (%s items) to: %s")
+        self.db_dump_load = ("[INFO] Loading dumped database queue (%s items) from: %s")
         self.integrity_msg = ("Database Integrity Error: %s:\n"+
                               "\tConverting INSERT to INSERT OR REPLACE for:\n"+
                               "\trequest: %s\n\targs: %s")
@@ -112,6 +114,12 @@ class ThreadedCursor(Thread):
                                  "\tNo database found at %s")
         self.retry_warning = ("[WARNING] retrying database operation on %s - retry %s \n"+
                               "\trequest: %s\n\targs: %s")
+        if restart:
+            self.load_queue()
+        self.start()
+        self.exception = None
+
+
     def run(self):
         cnx = sqlite3.connect(self.db, timeout=10.0)
         cursor = cnx.cursor()
@@ -132,6 +140,9 @@ class ThreadedCursor(Thread):
                         sleep(1)
             attempt = 0
             req, arg, res, bulk = self.reqs.get()
+            self.lastreq = req
+            self.lastarg = arg
+            self.lastbulk = bulk
             if req=='--close--': break
             while attempt < self.max_commit_attempts:
                 try:
@@ -153,6 +164,8 @@ class ThreadedCursor(Thread):
                         req = req.replace("INSERT INTO", "INSERT OR REPLACE INTO", 1)
                     if attempt >= self.max_commit_attempts:
                         self.exception = e
+                        # dump database queue - should only be readable by suite owner
+                        self.dump_queue()
                         raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
                     print >> sys.stderr, self.retry_warning%(self.db, str(attempt), req, arg)
                     sleep(1)
@@ -161,29 +174,77 @@ class ThreadedCursor(Thread):
                     attempt += 1
                     if attempt >= self.max_commit_attempts:
                         self.exception = e
+                        # dump database queue - should only be readable by suite owner
+                        self.dump_queue()
                         raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
                     print >> sys.stderr, self.retry_warning%(self.db, str(attempt), req, arg)
                     sleep(1)
             counter += 1
         cnx.commit()
         cnx.close()
+
     def execute(self, req, arg=None, res=None, bulk=False):
         self.reqs.put((req, arg or tuple(), res, bulk))
+
     def select(self, req, arg=None):
-        res=Queue()
+        res=Queue.Queue()
         self.execute(req, arg, res)
         while True:
             rec=res.get()
             if rec=='--no more--': break
             yield rec
+
     def close(self):
         self.execute('--close--')
+
+    def dump_queue(self):
+        """Dump out queued database operations"""
+        queue_dump = {}
+        if not self.lastreq.startswith("SELECT"):
+            queue_dump[0] = {}
+            queue_dump[0]['req'] = self.lastreq
+            queue_dump[0]['args'] = self.lastarg
+            queue_dump[0]['is_bulk'] = self.lastbulk
+
+        i = 1
+        while True:
+            try:
+                req, arg, res, bulk = self.reqs.get_nowait()
+            except Queue.Empty:
+                break
+            # Ignore queries and database close messages
+            if not res and not req == "--close--":
+                queue_dump[i] = {}
+                queue_dump[i]['req'] = req
+                queue_dump[i]['args'] = arg
+                queue_dump[i]['is_bulk'] = bulk
+                i += 1
+
+        print >> sys.stderr, self.db_dump_msg%(len(queue_dump.keys()), str(self.db_dump_name))
+        pickle.dump(queue_dump, open(self.db_dump_name, "wb"))
+
+        # Protect the file
+        os.chmod(self.db_dump_name, stat.S_IRUSR | stat.S_IWUSR)
+        return
+
+    def load_queue(self):
+        """Reload queue from a dump"""
+        if os.path.exists(self.db_dump_name):
+            dumped_queue = pickle.load( open( self.db_dump_name, "rb" ) )
+            print >> sys.stdout, self.db_dump_load%(len(dumped_queue.keys()), str(self.db_dump_name))
+            for item in dumped_queue.keys():
+                self.execute(dumped_queue[item]['req'],
+                             dumped_queue[item]['args'],
+                             bulk=dumped_queue[item]['is_bulk'])
+            os.remove(self.db_dump_name)
+        return
 
 
 class CylcRuntimeDAO(object):
     """Access object for a Cylc suite runtime database."""
 
     DB_FILE_BASE_NAME = "cylc-suite.db"
+    DB_DUMP_BASE_NAME = "cylc_db_dump.p"
     TASK_EVENTS = "task_events"
     TASK_STATES = "task_states"
     BROADCAST_SETTINGS = "broadcast_settings"
@@ -224,9 +285,12 @@ class CylcRuntimeDAO(object):
         if suite_dir is None:
             suite_dir = os.getcwd()
         if primary_db:
-            self.db_file_name = os.path.join(suite_dir, 'state', self.DB_FILE_BASE_NAME)
+            prefix = os.path.join(suite_dir, 'state')
         else:
-            self.db_file_name = os.path.join(suite_dir, self.DB_FILE_BASE_NAME)
+            prefix = suite_dir
+
+        self.db_file_name = os.path.join(prefix, self.DB_FILE_BASE_NAME)
+        self.db_dump_name = os.path.join(prefix, self.DB_DUMP_BASE_NAME)
         # create the host directory if necessary
         try:
             mkdir_p( suite_dir )
@@ -248,7 +312,13 @@ class CylcRuntimeDAO(object):
             # Restrict the primary database to user access only
             if primary_db:
                 os.chmod(self.db_file_name, stat.S_IRUSR | stat.S_IWUSR)
-        self.c = ThreadedCursor(self.db_file_name)
+            # Clear out old db operations dump
+            if os.path.exists(self.db_dump_name):
+                os.remove(self.db_dump_name)
+        else:
+            self.lock_check()
+
+        self.c = ThreadedCursor(self.db_file_name, self.db_dump_name, not new_mode)
 
     def close(self):
         self.c.close()
@@ -273,6 +343,12 @@ class CylcRuntimeDAO(object):
             s += ")"
             res = c.execute(s)
         return
+
+    def lock_check(self):
+        """Try to create a dummy table"""
+        c = self.connect()
+        c.execute("CREATE TABLE lock_check (entry TEXT)")
+        c.execute("DROP TABLE lock_check")
 
     def get_task_submit_num(self, name, cycle):
         s_fmt = ("SELECT COUNT(*) FROM task_events" +
