@@ -1,0 +1,7 @@
+2015-02-06T10:41:15Z INFO - Run mode: live
+2015-02-06T10:41:15Z INFO - Initial point: 1
+2015-02-06T10:41:15Z INFO - Final point: 1
+2015-02-06T10:41:15Z INFO - Cold Start 1
+2015-02-06T10:41:15Z INFO - [sleeper.1] -triggered off []
+2015-02-06T10:41:17Z INFO - [killer.1] -triggered off ['sleeper.1']
+2015-02-06T10:41:22Z INFO - [sleeper.1] -triggered off []
