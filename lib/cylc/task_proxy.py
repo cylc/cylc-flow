@@ -1461,6 +1461,7 @@ class TaskProxy(object):
 
     def kill(self):
         """Kill current job of this task."""
+        self.reset_state_held()
         return self._manip_job_status(
             "job-kill", self.job_kill_callback, ['running', 'submitted'])
 

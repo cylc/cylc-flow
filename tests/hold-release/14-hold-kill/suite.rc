@@ -1,0 +1,26 @@
+#!Jinja2
+
+title = Test: task should be held from retrying after a job kill
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT30S
+[scheduling]
+    [[dependencies]]
+        graph = "sleeper:start => killer"
+[runtime]
+    [[killer]]
+        command scripting = """
+cylc kill "${CYLC_SUITE_NAME}" 'sleeper' "${CYLC_TASK_CYCLE_POINT}"
+while grep -q '^sleeper, 1, running, spawned' \
+    <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
+do
+    sleep 1
+done
+# The following line will fail the test unless "sleeper" is held.
+grep -q '^sleeper, 1, held, spawned' <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
+cylc release "${CYLC_SUITE_NAME}" 'sleeper' "${CYLC_TASK_CYCLE_POINT}"
+"""
+    [[sleeper]]
+        command scripting = test "${CYLC_TASK_TRY_NUMBER}" -gt 1 || sleep 60
+        retry delays = PT1S
