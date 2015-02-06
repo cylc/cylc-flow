@@ -128,6 +128,19 @@ value is probably sufficient for job submission polling.
 \item {\em example:} (see the execution polling example above)
 \end{myitemize}
 
+\subsubsection{task host select command timeout}
+
+When a task host in a suite is a shell command string, cylc calls the shell to
+determine the task host. This call is invoked by the main process, and may
+cause the suite to hang while waiting for the command to finish. This setting
+sets a timeout for such a command to ensure that the suite can continue.
+
+\begin{myitemize}
+\item {\em type:} ISO 8601 duration/interval representation (e.g.
+\lstinline=PT10S=, 10 seconds, or \lstinline=PT1M=, 1 minute).
+\item {\em default: PT10S}
+\end{myitemize}
+
 \subsection{[task messaging]}
 
 This section contains configuration items that affect task-to-suite
