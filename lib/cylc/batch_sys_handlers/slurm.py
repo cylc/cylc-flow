@@ -27,10 +27,17 @@ class SLURMHandler(object):
     KILL_CMD_TMPL = "scancel '%(job_id)s'"
     # N.B. The "squeue -j JOB_ID" command returns 1 if JOB_ID is no longer in
     # the system, so there is no need to filter its output.
-    POLL_CMD_TMPL = "squeue -j '%(job_id)s'"
+    POLL_CMD_TMPL = "squeue -h -j '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(
         r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
+
+    @classmethod
+    def filter_poll_output(cls, out, job_id):
+        """Return True if job_id is in the queueing system."""
+        # squeue -h -j JOB_ID when JOB_ID has stopped can either exit with
+        # non-zero exit code or return blank text.
+        return out.strip()
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
