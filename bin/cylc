@@ -80,6 +80,7 @@ def match_dict(abbrev, categories, title):
 def match_command(abbrev):
     # allow any unique abbreviation to commands when no category is specified
     matches = []
+    finished_matching = False
     for dct in [
         admin_commands,
         license_commands,
@@ -92,10 +93,16 @@ def match_command(abbrev):
         hook_commands,
         task_commands]:
         for com in dct.keys():
+            if com == abbrev:
+                matches = [com]
+                finished_matching = True
+                break
             for alias in dct[com]:
                 if re.match('^' + abbrev + '.*', alias):
                     if com not in matches:
                         matches.append(com)
+            if finished_matching:
+                break
     if len(matches) == 0:
         raise CommandNotFoundError, 'COMMAND not found: ' + abbrev
     elif len(matches) > 1:
@@ -245,6 +252,7 @@ preparation_commands['5to6'] = ['5to6']
 preparation_commands['list'] = ['list', 'ls']
 preparation_commands['search'] = ['search', 'grep']
 preparation_commands['graph'] = ['graph']
+preparation_commands['graph-diff'] = ['graph-diff']
 preparation_commands['diff'] = ['diff', 'compare']
 preparation_commands['jobscript'] = ['jobscript']
 
@@ -376,6 +384,7 @@ comsum['validate'] = 'Parse and validate suite definitions'
 comsum['5to6'] = 'Improve the cylc 6 compatibility of a cylc 5 suite file'
 comsum['search'] = 'Search in suite definitions'
 comsum['graph'] = 'Plot suite dependency graphs and runtime hierarchies'
+comsum['graph-diff'] = 'Compare two suite dependencies or runtime hierarchies'
 comsum['diff'] = 'Compare two suite definitions and print differences'
 # information
 comsum['list'] = 'List suite tasks and family namespaces'

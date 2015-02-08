@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import StringIO
 import sys
 from cylc.remote import remrun
 from cylc.task_id import TaskID
@@ -86,6 +87,11 @@ parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START[STOP]]
      Plot the suite.rc dependency graph for SUITE.
        2/ cylc [prep] graph [OPTIONS] -f,--file FILE
      Plot the specified dot-language graph file.
+       3/ cylc [prep] graph [OPTIONS] --reference SUITE [START[STOP]]
+     Print out a reference format for the dependencies in SUITE.
+       4/ cylc [prep] graph [OPTIONS] --output-file FILE SUITE
+     Plot SUITE dependencies to a file FILE with a extension-derived format.
+     If FILE endswith ".png", output in PNG format, etc.
 
 Plot suite dependency graphs in an interactive graph viewer.
 
@@ -137,13 +143,20 @@ parser.add_option( "-f", "--file",
 
 parser.add_option( "-O", "--output-file",
     help="Output to a specific file, with a format given by --output-format" +
-         " or extrapolated from the extension.",
+         " or extrapolated from the extension. " +
+         "'-' implies stdout in plain format.",
     metavar="FILE", action="store", default=None, dest="output_filename" )
 
 parser.add_option( "--output-format",
     help="Specify a format for writing out the graph to --output-file " +
-         "e.g. png, svg, jpg, eps, dot.",
+         "e.g. png, svg, jpg, eps, dot. 'ref' is a special sorted plain " +
+         "text format for comparison and reference purposes.",
     metavar="FORMAT", action="store", default=None, dest="output_format" )
+
+parser.add_option( "-r", "--reference",
+    help="Output in a sorted plain text format for comparison purposes." +
+         " If not given, assume --output-file=-.",
+    action="store_true", default=False, dest="reference")
 
 (options, args) = parser.parse_args()
 
@@ -153,7 +166,8 @@ parser.add_option( "--output-format",
 import gtk, gobject
 from xdot import DotWindow
 try:
-    from cylc.cylc_xdot import MyDotWindow, MyDotWindow2
+    from cylc.cylc_xdot import (
+        MyDotWindow, MyDotWindow2, get_reference_from_plain_format)
 except ImportError, x:
     # this imports pygraphviz via cylc.graphing
     print >> sys.stderr, str(x)
@@ -206,11 +220,29 @@ else:
 window.widget.connect('clicked', on_url_clicked, window)
 window.get_graph()
 
+if options.reference and options.output_filename is None:
+    options.output_filename = "-"
+
 if options.output_filename:
-    if options.output_filename == "-":
-        window.graph.draw(sys.stdout, format="plain", prog="dot")
+    if (options.reference or options.output_filename.endswith(".ref") or
+            options.output_format == "ref"):
+        dest = StringIO.StringIO()
+        window.graph.draw(dest, format="plain", prog="dot")
+        output_text = get_reference_from_plain_format(dest.getvalue())
+        if options.output_filename == "-":
+            sys.stdout.write(output_text)
+        else:
+            open(options.output_filename).write(output_text)
     else:
-        window.graph.draw(options.output_filename, prog="dot")
+        if options.output_filename == "-":
+            window.graph.draw(sys.stdout, format="plain", prog="dot")
+        elif options.output_format:
+            window.graph.draw(
+                options.output_filename, format=options.output_format,
+                prog="dot"
+            )
+        else:
+            window.graph.draw(options.output_filename, prog="dot")
     sys.exit(0)
 
 window.connect('destroy', gtk.main_quit)

@@ -1,0 +1,13 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20140808T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = cold_foo => foo
+        [[[T00]]]
+            graph = foo => bar => baz
+[runtime]
+    [[FOO]]
+    [[foo,bar,baz]]
+        inherit = None, FOO

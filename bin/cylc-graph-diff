@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+set -eu
+
+usage() {
+  cat <<'__USAGE__'
+USAGE: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
+
+Difference 'cylc graph --reference' output for SUITE1 and SUITE2.
+
+OPTIONS: Use '-g' to launch a graphical diff utility.
+         Use '--diff-cmd=MY_DIFF_CMD' to use a custom diff tool.
+
+SUITE1, SUITE2: Suite names to compare.
+GRAPH_OPTIONS_ARGS: Options and arguments passed directly to cylc graph.
+__USAGE__
+}
+
+DIFF_CMD="diff -u"
+GRAPHICAL_DIFF=false
+SUITES=""
+NUM_SUITES=0
+for ARG in "$@"; do
+    shift
+    if [[ "$ARG" == '--' ]]; then
+        break
+    elif [[ "$ARG" == '--help' ]]; then
+        usage
+        exit 0
+    elif [[ "$ARG" == "-g" ]]; then
+        GRAPHICAL_DIFF=true
+    elif [[ "$ARG" == --diff-cmd=* ]]; then
+        DIFF_CMD=${ARG#*=}
+    else
+        # A suite - check it's registered.
+        if ! cylc db print --fail "$ARG$" >/dev/null 2>&1; then
+            echo "Suite not found: "$ARG >&2
+            exit 1
+        fi
+        SUITES="$SUITES $ARG"
+        NUM_SUITES=$((NUM_SUITES+1))
+    fi
+done
+if (( NUM_SUITES != 2 )); then
+    usage >&2
+    exit 1
+fi
+
+DIFF_FILES=""
+for SUITE in $SUITES; do
+    FILE=$(mktemp -t $SUITE.graph.ref.XXXX)
+    cylc graph --reference "$@" $SUITE >$FILE
+    DIFF_FILES="$DIFF_FILES $FILE"
+done
+
+if $GRAPHICAL_DIFF; then
+    for DIFFTOOL in xxdiff diffuse kdiff3 kompare gvimdiff2 meld tkdiff; do
+        if type -P $DIFFTOOL >/dev/null; then
+            "$DIFFTOOL" $DIFF_FILES
+            exit 0
+        fi
+    done
+    echo "Error: no graphical diff tool found." >&2
+    exit 1
+fi
+
+$DIFF_CMD $DIFF_FILES
