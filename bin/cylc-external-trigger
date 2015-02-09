@@ -24,13 +24,13 @@ from cylc.external_trigger import PyroClient
 from cylc.command_prep import prep_pyro
 
 
-parser = cop("""cylc [control] event [OPTIONS] ARGS
+parser = cop("""cylc [control] external-trigger [OPTIONS] ARGS
 
 Report an external trigger event to a suite daemon.""",
     pyro=True,
     argdoc=[
         ("REG", "Suite name"),
-        ("MSG", "Event message"),
+        ("MSG", "external trigger message"),
         ("[ID]", "Optional arbitrary unique event ID")
     ]
 )
