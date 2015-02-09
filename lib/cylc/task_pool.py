@@ -85,7 +85,7 @@ class TaskPool(object):
         self.rhpool_changed = []
 
         self.is_held = False
-
+        self.hold_point = None
         self.held_future_tasks = []
 
         self.wireless = broadcast(config.get_linearized_ancestors())
@@ -137,11 +137,10 @@ class TaskPool(object):
                 "holding (beyond suite stop point) " + str(self.stop_point))
             itask.reset_state_held()
 
-        # TODO ISO - restore this functionality
-        #elif self.hold_time and itask.point > self.hold_time:
-        #    itask.log(INFO, "holding (beyond suite hold point) " +
-        #    str(self.hold_time))
-        #    itask.reset_state_held()
+        elif self.hold_point and itask.point > self.hold_point:
+            itask.log(INFO, "holding (beyond suite hold point) " +
+                      str(self.hold_point))
+            itask.reset_state_held()
 
         # add in held state if a future trigger goes beyond the suite stop
         # point (note this only applies to tasks below the suite stop point
@@ -630,6 +629,18 @@ class TaskPool(object):
             if itask.identity in ids:
                 # (state check done in task module)
                 itask.kill()
+
+    def get_hold_point(self):
+        """Return the point after which tasks must be held."""
+        return self.hold_point
+
+    def set_hold_point(self, point):
+        """Set the point after which tasks must be held."""
+        self.hold_point = point
+        if point is not None:
+            for itask in self.get_tasks(incl_runahead=True):
+                if itask.point > point:
+                    itask.reset_state_held()
 
     def hold_tasks(self, ids):
         """Hold tasks with IDs matching any item in "ids"."""

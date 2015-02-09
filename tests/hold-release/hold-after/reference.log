@@ -1,0 +1,56 @@
+2015-02-09T12:33:54Z INFO - Suite starting at 2015-02-09T12:33:54Z
+2015-02-09T12:33:54Z INFO - Run mode: live
+2015-02-09T12:33:54Z INFO - Initial point: 20140101T0000Z
+2015-02-09T12:33:54Z INFO - Final point: 20140104T0000Z
+2015-02-09T12:33:54Z INFO - Cold Start 20140101T0000Z
+2015-02-09T12:33:54Z INFO - [holdafter.20140101T0000Z] -initiate job-submit
+2015-02-09T12:33:54Z INFO - [stopper.20140101T0000Z] -initiate job-submit
+2015-02-09T12:33:54Z INFO - [holdafter.20140101T0000Z] -triggered off []
+2015-02-09T12:33:54Z INFO - [stopper.20140101T0000Z] -triggered off []
+
+2015-02-09T12:33:55Z INFO - [holdafter.20140101T0000Z] -submit_method_id=28987
+2015-02-09T12:33:55Z INFO - [holdafter.20140101T0000Z] -submission succeeded
+
+2015-02-09T12:33:55Z INFO - [stopper.20140101T0000Z] -submit_method_id=28988
+2015-02-09T12:33:55Z INFO - [stopper.20140101T0000Z] -submission succeeded
+2015-02-09T12:33:56Z INFO - [holdafter.20140101T0000Z] -(current:submitted)> holdafter.20140101T0000Z started at 2015-02-09T12:33:55Z
+2015-02-09T12:33:56Z INFO - [stopper.20140101T0000Z] -(current:submitted)> stopper.20140101T0000Z started at 2015-02-09T12:33:55Z
+2015-02-09T12:33:57Z INFO - Setting suite hold cycle point: 20140101T1200Z
+2015-02-09T12:33:57Z INFO - The suite will pause when all tasks have passed 20140101T12
+2015-02-09T12:33:57Z INFO - Command succeeded: hold suite after(20140101T12)
+2015-02-09T12:33:58Z INFO - [holdafter.20140101T0000Z] -(current:running)> holdafter.20140101T0000Z succeeded at 2015-02-09T12:33:57Z
+2015-02-09T12:33:59Z INFO - [foo.20140101T0000Z] -initiate job-submit
+2015-02-09T12:33:59Z INFO - [foo.20140101T0000Z] -triggered off ['holdafter.20140101T0000Z']
+
+2015-02-09T12:34:00Z INFO - [foo.20140101T0000Z] -submit_method_id=29267
+2015-02-09T12:34:00Z INFO - [foo.20140101T0000Z] -submission succeeded
+2015-02-09T12:34:01Z INFO - [foo.20140101T0000Z] -(current:submitted)> foo.20140101T0000Z started at 2015-02-09T12:34:00Z
+2015-02-09T12:34:01Z INFO - [foo.20140101T0000Z] -(current:running)> foo.20140101T0000Z succeeded at 2015-02-09T12:34:00Z
+2015-02-09T12:34:02Z INFO - [foo.20140101T1200Z] -initiate job-submit
+2015-02-09T12:34:02Z INFO - [bar.20140101T0000Z] -initiate job-submit
+2015-02-09T12:34:02Z INFO - [foo.20140101T1200Z] -triggered off ['foo.20140101T0000Z']
+2015-02-09T12:34:02Z INFO - [bar.20140101T0000Z] -triggered off ['foo.20140101T0000Z']
+
+2015-02-09T12:34:03Z INFO - [foo.20140101T1200Z] -submit_method_id=29440
+2015-02-09T12:34:03Z INFO - [foo.20140101T1200Z] -submission succeeded
+
+2015-02-09T12:34:03Z INFO - [bar.20140101T0000Z] -submit_method_id=29443
+2015-02-09T12:34:03Z INFO - [bar.20140101T0000Z] -submission succeeded
+2015-02-09T12:34:03Z INFO - [foo.20140102T0000Z] -holding (beyond suite hold point) 20140101T1200Z
+2015-02-09T12:34:03Z INFO - [foo.20140102T0000Z] -waiting => held
+2015-02-09T12:34:04Z INFO - [foo.20140101T1200Z] -(current:submitted)> foo.20140101T1200Z started at 2015-02-09T12:34:03Z
+2015-02-09T12:34:04Z INFO - [foo.20140101T1200Z] -(current:running)> foo.20140101T1200Z succeeded at 2015-02-09T12:34:03Z
+2015-02-09T12:34:04Z INFO - [bar.20140101T0000Z] -(current:submitted)> bar.20140101T0000Z started at 2015-02-09T12:34:03Z
+2015-02-09T12:34:04Z INFO - [bar.20140101T0000Z] -(current:running)> bar.20140101T0000Z succeeded at 2015-02-09T12:34:03Z
+2015-02-09T12:34:05Z INFO - [bar.20140101T1200Z] -initiate job-submit
+2015-02-09T12:34:05Z INFO - [bar.20140101T1200Z] -triggered off ['foo.20140101T1200Z']
+
+2015-02-09T12:34:06Z INFO - [bar.20140101T1200Z] -submit_method_id=29656
+2015-02-09T12:34:06Z INFO - [bar.20140101T1200Z] -submission succeeded
+2015-02-09T12:34:06Z INFO - [bar.20140102T0000Z] -holding (beyond suite hold point) 20140101T1200Z
+2015-02-09T12:34:06Z INFO - [bar.20140102T0000Z] -waiting => held
+2015-02-09T12:34:07Z INFO - [bar.20140101T1200Z] -(current:submitted)> bar.20140101T1200Z started at 2015-02-09T12:34:06Z
+2015-02-09T12:34:07Z INFO - [bar.20140101T1200Z] -(current:running)> bar.20140101T1200Z succeeded at 2015-02-09T12:34:06Z
+2015-02-09T12:34:26Z INFO - Command succeeded: stop cleanly(False)
+2015-02-09T12:34:27Z INFO - [stopper.20140101T0000Z] -(current:running)> stopper.20140101T0000Z succeeded at 2015-02-09T12:34:26Z
+2015-02-09T12:34:28Z INFO - Suite shutting down at 2015-02-09T12:34:28Z

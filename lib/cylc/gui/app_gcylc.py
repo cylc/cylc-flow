@@ -969,7 +969,7 @@ been defined for this suite""").inform()
     def startsuite(self, bt, window, coldstart_rb, warmstart_rb, restart_rb,
                    entry_point_string, stop_point_string_entry,
                    statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
-                   mode_dum_rb, hold_cb, holdtime_entry):
+                   mode_dum_rb, hold_cb, holdpoint_entry):
 
         command = 'cylc run ' + self.cfg.template_vars_opts
         options = ''
@@ -999,7 +999,7 @@ been defined for this suite""").inform()
         if ste:
             options += ' --until=' + ste
 
-        hetxt = holdtime_entry.get_text()
+        hetxt = holdpoint_entry.get_text()
         if hold_cb.get_active():
             options += ' --hold'
         elif hetxt != '':
@@ -1995,10 +1995,10 @@ shown here in the state they were in at the time of triggering.''')
         hold_cb = gtk.CheckButton("Hold on start-up")
 
         hold_box = gtk.HBox()
-        holdtime_entry = EntryTempText()
-        holdtime_entry.set_temp_text("Hold after cycle")
-        holdtime_entry.set_width_chars(14)
-        hold_box.pack_start(holdtime_entry, True)
+        holdpoint_entry = EntryTempText()
+        holdpoint_entry.set_temp_text("Hold after cycle")
+        holdpoint_entry.set_width_chars(17)
+        hold_box.pack_start(holdpoint_entry, True)
 
         hbox.pack_start(hold_cb)
         hbox.pack_start(hold_box)
@@ -2029,8 +2029,8 @@ shown here in the state they were in at the time of triggering.''')
         start_button.connect("clicked", self.startsuite, window, coldstart_rb,
                              warmstart_rb, restart_rb, point_string_entry,
                              stop_point_string_entry, statedump_entry,
-                             optgroups, mode_live_rb, mode_sim_rb, mode_dum_rb,
-                             hold_cb, holdtime_entry)
+                             optgroups, mode_live_rb, mode_sim_rb,
+                             mode_dum_rb, hold_cb, holdpoint_entry)
 
         help_run_button = gtk.Button("_Help Run")
         help_run_button.connect("clicked", self.command_help, "control", "run")

@@ -40,7 +40,10 @@ See also 'cylc [control] release'.""", pyro=True, multitask=True,
     ('[MATCH]', 'Task or family name matching regular expression'),
     ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
 
-# TODO - hold after CYCLE_POINT etc. as per the stop command?
+parser.add_option(
+    "--after",
+    help="Hold whole suite AFTER this cycle point.",
+    metavar="CYCLE_POINT", action="store", dest="hold_point_string")
 
 (options, args) = parser.parse_args()
 
@@ -53,6 +56,8 @@ if len(args) == 3:
     point_string = args[2]
     prompt( 'Hold task(s) ' + name + ' at ' + point_string + ' in ' + suite,
             options.force )
+elif options.hold_point_string:
+    prompt( 'Hold suite after ' + options.hold_point_string, options.force )
 elif len(args) == 1:
     prompt( 'Hold suite ' + suite, options.force )
 else:
@@ -62,7 +67,9 @@ try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
             options.host, options.pyro_timeout,
             options.port ).get_proxy( 'command-interface' )
-    if whole_suite:
+    if options.hold_point_string:
+        result = proxy.put( 'hold suite after', options.hold_point_string )
+    elif whole_suite:
         result = proxy.put( 'hold suite now' )
     else:
         result = proxy.put( 'hold task now', name, point_string,

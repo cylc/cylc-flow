@@ -1,0 +1,23 @@
+
+title = "cylc run --hold-after"
+
+description = """Test running with a hold-after cycle point."""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    initial cycle time = 20140101T00
+    final cycle time   = 20140104T00
+    max active cycle points = 10    
+    [[dependencies]]
+        [[[R1]]]
+            graph = stopper
+        [[[T00, T12]]]
+            graph = foo[-PT12H] => foo => bar
+[runtime]
+    [[stopper]]
+        command scripting = sleep 30; cylc stop $CYLC_SUITE_NAME
+    [[foo,bar]]
+        command scripting = true
