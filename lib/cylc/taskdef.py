@@ -72,6 +72,8 @@ class TaskDef(object):
         # cycle.
         self.outputs = []
 
+        self.external_triggers = []
+
         self.name = name
         self.elapsed_times = []
         self.mean_total_elapsed_time = None

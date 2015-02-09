@@ -42,6 +42,7 @@ from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
 
 import cylc.rundb
+import cylc.external_trigger
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
@@ -91,6 +92,11 @@ class TaskPool(object):
 
         self.wireless = BroadcastServer(config.get_linearized_ancestors())
         self.pyro.connect(self.wireless, PYRO_BCAST_OBJ_NAME)
+
+        self.external_trigger_broker = cylc.external_trigger.Broker.get_inst(self.wireless)
+        self.pyro.connect(
+            self.external_trigger_broker,
+            cylc.external_trigger.PYRO_TARGET_NAME)
 
         self.broker = broker()
 
@@ -711,6 +717,10 @@ class TaskPool(object):
                 return True
         return False
 
+    def match_external_triggers(self):
+        for itask in self.get_tasks(incl_runahead=False):
+            self.external_trigger_broker.retrieve(itask)
+
     def match_dependencies(self):
         """Run time dependency negotiation.
 
@@ -978,6 +988,7 @@ class TaskPool(object):
         if not self.no_active_tasks():
             self.log.warning("some active tasks will be orphaned")
         self.pyro.disconnect(self.wireless)
+        self.pyro.disconnect(self.external_trigger_broker)
         for itask in self.get_tasks():
             if itask.message_queue:
                 self.pyro.disconnect(itask.message_queue)

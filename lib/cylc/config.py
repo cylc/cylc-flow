@@ -1112,6 +1112,17 @@ class config( object ):
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError( "ERROR: script cannot be defined for automatic suite polling task " + l_task )
 
+        # Check that external trigger messages are unique.
+        seen = {}
+        for name, tdef in self.taskdefs.items():
+            for eet in tdef.external_triggers:
+                if eet not in seen:
+                    seen[eet] = name
+                else:
+                    err = 'Duplicate external trigger for tasks \'%s\' and \'%s\':\n "%s"' % (
+                        name, seen[eet], eet)
+                    print >> sys.stderr, err
+                    raise SuiteConfigError("ERROR: duplicate external trigger")
 
     def get_coldstart_task_list( self ):
         return self.cfg['scheduling']['special tasks']['cold-start']
@@ -1495,12 +1506,15 @@ class config( object ):
                     self.taskdefs[ name ].add_sequence(seq)
 
             if self.run_mode == 'live':
-                # register any explicit internal outputs
-                if 'outputs' in self.cfg['runtime'][name]:
-                    for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = output(msg, base_interval)
-                        self.taskdefs[name].outputs.append(outp)
-
+                # register explicit output messages
+                for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
+                    outp = output(msg, base_interval)
+                    self.taskdefs[name].outputs.append(outp)
+                # register external event triggers
+                self.taskdefs[name].external_triggers = (
+                    self.cfg['runtime'][name]['external triggers'].values()
+                )
+ 
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.

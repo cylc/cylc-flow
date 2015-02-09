@@ -144,6 +144,11 @@ class TaskProxy(object):
                 self.outputs.add(msg)
         self.outputs.register()
 
+        self.external_triggers = {}
+        for eet in self.tdef.external_triggers:
+            # set unsatisfied
+            self.external_triggers[eet] = False
+
         # Manually inserted tasks may have a final cycle point set.
         self.stop_point = stop_point
 
@@ -398,7 +403,8 @@ class TaskProxy(object):
                 self.state.is_currently('queued') or
                 (
                     self.state.is_currently('waiting') and
-                    self.prerequisites.all_satisfied()
+                    self.prerequisites.all_satisfied() and
+                    all(self.external_triggers.values())
                 ) or
                 (
                     self.state.is_currently('submit-retrying', 'retrying') and
@@ -1469,6 +1475,9 @@ class TaskProxy(object):
         self.reset_state_held()
         return self._manip_job_status(
             "job-kill", self.job_kill_callback, ['running', 'submitted'])
+
+    def get_external_triggers(self):
+        return self.external_triggers
 
     def _manip_job_status(self, cmd_key, callback, ok_states=None):
         """Manipulate the job status, e.g. poll or kill."""

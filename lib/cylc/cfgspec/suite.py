@@ -367,6 +367,9 @@ SPEC = {
             'outputs' : {
                 '__MANY__'                    : vdr( vtype='string' ),
                 },
+            'external triggers' : {
+                '__MANY__'                    : vdr( vtype='string' ),
+                },
             },
         },
     'visualization' : {

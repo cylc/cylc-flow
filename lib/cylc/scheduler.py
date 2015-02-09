@@ -195,7 +195,7 @@ class scheduler(object):
         ]
         self.configure_suite()
 
-        # REMOTELY ACCESSIBLE SUITE IDENTIFIER
+        # Remotely accessible suite identifier
         self.suite_id = identifier( self.suite, self.owner )
         self.pyro.connect( self.suite_id, 'cylcid', qualified = False )
 
@@ -865,6 +865,7 @@ class scheduler(object):
                     main_loop_start_time = time.time()
 
                 self.pool.match_dependencies()
+                self.pool.match_external_triggers()
 
                 ready_tasks = self.pool.submit_tasks()
                 if (ready_tasks and

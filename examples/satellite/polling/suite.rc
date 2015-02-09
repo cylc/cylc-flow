@@ -2,9 +2,11 @@
 
 title = Demonstrates real time satellite data processing
 description = """
-Each successive integer cycle retrieves and processes the next
-arbitrarily timed and arbitrarily labelled dataset, in parallel
-with previous cycles if the data comes in quickly."""
+Each successive integer cycle retrieves and processes the next arbitrarily
+timed and labelled dataset, in parallel with previous cycles if the data comes
+in quickly.  This version of the suite uses an initial task that continually
+polls for new external datasets; the other version uses external event
+triggering on the initial task instead."""
 
 # you can monitor output processing with:
 # $ watch -n 1 \
