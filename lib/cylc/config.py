@@ -134,6 +134,7 @@ class config( object ):
 
         self.sequences = []
         self.actual_first_point = None
+        self._start_point_for_actual_first_point = None
 
         self.custom_runahead_limit = None
         self.max_num_active_cycle_points = None
@@ -1465,23 +1466,21 @@ class config( object ):
     def get_actual_first_point( self, start_point ):
         # Get actual first cycle point for the suite (get all
         # sequences to adjust the putative start time upward)
-        if self.actual_first_point:
-            # already computed
+        if (self._start_point_for_actual_first_point is not None and
+                self._start_point_for_actual_first_point == start_point and
+                self.actual_first_point is not None):
             return self.actual_first_point
-        if isinstance(start_point, basestring):
-            point = get_point(start_point)
-        else:
-            point = start_point
+        self._start_point_for_actual_first_point = start_point
         adjusted = []
         for seq in self.sequences:
-            foo = seq.get_first_point( point )
+            foo = seq.get_first_point( start_point )
             if foo:
                 adjusted.append( foo )
         if len( adjusted ) > 0:
             adjusted.sort()
             self.actual_first_point = adjusted[0]
         else:
-            self.actual_first_point = point
+            self.actual_first_point = start_point
         return self.actual_first_point
 
     def get_graph_raw( self, start_point_string, stop_point_string,
