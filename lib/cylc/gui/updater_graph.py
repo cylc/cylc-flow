@@ -444,7 +444,16 @@ class GraphUpdater(threading.Thread):
 
     def get_graph_id(self, edges):
         """If any of these quantities change, the graph should be redrawn."""
-        return (set(edges), self.crop,
+        node_ids = set()
+        for edge in edges:
+            node_ids.add(edge[0])
+            node_ids.add(edge[1])
+        # Get a set of ids that are actually present in the state summaries.
+        # We need this in case of no-longer-purely-base-node cycle points.
+        node_ids_in_state = set(node_ids).intersection(
+            set(self.state_summary).union(set(self.fam_state_summary)))
+        # Return a key that maps to the essential structure of the graph.
+        return (set(edges), self.crop, node_ids_in_state,
                 set(self.updater.filter_states_excl),
                 self.updater.filter_name_string,
                 self.orientation, self.ignore_suicide, self.subgraphs_on)
