@@ -37,7 +37,7 @@ class TaskDefError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return "ERROR: %s" % self.msg 
+        return "ERROR: %s" % self.msg
 
 
 class TaskDef(object):

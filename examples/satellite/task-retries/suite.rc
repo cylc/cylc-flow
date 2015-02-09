@@ -1,13 +1,16 @@
 #!Jinja2
 
-title = Demonstrates real time satellite data processing
+title = Real time satellite processing demo, variant 2 of 3
+
 description = """
-Each successive integer cycle retrieves and processes the next arbitrarily
-timed and labelled dataset, in parallel with previous cycles if the data comes
-in quickly.  This version of the suite uses external triggering on the initial
-data retrieval task (initiated by the running datagenerator simulation task);
-the other version has an initial task that continually polls for new external
-datasets."""
+Each successive integer cycle point retrieves and processes the next
+arbitrarily timed and labelled dataset, in parallel with previous cycle points
+if the data comes in quickly.
+
+This suite variant has initial get_data tasks that trigger immediately and
+simply report failure if no new data is available; but they are configured
+to retry (resubmit) automatically until they succeed."""
+
 
 # you can monitor output processing with:
 # $ watch -n 1 \
@@ -24,7 +27,6 @@ datasets."""
     initial cycle point = 1
     final cycle point = {{N_DATASETS}}
     max active cycle points = 5
-    # runahead limit = P5 # (alternative limiting method)
     [[dependencies]]
         [[[R1]]] # first cycle
             graph = prep => satsim & get_data
@@ -52,33 +54,33 @@ datasets after random durations."""
 COUNT=0
 while true; do
     (( COUNT == {{N_DATASETS}} )) && break
-    sleep $(( 1 + RANDOM % 10 ))
+    sleep $(( RANDOM % 20 ))
     DATA_ID=$(date +%s)
-    touch {{DATA_IN_DIR}}/dataset-${DATA_ID}.raw
+    DATA_FILE=dataset-${DATA_ID}.raw
+    touch {{DATA_IN_DIR}}/$DATA_FILE
+    cylc task message "$DATA_FILE ready for processing"
     (( COUNT += 1 ))
-    cylc external-trigger $CYLC_SUITE_NAME \
-      "new dataset ready for processing" $DATA_ID
 done"""
 
     [[WORKDIR]]
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        pre-command scripting = sleep 10
 
     [[get_data]]
         inherit = WORKDIR
-        title = grab one new dataset
+        title = grab one new dataset, retry if not available yet
+        retry delays = 10*PT2S
         command scripting = """
 DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
+[[ -z $DATASET ]] && exit 1
 mv $DATASET $PWD"""
-        [[[external triggers]]]
-            a = "new dataset ready for processing"
 
     [[proc1]]
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
         command scripting = """
+sleep 10
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
 
@@ -86,6 +88,7 @@ mv $DATASET ${DATASET%raw}proc1"""
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
         command scripting = """
+sleep 10
 DATASET=$(ls dataset-*.proc1)
 mv $DATASET ${DATASET%proc1}proc2"""
 

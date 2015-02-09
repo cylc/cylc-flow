@@ -1,12 +1,19 @@
 #!Jinja2
 
-title = Demonstrates real time satellite data processing
+title = Real time satellite processing demo, variant 3 of 3
+
 description = """
-Each successive integer cycle retrieves and processes the next arbitrarily
-timed and labelled dataset, in parallel with previous cycles if the data comes
-in quickly.  This version of the suite uses an initial task that continually
-polls for new external datasets; the other version uses external event
-triggering on the initial task instead."""
+Each successive integer cycle point retrieves and processes the next
+arbitrarily timed and labelled dataset, in parallel with previous cycle points
+if the data comes in quickly.
+
+This suite variant has initial get_data tasks with external event triggers: they
+do not submit until triggered by an external system that knows when the data is
+available."""
+
+# Note that the satellite simulator task here that supplies the external event
+# trigger happens to be a suite task - i.e. it is not really "external" - but
+# this is only a convenience - an easy route to a self-contained example suite.
 
 # you can monitor output processing with:
 # $ watch -n 1 \
@@ -39,62 +46,62 @@ triggering on the initial task instead."""
 [runtime]
     [[prep]]
         title = clean the suite output directories
-        script = \
+        command scripting = \
 rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
 
     [[satsim]]
         title = simulate a satellite data feed
         description = """Generates {{N_DATASETS}} arbitrarily labelled
 datasets after random durations."""
-        pre-script = mkdir -p {{DATA_IN_DIR}}
-        script = """
+        pre-command scripting = mkdir -p {{DATA_IN_DIR}}
+        command scripting = """
 COUNT=0
 while true; do
     (( COUNT == {{N_DATASETS}} )) && break
-    sleep $(( 1 + RANDOM % 10 ))
-    touch {{DATA_IN_DIR}}/dataset-$(date +%s).raw
+    sleep $(( RANDOM % 20 ))
+    DATA_ID=$(date +%s)
+    DATA_FILE=dataset-${DATA_ID}.raw
+    touch {{DATA_IN_DIR}}/$DATA_FILE
     (( COUNT += 1 ))
+    # Trigger downstream processing in the suite.
+    cylc external-trigger $CYLC_SUITE_NAME \
+      "new dataset ready for processing" $DATA_ID
 done"""
 
     [[WORKDIR]]
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        pre-script = sleep 10
 
     [[get_data]]
         inherit = WORKDIR
-        title = grab one new dataset, waiting if necessary
-        script = """
-while true; do
-    DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
-    if [[ -z $DATASET ]]; then
-        sleep 1
-        continue
-    fi
-    break
-done
+        title = grab one new dataset
+        command scripting = """
+DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
 mv $DATASET $PWD"""
+        [[[external triggers]]]
+            a = "new dataset ready for processing"
 
     [[proc1]]
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
-        script = """
+        command scripting = """
+sleep 10
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
 
     [[proc2]]
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
-        script = """
+        command scripting = """
 DATASET=$(ls dataset-*.proc1)
 mv $DATASET ${DATASET%proc1}proc2"""
 
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
-        pre-script = mkdir -p {{PRODUCT_DIR}}
-        script = """
+        pre-command scripting = mkdir -p {{PRODUCT_DIR}}
+        command scripting = """
 DATASET=$( ls dataset-*.proc2 )
 mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
 
@@ -102,7 +109,7 @@ mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
         title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
-        script = ls {{PRODUCT_DIR}}
+        command scripting = ls {{PRODUCT_DIR}}
 
 [visualization]
     default node attributes = "style=filled", "shape=box"
