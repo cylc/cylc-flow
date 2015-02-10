@@ -143,7 +143,11 @@ class Updater(threading.Thread):
         self.all_families = self.sinfo.get('all families')
         self.triggering_families = self.sinfo.get('triggering families')
 
-    def _reconnect( self ):
+    def _reconnect(self):
+        """Connect to the suite daemon and get Pyro client proxies."""
+        self.god = None
+        self.sinfo = None
+        self.log = None
         try:
             client = cylc_pyro_client.client(
                     self.cfg.suite,
