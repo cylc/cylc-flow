@@ -62,8 +62,12 @@ parser.add_option(
     help="Show a single view then exit.",
     action="store_true", default=False, dest="once")
 
-(options, args) = parser.parse_args()
+parser.add_option(
+    "-u", "--runahead",
+    help="Display task proxies in the runahead pool (off by default).",
+    action="store_true", default=False, dest="display_runahead")
 
+(options, args) = parser.parse_args()
 suite, pphrase = prep_pyro(args[0], options).execute()
 
 legend = ''
@@ -129,6 +133,7 @@ try:
             states = [
                     t["state"] for t in task_summaries.values() if (
                     "state" in t)]
+
             state_count = {}
             for state in states:
                 state_count.setdefault(state, 0)
@@ -143,6 +148,10 @@ try:
                         (i, j) for i, j in task_summaries.items() if (
                         j['state'] in
                         task_state.legal_for_restricted_monitoring))
+            if not options.display_runahead:
+                task_summaries = dict(
+                        (i, j) for i, j in task_summaries.items() if (
+                        j['state'] != 'runahead' ))
  
             alerted2 = False
             alerted3 = False

@@ -358,12 +358,7 @@ class DotUpdater(threading.Thread):
                         dot_type = 'task'
                     if name in tasks_at_point_string:
                         state = state_summary[task_id]['state']
-                        try:
-                            state_list.append(self.dots[dot_type][state])
-                        except KeyError:
-                            # unknown task state: use empty and save for next encounter
-                            self.dots[dot_type][state] = self.dots[dot_type]['unknown']
-                            state_list.append(self.dots[dot_type][state])
+                        state_list.append(self.dots[dot_type][state])
                     else:
                         state_list.append(self.dots[dot_type]['empty'])
                 try:

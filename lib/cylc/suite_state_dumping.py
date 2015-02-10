@@ -92,7 +92,7 @@ class SuiteStateDumper(object):
                 handle.write('Begin task states\n')
 
                 if tasks is None and self.pool is not None:
-                    tasks = self.pool.get_tasks(incl_runahead=True)
+                    tasks = self.pool.get_all_tasks()
                 if tasks is not None:
                     for itask in sorted(tasks, key=lambda t: t.identity):
                         itask.dump_state(handle)

@@ -133,7 +133,7 @@ stopped = {
 
 }
 
-stopped_unknown = {
+stopped_runahead = {
         'small': [
                 "10 10 2 1",
                 ".	c None",
@@ -344,7 +344,7 @@ live = {
 
 }
 
-unknown = {
+runahead = {
         'small': [
                 "11 11 3 1",
                 ".	c None",
@@ -425,17 +425,17 @@ unknown = {
                 "+..............................+",
                 "+..............................+",
                 "+..............................+",
-                "+.....wwwwwwwwwww..............+",
-                "+.....wwwwwwwwwww..............+",
-                "+.....ww.......ww..............+",
-                "+.....ww.......ww..............+",
-                "+.....ww.......ww..............+",
-                "+.....ww.......ww..............+",
-                "+.....ww.......ww..............+",
-                "+.....ww.......ww..............+",
-                "+.....ww.......ww..............+",
-                "+.....wwwwwwwwwww..............+",
-                "+.....wwwwwwwwwww..............+",
+                "+......wwwwwwwww...............+",
+                "+......w.......w...............+",
+                "+......w.......w...............+",
+                "+......w.......w...............+",
+                "+......w.......w...............+",
+                "+......w.......w...............+",
+                "+......w.......w...............+",
+                "+......w.......w...............+",
+                "+......wwwwwwwww...............+",
+                "+..............................+",
+                "+..............................+",
                 "+..............................+",
                 "+..............................+",
                 "+..............................+",
@@ -472,11 +472,11 @@ class DotMaker(object):
             # Empty icon.
             xpm = empty[self.size]
         elif state not in self.theme:
-            # Unknown state icon.
+            # runahead state icon.
             if is_stopped:
-                xpm = stopped_unknown[self.size]
+                xpm = stopped_runahead[self.size]
             else:
-                xpm = deepcopy(unknown[self.size])
+                xpm = deepcopy(runahead[self.size])
                 if is_family:
                     xpm[3] = xpm[3].replace('<FAM>', 'black')
                 else:
@@ -522,6 +522,6 @@ class DotMaker(object):
             dots['family'][state] = self.get_icon(state, is_family=True)
         dots['task']['empty'] = self.get_icon()
         dots['family']['empty'] = self.get_icon()
-        dots['task']['unknown'] = self.get_icon(state='unknown')
-        dots['family']['unknown'] = self.get_icon(state='unknown', is_family=True)
+        dots['task']['runahead'] = self.get_icon(state='runahead')
+        dots['family']['runahead'] = self.get_icon(state='runahead', is_family=True)
         return dots

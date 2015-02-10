@@ -292,6 +292,15 @@ class GraphUpdater(threading.Thread):
                 self.global_summary['oldest cycle point string'])
             self.newest_point_string = (
                 self.global_summary['newest cycle point string'])
+            if 'runahead' not in self.updater.filter_states_excl:
+                # Get a graph out to the max runahead point.
+                try:
+                    self.newest_point_string = (
+                        self.global_summary[
+                            'newest runahead cycle point string'])
+                except KeyError:
+                    # back compat <= 6.2.0
+                    pass
         except KeyError:
             # Pre cylc-6 back compat.
             self.oldest_point_string = (

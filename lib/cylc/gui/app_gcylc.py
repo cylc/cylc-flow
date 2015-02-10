@@ -487,6 +487,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if suite:
             self.reset(suite)
 
+        # Set initial filter background highlighting.
+        self.check_task_filter_buttons(None)
+
     def reset(self, suite):
         title = suite
         self.cfg.suite = suite
@@ -2999,8 +3002,8 @@ This is what my suite does:..."""
                 try:
                     icon, cb = box.get_children()
                 except (ValueError, AttributeError) as exc:
-                    # ValueError: this is the empty box to line things up.
-                    # AttributeError: this is the name filter entry box.
+                    # ValueError: an empty box to line things up.
+                    # AttributeError: the name filter entry box.
                     pass
                 else:
                     if cb.get_active():
@@ -3043,8 +3046,10 @@ This is what my suite does:..."""
         self.task_filter_box = gtk.VBox()
         subbox1 = gtk.HBox(homogeneous=True)
         subbox2 = gtk.HBox(homogeneous=True)
+        subbox3 = gtk.HBox(homogeneous=True)
         self.task_filter_box.pack_start(subbox1)
         self.task_filter_box.pack_start(subbox2)
+        self.task_filter_box.pack_start(subbox3)
         padbox = gtk.HBox()
         padbox.pack_start(self.task_filter_box, padding=10)
         dotm = DotMaker(self.theme, size='small')
@@ -3068,27 +3073,32 @@ This is what my suite does:..."""
             box.pack_start(icon, expand=False)
             box.pack_start(cb, expand=False)
             cnt += 1
-            if cnt > (len(task_state.legal) + 1)//2:
-                subbox2.pack_start(ebox, expand=False, fill=True)
+            third = (len(task_state.legal) + 1)/3
+            if cnt > 2 * third:
+                subbox3.pack_start(ebox, fill=True)
+            elif cnt > third:
+                subbox2.pack_start(ebox, fill=True)
             else:
-                subbox1.pack_start(ebox, expand=False, fill=True)
-            cb.set_active(True)
+                subbox1.pack_start(ebox, fill=True)
+            cb.set_active(st != 'runahead')
             cb.connect('toggled', self.check_task_filter_buttons)
 
         self.filter_entry = EntryTempText()
         self.filter_entry.set_width_chars(7)
         self.filter_entry.connect("activate", self.check_filter_entry)
-        self.filter_entry.set_temp_text("filter")
+        self.filter_entry.set_temp_text("task filter")
         ebox = gtk.EventBox()
         ebox.add(self.filter_entry)
         subbox2.pack_start(ebox)
-        cnt += 1
 
-        if cnt % 2 != 0:
-            # subbox2 needs another entry to line things up.
+        if cnt % 3 == 0:
+            # subboxes 1 and 3 needs another entry to line things up.
             ebox = gtk.EventBox()
             ebox.add(gtk.HBox())
-            subbox2.pack_start(ebox, expand=False, fill=True)
+            subbox1.pack_start(ebox, expand=False, fill=True)
+            ebox = gtk.EventBox()
+            ebox.add(gtk.HBox())
+            subbox3.pack_start(ebox, expand=False, fill=True)
 
         tooltip = gtk.Tooltips()
         tooltip.enable()
