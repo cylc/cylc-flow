@@ -41,6 +41,8 @@ elif [[ "${TEST_NAME_BASE}" == ??-slurm* ]]; then
     CONFIGURED_SYS_NAME='slurm'
 elif [[ "${TEST_NAME_BASE}" == ??-pbs* ]]; then
     CONFIGURED_SYS_NAME='pbs'
+elif [[ "${TEST_NAME_BASE}" == ??-lsf* ]]; then
+    CONFIGURED_SYS_NAME='lsf'
 fi
 if [[ -n $CONFIGURED_SYS_NAME ]]; then
     ITEM_KEY="[test battery][directives]$CONFIGURED_SYS_NAME host"
