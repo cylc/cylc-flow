@@ -2012,15 +2012,9 @@ shown here in the state they were in at the time of triggering.''')
         debug_group = controlled_option_group("Debug", "--debug")
         debug_group.pack(hbox)
 
-        refgen_group = controlled_option_group("Ref-log", "--reference-log")
-        refgen_group.pack(hbox)
-
-        reftest_group = controlled_option_group("Ref-test", "--reference-test")
-        reftest_group.pack(hbox)
-
         vbox.pack_start(hbox)
 
-        optgroups = [debug_group, refgen_group, reftest_group]
+        optgroups = [debug_group]
 
         cancel_button = gtk.Button("_Cancel")
         cancel_button.connect("clicked", lambda x: window.destroy())
