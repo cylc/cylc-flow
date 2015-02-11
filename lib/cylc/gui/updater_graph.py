@@ -70,7 +70,7 @@ class GraphUpdater(threading.Thread):
         self.oldest_point_string = None
         self.newest_point_string = None
         self.orientation = "TB"  # Top to Bottom ordering of nodes
-        self.best_fit = False  # zoom to page size
+        self.best_fit = True  # zoom to page size
         self.normal_fit = False  # zoom to 1.0 scale
         self.crop = False
         self.subgraphs_on = False   # organise by cycle point.

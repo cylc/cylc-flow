@@ -107,6 +107,23 @@ def run_get_stdout(command, filter=False):
     return (False, [])
 
 
+class TaskFilterWindow(gtk.Window):
+
+    """A popup window displaying task filtering options."""
+
+    def __init__(self, parent_window, widgets):
+        super(TaskFilterWindow, self).__init__()
+        self.set_border_width(10)
+        self.set_title( "Task Filtering" )
+        if parent_window is None:
+            self.set_icon(get_icon())
+        else:
+            self.set_transient_for( parent_window )
+        self.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+        self.add(widgets)
+        self.show_all()
+
+
 class InitData(object):
     """
 Class to hold initialisation data.
@@ -160,7 +177,8 @@ class InfoBar(gtk.VBox):
 Class to create an information bar.
     """
 
-    def __init__(self, host, theme, dot_size,
+    def __init__(self, host, theme, dot_size, filter_states_excl,
+                 filter_launcher,
                  status_changed_hook=lambda s: False,
                  log_launch_hook=lambda: False):
         super(InfoBar, self).__init__()
@@ -169,10 +187,15 @@ Class to create an information bar.
 
         self.set_theme(theme, dot_size)
 
+        self.filter_launcher = filter_launcher
         self._suite_states = []
+        self._filter_states_excl = filter_states_excl
+        self._filter_name_string = None
         self._is_suite_stopped = False
         self.state_widget = gtk.HBox()
+        self.filter_state_widget = gtk.HBox()
         self._set_tooltip(self.state_widget, "states")
+        self._set_tooltip(self.filter_state_widget, "states filtered out")
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
@@ -208,14 +231,18 @@ Class to create an information bar.
         self.time_widget = gtk.Label()
         self._set_tooltip(self.time_widget, "last update time")
 
-        self.pack_start(gtk.HSeparator(), False, False)
-
         hbox = gtk.HBox()
         self.pack_start(hbox, False, True)
 
         eb = gtk.EventBox()
         eb.add(self.status_widget)
-        #eb.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse('#fff'))
+        hbox.pack_start(eb, False)
+
+        #eb = gtk.EventBox()
+        #hbox.pack_start(eb, True)
+
+        eb = gtk.EventBox()
+        eb.add(self.filter_state_widget)
         hbox.pack_start(eb, False)
 
         eb = gtk.EventBox()
@@ -321,12 +348,50 @@ Class to create an information bar.
                 text = str(num) + " tasks " + str(state)
             self._set_tooltip(icon, text)
 
+    def set_filter_state(self, filter_states_excl, filter_name_string):
+        """Set filter state text."""
+        if filter_states_excl == self._filter_states_excl and (
+                filter_name_string == self._filter_name_string):
+            return False
+        self._filter_states_excl = filter_states_excl
+        self._filter_name_string = filter_name_string
+        gobject.idle_add(self._set_filter_state_widget)
+
+    def _set_filter_state_widget(self):
+        for child in self.filter_state_widget.get_children():
+            self.filter_state_widget.remove(child)
+        if not self._filter_states_excl and not self._filter_name_string:
+            label = gtk.Label("(click-to-filter)")
+            ebox = gtk.EventBox()
+            ebox.add(label)
+            ebox.connect("button_press_event", self.filter_launcher)
+            self.filter_state_widget.pack_start(ebox, False, False)
+            ttip_text = "Click to filter tasks by state or name"
+        else:
+            ttip_text = "Current filtering (click to alter):\n%s" % (
+                    ", ".join(self._filter_states_excl))
+            hbox = gtk.HBox()
+            for state in self._filter_states_excl:
+                icon = self.dots.get_image(state, is_filtered=True)
+                icon.show()
+                hbox.pack_start(icon, False, False)
+            if self._filter_name_string:
+                label = gtk.Label(" %s" % self._filter_name_string)
+                hbox.pack_start(label)
+                ttip_text += ", %s" % self._filter_name_string
+            ebox = gtk.EventBox()
+            ebox.add(hbox)
+            ebox.connect("button_press_event", self.filter_launcher)
+            self.filter_state_widget.pack_start(ebox, False, False)
+        self.filter_state_widget.show_all()
+        self._set_tooltip(self.filter_state_widget, ttip_text)
+
     def set_status(self, status):
         """Set status text."""
         if status == self._status:
             return False
         self._status = status
-        gobject.idle_add(self.status_widget.set_text, " " + self._status)
+        gobject.idle_add(self.status_widget.set_text, " " + self._status + "   ")
         gobject.idle_add(self.notify_status_changed, self._status)
 
     def set_stop_summary(self, summary_maps):
@@ -421,6 +486,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.current_views = []
 
         self.theme_legend_window = None
+        self.filter_dialog_window = None
 
         setup_icons()
 
@@ -464,13 +530,20 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         self.tool_bar_box.set_sensitive(False)
 
-        self.create_info_bar()
-
         self.updater = None
 
         self.views_parent = gtk.VBox()
         bigbox.pack_start(self.views_parent, True)
-        bigbox.pack_start(self.create_task_filter_box(), False, False)
+
+        if self.restricted_display:
+            self.legal_task_states = task_state.legal_for_restricted_monitoring
+        else:
+            self.legal_task_states = task_state.legal
+
+        self.filter_states_excl = ["runahead"]
+        self.filter_name_string = None
+        self.create_info_bar()
+
         hbox = gtk.HBox()
         hbox.pack_start(self.info_bar, True)
         bigbox.pack_start(hbox, False)
@@ -486,9 +559,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.setup_views()
         if suite:
             self.reset(suite)
-
-        # Set initial filter background highlighting.
-        self.check_task_filter_buttons(None)
 
     def reset(self, suite):
         title = suite
@@ -583,10 +653,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 # (may be None if the second view pane is turned off)
                 self.switch_view(self.current_views[view_num].name, view_num,
                                  force=True)
-        self.info_bar.set_theme(self.theme, self.dot_size)
-        self.info_bar._set_state_widget()  # (to update info bar immediately)
+        self._set_info_bar()
         self.update_theme_legend()
         return False
+
+    def _set_info_bar(self):
+        self.info_bar.set_theme(self.theme, self.dot_size)
+        self.info_bar._set_state_widget()  # (to update info bar immediately)
+        self.info_bar._set_filter_state_widget()  # (to update info bar immediately)
 
     def _cb_change_view0_menu(self, item):
         # This is the view menu callback for the primary view.
@@ -2401,6 +2475,16 @@ to reduce network traffic.""")
         poll_item.connect('activate', self.reset_connection_polling)
 
         self.view_menu.append(gtk.SeparatorMenuItem())
+        filter_item = gtk.ImageMenuItem("Task _Filtering")
+        img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
+                                       gtk.ICON_SIZE_MENU)
+        filter_item.set_image(img)
+        self._set_tooltip(
+            filter_item, "Filter by task state or name")
+        self.view_menu.append(filter_item)
+        filter_item.connect('activate', self.popup_filter_dialog)
+
+        self.view_menu.append(gtk.SeparatorMenuItem())
 
         key_item = gtk.ImageMenuItem("State Icon _Key")
         dots = DotMaker(self.theme, size='small')
@@ -2994,7 +3078,7 @@ This is what my suite does:..."""
                 bar_item.connect('activate', self.command_help, category,
                                  command)
 
-    def check_task_filter_buttons(self, tb):
+    def check_task_filter_buttons(self, tb=None):
         task_states = []
         for subbox in self.task_filter_box.get_children():
             for ebox in subbox.get_children():
@@ -3015,6 +3099,8 @@ This is what my suite does:..."""
                                        self.filter_highlight_color)
 
         self.updater.filter_states_excl = task_states
+        self.filter_states_excl = task_states
+        self.info_bar.set_filter_state(task_states, self.filter_name_string)
         self.updater.refilter()
         self.refresh_views()
 
@@ -3033,7 +3119,9 @@ This is what my suite does:..."""
                                           self.filter_highlight_color)
         else:
             self.filter_entry.modify_base(gtk.STATE_NORMAL, None)
+        self.filter_name_string = filter_text
         self.updater.filter_name_string = filter_text
+        self.info_bar.set_filter_state(self.filter_states_excl, filter_text)
         self.updater.refilter()
         self.refresh_views()
 
@@ -3042,71 +3130,53 @@ This is what my suite does:..."""
             if view is not None:
                 view.refresh()
 
-    def create_task_filter_box(self):
+    def create_task_filter_widgets(self):
         self.task_filter_box = gtk.VBox()
-        subbox1 = gtk.HBox(homogeneous=True)
-        subbox2 = gtk.HBox(homogeneous=True)
-        subbox3 = gtk.HBox(homogeneous=True)
-        self.task_filter_box.pack_start(subbox1)
-        self.task_filter_box.pack_start(subbox2)
-        self.task_filter_box.pack_start(subbox3)
-        padbox = gtk.HBox()
-        padbox.pack_start(self.task_filter_box, padding=10)
-        dotm = DotMaker(self.theme, size='small')
-        cnt = 0
-
-        if self.restricted_display:
-            task_states = task_state.legal_for_restricted_monitoring
-        else:
-            task_states = task_state.legal
-
-        for st in task_states:
-            ebox = gtk.EventBox()
-            box = gtk.HBox()
-            ebox.add(box)
-            icon = dotm.get_image(st)
-            cb = gtk.CheckButton(task_state.labels[st])
-            tooltip = gtk.Tooltips()
-            tooltip.enable()
-            tooltip.set_tip(cb, "Filter by task state = %s" % st)
-
-            box.pack_start(icon, expand=False)
-            box.pack_start(cb, expand=False)
-            cnt += 1
-            third = (len(task_state.legal) + 1)/3
-            if cnt > 2 * third:
-                subbox3.pack_start(ebox, fill=True)
-            elif cnt > third:
-                subbox2.pack_start(ebox, fill=True)
-            else:
-                subbox1.pack_start(ebox, fill=True)
-            cb.set_active(st != 'runahead')
-            cb.connect('toggled', self.check_task_filter_buttons)
+        PER_ROW = 3
+        n_states = len(self.legal_task_states) 
+        n_rows =  n_states / PER_ROW
+        if n_states % PER_ROW:
+            n_rows += 1
+        dotm = DotMaker(self.theme, size='medium')
+        for row in range(0, n_rows):
+            subbox = gtk.HBox(homogeneous=True)
+            self.task_filter_box.pack_start(subbox)
+            for i in range(0, PER_ROW):
+                ebox = gtk.EventBox()
+                box = gtk.HBox()
+                ebox.add(box)
+                try:
+                    st = self.legal_task_states[row * PER_ROW + i]
+                except:
+                    pass
+                else:
+                    icon = dotm.get_image(st)
+                    cb = gtk.CheckButton(task_state.labels[st])
+                    cb.set_active(st not in self.filter_states_excl)
+                    cb.connect('toggled', self.check_task_filter_buttons)
+                    tooltip = gtk.Tooltips()
+                    tooltip.enable()
+                    tooltip.set_tip(cb, "Filter by task state = %s" % st)
+                    box.pack_start(icon, expand=False)
+                    box.pack_start(cb, expand=False)
+                subbox.pack_start(ebox, fill=True)
 
         self.filter_entry = EntryTempText()
         self.filter_entry.set_width_chars(7)
         self.filter_entry.connect("activate", self.check_filter_entry)
-        self.filter_entry.set_temp_text("task filter")
+        self.filter_entry.set_temp_text("task name filter")
+        hbox = gtk.HBox()
         ebox = gtk.EventBox()
         ebox.add(self.filter_entry)
-        subbox2.pack_start(ebox)
-
-        if cnt % 3 == 0:
-            # subboxes 1 and 3 needs another entry to line things up.
-            ebox = gtk.EventBox()
-            ebox.add(gtk.HBox())
-            subbox1.pack_start(ebox, expand=False, fill=True)
-            ebox = gtk.EventBox()
-            ebox.add(gtk.HBox())
-            subbox3.pack_start(ebox, expand=False, fill=True)
-
+        hbox.pack_start(ebox)
+        self.task_filter_box.pack_start(hbox)
         tooltip = gtk.Tooltips()
         tooltip.enable()
         tooltip.set_tip(self.filter_entry,
                         "Filter by task name.\n"
                         "Enter a sub-string or regex and hit Enter\n"
                         "(to reset, clear the entry and hit Enter)")
-        return padbox
+        #return padbox
 
     def create_tool_bar(self):
         """Create the tool bar for the control GUI."""
@@ -3259,8 +3329,11 @@ For more Stop options use the Control menu.""")
     def create_info_bar(self):
         self.info_bar = InfoBar(
             self.cfg.host, self.theme, self.dot_size,
+            self.filter_states_excl,
+            self.popup_filter_dialog,
             self._alter_status_toolbar_menu,
             lambda: self.run_suite_log(None, type="err"))
+        self._set_info_bar()
 
     def popup_theme_legend(self, widget=None):
         """Popup a theme legend window."""
@@ -3271,6 +3344,22 @@ For more Stop options use the Control menu.""")
                 "destroy", self.destroy_theme_legend)
         else:
             self.theme_legend_window.present()
+
+    def popup_filter_dialog(self, x=None, y=None):
+        """Popup a task filtering diaolog."""
+        if self.filter_dialog_window is None:
+            self.create_task_filter_widgets()
+            self.filter_dialog_window = TaskFilterWindow(
+                self.window, self.task_filter_box)
+            self.filter_dialog_window.connect(
+                "destroy", self.destroy_filter_dialog)
+        else:
+            self.filter_dialog_window.present()
+        self.check_task_filter_buttons()
+
+    def destroy_filter_dialog(self, widget):
+        """Handle a destroy of the filter dialog window."""
+        self.filter_dialog_window = None
 
     def update_theme_legend(self):
         """Update the theme legend window, if it exists."""
