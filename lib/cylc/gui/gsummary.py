@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
-import datetime
 import os
 import re
 import shlex
@@ -70,15 +69,15 @@ def get_host_suites(hosts, timeout=None, owner=None):
     return host_suites_map
 
 
-def get_task_cycle_statuses(host, suite, owner=None):
-    """Return a list of task, cycle, status tuples, or None."""
+def get_task_cycle_statuses_updatetime(host, suite, owner=None):
+    """Return a list of task, cycle, status tuples, or None and update time."""
     if owner is None:
         owner = user
     command = ["cylc", "cat-state", "--host=%s" % host,
                "--user=%s" % owner, suite]
-    popen = subprocess.Popen( command,
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE )
+    popen = subprocess.Popen(command,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
     stdout = popen.stdout.read()
     res = popen.wait()
     if res != 0:
@@ -92,7 +91,12 @@ def get_task_cycle_statuses(host, suite, owner=None):
         task_order = task.split(".")
         task_order.append(status)
         task_cycle_statuses.append(tuple(task_order))
-    return task_cycle_statuses
+    suite_update_times = re.search("^time : [^ ]+ \(([0-9]+)\)$", stdout, re.M)
+    if suite_update_times is not None:
+        suite_update_times = int(suite_update_times.group(1))
+    else:
+        suite_update_times = time.time()
+    return task_cycle_statuses, suite_update_times
 
 
 def get_summary_menu(suite_host_tuples,
@@ -537,9 +541,9 @@ class SummaryApp(object):
             host = model.get_value(parent_iter, 0)
             suite = model.get_value(parent_iter, 1)
             child_row_number = path[-1]
-        update_time = model.get_value(iter_, 4)
+        suite_update_time = model.get_value(iter_, 4)
 
-        location_id = (host, suite, update_time, column.get_title(),
+        location_id = (host, suite, suite_update_time, column.get_title(),
                        child_row_number)
 
         if location_id != self._prev_tooltip_location_id:
@@ -551,7 +555,7 @@ class SummaryApp(object):
             return True
         if column.get_title() == "Updated":
             time_point = get_timepoint_from_seconds_since_unix_epoch(
-                update_time)
+                suite_update_time)
             tooltip.set_text("Info retrieved at " + str(time_point))
             return True
 
@@ -615,10 +619,17 @@ class SummaryApp(object):
         cell.set_property("text", title)
 
     def _set_cell_text_time(self, column, cell, model, iter_):
-        update_time = model.get_value(iter_, 4)
-        time_point = get_timepoint_from_seconds_since_unix_epoch(update_time)
+        suite_update_times = model.get_value(iter_, 4)
+        time_point = get_timepoint_from_seconds_since_unix_epoch(
+                        suite_update_times)
         time_point.set_time_zone_to_local()
-        time_string = str(time_point).split("T")[1]
+        current_time = time.time()
+        current_point = get_timepoint_from_seconds_since_unix_epoch(
+                        current_time)
+        if str(time_point).split("T")[0] == str(current_point).split("T")[0]:
+            time_string = str(time_point).split("T")[1]
+        else:
+            time_string = str(time_point)
         is_stopped = model.get_value(iter_, 2)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", time_string)
@@ -660,12 +671,13 @@ class BaseSummaryUpdater(threading.Thread):
         self.owner = owner
         self.statuses = {}
         self.stop_summaries = {}
+        self.suite_update_times = {}
         self.prev_suites = []
         self._should_force_update = False
         self.quit = False
         super(BaseSummaryUpdater, self).__init__()
 
-    def update(self, update_time=None):
+    def update(self, suite_update_times=None):
         """An update method that must be defined in subclasses."""
         raise NotImplementedError()
 
@@ -695,10 +707,11 @@ class BaseSummaryUpdater(threading.Thread):
                     self.prev_suites.remove((host, suite))
 
             # Get new information.
-            statuses, stop_summaries = get_new_statuses_and_stop_summaries(
+            statuses, stop_summaries, suite_update_times = (
+                get_new_statuses_and_stop_summaries_updatetime(
                             self.hosts, self.owner,
                             prev_stop_summaries=self.stop_summaries,
-                            prev_suites=self.prev_suites)
+                            prev_suites=self.prev_suites))
             prev_suites = []
             for host in statuses:
                 for suite in statuses[host]:
@@ -707,6 +720,7 @@ class BaseSummaryUpdater(threading.Thread):
             self.statuses = statuses
             self.stop_summaries = stop_summaries
             last_update_time = time.time()
+            self.suite_update_times = suite_update_times
             gobject.idle_add(self.update, current_time)
             time.sleep(1)
 
@@ -738,13 +752,14 @@ class BaseSummaryTimeoutUpdater(object):
         self.owner = owner
         self.statuses = {}
         self.stop_summaries = {}
+        self.suite_update_times = {}
         self._should_force_update = False
         self._last_running_time = None
         self.quit = True
         self.last_update_time = None
         self.prev_suites = []
 
-    def update(self, update_time=None):
+    def update(self, suite_update_times=None):
         """An update method that must be defined in subclasses."""
         raise NotImplementedError()
 
@@ -789,10 +804,11 @@ class BaseSummaryTimeoutUpdater(object):
                 self.prev_suites.remove((host, suite))
 
         # Get new information.
-        statuses, stop_summaries = get_new_statuses_and_stop_summaries(
+        statuses, stop_summaries, suite_update_times = (
+            get_new_statuses_and_stop_summaries_updatetime(
                        self.hosts, self.owner,
                        prev_stop_summaries=self.stop_summaries,
-                       prev_suites=self.prev_suites)
+                       prev_suites=self.prev_suites))
         prev_suites = []
         for host in statuses:
             for suite in statuses[host]:
@@ -800,7 +816,7 @@ class BaseSummaryTimeoutUpdater(object):
         self.prev_suites = prev_suites
         self.statuses = statuses
         self.stop_summaries = stop_summaries
-
+        self.suite_update_times = suite_update_times
         self.last_update_time = time.time()
         if self.statuses:
             self._last_running_time = None
@@ -857,13 +873,14 @@ class SummaryAppUpdater(BaseSummaryUpdater):
         self.stop_summaries.clear()
         gobject.idle_add(self.update)
 
-    def update(self, update_time=None):
+    def update(self, suite_update_times=None):
         """Update the Applet."""
         row_ids = self._get_user_expanded_row_ids()
         statuses = copy.deepcopy(self.statuses)
         stop_summaries = copy.deepcopy(self.stop_summaries)
-        if update_time is None:
-            update_time = time.time()
+        suite_update_times = copy.deepcopy(self.suite_update_times)
+        if suite_update_times is None:
+            suite_update_times = time.time()
         self.suite_treemodel.clear()
         suite_host_tuples = []
         for host in self.hosts:
@@ -877,7 +894,7 @@ class SummaryAppUpdater(BaseSummaryUpdater):
             if suite in statuses.get(host, {}):
                 status_map_items = statuses[host][suite]
                 is_stopped = False
-                suite_time = update_time
+                suite_time = suite_update_times[host][suite]
             else:
                 info = stop_summaries[host][suite]
                 status_map, suite_time = info
@@ -933,10 +950,11 @@ class SummaryAppUpdater(BaseSummaryUpdater):
             self.suite_titles[suite] = suite_title
 
 
-def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
+def get_new_statuses_and_stop_summaries_updatetime(hosts, owner,
+                                        prev_stop_summaries=None,
                                         prev_suites=None,
                                         stop_suite_clear_time=86400):
-    """Return dictionaries of statuses and stop_summaries."""
+    """Return dictionaries of statuses, stop_summaries and updatetimes."""
     hosts = copy.deepcopy(hosts)
     host_suites = get_host_suites(hosts, owner=owner)
     if prev_stop_summaries is None:
@@ -944,18 +962,22 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
     if prev_suites is None:
         prev_suites = []
     statuses = {}
+    suite_update_times = {}
     stop_summaries = copy.deepcopy(prev_stop_summaries)
     current_time = time.time()
     current_suites = []
     for host, suites in host_suites.items():
         for suite in suites:
-            task_cycle_statuses = get_task_cycle_statuses(host, suite,
-                                                          owner=owner)
+            task_cycle_statuses, update_time = (
+                get_task_cycle_statuses_updatetime(host, suite, owner=owner))
             if task_cycle_statuses is None:
                 continue
             statuses.setdefault(host, {})
             statuses[host].setdefault(suite, {})
             statuses[host][suite] = task_cycle_statuses
+            suite_update_times.setdefault(host, {})
+            suite_update_times[host].setdefault(suite, {})
+            suite_update_times[host][suite] = update_time
             if (host in stop_summaries and
                 suite in stop_summaries[host]):
                 stop_summaries[host].pop(suite)
@@ -963,8 +985,8 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
     for host, suite in prev_suites:
         if (host, suite) not in current_suites:
             stop_summaries.setdefault(host, {})
-            summary_statuses = get_task_cycle_statuses(host, suite,
-                                                       owner=owner)
+            summary_statuses, update_time = (
+                get_task_cycle_statuses_updatetime(host, suite, owner=owner))
             if summary_statuses is None:
                 continue
             stop_summaries[host][suite] = (summary_statuses,
@@ -975,4 +997,4 @@ def get_new_statuses_and_stop_summaries(hosts, owner, prev_stop_summaries=None,
             if (stop_summaries[host][suite][1] +
                 stop_suite_clear_time < current_time):
                 stop_summaries[host].pop(suite)
-    return statuses, stop_summaries
+    return statuses, stop_summaries, suite_update_times
