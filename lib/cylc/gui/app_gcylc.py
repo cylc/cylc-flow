@@ -3184,7 +3184,8 @@ For more Stop options use the Control menu.""")
             return False
         run_ok = bool("stopped" in new_status)
         pause_ok = bool("running" in new_status)
-        unpause_ok = bool("held" in new_status or "stopping" in new_status)
+        unpause_ok = bool("hold at" in new_status or "held" in new_status or
+                          "stopping" in new_status)
         stop_ok = bool("stopped" not in new_status)
         self.run_menuitem.set_sensitive(run_ok)
         self.pause_menuitem.set_sensitive(pause_ok)
