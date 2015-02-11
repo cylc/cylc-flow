@@ -153,6 +153,8 @@ class TaskProxy(object):
         self.state_before_held = None  # state before being held
         self.hold_on_retry = False
         self.manual_trigger = False
+        self.edit_run = False
+        self.job_prepped = False
 
         self.latest_message = ""
 
@@ -860,31 +862,35 @@ class TaskProxy(object):
         self.record_db_event(event="incrementing submit number")
         self.record_db_update("task_states", submit_num=self.submit_num)
 
-    def submit(self, dry_run=False, overrides=None):
+    def submit(self, overrides=None):
         """Submit a job for this task."""
-        self.set_status('ready')
 
         if self.tdef.run_mode == 'simulation':
             self.job_submission_succeeded()
             return
 
-        # Prepare the job submit command
-        try:
-            self._prepare_submit(overrides=overrides)
-            JOB_FILE.write(self.job_conf)
-        except Exception, exc:
-            # Could be a bad command template.
-            if flags.debug:
-                traceback.print_exc()
-            self.log(ERROR, "Failed to construct job submission command")
-            self.command_log("SUBMIT", err=str(exc))
-            self.job_submission_failed()
-            return
+        if not self.job_prepped:
+            # Prepare the job submit command.
+            try:
+                self._prepare_submit(overrides=overrides)
+                JOB_FILE.write(self.job_conf)
+            except Exception, exc:
+                # Could be a bad command template.
+                if flags.debug:
+                    traceback.print_exc()
+                self.log(ERROR, "Failed to construct job submission command")
+                self.command_log("SUBMIT", err=str(exc))
+                self.job_submission_failed()
+                return
+            self.job_prepped = True
 
-        if dry_run:
-            print "JOB SCRIPT=" + self.job_conf['local job file path']
-            return
+        if self.edit_run:
+            # Hold now and return without submitting the job.
+            self.edit_run = False
+            self.reset_state_held()
+            return self.job_conf['local job file path']
 
+        self.set_status('ready')
         return self._run_job_command(
             CMD_TYPE_JOB_SUBMISSION,
             "job-submit",
@@ -1508,6 +1514,7 @@ class TaskProxy(object):
         Run a job command with the multiprocess pool.
 
         """
+        self.job_prepped = False # (reset)
         if self.user_at_host in [user + '@localhost', 'localhost']:
             cmd = ["cylc", cmd_key] + list(args)
         else:  # if it is a remote job

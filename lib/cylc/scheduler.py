@@ -171,7 +171,8 @@ class scheduler(object):
                 'first-parent descendants' : self.info_get_first_parent_descendants,
                 'graph raw' : self.info_get_graph_raw,
                 'task requisites' : self.info_get_task_requisites,
-                'get cylc version' : self.info_get_cylc_version
+                'get cylc version' : self.info_get_cylc_version,
+                'task job file path' : self.info_get_task_jobfile_path
                 }
 
         # control commands to expose indirectly via a command queue
@@ -342,6 +343,9 @@ class scheduler(object):
 
     def info_ping_task( self, task_id ):
         return self.pool.ping_task( task_id )
+
+    def info_get_task_jobfile_path(self, task_id):
+        return self.pool.get_task_jobfile_path(task_id)
 
     def info_get_suite_info( self ):
         return [ self.config.cfg['title'], user ]
@@ -1182,45 +1186,45 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.hold_time
 
-    def command_trigger_task( self, name, point_string, is_family ):
-        matches = self.get_matching_tasks( name, is_family )
+    def command_trigger_task(self, name, point_string, is_family, edit_run):
+        matches = self.get_matching_tasks(name, is_family, edit_run)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.trigger_tasks( task_ids )
+        self.pool.trigger_tasks(task_ids, edit_run)
 
-    def get_matching_tasks( self, name, is_family=False ):
-        """name can be a task or family name, or a regex to match
-        multiple tasks or families."""
-
+    def get_matching_tasks(self, expr, is_family=False, unique_task=False):
+        """Find a task or family name (exact or regex match)."""
         matches = []
+        if is_family and unique_task:
+            raise TaskNotFoundError("Task match not unique: %s" % expr)
         tasks = self.config.get_task_name_list()
-
-        if is_family:
+        if is_family and not unique_task:
             families = self.config.runtime['first-parent descendants']
             try:
                 # exact
-                f_matches = families[name]
+                f_matches = families[expr]
             except KeyError:
                 # regex match
                 f_matches = []
                 for fam, mems in families.items():
-                    if re.match( name, fam ):
+                    if re.match( expr, fam ):
                         f_matches += mems
             matches = []
             for m in f_matches:
                 if m in tasks:
                     matches.append(m)
-
         else:
-            if name in tasks:
+            if expr in tasks:
                 # exact
-                matches.append(name)
+                matches.append(expr)
             else:
                 # regex match
                 for task in tasks:
-                    if re.match( name, task ):
+                    if re.match( expr, task ):
                         matches.append(task)
+        if unique_task and len(matches) > 1:
+            raise TaskNotFoundError("Task match not unique: %s" % expr)
         return matches
 
     def command_reset_task_state( self, name, point_string, state, is_family ):

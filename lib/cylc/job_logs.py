@@ -44,6 +44,15 @@ class CommandLogger(object):
     JOB_LOG_FMT_M = "%(timestamp)s %(mesg_type)s:\n\n%(mesg)s\n"
 
     @classmethod
+    def get_latest_job_log(cls, suite, task_name, task_point):
+        """Return the latest job log path on the suite host."""
+
+        suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
+            suite, "suite job log directory")
+        the_rest = os.path.join(str(task_point), task_name, "NN", "job")
+        return os.path.join(suite_job_log_dir, the_rest)
+ 
+    @classmethod
     def get_create_job_log_path(
             cls, suite, task_name, task_point, submit_num, new_mode=False):
         """Return a new job log path on the suite host, in two parts.

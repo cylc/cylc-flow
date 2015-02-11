@@ -887,10 +887,11 @@ class TaskPool(object):
                     self.force_spawn(itask)
                 self.remove(itask, 'by request')
 
-    def trigger_tasks(self, ids):
+    def trigger_tasks(self, ids, edit_run):
         for itask in self.get_tasks(incl_runahead=False):
             if itask.identity in ids:
                 itask.manual_trigger = True
+                itask.edit_run = edit_run
                 if not itask.state.is_currently('queued'):
                     itask.reset_state_ready()
 
@@ -980,6 +981,19 @@ class TaskPool(object):
             return False, "task not running"
         else:
             return True, " running"
+
+    def get_task_jobfile_path(self, id_):
+        found = False
+        running = False
+        for itask in self.get_tasks(incl_runahead=False):
+            if itask.identity == id_:
+                found = True
+                jobfile_path = itask.job_conf['local job file path']
+                break
+        if not found:
+            return False, "task not found"
+        else:
+            return True, jobfile_path
 
     def get_task_requisites(self, ids):
         info = {}

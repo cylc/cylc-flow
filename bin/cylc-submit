@@ -65,9 +65,8 @@ def commandline_parser():
     parser.set_defaults( sched=False, dry_run=False )
 
     parser.add_option( "-d", "--dry-run",
-            help="Generate the cylc task execution file for the "
-            "task and report how it would be submitted to run.",
-            action="store_true", dest="dry_run" )
+        help="Generate the job script for the task, but don't submit it."
+        action="store_true", dest="dry_run" )
 
     return parser
 
@@ -175,9 +174,11 @@ except TaskNotDefinedError, x:
 if not options.dry_run:
     proc_pool = SuiteProcPool.get_inst(pool_size=1)
 
-task_proxy.submit(dry_run=options.dry_run)
-
-if not options.dry_run:
+if options.dry_run:
+    # The edit-run flag prevents the job script from submitting.
+    task_proxy.edit_run = True
+    print "JOB SCRIPT: %s" % task_proxy.submit()
+else:
     while proc_pool.unhandled_results:
         proc_pool.handle_results_async()
     proc_pool.close()
