@@ -2012,9 +2012,13 @@ shown here in the state they were in at the time of triggering.''')
         debug_group = controlled_option_group("Debug", "--debug")
         debug_group.pack(hbox)
 
+        nodetach_group = controlled_option_group("No-detach", "--no-detach")
+        nodetach_group.pack(hbox)
+
+
         vbox.pack_start(hbox)
 
-        optgroups = [debug_group]
+        optgroups = [nodetach_group, debug_group]
 
         cancel_button = gtk.Button("_Cancel")
         cancel_button.connect("clicked", lambda x: window.destroy())
