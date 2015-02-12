@@ -34,7 +34,7 @@ from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.gui.legend import ThemeLegendWindow
-from cylc.gui.app_main import run_get_stdout
+from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.owner import user
