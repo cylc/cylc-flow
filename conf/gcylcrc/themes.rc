@@ -31,6 +31,7 @@
         failed    = "color=#ff0000", "style=filled", "fontcolor=white"
         retrying  = "color=#ff7e00"
         submit-retrying  = "color=#fa7e00"
+        runahead    = "color=#000000"
 
     [[solid]]
         # a solid version of the default theme
@@ -38,6 +39,7 @@
         defaults  = "color=#bbbbbb", "style=filled", "fontcolor=black"
 
     [[high-contrast]]
+        inherit = "default"
         defaults  = "color=#bbbbbb", "style=filled", "fontcolor=white"
         waiting   = "color=#008ed3"
         held      = "color=#fc00ff"
@@ -56,6 +58,7 @@
          # most forms of color-blindness:
          #   http://safecolors.rigdenage.com/colourchoice.html
          # Can also use style=filled/unfilled to help discrimate states.
+        inherit = "default"
         defaults  = "color=#bbbbbb", "style=filled", "fontcolor=black"
         waiting   = "color=#00ccff" # blue
         queued    = "color=#336600" # moss green

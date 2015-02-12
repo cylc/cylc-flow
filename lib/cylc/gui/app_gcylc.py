@@ -108,10 +108,10 @@ def run_get_stdout(command, filter=False):
 
 
 class TaskFilterWindow(gtk.Window):
-
-    """A popup window displaying task filtering options."""
-
-    def __init__(self, parent_window, widgets):
+    """
+    A popup window displaying task filtering options.
+    """
+    def __init__(self, parent_window, widgets, reset_task_filters):
         super(TaskFilterWindow, self).__init__()
         self.set_border_width(10)
         self.set_title( "Task Filtering" )
@@ -120,7 +120,12 @@ class TaskFilterWindow(gtk.Window):
         else:
             self.set_transient_for( parent_window )
         self.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
-        self.add(widgets)
+        vbox = gtk.VBox()
+        button = gtk.Button("_Reset")
+        button.connect("clicked", reset_task_filters)
+        vbox.pack_start(widgets)
+        vbox.pack_start(button)
+        self.add(vbox)
         self.show_all()
 
 
@@ -3105,7 +3110,23 @@ This is what my suite does:..."""
         self.updater.refilter()
         self.refresh_views()
 
-    def check_filter_entry(self, e):
+    def reset_filter_box(self, w=None):
+        for subbox in self.task_filter_box.get_children():
+            for ebox in subbox.get_children():
+                box = ebox.get_children()[0]
+                try:
+                    icon, cb = box.get_children()
+                except (ValueError, AttributeError) as exc:
+                    # ValueError: an empty box to line things up.
+                    # AttributeError: the name filter entry box.
+                    pass
+                else:
+                    cb.set_active(True)
+        self.check_task_filter_buttons()
+        self.filter_entry.set_text("")
+        self.check_filter_entry()
+
+    def check_filter_entry(self, e=None):
         filter_text = self.filter_entry.get_text()
         try:
             re.compile(filter_text)
@@ -3138,7 +3159,7 @@ This is what my suite does:..."""
         n_rows =  n_states / PER_ROW
         if n_states % PER_ROW:
             n_rows += 1
-        dotm = DotMaker(self.theme, size='medium')
+        dotm = DotMaker(self.theme, size=self.dot_size)
         for row in range(0, n_rows):
             subbox = gtk.HBox(homogeneous=True)
             self.task_filter_box.pack_start(subbox)
@@ -3351,7 +3372,7 @@ For more Stop options use the Control menu.""")
         if self.filter_dialog_window is None:
             self.create_task_filter_widgets()
             self.filter_dialog_window = TaskFilterWindow(
-                self.window, self.task_filter_box)
+                self.window, self.task_filter_box, self.reset_filter_box)
             self.filter_dialog_window.connect(
                 "destroy", self.destroy_filter_dialog)
         else:

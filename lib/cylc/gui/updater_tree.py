@@ -59,6 +59,7 @@ class TreeUpdater(threading.Thread):
         self.last_update_time = None
         self.ancestors = {}
         self.descendants = []
+        self.fam_state_summary = {}
         self._prev_id_named_paths = {}
         self._prev_data = {}
         self._prev_fam_data = {}
