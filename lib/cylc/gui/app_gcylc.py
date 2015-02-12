@@ -655,6 +655,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                                  force=True)
         self._set_info_bar()
         self.update_theme_legend()
+        self.update_filter_dialog()
         return False
 
     def _set_info_bar(self):
@@ -3365,6 +3366,13 @@ For more Stop options use the Control menu.""")
         """Update the theme legend window, if it exists."""
         if self.theme_legend_window is not None:
             self.theme_legend_window.update(self.theme, self.dot_size)
+
+    def update_filter_dialog(self):
+        """Update the filter dialog window, if it exists."""
+        # TODO - it would be nicer to update the dialog in-place!
+        if self.filter_dialog_window is not None:
+            self.filter_dialog_window.destroy()
+            self.popup_filter_dialog()
 
     def destroy_theme_legend(self, widget):
         """Handle a destroy of the theme legend window."""
