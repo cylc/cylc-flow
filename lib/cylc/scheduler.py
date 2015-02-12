@@ -141,7 +141,7 @@ class scheduler(object):
 
         self.parser.add_option( "--hold-after",
                 help="Hold (don't run tasks) AFTER this cycle point.",
-                metavar="CYCLE_POINT", action="store", dest="hold_time" )
+                metavar="CYCLE_POINT", action="store", dest="hold_point_string" )
 
         self.parser.add_option( "-m", "--mode",
                 help="Run mode: live, simulation, or dummy; default is live.",
@@ -186,6 +186,7 @@ class scheduler(object):
                 'remove cycle' : self.command_remove_cycle,
                 'remove task' : self.command_remove_task,
                 'hold suite now' : self.command_hold_suite,
+                'hold suite after' : self.command_hold_after_point_string,
                 'hold task now' : self.command_hold_task,
                 'set runahead' : self.command_set_runahead,
                 'set verbosity' : self.command_set_verbosity,
@@ -468,7 +469,7 @@ class scheduler(object):
         self.hold_suite()
 
     def command_hold_after_point_string( self, point_string ):
-        """TODO - not currently used, add to the cylc hold command"""
+        """Hold tasks AFTER this point (itask.point > point)."""
         point = get_point(point_string)
         point.standardise()
         self.hold_suite( point )
@@ -691,9 +692,10 @@ class scheduler(object):
                 self.view_db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir, primary_db=False)
 
             self.hold_suite_now = False
-            self.hold_time = None
-            if self.options.hold_time:
-                self.hold_time = get_point( self.options.hold_time )
+            self._pool_hold_point = None
+            if self.options.hold_point_string:
+                self._pool_hold_point = get_point(
+                    self.options.hold_point_string)
 
         # Running in UTC time? (else just use the system clock)
         flags.utc = self.config.cfg['cylc']['UTC mode']
@@ -841,9 +843,9 @@ class scheduler(object):
 
     def run( self ):
 
-        if self.hold_time:
+        if self._pool_hold_point is not None:
             # TODO - HANDLE STOP AND PAUSE TIMES THE SAME WAY?
-            self.hold_suite( self.hold_time )
+            self.hold_suite( self._pool_hold_point )
 
         if self.options.start_held:
             self.log.info( "Held on start-up (no tasks will be submitted)")
@@ -1149,13 +1151,13 @@ class scheduler(object):
             self.pool.hold_all_tasks()
         else:
             self.log.info( "Setting suite hold cycle point: " + str(point) )
-            self.hold_time = point
+            self.pool.set_hold_point(point)
 
     def release_suite( self ):
         if self.hold_suite_now:
             self.log.info( "RELEASE: new tasks will be queued when ready")
             self.hold_suite_now = False
-            self.hold_time = None
+        self.pool.set_hold_point(None)
         self.pool.release_all_tasks()
 
     def will_stop_at( self ):
@@ -1180,7 +1182,7 @@ class scheduler(object):
         return self.hold_suite_now
 
     def will_pause_at( self ):
-        return self.hold_time
+        return self.pool.get_hold_point()
 
     def command_trigger_task( self, name, point_string, is_family ):
         matches = self.get_matching_tasks( name, is_family )

@@ -1,0 +1,28 @@
+
+title = "cylc hold --after"
+
+description = """One task that holds future cycles after a given cycle."""
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    initial cycle time = 20140101T00
+    final cycle time   = 20140104T00
+    max active cycle points = 10
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+                stopper
+                holdafter => foo
+            """
+        [[[T00, T12]]]
+            graph = foo[-PT12H] => foo => bar
+[runtime]
+    [[holdafter]]
+        command scripting = cylc hold --after 20140101T12 $CYLC_SUITE_NAME
+    [[stopper]]
+        command scripting = sleep 30; cylc stop $CYLC_SUITE_NAME
+    [[foo,bar]]
+        command scripting = true
