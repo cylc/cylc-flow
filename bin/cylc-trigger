@@ -19,13 +19,14 @@
 import sys
 
 if '--host' in sys.argv[1:] and '--edit' in sys.argv[1:]:
+    # Edit runs must always be re-invoked on the suite host.
     if '--use-ssh' not in sys.argv[1:]:
         sys.argv[1:].append('--use-ssh')
 
 if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
+    sys.argv.remove('--use-ssh')
     from cylc.remote import remrun
-    if remrun().execute( force_required=True ):
+    if remrun().execute(force_required=True):
         sys.exit(0)
 
 import re
@@ -41,7 +42,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.job_logs import CommandLogger
 
 
-parser = cop( """cylc [control] trigger [OPTIONS] ARGS
+parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
 Manually trigger a task or tasks. For single tasks you can choose to edit the
 generated job script first, to apply one-off changes (--edit).  Triggering a
@@ -49,18 +50,22 @@ waiting task queues it for execution. If its queue is not limited it will
 submit immediately, otherwise it will submit when released by its queue.
 Triggering a queued task causes it to submit immediately even if that violates
 the queue limit.
-""" + multitask_usage, pyro=True, multitask=True,
-    argdoc=[ ('REG', 'Suite name'),
-        ('MATCH', 'Task or family name matching regular expression'),
-        ('POINT', 'Task cycle point (e.g. date-time or integer)') ])
+""" + multitask_usage, pyro=True, multitask=True, argdoc=[
+    ('REG', 'Suite name'),
+    ('MATCH', 'Task or family name matching regular expression'),
+    ('POINT', 'Task cycle point (e.g. date-time or integer)')
+    ]
+)
 
-parser.add_option( "-e", "--edit",
-                help="Manually edit the job script before running it.",
-                action="store_true", default=False, dest="edit_run" )
+parser.add_option(
+    "-e", "--edit",
+    help="Manually edit the job script before running it.",
+    action="store_true", default=False, dest="edit_run")
 
-parser.add_option( "-g", "--geditor",
-        help="(with --edit-run) force use of the configured GUI editor.",
-        action="store_true", default=False, dest="geditor" )
+parser.add_option(
+    "-g", "--geditor",
+    help="(with --edit-run) force use of the configured GUI editor.",
+    action="store_true", default=False, dest="geditor")
 
 (options, args) = parser.parse_args()
 suite, pphrase = prep_pyro(args[0], options).execute()
@@ -77,15 +82,17 @@ if options.edit_run:
         jobfile_mtime = None
 
 try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
+    proxy = cylc_pyro_client.client(
+        suite, pphrase, options.owner,
+        options.host, options.pyro_timeout, options.port
+        ).get_proxy('command-interface')
     prompt(
         'Trigger task(s) ' + name + ' at ' + point_string + ' in ' + suite,
         options.force
     )
     result = proxy.put(
-        'trigger task', name, point_string, options.is_family, options.edit_run)
+        'trigger task', name, point_string, options.is_family,
+        options.edit_run)
 except Exception as exc:
     if cylc.flags.debug:
         raise
@@ -121,9 +128,10 @@ if options.edit_run:
     command = ' '.join(command_list)
     try:
         # Edit the job file (this blocks until editor exit).
-        retcode = subprocess.call( command_list )
+        retcode = subprocess.call(command_list)
         if retcode != 0:
-            sys.exit('ERROR, command failed with %d:\n %s' % (retcode, command))
+            sys.exit(
+                'ERROR, command failed with %d:\n %s' % (retcode, command))
     except OSError:
         sys.exit('ERROR, unable to execute:\n %s' % command)
 
