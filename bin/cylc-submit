@@ -53,6 +53,7 @@ not present in the graph, the given cycle point is assumed to be valid.
 WARNING: do not 'cylc submit' a task that is running in its suite at the
 same time - both instances will attempt to write to the same job logs."""
 
+
 def commandline_parser():
     parser = cop(
         usage, jset=True,
@@ -62,20 +63,20 @@ def commandline_parser():
         ]
     )
 
-    parser.set_defaults( sched=False, dry_run=False )
+    parser.set_defaults(sched=False, dry_run=False)
 
-    parser.add_option( "-d", "--dry-run",
-            help="Generate the cylc task execution file for the "
-            "task and report how it would be submitted to run.",
-            action="store_true", dest="dry_run" )
+    parser.add_option(
+        "-d", "--dry-run",
+        help="Generate the job script for the task, but don't submit it.",
+        action="store_true", dest="dry_run")
 
     return parser
 
 # parse command line options and arguments-----------------------------
 parser = commandline_parser()
-( options, args ) = parser.parse_args()
+(options, args) = parser.parse_args()
 
-suite, suiterc = prep_file( args[0], options ).execute()
+suite, suiterc = prep_file(args[0], options).execute()
 
 owner = options.owner
 host = options.host
@@ -87,7 +88,7 @@ task_id = args[1]
 
 suite_dir = os.path.dirname(suiterc)
 # For user-defined job submission methods:
-sys.path.append( os.path.join( suite_dir, 'python' ))
+sys.path.append(os.path.join(suite_dir, 'python'))
 
 # check task
 if not TaskID.is_valid_id(task_id):
@@ -97,13 +98,13 @@ task_name, point_string = TaskID.split(task_id)
 
 # load suite config
 try:
-    config = config( suite, suiterc,
-            template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file )
-except Exception,x:
+    config = config(
+        suite, suiterc, template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file)
+except Exception as exc:
     if cylc.flags.debug:
         raise
-    raise SystemExit(x)
+    raise SystemExit(exc)
 
 # No TASK EVENT HOOKS are set for the submit command because there is
 # no scheduler instance watching for task failure etc.
@@ -114,7 +115,7 @@ utc = config.cfg['cylc']['UTC mode']
 # create log (after CYLC_MODE is exported)
 os.environ['CYLC_MODE'] = 'submit'
 
-GLOBAL_CFG.create_cylc_run_tree( suite )
+GLOBAL_CFG.create_cylc_run_tree(suite)
 slog = suite_log(suite)
 suite_log_dir = slog.get_dir()
 slog.pimp()
@@ -122,28 +123,28 @@ slog.pimp()
 RemoteJobHostManager.get_inst().single_task_mode = True
 
 ict = config.cfg['scheduling']['initial cycle point']
-fct = config.cfg['scheduling']['final cycle point'  ]
+fct = config.cfg['scheduling']['final cycle point']
 
 # static cylc and suite-specific variables:
 suite_env = {
-        'CYLC_UTC'               : str(utc),
-        'CYLC_MODE'              : 'submit',
-        'CYLC_DEBUG'             : str( cylc.flags.debug ),
-        'CYLC_VERBOSE'           : str( cylc.flags.verbose),
-        'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
-        'CYLC_SUITE_NAME'        : suite,
-        'CYLC_SUITE_REG_NAME'    : suite, # DEPRECATED
-        'CYLC_SUITE_HOST'        : str( get_suite_host() ),
-        'CYLC_SUITE_OWNER'       : owner,
-        'CYLC_SUITE_PORT'        : 'None',
-        'CYLC_SUITE_REG_PATH'    : RegPath( suite ).get_fpath(), # DEPRECATED
-        'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : suite_dir,
-        'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( ict ), # may be "None"
-        'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( fct ), # may be "None"
-        'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( ict ), # may be "None"
-        'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( fct ), # may be "None"
-        'CYLC_SUITE_LOG_DIR'     : suite_log_dir # needed by the test battery
-        }
+    'CYLC_UTC': str(utc),
+    'CYLC_MODE': 'submit',
+    'CYLC_DEBUG': str(cylc.flags.debug),
+    'CYLC_VERBOSE': str(cylc.flags.verbose),
+    'CYLC_DIR_ON_SUITE_HOST': os.environ['CYLC_DIR'],
+    'CYLC_SUITE_NAME': suite,
+    'CYLC_SUITE_REG_NAME': suite,  # DEPRECATED
+    'CYLC_SUITE_HOST': str(get_suite_host()),
+    'CYLC_SUITE_OWNER': owner,
+    'CYLC_SUITE_PORT': 'None',
+    'CYLC_SUITE_REG_PATH': RegPath(suite).get_fpath(),  # DEPRECATED
+    'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST': suite_dir,
+    'CYLC_SUITE_INITIAL_CYCLE_POINT': str(ict),  # may be "None"
+    'CYLC_SUITE_FINAL_CYCLE_POINT': str(fct),  # may be "None"
+    'CYLC_SUITE_INITIAL_CYCLE_TIME': str(ict),  # may be "None"
+    'CYLC_SUITE_FINAL_CYCLE_TIME': str(fct),  # may be "None"
+    'CYLC_SUITE_LOG_DIR': suite_log_dir  # needed by the test battery
+    }
 
 # Note: a suite contact env file is not written by this command (it
 # would overwrite the real one if the suite is running).
@@ -153,12 +154,15 @@ suite_env = {
 # are overridden by tasks prior to job submission, but in
 # principle they could be needed locally by event handlers:
 suite_task_env = {
-        'CYLC_SUITE_RUN_DIR'    : GLOBAL_CFG.get_derived_host_item( suite, 'suite run directory' ),
-        'CYLC_SUITE_WORK_DIR'   : GLOBAL_CFG.get_derived_host_item( suite, 'suite work directory' ),
-        'CYLC_SUITE_SHARE_DIR'  : GLOBAL_CFG.get_derived_host_item( suite, 'suite share directory' ),
-        'CYLC_SUITE_SHARE_PATH' : '$CYLC_SUITE_SHARE_DIR', # DEPRECATED
-        'CYLC_SUITE_DEF_PATH'   : suite_dir
-        }
+    'CYLC_SUITE_RUN_DIR': GLOBAL_CFG.get_derived_host_item(
+        suite, 'suite run directory'),
+    'CYLC_SUITE_WORK_DIR': GLOBAL_CFG.get_derived_host_item(
+        suite, 'suite work directory'),
+    'CYLC_SUITE_SHARE_DIR': GLOBAL_CFG.get_derived_host_item(
+        suite, 'suite share directory'),
+    'CYLC_SUITE_SHARE_PATH': '$CYLC_SUITE_SHARE_DIR',  # DEPRECATED
+    'CYLC_SUITE_DEF_PATH': suite_dir
+    }
 # (note GLOBAL_CFG automatically expands environment variables in local paths)
 
 JOB_FILE.set_suite_env(suite_env)
@@ -175,9 +179,10 @@ except TaskNotDefinedError, x:
 if not options.dry_run:
     proc_pool = SuiteProcPool.get_inst(pool_size=1)
 
-task_proxy.submit(dry_run=options.dry_run)
-
-if not options.dry_run:
+if options.dry_run:
+    print "JOB SCRIPT=%s" % task_proxy.submit(dry_run=True)
+else:
+    task_proxy.submit()
     while proc_pool.unhandled_results:
         proc_pool.handle_results_async()
     proc_pool.close()

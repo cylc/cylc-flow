@@ -26,8 +26,11 @@ import cylc.flags
 """Common options for all cylc commands."""
 
 multitask_usage = """
-For matching multiple tasks or families at once note that MATCH is
-interpreted as a full regular expression, not a simple shell glob."""
+To match multiple tasks or families at once, MATCH is interpreted as a
+Python-style regular expression, not a simple shell glob.
+
+To match family rather than task names, use the -m/--family option.
+"""
 
 class db_optparse( object ):
     def __init__( self, dbopt ):

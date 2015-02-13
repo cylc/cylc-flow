@@ -17,55 +17,146 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+
+if '--host' in sys.argv[1:] and '--edit' in sys.argv[1:]:
+    # Edit runs must always be re-invoked on the suite host.
+    if '--use-ssh' not in sys.argv[1:]:
+        sys.argv[1:].append('--use-ssh')
+
 if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
+    sys.argv.remove('--use-ssh')
     from cylc.remote import remrun
-    if remrun().execute( force_required=True ):
+    if remrun().execute(force_required=True):
         sys.exit(0)
 
+import re
+import os
+import time
+import subprocess
 from cylc.prompt import prompt
 from cylc import cylc_pyro_client
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 import cylc.flags
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.job_logs import CommandLogger
+from cylc.task_id import TaskID
 
-parser = cop( """cylc [control] trigger [OPTIONS] ARGS
+parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
-Manually trigger tasks. Triggering an unqueued task sets it "ready to
-run" and queues it for job submission (cylc internal queues). If the
-queue is not limited the task will submit immediately, otherwise it will
-submit when released by its queue. Triggering a queued task overrides the
-queue limiting mechanism and causes the task to submit immediately (be
-aware that this results in a greater number of active tasks than the
-queue limit specifies).
-""" + multitask_usage, pyro=True, multitask=True,
-    argdoc=[ ('REG', 'Suite name'),
-        ('MATCH', 'Task or family name matching regular expression'),
-        ('POINT', 'Task cycle point (e.g. date-time or integer)') ])
+Manually trigger a task or tasks. For single tasks you can choose to edit the
+generated job script first, to apply one-off changes (--edit).  Triggering a
+waiting task queues it for execution. If its queue is not limited it will
+submit immediately, otherwise it will submit when released by its queue.
+Triggering a queued task causes it to submit immediately even if that violates
+the queue limit.
+""" + multitask_usage, pyro=True, multitask=True, argdoc=[
+    ('REG', 'Suite name'),
+    ('MATCH', 'Task or family name matching regular expression'),
+    ('POINT', 'Task cycle point (e.g. date-time or integer)')
+    ]
+)
+
+parser.add_option(
+    "-e", "--edit",
+    help="Manually edit the job script before running it.",
+    action="store_true", default=False, dest="edit_run")
+
+parser.add_option(
+    "-g", "--geditor",
+    help="(with --edit-run) force use of the configured GUI editor.",
+    action="store_true", default=False, dest="geditor")
 
 (options, args) = parser.parse_args()
-
-suite, pphrase = prep_pyro( args[0], options ).execute()
-
+suite, pphrase = prep_pyro(args[0], options).execute()
 name = args[1]
 point_string = args[2]
 
+msg = 'Trigger task(s) %s  at %s in %s' % (name, point_string, suite)
+prompt(msg, options.force)
+
+# Get the suite daemon command interface.
 try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    prompt(
-        'Trigger task(s) ' + name + ' at ' + point_string + ' in ' + suite,
-        options.force
-    )
-    result = proxy.put(
-        'trigger task', name, point_string, options.is_family)
-except Exception, x:
+    cmd_proxy = cylc_pyro_client.client(
+        suite, pphrase, options.owner, options.host, options.pyro_timeout,
+        options.port).get_proxy('command-interface')
+except Exception as exc:
     if cylc.flags.debug:
         raise
-    sys.exit(x)
+    sys.exit(exc)
 
-if result[0]:
-    print result[1]
-else:
-    sys.exit( result[1] )
+if options.edit_run:
+    # Check that TASK is a unique task.
+    task_id = TaskID.get(name, point_string)
+    try:
+        info_proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+                options.host, options.pyro_timeout,
+                options.port ).get_proxy( 'suite-info' )
+        res, msg = info_proxy.get('ping task', task_id, True)
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)
+    if not res:
+        sys.exit('ERROR: %s' % msg)
+
+    # Get the current job file mtime, if the file exists.
+    jobfile_path = CommandLogger.get_latest_job_log(
+        suite, name, point_string)
+    try:
+        jobfile_mtime = os.stat(jobfile_path).st_mtime
+    except OSError:
+        # Does not exist.
+        jobfile_mtime = None
+
+    try:
+        # Tell the suite daemon to generate the job file.
+        result = cmd_proxy.put('dry run task', name, point_string)
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)
+    if not result[0]:
+        sys.exit(result[1])
+
+    # Wait for the new job file to be written.
+    count = 0
+    MAX_TRIES = 10
+    while True:
+        count += 1
+        try:
+            if os.stat(jobfile_path).st_mtime > jobfile_mtime:
+                break
+        except:
+            pass
+        if count > MAX_TRIES:
+            sys.exit('ERROR: no job file after %s seconds' % MAX_TRIES)
+        time.sleep(1)
+
+    # Edit the new job file.
+    if options.geditor:
+        editor = GLOBAL_CFG.get(['editors', 'gui'])
+    else:
+        editor = GLOBAL_CFG.get(['editors', 'terminal'])
+    # The editor command may have options, e.g. 'emacs -nw'.
+    command_list = re.split(' ', editor)
+    command_list.append(jobfile_path)
+    command = ' '.join(command_list)
+    try:
+        # Block until the editor exits.
+        retcode = subprocess.call(command_list)
+        if retcode != 0:
+            sys.exit(
+                'ERROR, command failed with %d:\n %s' % (retcode, command))
+    except OSError:
+        sys.exit('ERROR, unable to execute:\n %s' % command)
+
+# Trigger the task proxy(s).
+try:
+    result = cmd_proxy.put('trigger task', name, point_string, options.is_family)
+except Exception as exc:
+    if cylc.flags.debug:
+        raise
+    sys.exit(exc)
+if not result[0]:
+    sys.exit(result[1])

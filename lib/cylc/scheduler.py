@@ -171,7 +171,8 @@ class scheduler(object):
                 'first-parent descendants' : self.info_get_first_parent_descendants,
                 'graph raw' : self.info_get_graph_raw,
                 'task requisites' : self.info_get_task_requisites,
-                'get cylc version' : self.info_get_cylc_version
+                'get cylc version' : self.info_get_cylc_version,
+                'task job file path' : self.info_get_task_jobfile_path
                 }
 
         # control commands to expose indirectly via a command queue
@@ -193,6 +194,7 @@ class scheduler(object):
                 'purge tree' : self.command_purge_tree,
                 'reset task state' : self.command_reset_task_state,
                 'trigger task' : self.command_trigger_task,
+                'dry run task' : self.command_dry_run_task,
                 'nudge suite' : self.command_nudge,
                 'insert task' : self.command_insert_task,
                 'reload suite' : self.command_reload_suite,
@@ -341,8 +343,11 @@ class scheduler(object):
         """Return the cylc version running this suite daemon."""
         return CYLC_VERSION
 
-    def info_ping_task( self, task_id ):
-        return self.pool.ping_task( task_id )
+    def info_ping_task(self, task_id, exists_only=False):
+        return self.pool.ping_task(task_id, exists_only)
+
+    def info_get_task_jobfile_path(self, task_id):
+        return self.pool.get_task_jobfile_path(task_id)
 
     def info_get_suite_info( self ):
         return [ self.config.cfg['title'], user ]
@@ -427,7 +432,7 @@ class scheduler(object):
             self.set_stop_task(tid)
 
     def command_release_task( self, name, point_string, is_family ):
-        matches = self.get_matching_tasks( name, is_family )
+        matches = self.get_matching_task_names( name, is_family )
         point_string = standardise_point_string(point_string)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
@@ -439,7 +444,7 @@ class scheduler(object):
         if name == "None" and point_string == "None":
             self.pool.poll_tasks()
         else:
-            matches = self.get_matching_tasks(name, is_family)
+            matches = self.get_matching_task_names(name, is_family)
             if not matches:
                 raise TaskNotFoundError, "No matching tasks found: " + name
             point_string = standardise_point_string(point_string)
@@ -447,7 +452,7 @@ class scheduler(object):
             self.pool.poll_tasks(task_ids)
 
     def command_kill_tasks( self, name, point_string, is_family ):
-        matches = self.get_matching_tasks( name, is_family )
+        matches = self.get_matching_task_names( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
@@ -458,7 +463,7 @@ class scheduler(object):
         self.release_suite()
 
     def command_hold_task( self, name, point_string, is_family ):
-        matches = self.get_matching_tasks( name, is_family )
+        matches = self.get_matching_task_names( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
@@ -488,7 +493,7 @@ class scheduler(object):
         self.pool.remove_entire_cycle( point, spawn )
 
     def command_remove_task( self, name, point_string, is_family, spawn ):
-        matches = self.get_matching_tasks( name, is_family )
+        matches = self.get_matching_task_names( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
@@ -497,7 +502,7 @@ class scheduler(object):
 
     def command_insert_task( self, name, point_string, is_family,
                              stop_point_string ):
-        matches = self.get_matching_tasks( name, is_family )
+        matches = self.get_matching_task_names( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [TaskID.get(i, point_string) for i in matches]
@@ -1184,49 +1189,54 @@ class scheduler(object):
     def will_pause_at( self ):
         return self.pool.get_hold_point()
 
-    def command_trigger_task( self, name, point_string, is_family ):
-        matches = self.get_matching_tasks( name, is_family )
+    def command_trigger_task(self, name, point_string, is_family):
+        matches = self.get_matching_task_names(name, is_family)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.trigger_tasks( task_ids )
+        self.pool.trigger_tasks(task_ids)
 
-    def get_matching_tasks( self, name, is_family=False ):
-        """name can be a task or family name, or a regex to match
-        multiple tasks or families."""
+    def command_dry_run_task(self, name, point_string):
+        matches = self.get_matching_task_names(name)
+        if not matches:
+            raise TaskNotFoundError("Task not found: %s" % name)
+        if len(matches) > 1:
+            raise TaskNotFoundError("Unique task match not found: %s" % name)
+        task_id = TaskID.get(matches[0], point_string)
+        self.pool.dry_run_task(task_id)
 
+    def get_matching_task_names(self, expr, is_family=False):
+        """Return task names that match expr (for task or family name)."""
         matches = []
         tasks = self.config.get_task_name_list()
-
         if is_family:
             families = self.config.runtime['first-parent descendants']
             try:
-                # exact
-                f_matches = families[name]
+                # Exact family match.
+                f_matches = families[expr]
             except KeyError:
-                # regex match
+                # Regex familyi match
                 f_matches = []
                 for fam, mems in families.items():
-                    if re.match( name, fam ):
+                    if re.match(expr, fam):
                         f_matches += mems
             matches = []
             for m in f_matches:
                 if m in tasks:
                     matches.append(m)
-
         else:
-            if name in tasks:
-                # exact
-                matches.append(name)
+            if expr in tasks:
+                # Exact task match.
+                matches.append(expr)
             else:
-                # regex match
+                # Regex task match.
                 for task in tasks:
-                    if re.match( name, task ):
+                    if re.match(expr, task):
                         matches.append(task)
         return matches
 
     def command_reset_task_state( self, name, point_string, state, is_family ):
-        matches = self.get_matching_tasks( name, is_family )
+        matches = self.get_matching_task_names( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
         task_ids = [TaskID.get(i, point_string) for i in matches]

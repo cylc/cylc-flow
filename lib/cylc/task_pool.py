@@ -905,6 +905,12 @@ class TaskPool(object):
                 if not itask.state.is_currently('queued'):
                     itask.reset_state_ready()
 
+    def dry_run_task(self, id):
+        for itask in self.get_tasks(incl_runahead=False):
+            if itask.identity == id:
+                itask.submit(overrides=self.wireless.get(itask.identity),
+                             dry_run=True)
+
     def check_task_timers(self):
         for itask in self.get_tasks(incl_runahead=False):
             itask.check_timers()
@@ -976,7 +982,7 @@ class TaskPool(object):
                 break
         return res
 
-    def ping_task(self, id_):
+    def ping_task(self, id_, exists_only=False):
         found = False
         running = False
         for itask in self.get_tasks(incl_runahead=False):
@@ -987,10 +993,27 @@ class TaskPool(object):
                 break
         if not found:
             return False, "task not found"
-        elif not running:
-            return False, "task not running"
         else:
-            return True, " running"
+            if exists_only:
+                return True, "task found"
+            else:
+                if running:
+                    return True, " running"
+                else:
+                    return False, "task not running"
+
+    def get_task_jobfile_path(self, id_):
+        found = False
+        running = False
+        for itask in self.get_tasks(incl_runahead=False):
+            if itask.identity == id_:
+                found = True
+                jobfile_path = itask.job_conf['local job file path']
+                break
+        if not found:
+            return False, "task not found"
+        else:
+            return True, jobfile_path
 
     def get_task_requisites(self, ids):
         info = {}

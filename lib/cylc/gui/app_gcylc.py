@@ -1174,7 +1174,7 @@ The Cylc Suite Engine.
 
             items.append(gtk.SeparatorMenuItem())
 
-        trigger_now_item = gtk.ImageMenuItem('Trigger')
+        trigger_now_item = gtk.ImageMenuItem('Trigger (run now)')
         img = gtk.image_new_from_stock(
             gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU)
         trigger_now_item.set_image(img)
@@ -1182,8 +1182,18 @@ The Cylc Suite Engine.
         trigger_now_item.connect(
             'activate', self.trigger_task_now, task_id, task_is_family)
 
-        # TODO - grey out poll and kill if the task is not 'submitted' or
-        # 'running' (requires the task state from the underlying data model...)
+        if not task_is_family:
+            trigger_edit_item = gtk.ImageMenuItem('Trigger (edit run)')
+            img = gtk.image_new_from_stock(
+                gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU)
+            trigger_edit_item.set_image(img)
+            items.append(trigger_edit_item)
+            trigger_edit_item.connect(
+                'activate', self.trigger_task_edit_run, task_id)
+
+        items.append(gtk.SeparatorMenuItem())
+
+        # TODO - grey out poll and kill if the task is not active.
         poll_item = gtk.ImageMenuItem('Poll')
         img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
         poll_item.set_image(img)
@@ -1606,6 +1616,7 @@ shown here in the state they were in at the time of triggering.''')
             warning_dialog(result[1], self.window).warn()
 
     def trigger_task_now(self, b, task_id, is_family=False):
+        """Trigger task via the suite daemon's command interface."""
         cmd = "trigger"
         if not self.get_confirmation(cmd, task_id):
             return
@@ -1620,6 +1631,19 @@ shown here in the state they were in at the time of triggering.''')
             return
         if not result[0]:
             warning_dialog(result[1], self.window).warn()
+
+    def trigger_task_edit_run(self, b, task_id):
+        """
+        Do an edit-run by invoking 'cylc trigger --edit' on the suite host.
+        """
+        name, point_string = TaskID.split(task_id)
+        command = (
+            "cylc trigger --notify-completion --use-ssh --edit --geditor -f" +
+            self.get_remote_run_opts() + " " + self.cfg.suite +
+            " %s %s" % (name, point_string))
+        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
+        self.gcapture_windows.append(foo)
+        foo.run()
 
     def poll_task(self, b, task_id, is_family=False):
         cmd = "poll"

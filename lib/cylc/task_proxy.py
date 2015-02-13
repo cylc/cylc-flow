@@ -182,6 +182,7 @@ class TaskProxy(object):
         self.retry_delay = None
         self.retry_delay_timer_timeout = None
         self.retry_delays = None
+        self.job_file_written = False
 
         self.sub_try_number = 1
         self.sub_retry = None
@@ -862,29 +863,37 @@ class TaskProxy(object):
 
     def submit(self, dry_run=False, overrides=None):
         """Submit a job for this task."""
-        self.set_status('ready')
 
         if self.tdef.run_mode == 'simulation':
             self.job_submission_succeeded()
             return
 
-        # Prepare the job submit command
-        try:
-            self._prepare_submit(overrides=overrides)
-            JOB_FILE.write(self.job_conf)
-        except Exception, exc:
-            # Could be a bad command template.
-            if flags.debug:
-                traceback.print_exc()
-            self.log(ERROR, "Failed to construct job submission command")
-            self.command_log("SUBMIT", err=str(exc))
-            self.job_submission_failed()
-            return
+        if dry_run or not self.job_file_written:
+            # Prepare the job submit command and write the job script.
+            # In a dry_run, force a rewrite in case of a previous aborted
+            # edit-run that left the file write flag set.
+            try:
+                self._prepare_submit(overrides=overrides)
+                JOB_FILE.write(self.job_conf)
+                self.job_file_written = True
+            except Exception, exc:
+                # Could be a bad command template.
+                if flags.debug:
+                    traceback.print_exc()
+                self.log(ERROR, "Failed to construct job submission command")
+                self.command_log("SUBMIT", err=str(exc))
+                self.job_submission_failed()
+                return
+            if dry_run:
+                # Note this is used to bail out in the first stage of an
+                # edit-run (i.e. write the job file but don't submit it).
+                return self.job_conf['local job file path']
 
-        if dry_run:
-            print "JOB SCRIPT=" + self.job_conf['local job file path']
-            return
-
+        # The job file is now (about to be) used: reset the file write flag so
+        # that subsequent manual retrigger will generate a new job file.
+        self.job_file_written = False
+        self.set_status('ready')
+        # Send the job to the command pool.
         return self._run_job_command(
             CMD_TYPE_JOB_SUBMISSION,
             "job-submit",
@@ -900,6 +909,7 @@ class TaskProxy(object):
 
         """
         self.increment_submit_num()
+        self.job_file_written = False
 
         local_job_log_dir, common_job_log_path = (
             CommandLogger.get_create_job_log_path(
