@@ -1,0 +1,17 @@
+title = A suite to test 'cylc trigger --edit'.
+description = """
+A broken task will fail and cause the suite to abort on timeout, unless a
+second task fixes and retriggers it with an edit-run."""
+[cylc]
+    [[event hooks]]
+        abort on timeout = True
+        timeout = PT20S
+[scheduling]
+    [[dependencies]]
+        graph = broken-task:fail => fixer-task
+[runtime]
+    [[broken-task]]
+        command scripting = /bin/false
+    [[fixer-task]]
+        command scripting = """
+cylc trigger --edit $CYLC_SUITE_NAME broken-task 1"""
