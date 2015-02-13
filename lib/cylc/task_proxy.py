@@ -861,7 +861,7 @@ class TaskProxy(object):
         self.record_db_event(event="incrementing submit number")
         self.record_db_update("task_states", submit_num=self.submit_num)
 
-    def submit(self, overrides=None, dry_run=False):
+    def submit(self, dry_run=False, overrides=None):
         """Submit a job for this task."""
 
         if self.tdef.run_mode == 'simulation':
@@ -1518,7 +1518,6 @@ class TaskProxy(object):
         Run a job command with the multiprocess pool.
 
         """
-        self.job_prepped = False # (reset)
         if self.user_at_host in [user + '@localhost', 'localhost']:
             cmd = ["cylc", cmd_key] + list(args)
         else:  # if it is a remote job
