@@ -180,9 +180,7 @@ if not options.dry_run:
     proc_pool = SuiteProcPool.get_inst(pool_size=1)
 
 if options.dry_run:
-    # The edit-run flag prevents the job script from submitting.
-    task_proxy.edit_run = True
-    print "JOB SCRIPT: %s" % task_proxy.submit(dry_run=True)
+    print "JOB SCRIPT=%s" % task_proxy.submit(dry_run=True)
 else:
     while proc_pool.unhandled_results:
         proc_pool.handle_results_async()
