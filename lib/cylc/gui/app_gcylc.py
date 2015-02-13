@@ -1174,14 +1174,6 @@ The Cylc Suite Engine.
 
             items.append(gtk.SeparatorMenuItem())
 
-            trigger_edit_item = gtk.ImageMenuItem('Trigger (edit run)')
-            img = gtk.image_new_from_stock(
-                gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU)
-            trigger_edit_item.set_image(img)
-            items.append(trigger_edit_item)
-            trigger_edit_item.connect(
-                'activate', self.trigger_task_edit_run, task_id)
-
         trigger_now_item = gtk.ImageMenuItem('Trigger (run now)')
         img = gtk.image_new_from_stock(
             gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU)
@@ -1190,10 +1182,18 @@ The Cylc Suite Engine.
         trigger_now_item.connect(
             'activate', self.trigger_task_now, task_id, task_is_family)
 
+        if not task_is_family:
+            trigger_edit_item = gtk.ImageMenuItem('Trigger (edit run)')
+            img = gtk.image_new_from_stock(
+                gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU)
+            trigger_edit_item.set_image(img)
+            items.append(trigger_edit_item)
+            trigger_edit_item.connect(
+                'activate', self.trigger_task_edit_run, task_id)
+
         items.append(gtk.SeparatorMenuItem())
 
-        # TODO - grey out poll and kill if the task is not 'submitted' or
-        # 'running' (requires the task state from the underlying data model...)
+        # TODO - grey out poll and kill if the task is not active.
         poll_item = gtk.ImageMenuItem('Poll')
         img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
         poll_item.set_image(img)

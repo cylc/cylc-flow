@@ -153,8 +153,6 @@ class TaskProxy(object):
         self.state_before_held = None  # state before being held
         self.hold_on_retry = False
         self.manual_trigger = False
-        self.edit_run = False
-        self.job_prepped = False
 
         self.latest_message = ""
 
@@ -184,6 +182,7 @@ class TaskProxy(object):
         self.retry_delay = None
         self.retry_delay_timer_timeout = None
         self.retry_delays = None
+        self.job_file_written = False
 
         self.sub_try_number = 1
         self.sub_retry = None
@@ -862,18 +861,21 @@ class TaskProxy(object):
         self.record_db_event(event="incrementing submit number")
         self.record_db_update("task_states", submit_num=self.submit_num)
 
-    def submit(self, overrides=None):
+    def submit(self, overrides=None, dry_run=False):
         """Submit a job for this task."""
 
         if self.tdef.run_mode == 'simulation':
             self.job_submission_succeeded()
             return
 
-        if not self.job_prepped:
-            # Prepare the job submit command.
+        if dry_run or not self.job_file_written:
+            # Prepare the job submit command and write the job script.
+            # In a dry_run, force a rewrite in case of a previous aborted
+            # edit-run that left the file write flag set.
             try:
                 self._prepare_submit(overrides=overrides)
                 JOB_FILE.write(self.job_conf)
+                self.job_file_written = True
             except Exception, exc:
                 # Could be a bad command template.
                 if flags.debug:
@@ -882,15 +884,16 @@ class TaskProxy(object):
                 self.command_log("SUBMIT", err=str(exc))
                 self.job_submission_failed()
                 return
-            self.job_prepped = True
+            if dry_run:
+                # Note this is used to bail out in the first stage of an
+                # edit-run (i.e. write the job file but don't submit it).
+                return self.job_conf['local job file path']
 
-        if self.edit_run:
-            # Hold now and return without submitting the job.
-            self.edit_run = False
-            self.reset_state_held()
-            return self.job_conf['local job file path']
-
+        # The job file is now (about to be) used: reset the file write flag so
+        # that subsequent manual retrigger will generate a new job file.
+        self.job_file_written = False
         self.set_status('ready')
+        # Send the job to the command pool.
         return self._run_job_command(
             CMD_TYPE_JOB_SUBMISSION,
             "job-submit",
@@ -906,6 +909,7 @@ class TaskProxy(object):
 
         """
         self.increment_submit_num()
+        self.job_file_written = False
 
         local_job_log_dir, common_job_log_path = (
             CommandLogger.get_create_job_log_path(

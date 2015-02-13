@@ -40,7 +40,7 @@ from cylc.command_prep import prep_pyro
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.job_logs import CommandLogger
-
+from cylc.task_id import TaskID
 
 parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
@@ -72,62 +72,78 @@ suite, pphrase = prep_pyro(args[0], options).execute()
 name = args[1]
 point_string = args[2]
 
-if options.edit_run:
-    jobfile_path = CommandLogger.get_latest_job_log(
-        suite, name, point_string)
-    try:
-        jobfile_mtime = os.stat(jobfile_path).st_mtime
-    except OSError:
-        # No job script yet.
-        jobfile_mtime = None
+msg = 'Trigger task(s) %s  at %s in %s' % (name, point_string, suite)
+prompt(msg, options.force)
 
+# Get the suite daemon command interface.
 try:
-    proxy = cylc_pyro_client.client(
-        suite, pphrase, options.owner,
-        options.host, options.pyro_timeout, options.port
-        ).get_proxy('command-interface')
-    prompt(
-        'Trigger task(s) ' + name + ' at ' + point_string + ' in ' + suite,
-        options.force
-    )
-    result = proxy.put(
-        'trigger task', name, point_string, options.is_family,
-        options.edit_run)
+    cmd_proxy = cylc_pyro_client.client(
+        suite, pphrase, options.owner, options.host, options.pyro_timeout,
+        options.port).get_proxy('command-interface')
 except Exception as exc:
     if cylc.flags.debug:
         raise
     sys.exit(exc)
 
-if not result[0]:
-    sys.exit(result[1])
-
 if options.edit_run:
-    if options.geditor:
-        editor = GLOBAL_CFG.get(['editors', 'gui'])
-    else:
-        editor = GLOBAL_CFG.get(['editors', 'terminal'])
+    # Check that TASK is a unique task.
+    task_id = TaskID.get(name, point_string)
+    try:
+        info_proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
+                options.host, options.pyro_timeout,
+                options.port ).get_proxy( 'suite-info' )
+        res, msg = info_proxy.get('ping task', task_id, True)
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)
+    if not res:
+        sys.exit('ERROR: %s' % msg)
 
+    # Get the current job file mtime, if the file exists.
+    jobfile_path = CommandLogger.get_latest_job_log(
+        suite, name, point_string)
+    try:
+        jobfile_mtime = os.stat(jobfile_path).st_mtime
+    except OSError:
+        # Does not exist.
+        jobfile_mtime = None
+
+    try:
+        # Tell the suite daemon to generate the job file.
+        result = cmd_proxy.put('dry run task', name, point_string)
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)
+    if not result[0]:
+        sys.exit(result[1])
+
+    # Wait for the new job file to be written.
     count = 0
     MAX_TRIES = 10
     while True:
         count += 1
-        # Wait for the new jobfile to be written.
         try:
             if os.stat(jobfile_path).st_mtime > jobfile_mtime:
                 break
         except:
-            # No job script yet.
             pass
         if count > MAX_TRIES:
             sys.exit('ERROR: no job file after %s seconds' % MAX_TRIES)
         time.sleep(1)
 
+    # Edit the new job file.
+    if options.geditor:
+        editor = GLOBAL_CFG.get(['editors', 'gui'])
+    else:
+        editor = GLOBAL_CFG.get(['editors', 'terminal'])
     # The editor command may have options, e.g. 'emacs -nw'.
     command_list = re.split(' ', editor)
     command_list.append(jobfile_path)
     command = ' '.join(command_list)
     try:
-        # Edit the job file (this blocks until editor exit).
+        # Block until the editor exits.
         retcode = subprocess.call(command_list)
         if retcode != 0:
             sys.exit(
@@ -135,6 +151,12 @@ if options.edit_run:
     except OSError:
         sys.exit('ERROR, unable to execute:\n %s' % command)
 
-    # Release the task proxy to run.
-    result = proxy.put(
-        'release task', name, point_string, options.is_family)
+# Trigger the task proxy(s).
+try:
+    result = cmd_proxy.put('trigger task', name, point_string, options.is_family)
+except Exception as exc:
+    if cylc.flags.debug:
+        raise
+    sys.exit(exc)
+if not result[0]:
+    sys.exit(result[1])
