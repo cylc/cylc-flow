@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-02-02 12:57:00"> 
+<meta name="date" content="2015-02-16 09:32:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -22,23 +22,23 @@ href="cug-html.html#cug-htmlse18.html" >up</a>] </p></div>
    &#x00A0;<span class="subsectionToc" >B.1 <a 
 href="#x19-330000B.1">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.2 <a 
-href="#x19-339000B.2">[task messaging]</a></span>
+href="#x19-340000B.2">[task messaging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.3 <a 
-href="#x19-343000B.3">[suite logging]</a></span>
+href="#x19-344000B.3">[suite logging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.4 <a 
-href="#x19-347000B.4">[documentation]</a></span>
+href="#x19-348000B.4">[documentation]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.5 <a 
-href="#x19-356000B.5">[document viewers]</a></span>
+href="#x19-357000B.5">[document viewers]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.6 <a 
-href="#x19-359000B.6">[editors]</a></span>
+href="#x19-360000B.6">[editors]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.7 <a 
-href="#x19-362000B.7">[Pyro]</a></span>
+href="#x19-363000B.7">[Pyro]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.8 <a 
-href="#x19-366000B.8">[hosts]</a></span>
+href="#x19-367000B.8">[hosts]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.9 <a 
-href="#x19-377000B.9">[suite host self-identification] </a></span>
+href="#x19-378000B.9">[suite host self-identification] </a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.10 <a 
-href="#x19-381000B.10">[suite host scanning]</a></span>
+href="#x19-382000B.10">[suite host scanning]</a></span>
    </div>
 <!--l. 7--><p class="indent" >   This section defines all legal items and values for cylc site and user config files. See <span 
 class="cmti-10">Site And User Config Files</span>
@@ -236,17 +236,32 @@ class="cmti-10">default:</span>
      <li class="itemize"><span 
 class="cmti-10">example: </span>(see the execution polling example above)</li></ul>
 <!--l. 131--><p class="noindent" >
-<!--l. 131--><p class="indent" >    <h4 id="B.2" class="subsectionHead"> <span class="titlemark"> <a href="#B.2"> B.2</a>  <a 
- id="x19-339000B.2"></a>[task messaging] </span></h4>
-<!--l. 133--><p class="indent" >   This section contains configuration items that affect task-to-suite communications.
+<!--l. 131--><p class="indent" >    <h4 id="B.1.9" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.9"> B.1.9</a>  <a 
+ id="x19-339000B.1.9"></a>task host select command timeout </span></h4>
+<!--l. 133--><p class="indent" >   When a task host in a suite is a shell command string, cylc calls the shell to determine the task
+host. This call is invoked by the main process, and may cause the suite to hang while waiting for
+the command to finish. This setting sets a timeout for such a command to ensure that the suite can
+continue.
                                                                                          
 
                                                                                          
-<!--l. 136--><p class="noindent" >
-<!--l. 136--><p class="indent" >    <h4 id="B.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.1"> B.2.1</a>  <a 
- id="x19-340000B.2.1"></a>[task messaging] <span 
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>ISO 8601 duration/interval representation (e.g. <span class="lstinline"><span 
+class="pcrr7t-">PT10S</span></span>, 10 seconds, or <span class="lstinline"><span 
+class="pcrr7t-">PT1M</span></span>, 1 minute).
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: PT10S</span></li></ul>
+<!--l. 144--><p class="noindent" >
+<!--l. 144--><p class="indent" >    <h4 id="B.2" class="subsectionHead"> <span class="titlemark"> <a href="#B.2"> B.2</a>  <a 
+ id="x19-340000B.2"></a>[task messaging] </span></h4>
+<!--l. 146--><p class="indent" >   This section contains configuration items that affect task-to-suite communications.
+<!--l. 149--><p class="noindent" >
+<!--l. 149--><p class="indent" >    <h4 id="B.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.1"> B.2.1</a>  <a 
+ id="x19-341000B.2.1"></a>[task messaging] <span 
 class="cmsy-10">&#x2192; </span>retry interval </span></h4>
-<!--l. 138--><p class="indent" >   If a send fails, the messaging code will retry after a configured delay interval.
+<!--l. 151--><p class="indent" >   If a send fails, the messaging code will retry after a configured delay interval.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>ISO 8601 duration/interval representation (e.g. <span class="lstinline"><span 
@@ -255,11 +270,11 @@ class="pcrr7t-">PT1M</span></span>, 1 minute).
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>PT5S</li></ul>
-<!--l. 147--><p class="noindent" >
-<!--l. 147--><p class="indent" >    <h4 id="B.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.2"> B.2.2</a>  <a 
- id="x19-341000B.2.2"></a>[task messaging] <span 
+<!--l. 160--><p class="noindent" >
+<!--l. 160--><p class="indent" >    <h4 id="B.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.2"> B.2.2</a>  <a 
+ id="x19-342000B.2.2"></a>[task messaging] <span 
 class="cmsy-10">&#x2192; </span>maximum number of tries </span></h4>
-<!--l. 149--><p class="indent" >   If successive sends fail, the messaging code will give up after a configured number of tries.
+<!--l. 162--><p class="indent" >   If successive sends fail, the messaging code will give up after a configured number of tries.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>integer
@@ -269,11 +284,11 @@ class="cmti-10">minimum: </span>1
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>7</li></ul>
-<!--l. 158--><p class="noindent" >
-<!--l. 158--><p class="indent" >    <h4 id="B.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.3"> B.2.3</a>  <a 
- id="x19-342000B.2.3"></a>[task messaging] <span 
+<!--l. 171--><p class="noindent" >
+<!--l. 171--><p class="indent" >    <h4 id="B.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.3"> B.2.3</a>  <a 
+ id="x19-343000B.2.3"></a>[task messaging] <span 
 class="cmsy-10">&#x2192; </span>connection timeout </span></h4>
-<!--l. 160--><p class="indent" >   This is the same as the <span class="lstinline"><span 
+<!--l. 173--><p class="indent" >   This is the same as the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">pyro</span><span 
 class="pcrr7t-">-</span><span 
@@ -287,30 +302,30 @@ class="pcrr7t-">PT1M</span></span>, 1 minute).
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>PT30S</li></ul>
-<!--l. 170--><p class="noindent" >
-<!--l. 170--><p class="indent" >    <h4 id="B.3" class="subsectionHead"> <span class="titlemark"> <a href="#B.3"> B.3</a>  <a 
- id="x19-343000B.3"></a>[suite logging] </span></h4>
-<!--l. 172--><p class="indent" >   The suite event log, held under the suite run directory, is maintained as a rolling archive. Logs are rolled over
+                                                                                         
+
+                                                                                         
+<!--l. 183--><p class="noindent" >
+<!--l. 183--><p class="indent" >    <h4 id="B.3" class="subsectionHead"> <span class="titlemark"> <a href="#B.3"> B.3</a>  <a 
+ id="x19-344000B.3"></a>[suite logging] </span></h4>
+<!--l. 185--><p class="indent" >   The suite event log, held under the suite run directory, is maintained as a rolling archive. Logs are rolled over
 (backed up and started anew) when they reach a configurable limit size.
-<!--l. 176--><p class="noindent" >
-<!--l. 176--><p class="indent" >    <h4 id="B.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.1"> B.3.1</a>  <a 
- id="x19-344000B.3.1"></a>[suite logging] <span 
+<!--l. 189--><p class="noindent" >
+<!--l. 189--><p class="indent" >    <h4 id="B.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.1"> B.3.1</a>  <a 
+ id="x19-345000B.3.1"></a>[suite logging] <span 
 class="cmsy-10">&#x2192; </span>roll over at start-up </span></h4>
-<!--l. 178--><p class="indent" >   If true, a new suite log will be started for a new suite run.
+<!--l. 191--><p class="indent" >   If true, a new suite log will be started for a new suite run.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>True</li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 185--><p class="noindent" >
-<!--l. 185--><p class="indent" >    <h4 id="B.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.2"> B.3.2</a>  <a 
- id="x19-345000B.3.2"></a>[suite logging] <span 
+<!--l. 198--><p class="noindent" >
+<!--l. 198--><p class="indent" >    <h4 id="B.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.2"> B.3.2</a>  <a 
+ id="x19-346000B.3.2"></a>[suite logging] <span 
 class="cmsy-10">&#x2192; </span>rolling archive length </span></h4>
-<!--l. 187--><p class="indent" >   How many rolled logs to retain in the archive.
+<!--l. 200--><p class="indent" >   How many rolled logs to retain in the archive.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>integer
@@ -320,32 +335,35 @@ class="cmti-10">minimum: </span>1
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>5</li></ul>
-<!--l. 195--><p class="noindent" >
-<!--l. 195--><p class="indent" >    <h4 id="B.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.3"> B.3.3</a>  <a 
- id="x19-346000B.3.3"></a>[suite logging] <span 
+<!--l. 208--><p class="noindent" >
+<!--l. 208--><p class="indent" >    <h4 id="B.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.3"> B.3.3</a>  <a 
+ id="x19-347000B.3.3"></a>[suite logging] <span 
 class="cmsy-10">&#x2192; </span>maximum size in bytes </span></h4>
-<!--l. 197--><p class="indent" >   Suite event logs are rolled over when they reach this file size.
+<!--l. 210--><p class="indent" >   Suite event logs are rolled over when they reach this file size.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>integer
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>1000000</li></ul>
-<!--l. 204--><p class="noindent" >
-<!--l. 204--><p class="indent" >    <h4 id="B.4" class="subsectionHead"> <span class="titlemark"> <a href="#B.4"> B.4</a>  <a 
- id="x19-347000B.4"></a>[documentation] </span></h4>
-<!--l. 206--><p class="indent" >   Documentation locations for the <span class="lstinline"><span 
+<!--l. 217--><p class="noindent" >
+<!--l. 217--><p class="indent" >    <h4 id="B.4" class="subsectionHead"> <span class="titlemark"> <a href="#B.4"> B.4</a>  <a 
+ id="x19-348000B.4"></a>[documentation] </span></h4>
+<!--l. 219--><p class="indent" >   Documentation locations for the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">doc</span></span> command and gcylc Help menus.
-<!--l. 209--><p class="noindent" >
-<!--l. 209--><p class="indent" >    <h4 id="B.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.4.1"> B.4.1</a>  <a 
- id="x19-348000B.4.1"></a>[documentation] <span 
+<!--l. 222--><p class="noindent" >
+<!--l. 222--><p class="indent" >    <h4 id="B.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.4.1"> B.4.1</a>  <a 
+ id="x19-349000B.4.1"></a>[documentation] <span 
 class="cmsy-10">&#x2192; </span>[files] </span></h4>
-<!--l. 211--><p class="indent" >   File locations of documentation held locally on the cylc host server.
-<!--l. 213--><p class="noindent" >
-<!--l. 213--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-349000B.4.1.1"></a><span 
+<!--l. 224--><p class="indent" >   File locations of documentation held locally on the cylc host server.
+                                                                                         
+
+                                                                                         
+<!--l. 226--><p class="noindent" >
+<!--l. 226--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-350000B.4.1.1"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -366,9 +384,9 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">index</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">html</span></span></li></ul>
-<!--l. 221--><p class="noindent" >
-<!--l. 221--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-350000B.4.1.2"></a><span 
+<!--l. 234--><p class="noindent" >
+<!--l. 234--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-351000B.4.1.2"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -378,9 +396,6 @@ class="cmbx-10">pdf user guide </span></span>
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span><span class="lstinline"><span 
@@ -394,9 +409,9 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">pdf</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">pdf</span></span></li></ul>
-<!--l. 229--><p class="noindent" >
-<!--l. 229--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-351000B.4.1.3"></a><span 
+<!--l. 242--><p class="noindent" >
+<!--l. 242--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-352000B.4.1.3"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -423,9 +438,9 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">html</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">html</span></span></li></ul>
-<!--l. 237--><p class="noindent" >
-<!--l. 237--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-352000B.4.1.4"></a><span 
+<!--l. 250--><p class="noindent" >
+<!--l. 250--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-353000B.4.1.4"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[files] </span><span 
@@ -452,29 +467,32 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">html</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">html</span></span></li></ul>
-<!--l. 245--><p class="noindent" >
-<!--l. 245--><p class="indent" >    <h4 id="B.4.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.4.2"> B.4.2</a>  <a 
- id="x19-353000B.4.2"></a>[documentation] <span 
+<!--l. 258--><p class="noindent" >
+<!--l. 258--><p class="indent" >    <h4 id="B.4.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.4.2"> B.4.2</a>  <a 
+ id="x19-354000B.4.2"></a>[documentation] <span 
 class="cmsy-10">&#x2192; </span>[urls] </span></h4>
-<!--l. 247--><p class="indent" >   Online documentation URLs.
-<!--l. 249--><p class="noindent" >
-<!--l. 249--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-354000B.4.2.1"></a><span 
+<!--l. 260--><p class="indent" >   Online documentation URLs.
+<!--l. 262--><p class="noindent" >
+<!--l. 262--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-355000B.4.2.1"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[urls] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">internet homepage </span></span>
    URL of the cylc internet homepage, with links to documentation for the latest official release.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>http://cylc.github.com/cylc/</li></ul>
-<!--l. 259--><p class="noindent" >
-<!--l. 259--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-355000B.4.2.2"></a><span 
+<!--l. 272--><p class="noindent" >
+<!--l. 272--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-356000B.4.2.2"></a><span 
 class="cmbx-10">[documentation] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[urls] </span><span 
@@ -487,44 +505,44 @@ class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 268--><p class="noindent" >
-<!--l. 268--><p class="indent" >    <h4 id="B.5" class="subsectionHead"> <span class="titlemark"> <a href="#B.5"> B.5</a>  <a 
- id="x19-356000B.5"></a>[document viewers] </span></h4>
-<!--l. 270--><p class="indent" >   PDF and HTML viewers can be launched by cylc to view the documentation.
-<!--l. 272--><p class="noindent" >
-<!--l. 272--><p class="indent" >    <h4 id="B.5.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.5.1"> B.5.1</a>  <a 
- id="x19-357000B.5.1"></a>[document viewers] <span 
+<!--l. 281--><p class="noindent" >
+<!--l. 281--><p class="indent" >    <h4 id="B.5" class="subsectionHead"> <span class="titlemark"> <a href="#B.5"> B.5</a>  <a 
+ id="x19-357000B.5"></a>[document viewers] </span></h4>
+<!--l. 283--><p class="indent" >   PDF and HTML viewers can be launched by cylc to view the documentation.
+<!--l. 285--><p class="noindent" >
+<!--l. 285--><p class="indent" >    <h4 id="B.5.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.5.1"> B.5.1</a>  <a 
+ id="x19-358000B.5.1"></a>[document viewers] <span 
 class="cmsy-10">&#x2192; </span>pdf </span></h4>
-<!--l. 274--><p class="indent" >   Your preferred PDF viewer program.
+<!--l. 287--><p class="indent" >   Your preferred PDF viewer program.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>evince</li></ul>
-<!--l. 281--><p class="noindent" >
-<!--l. 281--><p class="indent" >    <h4 id="B.5.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.5.2"> B.5.2</a>  <a 
- id="x19-358000B.5.2"></a>[document viewers] <span 
+<!--l. 294--><p class="noindent" >
+<!--l. 294--><p class="indent" >    <h4 id="B.5.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.5.2"> B.5.2</a>  <a 
+ id="x19-359000B.5.2"></a>[document viewers] <span 
 class="cmsy-10">&#x2192; </span>html </span></h4>
-<!--l. 283--><p class="indent" >   Your preferred web browser.
+<!--l. 296--><p class="indent" >   Your preferred web browser.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>firefox</li></ul>
-<!--l. 290--><p class="noindent" >
-<!--l. 290--><p class="indent" >    <h4 id="B.6" class="subsectionHead"> <span class="titlemark"> <a href="#B.6"> B.6</a>  <a 
- id="x19-359000B.6"></a>[editors] </span></h4>
-<!--l. 292--><p class="indent" >   Choose your favourite text editor for editing suite definitions.
-<!--l. 294--><p class="noindent" >
-<!--l. 294--><p class="indent" >    <h4 id="B.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.6.1"> B.6.1</a>  <a 
- id="x19-360000B.6.1"></a>[editors] <span 
+<!--l. 303--><p class="noindent" >
+<!--l. 303--><p class="indent" >    <h4 id="B.6" class="subsectionHead"> <span class="titlemark"> <a href="#B.6"> B.6</a>  <a 
+ id="x19-360000B.6"></a>[editors] </span></h4>
+<!--l. 305--><p class="indent" >   Choose your favourite text editor for editing suite definitions.
+                                                                                         
+
+                                                                                         
+<!--l. 307--><p class="noindent" >
+<!--l. 307--><p class="indent" >    <h4 id="B.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.6.1"> B.6.1</a>  <a 
+ id="x19-361000B.6.1"></a>[editors] <span 
 class="cmsy-10">&#x2192; </span>terminal </span></h4>
-<!--l. 296--><p class="indent" >   The editor to be invoked by the cylc command line interface.
+<!--l. 309--><p class="indent" >   The editor to be invoked by the cylc command line interface.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
@@ -563,14 +581,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">f</span></span> (vim GUI)</li></ul>
      </li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 309--><p class="noindent" >
-<!--l. 309--><p class="indent" >    <h4 id="B.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.6.2"> B.6.2</a>  <a 
- id="x19-361000B.6.2"></a>[editors] <span 
+<!--l. 322--><p class="noindent" >
+<!--l. 322--><p class="indent" >    <h4 id="B.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.6.2"> B.6.2</a>  <a 
+ id="x19-362000B.6.2"></a>[editors] <span 
 class="cmsy-10">&#x2192; </span>gui </span></h4>
-<!--l. 311--><p class="indent" >   The editor to be invoked by the cylc GUI.
+<!--l. 324--><p class="indent" >   The editor to be invoked by the cylc GUI.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
@@ -604,42 +619,42 @@ class="pcrr7t-">e</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">vim</span></span></li></ul>
      </li></ul>
-<!--l. 324--><p class="noindent" >
-<!--l. 324--><p class="indent" >    <h4 id="B.7" class="subsectionHead"> <span class="titlemark"> <a href="#B.7"> B.7</a>  <a 
- id="x19-362000B.7"></a>[Pyro] </span></h4>
-<!--l. 326--><p class="indent" >   Pyro is the RPC layer used for network communication between cylc clients (suite-connecting commands and
+<!--l. 337--><p class="noindent" >
+<!--l. 337--><p class="indent" >    <h4 id="B.7" class="subsectionHead"> <span class="titlemark"> <a href="#B.7"> B.7</a>  <a 
+ id="x19-363000B.7"></a>[Pyro] </span></h4>
+<!--l. 339--><p class="indent" >   Pyro is the RPC layer used for network communication between cylc clients (suite-connecting commands and
 guis) servers (running suites). Each suite listens on a dedicated network port, binding on the first available starting
 at the configured base port.
-<!--l. 331--><p class="noindent" >
-<!--l. 331--><p class="indent" >    <h4 id="B.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.1"> B.7.1</a>  <a 
- id="x19-363000B.7.1"></a>[Pyro] <span 
+<!--l. 344--><p class="noindent" >
+<!--l. 344--><p class="indent" >    <h4 id="B.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.1"> B.7.1</a>  <a 
+ id="x19-364000B.7.1"></a>[Pyro] <span 
 class="cmsy-10">&#x2192; </span>base port  </span></h4>
-<!--l. 333--><p class="indent" >   The first port that cylc is allowed to use.
+<!--l. 346--><p class="indent" >   The first port that cylc is allowed to use.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>integer
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>7766</li></ul>
-<!--l. 340--><p class="noindent" >
-<!--l. 340--><p class="indent" >    <h4 id="B.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.2"> B.7.2</a>  <a 
- id="x19-364000B.7.2"></a>[Pyro] <span 
+<!--l. 353--><p class="noindent" >
+<!--l. 353--><p class="indent" >    <h4 id="B.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.2"> B.7.2</a>  <a 
+ id="x19-365000B.7.2"></a>[Pyro] <span 
 class="cmsy-10">&#x2192; </span>maximum number of ports </span></h4>
-<!--l. 342--><p class="indent" >   This determines the maximum number of suites that can run at once on the suite host.
+<!--l. 355--><p class="indent" >   This determines the maximum number of suites that can run at once on the suite host.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>integer
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>100</li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 350--><p class="noindent" >
-<!--l. 350--><p class="indent" >    <h4 id="B.7.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.3"> B.7.3</a>  <a 
- id="x19-365000B.7.3"></a>[Pyro] <span 
+<!--l. 363--><p class="noindent" >
+<!--l. 363--><p class="indent" >    <h4 id="B.7.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.3"> B.7.3</a>  <a 
+ id="x19-366000B.7.3"></a>[Pyro] <span 
 class="cmsy-10">&#x2192; </span>ports directory </span></h4>
-<!--l. 352--><p class="indent" >   Each suite stores its port number, by suite name, under this directory.
+<!--l. 365--><p class="indent" >   Each suite stores its port number, by suite name, under this directory.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string (directory path)
@@ -653,10 +668,10 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">ports</span><span 
 class="pcrr7t-">/</span></span></li></ul>
-<!--l. 359--><p class="noindent" >
-<!--l. 359--><p class="indent" >    <h4 id="B.8" class="subsectionHead"> <span class="titlemark"> <a href="#B.8"> B.8</a>  <a 
- id="x19-366000B.8"></a>[hosts] </span></h4>
-<!--l. 361--><p class="indent" >   The [hosts] section configures some important host-specific settings for the suite host (&#8216;localhost&#8217;) and remote
+<!--l. 372--><p class="noindent" >
+<!--l. 372--><p class="indent" >    <h4 id="B.8" class="subsectionHead"> <span class="titlemark"> <a href="#B.8"> B.8</a>  <a 
+ id="x19-367000B.8"></a>[hosts] </span></h4>
+<!--l. 374--><p class="indent" >   The [hosts] section configures some important host-specific settings for the suite host (&#8216;localhost&#8217;) and remote
 task hosts. Note that <span 
 class="cmti-10">remote task behaviour is determined by the site/user config on the suite host, not on the task</span>
 <span 
@@ -665,11 +680,11 @@ with the local home directory path, if present, replaced by <span class="lstinli
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span></span> in items that configure directory
 locations.
-<!--l. 369--><p class="noindent" >
-<!--l. 369--><p class="indent" >    <h4 id="B.8.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.8.1"> B.8.1</a>  <a 
- id="x19-367000B.8.1"></a>[hosts] <span 
+<!--l. 382--><p class="noindent" >
+<!--l. 382--><p class="indent" >    <h4 id="B.8.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.8.1"> B.8.1</a>  <a 
+ id="x19-368000B.8.1"></a>[hosts] <span 
 class="cmsy-10">&#x2192; </span>HOST </span></h4>
-<!--l. 371--><p class="indent" >   The default task host is the suite host, <span 
+<!--l. 384--><p class="indent" >   The default task host is the suite host, <span 
 class="cmbx-10">localhost</span>, with default values as listed below. Use an explicit
 <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
@@ -681,7 +696,7 @@ defaults for other hosts, with the local home directory path replaced as describ
 items omitted from an explicit host section, and to hosts that are not listed at all in the site and user
 config files. Explicit host sections are only needed if the automatically modified local defaults are not
 sufficient.
-<!--l. 380--><p class="indent" >   Host section headings can also be <span 
+<!--l. 393--><p class="indent" >   Host section headings can also be <span 
 class="cmti-10">regular expressions </span>to match multiple hostnames. Note that the
 general regular expression wildcard is &#8216;<span class="lstinline"><span 
 class="pcrr7t-">.&#x22C6;</span></span>&#8217; (zero or more of any character), not &#8216;<span class="lstinline"><span 
@@ -695,7 +710,10 @@ beginning of the hostname string (as specified in the suite definition) and they
 through to the end of the string (use the string-end matching character &#8216;<span class="lstinline"><span 
 class="pcrr8c-">$</span></span>&#8217; in the expression to force
 this).
-<!--l. 391--><p class="indent" >   A hierachy of host match expressions from specific to general can be used because config items are processed in
+                                                                                         
+
+                                                                                         
+<!--l. 404--><p class="indent" >   A hierachy of host match expressions from specific to general can be used because config items are processed in
 the order specified in the file.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -724,12 +742,9 @@ class="pcrr7t-">co</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">nz</span></span> - regular expression</li></ul>
      </li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 404--><p class="noindent" >
-<!--l. 404--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-368000B.8.1.1"></a><span 
+<!--l. 417--><p class="noindent" >
+<!--l. 417--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-369000B.8.1.1"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -749,9 +764,9 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">run</span></span></li></ul>
-<!--l. 414--><p class="noindent" >
-<!--l. 414--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-369000B.8.1.2"></a><span 
+<!--l. 427--><p class="noindent" >
+<!--l. 427--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-370000B.8.1.2"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -770,9 +785,9 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">run</span></span></li></ul>
-<!--l. 424--><p class="noindent" >
-<!--l. 424--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-370000B.8.1.3"></a><span 
+<!--l. 437--><p class="noindent" >
+<!--l. 437--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-371000B.8.1.3"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -789,6 +804,9 @@ class="cmti-10">options:</span>
          <ul class="itemize2">
          <li class="itemize"><span 
 class="cmbx-10">pyro </span>- direct client-server RPC via network ports
+                                                                                         
+
+                                                                                         
          </li>
          <li class="itemize"><span 
 class="cmbx-10">ssh </span>- use ssh to re-invoke the Pyro messaging commands on the suite server
@@ -798,9 +816,9 @@ class="cmbx-10">poll </span>- the suite polls for the status of tasks (no task m
      </li>
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span>pyro</li></ul>
-<!--l. 441--><p class="noindent" >
-<!--l. 441--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-371000B.8.1.4"></a><span 
+<!--l. 454--><p class="noindent" >
+<!--l. 454--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-372000B.8.1.4"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -811,9 +829,6 @@ local tasks under another user account.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span><span class="lstinline"><span 
@@ -827,9 +842,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">oConnectTimeout</span><span 
 class="pcrr7t-">=10</span></span></li></ul>
-<!--l. 451--><p class="noindent" >
-<!--l. 451--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-372000B.8.1.5"></a><span 
+<!--l. 464--><p class="noindent" >
+<!--l. 464--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-373000B.8.1.5"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -859,19 +874,19 @@ class="pcrr7t-">=10</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\%</span><span 
 class="pcrr7t-">s</span></span></li></ul>
-<!--l. 463--><p class="noindent" >
-<!--l. 463--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-373000B.8.1.6"></a><span 
+<!--l. 476--><p class="noindent" >
+<!--l. 476--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-374000B.8.1.6"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">use login shell </span></span>
    Whether to use a login shell or not for remote command invocation. By default cylc runs remote ssh commands
-using a login shell, <!--l. 467--><div class="lstlisting">
+using a login shell, <!--l. 480--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-373001r1"></a></span><span 
+ id="x19-374001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -890,7 +905,7 @@ class="pcrr7t-">...'</span>
 
 
    </div>
-<!--l. 470--><p class="indent" >   which will source <span class="lstinline"><span 
+<!--l. 483--><p class="indent" >   which will source <span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">etc</span><span 
 class="pcrr7t-">/</span><span 
@@ -898,10 +913,10 @@ class="pcrr7t-">profile</span></span> and <span class="lstinline"><span
 class="pcrr7t-">~/.</span><span 
 class="pcrr7t-">profile</span></span> to set up the user environment. However, for security
 reasons some institutions do not allow unattended commands to start login shells, so you can turn off this behaviour
-to get, <!--l. 474--><div class="lstlisting">
+to get, <!--l. 487--><div class="lstlisting">
 <span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x19-373002r1"></a></span><span 
+ id="x19-374002r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -915,21 +930,24 @@ class="pcrr7t-">...'</span>
 
 
    </div>
-<!--l. 477--><p class="indent" >   which will use the default shell on the remote machine, sourcing <span class="lstinline"><span 
+<!--l. 490--><p class="indent" >   which will use the default shell on the remote machine, sourcing <span class="lstinline"><span 
 class="pcrr7t-">~/.</span><span 
 class="pcrr7t-">bashrc</span></span> (or <span class="lstinline"><span 
 class="pcrr7t-">~/.</span><span 
 class="pcrr7t-">cshrc</span></span>) to set up the
 environment.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span>true</li></ul>
-<!--l. 486--><p class="noindent" >
-<!--l. 486--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-374000B.8.1.7"></a><span 
+<!--l. 499--><p class="noindent" >
+<!--l. 499--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-375000B.8.1.7"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -946,16 +964,13 @@ on this host.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
-                                                                                         
-
-                                                                                         
      </li>
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span><span class="lstinline"><span 
 class="pcrr7t-">cylc</span></span></li></ul>
-<!--l. 497--><p class="noindent" >
-<!--l. 497--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-375000B.8.1.8"></a><span 
+<!--l. 510--><p class="noindent" >
+<!--l. 510--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-376000B.8.1.8"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -974,9 +989,9 @@ class="cmti-10">type: </span>string
 class="cmti-10">localhost default: </span><span class="lstinline"><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span></span></li></ul>
-<!--l. 508--><p class="noindent" >
-<!--l. 508--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-376000B.8.1.9"></a><span 
+<!--l. 521--><p class="noindent" >
+<!--l. 521--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-377000B.8.1.9"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">HOST </span><span 
@@ -991,18 +1006,21 @@ class="cmti-10">type: </span>string_list
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span><span class="lstinline"><span 
 class="pcrr7t-">[]</span></span></li></ul>
-<!--l. 518--><p class="noindent" >
-<!--l. 518--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
- id="x19-377000B.9"></a>[suite host self-identification]  </span></h4>
-<!--l. 520--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
+<!--l. 531--><p class="noindent" >
+<!--l. 531--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
+ id="x19-378000B.9"></a>[suite host self-identification]  </span></h4>
+<!--l. 533--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_HOST</span></span>)
 so that task messages can target the right suite on the right host.
-<!--l. 528--><p class="noindent" >
-<!--l. 528--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
- id="x19-378000B.9.1"></a>[suite host self-identification] <span 
+                                                                                         
+
+                                                                                         
+<!--l. 541--><p class="noindent" >
+<!--l. 541--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
+ id="x19-379000B.9.1"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>method  </span></h4>
-<!--l. 530--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
+<!--l. 543--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
 class="cmti-10">name </span>method cylc asks the
 suite host for its host name. This should resolve on remote task hosts to the IP address of the suite host; if it
 doesn&#8217;t, adjust network settings or use one of the other methods. For the <span 
@@ -1028,9 +1046,6 @@ class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">options:</span>
-                                                                                         
-
-                                                                                         
          <ul class="itemize2">
          <li class="itemize">name - self-identified host name
          </li>
@@ -1042,11 +1057,11 @@ class="cmti-10">host</span>, below)</li></ul>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>name</li></ul>
-<!--l. 552--><p class="noindent" >
-<!--l. 552--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
- id="x19-379000B.9.2"></a>[suite host self-identification] <span 
+<!--l. 565--><p class="noindent" >
+<!--l. 565--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
+ id="x19-380000B.9.2"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>target  </span></h4>
-<!--l. 554--><p class="indent" >   This item is required for the <span 
+<!--l. 567--><p class="indent" >   This item is required for the <span 
 class="cmti-10">address </span>self-identification method. If your suite host sees the internet, a common
 address such as <span class="lstinline"><span 
 class="pcrr7t-">google</span><span 
@@ -1061,11 +1076,11 @@ class="cmti-10">default: </span><span class="lstinline"><span
 class="pcrr7t-">google</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">com</span></span></li></ul>
-<!--l. 564--><p class="noindent" >
-<!--l. 564--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
- id="x19-380000B.9.3"></a>[suite host self-identification] <span 
+<!--l. 577--><p class="noindent" >
+<!--l. 577--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
+ id="x19-381000B.9.3"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>host  </span></h4>
-<!--l. 566--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
+<!--l. 579--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
 class="cmti-10">hardwired</span>
 self-identification method.
      <ul class="itemize1">
@@ -1074,18 +1089,21 @@ class="cmti-10">type: </span>string (host name or IP address)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 573--><p class="noindent" >
-<!--l. 573--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
- id="x19-381000B.10"></a>[suite host scanning] </span></h4>
-<!--l. 575--><p class="indent" >   Utilities such as <span class="lstinline"><span 
+<!--l. 586--><p class="noindent" >
+<!--l. 586--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
+ id="x19-382000B.10"></a>[suite host scanning] </span></h4>
+<!--l. 588--><p class="indent" >   Utilities such as <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">gsummary</span></span> need to scan hosts for running suites.
-<!--l. 578--><p class="noindent" >
-<!--l. 578--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
- id="x19-382000B.10.1"></a>[suite host scanning] <span 
+                                                                                         
+
+                                                                                         
+<!--l. 591--><p class="noindent" >
+<!--l. 591--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
+ id="x19-383000B.10.1"></a>[suite host scanning] <span 
 class="cmsy-10">&#x2192; </span>hosts  </span></h4>
-<!--l. 580--><p class="indent" >   A list of hosts to scan for running suites.
+<!--l. 593--><p class="indent" >   A list of hosts to scan for running suites.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>comma-separated list of host names or IP addresses.

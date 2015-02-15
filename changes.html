@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.3.0">6.3.0</a></li>
     <li><a href="#6.2.0">6.2.0</a></li>
     <li><a href="#6.1.2">6.1.2</a></li>
     <li><a href="#6.1.1">6.1.1</a></li>
@@ -54,6 +55,38 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.3.0"/>
+    <h2>6.3.0</h2>
+
+		<h3>6.3.0 enhancements</h3>
+  		<ul>
+					<li> Support <em>edit run</em> functionality:
+					<code>cylc trigger --edit</code> or
+					right-click on a task in the GUI to edit the task job script
+					just before manual triggering.
+					<li> Support "hold after cycle point" via the run, restart, and hold
+					commands.
+					<li> New utility to compare suite graphs <code>cylc
+							graph-diff</code>.
+					<li> If a suite run database lock is encountered and does not
+					resolve in the allowed time (unlikely but possible) cylc now writes
+					any un-executed db operations to disk before shutdown and loads them
+					on restart to prevent an incomplete database.
+			</ul>
+	
+		<h3>6.3.0 fixes</h3>
+  		<ul>
+					<li> Fixed blank graph views that could result from rerunning a
+					suite from an existing GUI instance.
+					<li> Hold tasks that are killed manually, to prevent an immediate
+					retry (if retries are configured).
+					<li> Ensure that polling a SLURM job returns the right result even
+					if the job is still in SLURM's active job memory.
+					<li> Sort the GUI treeview execution time (dT) column, which is
+					displayed in ISO 8601 format, by time-value rather than
+					alphanumerically.
+			</ul>
+	
 <a name="6.2.0"/>
     <h2>6.2.0</h2>
 
