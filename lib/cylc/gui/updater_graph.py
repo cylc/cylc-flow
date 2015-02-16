@@ -214,6 +214,10 @@ class GraphUpdater(threading.Thread):
             f_states[id_]['label'] = fam_states_full[id_]['label']
             f_states[id_]['state'] = fam_states_full[id_]['state']
 
+        if states and not self.state_summary:
+            # This is basically equivalent to a first-update case.
+            self.first_update = True
+
         # only update states if a change occurred, or action required
         if self.action_required:
             self.state_summary = states
