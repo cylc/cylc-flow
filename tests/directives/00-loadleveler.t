@@ -21,8 +21,6 @@
 #     slurm, pbs, etc), otherwise it will be bypassed.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
 if [[ "${TEST_NAME_BASE}" == ??-loadleveler* ]]; then
@@ -36,30 +34,30 @@ export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
     "[test battery][directives]$BATCH_SYS_NAME host")
 export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \
     "[test battery][directives][$BATCH_SYS_NAME directives]")
-if [[ -n $CYLC_TEST_BATCH_TASK_HOST && $CYLC_TEST_BATCH_TASK_HOST != None ]]; then
-    # check the host is reachable
-    if ping -c 1 $CYLC_TEST_BATCH_TASK_HOST 1>/dev/null 2>&1; then
-        install_suite $TEST_NAME_BASE $BATCH_SYS_NAME
-#-------------------------------------------------------------------------------
+if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
+then
+    skip_all "[directive tests]$BATCH_SYS_NAME host not defined"
+fi
+# check the host is reachable
+if ! ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" true 1>/dev/null 2>&1
+then
+    skip_all "Host "$CYLC_TEST_BATCH_TASK_HOST" unreachable"
+fi
+
+set_test_number 2
+install_suite "${TEST_NAME_BASE}" "${BATCH_SYS_NAME}"
 # copy across passphrase as not all remote hosts will have a shared file system
 # the .cylc location is used as registration and run directory won't be the same
-        ssh $CYLC_TEST_BATCH_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
-        scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_TEST_BATCH_TASK_HOST:.cylc/$SUITE_NAME/passphrase
+ssh ${SSH_OPTS} -n "${CYLC_TEST_BATCH_TASK_HOST}" \
+    "mkdir -p '.cylc/${SUITE_NAME}/'"
+scp ${SSH_OPTS} "${TEST_DIR}/${SUITE_NAME}/passphrase" \
+    "${CYLC_TEST_BATCH_TASK_HOST}:.cylc/${SUITE_NAME}/passphrase"
 #-------------------------------------------------------------------------------
-        TEST_NAME=$TEST_NAME_BASE-validate
-        run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --reference-test --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-        TEST_NAME=$TEST_NAME_BASE-run
-        suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-        purge_suite $SUITE_NAME
-        if [[ -n $SUITE_NAME ]]; then
-            ssh $CYLC_TEST_BATCH_TASK_HOST rm -rf .cylc/$SUITE_NAME
-        fi
-    else
-        skip 2 "Host "$CYLC_TEST_BATCH_TASK_HOST" unreachable"
-    fi
-else
-    skip 2 "[directive tests]$BATCH_SYS_NAME host not defined"
-fi
-unset CYLC_TEST_BATCH_TASK_HOST BATCH_SYS_NAME CYLC_TEST_BATCH_SITE_DIRECTIVES
+purge_suite "${SUITE_NAME}"
+ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" \
+    "rm -fr .cylc/${SUITE_NAME} cylc-run/${SUITE_NAME}"
+exit

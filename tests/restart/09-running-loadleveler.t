@@ -19,8 +19,7 @@
 #     This test requires a specific host [test battery] entry in 
 #     site/user config in order to run, otherwise it will be bypassed
 #-------------------------------------------------------------------------------
-TEST_BASE_PATH=$(cd $(dirname $0) && pwd)/04-running.t
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 export TEST_DIR
 # export an environment variable for this - allows a script to be used to 
@@ -36,15 +35,14 @@ export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
     "[test battery][directives]$BATCH_SYS_NAME host")
 export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \
     "[test battery][directives][$BATCH_SYS_NAME directives]")
-if [[ -n $CYLC_TEST_BATCH_TASK_HOST && $CYLC_TEST_BATCH_TASK_HOST != 'None' ]]
+if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
-    # check the host is reachable
-    if ping -c 1 $CYLC_TEST_BATCH_TASK_HOST 1>/dev/null 2>&1; then
-        . $TEST_BASE_PATH
-    else
-        set_test_number 0
-    fi
-else
-    set_test_number 0
+    skip_all "[test battery][directives]$BATCH_SYS_NAME host not defined"
 fi
-unset BATCH_SYS_NAME CYLC_TEST_BATCH_TASK_HOST CYLC_TEST_BATCH_SITE_DIRECTIVES
+# check the host is reachable
+if ! ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" true 1>/dev/null 2>&1
+then
+    skip_all "Host "$CYLC_TEST_BATCH_TASK_HOST" unreachable"
+fi
+
+. "${TEST_SOURCE_DIR}/04-running.t"

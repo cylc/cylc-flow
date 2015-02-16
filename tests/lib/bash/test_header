@@ -288,18 +288,19 @@ function install_suite() {
 }
 
 function purge_suite() {
+    local SUITE_NAME="$1"
     if (($FAILURES == 0)); then
-        SUITE_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
-        while lsof | grep -q $SUITE_DIR; do
+        local SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+        while lsof | grep -q "${SUITE_DIR}"; do
             sleep 1
         done
-        rm -rf $SUITE_DIR
+        rm -fr "${SUITE_DIR}"
     fi
-    cd $TEST_DIR
-    if [[ -n ${SUITE_NAME:-} ]]; then
-        cylc unregister $SUITE_NAME 2>/dev/null || true
-        if [[ -n ${TEST_DIR:-} ]]; then
-            rm -rf $TEST_DIR/$SUITE_NAME/
+    cd "${TEST_DIR:-}"
+    if [[ -n "${SUITE_NAME:-}" ]]; then
+        cylc unregister "${SUITE_NAME}" 2>/dev/null || true
+        if [[ -n "${TEST_DIR:-}" ]]; then
+            rm -rf "${TEST_DIR}/${SUITE_NAME}/"
         fi
     fi
 }
@@ -351,6 +352,7 @@ cd $TEST_DIR
 TEST_LOG_DIR_BASE=${TMPDIR:-/tmp}/cylc-tests-"$LOGNAME"/$(basename $TEST_SOURCE_DIR)
 TEST_LOG_DIR=$TEST_LOG_DIR_BASE/$TEST_NAME_BASE-$(date -u +%Y%m%dT%H%M%SZ)
 SUITE_RUN_FAILS=false
+SSH_OPTS='-oBatchMode=yes -oConnectTimeout=10'
 
 # these variables should be moved to site/user config:
 export CYLC_TEST_TASK_HOST=${CYLC_TEST_TASK_HOST:-localhost}
