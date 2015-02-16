@@ -29,8 +29,5 @@ timeout 30s my-log-grepper '[t-retry-able.1] -held => retrying'
 """
     [[t-analyse]]
         command scripting = """
-set -x
-readlink "$(dirname "$0")/../../t-retry-able/NN"
-test "$(readlink "$(dirname "$0")/../../t-retry-able/NN")" == '03'
-set +x
+test "$(readlink "$(dirname "$0")/../../t-retry-able/NN")" = '03'
 """
