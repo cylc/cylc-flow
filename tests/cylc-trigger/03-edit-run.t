@@ -18,7 +18,7 @@
 # Test an edit-run (cylc trigger --edit).
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
@@ -29,6 +29,22 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-run"
 CYLC_CONF_PATH=$PWD/conf \
     run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
+#-------------------------------------------------------------------------------
+TEST_NAME="${TEST_NAME_BASE}-diff"
+DIFF_LOG=$(cylc cat-log -dl $SUITE_NAME broken-task.1)
+cmp_ok $DIFF_LOG - <<__END__
+---  
++++  
+@@ -128,7 +128,7 @@
+ echo
+ 
+ # COMMAND SCRIPTING:
+-/bin/false
++/bin/true
+ 
+ # EMPTY WORK DIRECTORY REMOVE:
+ cd
+__END__
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"
 exit

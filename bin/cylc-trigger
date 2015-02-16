@@ -32,6 +32,8 @@ if '--use-ssh' in sys.argv[1:]:
 import re
 import os
 import time
+import shutil
+import difflib
 import subprocess
 from cylc.prompt import prompt
 from cylc import cylc_pyro_client
@@ -46,10 +48,13 @@ parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
 Manually trigger a task or tasks. For single tasks you can choose to edit the
 generated job script first, to apply one-off changes (--edit).  Triggering a
-waiting task queues it for execution. If its queue is not limited it will
-submit immediately, otherwise it will submit when released by its queue.
-Triggering a queued task causes it to submit immediately even if that violates
-the queue limit.
+waiting task queues it for execution (cylc internal queues). If its queue is
+not limited it will submit immediately, otherwise it will submit when released
+by its queue.  Triggering a queued task causes it to submit immediately even if
+that violates the queue limit.
+
+In an edit run a diff between the original and edited job script is saved to
+the task job log directory.
 """ + multitask_usage, pyro=True, multitask=True, argdoc=[
     ('REG', 'Suite name'),
     ('MATCH', 'Task or family name matching regular expression'),
@@ -64,7 +69,7 @@ parser.add_option(
 
 parser.add_option(
     "-g", "--geditor",
-    help="(with --edit-run) force use of the configured GUI editor.",
+    help="(with --edit) force use of the configured GUI editor.",
     action="store_true", default=False, dest="geditor")
 
 (options, args) = parser.parse_args()
@@ -89,9 +94,9 @@ if options.edit_run:
     # Check that TASK is a unique task.
     task_id = TaskID.get(name, point_string)
     try:
-        info_proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-                options.host, options.pyro_timeout,
-                options.port ).get_proxy( 'suite-info' )
+        info_proxy = cylc_pyro_client.client(
+            suite, pphrase, options.owner, options.host, options.pyro_timeout,
+            options.port).get_proxy('suite-info')
         res, msg = info_proxy.get('ping task', task_id, True)
     except Exception as exc:
         if cylc.flags.debug:
@@ -133,6 +138,10 @@ if options.edit_run:
             sys.exit('ERROR: no job file after %s seconds' % MAX_TRIES)
         time.sleep(1)
 
+    # Make a pre-edit copy to allow a post-edit diff.
+    jobfile_copy_path = "%s.ORIG" % jobfile_path
+    shutil.copy(jobfile_path, jobfile_copy_path)
+
     # Edit the new job file.
     if options.geditor:
         editor = GLOBAL_CFG.get(['editors', 'gui'])
@@ -151,9 +160,19 @@ if options.edit_run:
     except OSError:
         sys.exit('ERROR, unable to execute:\n %s' % command)
 
+    # Save a diff to record the changes made.
+    log_dir = os.path.dirname(jobfile_path)
+    with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
+        for line in difflib.unified_diff(
+                open(jobfile_copy_path).readlines(),
+                open(jobfile_path).readlines()):
+            diff_file.write(line)
+    os.unlink(jobfile_copy_path)
+
 # Trigger the task proxy(s).
 try:
-    result = cmd_proxy.put('trigger task', name, point_string, options.is_family)
+    result = cmd_proxy.put(
+        'trigger task', name, point_string, options.is_family)
 except Exception as exc:
     if cylc.flags.debug:
         raise
