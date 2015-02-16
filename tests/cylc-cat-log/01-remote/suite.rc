@@ -1,0 +1,20 @@
+#!Jinja2
+[cylc]
+   [[event hooks]]
+       abort on timeout = True
+       timeout = PT20S
+[scheduling]
+    [[dependencies]]
+        graph = a-task
+[runtime]
+    [[a-task]]
+        command scripting = """
+# Write to task stdout log
+echo "the quick brown fox"
+# Write to task stderr log
+echo "jumped over the lazy dog" >&2
+# Write to a custom log file
+echo "drugs and money" > ${CYLC_TASK_LOG_ROOT}.custom-log
+"""
+        [[[remote]]]
+            host={{environ['CYLC_TEST_HOST']}}
