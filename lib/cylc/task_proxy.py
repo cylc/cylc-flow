@@ -887,6 +887,8 @@ class TaskProxy(object):
             if dry_run:
                 # Note this is used to bail out in the first stage of an
                 # edit-run (i.e. write the job file but don't submit it).
+                # In a suite daemon, this must be an edit run.
+                self.log(WARNING, "Job file written for an edit-run.")
                 return self.job_conf['local job file path']
 
         # The job file is now (about to be) used: reset the file write flag so
