@@ -25,9 +25,12 @@ set_test_number 13
 install_suite $TEST_NAME_BASE running
 TEST_SUITE_RUN_OPTIONS=
 SUITE_TIMEOUT=240
-if [[ -n ${CYLC_TEST_BATCH_TASK_HOST:-} && ${CYLC_TEST_BATCH_TASK_HOST:-} != 'None' ]]; then
-    ssh $CYLC_TEST_BATCH_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
-    scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_TEST_BATCH_TASK_HOST:.cylc/$SUITE_NAME/passphrase
+if [[ -n ${CYLC_TEST_BATCH_TASK_HOST:-} && ${CYLC_TEST_BATCH_TASK_HOST:-} != 'None' ]]
+then
+    ssh ${SSH_OPTS} -n "${CYLC_TEST_BATCH_TASK_HOST}" \
+        "mkdir -p '.cylc/${SUITE_NAME}/'"
+    scp ${SSH_OPTS} "${TEST_DIR}/${SUITE_NAME}/passphrase" \
+        "${CYLC_TEST_BATCH_TASK_HOST}:.cylc/${SUITE_NAME}/passphrase"
     export CYLC_TEST_BATCH_SITE_DIRECTIVES CYLC_TEST_BATCH_TASK_HOST
     TEST_SUITE_RUN_OPTIONS="--set=BATCH_SYS_NAME=$BATCH_SYS_NAME"
     SUITE_TIMEOUT=900
@@ -145,7 +148,11 @@ tidy|2013092300|1|1|succeeded
 tidy|2013092306|1|1|succeeded
 __DB_DUMP__
 #-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
-if [[ -n ${CYLC_TEST_BATCH_TASK_HOST:-} && ${CYLC_TEST_BATCH_TASK_HOST:-} != 'None' && -n $SUITE_NAME ]]; then
-    ssh $CYLC_TEST_BATCH_TASK_HOST rm -rf .cylc/$SUITE_NAME
+purge_suite "${SUITE_NAME}"
+if [[ -n "${CYLC_TEST_BATCH_TASK_HOST:-}" && \
+    "${CYLC_TEST_BATCH_TASK_HOST:-}" != 'None' ]]
+then
+    ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" \
+        "rm -fr .cylc/${SUITE_NAME} cylc-run/${SUITE_NAME}"
 fi
+exit

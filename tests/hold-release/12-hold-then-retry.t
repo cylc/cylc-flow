@@ -25,5 +25,5 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --reference-test --debug "${SUITE_NAME}"
 
-purge_suite "${TEST_NAME_BASE}"
+purge_suite "${SUITE_NAME}"
 exit
