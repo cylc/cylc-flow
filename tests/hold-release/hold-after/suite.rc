@@ -4,6 +4,7 @@ title = "cylc hold --after"
 description = """One task that holds future cycles after a given cycle."""
 
 [cylc]
+    UTC mode = True
     [[reference test]]
         live mode suite timeout = PT1M
 

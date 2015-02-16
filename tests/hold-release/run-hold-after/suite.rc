@@ -4,6 +4,7 @@ title = "cylc run --hold-after"
 description = """Test running with a hold-after cycle point."""
 
 [cylc]
+    UTC mode = True
     [[reference test]]
         live mode suite timeout = PT1M
 
