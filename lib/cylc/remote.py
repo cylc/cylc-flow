@@ -44,14 +44,15 @@ class remrun(object):
 
     """
 
-    def __init__(self):
+    def __init__(self, argv=None):
         self.owner = None
         self.host = None
         self.ssh_login_shell = None
+        self.argv = argv or sys.argv
 
-        cylc.flags.verbose = '-v' in sys.argv or '--verbose' in sys.argv
+        cylc.flags.verbose = '-v' in self.argv or '--verbose' in self.argv
 
-        argv = sys.argv[1:]
+        argv = self.argv[1:]
         self.args = []
         # detect and replace host and owner options
         while argv:
@@ -70,7 +71,7 @@ class remrun(object):
         self.is_remote = (
             is_remote_user(self.owner) or is_remote_host(self.host))
 
-    def execute(self, force_required=False, env={}, path=None):
+    def execute(self, force_required=False, env={}, path=None, dry_run=False):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -81,12 +82,12 @@ class remrun(object):
             return False
 
         if (force_required and
-                '-f' not in sys.argv[1:] and '--force' not in sys.argv[1:]):
+                '-f' not in self.argv[1:] and '--force' not in self.argv[1:]):
             sys.exit(
                 "ERROR: force (-f) required for non-interactive " +
                 "command invocation.")
 
-        name = os.path.basename(sys.argv[0])[5:]  # /path/to/cylc-foo => foo
+        name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
 
         user_at_host = ''
         if self.owner:
@@ -142,6 +143,9 @@ class remrun(object):
             command_str = ' '.join([quote(arg) for arg in command])
             print '\n'.join(
                 TextWrapper(subsequent_indent='\t').wrap(command_str))
+
+        if dry_run:
+            return command
 
         try:
             popen = subprocess.Popen(command)
