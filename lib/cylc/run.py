@@ -54,19 +54,15 @@ def main(name, start):
     # Print copyright and license information
     print_blurb()
 
-    # Before daemonizing attempt to create the suite output tree and get
-    # the suite port file.
-
+    # Create run directory tree and get port file.
     try:
-        if server.__class__.__name__ != 'restart':
-            GLOBAL_CFG.create_cylc_run_tree( server.suite )
+        GLOBAL_CFG.create_cylc_run_tree(server.suite)
         server.configure_pyro()
-    except Exception, x:
+    except Exception as exc:
         if flags.debug:
             raise
         else:
-            print >> sys.stderr, x
-            sys.exit(1)
+            sys.exit(exc)
 
     # Daemonize the suite
     if not server.options.no_detach and not flags.debug:
