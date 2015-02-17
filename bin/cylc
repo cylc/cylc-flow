@@ -298,7 +298,7 @@ Version """ + CYLC_VERSION + """
 The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
 
 USAGE:
-  % cylc -v,--version                   # print cylc version
+  % cylc version,-v,--version           # print cylc version
   % cylc help,--help,-h,?               # print this help page
 
   % cylc help CATEGORY                  # print help by category
@@ -525,9 +525,6 @@ if len(args) == 1:
         pretty_print(catsum, categories)
         sys.exit(0)
     if (args[0] == '-v' or args[0] == '--version'):
-        # cylc -v,--version
-        # is now an alias for "cylc version"
-        args[0] = 'version'
         print CYLC_VERSION
         sys.exit(0)
 
