@@ -71,7 +71,7 @@ class remrun(object):
         self.is_remote = (
             is_remote_user(self.owner) or is_remote_host(self.host))
 
-    def execute(self, force_required=False, env={}, path=None, dry_run=False):
+    def execute(self, force_required=False, env=None, path=None, dry_run=False):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -129,6 +129,8 @@ class remrun(object):
 
         command.append(name)
 
+        if env is None:
+            env = {}
         for var, val in env.iteritems():
             command.append("--env=%s=%s" % (var, val))
 
