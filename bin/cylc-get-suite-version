@@ -30,11 +30,11 @@ from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 
-parser = cop("""cylc [info] get-cylc-version [OPTIONS] ARGS
+parser = cop("""cylc [info] get-suite-version [OPTIONS] ARGS
 
 Interrogate running suite REG to find what version of cylc is running it.
 
-Note: to find the cylc version at your command line, use "cylc -v".""",
+To find the version you've invoked at the command line see "cylc version".""",
     pyro=True,
     argdoc=[('REG', 'Suite name')])
 

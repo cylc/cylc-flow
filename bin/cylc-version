@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Print the cylc release or git repository version number."""
+
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+from cylc.CylcOptionParsers import cop
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.version import CYLC_VERSION
+import cylc.flags
+
+
+parser = cop("""cylc [info] version
+
+Print the cylc version that you've invoked at the command line.
+Note that "cylc --version" and "cylc -v" are aliased to this command.
+
+For the version running a suite daemon, see "cylc get-suite-version".""")
+
+print CYLC_VERSION
