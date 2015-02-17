@@ -31,9 +31,15 @@ import cylc.flags
 
 parser = cop("""cylc [info] version
 
-Print the cylc version that you've invoked at the command line.
-Note that "cylc --version" and "cylc -v" are aliased to this command.
+Print the cylc version invoked at the command line.
 
-For the version running a suite daemon, see "cylc get-suite-version".""")
+Note that "cylc -v,--version" just prints the version string from the main
+command interface, whereas this is a proper cylc command that can take the
+standard --host and --user options, etc.
+
+For the cylc version of running a suite daemon see
+  "cylc get-suite-version".""")
+
+(options, args) = parser.parse_args()
 
 print CYLC_VERSION

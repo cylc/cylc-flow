@@ -298,7 +298,8 @@ Version """ + CYLC_VERSION + """
 The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
 
 USAGE:
-  % cylc version,-v,--version           # print cylc version
+  % cylc -v,--version                   # print cylc version
+  % cylc version                        # (ditto, by command)
   % cylc help,--help,-h,?               # print this help page
 
   % cylc help CATEGORY                  # print help by category
