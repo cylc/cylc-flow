@@ -15,7 +15,9 @@ t-retry-able => t-analyse
 
 [runtime]
     [[t-retry-able]]
-        command scripting = ((CYLC_TASK_TRY_NUMBER >= 3))
+        # Note under bash 4.2 failed bare arithmetic tests such as
+        # "(( VAR >= 3 ))" do not cause an abort under 'set -e'.
+        command scripting = (( CYLC_TASK_TRY_NUMBER < 3 )) && exit 1
         retry delays = PT15S, 2*PT1S
     [[t-hold-release]]
         command scripting = """
