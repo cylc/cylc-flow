@@ -28,6 +28,7 @@ from textwrap import TextWrapper
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
+from cylc.version import CYLC_VERSION
 import cylc.flags
 
 
@@ -69,7 +70,7 @@ class remrun(object):
         self.is_remote = (
             is_remote_user(self.owner) or is_remote_host(self.host))
 
-    def execute(self, force_required=False, env=None, path=None):
+    def execute(self, force_required=False, env={}, path=None):
         """Execute command on remote host.
 
         Returns False if remote re-invocation is not needed, True if it is
@@ -108,6 +109,10 @@ class remrun(object):
         if ssh_login_shell is None:
             ssh_login_shell = GLOBAL_CFG.get_host_item(
                 "use login shell", self.host, self.owner)
+
+        # Pass cylc version through.
+        command += ["CYLC_VERSION=%s" % CYLC_VERSION]
+
         if ssh_login_shell:
             # A login shell will always source /etc/profile and the user's bash
             # profile file. To avoid having to quote the entire remote command
@@ -123,10 +128,9 @@ class remrun(object):
 
         command.append(name)
 
-        if env is None:
-            env = {}
         for var, val in env.iteritems():
             command.append("--env=%s=%s" % (var, val))
+
         for arg in self.args:
             command.append("'" + arg + "'")
             # above: args quoted to avoid interpretation by the shell,
