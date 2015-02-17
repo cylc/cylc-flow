@@ -1,0 +1,15 @@
+[cylc]
+    [[event hooks]]
+        abort on timeout = True
+        timeout = PT20S
+[scheduling]
+    [[dependencies]]
+        graph = one => two
+[runtime]
+    [[one]]
+        command scripting = """
+# Tell the suite to stop after I've finished.
+cylc stop $CYLC_SUITE_NAME
+sleep 10"""
+    [[two]]
+        command scripting = true
