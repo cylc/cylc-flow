@@ -498,7 +498,9 @@ environment.
 
 \paragraph[cylc executable]{[hosts] $\rightarrow$ HOST $\rightarrow$ cylc executable }
 
-The \lstinline=cylc= executable on a remote host.
+The \lstinline=cylc= executable on a remote host. Note this should point to the 
+cylc multi-version wrapper (see~\ref{CUI}) on the host, not
+\lstinline=bin/cylc= for a specific installed version.
 Specify a full path if \lstinline=cylc= is not in \lstinline=\$PATH= when it is
 invoked via \lstinline=ssh= on this host.
 
