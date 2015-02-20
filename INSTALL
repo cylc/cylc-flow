@@ -11,30 +11,33 @@ Cylc is typically installed into a designated "cylc admin" user account
     % make      # (see below to understand what 'make' does here)
 
 _______________________________________________________________________
-ARRANGING ACCESS TO CYLC ONCE INSTALLED
+ARRANGING ACCESS TO CYLC
 
-To use cylc you just need the cylc bin directory in your $PATH (on task
-host accounts as well as on the suite host). Instead of arranging access
-to a specific cylc bin directory, however, you should consider
-installing successive versions in parallel like this:
+Users need access to the the "cylc" command from suite and task host user
+accounts.  Do not simply put the bin directory of a specific cylc release in
+$PATH for users, however. Instead install admin/cylc-wrapper as "cylc" in a
+central location and ensure that location is in $PATH. The wrapper must be
+modified slightly, as described in the file, to point to the location under
+which multiple cycle versions will be intalled. For example:
 
-    /home/admin/cylc/cylc-5.2.0/
-    /home/admin/cylc/cylc-5.4.0/
-        # etc.
-    /home/admin/cylc/cylc-5.4.5/
-    /home/admin/cylc/cylc -> cylc-5.4.5   # symlink to default version
-
-Now install admin/cylc-wrapper to a convenient location as "cylc", e.g.:
-
-    % cp admin/cylc-wrapper /home/admin/bin/cylc
-        # OR:
+    # Install the central wrapper:
     % cp admin/cylc-wrapper /usr/local/bin/cylc
-    
-Modify the wrapper for your environment as per instructions in the file
-and ensure that it is in $PATH for users. The wrapper selects from the
-installed versions via an environment variable $CYLC_VERSION that users
-can set if they don't want the default version. Running suites also use
-this to ensure that their tasks access the right version of cylc.
+
+Then (a) ensure that /usr/local/bin is in $PATH for users, and (b) modify
+/usr/local/bin/cylc to point to /home/admin/cylc, where successive releases can
+be installed like this:
+
+    # Install cylc releases side by side:
+    /home/admin/cylc/cylc-6.0.0/
+    /home/admin/cylc/cylc-6.1.0/
+    /home/admin/cylc/cylc-6.1.2/
+        # etc.
+    /home/admin/cylc/cylc -> cylc-6.3.0  # SYMLINK TO DEFAULT VERSION
+   
+The central wrapper selects from the available versions of cylc according to
+the value of an environment variable, $CYLC_VERSION.  This allows running
+suites to continue to function correctly even if they have not been upgraded
+to the latest release.
 
 _______________________________________________________________________
 CYLC DEVELOPMENT - CLONING THE GIT REPOSITORY

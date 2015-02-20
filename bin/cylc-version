@@ -16,40 +16,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Print the cylc release or git repository version number."""
+
 import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove('--use-ssh')
-    from cylc.remote import remrun
-    if remrun().execute():
-        sys.exit(0)
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-from cylc.task_id import TaskID
-from cylc import cylc_pyro_client
-from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.version import CYLC_VERSION
 import cylc.flags
 
-parser = cop("""cylc [info] get-cylc-version [OPTIONS] ARGS
 
-Interrogate running suite REG to find what version of cylc is running it.
+parser = cop("""cylc [info] version
 
-Note: to find the cylc version at your command line, use "cylc -v".""",
-    pyro=True,
-    argdoc=[('REG', 'Suite name')])
+Print the cylc version invoked at the command line.
+
+Note that "cylc -v,--version" just prints the version string from the main
+command interface, whereas this is a proper cylc command that can take the
+standard --host and --user options, etc.
+
+For the cylc version of running a suite daemon see
+  "cylc get-suite-version".""")
 
 (options, args) = parser.parse_args()
 
-suite, pphrase = prep_pyro(args[0], options).execute()
-
-try:
-    proxy = cylc_pyro_client.client(
-            suite, pphrase, options.owner, options.host, options.pyro_timeout,
-            options.port).get_proxy('suite-info')
-    res = proxy.get('get cylc version')
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-else:
-    print res
+print CYLC_VERSION

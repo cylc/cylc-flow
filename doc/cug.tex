@@ -792,17 +792,11 @@ one at first, see~\ref{SiteAndUserConfiguration} and~\ref{SiteRCReference}.
 \label{CUI}
 
 Cylc has command line (CLI) and graphical (GUI) user interfaces.
-To get access to them you just need the cylc bin directory in your shell
-search path:
-\lstset{language=bash}
-\begin{lstlisting}
-export PATH=/path/to/cylc/bin:$PATH
-\end{lstlisting}
-Note however that direct use of a specific installed version, like this, is 
-not recommended. Instead a special wrapper script provided with cylc should be
-installed centrally for all users. This points to a top level cylc release
-directory and allows use of multiple cylc versions at once if necessary.
-See the cylc INSTALL file for details (\ref{INSTALL}).
+To access them {\em do not simply put the bin directory of the current release
+the shell search path for users.} Instead, as described in the cylc INSTALL
+file (\ref{INSTALL}), configure the provided multi-version wrapper script to
+point to install location for any or all cylc releases. This allows existing
+suites to continue running at old cylc versions if necessary.
 
 \subsubsection{Command Line Interface (CLI)}
 

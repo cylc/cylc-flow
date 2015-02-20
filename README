@@ -14,12 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-This is the Cylc Suite Engine, version: cylc -v
-
-Access to cylc:
-  % export PATH=/path/to/cylc/bin:$PATH
-  % cylc help
-  % gcylc &
+This is the Cylc Suite Engine, a workflow engine and metascheduler.
 
 Documentation:
   * Installation: /path/to/cylc/INSTALL

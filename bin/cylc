@@ -180,7 +180,8 @@ information_commands['dump'] = ['dump']
 information_commands['cat-state'] = ['cat-state']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
-information_commands['get-cylc-version'] = ['get-cylc-version']
+information_commands['get-suite-version'] = ['get-suite-version', 'get-cylc-version']
+information_commands['version'] = ['version']
 
 information_commands['documentation'] = ['documentation', 'browse']
 information_commands['monitor'] = ['monitor']
@@ -298,6 +299,7 @@ The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
 
 USAGE:
   % cylc -v,--version                   # print cylc version
+  % cylc version                        # (ditto, by command)
   % cylc help,--help,-h,?               # print this help page
 
   % cylc help CATEGORY                  # print help by category
@@ -397,7 +399,8 @@ comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
 comsum['get-gui-config'] = 'Print gcylc configuration items'
-comsum['get-cylc-version'] = 'Get the cylc-version running a daemon'
+comsum['get-suite-version'] = 'Print the cylc version of a running suite daemon'
+comsum['version'] = 'Print the cylc release version'
 comsum['gsummary'] = 'Summary GUI for monitoring multiple suites'
 comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'
 # control
@@ -523,7 +526,6 @@ if len(args) == 1:
         pretty_print(catsum, categories)
         sys.exit(0)
     if (args[0] == '-v' or args[0] == '--version'):
-        # cylc -v,--version
         print CYLC_VERSION
         sys.exit(0)
 
