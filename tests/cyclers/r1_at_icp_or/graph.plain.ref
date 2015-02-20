@@ -1,0 +1,9 @@
+edge "bar.20130808T1200Z" "baz.20130808T1200Z" solid
+edge "baz.20130808T1200Z" "baz.20130809T1200Z" solid
+edge "foo.20130808T0000Z" "baz.20130808T1200Z" solid
+graph
+node "bar.20130808T1200Z" "bar\n20130808T1200Z" unfilled box orange
+node "baz.20130808T1200Z" "baz\n20130808T1200Z" unfilled box green
+node "baz.20130809T1200Z" "baz\n20130809T1200Z" unfilled box green
+node "foo.20130808T0000Z" "foo\n20130808T0000Z" unfilled box red
+stop

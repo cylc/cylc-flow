@@ -1,0 +1,22 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20130808T00
+    final cycle point = 20130809T18
+    [[dependencies]]
+        [[[R1]]]
+            graph = "foo"
+        [[[R1/T12]]]
+            graph = "foo[^] | bar => baz"
+        [[[T12]]]
+            graph = "baz[-P1D] => baz"
+[runtime]
+    [[root]]
+        command scripting = true
+[visualization]
+    initial cycle point = 20130808T00
+    final cycle point = 20130809T18
+    [[node attributes]]
+        foo = "color=red"
+        bar = "color=orange"
+        baz = "color=green"
