@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
-<language name="Cylc suite.rc" section="Configuration" extensions="suite.rc" mimetype="" version="1.0" kateversion="2.0" author="" license="GPL">
+<language name="Cylc suite.rc" section="Configuration" extensions="suite*.rc" mimetype="" version="1.0" kateversion="2.0" author="" license="GPL">
 
 <!-- For use with Kate. To use it, place or symlink this file in ~/.kde/share/apps/katepart/syntax/,
  or if possible, /usr/share/kde4/apps/katepart/syntax/ -->
