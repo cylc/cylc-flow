@@ -41,7 +41,7 @@
 <language id="cylc-suite-rc" _name="cylc suite.rc" version="2.0" _section="Others">
   <metadata>
     <property name="mimetypes">jinja2</property>
-    <property name="globs">suite.rc</property>
+    <property name="globs">suite*.rc</property>
     <property name="line-comment-start">#</property>
   </metadata>
 

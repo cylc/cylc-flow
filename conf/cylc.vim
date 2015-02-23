@@ -11,7 +11,7 @@
 "    (without the leading "| characters):
 "
 "|augroup filetype
-"|  au! BufRead,BufnewFile *suite.rc   set filetype=cylc
+"|  au! BufRead,BufnewFile *suite*.rc   set filetype=cylc
 "|augroup END
 "
 " (the wildcard in '*suite.rc' handles temporary files generated
