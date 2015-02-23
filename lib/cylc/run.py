@@ -25,10 +25,11 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import flags
 from exceptions import SchedulerStop, SchedulerError
 
+
 def print_blurb():
     lines = []
-    lines.append( " The Cylc Suite Engine [" + CYLC_VERSION + "] " )
-    lines.append( " Copyright (C) 2008-2015 NIWA " )
+    lines.append(" The Cylc Suite Engine [" + CYLC_VERSION + "] ")
+    lines.append(" Copyright (C) 2008-2015 NIWA ")
 
     lic = """
  This program comes with ABSOLUTELY NO WARRANTY.  It is free software;
@@ -43,8 +44,9 @@ def print_blurb():
 
     print '*' * (mx + 2)
     for line in lines:
-        print '*' + line.center( mx ) + '*'
+        print '*' + line.center(mx) + '*'
     print '*' * (mx + 2)
+
 
 def main(name, start):
 
@@ -54,32 +56,26 @@ def main(name, start):
     # Print copyright and license information
     print_blurb()
 
-    # Before daemonizing attempt to create the suite output tree and get
-    # the suite port file.
-
+    # Create run directory tree and get port file.
     try:
-        if server.__class__.__name__ != 'restart':
-            GLOBAL_CFG.create_cylc_run_tree( server.suite )
+        GLOBAL_CFG.create_cylc_run_tree(server.suite)
         server.configure_pyro()
-    except Exception, x:
+    except Exception as exc:
         if flags.debug:
             raise
         else:
-            print >> sys.stderr, x
-            sys.exit(1)
+            sys.exit(exc)
 
     # Daemonize the suite
     if not server.options.no_detach and not flags.debug:
-        daemonize( server.suite, server.port )
+        daemonize(server.suite, server.port)
 
     try:
         server.configure()
         server.run()
-        #   For profiling:
-        #import cProfile
-        #cProfile.run( 'server.run()', 'fooprof' )
-        #   and see Python docs "The Python Profilers"
-        #   for how to display the resulting stats.
+        # For profiling (see Python docs for how to display the stats).
+        # import cProfile
+        # cProfile.run('server.run()', 'fooprof')
     except SchedulerStop, x:
         # deliberate stop
         print str(x)
@@ -99,12 +95,12 @@ def main(name, start):
             traceback.print_exc(y)
             sys.exit(1)
 
-    except (KeyboardInterrupt,Exception) as x:
+    except (KeyboardInterrupt, Exception) as x:
         import traceback
         traceback.print_exc(x)
         print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
         try:
-            server.shutdown( 'ERROR: ' + str(x) )
+            server.shutdown('ERROR: ' + str(x))
         except Exception, y:
             # In case of exceptions in the shutdown method itself
             traceback.print_exc(y)
