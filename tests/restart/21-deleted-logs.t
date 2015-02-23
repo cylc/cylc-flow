@@ -30,6 +30,11 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-restart
+if [[ -z $SUITE_NAME ]]; then
+    # For safety, abort before attempting log tree removal.
+    echo "ERROR: \$SUITE_NAME does not exist" >&2
+    exit 1
+fi
 rm -r $(cylc get-global-config --print-run-dir)/$SUITE_NAME/log
 suite_run_ok $TEST_NAME cylc restart --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
