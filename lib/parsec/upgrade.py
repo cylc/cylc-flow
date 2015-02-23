@@ -22,7 +22,7 @@ if __name__ == '__main__':
     here = os.path.dirname( __file__ )
     sys.path.append( here + '/..' )
 
-from OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict
 import cylc.flags
 
 """Support automatic deprecation and obsoletion of parsec config items."""

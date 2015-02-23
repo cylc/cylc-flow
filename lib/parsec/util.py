@@ -19,7 +19,7 @@
 import os
 import sys
 from copy import copy
-from OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict
 
 """
 Utility functions for printing and manipulating PARSEC NESTED DICTS.
