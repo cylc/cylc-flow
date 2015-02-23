@@ -58,6 +58,16 @@ FAM_TRIGGER_TYPES = (
     [trig_type + "-any" for trig_type in TRIGGER_TYPES] +
     [trig_type + "-all" for trig_type in TRIGGER_TYPES])
 
+# Replace \W characters in conditional graph expressions.
+CONDITIONAL_REGEX_REPLACEMENTS = [
+    ("\[", "_leftsquarebracket_"),
+    ("\]", "_rightsquarebracket_"),
+    ("-", "_minus_"),
+    ("\^", "_caret_"),
+    (":", "_colon_"),
+    ("\+", "_plus_"),
+]
+
 try:
     import graphing
 except ImportError:
@@ -1450,17 +1460,14 @@ class config( object ):
             # CONDITIONAL TRIGGERS
             # Use fully qualified name for the expression label
             # (task name is not unique, e.g.: "F | F:fail => G")
-            label = re.sub( '[-\[\]:]', '_', left )
-            label = re.sub( '\+', 'x', label ) # future triggers
+            label = self.get_conditional_label(left)
             ctrig[label] = trig
             cname[label] = lnode.name
 
         if not conditional:
             return
 
-        # Replace some chars for later use in regular expressions.
-        expr = re.sub( '[-\[\]:]', '_', lexpression )
-        expr = re.sub( '\+', 'x', expr ) # future triggers
+        expr = self.get_conditional_label(lexpression)
         self.taskdefs[right].add_conditional_trigger( ctrig, expr, seq )
 
     def get_actual_first_point( self, start_point ):
@@ -1482,6 +1489,30 @@ class config( object ):
         else:
             self.actual_first_point = start_point
         return self.actual_first_point
+
+    def get_conditional_label( self, expression ):
+        """Return a label to ID the expression.
+
+        Special characters such as [, or ^ are replaced with
+        nice \w+ text for use in regular expressions and trigger
+        task matching. We don't back-transform the label, so
+        all it needs to is provide locally unique IDs for the
+        bits of the trigger.
+
+        For example, "foo[^] | bar" is represented in text as
+        "foo_leftsquarebracket__caret__rightsquarebracket_ | bar".
+        As long as no one uses that exact "foo_leftsquare...." text as
+        a task name as part of a conditional trigger for the *same*
+        task, we're OK.
+
+        Should we use unicodedata.name to convert the character names,
+        and support much more characters in the task names?
+
+        """
+        label = expression
+        for regex, replacement in CONDITIONAL_REGEX_REPLACEMENTS:
+            label = re.sub(regex, replacement, label)
+        return label
 
     def get_graph_raw( self, start_point_string, stop_point_string,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
