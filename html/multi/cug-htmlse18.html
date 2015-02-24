@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-02-16 09:32:00"> 
+<meta name="date" content="2015-02-24 15:22:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -954,13 +954,18 @@ class="cmbx-10">HOST </span><span
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">cylc executable </span></span>
    The <span class="lstinline"><span 
-class="pcrr7t-">cylc</span></span> executable on a remote host. Specify a full path if <span class="lstinline"><span 
+class="pcrr7t-">cylc</span></span> executable on a remote host. Note this should point to the cylc multi-version wrapper (see&#x00A0;<a 
+href="cug-htmlse7.html#x8-260007.2">7.2<!--tex4ht:ref: CUI --></a>) on the
+host, not <span class="lstinline"><span 
+class="pcrr7t-">bin</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">cylc</span></span> for a specific installed version. Specify a full path if <span class="lstinline"><span 
 class="pcrr7t-">cylc</span></span> is not in <span class="lstinline"><span 
 class="pcrr7t-">\</span><span 
 class="pcrr8c-">$</span><span 
-class="pcrr7t-">PATH</span></span> when it is invoked via <span class="lstinline"><span 
-class="pcrr7t-">ssh</span></span>
-on this host.
+class="pcrr7t-">PATH</span></span> when it is invoked
+via <span class="lstinline"><span 
+class="pcrr7t-">ssh</span></span> on this host.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
@@ -968,8 +973,8 @@ class="cmti-10">type: </span>string
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span><span class="lstinline"><span 
 class="pcrr7t-">cylc</span></span></li></ul>
-<!--l. 510--><p class="noindent" >
-<!--l. 510--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 512--><p class="noindent" >
+<!--l. 512--><p class="noindent" ><span class="paragraphHead"><a 
  id="x19-376000B.8.1.8"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
@@ -989,8 +994,8 @@ class="cmti-10">type: </span>string
 class="cmti-10">localhost default: </span><span class="lstinline"><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">"</span></span></li></ul>
-<!--l. 521--><p class="noindent" >
-<!--l. 521--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 523--><p class="noindent" >
+<!--l. 523--><p class="noindent" ><span class="paragraphHead"><a 
  id="x19-377000B.8.1.9"></a><span 
 class="cmbx-10">[hosts] </span><span 
 class="cmsy-10">&#x2192; </span><span 
@@ -1006,21 +1011,21 @@ class="cmti-10">type: </span>string_list
      <li class="itemize"><span 
 class="cmti-10">localhost default: </span><span class="lstinline"><span 
 class="pcrr7t-">[]</span></span></li></ul>
-<!--l. 531--><p class="noindent" >
-<!--l. 531--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
+<!--l. 533--><p class="noindent" >
+<!--l. 533--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
  id="x19-378000B.9"></a>[suite host self-identification]  </span></h4>
-<!--l. 533--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
+<!--l. 535--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_HOST</span></span>)
 so that task messages can target the right suite on the right host.
                                                                                          
 
                                                                                          
-<!--l. 541--><p class="noindent" >
-<!--l. 541--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
+<!--l. 543--><p class="noindent" >
+<!--l. 543--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
  id="x19-379000B.9.1"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>method  </span></h4>
-<!--l. 543--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
+<!--l. 545--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
 class="cmti-10">name </span>method cylc asks the
 suite host for its host name. This should resolve on remote task hosts to the IP address of the suite host; if it
 doesn&#8217;t, adjust network settings or use one of the other methods. For the <span 
@@ -1057,11 +1062,11 @@ class="cmti-10">host</span>, below)</li></ul>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>name</li></ul>
-<!--l. 565--><p class="noindent" >
-<!--l. 565--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
+<!--l. 567--><p class="noindent" >
+<!--l. 567--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
  id="x19-380000B.9.2"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>target  </span></h4>
-<!--l. 567--><p class="indent" >   This item is required for the <span 
+<!--l. 569--><p class="indent" >   This item is required for the <span 
 class="cmti-10">address </span>self-identification method. If your suite host sees the internet, a common
 address such as <span class="lstinline"><span 
 class="pcrr7t-">google</span><span 
@@ -1076,11 +1081,11 @@ class="cmti-10">default: </span><span class="lstinline"><span
 class="pcrr7t-">google</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">com</span></span></li></ul>
-<!--l. 577--><p class="noindent" >
-<!--l. 577--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
+<!--l. 579--><p class="noindent" >
+<!--l. 579--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
  id="x19-381000B.9.3"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>host  </span></h4>
-<!--l. 579--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
+<!--l. 581--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
 class="cmti-10">hardwired</span>
 self-identification method.
      <ul class="itemize1">
@@ -1089,21 +1094,21 @@ class="cmti-10">type: </span>string (host name or IP address)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 586--><p class="noindent" >
-<!--l. 586--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
+<!--l. 588--><p class="noindent" >
+<!--l. 588--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
  id="x19-382000B.10"></a>[suite host scanning] </span></h4>
-<!--l. 588--><p class="indent" >   Utilities such as <span class="lstinline"><span 
+<!--l. 590--><p class="indent" >   Utilities such as <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">gsummary</span></span> need to scan hosts for running suites.
                                                                                          
 
                                                                                          
-<!--l. 591--><p class="noindent" >
-<!--l. 591--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
+<!--l. 593--><p class="noindent" >
+<!--l. 593--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
  id="x19-383000B.10.1"></a>[suite host scanning] <span 
 class="cmsy-10">&#x2192; </span>hosts  </span></h4>
-<!--l. 593--><p class="indent" >   A list of hosts to scan for running suites.
+<!--l. 595--><p class="indent" >   A list of hosts to scan for running suites.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>comma-separated list of host names or IP addresses.
