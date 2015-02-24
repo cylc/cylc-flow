@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.3.1">6.3.1</a></li>
     <li><a href="#6.3.0">6.3.0</a></li>
     <li><a href="#6.2.0">6.2.0</a></li>
     <li><a href="#6.1.2">6.1.2</a></li>
@@ -55,6 +56,24 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.3.1"/>
+    <h2>6.3.1</h2>
+
+  		<ul>
+					<li> Support use of conditional dependencies involving the initial
+					cycle point.
+					<li> Create missing parts of the suite run directory tree if
+					necessary, on restart.
+					<li> Propagate <code>CYLC_VERSION</code> prior to remote command
+					invocation so that new features can be used on remote hosts even
+					if the new version of cylc is not yet the default version (so long as
+					it is installed under the standard version wrapper framework, of
+					course).
+					<li> Start the gcylc graph view in centered mode.
+					<li> For the new <em>edit runs</em> introduced in 6.3.0 record a diff
+					relative to the pristine job script, in the task log directory.
+			</ul>
+	
 <a name="6.3.0"/>
     <h2>6.3.0</h2>
 
