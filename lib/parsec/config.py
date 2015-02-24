@@ -17,12 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
-from fileparse import parse, FileNotFoundError
-from util import printcfg
-from validate import validate, check_compulsory, expand, validator
-from OrderedDict import OrderedDict
-from util import replicate, itemstr
-from upgrade import UpgradeError
+from parsec.fileparse import parse, FileNotFoundError
+from parsec.util import printcfg
+from parsec.validate import validate, check_compulsory, expand, validator
+from parsec.OrderedDict import OrderedDict
+from parsec.util import replicate, itemstr
+from parsec.upgrade import UpgradeError
 import cylc.flags
 
 class ParsecError( Exception ):

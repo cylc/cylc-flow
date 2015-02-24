@@ -10,9 +10,9 @@ sys.path.append( fpath + '/../../..' )
 Check that single-line config print works
 """ 
 
-from config import config
-from validate import validator as vdr
-from OrderedDict import OrderedDict
+from parsec.config import config
+from parsec.validate import validator as vdr
+from parsec.OrderedDict import OrderedDict
 
 SPEC = { 'foo' : { 'bar' : { '__MANY__' : vdr( vtype="string" ) } } }
 cfg = config( SPEC )

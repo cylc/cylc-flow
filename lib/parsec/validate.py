@@ -17,8 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, re
-from OrderedDict import OrderedDict
-from util import m_override, un_many, itemstr
+from parsec.OrderedDict import OrderedDict
+from parsec.util import m_override, un_many, itemstr
 from copy import copy
 
 """
