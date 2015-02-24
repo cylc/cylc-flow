@@ -165,7 +165,9 @@ if options.edit_run:
     with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
         for line in difflib.unified_diff(
                 open(jobfile_copy_path).readlines(),
-                open(jobfile_path).readlines()):
+                open(jobfile_path).readlines(),
+                fromfile="original",
+                tofile="edited"):
             diff_file.write(line)
     os.unlink(jobfile_copy_path)
 

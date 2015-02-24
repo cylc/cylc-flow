@@ -32,9 +32,10 @@ CYLC_CONF_PATH=$PWD/conf \
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-diff"
 DIFF_LOG=$(cylc cat-log -dl $SUITE_NAME broken-task.1)
+sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
 cmp_ok $DIFF_LOG - <<__END__
----  
-+++  
+--- original
++++ edited
 @@ -128,7 +128,7 @@
  echo
  
