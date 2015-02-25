@@ -21,9 +21,9 @@ import sys
 import re
 import traceback
 
-from OrderedDict import OrderedDict
-from include import inline, IncludeFileNotFoundError
-from util import itemstr
+from parsec.OrderedDict import OrderedDict
+from parsec.include import inline, IncludeFileNotFoundError
+from parsec.util import itemstr
 import cylc.flags
 
 """

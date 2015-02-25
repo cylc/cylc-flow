@@ -10,9 +10,9 @@ sys.path.append( fpath + '/../../..' )
 A missing config file should successfully yield an empty sparse config dict.
 """ 
 
-from config import config
-from validate import validator as vdr
-from OrderedDict import OrderedDict
+from parsec.config import config
+from parsec.validate import validator as vdr
+from parsec.OrderedDict import OrderedDict
 
 SPEC = { 'title' : vdr( vtype="string" ) }
 cfg = config( SPEC )
