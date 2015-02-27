@@ -31,7 +31,7 @@
         failed    = "color=#ff0000", "style=filled", "fontcolor=white"
         retrying  = "color=#ff7e00"
         submit-retrying  = "color=#fa7e00"
-        runahead    = "color=#000000"
+        runahead   = "color=#b35bfd"
 
     [[solid]]
         # a solid version of the default theme
@@ -47,11 +47,12 @@
         ready     = "color=#9c8320"
         submitted = "color=#76a200", "fontcolor=black"
         submit-failed = "color=#ff6f00"
-        running   = "color=#00ce27"
+        running   = "color=#008e27"
         succeeded = "color=#555454"
         failed    = "color=#ff0035"
         retrying  = "color=#ff6282"
         submit-retrying  = "color=#ffaf6f"
+        runahead   = "color=#8000c0"
 
     [[color-blind]]
          # Ten colors that are apparently distinguishable by people with
