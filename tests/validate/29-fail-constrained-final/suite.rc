@@ -1,0 +1,15 @@
+title = "Test validation of final cycle point against constraints"
+
+[cylc]
+[scheduling]
+initial cycle point = 20100101T03
+final cycle point = 20100102T17
+final cycle point constraints = T00, T06, T12, T18
+[[dependencies]]
+[[[T00, T06, T12, T18]]]
+graph = """foo"""
+[runtime]
+[[FOO]]
+[[BAR]]
+[[foo]]
+inherit = FOO, BAR
