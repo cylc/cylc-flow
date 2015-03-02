@@ -107,7 +107,7 @@ class TaskNotDefinedError(SuiteConfigError):
     """A named task not defined."""
 
     def __str__(self):
-        return "Task not found: " + self.args[0]
+        return "Task not defined: %s" % self.msg
 
 # TODO: separate config for run and non-run purposes?
 
