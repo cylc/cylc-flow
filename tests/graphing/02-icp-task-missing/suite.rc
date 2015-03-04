@@ -1,0 +1,18 @@
+#!jinja2
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20150304T00
+    final cycle point = +P2D
+   [[dependencies]]
+   {% if INCLUDE_R1 is defined and INCLUDE_R1 -%}
+        [[[R1]]]
+            graph = pc
+   {% endif %}
+        [[[T00]]]
+            graph = NZC1[-PT3H] => pc
+        [[[T21]]]
+            graph = NZC1
+[visualization]
+    initial cycle point = 20150304T00
+    final cycle point = 20150306T00
