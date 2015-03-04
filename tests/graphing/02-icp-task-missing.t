@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "[visualization]number of cycles" for a suite with two different cycling
-# intervals.
+# Test for GH bug #955, missing initial task depending on pre-initial.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 3
