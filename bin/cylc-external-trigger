@@ -42,7 +42,7 @@ suite, pphrase = prep_pyro(args[0], options).execute()
 
 event_id = None
 
-if len(args) < 1 or len(args) > 3:
+if len(args) == 0 or len(args) > 3:
     parser.error("Wrong number of args")
 
 event_id = None
