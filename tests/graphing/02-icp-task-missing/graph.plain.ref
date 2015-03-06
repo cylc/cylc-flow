@@ -1,0 +1,9 @@
+edge "NZC1.20150304T2100Z" "pc.20150305T0000Z" solid
+edge "NZC1.20150305T2100Z" "pc.20150306T0000Z" solid
+graph
+node "NZC1.20150304T2100Z" "NZC1\n20150304T2100Z" unfilled box black
+node "NZC1.20150305T2100Z" "NZC1\n20150305T2100Z" unfilled box black
+node "pc.20150304T0000Z" "pc\n20150304T0000Z" unfilled box black
+node "pc.20150305T0000Z" "pc\n20150305T0000Z" unfilled box black
+node "pc.20150306T0000Z" "pc\n20150306T0000Z" unfilled box black
+stop

@@ -1614,6 +1614,14 @@ class config( object ):
                     lct = get_point(lpoint_string)
                     if sct > lct:
                         action = False
+                        if r_id is not None:
+                            tmp, rpoint_string = TaskID.split(r_id)
+                            rct = get_point(rpoint_string)
+                            if rct >= sct:
+                                # Pre-initial dependency; keep right hand node.
+                                l_id = r_id
+                                r_id = None
+                                action = True
                 if action:
                     nl, nr = self.close_families(l_id, r_id)
                     if point not in gr_edges:
