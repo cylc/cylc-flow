@@ -1,0 +1,12 @@
+[cylc]
+[[reference test]]
+required run mode = live
+live mode suite timeout = PT1M # minutes
+[scheduling]
+initial cycle point = 20100101T03Z
+[[dependencies]]
+[[[R1/min(T00,T06+PT1H,T12,T18)]]]
+graph = foo
+
+[runtime]
+[[foo]]
