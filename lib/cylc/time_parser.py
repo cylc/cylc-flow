@@ -294,9 +294,11 @@ class CylcTimeParser(object):
             cpoint, offset = self._get_point_from_expression(
                                               point, context,
                                               allow_truncated=True)
-            cpoint += context
-            if offset:
-                cpoint += offset
+            if cpoint is not None:
+                if cpoint.truncated:
+                    cpoint += context
+                if offset is not None:
+                    cpoint += offset
             ptslist.append(cpoint)
         return min(ptslist), None
 
