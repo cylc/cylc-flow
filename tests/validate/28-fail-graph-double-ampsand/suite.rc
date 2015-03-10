@@ -1,0 +1,14 @@
+[scheduling]
+    [[dependencies]]
+            graph = """
+                    foo && bar => baz
+            """
+[runtime]
+    [[foo]] 
+        command scripting = echo "foo"
+        
+    [[bar]]
+        command scripting = echo "bar"
+
+    [[baz]]
+        command scripting = echo "baz"

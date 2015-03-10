@@ -184,6 +184,15 @@ class config( object ):
 
         graph_found = False
         for item, value in dependency_map.items():
+            if item == 'graph':
+                for line in value.split('\n'):
+                    m = re.search(r"(&&)|(\|\|)", line)
+                    if m:
+                        linemsg = line.strip()
+                        raise SuiteConfigError(
+                            "ERROR: Illegal '%s' in '%s' at %s" 
+                            % (m.group(0), item, linemsg)
+                        )
             if item == 'graph' or value.get('graph'):
                 graph_found = True
                 break
