@@ -186,13 +186,14 @@ class BatchSysManager(object):
                 break
         else:
             return 1
-        st_file.seek(0, 0)
+        st_file.seek(0, 0)  # rewind
         if getattr(batch_sys, "CAN_KILL_PROC_GROUP", False):
             for line in st_file:
                 if line.startswith("CYLC_JOB_PID="):
                     pid = line.strip().split("=", 1)[1]
                     os.killpg(int(pid), SIGKILL)
                     return 0
+        st_file.seek(0, 0)  # rewind
         if hasattr(batch_sys, "KILL_CMD_TMPL"):
             for line in st_file:
                 if line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
@@ -321,15 +322,20 @@ class BatchSysManager(object):
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}),
                 stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate(proc_stdin_value)
+        ret_code = proc.wait()
 
         # Filter submit command output, if relevant
         # Get job ID, if possible
         job_id = None
         if out or err:
-            out, err, job_id = self._filter_submit_output(
-                job_file_path, batch_sys, out, err)
+            try:
+                out, err, job_id = self._filter_submit_output(
+                    job_file_path + ".status", batch_sys, out, err)
+            except OSError:
+                ret_code = 1
+                self.job_kill(job_file_path + ".status")
 
-        return proc.wait(), out, err, job_id
+        return ret_code, out, err, job_id
 
     @classmethod
     def _create_nn(cls, job_file_path):
@@ -346,7 +352,7 @@ class BatchSysManager(object):
             pass
         os.symlink(os.path.basename(job_file_dir), nn_path)
 
-    def _filter_submit_output(self, job_file_path, batch_sys, out, err):
+    def _filter_submit_output(self, st_file_path, batch_sys, out, err):
         """Filter submit command output, if relevant."""
         job_id = None
         if hasattr(batch_sys, "REC_ID_FROM_SUBMIT_ERR"):
@@ -360,7 +366,7 @@ class BatchSysManager(object):
                 match = rec_id.match(line)
                 if match:
                     job_id = match.group("id")
-                    job_status_file = open(job_file_path + ".status", "a")
+                    job_status_file = open(st_file_path, "a")
                     job_status_file.write("%s=%s\n" % (
                         self.CYLC_BATCH_SYS_JOB_ID, job_id))
                     job_status_file.write("%s=%s\n" % (
