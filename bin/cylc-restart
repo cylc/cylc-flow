@@ -463,7 +463,10 @@ determine what happened to them while the suite was down."""
                     itask.try_number = try_num
                     itask.user_at_host = user_at_host
                     # poll the task
-                    itask.poll()
+                    try:
+                        itask.poll()
+                    except Exception as exc:
+                        print >>sys.stderr, "WARNING: %s: poll failed" % id
                     # update poll timers in case regular polling is configured for itask
                     if '@' in user_at_host:
                         owner, host = user_at_host.split('@')

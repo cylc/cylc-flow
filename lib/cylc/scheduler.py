@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc_pyro_server import pyro_server
-from cylc.job_host import RemoteJobHostManager
+from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.task_proxy import TaskProxy
 from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
@@ -286,8 +286,11 @@ class scheduler(object):
 
         # 2) restart only: copy to other accounts with still-running tasks
         for user_at_host in self.old_user_at_host_set:
-            RemoteJobHostManager.get_inst().init_suite_run_dir(
-                self.suite, user_at_host)
+            try:
+                RemoteJobHostManager.get_inst().init_suite_run_dir(
+                    self.suite, user_at_host)
+            except RemoteJobHostInitError as exc:
+                self.log.warning(str(exc))
 
         self.already_timed_out = False
         if self.config.cfg['cylc']['event hooks']['timeout']:
