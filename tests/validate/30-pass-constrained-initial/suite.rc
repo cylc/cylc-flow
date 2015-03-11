@@ -2,7 +2,7 @@ title = "Test validation of initial cycle point against constraints"
 
 [cylc]
 [scheduling]
-initial cycle point = 20100101T06Z
+initial cycle point = 20100101T06
 initial cycle point constraints = T00, T06, T12, T18
 [[dependencies]]
 [[[T00, T06, T12, T18]]]
