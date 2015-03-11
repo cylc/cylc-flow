@@ -160,15 +160,18 @@ class TaskPool(object):
         return True
 
     def release_runahead_tasks(self):
-        """Compute runahead base
-
-        The oldest task not succeeded or failed (excludes finished and includes
-        runahead-limited tasks so a low limit cannot stall the suite).
-
-        """
+        """Release tasks from the runahead pool to the main pool."""
 
         if not self.runahead_pool:
             return
+
+        # Any finished tasks can be released immediately (this can happen at
+        # restart when all tasks are initially loaded into the runahead pool).
+        for itask_id_maps in self.runahead_pool.values():
+            for itask in itask_id_maps.values():
+                if itask.state.is_currently('failed', 'succeeded'):
+                    self.release_runahead_task(itask)
+                    self.rhpool_changed = True
 
         limit = self.max_num_active_cycle_points
 
