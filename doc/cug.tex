@@ -2787,7 +2787,12 @@ For example, all these are valid in cylc:
         # Repeat every 1 day starting at 20140201T06
         [[[ 20140201T06/P1D ]]]
             graph = "absolute_daily_ham"
-        
+
+        # Repeat once at the first instance of either T00, T06, T12 or T18
+        # starting at the initial cycle point
+        [[[ R1/min(T00,T06,T12,T18) ]]]
+            graph = "cold_cycle_dependent_foo => foo"
+
 \end{lstlisting}
 \lstset{language=transcript}
 
@@ -3067,6 +3072,36 @@ In Figure \ref{fig-test5}, \lstinline=bar= will not be run at the initial
 cycle point, but will still run at subsequent cycle points.
 \lstinline=[[[+PT6H/PT6H]]]= means start at \lstinline=+PT6H= (6 hours after
 the initial cycle point) and then repeat every \lstinline=PT6H= (6 hours).
+
+Some suites may have staggered start-up sequences where different tasks need
+running once but only at specific cycle points, potentially due to differing
+data sources at different cycle points with different possible initial cycle 
+points. To allow this cylc provides a \lstinline=min( )= function that can be 
+used as follows:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20100101T03
+    [[dependencies]]
+        [[[R1/min(T00,T12)]]]
+            graph = "prep1 => foo"
+        [[[R1/min(T06,T18)]]]
+            graph = "prep2 => foo"
+        [[[T00,T06,T12,T18]]]
+            graph = "foo => bar"
+
+\end{lstlisting}
+\lstset{language=transcript}
+
+
+In this example the initial cycle point is \lstinline=20100101T03=, so the
+\lstinline=prep1= task will run once at \lstinline=20100101T12= and the
+\lstinline=prep2= task will run once at \lstinline=20100101T06= as these are
+the first cycle points after the initial cycle point in the respective 
+\lstinline=min( )= entries.
 
 
 \subparagraph{Integer Cycling}
