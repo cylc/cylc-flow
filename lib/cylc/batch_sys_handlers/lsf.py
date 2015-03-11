@@ -28,7 +28,7 @@ class LSFHandler(object):
     POLL_CMD_TMPL = "bjobs -noheader '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"^Job <(?P<id>\d+)>")
     SUBMIT_CMD_TMPL = "bsub"
-    SUBMIT_CMD_STDIN_EXEC_TMPL = "cat '%(job)s'"
+    SUBMIT_CMD_STDIN_IS_JOB_FILE = True
 
     @classmethod
     def filter_poll_output(cls, out, job_id):

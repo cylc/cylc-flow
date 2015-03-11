@@ -95,10 +95,9 @@ batch_sys.SUBMIT_CMD_STDIN_TMPL
           batch_sys.SUBMIT_CMD_STDIN_TMPL % {"job": job_file_path}
       See also "batch_sys.job_submit" and "batch_sys.SUBMIT_CMD".
 
-batch_sys.SUBMIT_CMD_STDIN_EXEC_TMPL
-    * The template string to execute to get the STDIN for the batch system
-      command to submit a job file. The value to write to STDIN is formed using
-      the logic: batch_sys.SUBMIT_CMD_STDIN_EXEC_TMPL % {"job": job_file_path}
+batch_sys.SUBMIT_CMD_STDIN_IS_JOB_FILE
+    * A boolean - iff True, use the contents of the job_file_path as stdin to
+      the submit command.
       See also "batch_sys.job_submit", "batch_sys.SUBMIT_CMD", and 
       "batch_sys.SUBMIT_CMD_STDIN_TMPL".
 
@@ -311,15 +310,8 @@ class BatchSysManager(object):
         batch_sys = self.get_inst(batch_sys_name)
         proc_stdin_arg = None
         proc_stdin_value = None
-        stdin_proc_err = ""
-        stdin_proc_code = 0
-        if hasattr(batch_sys, "SUBMIT_CMD_STDIN_EXEC_TMPL"):
-            stdin_proc = Popen(shlex.split(
-                batch_sys.SUBMIT_CMD_STDIN_EXEC_TMPL % {"job": job_file_path}),
-                         stdout=PIPE, stderr=PIPE)
-            proc_stdin_value, stdin_proc_err = stdin_proc.communicate()
-            stdin_proc_code = stdin_proc.wait()
-            proc_stdin_arg = PIPE
+        if getattr(batch_sys, "SUBMIT_CMD_STDIN_IS_JOB_FILE", False):
+            proc_stdin_arg = open(job_file_path)
         elif hasattr(batch_sys, "SUBMIT_CMD_STDIN_TMPL"):
             proc_stdin_value = batch_sys.SUBMIT_CMD_STDIN_TMPL % {
                 "job": job_file_path}
@@ -338,8 +330,6 @@ class BatchSysManager(object):
                 stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate(proc_stdin_value)
 
-        err = stdin_proc_err + err
-
         # Filter submit command output, if relevant
         # Get job ID, if possible
         job_id = None
@@ -347,7 +337,7 @@ class BatchSysManager(object):
             out, err, job_id = self._filter_submit_output(
                 job_file_path, batch_sys, out, err)
 
-        return (proc.wait() or stdin_proc_code), out, err, job_id
+        return proc.wait(), out, err, job_id
 
     @classmethod
     def _create_nn(cls, job_file_path):
