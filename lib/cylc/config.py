@@ -274,6 +274,21 @@ class config( object ):
         else:
             self.initial_point.standardise()
 
+        # Validate initial cycle point against any constraints
+        if self.cfg['scheduling']['initial cycle point constraints']:
+            valid_icp = False
+            for entry in self.cfg['scheduling']['initial cycle point constraints']:
+                possible_pt = get_point_relative(entry, initial_point).standardise()
+                if self.initial_point == possible_pt:
+                    valid_icp = True
+                    break
+            if not valid_icp:
+                raise SuiteConfigError(
+                    "Initial cycle point %s does not meet the constraints %s"%(
+                    str(self.initial_point),
+                    str(self.cfg['scheduling']['initial cycle point constraints']))
+                    )
+
         final_point = None
 
         if self.cfg['scheduling']['final cycle point'] is not None:
@@ -307,6 +322,22 @@ class config( object ):
             raise SuiteConfigError("The initial cycle point:" +
                 str(self.initial_point) + " is after the final cycle point:" +
                 str(final_point) + ".")
+
+        # Validate final cycle point against any constraints
+        if (final_point is not None and
+            self.cfg['scheduling']['final cycle point constraints']):
+            valid_fcp = False
+            for entry in self.cfg['scheduling']['final cycle point constraints']:
+                possible_pt = get_point_relative(entry, final_point).standardise()
+                if final_point == possible_pt:
+                    valid_fcp = True
+                    break
+            if not valid_fcp:
+                raise SuiteConfigError(
+                    "Final cycle point %s does not meet the constraints %s"%(
+                    str(final_point),
+                    str(self.cfg['scheduling']['final cycle point constraints']))
+                    )
 
         self.start_point = (
             get_point(self._cli_start_point_string) or self.initial_point)

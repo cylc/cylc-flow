@@ -462,6 +462,32 @@ the \ref{cycle-point-time-zone} if that is set.
     \item {\em default:} (none)
 \end{myitemize}
 
+\subsubsection[initial cycle point]{[scheduling] $\rightarrow$ initial cycle point constraints}
+\label{initial cycle point constraints}
+
+In a cycling suite it is possible to restrict the initial cycle point by
+defining a list of truncated time points under the initial cycle point 
+constraints.
+
+\begin{myitemize}
+    \item {\em type:} List of ISO 8601 truncated time point representations 
+    (e.g. T00, T06, T-30)
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subsubsection[final cycle point]{[scheduling] $\rightarrow$ final cycle point constraints}
+\label{final cycle point constraints}
+
+In a cycling suite it is possible to restrict the final cycle point by
+defining a list of truncated time points under the final cycle point 
+constraints.
+
+\begin{myitemize}
+    \item {\em type:} List of ISO 8601 truncated time point representations 
+    (e.g. T00, T06, T-30)
+    \item {\em default:} (none)
+\end{myitemize}
+
 \subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
 \label{runahead limit}
 

@@ -1753,7 +1753,16 @@ points. One form of the recurrence syntax looks like
 is always at 00 or 12 hours then \lstinline=[[[T00,T12]]]= could be
 written as \lstinline=[[[PT12H]]]=, which is short for
 \lstinline=[[[R/initial-cycle-point/PT12H/]]]= - i.e.\ repeat indefinitely every
-12 hours starting at the initial cycle point.
+12 hours starting at the initial cycle point. It is possible to add constraints
+to the suite to only allow initial cycle points at 00 or 12 hours e.g.
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 20130808T00
+    initial cycle point constraints = T00, T12
+\end{lstlisting}
+\lstset{language=transcript}
 
 \begin{myitemize}
     %Q Runahead factor now

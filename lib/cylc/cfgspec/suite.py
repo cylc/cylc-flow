@@ -258,6 +258,8 @@ SPEC = {
     'scheduling' : {
         'initial cycle point'                 : vdr(vtype='cycletime'),
         'final cycle point'                   : vdr(vtype='final_cycletime'),
+        'initial cycle point constraints'     : vdr(vtype='string_list', default=[]),
+        'final cycle point constraints'       : vdr(vtype='string_list', default=[]),
         'cycling mode'                        : vdr(vtype='string', default=Calendar.MODE_GREGORIAN, options=Calendar.MODES.keys() + ["integer"] ),
         'runahead limit'                      : vdr(vtype='cycleinterval' ),
         'max active cycle points'             : vdr(vtype='integer', default=3),
