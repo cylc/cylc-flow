@@ -1,4 +1,5 @@
 [cylc]
+UTC mode = true
 [[reference test]]
 required run mode = live
 live mode suite timeout = PT1M # minutes

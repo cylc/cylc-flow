@@ -290,6 +290,7 @@ class CylcTimeParser(object):
     def _get_min_from_expression(self, expr, context):
         points = re.findall(self.MIN_REGEX, expr)[0].split(",")
         ptslist = []
+        min_entry = ""
         for point in points:
             cpoint, offset = self._get_point_from_expression(
                                               point, context,
@@ -300,7 +301,9 @@ class CylcTimeParser(object):
                 if offset is not None:
                     cpoint += offset
             ptslist.append(cpoint)
-        return min(ptslist), None
+            if cpoint == min(ptslist):
+                min_entry = point
+        return min_entry
 
     def _get_point_from_expression(self, expr, context, is_required=False,
                                    allow_truncated=False):
@@ -316,7 +319,7 @@ class CylcTimeParser(object):
         expr_offset = None
 
         if expr.startswith("min("):
-            return self._get_min_from_expression(expr, context)
+            expr = self._get_min_from_expression(expr, context)
 
         if self._offset_rec.search(expr):
             chain_expr = re.findall(self.CHAIN_REGEX, expr)
