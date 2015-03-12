@@ -39,9 +39,9 @@ elements are 'YYYY' (year), 'MM' (month), 'DD' (day), and 'HH' (hour):
   foo-2010-08-08-00.nc
 
 Otherwise (cylc-6+) use ISO 8601 or posix date-time format elements:
-  % cylc cyclepoint 2010080T800 --template foo-CCYY-MM-DD-Thh.nc
+  % cylc cyclepoint 2010080T00 --template foo-CCYY-MM-DD-Thh.nc
   foo-2010-08-08-T00.nc
-  % cylc cyclepoint 2010080T800 --template foo-%Y-%m-%d-Thh.nc
+  % cylc cyclepoint 2010080T00 --template foo-%Y-%m-%d-Thh.nc
   foo-2010-08-08-T00.nc
 
 Other examples:
