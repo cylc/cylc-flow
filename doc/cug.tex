@@ -4940,12 +4940,10 @@ your suite.rc file:
             method = loadleveler
             # Use '-s' to stop llsubmit returning
             # until all job steps have completed:
-            command template = llsubmit -s %s
+            command template = llsubmit -s %(job)s
 \end{lstlisting}
 As explained in~\ref{SuiteRCReference}
-the template's first \%s will be substituted by the job file path and,
-where applicable a second and third \%s will be substituted by the paths
-to the job stdout and stderr files.
+the template's \%(job)s will be substituted by the job file path.
 
 \subsection{Job Polling}
 
