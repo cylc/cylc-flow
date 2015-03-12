@@ -1074,14 +1074,13 @@ new methods.  Cylc has a number of built in job submission methods:
 \subparagraph[command template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ command template}
 
 This allows you to override the actual command used by the chosen job
-submission method. The template's first \%s will be substituted by the
-job file path.  Where applicable the second and third \%s will be
-substituted by the paths to the job stdout and stderr files.
+submission method. The template's \%(job)s will be substituted by the
+job file path.
 
 \begin{myitemize}
 \item {\em type:} string
 \item {\em legal values:} a string template
-\item {\em example:} \lstinline@llsubmit %s@
+\item {\em example:} \lstinline@llsubmit \%(job)s@
 \end{myitemize}
 
 \subparagraph[shell]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ shell}
