@@ -732,7 +732,12 @@ class config( object ):
 
     def compute_runahead_limits( self ):
         """Extract the runahead limits information."""
-
+        max_cycles = self.cfg['scheduling']['max active cycle points']
+        if max_cycles == 0:
+            raise SuiteConfigError(
+                "ERROR: max cycle points must be greater than %s"
+                 % (max_cycles)
+            )
         self.max_num_active_cycle_points = self.cfg['scheduling'][
             'max active cycle points']
 
