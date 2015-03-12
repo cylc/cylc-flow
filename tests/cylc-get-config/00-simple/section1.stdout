@@ -1,5 +1,7 @@
 cycling mode = integer
+initial cycle point constraints = 
 max active cycle points = 3
+final cycle point constraints = 
 initial cycle point = 1
 final cycle point = 1
 runahead limit = 
