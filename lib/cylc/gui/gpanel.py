@@ -123,6 +123,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         self.dots = DotMaker(self.theme)
         self.statuses = {}
         self.stop_summaries = {}
+        self.suite_update_times = {}
         self._set_exception_hook()
         super(SummaryPanelAppletUpdater, self).__init__(
                               hosts, owner=owner, poll_interval=poll_interval)
@@ -176,7 +177,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         menu.popup( None, None, None, event.button, event.time )
         return False
 
-    def update(self, update_time=None):
+    def update(self, suite_update_times=None):
         """Update the Applet."""
         suite_host_tuples = []
         statuses = copy.deepcopy(self.statuses)
