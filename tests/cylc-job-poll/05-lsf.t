@@ -27,7 +27,7 @@ function get_fake_job_id() {
     fi
     local T_JOB_ID=$(get_real_job_id)
     bkill "$T_JOB_ID" >/dev/null 2>&1
-    while bjobs -noheader "$T_JOB_ID" | grep -v -q "\<DONE\>"; do
+    while bjobs -noheader "$T_JOB_ID" | grep -v -q "\<EXIT\>"; do
         sleep 2
     done
     echo $T_JOB_ID
@@ -56,7 +56,7 @@ __BSUB__
     cat >>$TEST_NAME_BASE.bsub <<'__BSUB__'
 sleep 60
 __BSUB__
-    local ID=$(bsub $TEST_NAME_BASE.qsub 2>/dev/null | \
+    local ID=$(bsub $TEST_NAME_BASE.bsub 2>/dev/null | \
                sed "s/.*<\([0-9][0-9]*\)>.*/\1/g")
     while ! bjobs $ID >/dev/null 2>&1; do
         sleep 2

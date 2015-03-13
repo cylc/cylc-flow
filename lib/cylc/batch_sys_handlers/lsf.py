@@ -35,7 +35,7 @@ class LSFHandler(object):
         """Return True if job_id is in the queueing system."""
         entries = out.strip().split()
         return (len(entries) >= 3 and entries[0] == job_id and
-                entries[2] != "DONE")
+                entries[2] not in ["DONE", "EXIT"])
 
     def format_directives(self, job_conf):
         """Format the job directives for a job file."""
