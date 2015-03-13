@@ -245,8 +245,10 @@ class CylcTimeParser(object):
                 # This is unbounded, and will come back in reverse order.
                 # We need to reverse it.
                 start_point = end_point
+                repetitions = 1
                 while start_point > context_start_point:
                     start_point -= interval
+                    repetitions += 1
                 end_point = None
 
             return isodatetime.data.TimeRecurrence(
