@@ -1524,7 +1524,9 @@ class TaskProxy(object):
             cmd = ["cylc", cmd_key] + list(args)
         else:  # if it is a remote job
             ssh_tmpl = GLOBAL_CFG.get_host_item(
-                'remote shell template', self.task_host, self.task_owner)
+                'remote shell template',
+                self.task_host,
+                self.task_owner).replace(" %s", "")
             r_cylc = GLOBAL_CFG.get_host_item(
                 'cylc executable', self.task_host, self.task_owner)
             sh_tmpl = "CYLC_VERSION='%s' "
@@ -1538,7 +1540,7 @@ class TaskProxy(object):
                 sh_cmd += " --remote-mode"
             for arg in args:
                 sh_cmd += ' "%s"' % (arg)
-            cmd = shlex.split(ssh_tmpl % str(self.user_at_host)) + [sh_cmd]
+            cmd = shlex.split(ssh_tmpl) + [str(self.user_at_host), sh_cmd]
 
         # Queue the command for execution
         self.log(INFO, "initiate %s" % (cmd_key))

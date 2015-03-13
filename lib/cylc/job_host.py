@@ -73,11 +73,12 @@ class RemoteJobHostManager(object):
             user_at_host, r_suite_run_dir))
 
         ssh_tmpl = GLOBAL_CFG.get_host_item(
-            'remote shell template', host, owner)
+            'remote shell template', host, owner).replace(" %s", "")
         scp_tmpl = GLOBAL_CFG.get_host_item(
             'remote copy template', host, owner)
 
-        cmd1 = shlex.split(ssh_tmpl % user_at_host) + [
+        cmd1 = shlex.split(ssh_tmpl) + [
+            user_at_host,
             'mkdir -p "%s" "%s"' % (r_suite_run_dir, r_log_job_dir)]
         cmd2 = shlex.split(scp_tmpl) + ["-r"] + sources + [
             user_at_host + ":" + r_suite_run_dir + "/"]

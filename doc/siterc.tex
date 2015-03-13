@@ -463,14 +463,15 @@ on the suite host unless you run local tasks under another user account.
 
 \paragraph[remote shell template]{[hosts] $\rightarrow$ HOST $\rightarrow$ remote shell template }
 
-A string template, containing \lstinline@\%s@ as a placeholder for the host name,
-for the command used to invoke commands on this host.
+A string for the command used to invoke commands on this host.
 This is not used on the suite host unless you run local tasks under
-another user account.
+another user account. (N.B. This setting used to be a string template with a \%s
+being a placeholder for the name of the host. This is no longer the case. Any
+\%s in the string will now be discarded.)
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em localhost default:} \lstinline@ssh -oBatchMode=yes -oConnectTimeout=10 \%s@
+\item {\em localhost default:} \lstinline@ssh -oBatchMode=yes -oConnectTimeout=10@
 \end{myitemize}
 
 \paragraph[use login shell]{[hosts] $\rightarrow$ HOST $\rightarrow$ use login shell }

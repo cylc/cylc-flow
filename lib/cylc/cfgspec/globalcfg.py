@@ -104,7 +104,7 @@ SPEC = {
             'work directory'              : vdr( vtype='string', default="$HOME/cylc-run" ),
             'task communication method'   : vdr( vtype='string', options=[ "pyro", "ssh", "poll"], default="pyro" ),
             'remote copy template'        : vdr( vtype='string', default='scp -oBatchMode=yes -oConnectTimeout=10' ),
-            'remote shell template'       : vdr( vtype='string', default='ssh -oBatchMode=yes -oConnectTimeout=10 %s' ),
+            'remote shell template'       : vdr( vtype='string', default='ssh -oBatchMode=yes -oConnectTimeout=10' ),
             'use login shell'             : vdr( vtype='boolean', default=True ),
             'cylc executable'             : vdr( vtype='string', default='cylc'  ),
             'global initial scripting'    : vdr( vtype='string', default='' ),

@@ -101,9 +101,8 @@ class remrun(object):
 
         # ssh command and options (X forwarding)
         ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-            "remote shell template", self.host, self.owner))
-        ssh_tmpl = ssh_tmpl.replace("%s", "-Y %s")
-        command = shlex.split(ssh_tmpl % user_at_host)
+            "remote shell template", self.host, self.owner)).replace(" %s", "")
+        command = shlex.split(ssh_tmpl) + ["-Y", user_at_host]
 
         # Use bash -l?
         ssh_login_shell = self.ssh_login_shell
