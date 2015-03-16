@@ -1,0 +1,14 @@
+edge "foo.20150221T0000Z" "nonstop.20150221T0000Z" solid
+edge "foo.20150221T0600Z" "nonstop.20150221T0600Z" solid
+edge "foo.20150221T1200Z" "nonstop.20150221T1200Z" solid
+edge "foo.20150221T1800Z" "stop.20150221T1800Z" solid
+graph
+node "foo.20150221T0000Z" "foo\n20150221T0000Z" unfilled box black
+node "foo.20150221T0600Z" "foo\n20150221T0600Z" unfilled box black
+node "foo.20150221T1200Z" "foo\n20150221T1200Z" unfilled box black
+node "foo.20150221T1800Z" "foo\n20150221T1800Z" unfilled box black
+node "nonstop.20150221T0000Z" "nonstop\n20150221T0000Z" unfilled box black
+node "nonstop.20150221T0600Z" "nonstop\n20150221T0600Z" unfilled box black
+node "nonstop.20150221T1200Z" "nonstop\n20150221T1200Z" unfilled box black
+node "stop.20150221T1800Z" "stop\n20150221T1800Z" unfilled box black
+stop
