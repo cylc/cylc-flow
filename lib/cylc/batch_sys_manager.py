@@ -98,7 +98,7 @@ batch_sys.SUBMIT_CMD_STDIN_TMPL
 batch_sys.SUBMIT_CMD_STDIN_IS_JOB_FILE
     * A boolean - iff True, use the contents of the job_file_path as stdin to
       the submit command.
-      See also "batch_sys.job_submit", "batch_sys.SUBMIT_CMD", and 
+      See also "batch_sys.job_submit", "batch_sys.SUBMIT_CMD", and
       "batch_sys.SUBMIT_CMD_STDIN_TMPL".
 
 """
