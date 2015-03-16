@@ -1038,6 +1038,7 @@ new methods.  Cylc has a number of built in job submission methods:
        \item {\em background} - direct background execution
        \item {\em at} - the rudimentary Unix \lstinline=at= scheduler
        \item {\em loadleveler} - \lstinline=llsubmit=, with directives defined in the suite.rc file
+       \item {\em lsf} - IBM Platform LSF \lstinline=bsub=, with directives defined in the suite.rc file
        \item {\em pbs} - PBS \lstinline=qsub=, with directives defined in the suite.rc file
        \item {\em sge} - Sun Grid Engine \lstinline=qsub=, with directives defined in the suite.rc file
        \item {\em slurm} - Simple Linux Utility for Resource Management \lstinline=sbatch=, with directives defined in the suite.rc file.
@@ -1329,11 +1330,12 @@ omission from an \lstinline=include= list.
 \paragraph[{[[[}directives{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]]}
 
 Batch queue scheduler directives.  Whether or not these are used depends
-on the job submission method. For the built-in loadleveler, pbs, and sge
-methods directives are written to the top of the task job script in
-the correct format for the method. Specifying directives individually
-like this allows use of default directives that can be individually
-overridden at lower levels of the runtime namespace hierarchy.
+on the job submission method. For the built-in methods that support directives
+(\lstinline=loadleveler=, \lstinline=lsf=, \lstinline=pbs=, \lstinline=sge=,
+\lstinline=slurm=), directives are written to the top of the task job script
+in the correct format for the method. Specifying directives individually like
+this allows use of default directives that can be individually overridden at
+lower levels of the runtime namespace hierarchy.
 
 \subparagraph[\_\_DIRECTIVE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]] $\rightarrow$ \_\_DIRECTIVE\_\_}
 
