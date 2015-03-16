@@ -131,6 +131,10 @@ SPEC = {
             'loadleveler directives' : {
                  '__MANY__'               : vdr( vtype='string' ),
                   },
+            'lsf host'                    : vdr( vtype='string' ),
+            'lsf directives'         : {
+                 '__MANY__'               : vdr( vtype='string' ),
+                 },
             'pbs host'                    : vdr( vtype='string' ),
             'pbs directives' : {
                  '__MANY__'               : vdr( vtype='string' ),

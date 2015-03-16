@@ -4812,6 +4812,28 @@ trapping SIGUSR1, the job will inform the suite that it has been vacated by
 loadleveler. This will put it back to the submitted state, until it starts
 running again.
 
+\subsubsection{lsf}
+
+Submits tasks to IBM Platform LSF by the \lstinline=bsub= command.
+LSF directives can be provided in the suite.rc file:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[my_task]]
+        [[[directives]]]
+            -q = foo
+            -W = 10
+\end{lstlisting}
+These are written to the top of the task job script like this:
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+# DIRECTIVES
+#BSUB -q = foo
+#BSUB -W = 10
+\end{lstlisting}
+
 \subsubsection{pbs}
 
 Submits tasks to PBS (or Torque) by the \lstinline=qsub= command.  PBS

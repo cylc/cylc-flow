@@ -95,6 +95,12 @@ batch_sys.SUBMIT_CMD_STDIN_TMPL
           batch_sys.SUBMIT_CMD_STDIN_TMPL % {"job": job_file_path}
       See also "batch_sys.job_submit" and "batch_sys.SUBMIT_CMD".
 
+batch_sys.SUBMIT_CMD_STDIN_IS_JOB_FILE
+    * A boolean - iff True, use the contents of the job_file_path as stdin to
+      the submit command.
+      See also "batch_sys.job_submit", "batch_sys.SUBMIT_CMD", and
+      "batch_sys.SUBMIT_CMD_STDIN_TMPL".
+
 """
 
 from datetime import datetime
@@ -304,7 +310,9 @@ class BatchSysManager(object):
         batch_sys = self.get_inst(batch_sys_name)
         proc_stdin_arg = None
         proc_stdin_value = None
-        if hasattr(batch_sys, "SUBMIT_CMD_STDIN_TMPL"):
+        if getattr(batch_sys, "SUBMIT_CMD_STDIN_IS_JOB_FILE", False):
+            proc_stdin_arg = open(job_file_path)
+        elif hasattr(batch_sys, "SUBMIT_CMD_STDIN_TMPL"):
             proc_stdin_value = batch_sys.SUBMIT_CMD_STDIN_TMPL % {
                 "job": job_file_path}
             proc_stdin_arg = PIPE
