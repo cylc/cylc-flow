@@ -467,8 +467,8 @@ class TestRecurrenceSuite(unittest.TestCase):
 
     def test_fourth_recurrence_format(self):
         """Test the fourth ISO 8601 recurrence format."""
-        tests = [("PT6H/20000101T0500Z", "R/19991226T0500Z/PT6H"),
-                 ("P12D/+P2W", "R/19991221T1000Z/P12D"),
+        tests = [("PT6H/20000101T0500Z", "R25/19991226T0500Z/PT6H"),
+                 ("P12D/+P2W", "R44/19991221T1000Z/P12D"),
                  ("R2/P1W/-P1M1D", "R2/P1W/20010405T1000Z"),
                  ("R3/P6D/T12+02", "R3/P6D/20010506T1000Z"),
                  ("R4/P6DT12H/01T00+02", "R4/P6DT12H/20010531T2200Z"),
@@ -479,7 +479,7 @@ class TestRecurrenceSuite(unittest.TestCase):
                  ("R9/PT3H/31T", "R9/PT3H/20010531T0000Z"),
                  ("R10/P1Y/", "R10/P1Y/20010506T1000Z"),
                  ("R3/P2Y/02T", "R3/P2Y/20010602T0000Z"),
-                 ("R/P2Y", "R/19990506T1000Z/P2Y"),
+                 ("R/P2Y", "R2/19990506T1000Z/P2Y"),
                  ("R48/PT2H", "R48/PT2H/20010506T1000Z"),
                  ("R100/P21Y/", "R100/P21Y/20010506T1000Z")]
         for test in tests:
