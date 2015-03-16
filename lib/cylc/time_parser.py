@@ -95,6 +95,8 @@ class CylcTimeParser(object):
 
     CHAIN_REGEX = '((?:[+-P]|[\dT])[\d\w]*)'
 
+    MIN_REGEX = 'min\(([^\)]+)\)'
+
     OFFSET_REGEX = r"(?P<sign>[+-])(?P<intv>P.+)$"
 
     TRUNCATED_REC_MAP = {"---": [re.compile("^\d\dT")],
@@ -285,6 +287,24 @@ class CylcTimeParser(object):
             return isodatetime.data.Duration(**kwargs)
         return self.duration_parser.parse(expr)
 
+    def _get_min_from_expression(self, expr, context):
+        points = re.findall(self.MIN_REGEX, expr)[0].split(",")
+        ptslist = []
+        min_entry = ""
+        for point in points:
+            cpoint, offset = self._get_point_from_expression(
+                                              point, context,
+                                              allow_truncated=True)
+            if cpoint is not None:
+                if cpoint.truncated:
+                    cpoint += context
+                if offset is not None:
+                    cpoint += offset
+            ptslist.append(cpoint)
+            if cpoint == min(ptslist):
+                min_entry = point
+        return min_entry
+
     def _get_point_from_expression(self, expr, context, is_required=False,
                                    allow_truncated=False):
         if expr is None:
@@ -297,6 +317,10 @@ class CylcTimeParser(object):
             return None, None
         expr_point = None
         expr_offset = None
+
+        if expr.startswith("min("):
+            expr = self._get_min_from_expression(expr, context)
+
         if self._offset_rec.search(expr):
             chain_expr = re.findall(self.CHAIN_REGEX, expr)
             expr = ""
