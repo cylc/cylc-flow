@@ -1697,7 +1697,15 @@ class config( object ):
         if start_point_string is None:
             start_point_string = self.cfg['visualization']['initial cycle point']
         if stop_point_string is None:
-            stop_point_string = self.cfg['visualization']['final cycle point']
+            #stop_point_string = self.cfg['visualization']['final cycle point']
+            try:
+                stop_point_string = str(get_point_relative(
+                    self.cfg['visualization']['final cycle point'],
+                    get_point(start_point_string)).standardise())
+            except ValueError:
+                stop_point_string = str(get_point(
+                    self.cfg['visualization']['final cycle point']).standardise())
+
         if stop_point_string is not None:
             if get_point(stop_point_string) < get_point(start_point_string):
                 # Avoid a null graph.
