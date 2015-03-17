@@ -18,12 +18,19 @@
 """Manage a remote job host."""
 
 import os
-import subprocess
+from subprocess import check_call
 from logging import getLogger, INFO
 import shlex
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import user
+
+
+class RemoteJobHostInitError(Exception):
+    """Cannot initialise suite run directory of remote job host."""
+
+    def __str__(self):
+        return "%s: initialisation did not complete" % self.args[0]
 
 
 class RemoteJobHostManager(object):
@@ -49,6 +56,8 @@ class RemoteJobHostManager(object):
         Install suite contact environment file.
         Install suite python modules.
 
+        Raise RemoteJobHostInitError if initialisation cannot complete.
+
         """
         if '@' in user_at_host:
             owner, host = user_at_host.split('@', 1)
@@ -65,23 +74,26 @@ class RemoteJobHostManager(object):
         suite_run_py = os.path.join(suite_run_dir, "python")
         if os.path.isdir(suite_run_py):
             sources.append(suite_run_py)
-        r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-            suite_name, 'suite run directory', host, owner)
-        r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
-            suite_name, 'suite job log directory', host, owner)
-        getLogger('main').log(INFO, 'Initialising %s:%s' % (
-            user_at_host, r_suite_run_dir))
+        try:
+            r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+                suite_name, 'suite run directory', host, owner)
+            r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
+                suite_name, 'suite job log directory', host, owner)
+            getLogger('main').log(INFO, 'Initialising %s:%s' % (
+                user_at_host, r_suite_run_dir))
 
-        ssh_tmpl = GLOBAL_CFG.get_host_item(
-            'remote shell template', host, owner).replace(" %s", "")
-        scp_tmpl = GLOBAL_CFG.get_host_item(
-            'remote copy template', host, owner)
+            ssh_tmpl = GLOBAL_CFG.get_host_item(
+                'remote shell template', host, owner).replace(" %s", "")
+            scp_tmpl = GLOBAL_CFG.get_host_item(
+                'remote copy template', host, owner)
 
-        cmd1 = shlex.split(ssh_tmpl) + [
-            user_at_host,
-            'mkdir -p "%s" "%s"' % (r_suite_run_dir, r_log_job_dir)]
-        cmd2 = shlex.split(scp_tmpl) + ["-r"] + sources + [
-            user_at_host + ":" + r_suite_run_dir + "/"]
-        for cmd in [cmd1, cmd2]:
-            subprocess.check_call(cmd)
+            cmd1 = shlex.split(ssh_tmpl) + [
+                user_at_host,
+                'mkdir -p "%s" "%s"' % (r_suite_run_dir, r_log_job_dir)]
+            cmd2 = shlex.split(scp_tmpl) + ["-r"] + sources + [
+                user_at_host + ":" + r_suite_run_dir + "/"]
+            for cmd in [cmd1, cmd2]:
+                check_call(cmd)
+        except Exception:
+            raise RemoteJobHostInitError(user_at_host)
         self.initialised_hosts.append(user_at_host)
