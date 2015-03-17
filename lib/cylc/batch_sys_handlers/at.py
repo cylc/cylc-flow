@@ -17,8 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Logic to submit jobs to the "at" batch system."""
 
+import errno
+import os
 import re
-from subprocess import Popen, PIPE
 
 
 class AtCommandHandler(object):
@@ -36,6 +37,7 @@ class AtCommandHandler(object):
            command template = at teatime
     """
 
+    ERR_NO_ATD = "Can't open /var/run/atd.pid to signal atd. No atd running?"
     CAN_KILL_PROC_GROUP = True
     # N.B. The perl command ensures that the job script is executed in its own
     # process group, which allows the job script and its child processes to be
@@ -75,6 +77,9 @@ class AtCommandHandler(object):
                     out += line
                 elif any([rec.match(line) for rec in self.REC_ERR_FILTERS]):
                     continue
+                elif line.strip() == self.ERR_NO_ATD:
+                    raise OSError(
+                        errno.ESRCH, os.strerror(errno.ESRCH), line)
                 else:
                     new_err += line
         return out, new_err
