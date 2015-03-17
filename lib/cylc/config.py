@@ -544,11 +544,20 @@ class config( object ):
                         "  (it must be defined with an initial cycle point)")
                 self.cfg['visualization']['final cycle point'] = None
 
-        vfcp = get_point(self.cfg['visualization']['final cycle point'])
-        sfcp = get_point(self.cfg['scheduling']['final cycle point'])
-        if vfcp is not None and sfcp is not None:
-            if vfcp > sfcp:
-                self.cfg['visualization']['final cycle point'] = str(sfcp)
+
+        vfcp = self.cfg['visualization']['final cycle point']
+        if vfcp:
+            try:
+                vfcp = get_point_relative(
+                    self.cfg['visualization']['final cycle point'],
+                    initial_point).standardise()
+            except ValueError:
+                vfcp = get_point(
+                    self.cfg['visualization']['final cycle point']).standardise()
+
+        if vfcp is not None and final_point is not None:
+            if vfcp > final_point:
+                self.cfg['visualization']['final cycle point'] = str(final_point)
 
     def check_env_names( self ):
         # check for illegal environment variable names
@@ -1696,15 +1705,18 @@ class config( object ):
         # If graph extent is not given, use visualization settings.
         if start_point_string is None:
             start_point_string = self.cfg['visualization']['initial cycle point']
+
+        print "stop point:", str(stop_point_string)
         if stop_point_string is None:
-            #stop_point_string = self.cfg['visualization']['final cycle point']
-            try:
-                stop_point_string = str(get_point_relative(
-                    self.cfg['visualization']['final cycle point'],
-                    get_point(start_point_string)).standardise())
-            except ValueError:
-                stop_point_string = str(get_point(
-                    self.cfg['visualization']['final cycle point']).standardise())
+            vfcp = self.cfg['visualization']['final cycle point']
+            if vfcp:
+                try:
+                    stop_point_string = str(get_point_relative(
+                        vfcp,
+                        get_point(start_point_string)).standardise())
+                except ValueError:
+                    stop_point_string = str(get_point(
+                        vfcp).standardise())
 
         if stop_point_string is not None:
             if get_point(stop_point_string) < get_point(start_point_string):
