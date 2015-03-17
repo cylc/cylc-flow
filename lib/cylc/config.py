@@ -1706,7 +1706,6 @@ class config( object ):
         if start_point_string is None:
             start_point_string = self.cfg['visualization']['initial cycle point']
 
-        print "stop point:", str(stop_point_string)
         if stop_point_string is None:
             vfcp = self.cfg['visualization']['final cycle point']
             if vfcp:
