@@ -72,4 +72,4 @@
         held      = "color=#9900cc" # purple
         retrying = "color=#009999" # turquoise
         submit-retrying = "color=#007777" # turquoise2
-        # (10th color: black)
+        runahead   = "color=#000000"
