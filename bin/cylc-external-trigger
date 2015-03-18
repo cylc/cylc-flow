@@ -35,7 +35,22 @@ Report an external trigger event to a suite daemon.""",
     ]
 )
 
-(options, args) = parser.parse_args()
+parser.add_option( "--max-tries", 
+        help="Max number of attempts to contact the suite "
+        "(default %s)." % PyroClient.MAX_TRIES,
+        metavar="INT", action="store", default=None, dest="max_tries")
+
+parser.add_option( "--retry-delay", 
+        help="Delay in seconds before attempting reconnection "
+        "(default %s)." % PyroClient.RETRY_SECONDS,
+        metavar="SEC", action="store", default=None, dest="retry_seconds")
+
+parser.add_option( "--timeout", 
+        help="Suite connection timeout in seconds "
+        "(default %s)." % PyroClient.PYRO_TIMEOUT,
+        metavar="SEC", action="store", default=None, dest="pyro_timeout")
+
+(options, args) = parser.parse_args(remove_opts=["--pyro-timeout"])
 cylc.flags.verbose = options.verbose
 
 suite, pphrase = prep_pyro(args[0], options).execute()
@@ -53,6 +68,5 @@ if len(args) == 3:
 
 PyroClient(
     suite, event_msg, options.host, options.owner, options.port,
-    event_id
-).send()
-
+    event_id, options.max_tries, options.pyro_timeout,
+    options.retry_seconds).send()

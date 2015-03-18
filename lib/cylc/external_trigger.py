@@ -34,14 +34,14 @@ PYRO_TARGET_NAME = 'external_event_broker'
 class PyroClient(object):
     """Network client for sending external triggers to a suite."""
 
-    # TODO - configurable network retry parameters?
     MAX_TRIES = 5
     PYRO_TIMEOUT = 10
     RETRY_SECONDS = 10
 
     def __init__(
             self, suite, event_msg, host='localhost', owner=None,
-            port=None, event_id=None):
+            port=None, event_id=None,
+            max_tries=None, pyro_timeout=None, retry_seconds=None):
 
         self.event_msg = event_msg
         self.event_id = event_id
@@ -49,14 +49,16 @@ class PyroClient(object):
         self.host = host
         self.owner = owner
         self.port = port
+        self.max_tries = max_tries or self.__class__.MAX_TRIES
+        self.pyro_timeout = pyro_timeout or self.__class__.PYRO_TIMEOUT
+        self.retry_seconds = retry_seconds or self.__class__.RETRY_SECONDS
 
         self.pphrase = passphrase(
                 self.suite, self.owner, self.host).get(None, None)
 
         self.pyro_proxy = cylc.cylc_pyro_client.client(
-                self.suite, self.pphrase,
-                self.owner, self.host, self.__class__.PYRO_TIMEOUT,
-                self.port ).get_proxy(PYRO_TARGET_NAME)
+                self.suite, self.pphrase, self.owner, self.host,
+                self.pyro_timeout, self.port).get_proxy(PYRO_TARGET_NAME)
 
     def send(self):
         sent = False
@@ -70,7 +72,7 @@ class PyroClient(object):
                 print >> sys.stderr, exc
                 print "Send message: try %s of %s failed: %s" % (
                     itry,
-                    self.__class__.MAX_TRIES,
+                    self.max_tries,
                     exc
                 )
                 print "Suite event broker not found? Aborting."
@@ -79,21 +81,21 @@ class PyroClient(object):
                 print >> sys.stderr, exc
                 print "Send message: try %s of %s failed: %s" % (
                     itry,
-                    self.__class__.MAX_TRIES,
+                    self.max_tries,
                     exc
                 )
-                if itry >= self.__class__.MAX_TRIES:
+                if itry >= self.max_tries:
                     break
                 print "   retry in %s seconds, timeout is %s" % (
-                    self.__class__.RETRY_SECONDS,
-                    self.__class__.PYRO_TIMEOUT
+                    self.retry_seconds,
+                    self.pyro_timeout
                 )
-                time.sleep(self.__class__.RETRY_SECONDS)
+                time.sleep(self.retry_seconds)
             else:
                 if itry > 1:
                     print "Send message: try %s of %s succeeded" % (
                         itry,
-                        self.__class__.MAX_TRIES
+                        self.max_tries
                     )
                 sent = True
                 break

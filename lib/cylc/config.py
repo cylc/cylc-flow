@@ -1506,11 +1506,11 @@ class config( object ):
                     self.taskdefs[ name ].add_sequence(seq)
 
             if self.run_mode == 'live':
-                # register explicit output messages
+                # Register explicit output messages.
                 for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
                     outp = output(msg, base_interval)
                     self.taskdefs[name].outputs.append(outp)
-                # register external event triggers
+                # Register external event triggers.
                 self.taskdefs[name].external_triggers = (
                     self.cfg['runtime'][name]['external triggers'].values()
                 )
