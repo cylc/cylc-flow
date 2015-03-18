@@ -26,7 +26,9 @@ from cylc.command_prep import prep_pyro
 
 parser = cop("""cylc [control] external-trigger [OPTIONS] ARGS
 
-Report an external trigger event to a suite daemon.""",
+Report an external trigger event to a suite daemon.
+
+The suite passphrase must be installed in $HOME/.cylc/<SUITE>/""",
     pyro=True,
     argdoc=[
         ("REG", "Suite name"),
@@ -66,7 +68,10 @@ if len(args) >= 2:
 if len(args) == 3:
     event_id = args[2]
 
-PyroClient(
+res = PyroClient(
     suite, event_msg, options.host, options.owner, options.port,
     event_id, options.max_tries, options.pyro_timeout,
     options.retry_seconds).send()
+
+if not res:
+    sys.exit(1)

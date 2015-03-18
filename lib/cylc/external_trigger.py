@@ -38,10 +38,14 @@ class PyroClient(object):
     PYRO_TIMEOUT = 10
     RETRY_SECONDS = 10
 
+    ERR_SEND_FAILED = "Send message: try %s of %s failed"
+    STR_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
+    STR_SEND_SUCCEED = "Send message: try %s of %s succeeded"
+
     def __init__(
             self, suite, event_msg, host='localhost', owner=None,
-            port=None, event_id=None,
-            max_tries=None, pyro_timeout=None, retry_seconds=None):
+            port=None, event_id=None, max_tries=None, pyro_timeout=None,
+            retry_seconds=None):
 
         self.event_msg = event_msg
         self.event_id = event_id
@@ -70,37 +74,35 @@ class PyroClient(object):
                 self.pyro_proxy.register(self.event_msg, self.event_id)
             except Pyro.errors.NamingError as exc:
                 print >> sys.stderr, exc
-                print "Send message: try %s of %s failed: %s" % (
+                print self.__class__.ERR_SEND_FAILED % (
                     itry,
                     self.max_tries,
-                    exc
                 )
-                print "Suite event broker not found? Aborting."
                 break
             except Exception as exc:
                 print >> sys.stderr, exc
-                print "Send message: try %s of %s failed: %s" % (
+                print self.__class__.ERR_SEND_FAILED % (
                     itry,
                     self.max_tries,
-                    exc
                 )
                 if itry >= self.max_tries:
                     break
-                print "   retry in %s seconds, timeout is %s" % (
+                print self.__class__.STR_SEND_RETRY % (
                     self.retry_seconds,
                     self.pyro_timeout
                 )
                 time.sleep(self.retry_seconds)
             else:
                 if itry > 1:
-                    print "Send message: try %s of %s succeeded" % (
+                    print self.__class__.STR_SEND_SUCCEEDED % (
                         itry,
                         self.max_tries
                     )
                 sent = True
                 break
         if not sent:
-            print >> sys.stderr, 'WARNING: EVENT MESSAGE SEND FAILED'
+            print >> sys.stderr, 'ERROR: event message send failed'
+        return sent
 
 
 class Broker(Pyro.core.ObjBase):
@@ -180,4 +182,3 @@ class Broker(Pyro.core.ObjBase):
         for q in queued:
             if q not in used:
                 self.queued.put(q)
-
