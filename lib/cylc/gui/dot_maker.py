@@ -288,24 +288,26 @@ class DotMaker(object):
         If is_stopped, generate a stopped form of the Pixbuf.
         If is_family, add a family indicator to the Pixbuf.
         """
+
         if state is None:
             xpm = empty[self.size]
-        elif state not in self.theme:
-            # Use filled black. (This should not be possible, thanks to
-            # inheritance from the default theme, but just in case).
-            filled = True
-            fill_color = "#000000"
-            brdr_color = "#000000"
         else:
-            color = self.theme[state]['color']
-            if self.theme[state]['style'] == 'filled':
+            if state not in self.theme:
+                # Use filled black. (This should not be possible, thanks to
+                # inheritance from the default theme, but just in case).
                 filled = True
-                fill_color = color
-                brdr_color = color
+                fill_color = "#000000"
+                brdr_color = "#000000"
             else:
-                filled = False
-                fill_color = 'None'
-                brdr_color = color
+                color = self.theme[state]['color']
+                if self.theme[state]['style'] == 'filled':
+                    filled = True
+                    fill_color = color
+                    brdr_color = color
+                else:
+                    filled = False
+                    fill_color = 'None'
+                    brdr_color = color
             if is_stopped:
                 xpm = deepcopy(stopped[self.size])
                 xpm[1] = xpm[1].replace('<FILL>', fill_color)
@@ -326,9 +328,6 @@ class DotMaker(object):
                         xpm[3] = xpm[3].replace('<FAMILY>', brdr_color)
                 else:
                     xpm[3] = xpm[3].replace('<FAMILY>', fill_color)
-
-        # NOTE: to get a pixbuf from an xpm file, use:
-        #    gtk.gdk.pixbuf_new_from_file('/path/to/file.xpm')
         return gtk.gdk.pixbuf_new_from_xpm_data(data=xpm)
 
     def get_image(self, state, is_stopped=False, is_filtered=False):
