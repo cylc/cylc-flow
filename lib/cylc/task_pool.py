@@ -719,7 +719,8 @@ class TaskPool(object):
 
     def match_external_triggers(self):
         for itask in self.get_tasks(incl_runahead=False):
-            self.external_trigger_broker.retrieve(itask)
+            if itask.external_triggers:
+                self.external_trigger_broker.retrieve(itask)
 
     def match_dependencies(self):
         """Run time dependency negotiation.
@@ -1069,8 +1070,7 @@ class TaskPool(object):
                     extra_info['Clock trigger time reached'] = (
                         itask.start_time_reached())
                     extra_info['Triggers at'] = itask.delayed_start_str
-                ext_triggers = itask.get_external_triggers()
-                for trig, satisfied in ext_triggers.items():
+                for trig, satisfied in itask.external_triggers.items():
                     if satisfied:
                         state = 'satisfied'
                     else:

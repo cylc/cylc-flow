@@ -137,7 +137,7 @@ class Broker(Pyro.core.ObjBase):
         self.queued.put((message, event_id))
         cylc.flags.pflag = True
 
-    def retrieve(self, task_proxy):
+    def retrieve(self, itask):
         """Match external triggers for a waiting task proxies."""
 
         # Note this has to allow multiple same-message triggers to be queued
@@ -145,8 +145,7 @@ class Broker(Pyro.core.ObjBase):
 
         if self.queued.empty():
             return
-        triggers = task_proxy.get_external_triggers()
-        if len(triggers) == 0:
+        if len(itask.external_triggers) == 0:
             return
         queued = []
         while True:
@@ -155,15 +154,15 @@ class Broker(Pyro.core.ObjBase):
             except Queue.Empty:
                 break
         used = []
-        for trig, satisfied in triggers.items():
+        for trig, satisfied in task.external_triggers.items():
             if satisfied:
                 continue
             for qmsg, qid in queued:
                 if trig == qmsg:
                     # Matched.
-                    name, point_string = TaskID.split(task_proxy.identity)
+                    name, point_string = TaskID.split(itask.identity)
                     # Set trigger satisfied.
-                    triggers[trig] = True
+                    itask.external_triggers[trig] = True
                     cylc.flags.pflag = True
                     # Broadcast the event ID to the cycle point.
                     if qid is not None:
