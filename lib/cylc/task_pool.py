@@ -93,7 +93,8 @@ class TaskPool(object):
         self.wireless = BroadcastServer(config.get_linearized_ancestors())
         self.pyro.connect(self.wireless, PYRO_BCAST_OBJ_NAME)
 
-        self.external_trigger_broker = cylc.external_trigger.Broker.get_inst(self.wireless)
+        self.external_trigger_broker = cylc.external_trigger.Broker.get_inst(
+            self.wireless)
         self.pyro.connect(
             self.external_trigger_broker,
             cylc.external_trigger.PYRO_TARGET_NAME)
@@ -137,16 +138,17 @@ class TaskPool(object):
             return False
 
         # add in held state if beyond the suite stop point
-
         if self.stop_point and itask.point > self.stop_point:
             itask.log(
                 INFO,
                 "holding (beyond suite stop point) " + str(self.stop_point))
             itask.reset_state_held()
 
+        # add in held state if beyond the suite hold point
         elif self.hold_point and itask.point > self.hold_point:
-            itask.log(INFO, "holding (beyond suite hold point) " +
-                      str(self.hold_point))
+            itask.log(
+                INFO,
+                "holding (beyond suite hold point) " + str(self.hold_point))
             itask.reset_state_held()
 
         # add in held state if a future trigger goes beyond the suite stop
@@ -157,7 +159,8 @@ class TaskPool(object):
             self.held_future_tasks.append(itask.identity)
             itask.reset_state_held()
         elif self.is_held and itask.state.is_currently("waiting"):
-            # hold newly-spawned tasks in a held suite (e.g. due to manual triggering of a held task)
+            # Hold newly-spawned tasks in a held suite (e.g. due to manual
+            # triggering of a held task).
             itask.reset_state_held()
 
         # add to the runahead pool
@@ -743,7 +746,7 @@ class TaskPool(object):
         """Handle incoming task messages for each task proxy."""
         for itask in self.get_tasks():
             itask.process_incoming_messages()
- 
+
     def process_queued_db_ops(self):
         """Handle queued db operations for each task proxy."""
         state_recorders = []
@@ -1151,8 +1154,8 @@ class TaskPool(object):
         while something_triggered:
             self.match_dependencies()
             something_triggered = False
-            for itask in sorted(
-                    self.get_all_tasks(), key=lambda t: t.identity):
+            for itask in sorted(self.get_all_tasks(), key=lambda t:
+                                t.identity):
                 if itask.point > stop:
                     continue
                 if itask.ready_to_run():

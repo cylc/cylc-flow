@@ -23,13 +23,14 @@ import cylc.flags
 from cylc.external_trigger import PyroClient
 from cylc.command_prep import prep_pyro
 
-
-parser = cop("""cylc [control] external-trigger [OPTIONS] ARGS
+usage = """cylc [control] external-trigger [OPTIONS] ARGS
 
 Report an external trigger event to a suite daemon.
 
-The suite passphrase must be installed in $HOME/.cylc/<SUITE>/""",
-    pyro=True,
+The suite passphrase must be installed in $HOME/.cylc/<SUITE>/"""
+
+parser = cop(
+    usage, pyro=True,
     argdoc=[
         ("REG", "Suite name"),
         ("MSG", "external trigger message"),
@@ -37,20 +38,20 @@ The suite passphrase must be installed in $HOME/.cylc/<SUITE>/""",
     ]
 )
 
-parser.add_option( "--max-tries", 
-        help="Max number of attempts to contact the suite "
-        "(default %s)." % PyroClient.MAX_TRIES,
-        metavar="INT", action="store", default=None, dest="max_tries")
+parser.add_option(
+    "--max-tries", help="Max number of attempts to contact the suite "
+    "(default %s)." % PyroClient.MAX_TRIES, metavar="INT", action="store",
+    default=None, dest="max_tries")
 
-parser.add_option( "--retry-delay", 
-        help="Delay in seconds before attempting reconnection "
-        "(default %s)." % PyroClient.RETRY_SECONDS,
-        metavar="SEC", action="store", default=None, dest="retry_seconds")
+parser.add_option(
+    "--retry-delay", help="Delay in seconds before attempting reconnection "
+    "(default %s)." % PyroClient.RETRY_SECONDS, metavar="SEC",
+    action="store", default=None, dest="retry_seconds")
 
-parser.add_option( "--timeout", 
-        help="Suite connection timeout in seconds "
-        "(default %s)." % PyroClient.PYRO_TIMEOUT,
-        metavar="SEC", action="store", default=None, dest="pyro_timeout")
+parser.add_option(
+    "--timeout", help="Suite connection timeout in seconds "
+    "(default %s)." % PyroClient.PYRO_TIMEOUT, metavar="SEC", action="store",
+    default=None, dest="pyro_timeout")
 
 (options, args) = parser.parse_args(remove_opts=["--pyro-timeout"])
 cylc.flags.verbose = options.verbose
@@ -69,7 +70,7 @@ if len(args) == 3:
     event_id = args[2]
 
 print "Sending to suite %s:" % suite
-msg = '  "%s"' % event_msg 
+msg = '  "%s"' % event_msg
 if event_id:
     msg += " (%s)" % event_id
 print msg

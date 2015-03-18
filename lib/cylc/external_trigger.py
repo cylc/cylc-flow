@@ -58,11 +58,11 @@ class PyroClient(object):
         self.retry_seconds = retry_seconds or self.__class__.RETRY_SECONDS
 
         self.pphrase = passphrase(
-                self.suite, self.owner, self.host).get(None, None)
+            self.suite, self.owner, self.host).get(None, None)
 
         self.pyro_proxy = cylc.cylc_pyro_client.client(
-                self.suite, self.pphrase, self.owner, self.host,
-                self.pyro_timeout, self.port).get_proxy(PYRO_TARGET_NAME)
+            self.suite, self.pphrase, self.owner, self.host,
+            self.pyro_timeout, self.port).get_proxy(PYRO_TARGET_NAME)
 
     def send(self):
         sent = False
@@ -133,7 +133,8 @@ class Broker(Pyro.core.ObjBase):
         trigger = message
         if event_id:
             trigger += ' (%s)' % event_id
-        self.logger.log(logging.INFO, 'External trigger received\n%s' % trigger)
+        self.logger.log(
+            logging.INFO, 'External trigger received\n%s' % trigger)
         self.queued.put((message, event_id))
         cylc.flags.pflag = True
 
@@ -168,10 +169,10 @@ class Broker(Pyro.core.ObjBase):
                     if qid is not None:
                         self.broadcaster.put(
                             ["root"],
-                            [point_string], 
+                            [point_string],
                             [{
-                                'environment' : {
-                                    'EXTERNAL_EVENT_ID' : qid
+                                'environment': {
+                                    'EXTERNAL_EVENT_ID': qid
                                 }
                             }]
                         )
