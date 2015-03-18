@@ -154,7 +154,7 @@ class Broker(Pyro.core.ObjBase):
             except Queue.Empty:
                 break
         used = []
-        for trig, satisfied in task.external_triggers.items():
+        for trig, satisfied in itask.external_triggers.items():
             if satisfied:
                 continue
             for qmsg, qid in queued:

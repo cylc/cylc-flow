@@ -31,6 +31,8 @@ available."""
     final cycle point = {{N_DATASETS}}
     max active cycle points = 5
     # runahead limit = P5 # (alternative limiting method)
+    [[special tasks]]
+        external-triggered = get_data("new dataset ready for processing")
     [[dependencies]]
         [[[R1]]] # first cycle
             graph = prep => satsim & get_data
@@ -79,8 +81,6 @@ done"""
         command scripting = """
 DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
 mv $DATASET $PWD"""
-        [[[external triggers]]]
-            a = "new dataset ready for processing"
 
     [[proc1]]
         inherit = WORKDIR
