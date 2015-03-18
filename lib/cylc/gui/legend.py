@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
-#import pygtk
-#pygtk.require('2.0')
 
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon
@@ -32,37 +30,37 @@ class ThemeLegendWindow(gtk.Window):
     def __init__(self, parent_window, theme_map, dot_size='medium'):
         super(ThemeLegendWindow, self).__init__()
         self.set_border_width(5)
-        self.set_title( "" )
+        self.set_title("")
         if parent_window is None:
             self.set_icon(get_icon())
         else:
-            self.set_transient_for( parent_window )
-        self.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+            self.set_transient_for(parent_window)
+        self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
 
         vbox = gtk.VBox()
 
         self._theme = theme_map
         self._dot_size = dot_size
-        self._key_liststore = gtk.ListStore( str, gtk.gdk.Pixbuf )
-        treeview = gtk.TreeView( self._key_liststore )
+        self._key_liststore = gtk.ListStore(str, gtk.gdk.Pixbuf)
+        treeview = gtk.TreeView(self._key_liststore)
         treeview.set_headers_visible(False)
-        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
-        tvc = gtk.TreeViewColumn( None )
+        treeview.get_selection().set_mode(gtk.SELECTION_NONE)
+        tvc = gtk.TreeViewColumn(None)
 
         self.update()
 
         cellpb = gtk.CellRendererPixbuf()
         cell = gtk.CellRendererText()
 
-        tvc.pack_start( cellpb, False )
-        tvc.pack_start( cell, True )
+        tvc.pack_start(cellpb, False)
+        tvc.pack_start(cell, True)
 
-        tvc.set_attributes( cellpb, pixbuf=1 )
-        tvc.set_attributes( cell, text=0 )
+        tvc.set_attributes(cellpb, pixbuf=1)
+        tvc.set_attributes(cell, text=0)
 
-        treeview.append_column( tvc )
+        treeview.append_column(tvc)
 
-        self.add( treeview )
+        self.add(treeview)
         self.show_all()
 
     def update(self, new_theme=None, new_dot_size=None):
@@ -78,5 +76,4 @@ class ThemeLegendWindow(gtk.Window):
         self._key_liststore.clear()
         for state in task_state.legal:
             dot = dotm.get_icon(state)
-            self._key_liststore.append([ state, dot])
-        #self._key_liststore.append(['(unknown)', dotm.get_icon('unknown')])
+            self._key_liststore.append([state, dot])
