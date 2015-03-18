@@ -25,16 +25,28 @@ from cylc.command_prep import prep_pyro
 
 usage = """cylc [control] external-trigger [OPTIONS] ARGS
 
-Report an external trigger event to a suite daemon.
+Report an external trigger message to a suite daemon. It is expected that a
+task in the suite has registered the same message as an external trigger - a
+special prerequisite that can only be satisifed by an external system, via this
+command, rather than by the usual triggering off other tasks.
 
-The suite passphrase must be installed in $HOME/.cylc/<SUITE>/"""
+The optional ID argument, which is entirely arbitrary as far as cylc is
+concerned, should uniquely distinguish one external trigger event from the
+next.  If not given, an ID will be generated automatically.  When a trigger
+message is used to satisfy a task's external trigger prerequisite the ID is
+broadcast to the task's cycle point as $EXT_TRIGGER_ID so that downstream tasks
+can use it - e.g. to identify a new data file that the trigger event represents.  
+
+The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
+
+Note: to manually trigger a task use 'cylc trigger', not this command."""
 
 parser = cop(
     usage, pyro=True,
     argdoc=[
         ("REG", "Suite name"),
-        ("MSG", "external trigger message"),
-        ("[ID]", "Optional arbitrary unique event ID")
+        ("MSG", "External trigger message"),
+        ("[ID]", "Unique trigger ID")
     ]
 )
 

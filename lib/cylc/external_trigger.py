@@ -139,7 +139,7 @@ class Broker(Pyro.core.ObjBase):
         cylc.flags.pflag = True
 
     def retrieve(self, itask):
-        """Match external triggers for a waiting task proxies."""
+        """Match external triggers for a waiting task proxy."""
 
         # Note this has to allow multiple same-message triggers to be queued
         # and only used one at a time.
@@ -177,6 +177,7 @@ class Broker(Pyro.core.ObjBase):
                             }]
                         )
                     used.append((qmsg, qid))
+                    break
         for q in queued:
             if q not in used:
                 self.queued.put(q)

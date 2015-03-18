@@ -54,62 +54,68 @@ rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
     [[satsim]]
         title = simulate a satellite data feed
         description = """Generates {{N_DATASETS}} arbitrarily labelled
-datasets after random durations."""
+datasets very quickly, to show parallel processing streams."""
         pre-command scripting = mkdir -p {{DATA_IN_DIR}}
         command scripting = """
 COUNT=0
 while true; do
-    (( COUNT == {{N_DATASETS}} )) && break
-    sleep $(( RANDOM % 20 ))
-    DATA_ID=$(date +%s)
+    ((COUNT == {{N_DATASETS}})) && break
+    DATA_ID=$(date +%s).$((RANDOM % 100))
     DATA_FILE=dataset-${DATA_ID}.raw
     touch {{DATA_IN_DIR}}/$DATA_FILE
-    (( COUNT += 1 ))
+    ((COUNT += 1))
+    # TODO - MAKE DATAID COMPULSORY OR SUPPLY AN ARBITRARY ONE
+    # (required to distinguish fast-arriving messages).
     # Trigger downstream processing in the suite.
     cylc external-trigger $CYLC_SUITE_NAME \
-      "new dataset ready for processing" $DATA_ID
+       "new dataset ready for processing" $DATA_ID
 done"""
 
     [[WORKDIR]]
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
+        # TODO - BROADCAST VARS SHOULD BE FIRST IN THE ENVIRONMENT
+        # so that other task environment variables can reference them.
+        pre-command scripting = "DATASET=dataset-$EXTERNAL_EVENT_ID"
 
     [[get_data]]
         inherit = WORKDIR
         title = grab one new dataset
         command scripting = """
-DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
-mv $DATASET $PWD"""
+sleep 2
+mv {{DATA_IN_DIR}}/${DATASET}.raw $PWD"""
 
     [[proc1]]
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
         command scripting = """
-sleep 10
-DATASET=$(ls dataset-*.raw)
-mv $DATASET ${DATASET%raw}proc1"""
+sleep 2
+mv ${DATASET}.raw ${DATASET}.proc1"""
 
     [[proc2]]
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
         command scripting = """
-DATASET=$(ls dataset-*.proc1)
-mv $DATASET ${DATASET%proc1}proc2"""
+sleep 2
+mv ${DATASET}.proc1 ${DATASET}.proc2"""
 
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
-        pre-command scripting = mkdir -p {{PRODUCT_DIR}}
         command scripting = """
-DATASET=$( ls dataset-*.proc2 )
-mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
+sleep 2
+mkdir -p {{PRODUCT_DIR}}
+mv ${DATASET}.proc2 {{PRODUCT_DIR}}/${DATASET}.prod"""
 
     [[collate]]
         title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
-        command scripting = ls {{PRODUCT_DIR}}
+        command scripting = """
+echo PRODUCTS:
+ls {{PRODUCT_DIR}}
+sleep 20"""
 
 [visualization]
     default node attributes = "style=filled", "shape=box"
