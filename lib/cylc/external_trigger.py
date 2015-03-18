@@ -143,7 +143,6 @@ class Broker(Pyro.core.ObjBase):
         # Note this has to allow multiple same-message triggers to be queued
         # and only used one at a time.
 
-        # TODO - show in "show pre-requisites and outputs"
         if self.queued.empty():
             return
         triggers = task_proxy.get_external_triggers()
@@ -157,7 +156,6 @@ class Broker(Pyro.core.ObjBase):
                 break
         used = []
         for trig, satisfied in triggers.items():
-            # TODO - CAN ITEMS BE SATISFIED IN-LOOP HERE?
             if satisfied:
                 continue
             for qmsg, qid in queued:

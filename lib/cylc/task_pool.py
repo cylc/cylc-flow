@@ -1065,11 +1065,17 @@ class TaskPool(object):
             if id_ == taskid:
                 found = True
                 extra_info = {}
-                # extra info for clocktriggered tasks
                 if itask.tdef.clocktrigger_offset is not None:
                     extra_info['Clock trigger time reached'] = (
                         itask.start_time_reached())
                     extra_info['Triggers at'] = itask.delayed_start_str
+                ext_triggers = itask.get_external_triggers()
+                for trig, satisfied in ext_triggers.items():
+                    if satisfied:
+                        state = 'satisfied'
+                    else:
+                        state = 'NOT satisfied'
+                    extra_info['External trigger "%s"' % trig] = state
 
                 info[id_] = [
                     itask.prerequisites.dump(),
