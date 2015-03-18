@@ -133,36 +133,6 @@ stopped = {
         ]
 }
 
-filtered = {
-        'medium': [
-                "10 20 3 1",
-                "o	c <FILL>",
-                "x	c <BRDR>",
-                ".  c None",
-                "..........",
-                "..........",
-                "..........",
-                "...xxxx...",
-                "...xoox...",
-                "...xoox...",
-                "...xoox...",
-                "...xoox...",
-                "...xoox...",
-                "...xoox...",
-                "...xoox...",
-                "...xoox...",
-                "...xxxx...",
-                "..........",
-                "..........",
-                "..........",
-                "...xxxx...",
-                "...xoox...",
-                "...xxxx...",
-                "..........",
-                "..........",
-                ]
-        }
-
 live = {
         'small': [
                 "11 11 3 1",
@@ -275,8 +245,9 @@ live = {
 
 
 class DotMaker(object):
-
     """Make dot icons to represent task and family states."""
+
+    FILTER_ICON_SIZES = ['small', 'medium']
 
     def __init__(self, theme, size='medium'):
         self.theme = theme
@@ -313,21 +284,25 @@ class DotMaker(object):
                 xpm[1] = xpm[1].replace('<FILL>', fill_color)
                 xpm[2] = xpm[2].replace('<BRDR>', brdr_color)
             elif is_filtered:
-                size = 'medium'
-                xpm = deepcopy(filtered[size])
+                if self.size in self.__class__.FILTER_ICON_SIZES:
+                    size = self.size
+                else:
+                    size = self.__class__.FILTER_ICON_SIZES[-1]
+                xpm = deepcopy(live[size])
                 xpm[1] = xpm[1].replace('<FILL>', fill_color)
                 xpm[2] = xpm[2].replace('<BRDR>', brdr_color)
             else:
                 xpm = deepcopy(live[self.size])
                 xpm[1] = xpm[1].replace('<FILL>', fill_color)
                 xpm[2] = xpm[2].replace('<BRDR>', brdr_color)
-                if is_family:
-                    if filled:
-                        xpm[3] = xpm[3].replace('<FAMILY>', 'None')
-                    else:
-                        xpm[3] = xpm[3].replace('<FAMILY>', brdr_color)
+            if is_family and '<FAMILY>' in xpm[3]:
+                if filled:
+                    xpm[3] = xpm[3].replace('<FAMILY>', 'None')
                 else:
-                    xpm[3] = xpm[3].replace('<FAMILY>', fill_color)
+                    xpm[3] = xpm[3].replace('<FAMILY>', brdr_color)
+            else:
+                xpm[3] = xpm[3].replace('<FAMILY>', fill_color)
+
         return gtk.gdk.pixbuf_new_from_xpm_data(data=xpm)
 
     def get_image(self, state, is_stopped=False, is_filtered=False):

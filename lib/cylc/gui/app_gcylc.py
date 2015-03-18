@@ -369,6 +369,7 @@ Class to create an information bar.
             ttip_text = "Current filtering (click to alter):\n%s" % (
                 ", ".join(self._filter_states_excl))
             hbox = gtk.HBox()
+            hbox.pack_start(gtk.Label("(filtered:"))
             for state in self._filter_states_excl:
                 icon = self.dots.get_image(state, is_filtered=True)
                 icon.show()
@@ -377,6 +378,7 @@ Class to create an information bar.
                 label = gtk.Label(" %s" % self._filter_name_string)
                 hbox.pack_start(label)
                 ttip_text += ", %s" % self._filter_name_string
+            hbox.pack_start(gtk.Label(")"))
             ebox = gtk.EventBox()
             ebox.add(hbox)
             ebox.connect("button_press_event", self.filter_launcher)
