@@ -721,7 +721,7 @@ class TaskPool(object):
         return False
 
     def match_external_triggers(self):
-        for itask in self.get_tasks(incl_runahead=False):
+        for itask in self.get_tasks():
             if itask.external_triggers:
                 self.external_trigger_broker.retrieve(itask)
 
