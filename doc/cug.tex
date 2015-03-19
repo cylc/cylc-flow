@@ -4827,6 +4827,8 @@ Loadleveler directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
+        [[[job submission]]]
+            method = loadleveler
         [[[directives]]]
             foo = bar
             baz = qux
@@ -4856,6 +4858,8 @@ LSF directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
+        [[[job submission]]]
+            method = lsf
         [[[directives]]]
             -q = foo
             -W = 10
@@ -4877,17 +4881,23 @@ directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
+        [[[job submission]]]
+            method = pbs
         [[[directives]]]
+            -V =
             -q = foo
-            -l = 'nodes=1,walltime=00:01:00'
+            -l nodes = 1
+            -l walltime = 00:01:00
 \end{lstlisting}
 These are written to the top of the task job script like this:
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
 # DIRECTIVES
+#PBS -V
 #PBS -q foo
-#PBS -l nodes=1,walltime=00:01:00
+#PBS -l nodes=1
+#PBS -l walltime=00:01:00
 \end{lstlisting}
 
 \subsubsection{sge}
@@ -4898,10 +4908,13 @@ SGE directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
+        [[[job submission]]]
+            method = sge
         [[[directives]]]
-            -cwd = ' '
+            -cwd =
             -q = foo
-            -l = h_data=1024M,h_rt=24:00:00
+            -l h_data = 1024M
+            -l h_rt = 24:00:00
 \end{lstlisting}
 These are written to the top of the task job script like this:
 \lstset{language=bash}
@@ -4910,7 +4923,8 @@ These are written to the top of the task job script like this:
 # DIRECTIVES
 #$ -cwd
 #$ -q foo
-#$ -l h_data=1024M,h_rt=24:00:00
+#$ -l h_data=1024M
+#$ -l h_rt=24:00:00
 \end{lstlisting}
 
 \subsubsection{slurm}
@@ -4923,6 +4937,8 @@ cylc requires the long form directives):
 \begin{lstlisting}
 [runtime]
     [[my_task]]
+        [[[job submission]]]
+            method = slurm
         [[[directives]]]
             --nodes = 5
             --time = 1:00:00
@@ -4945,12 +4961,9 @@ and stdout and stderr file paths.
 
 \subsubsection{Cylc Quirks (PBS, SGE, ...) }
 
-As shown in the example above, multiple entries for the same PBS or SGE
-directive option must be comma-separated on the same line, in the
-suite.rc file.  Otherwise, repeating the option on another line will
-override the previous entry, not add to it.  To get a naked option flag
-such as \lstinline=-cwd= in SGE you must give a quoted blank space as the
-directive value in the suite.rc file.
+As shown in the example above, to get a naked option flag such as
+\lstinline=-cwd= in SGE you must give a quoted blank space as the directive
+value in the suite.rc file.
 
 \subsection{Task stdout And stderr Logs}
 \label{WhitherStdoutAndStderr}
