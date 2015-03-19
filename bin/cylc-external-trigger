@@ -30,12 +30,11 @@ task in the suite has registered the same message as an external trigger - a
 special prerequisite that can only be satisifed by an external system, via this
 command, rather than by the usual triggering off other tasks.
 
-The optional ID argument, which is entirely arbitrary as far as cylc is
-concerned, should uniquely distinguish one external trigger event from the
-next.  If not given, an ID will be generated automatically.  When a trigger
-message is used to satisfy a task's external trigger prerequisite the ID is
-broadcast to the task's cycle point as $EXT_TRIGGER_ID so that downstream tasks
-can use it - e.g. to identify a new data file that the trigger event represents.  
+The ID argument should uniquely distinguish one external trigger event from the
+next. When a task's external trigger is satisfied by an incoming message, the
+message ID is broadcast to all downstream tasks in the cycle point as
+$EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file that
+the external triggering system is responding to.
 
 The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
 
@@ -46,7 +45,7 @@ parser = cop(
     argdoc=[
         ("REG", "Suite name"),
         ("MSG", "External trigger message"),
-        ("[ID]", "Unique trigger ID")
+        ("ID", "Unique trigger ID")
     ]
 )
 

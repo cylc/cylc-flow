@@ -1,14 +1,12 @@
 #!Jinja2
 
-title = Real time satellite processing demo, variant 1 of 3
+title = Real time satellite data processing demo, variant 1 of 3
 
 description = """
-Each successive integer cycle point retrieves and processes the next
-arbitrarily timed and labelled dataset, in parallel with previous cycle points
-if the data comes in quickly.
-
-This suite variant has initial get_data tasks that trigger immediately and run
-continuously, with a manual check-and-wait loop, until they detect new data."""
+Successive cycle points retrieve and processe the next arbitrarily timed and
+labelled dataset, in parallel if the data comes in quickly. This variant of the
+suite has initial get_data tasks that trigger immediately and run continuously,
+with a manual check-and-wait loop, until they detect new data."""
 
 # you can monitor output processing with:
 # $ watch -n 1 \
@@ -51,13 +49,13 @@ datasets after random durations."""
         script = """
 COUNT=0
 while true; do
-    (( COUNT == {{N_DATASETS}} )) && break
-    sleep $(( RANDOM % 20 ))
-    DATA_ID=$(date +%s)
+    ((COUNT == {{N_DATASETS}})) && break
+    DATA_ID=$(date +%s).$((RANDOM % 100))
+    sleep $((RANDOM % 20))
     DATA_FILE=dataset-${DATA_ID}.raw
     touch {{DATA_IN_DIR}}/$DATA_FILE
     cylc task message "$DATA_FILE ready for processing"
-    (( COUNT += 1 ))
+    ((COUNT += 1))
 done"""
 
     [[WORKDIR]]
@@ -69,11 +67,11 @@ done"""
     [[get_data]]
         inherit = WORKDIR
         title = grab one new dataset, waiting if necessary
+        post-script = sleep 5
         script = """
 while true; do
     DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
     if [[ -z $DATASET ]]; then
-        sleep 1
         continue
     fi
     break
@@ -84,6 +82,7 @@ mv $DATASET $PWD"""
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
         script = """
+        command scripting = """
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
 
@@ -97,8 +96,8 @@ mv $DATASET ${DATASET%proc1}proc2"""
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
-        pre-script = mkdir -p {{PRODUCT_DIR}}
         script = """
+mkdir -p {{PRODUCT_DIR}}
 DATASET=$( ls dataset-*.proc2 )
 mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
 
@@ -106,7 +105,10 @@ mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
         title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
-        script = ls {{PRODUCT_DIR}}
+        script = """
+echo PRODUCTS:
+ls {{PRODUCT_DIR}}
+sleep 20"""
 
 [visualization]
     default node attributes = "style=filled", "shape=box"

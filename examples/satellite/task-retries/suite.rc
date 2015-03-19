@@ -3,14 +3,11 @@
 title = Real time satellite processing demo, variant 2 of 3
 
 description = """
-Each successive integer cycle point retrieves and processes the next
-arbitrarily timed and labelled dataset, in parallel with previous cycle points
-if the data comes in quickly.
-
-This suite variant has initial get_data tasks that trigger immediately and
-simply report failure if no new data is available; but they are configured
-to retry (resubmit) automatically until they succeed."""
-
+Successive cycle points retrieve and process the next arbitrarily timed and
+labelled dataset, in parallel if the data comes in quickly.  This variant of
+the suite has initial get_data tasks that trigger immediately and simply report
+failure if no new data is available, but they are configured to retry
+automatically until they succeed."""
 
 # you can monitor output processing with:
 # $ watch -n 1 \
@@ -53,23 +50,25 @@ datasets after random durations."""
         command scripting = """
 COUNT=0
 while true; do
-    (( COUNT == {{N_DATASETS}} )) && break
-    sleep $(( RANDOM % 20 ))
-    DATA_ID=$(date +%s)
+    ((COUNT == {{N_DATASETS}})) && break
+    sleep $((RANDOM % 20))
+    DATA_ID=$(date +%s).$((RANDOM % 100))
     DATA_FILE=dataset-${DATA_ID}.raw
     touch {{DATA_IN_DIR}}/$DATA_FILE
     cylc task message "$DATA_FILE ready for processing"
-    (( COUNT += 1 ))
+    ((COUNT += 1))
 done"""
 
     [[WORKDIR]]
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
+        post-command scripting = sleep 5
 
     [[get_data]]
         inherit = WORKDIR
-        title = grab one new dataset, retry if not available yet
+        title = retreive next dataset
+        description = grab ONE new dataset if available else retry
         retry delays = 10*PT2S
         command scripting = """
 DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
@@ -80,7 +79,6 @@ mv $DATASET $PWD"""
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
         command scripting = """
-sleep 10
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
 
@@ -88,15 +86,14 @@ mv $DATASET ${DATASET%raw}proc1"""
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
         command scripting = """
-sleep 10
 DATASET=$(ls dataset-*.proc1)
 mv $DATASET ${DATASET%proc1}proc2"""
 
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
-        pre-command scripting = mkdir -p {{PRODUCT_DIR}}
         command scripting = """
+mkdir -p {{PRODUCT_DIR}}
 DATASET=$( ls dataset-*.proc2 )
 mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
 
@@ -104,7 +101,11 @@ mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
         title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
-        command scripting = ls {{PRODUCT_DIR}}
+        command scripting = """
+echo PRODUCTS:
+ls {{PRODUCT_DIR}}
+sleep 20"""
+
 
 [visualization]
     default node attributes = "style=filled", "shape=box"

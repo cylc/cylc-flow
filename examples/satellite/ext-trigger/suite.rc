@@ -1,15 +1,12 @@
 #!Jinja2
 
-title = Real time satellite processing demo, variant 3 of 3
+title = Real time satellite data processing demo, variant 3 of 3
 
 description = """
-Each successive integer cycle point retrieves and processes the next
-arbitrarily timed and labelled dataset, in parallel with previous cycle points
-if the data comes in quickly.
-
-This suite variant has initial get_data tasks with external event triggers: they
-do not submit until triggered by an external system that knows when the data is
-available."""
+Successive cycle points retrieve and processe the next arbitrarily timed and
+labelled dataset, in parallel if the data comes in quickly. This variant of the
+suite has initial get_data tasks with external triggers: they do not submit
+until triggered by an external system."""
 
 # Note that the satellite simulator task here that supplies the external event
 # trigger happens to be a suite task - i.e. it is not really "external" - but
@@ -60,6 +57,8 @@ datasets very quickly, to show parallel processing streams."""
 COUNT=0
 while true; do
     ((COUNT == {{N_DATASETS}})) && break
+    # sleep $((RANDOM % 20))
+    # Generate datasets very quickly to test parallel processing.
     DATA_ID=$(date +%s).$((RANDOM % 100))
     DATA_FILE=dataset-${DATA_ID}.raw
     touch {{DATA_IN_DIR}}/$DATA_FILE
@@ -75,36 +74,29 @@ done"""
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        # TODO - BROADCAST VARS SHOULD BE FIRST IN THE ENVIRONMENT
-        # so that other task environment variables can reference them.
-        pre-command scripting = "DATASET=dataset-$EXTERNAL_EVENT_ID"
+        pre-command scripting = "DATASET=dataset-$EXT_TRIGGER_ID"
+        post-command scripting = sleep 5
 
     [[get_data]]
         inherit = WORKDIR
-        title = grab one new dataset
-        command scripting = """
-sleep 2
-mv {{DATA_IN_DIR}}/${DATASET}.raw $PWD"""
+        title = retrieve next dataset
+        description = just do it - we know it exists already
+        command scripting = mv {{DATA_IN_DIR}}/${DATASET}.raw $PWD
 
     [[proc1]]
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
-        command scripting = """
-sleep 2
-mv ${DATASET}.raw ${DATASET}.proc1"""
+        command scripting = mv ${DATASET}.raw ${DATASET}.proc1
 
     [[proc2]]
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
-        command scripting = """
-sleep 2
-mv ${DATASET}.proc1 ${DATASET}.proc2"""
+        command scripting = mv ${DATASET}.proc1 ${DATASET}.proc2
 
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
         command scripting = """
-sleep 2
 mkdir -p {{PRODUCT_DIR}}
 mv ${DATASET}.proc2 {{PRODUCT_DIR}}/${DATASET}.prod"""
 
