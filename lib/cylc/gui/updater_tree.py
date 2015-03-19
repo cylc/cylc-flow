@@ -59,6 +59,7 @@ class TreeUpdater(threading.Thread):
         self.last_update_time = None
         self.ancestors = {}
         self.descendants = []
+        self.fam_state_summary = {}
         self._prev_id_named_paths = {}
         self._prev_data = {}
         self._prev_fam_data = {}
@@ -325,10 +326,7 @@ class TreeUpdater(threading.Thread):
                     host = host or "*"
                     message = message or "*"
 
-                try:
-                    icon = self.dots[dot_type][state]
-                except KeyError:
-                    icon = self.dots[dot_type]['unknown']
+                icon = self.dots[dot_type][state]
 
                 new_info = [
                     state, host, batch_sys_name, job_id,

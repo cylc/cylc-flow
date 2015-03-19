@@ -21,6 +21,10 @@ import sys
 
 """
 Task states, plus dump and reload from the suite state dump file.
+
+Note that 'runahead' is a task state used only in the state summary for suite
+monitoring. It indicates a task in the runahead pool - which is technically
+'waiting' but inactive.
 """
 
 class TaskStateError( Exception ):
@@ -42,7 +46,8 @@ class task_state(object):
         'running',
         'succeeded',
         'failed',
-        'retrying'
+        'retrying',
+        'runahead'
     ]
 
     legal_for_reset = [
@@ -97,6 +102,7 @@ class task_state(object):
             'failed'     : '_failed',
             'retrying'   : 'retr_ying',
             'held'       : '_held',
+            'runahead'   : 'r_unahead',
             }
     # terminal monitor color control codes
     ctrl = {
@@ -111,6 +117,7 @@ class task_state(object):
             'failed'     : "\033[1;37;41m",
             'retrying'   : "\033[1;35m",
             'held'       : "\033[1;37;43m",
+            'runahead'   : "\033[1;37;44m",
             }
 
     ctrl_end = "\033[0m"

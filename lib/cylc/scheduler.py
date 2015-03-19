@@ -976,13 +976,11 @@ class scheduler(object):
 
     def update_state_summary(self):
         self.suite_state.update(
-                self.pool.get_tasks(incl_runahead=False), 
-                self.pool.get_min_point(), self.pool.get_max_point(),
-                self.paused(),
-                self.will_pause_at(),
-                self.shut_down_cleanly,
-                self.will_stop_at(), self.pool.custom_runahead_limit,
-                self.config.ns_defn_order)
+            self.pool.get_tasks(), self.pool.get_rh_tasks(),
+            self.pool.get_min_point(), self.pool.get_max_point(),
+            self.pool.get_max_point_runahead(), self.paused(),
+            self.will_pause_at(), self.shut_down_cleanly, self.will_stop_at(),
+            self.config.ns_defn_order)
 
     def log_resolved_deps(self, ready_tasks):
         """Log what triggered off what."""

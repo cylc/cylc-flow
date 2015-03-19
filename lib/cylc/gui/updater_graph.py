@@ -70,7 +70,7 @@ class GraphUpdater(threading.Thread):
         self.oldest_point_string = None
         self.newest_point_string = None
         self.orientation = "TB"  # Top to Bottom ordering of nodes
-        self.best_fit = False  # zoom to page size
+        self.best_fit = True  # zoom to page size
         self.normal_fit = False  # zoom to 1.0 scale
         self.crop = False
         self.subgraphs_on = False   # organise by cycle point.
@@ -292,6 +292,15 @@ class GraphUpdater(threading.Thread):
                 self.global_summary['oldest cycle point string'])
             self.newest_point_string = (
                 self.global_summary['newest cycle point string'])
+            if 'runahead' not in self.updater.filter_states_excl:
+                # Get a graph out to the max runahead point.
+                try:
+                    self.newest_point_string = (
+                        self.global_summary[
+                            'newest runahead cycle point string'])
+                except KeyError:
+                    # back compat <= 6.2.0
+                    pass
         except KeyError:
             # Pre cylc-6 back compat.
             self.oldest_point_string = (
