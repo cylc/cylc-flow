@@ -63,6 +63,12 @@ warnings.filterwarnings('ignore', 'use the new', Warning)
 import cylc.gui
 
 cylc_dir = os.path.dirname(os.path.dirname(os.path.realpath(os.path.abspath(__file__))))
+if os.path.basename(cylc_dir).startswith("cylc-"):
+    # If using the wrapper, reference 'cylc' rather than 'cylc-6.3.1'.
+    cylc_alt_dir = os.path.join(os.path.dirname(cylc_dir), "cylc")
+    if os.path.realpath(cylc_alt_dir) == os.path.realpath(cylc_dir):
+        cylc_dir = cylc_alt_dir
+
 if cylc_dir != os.getenv('CYLC_DIR', ''):
     os.environ['CYLC_DIR'] = cylc_dir
 
