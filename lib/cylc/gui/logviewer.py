@@ -29,6 +29,7 @@ class logviewer(object):
         self.name = name
         self.dir = dir
         self.file = file
+        self.t = None
 
         self.find_current = None
         self.find_current_iter = None

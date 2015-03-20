@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""The main control GUI of gcylc."""
 
 import os
 import re
@@ -24,17 +25,17 @@ import gobject
 import pango
 import socket
 import subprocess
-from util import EntryTempText
+from isodatetime.parsers import TimePointParser
 
 from cylc.suite_host import is_remote_host
 from cylc.owner import is_remote_user
-from dbchooser import dbchooser
-from combo_logviewer import ComboLogViewer
-from warning_dialog import warning_dialog, info_dialog
+from cylc.gui.dbchooser import dbchooser
+from cylc.gui.combo_logviewer import ComboLogViewer
+from cylc.gui.warning_dialog import warning_dialog, info_dialog
 
 try:
-    from view_graph import ControlGraph
-    from graph import graph_suite_popup
+    from cylc.gui.view_graph import ControlGraph
+    from cylc.gui.graph import graph_suite_popup
 except ImportError, x:
     # pygraphviz not installed
     warning_dialog("WARNING: graph view disabled\n" + str(x)).warn()
@@ -42,24 +43,22 @@ except ImportError, x:
 else:
     graphing_disabled = False
 
-from legend import ThemeLegendWindow
-from view_dot import ControlLED
-from view_tree import ControlTree
-from dot_maker import DotMaker
-from updater import Updater
-from util import (get_icon, get_image_dir, get_logo, EntryTempText,
-                  EntryDialog, setup_icons, set_exception_hook_dialog)
+from cylc.gui.legend import ThemeLegendWindow
+from cylc.gui.view_dot import ControlLED
+from cylc.gui.view_tree import ControlTree
+from cylc.gui.dot_maker import DotMaker
+from cylc.gui.updater import Updater
+from cylc.gui.util import (
+    get_icon, get_image_dir, get_logo, EntryTempText,
+    EntryDialog, setup_icons, set_exception_hook_dialog)
 from cylc import cylc_pyro_client
 from cylc.state_summary import extract_group_state
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
-from cylc.strftime import strftime
-from option_group import controlled_option_group
-from color_rotator import rotator
-from cylc_logviewer import cylc_logviewer
-from textload import textload
-from datetime import datetime
-from gcapture import gcapture_tmpfile
+from cylc.gui.option_group import controlled_option_group
+from cylc.gui.color_rotator import rotator
+from cylc.gui.cylc_logviewer import cylc_logviewer
+from cylc.gui.gcapture import gcapture_tmpfile
 from cylc.task_state import task_state
 from cylc.passphrase import passphrase
 from cylc.suite_logging import suite_log
@@ -67,7 +66,6 @@ from cylc.registration import localdb
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_time_string_from_unix_time
-from isodatetime.parsers import TimePointParser
 
 
 def run_get_stdout(command, filter=False):
@@ -80,7 +78,7 @@ def run_get_stdout(command, filter=False):
         if res < 0:
             warning_dialog(
                 "ERROR: command terminated by signal %d\n%s" % (res, err)
-                ).warn()
+            ).warn()
             return (False, [])
         elif res > 0:
             warning_dialog(
@@ -1221,7 +1219,7 @@ The Cylc Suite Engine.
             js_item.set_image(img)
             view_menu.append(js_item)
             js_item.connect('button-press-event', self.view_task_info, task_id,
-                            'job script')
+                            'job')
 
             info_item = gtk.ImageMenuItem('log files')
             img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
@@ -2340,40 +2338,32 @@ or remove task definitions without restarting the suite."""
             warning_dialog('Failed to nudge the suite', self.window).warn()
 
     def popup_logview(self, task_id, logfiles, choice=None):
-        # TODO - choice is dirty hack to separate the task job script
-        # from other logs (stdout, stderr, and any extra logs); we
-        # should do this properly by storing them separately in the task
-        # proxy, or at least separating them in the suite state summary.
+        """Display task job log files in a combo log viewer."""
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.modify_bg(gtk.STATE_NORMAL,
                          gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
-        logs = []
-        err = []
-        out = []
-        extra = []
-        for logfile in logfiles:
-            if logfile.endswith('/job.err'):
-                err.append(logfile)
-            elif logfile.endswith('/job.out'):
-                out.append(logfile)
-            elif logfile.endswith('/job'):
-                js = logfile
-            else:
-                extra.append(logfile)
-
-        # for re-tries this sorts in time order due to filename:
-        # (TODO - does this still work, post secs-since-epoch file extensions?)
-        err.sort(key=self._sort_key_func, reverse=True)
-        out.sort(key=self._sort_key_func, reverse=True)
         window.set_size_request(800, 400)
-        if choice == 'job script':
-            window.set_title(task_id + ": Job Script")
-            lv = textload(task_id, js)
-        else:
-            logs = out + err + extra
-            window.set_title(task_id + ": Log Files")
-            lv = ComboLogViewer(task_id, logs)
+        log_paths = list(logfiles)
+        log_paths.sort(key=self._sort_key_func, reverse=True)
+        init_active_index = None
+        if choice:
+            for i, log in enumerate(log_paths):
+                if log.endswith("/" + choice):
+                    init_active_index = i
+                    break
+
+        auth = None
+        if is_remote_host(self.cfg.host):
+            auth = self.cfg.host
+        elif is_remote_user(self.cfg.owner):
+            auth = self.cfg.owner + "@" + self.cfg.host
+        if auth:
+            for i, log in enumerate(log_paths):
+                if ":" not in log:
+                    log_paths[i] = auth + ":" + log
+        window.set_title(task_id + ": Log Files")
+        lv = ComboLogViewer(task_id, log_paths, init_active_index)
         self.quitters.append(lv)
 
         window.add(lv.get_widget())
@@ -2386,9 +2376,14 @@ or remove task definitions without restarting the suite."""
         window.connect("delete_event", lv.quit_w_e)
         window.show_all()
 
-    def _sort_key_func(self, x):
-        return [
-            int(w) if w.isdigit() else w for w in re.split("(\d+)", x)[-2:]]
+    def _sort_key_func(self, log_path):
+        """Sort key for a task job log path."""
+        head, submit_num, base = log_path.rsplit("/", 2)
+        try:
+            submit_num = int(submit_num)
+        except ValueError:
+            pass
+        return (submit_num, base, head)
 
     def _set_tooltip(self, widget, tip_text):
         tooltip = gtk.Tooltips()

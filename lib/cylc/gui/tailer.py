@@ -45,7 +45,7 @@ class tailer(threading.Thread):
         #gobject.idle_add( self.clear )
         #print "Starting tailer thread"
 
-        if re.match( '^.+:', self.logfile ):
+        if ":" in self.logfile:
             # Handle remote task output statically - can't get a live
             # feed using 'ssh owner@host tail -f file' in a subprocess
             # because p.stdout.readline() blocks waiting for more output.

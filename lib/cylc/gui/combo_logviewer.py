@@ -33,8 +33,9 @@ class ComboLogViewer(logviewer):
 
     LABEL_TEXT = "Choose Log File: "
 
-    def __init__(self, name, file_list):
+    def __init__(self, name, file_list, init_active_index=None):
         self.file_list = file_list
+        self.init_active_index = init_active_index
         self.common_dir = os.path.dirname(os.path.commonprefix(self.file_list))
         logviewer.__init__(self, name, None, self.file_list[0])
 
@@ -48,13 +49,18 @@ class ComboLogViewer(logviewer):
             combobox.append_text(os.path.relpath(file_, self.common_dir))
 
         combobox.connect("changed", self.switch_log)
-        combobox.set_active(0)
+        if self.init_active_index:
+            combobox.set_active(self.init_active_index)
+        else:
+            combobox.set_active(0)
 
         self.hbox.pack_end(combobox, False)
         self.hbox.pack_end(label, False)
 
     def switch_log(self, callback):
         """Switch to another file, if necessary."""
+        if self.t is None:
+            return False
         model = callback.get_model()
         index = callback.get_active()
 
