@@ -179,7 +179,7 @@ class Updater(threading.Thread):
             if daemon_version != CYLC_VERSION:
                 warning_dialog(
                     "Warning: cylc version mismatch!\n\n" +
-                    "Daemon at %r.\n" % daemon_version +
+                    "Suite running with %r.\n" % daemon_version +
                     "gcylc at %r.\n" % CYLC_VERSION,
                     self.info_bar.get_toplevel()
                 ).warn()
