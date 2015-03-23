@@ -1,0 +1,14 @@
+ERROR: No broadcast to cancel/clear for these options:
+  --cancel=[environment]BCAST
+  --namespaces=m4
+  --point_strings=2010080900
+ERROR: No broadcast to cancel/clear for these options:
+  --cancel=[environment]BCAST
+  --namespaces=m5
+  --point_strings=all-cycle-points
+ERROR: No broadcast to cancel/clear for these options:
+  --namespaces=m6
+ERROR: No broadcast to cancel/clear for these options:
+  --namespaces=m7
+ERROR: No broadcast to cancel/clear for these options:
+  --namespaces=ENS3

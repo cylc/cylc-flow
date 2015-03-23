@@ -35,17 +35,18 @@ generated reference version.
     [[prep]]
         pre-command scripting = "rm -f $BCASTLOG"
         command scripting = """
+{
     # broadcast to all cycles and namespaces:
         cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_SUITE_REG_NAME
     # broadcast to foo%2010080800:
-        cylc broadcast -t 2010080800 -n foo -s "[environment]BCAST = FOO" $CYLC_SUITE_REG_NAME
+        cylc broadcast -p 2010080800 -n foo -s "[environment]BCAST = FOO" $CYLC_SUITE_REG_NAME
     # broadcast to bar at all cycles:
         cylc broadcast -n bar -s "[environment]BCAST = BAR" $CYLC_SUITE_REG_NAME
     # broadcast to baz at 2010080900:
-        cylc broadcast -n baz -t 2010080900 -s "[environment]BCAST = BAZ" $CYLC_SUITE_REG_NAME
+        cylc broadcast -n baz -p 2010080900 -s "[environment]BCAST = BAZ" $CYLC_SUITE_REG_NAME
     # broadcast to qux at 2010080900, then cancel it:
-        cylc broadcast -n qux -t 2010080900 -s "[environment]BCAST = QUX" $CYLC_SUITE_REG_NAME
-        cylc broadcast -n qux -t 2010080900 --cancel "[environment]BCAST" $CYLC_SUITE_REG_NAME
+        cylc broadcast -n qux -p 2010080900 -s "[environment]BCAST = QUX" $CYLC_SUITE_REG_NAME
+        cylc broadcast -n qux -p 2010080900 --cancel "[environment]BCAST" $CYLC_SUITE_REG_NAME
     # broadcast to wibble at all cycles, then clear it:
         cylc broadcast -n wibble -s "[environment]BCAST = WIBBLE" $CYLC_SUITE_REG_NAME
         cylc broadcast -n wibble --clear $CYLC_SUITE_REG_NAME
@@ -54,24 +55,27 @@ generated reference version.
     # broadcast to all members of ENS1, all cycles:
         cylc broadcast -n ENS1 -s "[environment]BCAST = ENS1" $CYLC_SUITE_REG_NAME
     # broadcast to a single member m2 of ENS1, in 2010080900:
-        cylc broadcast -n m2 -t 2010080900 -s "[environment]BCAST = M2" $CYLC_SUITE_REG_NAME
+        cylc broadcast -n m2 -p 2010080900 -s "[environment]BCAST = M2" $CYLC_SUITE_REG_NAME
     # cancel broadcast to m4 of ENS1, in 2010080900 (will not work):
-        cylc broadcast -n m4 -t 2010080900 --cancel "[environment]BCAST" $CYLC_SUITE_REG_NAME
+        ! cylc broadcast -n m4 -p 2010080900 --cancel "[environment]BCAST" $CYLC_SUITE_REG_NAME
     # cancel broadcast to m5 of ENS1 at all cycles (will not work):
-        cylc broadcast -n m5 --cancel "[environment]BCAST" $CYLC_SUITE_REG_NAME
+        ! cylc broadcast -n m5 --cancel "[environment]BCAST" $CYLC_SUITE_REG_NAME
     # clear broadcast to m6 of ENS1 at all cycles (will not work):
-        cylc broadcast -n m6 --clear $CYLC_SUITE_REG_NAME
+        ! cylc broadcast -n m6 --clear $CYLC_SUITE_REG_NAME
     # clear, then reset, broadcast to m7 of ENS1 at all cycles:
-        cylc broadcast -n m7 --clear $CYLC_SUITE_REG_NAME
+        ! cylc broadcast -n m7 --clear $CYLC_SUITE_REG_NAME
         cylc broadcast -n m7 -s "[environment]BCAST = M7" $CYLC_SUITE_REG_NAME
     # reset broadcast to m8 of ENS1 at 2010080900
         cylc broadcast -n m8 -s "[environment]BCAST = M8" $CYLC_SUITE_REG_NAME
     # reset broadcast to m9 of ENS1 at all cycles
         cylc broadcast -n m9 -s "[environment]BCAST = M9" $CYLC_SUITE_REG_NAME
     # clear broadcast for ENS3 (will not work):
-        cylc broadcast -n ENS3 --clear $CYLC_SUITE_REG_NAME
+        ! cylc broadcast -n ENS3 --clear $CYLC_SUITE_REG_NAME
     # list the result to prep task stdout:
         cylc bcast --display $CYLC_SUITE_REG_NAME
+} 1>prep.out 2>prep.err
+cmp "${CYLC_SUITE_DEF_PATH}/expected-prep.out" 'prep.out'
+cmp "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
                             """
     [[ENS]]
     [[ENS1]]
