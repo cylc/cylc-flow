@@ -658,7 +658,7 @@ class TaskPool(object):
         """Set the point after which tasks must be held."""
         self.hold_point = point
         if point is not None:
-            for itask in self.get_tasks(incl_runahead=True):
+            for itask in self.get_tasks():
                 if itask.point > point:
                     itask.reset_state_held()
 
@@ -926,7 +926,7 @@ class TaskPool(object):
                     itask.reset_state_ready()
 
     def dry_run_task(self, id):
-        for itask in self.get_tasks(incl_runahead=False):
+        for itask in self.get_tasks():
             if itask.identity == id:
                 itask.submit(overrides=self.wireless.get(itask.identity),
                              dry_run=True)
@@ -1025,7 +1025,7 @@ class TaskPool(object):
     def get_task_jobfile_path(self, id_):
         found = False
         running = False
-        for itask in self.get_tasks(incl_runahead=False):
+        for itask in self.get_tasks():
             if itask.identity == id_:
                 found = True
                 jobfile_path = itask.job_conf['local job file path']
