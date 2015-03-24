@@ -282,9 +282,6 @@ GUI
 
 * catch invalid regex (e.g. unbalanced paren) in user-entered filters.
 
-* clean up src/gui/textload.py and use of it: it was quickly hacked out
-  of the tailing logviewer and should be treated separately and more simply.
-
 ====================================
 GRAPH STABILITY:
 
