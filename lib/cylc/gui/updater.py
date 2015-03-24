@@ -23,6 +23,8 @@ from cylc.state_summary import get_id_summary
 from cylc.strftime import strftime
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_id import TaskID
+from cylc.version import CYLC_VERSION  # Warning: will SystemExit on failure.
+from warning_dialog import warning_dialog
 import gobject
 import gtk
 import Pyro
@@ -170,6 +172,17 @@ class Updater(threading.Thread):
                 self._flag_new_update()
             return False
         else:
+            try:
+                daemon_version = self.sinfo.get('get cylc version')
+            except KeyError:
+                daemon_version = "??? (pre 6.1.2?)"
+            if daemon_version != CYLC_VERSION:
+                warning_dialog(
+                    "Warning: cylc version mismatch!\n\n" +
+                    "Suite running with %r.\n" % daemon_version +
+                    "gcylc at %r.\n" % CYLC_VERSION,
+                    self.info_bar.get_toplevel()
+                ).warn()
             self.stop_summary = None
             self.err_log_lines = []
             self.err_log_size = 0
