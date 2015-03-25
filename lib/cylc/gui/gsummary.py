@@ -447,7 +447,7 @@ class SummaryApp(object):
         self.updater.start()
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
-        self.window.set_default_size(200, 100)
+        self.window.set_default_size(300, 150)
         self.suite_treeview.grab_focus()
         self.window.show()
 
