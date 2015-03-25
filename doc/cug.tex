@@ -4962,8 +4962,8 @@ and stdout and stderr file paths.
 \subsubsection{Cylc Quirks (PBS, SGE, ...) }
 
 As shown in the example above, to get a naked option flag such as
-\lstinline=-cwd= in SGE you must give a quoted blank space as the directive
-value in the suite.rc file.
+\lstinline=-V= in PBS or \lstinline=-cwd= in SGE you must give a
+null string as the directive value in the suite.rc file.
 
 \subsection{Task stdout And stderr Logs}
 \label{WhitherStdoutAndStderr}
