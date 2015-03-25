@@ -15,35 +15,36 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Handle broadcast from clients."""
 
 import Pyro.core
-from copy import deepcopy
-from datetime import datetime
-import logging, os, sys
+import logging
 import cPickle as pickle
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.task_id import TaskID
-from cycling.loader import get_point
-from rundb import RecordBroadcastObject
-from wallclock import get_current_time_string
+from cylc.cycling.loader import get_point
+from cylc.rundb import RecordBroadcastObject
+from cylc.wallclock import get_current_time_string
 
-class broadcast( Pyro.core.ObjBase ):
-    """Receive broadcast variables from cylc clients."""
 
-    # examples:
-    #self.settings[ 'all-cycle-points' ][ 'root' ] = "{ 'environment' : { 'FOO' : 'bar' }}
-    #self.settings[ '2010080806' ][ 'root' ] = "{ 'command scripting' : 'stuff' }
+class Broadcast(Pyro.core.ObjBase):
+    """Receive broadcast variables from cylc clients.
+
+    Examples:
+    self.settings['all-cycle-points']['root'] = {'environment': {'FOO': 'bar'}}
+    self.settings['20100808T06Z']['root'] = {'command scripting': 'stuff'}
+    """
 
     def __init__(self, linearized_ancestors):
         self.log = logging.getLogger('main')
         self.settings = {}
-        self.prev_dump = self.get_dump()
+        self.prev_dump = self._get_dump()
         self.settings_queue = []
         self.linearized_ancestors = linearized_ancestors
         Pyro.core.ObjBase.__init__(self)
 
-    def prune(self):
+    def _prune(self):
         """Remove empty leaves left by unsetting broadcast values."""
         prunes = []
         stuffs = [([], self.settings, True)]
@@ -61,13 +62,13 @@ class broadcast( Pyro.core.ObjBase ):
                         prunes.append(keys + [key])
         return prunes
 
-    def addict(self, target, source):
+    def _addict(self, target, source):
         """Recursively add source dict to target dict."""
         for key, val in source.items():
             if isinstance(val, dict):
                 if key not in target:
                     target[key] = {}
-                self.addict(target[key], val)
+                self._addict(target[key], val)
             else:
                 if source[key]:
                     target[key] = source[key]
@@ -84,12 +85,12 @@ class broadcast( Pyro.core.ObjBase ):
                 for namespace in namespaces:
                     if namespace not in self.settings[point_string]:
                         self.settings[point_string][namespace] = {}
-                    self.addict(
+                    self._addict(
                         self.settings[point_string][namespace], setting)
                     modified_settings.append(
                         (point_string, namespace, setting))
 
-        self.prune()
+        self._prune()
         self._update_db_queue()
 
         # Log the broadcast
@@ -112,9 +113,9 @@ class broadcast( Pyro.core.ObjBase ):
         for cycle in ['all-cycle-points', 'all-cycles', point_string]:
             if cycle not in self.settings:
                 continue
-            for ns in reversed(self.linearized_ancestors[name]):
-                if ns in self.settings[cycle]:
-                    self.addict(ret, self.settings[cycle][ns])
+            for namespace in reversed(self.linearized_ancestors[name]):
+                if namespace in self.settings[cycle]:
+                    self._addict(ret, self.settings[cycle][namespace])
         return ret
 
     def expire(self, cutoff):
@@ -128,23 +129,14 @@ class broadcast( Pyro.core.ObjBase ):
                 continue
             point = get_point(point_string)
             if point < cutoff:
-                self.log.info('Expiring ' + str(point) + ' broadcast settings now')
-                del self.settings[ point_string ]
+                self.log.info(
+                    'Expiring ' + str(point) + ' broadcast settings now')
+                del self.settings[point_string]
 
     def clear(self, namespaces, point_strings, cancel_settings=None):
         """Clear settings globally, or for listed namespaces and/or points."""
         # If cancel_settings defined, only clear specific settings
-        cancel_keys_list = []
-        if cancel_settings:
-            for cancel_setting in cancel_settings:
-                stuffs = [([], cancel_setting)]
-                while stuffs:
-                    keys, stuff = stuffs.pop()
-                    for key, value in stuff.items():
-                        if isinstance(value, dict):
-                            stuffs.append((keys + [key], value))
-                        else:
-                            cancel_keys_list.append(keys + [key])
+        cancel_keys_list = self._settings_to_keys_list(cancel_settings)
         # Clear settings
         modified_settings = []
         for point_string, point_string_settings in self.settings.items():
@@ -170,7 +162,7 @@ class broadcast( Pyro.core.ObjBase ):
 
         # Prune any empty branches
         bad_options = self._get_bad_options(
-            self.prune(), point_strings, namespaces, cancel_keys_list)
+            self._prune(), point_strings, namespaces, cancel_keys_list)
         self._update_db_queue()
 
         # Log the broadcast
@@ -180,6 +172,30 @@ class broadcast( Pyro.core.ObjBase ):
             self.log.error(get_broadcast_bad_options_report(bad_options))
 
         return (modified_settings, bad_options)
+
+    @staticmethod
+    def _settings_to_keys_list(settings):
+        """Return a list containing each setting dict keys as a list.
+
+        E.g. Each setting in settings may look like:
+        {"foo": {"bar": {"baz": 1}}}
+
+        An element of the returned list will look like:
+        ["foo", "bar", "baz"]
+
+        """
+        keys_list = []
+        if settings:
+            for setting in settings:
+                stuffs = [([], setting)]
+                while stuffs:
+                    keys, stuff = stuffs.pop()
+                    for key, value in stuff.items():
+                        if isinstance(value, dict):
+                            stuffs.append((keys + [key], value))
+                        else:
+                            keys_list.append(keys + [key])
+        return keys_list
 
     def dump(self, file_):
         """Write broadcast variables to the state dump file."""
@@ -192,42 +208,32 @@ class broadcast( Pyro.core.ObjBase ):
         self.settings_queue = []
         return ops
 
-    def get_dump(self):
-        """Return broadcast variables as written to the state dump file."""
-        return pickle.dumps(self.settings) + "\n"
-
     def load(self, pickled_settings):
         """Load broadcast variables from the state dump file."""
         self.settings = pickle.loads(pickled_settings)
 
-    @staticmethod
-    def _get_bad_options(prunes, point_strings, namespaces, cancel_keys_list):
+    def _get_dump(self):
+        """Return broadcast variables as written to the state dump file."""
+        return pickle.dumps(self.settings) + "\n"
+
+    @classmethod
+    def _get_bad_options(cls, prunes, point_strings, namespaces, cancel_keys_list):
         """Return unpruned namespaces and/or point_strings options."""
+        cancel_keys_list = [
+            tuple(cancel_keys) for cancel_keys in cancel_keys_list]
         bad_options = {
             "point_strings": None, "namespaces": None, "cancel": None}
-        if point_strings:
-            bad_options["point_strings"] = set(point_strings)
-            for point_string in point_strings:
-                if point_string in [prune[0] for prune in prunes]:
-                    bad_options["point_strings"].discard(point_string)
-                    if not bad_options["point_strings"]:
-                        break
-        if namespaces:
-            bad_options["namespaces"] = set(namespaces)
-            for namespace in namespaces:
-                if namespace in [prune[1] for prune in prunes if prune[1:]]:
-                    bad_options["namespaces"].discard(namespace)
-                    if not bad_options["namespaces"]:
-                        break
-        if cancel_keys_list:
-            bad_options["cancel"] = set(
-                [tuple(cancel_keys) for cancel_keys in cancel_keys_list])
-            for cancel_keys in cancel_keys_list:
-                if (list(cancel_keys) in
-                        [prune[2:] for prune in prunes if prune[2:]]):
-                    bad_options["cancel"].discard(tuple(cancel_keys))
-                    if not bad_options["cancel"]:
-                        break
+        for opt_name, opt_list, opt_test in [
+                ("point_strings", point_strings, cls._point_string_in_prunes),
+                ("namespaces", namespaces, cls._namespace_in_prunes),
+                ("cancel", cancel_keys_list, cls._cancel_keys_in_prunes)]:
+            if opt_list:
+                bad_options[opt_name] = set(opt_list)
+                for opt in opt_list:
+                    if opt_test(prunes, opt):
+                        bad_options[opt_name].discard(opt)
+                        if not bad_options[opt_name]:
+                            break
         for key, value in bad_options.items():
             if value:
                 bad_options[key] = list(value)
@@ -235,9 +241,25 @@ class broadcast( Pyro.core.ObjBase ):
                 del bad_options[key]
         return bad_options
 
+    @staticmethod
+    def _point_string_in_prunes(prunes, point_string):
+        """Is point_string pruned?"""
+        return point_string in [prune[0] for prune in prunes]
+
+    @staticmethod
+    def _namespace_in_prunes(prunes, namespace):
+        """Is point_string pruned?"""
+        return namespace in [prune[1] for prune in prunes if prune[1:]]
+
+    @staticmethod
+    def _cancel_keys_in_prunes(prunes, cancel_keys):
+        """Is point_string pruned?"""
+        return (list(cancel_keys) in
+                [prune[2:] for prune in prunes if prune[2:]])
+
     def _update_db_queue(self):
         """Update the queue to the runtime DB."""
-        this_dump = self.get_dump()
+        this_dump = self._get_dump()
         if this_dump != self.prev_dump:
             now = get_current_time_string(display_sub_seconds=True)
             self.settings_queue.append(RecordBroadcastObject(now, this_dump))
