@@ -49,8 +49,8 @@ generation of groups of related dependencies and runtime properties."""
 {% endfor %}
 
 [visualization]
-    initial cycle point = 2011080812
-    final cycle point = 2011080823
+    initial cycle point = 2011-08-08T12
+    final cycle point = 2011-08-08T23
     [[node groups]]
         cleaning = clean, cleanup
     [[node attributes]]
