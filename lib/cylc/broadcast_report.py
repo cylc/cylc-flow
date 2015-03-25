@@ -28,7 +28,7 @@ CHANGE_TITLE_SET = "Broadcast set:"
 
 
 def get_broadcast_bad_options_report(bad_options):
-    """Return a string to report bad options for cancel/clear."""
+    """Return a string to report bad options for broadcast cancel/clear."""
     if not bad_options:
         return None
     msg = BAD_OPTIONS_TITLE

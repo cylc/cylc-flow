@@ -5,7 +5,7 @@ ERROR: No broadcast to cancel/clear for these options:
 ERROR: No broadcast to cancel/clear for these options:
   --cancel=[environment]BCAST
   --namespaces=m5
-  --point_strings=all-cycle-points
+  --point_strings=*
 ERROR: No broadcast to cancel/clear for these options:
   --namespaces=m6
 ERROR: No broadcast to cancel/clear for these options:

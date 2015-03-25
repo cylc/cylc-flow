@@ -109,13 +109,13 @@ parser = cop( usage, pyro=True )
 parser.add_option( "-t", "--tag", metavar="CYCLE_POINT",
         help="(Deprecated). "
         "Target cycle point. More than one can be added. "
-        "Defaults to 'all-cycle-points' with --set and --cancel, "
+        "Defaults to '*' for all cycle points with --set and --cancel, "
         "and nothing with --clear.",
         action="append", dest="point_strings", default=[] )
 
 parser.add_option( "-p", "--point", metavar="CYCLE_POINT",
         help="Target cycle point. More than one can be added. "
-        "Defaults to 'all-cycle-points' with --set and --cancel, "
+        "Defaults to '*' with --set and --cancel, "
         "and nothing with --clear.",
         action="append", dest="point_strings", default=[] )
 
@@ -135,7 +135,7 @@ parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM",
 parser.add_option( "-C", "--clear",
         help="Cancel all broadcasts, or with -p/--point, "
         "-n/--namespace, cancel all broadcasts to targeted "
-        "namespaces and/or cycle points. Use '-C -p all-cycle-points' "
+        "namespaces and/or cycle points. Use \"-C -p '*'\" "
         "to cancel all all-cycle broadcasts without canceling "
         "all specific-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
@@ -238,7 +238,7 @@ if not namespaces:
     namespaces = ["root"]
 point_strings = options.point_strings
 if not point_strings:
-    point_strings = ["all-cycle-points"]
+    point_strings = ["*"]
 
 if options.cancel:
     try:

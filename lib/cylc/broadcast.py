@@ -32,9 +32,11 @@ class Broadcast(Pyro.core.ObjBase):
     """Receive broadcast variables from cylc clients.
 
     Examples:
-    self.settings['all-cycle-points']['root'] = {'environment': {'FOO': 'bar'}}
+    self.settings['*']['root'] = {'environment': {'FOO': 'bar'}}
     self.settings['20100808T06Z']['root'] = {'command scripting': 'stuff'}
     """
+
+    ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
     def __init__(self, linearized_ancestors):
         self.log = logging.getLogger('main')
@@ -45,7 +47,15 @@ class Broadcast(Pyro.core.ObjBase):
         Pyro.core.ObjBase.__init__(self)
 
     def _prune(self):
-        """Remove empty leaves left by unsetting broadcast values."""
+        """Remove empty leaves left by unsetting broadcast values.
+
+        Return a list of pruned settings in the form:
+
+        [
+            ["20200202", "foo", "command scripting"],
+            ["20020202", "bar", "environment", "BAR"],
+        ]
+        """
         prunes = []
         stuffs = [([], self.settings, True)]
         while stuffs:
@@ -76,7 +86,12 @@ class Broadcast(Pyro.core.ObjBase):
                     del target[key]
 
     def put(self, namespaces, point_strings, settings):
-        """Add new broadcast settings."""
+        """Add new broadcast settings.
+
+        Return a list of modified settings in the form:
+        [("20200202", "foo", {"command scripting": "true"}, ...]
+
+        """
         modified_settings = []
         for setting in settings:
             for point_string in point_strings:
@@ -90,10 +105,11 @@ class Broadcast(Pyro.core.ObjBase):
                     modified_settings.append(
                         (point_string, namespace, setting))
 
+        # Remove empty leaves 
         self._prune()
-        self._update_db_queue()
 
         # Log the broadcast
+        self._update_db_queue()
         self.log.info(get_broadcast_change_report(modified_settings))
 
         return modified_settings
@@ -109,8 +125,7 @@ class Broadcast(Pyro.core.ObjBase):
         # The order is:
         #    all:root -> all:FAM -> ... -> all:task
         # -> tag:root -> tag:FAM -> ... -> tag:task
-        # DEPRECATED at cylc 6: 'all-cycles'
-        for cycle in ['all-cycle-points', 'all-cycles', point_string]:
+        for cycle in self.ALL_CYCLE_POINTS_STRS + [point_string]:
             if cycle not in self.settings:
                 continue
             for namespace in reversed(self.linearized_ancestors[name]):
@@ -124,8 +139,7 @@ class Broadcast(Pyro.core.ObjBase):
             self.log.info('Expiring all broadcast settings now')
             self.settings = {}
         for point_string in self.settings.keys():
-            # DEPRECATED at cylc 6: 'all-cycles'
-            if point_string in ['all-cycle-points', 'all-cycles']:
+            if point_string in self.ALL_CYCLE_POINTS_STRS:
                 continue
             point = get_point(point_string)
             if point < cutoff:
@@ -134,9 +148,23 @@ class Broadcast(Pyro.core.ObjBase):
                 del self.settings[point_string]
 
     def clear(self, namespaces, point_strings, cancel_settings=None):
-        """Clear settings globally, or for listed namespaces and/or points."""
+        """Clear settings globally, or for listed namespaces and/or points.
+
+        Return a tuple (modified_settings, bad_options), where:
+        * modified_settings is similar to the return value of the "put" method,
+          but for removed settings.
+        * bad_options is a dict in the form:
+              {"point_strings": ["20020202", ..."], ...}
+          The dict is only populated if there are options not associated with
+          previous broadcasts. The keys can be:
+          * point_strings: a list of bad point strings.
+          * namespaces: a list of bad namespaces.
+          * cancel: a list of tuples. Each tuple contains the keys of a bad
+            setting.
+        """
         # If cancel_settings defined, only clear specific settings
         cancel_keys_list = self._settings_to_keys_list(cancel_settings)
+
         # Clear settings
         modified_settings = []
         for point_string, point_string_settings in self.settings.items():
@@ -163,9 +191,9 @@ class Broadcast(Pyro.core.ObjBase):
         # Prune any empty branches
         bad_options = self._get_bad_options(
             self._prune(), point_strings, namespaces, cancel_keys_list)
-        self._update_db_queue()
 
         # Log the broadcast
+        self._update_db_queue()
         self.log.info(
             get_broadcast_change_report(modified_settings, is_cancel=True))
         if bad_options:
@@ -223,6 +251,9 @@ class Broadcast(Pyro.core.ObjBase):
             tuple(cancel_keys) for cancel_keys in cancel_keys_list]
         bad_options = {
             "point_strings": None, "namespaces": None, "cancel": None}
+        # 1. Populate the bad_options dict where applicable.
+        # 2. Remove keys if they are found in "prunes".
+        # 3. Remove key in bad_options if it becomes empty.
         for opt_name, opt_list, opt_test in [
                 ("point_strings", point_strings, cls._point_string_in_prunes),
                 ("namespaces", namespaces, cls._namespace_in_prunes),

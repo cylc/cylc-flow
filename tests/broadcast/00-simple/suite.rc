@@ -74,8 +74,8 @@ generated reference version.
     # list the result to prep task stdout:
         cylc bcast --display $CYLC_SUITE_REG_NAME
 } 1>prep.out 2>prep.err
-cmp "${CYLC_SUITE_DEF_PATH}/expected-prep.out" 'prep.out'
-cmp "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
+diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.out" 'prep.out'
+diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
                             """
     [[ENS]]
     [[ENS1]]
