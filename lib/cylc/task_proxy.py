@@ -935,22 +935,22 @@ class TaskProxy(object):
         # dynamic instantiation - don't know job sub method till run time.
         self.batch_sys_name = rtconfig['job submission']['method']
 
-        command = rtconfig['command scripting']
+        command = rtconfig['script']
         use_manual = rtconfig['manual completion']
         if self.tdef.run_mode == 'dummy':
             # (dummy tasks don't detach)
             use_manual = False
-            command = rtconfig['dummy mode']['command scripting']
-            if rtconfig['dummy mode']['disable pre-command scripting']:
+            command = rtconfig['dummy mode']['script']
+            if rtconfig['dummy mode']['disable pre-script']:
                 precommand = None
-            if rtconfig['dummy mode']['disable post-command scripting']:
+            if rtconfig['dummy mode']['disable post-script']:
                 postcommand = None
         else:
-            precommand = rtconfig['pre-command scripting']
-            postcommand = rtconfig['post-command scripting']
+            precommand = rtconfig['pre-script']
+            postcommand = rtconfig['post-script']
 
         if self.tdef.suite_polling_cfg:
-            # generate automatic suite state polling command scripting
+            # generate automatic suite state polling script
             comstr = "cylc suite-state " + \
                      " --task=" + self.tdef.suite_polling_cfg['task'] + \
                      " --point=" + str(self.point) + \
@@ -1002,9 +1002,9 @@ class TaskProxy(object):
             rtconfig, local_jobfile_path, common_job_log_path)
         self.job_conf.update({
             'use manual completion': use_manual,
-            'pre-command scripting': precommand,
-            'command scripting': command,
-            'post-command scripting': postcommand,
+            'pre-script': precommand,
+            'script': command,
+            'post-script': postcommand,
         })
 
     def _prepare_manip(self):
@@ -1038,8 +1038,8 @@ class TaskProxy(object):
             'task id': self.identity,
             'batch system name': rtconfig['job submission']['method'],
             'directives': rtconfig['directives'],
-            'initial scripting': rtconfig['initial scripting'],
-            'environment scripting': rtconfig['environment scripting'],
+            'init-script': rtconfig['init-script'],
+            'env-script': rtconfig['env-script'],
             'runtime environment': rtconfig['environment'],
             'remote suite path': (
                 rtconfig['remote']['suite definition directory']),
@@ -1048,9 +1048,9 @@ class TaskProxy(object):
                 rtconfig['job submission']['command template']),
             'work sub-directory': rtconfig['work sub-directory'],
             'use manual completion': False,
-            'pre-command scripting': '',
-            'command scripting': '',
-            'post-command scripting': '',
+            'pre-script': '',
+            'script': '',
+            'post-script': '',
             'namespace hierarchy': self.tdef.namespace_hierarchy,
             'submission try number': self.sub_try_number,
             'try number': self.try_number,

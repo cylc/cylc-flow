@@ -28,6 +28,7 @@ from cylc.rundb import RecordBroadcastObject
 from cylc.wallclock import get_current_time_string
 
 
+<<<<<<< HEAD
 class Broadcast(Pyro.core.ObjBase):
     """Receive broadcast variables from cylc clients.
 

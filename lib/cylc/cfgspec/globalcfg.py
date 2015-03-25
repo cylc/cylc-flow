@@ -107,7 +107,7 @@ SPEC = {
             'remote shell template'       : vdr( vtype='string', default='ssh -oBatchMode=yes -oConnectTimeout=10' ),
             'use login shell'             : vdr( vtype='boolean', default=True ),
             'cylc executable'             : vdr( vtype='string', default='cylc'  ),
-            'global initial scripting'    : vdr( vtype='string', default='' ),
+            'global init-script'          : vdr( vtype='string', default='' ),
             'copyable environment variables': vdr(vtype='string_list', default=[]),
             },
         '__MANY__' : {
@@ -118,7 +118,7 @@ SPEC = {
             'remote shell template'       : vdr( vtype='string'  ),
             'use login shell'             : vdr( vtype='boolean' ),
             'cylc executable'             : vdr( vtype='string'  ),
-            'global initial scripting'    : vdr( vtype='string'  ),
+            'global init-script'          : vdr( vtype='string'  ),
             'copyable environment variables': vdr(vtype='string_list', default=[]),
             },
         },
@@ -173,10 +173,13 @@ def upg( cfg, descr ):
     u.deprecate( '5.1.1', ['hosts','__MANY__', 'cylc directory'], ['hosts','__MANY__', 'cylc bin directory'], add_bin_dir )
     u.obsolete(  '5.2.0', ['hosts','__MANY__', 'cylc bin directory'], ['hosts','__MANY__', 'cylc bin directory'] )
     u.deprecate( '5.2.0', ['hosts','__MANY__', 'use ssh messaging'], ['hosts','__MANY__', 'task communication method'], use_ssh )
-    u.upgrade()
     u.deprecate( '6.1.2', ['task messaging', 'connection timeout in seconds'], ['task messaging', 'connection timeout'] )
     u.deprecate( '6.1.2', ['task messaging', 'retry interval in seconds'], ['task messaging', 'retry interval'] )
-
+    u.deprecate('6.4.0',
+        ['runtime', '__MANY__', 'global initial scripting'],
+        ['runtime', '__MANY__', 'global init-script'])
+    u.upgrade()
+ 
 class GlobalConfigError( Exception ):
     def __init__( self, msg ):
         self.msg = msg
