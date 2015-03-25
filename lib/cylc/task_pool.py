@@ -658,7 +658,7 @@ class TaskPool(object):
         """Set the point after which tasks must be held."""
         self.hold_point = point
         if point is not None:
-            for itask in self.get_tasks():
+            for itask in self.get_all_tasks():
                 if itask.point > point:
                     itask.reset_state_held()
 
