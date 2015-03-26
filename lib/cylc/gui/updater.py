@@ -16,25 +16,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc import cylc_pyro_client, dump
-from cylc.task_state import task_state
-from cylc.gui.dot_maker import DotMaker
-from cylc.state_summary import get_id_summary
-from cylc.strftime import strftime
-from cylc.wallclock import get_time_string_from_unix_time
-from cylc.task_id import TaskID
-from cylc.version import CYLC_VERSION  # Warning: will SystemExit on failure.
-from warning_dialog import warning_dialog
-import gobject
+import re
+import sys
 import gtk
 import Pyro
-import re
-import string
-import sys
+import atexit
+import gobject
 import threading
-from time import sleep, time
+from time import sleep, time, ctime
 
-from cylc import cylc_pyro_client, dump
+import cylc.flags
+from cylc.dump import get_stop_state_summary
+from cylc.network.suite_state import StateSummaryClient
+from cylc.network.suite_info import SuiteInfoClient
+from cylc.network.suite_log import SuiteLogClient
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.task_state import task_state
+from cylc.gui.dot_maker import DotMaker
+from cylc.wallclock import get_time_string_from_unix_time
+from cylc.port_file import PortFileError
+from cylc.task_id import TaskID
+from cylc.version import CYLC_VERSION
+from cylc.gui.warning_dialog import warning_dialog
+
 
 class PollSchd(object):
     """Keep information on whether the updater should poll or not."""
@@ -57,6 +61,13 @@ class PollSchd(object):
             self.start()
 
     def ready(self):
+        is_ready = self._ready()
+        if cylc.flags.debug:
+            if not is_ready:
+                print >> sys.stderr, "  PollSchd not ready"
+        return is_ready
+
+    def _ready(self):
         """Return True if a poll is ready."""
         if self.t_init is None:
             return True
@@ -78,12 +89,16 @@ class PollSchd(object):
 
     def start(self):
         """Start keeping track of latest poll, if not already started."""
+        if cylc.flags.debug:
+            print >> sys.stderr, '  PollSchd start'
         if self.t_init is None:
             self.t_init = time()
             self.t_prev = None
 
     def stop(self):
         """Stop keeping track of latest poll."""
+        if cylc.flags.debug:
+            print >> sys.stderr, '  PollSchd stop'
         self.t_init = None
         self.t_prev = None
 
@@ -116,8 +131,7 @@ class Updater(threading.Thread):
         self.stop_summary = None
         self.ancestors = {}
         self.ancestors_pruned = {}
-        self.descendants = []
-        self.god = None
+        self.descendants = {}
         self.mode = "waiting..."
         self.dt = "waiting..."
         self.dt_date = None
@@ -126,7 +140,6 @@ class Updater(threading.Thread):
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
         self._flag_new_update()
-        self._reconnect()
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
         self.restricted_display = restricted_display
@@ -135,174 +148,198 @@ class Updater(threading.Thread):
         self.kept_task_ids = set()
         self.filt_task_ids = set()
 
+        client_args = (
+            self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host,
+            self.cfg.pyro_timeout, self.cfg.port, self.cfg.my_uuid)
+        self.state_summary_client = StateSummaryClient(*client_args)
+        self.suite_info_client = SuiteInfoClient(*client_args)
+        self.suite_log_client = SuiteLogClient(*client_args)
+        self.suite_command_client = SuiteCommandClient(*client_args)
+        # Don't report every call to these clients unless in debug mode:
+        self.suite_log_client.set_multi()
+        self.suite_info_client.set_multi()
+        self.state_summary_client.set_multi()
+        # Report sign-out on exit.
+        atexit.register(self.state_summary_client.signout)
+
     def _flag_new_update( self ):
         self.last_update_time = time()
 
-    def _retrieve_hierarchy_info(self):
-        self.ancestors = self.sinfo.get('first-parent ancestors')
-        self.ancestors_pruned = self.sinfo.get('first-parent ancestors', True)
-        self.descendants = self.sinfo.get('first-parent descendants')
-        self.all_families = self.sinfo.get('all families')
-        self.triggering_families = self.sinfo.get('triggering families')
-
-    def _reconnect(self):
-        """Connect to the suite daemon and get Pyro client proxies."""
-        self.god = None
-        self.sinfo = None
-        self.log = None
+    def reconnect(self):
+        """Try to reconnect to the suite daemon."""
+        if cylc.flags.debug:
+            print >> sys.stderr, "  reconnection...",
+        # Reset Pyro clients
+        self.suite_log_client.reset()
+        self.state_summary_client.reset()
+        self.suite_info_client.reset()
+        self.suite_command_client.reset()
         try:
-            client = cylc_pyro_client.client(
-                    self.cfg.suite,
-                    self.cfg.pphrase,
-                    self.cfg.owner,
-                    self.cfg.host,
-                    self.cfg.pyro_timeout,
-                    self.cfg.port )
-            self.god = client.get_proxy( 'state_summary' )
-            self.sinfo = client.get_proxy( 'suite-info' )
-            self.log = client.get_proxy( 'log' )
-            self._retrieve_hierarchy_info()
-        except Exception, x:
-            # (port file not found, if suite not running)
-            if self.stop_summary is None:
-                self.stop_summary = dump.get_stop_state_summary(
-                                                       self.cfg.suite,
-                                                       self.cfg.owner,
-                                                       self.cfg.host)
-                self._flag_new_update()
+            daemon_version = self.suite_info_client.get_info_gui('get cylc version')
+        except KeyError:
+            daemon_version = "??? (pre 6.1.2?)"
+            if cylc.flags.debug:
+                print >> sys.stderr, "succeeded: (old daemon)"
+        except (PortFileError,
+                Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
+            # Not connected.
+            if cylc.flags.debug:
+                print >> sys.stderr, "failed: %s" % str(exc)
             return False
-        else:
-            try:
-                daemon_version = self.sinfo.get('get cylc version')
-            except KeyError:
-                daemon_version = "??? (pre 6.1.2?)"
-            if daemon_version != CYLC_VERSION:
-                warning_dialog(
-                    "Warning: cylc version mismatch!\n\n" +
-                    "Suite running with %r.\n" % daemon_version +
-                    "gcylc at %r.\n" % CYLC_VERSION,
-                    self.info_bar.get_toplevel()
-                ).warn()
-            self.stop_summary = None
-            self.err_log_lines = []
-            self.err_log_size = 0
-            self.status = "connected"
-            self.connected = True
-            self.poll_schd.stop()
-            self._flag_new_update()
-            return True
 
-    def connection_lost( self ):
-        self._summary_update_time = None
-        self.state_summary = {}
-        self.full_state_summary = {}
-        self.fam_state_summary = {}
-        self.full_fam_state_summary = {}
-        self.status = "stopped"
-        self.connected = False
+        # Connected.
+        self.status = "connected"
+        self.connected = True
+        self.poll_schd.stop()
+        if cylc.flags.debug:
+            print >> sys.stderr, (
+                "succeeded: daemon v %s" % daemon_version)
+        if daemon_version != CYLC_VERSION:
+            warning_dialog(
+                "Warning: cylc version mismatch!\n\n" +
+                "Suite running with %r.\n" % daemon_version +
+                "gcylc at %r.\n" % CYLC_VERSION,
+                self.info_bar.get_toplevel()
+            ).warn()
+        self.stop_summary = None
+        self.err_log_lines = []
+        self.err_log_size = 0
         self._flag_new_update()
-        self.poll_schd.start()
-        self.info_bar.set_state( [] )
-        self.info_bar.set_status( self.status )
-        if self.stop_summary is not None and any(self.stop_summary):
-            self.info_bar.set_stop_summary(self.stop_summary)
-        # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
-        self._reconnect()
+        # This is an idle_add callback; always return False so that it is only
+        # called on the GUI's own update cycle.
         return False
 
-    def set_update( self, should_update ):
+    def set_update(self, should_update):
         if should_update:
             self._no_update_event.clear()
         else:
             self._no_update_event.set()
 
-    def update(self):
-        if self.god is None:
-            gobject.idle_add( self.connection_lost )
-            return False
-
+    def retrieve_err_log(self):
+        """Retrieve suite err log; return True if it has changed."""
         try:
-            new_err_content, new_err_size = self.log.get_err_content(
-                prev_size=self.err_log_size,
-                max_lines=self._err_num_log_lines)
-        except (AttributeError, Pyro.errors.NamingError):
+            new_err_content, new_err_size = (
+                self.suite_log_client.get_err_content(
+                    self.err_log_size, self._err_num_log_lines))
+        except AttributeError:
             # TODO: post-backwards compatibility concerns, remove this handling.
             new_err_content = ""
             new_err_size = self.err_log_size
-        except Pyro.errors.ProtocolError:
-            gobject.idle_add( self.connection_lost )
-            return False
 
         err_log_changed = (new_err_size != self.err_log_size)
         if err_log_changed:
             self.err_log_lines += new_err_content.splitlines()
             self.err_log_lines = self.err_log_lines[-self._err_num_log_lines:]
             self.err_log_size = new_err_size
+        return err_log_changed
 
-        update_summaries = False
+    def retrieve_summary_update_time(self):
+        """Retrieve suite summary update time; return True if it has changed."""
+        do_update = False
         try:
-            summary_update_time = self.god.get_summary_update_time()
+            summary_update_time = (
+                self.state_summary_client.get_suite_state_summary_update_time())
             if (summary_update_time is None or
                     self._summary_update_time is None or
                     summary_update_time != self._summary_update_time):
                 self._summary_update_time = summary_update_time
-                update_summaries = True
+                do_update = True
         except AttributeError as e:
             # TODO: post-backwards compatibility concerns, remove this handling.
             # Force an update for daemons using the old API.
-            update_summaries = True
-        except (Pyro.errors.ProtocolError, Pyro.errors.NamingError):
-            gobject.idle_add( self.connection_lost )
+            do_update = True
+        return do_update
+
+    def retrieve_state_summaries(self):
+        glbl, states, fam_states = self.state_summary_client.get_suite_state_summary()
+        self.ancestors = self.suite_info_client.get_info_gui('first-parent ancestors')
+        self.ancestors_pruned = self.suite_info_client.get_info_gui('first-parent ancestors', True)
+        self.descendants = self.suite_info_client.get_info_gui('first-parent descendants')
+        self.all_families = self.suite_info_client.get_info_gui('all families')
+        self.triggering_families = self.suite_info_client.get_info_gui('triggering families')
+
+        if glbl['stopping']:
+            self.status = 'stopping'
+        elif glbl['paused']:
+            self.status = 'held'
+        elif glbl['will_pause_at']:
+            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
+        elif glbl['will_stop_at']:
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
+        else:
+            self.status = 'running'
+        self.mode = glbl['run_mode']
+
+        if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
+            # (protect for compat with old suite daemons)
+            nsdo = glbl['namespace definition order']
+            if self.ns_defn_order != nsdo:
+                self.ns_defn_order = nsdo
+                self.dict_ns_defn_order = dict(zip(nsdo, range(0,len(nsdo))))
+        try:
+            self.dt = get_time_string_from_unix_time(glbl['last_updated'])
+        except (TypeError, ValueError):
+            # Older suite...
+            self.dt = glbl['last_updated'].isoformat()
+        self.global_summary = glbl
+
+        if self.restricted_display:
+            states = self.filter_for_restricted_display(states)
+
+        self.full_state_summary = states
+        self.full_fam_state_summary = fam_states
+        self.refilter()
+
+    def get_stop_summary(self):
+        # Get the suite stop summary.
+        if self.stop_summary is not None and any(self.stop_summary):
+            self.info_bar.set_stop_summary(self.stop_summary)
+        else:
+            self.stop_summary = get_stop_state_summary(
+                self.cfg.suite, self.cfg.owner, self.cfg.host)
+
+    def set_stopped(self):
+        self.connected = False
+        self.status = "stopped"
+        self.get_stop_summary()
+        self._summary_update_time = None
+        self.state_summary = {}
+        self.full_state_summary = {}
+        self.fam_state_summary = {}
+        self.full_fam_state_summary = {}
+        self.poll_schd.start()
+        self.info_bar.set_state([])
+        self.info_bar.set_status(self.status)
+        self._flag_new_update()
+
+    def update(self):
+        if cylc.flags.debug:
+            print >> sys.stderr, "UPDATE", ctime().split()[3],
+        if not self.connected:
+            # Only reconnect via self.reconnect().
+            gobject.idle_add(self.reconnect)
+            if cylc.flags.debug:
+                print >> sys.stderr, "(not connected)"
             return False
-
-        if update_summaries:
-            try:
-                [glbl, states, fam_states] = self.god.get_state_summary()
-                self._retrieve_hierarchy_info() # may change on reload
-            except (Pyro.errors.ProtocolError, Pyro.errors.NamingError):
-                gobject.idle_add( self.connection_lost )
-                return False
-
-            if not glbl:
-                self.task_list = []
-                return False
-
-            if glbl['stopping']:
-                self.status = 'stopping'
-            elif glbl['paused']:
-                self.status = 'held'
-            elif glbl['will_pause_at']:
-                self.status = 'hold at ' + glbl[ 'will_pause_at' ]
-            elif glbl['will_stop_at']:
-                self.status = 'running to ' + glbl[ 'will_stop_at' ]
+        if cylc.flags.debug:
+            print >> sys.stderr, "(connected)"
+        try:
+            err_log_changed = self.retrieve_err_log()
+            summaries_changed = self.retrieve_summary_update_time()
+            if summaries_changed:
+                self.retrieve_state_summaries()
+        except (PortFileError,
+                Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
+            if cylc.flags.debug:
+                print >> sys.stderr, "  CONNECTION LOST", str(exc)
+            self.set_stopped()
+            gobject.idle_add(self.reconnect)
+            return False
+        else:
+            if summaries_changed or err_log_changed:
+                return True
             else:
-                self.status = 'running'
-            self.mode = glbl['run_mode']
-
-            if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
-                # (protect for compat with old suite daemons)
-                nsdo = glbl['namespace definition order']
-                if self.ns_defn_order != nsdo:
-                    self.ns_defn_order = nsdo
-                    self.dict_ns_defn_order = dict(zip(nsdo, range(0,len(nsdo))))
-
-            try:
-                self.dt = get_time_string_from_unix_time(glbl['last_updated'])
-            except (TypeError, ValueError):
-                # Older suite...
-                self.dt = glbl['last_updated'].isoformat()
-            self.global_summary = glbl
-
-            if self.restricted_display:
-                states = self.filter_for_restricted_display(states)
-
-            self.full_state_summary = states
-            self.full_fam_state_summary = fam_states
-            self.refilter()
-
-        if update_summaries or err_log_changed:
-            return True
-        return False
+                return False
 
     def filter_by_name(self, states):
         return dict(

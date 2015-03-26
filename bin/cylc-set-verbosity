@@ -25,7 +25,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
@@ -53,19 +53,9 @@ try:
 except KeyError:
     parser.error("Illegal logging level, %s" % priority)
 
-try:
-    proxy = cylc_pyro_client.client(
-            suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port).get_proxy('command-interface')
-    prompt("Set logging level to " + priority_str + " in " + suite, options.force)
-    res, msg = proxy.put('set verbosity', priority)
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-
-if res:
-    print msg
-else:
-    sys.exit(msg)
+prompt("Set logging level to %s in %s" % (priority_str, suite), options.force)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+pclient.put_command('set verbosity', priority)

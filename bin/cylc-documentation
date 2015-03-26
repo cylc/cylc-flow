@@ -128,8 +128,12 @@ elif len(args) == 1:
         # (Illegal config item)
         sys.exit(stdout)
     elif len(stdout) == 0:
-        sys.exit("ERROR: No URL defined for %s in %s." % (
-            options.task_name, suite))
+        if options.task_name is not None:
+            sys.exit("ERROR: No URL defined for %s in %s." % (
+                options.task_name, suite))
+        else:
+            sys.exit("ERROR: No URL defined for %s." % suite)
+ 
     target = stdout[0]
     viewer = html_viewer
 

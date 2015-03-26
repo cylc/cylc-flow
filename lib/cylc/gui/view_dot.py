@@ -21,7 +21,6 @@ import os, re
 import gobject
 from updater_dot import DotUpdater
 from gcapture import gcapture_tmpfile
-from cylc import cylc_pyro_client
 from cylc.task_id import TaskID
 from util import EntryTempText
 from warning_dialog import warning_dialog

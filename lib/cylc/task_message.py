@@ -16,14 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Task to cylc progress messaging."""
-
-import os, sys
+import os
+import sys
 import socket
 import subprocess
 from datetime import datetime
 from time import sleep
-from remote import remrun
+from cylc.remote import remrun
 from cylc.passphrase import passphrase
 from cylc.wallclock import get_current_time_string
 import cylc.flags
@@ -102,17 +101,15 @@ class message(object):
             value = self.env_map.get(key, default)
             setattr(self, attr, value)
 
-    def get_proxy( self ):
+    def get_client(self):
         # get passphrase here, not in __init__, because it is not needed
         # on remote task hosts if 'ssh messaging = True' (otherwise, if
         # it is needed, we will end up in this method).
-
-        self.pphrase = passphrase( self.suite, self.owner, self.host ).get( None, None )
-
-        import cylc_pyro_client
-        return cylc_pyro_client.client( self.suite, self.pphrase,
-                self.owner, self.host, self.try_timeout,
-                self.port ).get_proxy( self.task_id )
+        from cylc.network.task_msgqueue import TaskMessageClient
+        self.pphrase = passphrase(self.suite, self.owner, self.host).get(None, None)
+        return TaskMessageClient(
+            self.suite, self.task_id, self.pphrase, self.owner, self.host,
+            self.try_timeout, self.port)
 
     def print_msg( self, msg ):
         now = get_current_time_string(override_use_utc=self.utc)
@@ -199,7 +196,7 @@ class message(object):
             try:
                 # Get a proxy for the remote object and send the message.
                 self.load_suite_contact_file() # might have change between tries
-                self.get_proxy().put( self.priority, msg )
+                self.get_client().put(self.priority, msg)
             except NamingError, x:
                 print >> sys.stderr, x
                 print "Send message: try %s of %s failed: %s" % (
@@ -248,18 +245,3 @@ class message(object):
             # the special task failed message.
             self.send()
         self.send( self.task_id + ' failed' )
-
-    def shortcut_next_restart( self ):
-        self.print_msg( 'next restart file completed' )
-        if self.mode == 'scheduler':
-            self.get_proxy().set_next_restart_completed()
-
-    def shortcut_all_restarts( self ):
-        self.print_msg( 'all restart files completed' )
-        if self.mode == 'scheduler':
-            self.get_proxy().set_all_restarts_completed()
-
-    def shortcut_all_outputs( self ):
-        self.print_msg( 'all outputs completed' )
-        if self.mode == 'scheduler':
-            self.get_proxy().set_all_internal_outputs_completed()

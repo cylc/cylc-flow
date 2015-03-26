@@ -16,24 +16,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import Pyro.core
-import logging
-from cylc.task_id import TaskID
 import time
-from datetime import datetime
-import flags
-from wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
+import datetime
+
+import cylc.flags
+from cylc.task_id import TaskID
+from cylc.wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
+from cylc.network.pyro_base import PyroClient, PyroServer
+
+PYRO_STATE_OBJ_NAME = 'state_summary'
+
+class SuiteStillInitialisingError(Exception):
+    """Exception raised if a summary is requested before the first update.
+    
+    This can happen if client connects during start-up for large suites.
+    """
+    def __str__(self):
+        return "Suite initializing..."
 
 
+class StateSummaryServer(PyroServer):
+    """Server-side suite state summary interface."""
 
-class state_summary( Pyro.core.ObjBase ):
-    """supply suite state summary information to remote cylc clients."""
-
-    def __init__( self, config, run_mode, start_time ):
-        Pyro.core.ObjBase.__init__(self)
+    def __init__(self, config, run_mode, start_time):
+        super(StateSummaryServer, self).__init__()
         self.task_summary = {}
         self.global_summary = {}
-        self.task_name_list = []
         self.family_summary = {}
         # external monitors should access config via methods in this
         # class, in case config items are ever updated dynamically by
@@ -41,12 +49,13 @@ class state_summary( Pyro.core.ObjBase ):
         self.config = config
         self.run_mode = run_mode
         self.start_time = start_time
+        self.first_update_completed = False
         self._summary_update_time = None
 
-    def update( self, tasks, tasks_rh, min_point, max_point, max_point_rh, paused,
-            will_pause_at, stopping, will_stop_at, ns_defn_order ):
+    def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh, paused,
+            will_pause_at, stopping, will_stop_at, ns_defn_order):
 
-        task_name_list = []
+        self.first_update_completed = True
         task_summary = {}
         global_summary = {}
         family_summary = {}
@@ -64,10 +73,7 @@ class state_summary( Pyro.core.ObjBase ):
                 task_states.setdefault(point_string, {})
                 task_states[point_string][name] = (
                     task_summary[task.identity]['state'])
-                task_name_list.append(name)
             fs = 'runahead'
-
-        task_name_list = list(set(task_name_list))
 
         fam_states = {}
         all_states = []
@@ -81,7 +87,7 @@ class state_summary( Pyro.core.ObjBase ):
                 state = c_task_states.get(key)
                 if state is None:
                     continue
-                all_states.append( state )
+                all_states.append(state)
                 for parent in parent_list:
                     if parent == key:
                         continue
@@ -107,55 +113,65 @@ class state_summary( Pyro.core.ObjBase ):
 
         all_states.sort()
 
-        global_summary[ 'start time' ] = self.str_or_None(self.start_time)
-        global_summary[ 'oldest cycle point string' ] = (
+        global_summary['start time'] = self.str_or_None(self.start_time)
+        global_summary['oldest cycle point string'] = (
             self.str_or_None(min_point))
-        global_summary[ 'newest cycle point string' ] = (
+        global_summary['newest cycle point string'] = (
             self.str_or_None(max_point))
-        global_summary[ 'newest runahead cycle point string' ] = (
+        global_summary['newest runahead cycle point string'] = (
             self.str_or_None(max_point_rh))
-        if flags.utc:
-            global_summary[ 'daemon time zone info' ] = TIME_ZONE_UTC_INFO
+        if cylc.flags.utc:
+            global_summary['daemon time zone info'] = TIME_ZONE_UTC_INFO
         else:
-            global_summary[ 'daemon time zone info' ] = TIME_ZONE_LOCAL_INFO
-        global_summary[ 'last_updated' ] = time.time()
-        global_summary[ 'run_mode' ] = self.run_mode
-        global_summary[ 'paused' ] = paused
-        global_summary[ 'stopping' ] = stopping
-        global_summary[ 'will_pause_at' ] = self.str_or_None(will_pause_at)
-        global_summary[ 'will_stop_at' ] = self.str_or_None(will_stop_at)
-        global_summary[ 'states' ] = all_states
-        global_summary[ 'namespace definition order' ] = ns_defn_order
+            global_summary['daemon time zone info'] = TIME_ZONE_LOCAL_INFO
+        global_summary['last_updated'] = time.time()
+        global_summary['run_mode'] = self.run_mode
+        global_summary['paused'] = paused
+        global_summary['stopping'] = stopping
+        global_summary['will_pause_at'] = self.str_or_None(will_pause_at)
+        global_summary['will_stop_at'] = self.str_or_None(will_stop_at)
+        global_summary['states'] = all_states
+        global_summary['namespace definition order'] = ns_defn_order
 
         self._summary_update_time = time.time()
         # replace the originals
-        self.task_name_list = task_name_list
         self.task_summary = task_summary
         self.global_summary = global_summary
         self.family_summary = family_summary
         task_states = {}
 
-    def str_or_None( self, s ):
+    def str_or_None(self, s):
         if s:
             return str(s)
         else:
             return None
 
-    def get_task_name_list( self ):
-        """Return the list of active task ids."""
-        self.task_name_list.sort()
-        return self.task_name_list
-
-    def get_state_summary( self ):
+    def get_state_summary(self):
         """Return the global, task, and family summary data structures."""
-        return [ self.global_summary, self.task_summary, self.family_summary ]
+        if not self.first_update_completed:
+            raise SuiteStillInitialisingError()
+        return (self.global_summary, self.task_summary, self.family_summary)
 
-    def get_summary_update_time( self ):
+    def get_summary_update_time(self):
         """Return the last time the summaries were changed (Unix time)."""
         return self._summary_update_time
 
 
-def extract_group_state( child_states, is_stopped=False ):
+class StateSummaryClient(PyroClient):
+    """Client-side suite state summary interface."""
+
+    target_server_object = PYRO_STATE_OBJ_NAME
+ 
+    def get_suite_state_summary(self):
+        self._report('get_state_summary')
+        return self.pyro_proxy.get_state_summary()
+
+    def get_suite_state_summary_update_time(self):
+        self._report('get_state_summary_update_time')
+        return self.pyro_proxy.get_summary_update_time()
+
+
+def extract_group_state(child_states, is_stopped=False):
     """Summarise child states as a group."""
     ordered_states = ['submit-failed', 'failed', 'submit-retrying', 'retrying', 'running',
             'submitted', 'ready', 'queued', 'waiting', 'held', 'succeeded', 'runahead']
@@ -169,13 +185,13 @@ def extract_group_state( child_states, is_stopped=False ):
     return None
 
 
-def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
+def get_id_summary(id_, task_state_summary, fam_state_summary, id_family_map):
     """Return some state information about a task or family id."""
     prefix_text = ""
     meta_text = ""
     sub_text = ""
     sub_states = {}
-    stack = [( id_, 0 )]
+    stack = [(id_, 0)]
     done_ids = []
     for summary in [task_state_summary, fam_state_summary]:
         if id_ in summary:
@@ -186,32 +202,32 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
             if description:
                 meta_text += "\n" + description.strip()
     while stack:
-        this_id, depth = stack.pop( 0 )
+        this_id, depth = stack.pop(0)
         if this_id in done_ids:  # family dive down will give duplicates
             continue
-        done_ids.append( this_id )
+        done_ids.append(this_id)
         prefix = "\n" + " " * 4 * depth + this_id + " "
         if this_id in task_state_summary:
             state = task_state_summary[this_id]['state']
             sub_text += prefix + state
-            sub_states.setdefault( state, 0 )
+            sub_states.setdefault(state, 0)
             sub_states[state] += 1
         elif this_id in fam_state_summary:
             name, point_string = TaskID.split(this_id)
             sub_text += prefix + fam_state_summary[this_id]['state']
-            for child in reversed( sorted( id_family_map[name] ) ):
+            for child in reversed(sorted(id_family_map[name])):
                 child_id = TaskID.get(child, point_string)
-                stack.insert( 0, ( child_id, depth + 1 ) )
+                stack.insert(0, (child_id, depth + 1))
         if not prefix_text:
             prefix_text = sub_text.strip()
             sub_text = ""
-    if len( sub_text.splitlines() ) > 10:
+    if len(sub_text.splitlines()) > 10:
         state_items = sub_states.items()
         state_items.sort()
-        state_items.sort( lambda x, y: cmp( y[1], x[1] ) )
+        state_items.sort(lambda x, y: cmp(y[1], x[1]))
         sub_text = ""
         for state, number in state_items:
-            sub_text += "\n    {0} tasks {1}".format( number, state )
+            sub_text += "\n    {0} tasks {1}".format(number, state)
     if sub_text and meta_text:
         sub_text = "\n" + sub_text
     text = prefix_text + meta_text + sub_text

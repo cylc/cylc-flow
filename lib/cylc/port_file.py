@@ -99,7 +99,7 @@ class port_retriever( object ):
     def get_local( self ):
         self.locn = self.local_path
         if not os.path.exists( self.local_path ):
-            raise PortFileError( "ERROR, port file not found: " + self.local_path )
+            raise PortFileError("ERROR: suite not running? (no port file: %s)" % self.local_path)
         f = open( self.local_path, 'r' )
         str_port = f.readline().rstrip('\n')
         f.close()

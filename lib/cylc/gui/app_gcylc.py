@@ -21,10 +21,11 @@ import os
 import re
 import sys
 import gtk
-import gobject
 import pango
+import gobject
 import socket
 import subprocess
+from uuid import uuid4
 from isodatetime.parsers import TimePointParser
 
 from cylc.suite_host import is_remote_host
@@ -51,8 +52,7 @@ from cylc.gui.updater import Updater
 from cylc.gui.util import (
     get_icon, get_image_dir, get_logo, EntryTempText,
     EntryDialog, setup_icons, set_exception_hook_dialog)
-from cylc import cylc_pyro_client
-from cylc.state_summary import extract_group_state
+from cylc.network.suite_state import extract_group_state
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
@@ -157,6 +157,8 @@ Class to hold initialisation data.
             ['disable interactive command prompts']
         )
         self.imagedir = get_image_dir()
+        self.my_uuid = uuid4()
+        self.logdir = None
 
         if suite:
             self.reset(suite)
@@ -548,11 +550,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start(hbox, False)
 
         self.window.add(bigbox)
-        title = "gcylc"
-        if self.restricted_display:
-            title += " -r (restricted display)"
-        self.window.set_title(title)
-
+        self.window.set_title('gcylc - %s' % self.cfg.my_uuid)
         self.window.show_all()
 
         self.setup_views()
@@ -560,15 +558,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.reset(suite)
 
     def reset(self, suite):
-        title = suite
-        self.cfg.suite = suite
-        if self.cfg.host != socket.getfqdn():
-            title += " - " + self.cfg.host
-        title += " - gcylc"
-        if self.restricted_display:
-            title += " -r (restricted display)"
-        self.window.set_title(title)
         self.cfg.reset(suite)
+
+        win_title = "%s %s" % ('gcylc', suite)
+        if self.cfg.host != socket.getfqdn():
+            win_title += " - %s" % self.cfg.host
+        win_title += " - %s" % self.cfg.my_uuid
+        self.window.set_title(win_title)
 
         self.tool_bar_box.set_sensitive(True)
         for menu in self.suite_menus:
@@ -903,32 +899,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.reset(chosen)
 
     def pause_suite(self, bt):
-        try:
-            result = self.get_pyro('command-interface').put('hold suite now')
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-        else:
-            if not result[0]:
-                warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('hold suite now')
 
     def resume_suite(self, bt):
-        try:
-            result = self.get_pyro('command-interface').put('release suite')
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('release suite')
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
-        try:
-            result = self.get_pyro('command-interface').put('stop cleanly')
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-        else:
-            if not result[0]:
-                warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('stop cleanly')
 
     def stopsuite(self, bt, window, kill_rb, stop_rb, stopat_rb, stopct_rb,
                   stoptt_rb, stopnow_rb, stoppoint_entry, stopclock_entry,
@@ -992,25 +970,18 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             return
 
         window.destroy()
-        try:
-            god = self.get_pyro('command-interface')
-            if stop:
-                result = god.put('stop cleanly', False)
-            elif stopkill:
-                result = god.put('stop cleanly', True)
-            elif stopat:
-                result = god.put('stop after point', stop_point_string)
-            elif stopnow:
-                result = god.put('stop now')
-            elif stopclock:
-                result = god.put('stop after clock time', stopclock_time)
-            elif stoptask:
-                result = god.put('stop after task', stoptask_id)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-        else:
-            if not result[0]:
-                warning_dialog(result[1], self.window).warn()
+        if stop:
+            self.put_pyro_command('stop cleanly', False)
+        elif stopkill:
+            self.put_pyro_command('stop cleanly', True)
+        elif stopat:
+            self.put_pyro_command('stop after point', stop_point_string)
+        elif stopnow:
+            self.put_pyro_command('stop now')
+        elif stopclock:
+            self.put_pyro_command('stop after clock time', stopclock_time)
+        elif stoptask:
+            self.put_pyro_command('stop after task', stoptask_id)
 
     def load_point_strings(self, bt, startentry, stopentry):
         item1 = " -i '[scheduling]initial cycle point'"
@@ -1138,31 +1109,22 @@ The Cylc Suite Engine.
     def view_task_info(self, w, e, task_id, choice):
         if hasattr(e, "button") and e.button != 1:
             return False
-        try:
-            [glbl, states, fam_states] = (
-                self.get_pyro('state_summary').get_state_summary())
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
         view = True
         reasons = []
         try:
-            logfiles = states[task_id]['logfiles']
+            task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
-            warning_dialog(task_id + ' is no longer live', self.window).warn()
+            warning_dialog(task_id + ' is not live', self.window).warn()
             return False
 
+        logfiles = task_state_summary['logfiles']
         if len(logfiles) == 0:
             view = False
             reasons.append(task_id + ' has no associated log files')
-
-        if states[task_id]['state'] == 'waiting' or \
-                states[task_id]['state'] == 'ready' or \
-                states[task_id]['state'] == 'submit-failed' or \
-                states[task_id]['state'] == 'queued':
+        if task_state_summary['state'] in [
+                'waiting', 'ready', 'submit-failed', 'queued']:
             view = False
             reasons.append(task_id + ' has not started running yet')
-
         if not view:
             warning_dialog('\n'.join(reasons), self.window).warn()
         else:
@@ -1454,14 +1416,7 @@ The Cylc Suite Engine.
             else:
                 limit = ent
         window.destroy()
-        try:
-            result = self.get_pyro(
-                'command-interface').put('set runahead', limit)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('set runahead', limit)
 
     def add_prerequisite_popup(self, b, task_id):
         window = gtk.Window()
@@ -1529,14 +1484,7 @@ The Cylc Suite Engine.
             return
 
         window.destroy()
-        try:
-            result = self.get_pyro(
-                'command-interface').put('add prerequisite', task_id, msg)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('add prerequisite', task_id, msg)
 
     def update_tb(self, tb, line, tags=None):
         if tags:
@@ -1545,14 +1493,8 @@ The Cylc Suite Engine.
             tb.insert(tb.get_end_iter(), line)
 
     def popup_requisites(self, w, e, task_id):
-        try:
-            name, point_string = TaskID.split(task_id)
-            result = self.get_pyro('suite-info').get(
-                'task requisites', name, point_string)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-
+        name, point_string = TaskID.split(task_id)
+        result = self.get_pyro_info('task requisites', name, point_string)
         if result:
             # (else no tasks were found at all -suite shutting down)
             if task_id not in result:
@@ -1675,20 +1617,13 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            if stop:
-                result = self.get_pyro('command-interface').put(
-                    'hold task now', name, point_string, is_family)
-            else:
-                result = self.get_pyro('command-interface').put(
-                    'release task', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
 
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        if stop:
+            self.put_pyro_command('hold task now', name, point_string,
+                                  is_family)
+        else:
+            self.put_pyro_command('release task', name, point_string,
+                                  is_family)
 
     def trigger_task_now(self, b, task_id, is_family=False):
         """Trigger task via the suite daemon's command interface."""
@@ -1697,15 +1632,7 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'trigger task', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('trigger task', name, point_string, is_family)
 
     def trigger_task_edit_run(self, b, task_id):
         """
@@ -1724,53 +1651,26 @@ shown here in the state they were in at the time of triggering.''')
         cmd = "poll"
         if not self.get_confirmation(cmd, task_id):
             return
-
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'poll tasks', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('poll tasks', name, point_string, is_family)
 
     def kill_task(self, b, task_id, is_family=False):
         cmd = "kill"
         if not self.get_confirmation(cmd, task_id):
             return
-
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'kill tasks', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('kill tasks', name, point_string, is_family)
 
     def reset_task_state(self, b, e, task_id, state, is_family=False):
         if hasattr(e, "button") and e.button != 1:
             return False
         cmd = "reset"
-
         name, point_string = TaskID.split(task_id)
         msg = "reset " + task_id + " to " + state + "?"
         if not self.get_confirmation(cmd, task_id, msg):
             return
-
-        try:
-            result = self.get_pyro('command-interface').put(
-                'reset task state', name, point_string, state, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('reset task state', name, point_string, state,
+                              is_family)
 
     def remove_task(self, b, task_id, is_family):
         cmd = "remove"
@@ -1779,14 +1679,8 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'remove task', name, point_string, is_family, True)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('remove task', name, point_string, is_family,
+                              True)
 
     def remove_task_nospawn(self, b, task_id, is_family=False):
         cmd = "remove"
@@ -1795,38 +1689,18 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'remove task', name, point_string, is_family, False)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('remove task', name, point_string, is_family,
+                              False)
 
     def purge_cycle_entry(self, e, w, task_id):
         stop = e.get_text()
         w.destroy()
-        try:
-            result = self.get_pyro('command-interface').put(
-                'purge tree', task_id, stop)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('purge tree', task_id, stop)
 
     def purge_cycle_button(self, b, e, w, task_id):
         stop = e.get_text()
         w.destroy()
-        try:
-            result = self.get_pyro('command-interface').put(
-                'purge tree', task_id, stop)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('purge tree', task_id, stop)
 
     def stopsuite_popup(self, b):
         window = gtk.Window()
@@ -2288,27 +2162,17 @@ shown here in the state they were in at the time of triggering.''')
         point_string = entry_point_string.get_text()
         is_family = fam_cb.get_active()
         stop_point_string = entry_stoppoint.get_text()
-
         if match == '' or point_string == '':
             warning_dialog(
                 "Enter task or family name MATCH expression",
                 self.window).warn()
             return
-
         window.destroy()
-
         stop = None
         if stop_point_string != '':
             stop = stop_point_string
-
-        try:
-            result = self.get_pyro('command-interface').put(
-                'insert task', match, point_string, is_family, stop)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('insert task', match, point_string, is_family,
+                               stop)
 
     def poll_all(self, w):
         command = "cylc poll" + self.get_remote_run_opts() + " " + self.cfg.suite
@@ -2342,13 +2206,7 @@ or remove task definitions without restarting the suite."""
         foo.run()
 
     def nudge_suite(self, w):
-        try:
-            result = self.get_pyro('command-interface').put('nudge suite')
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return False
-        if not result:
-            warning_dialog('Failed to nudge the suite', self.window).warn()
+        self.put_pyro_command('nudge suite')
 
     def popup_logview(self, task_id, logfiles, choice=None):
         """Display task job log files in a combo log viewer."""
@@ -2691,12 +2549,6 @@ to reduce network traffic.""")
         tools_menu_root = gtk.MenuItem('_Suite')
         tools_menu_root.set_submenu(tools_menu)
 
-        url_item = gtk.ImageMenuItem('_Browse suite URL')
-        img = gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
-        url_item.set_image(img)
-        tools_menu.append(url_item)
-        url_item.connect('activate', self.browse, self.cfg.suite)
-
         val_item = gtk.ImageMenuItem('_Validate')
         img = gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
         val_item.set_image(img)
@@ -2711,12 +2563,11 @@ to reduce network traffic.""")
         tools_menu.append(des_item)
         des_item.connect('activate', self.describe_suite)
 
-        info_item = gtk.ImageMenuItem('_Info (Running)')
-        img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
-                                       gtk.ICON_SIZE_MENU)
-        info_item.set_image(img)
-        tools_menu.append(info_item)
-        info_item.connect('activate', self.run_suite_info)
+        url_item = gtk.ImageMenuItem('_Browse Suite URL')
+        img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
+        url_item.set_image(img)
+        tools_menu.append(url_item)
+        url_item.connect('activate', self.browse, self.cfg.suite)
 
         tools_menu.append(gtk.SeparatorMenuItem())
 
@@ -2878,15 +2729,19 @@ to reduce network traffic.""")
         self.menu_bar.append(help_menu_root)
 
     def describe_suite(self, w):
-        command = (
-            "echo '> TITLE:'; " +
-            "cylc get-suite-config -i title " + self.cfg.suite + "; " +
-            "echo '> DESCRIPTION:'; " +
-            "cylc get-suite-config --notify-completion -i description " +
-            self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        # Show suite title and description.
+        if self.updater.connected:
+            # Interrogate the suite daemon.
+            info = self.get_pyro_info('suite info')
+            descr = '\n'.join("%s: %s" % (key, val) for key, val in info.items())
+            info_dialog(descr, self.window).inform()
+        else:
+            # Parse the suite definition.
+            command = ("cylc get-suite-config -i title -i description " +
+                   self.get_remote_run_opts() + " " + self.cfg.suite)
+            foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400)
+            self.gcapture_windows.append(foo)
+            foo.run()
 
     def search_suite_popup(self, w):
         reg = self.cfg.suite
@@ -3363,10 +3218,21 @@ For more Stop options use the Control menu.""")
         """Handle a destroy of the theme legend window."""
         self.theme_legend_window = None
 
-    def get_pyro(self, object):
-        return cylc_pyro_client.client(
-            self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-            self.cfg.pyro_timeout, self.cfg.port).get_proxy(object)
+    def put_pyro_command(self, command, *args):
+        try:
+            success, msg = self.updater.suite_command_client.put_command_gui(
+                command, *args)
+        except Exception, x:
+            warning_dialog(x.__str__(), self.window).warn()
+        else:
+            if not success:
+                warning_dialog(msg, self.window).warn()
+
+    def get_pyro_info(self, command, *args):
+        try:
+            return self.updater.suite_info_client.get_info_gui(command, *args)
+        except Exception, x:
+            warning_dialog(x.__str__(), self.window).warn()
 
     def run_suite_validate(self, w):
         command = ("cylc validate -v " + self.get_remote_run_opts() +

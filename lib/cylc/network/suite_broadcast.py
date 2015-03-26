@@ -15,21 +15,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Handle broadcast from clients."""
 
-import Pyro.core
+import sys
 import logging
 import cPickle as pickle
+
+import cylc.flags
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.task_id import TaskID
 from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.rundb import RecordBroadcastObject
 from cylc.wallclock import get_current_time_string
+from cylc.network.pyro_base import PyroClient, PyroServer
 
+PYRO_BCAST_OBJ_NAME = 'broadcast_receiver'
 
-class Broadcast(Pyro.core.ObjBase):
-    """Receive broadcast variables from cylc clients.
+class BroadcastServer(PyroServer):
+    """Server-side suite broadcast interface.
 
     Examples:
     self.settings['*']['root'] = {'environment': {'FOO': 'bar'}}
@@ -39,12 +42,12 @@ class Broadcast(Pyro.core.ObjBase):
     ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
 
     def __init__(self, linearized_ancestors):
+        super(BroadcastServer, self).__init__()
         self.log = logging.getLogger('main')
         self.settings = {}
         self.prev_dump = self._get_dump()
         self.settings_queue = []
         self.linearized_ancestors = linearized_ancestors
-        Pyro.core.ObjBase.__init__(self)
 
     def _prune(self):
         """Remove empty leaves left by unsetting broadcast values.
@@ -311,3 +314,22 @@ class Broadcast(Pyro.core.ObjBase):
             now = get_current_time_string(display_sub_seconds=True)
             self.settings_queue.append(RecordBroadcastObject(now, this_dump))
             self.prev_dump = this_dump
+
+
+class BroadcastClient(PyroClient):
+    """Client-side suite broadcast interface."""
+
+    target_server_object = PYRO_BCAST_OBJ_NAME
+
+    def broadcast(self, command, *command_args):
+        """CLI suite broadcast interface."""
+        try:
+            self._report(command)
+            try:
+                return getattr(self.pyro_proxy, command)(*command_args)
+            except AttributeError:
+                sys.exit("Illegal broadcast command: %s" % command)
+        except Exception as exc:
+            if cylc.flags.debug:
+                raise
+            sys.exit(exc)

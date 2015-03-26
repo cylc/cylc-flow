@@ -25,10 +25,9 @@ if '--use-ssh' in sys.argv[1:]:
 
 from cylc.CylcOptionParsers import cop
 from cylc.task_id import TaskID
-from cylc import cylc_pyro_client
+from cylc.network.suite_info import SuiteInfoClient
 from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-import cylc.flags
 
 parser = cop( """cylc [discovery] ping [OPTIONS] ARGS
 
@@ -52,17 +51,14 @@ if options.print_ports:
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-# cylc ping SUITE
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'suite-info' )
-    res = proxy.get( 'ping suite' ) # (no need to check the result)
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
+pclient = SuiteInfoClient(
+    suite, pphrase, options.owner, options.host, options.pyro_timeout,
+    options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 
+# cylc ping SUITE
+pclient.get_info('ping suite') # (no need to check the result)
 if len(args) == 1:
     sys.exit(0)
 
@@ -70,13 +66,6 @@ if len(args) == 1:
 task_id = args[1]
 if not TaskID.is_valid_id(task_id):
     sys.exit("Invalid task ID: " + task_id)
-
-try:
-    res, msg = proxy.get( 'ping task', task_id )
-except Exception,x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-
-if not res:
-    sys.exit( 'ERROR: ' + msg )
+success, msg = pclient.get_info('ping task', task_id)
+if not success:
+    sys.exit('ERROR: ' + msg)

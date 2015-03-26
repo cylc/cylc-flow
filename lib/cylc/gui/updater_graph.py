@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc import cylc_pyro_client, dump, graphing
+from cylc import dump, graphing
 from cylc.mkdir_p import mkdir_p
-from cylc.state_summary import get_id_summary
+from cylc.network.suite_state import get_id_summary
 from cylc.task_id import TaskID
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.warning_dialog import warning_dialog
@@ -318,12 +318,12 @@ class GraphUpdater(threading.Thread):
         start_time = self.global_summary['start time']
 
         try:
-            res = self.updater.sinfo.get(
+            res = self.updater.suite_info_client.get_info_gui(
                 'graph raw', oldest, newest, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except TypeError:
             # Back compat with pre cylc-6 suite daemons.
-            res = self.updater.sinfo.get(
+            res = self.updater.suite_info_client.get(
                 'graph raw', oldest, newest, False, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except Exception as exc:  # PyroError?

@@ -46,7 +46,7 @@ from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
-from cylc.broadcast import Broadcast
+from cylc.network.suite_broadcast import BroadcastServer, PYRO_BCAST_OBJ_NAME
 
 
 class TaskPool(object):
@@ -88,8 +88,8 @@ class TaskPool(object):
         self.hold_point = None
         self.held_future_tasks = []
 
-        self.wireless = Broadcast(config.get_linearized_ancestors())
-        self.pyro.connect(self.wireless, 'broadcast_receiver')
+        self.wireless = BroadcastServer(config.get_linearized_ancestors())
+        self.pyro.connect(self.wireless, PYRO_BCAST_OBJ_NAME)
 
         self.broker = broker()
 

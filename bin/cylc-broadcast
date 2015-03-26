@@ -23,18 +23,18 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute( force_required=True ):
         sys.exit(0)
 
-import os, re
+import os
+import re
+import cylc.flags
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.CylcOptionParsers import cop
-from cylc.task_message import message
-from cylc import cylc_pyro_client
+from cylc.network.suite_broadcast import BroadcastClient
 from cylc.command_prep import prep_pyro
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
-from parsec.validate import validate, ValidationError
 from cylc.cfgspec.suite import SPEC, upg
-import cylc.flags
+from parsec.validate import validate
 
 def get_padding( settings, level=0, padding=0 ):
     level += 1
@@ -180,14 +180,11 @@ else:
     except KeyError:
         pass
 
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'broadcast_receiver' )
-except Exception, x:
-    if debug:
-        raise
-    raise SystemExit(x)
+pclient = BroadcastClient(
+    suite, pphrase, options.owner, options.host, options.pyro_timeout,
+    options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 
 if options.show or options.showtask:
     if options.showtask:
@@ -195,45 +192,29 @@ if options.show or options.showtask:
             name, point_string = TaskID.split(options.showtask)
         except ValueError:
             parser.error("TASKID must be " + TaskID.SYNTAX)
-    try:
-        settings = proxy.get( options.showtask )
-    except Exception,x:
-        if debug:
-            raise
-        sys.exit(x)
+    settings = pclient.broadcast('get', options.showtask)
     padding = get_padding(settings) * ' '
     if options.raw:
-        print str( settings )
+        print str(settings)
     else:
-        print_tree( settings, padding, options.unicode )
+        print_tree(settings, padding, options.unicode)
     sys.exit(0)
 
 if options.clear:
-    try:
-        modified_settings, bad_options = proxy.clear(
-            options.point_strings, options.namespaces)
-    except Exception,x:
-        if debug:
-            raise
-        sys.exit(x)
-    else:
-        if modified_settings:
-            print get_broadcast_change_report(
-                modified_settings, is_cancel=True)
-        sys.exit(get_broadcast_bad_options_report(bad_options))
+    modified_settings, bad_options = pclient.broadcast(
+        'clear', options.point_strings, options.namespaces)
+    if modified_settings:
+        print get_broadcast_change_report(
+            modified_settings, is_cancel=True)
+    sys.exit(get_broadcast_bad_options_report(bad_options))
 
 if options.expire:
-    try:
-        modified_settings, bad_options = proxy.expire(options.expire)
-    except Exception, exc:
-        if debug:
-            raise
-        sys.exit(exc)
-    else:
-        if modified_settings:
-            print get_broadcast_change_report(
-                modified_settings, is_cancel=True)
-        sys.exit(get_broadcast_bad_options_report(bad_options))
+    modified_settings, bad_options = pclient.broadcast(
+        'expire', options.expire)
+    if modified_settings:
+        print get_broadcast_change_report(
+            modified_settings, is_cancel=True)
+    sys.exit(get_broadcast_bad_options_report(bad_options))
 
 # implement namespace and cycle point defaults here
 namespaces = options.namespaces
@@ -244,52 +225,41 @@ if not point_strings:
     point_strings = ["*"]
 
 if options.cancel:
-    try:
-        settings = []
-        for option_item in options.cancel:
-            if "=" in option_item:
-                raise ValueError(
-                    "ERROR: --cancel=[SEC]ITEM does not take a value")
-            option_item = option_item.strip()
-            if option_item == "inherit":
-                raise ValueError(
-                    "ERROR: Inheritance cannot be changed by broadcast")
-            setting = get_rdict(option_item)
-            upg({'runtime': {'__MANY__': setting}}, 'test')
-            validate(setting, SPEC['runtime']['__MANY__'])
-            settings.append(setting)
-        modified_settings, bad_options = proxy.clear(
-            point_strings, namespaces, settings)
-    except Exception, exc:
-        if debug:
-            raise
-        sys.exit(exc)
-    else:
-        if modified_settings:
-            print get_broadcast_change_report(
-                modified_settings, is_cancel=True)
-        sys.exit(get_broadcast_bad_options_report(bad_options))
+    settings = []
+    for option_item in options.cancel:
+        if "=" in option_item:
+            raise ValueError(
+                "ERROR: --cancel=[SEC]ITEM does not take a value")
+        option_item = option_item.strip()
+        if option_item == "inherit":
+            raise ValueError(
+                "ERROR: Inheritance cannot be changed by broadcast")
+        setting = get_rdict(option_item)
+        upg({'runtime': {'__MANY__': setting}}, 'test')
+        validate(setting, SPEC['runtime']['__MANY__'])
+        settings.append(setting)
+    modified_settings, bad_options = pclient.broadcast(
+        'clear', point_strings, namespaces, settings)
+    if modified_settings:
+        print get_broadcast_change_report(
+            modified_settings, is_cancel=True)
+    sys.exit(get_broadcast_bad_options_report(bad_options))
 
 if options.set:
-    try:
-        settings = []
-        for option_item in options.set:
-            if "=" not in option_item:
-                raise ValueError(
-                    "ERROR: --set=[SEC]ITEM=VALUE requires a value")
-            lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
-            if lhs == "inherit":
-                raise ValueError(
-                    "ERROR: Inheritance cannot be changed by broadcast")
-            setting = get_rdict(lhs, rhs)
-            upg({'runtime': {'__MANY__': setting}}, 'test')
-            validate(setting, SPEC['runtime']['__MANY__'])
-            settings.append(setting)
-        modified_settings, bad_options = proxy.put(point_strings, namespaces, settings)
-    except Exception as exc:
-        if debug:
-            raise
-        sys.exit(exc)
-    else:
-        print get_broadcast_change_report(modified_settings)
-        sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))
+    settings = []
+    for option_item in options.set:
+        if "=" not in option_item:
+            raise ValueError(
+                "ERROR: --set=[SEC]ITEM=VALUE requires a value")
+        lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
+        if lhs == "inherit":
+            raise ValueError(
+                "ERROR: Inheritance cannot be changed by broadcast")
+        setting = get_rdict(lhs, rhs)
+        upg({'runtime': {'__MANY__': setting}}, 'test')
+        validate(setting, SPEC['runtime']['__MANY__'])
+        settings.append(setting)
+    modified_settings, bad_options = pclient.broadcast(
+        'put', point_strings, namespaces, settings)
+    print get_broadcast_change_report(modified_settings)
+    sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))

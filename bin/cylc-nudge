@@ -23,7 +23,7 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute():
         sys.exit(0)
 
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
@@ -43,18 +43,9 @@ periods when nothing else is happening.""", pyro=True )
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
-
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    result = proxy.put( 'nudge suite' )
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
-
-if result[0]:
-    print result[1]
-else:
-    sys.exit( result[1] )
+pclient = SuiteCommandClient(
+    suite, pphrase, options.owner, options.host, options.pyro_timeout,
+    options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+pclient.put_command('nudge suite')

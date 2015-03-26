@@ -16,15 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
-from suite_host import get_hostname
-from owner import user
-from passphrase import passphrase
-from registration import localdb
+import os
+import sys
 import datetime
 import Pyro.errors, Pyro.core
+
+import cylc.flags
+from cylc.suite_host import get_hostname
+from cylc.owner import user
+from cylc.passphrase import passphrase
+from cylc.registration import localdb
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-import flags
 
 class SuiteIdentificationError( Exception ):
     """
@@ -161,11 +163,11 @@ def get_port( suite, owner=user, host=get_hostname(), pphrase=None, pyro_timeout
             #print >> sys.stderr, "Non-cylc pyro server found at " + portid( host, port )
             pass
         else:
-            if flags.verbose:
+            if cylc.flags.verbose:
                 after = datetime.datetime.now()
                 print "Pyro connection on port " +str(port) + " took: " + str( after - before )
             if name == suite and xowner == owner:
-                if flags.verbose:
+                if cylc.flags.verbose:
                     print suite, owner, host, port
                 # RESULT
                 return port
@@ -199,12 +201,12 @@ def check_port( suite, pphrase, port, owner=user, host=get_hostname(), pyro_time
     except Pyro.errors.NamingError:
         raise OtherServerFoundError, "ERROR: non-cylc pyro server found at " + portid( host, port )
     else:
-        if flags.verbose:
+        if cylc.flags.verbose:
             after = datetime.datetime.now()
             print "Pyro connection on port " +str(port) + " took: " + str( after - before )
         if name == suite and xowner == owner:
             # RESULT
-            if flags.verbose:
+            if cylc.flags.verbose:
                 print suite, owner, host, port
             return True
         else:
@@ -248,21 +250,21 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None):
             pass
         except Pyro.errors.ConnectionDeniedError:
             # secure suite
-            if flags.verbose:
+            if cylc.flags.verbose:
                 print >> sys.stderr, "Connection Denied at " + portid( host, port )
         except Pyro.errors.ProtocolError:
             # no suite
-            #if flags.verbose:
+            #if cylc.flags.verbose:
             #    print >> sys.stderr, "No Suite Found at " + portid( host, port )
             pass
         except Pyro.errors.NamingError:
             # other Pyro server
-            if flags.verbose:
+            if cylc.flags.verbose:
                 print >> sys.stderr, "Non-cylc Pyro server found at " + portid( host, port )
         except:
             raise
         else:
-            if flags.verbose:
+            if cylc.flags.verbose:
                 after = datetime.datetime.now()
                 print "Pyro connection on port " +str(port) + " took: " + str( after - before )
             results.append((name, owner, host, port))

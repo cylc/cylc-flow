@@ -158,6 +158,11 @@ Arguments:"""
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
 
+            self.add_option("--uuid",
+                    help="Print the client UUID to stderr. This can be matched "
+                    "to information logged by the receiving suite daemon.",
+                    action="store_true", default=False, dest="print_uuid")
+
             if not self.noforce:
                 self.add_option( "-f", "--force",
                         help="Do not ask for confirmation before acting. Note that "

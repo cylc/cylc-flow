@@ -15,7 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Task Proxy."""
 
 import Queue
 import os
@@ -45,7 +44,7 @@ from cylc.wallclock import (
     get_seconds_as_interval_string,
     RE_DATE_TIME_FORMAT_EXTENDED
 )
-from cylc.task_receiver import msgqueue
+from cylc.network.task_msgqueue import TaskMessageServer
 from cylc.host_select import get_task_host
 from cylc.job_file import JOB_FILE
 from cylc.job_host import RemoteJobHostManager
@@ -191,7 +190,7 @@ class TaskProxy(object):
         self.sub_retry_delays_orig = None
         self.sub_retry_delays = None
 
-        self.message_queue = msgqueue()
+        self.message_queue = TaskMessageServer()
         self.db_queue = []
 
         # TODO - should take suite name from config!
@@ -1175,21 +1174,6 @@ class TaskProxy(object):
             return True
         else:
             return False
-
-    def set_all_internal_outputs_completed(self):
-        """Shortcut all the outputs.
-
-        As if the task has gone through all the messages to "succeeded".
-
-        """
-        if self.reject_if_failed('set_all_internal_outputs_completed'):
-            return
-        self.log(DEBUG, 'setting all internal outputs completed')
-        for message in self.outputs.completed:
-            if (message != self.identity + ' started' and
-                    message != self.identity + ' succeeded' and
-                    message != self.identity + ' completed'):
-                self.message_queue.put('NORMAL', message)
 
     def reject_if_failed(self, message):
         """Reject a message if in the failed state.
