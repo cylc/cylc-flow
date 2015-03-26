@@ -85,7 +85,7 @@ class Broadcast(Pyro.core.ObjBase):
                 elif key in target:
                     del target[key]
 
-    def put(self, namespaces, point_strings, settings):
+    def put(self, point_strings, namespaces, settings):
         """Add new broadcast settings.
 
         Return a list of modified settings in the form:
@@ -105,7 +105,7 @@ class Broadcast(Pyro.core.ObjBase):
                     modified_settings.append(
                         (point_string, namespace, setting))
 
-        # Remove empty leaves 
+        # Remove empty leaves
         self._prune()
 
         # Log the broadcast
@@ -134,20 +134,21 @@ class Broadcast(Pyro.core.ObjBase):
         return ret
 
     def expire(self, cutoff):
-        """Clear all settings targetting cycle points earlier than cutoff."""
-        if not cutoff:
-            self.log.info('Expiring all broadcast settings now')
-            self.settings = {}
-        for point_string in self.settings.keys():
-            if point_string in self.ALL_CYCLE_POINTS_STRS:
-                continue
-            point = get_point(point_string)
-            if point < cutoff:
-                self.log.info(
-                    'Expiring ' + str(point) + ' broadcast settings now')
-                del self.settings[point_string]
+        """Clear all settings targeting cycle points earlier than cutoff."""
+        point_strings = []
+        cutoff_point = None
+        if cutoff is not None:
+            cutoff_point = get_point(str(cutoff))
+        for point_string in self.settings:
+            if cutoff_point is None or (
+                    point_string not in self.ALL_CYCLE_POINTS_STRS and
+                    get_point(point_string) < cutoff_point):
+                point_strings.append(point_string)
+        if not point_strings:
+            return (None, {"expire": [cutoff]})
+        return self.clear(point_strings=point_strings)
 
-    def clear(self, namespaces, point_strings, cancel_settings=None):
+    def clear(self, point_strings=None, namespaces=None, cancel_settings=None):
         """Clear settings globally, or for listed namespaces and/or points.
 
         Return a tuple (modified_settings, bad_options), where:
@@ -245,7 +246,8 @@ class Broadcast(Pyro.core.ObjBase):
         return pickle.dumps(self.settings) + "\n"
 
     @classmethod
-    def _get_bad_options(cls, prunes, point_strings, namespaces, cancel_keys_list):
+    def _get_bad_options(
+            cls, prunes, point_strings, namespaces, cancel_keys_list):
         """Return unpruned namespaces and/or point_strings options."""
         cancel_keys_list = [
             tuple(cancel_keys) for cancel_keys in cancel_keys_list]

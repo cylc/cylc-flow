@@ -1,0 +1,63 @@
+title=broadcast expire
+description=Test broadcast expire option
+[cylc]
+    [[reference test]]
+        required run mode=live
+        live mode suite timeout=PT1M
+[scheduling]
+    initial cycle time = 2020
+    final cycle time = 2025
+    [[dependencies]]
+        [[[P5Y]]]
+            graph="""
+broadcast => t1 => broadcast-expire => t2
+t2[-P5Y] => broadcast-expire
+"""
+[runtime]
+    [[broadcast]]
+        command scripting="""
+cylc broadcast \
+    -s '[environment]FABRIC=Wool' \
+    -s "[environment]ORGANISM=sheep" \
+    -p "${CYLC_TASK_CYCLE_POINT}" \
+    -n 'F1' \
+    "${CYLC_SUITE_NAME}" \
+    | tee 'broadcast.out'
+"""
+        post-command scripting="""
+diff -u - 'broadcast.out' <<__OUT__
+Broadcast set:
++ [F1.${CYLC_TASK_CYCLE_POINT}] [environment]FABRIC=Wool
++ [F1.${CYLC_TASK_CYCLE_POINT}] [environment]ORGANISM=sheep
+__OUT__
+"""
+    [[broadcast-expire]]
+        command scripting="""
+NEXT_CYCLE_POINT=$(cylc cycletime --offset=P5Y)
+cylc broadcast --expire="${NEXT_CYCLE_POINT}" "${CYLC_SUITE_NAME}" \
+    | tee 'broadcast.out'
+"""
+        post-command scripting="""
+diff -u - 'broadcast.out' <<__OUT__
+Broadcast cancelled:
+- [F1.${CYLC_TASK_CYCLE_POINT}] [environment]FABRIC=Wool
+- [F1.${CYLC_TASK_CYCLE_POINT}] [environment]ORGANISM=sheep
+__OUT__
+"""
+    [[F1]]
+        command scripting = """
+echo "${FABRIC} is from ${ORGANISM}." | tee 'echo.out'
+"""
+        [[[environment]]]
+            FABRIC=Silk
+            ORGANISM=silk worm
+    [[t1]]
+        inherit=F1
+        post-command scripting="""
+diff -u - 'echo.out' <<<'Wool is from sheep.'
+"""
+    [[t2]]
+        inherit=F1
+        post-command scripting="""
+diff -u - 'echo.out' <<<'Silk is from silk worm.'
+"""

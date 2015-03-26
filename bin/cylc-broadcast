@@ -140,9 +140,9 @@ parser.add_option( "-C", "--clear",
         "all specific-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
 
-parser.add_option( "-e", "--expire", metavar="CYCLE",
+parser.add_option( "-e", "--expire", metavar="CYCLE_POINT",
         help="Cancel any broadcasts that target cycle "
-        "times earlier than, but not inclusive of, CYCLE.",
+        "points earlier than, but not inclusive of, CYCLE_POINT.",
         action="store", default=None, dest="expire" )
 
 parser.add_option( "-d", "--display",
@@ -211,7 +211,7 @@ if options.show or options.showtask:
 if options.clear:
     try:
         modified_settings, bad_options = proxy.clear(
-            options.namespaces, options.point_strings)
+            options.point_strings, options.namespaces)
     except Exception,x:
         if debug:
             raise
@@ -224,13 +224,16 @@ if options.clear:
 
 if options.expire:
     try:
-        settings = proxy.expire( options.expire )
-    except Exception,x:
+        modified_settings, bad_options = proxy.expire(options.expire)
+    except Exception, exc:
         if debug:
             raise
-        sys.exit(x)
+        sys.exit(exc)
     else:
-        sys.exit(0)
+        if modified_settings:
+            print get_broadcast_change_report(
+                modified_settings, is_cancel=True)
+        sys.exit(get_broadcast_bad_options_report(bad_options))
 
 # implement namespace and cycle point defaults here
 namespaces = options.namespaces
@@ -255,7 +258,7 @@ if options.cancel:
             validate(setting, SPEC['runtime']['__MANY__'])
             settings.append(setting)
         modified_settings, bad_options = proxy.clear(
-            namespaces, point_strings, settings)
+            point_strings, namespaces, settings)
     except Exception, exc:
         if debug:
             raise
@@ -280,7 +283,7 @@ if options.set:
             setting = get_rdict(lhs, rhs)
             validate(setting, SPEC['runtime']['__MANY__'])
             settings.append(setting)
-        modified_settings = proxy.put(namespaces, point_strings, settings)
+        modified_settings = proxy.put(point_strings, namespaces, settings)
     except Exception as exc:
         if debug:
             raise
