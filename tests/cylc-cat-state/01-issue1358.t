@@ -26,7 +26,6 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-set -x
 # Run suite.
 cylc run $SUITE_NAME
 # Wait for task foo to fail.
