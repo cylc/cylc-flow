@@ -906,8 +906,6 @@ class scheduler(object):
                 self.pool.remove_spent_tasks()
                 self.pool.remove_suiciding_tasks()
 
-                self.state_dumper.dump()
-
                 self.do_update_state_summary = True
 
                 self.pool.wireless.expire( self.pool.get_min_point() )
@@ -929,6 +927,7 @@ class scheduler(object):
                 flags.iflag = False
                 self.do_update_state_summary = False
                 self.update_state_summary()
+                self.state_dumper.dump()
 
             if self.config.cfg['cylc']['event hooks']['timeout']:
                 self.check_suite_timer()

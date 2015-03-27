@@ -1,0 +1,11 @@
+[cylc]
+    [[event hooks]]
+        timeout = PT1M
+        abort on timeout = True
+[scheduling]
+    [[dependencies]]
+        graph = foo => bar & baz
+[runtime]
+    [[bar, baz]]
+    [[foo]]
+        command scripting = /bin/false
