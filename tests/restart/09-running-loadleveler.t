@@ -32,12 +32,12 @@ elif [[ "${TEST_NAME_BASE}" == ??-*-pbs* ]]; then
     BATCH_SYS_NAME='pbs'
 fi
 export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
-    "[test battery][directives]$BATCH_SYS_NAME host")
+    "[test battery][batch systems][$BATCH_SYS_NAME]host")
 export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \
-    "[test battery][directives][$BATCH_SYS_NAME directives]")
+    "[test battery][batch systems][$BATCH_SYS_NAME][directives]")
 if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
-    skip_all "[test battery][directives]$BATCH_SYS_NAME host not defined"
+    skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"
 fi
 # check the host is reachable
 if ! ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" true 1>/dev/null 2>&1

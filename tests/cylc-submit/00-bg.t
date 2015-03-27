@@ -45,12 +45,12 @@ elif [[ "${TEST_NAME_BASE}" == ??-lsf* ]]; then
     CONFIGURED_SYS_NAME='lsf'
 fi
 if [[ -n $CONFIGURED_SYS_NAME ]]; then
-    ITEM_KEY="[test battery][directives]$CONFIGURED_SYS_NAME host"
+    ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME]host"
     CYLC_TEST_HOST="$(cylc get-global-config "--item=${ITEM_KEY}")"
     if [[ -z "${CYLC_TEST_HOST}" ]]; then
         skip_all "${ITEM_KEY} not set"
     fi
-    ITEM_KEY="[test battery][directives]$CONFIGURED_SYS_NAME directives"
+    ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME][directives]"
     CYLC_TEST_DIRECTIVES="$(cylc get-global-config "--item=${ITEM_KEY}")"
     CYLC_TEST_BATCH_SYS_NAME=$CONFIGURED_SYS_NAME
 fi

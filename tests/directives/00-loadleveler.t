@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test loadleveler directives
-#     This test requires an e.g. [test battery][directives]loadleveler host
+#     This test requires an e.g. [test battery][batch systems][loadleveler]host
 #     entry in site/user config in order to run 'loadleveler' tests (same for
 #     slurm, pbs, etc), otherwise it will be bypassed.
 . $(dirname $0)/test_header
@@ -31,9 +31,9 @@ elif [[ "${TEST_NAME_BASE}" == ??-pbs* ]]; then
     BATCH_SYS_NAME='pbs'
 fi
 export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
-    "[test battery][directives]$BATCH_SYS_NAME host")
+    "[test battery][batch systems][$BATCH_SYS_NAME]host")
 export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \
-    "[test battery][directives][$BATCH_SYS_NAME directives]")
+    "[test battery][batch systems][$BATCH_SYS_NAME][directives]")
 if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
     skip_all "[directive tests]$BATCH_SYS_NAME host not defined"

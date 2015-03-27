@@ -123,32 +123,32 @@ SPEC = {
             },
         },
 
-    'test battery' : {
-       'remote host with shared fs'       : vdr( vtype='string' ),
-       'remote host'                      : vdr( vtype='string' ),
-       'directives' : {
-            'loadleveler host'            : vdr( vtype='string' ),
-            'loadleveler directives' : {
-                 '__MANY__'               : vdr( vtype='string' ),
-                  },
-            'lsf host'                    : vdr( vtype='string' ),
-            'lsf directives'         : {
-                 '__MANY__'               : vdr( vtype='string' ),
-                 },
-            'pbs host'                    : vdr( vtype='string' ),
-            'pbs directives' : {
-                 '__MANY__'               : vdr( vtype='string' ),
-                 },
-            'sge host'                    : vdr( vtype='string' ),
-            'sge directives' : {
-                 '__MANY__'               : vdr( vtype='string' ),
-                 },
-            'slurm host'                  : vdr( vtype='string' ),
-            'slurm directives' : {
-                 '__MANY__'               : vdr( vtype='string' ),
-                 },
+    'test battery': {
+        'remote host with shared fs': vdr(vtype='string'),
+        'remote host': vdr(vtype='string'),
+        'batch systems': {
+            'loadleveler': {
+                'host': vdr(vtype='string'),
+                'directives': {'__MANY__': vdr(vtype='string')},
+            },
+            'lsf': {
+                'host': vdr(vtype='string'),
+                'directives': {'__MANY__': vdr(vtype='string')},
+            },
+            'pbs': {
+                'host': vdr(vtype='string'),
+                'directives': {'__MANY__': vdr(vtype='string')},
+            },
+            'sge': {
+                'host': vdr(vtype='string'),
+                'directives': {'__MANY__': vdr(vtype='string')},
+            },
+            'slurm': {
+                'host': vdr(vtype='string'),
+                'directives': {'__MANY__': vdr(vtype='string')},
             },
         },
+    },
 
     'suite host self-identification' : {
         'method'                          : vdr( vtype='string', options=["name","address","hardwired"], default="name" ),
@@ -176,6 +176,15 @@ def upg( cfg, descr ):
     u.upgrade()
     u.deprecate( '6.1.2', ['task messaging', 'connection timeout in seconds'], ['task messaging', 'connection timeout'] )
     u.deprecate( '6.1.2', ['task messaging', 'retry interval in seconds'], ['task messaging', 'retry interval'] )
+    for batch_sys_name in ['loadleveler', 'lsf', 'pbs', 'sge', 'slurm']:
+        u.deprecate('6.4.1',
+            ['test battery', 'directives', batch_sys_name + ' host'],
+            ['test battery', 'batch systems', batch_sys_name, 'host'])
+        u.deprecate('6.4.1',
+            ['test battery', 'directives', batch_sys_name + ' directives',
+             '__MANY__'],
+            ['test battery', 'batch systems', batch_sys_name, 'directives',
+             '__MANY__'])
 
 class GlobalConfigError( Exception ):
     def __init__( self, msg ):

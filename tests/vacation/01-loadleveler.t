@@ -22,14 +22,14 @@
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 export CYLC_TEST_HOST=$( \
-    cylc get-global-config -i '[test battery][directives]loadleveler host')
+    cylc get-global-config -i '[test battery][batch systems][loadleveler]host')
 if [[ -z $CYLC_TEST_HOST ]]; then
-    skip_all '[test battery][directives]loadleveler host: not defined'
+    skip_all '[test battery][batch systems][loadleveler]host: not defined'
 fi
 set_test_number 6
 export CYLC_TEST_DIRECTIVES=$( \
     cylc get-global-config \
-    -i '[test battery][directives][loadleveler directives]')
+    -i '[test battery][batch systems][loadleveler][directives]')
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 set -eu
 if [[ $CYLC_TEST_HOST != 'localhost' ]]; then
