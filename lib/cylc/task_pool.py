@@ -1035,12 +1035,12 @@ class TaskPool(object):
         else:
             return True, jobfile_path
 
-    def get_task_requisites(self, ids):
+    def get_task_requisites(self, taskid):
         info = {}
         found = False
         for itask in self.get_tasks():
             id_ = itask.identity
-            if id_ in ids:
+            if id_ == taskid:
                 found = True
                 extra_info = {}
                 # extra info for clocktriggered tasks

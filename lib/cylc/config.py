@@ -2004,5 +2004,5 @@ class config( object ):
         return TaskProxy(tdef, *args, **kwargs)
 
     def describe(self, name):
-        """Return a string that describe the named task."""
+        """Return title and description of the named task."""
         return self.taskdefs[name].describe()

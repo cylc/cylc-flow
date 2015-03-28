@@ -96,8 +96,11 @@ class TaskDef(object):
                 self.implicit_sequences.append(sequence)
 
     def describe(self):
-        """Return a string that describes the current task."""
-        return "%(title)s\n%(description)s" % self.rtconfig
+        """Return title and description of the current task."""
+        info = {}
+        for item in 'title', 'description':
+            info[item] = self.rtconfig[item]
+        return info
 
     def check_for_explicit_cycling(self):
         """Check for explicitly somewhere.
