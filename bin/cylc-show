@@ -50,8 +50,8 @@ try:
     if len(args) == 1:
         # Print suite info.
         suite_info = proxy.get('suite info')
-        for key, value in suite_info.items():
-            print key + ':', value
+        for key, value in sorted(suite_info.items(), reverse=True):
+            print '%s: %s' % (key,value or "(not given)")
         sys.exit(0)
 
     point_string = None
@@ -68,8 +68,8 @@ try:
     info = proxy.get('task info', name)
     if not info:
         sys.exit("ERROR: task not found: %s" % name)
-    for key, value in info.items():
-        print key + ':', value
+    for key, value in sorted(info.items(), reverse=True):
+        print "%s: %s" % (key, value or "(not given)")
 
     if point_string is not None:
         result = proxy.get('task requisites', name, point_string)
