@@ -34,18 +34,16 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug \
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show
 cmp_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
-TASK foo.20141106T0900Z in suite $SUITE_NAME:
-  
+title: (not given)
+description: (not given)
 
-PREREQUISITES (- => not satisfied):
+prerequisites (- => not satisfied):
   - show.20141106T0900Z succeeded
-OUTPUTS (- => not completed):
+
+outputs (- => not completed):
   - foo.20141106T0900Z started
   - foo.20141106T0900Z submitted
   - foo.20141106T0900Z succeeded
-
-NOTE: for tasks that have triggered already, prerequisites are
-shown here in the state they were in at the time of triggering.
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -46,21 +46,20 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug \
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-show
 cmp_ok $TEST_NAME.stdout <<__SHOW_OUTPUT__
-TASK foo.20140808T0900$TZ_OFFSET_BASIC in suite $SUITE_NAME:
-  
+title: (not given)
+description: (not given)
 
-PREREQUISITES (- => not satisfied):
+prerequisites (- => not satisfied):
   - show.20140808T0900$TZ_OFFSET_BASIC succeeded
-OUTPUTS (- => not completed):
+
+outputs (- => not completed):
   - foo.20140808T0900$TZ_OFFSET_BASIC started
   - foo.20140808T0900$TZ_OFFSET_BASIC submitted
   - foo.20140808T0900$TZ_OFFSET_BASIC succeeded
-Other:
+
+other:
   o  Clock trigger time reached ... True
   o  Triggers at ... 2014-08-08T09:05:00$TZ_OFFSET_EXTENDED
-
-NOTE: for tasks that have triggered already, prerequisites are
-shown here in the state they were in at the time of triggering.
 __SHOW_OUTPUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
