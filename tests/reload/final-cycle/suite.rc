@@ -17,7 +17,7 @@ description = """change final cycle."""
         graph = "a[-PT6H] => a"
 [runtime]
     [[reloader]]
-        command scripting = """
+        script = """
 # change the final cycle:
 perl -pi -e 's/(final cycle time = )20100102T00( # marker)/\1 20100101T12\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
@@ -25,4 +25,4 @@ cylc reload -f $CYLC_SUITE_NAME
 sleep 5
 """
     [[a]]
-        command scripting = sleep 1
+        script = sleep 1

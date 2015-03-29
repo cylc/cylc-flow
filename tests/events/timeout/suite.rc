@@ -18,7 +18,7 @@ description = This suite is supposed to time out
         # multiple times in succession this orphaned task message retry
         # may occasionally succeed in messaging the next run of this
         # suite on the same port .
-        command scripting = "/bin/true"
+        script = "/bin/true"
     [[bar]]
         # this task is never meant to run (thanks to the fail trigger),
         # it is just present to keep the suite alive after foo finishes

@@ -7,7 +7,7 @@
         graph = a-task
 [runtime]
     [[a-task]]
-        command scripting = """
+        script = """
 # Write to task stdout log
 echo "the quick brown fox"
 # Write to task stderr log

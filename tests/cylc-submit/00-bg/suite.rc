@@ -4,7 +4,7 @@
         graph = foo
 [runtime]
     [[foo]]
-        command scripting = echo 'It is a good test.'
+        script = echo 'It is a good test.'
 {% if CYLC_TEST_HOST %}
         [[[remote]]]
             host = {{CYLC_TEST_HOST}}

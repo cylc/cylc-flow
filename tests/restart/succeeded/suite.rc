@@ -26,7 +26,7 @@
             """
 [runtime]
     [[root]]
-        command scripting = "sleep 1"
+        script = "sleep 1"
     [[RESTART_TASKS]]
         {%- if USE_LOADLEVELER %}
         [[[job submission]]]
@@ -43,7 +43,7 @@
         inherit = RESTART_TASKS
         description = "Succeeded state task for restart"
     [[force_restart]]
-        pre-command scripting = """
+        pre-script = """
             # We need to make sure that the results stay consistent.
             sleep 2
             sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
@@ -69,7 +69,7 @@
             CYLC_LL_TEST_SITE_DIRECTIVES={{ SITE_DIRECTIVES }}
             TEST_DIR={{ TEST_DIR }}
     [[output_states]]
-        command scripting = """
+        script = """
             while [[ ! -e $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME ]]; do
                 sleep 0.1
             done
@@ -83,7 +83,7 @@
         """
         description = "Wait for the restart to complete"
     [[tidy]]
-        command scripting = """
+        script = """
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
                 touch {{ TEST_DIR }}/suite-stopping
             fi

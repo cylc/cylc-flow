@@ -35,7 +35,7 @@ title = Simple start-up suite.
         start-up = cold_foo
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
         retry delays = 0.5, 10, 30, 5*60, 2*180, 1440
         [[[event hooks]]]
             execution timeout = 180

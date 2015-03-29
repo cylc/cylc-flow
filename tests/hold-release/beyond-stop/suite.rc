@@ -22,10 +22,10 @@ beyond the suite stop point."""
 [runtime]
     [[holdrelease]]
         # When this task runs foo will be held beyond the suite stop point.
-        command scripting = """
+        script = """
 cylc hold $CYLC_SUITE_NAME
 cylc release $CYLC_SUITE_NAME"""
     [[foo]]
-        command scripting = true
+        script = true
     [[bar]]
-        command scripting = sleep 10
+        script = sleep 10

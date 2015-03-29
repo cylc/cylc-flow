@@ -15,8 +15,8 @@ title = "Test list of task event handlers"
         excluded => bar"""
 [runtime]
     [[bar]]
-        command scripting = false
+        script = false
     [[fixer]]
-        command scripting = true
+        script = true
         [[[event hooks]]]
             started handler = trigger-bar.sh, remove-bar.sh

@@ -20,7 +20,7 @@ first cycle point of the suite.."""
             """
 [runtime]
     [[holdrelease]]
-        command scripting = """
+        script = """
 sleep 5
 cylc hold $CYLC_SUITE_NAME
 sleep 5
@@ -31,10 +31,10 @@ cylc release --family $CYLC_SUITE_NAME {{ RELEASE_MATCH }} 20141009T0000Z
     [[UNRELATED]]
     [[foo,bar]]
         inherit = STUFF
-        command scripting = true
+        script = true
     [[stop]]
         inherit = STUFF
-        command scripting = cylc stop $CYLC_SUITE_NAME
+        script = cylc stop $CYLC_SUITE_NAME
     [[unrelated]]
         inherit = UNRELATED
-        command scripting = true
+        script = true

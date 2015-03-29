@@ -9,4 +9,4 @@
             """
 [runtime]
     [[root]]
-        command scripting = /bin/true
+        script = /bin/true

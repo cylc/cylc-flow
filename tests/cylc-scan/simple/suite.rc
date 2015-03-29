@@ -7,4 +7,4 @@
         graph = "foo"
 [runtime]
     [[foo]]
-        command scripting = cylc scan | grep $CYLC_SUITE_NAME
+        script = cylc scan | grep $CYLC_SUITE_NAME

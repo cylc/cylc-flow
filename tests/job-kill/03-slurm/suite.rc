@@ -9,7 +9,7 @@
         graph=t1:start=>stop
 [runtime]
     [[t1]]
-        command scripting=sleep 120
+        script=sleep 120
 {% if "CYLC_TEST_BATCH_TASK_HOST" in environ and environ["CYLC_TEST_BATCH_TASK_HOST"] %}
         [[[remote]]]
             host={{environ["CYLC_TEST_BATCH_TASK_HOST"]}}
@@ -28,7 +28,7 @@
             {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
 {% endif %}
     [[stop]]
-        command scripting="""
+        script="""
 cylc kill $CYLC_SUITE_REG_NAME t1 1 || true
 cylc stop $CYLC_SUITE_REG_NAME
 """

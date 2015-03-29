@@ -21,6 +21,6 @@
             graph = "run_ok_2"
 [runtime]
     [[foo]]
-        command scripting = false
+        script = false
     [[bar]]
-        command scripting = true
+        script = true

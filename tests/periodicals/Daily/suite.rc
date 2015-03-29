@@ -12,7 +12,7 @@
             graph = "a"
 [runtime]
     [[a]]
-        command scripting = "sleep 1"
+        script = "sleep 1"
 
 [visualization]
     initial cycle time = 20140107

@@ -1,10 +1,10 @@
     [[a]]
-        command scripting = echo {{ MYVAR }}
+        script = echo {{ MYVAR }}
     [[FAM]]
         [[[environment]]]
             TITLE="member"
 {%- for num in range(5) %}
     [[member_{{ num }}]]
         inherit = FAM
-        command scripting = echo I am $TITLE {{ num }}
+        script = echo I am $TITLE {{ num }}
 {%- endfor %}

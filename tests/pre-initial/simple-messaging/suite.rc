@@ -10,7 +10,7 @@
             graph = "foo[T-24]:restart1 => foo"
 [runtime]
     [[foo]]
-        command scripting = """
+        script = """
 sleep 1
 cylc message "restart files ready for $(cylc cycle-point --offset-hours=24 )"
 sleep 1"""

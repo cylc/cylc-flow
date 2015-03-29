@@ -8,7 +8,7 @@ t-shutdown => t-check-log
 """
 [runtime]
     [[t-remote]]
-        command scripting = """
+        script = """
 # Hang the task on a remote host for up to 30 seconds
 touch 'file'
 timeout 30 bash -c 'while [[ -e 'file' ]]; do sleep 1; done' || true
@@ -18,19 +18,19 @@ timeout 30 bash -c 'while [[ -e 'file' ]]; do sleep 1; done' || true
         [[[job submission]]]
             method = at
     [[t-shutdown]]
-        command scripting = """
+        script = """
 # Shutdown and wait
 cylc shutdown --now --max-polls=10 --interval=1 "${CYLC_SUITE_NAME}"
 """
     [[t-remote-2]]
-        command scripting = """
+        script = """
 # Release t-remote-1
 rm -f "${CYLC_SUITE_WORK_DIR}/${CYLC_TASK_CYCLE_POINT}/t-remote/file"
 """
         [[[remote]]]
             host = {{environ['CYLC_TEST_HOST']}}
     [[t-check-log]]
-        command scripting = """
+        script = """
 grep -q 'WARNING - garbage: initialisation did not complete' \
     "${CYLC_SUITE_LOG_DIR}/log"
 """

@@ -11,12 +11,12 @@ title = "test reloading after manually removing a task."
         """
 [runtime]
     [[reloader]]
-        command scripting = """
+        script = """
             sed -i "s/remove_me =>//g" $CYLC_SUITE_DEF_PATH/suite.rc
             cylc reload $CYLC_SUITE_NAME
             sleep 10
         """
     [[remove_me]]
-        command scripting = false
+        script = false
     [[foo]]
-        command scripting = true
+        script = true

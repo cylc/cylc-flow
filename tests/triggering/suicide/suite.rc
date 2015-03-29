@@ -13,9 +13,9 @@ title = "Hello, Goodbye, Suicide"
            really_goodbye => !goodbye"""
 [runtime]
     [[hello]]
-        command scripting = "sleep 1; echo Hello World!"
+        script = "sleep 1; echo Hello World!"
     [[goodbye]]
-        command scripting = """
+        script = """
 sleep 1
 echo Goodbye ... oops!
 /bin/false # FAIL"""

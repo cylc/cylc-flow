@@ -16,12 +16,11 @@ description = the quick brown fox
 [runtime]
     [[foo]]
         title = a task
-        description = jumped over the lazy dog
-        command scripting = sleep 10
+        script = sleep 10
     [[bar,baz]]
-        command scripting = true
+        script = true
     [[show]]
-        command scripting = """
+        script = """
 # suite info
 cylc show "$CYLC_SUITE_NAME" >{{ TEST_OUTPUT_PATH }}
 # task info

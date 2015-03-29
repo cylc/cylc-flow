@@ -20,9 +20,9 @@ which should run to completion on restarting."""
             graph = "foo => bar"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
     [[foo]]
-        command scripting = """
+        script = """
 if [[ $CYLC_TASK_CYCLE_TIME == $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
     cylc reload $CYLC_SUITE_NAME
     cylc stop $CYLC_SUITE_NAME

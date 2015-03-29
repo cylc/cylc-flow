@@ -12,4 +12,4 @@
 
 [runtime]
     [[foo]]
-        command scripting = true
+        script = true

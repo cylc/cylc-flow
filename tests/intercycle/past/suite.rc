@@ -19,4 +19,4 @@ Task A should only run at 0, 12 hours; Task B at 6, 18"""
 
 [runtime]
     [[root]]
-        command scripting = "/bin/true" # fast
+        script = "/bin/true" # fast

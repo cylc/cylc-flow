@@ -15,7 +15,7 @@ title = "test suite for cylc-6 message triggers"
                   """
 [runtime]
     [[foo]]
-        command scripting = """
+        script = """
 echo HELLO
 sleep 2 
 TARGET_POINT=$CYLC_TASK_CYCLE_POINT

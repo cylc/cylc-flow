@@ -12,7 +12,7 @@
             graph = "baz[-P3W] => baz => qux"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle point = 1000W011
     final cycle point = 1000W064

@@ -21,7 +21,7 @@ title = "test insertion of a task with a bad cycle point."
 
 [runtime]
     [[root]]
-        command scripting = "sleep 1" # quick
+        script = "sleep 1" # quick
     [[prep]]
         # Insert the task with a bad cycle point
-        command scripting = cylc insert $CYLC_SUITE_NAME foo 20140101T00 soon
+        script = cylc insert $CYLC_SUITE_NAME foo 20140101T00 soon

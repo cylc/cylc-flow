@@ -20,11 +20,11 @@ GUI (waiting to held to waiting)"""
             graph = "holdrelease => bar"
 [runtime]
     [[holdrelease]]
-        command scripting = """
+        script = """
 sleep 5
 cylc hold $CYLC_SUITE_NAME
 sleep 5
 cylc release $CYLC_SUITE_NAME
 sleep 5"""
     [[foo,bar]]
-        command scripting = true
+        script = true

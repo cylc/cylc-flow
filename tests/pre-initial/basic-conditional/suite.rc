@@ -10,4 +10,4 @@
             graph = "a[T-24] & b => a"
 [runtime]
     [[a, b]]
-        command scripting = "sleep 1"
+        script = "sleep 1"

@@ -48,7 +48,10 @@ cmp_ok $TEST_NAME.stderr - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-section2
 run_ok $TEST_NAME cylc get-config --item=[runtime] $SUITE_NAME
-cmp_ok $TEST_NAME.stdout "$TEST_SOURCE_DIR/$TEST_NAME_BASE/section2.stdout"
+# Crude sorting to handle against change of dict order when new items added:
+sort ${TEST_NAME}.stdout > stdout.1
+sort "$TEST_SOURCE_DIR/$TEST_NAME_BASE/section2.stdout" > stdout.2
+cmp_ok stdout.1 stdout.2
 cmp_ok $TEST_NAME.stderr - </dev/null
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

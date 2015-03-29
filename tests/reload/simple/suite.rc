@@ -7,6 +7,6 @@
         graph = "a => b => c"
 [runtime]
     [[a,c]]
-        command scripting = "true"
+        script = "true"
     [[b]]
-        command scripting = "cylc reload $CYLC_SUITE_REG_NAME -f; sleep 5"
+        script = "cylc reload $CYLC_SUITE_REG_NAME -f; sleep 5"

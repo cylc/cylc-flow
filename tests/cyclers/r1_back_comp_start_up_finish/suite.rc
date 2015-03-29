@@ -13,6 +13,6 @@ my_start_up:finish => my_task
 
 [runtime]
     [[root]]
-        command scripting=true
+        script=true
     [[my_start_up]]
     [[my_task]]
