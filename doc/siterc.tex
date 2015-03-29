@@ -510,10 +510,11 @@ invoked via \lstinline=ssh= on this host.
 \item {\em localhost default:} \lstinline@cylc@
 \end{myitemize}
 
-\paragraph[global initial scripting]{[hosts] $\rightarrow$ HOST $\rightarrow$ global initial scripting }
+\paragraph[global init-script]{[hosts] $\rightarrow$ HOST $\rightarrow$ global init-script }
+\label{GlobalInitScript}
 
 If specified, the value of this setting will be inserted to just before the
-\lstinline=initial scripting= section of all job scripts that are to be
+\lstinline=init-script= section of all job scripts that are to be
 submitted to the specified remote host.
 
 \begin{myitemize}
