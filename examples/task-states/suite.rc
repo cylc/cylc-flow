@@ -25,7 +25,7 @@ to show what they look like live in gcylc."""
 [runtime]
     [[root]]
         # delay all tasks slightly in the 'submitted' state
-        initial scripting = "sleep 5"
+        init-script = "sleep 5"
    [[family]]
     [[m1,m2,m3]]
         inherit = family
@@ -33,7 +33,7 @@ to show what they look like live in gcylc."""
         inherit = family
         title = "this task succeeds on the second try "
         retry delays = PT18S
-        command scripting = """
+        script = """
 sleep 10
 if [[ $CYLC_TASK_TRY_NUMBER < 2 ]]; then
     cylc task message -p WARNING ABORTING
@@ -44,7 +44,7 @@ fi"""
         description = """Failed instances of this task are removed from the suite
 at the end of each cycle by a suicide trigger."""
         retry delays = PT12S
-        command scripting = "sleep 10; exit 1"
+        script = "sleep 10; exit 1"
     [[bad2]]
         title = "A task that fails to submit twice"
         [[[job submission]]]

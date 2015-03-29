@@ -11,18 +11,18 @@ available)."""
         inherit = GLOBALWAVE
         description = "The globalwave model."
         manual completion = True
-        command scripting = ${HOME}/bin/scripts/run_globalwave_120_only
+        script = ${HOME}/bin/scripts/run_globalwave_120_only
 
     [[globalwave_ncl]]
         inherit = GLOBALWAVE
         description = """GlobalWave ncl postprocessing.
     Creates eps and XML files for the GlobalWave model outputs."""
-        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_globalwave.sh
+        script = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_globalwave.sh
 
     [[globalwave_products]]
         inherit = GLOBALWAVE
         description = "GlobalWave forecast product generation and ingestion."
-        command scripting = convert_ingest.sh 
+        script = convert_ingest.sh 
         [[[environment]]]
             PRODUCT_DIR   = ${HOME}/running/globalwave_120/product
             SERVICE     = globalwave_products
@@ -30,4 +30,4 @@ available)."""
     [[globalwave_housekeeping]]
         inherit = GLOBALWAVE
         description = "Archiving and cleanup for the globalwave sub-system."
-        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalwave_housekeeping.conf
+        script = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalwave_housekeeping.conf

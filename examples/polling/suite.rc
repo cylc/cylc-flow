@@ -14,7 +14,7 @@ as the suite runs, filtering for the word 'poll'.
         # no polling for this task except with
         #  "task communication method = poll"
     [[bar]]
-        command scripting = "sleep 60"
+        script = "sleep 60"
         # configure submission and execution polling:
         submission polling intervals = 0.1
         execution polling intervals = 0.2, 2*0.3, 0.1

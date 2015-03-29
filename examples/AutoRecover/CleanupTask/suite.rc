@@ -20,11 +20,11 @@ the AutoRecover examples for recovery tasks that only run if needed."""
 
     [[m_foo]]
         inherit = fam
-        command scripting = sleep 8 
+        script = sleep 8 
 
     [[m_bar]]
         inherit = fam
-        command scripting = """
+        script = """
 # Fail at 6,18, succeed at 0,12:
 HH=$( cylc cycle-point --print-hour )
 if (( HH == 06 || HH == 18 )); then
@@ -37,8 +37,8 @@ $COMMAND"""
 
     [[m_baz]]
         inherit = fam
-        command scripting = sleep 10
+        script = sleep 10
 
     [[fam_cleanup]]
         description = "this is a family failed task cleanup task"
-        command scripting = fam_cleanup.sh
+        script = fam_cleanup.sh

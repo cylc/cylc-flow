@@ -4,6 +4,6 @@ title = "Hello World! on a remote host"
         graph = "hello"
 [runtime]
     [[hello]]
-        command scripting = "sleep 10; echo Hello World!"
+        script = "sleep 10; echo Hello World!"
         [[[remote]]]
             host = server1.niwa.co.nz

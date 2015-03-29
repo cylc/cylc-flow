@@ -16,7 +16,7 @@ title = "User Guide [runtime] example."
         [[[environment]]]
             COLOR = red
     [[OBS]]  # family (inherited by land, ship); implicitly inherits root
-        command scripting = run-${CYLC_TASK_NAME}.sh
+        script = run-${CYLC_TASK_NAME}.sh
         [[[environment]]]
             RUNNING_DIR = $HOME/running/$CYLC_TASK_NAME
     [[land]] # a task (a leaf on the inheritance tree) in the OBS family

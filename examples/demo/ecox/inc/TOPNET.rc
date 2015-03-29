@@ -1,7 +1,7 @@
     [[ecan_rain_obs]]
         inherit = TOPNET
         description = "Create rain observation NetCDF file for Topnet."
-        command scripting = $HOME/bin/ecan/ecan_rain2netcdf.sh
+        script = $HOME/bin/ecan/ecan_rain2netcdf.sh
         [[[environment]]]
             OUT_DIR = ${HOME}/input/topnet
             START_DATE  = $(cylc cycle-point -s 48)
@@ -13,17 +13,17 @@
     [[topnet]]
         inherit = TOPNET
         description = "The TopNet model"
-        command scripting = ${HOME}/bin/run_topnet.sh
+        script = ${HOME}/bin/run_topnet.sh
 
     [[topnet_ncl]]
         inherit = TOPNET
         description = "TopNet ncl postprocessing"
-        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_topnet.sh
+        script = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_topnet.sh
 
     [[topnet_products]]
         inherit = TOPNET
         description = "TopNet forecast product generation."
-        command scripting = convert_ingest.sh
+        script = convert_ingest.sh
          [[[environment]]]
             PRODUCT_DIR   = ${HOME}/running/topnet/product
             SERVICE     = topnet_products
@@ -31,17 +31,17 @@
     [[topnet_housekeeping]]
         inherit = TOPNET
         description = "Archiving and cleanup for the TopNet sub-system."
-        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/topnet_housekeeping.conf
+        script = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/topnet_housekeeping.conf
 
     [[ext_create_streamflow]]
         inherit = TOPNET
         description = "Create streamflow data on Tideda server."
-        command scripting = create_streamflow.sh
+        script = create_streamflow.sh
 
     [[ext_get_streamq]]
         inherit = TOPNET
         description = "Get the streamq file from TDServer, so Topnet can run."
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE    = tdserver2008.niwa.co.nz
             SRCE_LOC    = ~/

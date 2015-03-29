@@ -1,35 +1,35 @@
     [[mos_nzlam_coeffs]]
         inherit = MOS
         description = "Generate NZLAM mos coefficients."
-        command scripting = /${SYS}/ecoconnect/mos_${SYS}/bin/generate_nzlam_mos_coeff.sh
+        script = /${SYS}/ecoconnect/mos_${SYS}/bin/generate_nzlam_mos_coeff.sh
         [[[event hooks]]]
             execution timeout = 90
 
     [[mos_nzlam_apply]]
         inherit = MOS
         description = "Apply MOS correction to NZLAM forecasts."
-        command scripting = /${SYS}/ecoconnect/mos_${SYS}/bin/apply_nzlam_mos.sh
+        script = /${SYS}/ecoconnect/mos_${SYS}/bin/apply_nzlam_mos.sh
 
     [[ext_get_clidbdata]]
         inherit = MOS
         description = "Retrieve data from clidb"
-        command scripting = /${SYS}/ecoconnect/mos_${SYS}/bin/get_clidb_data.sh
+        script = /${SYS}/ecoconnect/mos_${SYS}/bin/get_clidb_data.sh
 
     [[mos_nzlam_vp_5day]]
         inherit = MOS
         description = "mos verification and plotting for last 5 days of NZLAM forecasts."
-        command scripting = /${SYS}/ecoconnect/mos_${SYS}/bin/verify_mos.sh
+        script = /${SYS}/ecoconnect/mos_${SYS}/bin/verify_mos.sh
         [[[environment]]]
             REFERENCE_TIME = $(cylc cycle-point --offset-hours=-120)
 
     [[mos_nzlam_vp_curr]]
         inherit = MOS
         description = "mos verification and plotting for the current NZLAM forecast."
-        command scripting = /${SYS}/ecoconnect/mos_${SYS}/bin/verify_mos.sh
+        script = /${SYS}/ecoconnect/mos_${SYS}/bin/verify_mos.sh
         [[[environment]]]
             REFERENCE_TIME = ${CYLC_TASK_CYCLE_TIME}
 
     [[mos_housekeeping]]
         inherit = MOS
         description = "Archiving and cleanup for the mos sub-system."
-        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/mos_housekeeping.conf
+        script = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/mos_housekeeping.conf

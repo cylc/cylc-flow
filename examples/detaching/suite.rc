@@ -16,7 +16,7 @@ to handle task completion messaging manually - see the Cylc User Guide."""
 [runtime]
     [[model]]
         manual completion = True
-        command scripting = model-wrapper.sh  # invoke the task via a custom wrapper
+        script = model-wrapper.sh  # invoke the task via a custom wrapper
         [[[environment]]]
             # location of native job scripts to modify for this suite:
             NATIVESCRIPTS = $CYLC_SUITE_DEF_PATH/native

@@ -11,7 +11,7 @@ be set in host-specific sections of the cylc site/user config file."""
         graph = "foo => bar"
 [runtime]
     [[root]]
-        command scripting = """
+        script = """
 echo HELLO from $CYLC_TASK_NAME on $(hostname)
 sleep 10
 echo GOODBYE from $CYLC_TASK_NAME on $(hostname)"""

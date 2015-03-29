@@ -4,7 +4,7 @@ title = "Simple runtime inheritance example"
         graph = "hello => goodbye"
 [runtime]
     [[root]]
-        command scripting = "sleep 10; echo $GREETING World!"
+        script = "sleep 10; echo $GREETING World!"
     [[hello]]
         [[[environment]]]
             GREETING = Hello
