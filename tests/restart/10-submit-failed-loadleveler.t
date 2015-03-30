@@ -23,13 +23,7 @@
 #-------------------------------------------------------------------------------
 # export an environment variable for this - allows a script to be used to 
 # select a compute node and have that same host used by the suite.
-if [[ "${TEST_NAME_BASE}" == ??-*-loadleveler* ]]; then
-    BATCH_SYS_NAME='loadleveler'
-elif [[ "${TEST_NAME_BASE}" == ??-*-slurm* ]]; then
-    BATCH_SYS_NAME='slurm'
-elif [[ "${TEST_NAME_BASE}" == ??-*-pbs* ]]; then
-    BATCH_SYS_NAME='pbs'
-fi
+BATCH_SYS_NAME="${TEST_NAME_BASE##??-*-}"
 export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
     "[test battery][batch systems][$BATCH_SYS_NAME]host")
 export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \

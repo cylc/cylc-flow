@@ -30,21 +30,19 @@ if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
     fi
     CYLC_TEST_HOST="${HOST}"
 fi
-CYLC_TEST_BATCH_SYS_NAME='background'
 CONFIGURED_SYS_NAME=
 CYLC_TEST_DIRECTIVES=
-if [[ "${TEST_NAME_BASE}" == ??-at* ]]; then
+CONFIGURED_SYS_NAME="${TEST_NAME_BASE##??-}"
+if [[ "${CONFIGURED_SYS_NAME}" == 'bg' || "${CONFIGURED_SYS_NAME}" == *-bg ]]
+then
+    CONFIGURED_SYS_NAME=
+    CYLC_TEST_BATCH_SYS_NAME='background'
+elif [[ "${CONFIGURED_SYS_NAME}" == 'at' || "${CONFIGURED_SYS_NAME}" == *-at ]]
+then
+    CONFIGURED_SYS_NAME=
     CYLC_TEST_BATCH_SYS_NAME='at'
-elif [[ "${TEST_NAME_BASE}" == ??-loadleveler* ]]; then
-    CONFIGURED_SYS_NAME='loadleveler'
-elif [[ "${TEST_NAME_BASE}" == ??-slurm* ]]; then
-    CONFIGURED_SYS_NAME='slurm'
-elif [[ "${TEST_NAME_BASE}" == ??-pbs* ]]; then
-    CONFIGURED_SYS_NAME='pbs'
-elif [[ "${TEST_NAME_BASE}" == ??-lsf* ]]; then
-    CONFIGURED_SYS_NAME='lsf'
 fi
-if [[ -n $CONFIGURED_SYS_NAME ]]; then
+if [[ -n "${CONFIGURED_SYS_NAME}" ]]; then
     ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME]host"
     CYLC_TEST_HOST="$(cylc get-global-config "--item=${ITEM_KEY}")"
     if [[ -z "${CYLC_TEST_HOST}" ]]; then
