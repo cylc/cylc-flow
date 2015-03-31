@@ -1,9 +1,10 @@
 title=broadcast expire
 description=Test broadcast expire option
 [cylc]
+    UTC mode = True
     [[reference test]]
         required run mode=live
-        live mode suite timeout=PT1M
+        live mode suite timeout=PT2M
 [scheduling]
     initial cycle time = 2020
     final cycle time = 2025
