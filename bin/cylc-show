@@ -18,7 +18,7 @@
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
+    sys.argv.remove('--use-ssh')
     from cylc.remote import remrun
     if remrun().execute():
         sys.exit(0)
@@ -29,116 +29,83 @@ from cylc.task_id import TaskID
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
-parser = cop( """cylc [info] show [OPTIONS] ARGS
+parser = cop(
+    """cylc [info] show [OPTIONS] ARGS
 
-Interrogate a running suite for its title and task list, task
-descriptions, current state of task prerequisites and outputs and, for
-clock-triggered tasks, whether or not the trigger time is up yet.""",
+Interrogate a suite daemon for the suite title and description; or for the
+title and description of one of its tasks; or for the current state of the
+prerequisites, outputs, and clock-triggering of a specific task instance.""",
     pyro=True, noforce=True,
     argdoc=[('REG', 'Suite name'),
             ('[' + TaskID.SYNTAX_OPT_POINT + ']', 'Task name or ID')])
 
 (options, args) = parser.parse_args()
-
-suite, pphrase = prep_pyro( args[0], options ).execute()
-
-prnt_suite = False
-prnt_name = False
-prnt_id = False
-
-if len(args) == 2:
-    target = args[1]
-    try:
-        name, point_string = TaskID.split(target)
-    except ValueError:
-        # just a task name
-        prnt_name = True
-        name = target
-    else:
-        # task ID
-        prnt_id = True
-        task_id = target
-else:
-    prnt_suite = True
+suite, pphrase = prep_pyro(args[0], options).execute()
 
 try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'suite-info' )
-    title, username = proxy.get( 'suite info' )
-except Exception, x:
+    proxy = cylc_pyro_client.client(
+        suite, pphrase, options.owner, options.host, options.pyro_timeout,
+        options.port).get_proxy('suite-info')
+
+    if len(args) == 1:
+        # Print suite info.
+        suite_info = proxy.get('suite info')
+        for key, value in sorted(suite_info.items(), reverse=True):
+            print '%s: %s' % (key,value or "(not given)")
+        sys.exit(0)
+
+    point_string = None
+    arg = args[1]
+    try:
+        name, point_string = TaskID.split(arg)
+    except ValueError:
+        # Print task info.
+        name = arg
+    else:
+        # Print task instance info.
+        task_id = arg
+
+    info = proxy.get('task info', name)
+    if not info:
+        sys.exit("ERROR: task not found: %s" % name)
+    for key, value in sorted(info.items(), reverse=True):
+        print "%s: %s" % (key, value or "(not given)")
+
+    if point_string is not None:
+        result = proxy.get('task requisites', name, point_string)
+        if not result:
+            sys.exit("ERROR: task instance not found: %s" % task_id)
+
+        for task_id in result.keys():
+            [pre, out, extra_info] = result[task_id]
+
+            print '\nprerequisites (- => not satisfied):'
+            if len(pre) == 0:
+                print '  (None)'
+            for item in sorted(pre):
+                [msg, state] = item
+                if state:
+                    descr = '  + '
+                else:
+                    descr = '  - '
+                print descr + msg
+
+            print '\noutputs (- => not completed):'
+            if len(out) == 0:
+                print '  (None)'
+            for item in sorted(out):
+                [msg, state] = item
+                if state:
+                    descr = '  + '
+                else:
+                    descr = '  - '
+                print descr + msg
+
+            if len(extra_info.keys()) > 0:
+                print '\nother:'
+                for item in extra_info:
+                    print '  o ', item, '...', extra_info[item]
+except Exception as exc:
     if cylc.flags.debug:
         raise
-    sys.exit(x)
-
-if prnt_suite:
-    print suite + ' (' + options.owner + ')'
-    print title
-
-    try:
-        for task in proxy.get( 'task list' ):
-            print ' + ', task
-    except Exception,x:
-        if cylc.flags.debug:
-            raise
-        sys.exit(x)
-
-if prnt_name or prnt_id:
-    try:
-        info = proxy.get( 'task info', [ name ] )
-    except Exception,x:
-        if cylc.flags.debug:
-            raise
-        sys.exit(x)
-    idx = name
-    if prnt_id:
-        idx = task_id
-    print 'TASK ' + idx + ' in suite ' + suite + ':'
-    for name in info.keys():
-        print ' ', info[name]
-
-if prnt_id:
-    # PREREQUISITES AND OUTPUTS
-    try:
-        result = proxy.get( 'task requisites', [ task_id ] )
-    except Exception,x:
-        if cylc.flags.debug:
-            raise
-        sys.exit(x)
-
-    if not result or task_id not in result:
-        print "Task " + task_id + " not found in " + suite
-        sys.exit(1)
-
-    for task_id in result.keys():
-        [ pre, out, extra_info ] = result[ task_id ]
-
-        print 'PREREQUISITES (- => not satisfied):'
-        if len( pre ) == 0:
-            print '  (None)'
-        for item in sorted(pre):
-            [ msg, state ] = item
-            if state:
-                descr = '  + '
-            else:
-                descr = '  - '
-            print descr + msg
-
-        print 'OUTPUTS (- => not completed):'
-        if len( out ) == 0:
-            print '  (None)'
-        for item in sorted(out):
-            [ msg, state ] = item
-            if state:
-                descr = '  + '
-            else:
-                descr = '  - '
-            print descr + msg
-
-        if len( extra_info.keys() ) > 0:
-            print 'Other:'
-            for item in extra_info:
-                print '  o ', item, '...', extra_info[ item ]
-        print """
-NOTE: for tasks that have triggered already, prerequisites are
-shown here in the state they were in at the time of triggering."""
+    sys.exit(exc)

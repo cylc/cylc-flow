@@ -1,4 +1,6 @@
 #!jinja2
+title = a test suite
+description = the quick brown fox
 [cylc]
     UTC mode = True
 [scheduling]
@@ -13,10 +15,17 @@
             """
 [runtime]
     [[foo]]
+        title = a task
+        description = jumped over the lazy dog
         command scripting = sleep 10
     [[bar,baz]]
         command scripting = true
     [[show]]
         command scripting = """
-cylc show "$CYLC_SUITE_NAME" foo.20141106T0900Z >{{ TEST_OUTPUT_PATH }}
+# suite info
+cylc show "$CYLC_SUITE_NAME" >{{ TEST_OUTPUT_PATH }}
+# task info
+cylc show "$CYLC_SUITE_NAME" foo >>{{ TEST_OUTPUT_PATH }}
+# task instance info
+cylc show "$CYLC_SUITE_NAME" foo.20141106T0900Z >>{{ TEST_OUTPUT_PATH }}
 """
