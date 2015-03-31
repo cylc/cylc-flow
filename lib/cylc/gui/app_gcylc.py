@@ -1533,8 +1533,9 @@ The Cylc Suite Engine.
 
     def popup_requisites(self, w, e, task_id):
         try:
-            result = self.get_pyro(
-                'suite-info').get('task requisites', [task_id])
+            name, point_string = TaskID.split(task_id)
+            result = self.get_pyro('suite-info').get(
+                'task requisites', name, point_string)
         except Exception, x:
             warning_dialog(str(x), self.window).warn()
             return
