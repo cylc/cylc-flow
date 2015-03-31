@@ -16,6 +16,7 @@ description = the quick brown fox
 [runtime]
     [[foo]]
         title = a task
+        description = jumped over the lazy dog
         script = sleep 10
     [[bar,baz]]
         script = true

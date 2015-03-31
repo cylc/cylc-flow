@@ -86,99 +86,99 @@
       <!-- To regenerate this keyword list, create a minimal suite.rc file and run something like:
         cylc get-config my-minimal-suite | sed "/^[^=]*$/d; s/=.*//g; s/^ *//g; s/ *$//g" | sort -r | uniq | sed "s/\(.*\)/<keyword>\1<\/keyword>/g"
         -->
-        <keyword>work sub-directory</keyword>
-        <keyword>warning handler</keyword>
-        <keyword>verbose mode</keyword>
-        <keyword>UTC mode</keyword>
-        <keyword>user</keyword>
-        <keyword>use node color for labels</keyword>
-        <keyword>use node color for edges</keyword>
-        <keyword>title</keyword>
-        <keyword>timeout handler</keyword>
-        <keyword>timeout</keyword>
-        <keyword>suite shutdown event handler</keyword>
-        <keyword>suite definition directory</keyword>
-        <keyword>succeeded handler</keyword>
-        <keyword>submitted handler</keyword>
-        <keyword>submission timeout handler</keyword>
-        <keyword>submission timeout</keyword>
-        <keyword>submission retry handler</keyword>
-        <keyword>submission polling intervals</keyword>
-        <keyword>submission failed handler</keyword>
-        <keyword>startup handler</keyword>
-        <keyword>start-up</keyword>
-        <keyword>started handler</keyword>
-        <keyword>simulation mode suite timeout</keyword>
-        <keyword>simulate failure</keyword>
-        <keyword>shutdown handler</keyword>
-        <keyword>shell</keyword>
-        <keyword>sequential</keyword>
-        <keyword>script</keyword>
-        <keyword>run time range</keyword>
-        <keyword>run-dir</keyword>
-        <keyword>runahead limit</keyword>
-        <keyword>root</keyword>
-        <keyword>retry handler</keyword>
-        <keyword>retry delays</keyword>
-        <keyword>reset timer</keyword>
-        <keyword>required run mode</keyword>
-        <keyword>pre-script</keyword>
-        <keyword>post-script</keyword>
-        <keyword>owner</keyword>
-        <keyword>number of cycle points</keyword>
-        <keyword>method</keyword>
-        <keyword>members</keyword>
-        <keyword>max-polls</keyword>
-        <keyword>max active cycle points</keyword>
-        <keyword>manual completion</keyword>
-        <keyword>log resolved dependencies</keyword>
-        <keyword>live mode suite timeout</keyword>
-        <keyword>limit</keyword>
-        <keyword>interval</keyword>
-        <keyword>init-script</keyword>
-        <keyword>initial cycle point constraints</keyword>
-        <keyword>initial cycle point</keyword>
-        <keyword>inherit</keyword>
-        <keyword>include at start-up</keyword>
-        <keyword>include</keyword>
-        <keyword>host</keyword>
-        <keyword>graph</keyword>
-        <keyword>force run mode</keyword>
-        <keyword>final cycle point constraints</keyword>
-        <keyword>final cycle point</keyword>
-        <keyword>failed handler</keyword>
-        <keyword>extra log files</keyword>
-        <keyword>expected task failures</keyword>
-        <keyword>execution timeout handler</keyword>
-        <keyword>execution timeout</keyword>
-        <keyword>execution polling intervals</keyword>
-        <keyword>exclude at start-up</keyword>
-        <keyword>exclude</keyword>
-        <keyword>env-script</keyword>
-        <keyword>enable resurrection</keyword>
-        <keyword>dummy mode suite timeout</keyword>
-        <keyword>disable task event hooks</keyword>
-        <keyword>disable suite event hooks</keyword>
-        <keyword>disable retries</keyword>
-        <keyword>disable pre-script</keyword>
-        <keyword>disable post-script</keyword>
-        <keyword>description</keyword>
-        <keyword>default node attributes</keyword>
-        <keyword>default edge attributes</keyword>
-        <keyword>cycling mode</keyword>
-        <keyword>cycle point time zone</keyword>
-        <keyword>cycle point num expanded year digits</keyword>
-        <keyword>cycle point format</keyword>
-        <keyword>command template</keyword>
-        <keyword>collapsed families</keyword>
-        <keyword>cold-start</keyword>
-        <keyword>clock-triggered</keyword>
-        <keyword>allow task failures</keyword>
-        <keyword>abort on timeout</keyword>
-        <keyword>abort if timeout handler fails</keyword>
-        <keyword>abort if startup handler fails</keyword>
-        <keyword>abort if shutdown handler fails</keyword>
-        <keyword>abort if any task fails</keyword>
+      <keyword>work sub-directory</keyword>
+      <keyword>warning handler</keyword>
+      <keyword>verbose mode</keyword>
+      <keyword>UTC mode</keyword>
+      <keyword>user</keyword>
+      <keyword>use node color for labels</keyword>
+      <keyword>use node color for edges</keyword>
+      <keyword>title</keyword>
+      <keyword>timeout handler</keyword>
+      <keyword>timeout</keyword>
+      <keyword>suite shutdown event handler</keyword>
+      <keyword>suite definition directory</keyword>
+      <keyword>succeeded handler</keyword>
+      <keyword>submitted handler</keyword>
+      <keyword>submission timeout handler</keyword>
+      <keyword>submission timeout</keyword>
+      <keyword>submission retry handler</keyword>
+      <keyword>submission polling intervals</keyword>
+      <keyword>submission failed handler</keyword>
+      <keyword>startup handler</keyword>
+      <keyword>start-up</keyword>
+      <keyword>started handler</keyword>
+      <keyword>simulation mode suite timeout</keyword>
+      <keyword>simulate failure</keyword>
+      <keyword>shutdown handler</keyword>
+      <keyword>shell</keyword>
+      <keyword>sequential</keyword>
+      <keyword>script</keyword>
+      <keyword>run time range</keyword>
+      <keyword>run-dir</keyword>
+      <keyword>runahead limit</keyword>
+      <keyword>root</keyword>
+      <keyword>retry handler</keyword>
+      <keyword>retry delays</keyword>
+      <keyword>reset timer</keyword>
+      <keyword>required run mode</keyword>
+      <keyword>pre-script</keyword>
+      <keyword>post-script</keyword>
+      <keyword>owner</keyword>
+      <keyword>number of cycle points</keyword>
+      <keyword>method</keyword>
+      <keyword>members</keyword>
+      <keyword>max-polls</keyword>
+      <keyword>max active cycle points</keyword>
+      <keyword>manual completion</keyword>
+      <keyword>log resolved dependencies</keyword>
+      <keyword>live mode suite timeout</keyword>
+      <keyword>limit</keyword>
+      <keyword>interval</keyword>
+      <keyword>init-script</keyword>
+      <keyword>initial cycle point constraints</keyword>
+      <keyword>initial cycle point</keyword>
+      <keyword>inherit</keyword>
+      <keyword>include at start-up</keyword>
+      <keyword>include</keyword>
+      <keyword>host</keyword>
+      <keyword>graph</keyword>
+      <keyword>force run mode</keyword>
+      <keyword>final cycle point constraints</keyword>
+      <keyword>final cycle point</keyword>
+      <keyword>failed handler</keyword>
+      <keyword>extra log files</keyword>
+      <keyword>expected task failures</keyword>
+      <keyword>execution timeout handler</keyword>
+      <keyword>execution timeout</keyword>
+      <keyword>execution polling intervals</keyword>
+      <keyword>exclude at start-up</keyword>
+      <keyword>exclude</keyword>
+      <keyword>env-script</keyword>
+      <keyword>enable resurrection</keyword>
+      <keyword>dummy mode suite timeout</keyword>
+      <keyword>disable task event hooks</keyword>
+      <keyword>disable suite event hooks</keyword>
+      <keyword>disable retries</keyword>
+      <keyword>disable pre-script</keyword>
+      <keyword>disable post-script</keyword>
+      <keyword>description</keyword>
+      <keyword>default node attributes</keyword>
+      <keyword>default edge attributes</keyword>
+      <keyword>cycling mode</keyword>
+      <keyword>cycle point time zone</keyword>
+      <keyword>cycle point num expanded year digits</keyword>
+      <keyword>cycle point format</keyword>
+      <keyword>command template</keyword>
+      <keyword>collapsed families</keyword>
+      <keyword>cold-start</keyword>
+      <keyword>clock-triggered</keyword>
+      <keyword>allow task failures</keyword>
+      <keyword>abort on timeout</keyword>
+      <keyword>abort if timeout handler fails</keyword>
+      <keyword>abort if startup handler fails</keyword>
+      <keyword>abort if shutdown handler fails</keyword>
+      <keyword>abort if any task fails</keyword>
     </context>
     <context id="cylc-subshell" style-ref="string">
       <match>"""</match>
