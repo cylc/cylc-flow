@@ -39,9 +39,9 @@ poll_while ! test -e "$SUITE_RUN_DIR/log/job/1/t1/02/job.status"
 #-------------------------------------------------------------------------------
 # Ensure that t2.1.2 is waiting for t1.1.2
 TEST_NAME="$TEST_NAME_BASE-show-t2.1.out"
-cylc show "$SUITE_NAME" t2.1 | sed -n '/^PREREQUISITES/{N;p;}' >"$TEST_NAME"
+cylc show "$SUITE_NAME" t2.1 | sed -n '/^prerequisites/{N;p;}' >"$TEST_NAME"
 cmp_ok "$TEST_NAME" <<__OUT__
-PREREQUISITES (- => not satisfied):
+prerequisites (- => not satisfied):
   - t1.1 succeeded
 __OUT__
 touch "$SUITE_RUN_DIR/t1.1.txt" # Release t1.1.2
