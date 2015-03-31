@@ -16,6 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO - standardise cycle point input (and for other commands?); 
+# TODO - fix the edit-run test.
+# TODO - what happens on edit-run family?
+# TODO - what about GUI-invoked commands when prompting is turned on in
+# general?
+
 import sys
 
 if '--host' in sys.argv[1:] and '--edit' in sys.argv[1:]:
@@ -46,8 +52,11 @@ from cylc.task_id import TaskID
 
 parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
-Manually trigger a task or tasks. For single tasks you can choose to edit the
-generated job script first, to apply one-off changes (--edit).  Triggering a
+Manually trigger one or more tasks.
+             
+For single tasks you can choose to edit the generated job script to apply one-off changes (--edit).
+             
+Triggering a
 waiting task queues it for execution (cylc internal queues). If its queue is
 not limited it will submit immediately, otherwise it will submit when released
 by its queue.  Triggering a queued task causes it to submit immediately even if
@@ -159,6 +168,10 @@ if options.edit_run:
                 'ERROR, command failed with %d:\n %s' % (retcode, command))
     except OSError:
         sys.exit('ERROR, unable to execute:\n %s' % command)
+
+    # Get confirmation after editing is done.
+    # (Don't allow forced non-prompting in this case).
+    prompt("Trigger the edited task?", gui=options.geditor, no_force=True)
 
     # Save a diff to record the changes made.
     log_dir = os.path.dirname(jobfile_path)

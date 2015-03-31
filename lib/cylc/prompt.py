@@ -17,14 +17,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import gtk
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.gui.util import get_icon
 
-def prompt( reason, force=False ):
-    if force or GLOBAL_CFG.get( ['disable interactive command prompts'] ):
+def prompt(question, force=False, gui=False, no_force=False):
+    """Interactive Yes/No prompt for cylc CLI scripts.
+
+    For convenience, on No we just exit rather than return.
+    If force is True don't prompt, just return immediately.
+    
+    """
+    if (force or GLOBAL_CFG.get(['disable interactive command prompts']) and (
+            not no_force):
         return
-    response = raw_input( reason + ' (y/n)? ' )
-    if response == 'y':
-        return
+    if gui:
+        dialog = gtk.MessageDialog(
+            None, gtk.DIALOG_DESTROY_WITH_PARENT,
+            gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO,
+            question
+        )
+        gui_response = dialog.run()
+        response_no = (gui_response != gtk.RESPONSE_YES)
     else:
+        cli_response = raw_input('%s (y/n)? ' % question)
+        response_no = (cli_response not in ['y', 'Y'])
+    if response_no:
         sys.exit(0)
