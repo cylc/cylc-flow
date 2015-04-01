@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO - standardise cycle point input (and for other commands?); 
 # TODO - fix the edit-run test.
-# TODO - what happens on edit-run family?
-# TODO - what about GUI-invoked commands when prompting is turned on in
-# general?
+# TODO - see point string standardisation comment below.
 
 import sys
 
@@ -115,6 +112,8 @@ if options.edit_run:
         sys.exit('ERROR: %s' % msg)
 
     # Get the current job file mtime, if the file exists.
+    # TODO - HAVE TO GET JOB LOG PATH FROM THE SUITE BECAUSE THE POINT NEEDS TO
+    # BE STANDARDISED ACCORDING TO THE SUITE POINT FORMAT.
     jobfile_path = CommandLogger.get_latest_job_log(
         suite, name, point_string)
     try:

@@ -29,7 +29,7 @@ def prompt(question, force=False, gui=False, no_force=False):
     If force is True don't prompt, just return immediately.
     
     """
-    if (force or GLOBAL_CFG.get(['disable interactive command prompts']) and (
+    if (force or GLOBAL_CFG.get(['disable interactive command prompts'])) and (
             not no_force):
         return
     if gui:
