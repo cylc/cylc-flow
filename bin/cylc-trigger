@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO - fix the edit-run test.
 # TODO - check prompting for all gui-invoked commands.
 
 import sys
@@ -48,12 +47,9 @@ from cylc.task_id import TaskID
 
 parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
-Manually trigger one or more tasks.
-
-Triggering a waiting task queues it for execution (cylc internal queues). If
-its queue is not limited it will submit immediately, otherwise it will submit
-when released by its queue.  Triggering a queued task causes it to submit
-immediately even if that violates the queue limit.
+Manually trigger one or more tasks. Waiting tasks will be queued (cylc internal
+queues) and will submit as normal when released by the queue. Queued tasks will
+submit immediately even if that violates the queue limit.
 
 For single tasks you can use "--edit" to edit the generated job script first,
 to apply one-off changes. In an edit run a diff between the original and edited

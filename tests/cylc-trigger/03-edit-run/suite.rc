@@ -14,4 +14,6 @@ second task fixes and retriggers it with an edit-run."""
         command scripting = /bin/false
     [[fixer-task]]
         command scripting = """
-cylc trigger --edit $CYLC_SUITE_NAME broken-task 1"""
+cylc trigger --edit $CYLC_SUITE_NAME broken-task 1 << __END__
+y
+__END__"""
