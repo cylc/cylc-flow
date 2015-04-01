@@ -57,17 +57,17 @@ class Broadcast(Pyro.core.ObjBase):
         ]
         """
         prunes = []
-        stuffs = [([], self.settings, True)]
-        while stuffs:
-            keys, stuff, is_new = stuffs.pop()
+        stuff_stack = [([], self.settings, True)]
+        while stuff_stack:
+            keys, stuff, is_new = stuff_stack.pop()
             if is_new:
-                stuffs.append((keys, stuff, False))
+                stuff_stack.append((keys, stuff, False))
                 for key, value in stuff.items():
                     if isinstance(value, dict):
-                        stuffs.append((keys + [key], value, True))
+                        stuff_stack.append((keys + [key], value, True))
             else:
                 for key, value in stuff.items():
-                    if not value:
+                    if value in [None, {}]:
                         del stuff[key]
                         prunes.append(keys + [key])
         return prunes
@@ -80,10 +80,7 @@ class Broadcast(Pyro.core.ObjBase):
                     target[key] = {}
                 self._addict(target[key], val)
             else:
-                if source[key]:
-                    target[key] = source[key]
-                elif key in target:
-                    del target[key]
+                target[key] = source[key]
 
     def put(self, point_strings, namespaces, settings):
         """Add new broadcast settings.
@@ -104,9 +101,6 @@ class Broadcast(Pyro.core.ObjBase):
                         self.settings[point_string][namespace], setting)
                     modified_settings.append(
                         (point_string, namespace, setting))
-
-        # Remove empty leaves
-        self._prune()
 
         # Log the broadcast
         self._update_db_queue()
@@ -174,12 +168,12 @@ class Broadcast(Pyro.core.ObjBase):
             for namespace, namespace_settings in point_string_settings.items():
                 if namespaces and namespace not in namespaces:
                     continue
-                stuffs = [([], namespace_settings)]
-                while stuffs:
-                    keys, stuff = stuffs.pop()
+                stuff_stack = [([], namespace_settings)]
+                while stuff_stack:
+                    keys, stuff = stuff_stack.pop()
                     for key, value in stuff.items():
                         if isinstance(value, dict):
-                            stuffs.append((keys + [key], value))
+                            stuff_stack.append((keys + [key], value))
                         elif (not cancel_keys_list or
                                 keys + [key] in cancel_keys_list):
                             stuff[key] = None
@@ -216,12 +210,12 @@ class Broadcast(Pyro.core.ObjBase):
         keys_list = []
         if settings:
             for setting in settings:
-                stuffs = [([], setting)]
-                while stuffs:
-                    keys, stuff = stuffs.pop()
+                stuff_stack = [([], setting)]
+                while stuff_stack:
+                    keys, stuff = stuff_stack.pop()
                     for key, value in stuff.items():
                         if isinstance(value, dict):
-                            stuffs.append((keys + [key], value))
+                            stuff_stack.append((keys + [key], value))
                         else:
                             keys_list.append(keys + [key])
         return keys_list
@@ -281,12 +275,12 @@ class Broadcast(Pyro.core.ObjBase):
 
     @staticmethod
     def _namespace_in_prunes(prunes, namespace):
-        """Is point_string pruned?"""
+        """Is namespace pruned?"""
         return namespace in [prune[1] for prune in prunes if prune[1:]]
 
     @staticmethod
     def _cancel_keys_in_prunes(prunes, cancel_keys):
-        """Is point_string pruned?"""
+        """Is cancel_keys pruned?"""
         return (list(cancel_keys) in
                 [prune[2:] for prune in prunes if prune[2:]])
 

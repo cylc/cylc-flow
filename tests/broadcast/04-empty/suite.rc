@@ -1,0 +1,26 @@
+title=broadcast empty
+description=Test broadcast of an empty string
+[cylc]
+    [[reference test]]
+        required run mode=live
+        live mode suite timeout=PT1M
+[scheduling]
+    [[dependencies]]
+        graph="broadcast => t1"
+[runtime]
+    [[broadcast]]
+        command scripting="""
+cylc broadcast -s '[environment]EMPTY=' -p '1' -n 't1' "${CYLC_SUITE_NAME}" \
+    | tee 'broadcast.out'
+diff -u - 'broadcast.out' <<__OUT__
+Broadcast set:
++ [t1.${CYLC_TASK_CYCLE_POINT}] [environment]EMPTY=
+__OUT__
+"""
+    [[t1]]
+        command scripting = """
+printenv EMPTY | tee 'echo.out'
+diff -u - 'echo.out' <<<''
+"""
+        [[[environment]]]
+            EMPTY=full
