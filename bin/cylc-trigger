@@ -169,7 +169,7 @@ if options.edit_run:
     # Don't allow force-no-prompt in this case.
     if options.geditor:
         # Alert stdout of the dialog window, in case it's missed. 
-        print "NOTE: prompt dialog window popping up now."
+        print "Editing done. I'm popping up a confirmation dialog now."
     prompt("Trigger the edited task?", gui=options.geditor, no_force=True)
 
     # Save a diff to record the changes made.

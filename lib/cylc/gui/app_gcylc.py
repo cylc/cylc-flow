@@ -1641,10 +1641,7 @@ shown here in the state they were in at the time of triggering.''')
                                    gtk.BUTTONS_YES_NO, question)
         response = prompt.run()
         prompt.destroy()
-        if response == gtk.RESPONSE_NO:
-            return False
-        else:
-            return True
+        return response == gtk.RESPONSE_YES
 
     def hold_task(self, b, task_id, stop=True, is_family=False):
         if stop:
