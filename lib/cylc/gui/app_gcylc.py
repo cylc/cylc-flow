@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """The main control GUI of gcylc."""
 
 import os
@@ -918,6 +919,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
+        if not self.get_confirmation("Stop suite %s?" % self.cfg.suite):
+            return
         try:
             result = self.get_pyro('command-interface').put('stop cleanly')
         except Exception, x:
@@ -1630,37 +1633,26 @@ shown here in the state they were in at the time of triggering.''')
         self.quitters.remove(lv)
         w.destroy()
 
-    def get_confirmation(self, cmd, name, msg=None):
-
+    def get_confirmation(self, question):
         if self.cfg.no_prompt:
             return True
-
-        if not msg:
-            msg = cmd + " " + name + "?"
-
         prompt = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,
                                    gtk.MESSAGE_QUESTION,
-                                   gtk.BUTTONS_OK_CANCEL, msg)
-
-        prompt.add_button(gtk.STOCK_HELP, gtk.RESPONSE_HELP)
+                                   gtk.BUTTONS_YES_NO, question)
         response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help(cmd)
-            response = prompt.run()
-
         prompt.destroy()
-        if response != gtk.RESPONSE_OK:
+        if response == gtk.RESPONSE_NO:
             return False
+        else:
+            return True
 
     def hold_task(self, b, task_id, stop=True, is_family=False):
         if stop:
-            cmd = "hold"
+            cmd = "Hold"
         else:
-            cmd = "release"
-        if not self.get_confirmation(cmd, task_id):
+            cmd = "Release"
+        if not self.get_confirmation("%s %s?" % (cmd, task_id)):
             return
-
         name, point_string = TaskID.split(task_id)
         try:
             if stop:
@@ -1673,16 +1665,13 @@ shown here in the state they were in at the time of triggering.''')
             # the suite was probably shut down by another process
             warning_dialog(x.__str__(), self.window).warn()
             return
-
         if not result[0]:
             warning_dialog(result[1], self.window).warn()
 
     def trigger_task_now(self, b, task_id, is_family=False):
         """Trigger task via the suite daemon's command interface."""
-        cmd = "trigger"
-        if not self.get_confirmation(cmd, task_id):
+        if not self.get_confirmation("Trigger %s?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro('command-interface').put(
@@ -1698,6 +1687,8 @@ shown here in the state they were in at the time of triggering.''')
         """
         Do an edit-run by invoking 'cylc trigger --edit' on the suite host.
         """
+        if not self.get_confirmation("Edit run %s?" % task_id):
+            return
         name, point_string = TaskID.split(task_id)
         command = (
             "cylc trigger --notify-completion --use-ssh --edit --geditor -f" +
@@ -1708,10 +1699,8 @@ shown here in the state they were in at the time of triggering.''')
         foo.run()
 
     def poll_task(self, b, task_id, is_family=False):
-        cmd = "poll"
-        if not self.get_confirmation(cmd, task_id):
+        if not self.get_confirmation("Poll %s?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro('command-interface').put(
@@ -1724,10 +1713,8 @@ shown here in the state they were in at the time of triggering.''')
             warning_dialog(result[1], self.window).warn()
 
     def kill_task(self, b, task_id, is_family=False):
-        cmd = "kill"
-        if not self.get_confirmation(cmd, task_id):
+        if not self.get_confirmation("Kill %s?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro('command-interface').put(
@@ -1742,13 +1729,9 @@ shown here in the state they were in at the time of triggering.''')
     def reset_task_state(self, b, e, task_id, state, is_family=False):
         if hasattr(e, "button") and e.button != 1:
             return False
-        cmd = "reset"
-
-        name, point_string = TaskID.split(task_id)
-        msg = "reset " + task_id + " to " + state + "?"
-        if not self.get_confirmation(cmd, task_id, msg):
+        if not self.get_confirmation("Reset %s to %s?" % (task_id, state)):
             return
-
+        name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro('command-interface').put(
                 'reset task state', name, point_string, state, is_family)
@@ -1760,11 +1743,8 @@ shown here in the state they were in at the time of triggering.''')
             warning_dialog(result[1], self.window).warn()
 
     def remove_task(self, b, task_id, is_family):
-        cmd = "remove"
-        msg = "remove " + task_id + " (after spawning)?"
-        if not self.get_confirmation(cmd, task_id, msg):
+        if not self.get_confirmation("Remove %s after spawning?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro('command-interface').put(
@@ -1776,11 +1756,8 @@ shown here in the state they were in at the time of triggering.''')
             warning_dialog(result[1], self.window).warn()
 
     def remove_task_nospawn(self, b, task_id, is_family=False):
-        cmd = "remove"
-        msg = "remove " + task_id + " (without spawning)?"
-        if not self.get_confirmation(cmd, task_id, msg):
+        if not self.get_confirmation("Remove %s without spawning?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         try:
             result = self.get_pyro('command-interface').put(
@@ -2304,24 +2281,8 @@ shown here in the state they were in at the time of triggering.''')
         foo.run()
 
     def reload_suite(self, w):
-        msg = """Reload the suite definition.
-This allows you change task runtime configuration and add
-or remove task definitions without restarting the suite."""
-        prompt = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,
-                                   gtk.MESSAGE_QUESTION,
-                                   gtk.BUTTONS_OK_CANCEL, msg)
-
-        prompt.add_button(gtk.STOCK_HELP, gtk.RESPONSE_HELP)
-        response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help("control", "reload")
-            response = prompt.run()
-
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
+        if not self.get_confirmation("Reload suite definiton?"):
             return
-
         command = (
             "cylc reload -f --host=" + self.cfg.host +
             " --user=" + self.cfg.owner + " " + self.cfg.suite)
@@ -2330,6 +2291,8 @@ or remove task definitions without restarting the suite."""
         foo.run()
 
     def nudge_suite(self, w):
+        if not self.get_confirmation("Nudge suite?"):
+            return
         try:
             result = self.get_pyro('command-interface').put('nudge suite')
         except Exception, x:
