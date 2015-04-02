@@ -22,12 +22,13 @@ import gtk
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.util import get_icon
 
+
 def prompt(question, force=False, gui=False, no_force=False):
     """Interactive Yes/No prompt for cylc CLI scripts.
 
     For convenience, on No we just exit rather than return.
     If force is True don't prompt, just return immediately.
-    
+
     """
     if (force or GLOBAL_CFG.get(['disable interactive command prompts'])) and (
             not no_force):

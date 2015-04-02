@@ -120,13 +120,13 @@ if options.edit_run:
     current_time = time.time()
     try:
         # Tell the suite daemon to generate the job file.
-        result = cmd_proxy.put('dry run task', name, point_string)
+        success, msg = cmd_proxy.put('dry run task', name, point_string)
     except Exception as exc:
         if cylc.flags.debug:
             raise
         sys.exit(exc)
-    if not result[0]:
-        sys.exit(result[1])
+    if not success:
+        sys.exit(msg)
 
     # Wait for the new job file to be written. Use mtime because the same
     # file could potentially exist already, left from a previous run.
@@ -168,7 +168,7 @@ if options.edit_run:
     # Get confirmation after editing is done.
     # Don't allow force-no-prompt in this case.
     if options.geditor:
-        # Alert stdout of the dialog window, in case it's missed. 
+        # Alert stdout of the dialog window, in case it's missed.
         print "Editing done. I'm popping up a confirmation dialog now."
     prompt("Trigger the edited task?", gui=options.geditor, no_force=True)
 
@@ -185,11 +185,11 @@ if options.edit_run:
 
 # Trigger the task proxy(s).
 try:
-    result = cmd_proxy.put(
+    success, msg = cmd_proxy.put(
         'trigger task', name, point_string, options.is_family)
 except Exception as exc:
     if cylc.flags.debug:
         raise
     sys.exit(exc)
-if not result[0]:
-    sys.exit(result[1])
+if not success:
+    sys.exit(msg)
