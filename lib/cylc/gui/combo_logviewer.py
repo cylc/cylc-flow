@@ -37,7 +37,7 @@ class ComboLogViewer(logviewer):
         self.file_list = file_list
         self.init_active_index = init_active_index
         self.common_dir = os.path.dirname(os.path.commonprefix(self.file_list))
-        logviewer.__init__(self, name, None, self.file_list[0])
+        logviewer.__init__(self, name, None, self.file_list[init_active_index])
 
     def create_gui_panel(self):
         """Create the panel."""

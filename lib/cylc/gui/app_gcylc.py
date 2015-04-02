@@ -1221,12 +1221,19 @@ The Cylc Suite Engine.
             js_item.connect('button-press-event', self.view_task_info, task_id,
                             'job')
 
-            info_item = gtk.ImageMenuItem('log files')
+            out_item = gtk.ImageMenuItem('job stdout')
             img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
-            info_item.set_image(img)
-            view_menu.append(info_item)
-            info_item.connect(
-                'button-press-event', self.view_task_info, task_id, None)
+            out_item.set_image(img)
+            view_menu.append(out_item)
+            out_item.connect('button-press-event', self.view_task_info, task_id,
+                             'job.out')
+
+            err_item = gtk.ImageMenuItem('job stderr')
+            img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
+            err_item.set_image(img)
+            view_menu.append(err_item)
+            err_item.connect('button-press-event', self.view_task_info, task_id,
+                             'job.err')
 
             info_item = gtk.ImageMenuItem('prereq\'s & outputs')
             img = gtk.image_new_from_stock(
@@ -2364,6 +2371,7 @@ or remove task definitions without restarting the suite."""
                 if ":" not in log:
                     log_paths[i] = auth + ":" + log
         window.set_title(task_id + ": Log Files")
+        print init_active_index
         lv = ComboLogViewer(task_id, log_paths, init_active_index)
         self.quitters.append(lv)
 
