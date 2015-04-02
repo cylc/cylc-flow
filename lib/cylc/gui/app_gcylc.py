@@ -1688,7 +1688,7 @@ shown here in the state they were in at the time of triggering.''')
             return
         name, point_string = TaskID.split(task_id)
         command = (
-            "cylc trigger --notify-completion --use-ssh --edit --geditor -f" +
+            "cylc trigger --use-ssh --edit --geditor -f" +
             self.get_remote_run_opts() + " " + self.cfg.suite +
             " %s %s" % (name, point_string))
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
@@ -2824,7 +2824,7 @@ to reduce network traffic.""")
             "echo '> TITLE:'; " +
             "cylc get-suite-config -i title " + self.cfg.suite + "; " +
             "echo '> DESCRIPTION:'; " +
-            "cylc get-suite-config --notify-completion -i description " +
+            "cylc get-suite-config -i description " +
             self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400)
         self.gcapture_windows.append(foo)
@@ -2879,7 +2879,7 @@ to reduce network traffic.""")
         if not yesbin_cb.get_active():
             options += ' -x '
         command = (
-            "cylc search --notify-completion %s %s %s" % (
+            "cylc search %s %s %s" % (
                 options, reg, pattern)
         )
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, width=600,
@@ -3312,7 +3312,7 @@ For more Stop options use the Control menu.""")
 
     def run_suite_validate(self, w):
         command = ("cylc validate -v " + self.get_remote_run_opts() +
-                   " --notify-completion " + self.cfg.template_vars_opts +
+                   " " + self.cfg.template_vars_opts +
                    " " + self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700)
         self.gcapture_windows.append(foo)
@@ -3323,7 +3323,7 @@ For more Stop options use the Control menu.""")
         extra = ''
         if inlined:
             extra = '-i '
-        command = ("cylc edit --notify-completion -g" + " " +
+        command = ("cylc edit -g " +
                    self.cfg.template_vars_opts + " " +
                    self.get_remote_run_opts() + " " + extra + ' ' +
                    self.cfg.suite)
@@ -3334,7 +3334,7 @@ For more Stop options use the Control menu.""")
 
     def run_suite_graph(self, w, show_ns=False):
         if show_ns:
-            command = "cylc graph --notify-completion -n %s %s %s" % (
+            command = "cylc graph -n %s %s %s" % (
                 self.cfg.template_vars_opts,
                 self.get_remote_run_opts(),
                 self.cfg.suite)
@@ -3351,7 +3351,7 @@ For more Stop options use the Control menu.""")
 
     def run_suite_info(self, w):
         command = (
-            "cylc show --notify-completion" + self.get_remote_run_opts() +
+            "cylc show " + self.get_remote_run_opts() +
             " " + self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
         self.gcapture_windows.append(foo)
@@ -3360,7 +3360,7 @@ For more Stop options use the Control menu.""")
     def run_suite_list(self, w, opt=''):
         command = (
             "cylc list " + self.get_remote_run_opts() + " " + opt +
-            " --notify-completion " + " " + self.cfg.template_vars_opts + " " +
+            " " + self.cfg.template_vars_opts + " " +
             self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 600)
         self.gcapture_windows.append(foo)
@@ -3375,7 +3375,7 @@ For more Stop options use the Control menu.""")
             else:
                 xopts = ' '
 
-            command = ("cylc cat-log --notify-completion" +
+            command = ("cylc cat-log " +
                        self.get_remote_run_opts() +
                        xopts + self.cfg.suite)
             foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400,
@@ -3396,7 +3396,7 @@ For more Stop options use the Control menu.""")
         elif method == 'processed':
             extra = ' -j'
 
-        command = ("cylc view --notify-completion -g " +
+        command = ("cylc view -g " +
                    self.get_remote_run_opts() + " " + extra + " " +
                    self.cfg.template_vars_opts + " " + self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400)
