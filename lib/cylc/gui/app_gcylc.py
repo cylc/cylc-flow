@@ -579,8 +579,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.updater = Updater(self.cfg, self.info_bar,
                                self.restricted_display)
         self.updater.start()
-
         self.restart_views()
+
+        self.updater.filter_states_excl = self.filter_states_excl
+        self.updater.filter_name_string = self.filter_name_string
+        self.updater.refilter()
+        self.refresh_views()
 
     def setup_views(self):
         """Create our view containers."""
