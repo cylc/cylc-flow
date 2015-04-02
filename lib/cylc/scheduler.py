@@ -55,6 +55,7 @@ from cylc.mp_pool import SuiteProcPool
 from exceptions import SchedulerStop, SchedulerError
 from wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
+from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
 import isodatetime.data
 import isodatetime.parsers
@@ -345,17 +346,35 @@ class scheduler(object):
         """Return the cylc version running this suite daemon."""
         return CYLC_VERSION
 
-    def standardise_taskid(self, task_id):
-        name, point_string = TaskID.split(task_id)
-        point_string = standardise_point_string(point_string)
-        return TaskID.get(name, point_string)
+    def get_standardised_point_string(self, point_string):
+        """Return a standardised point string.
+        
+        Used to process incoming command arguments.
+        """
+        try:
+            point_string = standardise_point_string(point_string)
+        except PointParsingError as exc:
+            # (This is only needed to raise a clearer error message).
+            raise Exception("Invalid cycle point: %s" % point_string)
+        return point_string
  
+    def get_standardised_point(self, point_string):
+        """Return a standardised point."""
+        point_string = self.get_standardised_point_string(point_string)
+        return point(point_string)
+ 
+    def get_standardised_taskid(self, task_id):
+        """Return task ID with standardised cycle point."""
+        name, point_string = TaskID.split(task_id)
+        point_string = self.get_standardised_point_string(point_string)
+        return TaskID.get(name, point_string)
+
     def info_ping_task(self, task_id, exists_only=False):
-        task_id = self.standardise_taskid(task_id)
+        task_id = self.get_standardised_taskid(task_id)
         return self.pool.ping_task(task_id, exists_only)
 
     def info_get_task_jobfile_path(self, task_id):
-        task_id = self.standardise_taskid(task_id)
+        task_id = self.get_standardised_taskid(task_id)
         return self.pool.get_task_jobfile_path(task_id)
 
     def info_get_suite_info(self):
@@ -396,7 +415,7 @@ class scheduler(object):
                         self.config.leaves, self.config.feet
 
     def info_get_task_requisites(self, name, point_string):
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         return self.pool.get_task_requisites(
             TaskID.get(name, point_string))
 
@@ -417,7 +436,7 @@ class scheduler(object):
         raise SchedulerStop("Stopping NOW")
 
     def command_set_stop_after_point(self, point_string):
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         self.set_stop_point(point_string)
 
     def command_set_stop_after_clock_time( self, arg ):
@@ -434,16 +453,16 @@ class scheduler(object):
             "seconds_since_unix_epoch"))
         self.set_stop_clock( stop_time_in_epoch_seconds, str(stop_point) )
 
-    def command_set_stop_after_task(self, tid):
-        tid = self.standardise_taskid(tid)
-        if TaskID.is_valid_id(tid):
-            self.set_stop_task(tid)
+    def command_set_stop_after_task(self, task_id):
+        task_id = self.get_standardised_taskid(task_id)
+        if TaskID.is_valid_id(task_id):
+            self.set_stop_task(task_id)
 
     def command_release_task(self, name, point_string, is_family):
         matches = self.get_matching_task_names(name, is_family)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.release_tasks(task_ids)
 
@@ -455,7 +474,7 @@ class scheduler(object):
             matches = self.get_matching_task_names(name, is_family)
             if not matches:
                 raise TaskNotFoundError, "No matching tasks found: " + name
-            point_string = standardise_point_string(point_string)
+            point_string = self.get_standardised_point_string(point_string)
             task_ids = [TaskID.get(i, point_string) for i in matches]
             self.pool.poll_tasks(task_ids)
 
@@ -463,7 +482,7 @@ class scheduler(object):
         matches = self.get_matching_task_names(name, is_family)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.kill_tasks(task_ids)
 
@@ -474,7 +493,7 @@ class scheduler(object):
         matches = self.get_matching_task_names(name, is_family)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.hold_tasks(task_ids)
 
@@ -483,8 +502,8 @@ class scheduler(object):
 
     def command_hold_after_point_string(self, point_string):
         """Hold tasks AFTER this point (itask.point > point)."""
+        point_string = self.get_standardised_point_string(point_string)
         point = get_point(point_string)
-        point.standardise()
         self.hold_suite(point)
         self.log.info(
             "The suite will pause when all tasks have passed " + point_string)
@@ -496,15 +515,14 @@ class scheduler(object):
         return True, 'OK'
 
     def command_remove_cycle(self, point_string, spawn):
-        point = get_point(point_string)
-        point.standardise()
+        point = self.get_standardised_point(point_string)
         self.pool.remove_entire_cycle(point, spawn)
 
     def command_remove_task(self, name, point_string, is_family, spawn):
         matches = self.get_matching_task_names(name, is_family)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.remove_tasks(task_ids, spawn)
 
@@ -513,13 +531,13 @@ class scheduler(object):
         matches = self.get_matching_task_names( name, is_family )
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         point = get_point(point_string)
         if stop_point_string is None:
             stop_point = None
         else:
-            stop_point_string = standardise_point_string(stop_point_string)
+            stop_point_string = self.get_standardised_point_string(stop_point_string)
             stop_point = get_point(stop_point_string)
         for task_id in task_ids:
             name, task_point_string = TaskID.split(task_id)
@@ -1117,12 +1135,12 @@ class scheduler(object):
         self.stop_clock_time = unix_time
         self.stop_clock_time_string = date_time_string
 
-    def set_stop_task(self, taskid):
-        name, point_string = TaskID.split(taskid)
+    def set_stop_task(self, task_id):
+        name, point_string = TaskID.split(task_id)
         if name in self.config.get_task_name_list():
-            task_id = self.standardise_taskid(task_id)
-            self.log.info("Setting stop task: " + taskid)
-            self.stop_task = taskid
+            task_id = self.get_standardised_taskid(task_id)
+            self.log.info("Setting stop task: " + task_id)
+            self.stop_task = task_id
         else:
             self.log.warning("Requested stop task name does not exist: " + name)
 
@@ -1177,7 +1195,7 @@ class scheduler(object):
         matches = self.get_matching_task_names(name, is_family)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.trigger_tasks(task_ids)
 
@@ -1187,7 +1205,7 @@ class scheduler(object):
             raise TaskNotFoundError("Task not found: %s" % name)
         if len(matches) > 1:
             raise TaskNotFoundError("Unique task match not found: %s" % name)
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_id = TaskID.get(matches[0], point_string)
         self.pool.dry_run_task(task_id)
 
@@ -1225,16 +1243,16 @@ class scheduler(object):
         matches = self.get_matching_task_names(name, is_family)
         if not matches:
             raise TaskNotFoundError, "No matching tasks found: " + name
-        point_string = standardise_point_string(point_string)
+        point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.reset_task_states(task_ids, state)
 
     def command_add_prerequisite(self, task_id, message):
-        task_id = self.standardise_taskid(task_id)
+        task_id = self.get_standardised_taskid(task_id)
         self.pool.add_prereq_to_task(task_id, message)
 
     def command_purge_tree(self, task_id, stop):
-        task_id = self.standardise_taskid(task_id)
+        task_id = self.get_standardised_taskid(task_id)
         self.pool.purge_tree(task_id, get_point(stop))
 
     def filter_initial_task_list( self, inlist ):
