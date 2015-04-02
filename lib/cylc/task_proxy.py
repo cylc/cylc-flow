@@ -1501,16 +1501,19 @@ class TaskProxy(object):
                 "Cannot %s detaching tasks (job ID unknown)" % (cmd_key))
             return
 
-        # Ensure settings are ready for manipulation on suite restart, etc
-        if self.job_conf is None:
-            self._prepare_manip()
-
         # Invoke the manipulation
         return self._run_job_command(
             CMD_TYPE_JOB_POLL_KILL,
             cmd_key,
-            args=[self.job_conf["job file path"] + ".status"],
+            args=[self.get_job_conf_item("job file path") + ".status"],
             callback=callback)
+
+    def get_job_conf_item(self, item):
+        if self.job_conf is None:
+            # Job hasn't run yet, or it ran before a suite restart.
+            # Ensure settings are ready for manipulation on restart, etc.
+            self._prepare_manip()
+        return self.job_conf[item]
 
     def _run_job_command(
             self, cmd_type, cmd_key, args, callback, is_bg_submit=None,

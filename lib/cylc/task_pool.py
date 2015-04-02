@@ -1028,7 +1028,7 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.identity == id_:
                 found = True
-                jobfile_path = itask.job_conf['local job file path']
+                jobfile_path = itask.get_job_conf_item("local job file path")
                 break
         if not found:
             return False, "task not found"
