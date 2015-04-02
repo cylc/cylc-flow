@@ -55,7 +55,6 @@ from cylc.mp_pool import SuiteProcPool
 from exceptions import SchedulerStop, SchedulerError
 from wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
-from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
 import isodatetime.data
 import isodatetime.parsers
@@ -516,29 +515,12 @@ class scheduler(object):
             raise TaskNotFoundError, "No matching tasks found: " + name
         point_string = standardise_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
-        try:
-            point = get_point(point_string)
-        except PointParsingError as exc:
-            # TODO - do we need this (would get error standardising just above?):
-            self.log.critical(
-                "%s: invalid cycle point for inserted task (%s)" % (
-                    point_string, exc)
-            )
-            return
-
+        point = get_point(point_string)
         if stop_point_string is None:
             stop_point = None
         else:
             stop_point_string = standardise_point_string(stop_point_string)
-            try:
-                stop_point = get_point(stop_point_string)
-            except PointParsingError as exc:
-                self.log.critical(
-                    "%s: invalid stop cycle point for inserted task (%s)" % (
-                        stop_point_string, exc)
-                )
-                return
-
+            stop_point = get_point(stop_point_string)
         for task_id in task_ids:
             name, task_point_string = TaskID.split(task_id)
             # TODO - insertion of start-up tasks? (startup=False is assumed here)
@@ -1125,14 +1107,6 @@ class scheduler(object):
 
     def set_stop_point( self, stop_point_string ):
         stop_point = get_point(stop_point_string)
-        try:
-            # TODO - already standardised in command_set_stop_after_point
-            stop_point.standardise()
-        except PointParsingError as exc:
-            self.log.critical(
-                "Cannot set stop cycle point: %s: %s" % (
-                    stop_point_string, exc))
-            return
         self.stop_point = stop_point
         self.log.info( "Setting stop cycle point: %s" % stop_point_string )
         self.pool.set_stop_point(self.stop_point)
