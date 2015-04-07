@@ -5727,7 +5727,8 @@ easy to shut down and restart cylc suites, but reloading may be useful
 if you don't want to wait for long-running tasks to finish first).
 
 Note that {\em defined tasks} can be already be added to or removed from
-a running suite with the 'cylc insert' and 'cylc remove' commands; the
+a running suite with the \lstinline=cylc insert= and \lstinline=cylc remove=
+commands; the
 reload command allows addition and removal of {\em task definitions}.
 If a new task is definition is added (and used in the graph) you will
 still need to manually insert an instance of it (with a particular cycle
@@ -6204,10 +6205,8 @@ The following topics have yet to be documented in detail.
         to understand how it works before using it. See
         \lstinline=cylc purge help= for details.
 
-    \item Task insertion: see \lstinline=cylc depend --help=.
-        Note that when you insert a task into a running suite the initial cycle
-        point can be in the past, and you can give a final cycle point after
-        which the inserted task will be eliminated from the suite.
+    \item Task insertion (add a new task proxy instance to a running suite):
+        see \lstinline=cylc insert --help=.
 
     \item Sub-suites: to run another suite inside a task, just invoke the
         sub-suite, with appropriate start and end cycle points (probably a
