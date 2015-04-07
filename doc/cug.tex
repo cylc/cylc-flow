@@ -5776,6 +5776,18 @@ registers the task failed, resubmit the killed job manually by
 cutting-and-pasting the original job submission command from the suite
 stdout stream.
 
+\subsection{Manual Task Triggering and Edit-Run}
+
+Any task proxy currently present in the suite can be manually triggered at any
+time using the \lstinline=cylc trigger= command, or from the right-click task
+menu in gcylc. If the task belongs to a limited internal queue
+(see~\ref{InternalQueues}), this will queue it; if not, or if it is already
+queued, it will submit immediately.
+
+With \lstinline=cylc trigger --edit= (also in the gcylc right-click task menu)
+you can edit the generated task job script to make one-off changes before the
+task submits.
+
 \subsection{Runtime Settings Broadcast and Communication Between Tasks}
 
 The \lstinline=cylc broadcast= command overrides \lstinline=[runtime]=
