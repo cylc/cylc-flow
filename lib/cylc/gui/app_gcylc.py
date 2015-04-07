@@ -1171,17 +1171,20 @@ The Cylc Suite Engine.
 
         return False
 
-    def get_right_click_menu(self, task_id, hide_task=False,
-                             task_is_family=False):
+    def get_right_click_menu(self, task_id, task_is_family=False):
         """Return the default menu for a task."""
         menu = gtk.Menu()
-        if not hide_task:
-            menu_root = gtk.MenuItem(task_id)
-            menu_root.set_submenu(menu)
+        menu_root = gtk.MenuItem(task_id)
+        menu_root.set_submenu(menu)
 
-            title_item = gtk.MenuItem('Task: ' + task_id.replace("_", "__"))
-            title_item.set_sensitive(False)
-            menu.append(title_item)
+        title_item = gtk.MenuItem('Task: ' + task_id.replace("_", "__"))
+        title_item.set_sensitive(False)
+        menu.append(title_item)
+
+        url_item = gtk.MenuItem('_Browse task URL')
+        name, point_string = TaskID.split(task_id)
+        url_item.connect('activate', self.browse, "-t", name, self.cfg.suite)
+        menu.append(url_item)
 
         menu_items = self._get_right_click_menu_items(task_id, task_is_family)
         for item in menu_items:
@@ -2690,6 +2693,12 @@ to reduce network traffic.""")
         tools_menu_root = gtk.MenuItem('_Suite')
         tools_menu_root.set_submenu(tools_menu)
 
+        url_item = gtk.ImageMenuItem('_Browse suite URL')
+        img = gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
+        url_item.set_image(img)
+        tools_menu.append(url_item)
+        url_item.connect('activate', self.browse, self.cfg.suite)
+
         val_item = gtk.ImageMenuItem('_Validate')
         img = gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
         val_item.set_image(img)
@@ -3458,8 +3467,8 @@ For more Stop options use the Control menu.""")
     def get_remote_run_opts(self):
         return " --host=" + self.cfg.host + " --user=" + self.cfg.owner
 
-    def browse(self, b, option=''):
-        command = 'cylc doc ' + option
+    def browse(self, b, *args):
+        command = 'cylc doc ' + ' '.join(args)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700)
         self.gcapture_windows.append(foo)
         foo.run()

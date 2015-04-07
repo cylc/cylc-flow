@@ -181,12 +181,10 @@ def get_id_summary( id_, task_state_summary, fam_state_summary, id_family_map ):
         if id_ in summary:
             title = summary[id_].get('title')
             if title:
-                meta_text += title.strip() + "\n"
+                meta_text += "\n" + title.strip()
             description = summary[id_].get('description')
             if description:
-                meta_text += description.strip()
-    if meta_text:
-        meta_text = "\n" + meta_text.rstrip()
+                meta_text += "\n" + description.strip()
     while stack:
         this_id, depth = stack.pop( 0 )
         if this_id in done_ids:  # family dive down will give duplicates
