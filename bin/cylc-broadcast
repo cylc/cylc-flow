@@ -24,13 +24,15 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import os, re
+from cylc.broadcast_report import (
+    get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.CylcOptionParsers import cop
 from cylc.task_message import message
 from cylc import cylc_pyro_client
 from cylc.command_prep import prep_pyro
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
-from parsec.validate import validate
+from parsec.validate import validate, ValidationError
 from cylc.cfgspec.suite import SPEC
 import cylc.flags
 
@@ -59,6 +61,7 @@ def get_rdict( left, right=None ):
         # item = right
         rdict = { left : right }
     return rdict
+
 
 usage = """cylc [control] broadcast|bcast [OPTIONS] REG
 
@@ -106,13 +109,13 @@ parser = cop( usage, pyro=True )
 parser.add_option( "-t", "--tag", metavar="CYCLE_POINT",
         help="(Deprecated). "
         "Target cycle point. More than one can be added. "
-        "Defaults to 'all-cycle-points' with --set and --cancel, "
+        "Defaults to '*' for all cycle points with --set and --cancel, "
         "and nothing with --clear.",
         action="append", dest="point_strings", default=[] )
 
 parser.add_option( "-p", "--point", metavar="CYCLE_POINT",
         help="Target cycle point. More than one can be added. "
-        "Defaults to 'all-cycle-points' with --set and --cancel, "
+        "Defaults to '*' with --set and --cancel, "
         "and nothing with --clear.",
         action="append", dest="point_strings", default=[] )
 
@@ -132,14 +135,14 @@ parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM",
 parser.add_option( "-C", "--clear",
         help="Cancel all broadcasts, or with -p/--point, "
         "-n/--namespace, cancel all broadcasts to targeted "
-        "namespaces and/or cycle points. Use '-C -p all-cycle-points' "
+        "namespaces and/or cycle points. Use \"-C -p '*'\" "
         "to cancel all all-cycle broadcasts without canceling "
         "all specific-cycle broadcasts.",
         action="store_true", dest="clear", default=False )
 
-parser.add_option( "-e", "--expire", metavar="CYCLE",
+parser.add_option( "-e", "--expire", metavar="CYCLE_POINT",
         help="Cancel any broadcasts that target cycle "
-        "times earlier than, but not inclusive of, CYCLE.",
+        "points earlier than, but not inclusive of, CYCLE_POINT.",
         action="store", default=None, dest="expire" )
 
 parser.add_option( "-d", "--display",
@@ -207,23 +210,30 @@ if options.show or options.showtask:
 
 if options.clear:
     try:
-        settings = proxy.clear( options.namespaces, options.point_strings )
+        modified_settings, bad_options = proxy.clear(
+            options.point_strings, options.namespaces)
     except Exception,x:
         if debug:
             raise
         sys.exit(x)
     else:
-        sys.exit(0)
+        if modified_settings:
+            print get_broadcast_change_report(
+                modified_settings, is_cancel=True)
+        sys.exit(get_broadcast_bad_options_report(bad_options))
 
 if options.expire:
     try:
-        settings = proxy.expire( options.expire )
-    except Exception,x:
+        modified_settings, bad_options = proxy.expire(options.expire)
+    except Exception, exc:
         if debug:
             raise
-        sys.exit(x)
+        sys.exit(exc)
     else:
-        sys.exit(0)
+        if modified_settings:
+            print get_broadcast_change_report(
+                modified_settings, is_cancel=True)
+        sys.exit(get_broadcast_bad_options_report(bad_options))
 
 # implement namespace and cycle point defaults here
 namespaces = options.namespaces
@@ -231,43 +241,52 @@ if not namespaces:
     namespaces = ["root"]
 point_strings = options.point_strings
 if not point_strings:
-    point_strings = ["all-cycle-points"]
+    point_strings = ["*"]
 
-settings = []
-for s in options.set:
+if options.cancel:
     try:
-        # left = val
-        left, val = s.split('=')
-        left = left.strip()
-        val = val.strip()
-        if left == 'inherit':
-            raise SystemExit( "ERROR: Inheritance cannot be changed by broadcast" )
-    except ValueError:
-        raise SystemExit( "ERROR: --set requires a value" )
-    settings.append( get_rdict( left, val ))
-
-for u in options.cancel:
-    if u == 'inherit':
-        raise SystemExit( "ERROR: Inheritance cannot be changed by broadcast" )
-    if '=' in u:
-        raise SystemExit( "ERROR: --cancel does not take a value" )
-    settings.append( get_rdict( u ) )
-
-for setting in settings:
-    try:
-        # validate items and coerce values
-        validate( setting, SPEC['runtime']['__MANY__'] )
-    except Exception,x:
+        settings = []
+        for option_item in options.cancel:
+            if "=" in option_item:
+                raise ValueError(
+                    "ERROR: --cancel=[SEC]ITEM does not take a value")
+            option_item = option_item.strip()
+            if option_item == "inherit":
+                raise ValueError(
+                    "ERROR: Inheritance cannot be changed by broadcast")
+            setting = get_rdict(option_item)
+            validate(setting, SPEC['runtime']['__MANY__'])
+            settings.append(setting)
+        modified_settings, bad_options = proxy.clear(
+            point_strings, namespaces, settings)
+    except Exception, exc:
         if debug:
             raise
-        sys.exit(x)
+        sys.exit(exc)
+    else:
+        if modified_settings:
+            print get_broadcast_change_report(
+                modified_settings, is_cancel=True)
+        sys.exit(get_broadcast_bad_options_report(bad_options))
 
-try:
-    success, msg = proxy.put( namespaces, point_strings, settings )
-except Exception, x:
-    if debug:
-        raise
-    sys.exit(x)
-else:
-    if not success:
-        sys.exit(msg)
+if options.set:
+    try:
+        settings = []
+        for option_item in options.set:
+            if "=" not in option_item:
+                raise ValueError(
+                    "ERROR: --set=[SEC]ITEM=VALUE requires a value")
+            lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
+            if lhs == "inherit":
+                raise ValueError(
+                    "ERROR: Inheritance cannot be changed by broadcast")
+            setting = get_rdict(lhs, rhs)
+            validate(setting, SPEC['runtime']['__MANY__'])
+            settings.append(setting)
+        modified_settings = proxy.put(point_strings, namespaces, settings)
+    except Exception as exc:
+        if debug:
+            raise
+        sys.exit(exc)
+    else:
+        print get_broadcast_change_report(modified_settings)

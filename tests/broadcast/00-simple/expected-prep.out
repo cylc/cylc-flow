@@ -1,0 +1,61 @@
+Broadcast set:
++ [root.*] [environment]BCAST=ROOT
+Broadcast set:
++ [foo.2010080800] [environment]BCAST=FOO
+Broadcast set:
++ [bar.*] [environment]BCAST=BAR
+Broadcast set:
++ [baz.2010080900] [environment]BCAST=BAZ
+Broadcast set:
++ [qux.2010080900] [environment]BCAST=QUX
+Broadcast cancelled:
+- [qux.2010080900] [environment]BCAST=QUX
+Broadcast set:
++ [wibble.*] [environment]BCAST=WIBBLE
+Broadcast cancelled:
+- [wibble.*] [environment]BCAST=WIBBLE
+Broadcast set:
++ [ENS.*] [environment]BCAST=ENS
+Broadcast set:
++ [ENS1.*] [environment]BCAST=ENS1
+Broadcast set:
++ [m2.2010080900] [environment]BCAST=M2
+Broadcast set:
++ [m7.*] [environment]BCAST=M7
+Broadcast set:
++ [m8.*] [environment]BCAST=M8
+Broadcast set:
++ [m9.*] [environment]BCAST=M9
+*                 
+ |-ENS            
+ | `-environment  
+ |   `-BCAST      ENS
+ |-ENS1           
+ | `-environment  
+ |   `-BCAST      ENS1
+ |-bar            
+ | `-environment  
+ |   `-BCAST      BAR
+ |-m7             
+ | `-environment  
+ |   `-BCAST      M7
+ |-m8             
+ | `-environment  
+ |   `-BCAST      M8
+ |-m9             
+ | `-environment  
+ |   `-BCAST      M9
+ `-root           
+   `-environment  
+     `-BCAST      ROOT
+2010080800        
+ `-foo            
+   `-environment  
+     `-BCAST      FOO
+2010080900        
+ |-baz            
+ | `-environment  
+ |   `-BCAST      BAZ
+ `-m2             
+   `-environment  
+     `-BCAST      M2
