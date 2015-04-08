@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.4.0">6.4.0</a></li>
     <li><a href="#6.3.1">6.3.1</a></li>
     <li><a href="#6.3.0">6.3.0</a></li>
     <li><a href="#6.2.0">6.2.0</a></li>
@@ -56,6 +57,37 @@
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
 
+<a name="6.4.0"/>
+    <h2>6.4.0</h2>
+
+    <ul>
+        <li> Documented the new edit-run feature.
+        <li> Initialize gcylc task log viewer with the correct log file.
+        <li> Activate initial gcylc task filtering immediately at start-up.
+        <li> Fixed <code>cylc show</code> for suite title and description.
+        <li> Improved user feedback from <code>cylc broadcast</code>, including
+        error on invalid requests.
+        <li> Warn of GUI vs suite daemon version mismatch.
+        <li> Allow use of relative final cycle point in visualisation settings.
+        <li> Fixed a bug in <code>R/[interval]/[stop-point]</code> recurrences.
+        <li> Fail validation if <code>max active cycle points</code> is set to
+        zero.
+        <li> Allow suite restart if a host with active tasks becomes unavailable.
+        <li> Detect and fail use of '&amp;&amp;' instead of '&amp;' in the
+        graph.
+        <li> Allow <code>min()</code> syntax in graph recurrence expressions.
+        <li> Fail <code>at</code> job submission if <code>atd</code> is not
+        running.
+        <li> Add IBM Platform LSF batch submission support.
+        <li> Allow constraints on the initial cycle point.
+        <li> If gcylc connects to a remote suite, allow it to view the logs of
+        tasks on the suite host.
+        <li> Allow tasks in the runahead pool to be monitored again.
+        <li> Moved the universal task filter controls to a dialog box, with
+        summary and activation point on the gcylc info bar.
+    </ul>
+</a>
+ 
 <a name="6.3.1"/>
     <h2>6.3.1</h2>
 
