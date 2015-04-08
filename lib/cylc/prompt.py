@@ -19,7 +19,6 @@
 import sys
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.gui.util import get_icon
 
 
 def prompt(question, force=False, gui=False, no_force=False):
