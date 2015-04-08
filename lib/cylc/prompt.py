@@ -21,7 +21,7 @@ import sys
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
-def prompt(question, force=False, gui=False, no_force=False):
+def prompt(question, force=False, gui=False, no_force=False, no_abort=False):
     """Interactive Yes/No prompt for cylc CLI scripts.
 
     For convenience, on No we just exit rather than return.
@@ -30,7 +30,7 @@ def prompt(question, force=False, gui=False, no_force=False):
     """
     if (force or GLOBAL_CFG.get(['disable interactive command prompts'])) and (
             not no_force):
-        return
+        return True
     if gui:
         import gtk
         dialog = gtk.MessageDialog(
@@ -44,4 +44,9 @@ def prompt(question, force=False, gui=False, no_force=False):
         cli_response = raw_input('%s (y/n)? ' % question)
         response_no = (cli_response not in ['y', 'Y'])
     if response_no:
-        sys.exit(0)
+        if no_abort:
+            return False
+        else:
+            sys.exit(0)
+    else:
+        return True

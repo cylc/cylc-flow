@@ -170,11 +170,19 @@ if options.edit_run:
     if options.geditor:
         # Alert stdout of the dialog window, in case it's missed.
         print "Editing done. I'm popping up a confirmation dialog now."
+
+    log_dir = os.path.dirname(jobfile_path)
     msg = "Trigger edited task %s?" % task_id
-    prompt(msg, gui=options.geditor, no_force=True)
+    if not prompt(msg, gui=options.geditor, no_force=True, no_abort=True):
+        # Generate placeholder log files for the aborted run.
+        for log in ["job.out", "job.err"]:
+            lf = os.path.join(log_dir, log)
+            with open(lf, 'wb') as log_file:
+                log_file.write("This edit run was aborted")
+        print "Run aborted."
+        sys.exit(0)
 
     # Save a diff to record the changes made.
-    log_dir = os.path.dirname(jobfile_path)
     with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
         for line in difflib.unified_diff(
                 open(jobfile_copy_path).readlines(),
