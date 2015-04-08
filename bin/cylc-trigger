@@ -170,7 +170,8 @@ if options.edit_run:
     if options.geditor:
         # Alert stdout of the dialog window, in case it's missed.
         print "Editing done. I'm popping up a confirmation dialog now."
-    prompt("Trigger the edited task?", gui=options.geditor, no_force=True)
+    msg = "Trigger edited task %s?" % task_id
+    prompt(msg, gui=options.geditor, no_force=True)
 
     # Save a diff to record the changes made.
     log_dir = os.path.dirname(jobfile_path)
