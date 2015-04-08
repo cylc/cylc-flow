@@ -2371,7 +2371,6 @@ or remove task definitions without restarting the suite."""
                 if ":" not in log:
                     log_paths[i] = auth + ":" + log
         window.set_title(task_id + ": Log Files")
-        print init_active_index
         lv = ComboLogViewer(task_id, log_paths, init_active_index)
         self.quitters.append(lv)
 
