@@ -114,13 +114,12 @@ class TaskNotDefinedError(SuiteConfigError):
 # TODO: separate config for run and non-run purposes?
 
 class config( object ):
-    def __init__(self, suite, fpath, template_vars=[],
-            template_vars_file=None, owner=None, run_mode='live',
-            validation=False, strict=False, collapsed=[],
-            cli_initial_point_string=None, cli_start_point_string=None,
-            is_restart=False, is_reload=False,
-            write_proc=True,
-            vis_start_string=None, vis_stop_string=None):
+    def __init__(self, suite, fpath, template_vars=[], template_vars_file=None,
+                 owner=None, run_mode='live', validation=False, strict=False,
+                 collapsed=[], cli_initial_point_string=None,
+                 cli_start_point_string=None, cli_final_point_string=None,
+                 is_restart=False, is_reload=False, write_proc=True,
+                 vis_start_string=None, vis_stop_string=None):
 
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
@@ -307,34 +306,32 @@ class config( object ):
                     str(self.cfg['scheduling']['initial cycle point constraints']))
                     )
 
-        final_point = None
-
-        if self.cfg['scheduling']['final cycle point'] is not None:
-            if self.cfg['scheduling']['final cycle point'].strip() is "":
+        if (self.cfg['scheduling']['final cycle point'] is not None and 
+            self.cfg['scheduling']['final cycle point'].strip() is ""):
                 self.cfg['scheduling']['final cycle point'] = None
+        final_point_string = (cli_final_point_string or
+                              self.cfg['scheduling']['final cycle point'])
+        final_point = None
+        if final_point_string is not None:
+            # Is the final "point"(/interval) relative to initial?
+            if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
+                if "P" in final_point_string:
+                    # Relative, integer cycling.
+                    final_point = get_point_relative(
+                            self.cfg['scheduling']['final cycle point'],
+                        self.initial_point).standardise()
             else:
-                final_point = None
-                # Is the final "point"(/interval) relative to initial?
-                if get_interval_cls().get_null().TYPE == INTEGER_CYCLING_TYPE:
-                    if "P" in self.cfg['scheduling']['final cycle point']:
-                        # Relative, integer cycling.
-                        final_point = get_point_relative(
-                                self.cfg['scheduling']['final cycle point'],
-                            self.initial_point).standardise()
-                else:
-                    try:
-                        # Relative, ISO8601 cycling.
-                        final_point = get_point_relative(
-                                self.cfg['scheduling']['final cycle point'],
-                                self.initial_point).standardise()
-                    except ValueError:
-                        # (not relative)
-                        pass
-                if final_point is None:
-                    # Must be absolute.
-                    final_point = get_point(
-                            self.cfg['scheduling']['final cycle point']).standardise()
-                self.cfg['scheduling']['final cycle point'] = str(final_point)
+                try:
+                    # Relative, ISO8601 cycling.
+                    final_point = get_point_relative(
+                        final_point_string, self.initial_point).standardise()
+                except ValueError:
+                    # (not relative)
+                    pass
+            if final_point is None:
+                # Must be absolute.
+                final_point = get_point(final_point_string).standardise()
+            self.cfg['scheduling']['final cycle point'] = str(final_point)
 
         if final_point is not None and self.initial_point > final_point:
             raise SuiteConfigError("The initial cycle point:" +
