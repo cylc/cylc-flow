@@ -7,20 +7,20 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-02-24 15:42:00"> 
+<meta name="date" content="2015-04-09 11:22:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 6094--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6184--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse14.html" >next</a>] [<a 
 href="cug-htmlse12.html" >prev</a>] [<a 
 href="cug-htmlse12.html#tailcug-htmlse12.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse13.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse13.html" >up</a>] </p></div>
-<!--l. 6094--><p class="indent" >    <h3 id="13" class="sectionHead"><span class="titlemark"> <a href="#13">13</a>  <a 
- id="x14-18500013"></a>Other Topics In Brief </span></h3> <div class="sectionTOCS">
+<!--l. 6184--><p class="indent" >    <h3 id="13" class="sectionHead"><span class="titlemark"> <a href="#13">13</a>  <a 
+ id="x14-18700013"></a>Other Topics In Brief </span></h3> <div class="sectionTOCS">
    </div>
-<!--l. 6096--><p class="indent" >   The following topics have yet to be documented in detail.
+<!--l. 6186--><p class="indent" >   The following topics have yet to be documented in detail.
      <ul class="itemize1">
      <li class="itemize">Intervening in suites, e.g.&#x00A0;stopping, removing, inserting tasks: see <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -63,27 +63,24 @@ class="pcrr7t-">purge</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">help</span></span> for details.
      </li>
-     <li class="itemize">Task insertion: see <span class="lstinline"><span 
+     <li class="itemize">Task insertion (add a new task proxy instance to a running suite): see <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">depend</span><span 
+class="pcrr7t-">insert</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
-class="pcrr7t-">help</span></span>. Note that when you insert a task into a running suite the
-     initial cycle point can be in the past, and you can give a final cycle point after which the inserted task
-     will be eliminated from the suite.
+class="pcrr7t-">help</span></span>.
      </li>
      <li class="itemize">Sub-suites: to run another suite inside a task, just invoke the sub-suite, with appropriate start and end
      cycle points (probably a single cycle point), in the host task&#8217;s command scripting:
-     <!--l. 6128--><div class="lstlisting">
-<span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x14-185001r1"></a></span><span 
+     <!--l. 6216-->
+     <div class="lstlisting" id="listing-213"><span class="label"><a 
+ id="x14-187001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x14-185002r2"></a></span><span 
+ id="x14-187002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -92,7 +89,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x14-185003r3"></a></span><span 
+ id="x14-187003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -109,7 +106,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">\</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x14-185004r4"></a></span><span 
+ id="x14-187004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -127,19 +124,18 @@ class="pcrr7t-">=</span><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_TASK_CYCLE_POINT</span><span 
 class="pcrr7t-">"</span>
-
-
+     
      </div>
      </li></ul>
                                                                                          
 
                                                                                          
-   <!--l. 6138--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6226--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse14.html" >next</a>] [<a 
 href="cug-htmlse12.html" >prev</a>] [<a 
 href="cug-htmlse12.html#tailcug-htmlse12.html" >prev-tail</a>] [<a 
 href="cug-htmlse13.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse13.html" >up</a>] </p></div>
-<!--l. 6138--><p class="indent" >   <a 
+<!--l. 6226--><p class="indent" >   <a 
  id="tailcug-htmlse13.html"></a>  
 </body></html> 
