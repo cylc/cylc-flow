@@ -60,52 +60,59 @@ For the definitive record see the cylc git repository change log.</p>
 <a name="6.4.0"/>
     <h2>6.4.0</h2>
 
+    <h3>6.4.0 enhancements</h3>
     <ul>
+        <li> Initial and final cycle point constraints, e.g. <code>initial
+            cycle point constraints = T00, T12</code> (initial cycle
+        point must end in 00 or 12 hours).
+        <li> New <code>min()</code> syntax for graph recurrence expressions,
+        e.g. <code>[[[R1/min(T00,T12)]]]</code> (run once at the first
+        cycle point ending in 00 or 12 hours).
+        <li> gcylc - warn of GUI vs suite daemon version mismatch.
+        <li> gcylc - moved the task filter controls to a dialog box, with
+        summary state and activation point on the info bar.
+        <li> Allow tasks in the runahead pool to be monitored.
         <li> Documented the new edit-run feature.
+        <li> Improved output from the <code>cylc broadcast</code> command,
+        including error on invalid requests.
+        <li> Add IBM Platform LSF batch submission support.
+        <li> Allow relative final cycle point in visualisation settings.
+    </ul>
+
+    <h3>6.4.0 fixes</h3>
+    <ul>
         <li> Initialize gcylc task log viewer with the correct log file.
         <li> Activate initial gcylc task filtering immediately at start-up.
         <li> Fixed <code>cylc show</code> for suite title and description.
-        <li> Improved user feedback from <code>cylc broadcast</code>, including
-        error on invalid requests.
-        <li> Warn of GUI vs suite daemon version mismatch.
-        <li> Allow use of relative final cycle point in visualisation settings.
-        <li> Fixed a bug in <code>R/[interval]/[stop-point]</code> recurrences.
-        <li> Fail validation if <code>max active cycle points</code> is set to
-        zero.
-        <li> Allow suite restart if a host with active tasks becomes unavailable.
+        <li> Fixed a bug in handling of <code>R/[interval]/[stop-point]</code> recurrences.
+        <li> Fail validation of <code>max active cycle points = 0</code>.
+        <li> Allow suite restart, with a warning, if a host with active tasks
+        is now unavailable.
         <li> Detect and fail use of '&amp;&amp;' instead of '&amp;' in the
         graph.
-        <li> Allow <code>min()</code> syntax in graph recurrence expressions.
         <li> Fail <code>at</code> job submission if <code>atd</code> is not
         running.
-        <li> Add IBM Platform LSF batch submission support.
-        <li> Allow constraints on the initial cycle point.
-        <li> If gcylc connects to a remote suite, allow it to view the logs of
-        tasks on the suite host.
-        <li> Allow tasks in the runahead pool to be monitored again.
-        <li> Moved the universal task filter controls to a dialog box, with
-        summary and activation point on the gcylc info bar.
+        <li> If gcylc is connected to a remote suite, allow it to view the logs
+        of tasks on the (remote) suite host.
     </ul>
-</a>
  
 <a name="6.3.1"/>
     <h2>6.3.1</h2>
-
   		<ul>
-					<li> Support use of conditional dependencies involving the initial
-					cycle point.
-					<li> Create missing parts of the suite run directory tree if
-					necessary, on restart.
-					<li> Propagate <code>CYLC_VERSION</code> prior to remote command
-					invocation so that new features can be used on remote hosts even
-					if the new version of cylc is not yet the default version (so long as
-					it is installed under the standard version wrapper framework, of
-					course).
-					<li> Start the gcylc graph view in centered mode.
-					<li> For the new <em>edit runs</em> introduced in 6.3.0 record a diff
-					relative to the pristine job script, in the task log directory.
-			</ul>
-	
+            <li> Support use of conditional dependencies involving the initial
+            cycle point.
+            <li> Create missing parts of the suite run directory tree if
+            necessary, on restart.
+            <li> Propagate <code>CYLC_VERSION</code> prior to remote command
+            invocation so that new features can be used on remote hosts even
+            if the new version of cylc is not yet the default version (so long as
+            it is installed under the standard version wrapper framework, of
+            course).
+            <li> Start the gcylc graph view in centered mode.
+            <li> For the new <em>edit runs</em> introduced in 6.3.0 record a diff
+            relative to the pristine job script, in the task log directory.
+        </ul>
+
 <a name="6.3.0"/>
     <h2>6.3.0</h2>
 
