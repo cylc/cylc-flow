@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import gtk
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.util import get_icon
@@ -34,6 +33,7 @@ def prompt(question, force=False, gui=False, no_force=False):
             not no_force):
         return
     if gui:
+        import gtk
         dialog = gtk.MessageDialog(
             None, gtk.DIALOG_DESTROY_WITH_PARENT,
             gtk.MESSAGE_QUESTION, gtk.BUTTONS_YES_NO,
