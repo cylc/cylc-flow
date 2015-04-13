@@ -599,3 +599,39 @@ A list of hosts to scan for running suites.
 \item {\em default:} localhost
 \end{myitemize}
 
+\subsection{[test battery]}
+
+Settings for the automated development tests.
+
+\subsubsection[remote host with shared fs]{[test battery] $\rightarrow$ remote host with shared fs}
+
+The name of a remote host with shared HOME file system as the host running the
+test battery.
+
+\subsubsection[remote host with shared fs]{[test battery] $\rightarrow$ remote host}
+
+The name of a remote host without shared HOME file system as the host running
+the test battery.
+
+\subsubsection[{[[}batch systems{]]}]{[test battery] $\rightarrow$ [batch systems]}
+
+Settings for testing supported batch systems (job submission methods). The
+tests for a batch system are only performed if the batch system is available on
+the test host or a remote host accessible via SSH from the test host.
+
+\paragraph[{[[[}\_\_NAME\_\_{]]]}]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_]}
+
+\_\_NAME\_\_ is the name of a supported batch system with automated tests.
+This can currently be "loadleveler", "lsf", "pbs", "sge" and/or "slurm".
+
+\subparagraph[host]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ host}
+
+The name of a host where commands for this batch system is available. Use
+"localhost" if the batch system is available on the host running the test
+battery. Any specified remote host should be accessible via SSH from the host
+running the test battery.
+
+\subparagraph[{[[[[}directives{]]]]}]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ [directives]}
+
+The minimum set of directives that must be supplied to the batch system on the
+site to initiate jobs for the tests.
