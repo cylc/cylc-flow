@@ -33,7 +33,7 @@ from cylc.command_prep import prep_pyro
 from cylc.print_tree import print_tree
 from cylc.task_id import TaskID
 from parsec.validate import validate, ValidationError
-from cylc.cfgspec.suite import SPEC
+from cylc.cfgspec.suite import SPEC, upg
 import cylc.flags
 
 def get_padding( settings, level=0, padding=0 ):
@@ -255,6 +255,7 @@ if options.cancel:
                 raise ValueError(
                     "ERROR: Inheritance cannot be changed by broadcast")
             setting = get_rdict(option_item)
+            upg({'runtime': {'__MANY__': setting}}, 'test')
             validate(setting, SPEC['runtime']['__MANY__'])
             settings.append(setting)
         modified_settings, bad_options = proxy.clear(
@@ -281,6 +282,7 @@ if options.set:
                 raise ValueError(
                     "ERROR: Inheritance cannot be changed by broadcast")
             setting = get_rdict(lhs, rhs)
+            upg({'runtime': {'__MANY__': setting}}, 'test')
             validate(setting, SPEC['runtime']['__MANY__'])
             settings.append(setting)
         modified_settings = proxy.put(point_strings, namespaces, settings)
