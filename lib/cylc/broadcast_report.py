@@ -20,6 +20,7 @@
 
 BAD_OPTIONS_FMT = "\n  --%s=%s"
 BAD_OPTIONS_TITLE = "ERROR: No broadcast to cancel/clear for these options:"
+BAD_OPTIONS_TITLE_SET = "ERROR: Invalid broadcast set options:"
 CHANGE_FMT = "\n%(prefix)s [%(namespace)s.%(point_string)s] %(setting)s"
 CHANGE_PREFIX_CANCEL = "-"
 CHANGE_PREFIX_SET = "+"
@@ -27,11 +28,14 @@ CHANGE_TITLE_CANCEL = "Broadcast cancelled:"
 CHANGE_TITLE_SET = "Broadcast set:"
 
 
-def get_broadcast_bad_options_report(bad_options):
+def get_broadcast_bad_options_report(bad_options, is_set=False):
     """Return a string to report bad options for broadcast cancel/clear."""
     if not bad_options:
         return None
-    msg = BAD_OPTIONS_TITLE
+    if is_set:
+        msg = BAD_OPTIONS_TITLE_SET
+    else:
+        msg = BAD_OPTIONS_TITLE
     for key, values in sorted(bad_options.items()):
         for value in values:
             if isinstance(value, tuple):
