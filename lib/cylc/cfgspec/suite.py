@@ -414,7 +414,6 @@ def upg( cfg, descr ):
         ['visualization', 'final cycle time'], ['visualization', 'final cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
-    u.obsolete('6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'])
     u.obsolete('6.0.0', ['cylc', 'job submission'])
     u.obsolete('6.0.0', ['cylc', 'event handler submission'])
     u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])

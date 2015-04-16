@@ -1,0 +1,45 @@
+
+# Test automatic deprecation and deletion of config items as specified
+# in lib/cylc/cfgspec/suite.py.
+
+[cylc]
+    [[event handler execution]] # deprecate
+        key = value
+    [[event handler submission]] # obsolete
+        key = value
+    [[accelerated clock]] # obsolete
+        key = value
+    [[job submission]] # obsolete
+        key = value
+    [[event handler submission]] # obsolete
+        key = value
+    [[poll and kill command submission]] # obsolete
+        key = value
+    [[lockserver]] # obsolete
+        key = value
+
+[scheduling]
+    initial cycle time = 20150808T00 # deprecate
+    final cycle time = 20150808T00 # deprecate
+    [[special tasks]]
+        explicit restart outputs = foo # obsolete
+    [[dependencies]]
+        [[[P1D]]]
+            graph = foo
+[runtime]
+    [[foo]]
+        initial scripting = "echo init-script" # deprecate
+        environment scripting = "echo env-script" # deprecate
+        pre-command scripting = "echo pre-script" # deprecate
+        command scripting = "echo script" # deprecate
+        post-command scripting = "echo post-script" # deprecate
+
+[visualization]
+    enable live graph movie = True # obsolete
+    initial cycle time = 20150808T00 # deprecate
+    final cycle time = 20150808T00 # deprecate
+   [[runtime graph]] # obsolete
+      key = value
+
+[development] # obsolete
+    key = value
