@@ -49,7 +49,7 @@ Parse and validate the suite definition file, do some consistency
 checking, then construct task proxy objects and graph structures.
 """
 
-CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*(.+)\s*\)')
+CLOCK_OFFSET_RE = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
 # TODO - unify this with task_state.py:
@@ -376,6 +376,8 @@ class config( object ):
                             Calendar.MODE_GREGORIAN
                         )
                     name, offset_string = m.groups()
+                    if not offset_string:
+                        offset_string = "PT0M"
                     offset_converted_from_prev = False
                     try:
                         float(offset_string)
