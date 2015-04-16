@@ -74,9 +74,10 @@ __PYTHON__
 }
 #-------------------------------------------------------------------------------
 if ! ${IS_AT_T_HOST:-false}; then
-    T_HOST=$(cylc get-global-config -i '[test battery][directives]lsf host')
+    RC_ITEM='[test battery][batch systems][lsf]host'
+    T_HOST=$(cylc get-global-config -i "${RC_ITEM}")
     if [[ -z $T_HOST ]]; then
-        skip_all '"[test battery][directives]lsf host" not defined'
+        skip_all "\"${RC_ITEM}\" not defined"
     fi
     if [[ $T_HOST != 'localhost' ]]; then
         T_HOST_CYLC_DIR=$(ssh_mkdtemp $T_HOST)
@@ -95,8 +96,8 @@ fi
 #-------------------------------------------------------------------------------
 T_DIRECTIVES_MORE=
 if ! ${HAS_READ_T_DIRECTIVES_MORE:-false}; then
-    export T_DIRECTIVES_MORE=$(cylc get-global-config -i \
-        '[test battery][directives][lsf directives]')
+    RC_ITEM='[test battery][batch systems][lsf][directives]'
+    export T_DIRECTIVES_MORE=$(cylc get-global-config -i "${RC_ITEM}")
     export HAS_READ_T_DIRECTIVES_MORE=true
 fi
 FAKE_JOB_ID=$(get_fake_job_id)
