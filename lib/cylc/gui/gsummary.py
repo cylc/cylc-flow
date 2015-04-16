@@ -21,6 +21,7 @@ import os
 import re
 import shlex
 import subprocess
+import sys
 import threading
 import time
 
@@ -81,7 +82,8 @@ def get_task_cycle_statuses_updatetime(host, suite, owner=None):
     stdout = popen.stdout.read()
     res = popen.wait()
     if res != 0:
-        return None
+        sys.stderr.write(popen.stderr.read())
+        return None, None
     task_cycle_statuses = []
     for line in stdout.rpartition("Begin task states")[2].splitlines():
         task_result = re.match("([^ ]+) : status=([^,]+), spawned", line)

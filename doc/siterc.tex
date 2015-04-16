@@ -334,14 +334,14 @@ The editor to be invoked by the cylc GUI.
 \end{myitemize}
 
 
-\subsection{[Pyro]}
+\subsection{[pyro]}
 
 Pyro is the RPC layer used for network communication between cylc
 clients (suite-connecting commands and guis) servers (running suites).
 Each suite listens on a dedicated network port, binding on the first
 available starting at the configured base port.
 
-\subsubsection[base port]{[Pyro] $\rightarrow$ base port }
+\subsubsection[base port]{[pyro] $\rightarrow$ base port }
 
 The first port that cylc is allowed to use.
 
@@ -350,7 +350,7 @@ The first port that cylc is allowed to use.
 \item {\em default:} 7766
 \end{myitemize}
 
-\subsubsection[maximum number of ports]{[Pyro] $\rightarrow$ maximum number of ports}
+\subsubsection[maximum number of ports]{[pyro] $\rightarrow$ maximum number of ports}
 
 This determines the maximum number of suites that can run at once on the
 suite host.
@@ -360,7 +360,7 @@ suite host.
 \item {\em default:} 100
 \end{myitemize}
 
-\subsubsection[ports directory]{[Pyro] $\rightarrow$ ports directory}
+\subsubsection[ports directory]{[pyro] $\rightarrow$ ports directory}
 
 Each suite stores its port number, by suite name, under this directory.
 
