@@ -218,7 +218,7 @@ class TaskProxy(object):
 
         # An initial db state entry is created at task proxy init. On reloading
         # or restarting the suite, the task proxies already have this db entry.
-        if not is_reload:
+        if not is_reload and self.submit_num == 0:
             self.record_db_state()
 
         if self.submit_num > 0:
