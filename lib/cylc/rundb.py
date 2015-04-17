@@ -84,6 +84,24 @@ class RecordStateObject(object):
                      submit_method, submit_method_id, status]
 
 
+class RecordOutputObject(object):
+    """RecordOutputObject for using in tasks"""
+    # Recorded outputs need to be distinct from the event record, as resetting
+    # task state, e.g. to retrigger a succeeded task, has to reset its outputs.
+    def __init__(self, identity, message=None):
+        """Insert a new row into the outputs table"""
+        self.s_fmt = "INSERT OR REPLACE INTO task_outputs VALUES(?, ?)"
+        self.args = [identity, message]
+
+
+class DeleteOutputObject(object):
+    """DeleteOutputObject for using in tasks"""
+    def __init__(self, identity, message=None):
+        """Delete a row from the outputs table"""
+        self.s_fmt = "DELETE FROM task_outputs WHERE identity ==? AND message ==?"
+        self.args = [identity, message]
+
+
 class BulkDBOperObject(object):
     """BulkDBOperObject for grouping together related operations"""
     def __init__(self, base_object):
@@ -247,8 +265,12 @@ class CylcRuntimeDAO(object):
     DB_DUMP_BASE_NAME = "cylc_db_dump.p"
     TASK_EVENTS = "task_events"
     TASK_STATES = "task_states"
+    TASK_OUTPUTS = "task_outputs"
     BROADCAST_SETTINGS = "broadcast_settings"
     TABLES = {
+            TASK_OUTPUTS: [
+                    "identity TEXT",
+                    "message TEXT"],
             TASK_EVENTS: [                      # each task event gets a row
                     "name TEXT",
                     "cycle TEXT",               # current cycle point of the task
@@ -277,6 +299,7 @@ class CylcRuntimeDAO(object):
                     "broadcast TEXT"
                     ]}
     PRIMARY_KEY_OF = {TASK_EVENTS: None,
+                      TASK_OUTPUTS: "identity, message",
                       TASK_STATES: "name, cycle",
                       BROADCAST_SETTINGS: None}
 
@@ -416,3 +439,14 @@ class CylcRuntimeDAO(object):
             res[name] = count
 
         return res
+
+    def get_output_taskid(self, message):
+        """Return the ID of the task that generated message, if it exists."""
+
+        s_fmt = """SELECT identity FROM task_outputs WHERE message ==?"""
+        identity = None
+        args = [message]
+        for row in self.c.select(s_fmt, args):
+            identity = str(row[0])
+            break
+        return identity

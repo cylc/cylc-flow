@@ -85,13 +85,6 @@ class plain_prerequisites(object):
     def all_satisfied( self ):
         return not ( False in self.satisfied.values() )
 
-    def satisfy_me( self, outputs ):
-        # Can any completed outputs satisfy any of my prerequisites?
-        for label, message in self.messages.items():
-            if label in self.satisfied and message in outputs:
-                self.satisfied[ label ] = True
-                self.satisfied_by[ label ] = outputs[message] # owner_id
-
     def get_satisfied_by( self ):
         return self.satisfied_by
 

@@ -36,10 +36,10 @@ as such, on restart, into the runahead pool.
 
 import sys
 from cylc.task_state import task_state
-from cylc.broker import broker
 import cylc.flags
 from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
+import datetime
 
 import cylc.rundb
 from cylc.cycling.loader import (
@@ -90,8 +90,6 @@ class TaskPool(object):
 
         self.wireless = Broadcast(config.get_linearized_ancestors())
         self.pyro.connect(self.wireless, 'broadcast_receiver')
-
-        self.broker = broker()
 
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
@@ -701,21 +699,12 @@ class TaskPool(object):
         return False
 
     def match_dependencies(self):
-        """Run time dependency negotiation.
-
-        Tasks attempt to get their prerequisites satisfied by other tasks'
-        outputs. BROKERED NEGOTIATION is O(n) in number of tasks.
-
-        """
-
-        self.broker.reset()
-
-        self.broker.register(self.get_tasks())
-
+        """Match task prerequisites with outputs in the run-db."""
         for itask in self.get_tasks():
-            # try to satisfy itask if not already satisfied.
-            if itask.not_fully_satisfied():
-                self.broker.negotiate(itask)
+            if itask.state.is_currently('waiting'):
+                itask.prerequisites.satisfy_me(self.db)
+            if itask.suicide_prerequisites.count() > 0:
+                itask.suicide_prerequisites.satisfy_me(self.db)
 
     def process_queued_task_messages(self):
         """Handle incoming task messages for each task proxy."""
@@ -727,6 +716,7 @@ class TaskPool(object):
         state_recorders = []
         state_updaters = []
         event_recorders = []
+        output_ops = []
         other = []
 
         for itask in self.get_all_tasks():
@@ -736,14 +726,18 @@ class TaskPool(object):
                     state_updaters += [oper]
                 elif isinstance(oper, cylc.rundb.RecordStateObject):
                     state_recorders += [oper]
+                elif (isinstance(oper, cylc.rundb.RecordOutputObject) or
+                        isinstance(oper, cylc.rundb.DeleteOutputObject)):
+                    # These must be kept in original order.
+                    output_ops += [oper]
                 elif isinstance(oper, cylc.rundb.RecordEventObject):
                     event_recorders += [oper]
                 else:
                     other += [oper]
 
-        # precedence is record states > update_states > record_events >
-        # anything_else
-        db_ops = state_recorders + state_updaters + event_recorders + other
+        # precedence:
+        db_ops = (state_recorders + state_updaters + output_ops +
+            event_recorders + other)
         # compact the set of operations
         if len(db_ops) > 1:
             db_opers = [db_ops[0]]
@@ -821,51 +815,12 @@ class TaskPool(object):
                     self.force_spawn(itask)
                     self.remove(itask, 'suicide')
 
-    def _get_earliest_unsatisfied_point(self):
-        """Get earliest unsatisfied cycle point."""
-        cutoff = None
-        for itask in self.get_all_tasks():
-            # this has to consider tasks in the runahead pool too, e.g.
-            # ones that have just spawned and not been released yet.
-            if itask.state.is_currently('waiting', 'held'):
-                if cutoff is None or itask.point < cutoff:
-                    cutoff = itask.point
-            elif not itask.state.has_spawned():
-                # (e.g. 'ready')
-                nxt = itask.next_point()
-                if nxt is not None and (cutoff is None or nxt < cutoff):
-                    cutoff = nxt
-        return cutoff
-
     def remove_spent_tasks(self):
-        """Remove cycling tasks that are no longer needed.
-
-        Remove cycling tasks that are no longer needed to satisfy others'
-        prerequisites.  Each task proxy knows its "cleanup cutoff" from the
-        graph. For example:
-          graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
-        implies foo's cutoff is T+12: if foo has succeeded and spawned,
-        it can be removed if no unsatisfied task proxy exists with
-        T<=T+12. Note this only uses information about the cycle point of
-        downstream dependents - if we used specific IDs instead spent
-        tasks could be identified and removed even earlier).
-
-        """
-
-        # first find the cycle point of the earliest unsatisfied task
-        cutoff = self._get_earliest_unsatisfied_point()
-
-        if not cutoff:
-            return
-
-        # now check each succeeded task against the cutoff
+        # TODO - no longer need task.cleanup_cutoff
         spent = []
         for itask in self.get_tasks():
-            if not itask.state.is_currently('succeeded') or \
-                    not itask.state.has_spawned() or \
-                    itask.cleanup_cutoff is None:
-                continue
-            if cutoff > itask.cleanup_cutoff:
+            if (itask.state.is_currently('succeeded') and
+                    itask.state.has_spawned() and len(itask.db_queue) == 0):
                 spent.append(itask)
         for itask in spent:
             self.remove(itask)

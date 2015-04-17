@@ -143,14 +143,6 @@ class conditional_prerequisites(object):
                 raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
             return res
 
-    def satisfy_me( self, outputs ):
-        # Can any completed outputs satisfy any of my prequisites?
-        for label in self.satisfied:
-            for msg in outputs:
-                if self.messages[label] == msg:
-                    self.satisfied[ label ] = True
-                    self.satisfied_by[ label ] = outputs[msg] # owner_id
-
     def count( self ):
         # how many messages are stored
         return len( self.satisfied.keys() )
