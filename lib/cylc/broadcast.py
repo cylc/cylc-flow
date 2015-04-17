@@ -23,7 +23,7 @@ import cPickle as pickle
 from cylc.broadcast_report import (
     get_broadcast_change_report, get_broadcast_bad_options_report)
 from cylc.task_id import TaskID
-from cylc.cycling.loader import get_point
+from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.rundb import RecordBroadcastObject
 from cylc.wallclock import get_current_time_string
 
@@ -85,28 +85,48 @@ class Broadcast(Pyro.core.ObjBase):
     def put(self, point_strings, namespaces, settings):
         """Add new broadcast settings.
 
-        Return a list of modified settings in the form:
-        [("20200202", "foo", {"command scripting": "true"}, ...]
-
+        Return a tuple (modified_settings, bad_options) where:
+          modified_settings is list of modified settings in the form:
+            [("20200202", "foo", {"command scripting": "true"}, ...]
+          bad_options is as described in the docstring for self.clear().
         """
         modified_settings = []
+        bad_point_strings = []
+        bad_namespaces = []
+        
         for setting in settings:
             for point_string in point_strings:
-                if point_string not in self.settings:
+                # Standardise the point and check its validity.
+                bad_point = False
+                try:
+                    point_string = standardise_point_string(point_string)
+                except Exception as exc:
+                    if point_string != '*':
+                        bad_point_strings.append(point_string)
+                        bad_point = True
+                if not bad_point and point_string not in self.settings:
                     self.settings[point_string] = {}
                 for namespace in namespaces:
-                    if namespace not in self.settings[point_string]:
-                        self.settings[point_string][namespace] = {}
-                    self._addict(
-                        self.settings[point_string][namespace], setting)
-                    modified_settings.append(
-                        (point_string, namespace, setting))
+                    if namespace not in self.linearized_ancestors:
+                        bad_namespaces.append(namespace)
+                    elif not bad_point:
+                        if namespace not in self.settings[point_string]:
+                            self.settings[point_string][namespace] = {}
+                        self._addict(
+                            self.settings[point_string][namespace], setting)
+                        modified_settings.append(
+                            (point_string, namespace, setting))
 
         # Log the broadcast
         self._update_db_queue()
         self.log.info(get_broadcast_change_report(modified_settings))
 
-        return modified_settings
+        bad_options = {}
+        if bad_point_strings:
+            bad_options["point_strings"] = bad_point_strings
+        if bad_namespaces:
+            bad_options["namespaces"] = bad_namespaces
+        return modified_settings, bad_options
 
     def get(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID."""

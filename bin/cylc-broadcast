@@ -283,10 +283,11 @@ if options.set:
             setting = get_rdict(lhs, rhs)
             validate(setting, SPEC['runtime']['__MANY__'])
             settings.append(setting)
-        modified_settings = proxy.put(point_strings, namespaces, settings)
+        modified_settings, bad_options = proxy.put(point_strings, namespaces, settings)
     except Exception as exc:
         if debug:
             raise
         sys.exit(exc)
     else:
         print get_broadcast_change_report(modified_settings)
+        sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))
