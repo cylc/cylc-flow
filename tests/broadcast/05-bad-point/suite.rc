@@ -17,8 +17,5 @@ description=Test broadcast to an invalid cycle point fails.
         command scripting="""
 # Broadcast to an integer point, not valid for this suite; and
 # fail if the broadcast succeeds (it should fail).
-if cylc broadcast -s 'title=foo' -p '1' "${CYLC_SUITE_NAME}"; then
-   /bin/false
-else
-   /bin/true
-fi"""
+! cylc broadcast -s 'title=foo' -p '1' "${CYLC_SUITE_NAME}"
+"""

@@ -16,8 +16,5 @@ description=Test broadcast to an undefined namespace fails.
         command scripting="""
 # Broadcast to an undefined namespace; fail if the broadcast succeeds (it
 # should fail).
-if cylc broadcast -s 'title=foo' -n 'zilch' "${CYLC_SUITE_NAME}"; then
-   /bin/false
-else
-   /bin/true
-fi"""
+! cylc broadcast -s 'title=foo' -n 'zilch' "${CYLC_SUITE_NAME}"
+"""
