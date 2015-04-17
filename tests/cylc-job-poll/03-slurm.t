@@ -35,13 +35,11 @@ function get_fake_job_id() {
 
 function get_real_job_id() {
     cat >$TEST_NAME_BASE.slurm <<'__SBATCH__'
-#!/bin/sh
-#$SBATCH --output=slurm-%j.out
-#$SBATCH --error=slurm-%j.err
-#$SBATCH --time=02:00
-#$SBATCH --nodes=1
-#$SBATCH --tasks-per-node=1
-#$SBATCH --cpus-per-task=1
+#!/bin/bash
+#SBATCH --output=/dev/null
+#SBATCH --error=/dev/null
+#SBATCH --time=02:00
+#SBATCH --tasks=1
 __SBATCH__
     while read; do
         if [[ -z $REPLY ]]; then
@@ -139,7 +137,6 @@ scancel "$T_JOB_ID" 2>/dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-started
 # Give it a real PID
-REAL_JOB_ID=${REAL_JOB_ID:-$(get_real_job_id)}
 T_JOB_ID=$(get_real_job_id)
 sleep 1
 # Status file
