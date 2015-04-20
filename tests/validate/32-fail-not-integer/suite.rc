@@ -1,0 +1,10 @@
+[scheduling]
+    initial cycle point = 2015-01-01
+    final cycle point = 2015-01-01
+
+    [[dependencies]]
+            graph = foo
+
+[runtime]
+    [[foo]]
+    command scripting = sleep 10
