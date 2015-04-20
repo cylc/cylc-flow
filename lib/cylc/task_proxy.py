@@ -1308,10 +1308,10 @@ class TaskProxy(object):
 
         # If the message matches a registered output, record it as completed.
         if self.outputs.exists(message):
-            self.record_db_output(message)
             if not self.outputs.is_completed(message):
                 flags.pflag = True
                 self.outputs.set_completed(message)
+                self.record_db_output(message)
                 self.record_db_event(event="output completed", message=content)
             elif content == 'started' and self.job_vacated:
                 self.job_vacated = False
@@ -1412,6 +1412,7 @@ class TaskProxy(object):
             outp = self.identity + ' submitted'
             if self.outputs.is_completed(outp):
                 self.outputs.remove(outp)
+                self.delete_db_output(outp)
             self.submission_timer_timeout = None
             self.job_submission_failed()
 
