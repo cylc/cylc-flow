@@ -389,8 +389,7 @@ class TaskPool(object):
 
         # 1) queue unqueued tasks that are ready to run or manually forced
         for itask in self.get_tasks():
-            if not itask.state.is_currently('queued'):
-                # only need to check that unqueued tasks are ready
+            if itask.state.is_currently('waiting'):
                 if itask.manual_trigger or itask.ready_to_run():
                     # queue the task
                     itask.set_status('queued')

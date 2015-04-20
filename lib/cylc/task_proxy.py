@@ -494,6 +494,7 @@ class TaskProxy(object):
         for msg in self.outputs.not_completed.keys():
             self.record_db_output(msg)
         self.outputs.set_all_completed()
+        flags.pflag = True
 
     def reset_state_ready(self):
         """Reset state to "ready"."""

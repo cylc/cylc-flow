@@ -891,8 +891,14 @@ class scheduler(object):
                     self.log.debug( "BEGIN TASK PROCESSING" )
                     main_loop_start_time = time.time()
 
-                self.pool.match_dependencies()
+                # Task outputs needed in db before initial dep matching.
+                try:
+                    self.pool.process_queued_db_ops()
+                except OSError as err:
+                    self.shutdown(str(err))
+                    raise
 
+                self.pool.match_dependencies()
                 ready_tasks = self.pool.submit_tasks()
                 if (ready_tasks and
                         self.config.cfg['cylc']['log resolved dependencies']):

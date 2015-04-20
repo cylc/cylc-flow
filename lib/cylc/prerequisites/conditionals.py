@@ -131,6 +131,8 @@ class conditional_prerequisites(object):
         self.conditional_expression = expr
 
     def all_satisfied( self ):
+        # The conditional expression is evaluated here.
+        # TODO: JUST RETURN PREVIOUS RESULT UNLESS A PREREQ STATUS CHANGES.
         if self.conditional_expression == "()":
             return True
         else:
