@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validating simple multi-inheritance suites.
+# Test all current non-silent suite obsoletions and deprecations.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -42,11 +42,6 @@ cmp_ok val.out <<__END__
  * (6.0.0) [cylc][poll and kill command submission] - DELETED (OBSOLETE)
  * (6.0.0) [cylc][lockserver] - DELETED (OBSOLETE)
  * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)
- * (6.4.0) [runtime][foo][environment scripting] -> [runtime][foo][env-script] - value unchanged
- * (6.4.0) [runtime][foo][initial scripting] -> [runtime][foo][init-script] - value unchanged
- * (6.4.0) [runtime][foo][post-command scripting] -> [runtime][foo][post-script] - value unchanged
- * (6.4.0) [runtime][foo][pre-command scripting] -> [runtime][foo][pre-script] - value unchanged
- * (6.4.0) [runtime][foo][command scripting] -> [runtime][foo][script] - value unchanged
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
