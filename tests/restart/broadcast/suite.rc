@@ -65,6 +65,7 @@
                  from task_states
                  order by name, cycle;" > {{ TEST_DIR }}/states-db-pre-restart-$CYLC_TASK_CYCLE_TIME
             cp $CYLC_SUITE_RUN_DIR/state/state {{ TEST_DIR }}/state-pre-restart-$CYLC_TASK_CYCLE_TIME
+            cp $CYLC_SUITE_RUN_DIR/state/state $HOME
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
                 cd $CYLC_SUITE_RUN_DIR && \
                     cylc shutdown --now --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \

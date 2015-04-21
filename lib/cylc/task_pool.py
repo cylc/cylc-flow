@@ -387,11 +387,11 @@ class TaskPool(object):
         an initially unqueued task that is queue-limited.
         """
 
-        # 1) queue unqueued tasks that are ready to run or manually forced
+        # 1) Queue unqueued tasks that are ready to run or manually forced.
         for itask in self.get_tasks():
-            if itask.state.is_currently('waiting'):
+            if not itask.state.is_currently('queued'):
+                # Only need to check that unqueued tasks are ready.
                 if itask.manual_trigger or itask.ready_to_run():
-                    # queue the task
                     itask.set_status('queued')
                     if itask.manual_trigger:
                         itask.reset_manual_trigger()
@@ -568,6 +568,9 @@ class TaskPool(object):
                         submit_num=itask.submit_num,
                         is_reload=True
                     )
+                    # Set new prerequisites.
+                    new_task.satisfy_me(self.db, force=True)
+
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
@@ -700,10 +703,7 @@ class TaskPool(object):
     def match_dependencies(self):
         """Match task prerequisites with outputs in the run-db."""
         for itask in self.get_tasks():
-            if itask.state.is_currently('waiting'):
-                itask.prerequisites.satisfy_me(self.db)
-            if itask.suicide_prerequisites.count() > 0:
-                itask.suicide_prerequisites.satisfy_me(self.db)
+            itask.satisfy_me(self.db)
 
     def process_queued_task_messages(self):
         """Handle incoming task messages for each task proxy."""

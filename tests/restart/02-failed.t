@@ -93,7 +93,6 @@ failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092306 : status=running, spawned=true
 force_restart.2013092312 : status=held, spawned=false
 output_states.2013092306 : status=waiting, spawned=false
-tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 __STATE__
 contains_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
@@ -126,7 +125,6 @@ Begin task states
 failed_task.2013092312 : status=held, spawned=false
 force_restart.2013092312 : status=held, spawned=false
 output_states.2013092312 : status=held, spawned=false
-tidy.2013092306 : status=succeeded, spawned=true
 tidy.2013092312 : status=held, spawned=false
 __STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \

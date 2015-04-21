@@ -1026,6 +1026,8 @@ class scheduler(object):
                 self.set_suite_timer()
 
         if self.pool.waiting_tasks_ready():
+            # TODO - this evaluates all task prerequisites. We should move to
+            # event-driven processing.
             process = True
 
         if self.run_mode == 'simulation' and self.pool.sim_time_check():

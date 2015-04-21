@@ -409,6 +409,13 @@ class TaskProxy(object):
                 done = True
         return done
 
+    def satisfy_me(self, db, force=False):
+        if self.prerequisites.count() > 0:
+            if force or self.state.is_currently('waiting'):
+                self.prerequisites.satisfy_me(db)
+        if self.suicide_prerequisites.count() > 0:
+            self.suicide_prerequisites.satisfy_me(db)
+
     def ready_to_run(self):
         """Is this task ready to run?"""
         return (

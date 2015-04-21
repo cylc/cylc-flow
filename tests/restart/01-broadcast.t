@@ -85,7 +85,6 @@ broadcast_task.2013092300 : status=waiting, spawned=false
 force_restart.2013092300 : status=running, spawned=true
 force_restart.2013092306 : status=waiting, spawned=false
 output_states.2013092300 : status=waiting, spawned=false
-send_a_broadcast_task.2013092300 : status=succeeded, spawned=true
 send_a_broadcast_task.2013092306 : status=waiting, spawned=false
 tidy.2013092300 : status=waiting, spawned=false
 __STATE__
@@ -103,7 +102,7 @@ run mode : live
 initial cycle : 2013092300
 final cycle : 2013092306
 (dp1
-S'2013092300'
+S'2013092306'
 p2
 (dp3
 S'broadcast_task'
@@ -114,30 +113,15 @@ p6
 (dp7
 S'MY_TIME'
 p8
-S'2013092300'
-p9
-ssssS'2013092306'
-p10
-(dp11
-S'broadcast_task'
-p12
-(dp13
-S'environment'
-p14
-(dp15
-S'MY_TIME'
-p16
 S'2013092306'
-p17
+p9
 ssss.
 Begin task states
 broadcast_task.2013092306 : status=waiting, spawned=false
 force_restart.2013092306 : status=running, spawned=true
 force_restart.2013092312 : status=held, spawned=false
 output_states.2013092306 : status=waiting, spawned=false
-send_a_broadcast_task.2013092306 : status=succeeded, spawned=true
 send_a_broadcast_task.2013092312 : status=held, spawned=false
-tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 __STATE__
 contains_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
