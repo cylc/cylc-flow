@@ -37,6 +37,7 @@ from cylc.cycling.loader import get_interval_cls, get_point_relative
 from cylc.envvar import expandvars
 from cylc.owner import user
 from cylc.job_logs import CommandLogger
+from cylc.task_outputs import TaskOutputs
 import cylc.rundb
 import cylc.flags as flags
 from cylc.wallclock import (
@@ -105,6 +106,7 @@ class TaskProxy(object):
         self.tdef = tdef
         self.submit_num = submit_num
         self.validate_mode = validate_mode
+        self.task_outputs = TaskOutputs.get_inst()
 
         if is_startup:
             # adjust up to the first on-sequence cycle point
@@ -375,21 +377,19 @@ class TaskProxy(object):
             status=self.state.get_status()
         ))
 
-    def record_db_output(self, message):
-        """Record output to DB."""
+    def register_output(self, message):
         if self.validate_mode:
             # Don't touch the db during validation.
+            # TODO - move this to TaskOutputs class?
             return
-        self.db_queue.append(cylc.rundb.RecordOutputObject(
-            self.identity, message))
+        self.task_outputs.register(self.identity, message)
 
-    def delete_db_output(self, message):
-        """Delete an output from the DB."""
+    def unregister_output(self, message):
         if self.validate_mode:
             # Don't touch the db during validation.
+            # TODO - move this to TaskOutputs class?
             return
-        self.db_queue.append(cylc.rundb.DeleteOutputObject(
-            self.identity, message))
+        self.task_outputs.unregister(self.identity, message)
 
     def get_db_ops(self):
         """Return the next DB operation from DB queue."""
@@ -409,12 +409,12 @@ class TaskProxy(object):
                 done = True
         return done
 
-    def satisfy_me(self, db, force=False):
+    def satisfy_me(self, force=False):
         if self.prerequisites.count() > 0:
             if force or self.state.is_currently('waiting'):
-                self.prerequisites.satisfy_me(db)
+                self.prerequisites.satisfy_me()
         if self.suicide_prerequisites.count() > 0:
-            self.suicide_prerequisites.satisfy_me(db)
+            self.suicide_prerequisites.satisfy_me()
 
     def ready_to_run(self):
         """Is this task ready to run?"""
@@ -479,11 +479,11 @@ class TaskProxy(object):
         msg = self.identity + " failed"
         if self.outputs.exists(msg):
             self.outputs.remove(msg)
-            self.delete_db_output(msg)
+            self.unregister_output(msg)
         msg = self.identity + " submit-failed"
         if self.outputs.exists(msg):
             self.outputs.remove(msg)
-            self.delete_db_output(msg)
+            self.unregister_output(msg)
 
     def turn_off_timeouts(self):
         """Turn off submission and execution timeouts."""
@@ -493,13 +493,13 @@ class TaskProxy(object):
     def unset_outputs(self):
         """Set all my outputs not completed."""
         for msg in self.outputs.completed.keys():
-            self.delete_db_output(msg)
+            self.unregister_output(msg)
         self.outputs.set_all_incomplete()
 
     def set_outputs(self):
         """Set all my outputs completed."""
         for msg in self.outputs.not_completed.keys():
-            self.record_db_output(msg)
+            self.register_output(msg)
         self.outputs.set_all_completed()
         flags.pflag = True
 
@@ -558,7 +558,7 @@ class TaskProxy(object):
         self.turn_off_timeouts()
         msg = '%s failed' % self.identity
         self.outputs.add(msg, completed=True)
-        self.record_db_output(msg)
+        self.register_output(msg)
 
     def reset_state_held(self):
         """Reset state to "held"."""
@@ -701,7 +701,7 @@ class TaskProxy(object):
             flags.pflag = True
             outp = self.identity + " submit-failed"  # hack: see github #476
             self.outputs.add(outp)
-            self.record_db_output(outp)
+            self.register_output(outp)
             self.outputs.set_completed(outp)
             self.set_status('submit-failed')
             self.handle_event('submission failed', 'job submission failed')
@@ -750,7 +750,7 @@ class TaskProxy(object):
         outp = self.identity + ' submitted'
         if not self.outputs.is_completed(outp):
             self.outputs.set_completed(outp)
-            self.record_db_output(outp)
+            self.register_output(outp)
             # Allow submitted tasks to spawn even if nothing else is happening.
             flags.pflag = True
 
@@ -810,7 +810,7 @@ class TaskProxy(object):
             msg = self.identity + ' failed'
             self.outputs.add(msg)
             self.outputs.set_completed(msg)
-            self.record_db_output(msg)
+            self.register_output(msg)
             self.set_status('failed')
             self.handle_event('failed', 'job failed')
 
@@ -1319,7 +1319,7 @@ class TaskProxy(object):
             if not self.outputs.is_completed(message):
                 flags.pflag = True
                 self.outputs.set_completed(message)
-                self.record_db_output(message)
+                self.register_output(message)
                 self.record_db_event(event="output completed", message=content)
             elif content == 'started' and self.job_vacated:
                 self.job_vacated = False
@@ -1420,7 +1420,7 @@ class TaskProxy(object):
             outp = self.identity + ' submitted'
             if self.outputs.is_completed(outp):
                 self.outputs.remove(outp)
-                self.delete_db_output(outp)
+                self.unregister_output(outp)
             self.submission_timer_timeout = None
             self.job_submission_failed()
 

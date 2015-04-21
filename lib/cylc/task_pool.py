@@ -47,6 +47,7 @@ from cylc.cycling.loader import (
 from cylc.CylcError import SchedulerError, TaskNotFoundError
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
 from cylc.broadcast import Broadcast
+from cylc.task_outputs import TaskOutputs
 
 
 class TaskPool(object):
@@ -62,6 +63,7 @@ class TaskPool(object):
         self.reconfiguring = False
         self.db = db
         self.view_db = view_db
+        self.task_outputs = TaskOutputs.get_inst()
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_future_offset = None
@@ -701,9 +703,9 @@ class TaskPool(object):
         return False
 
     def match_dependencies(self):
-        """Match task prerequisites with outputs in the run-db."""
+        """Match task prerequisites with outputs."""
         for itask in self.get_tasks():
-            itask.satisfy_me(self.db)
+            itask.satisfy_me()
 
     def process_queued_task_messages(self):
         """Handle incoming task messages for each task proxy."""
@@ -823,6 +825,8 @@ class TaskPool(object):
                 spent.append(itask)
         for itask in spent:
             self.remove(itask)
+
+        self.task_outputs.cleanup(self.get_min_point())
 
     def reset_task_states(self, ids, state):
         """Reset task states.
