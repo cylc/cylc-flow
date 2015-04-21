@@ -55,6 +55,11 @@ class CylcDotViewerCommon(xdot.DotWindow):
         self.inherit = self.suiterc.get_parent_lists()
         return True
 
+    def filter_graph_nodes(self, nodes_to_filter):
+        """Filter out a list of graph nodes."""
+        self.graph.cylc_remove_nodes_from(nodes_to_filter)
+
+
 class MyDotWindow2(CylcDotViewerCommon):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
     # used by "cylc graph" to plot runtime namespace graphs

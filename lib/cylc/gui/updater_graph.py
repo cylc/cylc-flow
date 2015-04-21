@@ -358,17 +358,19 @@ class GraphUpdater(threading.Thread):
             self.graphw.add_edges(
                 gr_edges, ignore_suicide=self.ignore_suicide)
 
+            nodes_to_remove = set()
+
             # Remove nodes representing filtered-out tasks.
             if (self.updater.filter_name_string or
                     self.updater.filter_states_excl):
-                nodes_to_remove = set()
                 for node in self.graphw.nodes():
                     id = node.get_name()
+                    # Don't need to guard against special nodes here (yet).
                     name, point_string = TaskID.split(id)
                     if name not in self.all_families:
                         if id in self.updater.filt_task_ids:
                             nodes_to_remove.add(node)
-                    else:
+                    elif id in self.fam_state_summary:
                         # Remove family nodes if all members filtered out.
                         remove = True
                         for mem in self.descendants[name]:
@@ -378,20 +380,18 @@ class GraphUpdater(threading.Thread):
                                 break
                         if remove:
                             nodes_to_remove.add(node)
-                self.graphw.remove_nodes_from(list(nodes_to_remove))
 
             # Base node cropping.
-            nodes_to_remove = set()
             if self.crop:
                 # Remove all base nodes.
-                for node in self.graphw.nodes():
+                for node in (set(self.graphw.nodes()) - nodes_to_remove):
                     if node.get_name() not in self.state_summary:
                         nodes_to_remove.add(node)
             else:
                 # Remove cycle points containing only base nodes.
                 non_base_point_strings = set()
                 point_string_nodes = {}
-                for node in self.graphw.nodes():
+                for node in set(self.graphw.nodes()) - nodes_to_remove:
                     node_id = node.get_name()
                     name, point_string = TaskID.split(node_id)
                     point_string_nodes.setdefault(point_string, [])
@@ -404,14 +404,18 @@ class GraphUpdater(threading.Thread):
                 for point_string in pure_base_point_strings:
                     for node in point_string_nodes[point_string]:
                         nodes_to_remove.add(node)
-            self.graphw.remove_nodes_from(list(nodes_to_remove))
-
+            self.graphw.cylc_remove_nodes_from(list(nodes_to_remove))
             # TODO - remove base nodes only connected to other base nodes?
+            # Should these even exist any more?
 
             # Make family nodes octagons.
             for node in self.graphw.nodes():
                 node_id = node.get_name()
-                name, point_string = TaskID.split(node_id)
+                try:
+                    name, point_string = TaskID.split(node_id)
+                except ValueError:
+                    # Special node.
+                    continue
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'

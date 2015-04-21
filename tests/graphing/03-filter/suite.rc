@@ -1,0 +1,27 @@
+[scheduling]
+    [[dependencies]]
+        graph = """
+                  artichoke & azuki => \
+            banana & blackberry & blueberry => \
+                        cherry => \
+                    date & durian => \
+                       elderberry => \
+                      fava & fennel
+
+                                    durian => \
+                                      fennel
+
+                             fennel => \
+                              grape
+
+            asparagus => \
+            banana => \
+            celery
+
+                 coconut => \
+                  date
+
+                         arugula => \
+                         breadfruit => \
+                         carrot
+       """

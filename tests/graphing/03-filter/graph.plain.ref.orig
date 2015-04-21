@@ -1,0 +1,42 @@
+edge "artichoke.1" "banana.1" solid
+edge "artichoke.1" "blackberry.1" solid
+edge "artichoke.1" "blueberry.1" solid
+edge "arugula.1" "breadfruit.1" solid
+edge "asparagus.1" "banana.1" solid
+edge "azuki.1" "banana.1" solid
+edge "azuki.1" "blackberry.1" solid
+edge "azuki.1" "blueberry.1" solid
+edge "banana.1" "celery.1" solid
+edge "banana.1" "cherry.1" solid
+edge "blackberry.1" "cherry.1" solid
+edge "blueberry.1" "cherry.1" solid
+edge "breadfruit.1" "carrot.1" solid
+edge "cherry.1" "date.1" solid
+edge "cherry.1" "durian.1" solid
+edge "coconut.1" "date.1" solid
+edge "date.1" "elderberry.1" solid
+edge "durian.1" "elderberry.1" solid
+edge "durian.1" "fennel.1" solid
+edge "elderberry.1" "fava.1" solid
+edge "elderberry.1" "fennel.1" solid
+edge "fennel.1" "grape.1" solid
+graph
+node "artichoke.1" "artichoke\n1" unfilled box black
+node "arugula.1" "arugula\n1" unfilled box black
+node "asparagus.1" "asparagus\n1" unfilled box black
+node "azuki.1" "azuki\n1" unfilled box black
+node "banana.1" "banana\n1" unfilled box black
+node "blackberry.1" "blackberry\n1" unfilled box black
+node "blueberry.1" "blueberry\n1" unfilled box black
+node "breadfruit.1" "breadfruit\n1" unfilled box black
+node "carrot.1" "carrot\n1" unfilled box black
+node "celery.1" "celery\n1" unfilled box black
+node "cherry.1" "cherry\n1" unfilled box black
+node "coconut.1" "coconut\n1" unfilled box black
+node "date.1" "date\n1" unfilled box black
+node "durian.1" "durian\n1" unfilled box black
+node "elderberry.1" "elderberry\n1" unfilled box black
+node "fava.1" "fava\n1" unfilled box black
+node "fennel.1" "fennel\n1" unfilled box black
+node "grape.1" "grape\n1" unfilled box black
+stop
