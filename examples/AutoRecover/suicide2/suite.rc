@@ -36,7 +36,7 @@ check1 | check2 | check3 => PostVAR
                     """
 [runtime]
     [[FAIL]]
-        command scripting = "sleep 10; /bin/false"
+        script = "sleep 10; /bin/false"
     #[[check1]] # first check fails, OR:
     [[check1, check2]] # first and second check fails
         inherit = FAIL

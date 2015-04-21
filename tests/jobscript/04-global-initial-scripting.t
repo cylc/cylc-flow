@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that global initial scripting is written
+# Test that global init-script is written
 . "$(dirname "${0}")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5

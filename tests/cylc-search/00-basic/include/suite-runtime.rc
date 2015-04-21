@@ -1,3 +1,3 @@
 [runtime]
 [[foo, bar]]
-command scripting=true
+script=true

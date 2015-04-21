@@ -45,7 +45,7 @@ grep_ok '^the quick brown fox$' $TEST_NAME.out
 TEST_NAME=$TEST_NAME_BASE-task-job
 cylc cat-log $SUITE_NAME a-task.1 >$TEST_NAME.out
 contains_ok $TEST_NAME.out - << __END__
-# COMMAND SCRIPTING:
+# SCRIPT:
 # Write to task stdout log
 echo "the quick brown fox"
 # Write to task stderr log

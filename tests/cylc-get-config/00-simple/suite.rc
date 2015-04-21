@@ -16,9 +16,9 @@ description = """To see how multiple inheritance works:
 [runtime]
     [[root]]
     [[OPS]]
-        command scripting = echo "RUN: run-ops.sh"
+        script = echo "RUN: run-ops.sh"
     [[VAR]]
-        command scripting = echo "RUN: run-var.sh"
+        script = echo "RUN: run-var.sh"
     [[SERIAL]]
         [[[directives]]]
             job_type = serial
@@ -30,7 +30,7 @@ description = """To see how multiple inheritance works:
 
     [[ops_p1, ops_p2]]
         inherit = OPS, PARALLEL
-        
+
     [[var_s1, var_s2]]
         inherit = VAR, SERIAL
 

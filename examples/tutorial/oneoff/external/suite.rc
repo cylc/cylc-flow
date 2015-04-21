@@ -4,7 +4,7 @@ title = "Hello World! from an external task script"
         graph = "hello"
 [runtime]
     [[hello]]
-        pre-command scripting = sleep 10
-        command scripting = hello.sh
+        pre-script = sleep 10
+        script = hello.sh
         [[[environment]]]
             GREETING = Hello

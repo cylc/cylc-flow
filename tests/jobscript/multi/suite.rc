@@ -3,19 +3,19 @@
         graph = "foo => bar => baz => qux => bah => hum => bug => reg => exp"
 [runtime]
     [[FAM1]]
-        pre-command scripting = echo pre
+        pre-script = echo pre
         [[[environment]]]
             MESSAGE="hello"
     [[FAM2]]
-        post-command scripting = echo post
+        post-script = echo post
         [[[environment]]]
             MESSAGE="goodbye"
     [[FAM3]]
-        pre-command scripting = echo pre2
+        pre-script = echo pre2
     [[FAM4]]
-        command scripting = echo $MESSAGE
+        script = echo $MESSAGE
     [[FAM5]]
-        command scripting = echo new $MESSAGE
+        script = echo new $MESSAGE
     [[foo]]
         inherit=FAM1
     [[bar]]
@@ -26,16 +26,16 @@
             MESSAGE="baz"
     [[qux]]
         inherit=FAM1
-        pre-command scripting = echo qux
+        pre-script = echo qux
     [[bah]]
         inherit=FAM1,FAM3
     [[hum]]
         inherit=FAM2
-        post-command scripting = echo hum
+        post-script = echo hum
     [[bug]]
         inherit=FAM4
     [[reg]]
         inherit=FAM4
-        command scripting = echo reg
+        script = echo reg
     [[exp]]
         inherit=FAM4,FAM5

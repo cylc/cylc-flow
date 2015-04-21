@@ -12,6 +12,6 @@
             graph = "once & foo"
 [runtime]
     [[foo]]
-        command scripting = true
+        script = true
     [[once]]
-        command scripting = true
+        script = true

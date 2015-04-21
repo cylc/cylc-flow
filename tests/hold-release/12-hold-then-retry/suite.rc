@@ -15,7 +15,7 @@ t-submit-retry-able:submit => t-hold
 
 [runtime]
     [[t-hold]]
-        command scripting = """
+        script = """
 # Silently kill off t-submit-retry-able
 T_ST_FILE="$(dirname "$0")/../../t-submit-retry-able/NN/job.status"
 atrm "$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${T_ST_FILE}")"
@@ -37,7 +37,7 @@ timeout 15 my-log-grepper '[t-retry-able.1] -held => retrying'
 timeout 15 my-log-grepper '[t-submit-retry-able.1] -held => submit-retrying'
 """
     [[t-retry-able]]
-        command scripting = """
+        script = """
 if ((CYLC_TASK_TRY_NUMBER == 1)); then
     touch "${CYLC_SUITE_RUN_DIR}/file"
     while [[ -e "${CYLC_SUITE_RUN_DIR}/file" ]]; do
@@ -50,7 +50,7 @@ fi
 """
         retry delays = PT5S
     [[t-submit-retry-able]]
-        command scripting = true
+        script = true
         [[[job submission]]]
             method = at
             command template = at now + 1 minute

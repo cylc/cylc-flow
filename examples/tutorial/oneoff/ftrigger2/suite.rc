@@ -5,11 +5,11 @@ title = "Trigger *off* a family of tasks"
             GREETERS:succeed-all => bar"""
 [runtime]
     [[root]]
-        pre-command scripting = "sleep 10"
+        pre-script = "sleep 10"
     [[foo,bar]]
         # empty (dummy tasks)
     [[GREETERS]]
-        command scripting = "echo $GREETING World!"
+        script = "echo $GREETING World!"
     [[greeter_1]]
         inherit = GREETERS
         [[[environment]]]

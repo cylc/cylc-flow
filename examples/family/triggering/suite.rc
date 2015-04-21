@@ -2,7 +2,7 @@ title = "family triggering test suite"
 
 description = """
 For manual testing of new-style family triggers. Play around
-with command scripting true/false to get different outcomes."""
+with script true/false to get different outcomes."""
 
 [scheduling]
     initial cycle point = 2012080800
@@ -28,25 +28,25 @@ with command scripting true/false to get different outcomes."""
     [[ens]]
     [[m1]]
         inherit = ens
-        command scripting = "sleep 10; true"
+        script = "sleep 10; true"
     [[m2]]
         inherit = ens
-        initial scripting = "sleep 5" # delay submission
-        command scripting = "sleep 15; false"
+        init-script = "sleep 5" # delay submission
+        script = "sleep 15; false"
     [[m3]]
         inherit = ens
-        initial scripting = "sleep 10" # delay submission
-        command scripting = "sleep 20; true"
+        init-script = "sleep 10" # delay submission
+        script = "sleep 20; true"
 
     [[c_ens]]
     [[c_m1]]
         inherit = c_ens
-        command scripting = "sleep 10; true"
+        script = "sleep 10; true"
     [[c_m2]]
         inherit = c_ens
-        initial scripting = "sleep 5" # delay submission
-        command scripting = "sleep 15; true"
+        init-script = "sleep 5" # delay submission
+        script = "sleep 15; true"
     [[c_m3]]
         inherit = c_ens
-        initial scripting = "sleep 10" # delay submission
-        command scripting = "sleep 20; true"
+        init-script = "sleep 10" # delay submission
+        script = "sleep 20; true"

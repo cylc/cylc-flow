@@ -7,4 +7,4 @@
             graph = "foo[-P1D] => foo => bar"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true

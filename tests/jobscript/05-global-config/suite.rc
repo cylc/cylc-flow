@@ -13,7 +13,7 @@ suite to environment test execution and submission polling intervals, task commu
 [runtime]
     [[foo]]
     [[bar]]
-        command scripting = "sleep 10"
+        script = "sleep 10"
         submission polling intervals = PT0.1M
         execution polling intervals = PT0.3M, 2*PT0.2M, PT0.1M
         [[[job submission]]]

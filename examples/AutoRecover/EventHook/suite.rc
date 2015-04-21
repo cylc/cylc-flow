@@ -17,11 +17,11 @@ Illustrates use of a task event hook script to clean up failed tasks."""
             failed handler = failhook.sh
     [[m_foo]]
         inherit = fam
-        command scripting = sleep 8 
+        script = sleep 8 
     [[m_bar]]
         inherit = fam
         # This family member always fails
-        command scripting = "sleep 5; /bin/false"
+        script = "sleep 5; /bin/false"
     [[m_baz]]
         inherit = fam
-        command scripting = sleep 10
+        script = sleep 10

@@ -1055,17 +1055,17 @@ class config( object ):
             if flags.verbose:
                 print "  + " + itask.identity + " ok"
 
-        # Check custom command scripting is not defined for automatic suite polling tasks
+        # Check custom script is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
             try:
-                cs = self.pcfg.getcfg( sparse=True )['runtime'][l_task]['command scripting']
+                cs = self.pcfg.getcfg( sparse=True )['runtime'][l_task]['script']
             except:
                 pass
             else:
                 if cs:
                     print cs
-                    # (allow explicit blanking of inherited scripting)
-                    raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
+                    # (allow explicit blanking of inherited script)
+                    raise SuiteConfigError( "ERROR: script cannot be defined for automatic suite polling task " + l_task )
 
 
     def get_coldstart_task_list( self ):

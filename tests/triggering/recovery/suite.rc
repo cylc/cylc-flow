@@ -25,10 +25,10 @@ Model post processing triggers off model or recovery tasks."""
                     """
 [runtime]
     [[root]]
-        command scripting = "true" # fast
+        script = "true" # fast
     [[model]]
         description = "A task that succeeds at O UTC and fails at 12 UTC"
-        command scripting = """
+        script = """
 echo Hello from $CYLC_TASK_ID
 #sleep 10
 if [[ $(cylc util cycletime --print-hour) == 12 ]]; then 

@@ -7,9 +7,9 @@
         graph = one => two
 [runtime]
     [[one]]
-        command scripting = """
+        script = """
 # Tell the suite to stop after I've finished.
 cylc stop $CYLC_SUITE_NAME
 sleep 10"""
     [[two]]
-        command scripting = true
+        script = true

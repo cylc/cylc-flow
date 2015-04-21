@@ -10,4 +10,4 @@
 [runtime]
     [[A]]
         retry delays      = 2*PT30M, PT60M
-        command scripting = "sleep 10"
+        script = "sleep 10"

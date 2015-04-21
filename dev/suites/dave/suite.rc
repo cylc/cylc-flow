@@ -28,8 +28,8 @@ background thread; (c) job submission in a background worker thread."""
             """
 [runtime]
     [[root]]
-        environment scripting = "PS4='$(date): ';set -x"
-        command scripting = "echo Running on $(hostname) in $PWD; sleep 5"
+        env-script = "PS4='$(date): ';set -x"
+        script = "echo Running on $(hostname) in $PWD; sleep 5"
         [[[event hooks]]]
             #succeeded handler = "rose task-hook --mail-if=submission_failed,submission_timeout,execution_timeout"
     [[REMOTE]]

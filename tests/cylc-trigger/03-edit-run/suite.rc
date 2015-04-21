@@ -11,7 +11,7 @@ second task fixes and retriggers it with an edit-run."""
         graph = broken-task:fail => fixer-task
 [runtime]
     [[broken-task]]
-        command scripting = /bin/false
+        script = /bin/false
     [[fixer-task]]
-        command scripting = """
+        script = """
 cylc trigger --edit $CYLC_SUITE_NAME broken-task 1"""

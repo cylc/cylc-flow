@@ -20,7 +20,7 @@ still be in the held state and should not run."""
             """
 [runtime]
     [[holdrelease]]
-        command scripting = """
+        script = """
 sleep 5
 cylc hold $CYLC_SUITE_NAME
 sleep 5
@@ -28,6 +28,6 @@ sleep 5
 cylc release $CYLC_SUITE_NAME '.*' 20141009T0000Z
 """
     [[foo,bar]]
-        command scripting = true
+        script = true
     [[stop]]
-        command scripting = cylc stop $CYLC_SUITE_NAME
+        script = cylc stop $CYLC_SUITE_NAME

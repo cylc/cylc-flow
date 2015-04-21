@@ -10,9 +10,9 @@
 
 [runtime]
     [[t1]]
-        command scripting = sleep 60
+        script = sleep 60
     [[t2]]
-        command scripting = """
+        script = """
 cylc shutdown "${CYLC_SUITE_NAME}"
 sleep 1
 cylc kill "${CYLC_SUITE_NAME}" t1 1

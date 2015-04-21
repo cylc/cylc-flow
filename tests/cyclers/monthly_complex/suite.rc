@@ -16,4 +16,4 @@
             graph = "flub[^+P1M] & flob[-P1D] => flob"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true

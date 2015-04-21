@@ -27,14 +27,14 @@ generated reference version.
                     """
 [runtime]
     [[root]]
-        pre-command scripting = "echo $CYLC_TASK_CYCLE_TIME $CYLC_TASK_NAME BCAST is $BCAST | tee -a $BCASTLOG"
-        command scripting = "true" # no sleep
+        pre-script = "echo $CYLC_TASK_CYCLE_TIME $CYLC_TASK_NAME BCAST is $BCAST | tee -a $BCASTLOG"
+        script = "true" # no sleep
         [[[environment]]]
             BCAST = ${BCAST:-(not set)}
             BCASTLOG = ${CYLC_SUITE_DEF_PATH}/broadcast.log
     [[prep]]
-        pre-command scripting = "rm -f $BCASTLOG"
-        command scripting = """
+        pre-script = "rm -f $BCASTLOG"
+        script = """
 {
     # broadcast to all cycles and namespaces:
         cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_SUITE_REG_NAME

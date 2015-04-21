@@ -11,8 +11,8 @@
                    bar => !foo"""
 [runtime]
     [[foo]]
-        command scripting = "true"
+        script = "true"
         [[[remote]]]
             host=idontexist
     [[bar]]
-        command scripting = "true"
+        script = "true"

@@ -5,7 +5,7 @@
 
 [runtime]
     [[t1]]
-        command scripting="""
+        script="""
 TIMEOUT=$(($(date +%s) + 120))
 while [[ ! -e file ]] && (($TIMEOUT > $(date +%s))); do
     sleep 1
@@ -14,4 +14,4 @@ done
         [[[job submission]]]
             method=background_vacation
     [[t2]]
-        command scripting=true
+        script=true

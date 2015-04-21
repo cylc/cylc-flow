@@ -8,8 +8,8 @@
         graph = """FAM:start-all => foo"""
 [runtime]
     [[FAM]]
-        command scripting = "sleep 5"
+        script = "sleep 5"
     [[a,b,c]]
         inherit = FAM
     [[foo]]
-        command scripting = "true"
+        script = "true"

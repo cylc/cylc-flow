@@ -1,14 +1,14 @@
 #!jinja2
 
-title=Test validation of blank command scripting in automatic suite polling task
+title=Test validation of blank script in automatic suite polling task
 [scheduling]
     [[dependencies]]
         graph=eat<food::eat>=>full
 [runtime]
     [[root]]
-        command scripting=true
+        script=true
     [[eat]]
-        command scripting=
+        script=
         [[[suite state polling]]]
             interval=2
             max-polls=20

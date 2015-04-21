@@ -10,4 +10,4 @@
             graph = "foo[T-6] => foo"
 [runtime]
     [[foo]]
-        command scripting = "true"
+        script = "true"

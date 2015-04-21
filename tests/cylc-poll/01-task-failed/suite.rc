@@ -18,8 +18,8 @@ suicide via a :fail trigger, and the suite to shut down successfully."""
 
 [runtime]
     [[A]]
-        command scripting = """
+        script = """
 trap '' EXIT # die silently
 exit 0"""
     [[B]]
-        command scripting = cylc poll $CYLC_SUITE_NAME A 1
+        script = cylc poll $CYLC_SUITE_NAME A 1

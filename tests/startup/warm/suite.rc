@@ -11,6 +11,6 @@
             graph = "cold | foo[T-6] => foo"
 [runtime]
     [[cold]]
-        command scripting = false
+        script = false
     [[foo]]
-        command scripting = true
+        script = true

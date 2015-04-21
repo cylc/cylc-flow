@@ -8,5 +8,5 @@
 [runtime]
     [[foo]]
         retry delays = 3*PT6S
-        command scripting = "((CYLC_TASK_TRY_NUMBER >= 4)) || exit 1"
+        script = "((CYLC_TASK_TRY_NUMBER >= 4)) || exit 1"
         # ( '|| exit 1' required to trigger error trap in bash 4.2.0)

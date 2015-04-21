@@ -1,12 +1,12 @@
     [[ukmodata_housekeeping]]
         inherit = CLEANUP
         description = "Archiving and cleanup for the UKMO data."
-        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ukmodata_housekeeping.conf
+        script = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ukmodata_housekeeping.conf
 
     [[cycle_check]]
         inherit = CLEANUP
         description = "Get statistics about all the task for a cycle."
-        command scripting = cycle_check.sh
+        script = cycle_check.sh
         [[[environment]]]
         	MAIN_LOG_FILE = log*
         	MAIN_LOG_DIR = ${HOME}/.cylc/logging/ecoconnect
@@ -18,7 +18,7 @@
     [[cycle_check_transfer]]
         inherit = CLEANUP
         description = "Transfer statistics file to web server."
-        command scripting = cylc util scp-transfer
+        script = cylc util scp-transfer
         [[[environment]]]
         	SRCE = ${HOME}/output/stats/task_stats_${CYLC_TASK_CYCLE_TIME}.csv ${HOME}/output/stats/task_stats_${CYLC_TASK_CYCLE_TIME}.csv
         	DEST = ecoconnect_oper@pa.niwa.co.nz:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_latest.csv ecoconnect_oper@pa.niwa.co.nz:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_${CYLC_TASK_CYCLE_TIME}.csv
@@ -28,4 +28,4 @@
         # Housekeeping
         description = "clean up temporary cylc job submission files."
         # keep temporary job submission files for one week
-        command scripting = cylc util housekeeping /tmp 'cylc-.*(\d{10})-.{6}' delete 168
+        script = cylc util housekeeping /tmp 'cylc-.*(\d{10})-.{6}' delete 168

@@ -3,17 +3,17 @@
         description = """The NZTIDE model. Has artificial dependence on
 nzwave_12, for synchronous product generation. Not defined as a forecast
 model because it does not have any restart outputs."""
-        command scripting = ${HOME}/bin/scripts/run_nztide_fc $CYLC_TASK_CYCLE_TIME
+        script = ${HOME}/bin/scripts/run_nztide_fc $CYLC_TASK_CYCLE_TIME
 
     [[nztide_ncl]]
         inherit = NZTIDE
         description = "nztide ncl postprocessing"
-        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_nztide.sh
+        script = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_nztide.sh
 
     [[nztide_products]]
         inherit = NZTIDE
         description = "NZTIDE forecast product generation and ingestion."
-        command scripting = convert_ingest.sh
+        script = convert_ingest.sh
         [[[environment]]]
             PRODUCT_DIR   = ${HOME}/running/nztide_12/product
             SERVICE     = nztide_products
@@ -21,4 +21,4 @@ model because it does not have any restart outputs."""
     [[nztide_housekeeping]]
         inherit = NZTIDE
         description = "Archiving and cleanup for the NZTIDE sub-system."
-        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nztide_housekeeping.conf
+        script = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nztide_housekeeping.conf

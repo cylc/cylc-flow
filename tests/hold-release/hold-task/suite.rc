@@ -20,12 +20,12 @@ point of the suite."""
             """
 [runtime]
     [[holdrelease]]
-        command scripting = """
+        script = """
 sleep 5
 cylc hold $CYLC_SUITE_NAME {{ HOLD_MATCH }} 20141009T0000Z
 sleep 5
 """
     [[foo]]
-        command scripting = true
+        script = true
     [[stop]]
-        command scripting = sleep 5; cylc stop $CYLC_SUITE_NAME
+        script = sleep 5; cylc stop $CYLC_SUITE_NAME

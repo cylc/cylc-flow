@@ -4,6 +4,6 @@ title = "Hello World! by 'at' job submission"
         graph = "hello"
 [runtime]
     [[hello]]
-        command scripting = "sleep 10; echo Hello World!"
+        script = "sleep 10; echo Hello World!"
         [[[job submission]]]
             method = at

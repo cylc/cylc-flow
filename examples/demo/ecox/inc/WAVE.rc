@@ -2,22 +2,22 @@
         inherit = NZWAVE
         description = "The NZWAVE model"
         manual completion = True
-        command scripting = ${HOME}/bin/scripts/run_nzwave_12
+        script = ${HOME}/bin/scripts/run_nzwave_12
     [[nzwave_ncl]]
         inherit = NZWAVE
         description = "NZWave ncl postprocessing, creates eps and XML files"
-        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_nzwave.sh
+        script = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_nzwave.sh
     [[nzwave_products]]
         inherit = NZWAVE
         description = "NZWave forecast product generation and ingestion."
-        command scripting = convert_ingest.sh
+        script = convert_ingest.sh
         [[[environment]]]
             PRODUCT_DIR   = ${HOME}/running/nzwave_12/product
             SERVICE     = nzwave_products
     [[nzwave_housekeeping]]
         inherit = NZWAVE
         description = """Archiving and cleanup for the nzwave sub-system."""
-        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzwave_housekeeping.conf
+        script = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzwave_housekeeping.conf
     [[nzwave_cold]]
         inherit = NZWAVE
         description = """Oneoff DUMMY TASK to supply initial NZWave restart

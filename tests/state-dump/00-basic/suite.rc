@@ -11,4 +11,4 @@ description=Test suite state dump
             graph=t1[T-24]=>t1
 [runtime]
     [[t1]]
-        command scripting=sleep 1 && test $CYLC_TASK_CYCLE_TIME != 2013010500 || cylc stop $CYLC_SUITE_REG_NAME
+        script=sleep 1 && test $CYLC_TASK_CYCLE_TIME != 2013010500 || cylc stop $CYLC_SUITE_REG_NAME

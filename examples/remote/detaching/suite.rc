@@ -13,7 +13,7 @@ detaching job submission method according to your needs (llsubmit)."""
 [runtime]
     [[foo]]
         manual completion = True
-        command scripting = """
+        script = """
 # create detached process script
 DETACHED=${CYLC_TASK_LOG_ROOT}-detached.sh
 echo "$CYLC_SUITE_ENVIRONMENT" > $DETACHED
