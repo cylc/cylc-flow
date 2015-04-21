@@ -428,7 +428,8 @@ def upg( cfg, descr ):
     for old, new in dep.items():
         u.deprecate('6.4.0',
             ['runtime', '__MANY__', old],
-            ['runtime', '__MANY__', new])
+            ['runtime', '__MANY__', new],
+            silent=True)
     u.upgrade()
 
     # Force pre cylc-6 "cycling = Yearly" type suites to the explicit
