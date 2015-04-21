@@ -575,11 +575,11 @@ In delayed or historical operation clock-triggered tasks do not constrain the
 suite until they catch up to the wall clock.
 
 \begin{myitemize}
-    \item {\em type:} list of task or family names with offsets expressed as an
-        ISO8601 interval string, positive or negative, e.g. \lstinline=PT1H=
-        for 1 hour.
+    \item {\em type:} list of task or family names with optional offsets in
+        brackets. An offset should be expressed as an ISO8601 interval
+        string, positive or negative, e.g. \lstinline=PT1H= for 1 hour.
     \item {\em default:} (none)
-    \item {\em examples:} \lstinline=foo(PT1H30M)=, \lstinline=bar(PT1.5H)=
+    \item {\em examples:} \lstinline=foo(PT1H30M)=, \lstinline=bar(PT1.5H)=, \lstinline=baz=
 \end{myitemize}
 
 \paragraph[sequential]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ sequential}

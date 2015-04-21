@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test clock triggering is working
+# Test clock triggering is working, with no offset argument
+# https://github.com/cylc/cylc/issues/1417
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 4
@@ -23,25 +24,25 @@ set_test_number 4
 install_suite $TEST_NAME_BASE clock
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME -s START=$(date +%Y%m%d%H) \
-    -s HOUR=$(date +%H) -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=0.2
+run_ok $TEST_NAME cylc validate $SUITE_NAME -s START=$(date +%Y%m%dT%H%z) \
+    -s HOUR=T$(date +%H) -s UTC_MODE=False -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-now
-run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$(date +%Y%m%d%H) \
-    -s HOUR=$(date +%H) -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=0.2
+run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$(date +%Y%m%dT%H%z) \
+    -s HOUR=T$(date +%H) -s UTC_MODE=False -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-past
-NOW=$(date +%Y%m%d%H)
-START=$(cylc cycle-point $NOW --offset-hour=-10)
-HOUR=$(cylc cycle-point $NOW --offset-hour=-10 --print-hour)
+NOW=$(date +%Y%m%dT%H)
+START=$(cylc cycle-point $NOW --offset-hour=-10)$(date +%z)
+HOUR=T$(cylc cycle-point $NOW --offset-hour=-10 --print-hour)
 run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START -s HOUR=$HOUR \
-    -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=1
+    -s UTC_MODE=False -s TIMEOUT=PT1M
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-later
-NOW=$(date +%Y%m%d%H)
-START=$(cylc cycle-point $NOW --offset-hour=10)
-HOUR=$(cylc cycle-point $NOW --offset-hour=10 --print-hour)
+NOW=$(date +%Y%m%dT%H)
+START=$(cylc cycle-point $NOW --offset-hour=10)$(date +%z)
+HOUR=T$(cylc cycle-point $NOW --offset-hour=10 --print-hour)
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START \
-    -s HOUR=$HOUR -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=0.2
+    -s HOUR=$HOUR -s UTC_MODE=False -s TIMEOUT=PT0.2M
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
