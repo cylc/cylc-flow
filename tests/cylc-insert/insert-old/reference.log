@@ -1,0 +1,59 @@
+2015-04-17T11:07:19Z INFO - Suite starting at 2015-04-17T11:07:19Z
+2015-04-17T11:07:19Z INFO - Run mode: live
+2015-04-17T11:07:19Z INFO - Initial point: 20140101T0000Z
+2015-04-17T11:07:19Z INFO - Final point: 20140104T0000Z
+2015-04-17T11:07:19Z INFO - Cold Start 20140101T0000Z
+2015-04-17T11:07:19Z INFO - [foo_cold.20140101T0000Z] -initiate job-submit
+2015-04-17T11:07:19Z INFO - [foo_cold.20140101T0000Z] -triggered off []
+
+2015-04-17T11:07:20Z INFO - [foo_cold.20140101T0000Z] -submit_method_id=29118
+2015-04-17T11:07:20Z INFO - [foo_cold.20140101T0000Z] -submission succeeded
+2015-04-17T11:07:21Z INFO - [foo_cold.20140101T0000Z] -(current:submitted)> foo_cold.20140101T0000Z started at 2015-04-17T11:07:20Z
+2015-04-17T11:07:21Z INFO - [foo_cold.20140101T0000Z] -(current:running)> foo_cold.20140101T0000Z succeeded at 2015-04-17T11:07:21Z
+2015-04-17T11:07:22Z INFO - [foo.20140101T0000Z] -initiate job-submit
+2015-04-17T11:07:22Z INFO - [foo.20140101T0000Z] -triggered off ['foo_cold.20140101T0000Z']
+
+2015-04-17T11:07:23Z INFO - [foo.20140101T0000Z] -submit_method_id=29242
+2015-04-17T11:07:23Z INFO - [foo.20140101T0000Z] -submission succeeded
+2015-04-17T11:07:24Z INFO - [foo.20140101T0000Z] -(current:submitted)> foo.20140101T0000Z started at 2015-04-17T11:07:23Z
+2015-04-17T11:07:24Z INFO - [foo.20140101T0000Z] -(current:running)> foo.20140101T0000Z succeeded at 2015-04-17T11:07:24Z
+2015-04-17T11:07:25Z INFO - [reinsert_foo.20140102T0000Z] -initiate job-submit
+2015-04-17T11:07:25Z INFO - [reinsert_foo.20140102T0000Z] -triggered off ['foo.20140101T0000Z']
+
+2015-04-17T11:07:26Z INFO - [reinsert_foo.20140102T0000Z] -submit_method_id=29366
+2015-04-17T11:07:26Z INFO - [reinsert_foo.20140102T0000Z] -submission succeeded
+2015-04-17T11:07:27Z INFO - [reinsert_foo.20140102T0000Z] -(current:submitted)> reinsert_foo.20140102T0000Z started at 2015-04-17T11:07:26Z
+2015-04-17T11:07:27Z INFO - Command succeeded: insert task(foo_cold,20140101T0000Z,False,None)
+2015-04-17T11:07:28Z INFO - [foo_cold.20140101T0000Z] -initiate job-submit
+2015-04-17T11:07:28Z INFO - [foo_cold.20140101T0000Z] -triggered off []
+2015-04-17T11:07:28Z INFO - [reinsert_foo.20140102T0000Z] -(current:running)> reinsert_foo.20140102T0000Z succeeded at 2015-04-17T11:07:28Z
+
+2015-04-17T11:07:29Z INFO - [foo_cold.20140101T0000Z] -submit_method_id=29499
+2015-04-17T11:07:29Z INFO - [foo_cold.20140101T0000Z] -submission succeeded
+2015-04-17T11:07:29Z INFO - [foo.20140102T0000Z] -initiate job-submit
+2015-04-17T11:07:29Z INFO - [foo.20140102T0000Z] -triggered off ['foo.20140101T0000Z', 'reinsert_foo.20140102T0000Z']
+
+2015-04-17T11:07:30Z INFO - [foo.20140102T0000Z] -submit_method_id=29606
+2015-04-17T11:07:30Z INFO - [foo.20140102T0000Z] -submission succeeded
+2015-04-17T11:07:30Z INFO - [foo_cold.20140101T0000Z] -(current:submitted)> foo_cold.20140101T0000Z started at 2015-04-17T11:07:29Z
+2015-04-17T11:07:31Z INFO - [foo.20140102T0000Z] -(current:submitted)> foo.20140102T0000Z started at 2015-04-17T11:07:31Z
+2015-04-17T11:07:31Z INFO - [foo_cold.20140101T0000Z] -(current:running)> foo_cold.20140101T0000Z succeeded at 2015-04-17T11:07:30Z
+2015-04-17T11:07:32Z INFO - [foo.20140102T0000Z] -(current:running)> foo.20140102T0000Z succeeded at 2015-04-17T11:07:31Z
+2015-04-17T11:07:33Z INFO - [foo.20140103T0000Z] -initiate job-submit
+2015-04-17T11:07:33Z INFO - [foo.20140103T0000Z] -triggered off ['foo.20140102T0000Z']
+
+2015-04-17T11:07:34Z INFO - [foo.20140103T0000Z] -submit_method_id=29747
+2015-04-17T11:07:34Z INFO - [foo.20140103T0000Z] -submission succeeded
+2015-04-17T11:07:35Z INFO - [foo.20140103T0000Z] -(current:submitted)> foo.20140103T0000Z started at 2015-04-17T11:07:34Z
+2015-04-17T11:07:35Z INFO - [foo.20140103T0000Z] -(current:running)> foo.20140103T0000Z succeeded at 2015-04-17T11:07:35Z
+2015-04-17T11:07:36Z INFO - [foo.20140104T0000Z] -initiate job-submit
+2015-04-17T11:07:36Z INFO - [foo.20140104T0000Z] -triggered off ['foo.20140103T0000Z']
+2015-04-17T11:07:37Z INFO - 29871
+
+2015-04-17T11:07:37Z INFO - [foo.20140104T0000Z] -submit_method_id=29871
+2015-04-17T11:07:37Z INFO - [foo.20140104T0000Z] -submission succeeded
+2015-04-17T11:07:37Z INFO - [foo.20140105T0000Z] -holding (beyond suite stop point) 20140104T0000Z
+2015-04-17T11:07:37Z INFO - [foo.20140105T0000Z] -waiting => held
+2015-04-17T11:07:38Z INFO - [foo.20140104T0000Z] -(current:submitted)> foo.20140104T0000Z started at 2015-04-17T11:07:37Z
+2015-04-17T11:07:38Z INFO - [foo.20140104T0000Z] -(current:running)> foo.20140104T0000Z succeeded at 2015-04-17T11:07:38Z
+2015-04-17T11:07:39Z INFO - Suite shutting down at 2015-04-17T11:07:39Z
