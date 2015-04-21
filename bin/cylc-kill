@@ -35,7 +35,7 @@ Kill a 'submitted' or 'running' task and update the suite state accordingly.
 """ + multitask_usage, pyro=True, multitask=True,
         argdoc=[ ('REG', 'Suite name'),
             ('MATCH', 'Task or family name matching regular expression'),
-            ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
+            ('POINT', 'Task cycle point (e.g. date-time or integer)') ])
 
 (options, args) = parser.parse_args()
 

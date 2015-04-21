@@ -1,0 +1,21 @@
+title=broadcast bad point
+description=Test broadcast to an invalid cycle point fails.
+# And see github #1415 - it did cause the suite daemon to abort.
+[cylc]
+    abort if any task fails = True
+    [[event hooks]]
+        abort on timeout = True
+        timeout=PT1M
+[scheduling]
+    initial cycle point = 20150808
+    final cycle point = 20150808
+    [[dependencies]]
+        [[[P1M]]]
+            graph = broadcast
+[runtime]
+    [[broadcast]]
+        command scripting="""
+# Broadcast to an integer point, not valid for this suite; and
+# fail if the broadcast succeeds (it should fail).
+! cylc broadcast -s 'title=foo' -p '1' "${CYLC_SUITE_NAME}"
+"""

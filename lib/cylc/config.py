@@ -211,6 +211,13 @@ class config( object ):
                     if item != 'graph' and value.get('graph'):
                         just_has_async_graph = False
                         break
+                icp = self.cfg['scheduling'].get('initial cycle point')
+                fcp = self.cfg['scheduling'].get('final cycle point')
+                if just_has_async_graph and not (
+                        icp in [None, "1"] and fcp in [None, icp]):
+                    raise SuiteConfigError('Conflicting syntax: integer vs ' +
+                        'cycling suite, are you missing an [[R1]] section in' +
+                        ' your graph?')
                 if just_has_async_graph:
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling mode'] = (
