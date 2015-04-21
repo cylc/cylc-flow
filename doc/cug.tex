@@ -609,6 +609,26 @@ See~\ref{SiteAndUserConfiguration} for how to generate an initial site file and
 where to install it. All legal site and user global config items are defined
 in~\ref{SiteRCReference}.
 
+\subsubsection{Configure Site Environment on Job Hosts}
+
+If your users submit task jobs to hosts other than the hosts they use to run
+their suites, you should ensure that the job hosts have the correct environment
+for running cylc. A cylc suite generates task job scripts that normally invoke
+\lstinline=bash=. The job will attempt to source the first of these files it
+finds to set up its environment:
+
+\begin{myitemize}
+\item \lstinline=${HOME}/.cylc/job-init-env.sh=
+\item \lstinline=${CYLC_DIR}/conf/job-init-env.sh=
+\item \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh=
+\end{myitemize}
+
+The \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh= file is provided in
+the cylc distribution, and will attempt to source \lstinline=/etc/profile= and
+\lstinline=${HOME}/.profile=. If this behaviour is not desirable, you should
+override it by adding a \lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and
+populate it with the appropriate contents.
+
 \subsection{Automated Tests}
 \label{RTAST}
 
@@ -787,6 +807,28 @@ invoked by cylc on suite definitions:
 one at first, see~\ref{SiteAndUserConfiguration} and~\ref{SiteRCReference}.
 \end{myitemize}
 
+\subsubsection{Configure Environment on Job Hosts}
+
+If you submit task jobs to hosts other than the hosts you use to run your
+suites, you may need to customise the environment for
+running cylc. A cylc suite generates task job scripts that normally invoke
+\lstinline=bash=. The job will attempt to source the first of these files it
+finds to set up its environment:
+
+\begin{myitemize}
+\item \lstinline=${HOME}/.cylc/job-init-env.sh=
+\item \lstinline=${CYLC_DIR}/conf/job-init-env.sh=
+\item \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh=
+\end{myitemize}
+
+The \lstinline=${CYLC_DIR}/conf/job-init-env-default.sh= file is provided in
+the cylc distribution, and will attempt to source \lstinline=/etc/profile= and
+\lstinline=${HOME}/.profile=. If this behaviour is not desirable, your site
+administrator who installed cylc should have overridden it by adding a
+\lstinline=${CYLC_DIR}/conf/job-init-env.sh= file and populate it with the
+appropriate contents. If customisation is still required, you can add your own
+\lstinline=${HOME}/.cylc/job-init-env.sh= file and populate it with the
+appropriate contents.
 
 \subsection{User Interfaces}
 \label{CUI}
