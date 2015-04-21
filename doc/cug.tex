@@ -3806,11 +3806,6 @@ be finished first:
             graph = "A[-PT24H] | A[-PT18H] | A[-PT12H] | A[-PT6H] => A"
 \end{lstlisting}
 
-If you need to skip one or more cycle points in a suite like this, manually
-remove the tasks that cannot run (or use \lstinline=cylc purge= to
-remove their downstream dependents too) and manually trigger the first
-post-gap task.
-
 \subsection{Runtime - Task Configuration}
 \label{NIORP}
 
@@ -6201,10 +6196,6 @@ The following topics have yet to be documented in detail.
         a previous state of operation. They are mentioned in the Tutorial
         (\ref{Tutorial}).
 
-    \item Recursive purge: this is a powerful intervention but you need
-        to understand how it works before using it. See
-        \lstinline=cylc purge help= for details.
-
     \item Task insertion (add a new task proxy instance to a running suite):
         see \lstinline=cylc insert --help=.
 
@@ -7192,13 +7183,6 @@ triggering failure rather than create task instances at incorrect cycle points.
 %state-N     # oldest state dump; will be deleted at next update
 %\end{lstlisting}
 %
-%In addition, immediately prior to any system intervention a special
-%uniquely named state dump file is created and logged, e.g.:
-%
-%\begin{lstlisting}
-%2010/03/30 14:54:29 WARNING main - pre-purge state dump: state.2010:3:30:14:54:29
-%\end{lstlisting}
-%
 %If you accidentally intervene wrongly in a suite, just shut it down
 %and restart from the pre-intervention state dump:
 %
@@ -7271,11 +7255,6 @@ triggering failure rather than create task instances at incorrect cycle points.
 %    unable to run. Solution: insert tasks (possibly one-off cold-start
 %    tasks) to get the suite running again.
 %
-%    \ldots This could also happen if you purge enough
-%    cycle points that the difference between the pre- and post-purge tasks
-%    is greater than the runahead limit. Solution: ensure your runahead
-%    limit is large enough to span these gaps.
-%
 %    \item If a failed task has not yet been removed or reset by the
 %    system operator it will eventually stall the suite. Solution:
 %    Fix, or otherwise deal with, failed tasks as quickly as possible.
@@ -7324,30 +7303,6 @@ triggering failure rather than create task instances at incorrect cycle points.
 %        problem. When fixed, use `cylc reset' to get the failed task to
 %        run again, after which it and its downstream dependants will
 %        catch up to the rest of the suite as quickly as possible.
-%
-%    \item {\em An important external task fails, but cannot be fixed.}
-%        In this case, if the task has a lot of downstream dependants,
-%        you will presumably need omit one or more cycle points of the
-%        affected tasks, and cold-start their part of the suite at the
-%        earliest possible subsequent cycle point. To do this, insert the
-%        relevant cold start task, or task group, at the later cycle point,
-%        then purge the failed task and everything that depends on it (and
-%        on them, and so on) down to the cold-start time. Other downstream
-%        forecast models will be able to pick up immediately so long their
-%        most recent previous instance (i.e.\ just before the gap) wrote out
-%        sufficient restart outputs to bridge the gap (otherwise they,
-%        or perhaps the entire suite, will need to be cold-started).
-%
-%    \item {\em HELP, I attempted a drastic intervention in a complex
-%        suite, using the horrifying purge command, and this time I
-%        really screwed the pooch!} Before any operation that alters the
-%        system state, cylc automatically writes out a special state dump
-%        file and reports the filename in the main log. Shut the suite
-%        down and restart it from its pre-intervention state (just
-%        cut-and-paste the state dump filename from the main log file -
-%        the file path is not required because the file will be in the
-%        configured suite state dump directory).  Then {\em retry your
-%        intervention in practice mode} before doing it for real!
 %
 %\end{myitemize}
 %

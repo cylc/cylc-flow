@@ -191,7 +191,6 @@ class scheduler(object):
                 'hold task now' : self.command_hold_task,
                 'set runahead' : self.command_set_runahead,
                 'set verbosity' : self.command_set_verbosity,
-                'purge tree' : self.command_purge_tree,
                 'reset task state' : self.command_reset_task_state,
                 'trigger task' : self.command_trigger_task,
                 'dry run task' : self.command_dry_run_task,
@@ -210,7 +209,6 @@ class scheduler(object):
             'kill cycle',
             'kill task',
             'set runahead',
-            'purge tree',
             'reset task state',
             'trigger task',
             'nudge suite',
@@ -1249,9 +1247,6 @@ class scheduler(object):
 
     def command_add_prerequisite( self, task_id, message ):
         self.pool.add_prereq_to_task( task_id, message )
-
-    def command_purge_tree( self, id, stop ):
-        self.pool.purge_tree( id, get_point(stop) )
 
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config.cfg['scheduling']['special tasks']['include at start-up']

@@ -415,10 +415,10 @@ determine what happened to them while the suite was down."""
 
             # see comments above on resurrecting tasks
 
-            # TODO - we should probably use the task.reset_state()
-            # methods here, to update the rundb too...
-
             print "  ", itask.state.get_status()
+
+            # The following sets task outputs and prerequisites based on state.
+            # This could be simplified by using the new db task_outputs table.
 
             if itask.state.is_currently('waiting'):
                 pass
