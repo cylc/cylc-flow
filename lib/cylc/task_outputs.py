@@ -80,9 +80,6 @@ class TaskOutputs(object):
             print ' ', taskid, message
         sys.stdout.flush()
 
-    def db_load(self):
-        pass
-
     def db_queue_record(self, taskid, message):
         """Record a task output to the run DB."""
         #if self.validate_mode:

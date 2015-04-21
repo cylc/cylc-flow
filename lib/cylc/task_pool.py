@@ -35,12 +35,12 @@ as such, on restart, into the runahead pool.
 """
 
 import sys
-from cylc.task_state import task_state
-import cylc.flags
+
 from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
-import datetime
 
+from cylc.task_state import task_state
+import cylc.flags
 import cylc.rundb
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
@@ -820,7 +820,6 @@ class TaskPool(object):
                     self.remove(itask, 'suicide')
 
     def remove_spent_tasks(self):
-        # TODO - no longer need task.cleanup_cutoff
         spent = []
         for itask in self.get_tasks():
             if (itask.state.is_currently('succeeded') and
@@ -829,6 +828,7 @@ class TaskPool(object):
         for itask in spent:
             self.remove(itask)
 
+        # TODO - THIS NEEDS TO BE THE OLD CLEANUP CUTOFF
         min_point =  self.get_min_point()
         if min_point:
             self.task_outputs.cleanup(min_point)
