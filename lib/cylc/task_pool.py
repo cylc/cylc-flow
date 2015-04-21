@@ -463,7 +463,7 @@ class TaskPool(object):
         self.release_runahead_tasks()
 
     def get_min_point(self):
-        """Return the minimum cycle point currently in the pool."""
+        """Return the minimum cycle point currently in the pool, or None."""
         cycles = self.pool.keys()
         minc = None
         if cycles:
@@ -561,7 +561,7 @@ class TaskPool(object):
                             itask.identity)
                 else:
                     self.log.info(
-                        'RELOADING TASK DEFINITION FOR ' + itask.identity)
+                        'Reloading task definition for ' + itask.identity)
                     new_task = self.config.get_task_proxy(
                         itask.tdef.name,
                         itask.point,
@@ -571,7 +571,7 @@ class TaskPool(object):
                         is_reload=True
                     )
                     # Set new prerequisites.
-                    new_task.satisfy_me(self.db, force=True)
+                    new_task.satisfy_me(force=True)
 
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
@@ -727,18 +727,14 @@ class TaskPool(object):
                     state_updaters += [oper]
                 elif isinstance(oper, cylc.rundb.RecordStateObject):
                     state_recorders += [oper]
-                elif (isinstance(oper, cylc.rundb.RecordOutputObject) or
-                        isinstance(oper, cylc.rundb.DeleteOutputObject)):
-                    # These must be kept in original order.
-                    output_ops += [oper]
                 elif isinstance(oper, cylc.rundb.RecordEventObject):
                     event_recorders += [oper]
                 else:
                     other += [oper]
 
         # precedence:
-        db_ops = (state_recorders + state_updaters + output_ops +
-            event_recorders + other)
+        db_ops = state_recorders + state_updaters + event_recorders + other
+
         # compact the set of operations
         if len(db_ops) > 1:
             db_opers = [db_ops[0]]
@@ -758,8 +754,14 @@ class TaskPool(object):
 
         # record any broadcast settings to be dumped out
         if self.wireless:
+            # TODO - this loops is unnecessary?:
             for db_oper in self.wireless.get_db_ops():
                 db_opers += [db_oper]
+
+        # And any ops on the task output table.
+        # (TODO - add this (and wireless?) to the bulk opers above?)
+        for db_oper in self.task_outputs.get_db_ops():
+            db_opers += [db_oper]
 
         for db_oper in db_opers:
             if self.db.c.is_alive():
@@ -826,7 +828,9 @@ class TaskPool(object):
         for itask in spent:
             self.remove(itask)
 
-        self.task_outputs.cleanup(self.get_min_point())
+        min_point =  self.get_min_point()
+        if min_point:
+            self.task_outputs.cleanup(min_point)
 
     def reset_task_states(self, ids, state):
         """Reset task states.

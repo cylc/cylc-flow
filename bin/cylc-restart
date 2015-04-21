@@ -346,6 +346,9 @@ determine what happened to them while the suite was down."""
 
         print "LOADING data from suite db"
 
+        print "LOADING task outputs"
+        self.pool.task_outputs.messages = self.db.get_outputs_table()
+
         for point_string in task_point_strings:
             res = self.db.get_restart_info(point_string)
             cycleinfo[point_string] = res

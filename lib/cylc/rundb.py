@@ -440,13 +440,12 @@ class CylcRuntimeDAO(object):
 
         return res
 
-    def get_output_taskid(self, message):
-        """Return the ID of the task that generated message, if it exists."""
+    def get_outputs_table(self):
+        """Return the entire task outputs table."""
 
-        s_fmt = """SELECT identity FROM task_outputs WHERE message ==?"""
-        identity = None
-        args = [message]
-        for row in self.c.select(s_fmt, args):
-            identity = str(row[0])
-            break
-        return identity
+        s_fmt = """SELECT * FROM task_outputs"""
+        args = []
+        table = {}
+        for taskid, msg in self.c.select(s_fmt, args):
+            table[str(msg)] = str(taskid)
+        return table
