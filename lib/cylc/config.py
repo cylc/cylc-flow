@@ -1471,6 +1471,7 @@ class config( object ):
 
         ctrig = {}
         cname = {}
+        offsets = []
         for left in left_nodes:
             # (GraphNodeError checked above)
             cycle_point = None
@@ -1483,18 +1484,16 @@ class config( object ):
                 last_point = seq.get_stop_point()
                 if last_point is None:
                     # This dependency persists for the whole suite run.
-                    ltaskdef.intercycle_offsets.append(
-                        (None, seq))
+                    offsets.append((None, seq))
                 else:
-                    ltaskdef.intercycle_offsets.append(
-                        (str(-(last_point - first_point)), seq))
+                    offsets.append((str(-(last_point - first_point)), seq))
                 cycle_point = first_point
             elif lnode.intercycle:
                 if lnode.offset_is_irregular:
                     offset_tuple = (lnode.offset_string, seq)
                 else:
                     offset_tuple = (lnode.offset_string, None)
-                ltaskdef.intercycle_offsets.append(offset_tuple)
+                offsets.append(offset_tuple)
 
             trig = trigger(
                     lnode.name, lnode.output, lnode.offset_string,
@@ -1507,6 +1506,7 @@ class config( object ):
                 # Dummy tasks do not report message outputs.
                 continue
 
+            self.taskdefs[right].intercycle_offsets = offsets
             if not conditional:
                 self.taskdefs[right].add_trigger( trig, seq )
                 continue

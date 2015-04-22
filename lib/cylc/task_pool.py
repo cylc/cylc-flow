@@ -22,8 +22,7 @@ pool, which does not participate in dependency matching and is not visible in
 the GUI. Tasks are then released to the task pool if not beyond the current
 runahead limit.
 
-check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
-runahead pool too.
+check_auto_shutdown() has to consider tasks in the runahead pool too.
 
 TODO - spawn-on-submit means a only one waiting instance of each task exists,
 in the pool, so if a new stop cycle is set we just need to check waiting pool
@@ -820,6 +819,7 @@ class TaskPool(object):
                     self.remove(itask, 'suicide')
 
     def remove_spent_tasks(self):
+        """Remove succeeded tasks immediately."""
         spent = []
         for itask in self.get_tasks():
             if (itask.state.is_currently('succeeded') and
@@ -828,8 +828,23 @@ class TaskPool(object):
         for itask in spent:
             self.remove(itask)
 
-        # TODO - THIS NEEDS TO BE THE OLD CLEANUP CUTOFF
-        min_point =  self.get_min_point()
+    def remove_spent_outputs(self):
+        """Remove task outputs no longer needed to satisfy prerequisites.
+        
+        Each task proxy knows its min trigger point from the graph, e.g. for:
+            graph = "foo[-PT6H] => bar\n foo[-PT12H] => baz"
+        task bar's min trigger point is <current point>-PT12H.
+        
+        """
+        min_point = None
+        # (need to consider runahead tasks here too).
+        for itask in self.get_all_tasks():
+            mtp = itask.min_trigger_point
+            if min_point is None:
+                min_point = mtp
+            if mtp is not None and min_point is not None:
+                if mtp < min_point:
+                    min_point = mtp
         if min_point:
             self.task_outputs.cleanup(min_point)
 

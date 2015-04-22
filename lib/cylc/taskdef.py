@@ -25,7 +25,7 @@ implications for global detection of duplicated prerequisites
 
 """
 
-from cylc.cycling.loader import get_point_relative, get_interval
+from cylc.cycling.loader import get_point_relative, get_interval, get_point
 from cylc.task_id import TaskID
 
 
@@ -111,10 +111,10 @@ class TaskDef(object):
             raise TaskDefError("No cycling sequences defined for %s" % self.name)
 
     @classmethod
-    def get_cleanup_cutoff_point(cls, my_point, offset_sequence_tuples):
-        """Extract the max dependent cycle point for this point."""
+    def get_min_trigger_point(cls, my_point, offset_sequence_tuples):
+        """Extract the minimum cycle point that this task triggers off."""
         if not offset_sequence_tuples:
-            # This task does not have dependent tasks at other cycles.
+            # This task does not depend on tasks at other cycles.
             return my_point
         cutoff_points = []
         for offset_string, sequence in offset_sequence_tuples:
@@ -124,33 +124,18 @@ class TaskDef(object):
             if sequence is None:
                 # This indicates a simple offset interval such as [-PT6H].
                 cutoff_points.append(
-                    my_point - get_interval(offset_string))
+                    my_point + get_interval(offset_string))
                 continue
             # This is a complicated offset like [02T00-P1W].
-            dependent_point = sequence.get_start_point()
+            cutoff_points.append(get_point_relative(offset_string, my_point))
 
-            matching_dependent_points = []
-            while dependent_point is not None:
-                # TODO: Is it realistically possible to hang in this loop?
-                target_point = (
-                    get_point_relative(offset_string, dependent_point))
-                if target_point > my_point:
-                    # Assume monotonic (target_point can never jump back).
-                    break
-                if target_point == my_point:
-                    # We have found a dependent_point for my_point.
-                    matching_dependent_points.append(dependent_point)
-                dependent_point = sequence.get_next_point_on_sequence(
-                    dependent_point)
-            if matching_dependent_points:
-                # Choose the largest of the dependent points.
-                cutoff_points.append(matching_dependent_points[-1])
         if cutoff_points:
-            max_cutoff_point = max(cutoff_points)
-            if max_cutoff_point < my_point:
+            min_cutoff_point = min(cutoff_points)
+            if min_cutoff_point > my_point:
                 # This is caused by future triggers - default to my_point.
                 return my_point
-            return max_cutoff_point
+            return  min_cutoff_point
+
         # There aren't any dependent tasks in other cycles for my_point.
         return my_point
 

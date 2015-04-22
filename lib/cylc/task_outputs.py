@@ -22,14 +22,12 @@ from cylc.cycling.loader import get_point
 from cylc.task_id import TaskID
 
 class TaskOutputs(object):
-    """Store task output messages for matching task prerequisites.
+    """Manage task output messages for matching task prerequisites.
     
-    The internal dict is indexed by messaage for easy dependency matching and
-    deletion, but not for cycle point based cleanup.
+    The internal dict is indexed by messaage for efficient dependency matching
+    and deletion (but is less efficient for cycle point based cleanup).
 
-    Task output messages are assumed to be unique across the suite.
     """
-
     _INSTANCE = None
 
     @classmethod
@@ -40,7 +38,6 @@ class TaskOutputs(object):
         return cls._INSTANCE
 
     def __init__(self):
-        # All messages.
         self.messages = {}
         self.db_queue = []
 
@@ -62,16 +59,11 @@ class TaskOutputs(object):
         return self.messages.get(message, None)
 
     def cleanup(self, min_point):
-        """Removed expired messages."""
-
-        # TODO - this does a string-to-point conversion and comparison for
-        # every task, in every cleanup ... can it be made more efficient?
-        # (are the conversions and comparisons memoized?)
+        """Removed messages from tasks at < min_point."""
         for message, taskid in self.messages.items():
             name, point_string = TaskID.split(taskid)
             point = get_point(point_string)
             if point < min_point:
-                # TODO - housekeep the db task_outputs table
                 self.unregister(taskid, message)
 
     def dump(self):

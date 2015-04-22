@@ -905,6 +905,7 @@ class scheduler(object):
                 self.pool.spawn_tasks()
 
                 self.pool.remove_spent_tasks()
+                self.pool.remove_spent_outputs()
                 self.pool.remove_suiciding_tasks()
 
                 self.do_update_state_summary = True

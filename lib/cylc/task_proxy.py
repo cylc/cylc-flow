@@ -120,12 +120,12 @@ class TaskProxy(object):
                 # This task is out of sequence bounds
                 raise TaskProxySequenceBoundsError(self.tdef.name)
             self.point = min(adjusted)
-            self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
+            self.min_trigger_point = self.tdef.get_min_trigger_point(
                 self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
         else:
             self.point = start_point
-            self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
+            self.min_trigger_point = self.tdef.get_min_trigger_point(
                 self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
@@ -249,33 +249,22 @@ class TaskProxy(object):
         spre = plain_prerequisites(self.identity, self.tdef.start_point)
 
         if self.tdef.sequential:
-            # For tasks declared 'sequential' we automatically add a
-            # previous-instance inter-cycle trigger, and adjust the
-            # cleanup cutoff (determined by inter-cycle triggers)
-            # accordingly.
-            p_next = None
+            # Add a previous-instance prereq and adjust the min trigger point.
+            p_prv = None
             adjusted = []
             for seq in self.tdef.sequences:
-                nxt = seq.get_next_point(self.point)
-                if nxt:
+                p_prv = seq.get_nearest_prev_point(self.point)
+                if p_prv:
                     # may be None if beyond the sequence bounds
-                    adjusted.append(nxt)
+                    adjusted.append(p_prv)
             if adjusted:
-                p_next = min(adjusted)
-                if (self.cleanup_cutoff is not None and
-                        self.cleanup_cutoff < p_next):
-                    self.cleanup_cutoff = p_next
-
-            p_prev = None
-            adjusted = []
-            for seq in self.tdef.sequences:
-                prv = seq.get_nearest_prev_point(self.point)
-                if prv:
-                    # may be None if out of sequence bounds
-                    adjusted.append(prv)
-            if adjusted:
-                p_prev = max(adjusted)
-                ppre.add(TaskID.get(self.tdef.name, p_prev) + ' succeeded')
+                p_prv = max(adjusted)
+                if self.min_trigger_point is not None:
+                    if p_prv < self.min_trigger_point:
+                        self.min_trigger_point = p_prv
+                else:
+                    self.min_trigger_point = p_prv
+                ppre.add(TaskID.get(self.tdef.name, p_prv) + ' succeeded')
 
         for sequence in self.tdef.triggers:
             for trig in self.tdef.triggers[sequence]:
