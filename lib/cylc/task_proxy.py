@@ -120,13 +120,9 @@ class TaskProxy(object):
                 # This task is out of sequence bounds
                 raise TaskProxySequenceBoundsError(self.tdef.name)
             self.point = min(adjusted)
-            self.min_trigger_point = self.tdef.get_min_trigger_point(
-                self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
         else:
             self.point = start_point
-            self.min_trigger_point = self.tdef.get_min_trigger_point(
-                self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
         self.prerequisites = prerequisites(self.tdef.start_point)
@@ -244,59 +240,11 @@ class TaskProxy(object):
         # used by a particular task if the task's cycle point is a
         # valid member of sequenceX's sequence of cycle points.
 
-        # 1) non-conditional triggers
-        ppre = plain_prerequisites(self.identity, self.tdef.start_point)
-        spre = plain_prerequisites(self.identity, self.tdef.start_point)
+        # TODO - COMPUTATION OF self.tdef.max_future_prereq_offset WAS ONLY IN
+        # THE OLD NON-CONDITIONAL TRIGGERS.
 
-        if self.tdef.sequential:
-            # Add a previous-instance prereq and adjust the min trigger point.
-            p_prv = None
-            adjusted = []
-            for seq in self.tdef.sequences:
-                p_prv = seq.get_nearest_prev_point(self.point)
-                if p_prv:
-                    # may be None if beyond the sequence bounds
-                    adjusted.append(p_prv)
-            if adjusted:
-                p_prv = max(adjusted)
-                if self.min_trigger_point is not None:
-                    if p_prv < self.min_trigger_point:
-                        self.min_trigger_point = p_prv
-                else:
-                    self.min_trigger_point = p_prv
-                ppre.add(TaskID.get(self.tdef.name, p_prv) + ' succeeded')
-
-        for sequence in self.tdef.triggers:
-            for trig in self.tdef.triggers[sequence]:
-                if not sequence.is_valid(self.point):
-                    # This trigger is not used in current cycle
-                    continue
-                if (trig.graph_offset_string is None or
-                        (get_point_relative(
-                            trig.graph_offset_string, point) >=
-                         self.tdef.start_point)):
-                    # i.c.t. can be None after a restart, if one
-                    # is not specified in the suite definition.
-
-                    message, prereq_point = trig.get(point)
-                    prereq_offset = prereq_point - point
-                    if (prereq_offset > get_interval_cls().get_null() and
-                            (self.tdef.max_future_prereq_offset is None or
-                             prereq_offset >
-                             self.tdef.max_future_prereq_offset)):
-                        self.tdef.max_future_prereq_offset = prereq_offset
-
-                    if trig.suicide:
-                        spre.add(message)
-                    else:
-                        ppre.add(message)
-
-        self.prerequisites.add_requisites(ppre)
-        self.suicide_prerequisites.add_requisites(spre)
-
-        # 2) conditional triggers
-        for sequence in self.tdef.cond_triggers.keys():
-            for ctrig, exp in self.tdef.cond_triggers[sequence]:
+        for sequence in self.tdef.triggers.keys():
+            for ctrig, exp in self.tdef.triggers[sequence]:
                 key = ctrig.keys()[0]
                 if not sequence.is_valid(self.point):
                     # This trigger is not valid for current cycle (see NOTE
@@ -312,9 +260,9 @@ class TaskProxy(object):
                                 trig.graph_offset_string, point) <
                             self.tdef.start_point
                         )
-                        cpre.add(trig.get(point)[0], label, is_less_than_start)
+                        cpre.add(trig.get_prereq(point)[0], label, is_less_than_start)
                     else:
-                        cpre.add(trig.get(point)[0], label)
+                        cpre.add(trig.get_prereq(point)[0], label)
                 cpre.set_condition(exp)
                 if ctrig[key].suicide:
                     self.suicide_prerequisites.add_requisites(cpre)

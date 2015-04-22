@@ -1452,77 +1452,35 @@ class config( object ):
                         self.taskdefs[name].outputs.append(outp)
 
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
-        if not right:
-            # lefts are lone nodes; no more triggers to define.
-            return
-        
-        if not left_nodes:
-            # Nothing actually remains to trigger right.
+        if not right or not left_nodes:
+            # Lone nodes have no triggers.
             return
 
         base_interval = seq.get_interval()
 
-        conditional = False
-        if re.search( '\|', lexpression ):
-            conditional = True
-            # For single triggers or '&'-only ones, which will be the
-            # vast majority, we needn't use conditional prerequisites
-            # (they may be less efficient due to python eval at run time).
-
         ctrig = {}
         cname = {}
-        offsets = []
         for left in left_nodes:
-            # (GraphNodeError checked above)
             cycle_point = None
             lnode = graphnode(left, base_interval=base_interval)
-            ltaskdef = self.taskdefs[lnode.name]
 
             if lnode.offset_is_from_ict:
-                first_point = get_point_relative(
+                cycle_point = get_point_relative(
                     lnode.offset_string, self.initial_point)
-                last_point = seq.get_stop_point()
-                if last_point is None:
-                    # This dependency persists for the whole suite run.
-                    offsets.append((None, seq))
-                else:
-                    offsets.append((str(-(last_point - first_point)), seq))
-                cycle_point = first_point
-            elif lnode.intercycle:
-                if lnode.offset_is_irregular:
-                    offset_tuple = (lnode.offset_string, seq)
-                else:
-                    offset_tuple = (lnode.offset_string, None)
-                offsets.append(offset_tuple)
 
             trig = trigger(
-                    lnode.name, lnode.output, lnode.offset_string,
-                    cycle_point, suicide,
-                    self.cfg['runtime'][lnode.name]['outputs'],
-                    base_interval
+                lnode.name, lnode.output, lnode.offset_string, cycle_point,
+                suicide, self.cfg['runtime'][lnode.name]['outputs'],
+                base_interval
             )
 
-            if self.run_mode != 'live' and not trig.is_standard():
-                # Dummy tasks do not report message outputs.
-                continue
-
-            self.taskdefs[right].intercycle_offsets = offsets
-            if not conditional:
-                self.taskdefs[right].add_trigger( trig, seq )
-                continue
-
-            # CONDITIONAL TRIGGERS
-            # Use fully qualified name for the expression label
-            # (task name is not unique, e.g.: "F | F:fail => G")
+            # TODO - use automatic simple labeling?
             label = self.get_conditional_label(left)
             ctrig[label] = trig
             cname[label] = lnode.name
 
-        if not conditional:
-            return
-
         expr = self.get_conditional_label(lexpression)
-        self.taskdefs[right].add_conditional_trigger( ctrig, expr, seq )
+        self.taskdefs[right].add_trigger(ctrig, expr, seq)
 
     def get_actual_first_point( self, start_point ):
         # Get actual first cycle point for the suite (get all

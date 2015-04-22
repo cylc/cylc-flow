@@ -836,17 +836,7 @@ class TaskPool(object):
         task bar's min trigger point is <current point>-PT12H.
         
         """
-        min_point = None
-        # (need to consider runahead tasks here too).
-        for itask in self.get_all_tasks():
-            mtp = itask.min_trigger_point
-            if min_point is None:
-                min_point = mtp
-            if mtp is not None and min_point is not None:
-                if mtp < min_point:
-                    min_point = mtp
-        if min_point:
-            self.task_outputs.cleanup(min_point)
+        # !!!!!! TODO !!!!!!
 
     def reset_task_states(self, ids, state):
         """Reset task states.

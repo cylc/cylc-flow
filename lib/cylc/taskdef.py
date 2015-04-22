@@ -15,15 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Task definition.
 
-NOTE on conditional and non-conditional triggers: all plain triggers
-(for a single task) are held in a single prerequisite object; but one
-such object is held for each conditional trigger. This has
-implications for global detection of duplicated prerequisites
-(detection is currently disabled).
-
-"""
+"""Task definition."""
 
 from cylc.cycling.loader import get_point_relative, get_interval, get_point
 from cylc.task_id import TaskID
@@ -57,36 +50,25 @@ class TaskDef(object):
 
         # some defaults
         self.max_future_prereq_offset = None
-        self.intercycle_offsets = []
         self.sequential = False
         self.is_coldstart = False
         self.suite_polling_cfg = {}
 
         self.clocktrigger_offset = None
         self.namespace_hierarchy = []
-        # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = {}
-        # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
-        self.cond_triggers = {}
-        # list of explicit internal outputs; change to dict if need to vary per
-        # cycle.
+        # message outputs
         self.outputs = []
 
         self.name = name
         self.elapsed_times = []
         self.mean_total_elapsed_time = None
 
-    def add_trigger(self, trigger, sequence):
-        """Add trigger to a named sequence."""
+    def add_trigger(self, triggers, expression, sequence):
+        """Add conditional trigger to a named sequence."""
         if sequence not in self.triggers:
             self.triggers[sequence] = []
-        self.triggers[sequence].append(trigger)
-
-    def add_conditional_trigger(self, triggers, exp, sequence):
-        """Add conditional trigger to a named sequence."""
-        if sequence not in self.cond_triggers:
-            self.cond_triggers[sequence] = []
-        self.cond_triggers[sequence].append([triggers, exp])
+        self.triggers[sequence].append([triggers, expression])
 
     def add_sequence(self, sequence, is_implicit=False):
         """Add a sequence."""
@@ -109,35 +91,6 @@ class TaskDef(object):
         """
         if len(self.sequences) == 0 and self.used_in_offset_trigger:
             raise TaskDefError("No cycling sequences defined for %s" % self.name)
-
-    @classmethod
-    def get_min_trigger_point(cls, my_point, offset_sequence_tuples):
-        """Extract the minimum cycle point that this task triggers off."""
-        if not offset_sequence_tuples:
-            # This task does not depend on tasks at other cycles.
-            return my_point
-        cutoff_points = []
-        for offset_string, sequence in offset_sequence_tuples:
-            if offset_string is None:
-                # This indicates a dependency that lasts for the whole run.
-                return None
-            if sequence is None:
-                # This indicates a simple offset interval such as [-PT6H].
-                cutoff_points.append(
-                    my_point + get_interval(offset_string))
-                continue
-            # This is a complicated offset like [02T00-P1W].
-            cutoff_points.append(get_point_relative(offset_string, my_point))
-
-        if cutoff_points:
-            min_cutoff_point = min(cutoff_points)
-            if min_cutoff_point > my_point:
-                # This is caused by future triggers - default to my_point.
-                return my_point
-            return  min_cutoff_point
-
-        # There aren't any dependent tasks in other cycles for my_point.
-        return my_point
 
     def update_mean_total_elapsed_time(self, t_started, t_succeeded):
         """Update the mean total elapsed time (all instances of this task)."""
