@@ -19,7 +19,7 @@
 import os
 import sys
 from copy import copy
-from parsec.OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDict, OrderedDictWithDefaults
 
 """
 Utility functions for printing and manipulating PARSEC NESTED DICTS.
@@ -96,19 +96,23 @@ def replicate( target, source ):
     if not source:
         target = OrderedDict()
         return
+    if hasattr(source, "defaults"):
+        target.defaults = pdeepcopy(source.defaults)
     for key,val in source.items():
         if isinstance( val, dict ):
             if key not in target:
-                target[key] = OrderedDict()
+                target[key] = OrderedDictWithDefaults()
+            elif hasattr(val, 'defaults'):
+                target[key].defaults = pdeepcopy(val.defaults)
             replicate( target[key], val )
         elif isinstance( val, list ):
             target[key] = val[:]
         else:
             target[key] = val
 
-def pdeepcopy( source):
+def pdeepcopy(source):
     """Make a deep copy of a pdict source"""
-    target = OrderedDict()
+    target = OrderedDictWithDefaults()
     replicate( target, source )
     return target
 
@@ -135,8 +139,9 @@ def m_override( target, sparse ):
         if isinstance( val, dict ):
             if key not in target:
                 if '__MANY__' in target:
-                    target[key] = OrderedDict()
-                    replicate( target[key], target['__MANY__'] )
+                    target[key] = OrderedDictWithDefaults()
+                    target[key].defaults = target['__MANY__']
+                    replicate( target[key], val )
                 else:
                     # TODO - validation prevents this, but handle properly for completeness.
                     raise Exception( "parsec dict override: no __MANY__ placeholder" )
