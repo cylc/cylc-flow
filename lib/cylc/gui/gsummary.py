@@ -565,7 +565,7 @@ class SummaryApp(object):
             tooltip.set_text(None)
             return False
         state_texts = []
-        status_column_info = 6
+        status_column_info = 7
         state_text = model.get_value(iter_, status_column_info)
         if state_text is None:
             tooltip.set_text(None)
