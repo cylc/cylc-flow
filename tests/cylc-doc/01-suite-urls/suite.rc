@@ -1,0 +1,11 @@
+
+URL = http://localhost/suite-docs/${CYLC_SUITE_NAME}.html
+[scheduling]
+   [[dependencies]]
+        graph = foo => FAM
+[runtime]
+    [[root]]
+        URL = 'http://localhost/suite-docs/${CYLC_SUITE_NAME}.html#${CYLC_TASK_NAME}'
+    [[FAM]]
+    [[bar,baz]]
+        inherit = FAM
