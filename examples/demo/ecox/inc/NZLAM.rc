@@ -10,7 +10,7 @@
         inherit = OPS
         description = "OPS Extract and Process Satwind observations"
         manual completion = True
-        command scripting = OPS-wrapper.sh
+        script = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_SATWIND_JOBDIR
         [[[directives]]]
@@ -21,7 +21,7 @@
         inherit = OPS
         description = "OPS Extract and Process ATOVS observations"
         manual completion = True
-        command scripting = OPS-wrapper.sh
+        script = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_ATOVS_JOBDIR
         [[[directives]]]
@@ -32,7 +32,7 @@
         inherit = OPS
         description = "OPS Extract and Process IASI observations"
         manual completion = True
-        command scripting = OPS-wrapper.sh
+        script = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_IASI_JOBDIR
         [[[directives]]]
@@ -43,7 +43,7 @@
         inherit = OPS
         description = "OPS Extract and Process Surface and Scatterometer observations"
         manual completion = True
-        command scripting = OPS-wrapper.sh
+        script = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_SURFACESCATT_JOBDIR
         [[[directives]]]
@@ -54,7 +54,7 @@
         inherit = OPS
         description = "OPS Extract and Process GPSRO observations"
         manual completion = True
-        command scripting = OPS-wrapper.sh
+        script = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_GPSRO_JOBDIR
         [[[directives]]]
@@ -65,7 +65,7 @@
         inherit = OPS
         description = "OPS Extract and Process AIRS observations"
         manual completion = True
-        command scripting = OPS-wrapper.sh
+        script = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_AIRS_JOBDIR
         [[[directives]]]
@@ -76,7 +76,7 @@
         inherit = OPS
         description = "OPS Extract and Process Aircraft and Sonde observations"
         manual completion = True
-        command scripting = OPS-wrapper.sh
+        script = OPS-wrapper.sh
         [[[environment]]]
             OPSUI_JOB_DIR     = $OPS_AIRCRAFTSONDE_JOBDIR
         [[[directives]]]
@@ -93,7 +93,7 @@
         inherit = NZLAM
         description = "Reconfigure the NZLAM model restart dump"
         manual completion = True
-        command scripting = """
+        script = """
 export UMRECON_INPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RECONFIGURED_RESTART_DUMP ) 
 export UM_DATAMDIR=$(  cylc template TEMPLATE_DATAM_DIR  )
@@ -107,7 +107,7 @@ UMrecon-wrapper.sh"""
         inherit = NZLAM
         description = "Reconfigure the cold start dump for the NZLAM"
         manual completion = True
-	command scripting = """
+	script = """
 export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
 export UM_DATAMDIR=$(  cylc template TEMPLATE_DATAM_DIR  )
@@ -123,7 +123,7 @@ UMrecon-wrapper.sh"""
 in global ancillary fields and generate a full sized UM global global
 start dump."""
         manual completion = True
-	command scripting = """
+	script = """
 export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_REDUCED_GLOBAL_DUMP ) 
 export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
 export UM_DATAMDIR=$(  cylc template TEMPLATE_DATAM_DIR  )
@@ -137,7 +137,7 @@ UMrecon-wrapper.sh"""
         inherit = NZLAM
         description = "NZLAM warm cycle forecast"
         manual completion = True
-        command scripting = """
+        script = """
 export UM_PPVARFILE=$( cylc template TEMPLATE_PPVAR_FILE )
 export UM_PP7CXFILE=$( cylc template TEMPLATE_PP7CX_FILE )
 export UM_DATAMDIR=$(  cylc template TEMPLATE_DATAM_DIR  )
@@ -158,7 +158,7 @@ UM-wrapper.sh"""
         inherit = NZLAM
         description = NZLAM initial forecast from global model start dump.
         manual completion = True
-        command scripting = """
+        script = """
 export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RESTART_DUMP )
 export UM_PPVARFILE=$( cylc template -s 6 TEMPLATE_PPVAR_FILE   )
 export UM_PP7CXFILE=$( cylc template -s 6 TEMPLATE_PP7CX_FILE   )
@@ -174,7 +174,7 @@ UM-wrapper.sh"""
         inherit = VAR
         description = "VAR Analysis"
         manual completion = True
-        command scripting = VAR-wrapper.sh
+        script = VAR-wrapper.sh
         [[[environment]]]
             VARUI_JOB_DIR    = $VAR_ANALYSEPF_JOBDIR
         [[[directives]]]
@@ -185,7 +185,7 @@ UM-wrapper.sh"""
         inherit = VAR
         description = "VAR Reconfiguration"
         manual completion = True
-        command scripting = VAR-wrapper.sh
+        script = VAR-wrapper.sh
         [[[environment]]]
             VARUI_JOB_DIR    = $VAR_CONFIGURELS_JOBDIR
         [[[directives]]]
@@ -196,12 +196,12 @@ UM-wrapper.sh"""
         inherit = NZLAM
         description = """Move NZLAM forecast output from the UM output
 directories to the suite output directory, renaming them appropriately."""
-        command scripting = get-um-output.sh $WARMSTART_RUNID pp0 pp1 pc pi
+        script = get-um-output.sh $WARMSTART_RUNID pp0 pp1 pc pi
 
     [[nzlam_conv_met]]
         inherit = NZLAM
         description = "Converts the NZLAM UM met file to NetCDF format."
-        command scripting = um_conv_nc.sh
+        script = um_conv_nc.sh
         [[[environment]]]
             FILEIN  = met_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12_*.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
@@ -222,7 +222,7 @@ directories to the suite output directory, renaming them appropriately."""
         inherit = NZLAM
     # ONLY REQUIRED UNTIL WE CHANGE THE UM STASH GRID CUTOUT DEFINITION.
         description = "Clean NetCDF tn file."
-        command scripting = llclean.sh 
+        script = llclean.sh 
         [[[environment]]]
             FILEIN  = tn_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.nc
             FILEIN_LOC  = ${HOME}/output/nzlam_12
@@ -233,7 +233,7 @@ directories to the suite output directory, renaming them appropriately."""
     [[nzlam_conv_sls]]
         inherit = NZLAM
         description = "Converts the NZLAM UM sls file to NetCDF format."
-        command scripting = um_conv_nc.sh
+        script = um_conv_nc.sh
         [[[environment]]]
             FILEIN  = sls_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
@@ -253,7 +253,7 @@ directories to the suite output directory, renaming them appropriately."""
     [[nzlam_conv_tn]]
         inherit = NZLAM
         description = "Converts the NZLAM UM TN file to NetCDF format."
-        command scripting = um_conv_nc.sh
+        script = um_conv_nc.sh
         [[[environment]]]
             FILEIN  = tn_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
@@ -273,7 +273,7 @@ directories to the suite output directory, renaming them appropriately."""
     [[nzlam_conv_escape]]
         inherit = NZLAM
         description = "Converts the NZLAM UM Energy Scape file to NetCDF format."
-        command scripting = um_conv_nc.sh
+        script = um_conv_nc.sh
         [[[environment]]]
             FILEIN  = escape_${CYLC_TASK_CYCLE_TIME}_utc_nzlam_12*.um
             FILEIN_LOC  = ${HOME}/output/nzlam_12
@@ -293,7 +293,7 @@ directories to the suite output directory, renaming them appropriately."""
     [[nzlam_ncl]]
         inherit = NZLAM
         description = "NZLAM ncl postprocessing."
-        command scripting = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_nzlam.sh
+        script = /${SYS}/ecoconnect/vis_${SYS}/bin/vis_scripts/vis_nzlam.sh
 
     [[nzlam_products]]
         inherit = NZLAM
@@ -301,7 +301,7 @@ directories to the suite output directory, renaming them appropriately."""
     # product ingest gets overloaded when multiple cycles run at once in
     # catchup operation. 
         description = "NZLAM forecast product generation and ingestion."
-        command scripting = convert_ingest.sh
+        script = convert_ingest.sh
         [[[environment]]]
             PRODUCT_DIR   = ${HOME}/running/nzlam_12/product
             SERVICE     = nzlam_products
@@ -313,7 +313,7 @@ directories to the suite output directory, renaming them appropriately."""
     [[nzlam_housekeeping]]
         inherit = NZLAM
         description = "Archiving and cleanup for the NZLAM sub-system."
-        command scripting = cylc housekeeping --mode=0775 -b 4 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzlam_housekeeping.conf
+        script = cylc housekeeping --mode=0775 -b 4 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzlam_housekeeping.conf
     	[[[directives]]]
 	        wall_clock_limit = "4:00:10,4:00:00"
         [[[event hooks]]]
@@ -322,7 +322,7 @@ directories to the suite output directory, renaming them appropriately."""
     [[make_alabc]]
         inherit = NZLAM
         description = "Convert NZLAM frames to an ALABC (boundary condition) file"
-        command scripting = """
+        script = """
 # This is required for access to the standard makebc executable in
 # the UM installation. UM jobs at NIWA, on the other hand, require
 # this in $HOME/.profile, which gets sourced inside the secondary
@@ -338,14 +338,14 @@ make_alabc.sh --keep"""
     [[unpack_bgerr]]
         inherit = NZLAM
         description = "Check bgerr file for current cycle, unpack if necessary."
-        command scripting = check-nzlam-inputs.sh --bgerr
+        script = check-nzlam-inputs.sh --bgerr
 
     [[unpack_frames]]
         inherit = NZLAM
         description = "Check frames files for the current cycle, unpack if necessary."
-        command scripting = check-nzlam-inputs.sh --frames
+        script = check-nzlam-inputs.sh --frames
 
     [[unpack_obstores]]
         inherit = NZLAM
         description = "Check obstore files for current cycle, unpack if necessary."
-        command scripting = check-nzlam-inputs.sh --obstore
+        script = check-nzlam-inputs.sh --obstore

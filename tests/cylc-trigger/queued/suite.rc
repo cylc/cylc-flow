@@ -9,7 +9,7 @@
     [[METASYNTACTIC]]
     [[foo]]
         inherit = METASYNTACTIC
-        command scripting = """
+        script = """
             sleep 10
             cylc trigger $CYLC_SUITE_NAME bar 1
             sleep 10

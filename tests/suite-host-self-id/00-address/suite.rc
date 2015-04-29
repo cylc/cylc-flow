@@ -9,6 +9,6 @@
         graph = t1
 [runtime]
     [[t1]]
-        command scripting = """
+        script = """
 grep -F -q "CYLC_SUITE_HOST={{MY_HOST_IP}}" "${CYLC_SUITE_RUN_DIR}/cylc-suite-env"
 """

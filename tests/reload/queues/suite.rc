@@ -16,11 +16,11 @@ description = """change the size of a queue via a reload."""
                    reloader => monitor"""
 [runtime]
     [[FAM]]
-        command scripting = sleep 10
+        script = sleep 10
     [[a,b,c,d,e,f,g,h,i,j,k,l]]
         inherit = FAM
     [[reloader]]
-        command scripting = """
+        script = """
 # change the limit on number of members of q_fam:
 perl -pi -e 's/(limit = )5( # marker)/\1 3 \2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
@@ -28,7 +28,7 @@ cylc reload -f $CYLC_SUITE_NAME
 sleep 5
 """
     [[monitor]]
-        command scripting = """
+        script = """
         sleep 5
         while true; do
             TASKS=$(cylc suite-state $CYLC_SUITE_NAME -S running | wc -l)

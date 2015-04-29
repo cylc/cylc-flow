@@ -9,6 +9,6 @@
             graph = "a[T-6] & c[T-6] => a => stopper => c"
 [runtime]
     [[a,c]]
-        command scripting = "true"
+        script = "true"
     [[stopper]]
-        command scripting = "cylc shutdown $CYLC_SUITE_REG_NAME 2010010100; sleep 5"
+        script = "cylc shutdown $CYLC_SUITE_REG_NAME 2010010100; sleep 5"

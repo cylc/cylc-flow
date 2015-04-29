@@ -11,9 +11,9 @@
             graph = "stop => foo"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
     [[stop]]
-        command scripting = "cylc shutdown $CYLC_SUITE_REG_NAME 20140107"
+        script = "cylc shutdown $CYLC_SUITE_REG_NAME 20140107"
 [visualization]
     initial cycle point = 20140101
     final cycle point = 20140110

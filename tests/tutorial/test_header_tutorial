@@ -8,7 +8,7 @@ function alter_suite() {
     cat >> suite.rc <<EOF
 [runtime]
     [[root]]
-        command scripting = /bin/true
+        script = /bin/true
 EOF
     perl -pi -e "s/sleep \d+/sleep 0/" suite.rc
 

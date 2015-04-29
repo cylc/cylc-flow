@@ -1,7 +1,7 @@
     [[ext_check_bgerr_ukmet]]
         inherit = UKMO
         description = "Check if the UK MetOffice bgerr file is available for download"
-        command scripting = file_check_ftp.sh
+        script = file_check_ftp.sh
         [[[environment]]]
             SRCE    = ftpops.metoffice.gov.uk
             SRCE_LOC    = ~/
@@ -19,7 +19,7 @@
         inherit = UKMO
         description = """Check if UK MetOffice obstore data for the current
 cycle is available for download."""
-        command scripting = file_check_ftp.sh
+        script = file_check_ftp.sh
        [[[environment]]]
             SRCE    = ftpops.metoffice.gov.uk
             SRCE_LOC    = ~/
@@ -37,7 +37,7 @@ cycle is available for download."""
         inherit = UKMO
         description = """Check if the UK MetOffice Frame checksum file is
 available on their ftp site"""
-        command scripting = file_check_ftp.sh
+        script = file_check_ftp.sh
         [[[environment]]]
             SRCE    = ftpops.metoffice.gov.uk
             SRCE_LOC    = ~/
@@ -56,7 +56,7 @@ available on their ftp site"""
         inherit = UKMO
         description = """Check if the Global wind file for the current cycle
 is available for download."""
-        command scripting = file_check_ftp.sh
+        script = file_check_ftp.sh
         [[[environment]]]
             SRCE    = ftpops.metoffice.gov.uk
             SRCE_LOC    = ~/
@@ -74,7 +74,7 @@ is available for download."""
         inherit = UKMO
         description = """Check if the Global ice file for the current cycle
 is available for download."""
-        command scripting = file_check_ftp.sh
+        script = file_check_ftp.sh
         [[[environment]]]
             SRCE    = ftpops.metoffice.gov.uk
             SRCE_LOC    = ~/
@@ -91,7 +91,7 @@ is available for download."""
     [[ext_check_sst_ukmet]]
         inherit = UKMO
         description = "Check if the UK MetOffice sst file is available for download"
-        command scripting = file_check_ftp.sh
+        script = file_check_ftp.sh
         [[[environment]]]
             SRCE    = ftpops.metoffice.gov.uk
             SRCE_LOC    = ~/
@@ -108,7 +108,7 @@ is available for download."""
     [[ext_check_dump_ukmet]]
         inherit = UKMO
         description = "Check if the UK MetOffice T+3 dump file is available for download"
-        command scripting = file_check_ftp.sh
+        script = file_check_ftp.sh
         [[[environment]]]
             SRCE    = ftpops.metoffice.gov.uk
             SRCE_LOC    = ~/
@@ -127,7 +127,7 @@ is available for download."""
     [[ext_get_bgerr_ukmet]]
         inherit = UKMO
         description = "Get the UK MetOffice bgerr file"
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE = ftpops.metoffice.gov.uk
             SRCE_LOC = ~/
@@ -146,7 +146,7 @@ is available for download."""
     [[ext_get_obstore_ukmet]]
         inherit = UKMO
         description = "Get the UK MetOffice obstore file"
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE = ftpops.metoffice.gov.uk
             SRCE_LOC = ~/
@@ -165,7 +165,7 @@ is available for download."""
     [[ext_get_frames_ukmet]]
         inherit = UKMO
         description = "Get the UK MetOffice Frame files"
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE = ftpops.metoffice.gov.uk
             SRCE_LOC = ~/
@@ -190,7 +190,7 @@ is available for download."""
     [[ext_get_globalwind_ukmet]]
         inherit = UKMO
         description = "Get the UK MetOffice globalwind file"
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE = ftpops.metoffice.gov.uk
             SRCE_LOC = ~/
@@ -213,7 +213,7 @@ is available for download."""
     [[ext_get_globalice_ukmet]]
         inherit = UKMO
         description = "Get the UK MetOffice globalice file"
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE = ftpops.metoffice.gov.uk
             SRCE_LOC = ~/
@@ -233,7 +233,7 @@ is available for download."""
     [[ext_get_sst_ukmet]]
         inherit = UKMO
         description = "Get the UK MetOffice sst file"
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE = ftpops.metoffice.gov.uk
             SRCE_LOC = ~/
@@ -253,7 +253,7 @@ is available for download."""
         description = """Get the UK MetOffice T+3 dump file. This task is
 only used during an initial coldstart, and thereafter should be inserted
 when needed."""  
-        command scripting = file_transfer_ftp.sh
+        script = file_transfer_ftp.sh
         [[[environment]]]
             SRCE = ftpops.metoffice.gov.uk
             SRCE_LOC = ~/

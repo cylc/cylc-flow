@@ -11,7 +11,7 @@ description = "if not, the test will fail due to an unexpected task failure."
 [runtime]
     [[foo]]
         manual completion = True
-        command scripting="""
+        script="""
 sleep 2
 # report task succeeded (but don't exit):
 cylc succeeded
@@ -24,4 +24,4 @@ cylc message "polled $CYLC_TASK_ID failed"
 """
     [[bar]]
         # to keep the suite up for 10s
-        command scripting = "sleep 10"
+        script = "sleep 10"

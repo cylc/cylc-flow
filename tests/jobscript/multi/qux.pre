@@ -1,2 +1,2 @@
-# PRE-COMMAND SCRIPTING:
+# PRE-SCRIPT:
 echo qux

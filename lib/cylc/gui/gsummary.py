@@ -363,7 +363,7 @@ class SummaryApp(object):
         self.theme = gcfg.get( ['themes', self.theme_name] )
 
         self.dots = DotMaker(self.theme)
-        suite_treemodel = gtk.TreeStore(str, str, bool, str, int, str, str)
+        suite_treemodel = gtk.TreeStore(str, str, bool, str, int, int, str, str)
         self._prev_tooltip_location_id = None
         self.suite_treeview = gtk.TreeView(suite_treemodel)
 
@@ -409,9 +409,9 @@ class SummaryApp(object):
 
       # Construct the status column.
         status_column = gtk.TreeViewColumn("Status")
-        status_column.set_sort_column_id(5)
-        status_column_info = 6
-        cycle_column_info = 5
+        status_column.set_sort_column_id(6)
+        status_column_info = 7
+        cycle_column_info = 6
         cell_text_cycle = gtk.CellRendererText()
         status_column.pack_start(cell_text_cycle, expand=False)
         status_column.set_cell_data_func(
@@ -544,7 +544,7 @@ class SummaryApp(object):
             suite = model.get_value(parent_iter, 1)
             child_row_number = path[-1]
         suite_update_time = model.get_value(iter_, 4)
-
+        last_update_time = model.get_value(iter_, 5)
         location_id = (host, suite, suite_update_time, column.get_title(),
                        child_row_number)
 
@@ -557,7 +557,7 @@ class SummaryApp(object):
             return True
         if column.get_title() == "Updated":
             time_point = get_timepoint_from_seconds_since_unix_epoch(
-                suite_update_time)
+                last_update_time)
             tooltip.set_text("Info retrieved at " + str(time_point))
             return True
 
@@ -565,7 +565,7 @@ class SummaryApp(object):
             tooltip.set_text(None)
             return False
         state_texts = []
-        status_column_info = 6
+        status_column_info = 7
         state_text = model.get_value(iter_, status_column_info)
         if state_text is None:
             tooltip.set_text(None)
@@ -897,6 +897,7 @@ class SummaryAppUpdater(BaseSummaryUpdater):
                 status_map_items = statuses[host][suite]
                 is_stopped = False
                 suite_time = suite_update_times[host][suite]
+                last_updated_time = time.time()
             else:
                 info = stop_summaries[host][suite]
                 status_map, suite_time = info
@@ -919,7 +920,8 @@ class SummaryAppUpdater(BaseSummaryUpdater):
                                  for key, group in groupby(cycle_sort_2)]
                 cycle_status.append(tuple(cycle_statuse))
             title = self.suite_titles.get(suite)
-            model_data = [host, suite, is_stopped, title, suite_time]
+            model_data = [host, suite, is_stopped, title, suite_time,
+                          last_updated_time]
             model_data += [None]
             distinct_states = len(task_state.legal)
             model_data += [' '.join(states[:distinct_states])]
@@ -927,7 +929,8 @@ class SummaryAppUpdater(BaseSummaryUpdater):
             for i in range(len(cycle_list)):
                 try:
                     active_cycle = cycle_status[i]
-                    model_data = [None, None, is_stopped, None, suite_time]
+                    model_data = [None, None, is_stopped, None, suite_time,
+                                  last_updated_time]
                     model_data += [cycle_list[i]]
                     model_data += [' '.join(active_cycle[:distinct_states])]
                 except:

@@ -10,6 +10,6 @@ title = "One task takes 20 sec to succeed, another to fail."
                 """
 [runtime]
     [[good]]
-        command scripting = "sleep 20"
+        script = "sleep 20"
     [[bad]]
-        command scripting = "sleep 20; /bin/false"
+        script = "sleep 20; /bin/false"

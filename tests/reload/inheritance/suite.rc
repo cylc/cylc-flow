@@ -11,11 +11,11 @@ description = """change inheritance via a reload."""
         graph = reloader => inheritor
 [runtime]
     [[FAM1]]
-        command scripting = false
+        script = false
     [[FAM2]]
-        command scripting = true
+        script = true
     [[reloader]]
-        command scripting = """
+        script = """
 # change the inheritance of inheritor:
 perl -pi -e 's/(inherit = )FAM1( # marker)/\1FAM2\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload

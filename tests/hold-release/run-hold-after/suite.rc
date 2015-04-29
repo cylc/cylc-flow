@@ -19,6 +19,6 @@ description = """Test running with a hold-after cycle point."""
             graph = foo[-PT12H] => foo => bar
 [runtime]
     [[stopper]]
-        command scripting = sleep 30; cylc stop $CYLC_SUITE_NAME
+        script = sleep 30; cylc stop $CYLC_SUITE_NAME
     [[foo,bar]]
-        command scripting = true
+        script = true

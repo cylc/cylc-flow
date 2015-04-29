@@ -23,8 +23,8 @@ duration of the suite; and the other is set to stop after two cycles."""
 
 [runtime]
     [[root]]
-        command scripting = "sleep 1" # quick
+        script = "sleep 1" # quick
     [[prep]]
-        command scripting = """
+        script = """
 cylc insert $CYLC_SUITE_NAME bar 20140101T00
 cylc insert $CYLC_SUITE_NAME baz 20140101T00 20140102T00"""

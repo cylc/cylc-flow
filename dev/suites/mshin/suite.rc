@@ -18,7 +18,7 @@ build => run{{ "%04d"|format(i) }}
 """
     [runtime]
         [[root]]
-            command scripting = "echo $CYLC_TASK_ID"
+            script = "echo $CYLC_TASK_ID"
         [[FAM00]]
             inherit = root
             {% for i in range(1, N_FAMS) %}

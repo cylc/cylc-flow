@@ -11,11 +11,11 @@
                    foo => !FAM"""
 [runtime]
     [[FAM]]
-        command scripting = "true"
+        script = "true"
     [[a,c]]
         inherit = FAM
     [[b]]
         inherit = FAM
-        command scripting = "false"
+        script = "false"
     [[foo]]
-        command scripting = "true"
+        script = "true"

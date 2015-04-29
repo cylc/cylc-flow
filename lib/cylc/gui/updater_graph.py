@@ -368,7 +368,7 @@ class GraphUpdater(threading.Thread):
                     if name not in self.all_families:
                         if id in self.updater.filt_task_ids:
                             nodes_to_remove.add(node)
-                    else:
+                    elif id in self.fam_state_summary:
                         # Remove family nodes if all members filtered out.
                         remove = True
                         for mem in self.descendants[name]:

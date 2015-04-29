@@ -12,7 +12,7 @@
             graph = foo => nonstop
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle point = 2015-02-21T00
     final cycle point = 2015-02-21T18

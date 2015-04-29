@@ -23,9 +23,9 @@
             host = {{ HOST }}
     [[rem1]]
         inherit = PBS_SETTINGS
-        command scripting = "sleep 10; true"
+        script = "sleep 10; true"
     [[rem2]]
         inherit = PBS_SETTINGS
-        command scripting = "sleep 30"
+        script = "sleep 30"
     [[killer]]
-        command scripting = cylc kill $CYLC_SUITE_NAME rem2 1 -f; sleep 10
+        script = cylc kill $CYLC_SUITE_NAME rem2 1 -f; sleep 10

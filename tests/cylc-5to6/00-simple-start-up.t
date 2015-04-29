@@ -87,7 +87,7 @@ title = Simple start-up suite.
         start-up = cold_foo # UPGRADE INFO: Replace this and *all* start-up/async graph deps with 'cylc validate' 'R1*' output
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
         retry delays = PT0.5M, PT10M, PT30M, 5*PT1H, 2*PT3H, P1D # UPGRADE CHANGE: delays as ISO 8601 durations
         [[[event hooks]]]
             execution timeout = PT3H # UPGRADE CHANGE: ISO 8601 durations

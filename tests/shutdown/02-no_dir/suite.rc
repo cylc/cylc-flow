@@ -12,6 +12,6 @@
             graph = "foo[T-12] => bar"
 [runtime]
     [[foo]]
-        command scripting = sleep 5
+        script = sleep 5
     [[bar]]
-        command scripting = rm -rf $CYLC_SUITE_RUN_DIR
+        script = rm -rf $CYLC_SUITE_RUN_DIR

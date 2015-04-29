@@ -10,7 +10,7 @@
 
 [runtime]
     [[t1]]
-        command scripting = """
+        script = """
 set +e
 trap '' SIGKILL
 kill -s SIGKILL "${$}"
@@ -19,7 +19,7 @@ sleep 5 # Prevent the script to run to success before it is killed
         [[[event hooks]]]
             failed handler = echo
     [[t2]]
-        command scripting = """
+        script = """
 T1_ST_FILE="${CYLC_SUITE_RUN_DIR}/log/job/1/t1/01/job.status"
 T1_PID=$(awk -F= '$1 == "CYLC_JOB_PID" {print $2}' "${T1_ST_FILE}")
 while ps "$T1_PID" 1>/dev/null 2>&1; do

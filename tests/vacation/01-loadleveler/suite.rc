@@ -13,7 +13,7 @@ t2
 
 [runtime]
     [[root]]
-        command scripting=true
+        script=true
         [[[job submission]]]
             method=loadleveler
         [[[directives]]]

@@ -8,6 +8,6 @@ title = "Job script: no directives test for SLURM"
 
 [runtime]
     [[foo]]
-        command scripting = echo hello
+        script = echo hello
         [[[job submission]]]
             method = slurm

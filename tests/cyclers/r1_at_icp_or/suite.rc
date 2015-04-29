@@ -12,7 +12,7 @@
             graph = "baz[-P1D] => baz"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle point = 20130808T00
     final cycle point = 20130809T18

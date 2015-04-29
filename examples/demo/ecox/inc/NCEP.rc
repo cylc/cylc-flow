@@ -1,27 +1,27 @@
     [[ncep_get]]
         inherit = NCEP
         description = "Get the NCEP GriB files"
-        command scripting = /${SYS}/ecoconnect/ncep_${SYS}/bin/get_ncep.sh
+        script = /${SYS}/ecoconnect/ncep_${SYS}/bin/get_ncep.sh
 
     [[ncep_run]]
         inherit = NCEP
         description = "Run the NCEP code"
-        command scripting = /${SYS}/ecoconnect/ncep_${SYS}/bin/run_process_ncep_wrapper.sh
+        script = /${SYS}/ecoconnect/ncep_${SYS}/bin/run_process_ncep_wrapper.sh
 
     [[ncep_xml]]
         inherit = NCEP
         description = "Run the NCEP XML creation"
-        command scripting = /${SYS}/ecoconnect/ncep_${SYS}/bin/run_mos_scripts.sh
+        script = /${SYS}/ecoconnect/ncep_${SYS}/bin/run_mos_scripts.sh
 
     [[ncep_upload_thotter]]
         inherit = NCEP
         description = "Run the NCEP upload to Thotter"
-        command scripting = /${SYS}/ecoconnect/ncep_${SYS}/bin/upload_to_thotter.sh
+        script = /${SYS}/ecoconnect/ncep_${SYS}/bin/upload_to_thotter.sh
 
     [[ncep_products]]
         inherit = NCEP
         description = "Run the NCEP products for ingestion into the EcoConnect database"
-        command scripting = convert_ingest.sh
+        script = convert_ingest.sh
         [[[environment]]]
             PRODUCT_DIR   = ${HOME}/running/medusa/product
             SERVICE     = ncep_products
@@ -29,4 +29,4 @@
     [[ncep_housekeeping]]
         inherit = NCEP
         description = "Archiving and cleanup for the ncep files."
-        command scripting = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ncep_housekeeping.conf
+        script = cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ncep_housekeeping.conf

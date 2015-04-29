@@ -10,7 +10,7 @@ bar:submit => baz
 
 [runtime]
     [[root]]
-        command scripting = "sleep 60"
+        script = "sleep 60"
     [[foo]]
         [[[job submission]]]
             method = "FAIL"

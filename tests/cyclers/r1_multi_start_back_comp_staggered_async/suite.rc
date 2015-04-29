@@ -13,7 +13,7 @@
             graph = "cold_foo => start_foo_three => foo_three"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle time = 20140101
     final cycle time = 2014010206

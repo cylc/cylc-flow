@@ -12,7 +12,7 @@ t2:start=>stop
 """
 [runtime]
     [[T]]
-        command scripting=sleep 120 & echo $! >file; wait
+        script=sleep 120 & echo $! >file; wait
 {% if "CYLC_TEST_HOST" in environ and environ["CYLC_TEST_HOST"] %}
         [[[remote]]]
             host={{environ["CYLC_TEST_HOST"]}}
@@ -24,7 +24,7 @@ t2:start=>stop
     [[t2]]
         inherit=T
     [[stop]]
-        command scripting="""
+        script="""
 cylc kill $CYLC_SUITE_REG_NAME t1 1 || true
 cylc kill $CYLC_SUITE_REG_NAME t2 1 || true
 cylc stop $CYLC_SUITE_REG_NAME

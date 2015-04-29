@@ -7,4 +7,4 @@
         graph = "a => b => c"
 [runtime]
     [[a,b,c]]
-        command scripting = true
+        script = true

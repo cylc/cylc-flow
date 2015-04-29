@@ -31,11 +31,11 @@ trigger, and the suite to shut down successfully."""
 
 [runtime]
     [[run_kill]]
-        command scripting = """
+        script = """
 trap '' EXIT # die silently 
 exit 0"""
     [[poll_check_kill]]
-        command scripting = """
+        script = """
             cylc poll $CYLC_SUITE_NAME
 
             while test $(grep "\[submit_hold.${CYLC_TASK_CYCLE_POINT}\] -submission succeeded
@@ -50,7 +50,7 @@ exit 0"""
 
         """
     [[poll_now]]
-        command scripting = """ 
+        script = """ 
             cylc poll $CYLC_SUITE_NAME
        """
         [[[job submission]]]

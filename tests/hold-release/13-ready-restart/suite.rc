@@ -15,15 +15,15 @@ bar
 
 [runtime]
     [[foo]]
-        command scripting = true
+        script = true
     [[foo-1]]
-        command scripting = true
+        script = true
         [[[job submission]]]
             method = at
             # A fake submission on 1st attempt
             command template = sleep 10
     [[bar]]
-        command scripting = """
+        script = """
 # Stop the suite as soon as job file of "foo-1" is in the ready state
 timeout 1m my-file-poll "${CYLC_SUITE_RUN_DIR}/log/job/1/foo-1/NN/job"
 cylc stop --now --max-polls=10 --interval=1 "${CYLC_SUITE_NAME}"

@@ -20,4 +20,4 @@ Tests triggering of asynchronous one-off, synchronous one-off
 
 [runtime]
     [[root]]
-        command scripting = "true" # fast
+        script = "true" # fast

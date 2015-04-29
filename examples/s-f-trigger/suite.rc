@@ -16,7 +16,7 @@ foo:finish => A:start => B
 [runtime]
     [[foo]]
         description = "A task that alternately succeeds (0 hours) and fails (12 hours)"
-        command scripting = """
+        script = """
 echo "HELLO"
 sleep 10
 if [[ $( cylc cycle-point --print-hour ) == 00 ]]; then

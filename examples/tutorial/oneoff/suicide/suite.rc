@@ -7,9 +7,9 @@ title = "Hello, Goodbye, Suicide"
            really_goodbye => !goodbye"""
 [runtime]
     [[hello]]
-        command scripting = "sleep 10; echo Hello World!"
+        script = "sleep 10; echo Hello World!"
     [[goodbye]]
-        command scripting = """
+        script = """
 sleep 10
 echo Goodbye ... oops!
 /bin/false # FAIL"""

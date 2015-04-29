@@ -12,6 +12,6 @@
                    baz:finish => qux"""
 [runtime]
     [[foo]]
-        command scripting = "false"
+        script = "false"
     [[bar,baz,qux]]
-        command scripting = "true"
+        script = "true"

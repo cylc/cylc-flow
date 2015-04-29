@@ -20,7 +20,7 @@ point of the suite."""
             """
 [runtime]
     [[holdrelease]]
-        command scripting = """
+        script = """
 sleep 5
 cylc hold --family $CYLC_SUITE_NAME {{ HOLD_MATCH }} 20141009T0000Z
 sleep 5
@@ -29,7 +29,7 @@ sleep 5
     [[STOP]]
     [[foo,bar]]
         inherit = STUFF
-        command scripting = true
+        script = true
     [[stop]]
         inherit = STOP
-        command scripting = sleep 5; cylc stop $CYLC_SUITE_NAME
+        script = sleep 5; cylc stop $CYLC_SUITE_NAME

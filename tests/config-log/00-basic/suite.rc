@@ -13,9 +13,9 @@ description = the weather is {{WEATHER | default("bad")}}
        graph = reloader => restarter
 [runtime]
    [[reloader]]
-      command scripting = cylc reload $CYLC_SUITE_NAME
+      script = cylc reload $CYLC_SUITE_NAME
    [[restarter]]
-      command scripting = """
+      script = """
 cylc stop --max-polls=10 --interval=2 --now $CYLC_SUITE_NAME
 cylc restart --set WEATHER=good $CYLC_SUITE_NAME
 sleep 10

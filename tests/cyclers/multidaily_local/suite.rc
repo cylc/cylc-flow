@@ -11,7 +11,7 @@
             graph = "baz[-P4D] => baz => qux"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle point = 20001231T0100
     final cycle point = 20010114

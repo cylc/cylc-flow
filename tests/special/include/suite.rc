@@ -9,6 +9,6 @@
         graph = "include & exclude"
 [runtime]
     [[include]]
-        command scripting = true
+        script = true
     [[exclude]]
-        command scripting = false
+        script = false

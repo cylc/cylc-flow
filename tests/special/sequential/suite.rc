@@ -16,9 +16,9 @@
             """
 [runtime]
     [[foo]]
-        command scripting = sleep 10
+        script = sleep 10
     [[monitor]]
-        command scripting = """
+        script = """
         while true; do
             sleep 1
             RUNNING=$(sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db "select count(*) from task_states where name is 'foo' and status is 'running'") || RUNNING=0

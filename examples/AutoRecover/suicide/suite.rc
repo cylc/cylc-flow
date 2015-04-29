@@ -21,7 +21,7 @@ post => !model # take out failed models if recovery succeeds
 [runtime]
     [[model]]
         description = "A task that succeeds at O UTC and fails at 12 UTC"
-        command scripting = """
+        script = """
 echo Hello from $CYLC_TASK_ID
 sleep 10
 if [[ $(cylc util cycletime --print-hour) == 12 ]]; then 

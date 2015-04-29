@@ -15,16 +15,16 @@ sleeping-waiter:start => reloader
 
 [runtime]
     [[sleeping-waiter]]
-        command scripting = """
+        script = """
 touch 'file'
 while [[ -e 'file' ]]; do
     sleep 1
 done
 """
     [[waiter]]
-        command scripting = true
+        script = true
     [[reloader]]
-        command scripting = """
+        script = """
 cylc reload "${CYLC_SUITE_NAME}"
 while ! grep -q 'RELOADING TASK DEFINITION FOR waiter\.1' \
     "${CYLC_SUITE_LOG_DIR}/log"

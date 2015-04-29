@@ -49,7 +49,7 @@ Parse and validate the suite definition file, do some consistency
 checking, then construct task proxy objects and graph structures.
 """
 
-CLOCK_OFFSET_RE = re.compile('(\w+)\s*\(\s*(.+)\s*\)')
+CLOCK_OFFSET_RE = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
 # TODO - unify this with task_state.py:
@@ -211,6 +211,13 @@ class config( object ):
                     if item != 'graph' and value.get('graph'):
                         just_has_async_graph = False
                         break
+                icp = self.cfg['scheduling'].get('initial cycle point')
+                fcp = self.cfg['scheduling'].get('final cycle point')
+                if just_has_async_graph and not (
+                        icp in [None, "1"] and fcp in [None, icp]):
+                    raise SuiteConfigError('Conflicting syntax: integer vs ' +
+                        'cycling suite, are you missing an [[R1]] section in' +
+                        ' your graph?')
                 if just_has_async_graph:
                     # There aren't any other graphs, so set integer cycling.
                     self.cfg['scheduling']['cycling mode'] = (
@@ -376,6 +383,8 @@ class config( object ):
                             Calendar.MODE_GREGORIAN
                         )
                     name, offset_string = m.groups()
+                    if not offset_string:
+                        offset_string = "PT0M"
                     offset_converted_from_prev = False
                     try:
                         float(offset_string)
@@ -1048,17 +1057,17 @@ class config( object ):
             if flags.verbose:
                 print "  + " + itask.identity + " ok"
 
-        # Check custom command scripting is not defined for automatic suite polling tasks
+        # Check custom script is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
             try:
-                cs = self.pcfg.getcfg( sparse=True )['runtime'][l_task]['command scripting']
+                cs = self.pcfg.getcfg( sparse=True )['runtime'][l_task]['script']
             except:
                 pass
             else:
                 if cs:
                     print cs
-                    # (allow explicit blanking of inherited scripting)
-                    raise SuiteConfigError( "ERROR: command scripting cannot be defined for automatic suite polling task " + l_task )
+                    # (allow explicit blanking of inherited script)
+                    raise SuiteConfigError( "ERROR: script cannot be defined for automatic suite polling task " + l_task )
 
 
     def get_coldstart_task_list( self ):

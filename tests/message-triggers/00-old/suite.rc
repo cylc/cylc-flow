@@ -16,7 +16,7 @@ title = "test suite for pre cylc-6 message triggers"
                   """
 [runtime]
     [[foo]]
-        command scripting = """
+        script = """
 sleep 2
 TARGET_POINT=$CYLC_TASK_CYCLE_POINT
 cylc message "uploaded file 1 for $TARGET_POINT"

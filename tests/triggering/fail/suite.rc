@@ -11,6 +11,6 @@
                    bar => !foo"""
 [runtime]
     [[foo]]
-        command scripting = "false"
+        script = "false"
     [[bar]]
-        command scripting = "true"
+        script = "true"

@@ -21,7 +21,7 @@ by many of the other test suites (see "cylc test-battery --help")."""
         graph = "foo & bar"
 [runtime]
     [[root]]
-        command scripting = "/bin/true" # fast
+        script = "/bin/true" # fast
     [[foo]]
         [[[remote]]]
             # in suite bin directory:

@@ -14,10 +14,10 @@
             """
 [runtime]
     [[foo]]
-        command scripting = sleep 10
+        script = sleep 10
     [[bar,baz]]
-        command scripting = true
+        script = true
     [[show]]
-        command scripting = """
+        script = """
 cylc show "$CYLC_SUITE_NAME" foo.20140808T0900{{ TZ_OFFSET_BASIC }} >{{ TEST_SHOW_OUTPUT_PATH }}
 """

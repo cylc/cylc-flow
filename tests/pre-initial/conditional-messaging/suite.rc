@@ -13,14 +13,14 @@
                        foo => !bar"""
 [runtime]
     [[foo]]
-        command scripting = """
+        script = """
 sleep 1
 cylc message "restart files ready for $(cylc cycle-point --offset-hours=24 )"
 sleep 1"""
         [[[outputs]]]
             restart1 = "restart files ready for [T+24]"
     [[bar]]
-        command scripting = """
+        script = """
                             if (($(cylc cycle-point)==2010080800)); then
                                 true
                             else

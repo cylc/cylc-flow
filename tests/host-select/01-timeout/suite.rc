@@ -12,6 +12,6 @@ title = Test task host selection with a bad command
         graph = "foo:submit-fail => !foo"
 [runtime]
     [[foo]]
-        command scripting = true
+        script = true
         [[[remote]]]
             host = $(sleep 2; echo 'localhost')

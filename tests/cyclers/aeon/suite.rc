@@ -13,7 +13,7 @@
             graph = "count_the_aeons"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle point = -13800000000-02-29T05:30
     final cycle point = +05400000000-12-31T23:59

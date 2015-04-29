@@ -15,4 +15,4 @@
             graph = "clock"
 [runtime]
     [[clock]]
-        command scripting = true
+        script = true
