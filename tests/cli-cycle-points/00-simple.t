@@ -20,7 +20,7 @@
 
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
@@ -31,6 +31,11 @@ TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-override
+# This will fail if the in-suite final cycle point does not get overridden.
 suite_run_ok $TEST_NAME cylc run --until=2015-04 --debug $SUITE_NAME 2015-04
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-run-fail
+# This should fail as the final cycle point  is < the initial one.
+suite_run_fail $TEST_NAME cylc run --until=2015-03 --debug $SUITE_NAME 2015-04
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
