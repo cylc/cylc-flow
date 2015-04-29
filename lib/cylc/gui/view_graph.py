@@ -161,10 +161,6 @@ Dependency graph suite control interface.
                                        name not in self.t.leaves)
         ungroup_rec_item.connect('activate', self.grouping, name, False, True)
 
-        title_item = gtk.MenuItem('Task: ' + task_id.replace("_", "__"))
-        title_item.set_sensitive(False)
-        menu.append(title_item)
-
         menu.append(gtk.SeparatorMenuItem())
 
         if type is not 'live task':
@@ -193,9 +189,14 @@ Dependency graph suite control interface.
 
         if type == 'live task':
             is_fam = (name in self.t.descendants)
-            default_menu = self.get_right_click_menu(task_id, hide_task=True,
-                                                     task_is_family=is_fam)
-            for item in default_menu.get_children():
+            default_menu = self.get_right_click_menu(task_id, task_is_family=is_fam)
+            dm_kids = default_menu.get_children()
+            for item in reversed(dm_kids[:2]):
+                # Put task name and URL at the top.
+                default_menu.remove(item)
+                menu.prepend(item)
+            for item in dm_kids[2:]:
+                # And the rest of the default menu at the bottom.
                 default_menu.remove(item)
                 menu.append(item)
 

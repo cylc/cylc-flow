@@ -49,6 +49,8 @@ Parse and validate the suite definition file, do some consistency
 checking, then construct task proxy objects and graph structures.
 """
 
+RE_SUITE_NAME_VAR = re.compile('\${?CYLC_SUITE_(REG_)?NAME}?')
+RE_TASK_NAME_VAR = re.compile('\${?CYLC_TASK_NAME}?')
 CLOCK_OFFSET_RE = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
@@ -567,6 +569,17 @@ class config( object ):
         if vfcp is not None and final_point is not None:
             if vfcp > final_point:
                 self.cfg['visualization']['final cycle point'] = str(final_point)
+
+        # Replace suite name in suite  URL.
+        url = self.cfg['URL']
+        if url is not '':
+            self.cfg['URL'] = re.sub(RE_SUITE_NAME_VAR, self.suite, url)
+
+        # Replace suite and task name in task URLs.
+        for name, cfg in self.cfg['runtime'].items():
+            if cfg['URL']:
+                cfg['URL'] = re.sub(RE_TASK_NAME_VAR, name, cfg['URL'])
+                cfg['URL'] = re.sub(RE_SUITE_NAME_VAR, self.suite, cfg['URL'])
 
     def check_env_names( self ):
         # check for illegal environment variable names
@@ -1401,7 +1414,10 @@ class config( object ):
             if name not in self.cfg['runtime']:
                 # naked dummy task, implicit inheritance from root
                 self.naked_dummy_tasks.append( name )
-                self.cfg['runtime'][name] = self.cfg['runtime']['root']
+                # These can't just be a reference to root runtime as we have to
+                # make some items task-specific: e.g. subst task name in URLs.
+                self.cfg['runtime'][name] = OrderedDict()
+                replicate(self.cfg['runtime'][name], self.cfg['runtime']['root'])
                 if 'root' not in self.runtime['descendants']:
                     # (happens when no runtimes are defined in the suite.rc)
                     self.runtime['descendants']['root'] = []

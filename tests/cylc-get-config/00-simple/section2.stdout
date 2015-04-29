@@ -6,6 +6,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -70,6 +71,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -133,6 +135,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -197,6 +200,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -261,6 +265,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -325,6 +330,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -389,6 +395,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -453,6 +460,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -516,6 +524,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -580,6 +589,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -644,6 +654,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -707,6 +718,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
@@ -771,6 +783,7 @@
    env-script = 
    execution polling intervals = 
    title = 
+   URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
    submission polling intervals = 
