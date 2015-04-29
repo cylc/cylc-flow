@@ -81,12 +81,6 @@ class remrun(object):
         if not self.is_remote:
             return False
 
-        if (force_required and
-                '-f' not in self.argv[1:] and '--force' not in self.argv[1:]):
-            sys.exit(
-                "ERROR: force (-f) required for non-interactive " +
-                "command invocation.")
-
         name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
 
         user_at_host = ''

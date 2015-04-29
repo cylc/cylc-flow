@@ -16,11 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os, re
+import sys
+for arg in sys.argv[1:]:
+    if arg.startswith('--host=') or arg.startswith('--user='):
+        from cylc.remote import remrun
+        if remrun().execute(force_required=True):
+            sys.exit(0)
+
+import os
+import re
 import subprocess
 from optparse import OptionParser
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.run_get_stdout import run_get_stdout
+from cylc.suite_host import get_hostname
+from cylc.owner import user
 
 parser = OptionParser(
     """cylc [info] documentation|browse [OPTIONS] [SUITE]
@@ -54,6 +64,18 @@ parser.add_option(
 parser.add_option(
     "-s", "--stdout", help="Just print the URL to stdout.",
     action="store_true", default=False, dest="stdout")
+
+parser.add_option(
+    "--user",
+    help="Other user account name. This results in "
+         "command reinvocation on the remote account.",
+    metavar="USER", default=user, action="store", dest="owner")
+
+parser.add_option(
+    "--host",
+    help="Other host name. This results in "
+         "command reinvocation on the remote account.",
+    metavar="HOST", action="store", default=get_hostname(), dest="host")
 
 (options, args) = parser.parse_args()
 
