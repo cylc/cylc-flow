@@ -619,6 +619,7 @@ class scheduler(object):
             self.options.templatevars_file, run_mode=self.run_mode,
             cli_initial_point_string=self._cli_initial_point_string,
             cli_start_point_string=self._cli_start_point_string,
+            cli_final_point_string=self.options.final_point_string,
             is_restart=self.is_restart, is_reload=reconfigure
         )
 
