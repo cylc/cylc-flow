@@ -37,7 +37,7 @@ def environ_init(argv0=None):
         if cylc_dir != os.getenv('CYLC_DIR', ''):
             os.environ['CYLC_DIR'] = cylc_dir
 
-        dirs = [os.path.join(cylc_dir, 'bin')]
+        dirs = []
         if os.getenv('CYLC_SUITE_DEF_PATH', ''):
             dirs.append(os.getenv('CYLC_SUITE_DEF_PATH'))
         environ_path_add(dirs)
