@@ -21,5 +21,5 @@
 set_test_number 1
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
-py_files=$(find "$CYLC_HOME" -name "*.pyc" -type f | sed "s/pyc$/py/g")
+py_files=$(find "$CYLC_DIR" -name "*.pyc" -type f | sed "s/pyc$/py/g")
 run_ok $TEST_NAME ls $py_files
