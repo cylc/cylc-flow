@@ -1,0 +1,27 @@
+2015-05-01T07:41:43Z INFO - Suite starting at 2015-05-01T07:41:43Z
+2015-05-01T07:41:43Z INFO - Run mode: live
+2015-05-01T07:41:43Z INFO - Initial point: 20100808T0000Z
+2015-05-01T07:41:43Z INFO - Final point: 20100809T0000Z
+2015-05-01T07:41:43Z INFO - Cold Start 20100808T0000Z
+2015-05-01T07:41:43Z INFO - [send_broadcast.20100808T0000Z] -initiate job-submit
+2015-05-01T07:41:43Z INFO - [send_broadcast.20100808T0000Z] -triggered off []
+
+2015-05-01T07:41:44Z INFO - [send_broadcast.20100808T0000Z] -submit_method_id=18920
+2015-05-01T07:41:44Z INFO - [send_broadcast.20100808T0000Z] -submission succeeded
+2015-05-01T07:41:45Z INFO - [send_broadcast.20100808T0000Z] -(current:submitted)> send_broadcast.20100808T0000Z started at 2015-05-01T07:41:44Z
+2015-05-01T07:41:46Z INFO - Broadcast set:
++ [timeout.20100808T0000Z] [event hooks]execution timeout=1.0
+2015-05-01T07:41:57Z INFO - [send_broadcast.20100808T0000Z] -(current:running)> send_broadcast.20100808T0000Z succeeded at 2015-05-01T07:41:57Z
+2015-05-01T07:41:58Z INFO - [timeout.20100808T0000Z] -initiate job-submit
+2015-05-01T07:41:58Z INFO - [timeout.20100808T0000Z] -triggered off ['send_broadcast.20100808T0000Z']
+
+2015-05-01T07:41:59Z INFO - [timeout.20100808T0000Z] -submit_method_id=19061
+2015-05-01T07:41:59Z INFO - [timeout.20100808T0000Z] -submission succeeded
+2015-05-01T07:42:00Z INFO - [timeout.20100808T0000Z] -(current:submitted)> timeout.20100808T0000Z started at 2015-05-01T07:41:59Z
+2015-05-01T07:42:01Z WARNING - [timeout.20100808T0000Z] -job started PT1S ago, but has not finished
+2015-05-01T07:42:01Z INFO - [timeout.20100808T0000Z] -initiate job-poll
+2015-05-01T07:42:02Z INFO - polled timeout.20100808T0000Z started at 2015-05-01T07:41:59Z
+
+2015-05-01T07:42:02Z INFO - [timeout.20100808T0000Z] -(current:running)> polled timeout.20100808T0000Z started at 2015-05-01T07:41:59Z
+2015-05-01T07:42:11Z INFO - [timeout.20100808T0000Z] -(current:running)> timeout.20100808T0000Z succeeded at 2015-05-01T07:42:10Z
+2015-05-01T07:42:12Z INFO - Suite shutting down at 2015-05-01T07:42:12Z
