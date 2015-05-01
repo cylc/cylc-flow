@@ -73,6 +73,6 @@ def get_broadcast_change_report(modified_settings, is_cancel=False):
             if isinstance(value, dict):
                 data["setting"] += "[" + key + "]"
             else:
-                data["setting"] += key + "=" + value
+                data["setting"] += key + "=" + str(value)
         msg += CHANGE_FMT % data
     return msg
