@@ -61,6 +61,7 @@ class CGraphPlain( pygraphviz.AGraph ):
         except ValueError:
             # Special node?
             if node_string.startswith("__remove_"):
+                node.attr['style'] = 'dashed'
                 node.attr['label'] = u'\u2702'
                 return
             raise

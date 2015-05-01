@@ -427,7 +427,7 @@ class GraphUpdater(threading.Thread):
 
         # Set base node style defaults
         for node in self.graphw.nodes():
-            node.attr['style'] = 'filled'
+            node.attr.setdefault('style', 'filled')
             node.attr['color'] = '#888888'
             node.attr['fillcolor'] = 'white'
             node.attr['fontcolor'] = '#888888'
