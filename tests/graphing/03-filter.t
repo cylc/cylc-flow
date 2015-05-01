@@ -31,9 +31,10 @@ cmp_ok graph.plain.test.orig $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.plain.ref.or
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-filtered
 graph_suite $SUITE_NAME graph.plain.test.filtered \
-    --filter=banana.1 --filter=blackberry.1 --filter=blueberry.1 \
-    --filter=cherry.1 --filter=date.1 --filter=durian.1 --filter=elderberry.1 \
-    --filter=grape.1  --filter=coconut.1 --filter=breadfruit.1
+    --filter='^banana.1$' --filter='^blackberry.1$' --filter=lueberry \
+    --filter='^cherry.1$' --filter='^date.1$' --filter='^durian.1$' \
+    --filter='^elderberry.1$' --filter='^grape.1$' --filter='^coconut.1$' \
+    --filter='^breadfruit.1$'
 cmp_ok graph.plain.test.filtered $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.plain.ref.filtered
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

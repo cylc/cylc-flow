@@ -55,9 +55,15 @@ class CylcDotViewerCommon(xdot.DotWindow):
         self.inherit = self.suiterc.get_parent_lists()
         return True
 
-    def filter_graph_nodes(self, nodes_to_filter):
-        """Filter out a list of graph nodes."""
-        self.graph.cylc_remove_nodes_from(nodes_to_filter)
+    def filter_graph_nodes(self, filter_patterns):
+        """Filter out graph nodes by regular expressions."""
+        filter_recs = [re.compile(_) for _ in filter_patterns]
+        filter_nodes = set()
+        for node in self.graph.nodes():
+            for filter_rec in filter_recs:
+                if filter_rec.search(node.get_name()):
+                    filter_nodes.add(node)
+        self.graph.cylc_remove_nodes_from(filter_nodes)
 
 
 class MyDotWindow2(CylcDotViewerCommon):

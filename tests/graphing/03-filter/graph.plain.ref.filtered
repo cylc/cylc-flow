@@ -1,11 +1,11 @@
 edge "artichoke.1" __remove_0__ dotted
-edge "arugula.1" __remove_2__ dotted
+edge "arugula.1" __remove_1__ dotted
 edge "asparagus.1" __remove_0__ dotted
 edge "azuki.1" __remove_0__ dotted
 edge __remove_0__ "celery.1" dotted
 edge __remove_0__ "fava.1" dotted
 edge __remove_0__ "fennel.1" dotted
-edge __remove_2__ "carrot.1" dotted
+edge __remove_1__ "carrot.1" dotted
 graph
 node "artichoke.1" "artichoke\n1" unfilled box black
 node "arugula.1" "arugula\n1" unfilled box black
@@ -15,6 +15,6 @@ node "carrot.1" "carrot\n1" unfilled box black
 node "celery.1" "celery\n1" unfilled box black
 node "fava.1" "fava\n1" unfilled box black
 node "fennel.1" "fennel\n1" unfilled box black
-node __remove_0__ ✂ unfilled box black
-node __remove_2__ ✂ unfilled box black
+node __remove_0__ ✂ dashed box black
+node __remove_1__ ✂ dashed box black
 stop

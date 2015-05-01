@@ -137,7 +137,7 @@ class CGraphPlain( pygraphviz.AGraph ):
 
         # Loop through all connected nuke nodes and group them up.
         group_num = -1
-        for l_node, r_node in internal_remove_edges:
+        for l_node, r_node in sorted(internal_remove_edges):
             l_group = remove_node_groups.get(l_node)
             r_group = remove_node_groups.get(r_node)
             if l_group is None:

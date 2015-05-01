@@ -143,7 +143,7 @@ parser.add_option( "-f", "--file",
 
 parser.add_option( "--filter",
     help="Filter out one or many nodes.",
-    metavar="NODE_NAME", action="append", dest="filter_nodes" )
+    metavar="NODE_NAME_PATTERN", action="append", dest="filter_patterns" )
 
 parser.add_option( "-O", "--output-file",
     help="Output to a specific file, with a format given by --output-format" +
@@ -223,9 +223,9 @@ else:
 
 window.widget.connect('clicked', on_url_clicked, window)
 window.get_graph()
-if options.filter_nodes:
-    filter_nodes = set(options.filter_nodes)
-    window.filter_graph_nodes(options.filter_nodes)
+if options.filter_patterns:
+    filter_patterns = set(options.filter_patterns)
+    window.filter_graph_nodes(options.filter_patterns)
 
 if options.reference and options.output_filename is None:
     options.output_filename = "-"
