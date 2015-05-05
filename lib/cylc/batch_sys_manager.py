@@ -108,7 +108,7 @@ import os
 import shlex
 from signal import SIGKILL
 import stat
-from subprocess import call, Popen, PIPE
+from subprocess import check_call, Popen, PIPE
 import sys
 from cylc.mkdir_p import mkdir_p
 from cylc.task_id import TaskID
@@ -202,10 +202,19 @@ class BatchSysManager(object):
         st_file.seek(0, 0)  # rewind
         if hasattr(batch_sys, "KILL_CMD_TMPL"):
             for line in st_file:
-                if line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
-                    job_id = line.strip().split("=", 1)[1]
-                    return call(shlex.split(
-                        batch_sys.KILL_CMD_TMPL % {"job_id": job_id}))
+                if not line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
+                    continue
+                job_id = line.strip().split("=", 1)[1]
+                command = shlex.split(
+                    batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
+                try:
+                    check_call(command)
+                except OSError as exc:
+                    # subprocess.Popen has a bad habit of not setting the
+                    # filename of the executable when it raises an OSError.
+                    if not exc.filename:
+                        exc.filename = command[0]
+                    raise
         return 1
 
     def job_poll(self, st_file_path):
@@ -244,9 +253,15 @@ class BatchSysManager(object):
         # Ask batch system if job is still alive or not
         batch_sys = self.get_inst(statuses[self.CYLC_BATCH_SYS_NAME])
         job_id = statuses[self.CYLC_BATCH_SYS_JOB_ID]
-        proc = Popen(
-            shlex.split(batch_sys.POLL_CMD_TMPL % {"job_id": job_id}),
-            stdout=PIPE)
+        command = shlex.split(batch_sys.POLL_CMD_TMPL % {"job_id": job_id})
+        try:
+            proc = Popen(command, stdout=PIPE)
+        except OSError as exc:
+            # subprocess.Popen has a bad habit of not setting the filename of
+            # the executable when it raises an OSError.
+            if not exc.filename:
+                exc.filename = command[0]
+            raise
         is_in_batch_sys = (proc.wait() == 0)
         if is_in_batch_sys and hasattr(batch_sys, "filter_poll_output"):
             is_in_batch_sys = batch_sys.filter_poll_output(
@@ -318,17 +333,27 @@ class BatchSysManager(object):
                 "job": job_file_path}
             proc_stdin_arg = PIPE
         if batch_submit_cmd_tmpl:
+            # No need to catch OSError when using shell. It is unlikely that we
+            # do not have a shell, and still manage to get as far as here.
             batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
             proc = Popen(
                 batch_sys_cmd,
                 stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE, shell=True)
         elif hasattr(batch_sys, "submit"):
+            # batch_sys.submit should handle OSError, if relevant.
             proc = batch_sys.submit(job_file_path)
         else:
-            proc = Popen(
-                shlex.split(
-                    batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}),
-                stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
+            command = shlex.split(
+                batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
+            try:
+                proc = Popen(
+                    command, stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
+            except OSError as exc:
+                # subprocess.Popen has a bad habit of not setting the filename
+                # of the executable when it raises an OSError.
+                if not exc.filename:
+                    exc.filename = command[0]
+                raise
         out, err = proc.communicate(proc_stdin_value)
         ret_code = proc.wait()
 
