@@ -1309,6 +1309,11 @@ class config( object ):
             right_nodes = new_right_nodes
 
             # extract task names from lexpression
+            open_brac = re.findall(r"(\()", lexpression)
+            closed_brac = re.findall(r"(\))", lexpression)
+            if len(open_brac) != len(closed_brac):
+                raise SuiteConfigError, (
+                    "ERROR: missing bracket in: \"" + lexpression + "\"") 
             nstr = re.sub( '[(|&)]', ' ', lexpression )
             nstr = nstr.strip()
             left_nodes = re.split( ' +', nstr )
@@ -1485,7 +1490,7 @@ class config( object ):
         base_interval = seq.get_interval()
 
         conditional = False
-        if re.search( '\|', lexpression ):
+        if re.search( r"(\|)", lexpression ):
             conditional = True
             # For single triggers or '&'-only ones, which will be the
             # vast majority, we needn't use conditional prerequisites
