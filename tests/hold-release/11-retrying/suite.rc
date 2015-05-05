@@ -21,7 +21,7 @@ t-retry-able => t-analyse
         retry delays = PT15S, 2*PT1S
     [[t-hold-release]]
         script = """
-timeout 30s my-log-grepper '[t-retry-able.1] -job failed, retrying in PT15S'
+timeout 30s my-log-grepper '[t-retry-able.1] -job(01) failed, retrying in PT15S'
 cylc hold "${CYLC_SUITE_NAME}" 't-retry-able' '1'
 timeout 30s my-log-grepper '[t-retry-able.1] -retrying => held'
 cylc release "${CYLC_SUITE_NAME}" 't-retry-able' '1'
