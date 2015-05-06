@@ -226,8 +226,7 @@ class scheduler(object):
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
 
-        self.suite_state = StateSummaryServer(
-            self.config, self.run_mode, str(self.initial_point))
+        self.suite_state = StateSummaryServer(self.config, self.run_mode)
         self.pyro.connect(self.suite_state, PYRO_STATE_OBJ_NAME)
 
         self.old_user_at_host_set = set()

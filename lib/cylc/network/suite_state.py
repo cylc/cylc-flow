@@ -38,7 +38,7 @@ class SuiteStillInitialisingError(Exception):
 class StateSummaryServer(PyroServer):
     """Server-side suite state summary interface."""
 
-    def __init__(self, config, run_mode, start_time):
+    def __init__(self, config, run_mode):
         super(StateSummaryServer, self).__init__()
         self.task_summary = {}
         self.global_summary = {}
@@ -48,7 +48,6 @@ class StateSummaryServer(PyroServer):
         # remote control
         self.config = config
         self.run_mode = run_mode
-        self.start_time = start_time
         self.first_update_completed = False
         self._summary_update_time = None
 
@@ -113,7 +112,6 @@ class StateSummaryServer(PyroServer):
 
         all_states.sort()
 
-        global_summary['start time'] = self.str_or_None(self.start_time)
         global_summary['oldest cycle point string'] = (
             self.str_or_None(min_point))
         global_summary['newest cycle point string'] = (

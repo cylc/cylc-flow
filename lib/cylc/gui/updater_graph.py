@@ -315,16 +315,14 @@ class GraphUpdater(threading.Thread):
             oldest = self.oldest_point_string
             newest = self.newest_point_string
 
-        start_time = self.global_summary['start time']
-
         try:
             res = self.updater.suite_info_client.get_info_gui(
-                'graph raw', oldest, newest, self.group, self.ungroup,
+                'get_graph_raw', oldest, newest, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except TypeError:
             # Back compat with pre cylc-6 suite daemons.
             res = self.updater.suite_info_client.get(
-                'graph raw', oldest, newest, False, self.group, self.ungroup,
+                'get_graph_raw', oldest, newest, False, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except Exception as exc:  # PyroError?
             print >> sys.stderr, str(exc)
