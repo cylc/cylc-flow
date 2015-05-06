@@ -52,7 +52,7 @@ class PyroClientReporter(object):
         self.clients = {}
 
     def report(self, command, uuid, info, multi):
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         if multi:
             if uuid not in self.clients:
                 self.log.info(
@@ -62,7 +62,8 @@ class PyroClientReporter(object):
         if not multi or cylc.flags.debug:
             self.log.info(
                 self.__class__.LOG_TMPL % (
-                    'command %s' % command, info['name'], info['user_at_host'], uuid))
+                    'command %s' % command,
+                    info['name'], info['user_at_host'], uuid))
         self._housekeep()
 
     def signout(self, uuid, info):
@@ -79,7 +80,7 @@ class PyroClientReporter(object):
 
     def _housekeep(self):
         """Forget inactive clients."""
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         for uuid in self.clients.keys():
             info, dtime = self.clients[uuid]
             if (self._total_seconds(now - dtime) >
