@@ -164,18 +164,22 @@ class scheduler(object):
         self.parse_commandline()
 
     def configure( self ):
-        SuiteProcPool.get_inst()  # initialise the singleton
+        SuiteProcPool.get_inst()
 
+        # Get control and info commands.
         self.info_commands = {}
-        for attr in dir(self):
-            if attr.startswith('info_'):
-                self.info_commands[ attr.replace('info_', '')] = getattr(self, attr)
+        self.control_command_names = []
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            if not callable(attr):
+                continue
+            if attr_name.startswith('info_'):
+                self.info_commands[attr_name.replace('info_', '')] = attr
+            elif attr_name.startswith('command_'):
+                self.control_command_names.append(
+                    attr_name.replace('command_', ''))
 
-        self.control_commands = [
-                cmd.replace('command_', '') for
-                cmd in dir(self) if cmd.startswith('command_')]
-
-        # run dependency negotation etc. after these commands
+        # Run dependency negotation etc. after these commands.
         self.proc_cmds = [
             'release_suite',
             'release_task',
@@ -269,7 +273,7 @@ class scheduler(object):
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
 
-    def process_command_queue( self ):
+    def process_command_queue(self):
         queue = self.command_queue.get_queue()
         n = queue.qsize()
         if n > 0:
@@ -685,8 +689,7 @@ class scheduler(object):
             self.log = slog.get_log()
             self.logfile = slog.get_path()
 
-            self.command_queue = SuiteCommandServer(
-                self.control_commands)
+            self.command_queue = SuiteCommandServer(self.control_command_names)
             self.pyro.connect(self.command_queue, PYRO_CMD_OBJ_NAME)
 
             self.info_interface = SuiteInfoServer(self.info_commands)

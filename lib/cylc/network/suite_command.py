@@ -33,7 +33,7 @@ class SuiteCommandServer(PyroServer):
 
     def put(self, command, *command_args):
         if command not in self.legal:
-            return (False, 'ERROR: Illegal command: ' + str(command))
+            return (False, 'ERROR: Illegal command: %s' % command)
         else:
             self.queue.put((command, command_args))
             return (True, 'Command queued')
