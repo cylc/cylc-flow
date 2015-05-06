@@ -21,7 +21,7 @@ T_ST_FILE="$(dirname "$0")/../../t-submit-retry-able/NN/job.status"
 atrm "$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${T_ST_FILE}")"
 # Hold the suite
 cylc hold "${CYLC_SUITE_NAME}"
-timeout 15 my-log-grepper 'Command succeeded: hold suite now()'
+timeout 15 my-log-grepper 'Command succeeded: hold_suite'
 # Poll t-submit-retry-able, should return submit-fail
 cylc poll "${CYLC_SUITE_NAME}" 't-submit-retry-able' '1'
 # Allow t-retry-able to continue

@@ -56,7 +56,7 @@ if options.print_uuid:
 if runahead:
     prompt('Change runahead limit in %s to %s' % (suite, runahead),
            options.force)
-    pclient.put_command('set runahead', runahead)
+    pclient.put_command('set_runahead', runahead)
 else:
     # no limit!
     prompt('Change runahead limit in %s to NO LIMIT' % suite, options.force)
