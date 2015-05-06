@@ -65,6 +65,6 @@ prompt('Add new prerequisite to %s in %s' % (task_id, suite), options.force)
 pclient = SuiteCommandClient(
     suite, pphrase, options.owner, options.host, options.pyro_timeout,
     options.port)
-pclient.put_command('add prerequisite', task_id, msg)
+pclient.put_command('add_prerequisite', task_id, msg)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()

@@ -49,7 +49,7 @@ if options.print_uuid:
 
 if len(args) == 1:
     # Print suite info.
-    suite_info = pclient.get_info('suite info')
+    suite_info = pclient.get_info('get_suite_info')
     for key, value in sorted(suite_info.items(), reverse=True):
         print '%s: %s' % (key,value or "(not given)")
     sys.exit(0)
@@ -65,14 +65,14 @@ else:
     # Print task instance info.
     task_id = arg
 
-info = pclient.get_info('task info', name)
+info = pclient.get_info('get_task_info', name)
 if not info:
     sys.exit("ERROR: task not found: %s" % name)
 for key, value in sorted(info.items(), reverse=True):
     print "%s: %s" % (key, value or "(not given)")
 
 if point_string is not None:
-    result = pclient.get_info('task requisites', name, point_string)
+    result = pclient.get_info('get_task_requisites', name, point_string)
     if not result:
         sys.exit("ERROR: task instance not found: %s" % task_id)
 

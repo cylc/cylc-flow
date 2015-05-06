@@ -58,4 +58,4 @@ pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
                              options.pyro_timeout, options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-pclient.put_command('set verbosity', priority)
+pclient.put_command('set_verbosity', priority)

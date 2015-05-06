@@ -165,64 +165,29 @@ class scheduler(object):
 
     def configure( self ):
         SuiteProcPool.get_inst()  # initialise the singleton
-        # read-only commands to expose directly to the network
-        self.info_commands = {
-            'ping suite' : self.info_ping_suite,
-            'ping task' : self.info_ping_task,
-            'suite info' : self.info_get_suite_info,
-            'task info' : self.info_get_task_info,
-            'all families' : self.info_get_all_families,
-            'triggering families' : self.info_get_triggering_families,
-            'first-parent ancestors' : self.info_get_first_parent_ancestors,
-            'first-parent descendants' : self.info_get_first_parent_descendants,
-            'graph raw' : self.info_get_graph_raw,
-            'task requisites' : self.info_get_task_requisites,
-            'get cylc version' : self.info_get_cylc_version,
-            'task job file path' : self.info_get_task_jobfile_path
-        }
 
-        # control commands to expose indirectly via a command queue
-        self.control_commands = {
-            'stop cleanly' : self.command_set_stop_cleanly,
-            'stop now' : self.command_stop_now,
-            'stop after point' : self.command_set_stop_after_point,
-            'stop after clock time' : self.command_set_stop_after_clock_time,
-            'stop after task' : self.command_set_stop_after_task,
-            'release suite' : self.command_release_suite,
-            'release task' : self.command_release_task,
-            'remove cycle' : self.command_remove_cycle,
-            'remove task' : self.command_remove_task,
-            'hold suite now' : self.command_hold_suite,
-            'hold suite after' : self.command_hold_after_point_string,
-            'hold task now' : self.command_hold_task,
-            'set runahead' : self.command_set_runahead,
-            'set verbosity' : self.command_set_verbosity,
-            'purge tree' : self.command_purge_tree,
-            'reset task state' : self.command_reset_task_state,
-            'trigger task' : self.command_trigger_task,
-            'dry run task' : self.command_dry_run_task,
-            'nudge suite' : self.command_nudge,
-            'insert task' : self.command_insert_task,
-            'reload suite' : self.command_reload_suite,
-            'add prerequisite' : self.command_add_prerequisite,
-            'poll tasks' : self.command_poll_tasks,
-            'kill tasks' : self.command_kill_tasks,
-        }
+        self.info_commands = {}
+        for attr in dir(self):
+            if attr.startswith('info_'):
+                self.info_commands[ attr.replace('info_', '')] = getattr(self, attr)
+
+        self.control_commands = [
+                cmd.replace('command_', '') for
+                cmd in dir(self) if cmd.startswith('command_')]
 
         # run dependency negotation etc. after these commands
         self.proc_cmds = [
-            'release suite',
-            'release task',
-            'kill cycle',
-            'kill task',
-            'set runahead',
-            'purge tree',
-            'reset task state',
-            'trigger task',
-            'nudge suite',
-            'insert task',
-            'reload suite',
-            'prerequisite'
+            'release_suite',
+            'release_task',
+            'kill_tasks',
+            'set_runahead',
+            'purge_tree',
+            'reset_task_state',
+            'trigger_task',
+            'nudge',
+            'insert_task',
+            'reload_suite',
+            'add_prerequisite'
         ]
         self.configure_suite()
 
@@ -320,7 +285,7 @@ class scheduler(object):
             print '  +', name
             cmdstr = name + '(' + ','.join( [ str(a) for a in args ]) + ')'
             try:
-                self.control_commands[ name ]( *args )
+                getattr(self, "command_%s" % name)(*args)
             except SchedulerStop:
                 self.log.info( 'Command succeeded: ' + cmdstr )
                 raise
@@ -721,7 +686,7 @@ class scheduler(object):
             self.logfile = slog.get_path()
 
             self.command_queue = SuiteCommandServer(
-                self.control_commands.keys())
+                self.control_commands)
             self.pyro.connect(self.command_queue, PYRO_CMD_OBJ_NAME)
 
             self.info_interface = SuiteInfoServer(self.info_commands)

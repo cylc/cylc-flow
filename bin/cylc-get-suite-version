@@ -47,4 +47,4 @@ pclient = SuiteInfoClient(
     options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-print pclient.get_info('get cylc version')
+print pclient.get_info('get_cylc_version')

@@ -68,8 +68,8 @@ pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 if options.hold_point_string:
-    pclient.put_command('hold suite after', options.hold_point_string)
+    pclient.put_command('hold_after_point_string', options.hold_point_string)
 elif whole_suite:
-    pclient.put_command('hold suite now')
+    pclient.put_command('hold_suite')
 else:
-    pclient.put_command('hold task now', name, point_string, options.is_family)
+    pclient.put_command('hold_task', name, point_string, options.is_family)

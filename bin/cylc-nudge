@@ -48,4 +48,4 @@ pclient = SuiteCommandClient(
     options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-pclient.put_command('nudge suite')
+pclient.put_command('nudge')

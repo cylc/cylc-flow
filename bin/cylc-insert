@@ -67,5 +67,5 @@ pclient = SuiteCommandClient(
     options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-pclient.put_command('insert task', name, point_string, options.is_family,
+pclient.put_command('insert_task', name, point_string, options.is_family,
     stop_point_string)

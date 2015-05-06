@@ -93,7 +93,7 @@ if options.edit_run:
     info_client = SuiteInfoClient(
         suite, pphrase, options.owner, options.host, options.pyro_timeout,
         options.port, my_uuid)
-    success, msg = info_client.get_info('ping task', task_id, True)
+    success, msg = info_client.get_info('ping_task', task_id, True)
     if not success:
         sys.exit('ERROR: %s' % msg)
 
@@ -107,7 +107,7 @@ if options.edit_run:
         jobfile_mtime = None
 
     # Tell the suite daemon to generate the job file.
-    cmd_client.put_command('dry run task', name, point_string)
+    cmd_client.put_command('dry_run_task', name, point_string)
 
     # Wait for the new job file to be written.
     count = 0
@@ -157,4 +157,4 @@ if options.edit_run:
     os.unlink(jobfile_copy_path)
 
 # Trigger the task proxy(s).
-cmd_client.put_command('trigger task', name, point_string, options.is_family)
+cmd_client.put_command('trigger_task', name, point_string, options.is_family)

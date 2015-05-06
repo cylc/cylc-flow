@@ -175,7 +175,7 @@ class Updater(threading.Thread):
         self.suite_info_client.reset()
         self.suite_command_client.reset()
         try:
-            daemon_version = self.suite_info_client.get_info_gui('get cylc version')
+            daemon_version = self.suite_info_client.get_info_gui('get_cylc_version')
         except KeyError:
             daemon_version = "??? (pre 6.1.2?)"
             if cylc.flags.debug:
@@ -252,11 +252,11 @@ class Updater(threading.Thread):
 
     def retrieve_state_summaries(self):
         glbl, states, fam_states = self.state_summary_client.get_suite_state_summary()
-        self.ancestors = self.suite_info_client.get_info_gui('first-parent ancestors')
-        self.ancestors_pruned = self.suite_info_client.get_info_gui('first-parent ancestors', True)
-        self.descendants = self.suite_info_client.get_info_gui('first-parent descendants')
-        self.all_families = self.suite_info_client.get_info_gui('all families')
-        self.triggering_families = self.suite_info_client.get_info_gui('triggering families')
+        self.ancestors = self.suite_info_client.get_info_gui('get_first_parent_ancestors')
+        self.ancestors_pruned = self.suite_info_client.get_info_gui('get_first_parent_ancestors', True)
+        self.descendants = self.suite_info_client.get_info_gui('get_first_parent_descendants')
+        self.all_families = self.suite_info_client.get_info_gui('get_all_families')
+        self.triggering_families = self.suite_info_client.get_info_gui('get_triggering_families')
 
         if glbl['stopping']:
             self.status = 'stopping'

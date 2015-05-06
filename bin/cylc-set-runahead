@@ -60,4 +60,4 @@ if runahead:
 else:
     # no limit!
     prompt('Change runahead limit in %s to NO LIMIT' % suite, options.force)
-    pclient.put_command('set runahead')
+    pclient.put_command('set_runahead')

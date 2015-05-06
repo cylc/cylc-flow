@@ -58,7 +58,7 @@ if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 
 # cylc ping SUITE
-pclient.get_info('ping suite') # (no need to check the result)
+pclient.get_info('ping_suite') # (no need to check the result)
 if len(args) == 1:
     sys.exit(0)
 
@@ -66,6 +66,6 @@ if len(args) == 1:
 task_id = args[1]
 if not TaskID.is_valid_id(task_id):
     sys.exit("Invalid task ID: " + task_id)
-success, msg = pclient.get_info('ping task', task_id)
+success, msg = pclient.get_info('ping_task', task_id)
 if not success:
     sys.exit('ERROR: ' + msg)

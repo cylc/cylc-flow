@@ -65,8 +65,8 @@ if options.print_uuid:
 if remove_point:
     prompt('remove ALL tasks at %s in %s' % (point_string, suite),
            options.force)
-    pclient.put_command('remove cycle', point_string, spawn)
+    pclient.put_command('remove_cycle', point_string, spawn)
 else:
     prompt('remove task(s) %s at %s in %s' % (name, point_string, suite),
            options.force)
-    pclient.put_command('remove task', name, point_string, options.is_family, spawn)
+    pclient.put_command('remove_task', name, point_string, options.is_family, spawn)

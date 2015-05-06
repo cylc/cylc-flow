@@ -899,14 +899,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.reset(chosen)
 
     def pause_suite(self, bt):
-        self.put_pyro_command('hold suite now')
+        self.put_pyro_command('hold_suite')
 
     def resume_suite(self, bt):
-        self.put_pyro_command('release suite')
+        self.put_pyro_command('release_suite')
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
-        self.put_pyro_command('stop cleanly')
+        self.put_pyro_command('set_stop_cleanly')
 
     def stopsuite(self, bt, window, kill_rb, stop_rb, stopat_rb, stopct_rb,
                   stoptt_rb, stopnow_rb, stoppoint_entry, stopclock_entry,
@@ -971,17 +971,17 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         window.destroy()
         if stop:
-            self.put_pyro_command('stop cleanly', False)
+            self.put_pyro_command('set_stop_cleanly', False)
         elif stopkill:
-            self.put_pyro_command('stop cleanly', True)
+            self.put_pyro_command('set_stop_cleanly', True)
         elif stopat:
-            self.put_pyro_command('stop after point', stop_point_string)
+            self.put_pyro_command('set_stop_after_point', stop_point_string)
         elif stopnow:
-            self.put_pyro_command('stop now')
+            self.put_pyro_command('stop_now')
         elif stopclock:
-            self.put_pyro_command('stop after clock time', stopclock_time)
+            self.put_pyro_command('set_stop_after_clock_time', stopclock_time)
         elif stoptask:
-            self.put_pyro_command('stop after task', stoptask_id)
+            self.put_pyro_command('set_stop_after_task', stoptask_id)
 
     def load_point_strings(self, bt, startentry, stopentry):
         item1 = " -i '[scheduling]initial cycle point'"
@@ -1416,7 +1416,7 @@ The Cylc Suite Engine.
             else:
                 limit = ent
         window.destroy()
-        self.put_pyro_command('set runahead', limit)
+        self.put_pyro_command('set_runahead', limit)
 
     def add_prerequisite_popup(self, b, task_id):
         window = gtk.Window()
@@ -1484,7 +1484,7 @@ The Cylc Suite Engine.
             return
 
         window.destroy()
-        self.put_pyro_command('add prerequisite', task_id, msg)
+        self.put_pyro_command('add_prerequisite', task_id, msg)
 
     def update_tb(self, tb, line, tags=None):
         if tags:
@@ -1494,7 +1494,7 @@ The Cylc Suite Engine.
 
     def popup_requisites(self, w, e, task_id):
         name, point_string = TaskID.split(task_id)
-        result = self.get_pyro_info('task requisites', name, point_string)
+        result = self.get_pyro_info('get_task_requisites', name, point_string)
         if result:
             # (else no tasks were found at all -suite shutting down)
             if task_id not in result:
@@ -1619,10 +1619,10 @@ shown here in the state they were in at the time of triggering.''')
         name, point_string = TaskID.split(task_id)
 
         if stop:
-            self.put_pyro_command('hold task now', name, point_string,
+            self.put_pyro_command('hold_task', name, point_string,
                                   is_family)
         else:
-            self.put_pyro_command('release task', name, point_string,
+            self.put_pyro_command('release_task', name, point_string,
                                   is_family)
 
     def trigger_task_now(self, b, task_id, is_family=False):
@@ -1632,7 +1632,7 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('trigger task', name, point_string, is_family)
+        self.put_pyro_command('trigger_task', name, point_string, is_family)
 
     def trigger_task_edit_run(self, b, task_id):
         """
@@ -1652,14 +1652,14 @@ shown here in the state they were in at the time of triggering.''')
         if not self.get_confirmation(cmd, task_id):
             return
         name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('poll tasks', name, point_string, is_family)
+        self.put_pyro_command('poll_tasks', name, point_string, is_family)
 
     def kill_task(self, b, task_id, is_family=False):
         cmd = "kill"
         if not self.get_confirmation(cmd, task_id):
             return
         name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('kill tasks', name, point_string, is_family)
+        self.put_pyro_command('kill_tasks', name, point_string, is_family)
 
     def reset_task_state(self, b, e, task_id, state, is_family=False):
         if hasattr(e, "button") and e.button != 1:
@@ -1669,7 +1669,7 @@ shown here in the state they were in at the time of triggering.''')
         msg = "reset " + task_id + " to " + state + "?"
         if not self.get_confirmation(cmd, task_id, msg):
             return
-        self.put_pyro_command('reset task state', name, point_string, state,
+        self.put_pyro_command('reset_task_state', name, point_string, state,
                               is_family)
 
     def remove_task(self, b, task_id, is_family):
@@ -1679,7 +1679,7 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('remove task', name, point_string, is_family,
+        self.put_pyro_command('remove_task', name, point_string, is_family,
                               True)
 
     def remove_task_nospawn(self, b, task_id, is_family=False):
@@ -1689,18 +1689,18 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('remove task', name, point_string, is_family,
+        self.put_pyro_command('remove_task', name, point_string, is_family,
                               False)
 
     def purge_cycle_entry(self, e, w, task_id):
         stop = e.get_text()
         w.destroy()
-        self.put_pyro_command('purge tree', task_id, stop)
+        self.put_pyro_command('purge_tree', task_id, stop)
 
     def purge_cycle_button(self, b, e, w, task_id):
         stop = e.get_text()
         w.destroy()
-        self.put_pyro_command('purge tree', task_id, stop)
+        self.put_pyro_command('purge_tree', task_id, stop)
 
     def stopsuite_popup(self, b):
         window = gtk.Window()
@@ -2171,7 +2171,7 @@ shown here in the state they were in at the time of triggering.''')
         stop = None
         if stop_point_string != '':
             stop = stop_point_string
-        self.put_pyro_command('insert task', match, point_string, is_family,
+        self.put_pyro_command('insert_task', match, point_string, is_family,
                                stop)
 
     def poll_all(self, w):
@@ -2206,7 +2206,7 @@ or remove task definitions without restarting the suite."""
         foo.run()
 
     def nudge_suite(self, w):
-        self.put_pyro_command('nudge suite')
+        self.put_pyro_command('nudge')
 
     def popup_logview(self, task_id, logfiles, choice=None):
         """Display task job log files in a combo log viewer."""
@@ -2732,7 +2732,7 @@ to reduce network traffic.""")
         # Show suite title and description.
         if self.updater.connected:
             # Interrogate the suite daemon.
-            info = self.get_pyro_info('suite info')
+            info = self.get_pyro_info('get_suite_info')
             descr = '\n'.join("%s: %s" % (key, val) for key, val in info.items())
             info_dialog(descr, self.window).inform()
         else:
