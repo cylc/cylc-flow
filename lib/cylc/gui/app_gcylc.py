@@ -550,7 +550,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start(hbox, False)
 
         self.window.add(bigbox)
-        self.window.set_title('gcylc - %s' % self.cfg.my_uuid)
+        self.window.set_title('gcylc')
         self.window.show_all()
 
         self.setup_views()
@@ -563,7 +563,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         win_title = "%s %s" % ('gcylc', suite)
         if self.cfg.host != socket.getfqdn():
             win_title += " - %s" % self.cfg.host
-        win_title += " - %s" % self.cfg.my_uuid
         self.window.set_title(win_title)
 
         self.tool_bar_box.set_sensitive(True)
@@ -1090,10 +1089,7 @@ been defined for this suite""").inform()
         about.set_copyright("Copyright (C) 2008-2015 NIWA")
 
         about.set_comments(
-            """
-The Cylc Suite Engine.
-"""
-        )
+            "The Cylc Suite Engine.\n\nclient UUID:\n%s" % self.cfg.my_uuid)
         about.set_logo(get_logo())
         about.set_transient_for(self.window)
         about.run()
@@ -2373,6 +2369,15 @@ to reduce network traffic.""")
         thememenu = gtk.Menu()
         theme_item.set_submenu(thememenu)
 
+        self.view_menu.append(gtk.SeparatorMenuItem())
+        uuid_item = gtk.ImageMenuItem("Client _UUID")
+        img = gtk.image_new_from_stock(gtk.STOCK_INDEX,
+                                       gtk.ICON_SIZE_MENU)
+        uuid_item.set_image(img)
+        self._set_tooltip(
+            uuid_item, "View the client UUID for this gcylc instance")
+        self.view_menu.append(uuid_item)
+        uuid_item.connect('activate', self.popup_uuid_dialog)
         theme_items = {}
         theme = "default"
         theme_items[theme] = gtk.RadioMenuItem(label='_' + theme)
@@ -3175,6 +3180,12 @@ For more Stop options use the Control menu.""")
             self._alter_status_toolbar_menu,
             lambda: self.run_suite_log(None, type="err"))
         self._set_info_bar()
+
+    def popup_uuid_dialog(self, w):
+        info_dialog(
+            "Client UUID %s\n"
+            "(this identifies a client instance to the suite daemon)" % (
+                self.cfg.my_uuid), self.window).inform()
 
     def popup_theme_legend(self, widget=None):
         """Popup a theme legend window."""
