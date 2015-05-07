@@ -28,7 +28,6 @@ from collections import deque
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import shlex
 import traceback
-from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 from isodatetime.timezone import get_local_time_zone
 
 from cylc.task_state import task_state
@@ -68,7 +67,6 @@ from cylc.mp_pool import (
 )
 from cylc.task_id import TaskID
 from cylc.task_output_logs import logfiles
-from cylc.wallclock import get_time_string_from_unix_time
 
 
 class TaskProxySequenceBoundsError(ValueError):
@@ -669,8 +667,8 @@ class TaskProxy(object):
             self.sub_retry_delay = sub_retry_delay
             self.sub_retry_delay_timer_timeout = (
                 time.time() + sub_retry_delay)
-            timeout_str = str(get_timepoint_from_seconds_since_unix_epoch(
-                int(self.sub_retry_delay_timer_timeout)))
+            timeout_str = get_time_string_from_unix_time(
+                self.sub_retry_delay_timer_timeout)
 
             delay_msg = "submit-retrying in %s" % (
                 get_seconds_as_interval_string(sub_retry_delay))
@@ -774,8 +772,8 @@ class TaskProxy(object):
             # There is a retry lined up
             self.retry_delay = retry_delay
             self.retry_delay_timer_timeout = (time.time() + retry_delay)
-            timeout_str = str(get_timepoint_from_seconds_since_unix_epoch(
-                int(self.retry_delay_timer_timeout)))
+            timeout_str = get_time_string_from_unix_time(
+                self.retry_delay_timer_timeout)
 
             delay_msg = "retrying in %s" % (
                 get_seconds_as_interval_string(retry_delay))
