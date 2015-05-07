@@ -52,9 +52,8 @@ class StateSummaryServer(PyroServer):
         self._summary_update_time = None
 
     def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh, paused,
-            will_pause_at, stopping, will_stop_at, ns_defn_order):
+               will_pause_at, stopping, will_stop_at, ns_defn_order):
 
-        self.first_update_completed = True
         task_summary = {}
         global_summary = {}
         family_summary = {}
@@ -137,6 +136,7 @@ class StateSummaryServer(PyroServer):
         self.global_summary = global_summary
         self.family_summary = family_summary
         task_states = {}
+        self.first_update_completed = True
 
     def str_or_None(self, s):
         if s:
