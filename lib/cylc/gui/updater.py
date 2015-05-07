@@ -150,6 +150,10 @@ class Updater(threading.Thread):
         self.kept_task_ids = set()
         self.filt_task_ids = set()
 
+        self.pbar = None
+        self.pbar_window = None
+        self.pbar_time = None
+
         client_args = (
             self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host,
             self.cfg.pyro_timeout, self.cfg.port, self.cfg.my_uuid)
@@ -177,7 +181,8 @@ class Updater(threading.Thread):
         self.suite_info_client.reset()
         self.suite_command_client.reset()
         try:
-            daemon_version = self.suite_info_client.get_info_gui('get_cylc_version')
+            daemon_version = self.suite_info_client.get_info_gui(
+                'get_cylc_version')
         except KeyError:
             daemon_version = "??? (pre 6.1.2?)"
             if cylc.flags.debug:
@@ -318,6 +323,30 @@ class Updater(threading.Thread):
         warning_dialog(msg, self.info_bar.get_toplevel()).warn()
         return False
 
+    def pbar_pulse(self):
+        self.pbar.pulse()
+        return True
+
+    def pbar_popup(self, msg):
+        """Pop up a dialog with a progress bar; call on idle_add!"""
+        self.pbar_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.pbar_window.set_border_width(5)
+        self.pbar_window.set_size_request(300, 60)
+        vbox = gtk.VBox()
+        self.pbar_window.add(vbox)
+        label = gtk.Label(msg)
+        vbox.add(label)
+        self.pbar = gtk.ProgressBar()
+        vbox.add(self.pbar)
+        self.pbar_window.show_all()
+        self.pbar_timer = gobject.timeout_add(100, self.pbar_pulse)
+        return False
+
+    def pbar_destroy(self):
+        gobject.source_remove(self.pbar_timer)
+        self.pbar_window.destroy()
+        self.pbar_window = None
+
     def update(self):
         if cylc.flags.debug:
             print >> sys.stderr, "UPDATE", ctime().split()[3],
@@ -338,7 +367,7 @@ class Updater(threading.Thread):
             print >> sys.stderr, str(exc)
             if not self.suite_init_warned:
                 self.suite_init_warned = True
-                gobject.idle_add(self.warn, str(exc))
+                gobject.idle_add(self.pbar_popup, str(exc))
             self.set_stopped()
             gobject.idle_add(self.reconnect)
             return False
@@ -350,6 +379,8 @@ class Updater(threading.Thread):
             gobject.idle_add(self.reconnect)
             return False
         else:
+            if self.pbar_window:
+                self.pbar_window.destroy()
             self.suite_init_warned = False
             if summaries_changed or err_log_changed:
                 return True
