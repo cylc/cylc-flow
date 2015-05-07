@@ -192,6 +192,7 @@ class Updater(threading.Thread):
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # Not connected.
+            self.set_stopped()
             if not self.no_connection_warned:
                 gobject.idle_add(self.warn, str(exc))
                 self.no_connection_warned = True
@@ -314,7 +315,6 @@ class Updater(threading.Thread):
     def set_stopped(self):
         self.connected = False
         self.status = "stopped"
-        self.get_stop_summary()
         self._summary_update_time = None
         self.state_summary = {}
         self.full_state_summary = {}
@@ -323,6 +323,7 @@ class Updater(threading.Thread):
         self.poll_schd.start()
         self.info_bar.set_state([])
         self.info_bar.set_status(self.status)
+        self.get_stop_summary()
         self._flag_new_update()
 
     def warn(self, msg):
