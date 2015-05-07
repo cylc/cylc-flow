@@ -550,7 +550,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start(hbox, False)
 
         self.window.add(bigbox)
-        self.window.set_title('gcylc')
+        self.window.set_title('')
         self.window.show_all()
 
         self.setup_views()
@@ -560,7 +560,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def reset(self, suite):
         self.cfg.reset(suite)
 
-        win_title = "%s %s" % ('gcylc', suite)
+        win_title = suite
         if self.cfg.host != socket.getfqdn():
             win_title += " - %s" % self.cfg.host
         self.window.set_title(win_title)
