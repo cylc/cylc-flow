@@ -102,9 +102,6 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     self.pclient.get_suite_state_summary())
             except SuiteStillInitialisingError as exc:
                 print str(exc)
-            except PortFileError:
-                print >> sys.stderr, "Port file not found - suite not running?"
-                self.pclient.reset()
             except Exception as exc:
                 print >> sys.stderr, "\033[1;37;41mERROR%s" % (
                     task_state.ctrl_end), str(exc)

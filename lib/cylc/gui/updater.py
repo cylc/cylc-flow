@@ -194,7 +194,7 @@ class Updater(threading.Thread):
             # Not connected.
             self.set_stopped()
             if not self.no_connection_warned:
-                gobject.idle_add(self.warn, str(exc))
+                gobject.idle_add(self.warn, "(Re)connection failed:\n%s" % str(exc))
                 self.no_connection_warned = True
             if cylc.flags.debug:
                 print >> sys.stderr, "failed: %s" % str(exc)
@@ -381,7 +381,7 @@ class Updater(threading.Thread):
             return False
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
-            gobject.idle_add(self.warn, str(exc))
+            gobject.idle_add(self.warn, "Connection lost:\n%s" % str(exc))
             if cylc.flags.debug:
                 print >> sys.stderr, "  CONNECTION LOST", str(exc)
             self.set_stopped()
