@@ -62,9 +62,8 @@ if not TaskID.is_valid_id(task_id):
     sys.exit("Invalid task ID: " + task_id)
 
 prompt('Add new prerequisite to %s in %s' % (task_id, suite), options.force)
-pclient = SuiteCommandClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
 pclient.put_command('add_prerequisite', task_id, msg)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()

@@ -42,9 +42,8 @@ To find the version you've invoked at the command line see "cylc version".""",
 
 suite, pphrase = prep_pyro(args[0], options).execute()
 
-pclient = SuiteInfoClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
+pclient = SuiteInfoClient(suite, pphrase, options.owner, options.host,
+                          options.pyro_timeout, options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 print pclient.get_info('get_cylc_version')

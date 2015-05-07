@@ -51,9 +51,8 @@ if options.print_ports:
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-pclient = SuiteInfoClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
+pclient = SuiteInfoClient(suite, pphrase, options.owner, options.host,
+                          options.pyro_timeout, options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 

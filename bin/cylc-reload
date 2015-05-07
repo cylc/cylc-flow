@@ -58,9 +58,8 @@ be reported but no harm will be done to the running suite.""", pyro=True )
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
 prompt('Reload %s' % suite, options.force)
-pclient = SuiteCommandClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 pclient.put_command('reload_suite')

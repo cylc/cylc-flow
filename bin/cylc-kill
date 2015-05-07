@@ -45,9 +45,8 @@ name = args[1]
 point_string = args[2]
 
 prompt('Kill task %s at %s in %s' % (name, point_string, suite), options.force)
-pclient = SuiteCommandClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 pclient.put_command('kill_tasks', name, point_string, options.is_family)

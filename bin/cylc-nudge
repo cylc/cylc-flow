@@ -43,9 +43,8 @@ periods when nothing else is happening.""", pyro=True )
 (options, args) = parser.parse_args()
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
-pclient = SuiteCommandClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 pclient.put_command('nudge')

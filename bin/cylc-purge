@@ -75,9 +75,8 @@ name, start = TaskID.split(target)
 stop = stop_point_string
 
 prompt('Purge from %s to %s in %s' % (target, stop, suite), options.force)
-pclient = SuiteCommandClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
 if options.print_uuid:
     print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 pclient.put_command('purge_tree', target, stop)

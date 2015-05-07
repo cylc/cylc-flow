@@ -90,9 +90,8 @@ if options.print_uuid:
 if options.edit_run:
     # Check that TASK is a unique task.
     task_id = TaskID.get(name, point_string)
-    info_client = SuiteInfoClient(
-        suite, pphrase, options.owner, options.host, options.pyro_timeout,
-        options.port, my_uuid)
+    info_client = SuiteInfoClient(suite, pphrase, options.owner, options.host,
+                                  options.pyro_timeout, options.port, my_uuid)
     success, msg = info_client.get_info('ping_task', task_id, True)
     if not success:
         sys.exit('ERROR: %s' % msg)
