@@ -226,9 +226,6 @@ class scheduler(object):
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
 
-        self.suite_state = StateSummaryServer(self.config, self.run_mode)
-        self.pyro.connect(self.suite_state, PYRO_STATE_OBJ_NAME)
-
         self.old_user_at_host_set = set()
         self.load_tasks()
 
@@ -696,6 +693,9 @@ class scheduler(object):
 
             self.log_interface = SuiteLogServer(slog)
             self.pyro.connect(self.log_interface, PYRO_LOG_OBJ_NAME)
+
+            self.suite_state = StateSummaryServer(self.config, self.run_mode)
+            self.pyro.connect(self.suite_state, PYRO_STATE_OBJ_NAME)
 
             self.log.info( "port:" +  str( self.port ))
 

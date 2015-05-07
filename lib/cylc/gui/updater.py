@@ -27,7 +27,8 @@ from time import sleep, time, ctime
 
 import cylc.flags
 from cylc.dump import get_stop_state_summary
-from cylc.network.suite_state import StateSummaryClient
+from cylc.network.suite_state import (
+        StateSummaryClient, SuiteStillInitialisingError)
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
@@ -137,6 +138,7 @@ class Updater(threading.Thread):
         self.dt_date = None
         self.status = None
         self.connected = False
+        self.suite_init_warned = False
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
         self._flag_new_update()
@@ -169,7 +171,7 @@ class Updater(threading.Thread):
         """Try to reconnect to the suite daemon."""
         if cylc.flags.debug:
             print >> sys.stderr, "  reconnection...",
-        # Reset Pyro clients
+        # Reset Pyro clients.
         self.suite_log_client.reset()
         self.state_summary_client.reset()
         self.suite_info_client.reset()
@@ -195,12 +197,11 @@ class Updater(threading.Thread):
             print >> sys.stderr, (
                 "succeeded: daemon v %s" % daemon_version)
         if daemon_version != CYLC_VERSION:
-            warning_dialog(
+            gobject.idle_add(self.warn,
                 "Warning: cylc version mismatch!\n\n" +
                 "Suite running with %r.\n" % daemon_version +
-                "gcylc at %r.\n" % CYLC_VERSION,
-                self.info_bar.get_toplevel()
-            ).warn()
+                "gcylc at %r.\n" % CYLC_VERSION
+            )
         self.stop_summary = None
         self.err_log_lines = []
         self.err_log_size = 0
@@ -312,6 +313,11 @@ class Updater(threading.Thread):
         self.info_bar.set_status(self.status)
         self._flag_new_update()
 
+    def warn(self, msg):
+        """Pop up a warning dialog; call on idle_add!"""
+        warning_dialog(msg, self.info_bar.get_toplevel()).warn()
+        return False
+
     def update(self):
         if cylc.flags.debug:
             print >> sys.stderr, "UPDATE", ctime().split()[3],
@@ -328,6 +334,14 @@ class Updater(threading.Thread):
             summaries_changed = self.retrieve_summary_update_time()
             if summaries_changed:
                 self.retrieve_state_summaries()
+        except SuiteStillInitialisingError as exc:
+            print >> sys.stderr, str(exc)
+            if not self.suite_init_warned:
+                self.suite_init_warned = True
+                gobject.idle_add(self.warn, str(exc))
+            self.set_stopped()
+            gobject.idle_add(self.reconnect)
+            return False
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             if cylc.flags.debug:
@@ -336,6 +350,7 @@ class Updater(threading.Thread):
             gobject.idle_add(self.reconnect)
             return False
         else:
+            self.suite_init_warned = False
             if summaries_changed or err_log_changed:
                 return True
             else:
