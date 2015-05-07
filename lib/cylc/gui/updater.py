@@ -138,7 +138,6 @@ class Updater(threading.Thread):
         self.dt_date = None
         self.status = None
         self.connected = False
-        self.suite_init_warned = False
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
         self._flag_new_update()
@@ -149,6 +148,9 @@ class Updater(threading.Thread):
         self.filter_states_excl = []
         self.kept_task_ids = set()
         self.filt_task_ids = set()
+
+        self.suite_init_warned = False
+        self.no_connection_warned = False
 
         self.pbar = None
         self.pbar_window = None
@@ -190,6 +192,9 @@ class Updater(threading.Thread):
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # Not connected.
+            if not self.no_connection_warned:
+                gobject.idle_add(self.warn, str(exc))
+                self.no_connection_warned = True
             if cylc.flags.debug:
                 print >> sys.stderr, "failed: %s" % str(exc)
             return False
@@ -197,6 +202,8 @@ class Updater(threading.Thread):
         # Connected.
         self.status = "connected"
         self.connected = True
+        self.no_connection_warned = False
+
         self.poll_schd.stop()
         if cylc.flags.debug:
             print >> sys.stderr, (
@@ -373,6 +380,7 @@ class Updater(threading.Thread):
             return False
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
+            gobject.idle_add(self.warn, str(exc))
             if cylc.flags.debug:
                 print >> sys.stderr, "  CONNECTION LOST", str(exc)
             self.set_stopped()
