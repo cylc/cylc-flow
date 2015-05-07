@@ -20,7 +20,26 @@ import sys
 import cylc.flags
 from cylc.network.pyro_base import PyroClient, PyroServer
 
+
 PYRO_INFO_OBJ_NAME = 'suite-info'
+
+# Backward compatibility for suite daemons running at <= 6.4.0.
+# TODO - this should eventually be removed.
+back_compat = {
+    'ping_suite': 'ping suite',
+    'ping_task': 'ping task',
+    'get_suite_info': 'suite info',
+    'get_task_info': 'task info',
+    'get_all_families': 'all families',
+    'get_triggering_families': 'triggering families',
+    'get_first_parent_ancestors': 'first-parent ancestors',
+    'get_first_parent_descendants': 'first-parent descendants',
+    'get_graph_raw': 'graph raw',
+    'get_task_requisites': 'task requisites', 
+    'get_cylc_version': 'get cylc version', 
+    'get_task_jobfile_path': 'task job file path'
+}
+
 
 class SuiteInfoServer(PyroServer):
     """Server-side suite information interface."""
@@ -41,7 +60,11 @@ class SuiteInfoClient(PyroClient):
     def get_info_gui(self, command, *command_args):
         """GUI suite info interface."""
         self._report(command)
-        return self.pyro_proxy.get(command, *command_args)
+        try:
+            return self.pyro_proxy.get(command, *command_args)
+        except KeyError:
+            # Back compat.
+            return self.pyro_proxy.get(back_compat[command], *command_args)
 
     def get_info(self, command, *command_args):
         """CLI suite info interface."""
