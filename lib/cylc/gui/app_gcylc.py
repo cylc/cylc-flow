@@ -264,6 +264,9 @@ Class to create an information bar.
         eb.add(self.time_widget)
         hbox.pack_start(eb, False)
 
+        self.pbar = gtk.ProgressBar()
+        hbox.pack_start(self.pbar, False)
+
         eb = gtk.EventBox()
         eb.add(self.log_widget)
         hbox.pack_start(eb, False)
@@ -580,6 +583,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.updater.filter_name_string = self.filter_name_string
         self.updater.refilter()
         self.refresh_views()
+        if not self.updater.prog_bar_active():
+            self.info_bar.prog_bar.hide()
 
     def setup_views(self):
         """Create our view containers."""

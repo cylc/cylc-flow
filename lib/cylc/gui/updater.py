@@ -122,13 +122,9 @@ class Updater(threading.Thread):
         self._err_num_log_lines = 10
         self.err_log_size = 0
         self.task_list = []
-        self.state_summary = {}
-        self.full_state_summary = {}
-        self.fam_state_summary = {}
-        self.full_fam_state_summary = {}
-        self.all_families = {}
-        self.triggering_families = {}
-        self.global_summary = {}
+
+        self.clear_data()
+
         self.stop_summary = None
         self.ancestors = {}
         self.ancestors_pruned = {}
@@ -149,12 +145,8 @@ class Updater(threading.Thread):
         self.kept_task_ids = set()
         self.filt_task_ids = set()
 
-        self.suite_init_warned = False
-        self.no_connection_warned = False
-
-        self.pbar = None
-        self.pbar_window = None
-        self.pbar_time = None
+        self.connect_fail_warned = False
+        self.prog_bar_timer = None
 
         client_args = (
             self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host,
@@ -191,19 +183,25 @@ class Updater(threading.Thread):
                 print >> sys.stderr, "succeeded: (old daemon)"
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
-            # Not connected.
-            self.set_stopped()
-            if not self.no_connection_warned:
-                gobject.idle_add(self.warn, "(Re)connection failed:\n%s" % str(exc))
-                self.no_connection_warned = True
+            # Failed to (re)connect.
+            if not self.connect_fail_warned:
+                #gobject.idle_add(self.warn, "Failed to connect:\n%s" % str(exc))
+                gobject.idle_add(self.warn, str(exc))
+                self.connect_fail_warned = True
             if cylc.flags.debug:
                 print >> sys.stderr, "failed: %s" % str(exc)
+            if self.stop_summary is None:
+                self.stop_summary = get_stop_state_summary(
+                        self.cfg.suite, self.cfg.owner, self.cfg.host)
+                self._flag_new_update()
+            if self.stop_summary is not None and any(self.stop_summary):
+                self.info_bar.set_stop_summary(self.stop_summary)
             return False
 
         # Connected.
-        self.status = "connected"
         self.connected = True
-        self.no_connection_warned = False
+        self.set_status("connected")
+        self.connect_fail_warned = False
 
         self.poll_schd.stop()
         if cylc.flags.debug:
@@ -304,56 +302,61 @@ class Updater(threading.Thread):
         self.full_fam_state_summary = fam_states
         self.refilter()
 
-    def get_stop_summary(self):
-        # Get the suite stop summary.
-        if self.stop_summary is not None and any(self.stop_summary):
-            self.info_bar.set_stop_summary(self.stop_summary)
-        else:
-            self.stop_summary = get_stop_state_summary(
-                self.cfg.suite, self.cfg.owner, self.cfg.host)
-
     def set_stopped(self):
         self.connected = False
-        self.status = "stopped"
+        self.set_status("stopped")
+        self.poll_schd.start()
         self._summary_update_time = None
+        self.clear_data()
+
+    def set_status(self, status):
+        self.status = status
+        self.info_bar.set_status(self.status)
+
+    def clear_data(self):
         self.state_summary = {}
         self.full_state_summary = {}
         self.fam_state_summary = {}
         self.full_fam_state_summary = {}
-        self.poll_schd.start()
-        self.info_bar.set_state([])
-        self.info_bar.set_status(self.status)
-        self.get_stop_summary()
-        self._flag_new_update()
+        self.all_families = {}
+        self.triggering_families = {}
+        self.global_summary = {}
 
     def warn(self, msg):
         """Pop up a warning dialog; call on idle_add!"""
         warning_dialog(msg, self.info_bar.get_toplevel()).warn()
         return False
 
-    def pbar_pulse(self):
-        self.pbar.pulse()
+    def prog_bar_active(self):
+        return self.prog_bar_timer is not None
+
+    def prog_bar_pulse(self):
+        self.info_bar.prog_bar.pulse()
         return True
 
-    def pbar_popup(self, msg):
-        """Pop up a dialog with a progress bar; call on idle_add!"""
-        self.pbar_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.pbar_window.set_border_width(5)
-        self.pbar_window.set_size_request(300, 60)
-        vbox = gtk.VBox()
-        self.pbar_window.add(vbox)
-        label = gtk.Label(msg)
-        vbox.add(label)
-        self.pbar = gtk.ProgressBar()
-        vbox.add(self.pbar)
-        self.pbar_window.show_all()
-        self.pbar_timer = gobject.timeout_add(100, self.pbar_pulse)
+    def prog_bar_start(self, msg):
+        """Set progress bar running"""
+        if self.prog_bar_active():
+            # (Not for users - this shouldn't happen)
+            print >> sys.stderr, "WARNING: progress bar is already active!"
+        else:
+            self.prog_bar_timer = gobject.timeout_add(100, self.prog_bar_pulse)
+            self.info_bar.prog_bar.set_text(msg)
+            self.info_bar.prog_bar.show()
         return False
 
-    def pbar_destroy(self):
-        gobject.source_remove(self.pbar_timer)
-        self.pbar_window.destroy()
-        self.pbar_window = None
+    def prog_bar_stop(self):
+        """Stop progress bar running."""
+        if self.prog_bar_active():
+            gobject.source_remove(self.prog_bar_timer)
+            self.info_bar.prog_bar.set_fraction(0)
+            self.info_bar.prog_bar.set_text('')
+            self.prog_bar_timer = None
+            self.info_bar.prog_bar.hide()
+        else:
+            # (Not for users - this shouldn't happen)
+            print >> sys.stderr, "WARNING: progress bar is not active!"
+        return False
 
     def update(self):
         if cylc.flags.debug:
@@ -371,26 +374,32 @@ class Updater(threading.Thread):
             summaries_changed = self.retrieve_summary_update_time()
             if summaries_changed:
                 self.retrieve_state_summaries()
-        except SuiteStillInitialisingError as exc:
-            print >> sys.stderr, str(exc)
-            if not self.suite_init_warned:
-                self.suite_init_warned = True
-                gobject.idle_add(self.pbar_popup, str(exc))
-            self.set_stopped()
+        except SuiteStillInitialisingError:
+            # Connection achieved but state summary not available yet.
+            if cylc.flags.debug:
+                print >> sys.stderr, "  Connected, suite initializing ..."
+            if not self.prog_bar_active():
+                gobject.idle_add(self.prog_bar_start, "suite initialising...")
+                self.info_bar.set_state([])
             gobject.idle_add(self.reconnect)
             return False
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
-            gobject.idle_add(self.warn, "Connection lost:\n%s" % str(exc))
             if cylc.flags.debug:
                 print >> sys.stderr, "  CONNECTION LOST", str(exc)
             self.set_stopped()
+            if self.prog_bar_active():
+                gobject.idle_add(self.prog_bar_stop)
             gobject.idle_add(self.reconnect)
             return False
         else:
-            if self.pbar_window:
-                self.pbar_window.destroy()
-            self.suite_init_warned = False
+            # Got suite data.
+            if self.status == "stopping" and not self.prog_bar_active():
+                gobject.idle_add(self.prog_bar_start, "suite stopping...")
+
+            if (self.prog_bar_active() and
+                    self.status not in ["stopping", "initialising"]):
+                gobject.idle_add(self.prog_bar_stop)
             if summaries_changed or err_log_changed:
                 return True
             else:
