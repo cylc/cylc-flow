@@ -33,8 +33,8 @@ command, rather than by the usual triggering off other tasks.
 The ID argument should uniquely distinguish one external trigger event from the
 next. When a task's external trigger is satisfied by an incoming message, the
 message ID is broadcast to all downstream tasks in the cycle point as
-$EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file that
-the external triggering system is responding to.
+$CYLC_EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file
+that the external triggering system is responding to.
 
 The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
 

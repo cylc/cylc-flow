@@ -172,7 +172,7 @@ class Broker(Pyro.core.ObjBase):
                             [point_string],
                             [{
                                 'environment': {
-                                    'EXT_TRIGGER_ID': qid
+                                    'CYLC_EXT_TRIGGER_ID': qid
                                 }
                             }]
                         )

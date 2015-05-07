@@ -15,7 +15,6 @@
    pre-script = 
    post-script = 
    inherit = VAR, PARALLEL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -81,7 +80,6 @@
    pre-script = 
    post-script = 
    inherit = 
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -146,7 +144,6 @@
    pre-script = 
    post-script = 
    inherit = OPS, SERIAL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -212,7 +209,6 @@
    pre-script = 
    post-script = 
    inherit = OPS, SERIAL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -278,7 +274,6 @@
    pre-script = 
    post-script = 
    inherit = OPS, PARALLEL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -344,7 +339,6 @@
    pre-script = 
    post-script = 
    inherit = OPS, PARALLEL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -410,7 +404,6 @@
    pre-script = 
    post-script = 
    inherit = VAR, PARALLEL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -476,7 +469,6 @@
    pre-script = 
    post-script = 
    inherit = 
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -541,7 +533,6 @@
    pre-script = 
    post-script = 
    inherit = VAR, SERIAL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -607,7 +598,6 @@
    pre-script = 
    post-script = 
    inherit = 
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -673,7 +663,6 @@
    pre-script = 
    post-script = 
    inherit = 
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -738,7 +727,6 @@
    pre-script = 
    post-script = 
    inherit = 
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -804,7 +792,6 @@
    pre-script = 
    post-script = 
    inherit = VAR, SERIAL
-   [[[external triggers]]]
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 

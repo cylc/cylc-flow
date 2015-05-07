@@ -82,7 +82,7 @@ done"""
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        pre-command scripting = "DATASET=dataset-$EXT_TRIGGER_ID"
+        pre-command scripting = "DATASET=dataset-$CYLC_EXT_TRIGGER_ID"
         ##post-command scripting = sleep 5
 
     [[get_data]]
