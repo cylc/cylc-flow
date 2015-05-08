@@ -227,16 +227,20 @@ Class to create an information bar.
         self._set_tooltip(self.mode_widget, "mode")
 
         self._runahead = ""
-        self.runahead_widget = gtk.Label()
-        self._set_tooltip(self.runahead_widget, "runahead limit")
+        #self.runahead_widget = gtk.Label()
+        #self._set_tooltip(self.runahead_widget, "runahead limit")
 
         self._time = "time..."
         self.time_widget = gtk.Label()
         self._set_tooltip(self.time_widget, "last update time")
 
-        hbox = gtk.HBox()
-        self.pack_start(hbox, False, True)
+        hbox = gtk.HBox(spacing=0)
+        self.pack_start(hbox, False, False)
 
+        # Note: using box padding or spacing creates spurious spacing around
+        # the hidden widgets; instead we add spaces to text widgets labels.
+
+        # From the left.
         eb = gtk.EventBox()
         eb.add(self.status_widget)
         hbox.pack_start(eb, False)
@@ -246,30 +250,28 @@ Class to create an information bar.
         hbox.pack_start(eb, False)
 
         eb = gtk.EventBox()
-        hbox.pack_start(eb, True)
-
-        eb = gtk.EventBox()
-        eb.add(self.state_widget)
-        hbox.pack_start(eb, False)
-
-        eb = gtk.EventBox()
         eb.add(self.mode_widget)
         hbox.pack_start(eb, False)
 
+        self.prog_bar = gtk.ProgressBar()
+        hbox.pack_start(self.prog_bar, False, False)
+
+        # From the right.
         eb = gtk.EventBox()
-        eb.add(self.runahead_widget)
-        hbox.pack_start(eb, False)
+        eb.add(self.log_widget)
+        hbox.pack_end(eb, False)
 
         eb = gtk.EventBox()
         eb.add(self.time_widget)
-        hbox.pack_start(eb, False)
+        hbox.pack_end(eb, False)
 
-        self.pbar = gtk.ProgressBar()
-        hbox.pack_start(self.pbar, False)
+        #eb = gtk.EventBox()
+        #eb.add(self.runahead_widget)
+        #hbox.pack_end(eb, False)
 
         eb = gtk.EventBox()
-        eb.add(self.log_widget)
-        hbox.pack_start(eb, False)
+        eb.add(self.state_widget)
+        hbox.pack_end(eb, False)
 
     def set_theme(self, theme, dot_size):
         self.dots = DotMaker(theme, size=dot_size)
@@ -305,8 +307,7 @@ Class to create an information bar.
         if mode == self._mode:
             return False
         self._mode = mode
-        gobject.idle_add(self.mode_widget.set_markup,
-                         "  " + self._mode + "  ")
+        gobject.idle_add(self.mode_widget.set_markup, " %s " % self._mode)
 
     def set_runahead(self, runahead):
         """Set runahead limit."""
@@ -316,7 +317,7 @@ Class to create an information bar.
         text = "runahead:" + str(runahead) + "h  "
         if runahead is None:
             text = ""
-        gobject.idle_add(self.runahead_widget.set_text, text)
+        #gobject.idle_add(self.runahead_widget.set_text, text)
 
     def set_state(self, suite_states, is_suite_stopped=None):
         """Set state text."""
@@ -372,7 +373,7 @@ Class to create an information bar.
             ttip_text = "Current filtering (click to alter):\n%s" % (
                 ", ".join(self._filter_states_excl))
             hbox = gtk.HBox()
-            hbox.pack_start(gtk.Label("(filtered:"))
+            hbox.pack_start(gtk.Label(" (filtered:"))
             for state in self._filter_states_excl:
                 icon = self.dots.get_image(state, is_filtered=True)
                 icon.show()
@@ -381,7 +382,7 @@ Class to create an information bar.
                 label = gtk.Label(" %s" % self._filter_name_string)
                 hbox.pack_start(label)
                 ttip_text += ", %s" % self._filter_name_string
-            hbox.pack_start(gtk.Label(")"))
+            hbox.pack_start(gtk.Label(") "))
             ebox = gtk.EventBox()
             ebox.add(hbox)
             ebox.connect("button_press_event", self.filter_launcher)
@@ -395,7 +396,7 @@ Class to create an information bar.
             return False
         self._status = status
         gobject.idle_add(
-            self.status_widget.set_text, " " + self._status + "   ")
+            self.status_widget.set_text, " %s " % self._status)
         gobject.idle_add(self.notify_status_changed, self._status)
 
     def set_stop_summary(self, summary_maps):
@@ -429,7 +430,7 @@ Class to create an information bar.
             return False
         self._time = time
         time_for_display = time.strip().rsplit(".", 1)[0]
-        gobject.idle_add(self.time_widget.set_text, time_for_display + " ")
+        gobject.idle_add(self.time_widget.set_text, " %s " % time_for_display)
 
     def _set_tooltip(self, widget, text):
         tooltip = gtk.Tooltips()
@@ -559,6 +560,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.setup_views()
         if suite:
             self.reset(suite)
+
+        self.info_bar.prog_bar.hide()
 
     def reset(self, suite):
         self.cfg.reset(suite)
