@@ -222,10 +222,10 @@ else:
             should_hide=should_hide_gtk_window)
 
 window.widget.connect('clicked', on_url_clicked, window)
-window.get_graph()
 if options.filter_patterns:
     filter_patterns = set(options.filter_patterns)
-    window.filter_graph_nodes(options.filter_patterns)
+    window.set_filter_graph_patterns(options.filter_patterns)
+window.get_graph()
 
 if options.reference and options.output_filename is None:
     options.output_filename = "-"
