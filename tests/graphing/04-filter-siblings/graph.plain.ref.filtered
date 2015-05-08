@@ -1,0 +1,9 @@
+edge "artichoke.1" __remove_0__ dotted
+edge "azuki.1" __remove_0__ dotted
+edge __remove_0__ "carrot.1" dotted
+graph
+node "artichoke.1" "artichoke\n1" unfilled box black
+node "azuki.1" "azuki\n1" unfilled box black
+node "carrot.1" "carrot\n1" unfilled box black
+node __remove_0__ ✂ dashed box black
+stop

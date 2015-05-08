@@ -166,8 +166,34 @@ class CGraphPlain( pygraphviz.AGraph ):
             if node not in remove_node_groups:
                 # The node is its own group.
                 group_num += 1
-                groups[group_num] = set((node))
+                groups[group_num] = set([node])
                 remove_node_groups[node] = group_num
+
+        # Consolidate all groups with the same in/out edges.
+        group_edges = {}
+        for l_node, r_node in incoming_remove_edges:
+            r_group = remove_node_groups[r_node]
+            group_edges.setdefault(r_group, [set(), set()])
+            group_edges[r_group][0].add(l_node)
+
+        for l_node, r_node in outgoing_remove_edges:
+            l_group = remove_node_groups[l_node]
+            group_edges.setdefault(l_group, [set(), set()])
+            group_edges[l_group][1].add(r_node)
+
+        for group1 in sorted(group_edges):
+            if group1 not in group_edges:
+                continue
+            for group2 in sorted(group_edges):
+                if (group1 != group2 and
+                        group_edges[group1][0] == group_edges[group2][0] and
+                        group_edges[group1][1] == group_edges[group2][1]):
+                    # Both groups have the same incoming and outgoing edges.
+                    for node in groups[group2]:
+                        remove_node_groups[node] = group1
+                    groups[group1] = groups[group1].union(groups[group2])
+                    groups.pop(group2)
+                    group_edges.pop(group2)
 
         # Create a new node name for the group.
         names = set()

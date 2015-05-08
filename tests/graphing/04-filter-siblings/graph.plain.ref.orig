@@ -1,0 +1,17 @@
+edge "artichoke.1" "banana.1" solid
+edge "artichoke.1" "blackberry.1" solid
+edge "artichoke.1" "blueberry.1" solid
+edge "azuki.1" "banana.1" solid
+edge "azuki.1" "blackberry.1" solid
+edge "azuki.1" "blueberry.1" solid
+edge "banana.1" "carrot.1" solid
+edge "blackberry.1" "carrot.1" solid
+edge "blueberry.1" "carrot.1" solid
+graph
+node "artichoke.1" "artichoke\n1" unfilled box black
+node "azuki.1" "azuki\n1" unfilled box black
+node "banana.1" "banana\n1" unfilled box black
+node "blackberry.1" "blackberry\n1" unfilled box black
+node "blueberry.1" "blueberry\n1" unfilled box black
+node "carrot.1" "carrot\n1" unfilled box black
+stop
