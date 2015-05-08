@@ -22,8 +22,7 @@ pool, which does not participate in dependency matching and is not visible in
 the GUI. Tasks are then released to the task pool if not beyond the current
 runahead limit.
 
-check_auto_shutdown() and remove_spent_tasks() have to consider tasks in the
-runahead pool too.
+check_auto_shutdown() has to consider tasks in the runahead pool too.
 
 TODO - spawn-on-submit means a only one waiting instance of each task exists,
 in the pool, so if a new stop cycle is set we just need to check waiting pool
@@ -35,18 +34,19 @@ as such, on restart, into the runahead pool.
 """
 
 import sys
-from cylc.task_state import task_state
-from cylc.broker import broker
-import cylc.flags
+
 from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
 
+from cylc.task_state import task_state
+import cylc.flags
 import cylc.rundb
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
 from cylc.broadcast import Broadcast
+from cylc.task_outputs import TaskOutputs
 
 
 class TaskPool(object):
@@ -62,6 +62,7 @@ class TaskPool(object):
         self.reconfiguring = False
         self.db = db
         self.view_db = view_db
+        self.task_outputs = TaskOutputs.get_inst()
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_future_offset = None
@@ -90,8 +91,6 @@ class TaskPool(object):
 
         self.wireless = Broadcast(config.get_linearized_ancestors())
         self.pyro.connect(self.wireless, 'broadcast_receiver')
-
-        self.broker = broker()
 
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
@@ -389,12 +388,11 @@ class TaskPool(object):
         an initially unqueued task that is queue-limited.
         """
 
-        # 1) queue unqueued tasks that are ready to run or manually forced
+        # 1) Queue unqueued tasks that are ready to run or manually forced.
         for itask in self.get_tasks():
             if not itask.state.is_currently('queued'):
-                # only need to check that unqueued tasks are ready
+                # Only need to check that unqueued tasks are ready.
                 if itask.manual_trigger or itask.ready_to_run():
-                    # queue the task
                     itask.set_status('queued')
                     if itask.manual_trigger:
                         itask.reset_manual_trigger()
@@ -464,7 +462,7 @@ class TaskPool(object):
         self.release_runahead_tasks()
 
     def get_min_point(self):
-        """Return the minimum cycle point currently in the pool."""
+        """Return the minimum cycle point currently in the pool, or None."""
         cycles = self.pool.keys()
         minc = None
         if cycles:
@@ -562,7 +560,7 @@ class TaskPool(object):
                             itask.identity)
                 else:
                     self.log.info(
-                        'RELOADING TASK DEFINITION FOR ' + itask.identity)
+                        'Reloading task definition for ' + itask.identity)
                     new_task = self.config.get_task_proxy(
                         itask.tdef.name,
                         itask.point,
@@ -571,14 +569,18 @@ class TaskPool(object):
                         submit_num=itask.submit_num,
                         is_reload=True
                     )
+                    # Set new prerequisites.
+                    new_task.satisfy_me(force=True)
+
                     # set reloaded task's spawn status
                     if itask.state.has_spawned():
                         new_task.state.set_spawned()
                     else:
                         new_task.state.set_unspawned()
                     # succeeded tasks need their outputs set completed:
+                    # TODO - DO WE STILL NEED THIS?
                     if itask.state.is_currently('succeeded'):
-                        new_task.reset_state_succeeded(manual=False)
+                        new_task.reset_state_succeeded()
 
                     # carry some task proxy state over to the new instance
                     new_task.logfiles = itask.logfiles
@@ -701,21 +703,9 @@ class TaskPool(object):
         return False
 
     def match_dependencies(self):
-        """Run time dependency negotiation.
-
-        Tasks attempt to get their prerequisites satisfied by other tasks'
-        outputs. BROKERED NEGOTIATION is O(n) in number of tasks.
-
-        """
-
-        self.broker.reset()
-
-        self.broker.register(self.get_tasks())
-
+        """Match task prerequisites with outputs."""
         for itask in self.get_tasks():
-            # try to satisfy itask if not already satisfied.
-            if itask.not_fully_satisfied():
-                self.broker.negotiate(itask)
+            itask.satisfy_me()
 
     def process_queued_task_messages(self):
         """Handle incoming task messages for each task proxy."""
@@ -727,6 +717,7 @@ class TaskPool(object):
         state_recorders = []
         state_updaters = []
         event_recorders = []
+        output_ops = []
         other = []
 
         for itask in self.get_all_tasks():
@@ -741,9 +732,9 @@ class TaskPool(object):
                 else:
                     other += [oper]
 
-        # precedence is record states > update_states > record_events >
-        # anything_else
+        # precedence:
         db_ops = state_recorders + state_updaters + event_recorders + other
+
         # compact the set of operations
         if len(db_ops) > 1:
             db_opers = [db_ops[0]]
@@ -763,8 +754,14 @@ class TaskPool(object):
 
         # record any broadcast settings to be dumped out
         if self.wireless:
+            # TODO - this loops is unnecessary?:
             for db_oper in self.wireless.get_db_ops():
                 db_opers += [db_oper]
+
+        # And any ops on the task output table.
+        # (TODO - add this (and wireless?) to the bulk opers above?)
+        for db_oper in self.task_outputs.get_db_ops():
+            db_opers += [db_oper]
 
         for db_oper in db_opers:
             if self.db.c.is_alive():
@@ -821,54 +818,25 @@ class TaskPool(object):
                     self.force_spawn(itask)
                     self.remove(itask, 'suicide')
 
-    def _get_earliest_unsatisfied_point(self):
-        """Get earliest unsatisfied cycle point."""
-        cutoff = None
-        for itask in self.get_all_tasks():
-            # this has to consider tasks in the runahead pool too, e.g.
-            # ones that have just spawned and not been released yet.
-            if itask.state.is_currently('waiting', 'held'):
-                if cutoff is None or itask.point < cutoff:
-                    cutoff = itask.point
-            elif not itask.state.has_spawned():
-                # (e.g. 'ready')
-                nxt = itask.next_point()
-                if nxt is not None and (cutoff is None or nxt < cutoff):
-                    cutoff = nxt
-        return cutoff
-
     def remove_spent_tasks(self):
-        """Remove cycling tasks that are no longer needed.
-
-        Remove cycling tasks that are no longer needed to satisfy others'
-        prerequisites.  Each task proxy knows its "cleanup cutoff" from the
-        graph. For example:
-          graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
-        implies foo's cutoff is T+12: if foo has succeeded and spawned,
-        it can be removed if no unsatisfied task proxy exists with
-        T<=T+12. Note this only uses information about the cycle point of
-        downstream dependents - if we used specific IDs instead spent
-        tasks could be identified and removed even earlier).
-
-        """
-
-        # first find the cycle point of the earliest unsatisfied task
-        cutoff = self._get_earliest_unsatisfied_point()
-
-        if not cutoff:
-            return
-
-        # now check each succeeded task against the cutoff
+        """Remove succeeded tasks immediately."""
         spent = []
         for itask in self.get_tasks():
-            if not itask.state.is_currently('succeeded') or \
-                    not itask.state.has_spawned() or \
-                    itask.cleanup_cutoff is None:
-                continue
-            if cutoff > itask.cleanup_cutoff:
+            if (itask.state.is_currently('succeeded') and
+                    itask.state.has_spawned() and len(itask.db_queue) == 0):
                 spent.append(itask)
         for itask in spent:
             self.remove(itask)
+
+    def remove_spent_outputs(self):
+        """Remove task outputs no longer needed to satisfy prerequisites.
+        
+        Each task proxy knows its min trigger point from the graph, e.g. for:
+            graph = "foo[-PT6H] => bar\n foo[-PT12H] => baz"
+        task bar's min trigger point is <current point>-PT12H.
+        
+        """
+        # !!!!!! TODO !!!!!!
 
     def reset_task_states(self, ids, state):
         """Reset task states.
@@ -1057,108 +1025,3 @@ class TaskPool(object):
         if not found:
             self.log.warning('task state info request: task(s) not found')
         return info
-
-    def purge_tree(self, id_, stop):
-        """Remove an entire dependency tree.
-
-        Remove an entire dependency tree rooted on the target task,
-        through to the given stop time (inclusive). In general this
-        involves tasks that do not even exist yet within the pool.
-
-        Method: trigger the target task *virtually* (i.e. without
-        running the real task) by: setting it to the succeeded state,
-        setting all of its outputs completed, and forcing it to spawn.
-        (this is equivalent to instantaneous successful completion as
-        far as cylc is concerned). Then enter the normal dependency
-        negotation process to trace the downstream effects of this,
-        also triggering subsequent tasks virtually. Each time a task
-        triggers mark it as a dependency of the target task for later
-        deletion (but not immmediate deletion because other downstream
-        tasks may still trigger off its outputs).  Downstream tasks
-        (freshly spawned or not) are not triggered if they have passed
-        the stop time, and the process is stopped is soon as a
-        dependency negotation round results in no new tasks
-        triggering.
-
-        Finally, reset the prerequisites of all tasks spawned during
-        the purge to unsatisfied, since they may have been satisfied
-        by the purged tasks in the "virtual" dependency negotiations.
-
-        TODO - THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
-        ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
-        so we should explicitly record the tasks that get satisfied
-        during the purge.
-
-        Purge is an infrequently used power tool, so print
-        comprehensive information on what it does to stdout.
-
-        """
-
-        print
-        print "PURGE ALGORITHM RESULTS:"
-
-        die = []
-        spawn = []
-
-        print 'ROOT TASK:'
-        for itask in self.get_all_tasks():
-            # Find the target task
-            if itask.identity == id_:
-                # set it succeeded
-                print '  Setting', itask.identity, 'succeeded'
-                itask.reset_state_succeeded(manual=False)
-                # force it to spawn
-                print '  Spawning', itask.identity
-                spawned = self.force_spawn(itask)
-                if spawned:
-                    spawn.append(spawned)
-                # mark it for later removal
-                print '  Marking', itask.identity, 'for deletion'
-                die.append(itask)
-                break
-
-        print 'VIRTUAL TRIGGERING STOPPING AT', stop
-        # trace out the tree of dependent tasks
-        something_triggered = True
-        while something_triggered:
-            self.match_dependencies()
-            something_triggered = False
-            for itask in sorted(
-                    self.get_all_tasks(), key=lambda t: t.identity):
-                if itask.point > stop:
-                    continue
-                if itask.ready_to_run():
-                    something_triggered = True
-                    print '  Triggering', itask.identity
-                    itask.reset_state_succeeded(manual=False)
-                    print '  Spawning', itask.identity
-                    spawned = self.force_spawn(itask)
-                    if spawned:
-                        spawn.append(spawned)
-                    print '  Marking', itask.identity, 'for deletion'
-                    # remove these later (their outputs may still be needed)
-                    die.append(itask)
-                elif itask.suicide_prerequisites.count() > 0:
-                    if itask.suicide_prerequisites.all_satisfied():
-                        print (
-                            '  Spawning virtually activated suicide task ' +
-                            itask.identity)
-                        self.force_spawn(itask)
-                        # remove these now (not setting succeeded; outputs not
-                        # needed)
-                        print '  Suiciding', itask.identity, 'now'
-                        self.remove(itask, 'purge')
-            self.release_runahead_tasks()
-        # reset any prerequisites "virtually" satisfied during the purge
-        print 'RESETTING spawned tasks to unsatisified:'
-        for itask in spawn:
-            print '  ', itask.identity
-            itask.prerequisites.set_all_unsatisfied()
-
-        # finally, purge all tasks marked as depending on the target
-        print 'REMOVING PURGED TASKS:'
-        for itask in die:
-            print '  ', itask.identity
-            self.remove(itask, 'purge')
-
-        print 'PURGE DONE'

@@ -92,7 +92,6 @@ Begin task states
 force_restart.2013092306 : status=running, spawned=true
 force_restart.2013092312 : status=held, spawned=false
 output_states.2013092306 : status=waiting, spawned=false
-tidy.2013092300 : status=succeeded, spawned=true
 tidy.2013092306 : status=waiting, spawned=false
 waiting_task.2013092306 : status=waiting, spawned=false
 __STATE__

@@ -191,7 +191,6 @@ class scheduler(object):
                 'hold task now' : self.command_hold_task,
                 'set runahead' : self.command_set_runahead,
                 'set verbosity' : self.command_set_verbosity,
-                'purge tree' : self.command_purge_tree,
                 'reset task state' : self.command_reset_task_state,
                 'trigger task' : self.command_trigger_task,
                 'dry run task' : self.command_dry_run_task,
@@ -210,7 +209,6 @@ class scheduler(object):
             'kill cycle',
             'kill task',
             'set runahead',
-            'purge tree',
             'reset task state',
             'trigger task',
             'nudge suite',
@@ -892,8 +890,14 @@ class scheduler(object):
                     self.log.debug( "BEGIN TASK PROCESSING" )
                     main_loop_start_time = time.time()
 
-                self.pool.match_dependencies()
+                # Task outputs needed in db before initial dep matching.
+                try:
+                    self.pool.process_queued_db_ops()
+                except OSError as err:
+                    self.shutdown(str(err))
+                    raise
 
+                self.pool.match_dependencies()
                 ready_tasks = self.pool.submit_tasks()
                 if (ready_tasks and
                         self.config.cfg['cylc']['log resolved dependencies']):
@@ -902,6 +906,7 @@ class scheduler(object):
                 self.pool.spawn_tasks()
 
                 self.pool.remove_spent_tasks()
+                self.pool.remove_spent_outputs()
                 self.pool.remove_suiciding_tasks()
 
                 self.do_update_state_summary = True
@@ -1021,6 +1026,8 @@ class scheduler(object):
                 self.set_suite_timer()
 
         if self.pool.waiting_tasks_ready():
+            # TODO - this evaluates all task prerequisites. We should move to
+            # event-driven processing.
             process = True
 
         if self.run_mode == 'simulation' and self.pool.sim_time_check():
@@ -1242,9 +1249,6 @@ class scheduler(object):
 
     def command_add_prerequisite( self, task_id, message ):
         self.pool.add_prereq_to_task( task_id, message )
-
-    def command_purge_tree( self, id, stop ):
-        self.pool.purge_tree( id, get_point(stop) )
 
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config.cfg['scheduling']['special tasks']['include at start-up']

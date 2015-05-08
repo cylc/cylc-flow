@@ -112,7 +112,7 @@ Task triggers, used to generate prerequisite messages.
     def is_standard(self):
         return self.builtin is not None
 
-    def get(self, point):
+    def get_prereq(self, point):
         """Return a prerequisite string and the relevant point."""
         if self.message:
             # Message trigger

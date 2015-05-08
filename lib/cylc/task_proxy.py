@@ -37,6 +37,7 @@ from cylc.cycling.loader import get_interval_cls, get_point_relative
 from cylc.envvar import expandvars
 from cylc.owner import user
 from cylc.job_logs import CommandLogger
+from cylc.task_outputs import TaskOutputs
 import cylc.rundb
 import cylc.flags as flags
 from cylc.wallclock import (
@@ -104,6 +105,7 @@ class TaskProxy(object):
         self.tdef = tdef
         self.submit_num = submit_num
         self.validate_mode = validate_mode
+        self.task_outputs = TaskOutputs.get_inst()
 
         if is_startup:
             # adjust up to the first on-sequence cycle point
@@ -117,20 +119,16 @@ class TaskProxy(object):
                 # This task is out of sequence bounds
                 raise TaskProxySequenceBoundsError(self.tdef.name)
             self.point = min(adjusted)
-            self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
-                self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
         else:
             self.point = start_point
-            self.cleanup_cutoff = self.tdef.get_cleanup_cutoff_point(
-                self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
-        # prerequisites
         self.prerequisites = prerequisites(self.tdef.start_point)
         self.suicide_prerequisites = prerequisites(self.tdef.start_point)
         self._add_prerequisites(self.point)
         self.point_as_seconds = None
+
 
         self.logfiles = logfiles()
         for lfile in self.tdef.rtconfig['extra log files']:
@@ -240,70 +238,11 @@ class TaskProxy(object):
         # used by a particular task if the task's cycle point is a
         # valid member of sequenceX's sequence of cycle points.
 
-        # 1) non-conditional triggers
-        ppre = plain_prerequisites(self.identity, self.tdef.start_point)
-        spre = plain_prerequisites(self.identity, self.tdef.start_point)
+        # TODO - COMPUTATION OF self.tdef.max_future_prereq_offset WAS ONLY IN
+        # THE OLD NON-CONDITIONAL TRIGGERS.
 
-        if self.tdef.sequential:
-            # For tasks declared 'sequential' we automatically add a
-            # previous-instance inter-cycle trigger, and adjust the
-            # cleanup cutoff (determined by inter-cycle triggers)
-            # accordingly.
-            p_next = None
-            adjusted = []
-            for seq in self.tdef.sequences:
-                nxt = seq.get_next_point(self.point)
-                if nxt:
-                    # may be None if beyond the sequence bounds
-                    adjusted.append(nxt)
-            if adjusted:
-                p_next = min(adjusted)
-                if (self.cleanup_cutoff is not None and
-                        self.cleanup_cutoff < p_next):
-                    self.cleanup_cutoff = p_next
-
-            p_prev = None
-            adjusted = []
-            for seq in self.tdef.sequences:
-                prv = seq.get_nearest_prev_point(self.point)
-                if prv:
-                    # may be None if out of sequence bounds
-                    adjusted.append(prv)
-            if adjusted:
-                p_prev = max(adjusted)
-                ppre.add(TaskID.get(self.tdef.name, p_prev) + ' succeeded')
-
-        for sequence in self.tdef.triggers:
-            for trig in self.tdef.triggers[sequence]:
-                if not sequence.is_valid(self.point):
-                    # This trigger is not used in current cycle
-                    continue
-                if (trig.graph_offset_string is None or
-                        (get_point_relative(
-                            trig.graph_offset_string, point) >=
-                         self.tdef.start_point)):
-                    # i.c.t. can be None after a restart, if one
-                    # is not specified in the suite definition.
-
-                    message, prereq_point = trig.get(point)
-                    prereq_offset = prereq_point - point
-                    if (prereq_offset > get_interval_cls().get_null() and
-                            (self.tdef.max_future_prereq_offset is None or
-                             prereq_offset >
-                             self.tdef.max_future_prereq_offset)):
-                        self.tdef.max_future_prereq_offset = prereq_offset
-
-                    if trig.suicide:
-                        spre.add(message)
-                    else:
-                        ppre.add(message)
-
-        self.prerequisites.add_requisites(ppre)
-        self.suicide_prerequisites.add_requisites(spre)
-
-        # 2) conditional triggers
-        for sequence in self.tdef.cond_triggers.keys():
-            for ctrig, exp in self.tdef.cond_triggers[sequence]:
+        for sequence in self.tdef.triggers.keys():
+            for ctrig, exp in self.tdef.triggers[sequence]:
                 key = ctrig.keys()[0]
                 if not sequence.is_valid(self.point):
                     # This trigger is not valid for current cycle (see NOTE
@@ -319,9 +258,9 @@ class TaskProxy(object):
                                 trig.graph_offset_string, point) <
                             self.tdef.start_point
                         )
-                        cpre.add(trig.get(point)[0], label, is_less_than_start)
+                        cpre.add(trig.get_prereq(point)[0], label, is_less_than_start)
                     else:
-                        cpre.add(trig.get(point)[0], label)
+                        cpre.add(trig.get_prereq(point)[0], label)
                 cpre.set_condition(exp)
                 if ctrig[key].suicide:
                     self.suicide_prerequisites.add_requisites(cpre)
@@ -373,6 +312,20 @@ class TaskProxy(object):
             status=self.state.get_status()
         ))
 
+    def register_output(self, message):
+        if self.validate_mode:
+            # Don't touch the db during validation.
+            # TODO - move this to TaskOutputs class?
+            return
+        self.task_outputs.register(self.identity, message)
+
+    def unregister_output(self, message):
+        if self.validate_mode:
+            # Don't touch the db during validation.
+            # TODO - move this to TaskOutputs class?
+            return
+        self.task_outputs.unregister(self.identity, message)
+
     def get_db_ops(self):
         """Return the next DB operation from DB queue."""
         ops = self.db_queue
@@ -390,6 +343,13 @@ class TaskProxy(object):
             if now_time > self.sub_retry_delay_timer_timeout:
                 done = True
         return done
+
+    def satisfy_me(self, force=False):
+        if self.prerequisites.count() > 0:
+            if force or self.state.is_currently('waiting'):
+                self.prerequisites.satisfy_me()
+        if self.suicide_prerequisites.count() > 0:
+            self.suicide_prerequisites.satisfy_me()
 
     def ready_to_run(self):
         """Is this task ready to run?"""
@@ -451,17 +411,32 @@ class TaskProxy(object):
 
         """
         self.hold_on_retry = False
-        failed_msg = self.identity + " failed"
-        if self.outputs.exists(failed_msg):
-            self.outputs.remove(failed_msg)
-        failed_msg = self.identity + "submit-failed"
-        if self.outputs.exists(failed_msg):
-            self.outputs.remove(failed_msg)
+        msg = self.identity + " failed"
+        if self.outputs.exists(msg):
+            self.outputs.remove(msg)
+            self.unregister_output(msg)
+        msg = self.identity + " submit-failed"
+        if self.outputs.exists(msg):
+            self.outputs.remove(msg)
+            self.unregister_output(msg)
 
     def turn_off_timeouts(self):
         """Turn off submission and execution timeouts."""
         self.submission_timer_timeout = None
         self.execution_timer_timeout = None
+
+    def unset_outputs(self):
+        """Set all my outputs not completed."""
+        for msg in self.outputs.completed.keys():
+            self.unregister_output(msg)
+        self.outputs.set_all_incomplete()
+
+    def set_outputs(self):
+        """Set all my outputs completed."""
+        for msg in self.outputs.not_completed.keys():
+            self.register_output(msg)
+        self.outputs.set_all_completed()
+        flags.pflag = True
 
     def reset_state_ready(self):
         """Reset state to "ready"."""
@@ -470,7 +445,7 @@ class TaskProxy(object):
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.turn_off_timeouts()
-        self.outputs.set_all_incomplete()
+        self.unset_outputs()
 
     def reset_state_waiting(self):
         """Reset state to "waiting".
@@ -483,40 +458,37 @@ class TaskProxy(object):
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
         self.turn_off_timeouts()
-        self.outputs.set_all_incomplete()
+        self.unset_outputs()
 
-    def reset_state_succeeded(self, manual=True):
+    def reset_state_succeeded(self):
         """Reset state to succeeded.
 
         All prerequisites satisified and all outputs complete.
 
         """
         self.set_status('succeeded')
-        if manual:
-            self.record_db_event(event="reset to succeeded")
-        else:
-            # Artificially set to succeeded but not by the user. E.g. by
-            # the purge algorithm and when reloading task definitions.
-            self.record_db_event(event="set to succeeded")
+        self.record_db_event(event="reset to succeeded")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.turn_off_timeouts()
-        self.outputs.set_all_completed()
+        self.set_outputs()
 
     def reset_state_failed(self):
         """Reset state to "failed".
 
-        All prerequisites satisified and no outputs complete
+        All prerequisites satisified and no outputs complete.
 
         """
         self.set_status('failed')
         self.record_db_event(event="reset to failed")
         self.prerequisites.set_all_satisfied()
         self.hold_on_retry = False
-        self.outputs.set_all_incomplete()
+        self.unset_outputs()
         # set a new failed output just as if a failure message came in
         self.turn_off_timeouts()
-        self.outputs.add(self.identity + ' failed', completed=True)
+        msg = '%s failed' % self.identity
+        self.outputs.add(msg, completed=True)
+        self.register_output(msg)
 
     def reset_state_held(self):
         """Reset state to "held"."""
@@ -659,6 +631,7 @@ class TaskProxy(object):
             flags.pflag = True
             outp = self.identity + " submit-failed"  # hack: see github #476
             self.outputs.add(outp)
+            self.register_output(outp)
             self.outputs.set_completed(outp)
             self.set_status('submit-failed')
             self.handle_event('submission failed', 'job submission failed')
@@ -712,6 +685,7 @@ class TaskProxy(object):
         outp = self.identity + ' submitted'
         if not self.outputs.is_completed(outp):
             self.outputs.set_completed(outp)
+            self.register_output(outp)
             # Allow submitted tasks to spawn even if nothing else is happening.
             flags.pflag = True
 
@@ -765,6 +739,7 @@ class TaskProxy(object):
             msg = self.identity + ' failed'
             self.outputs.add(msg)
             self.outputs.set_completed(msg)
+            self.register_output(msg)
             self.set_status('failed')
             self.handle_event('failed', 'job failed')
 
@@ -1279,6 +1254,7 @@ class TaskProxy(object):
             if not self.outputs.is_completed(message):
                 flags.pflag = True
                 self.outputs.set_completed(message)
+                self.register_output(message)
                 self.record_db_event(event="output completed", message=content)
             elif content == 'started' and self.job_vacated:
                 self.job_vacated = False
@@ -1350,7 +1326,7 @@ class TaskProxy(object):
                 for key in self.outputs.not_completed:
                     msg += "\n" + key
                 self.log(INFO, msg)
-                self.outputs.set_all_completed()
+                self.set_outputs()
 
         elif (content == 'failed' and
                 self.state.is_currently(
@@ -1379,6 +1355,7 @@ class TaskProxy(object):
             outp = self.identity + ' submitted'
             if self.outputs.is_completed(outp):
                 self.outputs.remove(outp)
+                self.unregister_output(outp)
             self.submission_timer_timeout = None
             self.job_submission_failed()
 
@@ -1450,12 +1427,6 @@ class TaskProxy(object):
         """Return True if prerequisites are not fully satisfied."""
         return (not self.prerequisites.all_satisfied() or
                 not self.suicide_prerequisites.all_satisfied())
-
-    def satisfy_me(self, task_outputs):
-        """Attempt to to satify the prerequisites of this task proxy."""
-        self.prerequisites.satisfy_me(task_outputs)
-        if self.suicide_prerequisites.count() > 0:
-            self.suicide_prerequisites.satisfy_me(task_outputs)
 
     def next_point(self):
         """Return the next cycle point."""

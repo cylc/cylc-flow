@@ -131,6 +131,8 @@ class conditional_prerequisites(object):
         self.conditional_expression = expr
 
     def all_satisfied( self ):
+        # The conditional expression is evaluated here.
+        # TODO: JUST RETURN PREVIOUS RESULT UNLESS A PREREQ STATUS CHANGES.
         if self.conditional_expression == "()":
             return True
         else:
@@ -142,14 +144,6 @@ class conditional_prerequisites(object):
                     print >> sys.stderr, "(?could be unmatched parentheses in the graph string?)"
                 raise TriggerExpressionError, '"' + self.raw_conditional_expression + '"'
             return res
-
-    def satisfy_me( self, outputs ):
-        # Can any completed outputs satisfy any of my prequisites?
-        for label in self.satisfied:
-            for msg in outputs:
-                if self.messages[label] == msg:
-                    self.satisfied[ label ] = True
-                    self.satisfied_by[ label ] = outputs[msg] # owner_id
 
     def count( self ):
         # how many messages are stored
