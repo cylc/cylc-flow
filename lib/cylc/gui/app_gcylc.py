@@ -199,6 +199,7 @@ Class to create an information bar.
         self.filter_state_widget = gtk.HBox()
         self._set_tooltip(self.state_widget, "states")
         self._set_tooltip(self.filter_state_widget, "states filtered out")
+        self.prog_bar_timer = None
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
@@ -241,6 +242,13 @@ Class to create an information bar.
         # the hidden widgets; instead we add spaces to text widgets labels.
 
         # From the left.
+        vbox = gtk.VBox()
+        self.prog_bar = gtk.ProgressBar()
+        vbox.pack_end(self.prog_bar, False, True)
+        # Add some text to get full height.
+        self.prog_bar.set_text("...")
+        hbox.pack_start(vbox, False)
+
         eb = gtk.EventBox()
         eb.add(self.status_widget)
         hbox.pack_start(eb, False)
@@ -252,9 +260,6 @@ Class to create an information bar.
         eb = gtk.EventBox()
         eb.add(self.mode_widget)
         hbox.pack_start(eb, False)
-
-        self.prog_bar = gtk.ProgressBar()
-        hbox.pack_start(self.prog_bar, False, False)
 
         # From the right.
         eb = gtk.EventBox()
@@ -441,6 +446,42 @@ Class to create an information bar.
         self._log_widget_image.set_sensitive(False)
         self.log_launch_hook()
 
+    def prog_bar_active(self):
+        return self.prog_bar_timer is not None
+
+    def prog_bar_pulse(self):
+        self.prog_bar.pulse()
+        return True
+
+    def prog_bar_start(self, msg):
+        """Set progress bar running"""
+        if self.prog_bar_active():
+            # (Not for users - this shouldn't happen)
+            print >> sys.stderr, "WARNING: progress bar is already active!"
+        else:
+            self.prog_bar_timer = gobject.timeout_add(100, self.prog_bar_pulse)
+            self.prog_bar.set_text(msg)
+            self.prog_bar.show()
+        self.status_widget.hide()
+        self.prog_bar.show()
+        return False
+
+    def prog_bar_stop(self):
+        """Stop progress bar running."""
+        if self.prog_bar_active():
+            gobject.source_remove(self.prog_bar_timer)
+            self.prog_bar.set_fraction(0)
+            self.prog_bar.set_text('')
+            self.prog_bar_timer = None
+            self.prog_bar.hide()
+        else:
+            # (Not for users - this shouldn't happen)
+            print >> sys.stderr, "WARNING: progress bar is not active!"
+        self.prog_bar.hide()
+        self.status_widget.show()
+        return False
+
+
 
 class ControlApp(object):
     """
@@ -556,12 +597,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.window.add(bigbox)
         self.window.set_title('')
         self.window.show_all()
+        self.info_bar.prog_bar.hide()
 
         self.setup_views()
         if suite:
             self.reset(suite)
-
-        self.info_bar.prog_bar.hide()
 
     def reset(self, suite):
         self.cfg.reset(suite)
@@ -586,8 +626,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.updater.filter_name_string = self.filter_name_string
         self.updater.refilter()
         self.refresh_views()
-        if not self.updater.prog_bar_active():
-            self.info_bar.prog_bar.hide()
 
     def setup_views(self):
         """Create our view containers."""
@@ -631,7 +669,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         new_pane.pack2(self.view_containers[1], resize=True, shrink=True)
         new_pane.set_position(extent / 2)
         top_parent.pack_start(new_pane, expand=True, fill=True)
-        self.window.show_all()
+        self.window_show_all()
 
     def set_theme(self, item):
         """Change self.theme and then replace each view with itself"""
@@ -839,7 +877,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         for toolitem in reversed(new_toolitems):
             self.tool_bars[view_num].insert(toolitem, index + 1)
         self.current_view_toolitems[view_num] = new_toolitems
-        self.window.show_all()
+        self.window_show_all()
 
     def remove_view(self, view_num):
         """Remove a view instance."""
@@ -1405,6 +1443,11 @@ been defined for this suite""").inform()
 
         window.add(vbox)
         window.show_all()
+
+    def window_show_all(self):
+        self.window.show_all()
+        if not self.info_bar.prog_bar_active():
+            self.info_bar.prog_bar.hide()
 
     def change_runahead(self, w, entry, window):
         ent = entry.get_text()

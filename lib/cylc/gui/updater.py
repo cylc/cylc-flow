@@ -148,7 +148,6 @@ class Updater(threading.Thread):
 
         self.connect_fail_warned = False
         self.version_mismatch_warned = False
-        self.prog_bar_timer = None
 
         client_args = (
             self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host,
@@ -187,7 +186,6 @@ class Updater(threading.Thread):
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # Failed to (re)connect.
             if not self.connect_fail_warned:
-                #gobject.idle_add(self.warn, "Failed to connect:\n%s" % str(exc))
                 gobject.idle_add(self.warn, str(exc))
                 self.connect_fail_warned = True
             if cylc.flags.debug:
@@ -337,37 +335,6 @@ class Updater(threading.Thread):
         warning_dialog(msg, self.info_bar.get_toplevel()).warn()
         return False
 
-    def prog_bar_active(self):
-        return self.prog_bar_timer is not None
-
-    def prog_bar_pulse(self):
-        self.info_bar.prog_bar.pulse()
-        return True
-
-    def prog_bar_start(self, msg):
-        """Set progress bar running"""
-        if self.prog_bar_active():
-            # (Not for users - this shouldn't happen)
-            print >> sys.stderr, "WARNING: progress bar is already active!"
-        else:
-            self.prog_bar_timer = gobject.timeout_add(100, self.prog_bar_pulse)
-            self.info_bar.prog_bar.set_text(msg)
-            self.info_bar.prog_bar.show()
-        return False
-
-    def prog_bar_stop(self):
-        """Stop progress bar running."""
-        if self.prog_bar_active():
-            gobject.source_remove(self.prog_bar_timer)
-            self.info_bar.prog_bar.set_fraction(0)
-            self.info_bar.prog_bar.set_text('')
-            self.prog_bar_timer = None
-            self.info_bar.prog_bar.hide()
-        else:
-            # (Not for users - this shouldn't happen)
-            print >> sys.stderr, "WARNING: progress bar is not active!"
-        return False
-
     def update(self):
         if cylc.flags.debug:
             print >> sys.stderr, "UPDATE", ctime().split()[3],
@@ -388,16 +355,16 @@ class Updater(threading.Thread):
             # Connection achieved but state summary data not available yet.
             if cylc.flags.debug:
                 print >> sys.stderr, "  connected, suite initializing ..."
-            if not self.prog_bar_active():
-                gobject.idle_add(self.prog_bar_start, "suite initialising...")
+            if not self.info_bar.prog_bar_active():
+                gobject.idle_add(self.info_bar.prog_bar_start, "suite initialising...")
                 self.info_bar.set_state([])
             return False
         except (PortFileError, Pyro.errors.ProtocolError) as exc:
             if cylc.flags.debug:
                 print >> sys.stderr, "  CONNECTION LOST", str(exc)
             self.set_stopped()
-            if self.prog_bar_active():
-                gobject.idle_add(self.prog_bar_stop)
+            if self.info_bar.prog_bar_active():
+                gobject.idle_add(self.info_bar.prog_bar_stop)
             gobject.idle_add(self.reconnect)
             return False
         except Pyro.errors.NamingError as exc:
@@ -407,8 +374,8 @@ class Updater(threading.Thread):
                 if cylc.flags.debug:
                     print >> sys.stderr, (
                         "  daemon <= 6.4.0, suite initializing ...")
-                if not self.prog_bar_active():
-                    gobject.idle_add(self.prog_bar_start, "suite initialising...")
+                if not self.info_bar.prog_bar_active():
+                    gobject.idle_add(self.info_bar.prog_bar_start, "suite initialising...")
                     self.info_bar.set_state([])
                 # Reconnect till we get the suite state object.
                 gobject.idle_add(self.reconnect)
@@ -417,19 +384,19 @@ class Updater(threading.Thread):
                 if cylc.flags.debug:
                     print >> sys.stderr, "  CONNECTION LOST", str(exc)
                 self.set_stopped()
-                if self.prog_bar_active():
-                    gobject.idle_add(self.prog_bar_stop)
+                if self.info_bar.prog_bar_active():
+                    gobject.idle_add(self.info_bar.prog_bar_stop)
                 gobject.idle_add(self.reconnect)
                 return False
         else:
             # Got suite data.
             self.version_mismatch_warned = False
-            if self.status == "stopping" and not self.prog_bar_active():
-                gobject.idle_add(self.prog_bar_start, "suite stopping...")
+            if self.status == "stopping" and not self.info_bar.prog_bar_active():
+                gobject.idle_add(self.info_bar.prog_bar_start, "suite stopping...")
 
-            if (self.prog_bar_active() and
+            if (self.info_bar.prog_bar_active() and
                     self.status not in ["stopping", "initialising"]):
-                gobject.idle_add(self.prog_bar_stop)
+                gobject.idle_add(self.info_bar.prog_bar_stop)
             if summaries_changed or err_log_changed:
                 return True
             else:
