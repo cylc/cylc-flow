@@ -1,0 +1,6 @@
+2015-05-05T10:33:27+01 INFO - Run mode: live
+2015-05-05T10:33:27+01 INFO - Initial point: 1
+2015-05-05T10:33:27+01 INFO - Final point: 1
+2015-05-05T10:33:27+01 INFO - Cold Start 1
+2015-05-05T10:33:27+01 INFO - [t1.1] -triggered off []
+2015-05-05T10:33:28+01 INFO - [t2.1] -triggered off ['t1.1']

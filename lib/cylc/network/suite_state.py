@@ -206,15 +206,18 @@ def get_id_summary(id_, task_state_summary, fam_state_summary, id_family_map):
         if this_id in done_ids:  # family dive down will give duplicates
             continue
         done_ids.append(this_id)
-        prefix = "\n" + " " * 4 * depth + this_id + " "
+        prefix = "\n" + " " * 4 * depth + this_id
         if this_id in task_state_summary:
+            submit_num = task_state_summary[this_id].get('submit_num')
+            if submit_num:
+                prefix += "(%02d)" % submit_num
             state = task_state_summary[this_id]['state']
-            sub_text += prefix + state
+            sub_text += prefix + " " + state
             sub_states.setdefault(state, 0)
             sub_states[state] += 1
         elif this_id in fam_state_summary:
             name, point_string = TaskID.split(this_id)
-            sub_text += prefix + fam_state_summary[this_id]['state']
+            sub_text += prefix + " " + fam_state_summary[this_id]['state']
             for child in reversed(sorted(id_family_map[name])):
                 child_id = TaskID.get(child, point_string)
                 stack.insert(0, (child_id, depth + 1))
