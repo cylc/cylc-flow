@@ -124,6 +124,7 @@ class Updater(threading.Thread):
         self.task_list = []
 
         self.clear_data()
+        self.daemon_version = None
 
         self.stop_summary = None
         self.ancestors = {}
@@ -146,6 +147,7 @@ class Updater(threading.Thread):
         self.filt_task_ids = set()
 
         self.connect_fail_warned = False
+        self.version_mismatch_warned = False
         self.prog_bar_timer = None
 
         client_args = (
@@ -175,12 +177,12 @@ class Updater(threading.Thread):
         self.suite_info_client.reset()
         self.suite_command_client.reset()
         try:
-            daemon_version = self.suite_info_client.get_info_gui(
+            self.daemon_version = self.suite_info_client.get_info_gui(
                 'get_cylc_version')
         except KeyError:
-            daemon_version = "??? (pre 6.1.2?)"
+            self.daemon_version = "??? (pre 6.1.2?)"
             if cylc.flags.debug:
-                print >> sys.stderr, "succeeded: (old daemon)"
+                print >> sys.stderr, "succeeded (old daemon)"
         except (PortFileError,
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # Failed to (re)connect.
@@ -197,6 +199,9 @@ class Updater(threading.Thread):
             if self.stop_summary is not None and any(self.stop_summary):
                 self.info_bar.set_stop_summary(self.stop_summary)
             return False
+        else:
+            if cylc.flags.debug:
+                print >> sys.stderr, "succeeded"
 
         # Connected.
         self.connected = True
@@ -206,13 +211,18 @@ class Updater(threading.Thread):
         self.poll_schd.stop()
         if cylc.flags.debug:
             print >> sys.stderr, (
-                "succeeded: daemon v %s" % daemon_version)
-        if daemon_version != CYLC_VERSION:
+                "succeeded: daemon v %s" % self.daemon_version)
+        if (self.daemon_version != CYLC_VERSION and
+                not self.version_mismatch_warned):
+            # (warn only once - reconnect() will be called multiple times
+            # during initialisation of daemons at <= 6.4.0 (for which the state
+            # summary object is not connected until all tasks are loaded).
             gobject.idle_add(self.warn,
                 "Warning: cylc version mismatch!\n\n" +
-                "Suite running with %r.\n" % daemon_version +
+                "Suite running with %r.\n" % self.daemon_version +
                 "gcylc at %r.\n" % CYLC_VERSION
             )
+            self.version_mismatch_warned = True
         self.stop_summary = None
         self.err_log_lines = []
         self.err_log_size = 0
@@ -375,16 +385,14 @@ class Updater(threading.Thread):
             if summaries_changed:
                 self.retrieve_state_summaries()
         except SuiteStillInitialisingError:
-            # Connection achieved but state summary not available yet.
+            # Connection achieved but state summary data not available yet.
             if cylc.flags.debug:
-                print >> sys.stderr, "  Connected, suite initializing ..."
+                print >> sys.stderr, "  connected, suite initializing ..."
             if not self.prog_bar_active():
                 gobject.idle_add(self.prog_bar_start, "suite initialising...")
                 self.info_bar.set_state([])
-            gobject.idle_add(self.reconnect)
             return False
-        except (PortFileError,
-                Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
+        except (PortFileError, Pyro.errors.ProtocolError) as exc:
             if cylc.flags.debug:
                 print >> sys.stderr, "  CONNECTION LOST", str(exc)
             self.set_stopped()
@@ -392,8 +400,30 @@ class Updater(threading.Thread):
                 gobject.idle_add(self.prog_bar_stop)
             gobject.idle_add(self.reconnect)
             return False
+        except Pyro.errors.NamingError as exc:
+            if self.daemon_version is not None:
+                # Back compat <= 6.4.0 the state summary object was not
+                # connected to Pyro until initialisation was completed.
+                if cylc.flags.debug:
+                    print >> sys.stderr, (
+                        "  daemon <= 6.4.0, suite initializing ...")
+                if not self.prog_bar_active():
+                    gobject.idle_add(self.prog_bar_start, "suite initialising...")
+                    self.info_bar.set_state([])
+                # Reconnect till we get the suite state object.
+                gobject.idle_add(self.reconnect)
+                return False
+            else:
+                if cylc.flags.debug:
+                    print >> sys.stderr, "  CONNECTION LOST", str(exc)
+                self.set_stopped()
+                if self.prog_bar_active():
+                    gobject.idle_add(self.prog_bar_stop)
+                gobject.idle_add(self.reconnect)
+                return False
         else:
             # Got suite data.
+            self.version_mismatch_warned = False
             if self.status == "stopping" and not self.prog_bar_active():
                 gobject.idle_add(self.prog_bar_start, "suite stopping...")
 
