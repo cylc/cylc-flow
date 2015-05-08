@@ -1309,8 +1309,8 @@ class config( object ):
             right_nodes = new_right_nodes
 
             # extract task names from lexpression
-            n_open_brackets = len(re.findall(r"(\()", lexpression))
-            n_close_brackets = len(re.findall(r"(\))", lexpression))
+            n_open_brackets = lexpression.count("(")
+            n_close_brackets = lexpression.count(")")
             if n_open_brackets != n_close_brackets:
                 raise SuiteConfigError, (
                     "ERROR: missing bracket in: \"" + lexpression + "\"") 
