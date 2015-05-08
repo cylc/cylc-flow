@@ -23,7 +23,7 @@ from cylc.network.pyro_base import PyroClient, PyroServer
 
 
 PYRO_CMD_OBJ_NAME = 'command-interface'
-ILLEGAL_CMD_MSG = 'ERROR: Illegal command'
+ILLEGAL_CMD_MSG = 'ERROR: Illegal command:'
 
 # Backward compatibility for suite daemons running at <= 6.4.0.
 # TODO - this should eventually be removed.
@@ -84,16 +84,18 @@ class SuiteCommandClient(PyroClient):
     def put_command_gui(self, command, *command_args):
         """GUI suite command interface."""
         self._report(command)
-        return self.pyro_proxy.put(command, *command_args)
+        success, msg = self.pyro_proxy.put(command, *command_args)
+        if msg.startswith(ILLEGAL_CMD_MSG):
+            # Back compat.
+            success, msg = self.put_command_gui(
+                back_compat[command], *command_args)
+        return success, msg
+
 
     def put_command(self, command, *command_args):
         """CLI suite command interface."""
         try:
             success, msg = self.put_command_gui(command, *command_args)
-            if msg.startswith(ILLEGAL_CMD_MSG):
-                # Back compat.
-                success, msg = self.put_command_gui(
-                    back_compat[command], *command_args)
         except Exception as exc:
             if cylc.flags.debug:
                 raise
