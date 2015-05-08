@@ -77,6 +77,7 @@ class SuiteStateDumper(object):
         max_attempts = 5
         n_attempt = 1
         while True:
+            handle = None
             try:
                 handle = open(file_name, "wb")
 
@@ -115,11 +116,12 @@ class SuiteStateDumper(object):
                 if n_attempt >= max_attempts:
                     raise exc
                 n_attempt += 1
-                try:
-                    handle.close()
-                except (IOError, OSError) as exc:
-                    self.log.warning(
-                        'State file handle closing failed: %s' % exc)
+                if handle is not None:
+                    try:
+                        handle.close()
+                    except (IOError, OSError) as exc:
+                        self.log.warning(
+                            'State file handle closing failed: %s' % exc)
                 time.sleep(0.2)
             else:
                 break
