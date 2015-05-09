@@ -200,6 +200,7 @@ Class to create an information bar.
         self._set_tooltip(self.state_widget, "states")
         self._set_tooltip(self.filter_state_widget, "states filtered out")
         self.prog_bar_timer = None
+        self.prog_bar_disabled = False
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
@@ -247,7 +248,12 @@ Class to create an information bar.
         vbox.pack_end(self.prog_bar, False, True)
         # Add some text to get full height.
         self.prog_bar.set_text("...")
-        hbox.pack_start(vbox, False)
+        eb = gtk.EventBox()
+        eb.add(vbox)
+        eb.connect('button-press-event', self.prog_bar_disable)
+        hbox.pack_start(eb, False)
+
+        self._set_tooltip(self.prog_bar, "Progress bar (click to remove)")
 
         eb = gtk.EventBox()
         eb.add(self.status_widget)
@@ -455,6 +461,8 @@ Class to create an information bar.
 
     def prog_bar_start(self, msg):
         """Set progress bar running"""
+        if self.prog_bar_disabled:
+            return False
         if self.prog_bar_active():
             # (Not for users - this shouldn't happen)
             print >> sys.stderr, "WARNING: progress bar is already active!"
@@ -481,6 +489,13 @@ Class to create an information bar.
         self.status_widget.show()
         return False
 
+    def prog_bar_disable(self, w=None, e=None):
+        """Disable the progress bar for the life of this gcylc instance.
+       
+        (Why? Some users may find it annoying.)
+        """
+        self.prog_bar_stop()
+        self.prog_bar_disabled = True
 
 
 class ControlApp(object):

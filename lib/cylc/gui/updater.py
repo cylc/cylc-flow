@@ -356,7 +356,9 @@ class Updater(threading.Thread):
             if cylc.flags.debug:
                 print >> sys.stderr, "  connected, suite initializing ..."
             if not self.info_bar.prog_bar_active():
-                gobject.idle_add(self.info_bar.prog_bar_start, "suite initialising...")
+                gobject.idle_add(
+                    self.info_bar.prog_bar_start, "suite initialising...")
+                self.set_status("initialising")
                 self.info_bar.set_state([])
             return False
         except (PortFileError, Pyro.errors.ProtocolError) as exc:
@@ -375,7 +377,8 @@ class Updater(threading.Thread):
                     print >> sys.stderr, (
                         "  daemon <= 6.4.0, suite initializing ...")
                 if not self.info_bar.prog_bar_active():
-                    gobject.idle_add(self.info_bar.prog_bar_start, "suite initialising...")
+                    gobject.idle_add(
+                        self.info_bar.prog_bar_start, "suite initialising...")
                     self.info_bar.set_state([])
                 # Reconnect till we get the suite state object.
                 gobject.idle_add(self.reconnect)
@@ -391,9 +394,10 @@ class Updater(threading.Thread):
         else:
             # Got suite data.
             self.version_mismatch_warned = False
-            if self.status == "stopping" and not self.info_bar.prog_bar_active():
-                gobject.idle_add(self.info_bar.prog_bar_start, "suite stopping...")
-
+            if (self.status == "stopping" and
+                    not self.info_bar.prog_bar_active()):
+                gobject.idle_add(
+                    self.info_bar.prog_bar_start, "suite stopping...")
             if (self.info_bar.prog_bar_active() and
                     self.status not in ["stopping", "initialising"]):
                 gobject.idle_add(self.info_bar.prog_bar_stop)
