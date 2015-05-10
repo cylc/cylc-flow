@@ -253,8 +253,6 @@ Class to create an information bar.
         eb.connect('button-press-event', self.prog_bar_disable)
         hbox.pack_start(eb, False)
 
-        self._set_tooltip(self.prog_bar, "Progress bar (click to remove)")
-
         eb = gtk.EventBox()
         eb.add(self.status_widget)
         hbox.pack_start(eb, False)
@@ -452,50 +450,43 @@ Class to create an information bar.
         self._log_widget_image.set_sensitive(False)
         self.log_launch_hook()
 
-    def prog_bar_active(self):
-        return self.prog_bar_timer is not None
+    def prog_bar_start(self, msg):
+        """Start the progress bar running"""
+        self.prog_bar_timer = gobject.timeout_add(100, self.prog_bar_pulse)
+        self.prog_bar.set_text(msg)
+        self.prog_bar.show()
+        self.status_widget.hide()
+        self.prog_bar.show()
+        self._set_tooltip(
+            self.prog_bar,
+            "%s\n(click to remove the progress bar)." % msg)
+        return False
 
     def prog_bar_pulse(self):
         self.prog_bar.pulse()
         return True
 
-    def prog_bar_start(self, msg):
-        """Set progress bar running"""
-        if self.prog_bar_disabled:
-            return False
-        if self.prog_bar_active():
-            # (Not for users - this shouldn't happen)
-            print >> sys.stderr, "WARNING: progress bar is already active!"
-        else:
-            self.prog_bar_timer = gobject.timeout_add(100, self.prog_bar_pulse)
-            self.prog_bar.set_text(msg)
-            self.prog_bar.show()
-        self.status_widget.hide()
-        self.prog_bar.show()
-        return False
-
     def prog_bar_stop(self):
-        """Stop progress bar running."""
-        if self.prog_bar_active():
-            gobject.source_remove(self.prog_bar_timer)
-            self.prog_bar.set_fraction(0)
-            self.prog_bar.set_text('')
-            self.prog_bar_timer = None
-            self.prog_bar.hide()
-        else:
-            # (Not for users - this shouldn't happen)
-            print >> sys.stderr, "WARNING: progress bar is not active!"
+        """Stop the progress bar running."""
+        gobject.source_remove(self.prog_bar_timer)
+        self.prog_bar.set_fraction(0)
+        self.prog_bar.set_text('')
+        self.prog_bar_timer = None
         self.prog_bar.hide()
         self.status_widget.show()
         return False
 
     def prog_bar_disable(self, w=None, e=None):
-        """Disable the progress bar for the life of this gcylc instance.
-       
-        (Why? Some users may find it annoying.)
-        """
+        """Disable the progress bar (users may find it annoying)"""
         self.prog_bar_stop()
         self.prog_bar_disabled = True
+
+    def prog_bar_can_start(self):
+        if not self.prog_bar_active() and not self.prog_bar_disabled:
+            return True
+
+    def prog_bar_active(self):
+        return self.prog_bar_timer is not None
 
 
 class ControlApp(object):
@@ -3192,15 +3183,14 @@ For more Stop options use the Control menu.""")
         # Handle changes in status for some toolbar/menuitems.
         if new_status == self._prev_status:
             return False
+        self.info_bar.prog_bar_disabled = False
         self._prev_status = new_status
-        if "connected" in new_status:
-            self.stop_toolbutton.set_sensitive(False)
-            return False
-        run_ok = bool("stopped" in new_status)
-        pause_ok = bool("running" in new_status)
-        unpause_ok = bool("hold at" in new_status or "held" in new_status or
-                          "stopping" in new_status)
-        stop_ok = bool("stopped" not in new_status)
+        run_ok = "stopped" in new_status
+        pause_ok = "running" in new_status
+        unpause_ok = "hold at" in new_status or "held" in new_status
+        stop_ok = ("stopped" not in new_status and
+                   "connected" not in new_status and
+                   "initialising" not in new_status)
         self.run_menuitem.set_sensitive(run_ok)
         self.pause_menuitem.set_sensitive(pause_ok)
         self.unpause_menuitem.set_sensitive(unpause_ok)
@@ -3231,6 +3221,7 @@ For more Stop options use the Control menu.""")
         icon_widget.show()
         self.run_pause_toolbutton.set_icon_widget(icon_widget)
         self.run_pause_toolbutton.set_label(label)
+        self.run_pause_toolbutton.set_sensitive(True)
         tip_tuple = gtk.tooltips_data_get(self.run_pause_toolbutton)
         if tip_tuple is None:
             tips = gtk.Tooltips()

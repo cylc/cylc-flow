@@ -186,7 +186,8 @@ class Updater(threading.Thread):
                 Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # Failed to (re)connect.
             if not self.connect_fail_warned:
-                gobject.idle_add(self.warn, str(exc))
+                gobject.idle_add(self.warn,
+                                 "Suite stopped\n(port file not found)")
                 self.connect_fail_warned = True
             if cylc.flags.debug:
                 print >> sys.stderr, "failed: %s" % str(exc)
@@ -355,10 +356,10 @@ class Updater(threading.Thread):
             # Connection achieved but state summary data not available yet.
             if cylc.flags.debug:
                 print >> sys.stderr, "  connected, suite initializing ..."
-            if not self.info_bar.prog_bar_active():
+            self.set_status("initialising")
+            if self.info_bar.prog_bar_can_start():
                 gobject.idle_add(
                     self.info_bar.prog_bar_start, "suite initialising...")
-                self.set_status("initialising")
                 self.info_bar.set_state([])
             return False
         except (PortFileError, Pyro.errors.ProtocolError) as exc:
@@ -376,7 +377,8 @@ class Updater(threading.Thread):
                 if cylc.flags.debug:
                     print >> sys.stderr, (
                         "  daemon <= 6.4.0, suite initializing ...")
-                if not self.info_bar.prog_bar_active():
+                self.set_status("initialising")
+                if self.info_bar.prog_bar_can_start():
                     gobject.idle_add(
                         self.info_bar.prog_bar_start, "suite initialising...")
                     self.info_bar.set_state([])
@@ -394,8 +396,7 @@ class Updater(threading.Thread):
         else:
             # Got suite data.
             self.version_mismatch_warned = False
-            if (self.status == "stopping" and
-                    not self.info_bar.prog_bar_active()):
+            if (self.status == "stopping" and self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
                     self.info_bar.prog_bar_start, "suite stopping...")
             if (self.info_bar.prog_bar_active() and
