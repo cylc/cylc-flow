@@ -141,6 +141,10 @@ parser.add_option( "-f", "--file",
     help="View a specific dot-language graphfile.",
     metavar="FILE", action="store", default=None, dest="filename" )
 
+parser.add_option( "--filter",
+    help="Filter out one or many nodes.",
+    metavar="NODE_NAME_PATTERN", action="append", dest="filter_patterns" )
+
 parser.add_option( "-O", "--output-file",
     help="Output to a specific file, with a format given by --output-format" +
          " or extrapolated from the extension. " +
@@ -218,6 +222,9 @@ else:
             should_hide=should_hide_gtk_window)
 
 window.widget.connect('clicked', on_url_clicked, window)
+if options.filter_patterns:
+    filter_patterns = set(options.filter_patterns)
+    window.set_filter_graph_patterns(options.filter_patterns)
 window.get_graph()
 
 if options.reference and options.output_filename is None:

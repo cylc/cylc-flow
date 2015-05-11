@@ -1702,7 +1702,7 @@ class config( object ):
                     nl, nr = self.close_families(l_id, r_id)
                     if point not in gr_edges:
                         gr_edges[point] = []
-                    gr_edges[point].append((nl, nr, False, e.suicide, e.conditional))
+                    gr_edges[point].append((nl, nr, None, e.suicide, e.conditional))
                 # Increment the cycle point.
                 point = e.sequence.get_next_point_on_sequence(point)
 
