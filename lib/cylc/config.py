@@ -1309,6 +1309,11 @@ class config( object ):
             right_nodes = new_right_nodes
 
             # extract task names from lexpression
+            n_open_brackets = lexpression.count("(")
+            n_close_brackets = lexpression.count(")")
+            if n_open_brackets != n_close_brackets:
+                raise SuiteConfigError, (
+                    "ERROR: missing bracket in: \"" + lexpression + "\"") 
             nstr = re.sub( '[(|&)]', ' ', lexpression )
             nstr = nstr.strip()
             left_nodes = re.split( ' +', nstr )
