@@ -41,6 +41,24 @@ from cylc.version import CYLC_VERSION
 from cylc.gui.warning_dialog import warning_dialog
 
 
+MSG_PORT_FILE_ERR = """Suite port file not found.
+
+This is normal for a stopped suite!
+
+(If you deleted the port file of a running
+suite, restore it to restore communications 
+or kill the suite manually and do a restart)."""
+
+MSG_PROTOCOL_ERR = """Connection failed.
+
+This could mean:
+ (a) The suite died without cleaning up its port
+   file: use "ps -fu $USER" to check that it's
+   not running, then delete the file and restart.
+ (b) A network problem is blocking communication
+   with the suite server."""
+
+
 class PollSchd(object):
     """Keep information on whether the updater should poll or not."""
 
@@ -182,13 +200,22 @@ class Updater(threading.Thread):
             self.daemon_version = "??? (pre 6.1.2?)"
             if cylc.flags.debug:
                 print >> sys.stderr, "succeeded (old daemon)"
-        except (PortFileError,
-                Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
+        except Exception as exc:
             # Failed to (re)connect.
+            if isinstance(exc, PortFileError):
+                # Probably normal shutdown.
+                msg = MSG_PORT_FILE_ERR
+            elif isinstance(exc, Pyro.errors.ProtocolError):
+                # Port file exists but connection failed.
+                msg = MSG_PROTOCOL_ERR
+            else:
+                # Other.
+                msg = str(exc)
+
             if not self.connect_fail_warned:
-                gobject.idle_add(self.warn,
-                                 "Suite stopped\n(port file not found)")
+                gobject.idle_add(self.warn, msg)
                 self.connect_fail_warned = True
+
             if cylc.flags.debug:
                 print >> sys.stderr, "failed: %s" % str(exc)
             if self.stop_summary is None:
@@ -362,14 +389,6 @@ class Updater(threading.Thread):
                     self.info_bar.prog_bar_start, "suite initialising...")
                 self.info_bar.set_state([])
             return False
-        except (PortFileError, Pyro.errors.ProtocolError) as exc:
-            if cylc.flags.debug:
-                print >> sys.stderr, "  CONNECTION LOST", str(exc)
-            self.set_stopped()
-            if self.info_bar.prog_bar_active():
-                gobject.idle_add(self.info_bar.prog_bar_stop)
-            gobject.idle_add(self.reconnect)
-            return False
         except Pyro.errors.NamingError as exc:
             if self.daemon_version is not None:
                 # Back compat <= 6.4.0 the state summary object was not
@@ -393,6 +412,17 @@ class Updater(threading.Thread):
                     gobject.idle_add(self.info_bar.prog_bar_stop)
                 gobject.idle_add(self.reconnect)
                 return False
+        except Exception as exc:
+            if self.status == "stopping":
+                # Expected stop: prevent the reconnection warning dialog.
+                self.connect_fail_warned = True
+            if cylc.flags.debug:
+                print >> sys.stderr, "  CONNECTION LOST", str(exc)
+            self.set_stopped()
+            if self.info_bar.prog_bar_active():
+                gobject.idle_add(self.info_bar.prog_bar_stop)
+            gobject.idle_add(self.reconnect)
+            return False
         else:
             # Got suite data.
             self.version_mismatch_warned = False

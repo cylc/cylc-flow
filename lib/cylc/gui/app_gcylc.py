@@ -3180,17 +3180,19 @@ For more Stop options use the Control menu.""")
         self.tool_bar_box.pack2(self.tool_bars[1], resize=True, shrink=True)
 
     def _alter_status_toolbar_menu(self, new_status):
-        # Handle changes in status for some toolbar/menuitems.
+        #But  Handle changes in status for some toolbar/menuitems.
         if new_status == self._prev_status:
             return False
         self.info_bar.prog_bar_disabled = False
         self._prev_status = new_status
         run_ok = "stopped" in new_status
-        pause_ok = "running" in new_status
-        unpause_ok = "hold at" in new_status or "held" in new_status
+        # Pause: avoid "stopped with running":
+        pause_ok = ("running" in new_status and 
+                    "stopped" not in new_status)
+        unpause_ok = "hold at" in new_status or "held" == new_status
         stop_ok = ("stopped" not in new_status and
-                   "connected" not in new_status and
-                   "initialising" not in new_status)
+                   "connected" != new_status and
+                   "initialising" != new_status)
         self.run_menuitem.set_sensitive(run_ok)
         self.pause_menuitem.set_sensitive(pause_ok)
         self.unpause_menuitem.set_sensitive(unpause_ok)
