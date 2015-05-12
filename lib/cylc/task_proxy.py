@@ -728,8 +728,6 @@ class TaskProxy(object):
         self.summary['submitted_time_string'] = (
             get_time_string_from_unix_time(self.submitted_time))
         self.summary['submit_method_id'] = self.submit_method_id
-        self.summary['batch_sys_name'] = self.batch_sys_name
-        self.summary['host'] = self.task_host
         self.summary['latest_message'] = "submitted"
         self.handle_event(
             'submitted', 'job submitted', db_event='submission succeeded')
@@ -938,6 +936,7 @@ class TaskProxy(object):
 
         # dynamic instantiation - don't know job sub method till run time.
         self.batch_sys_name = rtconfig['job submission']['method']
+        self.summary['batch_sys_name'] = self.batch_sys_name
 
         command = rtconfig['script']
         use_manual = rtconfig['manual completion']
@@ -991,6 +990,7 @@ class TaskProxy(object):
             self.user_at_host = self.task_owner + "@" + self.task_host
         else:
             self.user_at_host = self.task_host
+        self.summary['host'] = self.user_at_host
         self.submission_poll_timer.set_host(self.task_host)
         self.execution_poll_timer.set_host(self.task_host)
 
