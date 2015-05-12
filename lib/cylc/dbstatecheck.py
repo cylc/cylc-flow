@@ -26,7 +26,7 @@ class DBOperationError(Exception):
     """An exception raised when a db operation fails, typically due to a lock."""
 
     def __str__(self):
-        return "Suite database not found at: %s" % self.args
+        return "Suite database operation failed: %s" % self.args
 
 
 class DBNotFoundError(Exception):
