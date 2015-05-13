@@ -577,7 +577,9 @@ class TaskProxy(object):
         err = result['ERR']
         self.command_log("POLL", out, err)
         if result['EXIT'] != 0:
-            self.log(WARNING, 'job poll failed')
+            self.summary['latest_message'] = 'poll failed'
+            self.log(WARNING, 'job(%02d) poll failed' % self.submit_num)
+            flags.iflag = True
             return
         if not self.state.is_currently('submitted', 'running'):
             # Poll results can come in after a task finishes
@@ -597,7 +599,9 @@ class TaskProxy(object):
         err = result['ERR']
         self.command_log("KILL", out, err)
         if result['EXIT'] != 0:
-            self.log(WARNING, 'job kill failed')
+            self.summary['latest_message'] = 'kill failed'
+            self.log(WARNING, 'job(%02d) kill failed' % self.submit_num)
+            flags.iflag = True
             return
         if self.state.is_currently('submitted'):
             self.log(INFO, 'job killed')
