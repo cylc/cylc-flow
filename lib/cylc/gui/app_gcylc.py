@@ -3187,7 +3187,7 @@ For more Stop options use the Control menu.""")
         self._prev_status = new_status
         run_ok = "stopped" in new_status
         # Pause: avoid "stopped with running":
-        pause_ok = ("running" in new_status and 
+        pause_ok = (new_status in ["running", "reloading"] and 
                     "stopped" not in new_status)
         unpause_ok = "hold at" in new_status or "held" == new_status
         stop_ok = ("stopped" not in new_status and

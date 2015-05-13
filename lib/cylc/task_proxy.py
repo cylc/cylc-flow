@@ -674,6 +674,7 @@ class TaskProxy(object):
             msg = "submission failed, %s (after %s)" % (delay_msg, timeout_str)
             self.log(INFO, "job(%02d) " % self.submit_num + msg)
             self.summary['latest_message'] = msg
+            self.summary['waiting for reload'] = self.reconfigure_me
 
             self.sub_try_number += 1
             self.set_status('submit-retrying')

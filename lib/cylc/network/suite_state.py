@@ -52,7 +52,7 @@ class StateSummaryServer(PyroServer):
         self._summary_update_time = None
 
     def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh, paused,
-               will_pause_at, stopping, will_stop_at, ns_defn_order):
+               will_pause_at, stopping, will_stop_at, ns_defn_order, reloading):
 
         task_summary = {}
         global_summary = {}
@@ -129,6 +129,7 @@ class StateSummaryServer(PyroServer):
         global_summary['will_stop_at'] = self.str_or_None(will_stop_at)
         global_summary['states'] = all_states
         global_summary['namespace definition order'] = ns_defn_order
+        global_summary['reloading'] = reloading
 
         self._summary_update_time = time.time()
         # replace the originals

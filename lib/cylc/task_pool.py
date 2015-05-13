@@ -70,6 +70,7 @@ class TaskPool(object):
             config.get_max_num_active_cycle_points())
         self._prev_runahead_base_point = None
         self._prev_runahead_sequence_points = None
+        self.reload_warned = False
 
         self.config = config
 
@@ -610,6 +611,16 @@ class TaskPool(object):
 
                     self.remove(itask, '(suite definition reload)')
                     self.add_to_runahead_pool(new_task)
+
+        if found:
+            if not self.reload_warned:
+                self.log.warning(
+                    "Reload will complete once current active tasks have finished."
+                )
+                self.reload_warned = True
+        else:
+            self.log.info("Reload completed.")
+            self.reload_warned = False
 
         self.reconfiguring = found
 

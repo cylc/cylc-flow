@@ -315,7 +315,15 @@ class Updater(threading.Thread):
         elif glbl['will_stop_at']:
             self.status = 'running to ' + glbl[ 'will_stop_at' ]
         else:
-            self.status = 'running'
+            try:
+                if glbl['reloading']:
+                    self.status = 'reloading'
+                else:
+                    self.status = 'running'
+            except KeyError:
+                # Back compat.
+                self.status = 'running'
+
         self.mode = glbl['run_mode']
 
         if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
@@ -429,8 +437,11 @@ class Updater(threading.Thread):
             if (self.status == "stopping" and self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
                     self.info_bar.prog_bar_start, "suite stopping...")
+            if (self.status == "reloading" and self.info_bar.prog_bar_can_start()):
+                gobject.idle_add(
+                    self.info_bar.prog_bar_start, "suite reloading...")
             if (self.info_bar.prog_bar_active() and
-                    self.status not in ["stopping", "initialising"]):
+                    self.status not in ["stopping", "initialising", "reloading"]):
                 gobject.idle_add(self.info_bar.prog_bar_stop)
             if summaries_changed or err_log_changed:
                 return True

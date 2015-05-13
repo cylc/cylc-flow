@@ -949,7 +949,7 @@ class scheduler(object):
             self.pool.get_min_point(), self.pool.get_max_point(),
             self.pool.get_max_point_runahead(), self.paused(),
             self.will_pause_at(), self.shut_down_cleanly, self.will_stop_at(),
-            self.config.ns_defn_order)
+            self.config.ns_defn_order, self.pool.reconfiguring)
 
     def log_resolved_deps(self, ready_tasks):
         """Log what triggered off what."""
