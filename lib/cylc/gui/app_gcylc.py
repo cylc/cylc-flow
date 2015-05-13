@@ -2234,29 +2234,7 @@ shown here in the state they were in at the time of triggering.''')
         foo.run()
 
     def reload_suite(self, w):
-        msg = """Reload the suite definition.
-This allows you change task runtime configuration and add
-or remove task definitions without restarting the suite."""
-        prompt = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,
-                                   gtk.MESSAGE_QUESTION,
-                                   gtk.BUTTONS_OK_CANCEL, msg)
-
-        prompt.add_button(gtk.STOCK_HELP, gtk.RESPONSE_HELP)
-        response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help("control", "reload")
-            response = prompt.run()
-
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
-            return
-
-        command = (
-            "cylc reload -f" + self.get_remote_run_opts() + " " + self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self.put_pyro_command('reload_suite')
 
     def nudge_suite(self, w):
         self.put_pyro_command('nudge')

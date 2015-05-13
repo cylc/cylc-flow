@@ -21,11 +21,10 @@ username is "remote"."""
 
 import os
 import pwd
-import socket
+from cylc.suite_host import get_hostname
 
 user = os.environ.get( 'USER', pwd.getpwuid(os.getuid()).pw_name )
-hostname = socket.getfqdn()
-user_at_host = "%s@%s" % (user, hostname)
+user_at_host = "%s@%s" % (user, get_hostname())
 
 def is_remote_user(name):
     """Return True if name is different than the current username.
