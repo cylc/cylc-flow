@@ -4109,25 +4109,32 @@ $CYLC_SUITE_OWNER      # hilary (e.g.)
 Some of these variables are also used by cylc task messaging commands in
 order to target the right task proxy object in the right suite.
 
-\paragraph{Suite Share And Task Work Directories}
+\paragraph{Suite Share Directories}
 
-A {\em suite share directory} is created automatically for use as a file
-exchange area for tasks on same task host. It can be accessed via
-\lstinline=$CYLC_SUITE_SHARE_DIR= and its location can be set in the
-cylc site and user global config files.
+A {\em suite share directory} is created automatically under the suite run
+directory as a share space for tasks. The location is available to tasks as
+\lstinline=$CYLC_SUITE_SHARE_DIR=. In a cycling suite, output files are
+typically held in cycle point sub-directories of the suite share directory.
 
-A {\em task work directory} is also created automatically for each task,
-and can be accessed via the \lstinline=$CYLC_TASK_WORK_DIR= variable.
-The task job script is executed from within the work directory (i.e.\
-it is the task's {\em current working directory}). For non-detaching
-tasks the work directory is automatically removed again if it is empty
-when the task finishes. The main work directory location is set in the
-cylc site and user global config files, but the lowest-level sub-directory, which
-name defaults to the task ID to give each task a unique workspace, can
-be overridden under \lstinline=[runtime]= in suite definitions. This
-enables groups of tasks that read and write files from their current
-working directories to be given common work directories as file share
-spaces.
+The top level share and work directory (below) location can be changed
+(e.g.\ to a large data area) by a global config setting
+(see~\ref{workdirectory}). 
+
+\paragraph{Task Work Directories}
+
+Task job scripts are executed from within {\em work directories} created
+automatically under the suite run directory. A task can get its own work
+directory from \lstinline=$CYLC_TASK_WORK_DIR= (or simply \lstinline=$PWD= if
+it does not \lstinline=cd= elsewhere at runtime). By default the location
+contains task name and cycle point, to provide a unique workspace for every
+instance of every task. This can be overridden in the suite definition,
+however, to get several tasks to share the same work directory
+(see~\ref{worksubdirectory}).
+
+The top level work and share directory (above) location can be changed
+(e.g.\ to a large data area) by a global config setting
+(see~\ref{workdirectory}). 
+
 
 \paragraph{Other Cylc-Defined Environment Variables}
 
