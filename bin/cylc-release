@@ -31,10 +31,10 @@ import cylc.flags
 
 parser = cop( """cylc [control] release|unhold [OPTIONS] ARGS
 
-Release one or more held tasks, or a whole suite. Held tasks do not
-submit even if they are ready to run.
-""" + multitask_usage + """
-
+Release one or more held tasks (cylc release REG MATCH POINT)
+or the whole suite (cylc release REG). Held tasks do not
+submit even if they are ready to run.""" +
+   multitask_usage + """
 See also 'cylc [control] hold'.""", pyro=True, multitask=True,
     argdoc=[("REG", 'Suite name'),
     ('[MATCH]', 'Task or family name matching regular expression'),
@@ -44,7 +44,6 @@ See also 'cylc [control] hold'.""", pyro=True, multitask=True,
 
 suite, pphrase = prep_pyro( args[0], options ).execute()
 
-whole_suite = True
 if len(args) == 3:
     whole_suite = False
     name = args[1]
@@ -53,8 +52,11 @@ if len(args) == 3:
         'Release task(s) ' + name + ' at ' + point_string + ' in ' + suite,
         options.force
     )
-else:
+elif len(args) == 1:
+    whole_suite = True
     prompt( 'Release suite ' + suite, options.force )
+else:
+    parser.error("Wrong number of arguments.")
 
 try:
     proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
