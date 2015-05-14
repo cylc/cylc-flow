@@ -52,7 +52,6 @@ were recorded as submitted or running when the suite went down.
 
 suite, pphrase = prep_pyro(args[0], options).execute()
 
-print len(args)
 if len(args) == 3:
     name = args[1]
     point_string = args[2]
