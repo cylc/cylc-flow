@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a></li>
+    <li><a href="#6.4.1">6.4.1</a></li>
     <li><a href="#6.4.0">6.4.0</a></li>
     <li><a href="#6.3.1">6.3.1</a></li>
     <li><a href="#6.3.0">6.3.0</a></li>
@@ -56,6 +57,73 @@
 
 <p>Some minor enhancements and bug fixes may be omitted from this page.
 For the definitive record see the cylc git repository change log.</p>
+
+<a name="6.4.1"/>
+    <h2>6.4.1</h2>
+
+		<h3>6.4.1 enhancements</h3>
+
+		<li> Suite and task URLs, browseable from <code>gcylc</code> and <code>cylc
+				doc</code>.
+
+		<li> Suite "scripting" items can be shortened: <code>command
+				scripting</code> to <code>script</code>; <code>post-command
+				scripting</code> to <code>post-script</code>; etc.
+
+		<li> Filtering of graph nodes by <code>cylc graph --filter</code>.
+
+		<li> <code>cylc graph</code> and <code>gcylc</code> graph view: nodes that
+		are filtered out are now grouped and replaced by dotted "scissor nodes"
+		rather than breaking the graph into separate chunks.
+
+		<li> <code>gcylc</code> text tree view,
+		<ul>
+				<li> display job submit number, retry number, and retry delay interval,
+				in the "latest message" column.
+				<li> display [user@]host and batch system name even after job submission
+				failure.
+				<li> report failure of poll and kill commands (e.g. due to task host down) in
+				the "latest message" column.
+		</ul>
+
+		<li> Improved documentation of suite share and task work directory location
+		and use.
+
+		<li> Better error message for job submission failure due to choice of a
+		batch system that is not available on the task host.
+
+		<li> Documented use of global (site and user) job-init scripts.
+
+
+		<h3>6.4.1 fixes</h3>
+
+		<li> Validate final cycle point after command line override (if supplied), not before.
+
+		<li> Prevent <code>cylc gsummary</code> crashing if it can't get state
+		info from a suite because (for e.g.) the suite run directory has been
+		deleted.
+
+		<li> Don't let <code>cylc broadcast</code> to an invalid cycle point bring
+		down the suite.
+
+		<li> Clock-triggering syntax: allow the time offset to be omitted
+		completely if no offset is required.
+
+		<li> Better error message for a probable missing R1 graph section, if an
+		initial cycle time is given for a non-cycling graph.
+
+		<li> Prevent a DatabaseIntegrityError warning when an old task is
+		re-inserted into a suite.
+
+		<li> Corrected some command documentation for the poll, kill, hold,
+		release, and reset commands. 
+
+		<li> <code>gcylc</code> graph view: fixed filtering of family base nodes.
+
+		<li> Fixed broadcast of float values (e.g. timeout settings).
+
+		<li> Fail validation of mismatched parentheses in the graph.
+
 
 <a name="6.4.0"/>
     <h2>6.4.0</h2>
