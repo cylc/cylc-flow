@@ -7,24 +7,24 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-04-09 11:22:00"> 
+<meta name="date" content="2015-05-15 11:47:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 2101--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 2143--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse9.html" >next</a>] [<a 
 href="cug-htmlse7.html" >prev</a>] [<a 
 href="cug-htmlse7.html#tailcug-htmlse7.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse8.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse8.html" >up</a>] </p></div>
-<!--l. 2101--><p class="indent" >    <h3 id="8" class="sectionHead"><span class="titlemark"> <a href="#8">8</a>  <a 
- id="x9-620008"></a>Suite Name Registration And Passphrases </span></h3> <div class="sectionTOCS">
+<!--l. 2143--><p class="indent" >    <h3 id="8" class="sectionHead"><span class="titlemark"> <a href="#8">8</a>  <a 
+ id="x9-640008"></a>Suite Name Registration And Passphrases </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >8.1 <a 
-href="#x9-630008.1">Database Operations</a></span>
+href="#x9-650008.1">Database Operations</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >8.2 <a 
-href="#x9-640008.2">Suite Passphrases</a></span>
+href="#x9-660008.2">Suite Passphrases</a></span>
    </div>
-<!--l. 2104--><p class="indent" >   Cylc commands target suites via names registered in a <span 
+<!--l. 2146--><p class="indent" >   Cylc commands target suites via names registered in a <span 
 class="cmti-10">suite name database </span>located at <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span><span 
@@ -34,9 +34,10 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">REGDB</span><span 
 class="pcrr7t-">/</span></span>.
 Suite names are hierarchical like directory paths, allowing nested tree-like grouping, but use the &#8216;.&#8217; character as a
-delimiter. This : <!--l. 2108-->
-   <div class="lstlisting" id="listing-69"><span class="label"><a 
- id="x9-62001r1"></a></span><span 
+delimiter. This : <!--l. 2150--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x9-64001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -51,15 +52,15 @@ class="pcrr7t-">t</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62002r2"></a></span><span 
+ id="x9-64002r2"></a></span><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62003r3"></a></span><span 
+ id="x9-64003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|-</span><span 
 class="pcrr7t-">oper</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62004r4"></a></span><span 
+ id="x9-64004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -92,7 +93,7 @@ class="pcrr7t-">nested</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">Region1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62005r5"></a></span><span 
+ id="x9-64005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -125,12 +126,12 @@ class="pcrr7t-">nested</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">Region2</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62006r6"></a></span><span 
+ id="x9-64006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#8216;-</span><span 
 class="pcrr7t-">test</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62007r7"></a></span><span 
+ id="x9-64007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -159,16 +160,17 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">TESTS</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">Region1</span>
-   
+
+
    </div>
-<!--l. 2118--><p class="indent" >   Suite titles held in the name database are parsed from the suite definition at the time of initial suite registration.
+<!--l. 2160--><p class="indent" >   Suite titles held in the name database are parsed from the suite definition at the time of initial suite registration.
 If you change the title later use <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">db</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">refresh</span></span> to update the database.
-<!--l. 2122--><p class="indent" >   Name groups are entirely virtual, they do not need to be explicitly created before use, and they automatically
+<!--l. 2164--><p class="indent" >   Name groups are entirely virtual, they do not need to be explicitly created before use, and they automatically
 disappear if all tasks are removed from them. From the listing above, for example, to move the suite
 <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
@@ -178,9 +180,10 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">region2</span></span> into the <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">test</span></span> group: <!--l. 2127-->
-   <div class="lstlisting" id="listing-70"><span class="label"><a 
- id="x9-62008r1"></a></span><span 
+class="pcrr7t-">test</span></span> group: <!--l. 2169--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x9-64008r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -202,7 +205,7 @@ class="pcrr7t-">test</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">region2</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62009r2"></a></span><span 
+ id="x9-64009r2"></a></span><span 
 class="pcrr7t-">REREGISTER</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">nwp</span><span 
@@ -219,7 +222,7 @@ class="pcrr7t-">test</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">region2</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62010r3"></a></span><span 
+ id="x9-64010r3"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -234,15 +237,15 @@ class="pcrr7t-">tx</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62011r4"></a></span><span 
+ id="x9-64011r4"></a></span><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62012r5"></a></span><span 
+ id="x9-64012r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|-</span><span 
 class="pcrr7t-">oper</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62013r6"></a></span><span 
+ id="x9-64013r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -256,12 +259,12 @@ class="pcrr7t-">Model</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62014r7"></a></span><span 
+ id="x9-64014r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#8216;-</span><span 
 class="pcrr7t-">test</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62015r8"></a></span><span 
+ id="x9-64015r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -277,7 +280,7 @@ class="pcrr7t-">TEST</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62016r9"></a></span><span 
+ id="x9-64016r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -290,9 +293,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region2</span>
-   
+
+
    </div>
-<!--l. 2138--><p class="indent" >   And to move <span class="lstinline"><span 
+<!--l. 2180--><p class="indent" >   And to move <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">test</span><span 
@@ -300,9 +304,10 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">region2</span></span> into a new group <span class="lstinline"><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">para</span></span>: <!--l. 2139-->
-   <div class="lstlisting" id="listing-71"><span class="label"><a 
- id="x9-62017r1"></a></span><span 
+class="pcrr7t-">para</span></span>: <!--l. 2181--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x9-64017r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -324,7 +329,7 @@ class="pcrr7t-">para</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">region2</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62018r2"></a></span><span 
+ id="x9-64018r2"></a></span><span 
 class="pcrr7t-">REREGISTER</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">nwp</span><span 
@@ -341,7 +346,7 @@ class="pcrr7t-">para</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">region2</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62019r3"></a></span><span 
+ id="x9-64019r3"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -356,15 +361,15 @@ class="pcrr7t-">tx</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62020r4"></a></span><span 
+ id="x9-64020r4"></a></span><span 
 class="pcrr7t-">nwp</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62021r5"></a></span><span 
+ id="x9-64021r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|-</span><span 
 class="pcrr7t-">oper</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62022r6"></a></span><span 
+ id="x9-64022r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -378,12 +383,12 @@ class="pcrr7t-">Model</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62023r7"></a></span><span 
+ id="x9-64023r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|-</span><span 
 class="pcrr7t-">test</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62024r8"></a></span><span 
+ id="x9-64024r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">|</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -399,12 +404,12 @@ class="pcrr7t-">TEST</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62025r9"></a></span><span 
+ id="x9-64025r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#8216;-</span><span 
 class="pcrr7t-">para</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-62026r10"></a></span><span 
+ id="x9-64026r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -417,15 +422,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Model</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">Region2</span>
-   
+
+
    </div>
-<!--l. 2152--><p class="indent" >   Currently you cannot explicitly indicate a group name on the command line by appending a dot character.
+<!--l. 2194--><p class="indent" >   Currently you cannot explicitly indicate a group name on the command line by appending a dot character.
 Rather, in database operations such as copy, reregister, or unregister, the identity of the source item (group or suite)
 is inferred from the content of the database; and if the source item is a group, so must the target be a
 group (or it will be, in the case of an item that will be created by the operation). This means that you
 cannot copy a single suite into a group that does not exist yet unless you specify the entire target suite
 name.
-<!--l. 2161--><p class="indent" >   <span class="lstinline"><span 
+<!--l. 2203--><p class="indent" >   <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">db</span><span 
@@ -434,14 +440,15 @@ class="pcrr7t-">register</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span> shows a number of other examples.
-<!--l. 2163--><p class="noindent" >
-<!--l. 2163--><p class="indent" >    <h4 id="8.1" class="subsectionHead"> <span class="titlemark"> <a href="#8.1"> 8.1</a>  <a 
- id="x9-630008.1"></a>Database Operations </span></h4>
-<!--l. 2165--><p class="indent" >   On the command line, the &#8216;database&#8217; (or &#8216;db&#8217;) command category contains commands to implement the
+<!--l. 2205--><p class="noindent" >
+<!--l. 2205--><p class="indent" >    <h4 id="8.1" class="subsectionHead"> <span class="titlemark"> <a href="#8.1"> 8.1</a>  <a 
+ id="x9-650008.1"></a>Database Operations </span></h4>
+<!--l. 2207--><p class="indent" >   On the command line, the &#8216;database&#8217; (or &#8216;db&#8217;) command category contains commands to implement the
 aforementioned operations.
-   <!--l. 2169-->
-   <div class="lstlisting" id="listing-72"><span class="label"><a 
- id="x9-63001r1"></a></span><span 
+   <!--l. 2211--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x9-65001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -451,7 +458,7 @@ class="pcrr7t-">db</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">help</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63002r2"></a></span><span 
+ id="x9-65002r2"></a></span><span 
 class="pcrr7t-">CATEGORY</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -477,9 +484,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">etc</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63003r3"></a></span><span 
+ id="x9-65003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63004r4"></a></span><span 
+ id="x9-65004r4"></a></span><span 
 class="pcrr7t-">Suite</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">name</span><span 
@@ -505,7 +512,7 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">REGDB</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63005r5"></a></span><span 
+ id="x9-65005r5"></a></span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cat</span><span 
@@ -521,7 +528,7 @@ class="pcrr7t-">my</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">suite</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63006r6"></a></span><span 
+ id="x9-65006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -533,7 +540,7 @@ class="pcrr7t-">suite</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">title</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63007r7"></a></span><span 
+ id="x9-65007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -547,9 +554,9 @@ class="pcrr7t-">my</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suite</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63008r8"></a></span><span 
+ id="x9-65008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63009r9"></a></span><span 
+ id="x9-65009r9"></a></span><span 
 class="pcrr7t-">HELP</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -567,7 +574,7 @@ class="pcrr7t-">help</span><span
 class="pcrr7t-">,--</span><span 
 class="pcrr7t-">help</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63010r10"></a></span><span 
+ id="x9-65010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">You</span><span 
@@ -585,7 +592,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">COMMAND</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63011r11"></a></span><span 
+ id="x9-65011r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">The</span><span 
@@ -603,13 +610,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">omitted</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63012r12"></a></span><span 
+ id="x9-65012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63013r13"></a></span><span 
+ id="x9-65013r13"></a></span><span 
 class="pcrr7t-">COMMANDS</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63014r14"></a></span><span 
+ id="x9-65014r14"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">copy</span><span 
@@ -634,7 +641,7 @@ class="pcrr7t-">of</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">suites</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63015r15"></a></span><span 
+ id="x9-65015r15"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">get</span><span 
@@ -653,7 +660,7 @@ class="pcrr7t-">directory</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">paths</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63016r16"></a></span><span 
+ id="x9-65016r16"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">print</span><span 
@@ -666,7 +673,7 @@ class="pcrr7t-">registered</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">suites</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63017r17"></a></span><span 
+ id="x9-65017r17"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">refresh</span><span 
@@ -687,7 +694,7 @@ class="pcrr7t-">suite</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">titles</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63018r18"></a></span><span 
+ id="x9-65018r18"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">register</span><span 
@@ -704,7 +711,7 @@ class="pcrr7t-">for</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">use</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63019r19"></a></span><span 
+ id="x9-65019r19"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">reregister</span><span 
@@ -725,7 +732,7 @@ class="pcrr7t-">a</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">suite</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x9-63020r20"></a></span><span 
+ id="x9-65020r20"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">unregister</span><span 
@@ -741,12 +748,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">delete</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">suites</span>
-   
-                                                                                         
 
-                                                                                         
+
+
+
+
    </div>
-<!--l. 2192--><p class="indent" >   Groups of suites (at any level in the name hierarchy) can be deleted, copied, imported, and exported; as well as
+<!--l. 2234--><p class="indent" >   Groups of suites (at any level in the name hierarchy) can be deleted, copied, imported, and exported; as well as
 individual suites. To do this, just use suite group names as source and/or target for operations, as appropriate. For
 instance, if a group <span class="lstinline"><span 
 class="pcrr7t-">foo</span><span 
@@ -762,9 +770,10 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">qux</span></span>, you can copy a single suite
-like this:  <!--l. 2199-->
-   <div class="lstlisting" id="listing-73"><span class="label"><a 
- id="x9-63021r1"></a></span><span 
+like this:  <!--l. 2241--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x9-65021r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -784,12 +793,14 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suites</span>
-   
+
+
    </div>
-<!--l. 2202--><p class="indent" >   (resulting in a new suite <span class="lstinline"><span 
-class="pcrr7t-">boo</span></span>); or the group like this:  <!--l. 2204-->
-   <div class="lstlisting" id="listing-74"><span class="label"><a 
- id="x9-63022r1"></a></span><span 
+<!--l. 2244--><p class="indent" >   (resulting in a new suite <span class="lstinline"><span 
+class="pcrr7t-">boo</span></span>); or the group like this:  <!--l. 2246--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x9-65022r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -807,17 +818,19 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suites</span>
-   
+
+
    </div>
-<!--l. 2207--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
+<!--l. 2249--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">baz</span></span> and <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">qux</span></span>); or the group like this:  <!--l. 2209-->
-   <div class="lstlisting" id="listing-75"><span class="label"><a 
- id="x9-63023r1"></a></span><span 
+class="pcrr7t-">qux</span></span>); or the group like this:  <!--l. 2251--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x9-65023r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -833,9 +846,10 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">HOME</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">suites</span>
-   
+
+
    </div>
-<!--l. 2212--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
+<!--l. 2254--><p class="indent" >   (resulting in new suites <span class="lstinline"><span 
 class="pcrr7t-">boo</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">bar</span><span 
@@ -854,40 +868,40 @@ class="pcrr7t-">copy</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span> has some explicit examples.
-<!--l. 2217--><p class="indent" >   The same functionality is also available by right-clicking on suites or groups in the gcylc &#8220;Open Registered
+<!--l. 2259--><p class="indent" >   The same functionality is also available by right-clicking on suites or groups in the gcylc &#8220;Open Registered
 Suite&#8221; dialog.
-<!--l. 2220--><p class="noindent" >
-<!--l. 2220--><p class="indent" >    <h4 id="8.2" class="subsectionHead"> <span class="titlemark"> <a href="#8.2"> 8.2</a>  <a 
- id="x9-640008.2"></a>Suite Passphrases </span></h4>
-<!--l. 2222--><p class="indent" >   Any client process that connects to a running suite (this includes task messaging and user-invoked interrogation
+<!--l. 2262--><p class="noindent" >
+<!--l. 2262--><p class="indent" >    <h4 id="8.2" class="subsectionHead"> <span class="titlemark"> <a href="#8.2"> 8.2</a>  <a 
+ id="x9-660008.2"></a>Suite Passphrases </span></h4>
+<!--l. 2264--><p class="indent" >   Any client process that connects to a running suite (this includes task messaging and user-invoked interrogation
 and control commands) must authenticate with a secure passphrase that has been loaded by the suite. A random
 passphrase is generated automatically in the suite definition directory at registration time if one does not already
 exist there. For the default Pyro-based connection method the passphrase file must be distributed to other
 accounts that host running tasks or from which you need monitoring or control access to the running
 suite.
-<!--l. 2231--><p class="indent" >   Alternatively, cylc can be configured to,
+<!--l. 2273--><p class="indent" >   Alternatively, cylc can be configured to,
      <ol  class="enumerate1" >
      <li 
-  class="enumerate" id="x9-64002x1">use ssh to re-invoke task messaging commands on the suite host; or
+  class="enumerate" id="x9-66002x1">use ssh to re-invoke task messaging commands on the suite host; or
      </li>
      <li 
-  class="enumerate" id="x9-64004x2">use a one-way polling mechanism for tracking task progress.</li></ol>
-<!--l. 2236--><p class="noindent" >Neither of these methods require the suite passphrase to be installed on the task host. For ssh re-invocation ssh keys
+  class="enumerate" id="x9-66004x2">use a one-way polling mechanism for tracking task progress.</li></ol>
+<!--l. 2278--><p class="noindent" >Neither of these methods require the suite passphrase to be installed on the task host. For ssh re-invocation ssh keys
 must be installed for the task-to-suite direction in addition to the suite-to-task setup already required for job
 submission. The automatic polling mechanism can be used as a last resort for hosts that do not allow routing back
 to the suite host for pyro or ssh. It can also be used as regular health check on submitted tasks under the other
 communications methods.
-<!--l. 2244--><p class="indent" >   See&#x00A0;<a 
-href="cug-htmlse12.html#x13-15500012">12<!--tex4ht:ref: RunningSuites --></a> for more detail on cylc client/server communications, and how to use it.
+<!--l. 2286--><p class="indent" >   See&#x00A0;<a 
+href="cug-htmlse12.html#x13-15800012">12<!--tex4ht:ref: RunningSuites --></a> for more detail on cylc client/server communications, and how to use it.
                                                                                          
 
                                                                                          
-   <!--l. 2249--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 2291--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse9.html" >next</a>] [<a 
 href="cug-htmlse7.html" >prev</a>] [<a 
 href="cug-htmlse7.html#tailcug-htmlse7.html" >prev-tail</a>] [<a 
 href="cug-htmlse8.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse8.html" >up</a>] </p></div>
-<!--l. 2249--><p class="indent" >   <a 
+<!--l. 2291--><p class="indent" >   <a 
  id="tailcug-htmlse8.html"></a>   
 </body></html> 

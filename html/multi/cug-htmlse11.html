@@ -7,54 +7,55 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-04-09 11:22:00"> 
+<meta name="date" content="2015-05-15 11:47:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 4768--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 4817--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse11.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 4768--><p class="indent" >    <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
- id="x12-13600011"></a>Task Job Submission </span></h3> <div class="sectionTOCS">
+<!--l. 4817--><p class="indent" >    <h3 id="11" class="sectionHead"><span class="titlemark"> <a href="#11">11</a>  <a 
+ id="x12-13900011"></a>Task Job Submission </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >11.1 <a 
-href="#x12-13700011.1">Task Job Scripts</a></span>
+href="#x12-14000011.1">Task Job Scripts</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.2 <a 
-href="#x12-13800011.2">Supported Job Submission Methods</a></span>
+href="#x12-14100011.2">Supported Job Submission Methods</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.3 <a 
-href="#x12-14800011.3">Task stdout And stderr Logs</a></span>
+href="#x12-15100011.3">Task stdout And stderr Logs</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.4 <a 
-href="#x12-14900011.4">Overriding The Job Submission Command</a></span>
+href="#x12-15200011.4">Overriding The Job Submission Command</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.5 <a 
-href="#x12-15000011.5">Job Polling</a></span>
+href="#x12-15300011.5">Job Polling</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.6 <a 
-href="#x12-15100011.6">Job Killing</a></span>
+href="#x12-15400011.6">Job Killing</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >11.7 <a 
-href="#x12-15200011.7">Defining New Job Submission Methods</a></span>
+href="#x12-15500011.7">Defining New Job Submission Methods</a></span>
    </div>
-<!--l. 4771--><p class="indent" >   For the requirements a command, script, or program, must fulfill in order to function as a cylc task, see&#x00A0;<a 
-href="cug-htmlse10.html#x11-12900010">10<!--tex4ht:ref: TaskImplementation --></a>. This
+<!--l. 4820--><p class="indent" >   For the requirements a command, script, or program, must fulfill in order to function as a cylc task, see&#x00A0;<a 
+href="cug-htmlse10.html#x11-13200010">10<!--tex4ht:ref: TaskImplementation --></a>. This
 section explains how tasks are submitted by the suite daemon when they are ready to run, and how to define new
 task job submission methods.
-<!--l. 4776--><p class="noindent" >
-<!--l. 4776--><p class="indent" >    <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
- id="x12-13700011.1"></a>Task Job Scripts </span></h4>
-<!--l. 4779--><p class="indent" >   When a task is ready to run cylc generates a temporary <span 
-class="cmti-10">task job script </span>to configure the task&#8217;s execution
-environment and call its command scripting. The job script is the embodiment of all suite.rc runtime settings for the
-task. It is submitted to run by the <span 
-class="cmti-10">job submission method </span>configured for the task. Different tasks can have different
-job submission methods. Like other runtime properties, you can set a suite default job submission method and
-override it for specific tasks or families:  <!--l. 4788-->
-   <div class="lstlisting" id="listing-172"><span class="label"><a 
- id="x12-137001r1"></a></span><span 
+<!--l. 4825--><p class="noindent" >
+<!--l. 4825--><p class="indent" >    <h4 id="11.1" class="subsectionHead"> <span class="titlemark"> <a href="#11.1"> 11.1</a>  <a 
+ id="x12-14000011.1"></a>Task Job Scripts </span></h4>
+<!--l. 4828--><p class="indent" >   When a task is ready cylc generates a <span 
+class="cmti-10">task job script </span>that encapsulates the runtime settings (environment and
+scripting) defined for it in the suite.rc file. The job script is submitted to run by the <span 
+class="cmti-10">job submission method</span>
+chosen for the task. Different tasks can have different job submission methods. Like other runtime
+properties, you can set a suite default job submission method and override it for specific tasks or families:
+<!--l. 4835--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-140001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-137002r2"></a></span><span 
+ id="x12-140002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -68,7 +69,7 @@ class="pcrro7t-">suite</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">defaults</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-137003r3"></a></span><span 
+ id="x12-140003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -83,7 +84,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">submission</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-137004r4"></a></span><span 
+ id="x12-140004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -102,7 +103,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">loadleveler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-137005r5"></a></span><span 
+ id="x12-140005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -118,7 +119,7 @@ class="pcrro7t-">task</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-137006r6"></a></span><span 
+ id="x12-140006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -133,7 +134,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">submission</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-137007r7"></a></span><span 
+ id="x12-140007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -151,10 +152,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">at</span>
-   
+
+
    </div>
-<!--l. 4798--><p class="indent" >   As shown in the Tutorial (<a 
-href="cug-htmlse7.html#x8-370007.11">7.11<!--tex4ht:ref: RunningSuitesCLI --></a>) job scripts are saved to the suite run directory; the commands used to submit
+<!--l. 4845--><p class="indent" >   As shown in the Tutorial (<a 
+href="cug-htmlse7.html#x8-390007.11">7.11<!--tex4ht:ref: RunningSuitesCLI --></a>) job scripts are saved to the suite run directory; the commands used to submit
 them are printed to stdout by cylc in debug mode; and they can be printed with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -164,540 +166,34 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">jobscript</span></span> command. Take a look at one to see exactly how cylc wraps
 and runs your tasks.
-<!--l. 4805--><p class="noindent" >
-<!--l. 4805--><p class="indent" >    <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
- id="x12-13800011.2"></a>Supported Job Submission Methods </span></h4>
-<!--l. 4808--><p class="indent" >   Cylc supports a number of commonly used job submission methods. See&#x00A0;<a 
-href="#x12-15200011.7">11.7<!--tex4ht:ref: DefiningNewJobSubmissionMethods --></a> for how to add new job submission
+<!--l. 4852--><p class="noindent" >
+<!--l. 4852--><p class="indent" >    <h4 id="11.2" class="subsectionHead"> <span class="titlemark"> <a href="#11.2"> 11.2</a>  <a 
+ id="x12-14100011.2"></a>Supported Job Submission Methods </span></h4>
+<!--l. 4855--><p class="indent" >   Cylc supports a number of commonly used job submission methods. See&#x00A0;<a 
+href="#x12-15500011.7">11.7<!--tex4ht:ref: DefiningNewJobSubmissionMethods --></a> for how to add new job submission
 methods.
-<!--l. 4812--><p class="noindent" >
-<!--l. 4812--><p class="indent" >    <h4 id="11.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.1"> 11.2.1</a>  <a 
- id="x12-13900011.2.1"></a>background </span></h4>
-<!--l. 4814--><p class="indent" >   Runs tasks directly in a background shell.
+<!--l. 4859--><p class="noindent" >
+<!--l. 4859--><p class="indent" >    <h4 id="11.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.1"> 11.2.1</a>  <a 
+ id="x12-14200011.2.1"></a>background </span></h4>
+<!--l. 4861--><p class="indent" >   Runs tasks directly in a background shell.
                                                                                          
 
                                                                                          
-<!--l. 4816--><p class="noindent" >
-<!--l. 4816--><p class="indent" >    <h4 id="11.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.2"> 11.2.2</a>  <a 
- id="x12-14000011.2.2"></a>at </span></h4>
-<!--l. 4818--><p class="indent" >   Submits tasks to the rudimentary Unix <span class="lstinline"><span 
+<!--l. 4863--><p class="noindent" >
+<!--l. 4863--><p class="indent" >    <h4 id="11.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.2"> 11.2.2</a>  <a 
+ id="x12-14300011.2.2"></a>at </span></h4>
+<!--l. 4865--><p class="indent" >   Submits tasks to the rudimentary Unix <span class="lstinline"><span 
 class="pcrr7t-">at</span></span> scheduler. The <span class="lstinline"><span 
 class="pcrr7t-">atd</span></span> daemon must be running.
-<!--l. 4821--><p class="noindent" >
-<!--l. 4821--><p class="indent" >    <h4 id="11.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.3"> 11.2.3</a>  <a 
- id="x12-14100011.2.3"></a>loadleveler </span></h4>
-<!--l. 4823--><p class="indent" >   Submits tasks to loadleveler by the <span class="lstinline"><span 
+<!--l. 4868--><p class="noindent" >
+<!--l. 4868--><p class="indent" >    <h4 id="11.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.3"> 11.2.3</a>  <a 
+ id="x12-14400011.2.3"></a>loadleveler </span></h4>
+<!--l. 4870--><p class="indent" >   Submits tasks to loadleveler by the <span class="lstinline"><span 
 class="pcrr7t-">llsubmit</span></span> command. Loadleveler directives can be provided in the suite.rc
 file:
-   <!--l. 4827-->
-   <div class="lstlisting" id="listing-173"><span class="label"><a 
- id="x12-141001r1"></a></span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span><span 
+   <!--l. 4874--><div class="lstlisting">
+<span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141002r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[</span><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">submission</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141004r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">method</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">loadleveler</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">directives</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">bar</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141007r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">baz</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">qux</span>
-   
-   </div>
-<!--l. 4836--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4838-->
-   <div class="lstlisting" id="listing-174"><span class="label"><a 
- id="x12-141008r1"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">!/</span><span 
-class="pcrro7t-">bin</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">bash</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141009r2"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">DIRECTIVES</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141010r3"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">@</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">bar</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141011r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">@</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">baz</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">qux</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-141012r5"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">@</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">queue</span>
-   
-   </div>
-<!--l. 4846--><p class="indent" >   If restart=yes is specified as a directive for loadleveler, the job will automatically trap SIGUSR1, which
-loadleveler may use to preempt the job. On trapping SIGUSR1, the job will inform the suite that it
-has been vacated by loadleveler. This will put it back to the submitted state, until it starts running
-again.
-<!--l. 4852--><p class="noindent" >
-<!--l. 4852--><p class="indent" >    <h4 id="11.2.4" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.4"> 11.2.4</a>  <a 
- id="x12-14200011.2.4"></a>lsf </span></h4>
-<!--l. 4854--><p class="indent" >   Submits tasks to IBM Platform LSF by the <span class="lstinline"><span 
-class="pcrr7t-">bsub</span></span> command. LSF directives can be provided in the suite.rc
-file:
-   <!--l. 4858-->
-   <div class="lstlisting" id="listing-175"><span class="label"><a 
- id="x12-142001r1"></a></span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142002r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[</span><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">submission</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142004r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">method</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">lsf</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">directives</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">q</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142007r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">W</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">10</span>
-   
-   </div>
-<!--l. 4867--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4869-->
-   <div class="lstlisting" id="listing-176"><span class="label"><a 
- id="x12-142008r1"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">!/</span><span 
-class="pcrro7t-">bin</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">bash</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142009r2"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">DIRECTIVES</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142010r3"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">BSUB</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">q</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-142011r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">BSUB</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">W</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">=</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">10</span>
-   
-   </div>
-<!--l. 4876--><p class="noindent" >
-<!--l. 4876--><p class="indent" >    <h4 id="11.2.5" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.5"> 11.2.5</a>  <a 
- id="x12-14300011.2.5"></a>pbs </span></h4>
-<!--l. 4878--><p class="indent" >   Submits tasks to PBS (or Torque) by the <span class="lstinline"><span 
-class="pcrr7t-">qsub</span></span> command. PBS directives can be provided in the suite.rc file:
-<!--l. 4881-->
-   <div class="lstlisting" id="listing-177"><span class="label"><a 
- id="x12-143001r1"></a></span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143002r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[</span><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">job</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">submission</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143004r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">method</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">pbs</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">[[[</span><span 
-class="pcrr7t-">directives</span><span 
-class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">V</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143007r7"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">q</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143008r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">nodes</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143009r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">walltime</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">00:01:00</span>
-   
-   </div>
-<!--l. 4892--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4894-->
-                                                                                         
-
-                                                                                         
-   <div class="lstlisting" id="listing-178"><span class="label"><a 
- id="x12-143010r1"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">!/</span><span 
-class="pcrro7t-">bin</span><span 
-class="pcrro7t-">/</span><span 
-class="pcrro7t-">bash</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143011r2"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">DIRECTIVES</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143012r3"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">V</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143013r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">q</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143014r5"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">nodes</span><span 
-class="pcrro7t-">=1</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-143015r6"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro7t-">PBS</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">walltime</span><span 
-class="pcrro7t-">=00:01:00</span>
-   
-   </div>
-<!--l. 4903--><p class="noindent" >
-<!--l. 4903--><p class="indent" >    <h4 id="11.2.6" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.6"> 11.2.6</a>  <a 
- id="x12-14400011.2.6"></a>sge </span></h4>
-<!--l. 4905--><p class="indent" >   Submits tasks to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
-class="pcrr7t-">qsub</span></span> command. SGE directives can be provided in the suite.rc
-file:  <!--l. 4908-->
-   <div class="lstlisting" id="listing-179"><span class="label"><a 
  id="x12-144001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -744,7 +240,7 @@ class="pcrr7t-">method</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">sge</span><span 
+class="pcrr7t-">loadleveler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-144005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -772,10 +268,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">cwd</span><span 
+class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-144007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -790,119 +287,73 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">q</span><span 
+class="pcrr7t-">baz</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">foo</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-144008r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">h_data</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1024</span><span 
-class="pcrr7t-">M</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-144009r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">-</span><span 
-class="pcrr7t-">l</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">h_rt</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">24:00:00</span>
-   
+class="pcrr7t-">qux</span>
+
+
    </div>
-<!--l. 4919--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4921-->
-   <div class="lstlisting" id="listing-180"><span class="label"><a 
- id="x12-144010r1"></a></span><span 
+<!--l. 4883--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4885--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-144008r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-144011r2"></a></span><span 
+ id="x12-144009r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">DIRECTIVES</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-144012r3"></a></span><span 
+ id="x12-144010r3"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">cwd</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-144013r4"></a></span><span 
-class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">q</span><span 
+class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">foo</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">bar</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-144014r5"></a></span><span 
+ id="x12-144011r4"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
+class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">h_data</span><span 
-class="pcrro7t-">=1024</span><span 
-class="pcrro7t-">M</span><span 
+class="pcrro7t-">baz</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">qux</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-144015r6"></a></span><span 
+ id="x12-144012r5"></a></span><span 
 class="pcrro7t-">#</span><span 
-class="pcrro8c-">$</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">-</span><span 
-class="pcrro7t-">l</span><span 
+class="pcrro7t-">@</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">h_rt</span><span 
-class="pcrro7t-">=24:00:00</span>
-   
+class="pcrro7t-">queue</span>
+
+
    </div>
-<!--l. 4930--><p class="noindent" >
-<!--l. 4930--><p class="indent" >    <h4 id="11.2.7" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.7"> 11.2.7</a>  <a 
- id="x12-14500011.2.7"></a>slurm </span></h4>
-<!--l. 4932--><p class="indent" >   Submits tasks to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
-class="pcrr7t-">sbatch</span></span> command. SLURM directives
-can be provided in the suite.rc file (note that since not all SLURM commands have a short form, cylc requires the
-long form directives):  <!--l. 4937-->
-   <div class="lstlisting" id="listing-181"><span class="label"><a 
+<!--l. 4893--><p class="indent" >   If restart=yes is specified as a directive for loadleveler, the job will automatically trap SIGUSR1, which
+loadleveler may use to preempt the job. On trapping SIGUSR1, the job will inform the suite that it
+has been vacated by loadleveler. This will put it back to the submitted state, until it starts running
+again.
+<!--l. 4899--><p class="noindent" >
+<!--l. 4899--><p class="indent" >    <h4 id="11.2.4" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.4"> 11.2.4</a>  <a 
+ id="x12-14500011.2.4"></a>lsf </span></h4>
+<!--l. 4901--><p class="indent" >   Submits tasks to IBM Platform LSF by the <span class="lstinline"><span 
+class="pcrr7t-">bsub</span></span> command. LSF directives can be provided in the suite.rc
+file:
+   <!--l. 4905--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-145001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -949,7 +400,7 @@ class="pcrr7t-">method</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">slurm</span><span 
+class="pcrr7t-">lsf</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-145005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -977,6 +428,574 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">q</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-145007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">W</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">10</span>
+
+
+   </div>
+<!--l. 4914--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4916--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-145008r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">!/</span><span 
+class="pcrro7t-">bin</span><span 
+class="pcrro7t-">/</span><span 
+class="pcrro7t-">bash</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-145009r2"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">DIRECTIVES</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-145010r3"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">BSUB</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">q</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-145011r4"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">BSUB</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">W</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">=</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">10</span>
+
+
+   </div>
+<!--l. 4923--><p class="noindent" >
+<!--l. 4923--><p class="indent" >    <h4 id="11.2.5" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.5"> 11.2.5</a>  <a 
+ id="x12-14600011.2.5"></a>pbs </span></h4>
+<!--l. 4925--><p class="indent" >   Submits tasks to PBS (or Torque) by the <span class="lstinline"><span 
+class="pcrr7t-">qsub</span></span> command. PBS directives can be provided in the suite.rc file:
+<!--l. 4928--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">my_task</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">submission</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">method</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">pbs</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">directives</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">V</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">q</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">nodes</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">walltime</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">00:01:00</span>
+
+
+   </div>
+<!--l. 4939--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4941--><div class="lstlisting">
+
+
+
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146010r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">!/</span><span 
+class="pcrro7t-">bin</span><span 
+class="pcrro7t-">/</span><span 
+class="pcrro7t-">bash</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146011r2"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">DIRECTIVES</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146012r3"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">V</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146013r4"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">q</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146014r5"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">nodes</span><span 
+class="pcrro7t-">=1</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-146015r6"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">PBS</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">walltime</span><span 
+class="pcrro7t-">=00:01:00</span>
+
+
+   </div>
+<!--l. 4950--><p class="noindent" >
+<!--l. 4950--><p class="indent" >    <h4 id="11.2.6" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.6"> 11.2.6</a>  <a 
+ id="x12-14700011.2.6"></a>sge </span></h4>
+<!--l. 4952--><p class="indent" >   Submits tasks to Sun/Oracle Grid Engine by the <span class="lstinline"><span 
+class="pcrr7t-">qsub</span></span> command. SGE directives can be provided in the suite.rc
+file:  <!--l. 4955--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">my_task</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">submission</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">method</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sge</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">directives</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">cwd</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">q</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">h_data</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">1024</span><span 
+class="pcrr7t-">M</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147009r9"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">l</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">h_rt</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">24:00:00</span>
+
+
+   </div>
+<!--l. 4966--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4968--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147010r1"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">!/</span><span 
+class="pcrro7t-">bin</span><span 
+class="pcrro7t-">/</span><span 
+class="pcrro7t-">bash</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147011r2"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">DIRECTIVES</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147012r3"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">cwd</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147013r4"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">q</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">foo</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147014r5"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">h_data</span><span 
+class="pcrro7t-">=1024</span><span 
+class="pcrro7t-">M</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-147015r6"></a></span><span 
+class="pcrro7t-">#</span><span 
+class="pcrro8c-">$</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">-</span><span 
+class="pcrro7t-">l</span><span 
+class="pcrro7t-">&#x00A0;</span><span 
+class="pcrro7t-">h_rt</span><span 
+class="pcrro7t-">=24:00:00</span>
+
+
+   </div>
+<!--l. 4977--><p class="noindent" >
+<!--l. 4977--><p class="indent" >    <h4 id="11.2.7" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.7"> 11.2.7</a>  <a 
+ id="x12-14800011.2.7"></a>slurm </span></h4>
+<!--l. 4979--><p class="indent" >   Submits tasks to Simple Linux Utility for Resource Management by the <span class="lstinline"><span 
+class="pcrr7t-">sbatch</span></span> command. SLURM directives
+can be provided in the suite.rc file (note that since not all SLURM commands have a short form, cylc requires the
+long form directives):  <!--l. 4984--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-148001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">runtime</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-148002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">my_task</span><span 
+class="pcrr7t-">]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-148003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">job</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">submission</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-148004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">method</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">slurm</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-148005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">directives</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-148006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">nodes</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -984,7 +1003,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">5</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-145007r7"></a></span><span 
+ id="x12-148007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1004,7 +1023,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1:00:00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-145008r8"></a></span><span 
+ id="x12-148008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1023,18 +1042,20 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">QXZ5W2</span>
-   
+
+
    </div>
-<!--l. 4947--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4949-->
-   <div class="lstlisting" id="listing-182"><span class="label"><a 
- id="x12-145009r1"></a></span><span 
+<!--l. 4994--><p class="indent" >   These are written to the top of the task job script like this:  <!--l. 4996--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-148009r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-145010r2"></a></span><span 
+ id="x12-148010r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">SBATCH</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1042,7 +1063,7 @@ class="pcrro7t-">--</span><span
 class="pcrro7t-">nodes</span><span 
 class="pcrro7t-">=5</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-145011r3"></a></span><span 
+ id="x12-148011r3"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">SBATCH</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1050,7 +1071,7 @@ class="pcrro7t-">--</span><span
 class="pcrro7t-">time</span><span 
 class="pcrro7t-">=1:00:00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-145012r4"></a></span><span 
+ id="x12-148012r4"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">SBATCH</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1058,17 +1079,18 @@ class="pcrro7t-">--</span><span
 class="pcrro7t-">account</span><span 
 class="pcrro7t-">=</span><span 
 class="pcrro7t-">QXZ5W2</span>
-   
+
+
    </div>
-<!--l. 4956--><p class="noindent" >
-<!--l. 4956--><p class="indent" >    <h4 id="11.2.8" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.8"> 11.2.8</a>  <a 
- id="x12-14600011.2.8"></a>Default Directives Provided </span></h4>
-<!--l. 4958--><p class="indent" >   For job submission methods that use job file directives (PBS, Loadlevler, etc.) default directives are provided to
+<!--l. 5003--><p class="noindent" >
+<!--l. 5003--><p class="indent" >    <h4 id="11.2.8" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.8"> 11.2.8</a>  <a 
+ id="x12-14900011.2.8"></a>Default Directives Provided </span></h4>
+<!--l. 5005--><p class="indent" >   For job submission methods that use job file directives (PBS, Loadlevler, etc.) default directives are provided to
 set the job name and stdout and stderr file paths.
-<!--l. 4962--><p class="noindent" >
-<!--l. 4962--><p class="indent" >    <h4 id="11.2.9" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.9"> 11.2.9</a>  <a 
- id="x12-14700011.2.9"></a>Cylc Quirks (PBS, SGE, ...)  </span></h4>
-<!--l. 4964--><p class="indent" >   As shown in the example above, to get a naked option flag such as <span class="lstinline"><span 
+<!--l. 5009--><p class="noindent" >
+<!--l. 5009--><p class="indent" >    <h4 id="11.2.9" class="subsubsectionHead"><span class="titlemark"> <a href="#11.2.9"> 11.2.9</a>  <a 
+ id="x12-15000011.2.9"></a>Cylc Quirks (PBS, SGE, ...)  </span></h4>
+<!--l. 5011--><p class="indent" >   As shown in the example above, to get a naked option flag such as <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">V</span></span> in PBS or <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
@@ -1077,15 +1099,16 @@ null string as the directive value in the suite.rc file.
                                                                                          
 
                                                                                          
-<!--l. 4968--><p class="noindent" >
-<!--l. 4968--><p class="indent" >    <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
- id="x12-14800011.3"></a>Task stdout And stderr Logs </span></h4>
-<!--l. 4971--><p class="indent" >   When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
+<!--l. 5015--><p class="noindent" >
+<!--l. 5015--><p class="indent" >    <h4 id="11.3" class="subsectionHead"> <span class="titlemark"> <a href="#11.3"> 11.3</a>  <a 
+ id="x12-15100011.3"></a>Task stdout And stderr Logs </span></h4>
+<!--l. 5018--><p class="indent" >   When a task is ready to run cylc generates a filename root to be used for the task job script and log files. The
 filename containing the task name, cycle point, and a submit number that increments if the same task is re-triggered
 multiple times:
-   <!--l. 4977-->
-   <div class="lstlisting" id="listing-183"><span class="label"><a 
- id="x12-148001r1"></a></span><span 
+   <!--l. 5024--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-151001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">task</span><span 
@@ -1095,7 +1118,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">script</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-148002r2"></a></span><span 
+ id="x12-151002r2"></a></span><span 
 class="pcrr7t-">~/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
@@ -1115,7 +1138,7 @@ class="pcrr7t-">hello</span><span
 class="pcrr7t-">/01/</span><span 
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-148003r3"></a></span><span 
+ id="x12-151003r3"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">task</span><span 
@@ -1123,7 +1146,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">stdout</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-148004r4"></a></span><span 
+ id="x12-151004r4"></a></span><span 
 class="pcrr7t-">~/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
@@ -1145,7 +1168,7 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">out</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-148005r5"></a></span><span 
+ id="x12-151005r5"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">task</span><span 
@@ -1153,7 +1176,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">stderr</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-148006r6"></a></span><span 
+ id="x12-151006r6"></a></span><span 
 class="pcrr7t-">~/</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
@@ -1174,34 +1197,36 @@ class="pcrr7t-">/01/</span><span
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">err</span>
-   
+
+
    </div>
-<!--l. 4986--><p class="indent" >   How the stdout and stderr streams are directed into these files depends on the job submission method.
+<!--l. 5033--><p class="indent" >   How the stdout and stderr streams are directed into these files depends on the job submission method.
 The <span class="lstinline"><span 
 class="pcrr7t-">background</span></span> method just uses appropriate output redirection on the command line, as shown
 above. The <span class="lstinline"><span 
 class="pcrr7t-">loadleveler</span></span> method writes appropriate directives to the job script that is submitted to
 loadleveler.
-<!--l. 4992--><p class="indent" >   Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
+<!--l. 5039--><p class="indent" >   Cylc obviously has no control over the stdout and stderr output from tasks that do their own internal
 output management (e.g.&#x00A0;tasks that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred to here will be complete task job
 logs.
-<!--l. 4998--><p class="noindent" >
-<!--l. 4998--><p class="indent" >    <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
- id="x12-14900011.4"></a>Overriding The Job Submission Command </span></h4>
-<!--l. 5002--><p class="indent" >   To change the form of the actual command used to submit a job you do not need to define a new job submission
+<!--l. 5045--><p class="noindent" >
+<!--l. 5045--><p class="indent" >    <h4 id="11.4" class="subsectionHead"> <span class="titlemark"> <a href="#11.4"> 11.4</a>  <a 
+ id="x12-15200011.4"></a>Overriding The Job Submission Command </span></h4>
+<!--l. 5049--><p class="indent" >   To change the form of the actual command used to submit a job you do not need to define a new job submission
 method; just override the <span class="lstinline"><span 
 class="pcrr7t-">command</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">template</span></span> in the relevant job submission sections of your suite.rc file:
-<!--l. 5006-->
-   <div class="lstlisting" id="listing-184"><span class="label"><a 
- id="x12-149001r1"></a></span><span 
+<!--l. 5053--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-152001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-149002r2"></a></span><span 
+ id="x12-152002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1210,7 +1235,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">root</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-149003r3"></a></span><span 
+ id="x12-152003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1225,7 +1250,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">submission</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-149004r4"></a></span><span 
+ id="x12-152004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1244,7 +1269,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">loadleveler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-149005r5"></a></span><span 
+ id="x12-152005r5"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1273,7 +1298,7 @@ class="pcrro7t-">llsubmit</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">returning</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-149006r6"></a></span><span 
+ id="x12-152006r6"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -1301,7 +1326,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">completed</span><span 
 class="pcrro7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-149007r7"></a></span><span 
+ id="x12-152007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1329,39 +1354,40 @@ class="pcrr7t-">%(</span><span
 class="pcrr7t-">job</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span>
-   
+
+
    </div>
-<!--l. 5015--><p class="indent" >   As explained in&#x00A0;<a 
-href="cug-htmlse17.html#x18-217000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
-<!--l. 5018--><p class="noindent" >
-<!--l. 5018--><p class="indent" >    <h4 id="11.5" class="subsectionHead"> <span class="titlemark"> <a href="#11.5"> 11.5</a>  <a 
- id="x12-15000011.5"></a>Job Polling </span></h4>
-<!--l. 5020--><p class="indent" >   For supported job submission methods, one-way polling can be used to determine actual job status: the suite
+<!--l. 5062--><p class="indent" >   As explained in&#x00A0;<a 
+href="cug-htmlse17.html#x18-220000A">A<!--tex4ht:ref: SuiteRCReference --></a> the template&#8217;s %(job)s will be substituted by the job file path.
+<!--l. 5065--><p class="noindent" >
+<!--l. 5065--><p class="indent" >    <h4 id="11.5" class="subsectionHead"> <span class="titlemark"> <a href="#11.5"> 11.5</a>  <a 
+ id="x12-15300011.5"></a>Job Polling </span></h4>
+<!--l. 5067--><p class="indent" >   For supported job submission methods, one-way polling can be used to determine actual job status: the suite
 daemon executes a process on the task host, by passwordless ssh, to interrogate the batch queueing
 system there, and to read a <span 
 class="cmti-10">status file </span>that is automatically generated by the task job script as it
 runs.
-<!--l. 5026--><p class="indent" >   Polling may be required to update the suite state correctly after unusual events such as a machine being
+<!--l. 5073--><p class="indent" >   Polling may be required to update the suite state correctly after unusual events such as a machine being
 rebooted with tasks running on it, or network problems that prevent task messages from getting back to the suite
 host.
-<!--l. 5030--><p class="indent" >   Tasks can be polled on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
+<!--l. 5077--><p class="indent" >   Tasks can be polled on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> command.
-<!--l. 5033--><p class="indent" >   Tasks are polled automatically, once, if they timeout during job submission or execution (see&#x00A0;<a 
-href="cug-htmlse17.html#x18-299000A.4.1.20">A.4.1.20<!--tex4ht:ref: TaskEventHandling --></a> for how to
+<!--l. 5080--><p class="indent" >   Tasks are polled automatically, once, if they timeout during job submission or execution (see&#x00A0;<a 
+href="cug-htmlse17.html#x18-304000A.4.1.21">A.4.1.21<!--tex4ht:ref: TaskEventHandling --></a> for how to
 configure timeouts).
-<!--l. 5036--><p class="indent" >   Any tasks recorded in the <span 
+<!--l. 5083--><p class="indent" >   Any tasks recorded in the <span 
 class="cmti-10">submitted </span>or <span 
 class="cmti-10">running </span>states at suite restart are automatically polled to determine what
 happened to them while the suite was down.
-<!--l. 5040--><p class="indent" >   Regular polling can also be configured as a health check on tasks submitted to hosts that are known to be flaky,
+<!--l. 5087--><p class="indent" >   Regular polling can also be configured as a health check on tasks submitted to hosts that are known to be flaky,
 or as the sole method of determining task status on hosts that do not allow task messages to be routed back to the
 suite host.
                                                                                          
 
                                                                                          
-<!--l. 5045--><p class="indent" >   To use polling instead of task-to-suite messaging set <span class="lstinline"><span 
+<!--l. 5092--><p class="indent" >   To use polling instead of task-to-suite messaging set <span class="lstinline"><span 
 class="pcrr7t-">task</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">communication</span><span 
@@ -1372,38 +1398,38 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> in cylc site and
 user global config (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-375000B.8.1.3">B.8.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-342000B.1.8">B.1.8<!--tex4ht:ref: submission_polling --></a>
+href="cug-htmlse18.html#x19-380000B.8.1.3">B.8.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
+href="cug-htmlse18.html#x19-347000B.1.8">B.1.8<!--tex4ht:ref: submission_polling --></a>
 and&#x00A0;<a 
-href="cug-htmlse18.html#x19-341000B.1.7">B.1.7<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
+href="cug-htmlse18.html#x19-346000B.1.7">B.1.7<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
 method configured for the host; see&#x00A0;<a 
-href="cug-htmlse17.html#x18-279000A.4.1.10">A.4.1.10<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
-href="cug-htmlse17.html#x18-280000A.4.1.11">A.4.1.11<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
-<!--l. 5054--><p class="indent" >   Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
+href="cug-htmlse17.html#x18-284000A.4.1.11">A.4.1.11<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
+href="cug-htmlse17.html#x18-285000A.4.1.12">A.4.1.12<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
+<!--l. 5101--><p class="indent" >   Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
 sparingly in large suites.
-<!--l. 5057--><p class="noindent" >
-<!--l. 5057--><p class="indent" >    <h4 id="11.6" class="subsectionHead"> <span class="titlemark"> <a href="#11.6"> 11.6</a>  <a 
- id="x12-15100011.6"></a>Job Killing </span></h4>
-<!--l. 5059--><p class="indent" >   For supported job submission methods, the suite daemon can execute a process on the task host, by passwordless
+<!--l. 5104--><p class="noindent" >
+<!--l. 5104--><p class="indent" >    <h4 id="11.6" class="subsectionHead"> <span class="titlemark"> <a href="#11.6"> 11.6</a>  <a 
+ id="x12-15400011.6"></a>Job Killing </span></h4>
+<!--l. 5106--><p class="indent" >   For supported job submission methods, the suite daemon can execute a process on the task host, by passwordless
 ssh, to kill a submitted or running job according to its job submission method.
-<!--l. 5063--><p class="indent" >   Tasks can be killed on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
+<!--l. 5110--><p class="indent" >   Tasks can be killed on demand by right-clicking on them in gcylc or using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">kill</span></span> command.
-<!--l. 5066--><p class="noindent" >
-<!--l. 5066--><p class="indent" >    <h4 id="11.7" class="subsectionHead"> <span class="titlemark"> <a href="#11.7"> 11.7</a>  <a 
- id="x12-15200011.7"></a>Defining New Job Submission Methods </span></h4>
-<!--l. 5069--><p class="indent" >   Defining a new handler for a new job submission method requires a little Python programming. You can derive
+<!--l. 5113--><p class="noindent" >
+<!--l. 5113--><p class="indent" >    <h4 id="11.7" class="subsectionHead"> <span class="titlemark"> <a href="#11.7"> 11.7</a>  <a 
+ id="x12-15500011.7"></a>Defining New Job Submission Methods </span></h4>
+<!--l. 5116--><p class="indent" >   Defining a new handler for a new job submission method requires a little Python programming. You can derive
 (in the sense of object oriented programming inheritance) new classes from one of the existing ones, or
 simply write a new one using the existing ones as examples. Full reference can be found in the header
 <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">batch_sys_manager</span></span> module.
-<!--l. 5076--><p class="noindent" >
-<!--l. 5076--><p class="indent" >    <h4 id="11.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.1"> 11.7.1</a>  <a 
- id="x12-15300011.7.1"></a>An Example </span></h4>
-<!--l. 5078--><p class="indent" >   The following user-defined job submission class, called <span 
+<!--l. 5123--><p class="noindent" >
+<!--l. 5123--><p class="indent" >    <h4 id="11.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.1"> 11.7.1</a>  <a 
+ id="x12-15600011.7.1"></a>An Example </span></h4>
+<!--l. 5125--><p class="indent" >   The following user-defined job submission class, called <span 
 class="cmti-10">qsub</span>, overrides the built-in <span 
 class="cmti-10">pbs </span>class to change the
 directive prefix from <span class="lstinline"><span 
@@ -1411,9 +1437,10 @@ class="pcrro7t-">#</span><span
 class="pcrro7t-">PBS</span></span> to <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">QSUB</span></span>:
-   <!--l. 5082-->
-   <div class="lstlisting" id="listing-185"><span class="label"><a 
- id="x12-153001r1"></a></span><span 
+   <!--l. 5129--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-156001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">usr</span><span 
@@ -1424,9 +1451,9 @@ class="pcrro7t-">env</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">python</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153002r2"></a></span><span 
+ id="x12-156002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153003r3"></a></span><span 
+ id="x12-156003r3"></a></span><span 
 class="pcrb7t-">from</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -1439,11 +1466,11 @@ class="pcrb7t-">import</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">PBSHandler</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153004r4"></a></span><span 
+ id="x12-156004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153005r5"></a></span><span 
+ id="x12-156005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153006r6"></a></span><span 
+ id="x12-156006r6"></a></span><span 
 class="pcrb7t-">class</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">QSUBHandler</span><span 
@@ -1451,27 +1478,31 @@ class="pcrr7t-">(</span><span
 class="pcrr7t-">PBSHandler</span><span 
 class="pcrr7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153007r7"></a></span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">"""</span><span 
-class="pcrro7t-">A</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">user</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">defined</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">batch</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">system</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">handler</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">"""</span><span 
+ id="x12-156007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">A</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">user</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">defined</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">batch</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">system</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">handler</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
+class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153008r8"></a></span><span 
+ id="x12-156008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1486,33 +1517,35 @@ class="pcrr7t-">QSUB</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153009r9"></a></span><span 
+ id="x12-156009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153010r10"></a></span><span 
+ id="x12-156010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153011r11"></a></span><span 
+ id="x12-156011r11"></a></span><span 
 class="pcrr7t-">BATCH_SYSTEM_HANDLER</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">QSUBHandler</span><span 
 class="pcrr7t-">()</span>
-   
+
+
    </div>
-<!--l. 5096--><p class="indent" >   To check that this works correctly save the new source file to <span class="lstinline"><span 
+<!--l. 5143--><p class="indent" >   To check that this works correctly save the new source file to <span class="lstinline"><span 
 class="pcrr7t-">qsub</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span></span> in one of the allowed locations (see just
-below), use it in a suite definition:  <!--l. 5100-->
-   <div class="lstlisting" id="listing-186"><span class="label"><a 
- id="x12-153012r1"></a></span><span 
+below), use it in a suite definition:  <!--l. 5147--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-156012r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">SUITE</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrro7t-">rc</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153013r2"></a></span><span 
+ id="x12-156013r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro8c-">$</span><span 
@@ -1524,12 +1557,12 @@ class="pcrro7t-">suite</span><span
 class="pcrro7t-">.</span><span 
 class="pcrro7t-">rc</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153014r3"></a></span><span 
+ id="x12-156014r3"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153015r4"></a></span><span 
+ id="x12-156015r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1538,7 +1571,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153016r5"></a></span><span 
+ id="x12-156016r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1555,12 +1588,12 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">a</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153017r6"></a></span><span 
+ id="x12-156017r6"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153018r7"></a></span><span 
+ id="x12-156018r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1569,7 +1602,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">root</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153019r8"></a></span><span 
+ id="x12-156019r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1584,7 +1617,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">submission</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153020r9"></a></span><span 
+ id="x12-156020r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1603,7 +1636,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">qsub</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153021r10"></a></span><span 
+ id="x12-156021r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1616,7 +1649,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">directives</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153022r11"></a></span><span 
+ id="x12-156022r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1638,7 +1671,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153023r12"></a></span><span 
+ id="x12-156023r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1660,7 +1693,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">00:01:00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153024r13"></a></span><span 
+ id="x12-156024r13"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1680,7 +1713,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">long</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153025r14"></a></span><span 
+ id="x12-156025r14"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1697,11 +1730,13 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">V</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span>
-   
+
+
    </div>
-<!--l. 5116--><p class="indent" >   and generate a job script to see the resulting directives:  <!--l. 5118-->
-   <div class="lstlisting" id="listing-187"><span class="label"><a 
- id="x12-153026r1"></a></span><span 
+<!--l. 5163--><p class="indent" >   and generate a job script to see the resulting directives:  <!--l. 5165--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x12-156026r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1718,7 +1753,7 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">test</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153027r2"></a></span><span 
+ id="x12-156027r2"></a></span><span 
 class="pcrr7t-">shell</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1736,7 +1771,7 @@ class="pcrr7t-">grep</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153028r3"></a></span><span 
+ id="x12-156028r3"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1766,7 +1801,7 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">err</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153029r4"></a></span><span 
+ id="x12-156029r4"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1776,7 +1811,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">nodes</span><span 
 class="pcrr7t-">=1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153030r5"></a></span><span 
+ id="x12-156030r5"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1786,7 +1821,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">walltime</span><span 
 class="pcrr7t-">=00:01:00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153031r6"></a></span><span 
+ id="x12-156031r6"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1816,7 +1851,7 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">out</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153032r7"></a></span><span 
+ id="x12-156032r7"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1826,7 +1861,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">a</span><span 
 class="pcrr7t-">.1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153033r8"></a></span><span 
+ id="x12-156033r8"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1835,18 +1870,19 @@ class="pcrr7t-">q</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">long</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x12-153034r9"></a></span><span 
+ id="x12-156034r9"></a></span><span 
 class="pcrr7t-">#</span><span 
 class="pcrr7t-">QSUB</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">V</span>
-   
+
+
    </div>
-<!--l. 5130--><p class="noindent" >
-<!--l. 5130--><p class="indent" >    <h4 id="11.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.2"> 11.7.2</a>  <a 
- id="x12-15400011.7.2"></a>Where To Put New Job Submission Modules </span></h4>
-<!--l. 5132--><p class="indent" >   You new job submission class code should be saved to a file with the same name as the class (plus &#8220;.py&#8221;
+<!--l. 5177--><p class="noindent" >
+<!--l. 5177--><p class="indent" >    <h4 id="11.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#11.7.2"> 11.7.2</a>  <a 
+ id="x12-15700011.7.2"></a>Where To Put New Job Submission Modules </span></h4>
+<!--l. 5179--><p class="indent" >   You new job submission class code should be saved to a file with the same name as the class (plus &#8220;.py&#8221;
 extension). It can reside in any of the following locations, depending on how generally useful the new method is and
 whether or not you have write-access to the cylc source tree:
                                                                                          
@@ -1865,18 +1901,18 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">job_sys_handlers</span></span> directory of the cylc source tree.</li></ul>
-<!--l. 5145--><p class="noindent" >Note that the form of the import statement at the top of the new user-defined Python module differs depending on
+<!--l. 5192--><p class="noindent" >Note that the form of the import statement at the top of the new user-defined Python module differs depending on
 whether or not the file is installed in the cylc source tree (see the comment at the top of the example file
 above).
                                                                                          
 
                                                                                          
-   <!--l. 5154--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5201--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse12.html" >next</a>] [<a 
 href="cug-htmlse10.html" >prev</a>] [<a 
 href="cug-htmlse10.html#tailcug-htmlse10.html" >prev-tail</a>] [<a 
 href="cug-htmlse11.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse11.html" >up</a>] </p></div>
-<!--l. 5154--><p class="indent" >   <a 
+<!--l. 5201--><p class="indent" >   <a 
  id="tailcug-htmlse11.html"></a>    
 </body></html> 

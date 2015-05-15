@@ -7,35 +7,35 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-04-09 11:22:00"> 
+<meta name="date" content="2015-05-15 11:47:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 6926--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 6975--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse27.html" >next</a>] [<a 
 href="cug-htmlse25.html" >prev</a>] [<a 
 href="cug-htmlse25.html#tailcug-htmlse25.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse26.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse26.html" >up</a>] </p></div>
-<!--l. 6926--><p class="indent" >    <h3 id="J" class="sectionHead"><span class="titlemark"> <a href="#J">J</a>  <a 
- id="x27-495000J"></a>Cylc 6 Migration Reference </span></h3> <div class="sectionTOCS">
+<!--l. 6975--><p class="indent" >    <h3 id="J" class="sectionHead"><span class="titlemark"> <a href="#J">J</a>  <a 
+ id="x27-507000J"></a>Cylc 6 Migration Reference </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >J.1 <a 
-href="#x27-496000J.1">Timeouts and Delays</a></span>
+href="#x27-508000J.1">Timeouts and Delays</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.2 <a 
-href="#x27-497000J.2">Runahead Limit</a></span>
+href="#x27-509000J.2">Runahead Limit</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.3 <a 
-href="#x27-498000J.3">Cycle Time/Cycle Point</a></span>
+href="#x27-510000J.3">Cycle Time/Cycle Point</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.4 <a 
-href="#x27-499000J.4">Cycling</a></span>
+href="#x27-511000J.4">Cycling</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.5 <a 
-href="#x27-500000J.5">No Implicit Creation of Tasks by Offset Triggers</a></span>
+href="#x27-512000J.5">No Implicit Creation of Tasks by Offset Triggers</a></span>
    </div>
-<!--l. 6929--><p class="indent" >   Cylc 6 introduced new date-time-related syntax for the suite.rc file. In some places, this is quite radically
+<!--l. 6978--><p class="indent" >   Cylc 6 introduced new date-time-related syntax for the suite.rc file. In some places, this is quite radically
 different from the earlier syntax.
-<!--l. 6932--><p class="noindent" >
-<!--l. 6932--><p class="indent" >    <h4 id="J.1" class="subsectionHead"> <span class="titlemark"> <a href="#J.1"> J.1</a>  <a 
- id="x27-496000J.1"></a>Timeouts and Delays </span></h4>
-<!--l. 6935--><p class="indent" >   Timeouts and delays such as <span class="lstinline"><span 
+<!--l. 6981--><p class="noindent" >
+<!--l. 6981--><p class="indent" >    <h4 id="J.1" class="subsectionHead"> <span class="titlemark"> <a href="#J.1"> J.1</a>  <a 
+ id="x27-508000J.1"></a>Timeouts and Delays </span></h4>
+<!--l. 6984--><p class="indent" >   Timeouts and delays such as <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">][[</span><span 
@@ -54,10 +54,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">delays</span></span>
 were written in a purely numeric form before cylc 6, in seconds, minutes (most common), or hours, depending on the
 setting.
-<!--l. 6940--><p class="indent" >   They are now written in an ISO 8601 duration form, which has the benefit that the units are user-selectable (use
+<!--l. 6989--><p class="indent" >   They are now written in an ISO 8601 duration form, which has the benefit that the units are user-selectable (use
 1 day instead of 1440 minutes) and explicit.
-<!--l. 6944--><p class="indent" >   Nearly all timeouts and delays in cylc were in minutes, except for:<br 
-class="newline" /><span class="lstinline"><span 
+<!--l. 6993--><p class="indent" >   Nearly all timeouts and delays in cylc were in minutes, except for:
+<br class="newline" /><span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">][[</span><span 
@@ -69,8 +69,8 @@ class="pcrr7t-">state</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">polling</span><span 
 class="pcrr7t-">]]]</span><span 
-class="pcrr7t-">interval</span></span> <br 
-class="newline" /><span class="lstinline"><span 
+class="pcrr7t-">interval</span></span>
+<br class="newline" /><span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">][[</span><span 
@@ -84,46 +84,47 @@ class="pcrr7t-">run</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">range</span></span> <br 
-class="newline" />which were in seconds, and<br 
-class="newline" /><span class="lstinline"><span 
+class="pcrr7t-">range</span></span>
+<br class="newline" />which were in seconds, and
+<br class="newline" /><span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">runahead</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">limit</span></span><br 
-class="newline" />which was in hours (this is a special case discussed below in&#x00A0;<a 
-href="#x27-497000J.2">J.2<!--tex4ht:ref: cylc-6-migration-runahead-limit --></a>).
-<!--l. 6952--><p class="indent" >   See Table <a 
-href="#x27-4960011">1<!--tex4ht:ref: cylc-6-migration-timeout-delays-table --></a>.
+class="pcrr7t-">limit</span></span>
+<br class="newline" />which was in hours (this is a special case discussed below in&#x00A0;<a 
+href="#x27-509000J.2">J.2<!--tex4ht:ref: cylc-6-migration-runahead-limit --></a>).
+<!--l. 7001--><p class="indent" >   See Table <a 
+href="#x27-5080011">1<!--tex4ht:ref: cylc-6-migration-timeout-delays-table --></a>.
    <div class="table">
                                                                                          
 
                                                                                          
-<!--l. 6954--><p class="indent" >   <a 
- id="x27-4960011"></a><hr class="float"><div class="float" 
+<!--l. 7003--><p class="indent" >   <a 
+ id="x27-5080011"></a><hr class="float"><div class="float" 
+><table class="float"><tr class="float"><td class="float" 
 >
                                                                                          
 
                                                                                          
- <div class="caption" 
-><span class="id">Table&#x00A0;1: </span><span  
-class="content">Timeout/Delay Syntax Change Examples</span></div><!--tex4ht:label?: x27-4960011 -->
-<div class="tabular"> <table id="TBL-2" class="tabular" 
+ <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Table&#x00A0;1: </td><td  
+class="content">Timeout/Delay Syntax Change Examples</td></tr></table><!--tex4ht:label?: x27-5080011 -->
+<div class="tabular"><table class="tabular" 
 cellspacing="0" cellpadding="0"  
 ><colgroup id="TBL-2-1g"><col 
 id="TBL-2-1"><col 
 id="TBL-2-2"><col 
 id="TBL-2-3"></colgroup><tr  
  style="vertical-align:baseline;" id="TBL-2-1-"><td  style="white-space:nowrap; text-align:left;" id="TBL-2-1-1"  
-class="td11">Setting                                                                                     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-1-2"  
+class="td11">Setting                                                                                      </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-1-2"  
 class="td11">Pre-Cylc-6</td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-1-3"  
-class="td11">    Cylc-6+      </td>
+class="td11">      Cylc-6+      </td>
 </tr><tr 
 class="hline"><td><hr></td><td><hr></td><td><hr></td></tr><tr  
  style="vertical-align:baseline;" id="TBL-2-2-"><td  style="white-space:nowrap; text-align:left;" id="TBL-2-2-1"  
-class="td11"><span class="lstinline"><!--l. 6960--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7009--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">][[</span><span 
@@ -136,7 +137,7 @@ class="td11"> 180 </td><td  style="white-space:nowrap; text-align:center;" id="T
 class="td11"> PT3H </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-2-3-"><td  style="white-space:nowrap; text-align:left;" id="TBL-2-3-1"  
-class="td11"><span class="lstinline"><!--l. 6961--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7010--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">][[</span><span 
@@ -149,12 +150,12 @@ class="td11">2*30, 360,</td><td  style="white-space:nowrap; text-align:center;" 
 class="td11">2*PT30M, PT6H,</td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-2-4-"><td  style="white-space:nowrap; text-align:left;" id="TBL-2-4-1"  
-class="td11">                                                     </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-4-2"  
-class="td11">  1440    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-4-3"  
-class="td11">     P1D         </td>
+class="td11">                                                                                               </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-4-2"  
+class="td11">    1440    </td><td  style="white-space:nowrap; text-align:center;" id="TBL-2-4-3"  
+class="td11">         P1D         </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-2-5-"><td  style="white-space:nowrap; text-align:left;" id="TBL-2-5-1"  
-class="td11"><span class="lstinline"><!--l. 6963--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7012--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">][[</span><span 
@@ -171,17 +172,18 @@ class="td11"> 2 </td><td  style="white-space:nowrap; text-align:center;" id="TBL
 class="td11"> PT2S </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-2-6-"><td  style="white-space:nowrap; text-align:left;" id="TBL-2-6-1"  
-class="td11">                                                     </td></tr></table></div>
+class="td11">                                                                                               </td>
+</tr></table></div>
                                                                                          
 
                                                                                          
-   </div><hr class="endfloat" />
+   </td></tr></table></div><hr class="endfloat" />
    </div>
-<!--l. 6968--><p class="indent" >    <h4 id="J.2" class="subsectionHead"> <span class="titlemark"> <a href="#J.2"> J.2</a>  <a 
- id="x27-497000J.2"></a>Runahead Limit </span></h4>
-<!--l. 6971--><p class="indent" >   See&#x00A0;<a 
-href="cug-htmlse17.html#x18-251000A.3.6">A.3.6<!--tex4ht:ref: runahead limit --></a>.
-<!--l. 6973--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 7017--><p class="indent" >    <h4 id="J.2" class="subsectionHead"> <span class="titlemark"> <a href="#J.2"> J.2</a>  <a 
+ id="x27-509000J.2"></a>Runahead Limit </span></h4>
+<!--l. 7020--><p class="indent" >   See&#x00A0;<a 
+href="cug-htmlse17.html#x18-255000A.3.6">A.3.6<!--tex4ht:ref: runahead limit --></a>.
+<!--l. 7022--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
@@ -205,7 +207,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">limit</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">PT36H</span></span>.
-<!--l. 6978--><p class="indent" >   There is a new preferred alternative to <span class="lstinline"><span 
+<!--l. 7027--><p class="indent" >   There is a new preferred alternative to <span class="lstinline"><span 
 class="pcrr7t-">runahead</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">limit</span></span>, <span class="lstinline"><span 
@@ -221,39 +223,40 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">points</span></span>.
 This allows the user to configure how many cycle points can run at once (default <span class="lstinline"><span 
 class="pcrr7t-">3</span></span>). See <a 
-href="cug-htmlse17.html#x18-252000A.3.7">A.3.7<!--tex4ht:ref: max active cycle points --></a>.
-<!--l. 6983--><p class="noindent" >
-<!--l. 6983--><p class="indent" >    <h4 id="J.3" class="subsectionHead"> <span class="titlemark"> <a href="#J.3"> J.3</a>  <a 
- id="x27-498000J.3"></a>Cycle Time/Cycle Point </span></h4>
-<!--l. 6986--><p class="indent" >   See&#x00A0;<a 
-href="cug-htmlse17.html#x18-247000A.3.2">A.3.2<!--tex4ht:ref: initial cycle point --></a>.
-<!--l. 6988--><p class="indent" >   The following suite.rc settings have changed name (Table <a 
-href="#x27-4980012">2<!--tex4ht:ref: cylc-6-migration-cycle-point-time-table --></a>):
+href="cug-htmlse17.html#x18-256000A.3.7">A.3.7<!--tex4ht:ref: max active cycle points --></a>.
+<!--l. 7032--><p class="noindent" >
+<!--l. 7032--><p class="indent" >    <h4 id="J.3" class="subsectionHead"> <span class="titlemark"> <a href="#J.3"> J.3</a>  <a 
+ id="x27-510000J.3"></a>Cycle Time/Cycle Point </span></h4>
+<!--l. 7035--><p class="indent" >   See&#x00A0;<a 
+href="cug-htmlse17.html#x18-251000A.3.2">A.3.2<!--tex4ht:ref: initial cycle point --></a>.
+<!--l. 7037--><p class="indent" >   The following suite.rc settings have changed name (Table <a 
+href="#x27-5100012">2<!--tex4ht:ref: cylc-6-migration-cycle-point-time-table --></a>):
    <div class="table">
                                                                                          
 
                                                                                          
-<!--l. 6991--><p class="indent" >   <a 
- id="x27-4980012"></a><hr class="float"><div class="float" 
+<!--l. 7040--><p class="indent" >   <a 
+ id="x27-5100012"></a><hr class="float"><div class="float" 
+><table class="float"><tr class="float"><td class="float" 
 >
                                                                                          
 
                                                                                          
- <div class="caption" 
-><span class="id">Table&#x00A0;2: </span><span  
-class="content">Cycle Point Renaming</span></div><!--tex4ht:label?: x27-4980012 -->
-<div class="tabular"> <table id="TBL-3" class="tabular" 
+ <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Table&#x00A0;2: </td><td  
+class="content">Cycle Point Renaming</td></tr></table><!--tex4ht:label?: x27-5100012 -->
+<div class="tabular"><table class="tabular" 
 cellspacing="0" cellpadding="0"  
 ><colgroup id="TBL-3-1g"><col 
 id="TBL-3-1"><col 
 id="TBL-3-2"></colgroup><tr  
  style="vertical-align:baseline;" id="TBL-3-1-"><td  style="white-space:nowrap; text-align:left;" id="TBL-3-1-1"  
-class="td11">Pre-Cylc-6                                            </td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-1-2"  
+class="td11">Pre-Cylc-6                                             </td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-1-2"  
 class="td11">Cylc-6+                                                  </td>
 </tr><tr 
 class="hline"><td><hr></td><td><hr></td></tr><tr  
  style="vertical-align:baseline;" id="TBL-3-2-"><td  style="white-space:nowrap; text-align:left;" id="TBL-3-2-1"  
-class="td11"><span class="lstinline"><!--l. 6997--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7046--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
@@ -262,18 +265,18 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">cycle</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span>                                                 </span> </td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-2-2"  
-class="td11"><span class="lstinline"><!--l. 6997--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">scheduling</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">initial</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycle</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+class="td11"><span class="lstinline"><!--l. 7046--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">scheduling</span> <span 
+class="pcrr7t-">]</span> <span 
+class="pcrr7t-">initial</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
+class="pcrr7t-">cycle</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
 class="pcrr7t-">point</span>                                     </span> </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-3-3-"><td  style="white-space:nowrap; text-align:left;" id="TBL-3-3-1"  
-class="td11"><span class="lstinline"><!--l. 6998--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7047--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
@@ -282,18 +285,18 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">cycle</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span>                                                   </span> </td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-3-2"  
-class="td11"><span class="lstinline"><!--l. 6998--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">scheduling</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">final</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycle</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+class="td11"><span class="lstinline"><!--l. 7047--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">scheduling</span> <span 
+class="pcrr7t-">]</span> <span 
+class="pcrr7t-">final</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
+class="pcrr7t-">cycle</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
 class="pcrr7t-">point</span>                                     </span> </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-3-4-"><td  style="white-space:nowrap; text-align:left;" id="TBL-3-4-1"  
-class="td11"><span class="lstinline"><!--l. 6999--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7048--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">visualization</span><span 
 class="pcrr7t-">]</span><span 
@@ -302,18 +305,18 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">cycle</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span>                                              </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-4-2"  
-class="td11"><span class="lstinline"><!--l. 6999--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">visualization</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">initial</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycle</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+class="td11"><span class="lstinline"><!--l. 7048--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">visualization</span> <span 
+class="pcrr7t-">]</span> <span 
+class="pcrr7t-">initial</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
+class="pcrr7t-">cycle</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
 class="pcrr7t-">point</span>                                     </span></td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-3-5-"><td  style="white-space:nowrap; text-align:left;" id="TBL-3-5-1"  
-class="td11"><span class="lstinline"><!--l. 7000--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7049--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">visualization</span><span 
 class="pcrr7t-">]</span><span 
@@ -322,26 +325,27 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">cycle</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">time</span>                                                </span> </td><td  style="white-space:nowrap; text-align:left;" id="TBL-3-5-2"  
-class="td11"><span class="lstinline"><!--l. 7000--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">visualization</span><span 
-class="pcrr7t-">]</span><span 
-class="pcrr7t-">final</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">cycle</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
+class="td11"><span class="lstinline"><!--l. 7049--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">visualization</span> <span 
+class="pcrr7t-">]</span> <span 
+class="pcrr7t-">final</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
+class="pcrr7t-">cycle</span> <span 
+class="pcrr7t-">&#x00A0;</span> <span 
 class="pcrr7t-">point</span>                                     </span> </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-3-6-"><td  style="white-space:nowrap; text-align:left;" id="TBL-3-6-1"  
-class="td11">                                 </td></tr></table></div>
+class="td11">                                                           </td>
+</tr></table></div>
                                                                                          
 
                                                                                          
-   </div><hr class="endfloat" />
+   </td></tr></table></div><hr class="endfloat" />
    </div>
-<!--l. 7005--><p class="indent" >   This change is to reflect the fact that cycling in cylc 6+ can now be over e.g. integers instead of being purely
+<!--l. 7054--><p class="indent" >   This change is to reflect the fact that cycling in cylc 6+ can now be over e.g. integers instead of being purely
 based on date-time.
-<!--l. 7008--><p class="indent" >   Date-times written in <span class="lstinline"><span 
+<!--l. 7057--><p class="indent" >   Date-times written in <span class="lstinline"><span 
 class="pcrr7t-">initial</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">cycle</span><span 
@@ -355,36 +359,37 @@ class="pcrr7t-">time</span></span> were in a cylc-specific 10-digit (or
 less) <span class="lstinline"><span 
 class="pcrr7t-">CCYYMMDDhh</span></span> format, such as <span class="lstinline"><span 
 class="pcrr7t-">2014021400</span></span> for 00:00 on the 14th of February 2014.
-<!--l. 7013--><p class="indent" >   Date-times are now required to be ISO 8601 compatible. This can be achieved easily enough by inserting a <span class="lstinline"><span 
+<!--l. 7062--><p class="indent" >   Date-times are now required to be ISO 8601 compatible. This can be achieved easily enough by inserting a <span class="lstinline"><span 
 class="pcrr7t-">T</span></span>
 between the day and the hour digits.
    <div class="table">
                                                                                          
 
                                                                                          
-<!--l. 7017--><p class="indent" >   <a 
- id="x27-4980023"></a><hr class="float"><div class="float" 
+<!--l. 7066--><p class="indent" >   <a 
+ id="x27-5100023"></a><hr class="float"><div class="float" 
+><table class="float"><tr class="float"><td class="float" 
 >
                                                                                          
 
                                                                                          
- <div class="caption" 
-><span class="id">Table&#x00A0;3: </span><span  
-class="content">Cycle Point Syntax Example</span></div><!--tex4ht:label?: x27-4980023 -->
-<div class="tabular"> <table id="TBL-4" class="tabular" 
+ <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Table&#x00A0;3: </td><td  
+class="content">Cycle Point Syntax Example</td></tr></table><!--tex4ht:label?: x27-5100023 -->
+<div class="tabular"><table class="tabular" 
 cellspacing="0" cellpadding="0"  
 ><colgroup id="TBL-4-1g"><col 
 id="TBL-4-1"><col 
 id="TBL-4-2"><col 
 id="TBL-4-3"></colgroup><tr  
  style="vertical-align:baseline;" id="TBL-4-1-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-1-1"  
-class="td11">Setting                                            </td><td  style="white-space:nowrap; text-align:center;" id="TBL-4-1-2"  
+class="td11">Setting                                             </td><td  style="white-space:nowrap; text-align:center;" id="TBL-4-1-2"  
 class="td11"> Pre-Cylc-6 </td><td  style="white-space:nowrap; text-align:center;" id="TBL-4-1-3"  
-class="td11">  Cylc-6+   </td>
+class="td11">   Cylc-6+   </td>
 </tr><tr 
 class="hline"><td><hr></td><td><hr></td><td><hr></td></tr><tr  
  style="vertical-align:baseline;" id="TBL-4-2-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-2-1"  
-class="td11"><span class="lstinline"><!--l. 7023--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7072--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
@@ -397,40 +402,42 @@ class="td11">2014021400</td><td  style="white-space:nowrap; text-align:center;" 
 class="td11">20140214T00</td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-4-3-"><td  style="white-space:nowrap; text-align:left;" id="TBL-4-3-1"  
-class="td11">                              </td></tr></table></div>
+class="td11">                                                      </td>
+</tr></table></div>
                                                                                          
 
                                                                                          
-   </div><hr class="endfloat" />
+   </td></tr></table></div><hr class="endfloat" />
    </div>
-<!--l. 7028--><p class="indent" >    <h4 id="J.4" class="subsectionHead"> <span class="titlemark"> <a href="#J.4"> J.4</a>  <a 
- id="x27-499000J.4"></a>Cycling </span></h4>
-<!--l. 7031--><p class="indent" >   <span 
+<!--l. 7077--><p class="indent" >    <h4 id="J.4" class="subsectionHead"> <span class="titlemark"> <a href="#J.4"> J.4</a>  <a 
+ id="x27-511000J.4"></a>Cycling </span></h4>
+<!--l. 7080--><p class="indent" >   <span 
 class="cmti-10">Start-up tasks </span>have been removed from cylc 6, and use of cold-start tasks is no longer recommended. Instead, you
 should use the initial/repeat-once notation as detailed in&#x00A0;<a 
-href="cug-htmlse7.html#x8-550007.23.2">7.23.2<!--tex4ht:ref: initial-non-repeating-r1-tasks --></a> and&#x00A0;<a 
-href="cug-htmlse9.html#x10-840009.3.3.2.3">9.3.3.2.3<!--tex4ht:ref: AdvancedStartingUp --></a>.
-<!--l. 7036--><p class="indent" >   <span 
+href="cug-htmlse7.html#x8-570007.23.2">7.23.2<!--tex4ht:ref: initial-non-repeating-r1-tasks --></a> and&#x00A0;<a 
+href="cug-htmlse9.html#x10-860009.3.3.2.3">9.3.3.2.3<!--tex4ht:ref: AdvancedStartingUp --></a>.
+<!--l. 7085--><p class="indent" >   <span 
 class="cmti-10">Repeating asynchronous tasks </span>have also been removed because non date-time workflows can now be handled
 more easily with integer cycling. See for instance the satellite data processing example documented
 in&#x00A0;<a 
-href="cug-htmlse9.html#x10-850009.3.3.2.4">9.3.3.2.4<!--tex4ht:ref: IntegerCycling --></a>.
-<!--l. 7040--><p class="indent" >   For repeating tasks with hour-based cycling the syntax has only minor changes:
-<!--l. 7042--><p class="indent" >   Pre-cylc-6:  <!--l. 7044-->
-   <div class="lstlisting" id="listing-243"><span class="label"><a 
- id="x27-499001r1"></a></span><span 
+href="cug-htmlse9.html#x10-870009.3.3.2.4">9.3.3.2.4<!--tex4ht:ref: IntegerCycling --></a>.
+<!--l. 7089--><p class="indent" >   For repeating tasks with hour-based cycling the syntax has only minor changes:
+<!--l. 7091--><p class="indent" >   Pre-cylc-6:  <!--l. 7093--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x27-511001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499002r2"></a></span><span 
+ id="x27-511002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">...</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499003r3"></a></span><span 
+ id="x27-511003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -439,7 +446,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499004r4"></a></span><span 
+ id="x27-511004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -452,7 +459,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">0,12</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499005r5"></a></span><span 
+ id="x27-511005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -486,23 +493,25 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">baz</span>
-   
+
+
    </div>
-   <!--l. 7054-->
-   <div class="lstlisting" id="listing-244"><span class="label"><a 
- id="x27-499006r1"></a></span><span 
+   <!--l. 7103--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x27-511006r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499007r2"></a></span><span 
+ id="x27-511007r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">...</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499008r3"></a></span><span 
+ id="x27-511008r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -511,7 +520,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499009r4"></a></span><span 
+ id="x27-511009r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -526,7 +535,7 @@ class="pcrr7t-">,</span><span
 class="pcrr7t-">T12</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-499010r5"></a></span><span 
+ id="x27-511010r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -560,187 +569,193 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">baz</span>
-   
+
+
    </div>
-<!--l. 7063--><p class="indent" >   Hour-based cycling section names are easy enough to convert, as seen in Table <a 
-href="#x27-4990114">4<!--tex4ht:ref: cylc-6-migration-cycling-hours-table --></a>.
+<!--l. 7112--><p class="indent" >   Hour-based cycling section names are easy enough to convert, as seen in Table <a 
+href="#x27-5110114">4<!--tex4ht:ref: cylc-6-migration-cycling-hours-table --></a>.
    <div class="table">
                                                                                          
 
                                                                                          
-<!--l. 7066--><p class="indent" >   <a 
- id="x27-4990114"></a><hr class="float"><div class="float" 
+<!--l. 7115--><p class="indent" >   <a 
+ id="x27-5110114"></a><hr class="float"><div class="float" 
+><table class="float"><tr class="float"><td class="float" 
 >
                                                                                          
 
                                                                                          
- <div class="caption" 
-><span class="id">Table&#x00A0;4: </span><span  
-class="content">Hourly Cycling Sections</span></div><!--tex4ht:label?: x27-4990114 -->
-<div class="tabular"> <table id="TBL-5" class="tabular" 
+ <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Table&#x00A0;4: </td><td  
+class="content">Hourly Cycling Sections</td></tr></table><!--tex4ht:label?: x27-5110114 -->
+<div class="tabular"><table class="tabular" 
 cellspacing="0" cellpadding="0"  
 ><colgroup id="TBL-5-1g"><col 
 id="TBL-5-1"><col 
 id="TBL-5-2"></colgroup><tr  
  style="vertical-align:baseline;" id="TBL-5-1-"><td  style="white-space:nowrap; text-align:left;" id="TBL-5-1-1"  
-class="td11">Pre-Cylc-6                                                  </td><td  style="white-space:nowrap; text-align:left;" id="TBL-5-1-2"  
+class="td11">Pre-Cylc-6                                                   </td><td  style="white-space:nowrap; text-align:left;" id="TBL-5-1-2"  
 class="td11">Cylc-6+                                                        </td>
 </tr><tr 
 class="hline"><td><hr></td><td><hr></td></tr><tr  
  style="vertical-align:baseline;" id="TBL-5-2-"><td  style="white-space:nowrap; text-align:left;" id="TBL-5-2-1"  
-class="td11"><span class="lstinline"><!--l. 7072--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7121--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">][[</span><span 
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]][[[0]]]</span>                                            </span> </td><td  style="white-space:nowrap; text-align:left;" id="TBL-5-2-2"  
-class="td11"><span class="lstinline"><!--l. 7072--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">scheduling</span><span 
-class="pcrr7t-">][[</span><span 
-class="pcrr7t-">dependencies</span><span 
-class="pcrr7t-">]][[[</span><span 
-class="pcrr7t-">T00</span><span 
+class="td11"><span class="lstinline"><!--l. 7121--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">scheduling</span> <span 
+class="pcrr7t-">][[</span> <span 
+class="pcrr7t-">dependencies</span> <span 
+class="pcrr7t-">]][[[</span> <span 
+class="pcrr7t-">T00</span> <span 
 class="pcrr7t-">]]]</span>                                        </span></td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-5-3-"><td  style="white-space:nowrap; text-align:left;" id="TBL-5-3-1"  
-class="td11"><span class="lstinline"><!--l. 7073--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7122--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">][[</span><span 
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]][[[6]]]</span>                                            </span> </td><td  style="white-space:nowrap; text-align:left;" id="TBL-5-3-2"  
-class="td11"><span class="lstinline"><!--l. 7073--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">scheduling</span><span 
-class="pcrr7t-">][[</span><span 
-class="pcrr7t-">dependencies</span><span 
-class="pcrr7t-">]][[[</span><span 
-class="pcrr7t-">T06</span><span 
+class="td11"><span class="lstinline"><!--l. 7122--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">scheduling</span> <span 
+class="pcrr7t-">][[</span> <span 
+class="pcrr7t-">dependencies</span> <span 
+class="pcrr7t-">]][[[</span> <span 
+class="pcrr7t-">T06</span> <span 
 class="pcrr7t-">]]]</span>                                        </span></td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-5-4-"><td  style="white-space:nowrap; text-align:left;" id="TBL-5-4-1"  
-class="td11"><span class="lstinline"><!--l. 7074--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7123--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">][[</span><span 
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]][[[12]]]</span>                                           </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-5-4-2"  
-class="td11"><span class="lstinline"><!--l. 7074--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">scheduling</span><span 
-class="pcrr7t-">][[</span><span 
-class="pcrr7t-">dependencies</span><span 
-class="pcrr7t-">]][[[</span><span 
-class="pcrr7t-">T12</span><span 
+class="td11"><span class="lstinline"><!--l. 7123--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">scheduling</span> <span 
+class="pcrr7t-">][[</span> <span 
+class="pcrr7t-">dependencies</span> <span 
+class="pcrr7t-">]][[[</span> <span 
+class="pcrr7t-">T12</span> <span 
 class="pcrr7t-">]]]</span>                                        </span></td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-5-5-"><td  style="white-space:nowrap; text-align:left;" id="TBL-5-5-1"  
-class="td11"><span class="lstinline"><!--l. 7075--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7124--><p class="noindent" ><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">][[</span><span 
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]][[[18]]]</span>                                           </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-5-5-2"  
-class="td11"><span class="lstinline"><!--l. 7075--><p class="noindent" ><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">scheduling</span><span 
-class="pcrr7t-">][[</span><span 
-class="pcrr7t-">dependencies</span><span 
-class="pcrr7t-">]][[[</span><span 
-class="pcrr7t-">T18</span><span 
+class="td11"><span class="lstinline"><!--l. 7124--><p class="noindent" ><span 
+class="pcrr7t-">[</span> <span 
+class="pcrr7t-">scheduling</span> <span 
+class="pcrr7t-">][[</span> <span 
+class="pcrr7t-">dependencies</span> <span 
+class="pcrr7t-">]][[[</span> <span 
+class="pcrr7t-">T18</span> <span 
 class="pcrr7t-">]]]</span>                                        </span></td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-5-6-"><td  style="white-space:nowrap; text-align:left;" id="TBL-5-6-1"  
-class="td11">                                    </td></tr></table></div>
+class="td11">                                                                 </td>
+</tr></table></div>
                                                                                          
 
                                                                                          
-   </div><hr class="endfloat" />
+   </td></tr></table></div><hr class="endfloat" />
    </div>
-<!--l. 7080--><p class="indent" >   The graph text in hour-based cycling is also easy to convert, as seen in Table <a 
-href="#x27-4990125">5<!--tex4ht:ref: cylc-6-migration-cycling-hours-offset-table --></a>.
+<!--l. 7129--><p class="indent" >   The graph text in hour-based cycling is also easy to convert, as seen in Table <a 
+href="#x27-5110125">5<!--tex4ht:ref: cylc-6-migration-cycling-hours-offset-table --></a>.
    <div class="table">
                                                                                          
 
                                                                                          
-<!--l. 7083--><p class="indent" >   <a 
- id="x27-4990125"></a><hr class="float"><div class="float" 
+<!--l. 7132--><p class="indent" >   <a 
+ id="x27-5110125"></a><hr class="float"><div class="float" 
+><table class="float"><tr class="float"><td class="float" 
 >
                                                                                          
 
                                                                                          
- <div class="caption" 
-><span class="id">Table&#x00A0;5: </span><span  
-class="content">Hourly Cycling Offsets</span></div><!--tex4ht:label?: x27-4990125 -->
-<div class="tabular"> <table id="TBL-6" class="tabular" 
+ <table class="caption" 
+><tr style="vertical-align:baseline;" class="caption"><td class="id">Table&#x00A0;5: </td><td  
+class="content">Hourly Cycling Offsets</td></tr></table><!--tex4ht:label?: x27-5110125 -->
+<div class="tabular"><table class="tabular" 
 cellspacing="0" cellpadding="0"  
 ><colgroup id="TBL-6-1g"><col 
 id="TBL-6-1"><col 
 id="TBL-6-2"></colgroup><tr  
  style="vertical-align:baseline;" id="TBL-6-1-"><td  style="white-space:nowrap; text-align:left;" id="TBL-6-1-1"  
-class="td11">Pre-Cylc-6        </td><td  style="white-space:nowrap; text-align:left;" id="TBL-6-1-2"  
+class="td11">Pre-Cylc-6         </td><td  style="white-space:nowrap; text-align:left;" id="TBL-6-1-2"  
 class="td11">Cylc-6+                                                   </td>
 </tr><tr 
 class="hline"><td><hr></td><td><hr></td></tr><tr  
  style="vertical-align:baseline;" id="TBL-6-2-"><td  style="white-space:nowrap; text-align:left;" id="TBL-6-2-1"  
-class="td11"><span class="lstinline"><!--l. 7089--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7138--><p class="noindent" ><span 
 class="pcrr7t-">my_task</span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">T</span><span 
 class="pcrr7t-">-6]</span>                                                                   </span> </td><td  style="white-space:nowrap; text-align:left;" id="TBL-6-2-2"  
-class="td11"><span class="lstinline"><!--l. 7089--><p class="noindent" ><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">[-</span><span 
-class="pcrr7t-">PT6H</span><span 
+class="td11"><span class="lstinline"><!--l. 7138--><p class="noindent" ><span 
+class="pcrr7t-">my_task</span> <span 
+class="pcrr7t-">[-</span> <span 
+class="pcrr7t-">PT6H</span> <span 
 class="pcrr7t-">]</span>                 </span> </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-6-3-"><td  style="white-space:nowrap; text-align:left;" id="TBL-6-3-1"  
-class="td11"><span class="lstinline"><!--l. 7090--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7139--><p class="noindent" ><span 
 class="pcrr7t-">my_task</span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">T</span><span 
 class="pcrr7t-">-12]</span>                                                                  </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-6-3-2"  
-class="td11"><span class="lstinline"><!--l. 7090--><p class="noindent" ><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">[-</span><span 
-class="pcrr7t-">PT12H</span><span 
+class="td11"><span class="lstinline"><!--l. 7139--><p class="noindent" ><span 
+class="pcrr7t-">my_task</span> <span 
+class="pcrr7t-">[-</span> <span 
+class="pcrr7t-">PT12H</span> <span 
 class="pcrr7t-">]</span>                 </span> </td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-6-4-"><td  style="white-space:nowrap; text-align:left;" id="TBL-6-4-1"  
-class="td11"><span class="lstinline"><!--l. 7091--><p class="noindent" ><span 
+class="td11"><span class="lstinline"><!--l. 7140--><p class="noindent" ><span 
 class="pcrr7t-">my_task</span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">T</span><span 
 class="pcrr7t-">-24]</span>                                                                  </span></td><td  style="white-space:nowrap; text-align:left;" id="TBL-6-4-2"  
-class="td11"><span class="lstinline"><!--l. 7091--><p class="noindent" ><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">[-</span><span 
-class="pcrr7t-">PT24H</span><span 
-class="pcrr7t-">]</span>                 </span> or even <span class="lstinline"><!--l. 7091--><p class="noindent" ><span 
-class="pcrr7t-">my_task</span><span 
-class="pcrr7t-">[-</span><span 
-class="pcrr7t-">P1D</span><span 
+class="td11"><span class="lstinline"><!--l. 7140--><p class="noindent" ><span 
+class="pcrr7t-">my_task</span> <span 
+class="pcrr7t-">[-</span> <span 
+class="pcrr7t-">PT24H</span> <span 
+class="pcrr7t-">]</span>                 </span> or even <span class="lstinline"><!--l. 7140--><p class="noindent" ><span 
+class="pcrr7t-">my_task</span> <span 
+class="pcrr7t-">[-</span> <span 
+class="pcrr7t-">P1D</span> <span 
 class="pcrr7t-">]</span>                       </span></td>
 </tr><tr  
  style="vertical-align:baseline;" id="TBL-6-5-"><td  style="white-space:nowrap; text-align:left;" id="TBL-6-5-1"  
-class="td11">             </td></tr></table></div>
+class="td11">                       </td>
+</tr></table></div>
                                                                                          
 
                                                                                          
-   </div><hr class="endfloat" />
+   </td></tr></table></div><hr class="endfloat" />
    </div>
-<!--l. 7096--><p class="indent" >    <h4 id="J.5" class="subsectionHead"> <span class="titlemark"> <a href="#J.5"> J.5</a>  <a 
- id="x27-500000J.5"></a>No Implicit Creation of Tasks by Offset Triggers </span></h4>
-<!--l. 7099--><p class="indent" >   Prior to cylc-6 inter-cycle triggers implicitly created task instances at the offset cycle points. For example, this
+<!--l. 7145--><p class="indent" >    <h4 id="J.5" class="subsectionHead"> <span class="titlemark"> <a href="#J.5"> J.5</a>  <a 
+ id="x27-512000J.5"></a>No Implicit Creation of Tasks by Offset Triggers </span></h4>
+<!--l. 7148--><p class="indent" >   Prior to cylc-6 inter-cycle triggers implicitly created task instances at the offset cycle points. For example, this
 pre cylc-6 suite automatically creates instances of task <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> at the offset hours <span class="lstinline"><span 
 class="pcrr7t-">3,9,15,21</span></span> each day, for task <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span>
 to trigger off at <span class="lstinline"><span 
-class="pcrr7t-">0,6,12,18</span></span>:  <!--l. 7105-->
-   <div class="lstlisting" id="listing-245"><span class="label"><a 
- id="x27-500001r1"></a></span><span 
+class="pcrr7t-">0,6,12,18</span></span>:  <!--l. 7154--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x27-512001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Pre</span><span 
@@ -753,12 +768,12 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">cycling</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500002r2"></a></span><span 
+ id="x27-512002r2"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500003r3"></a></span><span 
+ id="x27-512003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -772,7 +787,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">2014080800</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500004r4"></a></span><span 
+ id="x27-512004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -780,7 +795,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500005r5"></a></span><span 
+ id="x27-512005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -791,7 +806,7 @@ class="pcrr7t-">[[[</span><span
 class="pcrr7t-">00,06,12,18</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500006r6"></a></span><span 
+ id="x27-512006r6"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -815,7 +830,7 @@ class="pcrro7t-">at</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">03,09,15,21:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500007r7"></a></span><span 
+ id="x27-512007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -838,13 +853,15 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span>
-   
+
+
    </div>
-<!--l. 7114--><p class="indent" >   You can run this suite to see how it works (cylc-6+ is backward-compatible: it generates the old-style behaviour
+<!--l. 7163--><p class="indent" >   You can run this suite to see how it works (cylc-6+ is backward-compatible: it generates the old-style behaviour
 when it detects an old-style suite definition). Here&#8217;s the direct translation of this suite to cylc-6+ format:
-<!--l. 7118-->
-   <div class="lstlisting" id="listing-246"><span class="label"><a 
- id="x27-500008r1"></a></span><span 
+<!--l. 7167--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x27-512008r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">In</span><span 
@@ -861,12 +878,12 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">stall</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500009r2"></a></span><span 
+ id="x27-512009r2"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500010r3"></a></span><span 
+ id="x27-512010r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -881,7 +898,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">20140808</span><span 
 class="pcrr7t-">T00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500011r4"></a></span><span 
+ id="x27-512011r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -889,7 +906,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500012r5"></a></span><span 
+ id="x27-512012r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -906,7 +923,7 @@ class="pcrr7t-">,</span><span
 class="pcrr7t-">T18</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500013r6"></a></span><span 
+ id="x27-512013r6"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -934,7 +951,7 @@ class="pcrro7t-">at</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">03,09,15,21:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500014r7"></a></span><span 
+ id="x27-512014r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -957,9 +974,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span>
-   
+
+
    </div>
-<!--l. 7127--><p class="indent" >   If you run this suite, <span class="lstinline"><span 
+<!--l. 7176--><p class="indent" >   If you run this suite, <span class="lstinline"><span 
 class="pcrr7t-">bar</span><span 
 class="pcrr7t-">.20140808</span><span 
 class="pcrr7t-">T00</span></span> will execute at start-up because dependence on tasks prior to the
@@ -978,9 +996,10 @@ graph expresses dependence, and <span class="lstinline"><span
 class="pcrr7t-">bar</span></span> really does depend on these instances of <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span>. The problem is just that the
 tasks don&#8217;t get created at run time, which is why the suite stalls. Here&#8217;s the correct way to get the desired behaviour
-in cylc-6+:  <!--l. 7139-->
-   <div class="lstlisting" id="listing-247"><span class="label"><a 
- id="x27-500015r1"></a></span><span 
+in cylc-6+:  <!--l. 7188--><div class="lstlisting">
+<span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x27-512015r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">Cylc</span><span 
@@ -997,12 +1016,12 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">creation</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500016r2"></a></span><span 
+ id="x27-512016r2"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500017r3"></a></span><span 
+ id="x27-512017r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1017,7 +1036,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">20140808</span><span 
 class="pcrr7t-">T00</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500018r4"></a></span><span 
+ id="x27-512018r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1025,7 +1044,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500019r5"></a></span><span 
+ id="x27-512019r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1042,7 +1061,7 @@ class="pcrr7t-">,</span><span
 class="pcrr7t-">T21</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500020r6"></a></span><span 
+ id="x27-512020r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1058,7 +1077,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500021r7"></a></span><span 
+ id="x27-512021r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1075,7 +1094,7 @@ class="pcrr7t-">,</span><span
 class="pcrr7t-">T18</span><span 
 class="pcrr7t-">]]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x27-500022r8"></a></span><span 
+ id="x27-512022r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1098,20 +1117,21 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">=&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">bar</span>
-   
+
+
    </div>
-<!--l. 7149--><p class="indent" >   Implicit creation of task instances by offset triggers has been disabled because it is error prone: if a trigger
+<!--l. 7198--><p class="indent" >   Implicit creation of task instances by offset triggers has been disabled because it is error prone: if a trigger
 offset is wrong it should cause a triggering failure rather than create task instances at incorrect cycle
 points.
                                                                                          
 
                                                                                          
-   <!--l. 7153--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 7202--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse27.html" >next</a>] [<a 
 href="cug-htmlse25.html" >prev</a>] [<a 
 href="cug-htmlse25.html#tailcug-htmlse25.html" >prev-tail</a>] [<a 
 href="cug-htmlse26.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse26.html" >up</a>] </p></div>
-<!--l. 7153--><p class="indent" >   <a 
+<!--l. 7202--><p class="indent" >   <a 
  id="tailcug-htmlse26.html"></a>   
 </body></html> 
