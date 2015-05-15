@@ -168,8 +168,8 @@ class Broker(Pyro.core.ObjBase):
                     # Broadcast the event ID to the cycle point.
                     if qid is not None:
                         self.broadcaster.put(
-                            ["root"],
                             [point_string],
+                            ["root"],
                             [{
                                 'environment': {
                                     'CYLC_EXT_TRIGGER_ID': qid
