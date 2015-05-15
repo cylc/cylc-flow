@@ -131,7 +131,7 @@ diagrams.
     \end{center}
     \caption[The only safe multi-cycle-point job schedule?]
     {\scriptsize The best that can be done {\em in general} when
-    inter-cycle-point dependence is ignored.}
+    inter-cycle dependence is ignored.}
     \label{fig-job-no-overlap}
 \end{figure}
 
@@ -150,30 +150,30 @@ dangerous - it results in dependency violations in half of the tasks in
 the example suite. In fact the situation could be even worse than this
 - imagine that task {\em b} in the first cycle point is delayed for some
 reason {\em after} the second cycle point has been launched. Clearly we must
-consider handling inter-cycle-point dependence explicitly or else agree not to
+consider handling inter-cycle dependence explicitly or else agree not to
 start the next cycle point early, as is illustrated in
 Figure~\ref{fig-job-no-overlap}.
 
-\subsubsection{Inter-Cycle-Point Dependence}
+\subsubsection{Inter-Cycle Dependence}
 \label{InterCyclePointDependence}
 
 Forecast models typically depend on their own most recent previous
 forecast for background state or restart files of some kind (this is
-called {\em warm cycling}) but there can also be inter-cycle-point dependence
+called {\em warm cycling}) but there can also be inter-cycle dependence
 between different tasks.  In an atmospheric forecast analysis suite, for
 instance, the weather model may generate background states for observation
 processing and data-assimilation tasks in the next cycle point as well as for
-the next forecast model run. In real time operation inter-cycle-point
+the next forecast model run. In real time operation inter-cycle
 dependence can be ignored because it is automatically satisfied when one cycle
 point finishes before the next begins. If it is not ignored it drastically
 complicates the dependency graph by blurring the clean boundary between
 cycle points. Figure~\ref{fig-dep-multi} illustrates the problem for our
-simple example suite assuming minimal inter-cycle-point dependence: the warm
+simple example suite assuming minimal inter-cycle dependence: the warm
 cycled models ($a$, $b$, and $c$) each depend on their own previous instances.
 
 For this reason, and because we tend to see forecasting suites in terms of
 their real time characteristics, other metaschedulers have ignored
-inter-cycle-point dependence and are thus restricted to running entire cycle
+inter-cycle dependence and are thus restricted to running entire cycle
 points in sequence at all times.  This does not affect normal real time
 operation but it can be a serious impediment when advance availability of
 external driving data makes it possible, in principle, to run some tasks from
@@ -184,7 +184,7 @@ etc.) and to an even greater extent in historical case studies and parallel
 test suites started behind a real time operation. It can be a serious problem
 for suites that have little downtime between forecast cycle points and
 therefore take many cycle points to catch up after a delay. Without taking
-account of inter-cycle-point dependence, the best that can be done, in
+account of inter-cycle dependence, the best that can be done, in
 general, is to reduce the gap between cycle points to zero as shown in
 Figure~\ref{fig-job-no-overlap}. A limited crude overlap of the single cycle
 point job schedule may be possible for specific task sets but the allowable
@@ -200,7 +200,7 @@ contention or task failures) won't result in dependency violations.
     \end{center}
     \caption[The complete multi-cycle-point dependency graph]
     {\scriptsize The complete dependency graph for the example suite, assuming
-    the least possible inter-cycle-point dependence: the forecast models ($a$,
+    the least possible inter-cycle dependence: the forecast models ($a$,
     $b$, and $c$) depend on their own previous instances. The dashed arrows
     show connections to previous and subsequent forecast cycle points.}
     \label{fig-dep-multi}
@@ -212,19 +212,19 @@ contention or task failures) won't result in dependency violations.
     \end{center}
     \caption[The optimal two-cycle-point job schedule]
     {\scriptsize The optimal two cycle job schedule when the next cycle's driving data is available in
-    advance, possible in principle when inter-cycle-point dependence is
+    advance, possible in principle when inter-cycle dependence is
     handled explicitly.}
     \label{fig-optimal-two}
 \end{figure}
 
 Figure~\ref{fig-optimal-two} shows, in contrast to
 Figure~\ref{fig-overlap}, the optimal two cycle point job schedule obtained by
-respecting all inter-cycle-point dependence.  This assumes no delays due to
+respecting all inter-cycle dependence.  This assumes no delays due to
 resource contention or otherwise - i.e.\ every task runs
 as soon as it is ready to run. The scheduler running
 this suite must be able to adapt dynamically to external conditions
 that impact on multi-cycle-point scheduling in the presence of
-inter-cycle-point dependence or else, again, risk bringing the system down
+inter-cycle dependence or else, again, risk bringing the system down
 with dependency violations.
 
 \begin{figure}
@@ -233,7 +233,7 @@ with dependency violations.
     \end{center}
     \caption[Comparison of job schedules after a delay]{\scriptsize Job
     schedules for the example suite after a delay of almost one whole
-    forecast cycle point, when inter-cycle-point dependence is
+    forecast cycle point, when inter-cycle dependence is
     taken into account (above the time axis), and when it is not
     (below the time axis). The colored lines indicate the time that
     each cycle point is delayed, and normal ``caught up'' cycle points
@@ -251,16 +251,16 @@ with dependency violations.
     available many cycle points in advance. Above the time axis is the optimal
     schedule obtained when the suite is constrained only by its true
     dependencies, as in Figure \ref{fig-dep-two-linked}, and underneath
-    is the best that can be done, in general, when inter-cycle-point
+    is the best that can be done, in general, when inter-cycle
     dependence is ignored.}
     \label{fig-time-two}
 \end{figure}
 
-To further illustrate the potential benefits of proper inter-cycle-point
+To further illustrate the potential benefits of proper inter-cycle
 dependency handling, Figure~\ref{fig-time-three} shows an operational
 delay of almost one whole cycle point in a suite with little downtime between
 cycle points. Above the time axis is the optimal schedule that is possible in
-principle when inter-cycle-point dependence is taken into account, and below
+principle when inter-cycle dependence is taken into account, and below
 it is the only safe schedule possible {\em in general} when it is ignored.
 In the former case, even the cycle point immediately after the delay is hardly
 affected, and subsequent cycle points are all on time, whilst in the latter
@@ -324,7 +324,7 @@ advance the suite; instead individual task proxies have their own
 private cycle point and spawn their own successors when the time is
 right. Task proxies are self-contained - they know their own
 prerequisites and outputs but are not aware of the wider suite.
-Inter-cycle-point dependence is not treated as special, and the task pool can
+Inter-cycle dependence is not treated as special, and the task pool can
 be populated with tasks with many different cycle points. The task pool
 is illustrated in Figure~\ref{fig-task-pool}. {\em Whenever any task
 changes state due to completion of an output, every task checks to see
@@ -959,10 +959,10 @@ shell$ cylc db pr --tree -x examples.tutorial
 examples
  `-tutorial
    `-cycling
-   | |-four       Inter-cycle-point dependence + a start-up task
+   | |-four       Inter-cycle dependence + a start-up task
    | | ...
-   | |-two        Two cycling tasks with inter-cycle-point dependence
-   | `-three      inter-cycle-point dependence + a cold-start task
+   | |-two        Two cycling tasks with inter-cycle dependence
+   | `-three      inter-cycle dependence + a cold-start task
    `-oneoff
      |-retry      A task with automatic retry on failure
      |-remote     Hello World! on a remote host
@@ -1814,13 +1814,13 @@ to the suite to only allow initial cycle points at 00 or 12 hours e.g.
         see~\ref{RunaheadLimit}.
 \end{myitemize}
 
-\subsubsection{Inter-Cycle-Point Triggers}
+\subsubsection{Inter-Cycle Triggers}
 \label{TutInterCyclePointTriggers}
 
 \hilight{ suite: \lstinline=tut.cycling.two= }
 \vspace{3mm}
 
-The \lstinline=tut.cycling.two= suite adds inter-cycle-point dependence
+The \lstinline=tut.cycling.two= suite adds inter-cycle dependence
 to the previous example:
 \begin{lstlisting}
 [scheduling]
@@ -1833,7 +1833,7 @@ For any given cycle point in the sequence defined by the
 cycling graph section heading, \lstinline=bar= triggers off
 \lstinline=foo= as before, but now \lstinline=foo= triggers off its own
 previous instance \lstinline=foo[-PT12H]=.  Date-time offsets in
-inter-cycle-point triggers are expressed as ISO 8601 intervals (12 hours
+inter-cycle triggers are expressed as ISO 8601 intervals (12 hours
 in this case).  Figure~\ref{fig-tut-two} shows how this connects the cycling
 graph sections together.
 \begin{figure}
@@ -1844,11 +1844,11 @@ graph sections together.
 \label{fig-tut-two}
 \end{figure}
 
-Experiment with this suite to see how inter-cycle-point triggers work.
+Experiment with this suite to see how inter-cycle triggers work.
 Note that the first instance of \lstinline=foo=, at suite start-up, will
-trigger immediately in spite of its inter-cycle-point trigger, because cylc
+trigger immediately in spite of its inter-cycle trigger, because cylc
 ignores dependence on points earlier than the initial cycle point.
-However, the presence of an inter-cycle-point trigger usually implies something
+However, the presence of an inter-cycle trigger usually implies something
 special has to happen at start-up. If a model depends on its own previous
 instance for restart files, for example, then some special process has to
 generate the initial set of restart files when there is no previous cycle point
@@ -2611,7 +2611,7 @@ graph section. For example this graph,
 implies that B triggers off A for cycle points in which the hour matches $00$
 or $12$.
 
-To define inter-cycle-point dependencies, attach an offset indicator to the
+To define inter-cycle dependencies, attach an offset indicator to the
 left side of a pair:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -3570,13 +3570,13 @@ failed):
 \end{lstlisting}
 
 
-\paragraph{Inter-Cycle-Point Triggers}
+\paragraph{Inter-Cycle Triggers}
 \label{InterCyclePointTriggers}
 
 Typically most tasks in a suite will trigger off others in the same
 cycle point, but some may depend on others with other cycle points.
 This notably applies to warm-cycled forecast models, which depend on
-their own previous instances (see below); but other kinds of inter-cycle-point
+their own previous instances (see below); but other kinds of inter-cycle
 dependence are possible too.\footnote{In NWP forecast analysis
 suites parts of the observation processing and data assimilation
 subsystem will typically also depend on model background fields
@@ -3588,18 +3588,18 @@ kind of relationship in cylc:
         # B triggers off A in the previous cycle point
         graph = "A[-PT6H] => B"
 \end{lstlisting}
-inter-cycle-point and trigger type (or message trigger) notation can be
+inter-cycle and trigger type (or message trigger) notation can be
 combined:
 \begin{lstlisting}
     # B triggers if A in the previous cycle point fails:
     graph = "A[-PT6H]:fail => B"
 \end{lstlisting}
 
-At suite start-up inter-cycle-point triggers refer to a previous cycle point
+At suite start-up inter-cycle triggers refer to a previous cycle point
 that does not exist. This does not cause the dependent task to wait
 indefinitely, however, because cylc ignores triggers that reach back
 beyond the initial cycle point. That said, the presence of an
-inter-cycle-point trigger does normally imply that something special has to
+inter-cycle trigger does normally imply that something special has to
 happen at start-up. If a model depends on its own previous instance for
 restart files, for instance, then an initial set of restart files has to be
 generated somehow or the first model task will presumably fail with
@@ -3648,7 +3648,7 @@ satisfied by a previous instance of itself, {\em or} by an initial task with
 
 In effect, the \lstinline=R1= task masquerades as the previous-cycle-point trigger
 of its associated cycling task. At suite start-up initial tasks will
-trigger the first cycling tasks, and thereafter the inter-cycle-point trigger
+trigger the first cycling tasks, and thereafter the inter-cycle trigger
 will take effect.
 
 If a task has a dependency on another task in a different cycle point, the
@@ -3737,7 +3737,7 @@ then successive instances can run in parallel if the opportunity arises.
 However, if such a task would interfere with its own siblings for
 internal reasons (e.g.\ use of a hardwired non cycle dependent
 temporary file or similar) then it can be forced to run sequentially.
-This can be done with explicit inter-cycle-point triggers in the graph:
+This can be done with explicit inter-cycle triggers in the graph:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -3789,30 +3789,124 @@ is equivalent to this one:
 
 \paragraph{Future Triggers}
 
-Cylc also supports inter-cycle-point triggering off tasks in the future (with
-respect to cycle point date-time, not real time!):
+Cylc also supports inter-cycle triggering off tasks ``in the future'' (with
+respect to cycle point):
 \begin{lstlisting}
 [[dependencies]]
     [[[T00,T06,T12,T18]]]
-        # Run A in this cycle.
-        # B triggers off A in the next cycle.
         graph = """
-            A[+PT6H] => B
+    # A runs in this cycle:
             A
+    # B in this cycle triggers off A in the next cycle.
+            A[PT6H] => B
         """
 \end{lstlisting}
-In contrast to normal inter-cycle-point triggers, future triggers present a
-problem at the suite stop time rather than at start-up - in the final cycle
-point \lstinline=B= wants to to trigger off \lstinline=A= at a future cycle
-point that does not exist. To avoid this problem cylc prevents tasks from
-spawning successors that depend on tasks in a non-existent future cycle point.
+(Recall that \lstinline=A[t+PT6H]= can run before B[t] because tasks in cylc
+have private cycle points).  Future triggers present a problem at the suite
+shutdown rather than at start-up.  Here, \lstinline=B= at the final cycle
+point wants to trigger off an instance of \lstinline=A= that will never exist
+because it is beyond the suite stop point. Consequently cylc prevents tasks
+from spawning successors that depend on other tasks beyond the stop point.
+
+\paragraph{Clock  Triggers}
+\label{ClockTriggeredTasks}
+
+In addition to depending on other tasks (and on external events -
+see~\ref{ExternalTriggers}) tasks can depend on the wall clock: specifically,
+they can trigger off a wall clock time expressed as an offset from cycle point:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[special tasks]]
+        clock-triggered = foo(PT2H)
+    [[dependencies]]
+        [[[T00]]]
+            graph = foo
+\end{lstlisting} 
+Here, \lstinline=foo[2015-08-23T00]= would trigger (other dependencies allowing)
+when the wall clock time reaches \lstinline=2015-08-23T02=.
+
+Clock-triggers have no effect on scheduling if the suite is running sufficiently
+far behind the clock (e.g.\ after a delay, or because it is processing archived
+historical data) that the trigger times, which are relative to task cycle
+point, have already passed.
+
+
+\paragraph{External Event Triggers}
+\label{ExternalTriggers}
+
+In addition to depending on other tasks (and on the wall clock -
+see~\ref{ClockTriggeredTasks}) tasks can depend on events reported by an
+external system.  For example, an external process could detect incoming data
+on an ftp server, and then notify a suite containing a task to retrieve the
+new data for processing. This is an alternative to having long-running tasks
+that poll for external events.
+
+Note that cylc does not directly support ``filesystem events'' because systems
+such as \lstinline=inotify= on Linux are not portable. However, external
+watcher processes can of course use inotify to detect filesystem events, if
+that is appropriate, before triggering the suite.
+
+External triggers are not normally needed in date-time cycling suites driven
+by real time data that comes in at regular intervals.  In these cases a data
+retrieval task can be clock-triggered to submit at the expected data arrival
+time, so little time if any is wasted in polling.  But in non-cycling or
+integer cycling suites (which can be used for arbitrarily timed repeating
+workflows such as for satellite data processing) external triggers may be
+preferred.
+
+The external triggering process must call \lstinline=cylc ext-trigger= with the
+name of the target suite, the message that identifies this type of event to the
+suite, and an ID that distinguishes this particular event instance from others
+(the name of the target task or its current cycle point is not required).  The
+event ID is just an arbitary string to cylc, but it typically identifies the
+filename(s) of the latest dataset in some way.  When the suite daemon receives
+the external event notification it will trigger the next instance of any task
+waiting on that trigger (whatever its cycle point) and then broadcast
+(see~\ref{cylc-broadcast}) the event ID to the cycle point of the triggered
+task as \lstinline=$CYLC_EXT_TRIGGER_ID=.  Downstream tasks with the same cycle
+point therefore know the new event ID too and can use it, if they need to, to
+identify the same new dataset. In this way a whole workflow can be associated
+with each new dataset, and multiple datasets can be processed in parallel if
+they happen to arrive in quick succession.  
+
+An externally-triggered task must register the event it waits on in the suite
+scheduling section:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# suite "sat-proc"
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[special tasks]]
+        external-triggered = get-data("new sat X data avail")
+    [[dependencies]]
+        [[[P1]]]
+            graph = get-data => conv-data => products
+\end{lstlisting}
+
+Then, each time a new dataset arrives the external detection system should
+notify the suite like this:
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc ext-trigger sat-proc "new sat X data avail" passX12334a
+\end{lstlisting}
+where ``sat-proc'' is the suite name and ``passX12334a'' is the ID string for
+the new event.
+
+Note that only one task in a suite can trigger off a given external message.
+This is no restriction however because other tasks can trigger off the
+externally triggered task.
+
+\lstinline=$CYLC_DIR/examples/satellite/ext-triggers/suite.rc= is a working
+example of a simulated satellite processing suite.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}
 
 Warm-cycled forecast models generate {\em restart files}, e.g.\ model
 background fields, to initialize the next forecast. This kind of
-dependence requires an inter-cycle-point trigger:
+dependence requires an inter-cycle trigger:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -5840,6 +5934,7 @@ you can edit the generated task job script to make one-off changes before the
 task submits.
 
 \subsection{Runtime Settings Broadcast and Communication Between Tasks}
+\label{cylc-broadcast}
 
 The \lstinline=cylc broadcast= command overrides \lstinline=[runtime]=
 settings in a running suite. This can
@@ -6320,7 +6415,7 @@ advantages to fine-graining:
         that failed.
 
     \item More code reuse: similar tasks may be able to call the same
-        underlying same script or command with differing input parameters.
+        underlying script or command with differing input parameters.
 
 \end{myitemize}
 
@@ -6483,26 +6578,13 @@ require that. One way to do this is to declare the product upload task to be
 instance (see~\ref{SequentialTasks}).
 
 \subsection{Use Of Clock-Triggered Tasks}
-\label{ClockTriggeredTasks}
-
-Most tasks submit as soon as their prerequisites (task triggers) are satisfied,
-but {\em clock-triggered} tasks also wait on a wall clock time expressed as an
-offset from their cycle point. For example, task \lstinline=foo= below will
-trigger (other dependencies allowing) 2 hours after the wall clock time passes
-its cycle point (which in this case must be a date-time).
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [[special tasks]]
-        clock-triggered = foo(PT2H)
-\end{lstlisting} 
 
 Tasks that wait on external real time data should have a clock-trigger to delay
-submission until roughly the expected time of data availability, otherwise they
-may clutter up batch scheduler queues by submitting hours earlier. Similarly,
-suite polling tasks (for inter-suite dependence in real time operation) should
-use a clock-trigger to delay their submission until the expected time of the 
-remote suite event.
+submission until roughly the expected time of data availability
+(see~\ref{ClockTriggeredTasks}), otherwise they could clutter up your batch
+scheduler queue by submitting hours earlier. Similarly, suite polling tasks
+(for inter-suite dependence in real time operation) should use a clock-trigger
+to delay their submission until the expected time of the remote suite event.
 
 \subsection{Tasks That Wait On Something}
 
@@ -6512,7 +6594,7 @@ a timeout). For example, a task that waits for a file to appear on an ftp
 server. Typically these should be clock-triggered tasks (see above), but once
 triggered there are two ways to handle the repeated checking: the task itself
 could implement a check-and-wait loop; or you could just configure multiple
-retries for the task, in the suite definition (see~\ref{TaskRetries}).
+retries for the task (see~\ref{TaskRetries}).
 
 \subsection{Do Not Treat Real Time Operation As Special}
 

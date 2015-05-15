@@ -484,6 +484,21 @@ class config( object ):
         if self.validation:
             self.check_tasks()
 
+        # Check that external trigger messages are only used once (they have to
+        # be discarded immediately to avoid triggering the next instance of the
+        # just-triggered task).
+        seen = {}
+        for name, tdef in self.taskdefs.items():
+            for msg in tdef.external_triggers:
+                if msg not in seen:
+                    seen[msg] = name
+                else:
+                    print >> sys.stderr, (
+                        "External trigger '%s'\n  used in tasks %s and %s." % (
+                        msg, name, seen[msg]))
+                    raise SuiteConfigError(
+                        "ERROR: external triggers must be used only once.")
+
         ngs = self.cfg['visualization']['node groups']
         # If a node group member is a family, include its descendants too.
         replace = {}
@@ -1132,18 +1147,6 @@ class config( object ):
                     print cs
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError( "ERROR: script cannot be defined for automatic suite polling task " + l_task )
-
-        # Check that external trigger messages are unique.
-        seen = {}
-        for name, tdef in self.taskdefs.items():
-            for eet in tdef.external_triggers:
-                if eet not in seen:
-                    seen[eet] = name
-                else:
-                    err = 'Duplicate external trigger for tasks \'%s\' and \'%s\':\n "%s"' % (
-                        name, seen[eet], eet)
-                    print >> sys.stderr, err
-                    raise SuiteConfigError("ERROR: duplicate external trigger")
 
     def get_coldstart_task_list( self ):
         return self.cfg['scheduling']['special tasks']['cold-start']

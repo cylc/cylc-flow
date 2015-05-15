@@ -213,7 +213,8 @@ Additional information can be passed to event handlers via
 
 \paragraph[EVENT handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ EVENT handler}
 
-A list of one or more event handlers to call when one of the following EVENTs occurs:
+A comma-separated list of one or more event handlers to call when one of the
+following EVENTs occurs:
 \begin{myitemize}
     \item {\bf startup}  - the suite has started running
     \item {\bf shutdown} - the suite is shutting down
@@ -373,7 +374,7 @@ A reference test run will abort immediately if any task fails, unless
 in a list IDs of tasks that are expected to fail.
 
 \begin{myitemize}
-    \item {\em type:} string list (task IDs: \lstinline=name.cycle_point=)
+    \item {\em type:} Comma-separated list of strings (task IDs: \lstinline=name.cycle_point=).
     \item {\em default:} (none)
     \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}
@@ -484,8 +485,8 @@ defining a list of truncated time points under the initial cycle point
 constraints.
 
 \begin{myitemize}
-    \item {\em type:} List of ISO 8601 truncated time point representations 
-    (e.g. T00, T06, T-30)
+    \item {\em type:} Comma-separated list of ISO 8601 truncated time point
+        representations (e.g. T00, T06, T-30).
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -497,8 +498,8 @@ defining a list of truncated time points under the final cycle point
 constraints.
 
 \begin{myitemize}
-    \item {\em type:} List of ISO 8601 truncated time point representations 
-    (e.g. T00, T06, T-30)
+    \item {\em type:} Comma-separated list of ISO 8601 truncated time point
+        representations (e.g. T00, T06, T-30).
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -568,33 +569,48 @@ The maximum number of active tasks allowed at any one time, for this queue.
 A list of member tasks, or task family names, to assign to this queue
 (assigned tasks will automatically be removed from the default queue).
 \begin{myitemize}
-\item {\em type:} string list
+\item {\em type:} Comma-separated list of strings (task or family names).
 \item {\em default:} none for user-defined queues; all tasks for the ``default'' queue
 \end{myitemize}
 
 \subsubsection[{[[}special tasks{]]}]{[scheduling] $\rightarrow$ [[special tasks]]}
 
-This section is used to identify any tasks with several kinds of special
-behaviour. Family names can be used in special task lists as shorthand
-for listing all member tasks.
+This section is used to identify tasks with special behaviour. Family names can
+be used in special task lists as shorthand for listing all member tasks.
 
 \paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
 
-Clock-triggered tasks wait on a wall clock time specified as an offset from
-their own cycle point, in addition to dependence on other tasks.
-Clock-triggers can be used to make tasks that wait on external real time
-data trigger at the expected time of data availability, or to make suite
-polling tasks trigger at the expected time of the remote suite event.
-In delayed or historical operation clock-triggered tasks do not constrain the
-suite until they catch up to the wall clock.
+Clock-triggered tasks (see~\ref{ClockTriggeredTasks}) wait on a wall clock time
+specified as an offset from their own cycle point.
 
 \begin{myitemize}
-    \item {\em type:} list of task or family names with optional offsets in
-        brackets. An offset should be expressed as an ISO8601 interval
-        string, positive or negative, e.g. \lstinline=PT1H= for 1 hour.
+    \item {\em type:} Comma-separated list of task or family names with
+        associated date-time offsets expressed as ISO8601 interval strings,
+        positive or negative, e.g. \lstinline=PT1H= for 1 hour.  The offset
+        specification may be omitted to trigger right on the cycle point.
     \item {\em default:} (none)
-    \item {\em examples:} \lstinline=foo(PT1H30M)=, \lstinline=bar(PT1.5H)=, \lstinline=baz=
+    \item {\em example:}
+\begin{lstlisting}
+    clock-triggered = foo(PT1H30M), bar(PT1.5H), baz
+\end{lstlisting}
 \end{myitemize}
+
+\paragraph[external-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ external-triggered}
+
+Externally triggered tasks (see~\ref{ExternalTriggers}) wait on external events
+reported via the \lstinline=cylc ext-trigger= command.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of task names with associated
+        external trigger message strings.
+    \item {\em default:} (none)
+    \item {\em example:} (note the comma and line-continuation character)
+\begin{lstlisting}
+    external-triggered = get-satx("new sat-X data ready"), \
+                         get-saty("new sat-Y data ready")
+\end{lstlisting}
+\end{myitemize}
+
 
 \paragraph[sequential]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ sequential}
 
@@ -605,7 +621,7 @@ graph visualization. For more on sequential tasks see~\ref{SequentialTasks}
 and~\ref{LimitPID}.
 
 \begin{myitemize}
-    \item {\em type:} list of task or family names
+    \item {\em type:} Comma-separated list of task or family names.
     \item {\em default:} (none)
     \item {\em example:} \lstinline@sequential = foo, bar@
 \end{myitemize}
@@ -628,7 +644,7 @@ subsequent cycles so they must typically be used in OR'd conditional
 expressions to avoid holding up the suite.
 
 \begin{myitemize}
-    \item {\em type:} list of task or family names
+    \item {\em type:} Comma-separated list of task or family names.
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -640,7 +656,7 @@ automatically one-off tasks and do not need to be listed here.
 Dependence on one-off tasks is not restricted to the first cycle.
 
 \begin{myitemize}
-\item {\em type:} list of task or family names
+\item {\em type:} Comma-separated list of task or family names.
 \item {\em default:} (none)
 \end{myitemize}
 
@@ -656,7 +672,7 @@ removed from the suite dependency graph, in which case some manual
 triggering, or insertion of excluded tasks, may be required.
 
 \begin{myitemize}
-    \item {\em type:} list of task or family names
+    \item {\em type:} Comma-separated list of task or family names.
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -673,7 +689,7 @@ graph, in which case some manual triggering, or insertion of excluded
 tasks, may be required.
 
 \begin{myitemize}
-    \item {\em type:} list of task or family names
+    \item {\em type:} Comma-separated list of task or family names.
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -755,7 +771,7 @@ hiearchies. For details and examples see~\ref{NIORP}.
 
 \subsubsection[{[[}\_\_NAME\_\_{]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]]}
 
-Replace \_\_NAME\_\_ with a namespace name, or a comma separated list of
+Replace \_\_NAME\_\_ with a namespace name, or a comma-separated list of
 names, and repeat as needed to define all tasks in the suite. Names may
 contain letters, digits, underscores, and hyphens. A namespace
 represents a group or family of tasks if other namespaces inherit from
@@ -786,7 +802,7 @@ A list of the immediate parent(s) this namespace inherits from. If no
 parents are listed \lstinline=root= is assumed.
 
 \begin{myitemize}
-\item {\em type:} string list (parent namespace names)
+\item {\em type:} Comma-separated list of strings (parent namespace names).
 \item {\em default:} \lstinline=root=
 \end{myitemize}
 
@@ -919,8 +935,8 @@ execution environment is incremented each time, starting from 1 for the
 first try - this can be used to vary task behavior by try number.
 
 \begin{myitemize}
-    \item {\em type:} list of ISO 8601 duration/interval representations,
-    optionally {\em preceded} by multipliers
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations,
+    optionally {\em preceded} by multipliers.
     \item {\em example:} \lstinline=PT1.5M,3*PT10M= is equivalent to
     \lstinline=PT1.5M, PT10M, PT10M, PT10M= - 1.5 minutes, 10 minutes,
     10 minutes, 10 minutes.
@@ -947,8 +963,8 @@ until finished.
 see~\ref{DetachingTasks}.}
 
 \begin{myitemize}
-    \item {\em type:} list of ISO 8601 duration/interval representations,
-    optionally {\em preceded} by multipliers
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
+        representations, optionally {\em preceded} by multipliers.
     \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
     \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
     hour, 1 minute.
@@ -976,8 +992,8 @@ until finished.
 see~\ref{DetachingTasks}.}
 
 \begin{myitemize}
-    \item {\em type:} list of ISO 8601 duration/interval representations,
-    optionally {\em preceded} by multipliers
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
+        representations, optionally {\em preceded} by multipliers.
     \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
     \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
     hour, 1 minute.
@@ -1008,8 +1024,7 @@ it does not \lstinline=cd= elsewhere at runtime). The default directory
 path contains task name and cycle point, to provide a unique workspace for
 every instance of every task. If several tasks need to exchange files and
 simply read and write from their from current working directory, this item
-can be used to override the default to make them all use the same workspace
-(see~\ref{worksubdirectory}).
+can be used to override the default to make them all use the same workspace.
 
 The top level share and work directory location can be changed (e.g.\ to a
 large data area) by a global config setting (see~\ref{workdirectory}). 
@@ -1084,8 +1099,8 @@ duration/intervals) which define a range from which the simulation mode task
 run length will be randomly chosen.
 
 \begin{myitemize}
-    \item {\em type:} list containing two ISO 8601 duration/interval
-    representations
+    \item {\em type:} Comma-separated list containing two ISO 8601
+        duration/interval representations.
     \item {\em example:} \lstinline=PT1S,PT20S= - a range of 1 second to 20
     seconds
     \item {\em default:} (1, 16)
@@ -1150,8 +1165,8 @@ to be modified slightly to allow use of the C shell.
 A list of duration (in ISO 8601 syntax), after which to resubmit if job
 submission fails.
 \begin{myitemize}
-    \item {\em type:} list of ISO 8601 duration/interval representations,
-    optionally {\em preceded} by multipliers
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
+        representations, optionally {\em preceded} by multipliers.
     \item {\em example:} \lstinline=PT1M,3*PT1H, P1D= is equivalent to
     \lstinline=PT1M, PT1H, PT1H, PT1H, P1D= - 1 minute, 1 hour, 1 hour, 1
     hour, 1 day.
@@ -1282,7 +1297,7 @@ A list of one or more event handlers to call when one of the following EVENTs oc
 
 Item details:
 \begin{myitemize}
-    \item {\em type:} string list (event handler scripts)
+    \item {\em type:} Comma-separated list of strings (event handler scripts).
     \item {\em default:} None
     \item {\em example:} \lstinline@failed handler = my-failed-handler.sh@
 \end{myitemize}
@@ -1380,7 +1395,7 @@ inherited environment, others will be filtered out. Variables may also
 be explicitly excluded by an \lstinline=exclude= list.
 
 \begin{myitemize}
-\item {\em type:} string list
+\item {\em type:} Comma-separated list of strings (variable names).
 \item {\em default:} (none)
 \end{myitemize}
 
@@ -1391,7 +1406,7 @@ environment.  Variables may also be implicitly excluded by
 omission from an \lstinline=include= list.
 
 \begin{myitemize}
-\item {\em type:} string list
+\item {\em type:} Comma-separated list of strings (variable names).
 \item {\em default:} (none)
 \end{myitemize}
 
@@ -1560,7 +1575,7 @@ Interactive GUI controls can then be used to group and ungroup family
 nodes at will.
 
 \begin{myitemize}
-    \item {\em type:} list of family names
+    \item {\em type:} Comma-separated list of family names.
     \item {\em default:} (none)
 \end{myitemize}
 
@@ -1591,7 +1606,7 @@ Set the default attributes (color and style etc.) of graph nodes (tasks and fami
 Attribute pairs must be quoted to hide the internal \lstinline@=@ character.
 
 \begin{myitemize}
-    \item {\em type:} list of quoted \lstinline@'attribute=value'@ pairs
+    \item {\em type:} Comma-separated list of quoted \lstinline@'attribute=value'@ pairs.
     \item {\em legal values:} see graphviz or pygraphviz documentation
     \item {\em default:} \lstinline@'style=filled', 'fillcolor=yellow', 'shape=box'@
 \end{myitemize}
@@ -1602,7 +1617,7 @@ Set the default attributes (color and style etc.) of graph edges
 (dependency arrows).  Attribute pairs must be quoted to hide the
 internal \lstinline@=@ character.
 \begin{myitemize}
-    \item {\em type:} list of quoted \lstinline@'attribute=value'@ pairs
+    \item {\em type:} Comma-separated list of quoted \lstinline@'attribute=value'@ pairs.
     \item {\em legal values:} see graphviz or pygraphviz documentation
     \item {\em default:} \lstinline@'color=black'@
 \end{myitemize}
@@ -1619,7 +1634,7 @@ root, so you can style family and member nodes at once by family name.
 Replace \_\_GROUP\_\_ with each named group of tasks or families.
 
 \begin{myitemize}
-    \item {\em type:} comma separated list of task or family names
+    \item {\em type:} Comma-separated list of task or family names.
     \item {\em default:} (none)
     \item {\em example:}
 \begin{lstlisting}
@@ -1646,7 +1661,7 @@ Replace \_\_NAME\_\_ with each node or node group for style attribute
 assignment.
 
 \begin{myitemize}
-    \item {\em type:} list of quoted \lstinline@'attribute=value'@ pairs
+    \item {\em type:} Comma-separated list of quoted \lstinline@'attribute=value'@ pairs.
     \item {\em legal values:} see graphviz or pygraphviz documentation
     \item {\em default:} (none)
     \item {\em example:} (with reference to the node groups defined above)

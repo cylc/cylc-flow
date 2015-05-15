@@ -71,7 +71,6 @@ while true; do
     DATA_FILE=dataset-${DATA_ID}.raw
     touch {{DATA_IN_DIR}}/$DATA_FILE
     ((COUNT += 1))
-    # TODO - MAKE DATAID COMPULSORY OR SUPPLY AN ARBITRARY ONE
     # (required to distinguish fast-arriving messages).
     # Trigger downstream processing in the suite.
     cylc ext-trigger $CYLC_SUITE_NAME \
