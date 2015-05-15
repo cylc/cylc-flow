@@ -113,6 +113,13 @@ class tailer(threading.Thread):
             #print "Disconnecting from tailer thread"
 
     def update_gui( self, line ):
+        try:
+            line.decode('utf-8')
+        except UnicodeDecodeError as exc:
+            dialog = warning_dialog("Problem reading file:\n    %s: %s" %
+                                    (type(exc).__name__, exc))
+            gobject.idle_add(dialog.warn)
+            return False
         if self.critical_re and re.search( self.critical_re, line ):
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.critical_tag )
         elif self.warning_re and re.search( self.warning_re, line ):
