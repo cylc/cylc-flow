@@ -39,7 +39,13 @@ class CGraphPlain( pygraphviz.AGraph ):
         self.suite_polling_tasks = suite_polling_tasks
 
     def node_attr_by_taskname( self, node_string ):
-        name, point_string = TaskID.split(node_string)
+        try:
+            name, point_string = TaskID.split(node_string)
+        except ValueError:
+            # Special node?
+            if node_string.startswith("__remove_"):
+                return []
+            raise
         if name in self.task_attr:
             return self.task_attr[name]
         else:
@@ -50,7 +56,15 @@ class CGraphPlain( pygraphviz.AGraph ):
 
     def style_node( self, node_string, autoURL, base=False ):
         node = self.get_node( node_string )
-        name, point_string = TaskID.split(node_string)
+        try:
+            name, point_string = TaskID.split(node_string)
+        except ValueError:
+            # Special node?
+            if node_string.startswith("__remove_"):
+                node.attr['style'] = 'dashed'
+                node.attr['label'] = u'\u2702'
+                return
+            raise
         label = name
         if name in self.suite_polling_tasks:
             label += "\\n" + self.suite_polling_tasks[name][3]
@@ -85,35 +99,163 @@ class CGraphPlain( pygraphviz.AGraph ):
             self.style_node( right, autoURL, base=True )
             self.style_edge( left, right )
 
+    def cylc_remove_nodes_from(self, nodes):
+        """Remove nodes, returning extra edge structure if possible.
+
+        Each group of connected to-be-removed nodes is replaced by a
+        single special node to preserve dependency info between the
+        remaining nodes.
+
+        """
+        if not nodes:
+            return
+        existing_nodes = set(self.nodes())
+        add_edges = set()
+        remove_nodes = set(nodes)
+        remove_node_groups = {}
+        groups = {}
+        group_new_nodes = {}
+        edges = self.edges()
+        incoming_remove_edges = []
+        outgoing_remove_edges = []
+        internal_remove_edges = []
+        for l_node, r_node in edges:
+            if l_node in remove_nodes:
+                if r_node in remove_nodes:
+                    # This is an edge between connected nuke nodes.
+                    internal_remove_edges.append((l_node, r_node))
+                else:
+                    # This is an edge between nuke and normal nodes.
+                    outgoing_remove_edges.append((l_node, r_node))
+            elif r_node in remove_nodes:
+                incoming_remove_edges.append((l_node, r_node))
+        
+        if not outgoing_remove_edges:
+            # Preserving edges doesn't matter - ditch this whole set.
+            self.remove_nodes_from(nodes)
+            return
+
+        # Loop through all connected nuke nodes and group them up.
+        group_num = -1
+        for l_node, r_node in sorted(internal_remove_edges):
+            l_group = remove_node_groups.get(l_node)
+            r_group = remove_node_groups.get(r_node)
+            if l_group is None:
+                if r_group is None:
+                    # Create a new group for l_node and r_node.
+                    group_num += 1
+                    groups[group_num] = set((l_node, r_node))
+                    remove_node_groups[l_node] = group_num
+                    remove_node_groups[r_node] = group_num
+                else:
+                    # r_node already in a group, l_node not - add l_node.
+                    groups[r_group].add(l_node)
+                    remove_node_groups[l_node] = r_group
+            elif r_group is None:
+                # l_node already in a group, r_node not - add r_node.
+                groups[l_group].add(r_node)
+                remove_node_groups[r_node] = l_group
+            elif l_group != r_group:
+                # They are members of different groups - combine them.
+                for node in groups[r_group]:
+                    remove_node_groups[node] = l_group
+                groups[l_group] = groups[l_group].union(groups[r_group])
+                groups.pop(r_group)
+        # Some nodes are their own group and don't have connections.
+        for node in nodes:
+            if node not in remove_node_groups:
+                # The node is its own group.
+                group_num += 1
+                groups[group_num] = set([node])
+                remove_node_groups[node] = group_num
+
+        # Consolidate all groups with the same in/out edges.
+        group_edges = {}
+        for l_node, r_node in incoming_remove_edges:
+            r_group = remove_node_groups[r_node]
+            group_edges.setdefault(r_group, [set(), set()])
+            group_edges[r_group][0].add(l_node)
+
+        for l_node, r_node in outgoing_remove_edges:
+            l_group = remove_node_groups[l_node]
+            group_edges.setdefault(l_group, [set(), set()])
+            group_edges[l_group][1].add(r_node)
+
+        for group1 in sorted(group_edges):
+            if group1 not in group_edges:
+                continue
+            for group2 in sorted(group_edges):
+                if (group1 != group2 and
+                        group_edges[group1][0] == group_edges[group2][0] and
+                        group_edges[group1][1] == group_edges[group2][1]):
+                    # Both groups have the same incoming and outgoing edges.
+                    for node in groups[group2]:
+                        remove_node_groups[node] = group1
+                    groups[group1] = groups[group1].union(groups[group2])
+                    groups.pop(group2)
+                    group_edges.pop(group2)
+
+        # Create a new node name for the group.
+        names = set()
+        index = -1
+        for group, group_nodes in sorted(groups.items()):
+            index += 1
+            name = "__remove_%s__" % index
+            while name in existing_nodes or name in names:
+                index += 1
+                name = "__remove_%s__" % index
+            group_new_nodes[group] = name
+            names.add(name)
+
+        new_edges = set()
+        groups_have_outgoing = set()
+        for l_node, r_node in outgoing_remove_edges:
+            new_l_group = remove_node_groups[l_node]
+            new_l_node = group_new_nodes[new_l_group]
+            new_edges.add((new_l_node, r_node, True, False, False))
+            groups_have_outgoing.add(new_l_group)
+
+        for l_node, r_node in incoming_remove_edges:
+            new_r_group = remove_node_groups[r_node]
+            new_r_node = group_new_nodes[new_r_group]
+            if new_r_group not in groups_have_outgoing:
+                # Skip any groups that don't have edges on to normal nodes.
+                continue
+            new_edges.add((l_node, new_r_node, True, False, False))
+
+        self.remove_nodes_from(nodes)
+        self.add_edges(list(new_edges))
+
     def add_edges( self, edges, ignore_suicide=False ):
         edges.sort() # TODO: does sorting help layout stability?
         for edge in edges:
-            left, right, dashed, suicide, conditional = edge
+            left, right, skipped, suicide, conditional = edge
             if suicide and ignore_suicide:
                 continue
+            attrs = {}
             if conditional:
                 if suicide:
-                    style='dashed'
-                    arrowhead='odot'
+                    attrs['style'] = 'dashed'
+                    attrs['arrowhead'] = 'odot'
                 else:
-                    style='solid'
-                    arrowhead='onormal'
+                    attrs['style'] = 'solid'
+                    attrs['arrowhead'] = 'onormal'
             else:
                 if suicide:
-                    style='dashed'
-                    arrowhead='dot'
+                    attrs['style'] = 'dashed'
+                    attrs['arrowhead'] = 'dot'
                 else:
-                    style='solid'
-                    arrowhead='normal'
-            if dashed:
+                    attrs['style'] = 'solid'
+                    attrs['arrowhead'] = 'normal'
+            if skipped:
                 # override
-                style='dashed'
+                attrs['style'] = 'dotted'
+                attrs['arrowhead'] = 'oinv'
 
-            penwidth = 2
+            attrs['penwidth'] = 2
 
             self.cylc_add_edge(
-                left, right, True, style=style, arrowhead=arrowhead,
-                penwidth=penwidth
+                left, right, True, **attrs
             )
 
     def add_cycle_point_subgraphs( self, edges ):
@@ -123,7 +265,11 @@ class CGraphPlain( pygraphviz.AGraph ):
             for id_ in edge_entry[:2]:
                 if id_ is None:
                     continue
-                point_string = TaskID.split(id_)[1]
+                try:
+                    point_string = TaskID.split(id_)[1]
+                except IndexError:
+                    # Probably a special node - ignore it.
+                    continue
                 point_string_id_map.setdefault(point_string, [])
                 point_string_id_map[point_string].append(id_)
         for point_string, ids in point_string_id_map.items():

@@ -55,6 +55,22 @@ class CylcDotViewerCommon(xdot.DotWindow):
         self.inherit = self.suiterc.get_parent_lists()
         return True
 
+    def set_filter_graph_patterns(self, filter_patterns):
+        """Set some regular expressions to filter out graph nodes."""
+        self.filter_recs = [re.compile(_) for _ in filter_patterns]
+
+    def filter_graph(self):
+        """Apply any filter patterns to remove graph nodes."""
+        if not self.filter_recs:
+            return
+        filter_nodes = set()
+        for node in self.graph.nodes():
+            for filter_rec in self.filter_recs:
+                if filter_rec.search(node.get_name()):
+                    filter_nodes.add(node)
+        self.graph.cylc_remove_nodes_from(filter_nodes)
+
+
 class MyDotWindow2(CylcDotViewerCommon):
     """Override xdot to get rid of some buttons and parse graph from suite.rc"""
     # used by "cylc graph" to plot runtime namespace graphs
@@ -87,6 +103,7 @@ class MyDotWindow2(CylcDotViewerCommon):
         self.template_vars_file = template_vars_file
         self.start_point_string = None
         self.stop_point_string = None
+        self.filter_recs = []
 
         util.setup_icons()
 
@@ -173,8 +190,9 @@ class MyDotWindow2(CylcDotViewerCommon):
                     n.attr['fillcolor'] = 'powderblue'
                     n.attr['color'] = 'royalblue'
 
-        self.set_dotcode( graph.string() )
         self.graph = graph
+        self.filter_graph()
+        self.set_dotcode( graph.string() )
 
     def on_left_to_right( self, toolitem ):
         if toolitem.get_active():
@@ -259,6 +277,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.ignore_suicide = False
         self.start_point_string = start_point_string
         self.stop_point_string = stop_point_string
+        self.filter_recs = []
 
         util.setup_icons()
 
@@ -387,8 +406,9 @@ class MyDotWindow( CylcDotViewerCommon ):
                 else:
                     node.attr['shape'] = 'tripleoctagon'
 
-        self.set_dotcode( graph.string() )
         self.graph = graph
+        self.filter_graph()
+        self.set_dotcode( graph.string() )
 
     def on_left_to_right( self, toolitem ):
         if toolitem.get_active():

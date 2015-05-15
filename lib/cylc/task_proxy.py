@@ -576,7 +576,9 @@ class TaskProxy(object):
         err = result['ERR']
         self.command_log("POLL", out, err)
         if result['EXIT'] != 0:
-            self.log(WARNING, 'job poll failed')
+            self.summary['latest_message'] = 'poll failed'
+            self.log(WARNING, 'job(%02d) poll failed' % self.submit_num)
+            flags.iflag = True
             return
         if not self.state.is_currently('submitted', 'running'):
             # Poll results can come in after a task finishes
@@ -596,7 +598,9 @@ class TaskProxy(object):
         err = result['ERR']
         self.command_log("KILL", out, err)
         if result['EXIT'] != 0:
-            self.log(WARNING, 'job kill failed')
+            self.summary['latest_message'] = 'kill failed'
+            self.log(WARNING, 'job(%02d) kill failed' % self.submit_num)
+            flags.iflag = True
             return
         if self.state.is_currently('submitted'):
             self.log(INFO, 'job killed')
@@ -728,8 +732,6 @@ class TaskProxy(object):
         self.summary['submitted_time_string'] = (
             get_time_string_from_unix_time(self.submitted_time))
         self.summary['submit_method_id'] = self.submit_method_id
-        self.summary['batch_sys_name'] = self.batch_sys_name
-        self.summary['host'] = self.task_host
         self.summary['latest_message'] = "submitted"
         self.handle_event(
             'submitted', 'job submitted', db_event='submission succeeded')
@@ -938,6 +940,7 @@ class TaskProxy(object):
 
         # dynamic instantiation - don't know job sub method till run time.
         self.batch_sys_name = rtconfig['job submission']['method']
+        self.summary['batch_sys_name'] = self.batch_sys_name
 
         command = rtconfig['script']
         use_manual = rtconfig['manual completion']
@@ -991,6 +994,7 @@ class TaskProxy(object):
             self.user_at_host = self.task_owner + "@" + self.task_host
         else:
             self.user_at_host = self.task_host
+        self.summary['host'] = self.user_at_host
         self.submission_poll_timer.set_host(self.task_host)
         self.execution_poll_timer.set_host(self.task_host)
 

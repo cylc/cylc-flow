@@ -31,8 +31,8 @@ import cylc.flags
 
 parser = cop( """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks, or all tasks with a common cycle point from a
-running suite.
+Remove one or more tasks (cylc remove REG MATCH POINT), or all tasks with a
+given cycle point (cylc remove REG POINT) from a running suite.
 
 Tasks will spawn successors first if they have not done so already.
 """ + multitask_usage, pyro=True, multitask=True,
@@ -52,9 +52,11 @@ if len(args) == 3:
     name = args[1]
     point_string = args[2]
     remove_point = False
-else:
+elif len(args) == 2:
     point_string = args[1]
     remove_point = True
+else:
+    parser.error("Wrong number of arguments.")
 
 spawn = not options.no_spawn
 

@@ -998,22 +998,31 @@ appropriate places in the task implementation (see~\ref{DetachingTasks}).
 \item {\em default:} False
 \end{myitemize}
 
-% HIDDEN \paragraph[hours]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ hours}
+\paragraph[work sub-directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work sub-directory}
+\label{worksubdirectory}
 
-\paragraph[work directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work sub-directory}
+Task job scripts are executed from within {\em work directories} created
+automatically under the suite run directory. A task can get its own work
+directory from \lstinline=$CYLC_TASK_WORK_DIR= (or simply \lstinline=$PWD= if
+it does not \lstinline=cd= elsewhere at runtime). The default directory
+path contains task name and cycle point, to provide a unique workspace for
+every instance of every task. If several tasks need to exchange files and
+simply read and write from their from current working directory, this item
+can be used to override the default to make them all use the same workspace
+(see~\ref{worksubdirectory}).
 
-Task job scripts are executed within automatically created work
-directories, which can be accessed by their tasks through
-\lstinline=$CYLC_TASK_WORK_DIR=.  This items sets the low-level
-sub-directory name. The default value provides a unique workspace for
-each task, but this can overridden to make groups of tasks run in the
-same working directory, thereby providing a share space for tasks that
-read and write from their current working directories.
+The top level share and work directory location can be changed (e.g.\ to a
+large data area) by a global config setting (see~\ref{workdirectory}). 
 
 \begin{myitemize}
-\item {\em type:} string (directory path, may contain environment variables)
-\item {\em default:} \lstinline=$TASK_ID=
+\item {\em type:} string (directory path, can contain environment variables)
+\item {\em default:} \lstinline=$CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME=
+\item {\em example:} \lstinline=$CYLC_TASK_CYCLE_POINT/shared/=
 \end{myitemize}
+
+Note that if you omit cycle point from the work sub-directory path successive
+instances of the task will share the same workspace.  Consider the effect on
+cycle point offset housekeeping of work directories before doing this.
 
 \paragraph[enable resurrection]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ enable resurrection}
 
