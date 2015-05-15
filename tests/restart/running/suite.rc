@@ -75,7 +75,6 @@
         description = "Force a shutdown and restart of the suite"
         [[[environment]]]
             CYLC_TEST_BATCH_TASK_HOST={{ HOST }}
-            CYLC_TEST_BATCH_SITE_DIRECTIVES={{ SITE_DIRECTIVES }}
             TEST_DIR={{ TEST_DIR }}
     [[output_states]]
         script = """
