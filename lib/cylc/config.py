@@ -578,6 +578,26 @@ class config( object ):
                 cfg['URL'] = re.sub(RE_TASK_NAME_VAR, name, cfg['URL'])
                 cfg['URL'] = re.sub(RE_SUITE_NAME_VAR, self.suite, cfg['URL'])
 
+        if self.validation:
+            # Detect cyclic dependence.
+            graph = self.get_graph(ungroup_all=True)
+            # Original edges.
+            o_edges = graph.edges()
+            # Reverse any back edges.
+            # (Note: use of acyclic(copy=True) reveals that our CGraph class
+            # needs the same argument list as its parent, pygraphviz.AGraph).
+            graph.acyclic()
+            # Look for reversed edges.
+            n_edges = graph.edges()
+            back_edges = []
+            for e in o_edges:
+                if e not in n_edges:
+                    back_edges.append(e)
+            if len(back_edges) > 0:
+                print >> sys.stderr, "Back-edges:"
+                print >> sys.stderr, '  %s => %s' %(e)
+                raise SuiteConfigError('ERROR: Cyclic dependence detected.')
+
     def check_env_names( self ):
         # check for illegal environment variable names
          bad = {}
@@ -1365,8 +1385,7 @@ class config( object ):
                 if right_name in tasks_to_prune:
                     continue
 
-                if not self.validation and not graphing_disabled:
-                    # edges not needed for validation
+                if not graphing_disabled:
                     left_edge_nodes = pruned_left_nodes
                     right_edge_node = right_name
                     if not left_edge_nodes and left_nodes:
