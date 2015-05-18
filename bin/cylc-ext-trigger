@@ -23,7 +23,7 @@ import cylc.flags
 from cylc.external_trigger import PyroClient
 from cylc.command_prep import prep_pyro
 
-usage = """cylc [control] external-trigger [OPTIONS] ARGS
+usage = """cylc [control] ext-trigger [OPTIONS] ARGS
 
 Report an external trigger message to a suite daemon. It is expected that a
 task in the suite has registered the same message as an external trigger - a

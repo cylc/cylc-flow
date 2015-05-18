@@ -74,7 +74,7 @@ while true; do
     # TODO - MAKE DATAID COMPULSORY OR SUPPLY AN ARBITRARY ONE
     # (required to distinguish fast-arriving messages).
     # Trigger downstream processing in the suite.
-    cylc external-trigger $CYLC_SUITE_NAME \
+    cylc ext-trigger $CYLC_SUITE_NAME \
        "new dataset ready for processing" $DATA_ID
 done"""
 
