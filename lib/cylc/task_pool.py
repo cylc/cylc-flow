@@ -46,7 +46,7 @@ from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
-from cylc.broadcast import Broadcast
+from cylc.network.suite_broadcast import BroadcastServer, PYRO_BCAST_OBJ_NAME
 
 
 class TaskPool(object):
@@ -70,6 +70,7 @@ class TaskPool(object):
             config.get_max_num_active_cycle_points())
         self._prev_runahead_base_point = None
         self._prev_runahead_sequence_points = None
+        self.reload_warned = False
 
         self.config = config
 
@@ -88,8 +89,8 @@ class TaskPool(object):
         self.hold_point = None
         self.held_future_tasks = []
 
-        self.wireless = Broadcast(config.get_linearized_ancestors())
-        self.pyro.connect(self.wireless, 'broadcast_receiver')
+        self.wireless = BroadcastServer(config.get_linearized_ancestors())
+        self.pyro.connect(self.wireless, PYRO_BCAST_OBJ_NAME)
 
         self.broker = broker()
 
@@ -610,6 +611,16 @@ class TaskPool(object):
 
                     self.remove(itask, '(suite definition reload)')
                     self.add_to_runahead_pool(new_task)
+
+        if found:
+            if not self.reload_warned:
+                self.log.warning(
+                    "Reload will complete once current active tasks have finished."
+                )
+                self.reload_warned = True
+        else:
+            self.log.info("Reload completed.")
+            self.reload_warned = False
 
         self.reconfiguring = found
 

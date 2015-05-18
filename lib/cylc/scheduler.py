@@ -16,23 +16,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc_pyro_server import pyro_server
+import os
+import re
+import sys
+import time
+import traceback
+import datetime
+import logging
+import threading
+import subprocess
+from copy import deepcopy
+from Queue import Queue, Empty
+from shutil import copy as shcopy, copytree, rmtree
+
+from parsec.util import printcfg
+import isodatetime.data
+import isodatetime.parsers
+
+import cylc.flags
+import cylc.rundb
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.task_proxy import TaskProxy
 from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
 from cylc.owner import user
 from cylc.version import CYLC_VERSION
-from parsec.util import printcfg
-from shutil import copy as shcopy, copytree, rmtree
-from copy import deepcopy
-import datetime, time
-import logging
-import re, os, sys, traceback
-from state_summary import state_summary
-from passphrase import passphrase
-from suite_id import identifier
-from config import config
+from cylc.passphrase import passphrase
+from cylc.suite_id import identifier
+from cylc.config import config
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.port_file import port_file, PortFileExistsError, PortFileError
 from cylc.regpath import RegPath
@@ -41,24 +52,19 @@ from cylc.RunEventHandler import RunHandler
 from cylc.LogDiagnosis import LogSpec
 from cylc.suite_state_dumping import SuiteStateDumper
 from cylc.suite_logging import suite_log
-import threading
-from cylc.suite_cmd_interface import comqueue
-from cylc.suite_info_interface import info_interface
-from cylc.suite_log_interface import log_interface
 from cylc.task_id import TaskID
 from cylc.task_pool import TaskPool
-import flags
-import cylc.rundb
-from Queue import Queue, Empty
-import subprocess
 from cylc.mp_pool import SuiteProcPool
-from exceptions import SchedulerStop, SchedulerError
-from wallclock import (
+from cylc.exceptions import SchedulerStop, SchedulerError
+from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
-import isodatetime.data
-import isodatetime.parsers
+from cylc.network.pyro_daemon import PyroDaemon
+from cylc.network.suite_state import StateSummaryServer, PYRO_STATE_OBJ_NAME
+from cylc.network.suite_command import SuiteCommandServer, PYRO_CMD_OBJ_NAME
+from cylc.network.suite_info import SuiteInfoServer, PYRO_INFO_OBJ_NAME
+from cylc.network.suite_log import SuiteLogServer, PYRO_LOG_OBJ_NAME
 
 
 class request_handler(threading.Thread):
@@ -158,66 +164,35 @@ class scheduler(object):
         self.parse_commandline()
 
     def configure( self ):
-        SuiteProcPool.get_inst()  # initialise the singleton
-        # read-only commands to expose directly to the network
-        self.info_commands = {
-                'ping suite' : self.info_ping_suite,
-                'ping task' : self.info_ping_task,
-                'suite info' : self.info_get_suite_info,
-                'task info' : self.info_get_task_info,
-                'all families' : self.info_get_all_families,
-                'triggering families' : self.info_get_triggering_families,
-                'first-parent ancestors' : self.info_get_first_parent_ancestors,
-                'first-parent descendants' : self.info_get_first_parent_descendants,
-                'graph raw' : self.info_get_graph_raw,
-                'task requisites' : self.info_get_task_requisites,
-                'get cylc version' : self.info_get_cylc_version,
-                'task job file path' : self.info_get_task_jobfile_path
-                }
+        SuiteProcPool.get_inst()
 
-        # control commands to expose indirectly via a command queue
-        self.control_commands = {
-                'stop cleanly' : self.command_set_stop_cleanly,
-                'stop now' : self.command_stop_now,
-                'stop after point' : self.command_set_stop_after_point,
-                'stop after clock time' : self.command_set_stop_after_clock_time,
-                'stop after task' : self.command_set_stop_after_task,
-                'release suite' : self.command_release_suite,
-                'release task' : self.command_release_task,
-                'remove cycle' : self.command_remove_cycle,
-                'remove task' : self.command_remove_task,
-                'hold suite now' : self.command_hold_suite,
-                'hold suite after' : self.command_hold_after_point_string,
-                'hold task now' : self.command_hold_task,
-                'set runahead' : self.command_set_runahead,
-                'set verbosity' : self.command_set_verbosity,
-                'purge tree' : self.command_purge_tree,
-                'reset task state' : self.command_reset_task_state,
-                'trigger task' : self.command_trigger_task,
-                'dry run task' : self.command_dry_run_task,
-                'nudge suite' : self.command_nudge,
-                'insert task' : self.command_insert_task,
-                'reload suite' : self.command_reload_suite,
-                'add prerequisite' : self.command_add_prerequisite,
-                'poll tasks' : self.command_poll_tasks,
-                'kill tasks' : self.command_kill_tasks,
-                }
+        # Get control and info commands.
+        self.info_commands = {}
+        self.control_command_names = []
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            if not callable(attr):
+                continue
+            if attr_name.startswith('info_'):
+                self.info_commands[attr_name.replace('info_', '')] = attr
+            elif attr_name.startswith('command_'):
+                self.control_command_names.append(
+                    attr_name.replace('command_', ''))
 
-        # run dependency negotation etc. after these commands
+        # Run dependency negotation etc. after these commands.
         self.proc_cmds = [
-            'release suite',
-            'release task',
-            'kill cycle',
-            'kill task',
-            'set runahead',
-            'purge tree',
-            'reset task state',
-            'trigger task',
-            'nudge suite',
-            'insert task',
-            'reload suite',
-            'prerequisite'
-            ]
+            'release_suite',
+            'release_task',
+            'kill_tasks',
+            'set_runahead',
+            'purge_tree',
+            'reset_task_state',
+            'trigger_task',
+            'nudge',
+            'insert_task',
+            'reload_suite',
+            'add_prerequisite'
+        ]
         self.configure_suite()
 
         # REMOTELY ACCESSIBLE SUITE IDENTIFIER
@@ -251,14 +226,8 @@ class scheduler(object):
         self.request_handler = request_handler( self.pyro )
         self.request_handler.start()
 
-        # LOAD TASK POOL ACCORDING TO STARTUP METHOD
         self.old_user_at_host_set = set()
         self.load_tasks()
-
-        # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary(
-            self.config, self.run_mode, str(self.pool.get_min_point()))
-        self.pyro.connect( self.suite_state, 'state_summary')
 
         self.state_dumper.set_cts( self.initial_point, self.final_point )
         self.configure_suite_environment()
@@ -300,7 +269,7 @@ class scheduler(object):
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5 # seconds
 
-    def process_command_queue( self ):
+    def process_command_queue(self):
         queue = self.command_queue.get_queue()
         n = queue.qsize()
         if n > 0:
@@ -316,7 +285,7 @@ class scheduler(object):
             print '  +', name
             cmdstr = name + '(' + ','.join( [ str(a) for a in args ]) + ')'
             try:
-                self.control_commands[ name ]( *args )
+                getattr(self, "command_%s" % name)(*args)
             except SchedulerStop:
                 self.log.info( 'Command succeeded: ' + cmdstr )
                 raise
@@ -484,7 +453,7 @@ class scheduler(object):
     def command_set_verbosity(self, lvl):
         # (lvl legality checked by CLI)
         self.log.setLevel(lvl)
-        flags.debug = (lvl == logging.DEBUG)
+        cylc.flags.debug = (lvl == logging.DEBUG)
         return True, 'OK'
 
     def command_remove_cycle( self, point_string, spawn ):
@@ -553,7 +522,7 @@ class scheduler(object):
         self.suite_timer_timeout = time.time() + (       
             self.config.cfg['cylc']['event hooks']['timeout']
         )
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "%s suite timer starts NOW: %s" % (
                 get_seconds_as_interval_string(
                     self.config.cfg['cylc']['event hooks']['timeout']),
@@ -585,7 +554,7 @@ class scheduler(object):
                     'Illegal run mode: %s\n' % self.options.run_mode)
         self.run_mode = self.options.run_mode
 
-        if flags.debug:
+        if cylc.flags.debug:
             self.logging_level = logging.DEBUG
         else:
             self.logging_level = logging.INFO
@@ -597,18 +566,18 @@ class scheduler(object):
             self.gen_reference_log = self.options.genref
 
     def configure_pyro(self):
-        self.pyro = pyro_server( self.suite, self.suite_dir,
-                GLOBAL_CFG.get( ['pyro','base port'] ),
-                GLOBAL_CFG.get( ['pyro','maximum number of ports'] ) )
+        self.pyro = PyroDaemon(self.suite, self.suite_dir,
+                GLOBAL_CFG.get(['pyro','base port']),
+                GLOBAL_CFG.get(['pyro','maximum number of ports']))
         self.port = self.pyro.get_port()
 
         try:
-            self.port_file = port_file( self.suite, self.port )
+            self.port_file = port_file(self.suite, self.port)
         except PortFileExistsError,x:
             print >> sys.stderr, x
-            raise SchedulerError( 'Suite already running? (if not, delete the port file)' )
+            raise SchedulerError('Suite already running? (if not, delete the port file)')
         except PortFileError,x:
-            raise SchedulerError( str(x) )
+            raise SchedulerError(str(x))
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
@@ -704,51 +673,54 @@ class scheduler(object):
                     self.options.hold_point_string)
 
         # Running in UTC time? (else just use the system clock)
-        flags.utc = self.config.cfg['cylc']['UTC mode']
+        cylc.flags.utc = self.config.cfg['cylc']['UTC mode']
 
         # Capture cycling mode
-        flags.cycling_mode = self.config.cfg['scheduling']['cycling mode']
+        cylc.flags.cycling_mode = self.config.cfg['scheduling']['cycling mode']
 
         if not reconfigure:
-            slog = suite_log( self.suite )
+            slog = suite_log(self.suite)
             self.suite_log_dir = slog.get_dir()
             slog.pimp( self.logging_level )
             self.log = slog.get_log()
             self.logfile = slog.get_path()
 
-            self.command_queue = comqueue( self.control_commands.keys() )
-            self.pyro.connect( self.command_queue, 'command-interface' )
+            self.command_queue = SuiteCommandServer(self.control_command_names)
+            self.pyro.connect(self.command_queue, PYRO_CMD_OBJ_NAME)
 
-            self.info_interface = info_interface( self.info_commands )
-            self.pyro.connect( self.info_interface, 'suite-info' )
+            self.info_interface = SuiteInfoServer(self.info_commands)
+            self.pyro.connect(self.info_interface, PYRO_INFO_OBJ_NAME)
 
-            self.log_interface = log_interface( slog )
-            self.pyro.connect( self.log_interface, 'log' )
+            self.log_interface = SuiteLogServer(slog)
+            self.pyro.connect(self.log_interface, PYRO_LOG_OBJ_NAME)
+
+            self.suite_state = StateSummaryServer(self.config, self.run_mode)
+            self.pyro.connect(self.suite_state, PYRO_STATE_OBJ_NAME)
 
             self.log.info( "port:" +  str( self.port ))
 
     def configure_suite_environment( self ):
         # static cylc and suite-specific variables:
         self.suite_env = {
-                'CYLC_UTC'               : str(flags.utc),
-                'CYLC_CYCLING_MODE'      : str(flags.cycling_mode),
-                'CYLC_MODE'              : 'scheduler',
-                'CYLC_DEBUG'             : str( flags.debug ),
-                'CYLC_VERBOSE'           : str( flags.verbose ),
-                'CYLC_DIR_ON_SUITE_HOST' : os.environ[ 'CYLC_DIR' ],
-                'CYLC_SUITE_NAME'        : self.suite,
-                'CYLC_SUITE_REG_NAME'    : self.suite, # DEPRECATED
-                'CYLC_SUITE_HOST'        : str( self.host ),
-                'CYLC_SUITE_OWNER'       : self.owner,
-                'CYLC_SUITE_PORT'        :  str( self.pyro.get_port()),
-                'CYLC_SUITE_REG_PATH'    : RegPath( self.suite ).get_fpath(), # DEPRECATED
-                'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST' : self.suite_dir,
-                'CYLC_SUITE_INITIAL_CYCLE_POINT' : str( self.initial_point ), # may be "None"
-                'CYLC_SUITE_FINAL_CYCLE_POINT'   : str( self.final_point ), # may be "None"
-                'CYLC_SUITE_INITIAL_CYCLE_TIME' : str( self.initial_point ), # may be "None"
-                'CYLC_SUITE_FINAL_CYCLE_TIME'   : str( self.final_point ), # may be "None"
-                'CYLC_SUITE_LOG_DIR'     : self.suite_log_dir # needed by the test battery
-                }
+            'CYLC_UTC': str(cylc.flags.utc),
+            'CYLC_CYCLING_MODE': str(cylc.flags.cycling_mode),
+            'CYLC_MODE': 'scheduler',
+            'CYLC_DEBUG': str(cylc.flags.debug),
+            'CYLC_VERBOSE': str(cylc.flags.verbose),
+            'CYLC_DIR_ON_SUITE_HOST': os.environ[ 'CYLC_DIR' ],
+            'CYLC_SUITE_NAME': self.suite,
+            'CYLC_SUITE_REG_NAME': self.suite,  # DEPRECATED
+            'CYLC_SUITE_HOST': str(self.host),
+            'CYLC_SUITE_OWNER': self.owner,
+            'CYLC_SUITE_PORT':  str(self.pyro.get_port()),
+            'CYLC_SUITE_REG_PATH': RegPath(self.suite).get_fpath(),  # DEPRECATED
+            'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST': self.suite_dir,
+            'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),  # may be "None"
+            'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),  # may be "None"
+            'CYLC_SUITE_INITIAL_CYCLE_TIME': str(self.initial_point),  # may be "None"
+            'CYLC_SUITE_FINAL_CYCLE_TIME': str(self.final_point),  # may be "None"
+            'CYLC_SUITE_LOG_DIR': self.suite_log_dir  # needed by the test battery
+        }
 
         # Contact details for remote tasks, written to file on task
         # hosts because the details can change on restarting a suite.
@@ -888,7 +860,7 @@ class scheduler(object):
             proc_pool.handle_results_async()
 
             if self.process_tasks():
-                if flags.debug:
+                if cylc.flags.debug:
                     self.log.debug( "BEGIN TASK PROCESSING" )
                     main_loop_start_time = time.time()
 
@@ -908,7 +880,7 @@ class scheduler(object):
 
                 self.pool.wireless.expire( self.pool.get_min_point() )
 
-                if flags.debug:
+                if cylc.flags.debug:
                     seconds = time.time() - main_loop_start_time
                     self.log.debug( "END TASK PROCESSING (took " + str( seconds ) + " sec)" )
 
@@ -921,8 +893,8 @@ class scheduler(object):
 
             self.process_command_queue()
 
-            if flags.iflag or self.do_update_state_summary:
-                flags.iflag = False
+            if cylc.flags.iflag or self.do_update_state_summary:
+                cylc.flags.iflag = False
                 self.do_update_state_summary = False
                 self.update_state_summary()
                 self.state_dumper.dump()
@@ -977,7 +949,7 @@ class scheduler(object):
             self.pool.get_min_point(), self.pool.get_max_point(),
             self.pool.get_max_point_runahead(), self.paused(),
             self.will_pause_at(), self.shut_down_cleanly, self.will_stop_at(),
-            self.config.ns_defn_order)
+            self.config.ns_defn_order, self.pool.reconfiguring)
 
     def log_resolved_deps(self, ready_tasks):
         """Log what triggered off what."""
@@ -1012,9 +984,9 @@ class scheduler(object):
             process = True
             self.do_process_tasks = False # reset
 
-        if flags.pflag:
+        if cylc.flags.pflag:
             process = True
-            flags.pflag = False # reset
+            cylc.flags.pflag = False # reset
             # New suite activity, so reset the suite timer.
             if (self.config.cfg['cylc']['event hooks']['timeout'] and
                     self.config.cfg['cylc']['event hooks']['reset timer']):
@@ -1027,12 +999,12 @@ class scheduler(object):
             process = True
 
         ##if not process:
-        ##    # If we neglect to set flags.pflag on some event that
+        ##    # If we neglect to set cylc.flags.pflag on some event that
         ##    # makes re-negotiation of dependencies necessary then if
         ##    # that event ever happens in isolation the suite could stall
         ##    # unless manually nudged ("cylc nudge SUITE").  If this
         ##    # happens turn on debug logging to see what happens
-        ##    # immediately before the stall, then set flags.pflag = True in
+        ##    # immediately before the stall, then set cylc.flags.pflag = True in
         ##    # the corresponding code section. Alternatively,
         ##    # for an undiagnosed stall you can uncomment this section to
         ##    # stimulate task processing every few seconds even during

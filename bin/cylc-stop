@@ -23,37 +23,28 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute( force_required=True ):
         sys.exit(0)
 
+import cylc.flags
 from cylc.prompt import prompt
 from cylc.task_id import TaskID
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.network.suite_info import SuiteInfoClient
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 from cylc.command_polling import poller
 from cylc.port_file import PortFileError
-import cylc.flags
 
-class stop_poller( poller ):
+class stop_poller(poller):
     """A polling object that checks if a suite has stopped yet."""
 
-    def connect( self ):
-        try:
-            self.proxy = cylc_pyro_client.client(
-                    self.args['suite'],
-                    self.args['pphrase'],
-                    self.args['owner'],
-                    self.args['host'],
-                    self.args['pyro_timeout'],
-                    self.args['port'] ).get_proxy('suite-info')
-        except Exception, x:
-            print >> sys.stderr, x
-            return False
-        else:
-            return True
+    def load(self):
+        self.pclient = SuiteInfoClient(
+            self.args['suite'], self.args['pphrase'], self.args['owner'],
+            self.args['host'], self.args['pyro_timeout'], self.args['port'])
 
-    def check( self ):
+    def check(self):
         # return True if suite has stopped (success) else False
         try:
-           self.proxy.get( 'ping suite' )
+           self.pclient.get_info('ping_suite')
         except:
             # failed to ping - suite stopped
             return True
@@ -120,82 +111,49 @@ if int(options.max_polls) > 0:
     # (test to avoid the "nothing to do" warning for # --max-polls=0)
     spoller = stop_poller( "suite stopped", options.interval, options.max_polls,
         args={
-            'suite'   : suite,
-            'pphrase' : pphrase,
-            'owner'   : options.owner,
-            'host'    : options.host,
-            'pyro_timeout' : options.pyro_timeout,
-            'port'    : options.port
-            })
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-except PortFileError, x:
-    print >> sys.stderr, x
-    print "The suite is apparently not running"
-    # (this is OK for the stop command)
-    sys.exit(0)
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+            'suite': suite,
+            'pphrase': pphrase,
+            'owner': options.owner,
+            'host': options.host,
+            'pyro_timeout': options.pyro_timeout,
+            'port': options.port
+        }
+    )
+
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
 
 method = None
 if options.wall_clock:
-    method = 'stop after clock time'
+    method = 'set_stop_after_clock_time'
     prompt_text = 'Set shutdown at wall clock %s' % options.wall_clock
     shutdown_arg = options.wall_clock
 elif shutdown_at:
     # STOP argument detected
     if TaskID.is_valid_id(shutdown_arg):
         # is a task ID
-        method = 'stop after task'
+        method = 'set_stop_after_task'
         prompt_text = 'Set shutdown after task %s' % shutdown_arg
     else:
         # not a task ID, may be a cycle point
-        method = 'stop after point'
+        method = 'set_stop_after_point'
         prompt_text = 'Set shutdown at cycle point %s' % shutdown_arg
 
 if method:
-    prompt( prompt_text + ' for ' + suite, options.force )
-    try:
-        result = proxy.put( method, shutdown_arg )
-    except Exception,x:
-        if cylc.flags.debug:
-            raise
-        sys.exit(x)
-
+    prompt(prompt_text + ' for ' + suite, options.force)
+    pclient.put_command(method, shutdown_arg)
 elif options.now:
-    prompt( 'Shut down %s now' % suite, options.force )
-    try:
-        result = proxy.put( 'stop now' )
-    except Exception,x:
-        if cylc.flags.debug:
-            raise
-        sys.exit(x)
-
+    prompt('Shut down %s now' % suite, options.force)
+    pclient.put_command('stop_now')
 else:
-    prompt( 'Shut down %s' % suite, options.force )
+    prompt('Shut down %s' % suite, options.force)
     print "Telling the suite to shut down ..."
-    try:
-        result = proxy.put( 'stop cleanly', options.kill )
-    except Exception,x:
-        if cylc.flags.debug:
-            raise
-        sys.exit(x)
-
-if result[0]:
-    # command queued
-    print result[1]
-else:
-    # (should not happen)
-    sys.exit( result[1] )
+    pclient.put_command('set_stop_cleanly', options.kill)
 
 if int(options.max_polls) > 0:
     # (test to avoid the "nothing to do" warning for # --max-polls=0)
-    if not spoller.connect():
-        print >> sys.stderr, "Could not connect to suite: it has apparently shut down already"
-        sys.exit(0)
+    spoller.load()
     if not spoller.poll():
         sys.exit(1)

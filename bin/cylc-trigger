@@ -36,13 +36,14 @@ import shutil
 import difflib
 import subprocess
 from cylc.prompt import prompt
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.network.suite_info import SuiteInfoClient
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
-import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.job_logs import CommandLogger
 from cylc.task_id import TaskID
+import cylc.flags
 
 parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
@@ -77,32 +78,22 @@ suite, pphrase = prep_pyro(args[0], options).execute()
 name = args[1]
 point_string = args[2]
 
-msg = 'Trigger task(s) %s  at %s in %s' % (name, point_string, suite)
+msg = 'Trigger task(s) %s at %s in %s' % (name, point_string, suite)
 prompt(msg, options.force)
 
-# Get the suite daemon command interface.
-try:
-    cmd_proxy = cylc_pyro_client.client(
-        suite, pphrase, options.owner, options.host, options.pyro_timeout,
-        options.port).get_proxy('command-interface')
-except Exception as exc:
-    if cylc.flags.debug:
-        raise
-    sys.exit(exc)
+cmd_client = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                                options.pyro_timeout, options.port)
+my_uuid = cmd_client.get_client_uuid()
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % my_uuid
 
 if options.edit_run:
     # Check that TASK is a unique task.
     task_id = TaskID.get(name, point_string)
-    try:
-        info_proxy = cylc_pyro_client.client(
-            suite, pphrase, options.owner, options.host, options.pyro_timeout,
-            options.port).get_proxy('suite-info')
-        res, msg = info_proxy.get('ping task', task_id, True)
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(exc)
-    if not res:
+    info_client = SuiteInfoClient(suite, pphrase, options.owner, options.host,
+                                  options.pyro_timeout, options.port, my_uuid)
+    success, msg = info_client.get_info('ping_task', task_id, True)
+    if not success:
         sys.exit('ERROR: %s' % msg)
 
     # Get the current job file mtime, if the file exists.
@@ -114,15 +105,8 @@ if options.edit_run:
         # Does not exist.
         jobfile_mtime = None
 
-    try:
-        # Tell the suite daemon to generate the job file.
-        result = cmd_proxy.put('dry run task', name, point_string)
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(exc)
-    if not result[0]:
-        sys.exit(result[1])
+    # Tell the suite daemon to generate the job file.
+    cmd_client.put_command('dry_run_task', name, point_string)
 
     # Wait for the new job file to be written.
     count = 0
@@ -172,12 +156,4 @@ if options.edit_run:
     os.unlink(jobfile_copy_path)
 
 # Trigger the task proxy(s).
-try:
-    result = cmd_proxy.put(
-        'trigger task', name, point_string, options.is_family)
-except Exception as exc:
-    if cylc.flags.debug:
-        raise
-    sys.exit(exc)
-if not result[0]:
-    sys.exit(result[1])
+cmd_client.put_command('trigger_task', name, point_string, options.is_family)

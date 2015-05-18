@@ -21,10 +21,11 @@ import os
 import re
 import sys
 import gtk
-import gobject
 import pango
+import gobject
 import socket
 import subprocess
+from uuid import uuid4
 from isodatetime.parsers import TimePointParser
 
 from cylc.suite_host import is_remote_host
@@ -51,8 +52,7 @@ from cylc.gui.updater import Updater
 from cylc.gui.util import (
     get_icon, get_image_dir, get_logo, EntryTempText,
     EntryDialog, setup_icons, set_exception_hook_dialog)
-from cylc import cylc_pyro_client
-from cylc.state_summary import extract_group_state
+from cylc.network.suite_state import extract_group_state
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
@@ -157,6 +157,8 @@ Class to hold initialisation data.
             ['disable interactive command prompts']
         )
         self.imagedir = get_image_dir()
+        self.my_uuid = uuid4()
+        self.logdir = None
 
         if suite:
             self.reset(suite)
@@ -197,6 +199,8 @@ Class to create an information bar.
         self.filter_state_widget = gtk.HBox()
         self._set_tooltip(self.state_widget, "states")
         self._set_tooltip(self.filter_state_widget, "states filtered out")
+        self.prog_bar_timer = None
+        self.prog_bar_disabled = False
 
         self._status = "status..."
         self.notify_status_changed = status_changed_hook
@@ -225,15 +229,29 @@ Class to create an information bar.
         self._set_tooltip(self.mode_widget, "mode")
 
         self._runahead = ""
-        self.runahead_widget = gtk.Label()
-        self._set_tooltip(self.runahead_widget, "runahead limit")
+        #self.runahead_widget = gtk.Label()
+        #self._set_tooltip(self.runahead_widget, "runahead limit")
 
         self._time = "time..."
         self.time_widget = gtk.Label()
         self._set_tooltip(self.time_widget, "last update time")
 
-        hbox = gtk.HBox()
-        self.pack_start(hbox, False, True)
+        hbox = gtk.HBox(spacing=0)
+        self.pack_start(hbox, False, False)
+
+        # Note: using box padding or spacing creates spurious spacing around
+        # the hidden widgets; instead we add spaces to text widgets labels.
+
+        # From the left.
+        vbox = gtk.VBox()
+        self.prog_bar = gtk.ProgressBar()
+        vbox.pack_end(self.prog_bar, False, True)
+        # Add some text to get full height.
+        self.prog_bar.set_text("...")
+        eb = gtk.EventBox()
+        eb.add(vbox)
+        eb.connect('button-press-event', self.prog_bar_disable)
+        hbox.pack_start(eb, False)
 
         eb = gtk.EventBox()
         eb.add(self.status_widget)
@@ -244,27 +262,25 @@ Class to create an information bar.
         hbox.pack_start(eb, False)
 
         eb = gtk.EventBox()
-        hbox.pack_start(eb, True)
-
-        eb = gtk.EventBox()
-        eb.add(self.state_widget)
-        hbox.pack_start(eb, False)
-
-        eb = gtk.EventBox()
         eb.add(self.mode_widget)
         hbox.pack_start(eb, False)
 
+        # From the right.
         eb = gtk.EventBox()
-        eb.add(self.runahead_widget)
-        hbox.pack_start(eb, False)
+        eb.add(self.log_widget)
+        hbox.pack_end(eb, False)
 
         eb = gtk.EventBox()
         eb.add(self.time_widget)
-        hbox.pack_start(eb, False)
+        hbox.pack_end(eb, False)
+
+        #eb = gtk.EventBox()
+        #eb.add(self.runahead_widget)
+        #hbox.pack_end(eb, False)
 
         eb = gtk.EventBox()
-        eb.add(self.log_widget)
-        hbox.pack_start(eb, False)
+        eb.add(self.state_widget)
+        hbox.pack_end(eb, False)
 
     def set_theme(self, theme, dot_size):
         self.dots = DotMaker(theme, size=dot_size)
@@ -300,8 +316,7 @@ Class to create an information bar.
         if mode == self._mode:
             return False
         self._mode = mode
-        gobject.idle_add(self.mode_widget.set_markup,
-                         "  " + self._mode + "  ")
+        gobject.idle_add(self.mode_widget.set_markup, " %s " % self._mode)
 
     def set_runahead(self, runahead):
         """Set runahead limit."""
@@ -311,7 +326,7 @@ Class to create an information bar.
         text = "runahead:" + str(runahead) + "h  "
         if runahead is None:
             text = ""
-        gobject.idle_add(self.runahead_widget.set_text, text)
+        #gobject.idle_add(self.runahead_widget.set_text, text)
 
     def set_state(self, suite_states, is_suite_stopped=None):
         """Set state text."""
@@ -367,7 +382,7 @@ Class to create an information bar.
             ttip_text = "Current filtering (click to alter):\n%s" % (
                 ", ".join(self._filter_states_excl))
             hbox = gtk.HBox()
-            hbox.pack_start(gtk.Label("(filtered:"))
+            hbox.pack_start(gtk.Label(" (filtered:"))
             for state in self._filter_states_excl:
                 icon = self.dots.get_image(state, is_filtered=True)
                 icon.show()
@@ -376,7 +391,7 @@ Class to create an information bar.
                 label = gtk.Label(" %s" % self._filter_name_string)
                 hbox.pack_start(label)
                 ttip_text += ", %s" % self._filter_name_string
-            hbox.pack_start(gtk.Label(")"))
+            hbox.pack_start(gtk.Label(") "))
             ebox = gtk.EventBox()
             ebox.add(hbox)
             ebox.connect("button_press_event", self.filter_launcher)
@@ -390,7 +405,7 @@ Class to create an information bar.
             return False
         self._status = status
         gobject.idle_add(
-            self.status_widget.set_text, " " + self._status + "   ")
+            self.status_widget.set_text, " %s " % self._status)
         gobject.idle_add(self.notify_status_changed, self._status)
 
     def set_stop_summary(self, summary_maps):
@@ -424,7 +439,7 @@ Class to create an information bar.
             return False
         self._time = time
         time_for_display = time.strip().rsplit(".", 1)[0]
-        gobject.idle_add(self.time_widget.set_text, time_for_display + " ")
+        gobject.idle_add(self.time_widget.set_text, " %s " % time_for_display)
 
     def _set_tooltip(self, widget, text):
         tooltip = gtk.Tooltips()
@@ -434,6 +449,44 @@ Class to create an information bar.
     def _log_widget_launch_hook(self, widget, event):
         self._log_widget_image.set_sensitive(False)
         self.log_launch_hook()
+
+    def prog_bar_start(self, msg):
+        """Start the progress bar running"""
+        self.prog_bar_timer = gobject.timeout_add(100, self.prog_bar_pulse)
+        self.prog_bar.set_text(msg)
+        self.prog_bar.show()
+        self.status_widget.hide()
+        self.prog_bar.show()
+        self._set_tooltip(
+            self.prog_bar,
+            "%s\n(click to remove the progress bar)." % msg)
+        return False
+
+    def prog_bar_pulse(self):
+        self.prog_bar.pulse()
+        return True
+
+    def prog_bar_stop(self):
+        """Stop the progress bar running."""
+        gobject.source_remove(self.prog_bar_timer)
+        self.prog_bar.set_fraction(0)
+        self.prog_bar.set_text('')
+        self.prog_bar_timer = None
+        self.prog_bar.hide()
+        self.status_widget.show()
+        return False
+
+    def prog_bar_disable(self, w=None, e=None):
+        """Disable the progress bar (users may find it annoying)"""
+        self.prog_bar_stop()
+        self.prog_bar_disabled = True
+
+    def prog_bar_can_start(self):
+        if not self.prog_bar_active() and not self.prog_bar_disabled:
+            return True
+
+    def prog_bar_active(self):
+        return self.prog_bar_timer is not None
 
 
 class ControlApp(object):
@@ -548,27 +601,21 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start(hbox, False)
 
         self.window.add(bigbox)
-        title = "gcylc"
-        if self.restricted_display:
-            title += " -r (restricted display)"
-        self.window.set_title(title)
-
+        self.window.set_title('')
         self.window.show_all()
+        self.info_bar.prog_bar.hide()
 
         self.setup_views()
         if suite:
             self.reset(suite)
 
     def reset(self, suite):
-        title = suite
-        self.cfg.suite = suite
-        if self.cfg.host != socket.getfqdn():
-            title += " - " + self.cfg.host
-        title += " - gcylc"
-        if self.restricted_display:
-            title += " -r (restricted display)"
-        self.window.set_title(title)
         self.cfg.reset(suite)
+
+        win_title = suite
+        if self.cfg.host != socket.getfqdn():
+            win_title += " - %s" % self.cfg.host
+        self.window.set_title(win_title)
 
         self.tool_bar_box.set_sensitive(True)
         for menu in self.suite_menus:
@@ -628,7 +675,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         new_pane.pack2(self.view_containers[1], resize=True, shrink=True)
         new_pane.set_position(extent / 2)
         top_parent.pack_start(new_pane, expand=True, fill=True)
-        self.window.show_all()
+        self.window_show_all()
 
     def set_theme(self, item):
         """Change self.theme and then replace each view with itself"""
@@ -836,7 +883,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         for toolitem in reversed(new_toolitems):
             self.tool_bars[view_num].insert(toolitem, index + 1)
         self.current_view_toolitems[view_num] = new_toolitems
-        self.window.show_all()
+        self.window_show_all()
 
     def remove_view(self, view_num):
         """Remove a view instance."""
@@ -903,32 +950,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.reset(chosen)
 
     def pause_suite(self, bt):
-        try:
-            result = self.get_pyro('command-interface').put('hold suite now')
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-        else:
-            if not result[0]:
-                warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('hold_suite')
 
     def resume_suite(self, bt):
-        try:
-            result = self.get_pyro('command-interface').put('release suite')
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('release_suite')
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
-        try:
-            result = self.get_pyro('command-interface').put('stop cleanly')
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-        else:
-            if not result[0]:
-                warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('set_stop_cleanly')
 
     def stopsuite(self, bt, window, kill_rb, stop_rb, stopat_rb, stopct_rb,
                   stoptt_rb, stopnow_rb, stoppoint_entry, stopclock_entry,
@@ -992,25 +1021,18 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             return
 
         window.destroy()
-        try:
-            god = self.get_pyro('command-interface')
-            if stop:
-                result = god.put('stop cleanly', False)
-            elif stopkill:
-                result = god.put('stop cleanly', True)
-            elif stopat:
-                result = god.put('stop after point', stop_point_string)
-            elif stopnow:
-                result = god.put('stop now')
-            elif stopclock:
-                result = god.put('stop after clock time', stopclock_time)
-            elif stoptask:
-                result = god.put('stop after task', stoptask_id)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-        else:
-            if not result[0]:
-                warning_dialog(result[1], self.window).warn()
+        if stop:
+            self.put_pyro_command('set_stop_cleanly', False)
+        elif stopkill:
+            self.put_pyro_command('set_stop_cleanly', True)
+        elif stopat:
+            self.put_pyro_command('set_stop_after_point', stop_point_string)
+        elif stopnow:
+            self.put_pyro_command('stop_now')
+        elif stopclock:
+            self.put_pyro_command('set_stop_after_clock_time', stopclock_time)
+        elif stoptask:
+            self.put_pyro_command('set_stop_after_task', stoptask_id)
 
     def load_point_strings(self, bt, startentry, stopentry):
         item1 = " -i '[scheduling]initial cycle point'"
@@ -1119,10 +1141,7 @@ been defined for this suite""").inform()
         about.set_copyright("Copyright (C) 2008-2015 NIWA")
 
         about.set_comments(
-            """
-The Cylc Suite Engine.
-"""
-        )
+            "The Cylc Suite Engine.\n\nclient UUID:\n%s" % self.cfg.my_uuid)
         about.set_logo(get_logo())
         about.set_transient_for(self.window)
         about.run()
@@ -1138,31 +1157,22 @@ The Cylc Suite Engine.
     def view_task_info(self, w, e, task_id, choice):
         if hasattr(e, "button") and e.button != 1:
             return False
-        try:
-            [glbl, states, fam_states] = (
-                self.get_pyro('state_summary').get_state_summary())
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
         view = True
         reasons = []
         try:
-            logfiles = states[task_id]['logfiles']
+            task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
-            warning_dialog(task_id + ' is no longer live', self.window).warn()
+            warning_dialog(task_id + ' is not live', self.window).warn()
             return False
 
+        logfiles = task_state_summary['logfiles']
         if len(logfiles) == 0:
             view = False
             reasons.append(task_id + ' has no associated log files')
-
-        if states[task_id]['state'] == 'waiting' or \
-                states[task_id]['state'] == 'ready' or \
-                states[task_id]['state'] == 'submit-failed' or \
-                states[task_id]['state'] == 'queued':
+        if task_state_summary['state'] in [
+                'waiting', 'ready', 'submit-failed', 'queued']:
             view = False
             reasons.append(task_id + ' has not started running yet')
-
         if not view:
             warning_dialog('\n'.join(reasons), self.window).warn()
         else:
@@ -1440,6 +1450,11 @@ The Cylc Suite Engine.
         window.add(vbox)
         window.show_all()
 
+    def window_show_all(self):
+        self.window.show_all()
+        if not self.info_bar.prog_bar_active():
+            self.info_bar.prog_bar.hide()
+
     def change_runahead(self, w, entry, window):
         ent = entry.get_text()
         if ent == '':
@@ -1454,14 +1469,7 @@ The Cylc Suite Engine.
             else:
                 limit = ent
         window.destroy()
-        try:
-            result = self.get_pyro(
-                'command-interface').put('set runahead', limit)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('set_runahead', limit)
 
     def add_prerequisite_popup(self, b, task_id):
         window = gtk.Window()
@@ -1529,14 +1537,7 @@ The Cylc Suite Engine.
             return
 
         window.destroy()
-        try:
-            result = self.get_pyro(
-                'command-interface').put('add prerequisite', task_id, msg)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('add_prerequisite', task_id, msg)
 
     def update_tb(self, tb, line, tags=None):
         if tags:
@@ -1545,14 +1546,8 @@ The Cylc Suite Engine.
             tb.insert(tb.get_end_iter(), line)
 
     def popup_requisites(self, w, e, task_id):
-        try:
-            name, point_string = TaskID.split(task_id)
-            result = self.get_pyro('suite-info').get(
-                'task requisites', name, point_string)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-
+        name, point_string = TaskID.split(task_id)
+        result = self.get_pyro_info('get_task_requisites', name, point_string)
         if result:
             # (else no tasks were found at all -suite shutting down)
             if task_id not in result:
@@ -1675,20 +1670,13 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            if stop:
-                result = self.get_pyro('command-interface').put(
-                    'hold task now', name, point_string, is_family)
-            else:
-                result = self.get_pyro('command-interface').put(
-                    'release task', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
 
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        if stop:
+            self.put_pyro_command('hold_task', name, point_string,
+                                  is_family)
+        else:
+            self.put_pyro_command('release_task', name, point_string,
+                                  is_family)
 
     def trigger_task_now(self, b, task_id, is_family=False):
         """Trigger task via the suite daemon's command interface."""
@@ -1697,15 +1685,7 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'trigger task', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('trigger_task', name, point_string, is_family)
 
     def trigger_task_edit_run(self, b, task_id):
         """
@@ -1724,53 +1704,26 @@ shown here in the state they were in at the time of triggering.''')
         cmd = "poll"
         if not self.get_confirmation(cmd, task_id):
             return
-
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'poll tasks', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('poll_tasks', name, point_string, is_family)
 
     def kill_task(self, b, task_id, is_family=False):
         cmd = "kill"
         if not self.get_confirmation(cmd, task_id):
             return
-
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'kill tasks', name, point_string, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('kill_tasks', name, point_string, is_family)
 
     def reset_task_state(self, b, e, task_id, state, is_family=False):
         if hasattr(e, "button") and e.button != 1:
             return False
         cmd = "reset"
-
         name, point_string = TaskID.split(task_id)
         msg = "reset " + task_id + " to " + state + "?"
         if not self.get_confirmation(cmd, task_id, msg):
             return
-
-        try:
-            result = self.get_pyro('command-interface').put(
-                'reset task state', name, point_string, state, is_family)
-        except Exception, x:
-            # the suite was probably shut down by another process
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('reset_task_state', name, point_string, state,
+                              is_family)
 
     def remove_task(self, b, task_id, is_family):
         cmd = "remove"
@@ -1779,14 +1732,8 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'remove task', name, point_string, is_family, True)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('remove_task', name, point_string, is_family,
+                              True)
 
     def remove_task_nospawn(self, b, task_id, is_family=False):
         cmd = "remove"
@@ -1795,38 +1742,18 @@ shown here in the state they were in at the time of triggering.''')
             return
 
         name, point_string = TaskID.split(task_id)
-        try:
-            result = self.get_pyro('command-interface').put(
-                'remove task', name, point_string, is_family, False)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('remove_task', name, point_string, is_family,
+                              False)
 
     def purge_cycle_entry(self, e, w, task_id):
         stop = e.get_text()
         w.destroy()
-        try:
-            result = self.get_pyro('command-interface').put(
-                'purge tree', task_id, stop)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('purge_tree', task_id, stop)
 
     def purge_cycle_button(self, b, e, w, task_id):
         stop = e.get_text()
         w.destroy()
-        try:
-            result = self.get_pyro('command-interface').put(
-                'purge tree', task_id, stop)
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('purge_tree', task_id, stop)
 
     def stopsuite_popup(self, b):
         window = gtk.Window()
@@ -2288,27 +2215,17 @@ shown here in the state they were in at the time of triggering.''')
         point_string = entry_point_string.get_text()
         is_family = fam_cb.get_active()
         stop_point_string = entry_stoppoint.get_text()
-
         if match == '' or point_string == '':
             warning_dialog(
                 "Enter task or family name MATCH expression",
                 self.window).warn()
             return
-
         window.destroy()
-
         stop = None
         if stop_point_string != '':
             stop = stop_point_string
-
-        try:
-            result = self.get_pyro('command-interface').put(
-                'insert task', match, point_string, is_family, stop)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
-            return
-        if not result[0]:
-            warning_dialog(result[1], self.window).warn()
+        self.put_pyro_command('insert_task', match, point_string, is_family,
+                               stop)
 
     def poll_all(self, w):
         command = "cylc poll" + self.get_remote_run_opts() + " " + self.cfg.suite
@@ -2317,38 +2234,10 @@ shown here in the state they were in at the time of triggering.''')
         foo.run()
 
     def reload_suite(self, w):
-        msg = """Reload the suite definition.
-This allows you change task runtime configuration and add
-or remove task definitions without restarting the suite."""
-        prompt = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,
-                                   gtk.MESSAGE_QUESTION,
-                                   gtk.BUTTONS_OK_CANCEL, msg)
-
-        prompt.add_button(gtk.STOCK_HELP, gtk.RESPONSE_HELP)
-        response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help("control", "reload")
-            response = prompt.run()
-
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
-            return
-
-        command = (
-            "cylc reload -f" + self.get_remote_run_opts() + " " + self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        self.put_pyro_command('reload_suite')
 
     def nudge_suite(self, w):
-        try:
-            result = self.get_pyro('command-interface').put('nudge suite')
-        except Exception, x:
-            warning_dialog(str(x), self.window).warn()
-            return False
-        if not result:
-            warning_dialog('Failed to nudge the suite', self.window).warn()
+        self.put_pyro_command('nudge')
 
     def popup_logview(self, task_id, logfiles, choice=None):
         """Display task job log files in a combo log viewer."""
@@ -2515,6 +2404,15 @@ to reduce network traffic.""")
         thememenu = gtk.Menu()
         theme_item.set_submenu(thememenu)
 
+        self.view_menu.append(gtk.SeparatorMenuItem())
+        uuid_item = gtk.ImageMenuItem("Client _UUID")
+        img = gtk.image_new_from_stock(gtk.STOCK_INDEX,
+                                       gtk.ICON_SIZE_MENU)
+        uuid_item.set_image(img)
+        self._set_tooltip(
+            uuid_item, "View the client UUID for this gcylc instance")
+        self.view_menu.append(uuid_item)
+        uuid_item.connect('activate', self.popup_uuid_dialog)
         theme_items = {}
         theme = "default"
         theme_items[theme] = gtk.RadioMenuItem(label='_' + theme)
@@ -2691,12 +2589,6 @@ to reduce network traffic.""")
         tools_menu_root = gtk.MenuItem('_Suite')
         tools_menu_root.set_submenu(tools_menu)
 
-        url_item = gtk.ImageMenuItem('_Browse suite URL')
-        img = gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
-        url_item.set_image(img)
-        tools_menu.append(url_item)
-        url_item.connect('activate', self.browse, self.cfg.suite)
-
         val_item = gtk.ImageMenuItem('_Validate')
         img = gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU)
         val_item.set_image(img)
@@ -2711,12 +2603,11 @@ to reduce network traffic.""")
         tools_menu.append(des_item)
         des_item.connect('activate', self.describe_suite)
 
-        info_item = gtk.ImageMenuItem('_Info (Running)')
-        img = gtk.image_new_from_stock(gtk.STOCK_DIALOG_INFO,
-                                       gtk.ICON_SIZE_MENU)
-        info_item.set_image(img)
-        tools_menu.append(info_item)
-        info_item.connect('activate', self.run_suite_info)
+        url_item = gtk.ImageMenuItem('_Browse Suite URL')
+        img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
+        url_item.set_image(img)
+        tools_menu.append(url_item)
+        url_item.connect('activate', self.browse, self.cfg.suite)
 
         tools_menu.append(gtk.SeparatorMenuItem())
 
@@ -2878,15 +2769,19 @@ to reduce network traffic.""")
         self.menu_bar.append(help_menu_root)
 
     def describe_suite(self, w):
-        command = (
-            "echo '> TITLE:'; " +
-            "cylc get-suite-config -i title " + self.cfg.suite + "; " +
-            "echo '> DESCRIPTION:'; " +
-            "cylc get-suite-config --notify-completion -i description " +
-            self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        # Show suite title and description.
+        if self.updater.connected:
+            # Interrogate the suite daemon.
+            info = self.get_pyro_info('get_suite_info')
+            descr = '\n'.join("%s: %s" % (key, val) for key, val in info.items())
+            info_dialog(descr, self.window).inform()
+        else:
+            # Parse the suite definition.
+            command = ("cylc get-suite-config -i title -i description " +
+                   self.get_remote_run_opts() + " " + self.cfg.suite)
+            foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400)
+            self.gcapture_windows.append(foo)
+            foo.run()
 
     def search_suite_popup(self, w):
         reg = self.cfg.suite
@@ -3263,18 +3158,19 @@ For more Stop options use the Control menu.""")
         self.tool_bar_box.pack2(self.tool_bars[1], resize=True, shrink=True)
 
     def _alter_status_toolbar_menu(self, new_status):
-        # Handle changes in status for some toolbar/menuitems.
+        #But  Handle changes in status for some toolbar/menuitems.
         if new_status == self._prev_status:
             return False
+        self.info_bar.prog_bar_disabled = False
         self._prev_status = new_status
-        if "connected" in new_status:
-            self.stop_toolbutton.set_sensitive(False)
-            return False
-        run_ok = bool("stopped" in new_status)
-        pause_ok = bool("running" in new_status)
-        unpause_ok = bool("hold at" in new_status or "held" in new_status or
-                          "stopping" in new_status)
-        stop_ok = bool("stopped" not in new_status)
+        run_ok = "stopped" in new_status
+        # Pause: avoid "stopped with running":
+        pause_ok = (new_status in ["running", "reloading"] and 
+                    "stopped" not in new_status)
+        unpause_ok = "hold at" in new_status or "held" == new_status
+        stop_ok = ("stopped" not in new_status and
+                   "connected" != new_status and
+                   "initialising" != new_status)
         self.run_menuitem.set_sensitive(run_ok)
         self.pause_menuitem.set_sensitive(pause_ok)
         self.unpause_menuitem.set_sensitive(unpause_ok)
@@ -3305,6 +3201,7 @@ For more Stop options use the Control menu.""")
         icon_widget.show()
         self.run_pause_toolbutton.set_icon_widget(icon_widget)
         self.run_pause_toolbutton.set_label(label)
+        self.run_pause_toolbutton.set_sensitive(True)
         tip_tuple = gtk.tooltips_data_get(self.run_pause_toolbutton)
         if tip_tuple is None:
             tips = gtk.Tooltips()
@@ -3320,6 +3217,12 @@ For more Stop options use the Control menu.""")
             self._alter_status_toolbar_menu,
             lambda: self.run_suite_log(None, type="err"))
         self._set_info_bar()
+
+    def popup_uuid_dialog(self, w):
+        info_dialog(
+            "Client UUID %s\n"
+            "(this identifies a client instance to the suite daemon)" % (
+                self.cfg.my_uuid), self.window).inform()
 
     def popup_theme_legend(self, widget=None):
         """Popup a theme legend window."""
@@ -3363,10 +3266,21 @@ For more Stop options use the Control menu.""")
         """Handle a destroy of the theme legend window."""
         self.theme_legend_window = None
 
-    def get_pyro(self, object):
-        return cylc_pyro_client.client(
-            self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-            self.cfg.pyro_timeout, self.cfg.port).get_proxy(object)
+    def put_pyro_command(self, command, *args):
+        try:
+            success, msg = self.updater.suite_command_client.put_command_gui(
+                command, *args)
+        except Exception, x:
+            warning_dialog(x.__str__(), self.window).warn()
+        else:
+            if not success:
+                warning_dialog(msg, self.window).warn()
+
+    def get_pyro_info(self, command, *args):
+        try:
+            return self.updater.suite_info_client.get_info_gui(command, *args)
+        except Exception, x:
+            warning_dialog(x.__str__(), self.window).warn()
 
     def run_suite_validate(self, w):
         command = ("cylc validate -v " + self.get_remote_run_opts() +

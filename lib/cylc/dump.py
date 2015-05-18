@@ -80,8 +80,6 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
   
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     stop = lines.pop(0).rstrip().rsplit(None, 1)[-1]
-    if start != "(none)":
-        global_summary["start time"] = start
     if stop != "(none)":
         global_summary["will_stop_at"] = stop
     while lines:

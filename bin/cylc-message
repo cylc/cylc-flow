@@ -46,18 +46,6 @@ parser.add_option( "-p",
         help="message priority: NORMAL, WARNING, or CRITICAL; default NORMAL.",
         action="store", dest="priority", default="NORMAL" )
 
-parser.add_option( "--next-restart-completed",
-        help="Report next restart file(s) completed",
-        action="store_true", dest="next_restart_completed" )
-
-parser.add_option( "--all-restart-outputs-completed",
-        help="Report all restart outputs completed at once.",
-        action="store_true", dest="all_restarts_completed" )
-
-parser.add_option( "--all-outputs-completed",
-        help="Report all internal outputs completed at once.",
-        action="store_true", dest="all_outputs_completed" )
-
 parser.add_option( "-v", "--verbose",
         help="Verbose output mode.",
         action="store_true", default=False, dest="verbose" )
@@ -65,19 +53,7 @@ parser.add_option( "-v", "--verbose",
 ( options, args ) = parser.parse_args()
 cylc.flags.verbose = options.verbose
 
-if options.next_restart_completed:
-    message().shortcut_next_restart()
-    sys.exit(0)
-
-elif options.all_restarts_completed:
-    message().shortcut_all_restarts()
-    sys.exit(0)
-
-elif options.all_outputs_completed:
-    message().shortcut_all_outputs()
-    sys.exit(0)
-
-elif len( args ) == 0:
+if len( args ) == 0:
     parser.error( "No task message supplied" )
 
 debug = False

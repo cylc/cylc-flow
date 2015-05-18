@@ -32,7 +32,7 @@ if "--use-ssh" in sys.argv[1:]:
 
 from multiprocessing import cpu_count, Pool
 from time import sleep
-from cylc.port_scan import scan
+from cylc.network.port_scan import scan
 from cylc.CylcOptionParsers import cop
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 

@@ -20,35 +20,34 @@ import sys
 import socket
 try:
     import Pyro
-except ImportError, x:
-    print >> sys.stderr, x
-    sys.exit( "ERROR: Pyro is not installed" )
-from passphrase import passphrase
-from suite_host import get_hostname
-from owner import user
+except ImportError:
+    sys.exit("ERROR: Pyro is not installed")
+from cylc.passphrase import passphrase
+from cylc.suite_host import get_hostname
+from cylc.owner import user
 
-class pyro_server( object ):
-    def __init__( self, suite, suitedir, base_port, max_n_ports, user=user ):
+class PyroDaemon(object):
+    def __init__(self, suite, suitedir, base_port, max_n_ports, user=user):
 
         self.suite = suite
         self.owner = user
 
-        # SINGLE THREADED PYRO
         Pyro.config.PYRO_MULTITHREADED = 1
-        # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
+        # Use dns names instead of fixed ip addresses from /etc/hosts
         # (see the Userguide "Networking Issues" section).
         Pyro.config.PYRO_DNS_URI = True
 
-        # base (lowest allowed) Pyro socket number
+        # Base Pyro socket number.
         Pyro.config.PYRO_PORT = base_port
-        # max number of sockets starting at base
+        # Max number of sockets starting at base.
         Pyro.config.PYRO_PORT_RANGE = max_n_ports
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
-        self.daemon.setAllowedIdentifications( [passphrase(suite,user,get_hostname()).get(suitedir=suitedir)] )
+        self.daemon.setAllowedIdentifications(
+            [passphrase(suite,user,get_hostname()).get(suitedir=suitedir)])
 
-    def shutdown( self ):
+    def shutdown(self):
         self.daemon.shutdown(True)
         # If a suite shuts down via 'stop --now' or # Ctrl-C, etc.,
         # any existing client end connections will hang for a long time
@@ -56,22 +55,22 @@ class pyro_server( object ):
         # presumably) which daemon.shutdown() does not do (why not?):
 
         try:
-            self.daemon.sock.shutdown( socket.SHUT_RDWR )
+            self.daemon.sock.shutdown(socket.SHUT_RDWR)
         except socket.error, x:
             print >> sys.stderr, x
 
-    def connect( self, obj, name, qualified=True ):
+    def connect(self, obj, name, qualified=True):
         if qualified:
             qname = self.owner + '.' + self.suite + '.' + name
         else:
             qname = name
-        uri = self.daemon.connect( obj, qname )
+        uri = self.daemon.connect(obj, qname)
 
-    def disconnect( self, obj ):
-        self.daemon.disconnect( obj )
+    def disconnect(self, obj):
+        self.daemon.disconnect(obj)
 
-    def handleRequests( self, timeout=None ):
-        self.daemon.handleRequests( timeout )
+    def handleRequests(self, timeout=None):
+        self.daemon.handleRequests(timeout)
 
-    def get_port( self ):
+    def get_port(self):
         return self.daemon.port

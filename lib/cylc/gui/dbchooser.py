@@ -26,13 +26,13 @@ from util import EntryTempText, EntryDialog
 from cylc.run_get_stdout import run_get_stdout
 
 try:
-    from cylc import cylc_pyro_client
+    import Pyro.core
 except BaseException, x: # this catches SystemExit
     PyroInstalled = False
     print >> sys.stderr, "WARNING: Pyro is not installed."
 else:
     PyroInstalled = True
-    from cylc.port_scan import scan
+    from cylc.network.port_scan import scan
 
 from cylc.registration import localdb
 from cylc.regpath import RegPath

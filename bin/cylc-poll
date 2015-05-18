@@ -24,7 +24,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 import cylc.flags
@@ -61,20 +61,9 @@ elif len(args) == 1:
 else:
     parser.error("Wrong number of arguments.")
 
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    prompt( 'Poll task ' + name + ' at ' + point_string + ' in ' + suite,
-            options.force )
-    result = proxy.put( 'poll tasks', name, point_string, options.is_family )
-
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-
-if result[0]:
-    print result[1]
-else:
-    sys.exit( result[1] )
+prompt('Poll task %s at %s in %s' % (name, point_string, suite), options.force)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+pclient.put_command('poll_tasks', name, point_string, options.is_family)

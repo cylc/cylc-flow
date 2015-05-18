@@ -26,7 +26,7 @@ if '--use-ssh' in sys.argv[1:]:
 import os
 from cylc.prompt import prompt
 from cylc.task_id import TaskID
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
@@ -61,18 +61,9 @@ else:
 if not TaskID.is_valid_id(task_id):
     sys.exit("Invalid task ID: " + task_id)
 
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    prompt( 'Add new prerequisite to ' + task_id + ' in ' + suite, options.force )
-    result = proxy.put( 'add prerequisite', task_id, msg )
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-
-if result[0]:
-    print result[1]
-else:
-    sys.exit( result[1] )
+prompt('Add new prerequisite to %s in %s' % (task_id, suite), options.force)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
+pclient.put_command('add_prerequisite', task_id, msg)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()

@@ -1,0 +1,14 @@
+title = Generate log messages for various suite connection types.
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = """
+# COMMAND INTERFACE:
+# This doesn't prevent the suite from shutting down as there's only one task:
+cylc hold $CYLC_SUITE_NAME
+# INFO INTERFACE:
+cylc show $CYLC_SUITE_NAME
+# BROADCAST INTERFACE:
+cylc broadcast -d $CYLC_SUITE_NAME"""
