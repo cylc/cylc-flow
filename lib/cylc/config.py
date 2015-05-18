@@ -597,11 +597,12 @@ class config( object ):
             for e in o_edges:
                 (l, r) = e
                 if l == r:
+                    e = (l, r.replace('!', ''))
                     back_edges.append(e)
-                    e = (l, r.replace('!',''))
             if len(back_edges) > 0:
                 print >> sys.stderr, "Back-edges:"
-                print >> sys.stderr, '  %s => %s' %(e)
+                for e in back_edges:
+                    print >> sys.stderr, '  %s => %s' % e
                 raise SuiteConfigError('ERROR: cyclic dependence detected '
                                        '(graph the suite to see back-edges).')
  
