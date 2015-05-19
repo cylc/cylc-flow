@@ -23,7 +23,7 @@ import Queue
 import Pyro.core
 import Pyro.errors
 import cylc.flags
-import cylc.cylc_pyro_client
+from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.task_id import TaskID
 from cylc.passphrase import passphrase
 
@@ -31,7 +31,7 @@ from cylc.passphrase import passphrase
 PYRO_TARGET_NAME = 'external_event_broker'
 
 
-class PyroClient(object):
+class ExtTriggerClient(PyroClient):
     """Network client for sending external triggers to a suite."""
 
     MAX_TRIES = 5
@@ -41,6 +41,8 @@ class PyroClient(object):
     ERR_SEND_FAILED = "Send message: try %s of %s failed"
     STR_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
     STR_SEND_SUCCEED = "Send message: try %s of %s succeeded"
+
+    target_server_object = PYRO_TARGET_NAME
 
     def __init__(
             self, suite, event_msg, host='localhost', owner=None,
@@ -60,9 +62,9 @@ class PyroClient(object):
         self.pphrase = passphrase(
             self.suite, self.owner, self.host).get(None, None)
 
-        self.pyro_proxy = cylc.cylc_pyro_client.client(
-            self.suite, self.pphrase, self.owner, self.host,
-            self.pyro_timeout, self.port).get_proxy(PYRO_TARGET_NAME)
+        super(ExtTriggerClient, self).__init__(
+            self.suite, self.pphrase, self.owner, self.host, self.pyro_timeout,
+            self.port)
 
     def send(self):
         sent = False
