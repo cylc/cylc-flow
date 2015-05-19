@@ -20,7 +20,7 @@ import copy
 import os
 import re
 import shlex
-import subprocess
+from subprocess import Popen, PIPE, STDOUT
 import sys
 import threading
 import time
@@ -33,6 +33,7 @@ from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
+import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
@@ -57,16 +58,20 @@ def get_host_suites(hosts, timeout=None, owner=None):
         command.append("--owner=%s" % owner)
     if hosts:
         command += hosts
-    popen = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    res = popen.wait()
-    if res == 0:
+    if cylc.flags.debug:
+        stderr = sys.stderr
+        command.append("--debug")
+    else:
+        stderr = PIPE
+    popen = Popen(command, stdout=PIPE, stderr=stderr)
+    if popen.wait() == 0:
         for line in popen.communicate()[0].splitlines():
             if line:
                 name, _, host, _ = line.split()
                 if host not in host_suites_map:
                     host_suites_map[host] = []
                 host_suites_map[host].append(name)
+        
     return host_suites_map
 
 
@@ -74,18 +79,18 @@ def get_task_cycle_statuses_updatetime(host, suite, owner=None):
     """Return a list of task, cycle, status tuples, or None and update time."""
     if owner is None:
         owner = user
-    command = ["cylc", "cat-state", "--host=%s" % host,
-               "--user=%s" % owner, suite]
-    popen = subprocess.Popen(command,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-    stdout = popen.stdout.read()
-    res = popen.wait()
-    if res != 0:
-        sys.stderr.write(popen.stderr.read())
+    command = ["cylc", "cat-state", "--host=" + host, "--user=" + owner]
+    if cylc.flags.debug:
+        stderr = sys.stderr
+        command.append("--debug")
+    else:
+        stderr = PIPE
+    popen = Popen(command + [suite], stdout=PIPE, stderr=stderr)
+    out = popen.communicate()[0]
+    if popen.wait():  # non-zero return code
         return None, None
     task_cycle_statuses = []
-    for line in stdout.rpartition("Begin task states")[2].splitlines():
+    for line in out.rpartition("Begin task states")[2].splitlines():
         task_result = re.match("([^ ]+) : status=([^,]+), spawned", line)
         if not task_result:
             continue
@@ -93,7 +98,7 @@ def get_task_cycle_statuses_updatetime(host, suite, owner=None):
         task_order = task.split(".")
         task_order.append(status)
         task_cycle_statuses.append(tuple(task_order))
-    suite_update_times = re.search("^time : [^ ]+ \(([0-9]+)\)$", stdout, re.M)
+    suite_update_times = re.search("^time : [^ ]+ \(([0-9]+)\)$", out, re.M)
     if suite_update_times is not None:
         suite_update_times = int(suite_update_times.group(1))
     else:
@@ -280,25 +285,53 @@ def launch_gcylc(host, suite, owner=None):
     """Launch gcylc for a given suite and host."""
     if owner is None:
         owner = user
-    stdout = open(os.devnull, "w")
-    stderr = stdout
-    command = "cylc gui --host=%s --user=%s %s" % (
-                                         host, owner, suite)
-    command = shlex.split(command)
-    subprocess.Popen(command, stdout=stdout, stderr=stderr)
+    args = ["--host=" + host, "--user=" + owner, suite]
+
+    # Get version of suite
+    f_null = open(os.devnull, "w")
+    if cylc.flags.debug:
+        stderr = sys.stderr
+        args = ["--debug"] + args
+    else:
+        stderr = f_null
+    command = ["cylc", "get-suite-version"] + args
+    proc = Popen(command, stdout=PIPE, stderr=stderr)
+    suite_version = proc.communicate()[0].strip()
+    proc.wait()
+
+    # Run correct version of "cylc gui", provided that "admin/cylc-wrapper" is
+    # installed.
+    env = None
+    if suite_version != CYLC_VERSION:
+        env = dict(os.environ)
+        env["CYLC_VERSION"] = suite_version
+    command = ["cylc", "gui"] + args
+    if cylc.flags.debug:
+        stdout = sys.stdout
+        stderr = sys.stderr
+        Popen(command, env=env, stdout=stdout, stderr=stderr)
+    else:
+        stdout = f_null
+        stderr = STDOUT
+        Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
 
 
 def launch_gsummary(hosts=None, owner=None):
     """Launch gsummary for a given list of hosts and/or owner."""
-    stdout = open(os.devnull, "w")
-    stderr = stdout
-    command = ["cylc", "gsummary"]
+    if cylc.flags.debug:
+        stdout = sys.stdout
+        stderr = sys.stderr
+        command = ["cylc", "gsummary", "--debug"]
+    else:
+        stdout = open(os.devnull, "w")
+        stderr = STDOUT
+        command = ["cylc", "gsummary"]
     if hosts is not None:
         for host in hosts:
             command += ["--host=%s" % host]
     if owner is not None:
         command += ["--user=%s" % owner]
-    subprocess.Popen(command, stdout=stdout, stderr=stderr)
+    Popen(command, stdout=stdout, stderr=stderr)
 
 
 def launch_hosts_dialog(existing_hosts, change_hosts_func):
