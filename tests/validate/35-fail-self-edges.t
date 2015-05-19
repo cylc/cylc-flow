@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,18 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test intercycle dependencies.
+# Test validation of a suite with self-edges fails.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE 9999_rollover
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME=$TEST_NAME_BASE
+run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
+grep_ok "ERROR: cyclic dependence detected" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run --debug $SUITE_NAME
-grep_ok "Cannot dump TimePoint year: 10000 not in bounds 0 to 9999" $TEST_NAME.stderr
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME

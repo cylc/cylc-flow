@@ -35,6 +35,7 @@ from time import sleep
 from cylc.network.port_scan import scan
 from cylc.CylcOptionParsers import cop
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.suite_host import is_remote_host
 
 
 def main():
@@ -83,6 +84,12 @@ def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
     """Scan all hosts."""
     if not hosts:
         hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
+    # Ensure that it does "localhost" only once
+    hosts = set(hosts)
+    for host in list(hosts):
+        if not is_remote_host(host):
+            hosts.remove(host)
+            hosts.add("localhost")
     proc_pool_size = GLOBAL_CFG.get(["process pool size"])
     if proc_pool_size is None:
         proc_pool_size = cpu_count()
