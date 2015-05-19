@@ -893,11 +893,11 @@ class SummaryAppUpdater(BaseSummaryUpdater):
         suite_host_tuples.sort()
         self._fetch_suite_titles()
         for suite, host in suite_host_tuples:
+            last_updated_time = time.time()
             if suite in statuses.get(host, {}):
                 status_map_items = statuses[host][suite]
                 is_stopped = False
                 suite_time = suite_update_times[host][suite]
-                last_updated_time = time.time()
             else:
                 info = stop_summaries[host][suite]
                 status_map, suite_time = info
