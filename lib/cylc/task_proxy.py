@@ -65,6 +65,7 @@ from cylc.mp_pool import (
     JOB_SKIPPED_FLAG
 )
 from cylc.task_id import TaskID
+from cylc.task_message import TaskMessage
 from cylc.task_output_logs import logfiles
 
 
@@ -1280,7 +1281,7 @@ class TaskProxy(object):
                     WARNING,
                     "Unexpected output (already completed):\n  " + message)
 
-        if priority == 'WARNING':
+        if priority == TaskMessage.WARNING:
             self.handle_event('warning', content, db_update=False)
 
         if self.event_hooks['reset timer']:
@@ -1291,7 +1292,7 @@ class TaskProxy(object):
                     time.time() + execution_timeout
                 )
 
-        elif (content == 'started' and
+        elif (content == TaskMessage.STARTED and
                 self.state.is_currently(
                     'ready', 'submitted', 'submit-failed')):
             # Received a 'task started' message
@@ -1315,7 +1316,7 @@ class TaskProxy(object):
             self.handle_event('started', 'job started')
             self.execution_poll_timer.set_timer()
 
-        elif (content == 'succeeded' and
+        elif (content == TaskMessage.SUCCEEDED and
                 self.state.is_currently(
                     'ready', 'submitted', 'submit-failed', 'running',
                     'failed')):
@@ -1341,17 +1342,17 @@ class TaskProxy(object):
                 self.log(INFO, msg)
                 self.outputs.set_all_completed()
 
-        elif (content == 'failed' and
+        elif (content == TaskMessage.FAILED and
                 self.state.is_currently(
                     'ready', 'submitted', 'submit-failed', 'running')):
             # (submit- states in case of very fast submission and execution).
             self.job_execution_failed()
 
-        elif content.startswith("Task job script received signal"):
+        elif content.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
             # capture and record signals sent to task proxy
             self.record_db_event(event="signaled", message=content)
 
-        elif content.startswith("Task job script vacated by signal"):
+        elif content.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             flags.pflag = True
             self.set_status('submitted')
             self.record_db_event(event="vacated", message=content)

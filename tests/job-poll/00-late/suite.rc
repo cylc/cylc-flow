@@ -14,7 +14,7 @@ description = "if not, the test will fail due to an unexpected task failure."
         script="""
 sleep 2
 # report task succeeded (but don't exit):
-cylc succeeded
+cylc task message succeeded
 sleep 2
 # fake a "polled-as-failed" result:
 # (real poll messages have "at <time>" or "at unknown-time" appended,
