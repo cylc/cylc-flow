@@ -1050,7 +1050,10 @@ class config( object ):
                         'ERROR: Illegal %s task name: %s' % (task_type, name))
                 if name not in self.taskdefs and name not in self.cfg['runtime']:
                     msg = '%s task "%s" is not defined.' % (task_type % name)
-                    raise SuiteConfigError("ERROR: " + msg)
+                    if self.strict:
+                        raise SuiteConfigError("ERROR: " + msg)
+                    else:
+                        print >> sys.stderr, "WARNING: " + msg
 
         try:
             import Pyro.constants
