@@ -42,12 +42,12 @@ from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
 
 import cylc.rundb
-import cylc.external_trigger
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
-from cylc.network.suite_broadcast import BroadcastServer, PYRO_BCAST_OBJ_NAME
+from cylc.network.suite_broadcast import BroadcastServer
+from cylc.network.ext_trigger import ExtTriggerServer
 
 
 class TaskPool(object):
@@ -89,15 +89,6 @@ class TaskPool(object):
         self.is_held = False
         self.hold_point = None
         self.held_future_tasks = []
-
-        self.wireless = BroadcastServer(config.get_linearized_ancestors())
-        self.pyro.connect(self.wireless, PYRO_BCAST_OBJ_NAME)
-
-        self.external_trigger_broker = cylc.external_trigger.Broker.get_inst(
-            self.wireless)
-        self.pyro.connect(
-            self.external_trigger_broker,
-            cylc.external_trigger.PYRO_TARGET_NAME)
 
         self.broker = broker()
 
@@ -440,8 +431,9 @@ class TaskPool(object):
 
         self.log.debug('%d task(s) de-queued' % len(readytogo))
 
+        bcast = BroadcastServer.get_inst()
         for itask in readytogo:
-            itask.submit(overrides=self.wireless.get(itask.identity))
+            itask.submit(overrides=bcast.get(itask.identity))
 
         return readytogo
 
@@ -720,11 +712,6 @@ class TaskPool(object):
                 return True
         return False
 
-    def match_external_triggers(self):
-        for itask in self.get_tasks():
-            if itask.external_triggers:
-                self.external_trigger_broker.retrieve(itask)
-
     def match_dependencies(self):
         """Run time dependency negotiation.
 
@@ -787,9 +774,9 @@ class TaskPool(object):
             db_opers = db_ops
 
         # record any broadcast settings to be dumped out
-        if self.wireless:
-            for db_oper in self.wireless.get_db_ops():
-                db_opers += [db_oper]
+        bcast = BroadcastServer.get_inst()
+        for db_oper in bcast.get_db_ops():
+            db_opers += [db_oper]
 
         for db_oper in db_opers:
             if self.db.c.is_alive():
@@ -951,10 +938,10 @@ class TaskPool(object):
                     itask.reset_state_ready()
 
     def dry_run_task(self, id):
+        bcast = BroadcastServer.get_inst()
         for itask in self.get_tasks():
             if itask.identity == id:
-                itask.submit(overrides=self.wireless.get(itask.identity),
-                             dry_run=True)
+                itask.submit(overrides=bcast.get(itask.identity), dry_run=True)
 
     def check_task_timers(self):
         for itask in self.get_tasks():
@@ -991,8 +978,6 @@ class TaskPool(object):
     def shutdown(self):
         if not self.no_active_tasks():
             self.log.warning("some active tasks will be orphaned")
-        self.pyro.disconnect(self.wireless)
-        self.pyro.disconnect(self.external_trigger_broker)
         for itask in self.get_tasks():
             if itask.message_queue:
                 self.pyro.disconnect(itask.message_queue)
@@ -1088,6 +1073,13 @@ class TaskPool(object):
         if not found:
             self.log.warning('task state info request: task(s) not found')
         return info
+
+    def match_ext_triggers(self):
+        """See if any queued external event messages can trigger tasks."""
+        ets = ExtTriggerServer.get_inst()
+        for itask in self.get_tasks():
+            if itask.external_triggers:
+                ets.retrieve(itask)
 
     def purge_tree(self, id_, stop):
         """Remove an entire dependency tree.

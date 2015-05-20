@@ -33,6 +33,7 @@ from cylc.command_prep import prep_file
 from cylc.task_id import TaskID
 from cylc.cycling.loader import get_point, DefaultCycler, ISO8601_CYCLING_TYPE
 from cylc.wallclock import get_current_time_string
+from cylc.network.suite_broadcast import BroadcastServer
 
 
 class restart( scheduler ):
@@ -301,7 +302,7 @@ determine what happened to them while the suite was down."""
                 # reinstate the old stop cycle
                 self.stop_point = state_stop_point
 
-        self.pool.wireless.load( broadcast )
+        BroadcastServer.get_inst().load(broadcast)
 
         # parse each task line and create the task it represents
         tasknames = {}

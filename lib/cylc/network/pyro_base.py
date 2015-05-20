@@ -112,11 +112,10 @@ class PyroClient(object):
             # Suite may have stopped before the client exits.
             pass
 
-    def _report(self, command):
+    def _report(self, cmd):
         self._get_proxy()
         try:
-            self.pyro_proxy.report(
-                command.replace(' ', '_'), self.my_uuid, self.my_info, self.multi)
+            self.pyro_proxy.report(cmd, self.my_uuid, self.my_info, self.multi)
         except AttributeError:
             # Back compat.
             pass

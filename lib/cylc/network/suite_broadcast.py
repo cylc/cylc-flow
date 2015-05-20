@@ -39,7 +39,20 @@ class BroadcastServer(PyroServer):
     self.settings['20100808T06Z']['root'] = {'command scripting': 'stuff'}
     """
 
+    _INSTANCE = None
     ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
+
+    @classmethod
+    def get_inst(cls, linearized_ancestors=None):
+        """Return a singleton instance.
+
+        On 1st call, instantiate the singleton.
+        Argument linearized_ancestors is only relevant on 1st call.
+
+        """
+        if cls._INSTANCE is None:
+            cls._INSTANCE = cls(linearized_ancestors)
+        return cls._INSTANCE
 
     def __init__(self, linearized_ancestors):
         super(BroadcastServer, self).__init__()

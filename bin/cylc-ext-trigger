@@ -20,7 +20,7 @@ import os
 import sys
 from cylc.CylcOptionParsers import cop
 import cylc.flags
-from cylc.external_trigger import PyroClient
+from cylc.network.ext_trigger import ExtTriggerClient
 from cylc.command_prep import prep_pyro
 
 usage = """cylc [control] ext-trigger [OPTIONS] ARGS
@@ -35,6 +35,9 @@ next. When a task's external trigger is satisfied by an incoming message, the
 message ID is broadcast to all downstream tasks in the cycle point as
 $CYLC_EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file
 that the external triggering system is responding to.
+
+Retries can be used in case the target suite is temporarily down or out of
+contact (see --max-tries and --retry-interval).
 
 The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
 
@@ -51,45 +54,25 @@ parser = cop(
 
 parser.add_option(
     "--max-tries", help="Max number of attempts to contact the suite "
-    "(default %s)." % PyroClient.MAX_TRIES, metavar="INT", action="store",
-    default=None, dest="max_tries")
+    "(default %s)." % ExtTriggerClient.MAX_N_TRIES, metavar="INT", action="store",
+    default=None, dest="max_n_tries")
 
 parser.add_option(
-    "--retry-delay", help="Delay in seconds before attempting reconnection "
-    "(default %s)." % PyroClient.RETRY_SECONDS, metavar="SEC",
-    action="store", default=None, dest="retry_seconds")
+    "--retry-interval", help="Delay in seconds before attempting reconnection "
+    "(default %s)." % ExtTriggerClient.RETRY_INTVL_SECS, metavar="SEC",
+    action="store", default=None, dest="retry_intvl_secs")
 
-parser.add_option(
-    "--timeout", help="Suite connection timeout in seconds "
-    "(default %s)." % PyroClient.PYRO_TIMEOUT, metavar="SEC", action="store",
-    default=None, dest="pyro_timeout")
-
-(options, args) = parser.parse_args(remove_opts=["--pyro-timeout"])
+(options, args) = parser.parse_args()
 cylc.flags.verbose = options.verbose
 
 suite, pphrase = prep_pyro(args[0], options).execute()
 
-event_id = None
+event_msg = args[1]
+event_id = args[2]
 
-if len(args) == 0 or len(args) > 3:
-    parser.error("Wrong number of args")
+print 'Send to suite %s: "%s" (%s)' % (suite, event_msg, event_id)
 
-event_id = None
-if len(args) >= 2:
-    event_msg = args[1]
-if len(args) == 3:
-    event_id = args[2]
-
-print "Sending to suite %s:" % suite
-msg = '  "%s"' % event_msg
-if event_id:
-    msg += " (%s)" % event_id
-print msg
-
-res = PyroClient(
-    suite, event_msg, options.host, options.owner, options.port,
-    event_id, options.max_tries, options.pyro_timeout,
-    options.retry_seconds).send()
-
-if not res:
-    sys.exit(1)
+pclient = ExtTriggerClient(suite, pphrase, options.owner, options.host,
+                           options.pyro_timeout, options.port)
+pclient.send_retry(event_msg, event_id,
+                   options.max_n_tries, options.retry_intvl_secs)

@@ -72,6 +72,8 @@ from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.network.pyro_daemon import PyroDaemon
 from cylc.network.suite_state import StateSummaryServer, PYRO_STATE_OBJ_NAME
 from cylc.network.suite_command import SuiteCommandServer, PYRO_CMD_OBJ_NAME
+from cylc.network.suite_broadcast import BroadcastServer, PYRO_BCAST_OBJ_NAME
+from cylc.network.ext_trigger import ExtTriggerServer, PYRO_EXT_TRIG_OBJ_NAME
 from cylc.network.suite_info import SuiteInfoServer, PYRO_INFO_OBJ_NAME
 from cylc.network.suite_log import SuiteLogServer, PYRO_LOG_OBJ_NAME
 
@@ -244,11 +246,6 @@ class scheduler(object):
 
         self.old_user_at_host_set = set()
         self.load_tasks()
-
-        # REMOTELY ACCESSIBLE SUITE STATE SUMMARY
-        self.suite_state = state_summary(
-            self.config, self.run_mode, str(self.pool.get_min_point()))
-        self.pyro.connect(self.suite_state, 'state_summary')
 
         self.state_dumper.set_cts(self.initial_point, self.final_point)
         self.configure_suite_environment()
@@ -717,8 +714,14 @@ class scheduler(object):
             self.log = slog.get_log()
             self.logfile = slog.get_path()
 
+            bcast = BroadcastServer.get_inst(self.config.get_linearized_ancestors())
+            self.pyro.connect(bcast, PYRO_BCAST_OBJ_NAME)
+
             self.command_queue = SuiteCommandServer(self.control_command_names)
             self.pyro.connect(self.command_queue, PYRO_CMD_OBJ_NAME)
+
+            ets = ExtTriggerServer.get_inst()
+            self.pyro.connect(ets, PYRO_EXT_TRIG_OBJ_NAME)
 
             self.info_interface = SuiteInfoServer(self.info_commands)
             self.pyro.connect(self.info_interface, PYRO_INFO_OBJ_NAME)
@@ -921,7 +924,7 @@ class scheduler(object):
                     main_loop_start_time = time.time()
 
                 self.pool.match_dependencies()
-                self.pool.match_external_triggers()
+                self.pool.match_ext_triggers()
 
                 ready_tasks = self.pool.submit_tasks()
                 if (ready_tasks and
@@ -935,7 +938,7 @@ class scheduler(object):
 
                 self.do_update_state_summary = True
 
-                self.pool.wireless.expire(self.pool.get_min_point())
+                BroadcastServer.get_inst().expire(self.pool.get_min_point())
 
                 if cylc.flags.debug:
                     seconds = time.time() - main_loop_start_time
@@ -1121,9 +1124,14 @@ class scheduler(object):
             self.request_handler.quit = True
             self.request_handler.join()
 
-        for i in [self.command_queue, self.suite_id, self.suite_state]:
-            if i:
-                self.pyro.disconnect(i)
+        for iface in [self.command_queue,
+                  self.suite_id,
+                  self.suite_state,
+                  ExtTriggerServer.get_inst(),
+                  BroadcastServer.get_inst()]:
+            if iface:
+                # TODO - if test not need once all these are singletons.
+                self.pyro.disconnect(iface)
 
         if self.pyro:
             self.pyro.shutdown()
