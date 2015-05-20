@@ -1041,14 +1041,16 @@ class config( object ):
                         print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
         # warn if listed special tasks are not defined
-        for type in self.cfg['scheduling']['special tasks']:
-            for name in self.cfg['scheduling']['special tasks'][type]:
-                if type == 'clock-triggered':
+        for task_type in self.cfg['scheduling']['special tasks']:
+            for name in self.cfg['scheduling']['special tasks'][task_type]:
+                if task_type == 'clock-triggered':
                     name = re.sub('\(.*\)','',name)
-                if re.search( '[^0-9a-zA-Z_]', name ):
-                    raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
+                if not TaskID.is_valid_name(name):
+                    raise SuiteConfigError(
+                        'ERROR: Illegal %s task name: %s' % (task_type, name))
                 if name not in self.taskdefs and name not in self.cfg['runtime']:
-                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.'
+                    msg = '%s task "%s" is not defined.' % (task_type % name)
+                    raise SuiteConfigError("ERROR: " + msg)
 
         try:
             import Pyro.constants
