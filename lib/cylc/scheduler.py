@@ -1124,14 +1124,13 @@ class scheduler(object):
             self.request_handler.quit = True
             self.request_handler.join()
 
-        for iface in [self.command_queue,
-                  self.suite_id,
-                  self.suite_state,
-                  ExtTriggerServer.get_inst(),
-                  BroadcastServer.get_inst()]:
-            if iface:
-                # TODO - ditch this 'if' test once these are all singletons.
+        for iface in [self.command_queue, self.suite_id, self.suite_state,
+                      ExtTriggerServer.get_inst(), BroadcastServer.get_inst()]:
+            try:
                 self.pyro.disconnect(iface)
+            except KeyError:
+                # Wasn't connected yet.
+                pass
 
         if self.pyro:
             self.pyro.shutdown()

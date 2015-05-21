@@ -979,8 +979,11 @@ class TaskPool(object):
         if not self.no_active_tasks():
             self.log.warning("some active tasks will be orphaned")
         for itask in self.get_tasks():
-            if itask.message_queue:
+            try:
                 self.pyro.disconnect(itask.message_queue)
+            except KeyError:
+                # Wasn't connected yet.
+                pass
 
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.
