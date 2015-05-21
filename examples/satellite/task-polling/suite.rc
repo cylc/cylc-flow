@@ -82,7 +82,6 @@ mv $DATASET $PWD"""
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
         script = """
-        command scripting = """
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
 
