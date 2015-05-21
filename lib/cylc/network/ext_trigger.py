@@ -158,16 +158,3 @@ class ExtTriggerClient(PyroClient):
         if not sent:
             sys.exit('ERROR: send failed')
         return sent
-
-
-        #try:
-        #    self._report(log_msg)
-        #    success, msg = self.pyro_proxy.put(event_message, event_id)
-        #except Exception as exc:
-        #    if cylc.flags.debug:
-        #        raise
-        #    sys.exit(exc)
-        #if success:
-        #    print msg
-        #else:
-        #    sys.exit(msg)

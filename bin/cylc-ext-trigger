@@ -25,10 +25,10 @@ from cylc.command_prep import prep_pyro
 
 usage = """cylc [control] ext-trigger [OPTIONS] ARGS
 
-Report an external trigger message to a suite daemon. It is expected that a
+Report an external event message to a suite daemon. It is expected that a
 task in the suite has registered the same message as an external trigger - a
-special prerequisite that can only be satisifed by an external system, via this
-command, rather than by the usual triggering off other tasks.
+special prerequisite to be satisifed by an external system, via this command,
+rather than by triggering off other tasks.
 
 The ID argument should uniquely distinguish one external trigger event from the
 next. When a task's external trigger is satisfied by an incoming message, the

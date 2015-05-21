@@ -3,7 +3,7 @@
 title = Real time satellite data processing demo, variant 1 of 3
 
 description = """
-Successive cycle points retrieve and processe the next arbitrarily timed and
+Successive cycle points retrieve and process the next arbitrarily timed and
 labelled dataset, in parallel if the data comes in quickly. This variant of the
 suite has initial get_data tasks that trigger immediately and run continuously,
 with a manual check-and-wait loop, until they detect new data."""

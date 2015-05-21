@@ -3808,7 +3808,7 @@ point wants to trigger off an instance of \lstinline=A= that will never exist
 because it is beyond the suite stop point. Consequently cylc prevents tasks
 from spawning successors that depend on other tasks beyond the stop point.
 
-\paragraph{Clock  Triggers}
+\paragraph{Clock Triggers}
 \label{ClockTriggeredTasks}
 
 In addition to depending on other tasks (and on external events -
@@ -3836,16 +3836,16 @@ point, have already passed.
 \label{ExternalTriggers}
 
 In addition to depending on other tasks (and on the wall clock -
-see~\ref{ClockTriggeredTasks}) tasks can depend on events reported by an
+see~\ref{ClockTriggeredTasks}) tasks can trigger off events reported by an
 external system.  For example, an external process could detect incoming data
 on an ftp server, and then notify a suite containing a task to retrieve the
-new data for processing. This is an alternative to having long-running tasks
-that poll for external events.
+new data for processing. This is an alternative to long-running tasks that poll
+for external events.
 
-Note that cylc does not directly support ``filesystem events'' because systems
-such as \lstinline=inotify= on Linux are not portable. However, external
-watcher processes can of course use inotify to detect filesystem events, if
-that is appropriate, before triggering the suite.
+Note that cylc does not currently support triggering off ``filesystem events''
+(e.g.\ \lstinline=inotify= on Linux). However, external watcher processes can
+use filesystem events to detect triggering conditions, if that is appropriate,
+before notifying a suite with our general external event system.
 
 External triggers are not normally needed in date-time cycling suites driven
 by real time data that comes in at regular intervals.  In these cases a data
@@ -3892,11 +3892,11 @@ notify the suite like this:
 shell$ cylc ext-trigger sat-proc "new sat X data avail" passX12334a
 \end{lstlisting}
 where ``sat-proc'' is the suite name and ``passX12334a'' is the ID string for
-the new event.
+the new event.  The suite passphrase must be installed on triggering account.
 
-Note that only one task in a suite can trigger off a given external message.
-This is no restriction however because other tasks can trigger off the
-externally triggered task.
+Note that only one task in a suite can trigger off a particular external
+message. Other tasks can trigger off the externally triggered task as required,
+of course.
 
 \lstinline=$CYLC_DIR/examples/satellite/ext-triggers/suite.rc= is a working
 example of a simulated satellite processing suite.
