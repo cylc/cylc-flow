@@ -41,7 +41,6 @@ from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
 from cylc.owner import user
 from cylc.version import CYLC_VERSION
-from cylc.suite_id import identifier
 from cylc.config import config
 from parsec.util import printcfg
 from shutil import copy as shcopy, copytree, rmtree
@@ -76,6 +75,7 @@ from cylc.network.suite_broadcast import BroadcastServer, PYRO_BCAST_OBJ_NAME
 from cylc.network.ext_trigger import ExtTriggerServer, PYRO_EXT_TRIG_OBJ_NAME
 from cylc.network.suite_info import SuiteInfoServer, PYRO_INFO_OBJ_NAME
 from cylc.network.suite_log import SuiteLogServer, PYRO_LOG_OBJ_NAME
+from cylc.network.suite_id import identifier
 
 
 class request_handler(threading.Thread):
@@ -1130,7 +1130,7 @@ class scheduler(object):
                   ExtTriggerServer.get_inst(),
                   BroadcastServer.get_inst()]:
             if iface:
-                # TODO - if test not need once all these are singletons.
+                # TODO - ditch this 'if' test once these are all singletons.
                 self.pyro.disconnect(iface)
 
         if self.pyro:

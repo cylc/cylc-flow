@@ -36,8 +36,7 @@ message ID is broadcast to all downstream tasks in the cycle point as
 $CYLC_EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file
 that the external triggering system is responding to.
 
-Retries can be used in case the target suite is temporarily down or out of
-contact (see --max-tries and --retry-interval).
+Use the retry options in case the target suite is down or out of contact.
 
 The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
 
@@ -53,12 +52,12 @@ parser = cop(
 )
 
 parser.add_option(
-    "--max-tries", help="Max number of attempts to contact the suite "
+    "--max-tries", help="Maximum number of send attempts "
     "(default %s)." % ExtTriggerClient.MAX_N_TRIES, metavar="INT", action="store",
     default=None, dest="max_n_tries")
 
 parser.add_option(
-    "--retry-interval", help="Delay in seconds before attempting reconnection "
+    "--retry-interval", help="Delay in seconds before retrying "
     "(default %s)." % ExtTriggerClient.RETRY_INTVL_SECS, metavar="SEC",
     action="store", default=None, dest="retry_intvl_secs")
 
