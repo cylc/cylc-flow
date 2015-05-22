@@ -216,6 +216,8 @@ class BatchSysManager(object):
                     if not exc.filename:
                         exc.filename = command[0]
                     raise
+                else:
+                    return 0
         return 1
 
     def job_poll(self, st_file_path):

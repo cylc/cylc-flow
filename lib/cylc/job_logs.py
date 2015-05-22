@@ -102,31 +102,34 @@ class CommandLogger(object):
         self.base_path = os.path.join(dir_, str(task_point), task_name)
         self.suite_logger = logging.getLogger("main")
 
-    def append_to_log(self, submit_num, log_type, out=None, err=None):
+    def append_to_log(self, submit_num, log_type, result):
         """Write new command output to the appropriate log file."""
         sub_num = "%02d" % int(submit_num)
         dir_ = os.path.join(self.base_path, sub_num)
         mkdir_p(dir_)
         job_log_handle = open(os.path.join(dir_, "job-activity.log"), "a")
         timestamp = get_current_time_string()
-        self._write_to_log(job_log_handle, timestamp, log_type + "-OUT", out)
-        self._write_to_log(job_log_handle, timestamp, log_type + "-ERR", err)
+        for key in 'EXIT', 'OUT', 'ERR':
+            value = result.get(key)
+            if value is not None and str(value).strip():
+                self._write_to_log(
+                    job_log_handle, timestamp, "%s-%s" % (log_type, key),
+                    str(value).strip())
         job_log_handle.close()
 
     def _write_to_log(self, job_log_handle, timestamp, mesg_type, mesg):
         """Write message to the logs."""
-        if mesg:
-            if mesg_type.endswith("-ERR"):
-                self.suite_logger.warning(mesg)
-            else:
-                self.suite_logger.info(mesg)
-            if len(mesg.splitlines()) > 1:
-                fmt = self.JOB_LOG_FMT_M
-            else:
-                fmt = self.JOB_LOG_FMT_1
-            if not mesg.endswith("\n"):
-                mesg += "\n"
-            job_log_handle.write(fmt % {
-                "timestamp": timestamp,
-                "mesg_type": mesg_type,
-                "mesg": mesg})
+        if mesg_type.endswith("-ERR"):
+            self.suite_logger.warning(mesg)
+        else:
+            self.suite_logger.info(mesg)
+        if len(mesg.splitlines()) > 1:
+            fmt = self.JOB_LOG_FMT_M
+        else:
+            fmt = self.JOB_LOG_FMT_1
+        if not mesg.endswith("\n"):
+            mesg += "\n"
+        job_log_handle.write(fmt % {
+            "timestamp": timestamp,
+            "mesg_type": mesg_type,
+            "mesg": mesg})

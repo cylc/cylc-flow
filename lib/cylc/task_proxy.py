@@ -338,9 +338,9 @@ class TaskProxy(object):
         msg = "[%s] -%s" % (self.identity, msg)
         self.logger.log(lvl, msg)
 
-    def command_log(self, log_type, out=None, err=None):
+    def command_log(self, log_type, result):
         """Log a command activity for a job of this task proxy."""
-        self.command_logger.append_to_log(self.submit_num, log_type, out, err)
+        self.command_logger.append_to_log(self.submit_num, log_type, result)
 
     def record_db_event(self, event="", message=""):
         """Record an event to the DB."""
@@ -564,7 +564,8 @@ class TaskProxy(object):
                     BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "=", "")
             else:
                 out += line
-        self.command_log("SUBMIT", out, result['ERR'])
+        result['OUT'] = out
+        self.command_log("SUBMIT", result)
         if result['EXIT'] != 0:
             if result['EXIT'] == JOB_SKIPPED_FLAG:
                 pass
@@ -579,41 +580,35 @@ class TaskProxy(object):
 
     def job_poll_callback(self, result):
         """Callback on job poll."""
-        out = result['OUT']
-        err = result['ERR']
-        self.command_log("POLL", out, err)
-        if result['EXIT'] != 0:
+        self.command_log("POLL", result)
+        if result['EXIT']:  # non-zero exit status
             self.summary['latest_message'] = 'poll failed'
             self.log(WARNING, 'job(%02d) poll failed' % self.submit_num)
             flags.iflag = True
-            return
-        if not self.state.is_currently('submitted', 'running'):
-            # Poll results can come in after a task finishes
-            msg = "Ignoring late poll result: task not active"
-            self.log(WARNING, msg)
-            self.command_log("POLL", err=msg)
-        else:
+        elif self.state.is_currently('submitted', 'running'):
             # poll results emulate task messages
-            for line in out.splitlines():
+            for line in result['OUT'].splitlines():
                 if line.startswith('polled %s' % (self.identity)):
                     self.process_incoming_message(('NORMAL', line))
                     break
+        else:
+            # Poll results can come in after a task finishes
+            msg = "Ignoring late poll result: task not active"
+            self.command_log('POLL', {'ERR': msg})
+            self.log(WARNING, msg)
 
     def job_kill_callback(self, result):
         """Callback on job kill."""
-        out = result['OUT']
-        err = result['ERR']
-        self.command_log("KILL", out, err)
-        if result['EXIT'] != 0:
+        self.command_log("KILL", result)
+        if result['EXIT']:  # non-zero exit status
             self.summary['latest_message'] = 'kill failed'
             self.log(WARNING, 'job(%02d) kill failed' % self.submit_num)
             flags.iflag = True
-            return
-        if self.state.is_currently('submitted'):
-            self.log(INFO, 'job killed')
+        elif self.state.is_currently('submitted'):
+            self.log(INFO, 'job(%02d) killed' % self.submit_num)
             self.job_submission_failed()
         elif self.state.is_currently('running'):
-            self.log(INFO, 'job killed')
+            self.log(INFO, 'job(%02d) killed' % self.submit_num)
             self.job_execution_failed()
         else:
             msg = ('ignoring job kill result, unexpected task state: %s'
@@ -622,9 +617,7 @@ class TaskProxy(object):
 
     def event_handler_callback(self, result):
         """Callback when event handler is done."""
-        out = result['OUT']
-        err = result['ERR']
-        self.command_log("EVENT", out, err)
+        self.command_log("EVENT", result)
         if result['EXIT'] != 0:
             self.log(WARNING, 'event handler failed:\n  ' + result['CMD'])
             return
@@ -894,7 +887,7 @@ class TaskProxy(object):
                 if flags.debug:
                     traceback.print_exc()
                 self.log(ERROR, "Failed to construct job submission command")
-                self.command_log("SUBMIT", err=str(exc))
+                self.command_log("SUBMIT", {'ERR': str(exc)})
                 self.job_submission_failed()
                 return
             if dry_run:
