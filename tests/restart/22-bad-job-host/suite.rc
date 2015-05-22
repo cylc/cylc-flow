@@ -15,8 +15,6 @@ timeout 30 bash -c 'while [[ -e 'file' ]]; do sleep 1; done' || true
 """
         [[[remote]]]
             host = {{environ['CYLC_TEST_HOST']}}
-        [[[job submission]]]
-            method = at
     [[t-shutdown]]
         script = """
 # Shutdown and wait
