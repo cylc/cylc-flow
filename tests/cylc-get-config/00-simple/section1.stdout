@@ -16,5 +16,6 @@ runahead limit =
    start-up = 
    cold-start = 
    sequential = 
+   external-triggered = 
    clock-triggered = 
    exclude at start-up = 

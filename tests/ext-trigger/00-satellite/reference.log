@@ -1,0 +1,204 @@
+2015-03-19T02:11:39Z INFO - port:7766
+2015-03-19T02:11:39Z INFO - Suite starting at 2015-03-19T02:11:39Z
+2015-03-19T02:11:39Z INFO - Run mode: live
+2015-03-19T02:11:39Z INFO - Initial point: 1
+2015-03-19T02:11:39Z INFO - Final point: 5
+2015-03-19T02:11:39Z INFO - Cold Start 1
+2015-03-19T02:11:39Z INFO - [prep.1] -initiate job-submit
+2015-03-19T02:11:39Z INFO - [prep.1] -triggered off []
+2015-03-19T02:11:40Z INFO - 8613
+
+2015-03-19T02:11:40Z INFO - [prep.1] -submit_method_id=8613
+2015-03-19T02:11:40Z INFO - [prep.1] -submission succeeded
+2015-03-19T02:11:40Z INFO - [prep.1] -(current:submitted)> prep.1 started at 2015-03-19T02:11:40Z
+2015-03-19T02:11:41Z INFO - [prep.1] -(current:running)> prep.1 succeeded at 2015-03-19T02:11:41Z
+2015-03-19T02:11:42Z INFO - [satsim.1] -initiate job-submit
+2015-03-19T02:11:42Z INFO - [satsim.1] -triggered off ['prep.1']
+2015-03-19T02:11:43Z INFO - 8673
+
+2015-03-19T02:11:43Z INFO - [satsim.1] -submit_method_id=8673
+2015-03-19T02:11:43Z INFO - [satsim.1] -submission succeeded
+2015-03-19T02:11:43Z INFO - [satsim.1] -(current:submitted)> satsim.1 started at 2015-03-19T02:11:43Z
+2015-03-19T02:11:43Z INFO - External trigger received
+new dataset ready for processing (1426731103.19)
+2015-03-19T02:11:43Z INFO - External trigger received
+new dataset ready for processing (1426731103.76)
+2015-03-19T02:11:44Z INFO - External trigger received
+new dataset ready for processing (1426731103.97)
+2015-03-19T02:11:44Z INFO - External trigger received
+new dataset ready for processing (1426731104.68)
+2015-03-19T02:11:44Z INFO - [get_data.1] -initiate job-submit
+2015-03-19T02:11:44Z INFO - [get_data.1] -triggered off ['prep.1']
+2015-03-19T02:11:44Z INFO - External trigger received
+new dataset ready for processing (1426731104.40)
+2015-03-19T02:11:45Z INFO - 8780
+
+2015-03-19T02:11:45Z INFO - [get_data.1] -submit_method_id=8780
+2015-03-19T02:11:45Z INFO - [get_data.1] -submission succeeded
+2015-03-19T02:11:45Z INFO - [get_data.1] -(current:submitted)> get_data.1 started at 2015-03-19T02:11:45Z
+2015-03-19T02:11:45Z INFO - [satsim.1] -(current:running)> satsim.1 succeeded at 2015-03-19T02:11:45Z
+2015-03-19T02:11:51Z INFO - [get_data.1] -(current:running)> get_data.1 succeeded at 2015-03-19T02:11:50Z
+2015-03-19T02:11:52Z INFO - [get_data.2] -initiate job-submit
+2015-03-19T02:11:52Z INFO - [proc1.1] -initiate job-submit
+2015-03-19T02:11:52Z INFO - [get_data.2] -triggered off ['get_data.1']
+2015-03-19T02:11:52Z INFO - [proc1.1] -triggered off ['get_data.1']
+2015-03-19T02:11:53Z INFO - 8939
+
+2015-03-19T02:11:53Z INFO - [get_data.2] -submit_method_id=8939
+2015-03-19T02:11:53Z INFO - [get_data.2] -submission succeeded
+2015-03-19T02:11:53Z INFO - 8940
+
+2015-03-19T02:11:53Z INFO - [proc1.1] -submit_method_id=8940
+2015-03-19T02:11:53Z INFO - [proc1.1] -submission succeeded
+2015-03-19T02:11:53Z INFO - [get_data.2] -(current:submitted)> get_data.2 started at 2015-03-19T02:11:53Z
+2015-03-19T02:11:53Z INFO - [proc1.1] -(current:submitted)> proc1.1 started at 2015-03-19T02:11:53Z
+2015-03-19T02:11:58Z INFO - [get_data.2] -(current:running)> get_data.2 succeeded at 2015-03-19T02:11:58Z
+2015-03-19T02:11:58Z INFO - [proc1.1] -(current:running)> proc1.1 succeeded at 2015-03-19T02:11:58Z
+2015-03-19T02:11:59Z INFO - [proc2.1] -initiate job-submit
+2015-03-19T02:11:59Z INFO - [get_data.3] -initiate job-submit
+2015-03-19T02:11:59Z INFO - [proc1.2] -initiate job-submit
+2015-03-19T02:11:59Z INFO - [proc2.1] -triggered off ['proc1.1']
+2015-03-19T02:11:59Z INFO - [get_data.3] -triggered off ['get_data.2']
+2015-03-19T02:11:59Z INFO - [proc1.2] -triggered off ['get_data.2']
+2015-03-19T02:12:00Z INFO - 9070
+
+2015-03-19T02:12:00Z INFO - [proc2.1] -submit_method_id=9070
+2015-03-19T02:12:00Z INFO - [proc2.1] -submission succeeded
+2015-03-19T02:12:00Z INFO - 9080
+
+2015-03-19T02:12:00Z INFO - [get_data.3] -submit_method_id=9080
+2015-03-19T02:12:00Z INFO - [get_data.3] -submission succeeded
+2015-03-19T02:12:00Z INFO - 9082
+
+2015-03-19T02:12:00Z INFO - [proc1.2] -submit_method_id=9082
+2015-03-19T02:12:00Z INFO - [proc1.2] -submission succeeded
+2015-03-19T02:12:00Z INFO - [proc2.1] -(current:submitted)> proc2.1 started at 2015-03-19T02:12:00Z
+2015-03-19T02:12:00Z INFO - [get_data.3] -(current:submitted)> get_data.3 started at 2015-03-19T02:12:00Z
+2015-03-19T02:12:00Z INFO - [proc1.2] -(current:submitted)> proc1.2 started at 2015-03-19T02:12:00Z
+2015-03-19T02:12:05Z INFO - [proc2.1] -(current:running)> proc2.1 succeeded at 2015-03-19T02:12:05Z
+2015-03-19T02:12:05Z INFO - [get_data.3] -(current:running)> get_data.3 succeeded at 2015-03-19T02:12:05Z
+2015-03-19T02:12:05Z INFO - [proc1.2] -(current:running)> proc1.2 succeeded at 2015-03-19T02:12:05Z
+2015-03-19T02:12:06Z INFO - [get_data.4] -initiate job-submit
+2015-03-19T02:12:06Z INFO - [products.1] -initiate job-submit
+2015-03-19T02:12:06Z INFO - [proc1.3] -initiate job-submit
+2015-03-19T02:12:06Z INFO - [proc2.2] -initiate job-submit
+2015-03-19T02:12:06Z INFO - [get_data.4] -triggered off ['get_data.3']
+2015-03-19T02:12:06Z INFO - [products.1] -triggered off ['proc2.1']
+2015-03-19T02:12:06Z INFO - [proc1.3] -triggered off ['get_data.3']
+2015-03-19T02:12:06Z INFO - [proc2.2] -triggered off ['proc1.2']
+2015-03-19T02:12:07Z INFO - 9382
+
+2015-03-19T02:12:07Z INFO - [get_data.4] -submit_method_id=9382
+2015-03-19T02:12:07Z INFO - [get_data.4] -submission succeeded
+2015-03-19T02:12:07Z INFO - 9378
+
+2015-03-19T02:12:07Z INFO - [products.1] -submit_method_id=9378
+2015-03-19T02:12:07Z INFO - [products.1] -submission succeeded
+2015-03-19T02:12:07Z INFO - 9379
+
+2015-03-19T02:12:07Z INFO - [proc1.3] -submit_method_id=9379
+2015-03-19T02:12:07Z INFO - [proc1.3] -submission succeeded
+2015-03-19T02:12:07Z INFO - 9408
+
+2015-03-19T02:12:07Z INFO - [proc2.2] -submit_method_id=9408
+2015-03-19T02:12:07Z INFO - [proc2.2] -submission succeeded
+2015-03-19T02:12:07Z INFO - [get_data.4] -(current:submitted)> get_data.4 started at 2015-03-19T02:12:07Z
+2015-03-19T02:12:07Z INFO - [products.1] -(current:submitted)> products.1 started at 2015-03-19T02:12:07Z
+2015-03-19T02:12:07Z INFO - [proc1.3] -(current:submitted)> proc1.3 started at 2015-03-19T02:12:07Z
+2015-03-19T02:12:07Z INFO - [proc2.2] -(current:submitted)> proc2.2 started at 2015-03-19T02:12:07Z
+2015-03-19T02:12:12Z INFO - [get_data.4] -(current:running)> get_data.4 succeeded at 2015-03-19T02:12:12Z
+2015-03-19T02:12:12Z INFO - [products.1] -(current:running)> products.1 succeeded at 2015-03-19T02:12:12Z
+2015-03-19T02:12:12Z INFO - [proc1.3] -(current:running)> proc1.3 succeeded at 2015-03-19T02:12:12Z
+2015-03-19T02:12:12Z INFO - [proc2.2] -(current:running)> proc2.2 succeeded at 2015-03-19T02:12:12Z
+2015-03-19T02:12:13Z INFO - [get_data.5] -initiate job-submit
+2015-03-19T02:12:13Z INFO - [products.2] -initiate job-submit
+2015-03-19T02:12:13Z INFO - [proc2.3] -initiate job-submit
+2015-03-19T02:12:13Z INFO - [proc1.4] -initiate job-submit
+2015-03-19T02:12:13Z INFO - [get_data.5] -triggered off ['get_data.4']
+2015-03-19T02:12:13Z INFO - [products.2] -triggered off ['proc2.2']
+2015-03-19T02:12:13Z INFO - [proc2.3] -triggered off ['proc1.3']
+2015-03-19T02:12:13Z INFO - [proc1.4] -triggered off ['get_data.4']
+2015-03-19T02:12:13Z INFO - Expiring 1 broadcast settings now
+2015-03-19T02:12:14Z INFO - 9627
+
+2015-03-19T02:12:14Z INFO - [get_data.5] -submit_method_id=9627
+2015-03-19T02:12:14Z INFO - [get_data.5] -submission succeeded
+2015-03-19T02:12:14Z INFO - 9626
+
+2015-03-19T02:12:14Z INFO - [products.2] -submit_method_id=9626
+2015-03-19T02:12:14Z INFO - [products.2] -submission succeeded
+2015-03-19T02:12:14Z INFO - 9642
+
+2015-03-19T02:12:14Z INFO - [proc2.3] -submit_method_id=9642
+2015-03-19T02:12:14Z INFO - [proc2.3] -submission succeeded
+2015-03-19T02:12:14Z INFO - 9643
+
+2015-03-19T02:12:14Z INFO - [proc1.4] -submit_method_id=9643
+2015-03-19T02:12:14Z INFO - [proc1.4] -submission succeeded
+2015-03-19T02:12:14Z INFO - [get_data.5] -(current:submitted)> get_data.5 started at 2015-03-19T02:12:14Z
+2015-03-19T02:12:14Z INFO - [products.2] -(current:submitted)> products.2 started at 2015-03-19T02:12:14Z
+2015-03-19T02:12:14Z INFO - [proc2.3] -(current:submitted)> proc2.3 started at 2015-03-19T02:12:14Z
+2015-03-19T02:12:14Z INFO - [proc1.4] -(current:submitted)> proc1.4 started at 2015-03-19T02:12:14Z
+2015-03-19T02:12:20Z INFO - [get_data.5] -(current:running)> get_data.5 succeeded at 2015-03-19T02:12:20Z
+2015-03-19T02:12:20Z INFO - [products.2] -(current:running)> products.2 succeeded at 2015-03-19T02:12:20Z
+2015-03-19T02:12:20Z INFO - [proc2.3] -(current:running)> proc2.3 succeeded at 2015-03-19T02:12:20Z
+2015-03-19T02:12:20Z INFO - [proc1.4] -(current:running)> proc1.4 succeeded at 2015-03-19T02:12:20Z
+2015-03-19T02:12:21Z INFO - [proc2.4] -initiate job-submit
+2015-03-19T02:12:21Z INFO - [products.3] -initiate job-submit
+2015-03-19T02:12:21Z INFO - [proc1.5] -initiate job-submit
+2015-03-19T02:12:21Z INFO - [proc2.4] -triggered off ['proc1.4']
+2015-03-19T02:12:21Z INFO - [products.3] -triggered off ['proc2.3']
+2015-03-19T02:12:21Z INFO - [proc1.5] -triggered off ['get_data.5']
+2015-03-19T02:12:21Z INFO - Expiring 2 broadcast settings now
+2015-03-19T02:12:22Z INFO - 9871
+
+2015-03-19T02:12:22Z INFO - [proc2.4] -submit_method_id=9871
+2015-03-19T02:12:22Z INFO - [proc2.4] -submission succeeded
+2015-03-19T02:12:22Z INFO - 9878
+
+2015-03-19T02:12:22Z INFO - [products.3] -submit_method_id=9878
+2015-03-19T02:12:22Z INFO - [products.3] -submission succeeded
+2015-03-19T02:12:22Z INFO - 9889
+
+2015-03-19T02:12:22Z INFO - [proc1.5] -submit_method_id=9889
+2015-03-19T02:12:22Z INFO - [proc1.5] -submission succeeded
+2015-03-19T02:12:22Z INFO - [proc2.4] -(current:submitted)> proc2.4 started at 2015-03-19T02:12:22Z
+2015-03-19T02:12:22Z INFO - [products.3] -(current:submitted)> products.3 started at 2015-03-19T02:12:22Z
+2015-03-19T02:12:22Z INFO - [proc1.5] -(current:submitted)> proc1.5 started at 2015-03-19T02:12:22Z
+2015-03-19T02:12:28Z INFO - [proc2.4] -(current:running)> proc2.4 succeeded at 2015-03-19T02:12:27Z
+2015-03-19T02:12:28Z INFO - [products.3] -(current:running)> products.3 succeeded at 2015-03-19T02:12:27Z
+2015-03-19T02:12:28Z INFO - [proc1.5] -(current:running)> proc1.5 succeeded at 2015-03-19T02:12:27Z
+2015-03-19T02:12:29Z INFO - [products.4] -initiate job-submit
+2015-03-19T02:12:29Z INFO - [proc2.5] -initiate job-submit
+2015-03-19T02:12:29Z INFO - [products.4] -triggered off ['proc2.4']
+2015-03-19T02:12:29Z INFO - [proc2.5] -triggered off ['proc1.5']
+2015-03-19T02:12:29Z INFO - Expiring 3 broadcast settings now
+2015-03-19T02:12:30Z INFO - 10051
+
+2015-03-19T02:12:30Z INFO - [products.4] -submit_method_id=10051
+2015-03-19T02:12:30Z INFO - [products.4] -submission succeeded
+2015-03-19T02:12:30Z INFO - 10054
+
+2015-03-19T02:12:30Z INFO - [proc2.5] -submit_method_id=10054
+2015-03-19T02:12:30Z INFO - [proc2.5] -submission succeeded
+2015-03-19T02:12:30Z INFO - [products.4] -(current:submitted)> products.4 started at 2015-03-19T02:12:29Z
+2015-03-19T02:12:30Z INFO - [proc2.5] -(current:submitted)> proc2.5 started at 2015-03-19T02:12:29Z
+2015-03-19T02:12:35Z INFO - [products.4] -(current:running)> products.4 succeeded at 2015-03-19T02:12:34Z
+2015-03-19T02:12:35Z INFO - [proc2.5] -(current:running)> proc2.5 succeeded at 2015-03-19T02:12:34Z
+2015-03-19T02:12:36Z INFO - [products.5] -initiate job-submit
+2015-03-19T02:12:36Z INFO - [products.5] -triggered off ['proc2.5']
+2015-03-19T02:12:37Z INFO - 10171
+
+2015-03-19T02:12:37Z INFO - [products.5] -submit_method_id=10171
+2015-03-19T02:12:37Z INFO - [products.5] -submission succeeded
+2015-03-19T02:12:37Z INFO - [products.5] -(current:submitted)> products.5 started at 2015-03-19T02:12:36Z
+2015-03-19T02:12:43Z INFO - [products.5] -(current:running)> products.5 succeeded at 2015-03-19T02:12:42Z
+2015-03-19T02:12:44Z INFO - [collate.5] -initiate job-submit
+2015-03-19T02:12:44Z INFO - [collate.5] -triggered off ['products.5']
+2015-03-19T02:12:45Z INFO - 10236
+
+2015-03-19T02:12:45Z INFO - [collate.5] -submit_method_id=10236
+2015-03-19T02:12:45Z INFO - [collate.5] -submission succeeded
+2015-03-19T02:12:45Z INFO - [collate.5] -(current:submitted)> collate.5 started at 2015-03-19T02:12:44Z
+2015-03-19T02:13:06Z INFO - [collate.5] -(current:running)> collate.5 succeeded at 2015-03-19T02:13:05Z
+2015-03-19T02:13:07Z INFO - Suite shutting down at 2015-03-19T02:13:07Z

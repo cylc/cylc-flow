@@ -37,7 +37,7 @@ class TaskDefError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return "ERROR: %s" % self.msg 
+        return "ERROR: %s" % self.msg
 
 
 class TaskDef(object):
@@ -71,6 +71,8 @@ class TaskDef(object):
         # list of explicit internal outputs; change to dict if need to vary per
         # cycle.
         self.outputs = []
+
+        self.external_triggers = []
 
         self.name = name
         self.elapsed_times = []
@@ -108,7 +110,8 @@ class TaskDef(object):
         Must be called after all graph sequences added.
         """
         if len(self.sequences) == 0 and self.used_in_offset_trigger:
-            raise TaskDefError("No cycling sequences defined for %s" % self.name)
+            raise TaskDefError(
+                "No cycling sequences defined for %s" % self.name)
 
     @classmethod
     def get_cleanup_cutoff_point(cls, my_point, offset_sequence_tuples):

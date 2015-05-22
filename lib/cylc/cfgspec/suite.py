@@ -275,6 +275,7 @@ SPEC = {
             },
         'special tasks' : {
             'clock-triggered'                 : vdr(vtype='string_list', default=[]),
+            'external-triggered'              : vdr(vtype='string_list', default=[]),
             'sequential'                      : vdr(vtype='string_list', default=[]),
             'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),

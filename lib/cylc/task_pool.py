@@ -46,7 +46,8 @@ from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
-from cylc.network.suite_broadcast import BroadcastServer, PYRO_BCAST_OBJ_NAME
+from cylc.network.suite_broadcast import BroadcastServer
+from cylc.network.ext_trigger import ExtTriggerServer
 
 
 class TaskPool(object):
@@ -89,9 +90,6 @@ class TaskPool(object):
         self.hold_point = None
         self.held_future_tasks = []
 
-        self.wireless = BroadcastServer(config.get_linearized_ancestors())
-        self.pyro.connect(self.wireless, PYRO_BCAST_OBJ_NAME)
-
         self.broker = broker()
 
         self.orphans = []
@@ -131,16 +129,17 @@ class TaskPool(object):
             return False
 
         # add in held state if beyond the suite stop point
-
         if self.stop_point and itask.point > self.stop_point:
             itask.log(
                 INFO,
                 "holding (beyond suite stop point) " + str(self.stop_point))
             itask.reset_state_held()
 
+        # add in held state if beyond the suite hold point
         elif self.hold_point and itask.point > self.hold_point:
-            itask.log(INFO, "holding (beyond suite hold point) " +
-                      str(self.hold_point))
+            itask.log(
+                INFO,
+                "holding (beyond suite hold point) " + str(self.hold_point))
             itask.reset_state_held()
 
         # add in held state if a future trigger goes beyond the suite stop
@@ -151,7 +150,8 @@ class TaskPool(object):
             self.held_future_tasks.append(itask.identity)
             itask.reset_state_held()
         elif self.is_held and itask.state.is_currently("waiting"):
-            # hold newly-spawned tasks in a held suite (e.g. due to manual triggering of a held task)
+            # Hold newly-spawned tasks in a held suite (e.g. due to manual
+            # triggering of a held task).
             itask.reset_state_held()
 
         # add to the runahead pool
@@ -431,8 +431,9 @@ class TaskPool(object):
 
         self.log.debug('%d task(s) de-queued' % len(readytogo))
 
+        bcast = BroadcastServer.get_inst()
         for itask in readytogo:
-            itask.submit(overrides=self.wireless.get(itask.identity))
+            itask.submit(overrides=bcast.get(itask.identity))
 
         return readytogo
 
@@ -732,7 +733,7 @@ class TaskPool(object):
         """Handle incoming task messages for each task proxy."""
         for itask in self.get_tasks():
             itask.process_incoming_messages()
- 
+
     def process_queued_db_ops(self):
         """Handle queued db operations for each task proxy."""
         state_recorders = []
@@ -773,9 +774,9 @@ class TaskPool(object):
             db_opers = db_ops
 
         # record any broadcast settings to be dumped out
-        if self.wireless:
-            for db_oper in self.wireless.get_db_ops():
-                db_opers += [db_oper]
+        bcast = BroadcastServer.get_inst()
+        for db_oper in bcast.get_db_ops():
+            db_opers += [db_oper]
 
         for db_oper in db_opers:
             if self.db.c.is_alive():
@@ -937,10 +938,10 @@ class TaskPool(object):
                     itask.reset_state_ready()
 
     def dry_run_task(self, id):
+        bcast = BroadcastServer.get_inst()
         for itask in self.get_tasks():
             if itask.identity == id:
-                itask.submit(overrides=self.wireless.get(itask.identity),
-                             dry_run=True)
+                itask.submit(overrides=bcast.get(itask.identity), dry_run=True)
 
     def check_task_timers(self):
         for itask in self.get_tasks():
@@ -977,10 +978,12 @@ class TaskPool(object):
     def shutdown(self):
         if not self.no_active_tasks():
             self.log.warning("some active tasks will be orphaned")
-        self.pyro.disconnect(self.wireless)
         for itask in self.get_tasks():
-            if itask.message_queue:
+            try:
                 self.pyro.disconnect(itask.message_queue)
+            except KeyError:
+                # Wasn't connected yet.
+                pass
 
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.
@@ -1054,11 +1057,16 @@ class TaskPool(object):
             if id_ == taskid:
                 found = True
                 extra_info = {}
-                # extra info for clocktriggered tasks
                 if itask.tdef.clocktrigger_offset is not None:
                     extra_info['Clock trigger time reached'] = (
                         itask.start_time_reached())
                     extra_info['Triggers at'] = itask.delayed_start_str
+                for trig, satisfied in itask.external_triggers.items():
+                    if satisfied:
+                        state = 'satisfied'
+                    else:
+                        state = 'NOT satisfied'
+                    extra_info['External trigger "%s"' % trig] = state
 
                 info[id_] = [
                     itask.prerequisites.dump(),
@@ -1068,6 +1076,13 @@ class TaskPool(object):
         if not found:
             self.log.warning('task state info request: task(s) not found')
         return info
+
+    def match_ext_triggers(self):
+        """See if any queued external event messages can trigger tasks."""
+        ets = ExtTriggerServer.get_inst()
+        for itask in self.get_tasks():
+            if itask.external_triggers:
+                ets.retrieve(itask)
 
     def purge_tree(self, id_, stop):
         """Remove an entire dependency tree.
@@ -1134,8 +1149,8 @@ class TaskPool(object):
         while something_triggered:
             self.match_dependencies()
             something_triggered = False
-            for itask in sorted(
-                    self.get_all_tasks(), key=lambda t: t.identity):
+            for itask in sorted(self.get_all_tasks(), key=lambda t:
+                                t.identity):
                 if itask.point > stop:
                     continue
                 if itask.ready_to_run():

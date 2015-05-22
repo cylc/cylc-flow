@@ -52,6 +52,7 @@ checking, then construct task proxy objects and graph structures.
 RE_SUITE_NAME_VAR = re.compile('\${?CYLC_SUITE_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile('\${?CYLC_TASK_NAME}?')
 CLOCK_OFFSET_RE = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
+EXT_TRIGGER_RE = re.compile('(.*)\s*\(\s*(.+)\s*\)\s*')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
 # TODO - unify this with task_state.py:
@@ -138,6 +139,7 @@ class config( object ):
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
+        self.ext_triggers = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
         self.vis_start_point_string = vis_start_string
@@ -359,7 +361,8 @@ class config( object ):
         if self.start_point is not None:
             self.start_point.standardise()
 
-        # [special tasks]: parse clock-offsets, and replace families with members
+        # Parse clock-trigger offsets and external trigger messages and replace
+        # families with members.
         if flags.verbose:
             print "Parsing [special tasks]"
         for type in self.cfg['scheduling']['special tasks']:
@@ -367,12 +370,20 @@ class config( object ):
             extn = ''
             for item in self.cfg['scheduling']['special tasks'][type]:
                 name = item
-                # Get clock-trigger offsets.
-                if type == 'clock-triggered':
-                    m = re.match( CLOCK_OFFSET_RE, item )
+                if type == 'external-triggered':
+                    m = re.match(EXT_TRIGGER_RE, item)
                     if m is None:
                         raise SuiteConfigError(
-                            "ERROR: Illegal clock-trigger spec: %s" % item
+                            "ERROR: Illegal %s spec: %s" % (type, item)
+                        )
+                    name, ext_trigger_msg = m.groups()
+                    extn = "(" + ext_trigger_msg + ")"
+  
+                elif type == 'clock-triggered':
+                    m = re.match(CLOCK_OFFSET_RE, item)
+                    if m is None:
+                        raise SuiteConfigError(
+                            "ERROR: Illegal %s spec: %s" % (type, item)
                         )
                     if (self.cfg['scheduling']['cycling mode'] !=
                             Calendar.MODE_GREGORIAN):
@@ -416,7 +427,7 @@ class config( object ):
 
                 # Replace family names with members.
                 if name in self.runtime['descendants']:
-                    result.remove( item )
+                    result.remove(item)
                     for member in self.runtime['descendants'][name]:
                         if member in self.runtime['descendants']:
                             # (sub-family)
@@ -424,8 +435,12 @@ class config( object ):
                         result.append(member + extn)
                         if type == 'clock-triggered':
                             self.clock_offsets[member] = offset_interval
+                        if type == 'external-triggered':
+                            self.ext_triggers[member] = ext_trigger_msg
                 elif type == 'clock-triggered':
                     self.clock_offsets[name] = offset_interval
+                elif type == 'external-triggered':
+                    self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
             self.cfg['scheduling']['special tasks'][type] = result
 
@@ -468,6 +483,21 @@ class config( object ):
 
         if self.validation:
             self.check_tasks()
+
+        # Check that external trigger messages are only used once (they have to
+        # be discarded immediately to avoid triggering the next instance of the
+        # just-triggered task).
+        seen = {}
+        for name, tdef in self.taskdefs.items():
+            for msg in tdef.external_triggers:
+                if msg not in seen:
+                    seen[msg] = name
+                else:
+                    print >> sys.stderr, (
+                        "External trigger '%s'\n  used in tasks %s and %s." % (
+                        msg, name, seen[msg]))
+                    raise SuiteConfigError(
+                        "ERROR: external triggers must be used only once.")
 
         ngs = self.cfg['visualization']['node groups']
         # If a node group member is a family, include its descendants too.
@@ -606,6 +636,12 @@ class config( object ):
                 raise SuiteConfigError('ERROR: cyclic dependence detected '
                                        '(graph the suite to see back-edges).')
  
+    def dequote(self, s):
+        """Strip quotes off a string."""
+        if (s[0] == s[-1]) and s.startswith(("'", '"')):
+            return s[1:-1]
+        return s
+
     def check_env_names( self ):
         # check for illegal environment variable names
          bad = {}
@@ -621,7 +657,7 @@ class config( object ):
                  print >> sys.stderr, 'Namespace:', label
                  for var in vars:
                      print >> sys.stderr, "  ", var
-             raise SuiteConfigError("Illegal env variable name(s) detected" )
+             raise SuiteConfigError("Illegal environment variable name(s) detected" )
 
     def filter_env( self ):
         # filter environment variables after sparse inheritance
@@ -1040,10 +1076,10 @@ class config( object ):
                         # any family triggers have have been replaced with members by now.
                         print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
-        # warn if listed special tasks are not defined
+        # Check declared special tasks are valid.
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
-                if task_type == 'clock-triggered':
+                if task_type in ['clock-triggered', 'external-triggered']:
                     name = re.sub('\(.*\)','',name)
                 if not TaskID.is_valid_name(name):
                     raise SuiteConfigError(
@@ -1111,7 +1147,6 @@ class config( object ):
                     print cs
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError( "ERROR: script cannot be defined for automatic suite polling task " + l_task )
-
 
     def get_coldstart_task_list( self ):
         return self.cfg['scheduling']['special tasks']['cold-start']
@@ -1495,12 +1530,11 @@ class config( object ):
                     self.taskdefs[ name ].add_sequence(seq)
 
             if self.run_mode == 'live':
-                # register any explicit internal outputs
-                if 'outputs' in self.cfg['runtime'][name]:
-                    for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = output(msg, base_interval)
-                        self.taskdefs[name].outputs.append(outp)
-
+                # Register explicit output messages.
+                for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
+                    outp = output(msg, base_interval)
+                    self.taskdefs[name].outputs.append(outp)
+ 
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
@@ -2035,9 +2069,10 @@ class config( object ):
         if name in self.cfg['scheduling']['special tasks']['cold-start']:
             taskd.is_coldstart = True
 
-        # Set clock-triggered tasks.
         if name in self.clock_offsets:
             taskd.clocktrigger_offset = self.clock_offsets[name]
+        if name in self.ext_triggers:
+            taskd.external_triggers.append(self.ext_triggers[name])
 
         taskd.sequential = (
             name in self.cfg['scheduling']['special tasks']['sequential'])
