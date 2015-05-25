@@ -19,8 +19,6 @@ t2:start=>stop
 {% endif %}
     [[t1]]
         inherit=T
-        [[[job submission]]]
-            method=at
     [[t2]]
         inherit=T
     [[stop]]
