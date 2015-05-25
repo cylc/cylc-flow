@@ -27,6 +27,6 @@
 {% endif %}
     [[stop]]
         script="""
-cylc kill $CYLC_SUITE_REG_NAME t1 1 || true
+cylc kill $CYLC_SUITE_REG_NAME t1 1
 cylc stop $CYLC_SUITE_REG_NAME
 """
