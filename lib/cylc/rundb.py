@@ -99,7 +99,7 @@ class BulkDBOperObject(object):
 class ThreadedCursor(Thread):
     def __init__(self, db, dump, restart=False):
         super(ThreadedCursor, self).__init__()
-        self.max_commit_attempts = 5
+        self.max_commit_attempts = 10
         self.db=db
         self.db_dump_name = dump
         self.reqs=Queue.Queue()
