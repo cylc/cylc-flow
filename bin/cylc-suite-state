@@ -30,9 +30,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_polling import poller
 import cylc.flags
 
-from isodatetime.dumpers import TimePointDumper
 from isodatetime.parsers import TimePointParser, DurationParser
-from isodatetime.data import Duration
 
 class suite_poller( poller ):
     """A polling object that checks suite state."""
