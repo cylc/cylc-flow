@@ -32,7 +32,7 @@ class CGraphPlain( pygraphviz.AGraph ):
 
     def __init__( self, title, suite_polling_tasks={} ):
         self.title = title
-        pygraphviz.AGraph.__init__( self, directed=True, strict=False )
+        pygraphviz.AGraph.__init__( self, directed=True, strict=True )
         # graph attributes
         # - label (suite name)
         self.graph_attr['label'] = title
