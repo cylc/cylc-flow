@@ -30,6 +30,8 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_polling import poller
 import cylc.flags
 
+from isodatetime.parsers import TimePointParser, DurationParser
+
 class suite_poller( poller ):
     """A polling object that checks suite state."""
 
@@ -92,10 +94,18 @@ For your own suites the database location is determined by your
 site/user config. For other suites, e.g. those owned by others, or
 mirrored suite databases, use --run-dir=DIR to specify the location.
 
-Example usage:
+Example usages:
   cylc suite-state REG --task=TASK --cycle=CYCLE --status=STATUS
 returns 0 if TASK.CYCLE reaches STATUS before the maximum number of
-polls, otherwise returns 1.""")
+polls, otherwise returns 1.
+
+  cylc suite-state REG --task=TASK --cycle=CYCLE --status=STATUS --offset=PT6H
+adds 6 hours to the value of CYCLE for carrying out the polling operation.
+
+  cylc suite-state REG --task=TASK --status=STATUS --task-point
+uses CYLC_TASK_CYCLE_POINT environment variable as the value for the CYCLE
+to poll. This is useful when you want to use cylc suite-state in a cylc task.
+""")
 
 parser.add_option( "-t", "--task",
         help="Specify a task to check the state of.",
@@ -109,11 +119,21 @@ parser.add_option( "-p", "--point",
         help="Specify the cycle point to check task states for.",
         action="store", dest="cycle", default=None )
 
+parser.add_option( "-T", "--task-point",
+        help="Use the CYLC_TASK_CYCLE_POINT environment variable as the "
+        "cycle to check task states for. "
+        "Shorthand for --cycle=$CYLC_TASK_CYCLE_POINT",
+        action="store_true", dest="use_task_point", default=False )
+
 parser.add_option( "-d", "--run-dir",
         help="The top level cylc run directory if non-standard. The "
         "database should be DIR/REG/cylc-suite.db. Use to interrogate "
         "suites owned by others, etc.; see note above.",
         metavar="DIR", action="store", dest="run_dir", default=None )
+
+parser.add_option( "-s", "--offset",
+        help="Specify an offset to add to the targetted cycle point",
+        action="store", dest="offset", default=None )
 
 conds = ("Valid triggering conditions to check for include: '" +
          ("', '").join(sorted(CylcSuiteDBChecker.STATE_ALIASES.keys())[:-1]) +
@@ -130,6 +150,43 @@ suite_poller.add_to_cmd_options(parser)
 ( options, args ) = parser.parse_args( remove_opts=["--db", "--debug"] )
 
 suite = args[0]
+
+if options.use_task_point and options.cycle:
+    sys.exit( "ERROR: cannot specify a cycle point and use environment variable" )
+
+if options.use_task_point:
+    if os.environ.has_key("CYLC_TASK_CYCLE_POINT"):
+        options.cycle = os.environ["CYLC_TASK_CYCLE_POINT"]
+    else:
+        sys.exit( "ERROR: CYLC_TASK_CYCLE_POINT is not defined" )
+
+if options.offset and not options.cycle:
+    sys.exit( "ERROR: You must target a cycle point to use an offset" )
+
+# Attempt to apply specified offset to the targetted cycle
+if options.offset:
+    my_parser=TimePointParser()
+    my_target_point = my_parser.parse(options.cycle, dump_as_parsed=True)
+    my_offset_parser = DurationParser()
+
+    oper = "+"
+    if options.offset.startswith("-") or options.offset.startswith("+"):
+        oper = options.offset[0]
+        options.offset = options.offset[1:]
+    if options.offset.startswith("P"):
+        try:
+            my_shift = my_offset_parser.parse(options.offset)
+        except ValueError:
+            sys.exit( "ERROR: Cannot parse offset: %s" % options.offset )
+        if oper == "-":
+            my_target_point -= my_shift
+        else:
+            my_target_point += my_shift
+    else:
+        sys.exit( "ERROR: Unrecognised offset: %s" % options.offset )
+
+    options.cycle = str(my_target_point)
+
 
 # this only runs locally (use of --host or --user results in remote re-invocation).
 run_dir = os.path.expandvars( \
