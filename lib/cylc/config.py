@@ -613,21 +613,15 @@ class config( object ):
             graph = self.get_graph(ungroup_all=True, check_suicide=True)
             # Original edges.
             o_edges = graph.edges()
-            # Reverse any back edges.
+            # Reverse any back edges using graphviz 'acyclic'.
             # (Note: use of acyclic(copy=True) reveals our CGraph class init
             # should have the same arg list as its parent, pygraphviz.AGraph).
             graph.acyclic()
-            # Look for reversed edges.
+            # Look for reversed edges (note this does not detect self-edges).
             n_edges = graph.edges()
             back_edges = []
             for e in o_edges:
                 if e not in n_edges:
-                    back_edges.append(e)
-            # Look for self-edges (a => a) - reversing these is invisible.
-            for e in o_edges:
-                (l, r) = e
-                if l == r:
-                    e = (l, r.replace('!', ''))
                     back_edges.append(e)
             if len(back_edges) > 0:
                 print >> sys.stderr, "Back-edges:"
@@ -1441,7 +1435,6 @@ class config( object ):
                                         right_name, seq, suicide)
         return special_dependencies
 
-
     def generate_edges( self, lexpression, left_nodes, right, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
         conditional = False
@@ -1450,9 +1443,28 @@ class config( object ):
             conditional = True
 
         for left in left_nodes:
-            if left is not None:
-                e = graphing.edge( left, right, seq, suicide, conditional )
-                self.edges.append(e)
+            if left is None:
+                continue
+            if right is not None:
+                # Check for self-suicide and self-edges.
+                if left == right or left.startswith(right + ':'):
+                    # (This passes inter-cycle offsets: left[-P1D] => left)
+                    # (TODO - but not explicit null offsets like [-P0D]!)
+                    if suicide:
+                        # Self-suicide may be OK.
+                        print >> sys.stderr, (
+                            'WARNING: self-suicide is not recommended: '
+                            '%s => !%s.'  % (left, right))
+                    else:
+                        # Self-edge.
+                        if left != lexpression:
+                            print >> sys.stderr, (
+                                "%s => %s" % (lexpression, right))
+                        raise SuiteConfigError(
+                            "ERROR, self-edge detected: %s => %s" % (
+                                left, right))
+            e = graphing.edge(left, right, seq, suicide, conditional)
+            self.edges.append(e)
 
     def generate_taskdefs( self, line, left_nodes, right, section, seq,
                            offset_seq_map, base_interval ):
@@ -1816,9 +1828,9 @@ class config( object ):
         )
         graph = graphing.CGraph(
                 self.suite, self.suite_polling_tasks, self.cfg['visualization'])
-        graph.add_edges( gr_edges, ignore_suicide )
+        graph.add_edges(gr_edges, ignore_suicide)
         if subgraphs_on:
-            graph.add_cycle_point_subgraphs( gr_edges )
+            graph.add_cycle_point_subgraphs(gr_edges)
         return graph
 
     def get_node_labels( self, start_point_string, stop_point_string):
