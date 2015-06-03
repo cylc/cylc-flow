@@ -1,0 +1,29 @@
+
+title = "cylc hold after point suite.rc test"
+
+description = """Define a hold after point in the suite.rc"""
+
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    initial cycle time  = 20100101T00Z
+    final cycle time    = 20100110T00Z
+    hold after point    = 20100102T00Z
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+                stopper
+            """
+        [[[T00]]]
+            graph = foo[-P1D] => foo
+[runtime]
+    [[stopper]]
+        script = sleep 30; cylc stop $CYLC_SUITE_NAME
+    [[foo]]
+        script = true
+[runtime]
+    [[foo]]
+        command scripting = sleep 5
