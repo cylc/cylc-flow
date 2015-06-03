@@ -296,10 +296,6 @@ class CGraphPlain( pygraphviz.AGraph ):
         nodes = self.prepare_nbunch(nbunch)
         subgraph.add_nodes_from(nodes)
 
-        for left, right in self.edges():
-            if left in subgraph and right in subgraph: 
-                subgraph.add_edge(left, right)
-
         return subgraph
 
 
