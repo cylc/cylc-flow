@@ -32,6 +32,7 @@ class tailer(threading.Thread):
         self.tag = tag
         self.proc = proc
         self.freeze = False
+        self.has_warned_corrupt = False
         self.warning_re = warning_re
         self.critical_re = critical_re
         self.warning_tag = self.logbuffer.create_tag( None, foreground = "#a83fd3" )
@@ -113,6 +114,16 @@ class tailer(threading.Thread):
             #print "Disconnecting from tailer thread"
 
     def update_gui( self, line ):
+        try:
+            line.decode('utf-8')
+        except UnicodeDecodeError as exc:
+            if self.has_warned_corrupt:
+                return False
+            self.has_warned_corrupt = True
+            dialog = warning_dialog("Problem reading file:\n    %s: %s" %
+                                    (type(exc).__name__, exc))
+            gobject.idle_add(dialog.warn)
+            return False
         if self.critical_re and re.search( self.critical_re, line ):
             self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.critical_tag )
         elif self.warning_re and re.search( self.warning_re, line ):
