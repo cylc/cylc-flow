@@ -1,8 +1,0 @@
-2014-08-26T16:02:56Z INFO - port:7766
-2014-08-26T16:02:56Z INFO - Suite starting at 2014-08-26T16:02:56Z
-2014-08-26T16:02:56Z INFO - Log event clock: real time
-2014-08-26T16:02:56Z INFO - Run mode: live
-2014-08-26T16:02:56Z INFO - Initial point: 99991231T2300Z
-2014-08-26T16:02:56Z INFO - Final point: None
-2014-08-26T16:02:56Z INFO - Cold Start 99991231T2300Z
-2014-08-26T16:02:56Z INFO - Suite shutting down at 2014-08-26T16:02:56Z (ERROR: Cannot dump TimePoint year: 10000 not in bounds 0 to 9999.)

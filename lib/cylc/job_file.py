@@ -24,6 +24,7 @@ import StringIO
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+from cylc.task_message import TaskMessage
 
 
 class JobFile(object):
@@ -57,9 +58,9 @@ class JobFile(object):
         self._write_directives(handle, job_conf)
         self._write_prelude(handle, job_conf)
         self._write_err_trap(handle, job_conf)
-        self._write_initial_scripting(handle, job_conf)
+        self._write_init_script(handle, job_conf)
         self._write_environment_1(handle, job_conf)
-        self._write_enviro_scripting(handle, job_conf)
+        self._write_env_script(handle, job_conf)
         # suite bin access must be before runtime environment
         # because suite bin commands may be used in variable
         # assignment expressions: FOO=$(command args).
@@ -67,8 +68,8 @@ class JobFile(object):
         self._write_environment_2(handle, job_conf)
         self._write_task_started(handle, job_conf)
         self._write_manual_environment(handle, job_conf)
-        self._write_identity_scripting(handle, job_conf)
-        self._write_command_scriptings(handle, job_conf)
+        self._write_identity_script(handle, job_conf)
+        self._write_script(handle, job_conf)
         self._write_epilogue(handle, job_conf)
         handle.close()
         # make it executable
@@ -133,18 +134,21 @@ prelude''')
     def _write_err_trap(cls, handle, job_conf):
         """Write error trap.
 
-        Note that all job-file scripting must be bash- and ksh-compatible,
-        hence use of "typeset" below instead of the more sensible but
-        bash-specific "local".
+        Note that the job script must be bash- and ksh-compatible, hence use of
+        "typeset" below instead of the more sensible but bash-specific "local".
 
         """
-        fail_signals_string = " ".join(
-            BATCH_SYS_MANAGER.get_fail_signals(job_conf))
+        args = {
+            "signals_str": " ".join(
+                BATCH_SYS_MANAGER.get_fail_signals(job_conf)),
+            "priority": TaskMessage.CRITICAL,
+            "message1": TaskMessage.FAILED,
+            "message2": TaskMessage.FAIL_MESSAGE_PREFIX}
         handle.write(r"""
 
 # TRAP ERROR SIGNALS:
 set -u # Fail when using an undefined variable
-FAIL_SIGNALS='""" + fail_signals_string + """'
+FAIL_SIGNALS='%(signals_str)s'
 TRAP_FAIL_SIGNAL() {
     typeset SIGNAL=$1
     echo "Received signal $SIGNAL" >&2
@@ -152,26 +156,27 @@ TRAP_FAIL_SIGNAL() {
     for S in ${VACATION_SIGNALS:-} $FAIL_SIGNALS; do
         trap "" $S
     done
-    if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
-        {
-            echo "CYLC_JOB_EXIT=$SIGNAL"
-            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
-        } >>$CYLC_TASK_LOG_ROOT.status
+    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
+        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
     fi
-    cylc task failed "Task job script received signal $@"
+    cylc task message -p '%(priority)s' "%(message2)s$SIGNAL" '%(message1)s'
     exit 1
 }
 for S in $FAIL_SIGNALS; do
     trap "TRAP_FAIL_SIGNAL $S" $S
 done
-unset S""")
+unset S""" % args)
 
         vacation_signal = BATCH_SYS_MANAGER.get_vacation_signal(job_conf)
         if vacation_signal:
+            args = {
+                "signals_str": vacation_signal,
+                "priority": TaskMessage.WARNING,
+                "message": TaskMessage.VACATION_MESSAGE_PREFIX}
             handle.write(r"""
 
 # TRAP VACATION SIGNALS:
-VACATION_SIGNALS='""" + vacation_signal + r"""'
+VACATION_SIGNALS='%(signals_str)s'
 TRAP_VACATION_SIGNAL() {
     typeset SIGNAL=$1
     echo "Received signal $SIGNAL" >&2
@@ -179,30 +184,30 @@ TRAP_VACATION_SIGNAL() {
     for S in $VACATION_SIGNALS $FAIL_SIGNALS; do
         trap "" $S
     done
-    if [[ -n ${CYLC_TASK_LOG_ROOT:-} && -f $CYLC_TASK_LOG_ROOT.status ]]; then
-        rm -f $CYLC_TASK_LOG_ROOT.status
+    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
+        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
     fi
-    cylc task message -p WARNING "Task job script vacated by signal $@"
+    cylc task message -p '%(priority)s' "%(message)s$SIGNAL"
     exit 1
 }
 S=
 for S in $VACATION_SIGNALS; do
     trap "TRAP_VACATION_SIGNAL $S" $S
 done
-unset S""")
+unset S""" % args)
 
     @classmethod
-    def _write_initial_scripting(cls, handle, job_conf):
-        """Initial scripting."""
-        global_initial_scripting = GLOBAL_CFG.get_host_item(
-            'global initial scripting', job_conf["host"], job_conf["owner"])
-        if global_initial_scripting:
-            handle.write("\n\n# GLOBAL INITIAL SCRIPTING:\n")
-            handle.write(global_initial_scripting)
-        if not job_conf['initial scripting']:
+    def _write_init_script(cls, handle, job_conf):
+        """Init-script."""
+        global_init_script = GLOBAL_CFG.get_host_item(
+            'global init-script', job_conf["host"], job_conf["owner"])
+        if global_init_script:
+            handle.write("\n\n# GLOBAL INIT-SCRIPT:\n")
+            handle.write(global_init_script)
+        if not job_conf['init-script']:
             return
-        handle.write("\n\n# INITIAL SCRIPTING:\n")
-        handle.write(job_conf['initial scripting'])
+        handle.write("\n\n# INIT-SCRIPT:\n")
+        handle.write(job_conf['init-script'])
 
     def _write_environment_1(self, handle, job_conf):
         """Suite and task environment."""
@@ -284,14 +289,15 @@ unset S""")
         handle.write("\nexport CYLC_TASK_WORK_DIR=" + task_work_dir)
         # DEPRECATED
         handle.write("\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR")
+        handle.write("\nexport CYLC_JOB_PID=$$")
 
     @classmethod
-    def _write_enviro_scripting(cls, handle, job_conf):
-        """Environment scripting."""
-        if not job_conf['environment scripting']:
+    def _write_env_script(cls, handle, job_conf):
+        """Env-script."""
+        if not job_conf['env-script']:
             return
-        handle.write("\n\n# ENVIRONMENT SCRIPTING:\n")
-        handle.write(job_conf['environment scripting'])
+        handle.write("\n\n# ENV-SCRIPT:\n")
+        handle.write(job_conf['env-script'])
 
     @classmethod
     def _write_suite_bin_access(cls, handle, _):
@@ -366,11 +372,8 @@ unset S""")
         handle.write(r"""
 
 # SEND TASK STARTED MESSAGE:
-{
-    echo "CYLC_JOB_PID=$$"
-    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
-} >>$CYLC_TASK_LOG_ROOT.status
-cylc task started
+cylc task message '%(message)s' &
+CYLC_TASK_MESSAGE_STARTED_PID=$!
 
 # SHARE DIRECTORY CREATE:
 mkdir -p $CYLC_SUITE_SHARE_DIR || true
@@ -378,7 +381,7 @@ mkdir -p $CYLC_SUITE_SHARE_DIR || true
 # WORK DIRECTORY CREATE:
 mkdir -p $(dirname $CYLC_TASK_WORK_DIR) || true
 mkdir -p $CYLC_TASK_WORK_DIR
-cd $CYLC_TASK_WORK_DIR""")
+cd $CYLC_TASK_WORK_DIR""" % {"message": TaskMessage.STARTED})
 
     def _write_manual_environment(self, handle, job_conf):
         """Write a transferable environment for detaching tasks."""
@@ -399,7 +402,7 @@ cd $CYLC_TASK_WORK_DIR""")
         handle.write('\nexport CYLC_SUITE_ENVIRONMENT="' + value + '"')
 
     @classmethod
-    def _write_identity_scripting(cls, handle, _):
+    def _write_identity_script(cls, handle, _):
         """Write script for suite and task identity."""
         handle.write(r"""
 
@@ -418,16 +421,17 @@ else
     echo "  Task Host   : $(hostname -f)"
 fi
 echo "  Task Owner  : $USER"
+echo "  Task Submit No.: $CYLC_TASK_SUBMIT_NUMBER"
 echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
 echo""")
 
     @classmethod
-    def _write_command_scriptings(cls, handle, job_conf):
-        """Write pre-command, command and post-command scriptings."""
+    def _write_script(cls, handle, job_conf):
+        """Write pre-script, script, and post-script."""
         for prefix in ['pre-', '', 'post-']:
-            value = job_conf[prefix + 'command scripting']
+            value = job_conf[prefix + 'script']
             if value:
-                handle.write("\n\n# %sCOMMAND SCRIPTING:\n%s" % (
+                handle.write("\n\n# %sSCRIPT:\n%s" % (
                     prefix.upper(), value))
 
     @classmethod
@@ -450,16 +454,13 @@ cd
 rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true
 
 # SEND TASK SUCCEEDED MESSAGE:
-{
-    echo 'CYLC_JOB_EXIT=SUCCEEDED'
-    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
-} >>$CYLC_TASK_LOG_ROOT.status
-cylc task succeeded
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc task message '%(message)s'
 
 echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
 trap '' EXIT
 
-#EOF""")
+#EOF""" % {"message": TaskMessage.SUCCEEDED})
 
 
 JOB_FILE = JobFile()

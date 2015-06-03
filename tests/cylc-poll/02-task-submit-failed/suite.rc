@@ -15,11 +15,11 @@
             method = at
             command template = at noon tomorrow
     [[poll_foo]]
-        command scripting = sleep 5; cylc poll $CYLC_SUITE_NAME foo 1
+        script = sleep 5; cylc poll $CYLC_SUITE_NAME foo 1
     [[stop]]
-        command scripting = cylc stop $CYLC_SUITE_NAME
+        script = cylc stop $CYLC_SUITE_NAME
     [[kill_foo_submit]]
-        command scripting = """
+        script = """
             sleep 5
             ID=$(sed -n "s/^CYLC_BATCH_SYS_JOB_ID=//p" \
                  $CYLC_SUITE_RUN_DIR/log/job/1/foo/01/job.status)

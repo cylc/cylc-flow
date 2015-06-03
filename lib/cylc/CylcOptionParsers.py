@@ -109,6 +109,8 @@ Arguments:"""
         usage = re.sub( 'ARGS', args, usage )
 
         OptionParser.__init__( self, usage )
+        if self.auto_add:
+            self.add_std_options()
 
     def add_std_options( self ):
         self.add_option( "--user",
@@ -157,6 +159,11 @@ Arguments:"""
                     "For task messaging connections see "
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
+
+            self.add_option("--uuid",
+                    help="Print the client UUID to stderr. This can be matched "
+                    "to information logged by the receiving suite daemon.",
+                    action="store_true", default=False, dest="print_uuid")
 
             if not self.noforce:
                 self.add_option( "-f", "--force",
@@ -210,8 +217,6 @@ Arguments:"""
 
     def parse_args( self, remove_opts=[] ):
 
-        if self.auto_add:
-            self.add_std_options()
         for opt in remove_opts:
             try:
                 self.remove_option( opt )

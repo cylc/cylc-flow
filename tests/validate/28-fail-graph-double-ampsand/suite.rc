@@ -5,10 +5,10 @@
             """
 [runtime]
     [[foo]] 
-        command scripting = echo "foo"
+        script = echo "foo"
         
     [[bar]]
-        command scripting = echo "bar"
+        script = echo "bar"
 
     [[baz]]
-        command scripting = echo "baz"
+        script = echo "baz"

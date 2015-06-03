@@ -1,10 +1,10 @@
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.5 # minutes
+       live mode suite timeout = PT1M
 [scheduling]
     [[dependencies]]
         graph = "foo"
 [runtime]
     [[foo]]
-        command scripting = cylc scan | grep $CYLC_SUITE_NAME
+        script = cylc scan | grep "^${CYLC_SUITE_NAME} "

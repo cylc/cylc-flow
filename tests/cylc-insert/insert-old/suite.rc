@@ -1,0 +1,26 @@
+title = "Test insertion of a task that has previously run"
+
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
+
+[scheduling]
+    initial cycle point = 20140101T00
+    final cycle point   = 20140104T00
+    [[dependencies]]
+        [[[R1]]]
+            graph = "foo_cold => foo"
+        [[[T00]]]
+            graph = "foo[-P1D] => foo"
+        [[[R1/+P1D]]]
+            graph = "foo[-P1D] => reinsert_foo => foo"
+
+[runtime]
+    [[foo_cold, foo]]
+        command scripting = "true"
+    [[reinsert_foo]]
+        command scripting = """
+            cylc insert $CYLC_SUITE_NAME foo_cold 20140101T0000Z
+        """

@@ -30,7 +30,7 @@ TEST_NAME=$TEST_NAME_BASE-check-foo
 #   check pre-command and environment
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.1
 cp $TEST_NAME.stdout foo.jobfile
-grep -A1 "PRE-COMMAND SCRIPTING" foo.jobfile > foo.pre_cmd
+grep -A1 "# PRE-SCRIPT:" foo.jobfile > foo.pre_cmd
 cmp_ok foo.pre $TEST_SOURCE_DIR/multi/foo.pre
 run_ok $TEST_NAME.env grep 'MESSAGE="hello"' foo.jobfile
 #-------------------------------------------------------------------------------
@@ -39,9 +39,9 @@ TEST_NAME=$TEST_NAME_BASE-check-bar
 #   check pre, post and environment
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME bar.1
 cp $TEST_NAME.stdout bar.jobfile
-grep -A1 "PRE-COMMAND SCRIPTING" bar.jobfile > bar.pre_cmd
+grep -A1 "# PRE-SCRIPT:" bar.jobfile > bar.pre_cmd
 cmp_ok bar.pre_cmd $TEST_SOURCE_DIR/multi/bar.pre
-grep -A1 "POST-COMMAND SCRIPTING" bar.jobfile > bar.post_cmd
+grep -A1 "# POST-SCRIPT:" bar.jobfile > bar.post_cmd
 cmp_ok bar.post_cmd $TEST_SOURCE_DIR/multi/bar.post
 run_ok $TEST_NAME.env grep 'MESSAGE="hello"' bar.jobfile
 #-------------------------------------------------------------------------------
@@ -52,45 +52,45 @@ cp $TEST_NAME.stdout baz.jobfile
 run_ok $TEST_NAME.env grep 'MESSAGE="baz"' baz.jobfile
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-qux
-# check qux is correctly overriding pre-command scripting
+# check qux is correctly overriding pre-script
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME qux.1
 cp $TEST_NAME.stdout qux.jobfile
-grep -A1 "PRE-COMMAND SCRIPTING" qux.jobfile > qux.pre_cmd
+grep -A1 "# PRE-SCRIPT:" qux.jobfile > qux.pre_cmd
 cmp_ok qux.pre_cmd $TEST_SOURCE_DIR/multi/qux.pre
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-bah
-# check bah has correctly inherited pre-command scripting from FAM1,FAM3
+# check bah has correctly inherited pre-script from FAM1,FAM3
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME bah.1
 cp $TEST_NAME.stdout bah.jobfile
-grep -A1 "PRE-COMMAND SCRIPTING" bah.jobfile > bah.pre_cmd
+grep -A1 "# PRE-SCRIPT:" bah.jobfile > bah.pre_cmd
 cmp_ok bah.pre_cmd $TEST_SOURCE_DIR/multi/bah.pre
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-hum
-# check hum has correctly set post-command scripting
+# check hum has correctly set post-script
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME hum.1
 cp $TEST_NAME.stdout hum.jobfile
-grep -A1 "POST-COMMAND SCRIPTING" hum.jobfile > hum.post_cmd
+grep -A1 "# POST-SCRIPT:" hum.jobfile > hum.post_cmd
 cmp_ok hum.post_cmd $TEST_SOURCE_DIR/multi/hum.post
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-bug
-# check bug has correctly inherited command scripting from FAM4
+# check bug has correctly inherited script from FAM4
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME bug.1
 cp $TEST_NAME.stdout bug.jobfile
-grep -A1 "COMMAND SCRIPTING" bug.jobfile > bug.task_cmd
+grep -A1 "# SCRIPT:" bug.jobfile > bug.task_cmd
 cmp_ok bug.task_cmd $TEST_SOURCE_DIR/multi/bug.cmd
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-reg
-# check reg has correctly overridden command scripting
+# check reg has correctly overridden script
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME reg.1
 cp $TEST_NAME.stdout reg.jobfile
-grep -A1 "COMMAND SCRIPTING" reg.jobfile > reg.task_cmd
+grep -A1 "# SCRIPT:" reg.jobfile > reg.task_cmd
 cmp_ok reg.task_cmd $TEST_SOURCE_DIR/multi/reg.cmd
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-exp
-# check exp has correctly inherited command scripting from FAM4,FAM5
+# check exp has correctly inherited script from FAM4,FAM5
 run_ok $TEST_NAME cylc jobscript $SUITE_NAME exp.1
 cp $TEST_NAME.stdout exp.jobfile
-grep -A1 "COMMAND SCRIPTING" exp.jobfile > exp.task_cmd
+grep -A1 "# SCRIPT:" exp.jobfile > exp.task_cmd
 cmp_ok exp.task_cmd $TEST_SOURCE_DIR/multi/exp.cmd
 
 purge_suite $SUITE_NAME

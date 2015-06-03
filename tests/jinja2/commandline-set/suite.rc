@@ -18,4 +18,4 @@ to pass the test run their values must be 'foo' and '2', respectively."""
             graph = {{TASKNAME}}
 [runtime]
     [[ {{TASKNAME}} ]]
-        command scripting = "sleep 1"
+        script = "sleep 1"

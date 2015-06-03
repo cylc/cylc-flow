@@ -17,4 +17,4 @@
             graph = "foo[^] & qux[-PT6H] => qux"
 [runtime]
     [[root]]
-        command scripting = "true"
+        script = "true"

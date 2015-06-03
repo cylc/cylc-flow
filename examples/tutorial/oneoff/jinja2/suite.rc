@@ -14,10 +14,10 @@ title = "A Jinja2 Hello World! suite"
 
 [runtime]
     [[hello]]
-        command scripting = "sleep 10; echo Hello World!"
+        script = "sleep 10; echo Hello World!"
 {% if MULTI %}
     [[BYE]]
-        command scripting = "sleep 10; echo Goodbye World!"
+        script = "sleep 10; echo Goodbye World!"
     {% for I in range(0,N_GOODBYES) %}
     [[ goodbye_{{I}} ]]
         inherit = BYE

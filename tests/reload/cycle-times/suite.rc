@@ -16,7 +16,7 @@ description = """change cycle times"""
             graph = "a[T-12] => a"
 [runtime]
     [[reloader]]
-        command scripting = """
+        script = """
 # change the order of FOO and BAR in the graphing section:
 perl -pi -e 's/(\[\[\[)0,12(\]\]\] # marker)/\1 0,6,12,18\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 perl -pi -e 's/(graph = ")a\[T-12\]( => a")/\1a\[T-6\]\2/' $CYLC_SUITE_DEF_PATH/suite.rc
@@ -25,4 +25,4 @@ cylc reload -f $CYLC_SUITE_NAME
 sleep 5
 """
     [[a]]
-        command scripting = sleep 1
+        script = sleep 1

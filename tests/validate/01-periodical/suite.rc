@@ -14,4 +14,4 @@
             graph = "yearly"
 [runtime]
     [[root]]
-        command scripting = "true"
+        script = "true"

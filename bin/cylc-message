@@ -15,13 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import os, sys
-from optparse import OptionParser
-from cylc.task_message import message
-import cylc.flags
-
-usage = """cylc [task] message [OPTIONS] MESSAGE
+"""cylc [task] message [OPTIONS] MESSAGE ...
 
 This command is part of the cylc task messaging interface, used by
 running tasks to communicate progress to their parent suite.
@@ -31,68 +25,42 @@ Other messages received by the suite daemon will just be logged.
 
 Suite and task identity are determined from the task execution
 environment supplied by the suite (or by the single task 'submit'
-command, in which case case the message is just printed to stdout).
+command, in which case case the message is just printed to stdout)."""
 
-See also:
-    cylc [task] started
-    cylc [task] succeeded
-    cylc [task] failed"""
 
-parser = OptionParser( usage )
+import os
+import sys
+from optparse import OptionParser
+import cylc.flags
+from cylc.task_message import TaskMessage
 
-parser.add_option( "-p",
-        metavar="PRIORITY", type="choice",
-        choices=[ 'NORMAL', 'WARNING', 'CRITICAL' ],
+def main():
+    """CLI."""
+    parser = OptionParser(__doc__)
+
+    parser.add_option(
+        "-p", "--priority", metavar="PRIORITY", type="choice",
+        choices=['NORMAL', 'WARNING', 'CRITICAL'],
         help="message priority: NORMAL, WARNING, or CRITICAL; default NORMAL.",
-        action="store", dest="priority", default="NORMAL" )
+        action="store", dest="priority", default="NORMAL")
 
-parser.add_option( "--next-restart-completed",
-        help="Report next restart file(s) completed",
-        action="store_true", dest="next_restart_completed" )
+    parser.add_option(
+        "-v", "--verbose", help="Verbose output mode.", action="store_true",
+        default=False, dest="verbose")
 
-parser.add_option( "--all-restart-outputs-completed",
-        help="Report all restart outputs completed at once.",
-        action="store_true", dest="all_restarts_completed" )
+    options, args = parser.parse_args()
+    if not args:
+        parser.error("No task message supplied")
 
-parser.add_option( "--all-outputs-completed",
-        help="Report all internal outputs completed at once.",
-        action="store_true", dest="all_outputs_completed" )
+    try:
+        TaskMessage(priority=options.priority).send(args)
+    except Exception, exc:
+        print >> sys.stderr, 'ERROR: task messaging failure.'
+        if os.getenv("CYLC_DEBUG") in ["True", "true"]:
+            import traceback
+            traceback.print_exc(exc)
+        raise SystemExit(exc)
 
-parser.add_option( "-v", "--verbose",
-        help="Verbose output mode.",
-        action="store_true", default=False, dest="verbose" )
 
-( options, args ) = parser.parse_args()
-cylc.flags.verbose = options.verbose
-
-if options.next_restart_completed:
-    message().shortcut_next_restart()
-    sys.exit(0)
-
-elif options.all_restarts_completed:
-    message().shortcut_all_restarts()
-    sys.exit(0)
-
-elif options.all_outputs_completed:
-    message().shortcut_all_outputs()
-    sys.exit(0)
-
-elif len( args ) == 0:
-    parser.error( "No task message supplied" )
-
-debug = False
-try:
-    # from task execution environment
-    if os.environ['CYLC_DEBUG'] == 'True':
-        debug = True
-except KeyError:
-    pass
-
-msg = ' '.join( args )
-try:
-    message( msg=msg, priority=options.priority ).send()
-except Exception, x:
-    print >> sys.stderr, 'ERROR: task messaging failure.'
-    if debug:
-        raise
-    raise SystemExit(x)
+if __name__ == "__main__":
+    main()

@@ -26,7 +26,7 @@
             """
 [runtime]
     [[root]]
-        command scripting = "sleep 1"
+        script = "sleep 1"
     [[RESTART_TASKS]]
         {%- if BATCH_SYS_NAME %}
         [[[job submission]]]
@@ -47,7 +47,7 @@
         {%- endif %}
     [[retrying_task]]
         inherit = RESTART_TASKS
-        command scripting = """
+        script = """
             if [[ $CYLC_TASK_TRY_NUMBER -le 2 ]]; then
                 sleep 1
                 exit 1
@@ -56,7 +56,7 @@
         description = "Retrying state task for restart"
         retry delays = 0.5, 0.01
     [[force_restart]]
-        pre-command scripting = """
+        pre-script = """
             # We need to make sure that the results stay consistent.
             sleep 2
             cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
@@ -82,10 +82,9 @@
         description = "Force a shutdown and restart of the suite"
         [[[environment]]]
             CYLC_TEST_BATCH_TASK_HOST={{ HOST }}
-            CYLC_TEST_BATCH_SITE_DIRECTIVES={{ SITE_DIRECTIVES }}
             TEST_DIR={{ TEST_DIR }}
     [[output_states]]
-        command scripting = """
+        script = """
             while [[ ! -e $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME ]]; do
                 sleep 0.1
             done
@@ -101,7 +100,7 @@
         """
         description = "Wait for the restart to complete"
     [[tidy]]
-        command scripting = """
+        script = """
             if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
                 touch {{ TEST_DIR }}/suite-stopping
             fi

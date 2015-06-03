@@ -13,10 +13,10 @@ new task proxy; ref github #945"""
 [runtime]
     [[retrier]]
         retry delays = 1*0.1
-        command scripting = "((CYLC_TASK_TRY_NUMBER >= 2)) || exit 1"
+        script = "((CYLC_TASK_TRY_NUMBER >= 2)) || exit 1"
         # ( '|| exit 1' required to trigger error trap in bash 4.2.0)
     [[reloader]]
-        command scripting = """
+        script = """
 cylc suite-state --max-polls=10 --interval=1 --task=retrier --cycle=1 \
     --status=retrying $CYLC_SUITE_NAME
 cylc reload $CYLC_SUITE_NAME"""

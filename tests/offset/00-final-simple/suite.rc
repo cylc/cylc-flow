@@ -11,4 +11,4 @@
             graph = "foo[-P1D] => foo"
 [runtime]
     [[foo]]
-        command scripting = true
+        script = true

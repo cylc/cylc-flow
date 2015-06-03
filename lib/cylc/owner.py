@@ -19,9 +19,12 @@
 """In analogy with cylc.hostname.is_remote_host(), determine if a
 username is "remote"."""
 
-import os, pwd
+import os
+import pwd
+from cylc.suite_host import get_hostname
 
 user = os.environ.get( 'USER', pwd.getpwuid(os.getuid()).pw_name )
+user_at_host = "%s@%s" % (user, get_hostname())
 
 def is_remote_user(name):
     """Return True if name is different than the current username.

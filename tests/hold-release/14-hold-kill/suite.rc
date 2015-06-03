@@ -10,7 +10,7 @@ title = Test: task should be held from retrying after a job kill
         graph = "sleeper:start => killer"
 [runtime]
     [[killer]]
-        command scripting = """
+        script = """
 cylc kill "${CYLC_SUITE_NAME}" 'sleeper' "${CYLC_TASK_CYCLE_POINT}"
 while grep -q '^sleeper, 1, running, spawned' \
     <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
@@ -22,5 +22,5 @@ grep -q '^sleeper, 1, held, spawned' <<<"$(cylc dump -t "${CYLC_SUITE_NAME}")"
 cylc release "${CYLC_SUITE_NAME}" 'sleeper' "${CYLC_TASK_CYCLE_POINT}"
 """
     [[sleeper]]
-        command scripting = test "${CYLC_TASK_TRY_NUMBER}" -gt 1 || sleep 60
+        script = test "${CYLC_TASK_TRY_NUMBER}" -gt 1 || sleep 60
         retry delays = PT1S

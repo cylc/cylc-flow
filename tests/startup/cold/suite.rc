@@ -12,6 +12,6 @@
             graph = "cold:fail | foo[T-6] => foo => !cold"
 [runtime]
     [[cold]]
-        command scripting = false
+        script = false
     [[foo]]
-        command scripting = true
+        script = true

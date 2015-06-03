@@ -9,7 +9,7 @@
         graph = "foo:submit-fail => !foo"
 [runtime]
     [[foo]]
-        command scripting = true
+        script = true
         [[[job submission]]]
             retry delays = PT4S, PT5S, PT7S # 3*0.1
         [[[remote]]]

@@ -97,9 +97,9 @@ class BulkDBOperObject(object):
 
 
 class ThreadedCursor(Thread):
-    def __init__(self, db, dump, restart=False):
+    def __init__(self, db, dump, restart=False, max_commit_attempts=5):
         super(ThreadedCursor, self).__init__()
-        self.max_commit_attempts = 5
+        self.max_commit_attempts = max_commit_attempts
         self.db=db
         self.db_dump_name = dump
         self.reqs=Queue.Queue()
@@ -280,14 +280,19 @@ class CylcRuntimeDAO(object):
                       TASK_STATES: "name, cycle",
                       BROADCAST_SETTINGS: None}
 
+    # Primary/Public database specific settings
+    PRIMARY_DB_ATTEMPT_LIMIT=5
+    PUBLIC_DB_ATTEMPT_LIMIT=10
 
     def __init__(self, suite_dir=None, new_mode=False, primary_db=True):
         if suite_dir is None:
             suite_dir = os.getcwd()
         if primary_db:
             prefix = os.path.join(suite_dir, 'state')
+            retries = self.PRIMARY_DB_ATTEMPT_LIMIT
         else:
             prefix = suite_dir
+            retries = self.PUBLIC_DB_ATTEMPT_LIMIT
 
         self.db_file_name = os.path.join(prefix, self.DB_FILE_BASE_NAME)
         self.db_dump_name = os.path.join(prefix, self.DB_DUMP_BASE_NAME)
@@ -318,7 +323,8 @@ class CylcRuntimeDAO(object):
         else:
             self.lock_check()
 
-        self.c = ThreadedCursor(self.db_file_name, self.db_dump_name, not new_mode)
+        self.c = ThreadedCursor(self.db_file_name, self.db_dump_name,
+                                not new_mode, retries)
 
     def close(self):
         self.c.close()

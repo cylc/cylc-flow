@@ -9,7 +9,7 @@
             graph = "foo[-PT12H] => foo"
 [runtime]
     [[foo]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle point = 2014080800
     final cycle point = 2014081000

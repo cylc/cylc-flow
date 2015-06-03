@@ -24,15 +24,15 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
 parser = cop( """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks, or all tasks with a common cycle point from a
-running suite.
+Remove one or more tasks (cylc remove REG MATCH POINT), or all tasks with a
+given cycle point (cylc remove REG POINT) from a running suite.
 
 Tasks will spawn successors first if they have not done so already.
 """ + multitask_usage, pyro=True, multitask=True,
@@ -52,34 +52,23 @@ if len(args) == 3:
     name = args[1]
     point_string = args[2]
     remove_point = False
-else:
+elif len(args) == 2:
     point_string = args[1]
     remove_point = True
+else:
+    parser.error("Wrong number of arguments.")
 
 spawn = not options.no_spawn
 
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    if remove_point:
-        prompt( 'remove ALL tasks at ' + point_string + ' in ' + suite,
-                options.force )
-        result = proxy.put( 'remove cycle', point_string, spawn )
-    else:
-        prompt(
-            'remove task(s) ' + name + ' at ' + point_string + ' in ' + suite,
-            options.force
-        )
-        result = proxy.put(
-            'remove task', name, point_string, options.is_family, spawn)
-
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-
-if result[0]:
-    print result[1]
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+if remove_point:
+    prompt('remove ALL tasks at %s in %s' % (point_string, suite),
+           options.force)
+    pclient.put_command('remove_cycle', point_string, spawn)
 else:
-    sys.exit( result[1] )
+    prompt('remove task(s) %s at %s in %s' % (name, point_string, suite),
+           options.force)
+    pclient.put_command('remove_task', name, point_string, options.is_family, spawn)

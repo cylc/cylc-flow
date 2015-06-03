@@ -12,11 +12,11 @@
         graph = monitor:start => FAM
 [runtime]
     [[FAM]]
-        command scripting = sleep 10
+        script = sleep 10
     [[a,b,c,d,e,f,g,h,i,j,k,l]]
         inherit = FAM
     [[monitor]]
-        command scripting = """
+        script = """
         N_SUCCEDED=0
         while ((N_SUCCEDED < 12)); do
             sleep 1

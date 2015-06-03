@@ -15,12 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-# Set up the cylc environment.
+"""Set up the cylc environment."""
 
 import os
 import socket
 import sys
+
 
 def environ_init(argv0=None):
     """Initialise cylc environment."""
@@ -37,11 +37,18 @@ def environ_init(argv0=None):
         if cylc_dir != os.getenv('CYLC_DIR', ''):
             os.environ['CYLC_DIR'] = cylc_dir
 
-        dirs = [os.path.join(cylc_dir, 'util'), os.path.join(cylc_dir, 'bin')]
+        cylc_dir_lib = os.path.join(cylc_dir, 'lib')
+        my_lib = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        if cylc_dir_lib == my_lib:
+            dirs = []
+        else:
+            # For backward compat, old versions of "cylc" may end up loading an
+            # incorrect version of this file.
+            dirs = [os.path.join(cylc_dir, 'bin')]
         if os.getenv('CYLC_SUITE_DEF_PATH', ''):
             dirs.append(os.getenv('CYLC_SUITE_DEF_PATH'))
         environ_path_add(dirs)
-        environ_path_add([os.path.join(cylc_dir, 'lib')], 'PYTHONPATH')
+        environ_path_add([cylc_dir_lib], 'PYTHONPATH')
 
     # Python output buffering delays appearance of stdout and stderr
     # when output is not directed to a terminal (this occurred when
@@ -49,17 +56,25 @@ def environ_init(argv0=None):
     # case in post-5.0 daemon-mode cylc?)
     os.environ['PYTHONUNBUFFERED'] = 'true'
 
+
 def environ_path_add(dirs, key='PATH'):
-    """For each dir in dirs, add dir to the front of the PATH environment
-    variable. If the 2nd argument key is specified, add each dir to the front of
-    the named environment variable instead of PATH.
+    """For each dir_ in dirs, prepend dir_ to the PATH environment variable.
+
+    If key is specified, prepend dir_ to the named environment variable instead
+    of PATH.
+
     """
 
-    paths = os.getenv(key, '').split(os.pathsep)
-    for dir in dirs:
-        while dir in paths:
-            paths.remove(dir)
-        paths.insert(0, dir)
+    paths_str = os.getenv(key, '')
+    # ''.split(os.pathsep) gives ['']
+    if paths_str.strip():
+        paths = paths_str.split(os.pathsep)
+    else:
+        paths = []
+    for dir_ in dirs:
+        while dir_ in paths:
+            paths.remove(dir_)
+        paths.insert(0, dir_)
     os.environ[key] = os.pathsep.join(paths)
 
 

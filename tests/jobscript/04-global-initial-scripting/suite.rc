@@ -12,6 +12,6 @@ title = Job script: suite to environment test
 
 [runtime]
     [[foo]]
-        command scripting = printenv FOO BAR BAZ
+        script = printenv FOO BAR BAZ
         [[[remote]]]
             host = localhost

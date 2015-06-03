@@ -20,6 +20,6 @@
             """
 [runtime]
     [[foo]]
-        command scripting = false
+        script = false
     [[bar,baz,wibble]]
-        command scripting = true
+        script = true

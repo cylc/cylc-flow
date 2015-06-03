@@ -7,6 +7,6 @@
         graph = a:start => b
 [runtime]
     [[a]]
-        command scripting = sleep 20
+        script = sleep 20
     [[b]]
-        command scripting = cylc poll $CYLC_SUITE_REG_NAME a 1
+        script = cylc poll $CYLC_SUITE_REG_NAME a 1

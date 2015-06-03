@@ -24,17 +24,18 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
 parser = cop( """cylc [control] hold [OPTIONS] ARGS
 
-Hold one or more waiting tasks, or a whole suite. Held tasks do not
-submit even if they are ready to run.
-""" + multitask_usage + """
+Hold one or more waiting tasks (cylc hold REG MATCH POINT), or
+a whole suite (cylc hold REG).
 
+Held tasks do not submit even if they are ready to run.""" +
+    multitask_usage + """
 See also 'cylc [control] release'.""", pyro=True, multitask=True,
     argdoc=[("REG", "Suite name"),
     ('[MATCH]', 'Task or family name matching regular expression'),
@@ -54,32 +55,22 @@ if len(args) == 3:
     whole_suite = False
     name = args[1]
     point_string = args[2]
-    prompt( 'Hold task(s) ' + name + ' at ' + point_string + ' in ' + suite,
-            options.force )
+    prompt('Hold task(s) %s at %s in %s' % (name, point_string, suite),
+            options.force)
 elif options.hold_point_string:
-    prompt( 'Hold suite after ' + options.hold_point_string, options.force )
+    prompt('Hold suite after %s' % options.hold_point_string, options.force)
 elif len(args) == 1:
-    prompt( 'Hold suite ' + suite, options.force )
+    prompt('Hold suite %s' % suite, options.force)
 else:
-    parser.error( "Wrong number of arguments" )
+    parser.error("Wrong number of arguments")
 
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    if options.hold_point_string:
-        result = proxy.put( 'hold suite after', options.hold_point_string )
-    elif whole_suite:
-        result = proxy.put( 'hold suite now' )
-    else:
-        result = proxy.put( 'hold task now', name, point_string,
-                            options.is_family )
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
-
-if result[0]:
-    print result[1]
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+if options.hold_point_string:
+    pclient.put_command('hold_after_point_string', options.hold_point_string)
+elif whole_suite:
+    pclient.put_command('hold_suite')
 else:
-    sys.exit( result[1] )
+    pclient.put_command('hold_task', name, point_string, options.is_family)

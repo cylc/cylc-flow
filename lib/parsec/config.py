@@ -143,7 +143,7 @@ class config( object ):
     def idump( self, items=[], sparse=False, pnative=False, prefix='', oneline=False, none_str='' ):
         """
         items is a list of --item style inputs:
-           '[runtime][foo]command scripting'.
+           '[runtime][foo]script'.
         """
         mkeys = []
         null = True

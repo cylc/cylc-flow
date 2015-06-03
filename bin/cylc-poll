@@ -24,22 +24,25 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 from cylc.prompt import prompt
-from cylc import cylc_pyro_client
+from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 import cylc.flags
 
 parser = cop("""cylc [control] poll [OPTIONS] ARGS
 
-Poll a 'submitted' or 'running' or 'all' task(s) to verify the status(es).
-If a job was killed by external means this will update the suite accordingly.
+Poll active tasks (those in the 'submitted' or 'running' states) to verify
+or update their statuses - even if they have suffered an external hard kill.
 
-Note that automatic job polling can used to track task status on task
-hosts that do not allow any communication by RPC (pyro) or ssh back to
-the suite host - see site/user config file documentation.
+To poll one or more tasks, "cylc poll REG MATCH POINT"; to poll all active
+tasks: "cylc poll REG".
 
-Polling is also done automatically on restarting a suite, for any tasks
-that were recorded as submitted or running when the suite went down.
+Note that automatic job polling can used to track task status on task hosts
+that do not allow any communication by RPC (pyro) or ssh back to the suite host
+- see site/user config file documentation.
+
+Polling is also done automatically on restarting a suite, for any tasks that
+were recorded as submitted or running when the suite went down.
 """ + multitask_usage, pyro=True, multitask=True,
         argdoc=[('REG', 'Suite name'),
             ('[MATCH]', 'Task or family name matching regular expression'),
@@ -52,24 +55,15 @@ suite, pphrase = prep_pyro(args[0], options).execute()
 if len(args) == 3:
     name = args[1]
     point_string = args[2]
-else:
+elif len(args) == 1:
     name = str(None)
     point_string = str(None)
-
-try:
-    proxy = cylc_pyro_client.client( suite, pphrase, options.owner,
-            options.host, options.pyro_timeout,
-            options.port ).get_proxy( 'command-interface' )
-    prompt( 'Poll task ' + name + ' at ' + point_string + ' in ' + suite,
-            options.force )
-    result = proxy.put( 'poll tasks', name, point_string, options.is_family )
-
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
-
-if result[0]:
-    print result[1]
 else:
-    sys.exit( result[1] )
+    parser.error("Wrong number of arguments.")
+
+prompt('Poll task %s at %s in %s' % (name, point_string, suite), options.force)
+pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
+                             options.pyro_timeout, options.port)
+if options.print_uuid:
+    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+pclient.put_command('poll_tasks', name, point_string, options.is_family)

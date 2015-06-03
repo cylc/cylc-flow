@@ -1,4 +1,4 @@
-title = "test suite for cylc-6 message triggers"
+title = test suite for cylc-6 message triggers
 [cylc]
     UTC mode = True
     [[reference test]]
@@ -10,20 +10,21 @@ title = "test suite for cylc-6 message triggers"
     [[dependencies]]
         [[[P2M]]]
            graph = """
-            foo:x => bar
-            foo[-P2M]:y => baz
-                  """
+foo:x => bar
+foo[-P2M]:y => baz
+"""
+
 [runtime]
+    [[bar, baz]]
+        script = true
     [[foo]]
-        command scripting = """
+        script = """
 echo HELLO
-sleep 2 
-TARGET_POINT=$CYLC_TASK_CYCLE_POINT
-cylc message "file 1 for $TARGET_POINT done"
-sleep 2
-TARGET_POINT=$(cylc cycle-point --offset P2M)
-cylc message "file 2 for $TARGET_POINT done"
-sleep 2
+MESSAGE_X="file 1 for $CYLC_TASK_CYCLE_POINT done"
+MESSAGE_Y="file 2 for $(cylc cycle-point --offset P2M) done"
+cylc message "${MESSAGE_X}" "${MESSAGE_Y}"
+grep -q "CYLC_MESSAGE=.* \[NORMAL\] ${MESSAGE_X}" "$0.status"
+grep -q "CYLC_MESSAGE=.* \[NORMAL\] ${MESSAGE_Y}" "$0.status"
 """
         [[[outputs]]]
             x = "file 1 for [] done"

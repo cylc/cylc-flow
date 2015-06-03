@@ -216,6 +216,7 @@ coercers['interval_seconds_list'] = coerce_interval_list
 SPEC = {
     'title'                                   : vdr( vtype='string', default="" ),
     'description'                             : vdr( vtype='string', default="" ),
+    'URL'                                     : vdr( vtype='string', default="" ),
     'cylc' : {
         'UTC mode'                            : vdr( vtype='boolean', default=False),
         'cycle point format'                  : vdr( vtype='cycletime_format', default=None),
@@ -274,6 +275,7 @@ SPEC = {
             },
         'special tasks' : {
             'clock-triggered'                 : vdr(vtype='string_list', default=[]),
+            'external-triggered'              : vdr(vtype='string_list', default=[]),
             'sequential'                      : vdr(vtype='string_list', default=[]),
             'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
@@ -293,11 +295,12 @@ SPEC = {
             'inherit'                         : vdr( vtype='string_list', default=[] ),
             'title'                           : vdr( vtype='string', default="" ),
             'description'                     : vdr( vtype='string', default="" ),
-            'initial scripting'               : vdr( vtype='string' ),
-            'environment scripting'           : vdr( vtype='string' ),
-            'pre-command scripting'           : vdr( vtype='string' ),
-            'command scripting'               : vdr( vtype='string', default='echo Default command scripting; sleep $(cylc rnd 1 16)'),
-            'post-command scripting'          : vdr( vtype='string' ),
+            'URL'                             : vdr( vtype='string', default="" ),
+            'init-script'                     : vdr( vtype='string' ),
+            'env-script'                      : vdr( vtype='string' ),
+            'pre-script'                      : vdr( vtype='string' ),
+            'script'                          : vdr( vtype='string', default='echo Dummy task; sleep $(cylc rnd 1 16)'),
+            'post-script'                     : vdr( vtype='string' ),
             'retry delays'                    : vdr( vtype='interval_minutes_list', default=[] ),
             'manual completion'               : vdr( vtype='boolean', default=False ),
             'extra log files'                 : vdr( vtype='string_list', default=[] ),
@@ -316,9 +319,9 @@ SPEC = {
                 'disable retries'             : vdr( vtype='boolean', default=True ),
                 },
             'dummy mode' : {
-                'command scripting'              : vdr( vtype='string', default='echo Dummy command scripting; sleep $(cylc rnd 1 16)'),
-                'disable pre-command scripting'  : vdr( vtype='boolean', default=True ),
-                'disable post-command scripting' : vdr( vtype='boolean', default=True ),
+                'script'                      : vdr( vtype='string', default='echo Dummy task; sleep $(cylc rnd 1 16)'),
+                'disable pre-script'          : vdr( vtype='boolean', default=True ),
+                'disable post-script'         : vdr( vtype='boolean', default=True ),
                 'disable task event hooks'       : vdr( vtype='boolean', default=True ),
                 'disable retries'                : vdr( vtype='boolean', default=True ),
                 },
@@ -414,11 +417,22 @@ def upg( cfg, descr ):
         ['visualization', 'final cycle time'], ['visualization', 'final cycle point'],
         converter( lambda x: x, 'changed naming to reflect non-date-time cycling' )
     )
-    u.obsolete('6.0.0', ['scheduling', 'dependencies', '__MANY__', 'daemon'])
     u.obsolete('6.0.0', ['cylc', 'job submission'])
     u.obsolete('6.0.0', ['cylc', 'event handler submission'])
     u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
     u.obsolete('6.0.0', ['cylc', 'lockserver'])
+    dep = {
+        'pre-command scripting': 'pre-script',
+        'command scripting': 'script',
+        'post-command scripting': 'post-script',
+        'environment scripting': 'env-script',
+        'initial scripting': 'init-script'
+    }
+    for old, new in dep.items():
+        u.deprecate('6.4.0',
+            ['runtime', '__MANY__', old],
+            ['runtime', '__MANY__', new],
+            silent=True)
     u.upgrade()
 
     # Force pre cylc-6 "cycling = Yearly" type suites to the explicit

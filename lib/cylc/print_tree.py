@@ -46,6 +46,7 @@ def print_tree( tree, padding, use_unicode=False, prefix='', labels=None, eq=Fal
         tee_re = a_tee_re
 
     keys = tree.keys()
+    keys.sort()
     # don't sort an ordered-dict tree!
     for item in keys:
         if item == keys[-1]:

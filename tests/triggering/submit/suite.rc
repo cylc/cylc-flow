@@ -8,4 +8,4 @@
         graph = "foo:submit => bar"
 [runtime]
     [[foo,bar]]
-        command scripting = "true"
+        script = "true"

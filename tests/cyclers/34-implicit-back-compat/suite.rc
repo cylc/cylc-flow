@@ -14,4 +14,4 @@ description = should define cycling implicitly in cylc-5 back compat mode.
 
 [runtime]
    [[foo,bar]]
-       command scripting = /bin/true
+       script = /bin/true

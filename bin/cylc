@@ -17,9 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re, sys
-import subprocess
 
-sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
+
+def prelude():
+    """Ensure cylc library is at the front of "sys.path"."""
+    lib = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), '..', 'lib')
+    if lib in sys.path:
+        sys.path.remove(lib)
+    sys.path.insert(0, lib)
+
+
+prelude()
+
 
 try:
     os.getcwd()
@@ -212,6 +222,7 @@ control_commands['depend'] = ['depend']
 control_commands['set-runahead'] = ['set-runahead']
 control_commands['set-verbosity'] = ['set-verbosity']
 control_commands['broadcast'] = ['broadcast', 'bcast']
+control_commands['ext-trigger'] = ['ext-trigger', 'external-trigger']
 
 utility_commands = OrderedDict()
 utility_commands['cycle-point'] = ['cycle-point', 'cyclepoint', 'datetime','cycletime']
@@ -264,10 +275,7 @@ discovery_commands['check-versions'] = ['check-versions']
 
 task_commands = OrderedDict()
 task_commands['submit'] = ['submit', 'single']
-task_commands['started'] = ['started', 'task-started']
 task_commands['message'] = ['message', 'task-message']
-task_commands['succeeded'] = ['succeeded', 'task-succeeded']
-task_commands['failed'] = ['failed', 'task-failed']
 task_commands['job-poll'] = ['job-poll']
 task_commands['job-kill'] = ['job-kill']
 task_commands['job-submit'] = ['job-submit']
@@ -422,16 +430,14 @@ comsum['reload'] = 'Reload the suite definition at run time'
 comsum['depend'] = 'Add prerequisites to tasks in a running suite'
 comsum['set-runahead'] = 'Change the runahead limit in a running suite.'
 comsum['set-verbosity'] = 'Change a running suite\'s logging verbosity'
+comsum['ext-trigger'] = 'Report an external trigger event to a suite'
 # discovery
 comsum['ping'] = 'Check that a suite is running'
 comsum['scan'] = 'Scan a host for running suites'
 comsum['check-versions'] = 'Compare cylc versions on task host accounts'
 # task
 comsum['submit'] = 'Run a single task just as its parent suite would'
-comsum['started'] = '(task messaging) Report task started'
 comsum['message'] = '(task messaging) Report task messages'
-comsum['succeeded'] = '(task messaging) Report task succeeded'
-comsum['failed'] = '(task messaging) Report task failed'
 comsum['broadcast'] = 'Change suite [runtime] settings on the fly'
 comsum['job-poll'] = '(Internal) Retrieve job status for a task'
 comsum['job-kill'] = '(Internal) Kill a job for a task'
@@ -645,7 +651,7 @@ for item in command_args:
         args_new.append(item)
 args = args_new
 
-cmd = 'cylc-' + command
+cmd = sys.argv[0] + '-' + command
 
 ####BACKGROUNDED MESSAGING CALLS: this results in a currently
 ####undiagnosed error in Pyro core when the 'message' command is
@@ -659,5 +665,7 @@ cmd = 'cylc-' + command
 # Replace the current process with that of the sub-command.
 try:
     os.execvp(cmd, [cmd] + args)
-except OSError, x:
-    raise SystemExit(x)
+except OSError, exc:
+    if exc.filename is None:
+        exc.filename = cmd
+    raise SystemExit(exc)

@@ -26,7 +26,7 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_fail $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
+suite_run_fail $TEST_NAME cylc run --debug $SUITE_NAME
 grep_ok "Cannot dump TimePoint year: 10000 not in bounds 0 to 9999" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

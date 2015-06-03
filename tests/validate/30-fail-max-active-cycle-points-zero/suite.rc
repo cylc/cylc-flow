@@ -4,4 +4,4 @@
          graph = foo
 [runtime]
     [[foo]]
-        command scripting = echo "foo"
+        script = echo "foo"

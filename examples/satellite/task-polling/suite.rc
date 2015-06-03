@@ -1,0 +1,119 @@
+#!Jinja2
+
+title = Real time satellite data processing demo, variant 1 of 3
+
+description = """
+Successive cycle points retrieve and process the next arbitrarily timed and
+labelled dataset, in parallel if the data comes in quickly. This variant of the
+suite has initial get_data tasks that trigger immediately and run continuously,
+with a manual check-and-wait loop, until they detect new data."""
+
+# you can monitor output processing with:
+# $ watch -n 1 \
+#    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/<SUITE>/work"
+
+{% set N_DATASETS = 5 %}
+
+# define shared directories (could use runtime namespaces for this)
+{% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}
+{% set PRODUCT_DIR = "$CYLC_SUITE_SHARE_DIR/products" %}
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = {{N_DATASETS}}
+    max active cycle points = 5
+    [[dependencies]]
+        [[[R1]]] # first cycle
+            graph = prep => satsim & get_data
+        [[[P1]]]
+            graph = """
+    # Processing chain for each dataset
+    get_data => proc1 => proc2 => products
+    # As one dataset is retrieved, start waiting on another.
+    get_data[-P1] => get_data"""
+        [[[R1//{{N_DATASETS}}]]] # last cycle
+            graph = products => collate
+
+[runtime]
+    [[prep]]
+        title = clean the suite output directories
+        script = \
+rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
+
+    [[satsim]]
+        title = simulate a satellite data feed
+        description = """Generates {{N_DATASETS}} arbitrarily labelled
+datasets after random durations."""
+        pre-script = mkdir -p {{DATA_IN_DIR}}
+        script = """
+COUNT=0
+while true; do
+    ((COUNT == {{N_DATASETS}})) && break
+    DATA_ID=$(date +%s).$((RANDOM % 100))
+    sleep $((RANDOM % 20))
+    DATA_FILE=dataset-${DATA_ID}.raw
+    touch {{DATA_IN_DIR}}/$DATA_FILE
+    cylc task message "$DATA_FILE ready for processing"
+    ((COUNT += 1))
+done"""
+
+    [[WORKDIR]]
+        # Define a common cycle-point-specific work-directory for all
+        # processing tasks so that they all work on the same dataset.
+        work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
+        pre-script = sleep 10
+
+    [[get_data]]
+        inherit = WORKDIR
+        title = grab one new dataset, waiting if necessary
+        post-script = sleep 5
+        script = """
+while true; do
+    DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
+    if [[ -z $DATASET ]]; then
+        continue
+    fi
+    break
+done
+mv $DATASET $PWD"""
+
+    [[proc1]]
+        inherit = WORKDIR
+        title = convert .raw dataset to .proc1 form
+        script = """
+DATASET=$(ls dataset-*.raw)
+mv $DATASET ${DATASET%raw}proc1"""
+
+    [[proc2]]
+        inherit = WORKDIR
+        title = convert .proc1 dataset to .proc2 form
+        script = """
+DATASET=$(ls dataset-*.proc1)
+mv $DATASET ${DATASET%proc1}proc2"""
+
+    [[products]]
+        inherit = WORKDIR
+        title = generate products from .proc2 processed dataset
+        script = """
+mkdir -p {{PRODUCT_DIR}}
+DATASET=$( ls dataset-*.proc2 )
+mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
+
+    [[collate]]
+        title = collate all products from the suite run
+        # Note you might want to use "cylc suite-state" to check that
+        # _all_ product tasks have finished before collating results.
+        script = """
+echo PRODUCTS:
+ls {{PRODUCT_DIR}}
+sleep 20"""
+
+[visualization]
+    default node attributes = "style=filled", "shape=box"
+    [[node attributes]]
+        satsim = "fillcolor=yellow"
+        WORKDIR = "fillcolor=limegreen"
+        get_data = "fillcolor=skyblue"
+        products = "fillcolor=orange"
+        collate = "fillcolor=red"

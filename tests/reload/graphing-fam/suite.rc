@@ -14,7 +14,7 @@ description = """change family triggering order via a reload."""
                 """
 [runtime]
     [[reloader]]
-        command scripting = """
+        script = """
 # change the order of FOO and BAR in the graphing section:
 perl -pi -e 's/(reloader => )BAR( # marker1)/\1FOO\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 perl -pi -e 's/( )BAR:finish-all => FOO( # marker2)/\1FOO:finish-all => BAR\2/' $CYLC_SUITE_DEF_PATH/suite.rc
@@ -23,7 +23,7 @@ cylc reload -f $CYLC_SUITE_NAME
 sleep 5
 """
     [[FOO, BAR]]
-        command scripting = sleep 5
+        script = sleep 5
     [[a,b,c,d]]
         inherit = FOO
     [[e,f,g,h]]

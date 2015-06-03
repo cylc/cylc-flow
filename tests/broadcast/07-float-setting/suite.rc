@@ -1,0 +1,27 @@
+
+title = "test suite for broadcast timeout functionality"
+
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    initial cycle time = 20100808T0000Z
+    final cycle time   = 20100809T0000Z
+    [[dependencies]]
+        [[[R1]]]
+            graph = """
+                send_broadcast => timeout
+            """
+
+[runtime]
+    [[send_broadcast]]
+        script = """
+            cylc broadcast -n timeout --point=20100808T0000Z --set='[event hooks]execution timeout=PT1S' $CYLC_SUITE_NAME
+            sleep 10
+        """
+    [[timeout]]
+        script = sleep 10
+        [[[event hooks]]]
+            execution timeout = PT1M

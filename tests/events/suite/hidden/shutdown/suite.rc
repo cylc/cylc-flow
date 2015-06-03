@@ -9,4 +9,4 @@
 
 [runtime]
     [[root]]
-        command scripting = "/bin/true" # no sleep
+        script = "/bin/true" # no sleep

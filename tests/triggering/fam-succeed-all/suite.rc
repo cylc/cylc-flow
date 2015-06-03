@@ -8,8 +8,8 @@
         graph = """FAM:succeed-all => foo"""
 [runtime]
     [[FAM]]
-        command scripting = "true"
+        script = "true"
     [[a,b,c]]
         inherit = FAM
     [[foo]]
-        command scripting = "true"
+        script = "true"

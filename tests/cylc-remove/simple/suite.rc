@@ -11,9 +11,9 @@
                    cleaner => d"""
 [runtime]
     [[a,b]]
-        command scripting = true
+        script = true
     [[c]]
-        command scripting = false
+        script = false
     [[d]]
     [[cleaner]]
-        command scripting = cylc remove $CYLC_SUITE_NAME c 1; cylc remove $CYLC_SUITE_NAME d 1
+        script = cylc remove $CYLC_SUITE_NAME c 1; cylc remove $CYLC_SUITE_NAME d 1

@@ -10,7 +10,7 @@
             graph = "foo[-P1M] => foo => bar"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true
 [visualization]
     initial cycle point = 20000131T0100Z
     final cycle point = 2001

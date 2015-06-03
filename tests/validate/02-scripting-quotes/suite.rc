@@ -3,4 +3,4 @@
         graph = "foo"
 [runtime]
     [[foo]]
-        command scripting = "foo"bar"baz"
+        script = "foo"bar"baz"

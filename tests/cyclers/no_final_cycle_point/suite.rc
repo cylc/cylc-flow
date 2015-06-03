@@ -7,4 +7,4 @@
             graph = "foo => final_foo"
 [runtime]
     [[root]]
-        command scripting = true
+        script = true

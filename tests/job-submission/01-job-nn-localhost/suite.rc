@@ -15,7 +15,7 @@
             host = {{environ["CYLC_TEST_HOST"]}}
 {% endif %}
     [[foo]]
-        command scripting="""
+        script="""
 JOB_LOG_DIR=$(dirname $(dirname "$CYLC_TASK_LOG_ROOT"))
 readlink "$JOB_LOG_DIR/NN" >>what-is-nn.txt
 echo "$JOB_LOG_DIR/NN"
@@ -24,6 +24,6 @@ test "$CYLC_TASK_TRY_NUMBER" -eq "100"
 """
         retry delays=99*PT0S
     [[bar]]
-        command scripting="""
+        script="""
 printf "%02d\n" {1..100} | cmp -s ../foo/what-is-nn.txt -
 """

@@ -1,0 +1,14 @@
+[cylc]
+    UTC mode = true
+    [[event hooks]]
+        abort on timeout = true
+        timeout = PT20S
+[scheduling]
+    initial cycle point = 2015-01
+    final cycle point = 2015-01
+    [[dependencies]]
+        [[[P1D]]]
+            graph = foo
+[runtime]
+    [[foo]]
+        command scripting = /bin/true

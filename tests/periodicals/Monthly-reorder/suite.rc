@@ -17,4 +17,4 @@
             graph = "dummy => monthly" # marker2
 [runtime]
     [[root]]
-        command scripting = "sleep 1"
+        script = "sleep 1"

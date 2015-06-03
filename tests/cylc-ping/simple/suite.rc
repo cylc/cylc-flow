@@ -7,6 +7,6 @@
         graph = "foo => bar"
 [runtime]
     [[foo]]
-        command scripting = cylc ping $CYLC_SUITE_NAME
+        script = cylc ping $CYLC_SUITE_NAME
     [[bar]]
-        command scripting = [[ ! $(cylc ping $CYLC_SUITE_NAME-non-existant) ]]
+        script = [[ ! $(cylc ping $CYLC_SUITE_NAME-non-existant) ]]

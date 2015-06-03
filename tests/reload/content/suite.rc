@@ -14,13 +14,13 @@ fail, unless the first reloads the suite definition after modifying it."""
 
 [runtime]
     [[reloader]]
-        command scripting = """
+        script = """
 # change the value of $FALSE to "true" in foo's environment:
 perl -pi -e 's/(FALSE = )false( # marker)/\1true\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload
 cylc reload -f $CYLC_SUITE_NAME
 """
     [[foo]]
-        command scripting = "$FALSE"
+        script = "$FALSE"
         [[[environment]]]
             FALSE = false # marker

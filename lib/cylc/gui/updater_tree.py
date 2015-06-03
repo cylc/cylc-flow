@@ -25,7 +25,7 @@ from time import sleep
 
 from cylc.task_id import TaskID
 from cylc.gui.dot_maker import DotMaker
-from cylc.state_summary import get_id_summary
+from cylc.network.suite_state import get_id_summary
 from cylc.strftime import isoformat_strftime
 from cylc.wallclock import (
         get_current_time_string,
@@ -311,8 +311,13 @@ class TreeUpdater(threading.Thread):
                 batch_sys_name = summary[id].get('batch_sys_name')
                 host = summary[id].get('host')
                 message = summary[ id ].get('latest_message')
-                if message is not None and last_update_date is not None:
-                    message = message.replace(last_update_date + "T", "", 1)
+                if message is not None:
+                    if last_update_date is not None:
+                        message = message.replace(
+                            last_update_date + "T", "", 1)
+                    submit_num = summary[id].get('submit_num')
+                    if submit_num:
+                        message = "job(%02d) " % submit_num + message
                 if is_fam:
                     dot_type = 'family'
                     job_id = job_id or ""

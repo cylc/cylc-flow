@@ -35,13 +35,11 @@ function get_fake_job_id() {
 
 function get_real_job_id() {
     cat >$TEST_NAME_BASE.slurm <<'__SBATCH__'
-#!/bin/sh
-#$SBATCH --output=slurm-%j.out
-#$SBATCH --error=slurm-%j.err
-#$SBATCH --time=02:00
-#$SBATCH --nodes=1
-#$SBATCH --tasks-per-node=1
-#$SBATCH --cpus-per-task=1
+#!/bin/bash
+#SBATCH --output=/dev/null
+#SBATCH --error=/dev/null
+#SBATCH --time=02:00
+#SBATCH --tasks=1
 __SBATCH__
     while read; do
         if [[ -z $REPLY ]]; then
@@ -79,9 +77,10 @@ __PYTHON__
 }
 #-------------------------------------------------------------------------------
 if ! ${IS_AT_T_HOST:-false}; then
-    T_HOST=$(cylc get-global-config -i '[test battery][directives]slurm host')
+    RC_ITEM='[test battery][batch systems][slurm]host'
+    T_HOST=$(cylc get-global-config -i "${RC_ITEM}")
     if [[ -z $T_HOST ]]; then
-        skip_all '"[test battery][directives]slurm host" not defined'
+        skip_all "\"${RC_ITEM}\" not defined"
     fi
     if [[ $T_HOST != 'localhost' ]]; then
         T_HOST_CYLC_DIR=$(ssh_mkdtemp $T_HOST)
@@ -100,8 +99,8 @@ fi
 #-------------------------------------------------------------------------------
 T_DIRECTIVES_MORE=
 if ! ${HAS_READ_T_DIRECTIVES_MORE:-false}; then
-    export T_DIRECTIVES_MORE=$(cylc get-global-config -i \
-        '[test battery][directives][slurm directives]')
+    RC_ITEM='[test battery][batch systems][slurm][directives]'
+    export T_DIRECTIVES_MORE=$(cylc get-global-config -i "${RC_ITEM}")
     export HAS_READ_T_DIRECTIVES_MORE=true
 fi
 FAKE_JOB_ID=$(get_fake_job_id)
@@ -138,7 +137,6 @@ scancel "$T_JOB_ID" 2>/dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-started
 # Give it a real PID
-REAL_JOB_ID=${REAL_JOB_ID:-$(get_real_job_id)}
 T_JOB_ID=$(get_real_job_id)
 sleep 1
 # Status file

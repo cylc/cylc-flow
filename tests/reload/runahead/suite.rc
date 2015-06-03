@@ -14,11 +14,11 @@
             graph = "foo => bar"
 [runtime]
     [[foo]]
-        command scripting = false
+        script = false
     [[bar]]
-        command scripting = true
+        script = true
     [[reloader]]
-        command scripting = """
+        script = """
 # change the dependencies section name to garbage:
 perl -pi -e 's/(runahead limit = )PT12H( # marker)/\1 PT18H\2/' $CYLC_SUITE_DEF_PATH/suite.rc
 # reload

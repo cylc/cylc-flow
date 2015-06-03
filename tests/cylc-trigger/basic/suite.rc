@@ -3,7 +3,7 @@
         graph = "foo => bar"
 [runtime]
     [[foo]]
-        command scripting = """
+        script = """
             cylc trigger $CYLC_SUITE_NAME bar 1
             sleep 10
             cylc stop $CYLC_SUITE_NAME

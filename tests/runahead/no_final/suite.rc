@@ -13,8 +13,8 @@
             graph = "foo:fail => shutdown"
 [runtime]
     [[foo]]
-        command scripting = false
+        script = false
     [[bar]]
-        command scripting = true
+        script = true
     [[shutdown]]
-        command scripting = cylc shutdown $CYLC_SUITE_REG_NAME
+        script = cylc shutdown $CYLC_SUITE_REG_NAME

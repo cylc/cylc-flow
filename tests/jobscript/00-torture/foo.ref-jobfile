@@ -33,13 +33,10 @@ TRAP_FAIL_SIGNAL() {
     for S in ${VACATION_SIGNALS:-} $FAIL_SIGNALS; do
         trap "" $S
     done
-    if [[ -n ${CYLC_TASK_LOG_ROOT:-} ]]; then
-        {
-            echo "CYLC_JOB_EXIT=$SIGNAL"
-            date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
-        } >>$CYLC_TASK_LOG_ROOT.status
+    if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
+        wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
     fi
-    cylc task failed "Task job script received signal $@"
+    cylc task message -p 'CRITICAL' "Task job script received signal $SIGNAL" 'failed'
     exit 1
 }
 for S in $FAIL_SIGNALS; do
@@ -47,8 +44,8 @@ for S in $FAIL_SIGNALS; do
 done
 unset S
 
-# INITIAL SCRIPTING:
-echo "HELLO FROM INITIAL SCRIPTING"
+# INIT-SCRIPT:
+echo "HELLO FROM INIT-SCRIPT"
 # define a variable
 export VAR_IS=is
 
@@ -94,6 +91,7 @@ export CYLC_TASK_SUBMIT_NUMBER=
 export CYLC_TASK_TRY_NUMBER=
 export CYLC_TASK_WORK_DIR=
 export CYLC_TASK_WORK_PATH=
+export CYLC_JOB_PID=
 
 # ACCESS TO THE SUITE BIN DIRECTORY:
 export PATH=$CYLC_SUITE_DEF_PATH/bin:$PATH
@@ -107,11 +105,8 @@ E_FIV="$( foo.sh )"
 export E_ONE E_TWO E_THR E_FOU E_FIV
 
 # SEND TASK STARTED MESSAGE:
-{
-    echo "CYLC_JOB_PID=$$"
-    date -u +'CYLC_JOB_INIT_TIME=%FT%H:%M:%SZ'
-} >>$CYLC_TASK_LOG_ROOT.status
-cylc task started
+cylc task message 'started' &
+CYLC_TASK_MESSAGE_STARTED_PID=$!
 
 # SHARE DIRECTORY CREATE:
 mkdir -p $CYLC_SUITE_SHARE_DIR || true
@@ -136,12 +131,13 @@ else
     echo "  Task Host   : $(hostname -f)"
 fi
 echo "  Task Owner  : $USER"
+echo "  Task Submit No.: $CYLC_TASK_SUBMIT_NUMBER"
 echo "  Task Try No.: $CYLC_TASK_TRY_NUMBER"
 echo
 
-# PRE-COMMAND SCRIPTING:
-echo "HELLO FROM PRE-COMMAND SCRIPTING"
-# initial scripting must be done:
+# PRE-SCRIPT:
+echo "HELLO FROM PRE-SCRIPT"
+# init-script must be done:
 echo VAR_IS is $VAR_IS
 # user environment must be done:
 echo E_ONE is $E_ONE
@@ -152,11 +148,11 @@ echo E_FIV is $E_FIV
 # define a variable
 export VAR_PreCS=precs
 
-# COMMAND SCRIPTING:
-echo "HELLO FROM COMMAND SCRIPTING"
-# initial scripting must be done:
+# SCRIPT:
+echo "HELLO FROM SCRIPT"
+# init-script must be done:
 echo VAR_IS is $VAR_IS
-# pre-command scripting must be done:
+# pre-script must be done:
 echo VAR_PreCS is $VAR_PreCS
 # environment must be done:
 echo E_ONE is $E_ONE
@@ -167,13 +163,13 @@ echo E_FIV is $E_FIV
 # define a variable
 export VAR_CS=var_cs
 
-# POST-COMMAND SCRIPTING:
-echo "HELLO FROM POST-COMMAND SCRIPTING"
-# initial scripting must be done:
+# POST-SCRIPT:
+echo "HELLO FROM POST-SCRIPT"
+# init-script must be done:
 echo VAR_IS is $VAR_IS
-# pre-command scripting must be done:
+# pre-script must be done:
 echo VAR_PreCS is $VAR_PreCS
-# command scripting must be done:
+# script must be done:
 echo VAR_CS is $VAR_CS
 # environment must be done:
 echo E_ONE is $E_ONE
@@ -192,11 +188,8 @@ cd
 rmdir $CYLC_TASK_WORK_DIR 2>/dev/null || true
 
 # SEND TASK SUCCEEDED MESSAGE:
-{
-    echo 'CYLC_JOB_EXIT=SUCCEEDED'
-    date -u +'CYLC_JOB_EXIT_TIME=%FT%H:%M:%SZ'
-} >>$CYLC_TASK_LOG_ROOT.status
-cylc task succeeded
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+cylc task message 'succeeded'
 
 echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
 trap '' EXIT

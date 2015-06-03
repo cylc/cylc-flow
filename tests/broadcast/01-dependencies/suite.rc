@@ -9,6 +9,6 @@
                    c => d"""
 [runtime]
     [[a]]
-        command scripting = "cylc depend $CYLC_SUITE_NAME d.1 b.1; sleep 10"
+        script = "cylc depend $CYLC_SUITE_NAME d.1 b.1; sleep 10"
     [[b,c,d]]
-        command scripting = true
+        script = true

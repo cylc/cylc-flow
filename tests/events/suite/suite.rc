@@ -6,7 +6,7 @@
         graph = "startup => timeout => shutdown"
 [runtime]
     [[common]]
-        command scripting = """
+        script = """
 cylc unreg $REG
 cylc reg $REG $DEF
 echo "Sub-suite log file is: $PWD/$LOG"

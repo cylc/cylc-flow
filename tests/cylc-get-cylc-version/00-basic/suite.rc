@@ -10,7 +10,7 @@ test suite (should be the same)."""
             graph = foo
 [runtime]
     [[root]]
-        command scripting = """
+        script = """
 CYLC_VERSION_1=$(cylc --version)
 CYLC_VERSION_2=$(cylc get-cylc-version $CYLC_SUITE_NAME)
 if [[ $CYLC_VERSION_1 != $CYLC_VERSION_2 ]]; then

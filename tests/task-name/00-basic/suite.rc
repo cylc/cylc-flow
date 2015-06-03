@@ -14,5 +14,5 @@ t1 => t1-a => t1+a => t1%a
 """
 [runtime]
     [[root]]
-        command scripting = printenv CYLC_TASK_ID
+        script = printenv CYLC_TASK_ID
     [[t1, t1-a, t1+a, t1%a]]

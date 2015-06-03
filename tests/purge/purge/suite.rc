@@ -45,7 +45,7 @@ title = "Old Cylc Admin Test Suite"
                     """
 [runtime]
     [[root]]
-        command scripting = """
+        script = """
 mkdir -p $INPUT_DIR $OUTPUT_DIR
 ${CYLC_TASK_NAME}.sh"""
         [[[environment]]]
@@ -58,7 +58,7 @@ ${CYLC_TASK_NAME}.sh"""
 
     [[Model]]
         description = "Model task"
-        pre-command scripting = mkdir -p $RUNNING_DIR
+        pre-script = mkdir -p $RUNNING_DIR
         [[[environment]]]
             RUNNING_DIR = $RUNNING/$CYLC_TASK_NAME
 
@@ -78,7 +78,7 @@ ${CYLC_TASK_NAME}.sh"""
 
     [[prep]]
         description = "Clean out the suite workspace for a new run"
-        command scripting = """
+        script = """
 clean-workspace.sh $WORKSPACE
 STOP=$( cylc cycle-point --offset-hours=24 )
 cylc message "Setting stop cycle $STOP"
@@ -88,7 +88,7 @@ cylc set-runahead -f $CYLC_SUITE_REG_NAME 30"""
 
     [[X]]
         description = "Retrieve real time data for model A"
-        pre-command scripting = """
+        pre-script = """
 #sleep 10
 CYCLE2=$( cylc cycle-point --offset-hours=6 $CYLC_SUITE_INITIAL_CYCLE_TIME )
 if (( CYLC_TASK_CYCLE_TIME == CYCLE2 )); then
@@ -106,7 +106,7 @@ fi"""
         inherit = Cold
 
     [[recover]]
-        command scripting = """
+        script = """
 # insert ColdA:
 AT=$( cylc cycle-point --offset-hours=18 )
 cylc insert -f $CYLC_SUITE_REG_NAME ColdA ${AT}

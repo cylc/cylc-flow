@@ -16,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc import cylc_pyro_client, dump, graphing
+from cylc import dump, graphing
 from cylc.mkdir_p import mkdir_p
-from cylc.state_summary import get_id_summary
+from cylc.network.suite_state import get_id_summary
 from cylc.task_id import TaskID
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.warning_dialog import warning_dialog
@@ -186,33 +186,22 @@ class GraphUpdater(threading.Thread):
         # this when checking for changes. So: just extract the critical
         # info here:
         states = {}
-        for id_ in states_full:
+        for id_, state_full in states_full.items():
             if id_ not in states:
                 states[id_] = {}
-            states[id_]['name'] = states_full[id_]['name']
-            # TODO: remove the following backwards compatibility condition.
-            if 'description' in states_full[id_]:
-                states[id_]['description'] = states_full[id_]['description']
-            # TODO: remove the following backwards compatibility condition.
-            if 'title' in states_full[id_]:
-                states[id_]['title'] = states_full[id_]['title']
-            states[id_]['label'] = states_full[id_]['label']
-            states[id_]['state'] = states_full[id_]['state']
+            for key in [
+                    'name', 'description', 'title', 'label', 'state',
+                    'submit_num']:
+                if key in state_full:  # ensure backward compatible
+                    states[id_][key] = state_full[key]
 
         f_states = {}
-        for id_ in fam_states_full:
+        for id_, fam_state_full in fam_states_full.items():
             if id_ not in states:
                 f_states[id_] = {}
-            f_states[id_]['name'] = fam_states_full[id_]['name']
-            # TODO: remove the following backwards compatibility condition.
-            if 'description' in fam_states_full[id_]:
-                f_states[id_]['description'] = (
-                    fam_states_full[id_]['description'])
-            # TODO: remove the following backwards compatibility condition.
-            if 'title' in fam_states_full[id_]:
-                f_states[id_]['title'] = fam_states_full[id_]['title']
-            f_states[id_]['label'] = fam_states_full[id_]['label']
-            f_states[id_]['state'] = fam_states_full[id_]['state']
+            for key in ['name', 'description', 'title', 'label', 'state']:
+                if key in fam_state_full:  # ensure backward compatible
+                    f_states[id_][key] = fam_state_full[key]
 
         if states and not self.state_summary:
             # This is basically equivalent to a first-update case.
@@ -315,16 +304,14 @@ class GraphUpdater(threading.Thread):
             oldest = self.oldest_point_string
             newest = self.newest_point_string
 
-        start_time = self.global_summary['start time']
-
         try:
-            res = self.updater.sinfo.get(
-                'graph raw', oldest, newest, self.group, self.ungroup,
+            res = self.updater.suite_info_client.get_info_gui(
+                'get_graph_raw', oldest, newest, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except TypeError:
             # Back compat with pre cylc-6 suite daemons.
-            res = self.updater.sinfo.get(
-                'graph raw', oldest, newest, False, self.group, self.ungroup,
+            res = self.updater.suite_info_client.get(
+                'get_graph_raw', oldest, newest, False, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except Exception as exc:  # PyroError?
             print >> sys.stderr, str(exc)
@@ -358,17 +345,19 @@ class GraphUpdater(threading.Thread):
             self.graphw.add_edges(
                 gr_edges, ignore_suicide=self.ignore_suicide)
 
+            nodes_to_remove = set()
+
             # Remove nodes representing filtered-out tasks.
             if (self.updater.filter_name_string or
                     self.updater.filter_states_excl):
-                nodes_to_remove = set()
                 for node in self.graphw.nodes():
                     id = node.get_name()
+                    # Don't need to guard against special nodes here (yet).
                     name, point_string = TaskID.split(id)
                     if name not in self.all_families:
                         if id in self.updater.filt_task_ids:
                             nodes_to_remove.add(node)
-                    else:
+                    elif id in self.fam_state_summary:
                         # Remove family nodes if all members filtered out.
                         remove = True
                         for mem in self.descendants[name]:
@@ -378,20 +367,18 @@ class GraphUpdater(threading.Thread):
                                 break
                         if remove:
                             nodes_to_remove.add(node)
-                self.graphw.remove_nodes_from(list(nodes_to_remove))
 
             # Base node cropping.
-            nodes_to_remove = set()
             if self.crop:
                 # Remove all base nodes.
-                for node in self.graphw.nodes():
+                for node in (set(self.graphw.nodes()) - nodes_to_remove):
                     if node.get_name() not in self.state_summary:
                         nodes_to_remove.add(node)
             else:
                 # Remove cycle points containing only base nodes.
                 non_base_point_strings = set()
                 point_string_nodes = {}
-                for node in self.graphw.nodes():
+                for node in set(self.graphw.nodes()) - nodes_to_remove:
                     node_id = node.get_name()
                     name, point_string = TaskID.split(node_id)
                     point_string_nodes.setdefault(point_string, [])
@@ -404,14 +391,18 @@ class GraphUpdater(threading.Thread):
                 for point_string in pure_base_point_strings:
                     for node in point_string_nodes[point_string]:
                         nodes_to_remove.add(node)
-            self.graphw.remove_nodes_from(list(nodes_to_remove))
-
+            self.graphw.cylc_remove_nodes_from(list(nodes_to_remove))
             # TODO - remove base nodes only connected to other base nodes?
+            # Should these even exist any more?
 
             # Make family nodes octagons.
             for node in self.graphw.nodes():
                 node_id = node.get_name()
-                name, point_string = TaskID.split(node_id)
+                try:
+                    name, point_string = TaskID.split(node_id)
+                except ValueError:
+                    # Special node.
+                    continue
                 if name in self.all_families:
                     if name in self.triggering_families:
                         node.attr['shape'] = 'doubleoctagon'
@@ -423,7 +414,7 @@ class GraphUpdater(threading.Thread):
 
         # Set base node style defaults
         for node in self.graphw.nodes():
-            node.attr['style'] = 'filled'
+            node.attr.setdefault('style', 'filled')
             node.attr['color'] = '#888888'
             node.attr['fillcolor'] = 'white'
             node.attr['fontcolor'] = '#888888'

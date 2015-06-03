@@ -25,18 +25,18 @@ title = "test all event hooks"
     [[root]]
         # make the event handler log available to gcylc:
         extra log files = {{ EVNTLOG }}
-        command scripting = "true" # fast
+        script = "true" # fast
         [[[environment]]]
             EVNTLOG = {{ EVNTLOG }}
 
     [[prep]]
-        command scripting = """
+        script = """
 printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > $EVNTLOG
                             """
     [[foo]]
         # timeout, retry, warning, succeeded 
         retry delays = PT3S
-        command scripting = """
+        script = """
 if [[ $CYLC_TASK_TRY_NUMBER == 1 ]]; then
     false
 else
@@ -61,8 +61,8 @@ fi"""
 
      [[baz]]
         # submitted, submission timeout, started, failed
-        initial scripting = "sleep 5"
-        command scripting = "false"
+        init-script = "sleep 5"
+        script = "false"
         [[[event hooks]]]
             submitted handler = {{ HANDLER }}
             started handler = {{ HANDLER }}
