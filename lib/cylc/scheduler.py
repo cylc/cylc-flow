@@ -21,6 +21,7 @@ import re
 import signal
 import sys
 import time
+from tempfile import mkstemp
 import traceback
 import datetime
 import logging
@@ -28,14 +29,14 @@ import threading
 import subprocess
 from copy import deepcopy
 from Queue import Queue, Empty
-from shutil import copy as shcopy, copytree, rmtree
+from shutil import copy as copyfile, copytree, rmtree
 
 from parsec.util import printcfg
 import isodatetime.data
 import isodatetime.parsers
 
 import cylc.flags
-import cylc.rundb
+from cylc.rundb import CylcSuiteDAO
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.task_proxy import TaskProxy
 from cylc.job_file import JOB_FILE
@@ -44,7 +45,6 @@ from cylc.owner import user
 from cylc.version import CYLC_VERSION
 from cylc.config import config
 from parsec.util import printcfg
-from shutil import copy as shcopy, copytree, rmtree
 from copy import deepcopy
 import time
 import datetime
@@ -239,7 +239,7 @@ class scheduler(object):
         self.log.info('Final point: ' + str(self.final_point))
 
         self.pool = TaskPool(
-            self.suite, self.db, self.view_db, self.final_point, self.config,
+            self.suite, self.pri_dao, self.pub_dao, self.final_point, self.config,
             self.pyro, self.log, self.run_mode)
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler(self.pyro)
@@ -518,14 +518,17 @@ class scheduler(object):
                 )
                 return
 
+        task_states_data = self.pri_dao.select_task_states_by_task_ids(
+            ["submit_num"], [TaskID.split(task_id) for task_id in task_ids])
         for task_id in task_ids:
-            name, task_point_string = TaskID.split(task_id)
+            task_name, task_point = TaskID.split(task_id)
             # TODO - insertion of start-up tasks? (startup=False assumed here)
+            submit_num = None
+            if (task_name, task_point) in task_states_data:
+                submit_num = task_states_data[(task_name, task_point)].get(
+                    "submit_num")
             new_task = self.config.get_task_proxy(
-                name, point, 'waiting', stop_point,
-                submit_num=self.db.get_task_current_submit_num(
-                    name, task_point_string),
-            )
+                name, point, 'waiting', stop_point, submit_num=submit_num)
             if new_task:
                 self.pool.add_to_runahead_pool(new_task)
 
@@ -673,28 +676,33 @@ class scheduler(object):
 
             run_dir = GLOBAL_CFG.get_derived_host_item(
                 self.suite, 'suite run directory')
-            if not self.is_restart:
-                # create new suite_db file (and dir) if needed
-                self.db = cylc.rundb.CylcRuntimeDAO(
-                    suite_dir=run_dir, new_mode=True)
-                self.view_db = cylc.rundb.CylcRuntimeDAO(
-                    suite_dir=run_dir, new_mode=True, primary_db=False)
+            pri_db_path = os.path.join(
+                run_dir, 'state', CylcSuiteDAO.DB_FILE_BASE_NAME)
+            pub_db_path = os.path.join(
+                run_dir, CylcSuiteDAO.DB_FILE_BASE_NAME)
+            if self.is_restart:
+                if (os.path.exists(pub_db_path) and
+                        not os.path.exists(pri_db_path)):
+                    # Backwards compatibility code for restarting at move to
+                    # new db location should be deleted at database refactoring
+                    print('Copy "cylc.suite.db" to "state/cylc.suite.db"')
+                    copyfile(pub_db_path, pri_db_path)
             else:
-                # Backwards compatibility code for restarting at move to new db
-                # location should be deleted at database refactoring
-                primary = os.path.join(
-                    run_dir,
-                    'state',
-                    cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
-                viewable = os.path.join(
-                    run_dir, cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
-                if not os.path.exists(primary) and os.path.exists(viewable):
-                    print ("Copying across old suite database to " +
-                           "state directory")
-                    shcopy(viewable, primary)
-                self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
-                self.view_db = cylc.rundb.CylcRuntimeDAO(
-                    suite_dir=run_dir, primary_db=False)
+                # create new suite_db file (and dir) if needed
+                if os.path.isdir(pri_db_path):
+                    shutil.rmtree(pri_db_path)
+                else:
+                    try:
+                        os.unlink(pri_db_path)
+                    except:
+                        pass
+            # Ensure that:
+            # * public database is in sync with private database
+            # * private database file is private
+            self.pri_dao = CylcSuiteDAO(pri_db_path)
+            os.chmod(pri_db_path, 0600)
+            self.pub_dao = CylcSuiteDAO(pub_db_path, is_public=True)
+            self._copy_pri_db_to_pub_db()
 
             self.hold_suite_now = False
             self._pool_hold_point = None
@@ -977,6 +985,23 @@ class scheduler(object):
             except OSError as err:
                 self.shutdown(str(err))
                 raise
+            # If public database is stuck, blast it away by copying the content
+            # of the private database into it.
+            if self.pub_dao.n_tries >= self.pub_dao.MAX_TRIES:
+                try:
+                    self._copy_pri_db_to_pub_db()
+                except (IOError, OSError) as exc:
+                    # Something has to be very wrong here, so stop the suite
+                    self.shutdown(str(err))
+                    raise
+                else:
+                    # No longer stuck
+                    self.log.warning(
+                        "%(pub_db_name)s: recovered from %(pri_db_name)s" % {
+                            "pub_db_name": self.pub_dao.db_file_name,
+                            "pri_db_name": self.pri_dao.db_file_name})
+                    self.pub_dao.n_tries = 0
+
 
             self.process_command_queue()
 
@@ -1125,7 +1150,7 @@ class scheduler(object):
 
         if self.gen_reference_log:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
-            shcopy(self.logfile, self.reflogfile)
+            copyfile(self.logfile, self.reflogfile)
 
         proc_pool = SuiteProcPool.get_inst()
         if proc_pool:
@@ -1169,8 +1194,8 @@ class scheduler(object):
 
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:
-            self.db.close()
-            self.view_db.close()
+            self.pri_dao.close()
+            self.pub_dao.close()
 
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
@@ -1343,6 +1368,28 @@ class scheduler(object):
             return True
         else:
             return False
+
+    def _copy_pri_db_to_pub_db(self):
+        """Copy content of primary database file to public database file.
+
+        Use temporary file to ensure that we do not end up with a partial file.
+
+        """
+        temp_pub_db_file_name = None
+        try:
+            open(self.pub_dao.db_file_name, "a").close()  # touch
+            st_mode = os.stat(self.pub_dao.db_file_name).st_mode
+            temp_pub_db_file_name = mkstemp(
+                prefix=self.pub_dao.DB_FILE_BASE_NAME,
+                dir=os.path.dirname(self.pub_dao.db_file_name))[1]
+            copyfile(
+                self.pri_dao.db_file_name, temp_pub_db_file_name)
+            os.rename(temp_pub_db_file_name, self.pub_dao.db_file_name)
+            os.chmod(self.pub_dao.db_file_name, st_mode)
+        except (IOError, OSError) as exc:
+            if temp_pub_db_file_name:
+                os.unlink(temp_pub_db_file_name)
+            raise
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         # Update the 1, 5, 15 minute dt averages for a given category.

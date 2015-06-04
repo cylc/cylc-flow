@@ -32,13 +32,13 @@ TEST_NAME=$TEST_NAME_BASE-userathost
 SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
 echo $CYLC_TEST_TASK_OWNER@$CYLC_TEST_TASK_HOST > userathost
 cmp_ok userathost - <<__OUT__
-$(sqlite3 $SUITE_RUN_DIR/cylc-suite.db "select host from task_states where name='foo'")
+$(sqlite3 $SUITE_RUN_DIR/cylc-suite.db "select host from task_states where name=='foo'")
 __OUT__
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-hostonly
 echo $CYLC_TEST_TASK_HOST > hostonly
 cmp_ok hostonly - <<__OUT__
-$(sqlite3 $SUITE_RUN_DIR/cylc-suite.db "select host from task_states where name='bar'")
+$(sqlite3 $SUITE_RUN_DIR/cylc-suite.db "select host from task_states where name=='bar'")
 __OUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

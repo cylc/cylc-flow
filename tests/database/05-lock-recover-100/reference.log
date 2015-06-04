@@ -1,0 +1,15 @@
+2015-06-10T21:54:26Z INFO - Run mode: live
+2015-06-10T21:54:26Z INFO - Initial point: 1
+2015-06-10T21:54:26Z INFO - Final point: 1
+2015-06-10T21:54:26Z INFO - Cold Start 1
+2015-06-10T21:54:26Z INFO - [locker.1] -triggered off []
+2015-06-10T21:54:47Z INFO - [t6.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t5.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t0.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t1.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t8.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t9.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t4.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t7.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t2.1] -triggered off ['locker.1']
+2015-06-10T21:54:47Z INFO - [t3.1] -triggered off ['locker.1']

@@ -41,7 +41,6 @@ import cylc.flags
 from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
 
-import cylc.rundb
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
@@ -53,16 +52,16 @@ from cylc.network.ext_trigger import ExtTriggerServer
 class TaskPool(object):
     """Task pool of a suite."""
 
-    def __init__(
-            self, suite, db, view_db, stop_point, config, pyro, log, run_mode):
+    def __init__(self, suite, pri_dao, pub_dao, stop_point, config, pyro, log,
+                 run_mode):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.qconfig = config.cfg['scheduling']['queues']
         self.stop_point = stop_point
         self.reconfiguring = False
-        self.db = db
-        self.view_db = view_db
+        self.pri_dao = pri_dao
+        self.pub_dao = pub_dao
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_future_offset = None
@@ -346,7 +345,6 @@ class TaskPool(object):
         self.update_rhpool_list()
         return self.rhpool_list
 
-
     def get_tasks_by_point(self, incl_runahead):
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
@@ -397,8 +395,7 @@ class TaskPool(object):
                 if itask.manual_trigger or itask.ready_to_run():
                     # queue the task
                     itask.set_status('queued')
-                    if itask.manual_trigger:
-                        itask.reset_manual_trigger()
+                    itask.reset_manual_trigger()
 
         # 2) submit queued tasks if manually forced or not queue-limited
         readytogo = []
@@ -425,8 +422,7 @@ class TaskPool(object):
                     # manual release, or no limit, or not currently limited
                     n_release -= 1
                     readytogo.append(itask)
-                    if itask.manual_trigger:
-                        itask.reset_manual_trigger()
+                    itask.reset_manual_trigger()
                 # else leaved queued
 
         self.log.debug('%d task(s) de-queued' % len(readytogo))
@@ -608,7 +604,11 @@ class TaskPool(object):
                     new_task.try_number = itask.try_number
                     new_task.sub_try_number = itask.sub_try_number
                     new_task.submit_num = itask.submit_num
-                    new_task.db_queue = itask.db_queue
+                    new_task.db_jobs_inserts = itask.db_jobs_inserts
+                    new_task.db_jobs_updates = itask.db_jobs_updates
+                    new_task.db_states_inserts = itask.db_states_inserts
+                    new_task.db_states_updates = itask.db_states_updates
+                    new_task.db_events_inserts = itask.db_events_inserts
 
                     self.remove(itask, '(suite definition reload)')
                     self.add_to_runahead_pool(new_task)
@@ -736,71 +736,46 @@ class TaskPool(object):
 
     def process_queued_db_ops(self):
         """Handle queued db operations for each task proxy."""
-        state_recorders = []
-        state_updaters = []
-        event_recorders = []
-        other = []
-
         for itask in self.get_all_tasks():
             # (runahead pool tasks too, to get new state recorders).
-            for oper in itask.get_db_ops():
-                if isinstance(oper, cylc.rundb.UpdateObject):
-                    state_updaters += [oper]
-                elif isinstance(oper, cylc.rundb.RecordStateObject):
-                    state_recorders += [oper]
-                elif isinstance(oper, cylc.rundb.RecordEventObject):
-                    event_recorders += [oper]
-                else:
-                    other += [oper]
+            for table_name, db_inserts in [
+                    (self.pri_dao.TABLE_TASK_JOBS, itask.db_jobs_inserts),
+                    (self.pri_dao.TABLE_TASK_STATES, itask.db_states_inserts),
+                    (self.pri_dao.TABLE_TASK_EVENTS, itask.db_events_inserts)]:
+                while db_inserts:
+                    db_insert = db_inserts.pop(0)
+                    db_insert.update({
+                        "name": itask.tdef.name,
+                        "cycle": str(itask.point),
+                        "submit_num": itask.submit_num,
+                    })
+                    self.pri_dao.add_insert_item(table_name, db_insert)
+                    self.pub_dao.add_insert_item(table_name, db_insert)
 
-        # precedence is record states > update_states > record_events >
-        # anything_else
-        db_ops = state_recorders + state_updaters + event_recorders + other
-        # compact the set of operations
-        if len(db_ops) > 1:
-            db_opers = [db_ops[0]]
-            for i in range(1, len(db_ops)):
-                if db_opers[-1].s_fmt == db_ops[i].s_fmt:
-                    if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
-                        db_opers[-1].add_oper(db_ops[i])
-                    else:
-                        new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
-                        new_oper.add_oper(db_ops[i])
-                        db_opers.pop(-1)
-                        db_opers += [new_oper]
-                else:
-                    db_opers += [db_ops[i]]
-        else:
-            db_opers = db_ops
+            for table_name, db_updates in [
+                    (self.pri_dao.TABLE_TASK_JOBS, itask.db_jobs_updates),
+                    (self.pri_dao.TABLE_TASK_STATES, itask.db_states_updates)]:
+                while db_updates:
+                    set_args = db_updates.pop(0)
+                    where_args = {
+                        "cycle": str(itask.point), "name": itask.tdef.name}
+                    if "submit_num" not in set_args:
+                        where_args["submit_num"] = itask.submit_num
+                    self.pri_dao.add_update_item(
+                        table_name, set_args, where_args)
+                    self.pub_dao.add_update_item(
+                        table_name, set_args, where_args)
 
         # record any broadcast settings to be dumped out
         bcast = BroadcastServer.get_inst()
-        for db_oper in bcast.get_db_ops():
-            db_opers += [db_oper]
+        table_name = self.pri_dao.TABLE_BROADCASTS
+        while bcast.db_inserts:
+            db_insert = bcast.db_inserts.pop(0)
+            self.pri_dao.add_insert_item(table_name, db_insert)
+            self.pub_dao.add_insert_item(table_name, db_insert)
 
-        for db_oper in db_opers:
-            if self.db.c.is_alive():
-                self.db.run_db_op(db_oper)
-            elif self.db.c.exception:
-                self.view_db.close()
-                raise self.db.c.exception
-            else:
-                raise SchedulerError(
-                    'An unexpected error occurred while writing to the ' +
-                    'suite database')
-
-        # we should filter down to only recording the utility relevent
-        # entries in the viewable database following database refactoring
-        for db_oper in db_opers:
-            if self.view_db.c.is_alive():
-                self.view_db.run_db_op(db_oper)
-            elif self.view_db.c.exception:
-                self.db.close()
-                raise self.view_db.c.exception
-            else:
-                raise SchedulerError(
-                    'An unexpected error occurred while writing to the ' +
-                    'viewable database')
+        self.pri_dao.execute_queued_items()
+        self.pub_dao.execute_queued_items()
 
     def force_spawn(self, itask):
         """Spawn successor of itask."""

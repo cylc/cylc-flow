@@ -1,0 +1,20 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+[scheduling]
+    initial cycle point=2020
+    final cycle point=2020
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = """
+t1
+t2
+"""
+[runtime]
+    [[t1]]
+        script=true
+    [[t2]]
+        script=true
+        [[[remote]]]
+            host=$CYLC_TEST_HOST

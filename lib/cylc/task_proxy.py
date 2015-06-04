@@ -36,7 +36,6 @@ from cylc.cycling.loader import get_interval_cls, get_point_relative
 from cylc.envvar import expandvars
 from cylc.owner import user
 from cylc.job_logs import CommandLogger
-import cylc.rundb
 import cylc.flags as flags
 from cylc.wallclock import (
     get_current_time_string,
@@ -102,7 +101,10 @@ class TaskProxy(object):
             is_startup=False, validate_mode=False, submit_num=0,
             is_reload=False):
         self.tdef = tdef
-        self.submit_num = submit_num
+        if submit_num is None:
+            self.submit_num = 0
+        else:
+            self.submit_num = submit_num
         self.validate_mode = validate_mode
 
         if is_startup:
@@ -157,6 +159,7 @@ class TaskProxy(object):
         self.state_before_held = None  # state before being held
         self.hold_on_retry = False
         self.manual_trigger = False
+        self.is_manual_submit = False
 
         self.submission_timer_timeout = None
         self.execution_timer_timeout = None
@@ -195,12 +198,16 @@ class TaskProxy(object):
         self.sub_retry_delays = None
 
         self.message_queue = TaskMessageServer()
-        self.db_queue = []
+        self.db_jobs_inserts = []
+        self.db_jobs_updates = []
+        self.db_states_inserts = []
+        self.db_states_updates = []
+        self.db_events_inserts = []
 
         # TODO - should take suite name from config!
         self.suite_name = os.environ['CYLC_SUITE_NAME']
 
-        # In case task owner and host are needed by record_db_event()
+        # In case task owner and host are needed by _db_events_insert()
         # for pre-submission events, set their initial values as if
         # local (we can't know the correct host prior to this because
         # dynamic host selection could be used).
@@ -221,12 +228,17 @@ class TaskProxy(object):
 
         # An initial db state entry is created at task proxy init. On reloading
         # or restarting the suite, the task proxies already have this db entry.
-        if not is_reload and self.submit_num == 0:
-            self.record_db_state()
+        if not self.validate_mode and not is_reload and self.submit_num == 0:
+            self.db_states_inserts.append({
+                "time_created": get_current_time_string(),
+                "time_updated": get_current_time_string(),
+                "try_num": self.try_number,
+                "status": self.state.get_status()})
 
-        if self.submit_num > 0:
-            self.record_db_update(
-                "task_states", status=self.state.get_status())
+        if not self.validate_mode and self.submit_num > 0:
+            self.db_states_updates.append({
+                "time_updated": get_current_time_string(),
+                "status": self.state.get_status()})
 
         self.reconfigure_me = False
         self.event_hooks = None
@@ -342,47 +354,13 @@ class TaskProxy(object):
         """Log a command activity for a job of this task proxy."""
         self.command_logger.append_to_log(self.submit_num, log_type, result)
 
-    def record_db_event(self, event="", message=""):
+    def _db_events_insert(self, event="", message=""):
         """Record an event to the DB."""
-        if self.validate_mode:
-            # Don't touch the db during validation.
-            return
-        self.db_queue.append(cylc.rundb.RecordEventObject(
-            self.tdef.name, str(self.point), self.submit_num, event, message,
-            self.user_at_host
-        ))
-
-    def record_db_update(self, table, **kwargs):
-        """Record an update to the DB."""
-        if self.validate_mode:
-            # Don't touch the db during validation.
-            return
-        self.db_queue.append(cylc.rundb.UpdateObject(
-            table, self.tdef.name, str(self.point), **kwargs))
-
-    def record_db_state(self):
-        """Record state to DB."""
-        if self.validate_mode:
-            # Don't touch the db during validation.
-            return
-        self.db_queue.append(cylc.rundb.RecordStateObject(
-            self.tdef.name,
-            str(self.point),
-            time_created_string=get_current_time_string(),
-            time_updated_string=None,
-            submit_num=self.submit_num,
-            try_num=self.try_number,
-            host=None,
-            submit_method=None,
-            submit_method_id=None,
-            status=self.state.get_status()
-        ))
-
-    def get_db_ops(self):
-        """Return the next DB operation from DB queue."""
-        ops = self.db_queue
-        self.db_queue = []
-        return ops
+        self.db_events_inserts.append({
+            "time": get_current_time_string(),
+            "event": event,
+            "message": message,
+            "misc": self.user_at_host})
 
     def retry_delay_done(self):
         """Is retry delay done? Can I retry now?"""
@@ -472,7 +450,7 @@ class TaskProxy(object):
     def reset_state_ready(self):
         """Reset state to "ready"."""
         self.set_status('waiting')
-        self.record_db_event(event="reset to ready")
+        self._db_events_insert(event="reset to ready")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.turn_off_timeouts()
@@ -485,7 +463,7 @@ class TaskProxy(object):
 
         """
         self.set_status('waiting')
-        self.record_db_event(event="reset to waiting")
+        self._db_events_insert(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
         self.unfail()
         self.turn_off_timeouts()
@@ -499,11 +477,11 @@ class TaskProxy(object):
         """
         self.set_status('succeeded')
         if manual:
-            self.record_db_event(event="reset to succeeded")
+            self._db_events_insert(event="reset to succeeded")
         else:
             # Artificially set to succeeded but not by the user. E.g. by
             # the purge algorithm and when reloading task definitions.
-            self.record_db_event(event="set to succeeded")
+            self._db_events_insert(event="set to succeeded")
         self.prerequisites.set_all_satisfied()
         self.unfail()
         self.turn_off_timeouts()
@@ -516,7 +494,7 @@ class TaskProxy(object):
 
         """
         self.set_status('failed')
-        self.record_db_event(event="reset to failed")
+        self._db_events_insert(event="reset to failed")
         self.prerequisites.set_all_satisfied()
         self.hold_on_retry = False
         self.outputs.set_all_incomplete()
@@ -531,7 +509,7 @@ class TaskProxy(object):
             self.state_before_held = task_state(self.state.get_status())
             self.set_status('held')
             self.turn_off_timeouts()
-            self.record_db_event(event="reset to held")
+            self._db_events_insert(event="reset to held")
             self.log(INFO, '%s => held' % self.state_before_held.get_status())
         elif self.state.is_currently('submitted', 'running'):
             self.hold_on_retry = True
@@ -552,7 +530,7 @@ class TaskProxy(object):
         old_status = self.state_before_held.get_status()
         self.set_status(old_status)
         self.state_before_held = None
-        self.record_db_event(event="reset to %s" % (old_status))
+        self._db_events_insert(event="reset to %s" % (old_status))
         self.log(INFO, 'held => %s' % (old_status))
 
     def job_submission_callback(self, result):
@@ -572,10 +550,20 @@ class TaskProxy(object):
             else:
                 self.job_submission_failed()
             return
+        now = get_current_time_string()
         if self.submit_method_id:
             self.log(INFO, 'submit_method_id=' + self.submit_method_id)
-            self.record_db_update(
-                "task_states", submit_method_id=self.submit_method_id)
+            self.db_states_updates.append({
+                "time_updated": now,
+                "submit_method_id": self.submit_method_id})
+            self.db_jobs_updates.append({
+                "time_submit_exit": now,
+                "submit_status": 0,
+                "batch_sys_job_id": self.submit_method_id})
+        else:
+            self.db_jobs_updates.append({
+                "time_submit_exit": now,
+                "submit_status": 0})
         self.job_submission_succeeded()
 
     def job_poll_callback(self, result):
@@ -630,7 +618,7 @@ class TaskProxy(object):
         # updates
         db_event = db_event or event
         if db_update:
-            self.record_db_event(event=db_event, message=db_msg)
+            self._db_events_insert(event=db_event, message=db_msg)
 
         if self.tdef.run_mode != 'live':
             return
@@ -654,6 +642,10 @@ class TaskProxy(object):
     def job_submission_failed(self):
         """Handle job submission failure."""
         self.log(ERROR, 'submission failed')
+        self.db_jobs_updates.append({
+            "time_submit_exit": get_current_time_string(),
+            "submit_status": 1,
+        })
         self.submit_method_id = None
         try:
             sub_retry_delay = self.sub_retry_delays.popleft()
@@ -682,13 +674,13 @@ class TaskProxy(object):
 
             self.sub_try_number += 1
             self.set_status('submit-retrying')
-            self.record_db_event(event="submission failed",
-                                 message=delay_msg)
+            self._db_events_insert(
+                event="submission failed", message=delay_msg)
             self.prerequisites.set_all_satisfied()
             self.outputs.set_all_incomplete()
 
             # TODO - is this record is redundant with that in handle_event?
-            self.record_db_event(
+            self._db_events_insert(
                 event="submission failed",
                 message="submit-retrying in " + str(sub_retry_delay))
             self.handle_event(
@@ -697,7 +689,7 @@ class TaskProxy(object):
                 self.reset_state_held()
 
     def job_submission_succeeded(self):
-        """Handle job succeeded."""
+        """Handle job submission succeeded."""
         self.log(INFO, 'submission succeeded')
         if self.tdef.run_mode == 'simulation':
             if self.__class__.stop_sim_mode_job_submission:
@@ -753,10 +745,14 @@ class TaskProxy(object):
 
     def job_execution_failed(self):
         """Handle a job failure."""
-        self.finished_time = time.time()
+        self.finished_time = time.time()  # TODO: use time from message
         self.summary['finished_time'] = self.finished_time
         self.summary['finished_time_string'] = (
             get_time_string_from_unix_time(self.finished_time))
+        self.db_jobs_updates.append({
+            "run_status": 1,
+            "time_run_exit": self.summary['finished_time_string'],
+        })
         self.execution_timer_timeout = None
         try:
             retry_delay = self.retry_delays.popleft()
@@ -794,10 +790,12 @@ class TaskProxy(object):
 
     def reset_manual_trigger(self):
         """This is called immediately after manual trigger flag used."""
-        self.manual_trigger = False
-        # unset any retry delay timers
-        self.retry_delay_timer_timeout = None
-        self.sub_retry_delay_timer_timeout = None
+        if self.manual_trigger:
+            self.manual_trigger = False
+            self.is_manual_submit = True
+            # unset any retry delay timers
+            self.retry_delay_timer_timeout = None
+            self.sub_retry_delay_timer_timeout = None
 
     def set_from_rtconfig(self, cfg=None):
         """Populate task proxy with runtime configuration.
@@ -859,14 +857,6 @@ class TaskProxy(object):
             copy(GLOBAL_CFG.get(['execution polling intervals'])),
             'execution', self.log)
 
-    def increment_submit_num(self):
-        """Increment and record the submit number."""
-        self.log(DEBUG, "incrementing submit number")
-        self.submit_num += 1
-        self.summary['submit_num'] = self.submit_num
-        self.record_db_event(event="incrementing submit number")
-        self.record_db_update("task_states", submit_num=self.submit_num)
-
     def submit(self, dry_run=False, overrides=None):
         """Submit a job for this task."""
 
@@ -916,7 +906,10 @@ class TaskProxy(object):
         Exceptions here are caught in the task pool module.
 
         """
-        self.increment_submit_num()
+        self.log(DEBUG, "incrementing submit number")
+        self.submit_num += 1
+        self.summary['submit_num'] = self.submit_num
+        self._db_events_insert(event="incrementing submit number")
         self.job_file_written = False
 
         local_job_log_dir, common_job_log_path = (
@@ -1001,11 +994,11 @@ class TaskProxy(object):
         RemoteJobHostManager.get_inst().init_suite_run_dir(
             self.suite_name, self.user_at_host)
 
-        self.record_db_update(
-            "task_states",
-            submit_method=self.batch_sys_name,
-            host=self.user_at_host,
-        )
+        self.db_states_updates.append({
+            "time_updated": get_current_time_string(),
+            "submit_method": self.batch_sys_name,
+            "host": self.user_at_host,
+            "submit_num": self.submit_num})
         self._populate_job_conf(
             rtconfig, local_jobfile_path, common_job_log_path)
         self.job_conf.update({
@@ -1014,6 +1007,14 @@ class TaskProxy(object):
             'script': command,
             'post-script': postcommand,
         })
+        self.db_jobs_inserts.append({
+            "is_manual_submit": self.is_manual_submit,
+            "try_num": self.try_number,
+            "time_submit": get_current_time_string(),
+            "user_at_host": self.user_at_host,
+            "batch_sys_name": self.batch_sys_name,
+        })
+        self.is_manual_submit = False
 
     def _prepare_manip(self):
         """A cut down version of prepare_submit().
@@ -1268,7 +1269,8 @@ class TaskProxy(object):
             if not self.outputs.is_completed(message):
                 flags.pflag = True
                 self.outputs.set_completed(message)
-                self.record_db_event(event="output completed", message=content)
+                self._db_events_insert(
+                    event="output completed", message=content)
             elif content == 'started' and self.job_vacated:
                 self.job_vacated = False
                 self.log(WARNING, "Vacated job restarted: " + message)
@@ -1297,10 +1299,12 @@ class TaskProxy(object):
             # Received a 'task started' message
             flags.pflag = True
             self.set_status('running')
-            self.started_time = time.time()
+            self.started_time = time.time()  # TODO: use time from message
             self.summary['started_time'] = self.started_time
             self.summary['started_time_string'] = (
                 get_time_string_from_unix_time(self.started_time))
+            self.db_jobs_updates.append({
+                "time_run": self.summary['started_time_string']})
             execution_timeout = self.event_hooks['execution timeout']
             if execution_timeout:
                 self.execution_timer_timeout = (
@@ -1328,6 +1332,10 @@ class TaskProxy(object):
             self.summary['finished_time'] = self.finished_time
             self.summary['finished_time_string'] = (
                 get_time_string_from_unix_time(self.finished_time))
+            self.db_jobs_updates.append({
+                "run_status": 0,
+                "time_run_exit": self.summary['finished_time_string'],
+            })
             # Update mean elapsed time only on task succeeded.
             self.tdef.update_mean_total_elapsed_time(
                 self.started_time, self.finished_time)
@@ -1349,12 +1357,14 @@ class TaskProxy(object):
 
         elif content.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
             # capture and record signals sent to task proxy
-            self.record_db_event(event="signaled", message=content)
+            self._db_events_insert(event="signaled", message=content)
+            signal = content.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
+            self.db_jobs_updates.append({"run_signal": signal})
 
         elif content.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             flags.pflag = True
             self.set_status('submitted')
-            self.record_db_event(event="vacated", message=content)
+            self._db_events_insert(event="vacated", message=content)
             self.execution_timer_timeout = None
             # TODO - check summary item value compat with GUI:
             self.summary['started_time'] = None
@@ -1385,12 +1395,12 @@ class TaskProxy(object):
             flags.iflag = True
             self.log(DEBUG, '(setting:' + status + ')')
             self.state.set_status(status)
-            self.record_db_update(
-                "task_states",
-                submit_num=self.submit_num,
-                try_num=self.try_number,
-                status=status
-            )
+            self.db_states_updates.append({
+                "time_updated": get_current_time_string(),
+                "submit_num": self.submit_num,
+                "try_num": self.try_number,
+                "status": status
+            })
 
     def dump_state(self, handle):
         """Write state information to the state dump file."""
@@ -1481,10 +1491,6 @@ class TaskProxy(object):
             self.log(
                 WARNING,
                 'Can only do %s when in %s states' % (cmd_key, str(ok_states)))
-            return
-        # No submit method ID: should not happen
-        if not self.submit_method_id:
-            self.log(CRITICAL, 'No submit method ID')
             return
         # Detached tasks
         if self.tdef.rtconfig['manual completion']:
