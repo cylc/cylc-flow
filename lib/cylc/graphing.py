@@ -32,7 +32,7 @@ class CGraphPlain( pygraphviz.AGraph ):
 
     def __init__( self, title, suite_polling_tasks={} ):
         self.title = title
-        pygraphviz.AGraph.__init__( self, directed=True )
+        pygraphviz.AGraph.__init__( self, directed=True, strict=True )
         # graph attributes
         # - label (suite name)
         self.graph_attr['label'] = title
@@ -88,10 +88,6 @@ class CGraphPlain( pygraphviz.AGraph ):
         elif left == None:
             self.cylc_add_node( right, autoURL )
         elif right == None:
-            self.cylc_add_node( left, autoURL )
-        elif left == right:
-            # pygraphviz 1.1 adds a node instead of a self-edge
-            # which results in a KeyError in get_edge() below.
             self.cylc_add_node( left, autoURL )
         else:
             pygraphviz.AGraph.add_edge( self, left, right, **attr )
@@ -300,10 +296,6 @@ class CGraphPlain( pygraphviz.AGraph ):
         nodes = self.prepare_nbunch(nbunch)
         subgraph.add_nodes_from(nodes)
 
-        for left, right in self.edges():
-            if left in subgraph and right in subgraph: 
-                subgraph.add_edge(left, right)
-
         return subgraph
 
 
@@ -374,9 +366,14 @@ class edge( object):
                   conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
         self.left = left
-        self.right = right
-        self.sequence = sequence
+        if suicide:
+            # Change name of suicide nodes to avoid cyclic dep check.
+            # (this is removed in config.get_graph() for normal use).
+            self.right = "!" + right
+        else:
+            self.right = right
         self.suicide = suicide
+        self.sequence = sequence
         self.conditional = conditional
 
     def get_right( self, inpoint, start_point):

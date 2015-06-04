@@ -112,6 +112,7 @@ from subprocess import check_call, Popen, PIPE
 import sys
 from cylc.mkdir_p import mkdir_p
 from cylc.task_id import TaskID
+from cylc.wallclock import get_current_time_string
 
 
 class BatchSysManager(object):
@@ -121,9 +122,9 @@ class BatchSysManager(object):
 
     """
 
-    CYLC_JOB_SUBMIT_TIME = "CYLC_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_NAME = "CYLC_BATCH_SYS_NAME"
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
+    CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
@@ -215,6 +216,8 @@ class BatchSysManager(object):
                     if not exc.filename:
                         exc.filename = command[0]
                     raise
+                else:
+                    return 0
         return 1
 
     def job_poll(self, st_file_path):
@@ -403,8 +406,8 @@ class BatchSysManager(object):
                     job_status_file.write("%s=%s\n" % (
                         self.CYLC_BATCH_SYS_JOB_ID, job_id))
                     job_status_file.write("%s=%s\n" % (
-                        self.CYLC_JOB_SUBMIT_TIME,
-                        datetime.utcnow().strftime("%FT%H:%M:%SZ")))
+                        self.CYLC_BATCH_SYS_JOB_SUBMIT_TIME,
+                        get_current_time_string()))
                     job_status_file.close()
                     break
         if hasattr(batch_sys, "filter_submit_output"):

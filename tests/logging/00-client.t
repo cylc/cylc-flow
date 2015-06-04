@@ -27,12 +27,12 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --no-detach --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
-cylc cat-log $SUITE_NAME | grep "Client" | awk '{print $5,$6,$7,$8}' > log.txt
+cylc cat-log $SUITE_NAME | grep "Client" | awk '{print $5,$6,$7}' > log.txt
 USER_AT_HOST=${USER}@$(hostname -f)
 cmp_ok log.txt << __END__
-command hold_suite (cylc-hold ${USER_AT_HOST}
-command get_suite_info (cylc-show ${USER_AT_HOST}
-command get (cylc-broadcast ${USER_AT_HOST}
+hold_suite (cylc-hold ${USER_AT_HOST}
+get_suite_info (cylc-show ${USER_AT_HOST}
+get (cylc-broadcast ${USER_AT_HOST}
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

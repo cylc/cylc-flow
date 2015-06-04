@@ -1,0 +1,22 @@
+#!jinja2
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+[scheduling]
+    initial cycle point = 20100101T00Z
+    final cycle point = 20100103T00Z
+    [[dependencies]]
+        [[[T00]]]
+        graph = "foo[-P1D] => foo"
+        [[[R1/20100103T00Z]]]
+        graph = """foo => env_polling
+                   foo => offset_polling
+                """
+[runtime]
+    [[foo]]
+        command scripting = true
+    [[env_polling]]
+        command scripting = cylc suite-state $CYLC_SUITE_NAME --task=foo --task-point -S succeeded
+    [[offset_polling]]
+        command scripting = cylc suite-state $CYLC_SUITE_NAME --task=foo -p 20100101T0000Z --offset=P1D

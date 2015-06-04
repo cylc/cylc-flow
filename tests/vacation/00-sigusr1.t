@@ -43,7 +43,7 @@ kill -s USR1 $T1_PID
 while ps $T1_PID 1>/dev/null 2>&1; do
     sleep 1
 done
-exists_fail $T1_STATUS_FILE
+run_fail "${T1_STATUS_FILE}" grep -q '^CYLC_JOB' "${T1_STATUS_FILE}"
 TIMEOUT=$(($(date +%s) + 120))
 while ! grep -q 'Task job script vacated by signal USR1' \
             $SUITE_RUN_DIR/log/suite/log \

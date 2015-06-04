@@ -23,6 +23,7 @@ import time
 import logging
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.wallclock import get_current_time_string
+from cylc.network.suite_broadcast import BroadcastServer
 
 class SuiteStateDumper(object):
     """Generate state dumps."""
@@ -59,11 +60,10 @@ class SuiteStateDumper(object):
         else:
             self.cts_str += 'final cycle : (none)\n'
 
-    def dump(self, tasks=None, wireless=None):
+    def dump(self, tasks=None):
         """Dump suite states to disk. Return state file basename on success."""
 
-        if wireless is None:
-            wireless = self.pool.wireless
+        wireless = BroadcastServer.get_inst()
 
         base_name = self.BASE_NAME + "." + get_current_time_string(
             override_use_utc=True, use_basic_format=True,
@@ -86,10 +86,7 @@ class SuiteStateDumper(object):
                    get_current_time_string(), time.time()))
 
                 handle.write(self.cts_str)
-
-                if wireless is not None:
-                    wireless.dump(handle)
-
+                wireless.dump(handle)
                 handle.write('Begin task states\n')
 
                 if tasks is None and self.pool is not None:

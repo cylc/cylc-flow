@@ -1,10 +1,13 @@
 #!Jinja2
 
-title = Demonstrates real time satellite data processing
+title = Real time satellite processing demo, variant 2 of 3
+
 description = """
-Each successive integer cycle retrieves and processes the next
-arbitrarily timed and arbitrarily labelled dataset, in parallel
-with previous cycles if the data comes in quickly."""
+Successive cycle points retrieve and process the next arbitrarily timed and
+labelled dataset, in parallel if the data comes in quickly.  This variant of
+the suite has initial get_data tasks that trigger immediately and simply report
+failure if no new data is available, but they are configured to retry
+automatically until they succeed."""
 
 # you can monitor output processing with:
 # $ watch -n 1 \
@@ -21,7 +24,6 @@ with previous cycles if the data comes in quickly."""
     initial cycle point = 1
     final cycle point = {{N_DATASETS}}
     max active cycle points = 5
-    # runahead limit = P5 # (alternative limiting method)
     [[dependencies]]
         [[[R1]]] # first cycle
             graph = prep => satsim & get_data
@@ -37,62 +39,61 @@ with previous cycles if the data comes in quickly."""
 [runtime]
     [[prep]]
         title = clean the suite output directories
-        script = \
+        command scripting = \
 rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
 
     [[satsim]]
         title = simulate a satellite data feed
         description = """Generates {{N_DATASETS}} arbitrarily labelled
 datasets after random durations."""
-        pre-script = mkdir -p {{DATA_IN_DIR}}
-        script = """
+        pre-command scripting = mkdir -p {{DATA_IN_DIR}}
+        command scripting = """
 COUNT=0
 while true; do
-    (( COUNT == {{N_DATASETS}} )) && break
-    sleep $(( 1 + RANDOM % 10 ))
-    touch {{DATA_IN_DIR}}/dataset-$(date +%s).raw
-    (( COUNT += 1 ))
+    ((COUNT == {{N_DATASETS}})) && break
+    sleep $((RANDOM % 20))
+    DATA_ID=$(date +%s).$((RANDOM % 100))
+    DATA_FILE=dataset-${DATA_ID}.raw
+    touch {{DATA_IN_DIR}}/$DATA_FILE
+    cylc task message "$DATA_FILE ready for processing"
+    ((COUNT += 1))
 done"""
 
     [[WORKDIR]]
         # Define a common cycle-point-specific work-directory for all
         # processing tasks so that they all work on the same dataset.
         work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
-        pre-script = sleep 10
+        post-command scripting = sleep 5
 
     [[get_data]]
         inherit = WORKDIR
-        title = grab one new dataset, waiting if necessary
-        script = """
-while true; do
-    DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
-    if [[ -z $DATASET ]]; then
-        sleep 1
-        continue
-    fi
-    break
-done
+        title = retreive next dataset
+        description = grab ONE new dataset if available else retry
+        retry delays = 10*PT2S
+        command scripting = """
+DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
+[[ -z $DATASET ]] && exit 1
 mv $DATASET $PWD"""
 
     [[proc1]]
         inherit = WORKDIR
         title = convert .raw dataset to .proc1 form
-        script = """
+        command scripting = """
 DATASET=$(ls dataset-*.raw)
 mv $DATASET ${DATASET%raw}proc1"""
 
     [[proc2]]
         inherit = WORKDIR
         title = convert .proc1 dataset to .proc2 form
-        script = """
+        command scripting = """
 DATASET=$(ls dataset-*.proc1)
 mv $DATASET ${DATASET%proc1}proc2"""
 
     [[products]]
         inherit = WORKDIR
         title = generate products from .proc2 processed dataset
-        pre-script = mkdir -p {{PRODUCT_DIR}}
-        script = """
+        command scripting = """
+mkdir -p {{PRODUCT_DIR}}
 DATASET=$( ls dataset-*.proc2 )
 mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
 
@@ -100,7 +101,11 @@ mv $DATASET {{PRODUCT_DIR}}/${DATASET%proc2}prod"""
         title = collate all products from the suite run
         # Note you might want to use "cylc suite-state" to check that
         # _all_ product tasks have finished before collating results.
-        script = ls {{PRODUCT_DIR}}
+        command scripting = """
+echo PRODUCTS:
+ls {{PRODUCT_DIR}}
+sleep 20"""
+
 
 [visualization]
     default node attributes = "style=filled", "shape=box"

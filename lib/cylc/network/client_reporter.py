@@ -37,7 +37,7 @@ class PyroClientReporter(object):
 
     _INSTANCE = None
     CLIENT_FORGET_SEC = 60
-    LOG_TMPL = 'Client %s (%s %s %s)'
+    LOG_TMPL = 'Client: %s (%s %s %s)'
 
     @classmethod
     def get_inst(cls):
@@ -62,7 +62,7 @@ class PyroClientReporter(object):
         if not multi or cylc.flags.debug:
             self.log.info(
                 self.__class__.LOG_TMPL % (
-                    'command %s' % command,
+                    command,
                     info['name'], info['user_at_host'], uuid))
         self._housekeep()
 

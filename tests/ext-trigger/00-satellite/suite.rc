@@ -1,0 +1,126 @@
+#!Jinja2
+
+# TEST SUITE ADAPTED FROM examples/satellite/ext-trigger/
+
+title = Real time satellite data processing demo, variant 3 of 3
+
+description = """
+Successive cycle points retrieve and processe the next arbitrarily timed and
+labelled dataset, in parallel if the data comes in quickly. This variant of the
+suite has initial get_data tasks with external triggers: they do not submit
+until triggered by an external system."""
+
+# Note that the satellite simulator task here that supplies the external event
+# trigger happens to be a suite task - i.e. it is not really "external" - but
+# this is only a convenience - an easy route to a self-contained example suite.
+
+# you can monitor output processing with:
+# $ watch -n 1 \
+#    "find ~/cylc-run/<SUITE>/share; find ~/cylc-run/<SUITE>/work"
+
+{% set N_DATASETS = 5 %}
+
+# define shared directories (could use runtime namespaces for this)
+{% set DATA_IN_DIR = "$CYLC_SUITE_SHARE_DIR/incoming" %}
+{% set PRODUCT_DIR = "$CYLC_SUITE_SHARE_DIR/products" %}
+
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
+
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    final cycle point = {{N_DATASETS}}
+    max active cycle points = 5
+    # runahead limit = P5 # (alternative limiting method)
+    [[special tasks]]
+        external-triggered = get_data("new dataset ready for processing")
+    [[dependencies]]
+        [[[R1]]] # first cycle
+            graph = prep => satsim & get_data
+        [[[P1]]]
+            graph = """
+    # Processing chain for each dataset
+    get_data => proc1 => proc2 => products
+    # As one dataset is retrieved, start waiting on another.
+    get_data[-P1] => get_data"""
+        [[[R1//{{N_DATASETS}}]]] # last cycle
+            graph = products => collate
+
+[runtime]
+    [[prep]]
+        title = clean the suite output directories
+        command scripting = \
+rm -rf $CYLC_SUITE_SHARE_DIR $CYLC_SUITE_WORK_DIR
+
+    [[satsim]]
+        title = simulate a satellite data feed
+        description = """Generates {{N_DATASETS}} arbitrarily labelled
+datasets very quickly, to show parallel processing streams."""
+        pre-command scripting = mkdir -p {{DATA_IN_DIR}}
+        command scripting = """
+COUNT=0
+while true; do
+    ((COUNT == {{N_DATASETS}})) && break
+    # sleep $((RANDOM % 20))
+    # Generate datasets very quickly to test parallel processing.
+    DATA_ID=$(date +%s).$((RANDOM % 100))
+    DATA_FILE=dataset-${DATA_ID}.raw
+    touch {{DATA_IN_DIR}}/$DATA_FILE
+    ((COUNT += 1))
+    # (required to distinguish fast-arriving messages).
+    # Trigger downstream processing in the suite.
+    cylc ext-trigger $CYLC_SUITE_NAME \
+       "new dataset ready for processing" $DATA_ID
+done"""
+
+    [[WORKDIR]]
+        # Define a common cycle-point-specific work-directory for all
+        # processing tasks so that they all work on the same dataset.
+        work sub-directory = proc-$CYLC_TASK_CYCLE_POINT
+        pre-command scripting = "DATASET=dataset-$CYLC_EXT_TRIGGER_ID"
+        ##post-command scripting = sleep 5
+
+    [[get_data]]
+        inherit = WORKDIR
+        title = retrieve next dataset
+        description = just do it - we know it exists already
+        command scripting = mv {{DATA_IN_DIR}}/${DATASET}.raw $PWD
+
+    [[proc1]]
+        inherit = WORKDIR
+        title = convert .raw dataset to .proc1 form
+        command scripting = mv ${DATASET}.raw ${DATASET}.proc1
+
+    [[proc2]]
+        inherit = WORKDIR
+        title = convert .proc1 dataset to .proc2 form
+        command scripting = mv ${DATASET}.proc1 ${DATASET}.proc2
+
+    [[products]]
+        inherit = WORKDIR
+        title = generate products from .proc2 processed dataset
+        command scripting = """
+mkdir -p {{PRODUCT_DIR}}
+mv ${DATASET}.proc2 {{PRODUCT_DIR}}/${DATASET}.prod"""
+
+    [[collate]]
+        title = collate all products from the suite run
+        # Note you might want to use "cylc suite-state" to check that
+        # _all_ product tasks have finished before collating results.
+        command scripting = """
+echo PRODUCTS:
+ls {{PRODUCT_DIR}}
+##sleep 20"""
+
+[visualization]
+    default node attributes = "style=filled", "shape=box"
+    [[node attributes]]
+        satsim = "fillcolor=yellow"
+        WORKDIR = "fillcolor=limegreen"
+        get_data = "fillcolor=skyblue"
+        products = "fillcolor=orange"
+        collate = "fillcolor=red"

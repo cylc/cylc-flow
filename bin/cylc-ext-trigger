@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import sys
+from cylc.CylcOptionParsers import cop
+import cylc.flags
+from cylc.network.ext_trigger import ExtTriggerClient
+from cylc.command_prep import prep_pyro
+
+usage = """cylc [control] ext-trigger [OPTIONS] ARGS
+
+Report an external event message to a suite daemon. It is expected that a
+task in the suite has registered the same message as an external trigger - a
+special prerequisite to be satisifed by an external system, via this command,
+rather than by triggering off other tasks.
+
+The ID argument should uniquely distinguish one external trigger event from the
+next. When a task's external trigger is satisfied by an incoming message, the
+message ID is broadcast to all downstream tasks in the cycle point as
+$CYLC_EXT_TRIGGER_ID so that they can use it - e.g. to identify a new data file
+that the external triggering system is responding to.
+
+Use the retry options in case the target suite is down or out of contact.
+
+The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
+
+Note: to manually trigger a task use 'cylc trigger', not this command."""
+
+parser = cop(
+    usage, pyro=True,
+    argdoc=[
+        ("REG", "Suite name"),
+        ("MSG", "External trigger message"),
+        ("ID", "Unique trigger ID")
+    ]
+)
+
+parser.add_option(
+    "--max-tries", help="Maximum number of send attempts "
+    "(default %s)." % ExtTriggerClient.MAX_N_TRIES, metavar="INT", action="store",
+    default=None, dest="max_n_tries")
+
+parser.add_option(
+    "--retry-interval", help="Delay in seconds before retrying "
+    "(default %s)." % ExtTriggerClient.RETRY_INTVL_SECS, metavar="SEC",
+    action="store", default=None, dest="retry_intvl_secs")
+
+(options, args) = parser.parse_args()
+cylc.flags.verbose = options.verbose
+
+suite, pphrase = prep_pyro(args[0], options).execute()
+
+event_msg = args[1]
+event_id = args[2]
+
+print 'Send to suite %s: "%s" (%s)' % (suite, event_msg, event_id)
+
+pclient = ExtTriggerClient(suite, pphrase, options.owner, options.host,
+                           options.pyro_timeout, options.port)
+pclient.send_retry(event_msg, event_id,
+                   options.max_n_tries, options.retry_intvl_secs)

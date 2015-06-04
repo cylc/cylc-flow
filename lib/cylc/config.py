@@ -52,6 +52,7 @@ checking, then construct task proxy objects and graph structures.
 RE_SUITE_NAME_VAR = re.compile('\${?CYLC_SUITE_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile('\${?CYLC_TASK_NAME}?')
 CLOCK_OFFSET_RE = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
+EXT_TRIGGER_RE = re.compile('(.*)\s*\(\s*(.+)\s*\)\s*')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
 # TODO - unify this with task_state.py:
@@ -138,6 +139,7 @@ class config( object ):
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
+        self.ext_triggers = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
         self.vis_start_point_string = vis_start_string
@@ -359,7 +361,8 @@ class config( object ):
         if self.start_point is not None:
             self.start_point.standardise()
 
-        # [special tasks]: parse clock-offsets, and replace families with members
+        # Parse clock-trigger offsets and external trigger messages and replace
+        # families with members.
         if flags.verbose:
             print "Parsing [special tasks]"
         for type in self.cfg['scheduling']['special tasks']:
@@ -367,12 +370,20 @@ class config( object ):
             extn = ''
             for item in self.cfg['scheduling']['special tasks'][type]:
                 name = item
-                # Get clock-trigger offsets.
-                if type == 'clock-triggered':
-                    m = re.match( CLOCK_OFFSET_RE, item )
+                if type == 'external-triggered':
+                    m = re.match(EXT_TRIGGER_RE, item)
                     if m is None:
                         raise SuiteConfigError(
-                            "ERROR: Illegal clock-trigger spec: %s" % item
+                            "ERROR: Illegal %s spec: %s" % (type, item)
+                        )
+                    name, ext_trigger_msg = m.groups()
+                    extn = "(" + ext_trigger_msg + ")"
+  
+                elif type == 'clock-triggered':
+                    m = re.match(CLOCK_OFFSET_RE, item)
+                    if m is None:
+                        raise SuiteConfigError(
+                            "ERROR: Illegal %s spec: %s" % (type, item)
                         )
                     if (self.cfg['scheduling']['cycling mode'] !=
                             Calendar.MODE_GREGORIAN):
@@ -416,7 +427,7 @@ class config( object ):
 
                 # Replace family names with members.
                 if name in self.runtime['descendants']:
-                    result.remove( item )
+                    result.remove(item)
                     for member in self.runtime['descendants'][name]:
                         if member in self.runtime['descendants']:
                             # (sub-family)
@@ -424,8 +435,12 @@ class config( object ):
                         result.append(member + extn)
                         if type == 'clock-triggered':
                             self.clock_offsets[member] = offset_interval
+                        if type == 'external-triggered':
+                            self.ext_triggers[member] = ext_trigger_msg
                 elif type == 'clock-triggered':
                     self.clock_offsets[name] = offset_interval
+                elif type == 'external-triggered':
+                    self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
             self.cfg['scheduling']['special tasks'][type] = result
 
@@ -468,6 +483,21 @@ class config( object ):
 
         if self.validation:
             self.check_tasks()
+
+        # Check that external trigger messages are only used once (they have to
+        # be discarded immediately to avoid triggering the next instance of the
+        # just-triggered task).
+        seen = {}
+        for name, tdef in self.taskdefs.items():
+            for msg in tdef.external_triggers:
+                if msg not in seen:
+                    seen[msg] = name
+                else:
+                    print >> sys.stderr, (
+                        "External trigger '%s'\n  used in tasks %s and %s." % (
+                        msg, name, seen[msg]))
+                    raise SuiteConfigError(
+                        "ERROR: external triggers must be used only once.")
 
         ngs = self.cfg['visualization']['node groups']
         # If a node group member is a family, include its descendants too.
@@ -578,6 +608,34 @@ class config( object ):
                 cfg['URL'] = re.sub(RE_TASK_NAME_VAR, name, cfg['URL'])
                 cfg['URL'] = re.sub(RE_SUITE_NAME_VAR, self.suite, cfg['URL'])
 
+        if self.validation:
+            # Detect cyclic dependence.
+            graph = self.get_graph(ungroup_all=True, check_suicide=True)
+            # Original edges.
+            o_edges = graph.edges()
+            # Reverse any back edges using graphviz 'acyclic'.
+            # (Note: use of acyclic(copy=True) reveals our CGraph class init
+            # should have the same arg list as its parent, pygraphviz.AGraph).
+            graph.acyclic()
+            # Look for reversed edges (note this does not detect self-edges).
+            n_edges = graph.edges()
+            back_edges = []
+            for e in o_edges:
+                if e not in n_edges:
+                    back_edges.append(e)
+            if len(back_edges) > 0:
+                print >> sys.stderr, "Back-edges:"
+                for e in back_edges:
+                    print >> sys.stderr, '  %s => %s' % e
+                raise SuiteConfigError('ERROR: cyclic dependence detected '
+                                       '(graph the suite to see back-edges).')
+ 
+    def dequote(self, s):
+        """Strip quotes off a string."""
+        if (s[0] == s[-1]) and s.startswith(("'", '"')):
+            return s[1:-1]
+        return s
+
     def check_env_names( self ):
         # check for illegal environment variable names
          bad = {}
@@ -593,7 +651,7 @@ class config( object ):
                  print >> sys.stderr, 'Namespace:', label
                  for var in vars:
                      print >> sys.stderr, "  ", var
-             raise SuiteConfigError("Illegal env variable name(s) detected" )
+             raise SuiteConfigError("Illegal environment variable name(s) detected" )
 
     def filter_env( self ):
         # filter environment variables after sparse inheritance
@@ -1012,15 +1070,20 @@ class config( object ):
                         # any family triggers have have been replaced with members by now.
                         print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
 
-        # warn if listed special tasks are not defined
-        for type in self.cfg['scheduling']['special tasks']:
-            for name in self.cfg['scheduling']['special tasks'][type]:
-                if type == 'clock-triggered':
+        # Check declared special tasks are valid.
+        for task_type in self.cfg['scheduling']['special tasks']:
+            for name in self.cfg['scheduling']['special tasks'][task_type]:
+                if task_type in ['clock-triggered', 'external-triggered']:
                     name = re.sub('\(.*\)','',name)
-                if re.search( '[^0-9a-zA-Z_]', name ):
-                    raise SuiteConfigError, 'ERROR: Illegal ' + type + ' task name: ' + name
+                if not TaskID.is_valid_name(name):
+                    raise SuiteConfigError(
+                        'ERROR: Illegal %s task name: %s' % (task_type, name))
                 if name not in self.taskdefs and name not in self.cfg['runtime']:
-                    raise SuiteConfigError, 'ERROR: special task "' + name + '" is not defined.'
+                    msg = '%s task "%s" is not defined.' % (task_type % name)
+                    if self.strict:
+                        raise SuiteConfigError("ERROR: " + msg)
+                    else:
+                        print >> sys.stderr, "WARNING: " + msg
 
         try:
             import Pyro.constants
@@ -1078,7 +1141,6 @@ class config( object ):
                     print cs
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError( "ERROR: script cannot be defined for automatic suite polling task " + l_task )
-
 
     def get_coldstart_task_list( self ):
         return self.cfg['scheduling']['special tasks']['cold-start']
@@ -1318,15 +1380,6 @@ class config( object ):
             nstr = nstr.strip()
             left_nodes = re.split( ' +', nstr )
 
-            # detect and fail and self-dependence loops (foo => foo)
-            for right_node in right_nodes:
-                if right_node in left_nodes:
-                    print >> sys.stderr, (
-                        "Self-dependence detected in '" + right_node + "':")
-                    print >> sys.stderr, "  line:", line
-                    print >> sys.stderr, "  from:", orig_line
-                    raise SuiteConfigError, "ERROR: self-dependence loop detected"
-
             for right_node in right_nodes:
                 # foo => '!bar' means task bar should suicide if foo succeeds.
                 suicide = False
@@ -1365,8 +1418,7 @@ class config( object ):
                 if right_name in tasks_to_prune:
                     continue
 
-                if not self.validation and not graphing_disabled:
-                    # edges not needed for validation
+                if not graphing_disabled:
                     left_edge_nodes = pruned_left_nodes
                     right_edge_node = right_name
                     if not left_edge_nodes and left_nodes:
@@ -1383,7 +1435,6 @@ class config( object ):
                                         right_name, seq, suicide)
         return special_dependencies
 
-
     def generate_edges( self, lexpression, left_nodes, right, seq, suicide=False ):
         """Add nodes from this graph section to the abstract graph edges structure."""
         conditional = False
@@ -1392,9 +1443,28 @@ class config( object ):
             conditional = True
 
         for left in left_nodes:
-            if left is not None:
-                e = graphing.edge( left, right, seq, suicide, conditional )
-                self.edges.append(e)
+            if left is None:
+                continue
+            if right is not None:
+                # Check for self-suicide and self-edges.
+                if left == right or left.startswith(right + ':'):
+                    # (This passes inter-cycle offsets: left[-P1D] => left)
+                    # (TODO - but not explicit null offsets like [-P0D]!)
+                    if suicide:
+                        # Self-suicide may be OK.
+                        print >> sys.stderr, (
+                            'WARNING: self-suicide is not recommended: '
+                            '%s => !%s.'  % (left, right))
+                    else:
+                        # Self-edge.
+                        if left != lexpression:
+                            print >> sys.stderr, (
+                                "%s => %s" % (lexpression, right))
+                        raise SuiteConfigError(
+                            "ERROR, self-edge detected: %s => %s" % (
+                                left, right))
+            e = graphing.edge(left, right, seq, suicide, conditional)
+            self.edges.append(e)
 
     def generate_taskdefs( self, line, left_nodes, right, section, seq,
                            offset_seq_map, base_interval ):
@@ -1472,12 +1542,11 @@ class config( object ):
                     self.taskdefs[ name ].add_sequence(seq)
 
             if self.run_mode == 'live':
-                # register any explicit internal outputs
-                if 'outputs' in self.cfg['runtime'][name]:
-                    for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
-                        outp = output(msg, base_interval)
-                        self.taskdefs[name].outputs.append(outp)
-
+                # Register explicit output messages.
+                for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
+                    outp = output(msg, base_interval)
+                    self.taskdefs[name].outputs.append(outp)
+ 
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right:
             # lefts are lone nodes; no more triggers to define.
@@ -1597,7 +1666,7 @@ class config( object ):
 
     def get_graph_raw( self, start_point_string, stop_point_string,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-            group_all=False, ungroup_all=False ):
+            group_all=False, ungroup_all=False, check_suicide=False ):
         """Convert the abstract graph edges held in self.edges (etc.) to
         actual edges for a concrete range of cycle points."""
 
@@ -1707,6 +1776,9 @@ class config( object ):
                     nl, nr = self.close_families(l_id, r_id)
                     if point not in gr_edges:
                         gr_edges[point] = []
+                    if not check_suicide and e.suicide:
+                        # Remove initial '!' from suicide node names.
+                        nr = nr[1:]
                     gr_edges[point].append((nl, nr, None, e.suicide, e.conditional))
                 # Increment the cycle point.
                 point = e.sequence.get_next_point_on_sequence(point)
@@ -1727,7 +1799,7 @@ class config( object ):
     def get_graph(self, start_point_string=None, stop_point_string=None,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False, ignore_suicide=False,
-            subgraphs_on=False):
+            subgraphs_on=False, check_suicide=False):
 
         # If graph extent is not given, use visualization settings.
         if start_point_string is None:
@@ -1752,13 +1824,13 @@ class config( object ):
         gr_edges = self.get_graph_raw(
             start_point_string, stop_point_string,
             group_nodes, ungroup_nodes, ungroup_recursive,
-            group_all, ungroup_all
+            group_all, ungroup_all, check_suicide,
         )
         graph = graphing.CGraph(
                 self.suite, self.suite_polling_tasks, self.cfg['visualization'])
-        graph.add_edges( gr_edges, ignore_suicide )
+        graph.add_edges(gr_edges, ignore_suicide)
         if subgraphs_on:
-            graph.add_cycle_point_subgraphs( gr_edges )
+            graph.add_cycle_point_subgraphs(gr_edges)
         return graph
 
     def get_node_labels( self, start_point_string, stop_point_string):
@@ -2009,9 +2081,10 @@ class config( object ):
         if name in self.cfg['scheduling']['special tasks']['cold-start']:
             taskd.is_coldstart = True
 
-        # Set clock-triggered tasks.
         if name in self.clock_offsets:
             taskd.clocktrigger_offset = self.clock_offsets[name]
+        if name in self.ext_triggers:
+            taskd.external_triggers.append(self.ext_triggers[name])
 
         taskd.sequential = (
             name in self.cfg['scheduling']['special tasks']['sequential'])
