@@ -3161,18 +3161,18 @@ For more Stop options use the Control menu.""")
         """Handle changes in status for some toolbar/menuitems.
         
        Example status strings:
-         * stopped with 'running'
          * connected
          * initialising
          * running
-         * held
-         * hold at 20150601T0000Z
-         * reloading
          * running to 20150601T0000Z
          * running to 2015-08-08T01:00:00+12:00
+         * running to hold at 20150601T0000Z
+         * held
+         * reloading
          * stopping
          * stopped
          * stopped with 'succeeded' 
+         * stopped with 'running'
         """
         if new_status == self._prev_status:
             return False
@@ -3182,7 +3182,7 @@ For more Stop options use the Control menu.""")
         # Pause: avoid "stopped with 'running'".
         pause_ok = (new_status == "reloading" or 
                 "running" in new_status and not "stopped" in new_status)
-        unpause_ok = "hold at" in new_status or "held" == new_status
+        unpause_ok = "held" == new_status
         stop_ok = ("stopped" not in new_status and
                    "connected" != new_status and
                    "initialising" != new_status)

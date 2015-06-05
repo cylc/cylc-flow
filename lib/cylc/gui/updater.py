@@ -306,24 +306,6 @@ class Updater(threading.Thread):
         self.all_families = self.suite_info_client.get_info_gui('get_all_families')
         self.triggering_families = self.suite_info_client.get_info_gui('get_triggering_families')
 
-        if glbl['stopping']:
-            self.status = 'stopping'
-        elif glbl['paused']:
-            self.status = 'held'
-        elif glbl['will_pause_at']:
-            self.status = 'hold at ' + glbl[ 'will_pause_at' ]
-        elif glbl['will_stop_at']:
-            self.status = 'running to ' + glbl[ 'will_stop_at' ]
-        else:
-            try:
-                if glbl['reloading']:
-                    self.status = 'reloading'
-                else:
-                    self.status = 'running'
-            except KeyError:
-                # Back compat.
-                self.status = 'running'
-
         self.mode = glbl['run_mode']
 
         if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
@@ -345,6 +327,30 @@ class Updater(threading.Thread):
         self.full_state_summary = states
         self.full_fam_state_summary = fam_states
         self.refilter()
+
+        # Prioritise which suite state string to display.
+        # 1. Are we stopping, or some variant of 'running'?
+        if glbl['stopping']:
+            self.status = 'stopping'
+        elif glbl['will_pause_at']:
+            self.status = 'running to hold at ' + glbl[ 'will_pause_at' ]
+        elif glbl['will_stop_at']:
+            self.status = 'running to ' + glbl[ 'will_stop_at' ]
+        else:
+            self.status = 'running'
+
+        # 2. Override with temporary held status.
+        if glbl['paused']:
+            self.status = 'held'
+
+        # 3. Override running or held with reloading.
+        if not self.status == 'stopping':
+            try:
+                if glbl['reloading']:
+                    self.status = 'reloading'
+            except KeyError:
+                # Back compat.
+                pass
 
     def set_stopped(self):
         self.connected = False
