@@ -1,10 +1,11 @@
-cycling mode = integer
-initial cycle point constraints = 
+runahead limit = 
+hold after point = 
 max active cycle points = 3
 final cycle point constraints = 
+cycling mode = integer
 initial cycle point = 1
+initial cycle point constraints = 
 final cycle point = 1
-runahead limit = 
 [[dependencies]]
    graph = OPS:finish-all => VAR
 [[queues]]
