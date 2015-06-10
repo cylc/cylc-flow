@@ -95,13 +95,9 @@ if options.edit_run:
 
     # Retrieve the filename from the suite (the task cycle point may need
     # standardising to the suite cycle point format).
-    try:
-        res, jobfile_path = info_proxy.get('task job file path', task_id)
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(exc)
-    if not res:
+    success, jobfile_path = info_proxy.get_info(
+        'get_task_jobfile_path', task_id)
+    if not success:
         sys.exit('ERROR: %s' % jobfile_path)
 
     # Replace the submit number with the 'NN' symnlink as it will increment
@@ -177,16 +173,4 @@ if options.edit_run:
     os.unlink(jobfile_copy_path)
 
 # Trigger the task proxy(s).
-<<<<<<< HEAD
-try:
-    success, msg = cmd_proxy.put(
-        'trigger task', name, point_string, options.is_family)
-except Exception as exc:
-    if cylc.flags.debug:
-        raise
-    sys.exit(exc)
-if not success:
-    sys.exit(msg)
-=======
 cmd_client.put_command('trigger_task', name, point_string, options.is_family)
->>>>>>> master
