@@ -818,7 +818,10 @@ class SuiteConfig(object):
 
         already_done = {} # to store already computed namespaces by mro
 
-        for ns in self.cfg['runtime']:
+        # Loop through runtime members, 'root' first.
+        nses = self.cfg['runtime'].keys()
+        nses.sort(key=lambda ns: ns != 'root')
+        for ns in nses:
             # for each namespace ...
 
             hierarchy = copy(self.runtime['linearized ancestors'][ns])
