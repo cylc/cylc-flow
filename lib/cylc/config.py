@@ -39,7 +39,7 @@ from trigger import trigger
 from parsec.util import replicate
 from cylc.task_id import TaskID
 from C3MRO import C3
-from parsec.OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDictWithDefaults
 import flags
 from syntax_flags import (
     SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
@@ -280,10 +280,10 @@ class SuiteConfig(object):
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
-            self.cfg['runtime'] = {}
+            self.cfg['runtime'] = OrderedDictWithDefaults()
 
         if 'root' not in self.cfg['runtime']:
-            self.cfg['runtime']['root'] = {}
+            self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         # Replace [runtime][name1,name2,...] with separate namespaces.
         if flags.verbose:
@@ -291,18 +291,19 @@ class SuiteConfig(object):
         # This requires expansion into a new OrderedDict to preserve the
         # correct order of the final list of namespaces (add-or-override
         # by repeated namespace depends on this).
-        newruntime = OrderedDict()
+        newruntime = OrderedDictWithDefaults()
         for key, val in self.cfg['runtime'].items():
             if ',' in key:
                 for name in re.split(' *, *', key.rstrip(', ')):
                     if name not in newruntime:
-                        newruntime[name] = OrderedDict()
+                        newruntime[name] = OrderedDictWithDefaults()
                     replicate(newruntime[name], val)
             else:
                 if key not in newruntime:
-                    newruntime[key] = OrderedDict()
+                    newruntime[key] = OrderedDictWithDefaults()
                 replicate(newruntime[key], val)
         self.cfg['runtime'] = newruntime
+
         self.ns_defn_order = newruntime.keys()
 
         # check var names before inheritance to avoid repetition
@@ -737,7 +738,7 @@ class SuiteConfig(object):
                 # no filtering to do
                 continue
 
-            nenv = OrderedDict()
+            nenv = OrderedDictWithDefaults()
             for key, val in oenv.items():
                 if ( not fincl or key in fincl ) and key not in fexcl:
                     nenv[key] = val
@@ -812,7 +813,7 @@ class SuiteConfig(object):
         if flags.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        results = {}
+        results = OrderedDictWithDefaults()
         n_reps = 0
 
         already_done = {} # to store already computed namespaces by mro
@@ -823,7 +824,7 @@ class SuiteConfig(object):
             hierarchy = copy(self.runtime['linearized ancestors'][ns])
             hierarchy.reverse()
 
-            result = {}
+            result = OrderedDictWithDefaults()
 
             if use_simple_method:
                 # Go up the linearized MRO from root, replicating or
@@ -850,7 +851,7 @@ class SuiteConfig(object):
                         if prev_shortcut:
                             prev_shortcut = False
                             # copy ad_result (to avoid altering already_done)
-                            result = {}
+                            result = OrderedDictWithDefaults()
                             replicate(result,ad_result) # ...and use stored
                             n_reps += 1
                         # override name content into tmp
@@ -1504,7 +1505,7 @@ class SuiteConfig(object):
                 self.naked_dummy_tasks.append( name )
                 # These can't just be a reference to root runtime as we have to
                 # make some items task-specific: e.g. subst task name in URLs.
-                self.cfg['runtime'][name] = OrderedDict()
+                self.cfg['runtime'][name] = OrderedDictWithDefaults()
                 replicate(self.cfg['runtime'][name], self.cfg['runtime']['root'])
                 if 'root' not in self.runtime['descendants']:
                     # (happens when no runtimes are defined in the suite.rc)

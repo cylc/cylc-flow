@@ -19,7 +19,7 @@
 import os
 import sys
 from copy import copy
-from parsec.OrderedDict import OrderedDict, OrderedDictWithDefaults
+from parsec.OrderedDict import OrderedDictWithDefaults
 
 """
 Utility functions for printing and manipulating PARSEC NESTED DICTS.
@@ -94,7 +94,7 @@ def replicate( target, source ):
     otherwise adds elements to it.
     """
     if not source:
-        target = OrderedDict()
+        target = OrderedDictWithDefaults()
         return
     if hasattr(source, "defaults"):
         target.defaults = pdeepcopy(source.defaults)
@@ -102,7 +102,7 @@ def replicate( target, source ):
         if isinstance( val, dict ):
             if key not in target:
                 target[key] = OrderedDictWithDefaults()
-            elif hasattr(val, 'defaults'):
+            if hasattr(val, 'defaults'):
                 target[key].defaults = pdeepcopy(val.defaults)
             replicate( target[key], val )
         elif isinstance( val, list ):
@@ -119,7 +119,7 @@ def pdeepcopy(source):
 def poverride( target, sparse ):
     """Override items in a target pdict, target sub-dicts must already exist."""
     if not sparse:
-        target = OrderedDict()
+        target = OrderedDictWithDefaults()
         return
     for key,val in sparse.items():
         if isinstance( val, dict ):
@@ -133,33 +133,58 @@ def m_override( target, sparse ):
     """Override items in a target pdict. Target keys must already exist
     unless there is a "__MANY__" placeholder in the right position."""
     if not sparse:
-        target = OrderedDict()
+        target = OrderedDictWithDefaults()
         return
-    for key,val in sparse.items():
-        if isinstance( val, dict ):
-            if key not in target:
-                if '__MANY__' in target:
-                    target[key] = OrderedDictWithDefaults()
-                    target[key].defaults = target['__MANY__']
-                    replicate( target[key], val )
+    stack = [(sparse, target, [], OrderedDictWithDefaults())]
+    defaults_list = []
+    while stack:
+        source, dest, keylist, many_defaults = stack.pop(0)
+        if many_defaults:
+            defaults_list.append((dest, many_defaults))
+        for key, val in source.items():
+            if isinstance( val, dict ):
+                if key in many_defaults:
+                    child_many_defaults = many_defaults[key]
                 else:
-                    # TODO - validation prevents this, but handle properly for completeness.
-                    raise Exception( "parsec dict override: no __MANY__ placeholder" )
-            m_override( target[key], val )
-        else:
-            if key not in target:
-                if '__MANY__' in target:
-                    if isinstance( val, list ):
-                        target[key] = val[:]
+                    child_many_defaults = OrderedDictWithDefaults()
+                if key not in dest:
+                    if '__MANY__' in dest:
+                        dest[key] = OrderedDictWithDefaults()
+                        child_many_defaults = dest['__MANY__']
+                    elif '__MANY__' in many_defaults:
+                        # A 'sub-many' dict - would it ever exist in real life?
+                        dest[key] = OrderedDictWithDefaults()
+                        child_many_defaults = many_defaults['__MANY__']
+                    elif key in many_defaults:
+                        dest[key] = OrderedDictWithDefaults()
                     else:
-                        target[key] = val
-                else:
-                    # TODO - validation prevents this, but handle properly for completeness.
-                    raise Exception( "parsec dict override: no __MANY__ placeholder" )
-            if isinstance( val, list ):
-                target[key] = val[:]
+                        # TODO - validation prevents this, but handle properly for completeness.
+                        raise Exception(
+                            "parsec dict override: no __MANY__ placeholder" +
+                            "%s" % (keylist + [key])
+                        )
+                stack.append((val, dest[key], keylist + [key], child_many_defaults))
             else:
-                target[key] = val
+                if key not in dest:
+                    if '__MANY__' in dest or key in many_defaults or '__MANY__' in many_defaults:
+                        if isinstance( val, list ):
+                            dest[key] = val[:]
+                        else:
+                            dest[key] = val
+
+                    else:
+                        # TODO - validation prevents this, but handle properly for completeness.
+                        raise Exception(
+                            "parsec dict override: no __MANY__ placeholder" +
+                            "%s" % (keylist + [key])
+                        )
+                if isinstance( val, list ):
+                    dest[key] = val[:]
+                else:
+                    dest[key] = val
+    for dest_dict, defaults in defaults_list:
+        dest_dict.defaults = defaults
+
 
 def un_many( cfig ):
     """Remove any '__MANY__' items from a nested dict, in-place."""
@@ -167,7 +192,13 @@ def un_many( cfig ):
         return
     for key,val in cfig.items():
         if key == '__MANY__':
-            del cfig[key]
+            try:
+                del cfig[key]
+            except KeyError:
+                if hasattr(cfig, 'defaults') and key in cfig.defaults:
+                    del cfig.defaults[key]
+                else:
+                    raise
         elif isinstance( val, dict ):
             un_many( cfig[key] )
 

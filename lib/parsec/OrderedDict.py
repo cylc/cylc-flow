@@ -43,7 +43,11 @@ class OrderedDictWithDefaults(OrderedDict):
 
     """
 
-    def __contains__(self, key):
+    def __contains_no_default__(self, key):
+        """No-default contains."""
+        return key in list(self)
+
+    def __contains_default__(self, key):
         """Make sure "key in foo" works with our defaults."""
         return key in self.keys()
 
@@ -55,6 +59,12 @@ class OrderedDictWithDefaults(OrderedDict):
             if hasattr(self, 'defaults'):
                 return self.defaults[key]
             raise
+
+    def __setitem__(self, *args, **kwargs):
+        self.__contains__ = self.__contains_no_default__
+        return_value = OrderedDict.__setitem__(self, *args, **kwargs)
+        self.__contains__ = self.__contains_default__
+        return return_value
 
     def keys(self):
         """Include the default keys, after the list of actually-set ones."""
@@ -86,3 +96,21 @@ class OrderedDictWithDefaults(OrderedDict):
         """Include default key-value pairs - no memory saving over .items()"""
         for k in self.keys():
             yield (k, self[k])
+
+    def __nonzero__(self):
+        """Include any default keys in the nonzero calculation."""
+        return bool(self.keys())
+
+    def __repr__(self):
+        non_default_items = []
+        non_default_keys = list(self)
+        for key in non_default_keys:
+            non_default_items.append(key)
+        default_items = []
+        for key in getattr(self, 'defaults', []):
+            if key not in non_default_keys:
+                default_items.append(key)
+        return "<" + type(self).__name__ + "({'': " + repr(non_default_items) + ", 'defaults':" + repr(default_items) + "})" + ")>\n"
+
+    __contains__ = __contains_default__
+
