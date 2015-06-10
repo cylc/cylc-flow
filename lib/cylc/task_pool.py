@@ -170,7 +170,7 @@ class TaskPool(object):
         # restart when all tasks are initially loaded into the runahead pool).
         for itask_id_maps in self.runahead_pool.values():
             for itask in itask_id_maps.values():
-                if itask.state.is_currently('failed', 'succeeded'):
+                if itask.state.is_currently('failed', 'succeeded', 'expired'):
                     self.release_runahead_task(itask)
                     self.rhpool_changed = True
 
@@ -181,7 +181,7 @@ class TaskPool(object):
                 self.get_tasks_by_point(incl_runahead=True).items()):
             has_unfinished_itasks = False
             for itask in itasks:
-                if not itask.state.is_currently('failed', 'succeeded'):
+                if not itask.state.is_currently('failed', 'succeeded', 'expired'):
                     has_unfinished_itasks = True
                     break
             if not points and not has_unfinished_itasks:
@@ -953,11 +953,11 @@ class TaskPool(object):
         for itask in self.get_all_tasks():
             if self.stop_point is None:
                 # Don't if any unsucceeded task exists.
-                if not itask.state.is_currently('succeeded'):
+                if not itask.state.is_currently('succeeded', 'expired'):
                     shutdown = False
                     break
             elif (itask.point <= self.stop_point and
-                    not itask.state.is_currently('succeeded')):
+                    not itask.state.is_currently('succeeded', 'expired')):
                 # Don't if any unsucceeded task exists < stop point...
                 if itask.identity not in self.held_future_tasks:
                     # ...unless it has a future trigger extending > stop point.

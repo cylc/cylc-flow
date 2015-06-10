@@ -415,8 +415,8 @@ class TaskProxy(object):
             ) and self.start_time_reached()
         )
         if ready and self.has_expired():
-            self.log(WARNING, 'expired: succeeding without running.')
-            self.reset_state_succeeded()
+            self.log(WARNING, 'Task expired (skipping job).')
+            self.reset_state_expired()
             return False
         return ready
 
@@ -475,20 +475,19 @@ class TaskProxy(object):
         dep.sort()
         return dep
 
-    def unfail(self):
-        """Remove previous failed message.
+    def unset_outputs(self):
+        """Remove special output messages.
 
-        If a task is manually reset remove any previous failed message or on
-        later success it will be seen as an incomplete output.
-
+        These are added for use in triggering off special states:
+          failed, submit-failed, expired
+        If the task state is later reset, these must be removed or they will
+        seen as incomplete outputs when the task finishes.
         """
         self.hold_on_retry = False
-        failed_msg = self.identity + " failed"
-        if self.outputs.exists(failed_msg):
-            self.outputs.remove(failed_msg)
-        failed_msg = self.identity + "submit-failed"
-        if self.outputs.exists(failed_msg):
-            self.outputs.remove(failed_msg)
+        for state in ["failed", "submit-failed", "expired"]:
+            msg = "%s %s" % (self.identity, state)
+            if self.outputs.exists(msg):
+                self.outputs.remove(msg)
 
     def turn_off_timeouts(self):
         """Turn off submission and execution timeouts."""
@@ -500,9 +499,19 @@ class TaskProxy(object):
         self.set_status('waiting')
         self.record_db_event(event="reset to ready")
         self.prerequisites.set_all_satisfied()
-        self.unfail()
+        self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
+
+    def reset_state_expired(self):
+        """Reset state to "expired"."""
+        self.set_status('expired')
+        self.record_db_event(event="reset to expired")
+        self.prerequisites.set_all_satisfied()
+        self.unset_outputs()
+        self.turn_off_timeouts()
+        self.outputs.set_all_incomplete()
+        self.outputs.add(self.identity + ' expired', completed=True)
 
     def reset_state_waiting(self):
         """Reset state to "waiting".
@@ -513,7 +522,7 @@ class TaskProxy(object):
         self.set_status('waiting')
         self.record_db_event(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
-        self.unfail()
+        self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
 
@@ -531,7 +540,7 @@ class TaskProxy(object):
             # the purge algorithm and when reloading task definitions.
             self.record_db_event(event="set to succeeded")
         self.prerequisites.set_all_satisfied()
-        self.unfail()
+        self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_completed()
 
@@ -1446,7 +1455,8 @@ class TaskProxy(object):
         if self.tdef.is_coldstart:
             self.state.set_spawned()
         return not self.state.has_spawned() and self.state.is_currently(
-            'submitted', 'running', 'succeeded', 'failed', 'retrying')
+            'expired', 'submitted', 'running', 'succeeded', 'failed',
+            'retrying')
 
     def done(self):
         """Return True if task has succeeded and spawned."""

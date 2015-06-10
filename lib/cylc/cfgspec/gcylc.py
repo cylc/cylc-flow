@@ -47,6 +47,7 @@ SPEC = {
             'held'          : vdr( vtype='string_list' ),
             'queued'        : vdr( vtype='string_list' ),
             'ready'         : vdr( vtype='string_list' ),
+            'expired'       : vdr( vtype='string_list' ),
             'submitted'     : vdr( vtype='string_list' ),
             'submit-failed' : vdr( vtype='string_list' ),
             'running'       : vdr( vtype='string_list' ),
