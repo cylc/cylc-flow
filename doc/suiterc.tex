@@ -503,6 +503,13 @@ constraints.
     \item {\em default:} (none)
 \end{myitemize}
 
+\subsubsection[hold after point]{[scheduling] $\rightarrow$ hold after point}
+
+Cycling tasks are held once they pass the hold after cycle point, if one is
+specified. Unlike the final cycle point suite will not shut down once all tasks
+have passed this point. If this item is provided you can override it on the 
+command line or in the gcylc suite start panel.
+
 \subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
 \label{runahead limit}
 
