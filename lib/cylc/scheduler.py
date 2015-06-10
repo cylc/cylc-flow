@@ -688,7 +688,7 @@ class scheduler(object):
                 viewable = os.path.join(
                     run_dir, cylc.rundb.CylcRuntimeDAO.DB_FILE_BASE_NAME)
                 if not os.path.exists(primary) and os.path.exists(viewable):
-                    print ("[info] copying across old suite database to " +
+                    print ("Copying across old suite database to " +
                            "state directory")
                     shcopy(viewable, primary)
                 self.db = cylc.rundb.CylcRuntimeDAO(suite_dir=run_dir)
@@ -707,7 +707,7 @@ class scheduler(object):
                     self.options.hold_point_string)
 
             if self._pool_hold_point:
-                print "[info] suite will hold after " + str(self._pool_hold_point)
+                print "Suite will hold after " + str(self._pool_hold_point)
 
         # Running in UTC time? (else just use the system clock)
         cylc.flags.utc = self.config.cfg['cylc']['UTC mode']
