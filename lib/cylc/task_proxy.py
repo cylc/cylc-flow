@@ -234,6 +234,8 @@ class TaskProxy(object):
         self.set_from_rtconfig()
         self.delayed_start_str = None
         self.delayed_start = None
+        self.expire_time_str = None
+        self.expire_time = None
 
     def _add_prerequisites(self, point):
         """Add task prerequisites."""
@@ -398,7 +400,7 @@ class TaskProxy(object):
 
     def ready_to_run(self):
         """Is this task ready to run?"""
-        return (
+        ready = (
             (
                 self.state.is_currently('queued') or
                 (
@@ -412,31 +414,55 @@ class TaskProxy(object):
                 )
             ) and self.start_time_reached()
         )
+        if ready and self.has_expired():
+            self.log(WARNING, 'expired: succeeding without running.')
+            self.reset_state_succeeded()
+            return False
+        return ready
 
-    def start_time_reached(self):
-        """Has this task reached its clock trigger time?"""
-        if self.tdef.clocktrigger_offset is None:
-            return True
+    def get_point_as_seconds(self):
+        """Compute and store my cycle point as seconds."""
         if self.point_as_seconds is None:
             iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.point))
-            iso_clocktrigger_offset = cylc.cycling.iso8601.interval_parse(
-                str(self.tdef.clocktrigger_offset))
             self.point_as_seconds = int(iso_timepoint.get(
                 "seconds_since_unix_epoch"))
-            clocktrigger_offset_as_seconds = int(
-                iso_clocktrigger_offset.get_seconds())
             if iso_timepoint.time_zone.unknown:
                 utc_offset_hours, utc_offset_minutes = (
                     get_local_time_zone())
                 utc_offset_in_seconds = (
                     3600 * utc_offset_hours + 60 * utc_offset_minutes)
                 self.point_as_seconds += utc_offset_in_seconds
+        return self.point_as_seconds
+
+    def get_offset_as_seconds(self, offset):
+        """Return an ISO interval as seconds."""
+        iso_offset = cylc.cycling.iso8601.interval_parse(str(offset))
+        return int(iso_offset.get_seconds())
+
+    def start_time_reached(self):
+        """Has this task reached its clock trigger time?"""
+        if self.tdef.clocktrigger_offset is None:
+            return True
+        if self.delayed_start is None:
             self.delayed_start = (
-                self.point_as_seconds + clocktrigger_offset_as_seconds)
+                self.get_point_as_seconds() +
+                self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
             self.delayed_start_str = get_time_string_from_unix_time(
                 self.delayed_start)
         return time.time() > self.delayed_start
 
+    def has_expired(self):
+        """Is this task past its use-by date?"""
+        if self.tdef.expiration_offset is None:
+            return False
+        if self.expire_time is None:
+            self.expire_time = (
+                self.get_point_as_seconds() +
+                self.get_offset_as_seconds(self.tdef.expiration_offset))
+            self.expire_time_str = get_time_string_from_unix_time(
+                self.expire_time)
+        return time.time() > self.expire_time
+ 
     def get_resolved_dependencies(self):
         """report who I triggered off"""
         # Used by the test-battery log comparator

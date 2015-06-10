@@ -139,6 +139,7 @@ class config( object ):
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
+        self.expiration_offsets = {}
         self.ext_triggers = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
@@ -376,8 +377,7 @@ class config( object ):
         if self.start_point is not None:
             self.start_point.standardise()
 
-        # Parse clock-trigger offsets and external trigger messages and replace
-        # families with members.
+        # Parse special task cycle point offsets, and replace family names.
         if flags.verbose:
             print "Parsing [special tasks]"
         for type in self.cfg['scheduling']['special tasks']:
@@ -394,7 +394,7 @@ class config( object ):
                     name, ext_trigger_msg = m.groups()
                     extn = "(" + ext_trigger_msg + ")"
   
-                elif type == 'clock-triggered':
+                elif type in ['clock-triggered', 'expiring']:
                     m = re.match(CLOCK_OFFSET_RE, item)
                     if m is None:
                         raise SuiteConfigError(
@@ -403,9 +403,9 @@ class config( object ):
                     if (self.cfg['scheduling']['cycling mode'] !=
                             Calendar.MODE_GREGORIAN):
                         raise SuiteConfigError(
-                            "ERROR: clock-triggered tasks require " +
-                            "[scheduling]cycling mode=%s" %
-                            Calendar.MODE_GREGORIAN
+                            "ERROR: %s tasks require "
+                            "[scheduling]cycling mode=%s" % (
+                                type, Calendar.MODE_GREGORIAN)
                         )
                     name, offset_string = m.groups()
                     if not offset_string:
@@ -450,10 +450,14 @@ class config( object ):
                         result.append(member + extn)
                         if type == 'clock-triggered':
                             self.clock_offsets[member] = offset_interval
+                        if type == 'expiring':
+                            self.expiration_offsets[member] = offset_interval
                         if type == 'external-triggered':
                             self.ext_triggers[member] = ext_trigger_msg
                 elif type == 'clock-triggered':
                     self.clock_offsets[name] = offset_interval
+                elif type == 'expiring':
+                    self.expiration_offsets[name] = offset_interval
                 elif type == 'external-triggered':
                     self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
@@ -1088,7 +1092,7 @@ class config( object ):
         # Check declared special tasks are valid.
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
-                if task_type in ['clock-triggered', 'external-triggered']:
+                if task_type in ['clock-triggered', 'expiring', 'external-triggered']:
                     name = re.sub('\(.*\)','',name)
                 if not TaskID.is_valid_name(name):
                     raise SuiteConfigError(
@@ -2098,6 +2102,8 @@ class config( object ):
 
         if name in self.clock_offsets:
             taskd.clocktrigger_offset = self.clock_offsets[name]
+        if name in self.expiration_offsets:
+            taskd.expiration_offset = self.expiration_offsets[name]
         if name in self.ext_triggers:
             taskd.external_triggers.append(self.ext_triggers[name])
 
