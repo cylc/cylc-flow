@@ -29,7 +29,6 @@ hosts.
 To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file.""",
     argdoc=[])
-parser.remove_option("--host")
 parser.add_option("--host",
                   help="Host names to monitor (override site default).",
                   metavar="HOST", action="append",

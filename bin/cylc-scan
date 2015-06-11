@@ -44,8 +44,7 @@ def main():
         __doc__,
         pyro=True,
         noforce=True,
-        argdoc=[("[HOSTS ...]", "hosts to scan instead of the default ones")],
-        auto_add=False)
+        argdoc=[("[HOSTS ...]", "hosts to scan instead of the default ones")])
 
     parser.add_option(
         "--print-ports",
@@ -56,8 +55,6 @@ def main():
         default=False,
         dest="print_ports")
 
-    parser.add_std_options()
-    parser.remove_option("--pyro-timeout")
     parser.add_option(
         "--pyro-timeout",
         metavar="SEC",
