@@ -20,7 +20,7 @@ import os, sys, re
 from parsec.fileparse import parse, FileNotFoundError
 from parsec.util import printcfg
 from parsec.validate import validate, check_compulsory, expand, validator
-from parsec.OrderedDict import OrderedDict, OrderedDictWithDefaults
+from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate, itemstr
 from parsec.upgrade import UpgradeError
 import cylc.flags

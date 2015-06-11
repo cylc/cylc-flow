@@ -59,6 +59,7 @@ class OrderedDictWithDefaults(OrderedDict):
             raise
 
     def __setitem__(self, *args, **kwargs):
+        """Make sure that we don't set the default value!"""
         self.__contains__ = OrderedDict.__contains__
         return_value = OrderedDict.__setitem__(self, *args, **kwargs)
         self.__contains__ = self.__contains_default__
@@ -100,15 +101,17 @@ class OrderedDictWithDefaults(OrderedDict):
         return bool(self.keys())
 
     def __repr__(self):
+        """User-friendly-ish representation of defaults and others."""
         non_default_items = []
         non_default_keys = list(self)
         for key in non_default_keys:
-            non_default_items.append(key)
+            non_default_items.append((key, self[key]))
         default_items = []
         for key in getattr(self, 'defaults', []):
             if key not in non_default_keys:
-                default_items.append(key)
-        return "<" + type(self).__name__ + "({'': " + repr(non_default_items) + ", 'defaults':" + repr(default_items) + "})" + ")>\n"
+                default_items.append((key, self[key]))
+        repr_map = {"": non_default_items, "defaults": default_items}
+        return "<" + type(self).__name__ + "(" + repr(repr_map) + ")>\n"
 
     __contains__ = __contains_default__
 
