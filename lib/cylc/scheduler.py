@@ -18,6 +18,7 @@
 
 import os
 import re
+import signal
 import sys
 import time
 import traceback
@@ -893,14 +894,16 @@ class scheduler(object):
 
         fs_check_period = datetime.timedelta(minutes=10)
         next_fs_check = datetime.datetime.utcnow() + fs_check_period
+
+        suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            self.suite, 'suite run directory')
+
         while True:  # MAIN LOOP
 
             # Periodic check that the suite directory still exists
             if datetime.datetime.now() > next_fs_check:
-                if not os.path.exists(self.suite_dir):
-                    self.shutdown(
-                        "ERROR: Suite directory not found at " + self.suite_dir)
-                    raise
+                if not os.path.exists(suite_run_dir):
+                    os.kill(os.getpid(), signal.SIGKILL)
                 else:
                     next_fs_check = datetime.datetime.utcnow() + fs_check_period
 
