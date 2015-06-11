@@ -43,13 +43,11 @@ class OrderedDictWithDefaults(OrderedDict):
 
     """
 
-    def __contains_no_default__(self, key):
-        """No-default contains."""
-        return key in list(self)
-
     def __contains_default__(self, key):
         """Make sure "key in foo" works with our defaults."""
-        return key in self.keys()
+        if key in getattr(self, "defaults", {}):
+            return True
+        return OrderedDict.__contains__(self, key)
 
     def __getitem__(self, key):
         """Override to look in our special .defaults attribute, if it exists."""
@@ -61,7 +59,7 @@ class OrderedDictWithDefaults(OrderedDict):
             raise
 
     def __setitem__(self, *args, **kwargs):
-        self.__contains__ = self.__contains_no_default__
+        self.__contains__ = OrderedDict.__contains__
         return_value = OrderedDict.__setitem__(self, *args, **kwargs)
         self.__contains__ = self.__contains_default__
         return return_value
