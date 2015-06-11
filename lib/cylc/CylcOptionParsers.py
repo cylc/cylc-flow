@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re
-from optparse import OptionParser
+from optparse import OptionParser, OptionConflictError
 from suite_host import get_hostname
 from owner import user
 from cylc.command_prep import prep_file
@@ -109,88 +109,133 @@ Arguments:"""
         usage = re.sub( 'ARGS', args, usage )
 
         OptionParser.__init__( self, usage )
-        if self.auto_add:
-            self.add_std_options()
 
     def add_std_options( self ):
-        self.add_option( "--user",
+        """Add standard options if they have not been overridden."""
+        try:
+            self.add_option( "--user",
                 help="Other user account name. This results in "
                 "command reinvocation on the remote account.",
                 metavar="USER", default=user,
                 action="store", dest="owner" )
+        except OptionConflictError:
+            pass
 
-        self.add_option( "--host",
+        try:
+            self.add_option( "--host",
                 help="Other host name. This results in "
                 "command reinvocation on the remote account.",
                 metavar="HOST", action="store", default=get_hostname(),
                 dest="host" )
+        except OptionConflictError:
+            pass
 
-        self.add_option( "-v", "--verbose",
+        try:
+            self.add_option( "-v", "--verbose",
                 help="Verbose output mode.",
                 action="store_true", default=False, dest="verbose" )
+        except OptionConflictError:
+            pass
 
-        self.add_option( "--debug",
+
+        try:
+            self.add_option( "--debug",
                 help="Run suites in non-daemon mode, and show exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
+        except OptionConflictError:
+            pass
 
-        self.add_option( "--db",
+
+        try:
+            self.add_option( "--db",
                 help="Alternative suite registration database location, "
                 "defaults to $HOME/.cylc/REGDB.",
                 metavar="PATH", action="store", default=None, dest="db" )
+        except OptionConflictError:
+            pass
+
 
         if self.pyro:
-            self.add_option( "--port",
-                help="Suite port number on the suite host. NOTE: this is retrieved "
-                "automatically if passwordless ssh is configured to the suite host.",
-                metavar="INT", action="store", default=None, dest="port" )
+            try:
+                self.add_option( "--port",
+                    help="Suite port number on the suite host. NOTE: this is retrieved "
+                    "automatically if passwordless ssh is configured to the suite host.",
+                    metavar="INT", action="store", default=None, dest="port" )
+            except OptionConflictError:
+                pass
 
-            self.add_option( "--use-ssh",
+            try:
+                self.add_option( "--use-ssh",
                     help="Use ssh to re-invoke the command on the suite host.",
                     action="store_true", default=False, dest="use_ssh" )
+            except OptionConflictError:
+                pass
 
-            self.add_option( "--no-login",
+            try:
+                self.add_option( "--no-login",
                     help="Do not use a login shell to run remote ssh commands. "
                     "The default is to use a login shell.",
                     action="store_false", default=True, dest="ssh_login" )
+            except OptionConflictError:
+                pass
 
-            self.add_option( "--pyro-timeout", metavar='SEC',
+            try:
+                self.add_option( "--pyro-timeout", metavar='SEC',
                     help="Set a timeout for network connections "
                     "to the running suite. The default is no timeout. "
                     "For task messaging connections see "
                     "site/user config file documentation.",
                     action="store", default=None, dest="pyro_timeout" )
+            except OptionConflictError:
+                pass
 
-            self.add_option("--uuid",
+            try:
+                self.add_option("--uuid",
                     help="Print the client UUID to stderr. This can be matched "
                     "to information logged by the receiving suite daemon.",
                     action="store_true", default=False, dest="print_uuid")
+            except OptionConflictError:
+                pass
 
             if not self.noforce:
-                self.add_option( "-f", "--force",
+                try:
+                    self.add_option( "-f", "--force",
                         help="Do not ask for confirmation before acting. Note that "
                         "it is not necessary to use this option if interactive command "
                         "prompts have been disabled in the site/user config files.",
                         action="store_true", default=False, dest="force" )
+                except OptionConflictError:
+                    pass
 
         if self.jset:
-            self.add_option( "-s", "--set", metavar="NAME=VALUE",
+            try:
+                self.add_option( "-s", "--set", metavar="NAME=VALUE",
                     help="Set the value of a Jinja2 template variable in the suite "
                     "definition. This option can be used multiple times on the command "
                     "line.  WARNING: these settings do not persist across suite restarts; "
                     "they need to be set again on the \"cylc restart\" command line.",
                     action="append", default=[], dest="templatevars" )
+            except OptionConflictError:
+                pass
 
-            self.add_option( "--set-file", metavar="FILE",
+            try:
+                self.add_option( "--set-file", metavar="FILE",
                     help="Set the value of Jinja2 template variables in the suite "
                     "definition from a file containing NAME=VALUE pairs (one per line). "
                     "WARNING: these settings do not persist across suite restarts; "
                     "they need to be set again on the \"cylc restart\" command line.",
                     action="store", default=None, dest="templatevars_file" )
+            except OptionConflictError:
+                pass
 
         if self.multitask:
-            self.add_option( "-m", "--family",
+            try:
+                self.add_option( "-m", "--family",
                     help="Match members of named families rather than tasks.",
                     action="store_true", default=False, dest="is_family" )
+            except OptionConflictError:
+                pass
+
 
     def get_suite( self, index=0 ):
         return self.suite_info[index]
@@ -216,6 +261,9 @@ Arguments:"""
         return suite, suiterc, watchers
 
     def parse_args( self, remove_opts=[] ):
+        if self.auto_add:
+            # Add common options after command-specific options.
+            self.add_std_options()
 
         for opt in remove_opts:
             try:
