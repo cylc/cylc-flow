@@ -114,4 +114,3 @@ class OrderedDictWithDefaults(OrderedDict):
         return "<" + type(self).__name__ + "(" + repr(repr_map) + ")>\n"
 
     __contains__ = __contains_default__
-
