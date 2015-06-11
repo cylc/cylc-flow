@@ -91,7 +91,7 @@ Text Treeview suite control interface.
 
     def treeview_widgets( self ):
         self.sort_col_num = 0
-        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str, str, str, str, gtk.gdk.Pixbuf)
+        self.ttreestore = gtk.TreeStore(str, str, str, str, str, str, str, str, str, str, str, gtk.gdk.Pixbuf, int)
         self.ttreeview = gtk.TreeView()
         self.ttreeview.set_rules_hint(True)
         self.tmodelfilter = self.ttreestore.filter_new() # TODO - REMOVE FILTER HERE?
@@ -114,7 +114,10 @@ Text Treeview suite control interface.
                 crp = gtk.CellRendererPixbuf()
                 tvc.pack_start(crp, False)
                 tvc.set_attributes(crp, pixbuf=11)
-            cr = gtk.CellRendererText()
+            if n == 8:
+                cr = gtk.CellRendererProgress()
+            else:
+                cr = gtk.CellRendererText()
             tvc.pack_start(cr, True)
             if n == 6 or n == 7 or n == 8:
                 tvc.set_cell_data_func(cr, self._set_cell_text_time, n)
@@ -262,12 +265,27 @@ Text Treeview suite control interface.
         date_time_string = model.get_value(iter_, n)
         if "T" in self.updater.dt:
             last_update_date = self.updater.dt.split("T")[0]
-            date_time_string = date_time_string.replace(last_update_date
-                                                        + "T", "", 1)
+            date_time_string = date_time_string.replace(
+                last_update_date + "T", "", 1)
         if n == 8:
-            return cell.set_property("markup", date_time_string)
-        else:
-            return cell.set_property("text", date_time_string)
+            # Progress bar for estimated completion time.
+            if date_time_string == "":
+                # Family rows.
+                cell.set_property('visible', False)
+            elif date_time_string == "*":
+                # Date-time estimate not available yet.
+                cell.set_property('visible', True)
+                cell.set_property('value', 0)
+            elif not date_time_string.endswith('?'):
+                # Task finished - set back to 0% for aesthetic reasons.
+                cell.set_property('visible', True)
+                cell.set_property('value', 0)
+            else: 
+                # Task running - show progress to estimated finish time.
+                cell.set_property('visible', True)
+                percent = model.get_value(iter_, 12)
+                cell.set_property('value', percent)
+        cell.set_property("text", date_time_string)
 
     def get_toolitems( self ):
         """Return the tool bar items specific to this view."""
