@@ -339,6 +339,7 @@ SPEC = {
                 'suite definition directory'  : vdr( vtype='string' ),
                 },
             'event hooks' : {
+                'expired handler'             : vdr( vtype='string_list', default=[] ),
                 'submitted handler'           : vdr( vtype='string_list', default=[] ),
                 'started handler'             : vdr( vtype='string_list', default=[] ),
                 'succeeded handler'           : vdr( vtype='string_list', default=[] ),

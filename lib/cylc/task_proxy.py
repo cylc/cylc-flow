@@ -416,6 +416,7 @@ class TaskProxy(object):
         )
         if ready and self.has_expired():
             self.log(WARNING, 'Task expired (skipping job).')
+            self.handle_event('expired')
             self.reset_state_expired()
             return False
         return ready
