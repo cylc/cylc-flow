@@ -1094,7 +1094,7 @@ class config( object ):
                     raise SuiteConfigError(
                         'ERROR: Illegal %s task name: %s' % (task_type, name))
                 if name not in self.taskdefs and name not in self.cfg['runtime']:
-                    msg = '%s task "%s" is not defined.' % (task_type % name)
+                    msg = '%s task "%s" is not defined.' % (task_type, name)
                     if self.strict:
                         raise SuiteConfigError("ERROR: " + msg)
                     else:
