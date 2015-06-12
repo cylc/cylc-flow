@@ -178,6 +178,14 @@ class config( object ):
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
 
+        # The two runahead limiting schemes are mutually exclusive.
+        rlim = self.cfg['scheduling'].get('runahead limit', None) 
+        mact = self.cfg['scheduling'].get('max active cycle points', None)
+        if rlim is not None and mact is not None:
+            raise SuiteConfigError(
+                "ERROR: use 'runahead limit' OR "
+                "'max active cycle points', not both")
+
         if self._cli_initial_point_string is not None:
             self.cfg['scheduling']['initial cycle point'] = (
                 self._cli_initial_point_string)
