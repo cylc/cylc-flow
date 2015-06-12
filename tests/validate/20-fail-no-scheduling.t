@@ -24,6 +24,6 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "No suite dependency graph defined\." $TEST_NAME.stderr
+grep_ok "missing \[scheduling\] section" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 exit

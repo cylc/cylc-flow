@@ -178,6 +178,13 @@ class config( object ):
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
 
+        # First check for the essential scheduling section.
+        if 'scheduling' not in self.cfg:
+            raise SuiteConfigError("ERROR: missing [scheduling] section.")
+        if 'dependencies' not in self.cfg['scheduling']:
+            raise SuiteConfigError(
+                "ERROR: missing [scheduling][[dependencies]] section.")
+        # (The check that 'graph' is definied is below).
         # The two runahead limiting schemes are mutually exclusive.
         rlim = self.cfg['scheduling'].get('runahead limit', None) 
         mact = self.cfg['scheduling'].get('max active cycle points', None)
