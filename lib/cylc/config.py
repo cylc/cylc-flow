@@ -420,7 +420,7 @@ class config( object ):
                         # Backward-compatibility for a raw float number of hours.
                         set_syntax_version(
                             VERSION_PREV,
-                            "clock-trigger=%s: integer offset" % item
+                            "%s=%s: integer offset" % (type, item)
                         )
                         if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
                             seconds = int(float(offset_string)*3600)
@@ -430,13 +430,13 @@ class config( object ):
                         offset_interval = get_interval(offset_string).standardise()
                     except IntervalParsingError as exc:
                         raise SuiteConfigError(
-                            "ERROR: Illegal clock-trigger spec: %s" % offset_string
+                            "ERROR: Illegal %s spec: %s" % (type, offset_string)
                         )
                     else:
                         if not offset_converted_from_prev:
                             set_syntax_version(
                                 VERSION_NEW,
-                                "clock-trigger=%s: ISO 8601 offset" % item
+                                "%s=%s: ISO 8601 offset" % (type, item)
                             )
                     extn = "(" + offset_string + ")"
 
