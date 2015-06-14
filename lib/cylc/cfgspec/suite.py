@@ -101,7 +101,7 @@ def _coerce_cycletime_format( value, keys, args ):
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
-    if "/" in value or ":" in value:
+    if "/" in value:
         raise IllegalValueError("cycle point format", keys, value)
     if "%" in value:
         try:
