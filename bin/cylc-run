@@ -55,8 +55,9 @@ warm start unless you use special cold-start tasks. See "Suite Start-up" and
 "Cold-Start Tasks" in the User Guide for more."""
 
         self.parser = cop( usage, jset=True, argdoc=[ ("REG", "Suite name"),
-                ("[START_POINT]", """Initial cycle point or 'now'; overrides the
-                         suite definition.""")])
+                ("[START_POINT]",
+                """Initial cycle point, or 'now', or 'UTC-now';
+                               overrides the suite definition.""")])
 
         self.parser.add_option( "--non-daemon",
                 help="(deprecated: use --no-detach)",
@@ -95,7 +96,11 @@ warm start unless you use special cold-start tasks. See "Suite Start-up" and
             start_point_string = self.args[1]
             if start_point_string == "now":
                 start_point_string = (
-                    datetime.datetime.utcnow().strftime("%Y%m%dT%H%MZ")
+                    datetime.datetime.now().strftime("%Y%m%dT%H%M")
+                )
+            elif start_point_string == "UTC-now":
+                start_point_string = (
+                    datetime.datetime.utcnow().strftime("%Y%m%dT%H%M")
                 )
             if self.options.warm:
                 self._cli_start_point_string = start_point_string
