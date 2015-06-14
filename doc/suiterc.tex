@@ -455,9 +455,14 @@ the time zone determined by \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time point representation (e.g.
- \lstinline=CCYYMMDDThhmm=, 19951231T0630)
+ \lstinline=CCYYMMDDThhmm=, 19951231T0630), or ``now'', or ``UTCnow''.
     \item {\em default:} (none)
 \end{myitemize}
+
+The string ``now'' converts to the current date-time on the suite host, to
+minute resolution - but minutes (or hours, etc.) may be ignored depending
+on your cycle point format (\ref{cycle-point-format}).  Use ``UTCnow'' if the
+suite runs in UTC mode (\ref{UTC-mode}) but the suite host does not.  
 
 \subsubsection[final cycle point]{[scheduling] $\rightarrow$ final cycle point}
 

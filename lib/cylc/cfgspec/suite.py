@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import datetime
 
 from parsec.validate import validator as vdr
 from parsec.validate import (
@@ -66,6 +67,10 @@ def _coerce_cycleinterval( value, keys, args ):
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle point."""
+    if value == "now":
+        value = datetime.datetime.now().strftime("%Y%m%dT%H%M")
+    elif value == "UTCnow":
+        value = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M")
     value = _strip_and_unquote( keys, value )
     if re.match(r"\d+$", value):
         # Could be an old date-time cycle point format, or integer format.
