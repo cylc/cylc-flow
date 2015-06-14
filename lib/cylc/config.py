@@ -394,7 +394,7 @@ class config( object ):
                     name, ext_trigger_msg = m.groups()
                     extn = "(" + ext_trigger_msg + ")"
   
-                elif type in ['clock-triggered', 'expiring']:
+                elif type in ['clock-trigger', 'clock-expire']:
                     m = re.match(CLOCK_OFFSET_RE, item)
                     if m is None:
                         raise SuiteConfigError(
@@ -420,7 +420,7 @@ class config( object ):
                         # Backward-compatibility for a raw float number of hours.
                         set_syntax_version(
                             VERSION_PREV,
-                            "clock-triggered=%s: integer offset" % item
+                            "clock-trigger=%s: integer offset" % item
                         )
                         if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
                             seconds = int(float(offset_string)*3600)
@@ -436,7 +436,7 @@ class config( object ):
                         if not offset_converted_from_prev:
                             set_syntax_version(
                                 VERSION_NEW,
-                                "clock-triggered=%s: ISO 8601 offset" % item
+                                "clock-trigger=%s: ISO 8601 offset" % item
                             )
                     extn = "(" + offset_string + ")"
 
@@ -448,15 +448,15 @@ class config( object ):
                             # (sub-family)
                             continue
                         result.append(member + extn)
-                        if type == 'clock-triggered':
+                        if type == 'clock-trigger':
                             self.clock_offsets[member] = offset_interval
-                        if type == 'expiring':
+                        if type == 'clock-expire':
                             self.expiration_offsets[member] = offset_interval
                         if type == 'external-triggered':
                             self.ext_triggers[member] = ext_trigger_msg
-                elif type == 'clock-triggered':
+                elif type == 'clock-trigger':
                     self.clock_offsets[name] = offset_interval
-                elif type == 'expiring':
+                elif type == 'clock-expire':
                     self.expiration_offsets[name] = offset_interval
                 elif type == 'external-triggered':
                     self.ext_triggers[name] = self.dequote(ext_trigger_msg)
@@ -1086,18 +1086,22 @@ class config( object ):
             for name in self.cfg['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.runtime['descendants']:
-                        # any family triggers have have been replaced with members by now.
-                        print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
-
+                        # Family triggers have been replaced with members.
+                        print >> sys.stderr, (
+                            '  WARNING: task "%s" not used in the graph.' % (
+                                name))
         # Check declared special tasks are valid.
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
-                if task_type in ['clock-triggered', 'expiring', 'external-triggered']:
+                if task_type in ['clock-trigger',
+                                 'clock-expire',
+                                 'external-triggered']:
                     name = re.sub('\(.*\)','',name)
                 if not TaskID.is_valid_name(name):
                     raise SuiteConfigError(
                         'ERROR: Illegal %s task name: %s' % (task_type, name))
-                if name not in self.taskdefs and name not in self.cfg['runtime']:
+                if (name not in self.taskdefs and
+                    name not in self.cfg['runtime']):
                     msg = '%s task "%s" is not defined.' % (task_type, name)
                     if self.strict:
                         raise SuiteConfigError("ERROR: " + msg)

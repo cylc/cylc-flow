@@ -34,7 +34,7 @@ Cause the cylc task processing loop to be invoked in a running suite.
 
 This happens automatically when the state of any task changes such that
 task processing (dependency negotation etc.) is required, or if a
-clock-triggered task is ready to run.
+clock-trigger task is ready to run.
 
 The main reason to use this command is to update the "estimated time till
 completion" intervals shown in the tree-view suite control GUI, during

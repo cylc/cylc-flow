@@ -2462,7 +2462,7 @@ configuration items grouped under several top level section headings:
     \item {\bf [cylc] } - {\em non task-specific suite configuration}
     \item {\bf [scheduling] } - {\em determines when tasks are ready to run}
         \begin{myitemize}
-            \item tasks with special behaviour, e.g. clock-triggered tasks
+            \item tasks with special behaviour, e.g. clock-trigger tasks
             \item the dependency graph, which defines the relationships
                 between tasks
         \end{myitemize}
@@ -3818,7 +3818,7 @@ they can trigger off a wall clock time expressed as an offset from cycle point:
 \begin{lstlisting}
 [scheduling]
     [[special tasks]]
-        clock-triggered = foo(PT2H)
+        clock-trigger = foo(PT2H)
     [[dependencies]]
         [[[T00]]]
             graph = foo
@@ -5612,7 +5612,7 @@ As a suite runs its task proxies may pass through the following states:
 
 \begin{myitemize}
     \item {\bf waiting} - prerequisites not satisfied yet
-    (note that clock-triggered tasks also wait on their trigger time).
+    (note that clock-trigger tasks also wait on their trigger time).
 
     \item {\bf queued} - ready to run (prerequisites satisfied) but
     temporarily held back by an {\em internal cylc queue}
@@ -6577,7 +6577,7 @@ require that. One way to do this is to declare the product upload task to be
 {\em sequential}, which is equivalent to making it depend on its own previous
 instance (see~\ref{SequentialTasks}).
 
-\subsection{Use Of Clock-Triggered Tasks}
+\subsection{Use Of Clock-Trigger Tasks}
 
 Tasks that wait on external real time data should have a clock-trigger to delay
 submission until roughly the expected time of data availability
@@ -6591,7 +6591,7 @@ to delay their submission until the expected time of the remote suite event.
 Some tasks wait on external events and therefore need to repeatedly check and
 wait for the event before reporting eventual success (or perhaps failure after
 a timeout). For example, a task that waits for a file to appear on an ftp
-server. Typically these should be clock-triggered tasks (see above), but once
+server. Typically these should be clock-trigger tasks (see above), but once
 triggered there are two ways to handle the repeated checking: the task itself
 could implement a check-and-wait loop; or you could just configure multiple
 retries for the task (see~\ref{TaskRetries}).
@@ -6599,12 +6599,12 @@ retries for the task (see~\ref{TaskRetries}).
 \subsection{Do Not Treat Real Time Operation As Special}
 
 Cylc suites, without modification, can handle real time and delayed operation
-equally well.  In caught-up real time operation, clock-triggered tasks
+equally well.  In caught-up real time operation, clock-trigger tasks
 constrain the behaviour of the whole suite, or at least of any tasks
 downstream of them in the dependency graph.  In delayed or historical operation
-clock-triggered tasks will not constrain the suite at all, and cylc's cycle
+clock-trigger tasks will not constrain the suite at all, and cylc's cycle
 point interleaving abilities come to the fore, because the clock-trigger times
-have already passed. But if a clock-triggered task catches up to the wall
+have already passed. But if a clock-trigger task catches up to the wall
 clock, it will automatically wait again. In this way cylc suites naturally 
 transition between delayed and real time operation as required.
 

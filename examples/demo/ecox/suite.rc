@@ -18,7 +18,7 @@ edit 2014: this pre-dates runtime inheritance and other new features!"""
             mos_nzlam_vp_5day, mos_nzlam_vp_curr, UM_nzlam, nzwave, \
             ext_create_streamflow, globalwave, ncep_get, ncep_run, ncep_xml
 
-        clock-triggered =  ext_get_clidbdata(2.0), ext_create_streamflow(3.0), \
+        clock-trigger =  ext_get_clidbdata(2.0), ext_create_streamflow(3.0), \
             ecan_rain_obs(2.0), ext_check_globalwind_ukmet(4.30), \
             ext_check_globalice_ukmet(4.30), ext_check_frames_ukmet(-2.25), \
             ext_check_bgerr_ukmet(3.15), ext_check_obstore_ukmet(3.15), \

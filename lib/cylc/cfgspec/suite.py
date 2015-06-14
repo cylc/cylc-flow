@@ -275,9 +275,9 @@ SPEC = {
                 },
             },
         'special tasks' : {
-            'clock-triggered'                 : vdr(vtype='string_list', default=[]),
-            'expiring'                        : vdr(vtype='string_list', default=[]),
-            'external-triggered'              : vdr(vtype='string_list', default=[]),
+            'clock-trigger'                   : vdr(vtype='string_list', default=[]),
+            'external-trigger'                : vdr(vtype='string_list', default=[]),
+            'clock-expire'                    : vdr(vtype='string_list', default=[]),
             'sequential'                      : vdr(vtype='string_list', default=[]),
             'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
@@ -436,6 +436,16 @@ def upg( cfg, descr ):
             ['runtime', '__MANY__', old],
             ['runtime', '__MANY__', new],
             silent=True)
+    u.deprecate(
+        '6.5.0',
+        ['scheduling', 'special tasks', 'clock-triggered'],
+        ['scheduling', 'special tasks', 'clock-trigger'],
+    )
+    u.deprecate(
+        '6.5.0',
+        ['scheduling', 'special tasks', 'external-triggered'],
+        ['scheduling', 'special tasks', 'external-trigger'],
+    )
     u.upgrade()
 
     # Force pre cylc-6 "cycling = Yearly" type suites to the explicit

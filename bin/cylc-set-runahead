@@ -36,10 +36,12 @@ hours that the fastest task is allowed to get ahead of the slowest. If a
 task spawns beyond that limit it will be held back from running until the
 slowest tasks catch up enough. WARNING: if you omit HOURS no runahead
 limit will be set - DO NOT DO THIS for for any cycling suite that has
-no near stop cycle set and is not constrained by clock-triggered
-tasks.""", pyro=True,
-    argdoc=[ ('REG', 'Suite name'),
-        ('[HOURS]', 'Runahead limit (default: no limit)')])
+no near stop cycle set and is not constrained by clock-trigger tasks.""",
+    pyro=True,
+    argdoc=[('REG', 'Suite name'),
+            ('[HOURS]', 'Runahead limit (default: no limit)')
+           ]
+    )
 
 (options, args) = parser.parse_args()
 
