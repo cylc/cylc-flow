@@ -856,26 +856,24 @@ class TaskPool(object):
         prerequisites.  Each task proxy knows its "cleanup cutoff" from the
         graph. For example:
           graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
-        implies foo's cutoff is T+12: if foo has succeeded and spawned,
-        it can be removed if no unsatisfied task proxy exists with
+        implies foo's cutoff is T+12: if foo has succeeded (or expired) and
+        spawned, it can be removed if no unsatisfied task proxy exists with
         T<=T+12. Note this only uses information about the cycle point of
         downstream dependents - if we used specific IDs instead spent
         tasks could be identified and removed even earlier).
 
         """
-
         # first find the cycle point of the earliest unsatisfied task
         cutoff = self._get_earliest_unsatisfied_point()
-
         if not cutoff:
             return
 
         # now check each succeeded task against the cutoff
         spent = []
         for itask in self.get_tasks():
-            if not itask.state.is_currently('succeeded') or \
-                    not itask.state.has_spawned() or \
-                    itask.cleanup_cutoff is None:
+            if (not itask.state.is_currently('succeeded', 'expired') or
+                not itask.state.has_spawned() or
+                itask.cleanup_cutoff is None):
                 continue
             if cutoff > itask.cleanup_cutoff:
                 spent.append(itask)
