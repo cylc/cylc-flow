@@ -115,9 +115,11 @@ Text Treeview suite control interface.
                 tvc.pack_start(crp, False)
                 tvc.set_attributes(crp, pixbuf=11)
             if n == 8:
-                cr = gtk.CellRendererProgress()
-            else:
-                cr = gtk.CellRendererText()
+                # Pack in progress and text cell renderers.
+                prog_cr = gtk.CellRendererProgress()
+                tvc.pack_start(prog_cr, True)
+                tvc.set_cell_data_func(prog_cr, self._set_cell_text_time, n)
+            cr = gtk.CellRendererText()
             tvc.pack_start(cr, True)
             if n == 6 or n == 7 or n == 8:
                 tvc.set_cell_data_func(cr, self._set_cell_text_time, n)
@@ -269,22 +271,24 @@ Text Treeview suite control interface.
                 last_update_date + "T", "", 1)
         if n == 8:
             # Progress bar for estimated completion time.
-            if date_time_string == "":
-                # Family rows.
-                cell.set_property('visible', False)
-            elif date_time_string == "*":
-                # Date-time estimate not available yet.
-                cell.set_property('visible', True)
-                cell.set_property('value', 0)
-            elif not date_time_string.endswith('?'):
-                # Task finished - set back to 0% for aesthetic reasons.
-                cell.set_property('visible', True)
-                cell.set_property('value', 0)
-            else: 
-                # Task running - show progress to estimated finish time.
-                cell.set_property('visible', True)
-                percent = model.get_value(iter_, 12)
-                cell.set_property('value', percent)
+            if isinstance(cell, gtk.CellRendererText):
+                if date_time_string.endswith("?"):
+                    # Task running -show progress bar instead.
+                    cell.set_property('visible', False)
+                else:
+                    # Task not running - just show text
+                    cell.set_property('visible', True)
+                    cell.set_property('text', date_time_string)
+            if isinstance(cell, gtk.CellRendererProgress):
+                if date_time_string.endswith("?"):
+                    # Task running -show progress bar to estimated finish time.
+                    cell.set_property('visible', True)
+                    percent = model.get_value(iter_, 12)
+                    cell.set_property('value', percent)
+                else:
+                    # Task not running - show text cell instead.
+                    cell.set_property('visible', False)
+                    cell.set_property('value', 0)
         cell.set_property("text", date_time_string)
 
     def get_toolitems( self ):
