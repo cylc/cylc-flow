@@ -1,0 +1,33 @@
+title = task expire example suite
+description = """
+Skip a daily post-processing workflow if the 'copy' task has expired."""
+
+[cylc]
+    cycle point format = %Y-%m-%dT%H
+    abort if any task fails = True
+    [[event hooks]]
+        abort on timeout = True
+        timeout = PT1M
+[scheduling]
+    initial cycle point = now
+    final cycle point = +P3D
+    [[special tasks]]
+        clock-expire = copy(-P1DT1H)
+        # NOTE this would normally be copy(P1D) i.e. expire if more than 1 day
+        # behind the wall clock, but here we have to start from 'now' in order
+        # to stay near the wall clock, so expire the task if more than 1 day
+        # behind "now + 1 day". This makes the first two 'copy' tasks expire.
+    [[dependencies]]
+        [[[P1D]]]
+            graph = """
+        model[-P1D] => model => copy => proc
+              copy:expired => !proc"""
+[runtime]
+    [[root]]
+        script = /bin/true
+    [[copy]]
+        script = """
+# Abort if I run in either of the first two cycle points.
+[[ $CYLC_TASK_CYCLE_POINT == $CYLC_SUITE_INITIAL_CYCLE_POINT ]] && exit 1
+P2D=$(cylc cyclepoint --offset=P1D $CYLC_SUITE_INITIAL_CYCLE_POINT)
+[[ $CYLC_TASK_CYCLE_POINT == $P2D ]] && exit 1"""
