@@ -18,6 +18,7 @@
 
 import os
 import re
+import signal
 import sys
 import time
 import traceback
@@ -898,7 +899,24 @@ class scheduler(object):
         self.run_event_handlers('startup', abort, 'suite starting')
 
         proc_pool = SuiteProcPool.get_inst()
+
+        fs_check_period = datetime.timedelta(minutes=10)
+        next_fs_check = datetime.datetime.utcnow() + fs_check_period
+
+        suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            self.suite, 'suite run directory')
+
         while True:  # MAIN LOOP
+
+            # Periodic check that the suite directory still exists
+            # - designed to catch stalled suite daemons where the suite 
+            # directory has been deleted out from under itself
+            if datetime.datetime.now() > next_fs_check:
+                if not os.path.exists(suite_run_dir):
+                    os.kill(os.getpid(), signal.SIGKILL)
+                else:
+                    next_fs_check = datetime.datetime.utcnow() + fs_check_period
+
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
