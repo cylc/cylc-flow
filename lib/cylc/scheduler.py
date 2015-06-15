@@ -921,7 +921,7 @@ class scheduler(object):
         while True:  # MAIN LOOP
 
             # Periodic check that the suite directory still exists
-            # - designed to catch stalled suite daemons where the suite 
+            # - designed to catch stalled suite daemons where the suite
             # directory has been deleted out from under itself
             if datetime.datetime.now() > next_fs_check:
                 if not os.path.exists(suite_run_dir):

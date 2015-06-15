@@ -99,7 +99,7 @@ determine what happened to them while the suite was down."""
     def get_state_initial_point_string( self ):
         """Return the initial point string from the state file, if any."""
         return self.get_state_file_info()[0]
-        
+
     def get_state_file_path( self ):
         """Return the state file path that we are restarting from."""
         my_dumper = self.state_dumper
@@ -122,7 +122,7 @@ determine what happened to them while the suite was down."""
         """Return the state file start & stop strings, broadcast, tasks.
 
         The state dump file format is:
-        run mode : <mode> 
+        run mode : <mode>
         time : <time> (<unix time>)
         initial cycle : 2014050100
         final cycle : (none)
@@ -155,7 +155,7 @@ determine what happened to them while the suite was down."""
                 print ' ', l.rstrip()
             raise Exception(
                 "ERROR, incomplete suite state dump: %s" % file_name)
-       
+
         index = 0
         # run mode : <mode>
         line0 = lines[index].rstrip()
@@ -281,7 +281,7 @@ determine what happened to them while the suite was down."""
             else:
                 # reinstate the former start cycle
                 self.start_point = state_start_point
-        
+
         if state_stop_string is not None:
             # the state dump prescribes a stop cycle
             # (else we take whatever the command line or suite.rc file gives us)
