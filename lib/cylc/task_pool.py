@@ -774,6 +774,14 @@ class TaskPool(object):
             self.pri_dao.add_insert_item(table_name, db_insert)
             self.pub_dao.add_insert_item(table_name, db_insert)
 
+        # Previously, we used a separate thread for database writes. This has
+        # now been removed. For the private database, there is no real
+        # advantage in using a separate thread, because we want it to be like
+        # the state dump - always in sync with what is current. For the public
+        # database, which does not need to be fully in sync, there is some
+        # advantage of using a separate thread/process, if writing to it
+        # becomes a bottleneck. At the moment, there is no evidence that this
+        # is a bottleneck, so it is better to keep the logic simple.
         self.pri_dao.execute_queued_items()
         self.pub_dao.execute_queued_items()
 

@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Provide data access object for the suite runtime database."""
 
 from logging import getLogger, WARNING
 import sqlite3
@@ -165,7 +166,7 @@ class CylcSuiteDAOTable(object):
 
 
 class CylcSuiteDAO(object):
-    """Data access object for a suite runtime database."""
+    """Data access object for the suite runtime database."""
 
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "cylc-suite.db"
@@ -302,7 +303,7 @@ class CylcSuiteDAO(object):
                     stmt = table.get_insert_stmt()
                     self.conn.executemany(stmt, table.insert_queue)
                     self.conn.commit()
-                except sqlite3.Error as exc:
+                except sqlite3.Error:
                     if not self.is_public:
                         raise
                     self.conn.rollback()
@@ -327,7 +328,7 @@ class CylcSuiteDAO(object):
                 try:
                     self.conn.executemany(stmt, stmt_args_list)
                     self.conn.commit()
-                except sqlite3.Error as exc:
+                except sqlite3.Error:
                     if not self.is_public:
                         raise
                     self.conn.rollback()
