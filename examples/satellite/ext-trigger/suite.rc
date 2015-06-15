@@ -29,7 +29,7 @@ until triggered by an external system."""
     max active cycle points = 5
     # runahead limit = P5 # (alternative limiting method)
     [[special tasks]]
-        external-triggered = get_data("new dataset ready for processing")
+        external-trigger = get_data("new dataset ready for processing")
     [[dependencies]]
         [[[R1]]] # first cycle
             graph = prep => satsim & get_data

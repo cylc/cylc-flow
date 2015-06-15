@@ -592,7 +592,7 @@ be used in special task lists as shorthand for listing all member tasks.
 
 \paragraph[clock-trigger]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-trigger}
 
-Clock-trigger tasks (see~\ref{ClockTriggeredTasks}) wait on a wall clock time
+Clock-trigger tasks (see~\ref{ClockTriggerTasks}) wait on a wall clock time
 specified as an offset from their own cycle point.
 
 \begin{myitemize}
@@ -607,7 +607,27 @@ specified as an offset from their own cycle point.
 \end{lstlisting}
 \end{myitemize}
 
-\paragraph[external-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ external-triggered}
+\paragraph[clock-expire]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-expire}
+\label{ClockExpireRef}
+
+Clock-expire tasks enter the {\em expired} state and skip job submission if too
+far behind the wall clock when they become ready to run.  The expiry time is
+specified as an offset from wall-clock time; typically it should be negative -
+see~\ref{ClockExpireTasks}. 
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of task or family names with
+        associated date-time offsets expressed as ISO8601 interval strings,
+        positive or negative, e.g. \lstinline=PT1H= for 1 hour.  The offset
+        may be omitted if it is zero.
+    \item {\em default:} (none)
+    \item {\em example:}
+\begin{lstlisting}
+    clock-expire = foo(-P1D)
+\end{lstlisting}
+\end{myitemize}
+
+\paragraph[external-trigger]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ external-trigger}
 
 Externally triggered tasks (see~\ref{ExternalTriggers}) wait on external events
 reported via the \lstinline=cylc ext-trigger= command.
@@ -618,7 +638,7 @@ reported via the \lstinline=cylc ext-trigger= command.
     \item {\em default:} (none)
     \item {\em example:} (note the comma and line-continuation character)
 \begin{lstlisting}
-    external-triggered = get-satx("new sat-X data ready"), \
+    external-trigg = get-satx("new sat-X data ready"), \
                          get-saty("new sat-Y data ready")
 \end{lstlisting}
 \end{myitemize}

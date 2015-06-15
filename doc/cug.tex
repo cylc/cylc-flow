@@ -3809,11 +3809,12 @@ because it is beyond the suite stop point. Consequently cylc prevents tasks
 from spawning successors that depend on other tasks beyond the stop point.
 
 \paragraph{Clock Triggers}
-\label{ClockTriggeredTasks}
+\label{ClockTriggerTasks}
 
 In addition to depending on other tasks (and on external events -
 see~\ref{ExternalTriggers}) tasks can depend on the wall clock: specifically,
-they can trigger off a wall clock time expressed as an offset from cycle point:
+they can trigger off a wall clock time expressed as an offset from their own
+cycle point:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -3824,19 +3825,53 @@ they can trigger off a wall clock time expressed as an offset from cycle point:
             graph = foo
 \end{lstlisting} 
 Here, \lstinline=foo[2015-08-23T00]= would trigger (other dependencies allowing)
-when the wall clock time reaches \lstinline=2015-08-23T02=.
+when the wall clock time reaches \lstinline=2015-08-23T02=. Clock-trigger
+offsets are normally positive, to trigger some time {\em after} the wall-clock
+time is equal to task cycle point.
 
 Clock-triggers have no effect on scheduling if the suite is running sufficiently
 far behind the clock (e.g.\ after a delay, or because it is processing archived
 historical data) that the trigger times, which are relative to task cycle
 point, have already passed.
 
+\paragraph{Clock-Expire Triggers}
+\label{ClockExpireTasks}
 
-\paragraph{External Event Triggers}
+Tasks can be configured to {\em expire} - i.e.\ to skip job submission and
+enter the {\em expired} state - if they are too far behind the wall clock when
+they become ready to run, and other tasks can trigger off this.  As a possible
+use case, consider a cycling task that copies the latest of a set of files to
+overwrite the previous set: if the task is delayed by more than one cycle there
+may be no point in running it because the freshly copied files will just be
+overwritten immediately by the next task instance as the suite catches back up
+to real time operation.  Clock-expire tasks are configured like clock-trigger
+tasks, with a date-time offset relative to cycle point (\ref{ClockExpireRef}).
+The offset should be positive to make the task expire if the wall-clock time
+has gone beyond the cycle point.  Triggering off an expired task typically
+requires suicide triggers to remove the workflow that runs if the task has not
+expired. Here a task called \lstinline=copy= expires, and its downstream
+workflow is skipped, if it is more than one day behind the wall-clock (see also
+\lstinline=examples/clock-expire=):
+\lstset{language=suiterc}
+\begin{lstlisting}
+[cylc]
+   cycle point format = %Y-%m-%dT%H
+[scheduling]
+    initial cycle point = 2015-08-15T00
+    [[special tasks]]
+        clock-expire = copy(-P1D)
+    [[dependencies]]
+        [[[P1D]]]
+            graph = """
+        model[-P1D] => model => copy => proc
+              copy:expired => !proc"""
+\end{lstlisting}
+
+\paragraph{External Triggers}
 \label{ExternalTriggers}
 
 In addition to depending on other tasks (and on the wall clock -
-see~\ref{ClockTriggeredTasks}) tasks can trigger off events reported by an
+see~\ref{ClockTriggerTasks}) tasks can trigger off events reported by an
 external system.  For example, an external process could detect incoming data
 on an ftp server, and then notify a suite containing a task to retrieve the
 new data for processing. This is an alternative to long-running tasks that poll
@@ -3879,7 +3914,7 @@ scheduling section:
     cycling mode = integer
     initial cycle point = 1
     [[special tasks]]
-        external-triggered = get-data("new sat X data avail")
+        external-trigger = get-data("new sat X data avail")
     [[dependencies]]
         [[[P1]]]
             graph = get-data => conv-data => products
@@ -6581,7 +6616,7 @@ instance (see~\ref{SequentialTasks}).
 
 Tasks that wait on external real time data should have a clock-trigger to delay
 submission until roughly the expected time of data availability
-(see~\ref{ClockTriggeredTasks}), otherwise they could clutter up your batch
+(see~\ref{ClockTriggerTasks}), otherwise they could clutter up your batch
 scheduler queue by submitting hours earlier. Similarly, suite polling tasks
 (for inter-suite dependence in real time operation) should use a clock-trigger
 to delay their submission until the expected time of the remote suite event.

@@ -385,7 +385,7 @@ class config( object ):
             extn = ''
             for item in self.cfg['scheduling']['special tasks'][type]:
                 name = item
-                if type == 'external-triggered':
+                if type == 'external-trigger':
                     m = re.match(EXT_TRIGGER_RE, item)
                     if m is None:
                         raise SuiteConfigError(
@@ -410,6 +410,11 @@ class config( object ):
                     name, offset_string = m.groups()
                     if not offset_string:
                         offset_string = "PT0M"
+                    if flags.verbose:
+                        if offset_string.startswith("-"):
+                                print >> sys.stderr, (
+                                    "WARNING: %s offsets are "
+                                    "normally positive: %s" % (type, item))
                     offset_converted_from_prev = False
                     try:
                         float(offset_string)
@@ -452,13 +457,13 @@ class config( object ):
                             self.clock_offsets[member] = offset_interval
                         if type == 'clock-expire':
                             self.expiration_offsets[member] = offset_interval
-                        if type == 'external-triggered':
+                        if type == 'external-trigger':
                             self.ext_triggers[member] = ext_trigger_msg
                 elif type == 'clock-trigger':
                     self.clock_offsets[name] = offset_interval
                 elif type == 'clock-expire':
                     self.expiration_offsets[name] = offset_interval
-                elif type == 'external-triggered':
+                elif type == 'external-trigger':
                     self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
             self.cfg['scheduling']['special tasks'][type] = result
@@ -1095,7 +1100,7 @@ class config( object ):
             for name in self.cfg['scheduling']['special tasks'][task_type]:
                 if task_type in ['clock-trigger',
                                  'clock-expire',
-                                 'external-triggered']:
+                                 'external-trigger']:
                     name = re.sub('\(.*\)','',name)
                 if not TaskID.is_valid_name(name):
                     raise SuiteConfigError(
