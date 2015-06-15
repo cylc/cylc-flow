@@ -688,7 +688,7 @@ class scheduler(object):
                     print('Copy "cylc.suite.db" to "state/cylc.suite.db"')
                     copyfile(pub_db_path, pri_db_path)
             else:
-                # create new suite_db file (and dir) if needed
+                # Remove database created by previous runs
                 if os.path.isdir(pri_db_path):
                     shutil.rmtree(pri_db_path)
                 else:
@@ -701,6 +701,10 @@ class scheduler(object):
             # * private database file is private
             self.pri_dao = CylcSuiteDAO(pri_db_path)
             os.chmod(pri_db_path, 0600)
+            if self.is_restart:
+                sys.stdout.write("Rebuilding the suite db ...")
+                self.pri_dao.vacuum()
+                sys.stdout.write(" done\n")
             self.pub_dao = CylcSuiteDAO(pub_db_path, is_public=True)
             self._copy_pri_db_to_pub_db()
 
@@ -1376,7 +1380,9 @@ class scheduler(object):
 
         """
         temp_pub_db_file_name = None
+        self.pub_dao.close()
         try:
+            self.pub_dao.conn = None  # reset connection
             open(self.pub_dao.db_file_name, "a").close()  # touch
             st_mode = os.stat(self.pub_dao.db_file_name).st_mode
             temp_pub_db_file_name = mkstemp(

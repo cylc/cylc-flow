@@ -238,8 +238,6 @@ class CylcSuiteDAO(object):
         }
 
         if not self.is_public:
-            self.connect()
-            self.conn.execute("VACUUM")
             self.create_tables()
 
     def add_insert_item(self, table_name, args):
@@ -268,19 +266,22 @@ class CylcSuiteDAO(object):
     def close(self):
         """Explicitly close the connection."""
         if self.conn is not None:
-            self.conn.close()
+            try:
+                self.conn.close()
+            except sqlite3.Error as exc:
+                pass
             self.conn = None
 
     def connect(self):
         """Connect to the database."""
-        self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
+        if self.conn is None:
+            self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
         return self.conn
 
     def create_tables(self):
         """Create tables."""
-        self.connect()
         names = []
-        for row in self.conn.execute(
+        for row in self.connect().execute(
                 "SELECT name FROM sqlite_master WHERE type==? ORDER BY name",
                 ["table"]):
             names.append(row[0])
@@ -422,3 +423,7 @@ class CylcSuiteDAO(object):
             for key, value in zip(keys, row[2:]):
                 ret[(name, cycle)][key] = value
         return ret
+
+    def vacuum(self):
+        """Vacuum to the database."""
+        return self.connect().execute("VACUUM")
