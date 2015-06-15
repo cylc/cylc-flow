@@ -22,7 +22,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 20200101
     [[special tasks]]
-        clock-triggered = foo(PT0M)
+        clock-trigger = foo(PT0M)
     [[dependencies]]
         [[[T00]]]
             graph = bar
