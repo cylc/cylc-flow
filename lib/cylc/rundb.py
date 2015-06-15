@@ -360,6 +360,11 @@ class CylcSuiteDAO(object):
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
 
+        # N.B. This is not strictly necessary. However, if the suite run
+        # directory is removed, a forced reconnection to the private database
+        # will ensure that the suite dies.
+        self.close()
+
     def select_task_states_by_task_ids(self, keys, task_ids=None):
         """Select items from task_states by task IDs.
 
