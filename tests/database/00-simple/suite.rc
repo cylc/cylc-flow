@@ -3,4 +3,4 @@
         graph = "foo => bar => baz"
 [runtime]
     [[foo, bar, baz]]
-        script = "sleep 5"
+        script = true

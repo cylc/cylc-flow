@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+"""Lock a suite's database file."""
+
+from fcntl import lockf, LOCK_SH
+import os
+from subprocess import call
+
+def main():
+    handle = open(
+        os.path.join(os.getenv("CYLC_SUITE_RUN_DIR"), "cylc-suite.db"))
+    lockf(handle, LOCK_SH)
+    call([
+        "cylc", "task", "message",
+        "[1] I have locked the public database file"])
+    suite_log_dir = os.getenv("CYLC_SUITE_LOG_DIR")
+    while True:
+        for line in open(os.path.join(suite_log_dir, "log")):
+            if "write attempt (1) did not complete" in line:
+                return
+
+if __name__ == "__main__":
+    main()
