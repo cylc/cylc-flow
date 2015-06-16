@@ -28,6 +28,8 @@ from cylc.CylcOptionParsers import cop
 import os
 from subprocess import check_call
 import shlex
+import sys
+import traceback
 
 
 def main():
@@ -52,16 +54,19 @@ def main():
     ssh_tmpl = str(GLOBAL_CFG.get_host_item(
         "remote shell template", source_host, source_owner)).replace(" %s", "")
 
-    # See if "job.out" file is available before retrieval
-    job_out_path = os.path.join(source_path, "job.out")
-    check_call(
-        shlex.split(ssh_tmpl) + [source_auth, "test -e \"%s\"" % job_out_path])
-
     # Retrieve remote job logs
     # N.B. "scp" does not have a "max-size" option.
     check_call([
         "rsync", "-a", "--rsh=" + ssh_tmpl, "--max-size=" + opts.max_size,
         source + "/", target])
+
+    # Fail if "job.out" does not exist
+    try:
+        os.stat(os.path.join(target, "job.out"))
+    except OSError as exc:
+        if opts.debug:
+            traceback.print_exc()
+        sys.exit(exc)
 
 
 if __name__ == "__main__":
