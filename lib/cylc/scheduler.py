@@ -710,12 +710,6 @@ class scheduler(object):
             if self._pool_hold_point:
                 print "Suite will hold after " + str(self._pool_hold_point)
 
-        # Running in UTC time? (else just use the system clock)
-        cylc.flags.utc = self.config.cfg['cylc']['UTC mode']
-
-        # Capture cycling mode
-        cylc.flags.cycling_mode = self.config.cfg['scheduling']['cycling mode']
-
         if not reconfigure:
             slog = suite_log(self.suite)
             self.suite_log_dir = slog.get_dir()

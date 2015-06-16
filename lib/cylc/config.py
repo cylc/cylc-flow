@@ -26,6 +26,7 @@ from cylc.cycling.loader import (get_point, get_point_relative,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
                                  ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
+from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
@@ -134,8 +135,6 @@ class config( object ):
         self.validation = validation
         self.initial_point = None
         self.start_point = None
-        self._cli_initial_point_string = cli_initial_point_string
-        self._cli_start_point_string = cli_start_point_string
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
@@ -194,9 +193,10 @@ class config( object ):
                 "ERROR: use 'runahead limit' OR "
                 "'max active cycle points', not both")
 
-        if self._cli_initial_point_string is not None:
+        # Override the suite defn with an initial point from the CLI.
+        if cli_initial_point_string is not None:
             self.cfg['scheduling']['initial cycle point'] = (
-                self._cli_initial_point_string)
+                cli_initial_point_string)
 
         dependency_map = self.cfg.get('scheduling', {}).get(
             'dependencies', {})
@@ -292,28 +292,35 @@ class config( object ):
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
 
-        initial_point = None
-        if self.cfg['scheduling']['initial cycle point'] is not None:
-            initial_point = get_point(
-                self.cfg['scheduling']['initial cycle point']).standardise()
-            self.cfg['scheduling']['initial cycle point'] = str(initial_point)
+        # Running in UTC time? (else just use the system clock)
+        flags.utc = self.cfg['cylc']['UTC mode']
+        # Capture cycling mode
+        flags.cycling_mode = self.cfg['scheduling']['cycling mode']
 
-        self.cli_initial_point = get_point(self._cli_initial_point_string)
-        if self.cli_initial_point is not None:
-            self.cli_initial_point.standardise()
-
-        self.initial_point = self.cli_initial_point or initial_point
-        if self.initial_point is None:
+        # Initial point from suite definition (or CLI override above).
+        icp = self.cfg['scheduling']['initial cycle point']
+        if icp is None:
             raise SuiteConfigError(
                 "This suite requires an initial cycle point.")
+        if icp == "now":
+            icp = get_current_time_string()
+        self.initial_point = get_point(icp).standardise()
+        self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
+        if cli_start_point_string:
+            # Warm start from a point later than initial point.
+            if cli_start_point_string == "now":
+                cli_start_point_string = get_current_time_string()
+            cli_start_point = get_point(cli_start_point_string).standardise()
+            self.start_point = cli_start_point
         else:
-            self.initial_point.standardise()
+            # Cold start.
+            self.start_point = self.initial_point
 
         # Validate initial cycle point against any constraints
         if self.cfg['scheduling']['initial cycle point constraints']:
             valid_icp = False
             for entry in self.cfg['scheduling']['initial cycle point constraints']:
-                possible_pt = get_point_relative(entry, initial_point).standardise()
+                possible_pt = get_point_relative(entry, self.initial_point).standardise()
                 if self.initial_point == possible_pt:
                     valid_icp = True
                     break
@@ -371,11 +378,6 @@ class config( object ):
                     str(final_point),
                     str(self.cfg['scheduling']['final cycle point constraints']))
                     )
-
-        self.start_point = (
-            get_point(self._cli_start_point_string) or self.initial_point)
-        if self.start_point is not None:
-            self.start_point.standardise()
 
         # Parse special task cycle point offsets, and replace family names.
         if flags.verbose:
@@ -612,7 +614,7 @@ class config( object ):
             try:
                 vfcp = get_point_relative(
                     self.cfg['visualization']['final cycle point'],
-                    initial_point).standardise()
+                    self.initial_point).standardise()
             except ValueError:
                 vfcp = get_point(
                     self.cfg['visualization']['final cycle point']).standardise()
@@ -1098,8 +1100,7 @@ class config( object ):
         # Check declared special tasks are valid.
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
-                if task_type in ['clock-trigger',
-                                 'clock-expire',
+                if task_type in ['clock-trigger', 'clock-expire',
                                  'external-trigger']:
                     name = re.sub('\(.*\)','',name)
                 if not TaskID.is_valid_name(name):
