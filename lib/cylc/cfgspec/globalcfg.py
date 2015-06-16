@@ -34,14 +34,16 @@ from cylc.owner import user
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
-from cylc.cfgspec.suite import coerce_interval
-from cylc.cfgspec.suite import coerce_interval_list
+from cylc.cfgspec.utils import coerce_interval
+from cylc.cfgspec.utils import coerce_interval_list
 
 
 "Cylc site and user configuration file spec."
 
 coercers['interval_seconds'] = (
     lambda *args: coerce_interval(*args, check_syntax_version=False))
+coercers['interval_minutes'] = lambda *a: coerce_interval(
+    *a, back_comp_unit_factor=60)
 coercers['interval_minutes_list'] = (
     lambda *args: coerce_interval_list(*args, back_comp_unit_factor=60,
                                        check_syntax_version=False))
@@ -62,6 +64,16 @@ SPEC = {
         'maximum number of tries'         : vdr( vtype='integer', vmin=1, default=7 ),
         'connection timeout'              : vdr( vtype='interval_seconds', default=30),
 
+        },
+
+    'cylc' : {
+        'UTC mode'                            : vdr( vtype='boolean', default=False),
+        'event hooks' : {
+            'startup handler'                 : vdr( vtype='string_list', default=[] ),
+            'timeout handler'                 : vdr( vtype='string_list', default=[] ),
+            'shutdown handler'                : vdr( vtype='string_list', default=[] ),
+            'timeout'                         : vdr( vtype='interval_minutes'),
+            },
         },
 
     'suite logging' : {
