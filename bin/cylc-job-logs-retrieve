@@ -23,13 +23,15 @@ Retrieve logs from a remote host for a task job.
 """
 
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.CylcOptionParsers import cop
 import os
 from subprocess import check_call
 import shlex
 import sys
 import traceback
+
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.CylcOptionParsers import cop
+from cylc.wallclock import get_time_string_from_unix_time
 
 
 def main():
@@ -60,13 +62,22 @@ def main():
         "rsync", "-a", "--rsh=" + ssh_tmpl, "--max-size=" + opts.max_size,
         source + "/", target])
 
-    # Fail if "job.out" does not exist
+    names = os.listdir(target)
+    if "job.out" not in names:
+        sys.exit("ERROR: job.out: file not found")
+    sys.stdout.write("%s:\n" % os.path.basename(sys.argv[0]))
+    for name in names:
+        stat = os.stat(os.path.join(target, name))
+        sys.stdout.write("%s\t%s\t%s\n" % (
+            get_time_string_from_unix_time(stat.st_mtime), stat.st_size, name))
     try:
-        os.stat(os.path.join(target, "job.out"))
+        stats["job.out"] = os.stat(os.path.join(target, "job.out"))
     except OSError as exc:
         if opts.debug:
             traceback.print_exc()
         sys.exit(exc)
+
+    os.listdir(target)
 
 
 if __name__ == "__main__":

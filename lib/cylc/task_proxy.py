@@ -157,16 +157,20 @@ class TaskProxy(object):
     stop_sim_mode_job_submission = False
 
     @classmethod
-    def get_job_log_dir(cls, suite, task_name, task_point, submit_num="NN"):
+    def get_job_log_dir(
+            cls, suite, task_name, task_point, submit_num="NN", rel=False):
         """Return the latest job log path on the suite host."""
-        suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
-            suite, "suite job log directory")
         try:
             submit_num = "%02d" % submit_num
         except TypeError:
             pass
-        return os.path.join(
-            suite_job_log_dir, str(task_point), task_name, submit_num)
+        if rel:
+            return os.path.join(str(task_point), task_name, submit_num)
+        else:
+            suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
+                suite, "suite job log directory")
+            return os.path.join(
+                suite_job_log_dir, str(task_point), task_name, submit_num)
 
     def __init__(
             self, tdef, start_point, initial_state, stop_point=None,
@@ -740,7 +744,7 @@ class TaskProxy(object):
                 except ValueError:
                     pass
                 else:
-                    self.register_job_logs(submit_num)
+                    self.register_job_logs(submit_num, result)
         elif try_state.next() is None:
             self.log(ERROR, "event handler failed:\n\t%s" % result.cmd)
         else:
@@ -1056,26 +1060,45 @@ class TaskProxy(object):
             copy(GLOBAL_CFG.get(['execution polling intervals'])),
             'execution', self.log)
 
-    def register_job_logs(self, submit_num):
+    def register_job_logs(self, submit_num, result=None):
         """Register job logs in the runtime database."""
-        job_log_dir = self.get_job_log_dir(
+        data = []
+        if result is None:
+            job_log_dir = self.get_job_log_dir(
                 self.suite_name, self.tdef.name, self.point, submit_num)
-        try:
-            for name in os.listdir(job_log_dir):
-                try:
-                    stat = os.stat(os.path.join(job_log_dir, name))
-                except OSError:
-                    continue
-                else:
-                    self.db_inserts_map[self.TABLE_TASK_JOB_LOGS].append({
-                        "submit_num": submit_num,
-                        "key": name,
-                        "path": name,
-                        "mtime": stat.st_mtime,
-                        "size": stat.st_size,
-                    })
-        except OSError:
-            pass
+            try:
+                for filename in os.listdir(job_log_dir):
+                    try:
+                        stat = os.stat(os.path.join(job_log_dir, filename))
+                    except OSError:
+                        continue
+                    else:
+                        data.append((stat.st_mtime, stat.st_size, filename))
+            except OSError:
+                pass
+        else:
+            has_found_delim = False
+            for line in result.out.splitlines():
+                if has_found_delim:
+                    try:
+                        mtime, size, filename = line.split("\t")
+                    except ValueError:
+                        pass
+                    else:
+                        data.append((mtime, size, filename))
+                elif line == "cylc-" + self.JOB_LOGS_RETRIEVE + ":":
+                    has_found_delim = True
+
+        rel_job_log_dir = self.get_job_log_dir(
+            self.suite_name, self.tdef.name, self.point, submit_num, rel=True)
+        for mtime, size, filename in data:
+            self.db_inserts_map[self.TABLE_TASK_JOB_LOGS].append({
+                "submit_num": submit_num,
+                "filename": filename,
+                "location": os.path.join(rel_job_log_dir, filename),
+                "mtime": mtime,
+                "size": size})
+
 
     def submit(self, dry_run=False, overrides=None):
         """Submit a job for this task."""
