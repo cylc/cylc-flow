@@ -41,8 +41,8 @@ cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
 NAME='select-task-job-logs.out'
 sqlite3 "${DB_FILE}" \
-    'SELECT cycle, name, submit_num, key, path
-     FROM task_job_logs ORDER BY name, key' \
+    'SELECT cycle, name, submit_num, filename
+     FROM task_job_logs ORDER BY name, filename' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 

@@ -68,8 +68,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -144,8 +145,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -221,8 +223,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -298,8 +301,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -375,8 +379,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -452,8 +457,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -529,8 +535,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -605,8 +612,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -682,8 +690,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -759,8 +768,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -835,8 +845,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -912,8 +923,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -989,8 +1001,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log retry delays = 
+      retrieve job log = False
       retrieve job log max size = 
+      retrieve job log retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
