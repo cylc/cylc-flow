@@ -18,7 +18,7 @@ title = "Cylc Admin Test Suite"
     [[special tasks]]
     start-up         = prep
     cold-start       = ColdA, ColdB, ColdC
-    clock-triggered  = X(1)
+    clock-trigger  = X(1)
 
     [[dependencies]]
         [[[0,6,12,18]]]

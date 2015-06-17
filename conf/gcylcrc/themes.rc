@@ -24,6 +24,7 @@
         held      = "color=#fe83ff"
         queued    = "color=#dcd901"
         ready     = "color=#a08f49"
+        expired   = "color=#000000"
         submitted = "color=#a1cf25", "style=filled"
         submit-failed = "color=#ff007e", "style=filled", "fontcolor=white"
         running   = "color=#00c140", "style=filled"
@@ -36,7 +37,8 @@
     [[solid]]
         # a solid version of the default theme
         inherit = "default"
-        defaults  = "color=#bbbbbb", "style=filled", "fontcolor=black"
+        defaults = "color=#bbbbbb", "style=filled", "fontcolor=black"
+        expired  = "color=#000000", "fontcolor=white"
 
     [[high-contrast]]
         inherit = "default"
@@ -45,6 +47,7 @@
         held      = "color=#fc00ff"
         queued    = "color=#e6c522", "fontcolor=black"
         ready     = "color=#9c8320"
+        expired   = "color=#000000", "fontcolor=white"
         submitted = "color=#76a200", "fontcolor=black"
         submit-failed = "color=#ff6f00"
         running   = "color=#008e27"
@@ -64,6 +67,7 @@
         waiting   = "color=#00ccff" # blue
         queued    = "color=#336600" # moss green
         ready     = "color=#d2800a",  "style=unfilled"
+        expired   = "color=#000000", "fontcolor=white"
         submitted = "color=#ff9933" # orange
         submit-failed = "color=#ff3333", "style=unfilled"
         running   = "color=#66ff33" # lime green

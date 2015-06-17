@@ -40,6 +40,7 @@ class task_state(object):
         'held',
         'queued',
         'ready',
+        'expired',
         'submitted',
         'submit-failed',
         'submit-retrying',
@@ -60,6 +61,7 @@ class task_state(object):
     ]
 
     legal_for_trigger = {
+        'expire' : 'expired',
         'submit' : 'submitted',
         'submit-fail' : 'submit-failed',
         'start' : 'started',
@@ -68,6 +70,7 @@ class task_state(object):
     }
 
     legal_for_restricted_monitoring = [
+        'expired',
         'submitted',
         'submit-failed',
         'submit-retrying',
@@ -94,6 +97,7 @@ class task_state(object):
             'waiting'    : '_waiting',
             'queued'     : '_queued',
             'ready'      : 'rea_dy',
+            'expired'    : 'e_xpired',
             'submitted'  : 'sub_mitted',
             'submit-failed' : 'submit-f_ailed',
             'submit-retrying' : 'submit-retryin_g',
@@ -109,6 +113,7 @@ class task_state(object):
             'waiting'    : "\033[1;36m",
             'queued'     : "\033[1;38;44m",
             'ready'      : "\033[1;32m",
+            'expired'    : "\033[1;37;40m",
             'submitted'  : "\033[1;33m",
             'submit-failed' : "\033[1;34m",
             'submit-retrying'   : "\033[1;31m",

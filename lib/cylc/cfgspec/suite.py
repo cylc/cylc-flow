@@ -66,6 +66,9 @@ def _coerce_cycleinterval( value, keys, args ):
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle point."""
+    if value == "now":
+        # Handle this later in config.py when the suite UTC mode is known.
+        return value
     value = _strip_and_unquote( keys, value )
     if re.match(r"\d+$", value):
         # Could be an old date-time cycle point format, or integer format.
@@ -101,7 +104,7 @@ def _coerce_cycletime_format( value, keys, args ):
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
-    if "/" in value or ":" in value:
+    if "/" in value:
         raise IllegalValueError("cycle point format", keys, value)
     if "%" in value:
         try:
@@ -275,8 +278,9 @@ SPEC = {
                 },
             },
         'special tasks' : {
-            'clock-triggered'                 : vdr(vtype='string_list', default=[]),
-            'external-triggered'              : vdr(vtype='string_list', default=[]),
+            'clock-trigger'                   : vdr(vtype='string_list', default=[]),
+            'external-trigger'                : vdr(vtype='string_list', default=[]),
+            'clock-expire'                    : vdr(vtype='string_list', default=[]),
             'sequential'                      : vdr(vtype='string_list', default=[]),
             'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
@@ -338,6 +342,7 @@ SPEC = {
                 'suite definition directory'  : vdr( vtype='string' ),
                 },
             'event hooks' : {
+                'expired handler'             : vdr( vtype='string_list', default=[] ),
                 'submitted handler'           : vdr( vtype='string_list', default=[] ),
                 'started handler'             : vdr( vtype='string_list', default=[] ),
                 'succeeded handler'           : vdr( vtype='string_list', default=[] ),
@@ -434,6 +439,16 @@ def upg( cfg, descr ):
             ['runtime', '__MANY__', old],
             ['runtime', '__MANY__', new],
             silent=True)
+    u.deprecate(
+        '6.5.0',
+        ['scheduling', 'special tasks', 'clock-triggered'],
+        ['scheduling', 'special tasks', 'clock-trigger'],
+    )
+    u.deprecate(
+        '6.5.0',
+        ['scheduling', 'special tasks', 'external-triggered'],
+        ['scheduling', 'special tasks', 'external-trigger'],
+    )
     u.upgrade()
 
     # Force pre cylc-6 "cycling = Yearly" type suites to the explicit

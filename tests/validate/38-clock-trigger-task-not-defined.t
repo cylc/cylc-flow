@@ -22,7 +22,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
     initial cycle point = 20200101
     [[special tasks]]
-        clock-triggered = foo(PT0M)
+        clock-trigger = foo(PT0M)
     [[dependencies]]
         [[[T00]]]
             graph = bar
@@ -32,6 +32,6 @@ cat >'suite.rc' <<'__SUITE_RC__'
 __SUITE_RC__
 run_fail "${TEST_NAME_BASE}" cylc validate --strict "${PWD}/suite.rc"
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-'ERROR: clock-triggered task "foo" is not defined.'
+'ERROR: clock-trigger task "foo" is not defined.'
 __ERR__
 exit

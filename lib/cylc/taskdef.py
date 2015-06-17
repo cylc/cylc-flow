@@ -63,6 +63,7 @@ class TaskDef(object):
         self.suite_polling_cfg = {}
 
         self.clocktrigger_offset = None
+        self.expiration_offset = None
         self.namespace_hierarchy = []
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = {}

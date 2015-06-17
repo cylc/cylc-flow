@@ -472,7 +472,7 @@ by the runtime namespace hierarchy.
 + Asynchronous (non-cycling) suites can now be stopped and restarted
 mid-run.
 
-+ Clock-triggered tasks can now be triggered manually before their
++ Clock-trigger tasks can now be triggered manually before their
 normal trigger time is up.
 
 + Improved graph string validation: dangling arrows are now caught;
@@ -785,7 +785,7 @@ altered while the GUI was still running.
 ________________________________________________________________________
 4.5.1
 
-+ Task retry delays now work with clock-triggered tasks.
++ Task retry delays now work with clock-trigger tasks.
 
 + Cleaned up use of Pyro connection timeouts. Prior to 4.5.0 there was
 no timeout. At 4.5.0 we set a 1 seconds default, but depending on

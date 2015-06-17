@@ -246,6 +246,8 @@ class TaskProxy(object):
         self.set_from_rtconfig()
         self.delayed_start_str = None
         self.delayed_start = None
+        self.expire_time_str = None
+        self.expire_time = None
 
     def _add_prerequisites(self, point):
         """Add task prerequisites."""
@@ -376,7 +378,7 @@ class TaskProxy(object):
 
     def ready_to_run(self):
         """Is this task ready to run?"""
-        return (
+        ready = (
             (
                 self.state.is_currently('queued') or
                 (
@@ -390,31 +392,56 @@ class TaskProxy(object):
                 )
             ) and self.start_time_reached()
         )
+        if ready and self.has_expired():
+            self.log(WARNING, 'Task expired (skipping job).')
+            self.handle_event('expired')
+            self.reset_state_expired()
+            return False
+        return ready
 
-    def start_time_reached(self):
-        """Has this task reached its clock trigger time?"""
-        if self.tdef.clocktrigger_offset is None:
-            return True
+    def get_point_as_seconds(self):
+        """Compute and store my cycle point as seconds."""
         if self.point_as_seconds is None:
             iso_timepoint = cylc.cycling.iso8601.point_parse(str(self.point))
-            iso_clocktrigger_offset = cylc.cycling.iso8601.interval_parse(
-                str(self.tdef.clocktrigger_offset))
             self.point_as_seconds = int(iso_timepoint.get(
                 "seconds_since_unix_epoch"))
-            clocktrigger_offset_as_seconds = int(
-                iso_clocktrigger_offset.get_seconds())
             if iso_timepoint.time_zone.unknown:
                 utc_offset_hours, utc_offset_minutes = (
                     get_local_time_zone())
                 utc_offset_in_seconds = (
                     3600 * utc_offset_hours + 60 * utc_offset_minutes)
                 self.point_as_seconds += utc_offset_in_seconds
+        return self.point_as_seconds
+
+    def get_offset_as_seconds(self, offset):
+        """Return an ISO interval as seconds."""
+        iso_offset = cylc.cycling.iso8601.interval_parse(str(offset))
+        return int(iso_offset.get_seconds())
+
+    def start_time_reached(self):
+        """Has this task reached its clock trigger time?"""
+        if self.tdef.clocktrigger_offset is None:
+            return True
+        if self.delayed_start is None:
             self.delayed_start = (
-                self.point_as_seconds + clocktrigger_offset_as_seconds)
+                self.get_point_as_seconds() +
+                self.get_offset_as_seconds(self.tdef.clocktrigger_offset))
             self.delayed_start_str = get_time_string_from_unix_time(
                 self.delayed_start)
         return time.time() > self.delayed_start
 
+    def has_expired(self):
+        """Is this task past its use-by date?"""
+        if self.tdef.expiration_offset is None:
+            return False
+        if self.expire_time is None:
+            self.expire_time = (
+                self.get_point_as_seconds() +
+                self.get_offset_as_seconds(self.tdef.expiration_offset))
+            self.expire_time_str = get_time_string_from_unix_time(
+                self.expire_time)
+        return time.time() > self.expire_time
+ 
     def get_resolved_dependencies(self):
         """report who I triggered off"""
         # Used by the test-battery log comparator
@@ -427,20 +454,19 @@ class TaskProxy(object):
         dep.sort()
         return dep
 
-    def unfail(self):
-        """Remove previous failed message.
+    def unset_outputs(self):
+        """Remove special output messages.
 
-        If a task is manually reset remove any previous failed message or on
-        later success it will be seen as an incomplete output.
-
+        These are added for use in triggering off special states:
+          failed, submit-failed, expired
+        If the task state is later reset, these must be removed or they will
+        seen as incomplete outputs when the task finishes.
         """
         self.hold_on_retry = False
-        failed_msg = self.identity + " failed"
-        if self.outputs.exists(failed_msg):
-            self.outputs.remove(failed_msg)
-        failed_msg = self.identity + "submit-failed"
-        if self.outputs.exists(failed_msg):
-            self.outputs.remove(failed_msg)
+        for state in ["failed", "submit-failed", "expired"]:
+            msg = "%s %s" % (self.identity, state)
+            if self.outputs.exists(msg):
+                self.outputs.remove(msg)
 
     def turn_off_timeouts(self):
         """Turn off submission and execution timeouts."""
@@ -452,9 +478,19 @@ class TaskProxy(object):
         self.set_status('waiting')
         self._db_events_insert(event="reset to ready")
         self.prerequisites.set_all_satisfied()
-        self.unfail()
+        self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
+
+    def reset_state_expired(self):
+        """Reset state to "expired"."""
+        self.set_status('expired')
+        self._db_events_insert(event="reset to expired")
+        self.prerequisites.set_all_satisfied()
+        self.unset_outputs()
+        self.turn_off_timeouts()
+        self.outputs.set_all_incomplete()
+        self.outputs.add(self.identity + ' expired', completed=True)
 
     def reset_state_waiting(self):
         """Reset state to "waiting".
@@ -465,7 +501,7 @@ class TaskProxy(object):
         self.set_status('waiting')
         self._db_events_insert(event="reset to waiting")
         self.prerequisites.set_all_unsatisfied()
-        self.unfail()
+        self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
 
@@ -483,7 +519,7 @@ class TaskProxy(object):
             # the purge algorithm and when reloading task definitions.
             self._db_events_insert(event="set to succeeded")
         self.prerequisites.set_all_satisfied()
-        self.unfail()
+        self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_completed()
 
@@ -1430,7 +1466,8 @@ class TaskProxy(object):
         if self.tdef.is_coldstart:
             self.state.set_spawned()
         return not self.state.has_spawned() and self.state.is_currently(
-            'submitted', 'running', 'succeeded', 'failed', 'retrying')
+            'expired', 'submitted', 'running', 'succeeded', 'failed',
+            'retrying')
 
     def done(self):
         """Return True if task has succeeded and spawned."""
