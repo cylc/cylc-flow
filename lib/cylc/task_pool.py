@@ -719,6 +719,11 @@ class TaskPool(object):
         for itask in self.get_tasks():
             itask.process_incoming_messages()
 
+    def process_event_handler_retries(self):
+        """Retry, where applicable, any failed task event handlers."""
+        for itask in self.get_tasks():
+            itask.process_event_handler_retries()
+
     def process_queued_db_ops(self):
         """Handle queued db operations for each task proxy."""
         for itask in self.get_all_tasks():

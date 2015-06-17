@@ -1462,16 +1462,6 @@ class TaskProxy(object):
             except Queue.Empty:
                 break
             queue.task_done()
-        # Retry any failed event handlers
-        for key, try_state in self.event_handler_try_states.items():
-            if try_state.ctx and try_state.is_delay_done():
-                ctx = SuiteProcContext(
-                    try_state.ctx.cmd_type,
-                    try_state.ctx.cmd,
-                    **try_state.ctx.cmd_kwargs)
-                try_state.ctx = ctx
-                SuiteProcPool.get_inst().put_command(
-                    ctx, self.event_handler_callback)
 
     def process_incoming_message(self, (priority, message)):
         """Parse an incoming task message and update task state.
@@ -1640,6 +1630,18 @@ class TaskProxy(object):
             # Note that all messages are logged already at the top.
             self.log(DEBUG, '(current: %s) unhandled: %s' % (
                 self.state.get_status(), content))
+
+    def process_event_handler_retries(self):
+        # Retry any failed event handlers
+        for key, try_state in self.event_handler_try_states.items():
+            if try_state.ctx and try_state.is_delay_done():
+                ctx = SuiteProcContext(
+                    try_state.ctx.cmd_type,
+                    try_state.ctx.cmd,
+                    **try_state.ctx.cmd_kwargs)
+                try_state.ctx = ctx
+                SuiteProcPool.get_inst().put_command(
+                    ctx, self.event_handler_callback)
 
     def set_status(self, status):
         """Set, log and record task status."""
