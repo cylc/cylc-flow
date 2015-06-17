@@ -485,7 +485,7 @@ class TaskProxy(object):
     def reset_state_expired(self):
         """Reset state to "expired"."""
         self.set_status('expired')
-        self.record_db_event(event="reset to expired")
+        self._db_events_insert(event="reset to expired")
         self.prerequisites.set_all_satisfied()
         self.unset_outputs()
         self.turn_off_timeouts()
