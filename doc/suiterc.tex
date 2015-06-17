@@ -72,11 +72,12 @@ Cylc runs off the suite host's system clock by default. This item allows
 you to run the suite in UTC even if the system clock is set to local time.
 Clock-triggered tasks will trigger when the current UTC time is equal to
 their cycle point date-time plus offset; other time values used, reported,
-or logged by the suite daemon will usually also be in UTC.
+or logged by the suite daemon will usually also be in UTC. The default for
+this can be set at the site level (see ~\ref{SiteUTCMode}).
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} False
+    \item {\em default:} False, unless overridden at site level.
 \end{myitemize}
 
 \subsubsection[cycle point format]{ [cylc] $\rightarrow$ cycle point format}
@@ -221,10 +222,13 @@ following EVENTs occurs:
     \item {\bf timeout}  - the suite has timed out
 \end{myitemize}
 
+Default values for these can be set at the site level via the siterc file
+(see ~\ref{SiteCylcHooks}).
+
 Item details:
 \begin{myitemize}
     \item {\em type:} string (event handler script name)
-    \item {\em default:} None
+    \item {\em default:} None, unless defined at the site level.
     \item {\em example:} \lstinline@startup handler = my-handler.sh@
 \end{myitemize}
 
@@ -232,12 +236,13 @@ Item details:
 
 If a timeout is set and the timeout event is handled, the timeout event
 handler(s) will be called if the suite times out before it finishes.
-The timer is set initially at suite start up.
+The timer is set initially at suite start up. It is possible to set a default
+for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 duration/interval representation (e.g.
  \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
-    \item {\em default:} (none)
+    \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
 
 \paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
@@ -255,11 +260,12 @@ time.
 \paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
-error status if the suite times out while still running.
+error status if the suite times out while still running. It is possible to set 
+a default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} False
+    \item {\em default:} False, unless set at the site level.
 \end{myitemize}
 
 \paragraph[abort if startup handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if EVENT handler fails}

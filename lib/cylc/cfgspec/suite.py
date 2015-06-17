@@ -196,7 +196,7 @@ SPEC = {
             'abort if startup handler fails'  : vdr( vtype='boolean', default=False ),
             'abort if shutdown handler fails' : vdr( vtype='boolean', default=False ),
             'abort if timeout handler fails'  : vdr( vtype='boolean', default=False ),
-            'abort on timeout'                : vdr( vtype='boolean', default=False ),
+            'abort on timeout'                : vdr( vtype='boolean', default=GLOBAL_CFG.get( ['cylc','event hooks', 'abort on timeout'] ) ),
             },
         'simulation mode' : {
             'disable suite event hooks'       : vdr( vtype='boolean', default=True ),

@@ -73,6 +73,7 @@ SPEC = {
             'timeout handler'                 : vdr( vtype='string_list', default=[] ),
             'shutdown handler'                : vdr( vtype='string_list', default=[] ),
             'timeout'                         : vdr( vtype='interval_minutes'),
+            'abort on timeout'                : vdr( vtype='boolean', default=False ),
             },
         },
 
