@@ -662,14 +662,16 @@ class TaskProxy(object):
 
     def job_submission_callback(self, result):
         """Callback on job submission."""
-        out = ""
-        for line in result.out.splitlines(True):
-            if line.startswith(BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "="):
-                self.submit_method_id = line.strip().replace(
-                    BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "=", "")
-            else:
-                out += line
-        result.out = out
+        if result.out is not None:
+            out = ""
+            for line in result.out.splitlines(True):
+                if line.startswith(
+                        BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "="):
+                    self.submit_method_id = line.strip().replace(
+                        BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "=", "")
+                else:
+                    out += line
+            result.out = out
         self.command_log(result)
 
         if result.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
@@ -782,17 +784,15 @@ class TaskProxy(object):
             self.register_job_logs(self.submit_num)
             return
         conf = self.tdef.rtconfig["remote"]
-        size = conf["retrieve job log max size"]
-        if not size:
+        if not conf["retrieve job log"]:
             return
         source = (
             self.user_at_host + ":" +
             os.path.dirname(self.job_conf["job file path"]))
-        cmd = [
-            "cylc", self.JOB_LOGS_RETRIEVE,
-            "--max-size=%s" % size,
-            source,
-            os.path.dirname(self.job_conf["local job file path"])]
+        cmd = ["cylc", self.JOB_LOGS_RETRIEVE]
+        if conf["retrieve job log max size"]:
+            cmd.append("--max-size=%s" % conf["retrieve job log max size"])
+        cmd += [source, os.path.dirname(self.job_conf["local job file path"])]
         ctx = SuiteProcContext(key, cmd)
         self.event_handler_try_states[key] = TryState(ctx)
         try_state = TryState(ctx)
@@ -1068,6 +1068,8 @@ class TaskProxy(object):
                 self.suite_name, self.tdef.name, self.point, submit_num)
             try:
                 for filename in os.listdir(job_log_dir):
+                    if filename.startswith("."):  # ignore hidden files
+                        continue
                     try:
                         stat = os.stat(os.path.join(job_log_dir, filename))
                     except OSError:

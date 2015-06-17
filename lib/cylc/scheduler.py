@@ -1000,7 +1000,6 @@ class scheduler(object):
                             "pri_db_name": self.pri_dao.db_file_name})
                     self.pub_dao.n_tries = 0
 
-
             self.process_command_queue()
 
             if cylc.flags.iflag or self.do_update_state_summary:

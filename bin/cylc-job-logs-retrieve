@@ -62,20 +62,18 @@ def main():
         "rsync", "-a", "--rsh=" + ssh_tmpl, "--max-size=" + opts.max_size,
         source + "/", target])
 
-    names = os.listdir(target)
-    if "job.out" not in names:
+    filenames = os.listdir(target)
+    if "job.out" not in filenames:
         sys.exit("ERROR: job.out: file not found")
     sys.stdout.write("%s:\n" % os.path.basename(sys.argv[0]))
-    for name in names:
-        stat = os.stat(os.path.join(target, name))
+    for filename in filenames:
+        if filename.startswith("."):  # ignore hidden files
+            continue
+        stat = os.stat(os.path.join(target, filename))
         sys.stdout.write("%s\t%s\t%s\n" % (
-            get_time_string_from_unix_time(stat.st_mtime), stat.st_size, name))
-    try:
-        stats["job.out"] = os.stat(os.path.join(target, "job.out"))
-    except OSError as exc:
-        if opts.debug:
-            traceback.print_exc()
-        sys.exit(exc)
+            get_time_string_from_unix_time(stat.st_mtime),
+            stat.st_size,
+            filename))
 
     os.listdir(target)
 
