@@ -643,6 +643,13 @@ class TaskPool(object):
                 return False
         return True
 
+    def unkillable_only(self):
+        for itask in self.get_tasks():
+            if itask.state.is_currently('running', 'submitted'):
+                if not itask.kill_failed:
+                    return False
+        return True
+
     def poll_tasks(self, ids=None):
         for itask in self.get_tasks():
             if itask.state.is_currently('running', 'submitted'):

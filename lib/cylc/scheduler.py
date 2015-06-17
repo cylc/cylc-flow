@@ -391,6 +391,7 @@ class scheduler(object):
         if kill_active_tasks:
             self.pool.kill_active_tasks()
         self.shut_down_cleanly = True
+        self.kill_on_shutdown = kill_active_tasks
 
     def command_stop_now(self):
         """Shutdown immediately."""
@@ -1038,6 +1039,12 @@ class scheduler(object):
 
             if ((self.shut_down_cleanly or auto_stop) and
                     self.pool.no_active_tasks()):
+                proc_pool.close()
+                self.shut_down_now = True
+
+            if (self.shut_down_cleanly and self.pool.unkillable_only() and 
+                    self.kill_on_shutdown):
+                print '\nWARNING some tasks were not killable at shutdown'
                 proc_pool.close()
                 self.shut_down_now = True
 
