@@ -1,3 +1,0 @@
-CREATE TABLE broadcast_settings(timestamp TEXT, broadcast TEXT);
-CREATE TABLE task_events(name TEXT, cycle TEXT, time INTEGER, submit_num INTEGER, event TEXT, message TEXT, misc TEXT);
-CREATE TABLE task_states(name TEXT, cycle TEXT, time_created TEXT, time_updated TEXT, submit_num INTEGER, is_manual_submit INTEGER, try_num INTEGER, host TEXT, submit_method TEXT, submit_method_id TEXT, status TEXT, PRIMARY KEY(name, cycle));

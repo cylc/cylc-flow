@@ -1,0 +1,21 @@
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT6M
+[scheduling]
+    [[dependencies]]
+        graph = """
+locker:lock => TRUES:succeed-all
+"""
+[runtime]
+    [[locker]]
+        script = """
+timeout 300 cylc-db-lock
+"""
+        [[[outputs]]]
+            lock = "[] I have locked the public database file"
+    [[TRUES]]
+        script = true
+    [[t0, t1, t2, t3, t4, t5, t6, t7, t8, t9]]
+        inherit = TRUES

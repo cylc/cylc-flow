@@ -22,14 +22,16 @@ import cPickle as pickle
 
 import cylc.flags
 from cylc.broadcast_report import (
-    get_broadcast_change_report, get_broadcast_bad_options_report)
+    get_broadcast_change_iter,
+    get_broadcast_change_report,
+    get_broadcast_bad_options_report)
 from cylc.task_id import TaskID
 from cylc.cycling.loader import get_point, standardise_point_string
-from cylc.rundb import RecordBroadcastObject
 from cylc.wallclock import get_current_time_string
 from cylc.network.pyro_base import PyroClient, PyroServer
 
 PYRO_BCAST_OBJ_NAME = 'broadcast_receiver'
+
 
 class BroadcastServer(PyroServer):
     """Server-side suite broadcast interface.
@@ -58,8 +60,7 @@ class BroadcastServer(PyroServer):
         super(BroadcastServer, self).__init__()
         self.log = logging.getLogger('main')
         self.settings = {}
-        self.prev_dump = self._get_dump()
-        self.settings_queue = []
+        self.db_inserts = []
         self.linearized_ancestors = linearized_ancestors
 
     def _prune(self):
@@ -109,7 +110,7 @@ class BroadcastServer(PyroServer):
         modified_settings = []
         bad_point_strings = []
         bad_namespaces = []
-        
+
         for setting in settings:
             for point_string in point_strings:
                 # Standardise the point and check its validity.
@@ -134,7 +135,7 @@ class BroadcastServer(PyroServer):
                             (point_string, namespace, setting))
 
         # Log the broadcast
-        self._update_db_queue()
+        self._append_db_inserts(modified_settings)
         self.log.info(get_broadcast_change_report(modified_settings))
 
         bad_options = {}
@@ -224,7 +225,7 @@ class BroadcastServer(PyroServer):
             self._prune(), point_strings, namespaces, cancel_keys_list)
 
         # Log the broadcast
-        self._update_db_queue()
+        self._append_db_inserts(modified_settings, is_cancel=True)
         self.log.info(
             get_broadcast_change_report(modified_settings, is_cancel=True))
         if bad_options:
@@ -260,12 +261,6 @@ class BroadcastServer(PyroServer):
         """Write broadcast variables to the state dump file."""
         pickle.dump(self.settings, file_)
         file_.write("\n")
-
-    def get_db_ops(self):
-        """Return the next DB operations from DB queue."""
-        ops = self.settings_queue
-        self.settings_queue = []
-        return ops
 
     def load(self, pickled_settings):
         """Load broadcast variables from the state dump file."""
@@ -320,13 +315,11 @@ class BroadcastServer(PyroServer):
         return (list(cancel_keys) in
                 [prune[2:] for prune in prunes if prune[2:]])
 
-    def _update_db_queue(self):
+    def _append_db_inserts(self, modified_settings, is_cancel=False):
         """Update the queue to the runtime DB."""
-        this_dump = self._get_dump()
-        if this_dump != self.prev_dump:
-            now = get_current_time_string(display_sub_seconds=True)
-            self.settings_queue.append(RecordBroadcastObject(now, this_dump))
-            self.prev_dump = this_dump
+        now = get_current_time_string(display_sub_seconds=True)
+        for ctx in get_broadcast_change_iter(modified_settings, is_cancel):
+            self.db_inserts.append([now] + ctx)
 
 
 class BroadcastClient(PyroClient):

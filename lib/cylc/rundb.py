@@ -15,410 +15,421 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Provide data access object for the suite runtime database."""
 
-from datetime import datetime
-import errno
-from time import sleep
-import os
-import Queue
-import shutil
+from logging import getLogger, WARNING
 import sqlite3
-import stat
 import sys
-from threading import Thread
-from mkdir_p import mkdir_p
-from cylc.wallclock import get_current_time_string
-import cPickle as pickle
+import traceback
+import cylc.flags
 
 
-class UpdateObject(object):
-    """UpdateObject for using in tasks"""
-    def __init__(self, table, name, cycle, **kwargs):
-        """Update a row in a table."""
-        kwargs["time_updated"] = get_current_time_string()
-        s_fmt = "UPDATE %(table)s SET %(cols)s WHERE name==? AND cycle==?"
-        cols = ""
-        args = []
-        not_first = False
-        for k, v in kwargs.items():
-            if not_first:
-                cols += ", "
-            not_first = True
-            cols += k + "=?"
-            args.append(v)
-        args.append(name)
-        args.append(cycle)
-        self.s_fmt = s_fmt % {"table": table, "cols": cols}
-        self.args = args
+class CylcSuiteDAOTableColumn(object):
+    """Represent a column in a table."""
+
+    def __init__(self, name, datatype, is_primary_key):
+        self.name = name
+        self.datatype = datatype
+        self.is_primary_key = is_primary_key
 
 
-class RecordBroadcastObject(object):
-    """RecordBroadcastObject for using in broadcast settings dumps"""
-    def __init__(self, time_string, dump_string):
-        """Records a dumped string in the broadcast table"""
-        self.s_fmt = "INSERT INTO broadcast_settings VALUES(?, ?)"
-        self.args = [time_string, dump_string]
+class CylcSuiteDAOTable(object):
+    """Represent a table in the suite runtime database."""
+
+    FMT_CREATE = "CREATE TABLE %(name)s(%(columns_str)s%(primary_keys_str)s)"
+    FMT_INSERT = "INSERT OR REPLACE INTO %(name)s VALUES(%(values_str)s)"
+    FMT_UPDATE = "UPDATE %(name)s SET %(set_str)s%(where_str)s"
+
+    def __init__(self, name, column_items):
+        self.name = name
+        self.columns = []
+        for column_item in column_items:
+            name = column_item[0]
+            attrs = {}
+            if len(column_item) > 1:
+                attrs = column_item[1]
+            self.columns.append(CylcSuiteDAOTableColumn(
+                name,
+                attrs.get("datatype", "TEXT"),
+                attrs.get("is_primary_key", False)))
+        self.insert_queue = []
+        self.update_queues = {}
+
+    def get_create_stmt(self):
+        """Return an SQL statement to create this table."""
+        column_str_list = []
+        primary_keys = []
+        for column in self.columns:
+            column_str_list.append(column.name + " " + column.datatype)
+            if column.is_primary_key:
+                primary_keys.append(column.name)
+        primary_keys_str = ""
+        if primary_keys:
+            primary_keys_str = ", PRIMARY KEY(" + ", ".join(primary_keys) + ")"
+        return self.FMT_CREATE % {
+            "name": self.name,
+            "columns_str": ", ".join(column_str_list),
+            "primary_keys_str": primary_keys_str}
+
+    def get_insert_stmt(self):
+        """Return an SQL statement to insert a row to this table."""
+        return self.FMT_INSERT % {
+            "name": self.name,
+            "values_str": ", ".join("?" * len(self.columns))}
+
+    def get_update_stmt(self, set_args, where_args=None):
+        """Return an update statement and its args to update a row.
+
+        return (stmt, stmt_args)
+
+        set_args should be a dict, with colum keys and values to be set.
+        where_args should be a dict, update will only apply to rows matching
+        all these items.
+
+        """
+        set_strs = []
+        stmt_args = []
+        for column in self.columns:
+            if column.name in set_args:
+                set_strs.append(column.name + "=?")
+                stmt_args.append(set_args[column.name])
+        set_str = ", ".join(set_strs)
+        where_str = ""
+        if where_args:
+            where_strs = []
+            for column in self.columns:
+                if column.name in where_args:
+                    where_strs.append(column.name + "==?")
+                    stmt_args.append(where_args[column.name])
+            if where_strs:
+                where_str = " WHERE " + " AND ".join(where_strs)
+        stmt = self.FMT_UPDATE % {
+            "name": self.name,
+            "set_str": set_str,
+            "where_str": where_str}
+        return stmt, stmt_args
+
+    def add_insert_item(self, args):
+        """Queue an INSERT args.
+
+        If args is a list, its length will be adjusted to be the same as the
+        number of columns. If args is a dict, will return a list with the same
+        length as the number of columns, the elements of which are determined
+        by matching the column names with the keys in the dict.
+
+        Empty elements are padded with None.
+
+        """
+        if isinstance(args, list):
+            if len(args) == len(self.columns):
+                stmt_args = list(args)
+            elif len(args) < len(self.columns):
+                stmt_args = args + [None] * (len(self.columns) - len(args))
+            else:  # len(args) > len(self.columns)
+                stmt_args = args[0:len(self.columns)]
+        else:
+            stmt_args = [
+                args.get(column.name, None) for column in self.columns]
+        self.insert_queue.append(stmt_args)
+
+    def add_update_item(self, set_args, where_args):
+        """Queue an UPDATE item.
+
+        set_args should be a dict, with colum keys and values to be set.
+        where_args should be a dict, update will only apply to rows matching
+        all these items.
+
+        """
+        set_strs = []
+        stmt_args = []
+        for column in self.columns:
+            if column.name in set_args:
+                set_strs.append(column.name + "=?")
+                stmt_args.append(set_args[column.name])
+        set_str = ", ".join(set_strs)
+        where_str = ""
+        if where_args:
+            where_strs = []
+            for column in self.columns:
+                if column.name in where_args:
+                    where_strs.append(column.name + "==?")
+                    stmt_args.append(where_args[column.name])
+            if where_strs:
+                where_str = " WHERE " + " AND ".join(where_strs)
+        stmt = self.FMT_UPDATE % {
+            "name": self.name,
+            "set_str": set_str,
+            "where_str": where_str}
+        if stmt not in self.update_queues:
+            self.update_queues[stmt] = []
+        self.update_queues[stmt].append(stmt_args)
 
 
-class RecordEventObject(object):
-    """RecordEventObject for using in tasks"""
-    def __init__(self, name, cycle, submit_num, event=None, message=None, misc=None):
-        """Records an event in the table"""
-        self.s_fmt = "INSERT INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)"
-        self.args = [name, cycle, get_current_time_string(),
-                     submit_num, event, message, misc]
+class CylcSuiteDAO(object):
+    """Data access object for the suite runtime database."""
 
-
-class RecordStateObject(object):
-    """RecordStateObject for using in tasks"""
-    def __init__(self, name, cycle, time_created_string=None,
-                 time_updated_string=None, submit_num=None,
-                 is_manual_submit=None, try_num=None, host=None,
-                 submit_method=None, submit_method_id=None, status=None):
-        """Insert a new row into the states table"""
-        if time_created_string is None:
-            time_created_string = get_current_time_string()
-        self.s_fmt = "INSERT INTO task_states VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        self.args = [name, cycle, time_created_string, time_updated_string,
-                     submit_num, is_manual_submit, try_num, host,
-                     submit_method, submit_method_id, status]
-
-
-class BulkDBOperObject(object):
-    """BulkDBOperObject for grouping together related operations"""
-    def __init__(self, base_object):
-        self.s_fmt = base_object.s_fmt
-        self.args = []
-        self.args.append(base_object.args)
-    def add_oper(self, db_object):
-        if db_object.s_fmt != self.s_fmt:
-            raise Exception( "ERROR: cannot combine different types of database operation" )
-        self.args.append(db_object.args)
-
-
-class ThreadedCursor(Thread):
-    def __init__(self, db, dump, restart=False, max_commit_attempts=5):
-        super(ThreadedCursor, self).__init__()
-        self.max_commit_attempts = max_commit_attempts
-        self.db=db
-        self.db_dump_name = dump
-        self.reqs=Queue.Queue()
-        self.db_dump_msg = ("[INFO] Dumping database queue (%s items) to: %s")
-        self.db_dump_load = ("[INFO] Loading dumped database queue (%s items) from: %s")
-        self.integrity_msg = ("Database Integrity Error: %s:\n"+
-                              "\tConverting INSERT to INSERT OR REPLACE for:\n"+
-                              "\trequest: %s\n\targs: %s")
-        self.generic_err_msg = ("%s:%s occurred while trying to run:\n"+
-                              "\trequest: %s\n\targs: %s")
-        self.db_not_found_err = ("Database Not Found Error:\n"+
-                                 "\tNo database found at %s")
-        self.retry_warning = ("[WARNING] retrying database operation on %s - retry %s \n"+
-                              "\trequest: %s\n\targs: %s")
-        if restart:
-            self.load_queue()
-        self.start()
-        self.exception = None
-
-
-    def run(self):
-        cnx = sqlite3.connect(self.db, timeout=10.0)
-        cursor = cnx.cursor()
-        counter = 1
-        while True:
-            if (counter % 10) == 0 or self.reqs.qsize() == 0:
-                counter = 0
-                attempt = 0
-                while attempt < self.max_commit_attempts:
-                    try:
-                        cnx.commit()
-                        break
-                    except Exception as e:
-                        attempt += 1
-                        if attempt >= self.max_commit_attempts:
-                            self.exception = e
-                            raise e
-                        sleep(1)
-            attempt = 0
-            req, arg, res, bulk = self.reqs.get()
-            self.lastreq = req
-            self.lastarg = arg
-            self.lastbulk = bulk
-            if req=='--close--': break
-            while attempt < self.max_commit_attempts:
-                try:
-                    if bulk:
-                        cursor.executemany(req, arg)
-                    else:
-                        cursor.execute(req, arg)
-                    if res:
-                        for rec in cursor:
-                            res.put(rec)
-                        res.put('--no more--')
-                    cnx.commit()
-                    break
-                except sqlite3.IntegrityError as e:
-                    # Capture integrity errors, refactor request and report to stderr
-                    attempt += 1
-                    if req.startswith("INSERT INTO"):
-                        print >> sys.stderr, self.integrity_msg%(str(e),req,arg)
-                        req = req.replace("INSERT INTO", "INSERT OR REPLACE INTO", 1)
-                    if attempt >= self.max_commit_attempts:
-                        self.exception = e
-                        # dump database queue - should only be readable by suite owner
-                        self.dump_queue()
-                        raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
-                    print >> sys.stderr, self.retry_warning%(self.db, str(attempt), req, arg)
-                    sleep(1)
-                except Exception as e:
-                    # Capture all other integrity errors and raise more helpful message
-                    attempt += 1
-                    if attempt >= self.max_commit_attempts:
-                        self.exception = e
-                        # dump database queue - should only be readable by suite owner
-                        self.dump_queue()
-                        raise Exception(self.generic_err_msg%(type(e),str(e),req,arg))
-                    print >> sys.stderr, self.retry_warning%(self.db, str(attempt), req, arg)
-                    sleep(1)
-            counter += 1
-        cnx.commit()
-        cnx.close()
-
-    def execute(self, req, arg=None, res=None, bulk=False):
-        self.reqs.put((req, arg or tuple(), res, bulk))
-
-    def select(self, req, arg=None):
-        res=Queue.Queue()
-        self.execute(req, arg, res)
-        while True:
-            rec=res.get()
-            if rec=='--no more--': break
-            yield rec
-
-    def close(self):
-        self.execute('--close--')
-
-    def dump_queue(self):
-        """Dump out queued database operations"""
-        queue_dump = {}
-        if not self.lastreq.startswith("SELECT"):
-            queue_dump[0] = {}
-            queue_dump[0]['req'] = self.lastreq
-            queue_dump[0]['args'] = self.lastarg
-            queue_dump[0]['is_bulk'] = self.lastbulk
-
-        i = 1
-        while True:
-            try:
-                req, arg, res, bulk = self.reqs.get_nowait()
-            except Queue.Empty:
-                break
-            # Ignore queries and database close messages
-            if not res and not req == "--close--":
-                queue_dump[i] = {}
-                queue_dump[i]['req'] = req
-                queue_dump[i]['args'] = arg
-                queue_dump[i]['is_bulk'] = bulk
-                i += 1
-
-        print >> sys.stderr, self.db_dump_msg%(len(queue_dump.keys()), str(self.db_dump_name))
-        pickle.dump(queue_dump, open(self.db_dump_name, "wb"))
-
-        # Protect the file
-        os.chmod(self.db_dump_name, stat.S_IRUSR | stat.S_IWUSR)
-        return
-
-    def load_queue(self):
-        """Reload queue from a dump"""
-        if os.path.exists(self.db_dump_name):
-            dumped_queue = pickle.load( open( self.db_dump_name, "rb" ) )
-            print >> sys.stdout, self.db_dump_load%(len(dumped_queue.keys()), str(self.db_dump_name))
-            for item in dumped_queue.keys():
-                self.execute(dumped_queue[item]['req'],
-                             dumped_queue[item]['args'],
-                             bulk=dumped_queue[item]['is_bulk'])
-            os.remove(self.db_dump_name)
-        return
-
-
-class CylcRuntimeDAO(object):
-    """Access object for a Cylc suite runtime database."""
-
+    CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "cylc-suite.db"
-    DB_DUMP_BASE_NAME = "cylc_db_dump.p"
-    TASK_EVENTS = "task_events"
-    TASK_STATES = "task_states"
-    BROADCAST_SETTINGS = "broadcast_settings"
-    TABLES = {
-            TASK_EVENTS: [                      # each task event gets a row
-                    "name TEXT",
-                    "cycle TEXT",               # current cycle point of the task
-                    "time INTEGER",             # actual time
-                    "submit_num INTEGER",
-                    "event TEXT",
-                    "message TEXT",
-                    "misc TEXT"],               # e.g. record the user@host associated with this event
-            TASK_STATES: [                      # each task gets a status entry that is updated
-                    "name TEXT",
-                    "cycle TEXT",
-                    "time_created TEXT",        # actual serverside time
-                    "time_updated TEXT",        # actual serverside time
-                    "submit_num INTEGER",       # included in key to track status of different submissions for a task
-                    "is_manual_submit INTEGER", # boolean - user related or auto?
-                    "try_num INTEGER",          # auto-resubmit generates this
-                    "host TEXT",                # host for the task
-                    "submit_method TEXT",       # to be taken from loadleveller id/process - empty at the moment
-                    "submit_method_id TEXT",    # empty at the moment
-                    "status TEXT",
-                    # TODO: "rc TEXT",
-                    # TODO: "auth_key TEXT",
-                    ],
-            BROADCAST_SETTINGS: [
-                    "timestamp TEXT",
-                    "broadcast TEXT"
-                    ]}
-    PRIMARY_KEY_OF = {TASK_EVENTS: None,
-                      TASK_STATES: "name, cycle",
-                      BROADCAST_SETTINGS: None}
+    MAX_TRIES = 100
+    TABLE_BROADCASTS = "broadcasts"
+    TABLE_TASK_JOBS = "task_jobs"
+    TABLE_TASK_EVENTS = "task_events"
+    TABLE_TASK_STATES = "task_states"
 
-    # Primary/Public database specific settings
-    PRIMARY_DB_ATTEMPT_LIMIT=5
-    PUBLIC_DB_ATTEMPT_LIMIT=10
+    def __init__(self, db_file_name=None, is_public=False):
+        """Initialise object.
 
-    def __init__(self, suite_dir=None, new_mode=False, primary_db=True):
-        if suite_dir is None:
-            suite_dir = os.getcwd()
-        if primary_db:
-            prefix = os.path.join(suite_dir, 'state')
-            retries = self.PRIMARY_DB_ATTEMPT_LIMIT
-        else:
-            prefix = suite_dir
-            retries = self.PUBLIC_DB_ATTEMPT_LIMIT
+        db_file_name - Path to the database file
+        is_public - If True, allow retries, etc
 
-        self.db_file_name = os.path.join(prefix, self.DB_FILE_BASE_NAME)
-        self.db_dump_name = os.path.join(prefix, self.DB_DUMP_BASE_NAME)
-        # create the host directory if necessary
-        try:
-            mkdir_p( suite_dir )
-        except Exception, x:
-            raise Exception( "ERROR: " + str(x) )
+        """
+        self.db_file_name = db_file_name
+        self.is_public = is_public
+        self.conn = None
+        self.n_tries = 0
 
-        if new_mode:
-            if os.path.isdir(self.db_file_name):
-                shutil.rmtree(self.db_file_name)
-            else:
-                try:
-                    os.unlink(self.db_file_name)
-                except:
-                    pass
-        if not os.path.exists(self.db_file_name):
-            new_mode = True
-        if new_mode:
-            self.create()
-            # Restrict the primary database to user access only
-            if primary_db:
-                os.chmod(self.db_file_name, stat.S_IRUSR | stat.S_IWUSR)
-            # Clear out old db operations dump
-            if os.path.exists(self.db_dump_name):
-                os.remove(self.db_dump_name)
-        else:
-            self.lock_check()
+        self.tables = {
+            self.TABLE_BROADCASTS: CylcSuiteDAOTable(self.TABLE_BROADCASTS, [
+                ["time"],
+                ["change"],
+                ["point"],
+                ["namespace"],
+                ["key"],
+                ["value"],
+            ]),
+            self.TABLE_TASK_JOBS: CylcSuiteDAOTable(self.TABLE_TASK_JOBS, [
+                ["cycle"],
+                ["name"],
+                ["submit_num", {"datatype": "INTEGER"}],
+                ["is_manual_submit", {"datatype": "INTEGER"}],
+                ["try_num", {"datatype": "INTEGER"}],
+                ["time_submit"],
+                ["time_submit_exit"],
+                ["submit_status"],
+                ["time_run"],
+                ["time_run_exit"],
+                ["run_signal"],
+                ["run_status"],
+                ["user_at_host"],
+                ["batch_sys_name"],
+                ["batch_sys_job_id"],
+            ]),
+            self.TABLE_TASK_EVENTS: CylcSuiteDAOTable(self.TABLE_TASK_EVENTS, [
+                ["name"],
+                ["cycle"],
+                ["time"],
+                ["submit_num", {"datatype": "INTEGER"}],
+                ["event"],
+                ["message"],
+                ["misc"],
+            ]),
+            self.TABLE_TASK_STATES: CylcSuiteDAOTable(self.TABLE_TASK_STATES, [
+                ["name", {"is_primary_key": True}],
+                ["cycle", {"is_primary_key": True}],
+                ["time_created"],
+                ["time_updated"],
+                ["submit_num", {"datatype": "INTEGER"}],
+                ["is_manual_submit", {"datatype": "INTEGER"}],
+                ["try_num", {"datatype": "INTEGER"}],
+                ["host"],
+                ["submit_method"],
+                ["submit_method_id"],
+                ["status"],
+            ]),
+        }
 
-        self.c = ThreadedCursor(self.db_file_name, self.db_dump_name,
-                                not new_mode, retries)
+        if not self.is_public:
+            self.create_tables()
+
+    def add_insert_item(self, table_name, args):
+        """Queue an INSERT args for a given table.
+
+        If args is a list, its length will be adjusted to be the same as the
+        number of columns. If args is a dict, will return a list with the same
+        length as the number of columns, the elements of which are determined
+        by matching the column names with the keys in the dict.
+
+        Empty elements are padded with None.
+
+        """
+        self.tables[table_name].add_insert_item(args)
+
+    def add_update_item(self, table_name, set_args, where_args=None):
+        """Queue an UPDATE item for a given table.
+
+        set_args should be a dict, with colum keys and values to be set.
+        where_args should be a dict, update will only apply to rows matching
+        all these items.
+
+        """
+        self.tables[table_name].add_update_item(set_args, where_args)
 
     def close(self):
-        self.c.close()
+        """Explicitly close the connection."""
+        if self.conn is not None:
+            try:
+                self.conn.close()
+            except sqlite3.Error as exc:
+                pass
+            self.conn = None
 
     def connect(self):
-        self.conn = sqlite3.connect(self.db_file_name)
-        return self.conn.cursor()
+        """Connect to the database."""
+        if self.conn is None:
+            self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
+        return self.conn
 
-    def create(self):
-        """Create the database tables."""
-        c = self.connect()
-        for table, cols in self.TABLES.items():
-            s = "CREATE TABLE " + table + "("
-            not_first = False
-            for col in cols:
-                if not_first:
-                    s += ", "
-                not_first = True
-                s += col
-            if self.PRIMARY_KEY_OF[table]:
-                s += ", PRIMARY KEY(" + self.PRIMARY_KEY_OF[table] + ")"
-            s += ")"
-            res = c.execute(s)
-        return
+    def create_tables(self):
+        """Create tables."""
+        names = []
+        for row in self.connect().execute(
+                "SELECT name FROM sqlite_master WHERE type==? ORDER BY name",
+                ["table"]):
+            names.append(row[0])
+        for name, table in self.tables.items():
+            if name not in names:
+                self.conn.execute(table.get_create_stmt())
+                self.conn.commit()
 
-    def lock_check(self):
-        """Try to create a dummy table"""
-        c = self.connect()
-        c.execute("CREATE TABLE lock_check (entry TEXT)")
-        c.execute("DROP TABLE lock_check")
-
-    def get_task_submit_num(self, name, cycle):
-        s_fmt = ("SELECT COUNT(*) FROM task_events" +
-                 " WHERE name==? AND cycle==? AND event==?")
-        args = [name, str(cycle), "incrementing submit number"]
-        count = 0
-        for row in self.c.select(s_fmt, args):
-            count = row[0]  # submission numbers should start at 0
-            break
-        return count + 1
-
-    def get_task_current_submit_num(self, name, cycle):
-        s_fmt = ("SELECT COUNT(*) FROM task_events" +
-                 " WHERE name==? AND cycle==? AND event==?")
-        args = [name, str(cycle), "incrementing submit number"]
-        for row in self.c.select(s_fmt, args):
-            return row[0]
-
-    def get_task_state_exists(self, name, cycle):
-        s_fmt = "SELECT COUNT(*) FROM task_states WHERE name==? AND cycle==?"
-        for row in self.c.select(s_fmt, [name, str(cycle)]):
-            return row[0] > 0
-        return False
-
-    def get_task_host(self, name, cycle):
-        """Return the host name for task "name" at a given cycle."""
-        s_fmt = r"SELECT host FROM task_states WHERE name==? AND cycle==?"
-        for row in self.c.select(s_fmt, [name, str(cycle)]):
-            return row[0]
-
-    def get_task_location(self, name, cycle):
-        s_fmt = """SELECT misc FROM task_events WHERE name==? AND cycle==?
-                   AND event=="submission succeeded" AND misc!=""
-                   ORDER BY submit_num DESC LIMIT 1"""
-        for row in self.c.select(s_fmt, [name, str(cycle)]):
-            return row
-
-    def get_task_submit_method_id_and_try(self, name, cycle):
-        s_fmt = """SELECT submit_method_id, try_num FROM task_states WHERE name==? AND cycle==?
-                   ORDER BY submit_num DESC LIMIT 1"""
-        for row in self.c.select(s_fmt, [name, str(cycle)]):
-            return row
-
-    def run_db_op(self, db_oper):
-        if not os.path.exists(self.db_file_name):
-            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), self.db_file_name)
-        if isinstance(db_oper, BulkDBOperObject):
-            self.c.execute(db_oper.s_fmt, db_oper.args, bulk=True)
+    def execute_queued_items(self):
+        """Execute queued items for each table."""
+        self.connect()
+        will_retry = False
+        for table in self.tables.values():
+            # INSERT statements are uniform for each table, so all INSERT
+            # statements can be executed using a single "executemany" call.
+            if table.insert_queue:
+                try:
+                    stmt = table.get_insert_stmt()
+                    self.conn.executemany(stmt, table.insert_queue)
+                    self.conn.commit()
+                except sqlite3.Error:
+                    if not self.is_public:
+                        raise
+                    self.conn.rollback()
+                    will_retry = True
+                    if cylc.flags.debug:
+                        traceback.print_exc()
+                        sys.stderr.write(
+                            "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
+                                "file": self.db_file_name,
+                                "table": table.name,
+                                "stmt": stmt})
+                        for stmt_args in table.insert_queue:
+                            sys.stderr.write(
+                                "\t%(stmt_args)s\n" % {"stmt_args": stmt_args})
+                    # Not safe to do UPDATE if INSERT failed
+                    continue
+                else:
+                    table.insert_queue = []
+            # UPDATE statements can be used to update any fields in many rows
+            # so we can only executemany for each identical template statement.
+            for stmt, stmt_args_list in table.update_queues.items():
+                try:
+                    self.conn.executemany(stmt, stmt_args_list)
+                    self.conn.commit()
+                except sqlite3.Error:
+                    if not self.is_public:
+                        raise
+                    self.conn.rollback()
+                    will_retry = True
+                    if cylc.flags.debug:
+                        traceback.print_exc()
+                        sys.stderr.write(
+                            "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
+                                "file": self.db_file_name,
+                                "table": table.name,
+                                "stmt": stmt})
+                        for stmt_args in stmt_args_list:
+                            sys.stderr.write("\t%(stmt_args)s\n" % {
+                                "stmt_args": stmt_args})
+                else:
+                    table.update_queues.pop(stmt)
+        if will_retry:
+            self.n_tries += 1
+            logger = getLogger("main")
+            logger.log(
+                WARNING,
+                "%(file)s: write attempt (%(attempt)d) did not complete\n" % {
+                    "file": self.db_file_name, "attempt": self.n_tries})
         else:
-            self.c.execute(db_oper.s_fmt, db_oper.args)
+            if self.n_tries:
+                logger = getLogger("main")
+                logger.log(
+                    WARNING,
+                    "%(file)s: recovered after (%(attempt)d) attempt(s)\n" % {
+                        "file": self.db_file_name, "attempt": self.n_tries})
+            self.n_tries = 0
 
-    def get_restart_info(self, cycle):
-        """Get all the task names and submit count for a particular cycle"""
-        s_fmt = """SELECT name FROM task_states WHERE cycle ==?"""
-        args = [cycle]
-        res = {}
-        for row in self.c.select(s_fmt, args):
-            res[row[0]] = 0
-        
-        s_fmt = """SELECT name, count(*) FROM task_events WHERE cycle ==? AND
-                   event ==? GROUP BY name"""
-        args = [cycle, "incrementing submit number"]
-        
-        for name, count in self.c.select(s_fmt, args):
-            res[name] = count
+        # N.B. This is not strictly necessary. However, if the suite run
+        # directory is removed, a forced reconnection to the private database
+        # will ensure that the suite dies.
+        self.close()
 
-        return res
+    def select_task_states_by_task_ids(self, keys, task_ids=None):
+        """Select items from task_states by task IDs.
+
+        Return a data structure like this:
+
+        {
+            (name1, point1): {key1: "value 1", ...},
+            ...,
+        }
+
+        task_ids should be specified as [[name, cycle], ...]
+
+        """
+        if keys is None:
+            keys = []
+            for column in self.tables[self.TABLE_TASK_STATES].columns[2:]:
+                keys.append(column.name)
+        stmt = r"SELECT name,cycle,%(keys_str)s FROM %(name)s" % {
+            "keys_str": ",".join(keys),
+            "name": self.TABLE_TASK_STATES}
+        stmt_args = []
+        if task_ids:
+            stmt += (
+                " WHERE (" +
+                ") OR (".join(["name==? AND cycle==?"] * len(task_ids)) +
+                ")")
+            for name, cycle in task_ids:
+                stmt_args += [name, cycle]
+        ret = {}
+        for row in self.connect().execute(stmt, stmt_args):
+            name, cycle = row[0:2]
+            ret[(name, cycle)] = {}
+            for key, value in zip(keys, row[2:]):
+                ret[(name, cycle)][key] = value
+        return ret
+
+    def select_task_states_by_cycles(self, keys, cycles=None):
+        """Select items from task_states by cycles.
+
+        Return a data structure like this:
+
+        {
+            (name1, point1): {key1: "value 1", ...},
+            ...,
+        }
+
+        cycles should be a list of relevant cycles.
+
+        """
+        stmt = r"SELECT name,cycle,%(keys_str)s FROM %(name)s" % {
+            "keys_str": ",".join(keys),
+            "name": self.TABLE_TASK_STATES}
+        stmt_args = []
+        if cycles:
+            stmt += " WHERE " + " OR ".join(["cycle==?"] * len(cycles))
+            stmt_args += [str(cycle) for cycle in cycles]
+        ret = {}
+        for row in self.connect().execute(stmt, stmt_args):
+            name, cycle = row[0:2]
+            ret[(name, cycle)] = {}
+            for key, value in zip(keys, row[2:]):
+                ret[(name, cycle)][key] = value
+        return ret
+
+    def vacuum(self):
+        """Vacuum to the database."""
+        return self.connect().execute("VACUUM")

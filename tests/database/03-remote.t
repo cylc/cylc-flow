@@ -15,36 +15,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test broadcasts
+# Suite database content, "task_jobs" table with a remote job.
 . "$(dirname "$0")/test_header"
+export CYLC_TEST_HOST=$(cylc get-global-config -i '[test battery]remote host')
+if [[ -z "${CYLC_TEST_HOST}" ]]; then
+    skip_all '[test battery]remote host: not defined'
+fi
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+# Install suite passphrase.
+set -eu
+ssh -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
+    "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
+    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
+set +eu
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test "${SUITE_NAME}"
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
-NAME='select-broadcasts.out'
+
+NAME='select-task-jobs.out'
 sqlite3 "${DB_FILE}" \
-    'SELECT change, point, namespace, key, value FROM broadcasts
-     ORDER BY time, change, point, namespace, key' >"${NAME}"
-cmp_ok "${NAME}" <<'__SELECT__'
-+|*|root|[environment]BCAST|ROOT
-+|2010080800|foo|[environment]BCAST|FOO
-+|*|bar|[environment]BCAST|BAR
-+|2010080900|baz|[environment]BCAST|BAZ
-+|2010080900|qux|[environment]BCAST|QUX
--|2010080900|qux|[environment]BCAST|QUX
-+|*|wibble|[environment]BCAST|WIBBLE
--|*|wibble|[environment]BCAST|WIBBLE
-+|*|ENS|[environment]BCAST|ENS
-+|*|ENS1|[environment]BCAST|ENS1
-+|2010080900|m2|[environment]BCAST|M2
-+|*|m7|[environment]BCAST|M7
-+|*|m8|[environment]BCAST|M8
-+|*|m9|[environment]BCAST|M9
--|2010080800|foo|[environment]BCAST|FOO
+    'SELECT cycle, name, submit_num, try_num, submit_status, run_status,
+            user_at_host, batch_sys_name
+     FROM task_jobs ORDER BY name' \
+    >"${NAME}"
+cmp_ok "${NAME}" <<__SELECT__
+20200101T0000Z|t1|1|1|0|0|localhost|background
+20200101T0000Z|t2|1|1|0|0|${CYLC_TEST_HOST}|background
 __SELECT__
 
 purge_suite "${SUITE_NAME}"

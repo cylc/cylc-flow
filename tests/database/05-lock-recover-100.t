@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test broadcasts
+# Suite database content, "task_jobs" table after a task retries.
 . "$(dirname "$0")/test_header"
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
@@ -25,26 +25,23 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test "${SUITE_NAME}"
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
-NAME='select-broadcasts.out'
+
+NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" \
-    'SELECT change, point, namespace, key, value FROM broadcasts
-     ORDER BY time, change, point, namespace, key' >"${NAME}"
+    'SELECT cycle, name, status FROM task_states ORDER BY name' \
+    >"${NAME}"
 cmp_ok "${NAME}" <<'__SELECT__'
-+|*|root|[environment]BCAST|ROOT
-+|2010080800|foo|[environment]BCAST|FOO
-+|*|bar|[environment]BCAST|BAR
-+|2010080900|baz|[environment]BCAST|BAZ
-+|2010080900|qux|[environment]BCAST|QUX
--|2010080900|qux|[environment]BCAST|QUX
-+|*|wibble|[environment]BCAST|WIBBLE
--|*|wibble|[environment]BCAST|WIBBLE
-+|*|ENS|[environment]BCAST|ENS
-+|*|ENS1|[environment]BCAST|ENS1
-+|2010080900|m2|[environment]BCAST|M2
-+|*|m7|[environment]BCAST|M7
-+|*|m8|[environment]BCAST|M8
-+|*|m9|[environment]BCAST|M9
--|2010080800|foo|[environment]BCAST|FOO
+1|locker|succeeded
+1|t0|succeeded
+1|t1|succeeded
+1|t2|succeeded
+1|t3|succeeded
+1|t4|succeeded
+1|t5|succeeded
+1|t6|succeeded
+1|t7|succeeded
+1|t8|succeeded
+1|t9|succeeded
 __SELECT__
 
 purge_suite "${SUITE_NAME}"
