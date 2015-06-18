@@ -49,7 +49,7 @@ coercers['interval_minutes_list'] = (
                                        check_syntax_version=False))
 
 SPEC = {
-    'process pool size'                   : vdr( vtype='integer', default=None ),
+    'process pool size'                   : vdr( vtype='integer', default=4 ),
     'temporary directory'                 : vdr( vtype='string' ),
     'state dump rolling archive length'   : vdr( vtype='integer', vmin=1, default=10 ),
     'disable interactive command prompts' : vdr( vtype='boolean', default=True ),
