@@ -58,6 +58,12 @@
 #         Test that FILE does not exist
 #     init_suite SUITE_NAME
 #         Create a suite called '__cylc__test__${SUITE_NAME}__' in $TEST_DIR.
+#     mock_smtpd_init
+#         Start a mock SMTP server daemon for testing. Write host:port setting
+#         to the variable TEST_SMTPD_HOST. Write pid of daemon to
+#         TEST_SMTPD_PID. Write log to TEST_SMTPD_LOG.
+#     mock_smtpd_kill
+#         Kill the mock SMTP server daemon process.
 #     purge_suite SUITE_NAME
 #         Tidy up test directories for SUITE_NAME.
 #     poll COMMAND
@@ -87,6 +93,9 @@ function FINALLY() {
     if [[ -n "${TEST_RHOST_CYLC_DIR}" ]]; then
         ssh -oBatchMode=yes -oConnectTimeout=5 "${TEST_RHOST_CYLC_DIR%%:*}" \
             "rm -fr ${TEST_RHOST_CYLC_DIR#*:}"
+    fi
+    if [[ -n "${TEST_SMTPD_PID:-}" ]]; then
+        kill "${TEST_SMTPD_PID}"
     fi
     if (($FAILURES > 0)); then
         echo -e "\n    stdout and stderr stored in: $TEST_LOG_DIR" >&2
@@ -340,6 +349,41 @@ import os
 from tempfile import mkdtemp
 print mkdtemp(dir=os.path.expanduser("~"), prefix="cylc-")
 __PYTHON__
+}
+
+function mock_smtpd_init() {  # Logic borrowed from Rose
+    local SMTPD_PORT=
+    for SMTPD_PORT in 8025 8125 8225 8325 8425 8525 8625 8725 8825 8925; do 
+        local SMTPD_HOST="localhost:${SMTPD_PORT}"
+        local SMTPD_LOG="${TEST_DIR}/smtpd.log"
+        python -m 'smtpd' -c 'DebuggingServer' -d -n "${SMTPD_HOST}" \
+            1>"${SMTPD_LOG}" 2>&1 &
+        local SMTPD_PID="$!"
+        while ! grep -q 'DebuggingServer started' "${SMTPD_LOG}" 2>/dev/null; do
+            if ps "${SMTPD_PID}" 1>/dev/null 2>&1; then
+                sleep 1
+            else
+                rm -f "${SMTPD_LOG}"
+                unset SMTPD_HOST SMTPD_LOG SMTPD_PID
+                break
+            fi
+        done
+        if [[ -n "${SMTPD_PID:-}" ]]; then
+            TEST_SMTPD_HOST="${SMTPD_HOST}"
+            TEST_SMTPD_PID="${SMTPD_PID}"
+            TEST_SMTPD_LOG="${SMTPD_LOG}"
+            break
+        fi
+    done
+}
+
+function mock_smtpd_kill() {  # Logic borrowed from Rose
+    if [[ -n "${TEST_SMTPD_PID:-}" ]] && ps "${TEST_SMTPD_PID}" >/dev/null 2>&1
+    then
+        kill "${TEST_SMTPD_PID}"
+        wait "${TEST_SMTPD_PID}" 2>/dev/null || true
+        unset TEST_SMTPD_HOST TEST_SMTPD_LOG TEST_SMTPD_PID
+    fi
 }
 
 CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}

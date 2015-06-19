@@ -882,9 +882,9 @@ class scheduler(object):
                     # Note: test suites depends on this message:
                     print >> sys.stderr, (
                         '\nERROR: %s EVENT HANDLER FAILED' % name)
-                    raise SchedulerError(x)
                     if name == 'shutdown' and self.reference_test_mode:
                         sys.exit('\nERROR: SUITE REFERENCE TEST FAILED')
+                    raise SchedulerError(x)
                 else:
                     if name == 'shutdown' and self.reference_test_mode:
                         # TODO - this isn't true, it just means the
