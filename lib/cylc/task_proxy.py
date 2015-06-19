@@ -756,7 +756,7 @@ class TaskProxy(object):
                     try_state.delay_as_seconds(),
                     try_state.timeout_as_str(),
                     result.cmd))
-            self.event_handler_try_states[try_state.key] = try_state
+            self.event_handler_try_states[result.cmd_type] = try_state
 
     def handle_event(
             self, event, message, db_update=True, db_event=None, db_msg=None):
