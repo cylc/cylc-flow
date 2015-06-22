@@ -1400,12 +1400,63 @@ ssh -oBatchMode=yes -oConnectTimeout=10 wrh-1.niwa.co.nz\
 ' "/opt/cylc/bin/cylc" '"'"'job-submit'"'"\
 ' --remote-mode "/home/oliverh/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job"'
 \end{lstlisting}
-(Don't be intimated by this - it really quite straightforward and would appear
-much simpler if the job log path was shorter!). Remote task job logs are
+(Don't be intimated by this - it is really quite straightforward and would
+appear much simpler if the job log path was shorter!). Remote task job logs are
 saved to the suite run directory on the task host, not on the suite host,
-although they can be retrieved by right-clicking on the task in the GUI. Rose
-(section~\ref{Rose}) provides a task event handler to pull logs back to
-the suite host.
+although they can be retrieved by right-clicking on the task in the GUI. If you
+want the job logs pulled back to the suite host automatically, you can set
+\lstinline@[[[remote]]]retrieve job log=True@:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[hello]]
+        script = "sleep 10; echo Hello World!"
+        [[[remote]]]
+            host = server1.niwa.co.nz
+            retrieve job log = True
+\end{lstlisting}
+
+The suite will attempt to \lstinline=rsync= the job logs once from the remote
+host each time a task job completes. E.g. if the job file is
+\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job=, anything under
+\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/= will be retrieved.
+
+Some batch systems have considerable
+delays between the time when the job completes and when it writes the job logs
+in its normal location. If this is the case, you can configure retry delays for
+job log retrieval by setting some
+\lstinline=[[[remote]]]retrieve job log retry delays=.  E.g.:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[hello]]
+        script = "sleep 10; echo Hello World!"
+        [[[remote]]]
+            host = server1.niwa.co.nz
+            retrieve job log = True
+            # Retry after 10 seconds, 1 minute and 3 minutes
+            retrieve job log retry delays = PT10S, PT1M, PT3M
+\end{lstlisting}
+
+Finally, if the disk space of the suite host is limited, you may want to
+restrict the maximum sizes of the job log files to retrieve by setting
+\lstinline@[[[remote]]]retrieve job log max size=SIZE@. The value of SIZE can
+be anything that is acceptable by the \lstinline@--max-size=SIZE@ option of the
+\lstinline=rsync= command. E.g.:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[hello]]
+        script = "sleep 10; echo Hello World!"
+        [[[remote]]]
+            host = server1.niwa.co.nz
+            retrieve job log = True
+            # Don't get anything bigger than 10MB
+            retrieve job log max size = 10M
+\end{lstlisting}
 
 \begin{myitemize}
 \item For more on remote tasks see~\ref{RunningTasksOnARemoteHost}
@@ -5821,25 +5872,41 @@ suite listed below under~\ref{EventHandling}.
 See also~\ref{SuiteEventHandling} and~\ref{TaskEventHandling}
 in the {\em Suite.rc Reference}.
 
-Cylc can call nominated event handlers when certain suite or task events
-occur. This is intended to facilitate centralized alerting and automated
-handling of critical events. Event handlers can send an email or an SMS,
-call a pager, and so on; or intervene in the operation of their own
-suite using cylc commands.  \lstinline=cylc [hook] email-suite= and
-\lstinline=cylc [hook] email-task= are example event handlers packaged
-with cylc.
+Cylc can call nominated event handlers when certain suite or task events occur.
+This is intended to facilitate centralized alerting and automated handling of
+critical events. Event handlers can be used to send a message, call a pager,
+and so on; or intervene in the operation of their own suite using cylc
+commands.
 
-Event handlers can be located in the suite bin directory, otherwise
-it is up to you to ensure their location is in \lstinline=$PATH=
-(in the shell in which cylc runs, on the suite host).
+To send an email, you can use the built-in setting
+\lstinline=[[[events]]]mail events= to specify a list of events when
+notifications should be sent. E.g. to send an email on (submission) failed and
+retry, you can do:
 
-Task event handlers are passed the following arguments by the suite daemon:
-
+\lstset{language=suiterc}
 \begin{lstlisting}
-<task-event-handler> EVENT SUITE TASKID MESSAGE
+[runtime]
+    [[foo]]
+        retry delays = PT0S, PT30S
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 3
+        [[[events]]]
+            mail events = submission failed, submission retry, failed, retry
 \end{lstlisting}
-where EVENT is one of the following:
 
+By default, the emails will be sent to the current user with \lstinline=from:=
+set to \lstinline=notifications@$(hostname)= using an SMTP server at
+\lstinline=localhost:25=. These can be configured using the settings
+\lstinline=[[[events]]]mail to= (list of email addresses),
+\lstinline=[[[events]]]mail from= and \lstinline=[[[events]]]mail smtp=.
+
+Event handler commands can be located in the suite \lstinline=bin/= directory,
+otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
+the shell in which cylc runs, on the suite host). The commands should require
+very little resource to run and should return instantaneously.
+
+Task event handlers can be specified using the
+\lstinline=[[[event hooks]]]<event> handler= settings, where
+\lstinline=<event>= is one of:
 \begin{myitemize}
     \item `submitted' - the job submit command was successful
     \item `submission failed' - the job submit command failed
@@ -5852,8 +5919,35 @@ where EVENT is one of the following:
     \item `retry' - the task failed but will retry
     \item `execution timeout' - task execution timed out
 \end{myitemize}
-MESSAGE, if provided, describes what has happened, and TASKID identifies
-the task (\lstinline=NAME.CYCLE= for cycling tasks).
+
+The value of each setting should be a set of shell scripts or shell script
+templates (see below).
+
+Alternatively, task event handlers can be specified using the
+\lstinline=[[[events]]]handler= and the \lstinline=[[[events]]]handler events=
+settings, where the former is a set of shell scripts or shell script templates
+(see below) and the latter is a list of events when these commands should be
+invoked.
+
+Each task event handler can be specified as a list of shell scripts or a shell
+script templates.
+
+A shell script template may have any or all of these patterns which will be
+substituted with actual values:
+\begin{myitemize}
+    \item %(event)s: event name
+    \item %(suite)s: suite name
+    \item %(point)s: cycle point
+    \item %(name)s: task name
+    \item %(submit_num)s: submit number
+    \item %(id)s: task ID (i.e. %(name)s.%(point)s)
+    \item %(message)s: event message, if any
+\end{myitemize}
+
+Otherwise, the shell script will be appended with the following arguments:
+\begin{lstlisting}
+<task-event-handler> '%(event)s' '%(suite)s' '%(id)s' '%(message)s'
+\end{lstlisting}
 
 The retry event occurs if a task fails and has any remaining retries
 configured (see~\ref{TaskRetries}).
@@ -5865,35 +5959,33 @@ running tasks} so if you wish to pass them additional information via
 the environment you must use [cylc] $\rightarrow$ [[environment]],
 not task runtime environments.
 
-Here is an example suite that tests the {\em retry} and {\em failed} events.
-The handler in this case simply echoes its command line arguments to
-suite stdout.
+The following 2 \lstinline=suite.rc= snippets are examples on how to specify
+event handlers using the alternate methods:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-[scheduling]
-    initial cycle point = 20100808T00
-    final cycle point = 20100810T00
-    [[dependencies]]
-        [[[T00]]]
-            graph = "foo => bar"
 [runtime]
     [[foo]]
         retry delays = PT0S, PT30S
-        script = """
-echo TRY NUMBER: $CYLC_TASK_TRY_NUMBER
-sleep 10
-# retry twice and succeed on the final try,
-# but fail definitively in the final cycle.
-if (( CYLC_TASK_TRY_NUMBER <= 2 )) || \
-    (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_FINAL_CYCLE_POINT )); then
-    echo ABORTING
-    /bin/false
-fi"""
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 2
         [[[event hooks]]]
-            retry handler = "echo !!!!!EVENT!!!!! "
-            failed handler = "echo !!!!!EVENT!!!!! "
+            retry handler = "echo '!!!!!EVENT!!!!!' "
+            failed handler = "echo '!!!!!EVENT!!!!!' "
 \end{lstlisting}
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        retry delays = PT0S, PT30S
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 2
+        [[[events]]]
+            handler = "echo '!!!!!EVENT!!!!!' "
+            handler events = retry, failed
+\end{lstlisting}
+
+N.B. The handler commands is equivalent to
+\lstinline="echo '!!!!!EVENT!!!!!' '%(event)s' '%(suite)s' '%(id)s' '%(message)s'"=.
 
 \subsection{Reloading The Suite Definition At Runtime}
 
