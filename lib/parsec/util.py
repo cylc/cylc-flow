@@ -96,14 +96,14 @@ def replicate( target, source ):
     if not source:
         target = OrderedDictWithDefaults()
         return
-    if hasattr(source, "defaults"):
-        target.defaults = pdeepcopy(source.defaults)
+    if hasattr(source, "defaults_"):
+        target.defaults_ = pdeepcopy(source.defaults_)
     for key,val in source.items():
         if isinstance( val, dict ):
             if key not in target:
                 target[key] = OrderedDictWithDefaults()
-            if hasattr(val, 'defaults'):
-                target[key].defaults = pdeepcopy(val.defaults)
+            if hasattr(val, 'defaults_'):
+                target[key].defaults_ = pdeepcopy(val.defaults_)
             replicate( target[key], val )
         elif isinstance( val, list ):
             target[key] = val[:]
@@ -183,7 +183,7 @@ def m_override( target, sparse ):
                 else:
                     dest[key] = val
     for dest_dict, defaults in defaults_list:
-        dest_dict.defaults = defaults
+        dest_dict.defaults_ = defaults
 
 
 def un_many( cfig ):
@@ -195,8 +195,8 @@ def un_many( cfig ):
             try:
                 del cfig[key]
             except KeyError:
-                if hasattr(cfig, 'defaults') and key in cfig.defaults:
-                    del cfig.defaults[key]
+                if hasattr(cfig, 'defaults_') and key in cfig.defaults_:
+                    del cfig.defaults_[key]
                 else:
                     raise
         elif isinstance( val, dict ):
