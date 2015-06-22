@@ -1,0 +1,19 @@
+#!jinja2
+
+title=Task Event Job Log Retrieve
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout=PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph=t1
+
+[runtime]
+    [[t1]]
+        script=test "${CYLC_TASK_TRY_NUMBER}" -eq 3
+        retry delays=2*PT1S
+        [[[remote]]]
+            host = {{HOST}}
+            retrieve job log = True
