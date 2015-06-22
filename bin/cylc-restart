@@ -125,7 +125,7 @@ determine what happened to them while the suite was down."""
         run mode : <mode>
         time : <time> (<unix time>)
         initial cycle : 2014050100
-        final cycle : (none)
+        final cycle : None
         (dp1   # (Broadcast pickle string)
         .      # (Broadcast pickle string)
         Begin task states
@@ -188,7 +188,7 @@ determine what happened to them while the suite was down."""
                 'ERROR, Illegal state dump line 2 (initial cycle):')
             print >> sys.stderr, ' ', line2
             raise Exception("ERROR: corrupted state dump")
-        if oldstartcycle != '(none)':
+        if oldstartcycle != 'None':
             state_start_string = oldstartcycle
 
         state_stop_string = None
@@ -203,7 +203,7 @@ determine what happened to them while the suite was down."""
             print >> sys.stderr, ' ', line3
             raise Exception("ERROR: corrupted state dump")
 
-        if oldstopcycle != '(none)':
+        if oldstopcycle != 'None':
             state_stop_string = oldstopcycle
 
         # broadcast variables (universal):
