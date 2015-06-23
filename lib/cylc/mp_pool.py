@@ -61,6 +61,8 @@ def _run_command(ctx):
         stdin_file = None
         if ctx.cmd_kwargs.get('stdin_file_path'):
             stdin_file = open(ctx.cmd_kwargs['stdin_file_path'])
+        elif ctx.cmd_kwargs.get('stdin_str'):
+            stdin_file = PIPE
         proc = Popen(
             ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
             env=ctx.cmd_kwargs.get('env'), shell=ctx.cmd_kwargs.get('shell'))
@@ -89,9 +91,9 @@ def _run_command(ctx):
                     ctx.out, ctx.err = proc.communicate()
                     ctx.ret_code = ret_code
         else:
+            ctx.out, ctx.err = proc.communicate(
+                ctx.cmd_kwargs.get('stdin_str'))
             ctx.ret_code = proc.wait()
-            if ctx.ret_code is not None:
-                ctx.out, ctx.err = proc.communicate()
 
     ctx.timestamp = get_current_time_string()
     return ctx

@@ -37,7 +37,6 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.cycling.loader import get_interval_cls, get_point_relative
 from cylc.envvar import expandvars
-from cylc.owner import user
 import cylc.flags as flags
 from cylc.wallclock import (
     get_current_time_string,
@@ -51,12 +50,12 @@ from cylc.job_file import JOB_FILE
 from cylc.job_host import RemoteJobHostManager
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.outputs import outputs
-from cylc.owner import is_remote_user
+from cylc.owner import is_remote_user, user
 from cylc.poll_timer import PollTimer
 from cylc.prerequisites.prerequisites import prerequisites
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
 from cylc.prerequisites.conditionals import conditional_prerequisites
-from cylc.suite_host import is_remote_host
+from cylc.suite_host import is_remote_host, get_suite_host
 from parsec.util import pdeepcopy, poverride
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.rundb import CylcSuiteDAO
@@ -436,6 +435,13 @@ class TaskProxy(object):
                     mesg = " ".join(quote(item) for item in value)
                 else:
                     mesg = str(value).strip()
+                if attr == "cmd":
+                    if ctx.cmd_kwargs.get("stdin_file_path"):
+                        mesg += " <%s" % quote(
+                            ctx.cmd_kwargs.get("stdin_file_path"))
+                    elif ctx.cmd_kwargs.get("stdin_str"):
+                        mesg += " <<<%s" % quote(
+                            ctx.cmd_kwargs.get("stdin_str"))
                 if getattr(ctx, "ret-code", None):
                     self.log(ERROR, mesg)
                 else:
@@ -807,16 +813,32 @@ class TaskProxy(object):
         if (key in self.event_handler_try_states
                 or event not in conf["mail events"]):
             return
-        cmd = ["cylc", self.EVENT_MAIL]
-        for attr in ["from", "smtp", "to"]:
-            value = conf["mail " + attr]
-            if value:
-                cmd.append("--%s=%s" % (attr, value))
+
         names = [self.suite_name, str(self.point), self.tdef.name]
         if self.submit_num:
             names.append("%02d" % self.submit_num)
-        cmd += [event, ".".join(names), message]
-        ctx = SuiteProcContext(key, cmd)
+        subject = "[%(event)s] %(names)s" % {
+            "event": event, "names": ".".join(names)}
+        cmd = ["mail", "-s", subject]
+        # From:
+        if conf["mail from"]:
+            cmd += ["-r", conf["mail from"]]
+        else:
+            cmd += ["-r", "notifications@" + get_suite_host()]
+        # To:
+        if conf["mail to"]:
+            cmd.append(conf["mail to"])
+        else:
+            cmd.append(user)
+        # Mail message
+        stdin_str = "%s: %s\n" % (subject, message)
+        # SMTP server
+        env = None
+        if conf["mail smtp"]:
+            env = dict(os.environ)
+            env["smtp"] = conf["mail smtp"]
+
+        ctx = SuiteProcContext(key, cmd, env=env, stdin_str=stdin_str)
         try_state = TryState(ctx)
         try_state.delays += conf["mail retry delays"]
         self.event_handler_try_states[key] = try_state
