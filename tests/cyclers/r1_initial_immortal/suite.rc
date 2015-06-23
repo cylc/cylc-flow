@@ -1,5 +1,7 @@
 [cylc]
     UTC mode = True
+   [[reference test]]
+      live mode suite timeout = PT2M
 [scheduling]
     initial cycle point = 20140101
     [[dependencies]]
