@@ -26,7 +26,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
 
 NAME='schema.out'
-sqlite3 "${DB_FILE}" ".schema" >"${NAME}"
+sqlite3 "${DB_FILE}" ".schema" | sort >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
 NAME='select-task-states.out'
