@@ -81,14 +81,8 @@ if [[ "$PWD" != "$CYLC_DIR" ]]; then
     cd "$CYLC_DIR"
 fi
 
-echo "[INFO] Checking .pyc files match .py files..."
-py_files=$(find "$CYLC_DIR" -name "*.pyc" -type f | sed "s/pyc$/py/g")
-ls $py_files 1> /dev/null
-if [ $? -gt 0 ]; then
-    echo "[ERROR] Aborting test battery, .pyc files do not match .py files"
-else
-    echo "[INFO] ...ok"
-fi
+# Remove pyc files to ensure we are running the current code.
+find $CYLC_DIR -name '*.pyc' | xargs rm
 
 if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
     NPROC=$(cylc get-global-config '--item=process pool size')
