@@ -16,52 +16,65 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute( force_required=True ):
-        sys.exit(0)
-
-from cylc.prompt import prompt
-from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop, multitask_usage
-from cylc.command_prep import prep_pyro
-import cylc.flags
-
-parser = cop( """cylc [control] release|unhold [OPTIONS] ARGS
+"""cylc [control] release|unhold [OPTIONS] ARGS
 
 Release one or more held tasks (cylc release REG MATCH POINT)
 or the whole suite (cylc release REG). Held tasks do not
-submit even if they are ready to run.""" +
-   multitask_usage + """
-See also 'cylc [control] hold'.""", pyro=True, multitask=True,
-    argdoc=[("REG", 'Suite name'),
-    ('[MATCH]', 'Task or family name matching regular expression'),
-    ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
+submit even if they are ready to run."""
 
-(options, args) = parser.parse_args()
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute(force_required=True):
+        sys.exit(0)
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+import cylc.flags
+from cylc.prompt import prompt
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.CylcOptionParsers import cop, multitask_usage
 
-if len(args) == 3:
-    whole_suite = False
-    name = args[1]
-    point_string = args[2]
-    prompt('Release task(s) %s at %s in %s' % (name, point_string, suite),
-           options.force)
 
-elif len(args) == 1:
-    whole_suite = True
-    prompt('Release suite %s' % suite, options.force)
-else:
-    parser.error("Wrong number of arguments.")
+def main():
+    parser = cop(
+        __doc__ + multitask_usage + "\nSee also 'cylc [control] hold'.",
+        pyro=True, multitask=True,
+        argdoc=[
+            ("REG", 'Suite name'),
+            ('[MATCH]', 'Task or family name matching regular expression'),
+            ('[POINT]', 'Task cycle point (e.g. date-time or integer)')])
 
-pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
-                             options.pyro_timeout, options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-if whole_suite:
-    pclient.put_command('release_suite')
-else:
-    pclient.put_command('release_task', name, point_string, options.is_family)
+    (options, args) = parser.parse_args()
+    suite = args[0]
+
+    if len(args) == 3:
+        whole_suite = False
+        name = args[1]
+        point_string = args[2]
+        prompt('Release task(s) %s at %s in %s' % (name, point_string, suite),
+               options.force)
+
+    elif len(args) == 1:
+        whole_suite = True
+        prompt('Release suite %s' % suite, options.force)
+    else:
+        parser.error("Wrong number of arguments.")
+
+    pclient = SuiteCommandClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, print_uuid=options.print_uuid)
+
+    if whole_suite:
+        pclient.put_command('release_suite')
+    else:
+        pclient.put_command('release_task', name, point_string,
+                            options.is_family)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

@@ -16,17 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import os
-from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
-import cylc.flags
-
-parser = cop( usage = """cylc [db] register [OPTIONS] ARGS
+"""cylc [db] register [OPTIONS] ARGS
 
 Register the suite definition located in PATH as REG.
 
@@ -45,39 +35,55 @@ For suite definition directories /home/bob/(one,two,three,four):
 % cylc db reg foo.bar.waz /home/bob/four
 
 % cylc db pr '^foo'             # print in flat form
-  bob         | "Test Suite One"   | /home/bob/one
-  foo.bag     | "Test Suite Two"   | /home/bob/two
-  foo.bar.baz | "Test Suite Four"  | /home/bob/three
-  foo.bar.waz | "Test Suite Three" | /home/bob/four
+  bob         | 'Test Suite One'   | /home/bob/one
+  foo.bag     | 'Test Suite Two'   | /home/bob/two
+  foo.bar.baz | 'Test Suite Four'  | /home/bob/three
+  foo.bar.waz | 'Test Suite Three' | /home/bob/four
 
 % cylc db pr -t '^foo'          # print in tree form
-  bob        "Test Suite One"   | /home/bob/one
+  bob        'Test Suite One'   | /home/bob/one
   foo
-   |-bag     "Test Suite Two"   | /home/bob/two
+   |-bag     'Test Suite Two'   | /home/bob/two
    `-bar
-     |-baz   "Test Suite Three" | /home/bob/three
-     `-waz   "Test Suite Four"  | /home/bob/four""",
-     argdoc=[("REG", "Suite name"),
-         ("PATH", "Suite definition directory")])
+     |-baz   'Test Suite Three' | /home/bob/three
+     `-waz   'Test Suite Four'  | /home/bob/four"""
 
-( options, args ) = parser.parse_args()
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
 
-if args[1].endswith('suite.rc'):
-    suiterc = args[1]
-    rdir = os.path.dirname(suiterc)
-else:
-    rdir = args[1]
-    suiterc = os.path.join( rdir, 'suite.rc' )
+import os
 
-if not os.path.isdir( rdir ):
-    raise SystemExit( "Directory not found: " + rdir )
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb
+import cylc.flags
 
-suite = args[0]
 
-db = localdb( file=options.db )
-try:
-    db.register( suite, rdir )
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+def main():
+    parser = cop(
+        __doc__,
+        argdoc=[("REG", "Suite name"),
+                ("PATH", "Suite definition directory")])
+
+    (options, args) = parser.parse_args()
+    suite = args[0]
+
+    if args[1].endswith('suite.rc'):
+        suiterc = args[1]
+        rdir = os.path.dirname(suiterc)
+    else:
+        rdir = args[1]
+        suiterc = os.path.join(rdir, 'suite.rc')
+
+    db = localdb(file=options.db)
+    db.register(suite, rdir)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

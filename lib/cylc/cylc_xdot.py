@@ -22,7 +22,7 @@ import subprocess
 import gtk
 import time
 import gobject
-import config
+from cylc.config import SuiteConfig
 import os, sys
 import re
 from graphing import CGraphPlain
@@ -42,12 +42,13 @@ class CylcDotViewerCommon(xdot.DotWindow):
             is_reload = False
             collapsed = []
         try:
-            self.suiterc = config.config(self.suite, self.file,
-                    template_vars=self.template_vars,
-                    template_vars_file=self.template_vars_file,
-                    is_reload=is_reload, collapsed=collapsed,
-                    vis_start_string=self.start_point_string,
-                    vis_stop_string=self.stop_point_string)
+            self.suiterc = SuiteConfig(
+                self.suite, self.file,
+                template_vars=self.template_vars,
+                template_vars_file=self.template_vars_file,
+                is_reload=is_reload, collapsed=collapsed,
+                vis_start_string=self.start_point_string,
+                vis_stop_string=self.stop_point_string)
         except Exception, x:
             print >> sys.stderr, "Failed - parsing error?"
             print >> sys.stderr, x

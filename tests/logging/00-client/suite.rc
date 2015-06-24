@@ -5,10 +5,13 @@ title = Generate log messages for various suite connection types.
 [runtime]
     [[foo]]
         script = """
+sleep 5
 # COMMAND INTERFACE:
-# This doesn't prevent the suite from shutting down as there's only one task:
 cylc hold $CYLC_SUITE_NAME
 # INFO INTERFACE:
 cylc show $CYLC_SUITE_NAME
 # BROADCAST INTERFACE:
-cylc broadcast -d $CYLC_SUITE_NAME"""
+cylc broadcast -d $CYLC_SUITE_NAME
+# COMMAND INTERFACE:
+cylc release $CYLC_SUITE_NAME
+sleep 5"""

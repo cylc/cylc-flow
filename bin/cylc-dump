@@ -16,20 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute():
-        sys.exit(0)
-
-from cylc.network.suite_state import StateSummaryClient
-from cylc.CylcOptionParsers import cop
-from cylc.command_prep import prep_pyro
-from cylc.dump import dump_to_stdout
-import cylc.flags
-
-parser = cop( """cylc [info] dump [OPTIONS] ARGS
+"""cylc [info] dump [OPTIONS] ARGS
 
 Print state information (e.g. the state of each task) from a running
 suite. For small suites 'watch cylc [info] dump SUITE' is an effective
@@ -43,56 +30,75 @@ Examples:
  % cylc [info] dump --tasks --sort SUITE | grep running
 
  Display the state of all tasks in a particular cycle point:
- % cylc [info] dump -t SUITE | grep 2010082406""", pyro=True, noforce=True )
+ % cylc [info] dump -t SUITE | grep 2010082406"""
 
-parser.add_option( "-g", "--global", help="Global information only.",
-        action="store_true", default=False, dest="global_only" )
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute():
+        sys.exit(0)
 
-parser.add_option( "-t", "--tasks", help="Task states only.",
-        action="store_true", default=False, dest="tasks_only" )
+import cylc.flags
+from cylc.network.suite_state import StateSummaryClient
+from cylc.CylcOptionParsers import cop
+from cylc.dump import dump_to_stdout
 
-parser.add_option( "-s", "--sort", help="Task states only; "
-        "sort by cycle point instead of name.",
-        action="store_true", default=False, dest="sort_by_cycle" )
 
-( options, args ) = parser.parse_args()
+def main():
+    parser = cop(__doc__, pyro=True, noforce=True)
 
-try:
-    suite, pphrase = prep_pyro( args[0], options ).execute()
-except:  # Trap SystemExit
+    parser.add_option(
+        "-g", "--global", help="Global information only.",
+        action="store_true", default=False, dest="global_only")
+
+    parser.add_option(
+        "-t", "--tasks", help="Task states only.",
+        action="store_true", default=False, dest="tasks_only")
+
+    parser.add_option(
+        "-s", "--sort",
+        help="Task states only; sort by cycle point instead of name.",
+        action="store_true", default=False, dest="sort_by_cycle")
+
+    (options, args) = parser.parse_args()
     suite = args[0]
-    pphrase = None
 
-# default: display all information
-display_tasks = True
-display_global = True
-# check for restricted output
-if options.global_only and options.tasks_only:
-    parser.error( '--tasks and --global are incompatible' )
+    # default: display all information
+    display_tasks = True
+    display_global = True
+    # check for restricted output
+    if options.global_only and options.tasks_only:
+        parser.error('--tasks and --global are incompatible')
 
-if options.global_only:
-    display_tasks = False
-if options.tasks_only:
-    display_global = False
+    if options.global_only:
+        display_tasks = False
+    if options.tasks_only:
+        display_global = False
 
-try:
-    pclient = StateSummaryClient(
-        suite, pphrase, options.owner, options.host, options.pyro_timeout,
-        options.port)
-    if options.print_uuid:
-        print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-    # get state summary, task names, cycle points
-    glbl, states, fam_states = pclient.get_suite_state_summary()
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit(x)
+    try:
+        pclient = StateSummaryClient(
+            suite, options.owner, options.host, options.pyro_timeout,
+            options.port, options.db, print_uuid=options.print_uuid)
+        # get state summary, task names, cycle points
+        glbl, states, fam_states = pclient.get_suite_state_summary()
+    except Exception, x:
+        if cylc.flags.debug:
+            raise
+        sys.exit(x)
 
-if display_global:
-    #print 'GLOBALS:'
-    for item in glbl:
-        print item, '=', glbl[item]
+    if display_global:
+        for item in glbl:
+            print item, '=', glbl[item]
 
-if display_tasks:
-    #print 'TASKS:'
-    dump_to_stdout(states, options.sort_by_cycle)
+    if display_tasks:
+        dump_to_stdout(states, options.sort_by_cycle)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

@@ -16,14 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-from cylc.CylcOptionParsers import cop
-import cylc.flags
-from cylc.network.ext_trigger import ExtTriggerClient
-from cylc.command_prep import prep_pyro
-
-usage = """cylc [control] ext-trigger [OPTIONS] ARGS
+"""cylc [control] ext-trigger [OPTIONS] ARGS
 
 Report an external event message to a suite daemon. It is expected that a
 task in the suite has registered the same message as an external trigger - a
@@ -42,36 +35,51 @@ The suite passphrase must be installed in $HOME/.cylc/<SUITE>/.
 
 Note: to manually trigger a task use 'cylc trigger', not this command."""
 
-parser = cop(
-    usage, pyro=True,
-    argdoc=[
-        ("REG", "Suite name"),
-        ("MSG", "External trigger message"),
-        ("ID", "Unique trigger ID")
-    ]
-)
+import os
+import sys
 
-parser.add_option(
-    "--max-tries", help="Maximum number of send attempts "
-    "(default %s)." % ExtTriggerClient.MAX_N_TRIES, metavar="INT", action="store",
-    default=None, dest="max_n_tries")
+import cylc.flags
+from cylc.CylcOptionParsers import cop
+from cylc.network.ext_trigger import ExtTriggerClient
 
-parser.add_option(
-    "--retry-interval", help="Delay in seconds before retrying "
-    "(default %s)." % ExtTriggerClient.RETRY_INTVL_SECS, metavar="SEC",
-    action="store", default=None, dest="retry_intvl_secs")
 
-(options, args) = parser.parse_args()
-cylc.flags.verbose = options.verbose
+def main():
+    parser = cop(
+        __doc__, pyro=True,
+        argdoc=[("REG", "Suite name"),
+                ("MSG", "External trigger message"),
+                ("ID", "Unique trigger ID")])
 
-suite, pphrase = prep_pyro(args[0], options).execute()
+    parser.add_option(
+        "--max-tries", help="Maximum number of send attempts "
+        "(default %s)." % ExtTriggerClient.MAX_N_TRIES, metavar="INT",
+        action="store", default=None, dest="max_n_tries")
 
-event_msg = args[1]
-event_id = args[2]
+    parser.add_option(
+        "--retry-interval", help="Delay in seconds before retrying "
+        "(default %s)." % ExtTriggerClient.RETRY_INTVL_SECS, metavar="SEC",
+        action="store", default=None, dest="retry_intvl_secs")
 
-print 'Send to suite %s: "%s" (%s)' % (suite, event_msg, event_id)
+    (options, args) = parser.parse_args()
+    suite = args[0]
 
-pclient = ExtTriggerClient(suite, pphrase, options.owner, options.host,
-                           options.pyro_timeout, options.port)
-pclient.send_retry(event_msg, event_id,
-                   options.max_n_tries, options.retry_intvl_secs)
+    cylc.flags.verbose = options.verbose
+    event_msg = args[1]
+    event_id = args[2]
+
+    print 'Send to suite %s: "%s" (%s)' % (suite, event_msg, event_id)
+
+    pclient = ExtTriggerClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, print_uuid=options.print_uuid)
+
+    pclient.send_retry(
+        event_msg, event_id, options.max_n_tries, options.retry_intvl_secs)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

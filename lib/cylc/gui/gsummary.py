@@ -53,7 +53,8 @@ def get_host_suites(hosts, timeout=None, owner=None):
     host_suites_map = {}
     if timeout is None:
         timeout = PYRO_TIMEOUT
-    command = ["cylc", "scan", "--pyro-timeout=%s" % timeout]
+    command = ["cylc", "scan", "--old-format",
+               "--pyro-timeout=%s" % timeout]
     if owner:
         command.append("--owner=%s" % owner)
     if hosts:

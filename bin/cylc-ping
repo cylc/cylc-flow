@@ -16,9 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [discovery] ping [OPTIONS] ARGS
+
+If suite REG is running or TASK in suite REG is currently in the 'running'
+state exit with success status, else exit with error status."""
+
 import sys
 if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
+    sys.argv.remove('--use-ssh')
     from cylc.remote import remrun
     if remrun().execute():
         sys.exit(0)
@@ -26,45 +31,51 @@ if '--use-ssh' in sys.argv[1:]:
 from cylc.CylcOptionParsers import cop
 from cylc.task_id import TaskID
 from cylc.network.suite_info import SuiteInfoClient
-from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
-parser = cop( """cylc [discovery] ping [OPTIONS] ARGS
 
-If suite REG is running or TASK in suite REG is currently in the 'running'
-state exit with success status, else exit with error status.""",
-    pyro=True,
-    argdoc=[('REG', 'Suite name'),
-            ('[TASK]', 'Task ' + TaskID.SYNTAX)])
+def main():
+    parser = cop(
+        __doc__, pyro=True,
+        argdoc=[('REG', 'Suite name'), ('[TASK]', 'Task ' + TaskID.SYNTAX)])
 
-parser.add_option( "--print-ports",
+    parser.add_option(
+        "--print-ports",
         help="Print the port range from the cylc site config file.",
-        action="store_true",default=False, dest="print_ports" )
+        action="store_true", default=False, dest="print_ports")
 
-( options, args ) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-if options.print_ports:
-    base = GLOBAL_CFG.get( ['pyro','base port'] )
-    range = GLOBAL_CFG.get( ['pyro','maximum number of ports'] )
-    print base, '<= port <=', base + range
-    sys.exit(0)
+    if options.print_ports:
+        base = GLOBAL_CFG.get(['pyro', 'base port'])
+        range = GLOBAL_CFG.get(['pyro', 'maximum number of ports'])
+        print base, '<= port <=', base + range
+        sys.exit(0)
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+    suite = args[0]
 
-pclient = SuiteInfoClient(suite, pphrase, options.owner, options.host,
-                          options.pyro_timeout, options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+    pclient = SuiteInfoClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, print_uuid=options.print_uuid)
 
-# cylc ping SUITE
-pclient.get_info('ping_suite') # (no need to check the result)
-if len(args) == 1:
-    sys.exit(0)
+    # cylc ping SUITE
+    pclient.get_info('ping_suite')  # (no need to check the result)
+    if len(args) == 1:
+        sys.exit(0)
 
-# cylc ping SUITE TASKID
-task_id = args[1]
-if not TaskID.is_valid_id(task_id):
-    sys.exit("Invalid task ID: " + task_id)
-success, msg = pclient.get_info('ping_task', task_id)
-if not success:
-    sys.exit('ERROR: ' + msg)
+    # cylc ping SUITE TASKID
+    task_id = args[1]
+    if not TaskID.is_valid_id(task_id):
+        sys.exit("Invalid task ID: " + task_id)
+    success, msg = pclient.get_info('ping_task', task_id)
+    if not success:
+        sys.exit('ERROR: ' + msg)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

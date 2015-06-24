@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test logging of user@host in response to suite connections.
+# Test logging of client connections and commands.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 3
@@ -27,12 +27,21 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --no-detach --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
-cylc cat-log $SUITE_NAME | grep "Client" | awk '{print $5,$6,$7}' > log.txt
+cylc cat-log $SUITE_NAME | grep "client" | awk '{print $5,$6,$7}' > log.txt
 USER_AT_HOST=${USER}@$(hostname -f)
 cmp_ok log.txt << __END__
-hold_suite (cylc-hold ${USER_AT_HOST}
-get_suite_info (cylc-show ${USER_AT_HOST}
-get (cylc-broadcast ${USER_AT_HOST}
+connect ${USER_AT_HOST}:cylc-message privilege='full-control'
+command task_message ${USER_AT_HOST}:cylc-message
+connect ${USER_AT_HOST}:cylc-hold privilege='full-control'
+command hold_suite ${USER_AT_HOST}:cylc-hold
+connect ${USER_AT_HOST}:cylc-show privilege='full-control'
+command get_suite_info ${USER_AT_HOST}:cylc-show
+connect ${USER_AT_HOST}:cylc-broadcast privilege='full-control'
+command broadcast_get ${USER_AT_HOST}:cylc-broadcast
+connect ${USER_AT_HOST}:cylc-release privilege='full-control'
+command release_suite ${USER_AT_HOST}:cylc-release
+connect ${USER_AT_HOST}:cylc-message privilege='full-control'
+command task_message ${USER_AT_HOST}:cylc-message
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

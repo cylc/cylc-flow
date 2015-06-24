@@ -16,36 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import os, re
-from collections import deque
-from cylc.CylcOptionParsers import cop
-from parsec.include import inline
-
-def section_level( heading ):
-    # e.g. foo => 0
-    #     [foo] => 1
-    #    [[foo]] => 2
-    m = re.match( '^(\[+)', heading )
-    if m:
-        level = len( m.groups()[0] )
-    else:
-        level = 0
-    return level
-
-def print_heading( heading ):
-    print '>>>' + '->'.join(heading)
-    #space = ' '
-    #indent = '>>>'
-    #for i in range( 1, section_level(heading) ):
-    #    indent += space * 2
-    #print indent + heading
-
-parser = cop( """cylc [prep] search|grep [OPTIONS] ARGS
+"""cylc [prep] search|grep [OPTIONS] ARGS
 
 Search for pattern matches in suite definitions and any files in the
 suite bin directory. Matches are reported by line number and suite
@@ -58,32 +29,63 @@ Note that this command performs a text search on the suite definition,
 it does not search the data structure that results from parsing the
 suite definition - so it will not report implicit default settings.
 
-For case insenstive matching use '(?i)PATTERN'.""", prep=True,
-    argdoc = [('SUITE', 'Suite name or path'),
-        ('PATTERN', 'Python-style regular expression'),
-        ('[PATTERN2...]', 'Additional search patterns')])
+For case insenstive matching use '(?i)PATTERN'."""
 
-parser.add_option( "-x", help="Do not search in the suite bin directory",
-        action="store_false", default=True, dest="search_bin" )
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
 
-( options, args ) = parser.parse_args()
+import os
+import re
+from collections import deque
+from cylc.CylcOptionParsers import cop
+from parsec.include import inline
+
+
+def section_level(heading):
+    # e.g. foo => 0
+    #     [foo] => 1
+    #    [[foo]] => 2
+    m = re.match('^(\[+)', heading)
+    if m:
+        level = len(m.groups()[0])
+    else:
+        level = 0
+    return level
+
+
+def print_heading(heading):
+    print '>>>' + '->'.join(heading)
+
+parser = cop(
+    __doc__, prep=True,
+    argdoc=[('SUITE', 'Suite name or path'),
+            ('PATTERN', 'Python-style regular expression'),
+            ('[PATTERN2...]', 'Additional search patterns')])
+
+parser.add_option(
+    "-x", help="Do not search in the suite bin directory",
+    action="store_false", default=True, dest="search_bin")
+
+(options, args) = parser.parse_args()
 
 suite, suiterc, junk = parser.get_suite()
 
 # cylc search SUITE PATTERN
 pattern = '|'.join(args[1:])
 
-suitedir = os.path.dirname( suiterc )
+suitedir = os.path.dirname(suiterc)
 
-if os.path.isfile( suiterc ):
-    h = open( suiterc, 'rb' )
+if os.path.isfile(suiterc):
+    h = open(suiterc, 'rb')
     lines = h.readlines()
     h.close()
-    lines = inline( lines, suitedir, suiterc, for_grep=True )
+    lines = inline(lines, suitedir, suiterc, for_grep=True)
 else:
-    parser.error("File not found: " + suiterc )
+    parser.error("File not found: " + suiterc)
 
-sections = deque( ['(top)'] )
+sections = deque(['(top)'])
 
 line_count = 1
 inc_file = None
@@ -93,7 +95,7 @@ prev_file = None
 
 for line in lines:
 
-    m = re.match('^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line )
+    m = re.match('^#\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line)
     if m:
         inc_file = m.groups()[0]
         in_include_file = True
@@ -104,30 +106,30 @@ for line in lines:
         line_count += 1
     else:
         inc_line_count += 1
-        m = re.match('^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line )
+        m = re.match('^#\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line)
         if m:
             in_include_file = False
             inc_file = None
             continue
 
-    m = re.match( '\s*(\[+\s*(.+)\s*\]+)', line )
+    m = re.match('\s*(\[+\s*(.+)\s*\]+)', line)
     if m:
         # new section heading detected
         heading = m.groups()[0]
-        level = section_level( heading )
+        level = section_level(heading)
         name = m.groups()[1]
         # unwind to the current section level
         while len(sections) > level - 1:
             sections.pop()
-        sections.append( heading )
+        sections.append(heading)
         continue
 
-    if re.search( pattern, line ):
+    if re.search(pattern, line):
         # Found a pattern match.
 
         # Print the file name
         if in_include_file:
-            curr_file = os.path.join( suitedir, inc_file )
+            curr_file = os.path.join(suitedir, inc_file)
             line_no = inc_line_count
         else:
             curr_file = suiterc
@@ -138,11 +140,9 @@ for line in lines:
             print "\nFILE:", curr_file
 
         # Print the nested section headings
-        section_key = '->'.join( sections )
+        section_key = '->'.join(sections)
         if section_key != prev_section_key:
             prev_section_key = section_key
-            #for heading in sections:
-            #    print_heading( heading )
             print '   SECTION:', section_key
 
         # Print the pattern match, with line number
@@ -152,22 +152,22 @@ if not options.search_bin:
     sys.exit(0)
 
 # search files in suite bin directory
-bin = os.path.join( suitedir, 'bin' )
-if not os.path.isdir( bin ):
+bin = os.path.join(suitedir, 'bin')
+if not os.path.isdir(bin):
     print >> sys.stderr, "\nSuite " + suite + " has no bin directory"
     sys.exit(0)
 
-for file in os.listdir( bin ):
-    if re.match( '^\.', file):
+for file in os.listdir(bin):
+    if re.match('^\.', file):
         # skip hidden dot-files
         # (e.g. vim editor temporary files)
         continue
     new_file = True
     try:
-        h = open( os.path.join(bin,file), 'rb')
+        h = open(os.path.join(bin, file), 'rb')
     except IOError, x:
         # e.g. there's a sub-directory under bin; ignore it.
-        print >> sys.stderr, 'Unable to open file ' + os.path.join(bin,file)
+        print >> sys.stderr, 'Unable to open file ' + os.path.join(bin, file)
         print >> sys.stderr, x
         continue
     contents = h.readlines()
@@ -177,8 +177,8 @@ for file in os.listdir( bin ):
     for line in contents:
         line = line.rstrip('\n')
         count += 1
-        if re.search( pattern, line ):
+        if re.search(pattern, line):
             if new_file:
-                print '\nFILE:', os.path.join( bin, file )
+                print '\nFILE:', os.path.join(bin, file)
                 new_file = False
             print '   ('+str(count)+'): ' + line

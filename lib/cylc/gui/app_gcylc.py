@@ -60,9 +60,7 @@ from cylc.gui.color_rotator import rotator
 from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
 from cylc.task_state import task_state
-from cylc.passphrase import passphrase
 from cylc.suite_logging import suite_log
-from cylc.registration import localdb
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_time_string_from_unix_time
@@ -158,20 +156,10 @@ Class to hold initialisation data.
         )
         self.imagedir = get_image_dir()
         self.my_uuid = uuid4()
-        self.logdir = None
-
-        if suite:
-            self.reset(suite)
 
     def reset(self, suite):
         self.suite = suite
-        suitedir = None
-        if not is_remote_host(self.host) and not is_remote_user(self.owner):
-            db = localdb(file=self.db)
-            suitedir = db.get_suitedir(suite)
-        # get the suite passphrase (required for local or remote suites)
-        self.pphrase = passphrase(suite, self.owner,
-                                  self.host).get(suitedir=suitedir)
+        self.logdir = suite_log(suite).get_dir()
         self.logdir = suite_log(suite).get_dir()
 
 
@@ -432,6 +420,8 @@ Class to create an information bar.
         self.set_status(summary)
         dt = glob["last_updated"]
         self.set_time(get_time_string_from_unix_time(dt))
+        # (called on idle_add)
+        return False
 
     def set_time(self, time):
         """Set last update text."""
@@ -1110,17 +1100,11 @@ been defined for this suite""").inform()
         options += self.get_remote_run_opts()
 
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + point_string
-
         print command
 
         if method == 'restart':
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
-
-        # #DEBUGGING:
-        # info_dialog("I'm about to run this command: \n" + command,
-        #             self.window).inform()
-        # return
 
         try:
             subprocess.Popen([command], shell=True)
@@ -3283,7 +3267,7 @@ For more Stop options use the Control menu.""")
 
     def put_pyro_command(self, command, *args):
         try:
-            success, msg = self.updater.suite_command_client.put_command_gui(
+            success, msg = self.updater.suite_command_client.put_command(
                 command, *args)
         except Exception, x:
             warning_dialog(x.__str__(), self.window).warn()
@@ -3293,9 +3277,9 @@ For more Stop options use the Control menu.""")
 
     def get_pyro_info(self, command, *args):
         try:
-            return self.updater.suite_info_client.get_info_gui(command, *args)
-        except Exception, x:
-            warning_dialog(x.__str__(), self.window).warn()
+            return self.updater.suite_info_client.get_info(command, *args)
+        except Exception as exc:
+            warning_dialog(str(exc), self.window).warn()
 
     def run_suite_validate(self, w):
         command = ("cylc validate -v " + self.get_remote_run_opts() +

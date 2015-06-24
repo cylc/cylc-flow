@@ -16,29 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-from datetime import datetime
-import os, re
-from cylc.config import TaskNotDefinedError
-from cylc.CylcOptionParsers import cop
-from cylc.scheduler import scheduler
-from cylc.suite_state_dumping import SuiteStateDumper
-from cylc.task_state import task_state
-from cylc.run import main
-from cylc.command_prep import prep_file
-from cylc.task_id import TaskID
-from cylc.cycling.loader import get_point, DefaultCycler, ISO8601_CYCLING_TYPE
-from cylc.wallclock import get_current_time_string
-from cylc.network.suite_broadcast import BroadcastServer
-
-
-class restart( scheduler ):
-    def __init__( self ):
-        usage = """cylc [control] restart [OPTIONS] ARGS
+"""cylc [control] restart [OPTIONS] ARGS
 
 Start a suite run from a previous state. To start from scratch (cold or warm
 start) see the 'cylc run' command.
@@ -51,56 +29,88 @@ files in the suite state directory can be specified on the command line.
 Tasks recorded as 'submitted' or 'running' will be polled at start-up to
 determine what happened to them while the suite was down."""
 
-        self.parser = cop( usage, jset=True, argdoc=[("REG", "Suite name"),
-   ( "[FILE]", """Optional state dump file, assumed to reside in the
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import os
+import re
+from datetime import datetime
+
+from cylc.config import SuiteConfig, TaskNotDefinedError
+from cylc.CylcOptionParsers import cop
+from cylc.scheduler import scheduler
+from cylc.suite_state_dumping import SuiteStateDumper
+from cylc.task_state import task_state
+from cylc.run import main
+from cylc.get_task_proxy import get_task_proxy
+from cylc.registration import localdb
+from cylc.task_id import TaskID
+from cylc.cycling.loader import get_point, DefaultCycler, ISO8601_CYCLING_TYPE
+from cylc.wallclock import get_current_time_string
+from cylc.network.suite_broadcast import BroadcastServer
+
+
+class restart(scheduler):
+    def __init__(self):
+
+        self.parser = cop(
+            __doc__, jset=True,
+            argdoc=[
+                ("REG", "Suite name"),
+                ("[FILE]", """Optional state dump, assumed to reside in the
                         suite state dump directory unless an absolute path
-                        is given. Defaults to the most recent suite state.""")])
+                        is given. Defaults to the most recent suite state.""")
+            ]
+        )
 
-        self.parser.add_option( "--non-daemon",
-                help="(deprecated: use --no-detach)",
-                action="store_true", default=False, dest="no_detach" )
+        self.parser.add_option(
+            "--non-daemon", help="(deprecated: use --no-detach)",
+            action="store_true", default=False, dest="no_detach")
 
-        self.parser.add_option( "-n", "--no-detach",
-                help="Do not daemonize the suite",
-                action="store_true", default=False, dest="no_detach" )
+        self.parser.add_option(
+            "-n", "--no-detach", help="Do not daemonize the suite",
+            action="store_true", default=False, dest="no_detach")
 
-        self.parser.add_option( "--profile",
-                help="Output profiling (performance) information",
-                action="store_true", default=False, dest="profile_mode" )
+        self.parser.add_option(
+            "--profile", help="Output profiling (performance) information",
+            action="store_true", default=False, dest="profile_mode")
 
-        self.parser.add_option( "--ignore-final-cycle-point",
+        self.parser.add_option(
+            "--ignore-final-cycle-point",
             help="Ignore the final cycle point in the state dump. If one is"
-            "specified in the suite definition it will be used, however.",
-            action="store_true", default=False, dest="ignore_stop_point" )
+                 "specified in the suite definition it will be used, however.",
+            action="store_true", default=False, dest="ignore_stop_point")
 
-        self.parser.add_option( "--ignore-initial-cycle-point",
+        self.parser.add_option(
+            "--ignore-initial-cycle-point",
             help="Ignore the initial cycle point in the state dump. If one is "
-            "specified in the suite definition it will be used, however.",
-            action="store_true", default=False, dest="ignore_start_point" )
+                 "specified in the suite definition it will be used, however.",
+            action="store_true", default=False, dest="ignore_start_point")
 
-        scheduler.__init__( self, is_restart=True )
+        scheduler.__init__(self, is_restart=True)
 
-    def parse_commandline( self ):
-        ( self.options, self.args ) = self.parser.parse_args()
-
-        self.suite, self.suiterc = prep_file( self.args[0], self.options ).execute()
-
-        self.suite_dir = os.path.dirname( self.suiterc )
+    def parse_commandline(self):
+        (self.options, self.args) = self.parser.parse_args()
+        self.suite = self.args[0]
+        self.suiterc = localdb(self.options.db).get_suiterc(self.suite)
+        self.suite_dir = os.path.dirname(self.suiterc)
 
         # For user-defined job submission methods:
-        sys.path.append( os.path.join( self.suite_dir, 'python' ))
+        sys.path.append(os.path.join(self.suite_dir, 'python'))
 
         self.restart_from = None
-        if len( self.args ) == 2:
+        if len(self.args) == 2:
             self.restart_from = self.args[1]
 
-        scheduler.parse_commandline( self )
+        scheduler.parse_commandline(self)
 
-    def get_state_initial_point_string( self ):
+    def get_state_initial_point_string(self):
         """Return the initial point string from the state file, if any."""
         return self.get_state_file_info()[0]
 
-    def get_state_file_path( self ):
+    def get_state_file_path(self):
         """Return the state file path that we are restarting from."""
         my_dumper = self.state_dumper
         if my_dumper is None:
@@ -118,7 +128,7 @@ determine what happened to them while the suite was down."""
             raise Exception("state dump file not found: " + file_name)
         return os.path.realpath(file_name)
 
-    def get_state_file_info( self ):
+    def get_state_file_info(self):
         """Return the state file start & stop strings, broadcast, tasks.
 
         The state dump file format is:
@@ -137,9 +147,9 @@ determine what happened to them while the suite was down."""
         """
         file_name = self.get_state_file_path()
         try:
-            FILE = open( file_name, 'r' )
-        except IOError,x:
-            print >> sys.stderr, x
+            FILE = open(file_name, 'r')
+        except IOError as exc:
+            print >> sys.stderr, str(exc)
             raise Exception(
                 "ERROR, cannot open suite state dump: %s" % file_name)
         lines = FILE.readlines()
@@ -147,7 +157,7 @@ determine what happened to them while the suite was down."""
 
         nlines = len(lines)
         if nlines == 0:
-            raise Exception( "ERROR, empty suite state dump: %s" % file_name )
+            raise Exception("ERROR, empty suite state dump: %s" % file_name)
         elif nlines < 3:
             print >> sys.stderr, (
                 "ERROR, The suite state dump contains only %d lines" % nlines)
@@ -159,10 +169,10 @@ determine what happened to them while the suite was down."""
         index = 0
         # run mode : <mode>
         line0 = lines[index].rstrip()
-        if line0.startswith( 'suite time' ):
+        if line0.startswith('suite time'):
             # backward compatibility for pre-5.4.11 state dumps
             old_run_mode = 'live'
-        elif line0.startswith( 'simulation time' ):
+        elif line0.startswith('simulation time'):
             # backward compatibility for pre-5.4.11 state dumps
             old_run_mode = 'simulation'
         else:
@@ -174,8 +184,7 @@ determine what happened to them while the suite was down."""
         if self.run_mode == 'live' and old_run_mode != 'live':
             raise Exception(
                 "ERROR: cannot RESTART in %s from a %s state dump" % (
-                    self.run_mode, old_run_mode)
-            )
+                    self.run_mode, old_run_mode))
 
         state_start_string = None
         index += 1
@@ -234,14 +243,14 @@ determine what happened to them while the suite was down."""
         return (state_start_string, state_stop_string,
                 pickled_broadcast, task_lines)
 
-    def load_tasks( self ):
+    def load_tasks(self):
 
         # FIND THE INITIAL STATE DUMP FILE
         base_name = self.state_dumper.BASE_NAME
         dir_name = self.state_dumper.dir_name
         file_name = self.get_state_file_path()
 
-        self.log.info( 'Restart ' + file_name )
+        self.log.info('Restart ' + file_name)
         src_name = file_name
         if os.path.realpath(dir_name) == os.path.dirname(file_name):
             src_name = os.path.basename(file_name)
@@ -284,15 +293,16 @@ determine what happened to them while the suite was down."""
 
         if state_stop_string is not None:
             # the state dump prescribes a stop cycle
-            # (else we take whatever the command line or suite.rc file gives us)
+            # (else take whatever the command line or suite.rc file gives us)
             state_stop_point = get_point(state_stop_string)
             if self.options.ignore_stop_point:
-                # ignore it and take whatever the command line or suite.rc file gives us
+                # take whatever the command line or suite.rc file gives us
                 if self.stop_point is not None:
-                    print >> sys.stderr, """WARNING: I'm ignoring the old final cycle point as requested, but I
-  can't ignore the one set on the command line or in the suite definition."""
+                    print >> sys.stderr, (
+                        """WARNING: I'm ignoring the old final cycle point as requested, but I
+  can't ignore the one set on the command line or in the suite definition.""")
             elif self.stop_point is not None:
-                # a stop cycle was given on the restart command line or suite.rc file
+                # a stop cycle was given on the command line or suite.rc file
                 if self.stop_point != state_stop_point:
                     print >> sys.stderr, (
                         "WARNING: overriding the old stop cycle point "
@@ -311,12 +321,12 @@ determine what happened to them while the suite was down."""
         for line in task_lines:
             # instance variables
             try:
-                ( id, state ) = line.split(' : ')
+                (id, state) = line.split(' : ')
                 name, point_string = TaskID.split(id)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
-                raise Exception( "ERROR: corrupted state dump" )
+                raise Exception("ERROR: corrupted state dump")
             if (point_string == "1" and
                     DefaultCycler.TYPE == ISO8601_CYCLING_TYPE):
                 # A state file from a pre-cylc-6 with mixed-async graphing.
@@ -327,7 +337,7 @@ determine what happened to them while the suite was down."""
                 id = new_id
             tasknames[name] = True
             if 'status=submitting,' in state:
-                # backward compatibility for state dumps generated prior to #787
+                # back compat for state dumps generated prior to #787
                 state = state.replace('status=submitting,',
                                       'status=ready,', 1)
             if 'status=runahead,' in state:
@@ -338,8 +348,8 @@ determine what happened to them while the suite was down."""
                 task_state(state)
             except Exception as e:
                 print >> sys.stderr, "ERROR: ", type(e).__name__, e
-                raise Exception( "ERROR: corrupted state dump" )
-            taskstates[id] = (name, point_string, state )
+                raise Exception("ERROR: corrupted state dump")
+            taskstates[id] = (name, point_string, state)
             task_point_strings.append(point_string)
 
         task_point_strings = list(set(task_point_strings))
@@ -372,10 +382,11 @@ determine what happened to them while the suite was down."""
         # polled to determine what their current true status is.
 
         initial_task_list = tasknames.keys()
-        task_list = self.filter_initial_task_list( initial_task_list )
+        task_list = self.filter_initial_task_list(initial_task_list)
 
         print "RELOADING task proxies"
 
+        config = SuiteConfig.get_inst()
         for id in taskstates:
             name, point_string, state = taskstates[id]
             if name not in task_list:
@@ -386,7 +397,7 @@ determine what happened to them while the suite was down."""
             try:
                 submit_num = task_states_datum.get("submit_num", 0)
                 # startup is True only for a cold start
-                itask = self.config.get_task_proxy(
+                itask = get_task_proxy(
                     name,
                     get_point(point_string),
                     state,
@@ -398,7 +409,9 @@ determine what happened to them while the suite was down."""
                 print >> sys.stderr, (
                     "WARNING: ignoring task %s " % name +
                     "from the suite state dump file")
-                print >> sys.stderr, "(the task definition has probably been deleted from the suite)."
+                print >> sys.stderr, (
+                    "(the task definition has probably been "
+                    "deleted from the suite).")
                 continue
             except Exception, x:
                 print >> sys.stderr, str(x)
@@ -439,7 +452,7 @@ determine what happened to them while the suite was down."""
                     itask.poll()
                 except Exception as exc:
                     print >>sys.stderr, "WARNING: %s: poll failed" % id
-                # update poll timers in case regular polling is configured for itask
+                # update timers in case regular polling is configured for itask
                 if '@' in itask.user_at_host:
                     owner, host = itask.user_at_host.split('@')
                 else:
@@ -447,9 +460,11 @@ determine what happened to them while the suite was down."""
                 itask.submission_poll_timer.set_host(host, set_timer=True)
                 itask.execution_poll_timer.set_host(host, set_timer=True)
 
-            elif itask.state.is_currently( 'queued', 'ready','submit-retrying', 'submit-failed', 'retrying', 'failed'):
+            elif itask.state.is_currently('queued', 'ready', 'submit-retrying',
+                                          'submit-failed', 'retrying',
+                                          'failed'):
                 itask.prerequisites.set_all_satisfied()
-                if not itask.state.is_currently( 'failed', 'submit-failed' ):
+                if not itask.state.is_currently('failed', 'submit-failed'):
                     # reset to waiting as these had not been submitted yet.
                     itask.state.set_status('waiting')
 
@@ -461,7 +476,7 @@ determine what happened to them while the suite was down."""
                 raise Exception(
                     'ERROR: unknown task state for %s' % itask.identity)
 
-            self.pool.add_to_runahead_pool( itask )
+            self.pool.add_to_runahead_pool(itask)
 
 
 if __name__ == '__main__':

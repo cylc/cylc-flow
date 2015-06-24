@@ -20,7 +20,7 @@ set -e
 
 usage() {
     echo ""
-    echo "USAGE: cylc [prep] jobscript [OPTIONS] REG TASK"
+    echo "Usage: cylc [prep] jobscript [OPTIONS] REG TASK"
     echo ""
     echo "Generate a task job script and print it to stdout."
     echo ""

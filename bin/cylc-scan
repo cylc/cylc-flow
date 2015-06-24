@@ -15,13 +15,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """cylc [discovery] scan [OPTIONS] [HOSTS ...]
 
-Detect running suites by port scanning.  Use --verbose to see (with "connection
-denied") suites owned by others too.
+Print name, owner, host, and port for suites found running on scanned hosts,
+specified in global config under [suite host scanning] or on the command line.
 
-WARNING: a suite suspended with Ctrl-Z will cause port scans to hang for all
-users until timing out (see --pyro-timeout, default 60 seconds)."""
+Optional information can be printed if it is available - this is determined by
+the suite owner's public access settings (via site, user, and/or suite config):
+suite title, description, state totals, and cycle point state totals.
+
+By default, just your own suites are listed (this assumes your username is the
+same on all scanned hosts). Use -a/--all-suites to see all suites on all hosts,
+or restrict suites displayed with the -o/--owner and -n/--name options (with
+--name the default owner restriction (i.e. just your own suites) is disabled.
+
+Authentication credentials are not required to get this public information
+from suite servers running at >= cylc-6.5.0.  With -v/--verbose you'll see
+"connection denied (security reasons)" from older suite servers.
+
+WARNING: a suite suspended with Ctrl-Z will cause port scans to hang until the
+connection times out (see --pyro-timeout)."""
 
 import sys
 if "--use-ssh" in sys.argv[1:]:
@@ -30,12 +44,16 @@ if "--use-ssh" in sys.argv[1:]:
     if remrun().execute():
         sys.exit(0)
 
+import re
 from multiprocessing import cpu_count, Pool
 from time import sleep
+
 from cylc.network.port_scan import scan
 from cylc.CylcOptionParsers import cop
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.suite_host import is_remote_host
+from cylc.task_state import task_state
+from cylc.owner import user
 
 
 def main():
@@ -44,26 +62,87 @@ def main():
         __doc__,
         pyro=True,
         noforce=True,
-        argdoc=[("[HOSTS ...]", "hosts to scan instead of the default ones")])
+        argdoc=[(
+            "[HOSTS ...]", "Hosts to scan instead of the configured hosts.")]
+        )
+
+    parser.add_option(
+        "-a", "--all-suites",
+        help="List all suites found on all scanned hosts (the default is "
+             "just your own suites).",
+        action="store_true", default=False, dest="all_suites")
+
+    parser.add_option(
+        "-n", "--name",
+        metavar="PATTERN",
+        help="List suites with name matching PATTERN (regular expression). "
+             "Defaults to any name. Can be used multiple times.",
+        action="append", dest="patterns_name", default=[])
+
+    parser.add_option(
+        "-o", "--owner",
+        metavar="PATTERN",
+        help="List suites with owner matching PATTERN (regular expression). "
+             "Defaults to just your own suites. Can be used multiple times.",
+        action="append", dest="patterns_owner", default=[])
+
+    parser.add_option(
+        "-t", "--title",
+        help="Print suite titles if possible.",
+        action="store_true", default=False, dest="print_titles")
+
+    parser.add_option(
+        "-d", "--description",
+        help="Print suite descriptions if possible.",
+        action="store_true", default=False, dest="print_descriptions")
+
+    parser.add_option(
+        "-s", "--state",
+        help="Print the number of tasks in each state.",
+        action="store_true", default=False, dest="print_totals")
+
+    parser.add_option(
+        "-p", "--point-states",
+        help="Print the number of tasks in each state, per cycle point.",
+        action="store_true", default=False, dest="print_cycles")
+
+    parser.add_option(
+        "-f", "--full",
+        help="Print all available information for selected suites.",
+        action="store_true", default=False, dest="print_all")
+
+    parser.add_option(
+        "-l", "--legend",
+        help="Print the task state color legend (with new output format).",
+        action="store_true", default=False, dest="print_legend")
+
+    parser.add_option(
+        "-c", "--color", "--colour",
+        help="Print task state summaries using terminal color control codes.",
+        action="store_true", default=False, dest="color")
+
+    parser.add_option(
+        "-b", "--bare",
+        help="Omit line prefix annotation for extra information.",
+        action="store_true", default=False, dest="bare")
 
     parser.add_option(
         "--print-ports",
-        help=(
-            "Print the port range from the site config file "
-            "($CYLC_DIR/conf/global.rc)."),
-        action="store_true",
-        default=False,
-        dest="print_ports")
+        help="Print the port range from the site config file "
+             "($CYLC_DIR/conf/global.rc).",
+        action="store_true", default=False, dest="print_ports")
 
     parser.add_option(
         "--pyro-timeout",
         metavar="SEC",
-        help=(
-            "Set a timeout for network connections " +
-            "to running suites. The default is 60 seconds."),
-        action="store",
-        default=60,
-        dest="pyro_timeout")
+        help="Set a timeout for network connections "
+             "to running suites. The default is 60 seconds.",
+        action="store", default=60, dest="pyro_timeout")
+
+    parser.add_option(
+        "--old", "--old-format",
+        help="Legacy output format (suite owner host port).",
+        action="store_true", default=False, dest="old_format")
 
     options, args = parser.parse_args()
 
@@ -73,8 +152,140 @@ def main():
         print base, "<= port <=", base + max_num_ports
         sys.exit(0)
 
-    for scan_result in scan_all(args, options.db, options.pyro_timeout):
-        print "%s %s %s %s" % scan_result
+    if options.all_suites:
+        if options.patterns_name != []:
+            parser.error("-a and -n are mutually exclusive.")
+        if options.patterns_owner != []:
+            parser.error("-a and -o are mutually exclusive.")
+        patterns_name = ['.*']  # Any name.
+        patterns_owner = ['.*']  # Any owner.
+    else:
+        if options.patterns_name:
+            patterns_name = options.patterns_name
+        else:
+            # Any suite name.
+            patterns_name = ['.*']
+        if options.patterns_owner:
+            patterns_owner = options.patterns_owner
+        else:
+            if options.patterns_name:
+                # Any suite owner.
+                patterns_owner = ['.*']
+            else:
+                # Just the user's suites.
+                patterns_owner = [user]
+    pattern_name = "(" + ")|(".join(patterns_name) + ")"
+    pattern_owner = "(" + ")|(".join(patterns_owner) + ")"
+
+    if options.print_all:
+        options.print_titles = True
+        options.print_descriptions = True
+        options.print_totals = True
+        options.print_cycles = True
+
+    if options.print_legend and options.color and not options.old_format:
+        state_legend = ''
+        for state in task_state.legal:
+            state_legend += "%s%s%s" % (
+                task_state.ctrl[state], state, task_state.ctrl_end)
+        state_legend = state_legend.rstrip()
+        print state_legend
+
+    for result in scan_all(args, options.db, options.pyro_timeout):
+        host, scan_result = result
+        try:
+            port, suite_identity = scan_result
+        except ValueError:
+            # Back-compat (<= 6.4.1 no title or state totals).
+            port, name, owner = scan_result
+            if not (re.match(pattern_name, name) and
+                    re.match(pattern_owner, owner)):
+                continue
+            if options.old_format:
+                print name, owner, host, port
+            else:
+                print "%s %s@%s:%s" % (name, owner, host, port)
+            continue
+        else:
+            name = suite_identity['name']
+            owner = suite_identity['owner']
+
+        if not (re.match(pattern_name, name) and
+                re.match(pattern_owner, owner)):
+            continue
+
+        if options.old_format:
+            print name, owner, host, port
+            continue
+
+        print '%s %s@%s:%s' % (name, owner, host, port)
+
+        indent = "   "
+        if options.print_titles:
+            title = suite_identity.get('title', None)
+            if title is None:
+                line = "(title withheld)"
+            elif title == "":
+                line = "(no title)"
+            else:
+                line = '"%s"' % title
+            if not options.bare:
+                line = "Title: %s" % line
+            print indent + line
+
+        if options.print_descriptions:
+            description = suite_identity.get('description', None)
+            if description is None:
+                lines = "(description withheld)"
+            elif description == "":
+                lines = "(no description)"
+            else:
+                lines = '"%s"' % description
+            if not options.bare:
+                lines = "Description: %s" % lines
+            line1 = True
+            for line in lines.split('\n'):
+                if line1:
+                    print indent + line
+                    line1 = False
+                else:
+                    print indent*2 + line
+
+        totals = suite_identity.get('states', None)
+        if totals is None:
+            if (options.print_totals or options.print_cycles):
+                line = indent
+                if not options.bare:
+                    line += "State totals: "
+                line += "(states withheld)"
+                print line
+            continue
+
+        state_count_totals, state_count_cycles = totals
+        if options.print_totals:
+            line = indent
+            if not options.bare:
+                line += "State totals: "
+            for state, tot in state_count_totals.items():
+                if options.color:
+                    line += '%s %d %s' % (
+                        task_state.ctrl[state], tot, task_state.ctrl_end)
+                else:
+                    line += '%s:%d ' % (state, tot)
+            print line.rstrip()
+        if options.print_cycles:
+            print indent + "State totals by cycle point:"
+            line = indent*2
+            for point_string in sorted(state_count_cycles.keys()):
+                line += point_string + ' '
+                for st, tot in state_count_cycles[point_string].items():
+                    if options.color:
+                        line += '%s %d %s' % (
+                                task_state.ctrl[st], tot, task_state.ctrl_end)
+                    else:
+                        line += '%s:%d ' % (st, tot)
+                print line.rstrip()
+                line = indent*2
 
 
 def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
@@ -99,16 +310,17 @@ def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
             scan, [host, reg_db_path, pyro_timeout])
     proc_pool.close()
     scan_results = []
+    hosts = []
     while async_results:
         sleep(0.05)
         for host, async_result in async_results.items():
             if async_result.ready():
                 async_results.pop(host)
-                scan_results.extend(async_result.get())
+                res = async_result.get()
+                scan_results.extend(res)
+                hosts.extend([host]*len(res))
     proc_pool.join()
-    scan_results.sort()
-    return scan_results
-
+    return zip(hosts, scan_results)
 
 if __name__ == "__main__":
     main()

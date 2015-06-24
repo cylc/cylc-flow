@@ -16,54 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute( force_required=True ):
-        sys.exit(0)
-
-import os
-import re
-import cylc.flags
-from cylc.broadcast_report import (
-    get_broadcast_change_report, get_broadcast_bad_options_report)
-from cylc.CylcOptionParsers import cop
-from cylc.network.suite_broadcast import BroadcastClient
-from cylc.command_prep import prep_pyro
-from cylc.print_tree import print_tree
-from cylc.task_id import TaskID
-from cylc.cfgspec.suite import SPEC, upg
-from parsec.validate import validate
-
-def get_padding( settings, level=0, padding=0 ):
-    level += 1
-    for key,val in settings.items():
-        tmp = level*2 + len(key)
-        if tmp > padding:
-            padding = tmp
-        if isinstance( val, dict ):
-            padding = get_padding( val, level, padding )
-    return padding
-
-def get_rdict( left, right=None ):
-    # left is [section]item, or just item
-    rdict = {}
-    m = re.match( '^\[(.*)\](.*)$', left )
-    if m:
-        # [sect]item = right
-        sect, var = m.groups()
-        if not var:
-            rdict = { sect : right }
-        else:
-            rdict = { sect : { var : right }}
-    else:
-        # item = right
-        rdict = { left : right }
-    return rdict
-
-
-usage = """cylc [control] broadcast|bcast [OPTIONS] REG
+"""cylc [control] broadcast|bcast [OPTIONS] REG
 
 Override [runtime] config in targeted namespaces in a running suite.
 
@@ -104,162 +57,227 @@ options can be used on the same command line. Broadcast cannot change
 
 See also 'cylc reload' - reload a modified suite definition at run time."""
 
-parser = cop( usage, pyro=True )
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute(force_required=True):
+        sys.exit(0)
 
-parser.add_option( "-t", "--tag", metavar="CYCLE_POINT",
-        help="(Deprecated). "
-        "Target cycle point. More than one can be added. "
-        "Defaults to '*' for all cycle points with --set and --cancel, "
-        "and nothing with --clear.",
-        action="append", dest="point_strings", default=[] )
+import os
+import re
 
-parser.add_option( "-p", "--point", metavar="CYCLE_POINT",
-        help="Target cycle point. More than one can be added. "
-        "Defaults to '*' with --set and --cancel, "
-        "and nothing with --clear.",
-        action="append", dest="point_strings", default=[] )
+import cylc.flags
+from cylc.broadcast_report import (
+    get_broadcast_change_report, get_broadcast_bad_options_report)
+from cylc.CylcOptionParsers import cop
+from cylc.network.suite_broadcast import BroadcastClient
+from cylc.print_tree import print_tree
+from cylc.task_id import TaskID
+from cylc.cfgspec.suite import SPEC, upg
+from parsec.validate import validate
 
-parser.add_option( "-n", "--namespace", metavar="NAME",
-        help="Target namespace. Defaults to 'root' with "
-        "--set and --cancel, and nothing with --clear.",
-        action="append", dest="namespaces", default=[] )
 
-parser.add_option( "-s", "--set", metavar="[SEC]ITEM=VALUE",
-        help="A [runtime] config item and value to broadcast.",
-        action="append", dest="set", default=[] )
+def get_padding(settings, level=0, padding=0):
+    level += 1
+    for key, val in settings.items():
+        tmp = level*2 + len(key)
+        if tmp > padding:
+            padding = tmp
+        if isinstance(val, dict):
+            padding = get_padding(val, level, padding)
+    return padding
 
-parser.add_option( "-c", "--cancel", metavar="[SEC]ITEM",
-        help="An item-specific broadcast to cancel.",
-        action="append", dest="cancel", default=[] )
 
-parser.add_option( "-C", "--clear",
-        help="Cancel all broadcasts, or with -p/--point, "
-        "-n/--namespace, cancel all broadcasts to targeted "
-        "namespaces and/or cycle points. Use \"-C -p '*'\" "
-        "to cancel all all-cycle broadcasts without canceling "
-        "all specific-cycle broadcasts.",
-        action="store_true", dest="clear", default=False )
-
-parser.add_option( "-e", "--expire", metavar="CYCLE_POINT",
-        help="Cancel any broadcasts that target cycle "
-        "points earlier than, but not inclusive of, CYCLE_POINT.",
-        action="store", default=None, dest="expire" )
-
-parser.add_option( "-d", "--display",
-        help="Display active broadcasts.",
-        action="store_true", default=False, dest="show" )
-
-parser.add_option( "-k", "--display-task", metavar="TASKID",
-        help="Print active broadcasts for a given task "
-        "(" + TaskID.SYNTAX + ").",
-        action="store", default=None, dest="showtask" )
-
-parser.add_option( "-b", "--box",
-        help="Use unicode box characters with -d, -k.",
-        action="store_true", default=False, dest="unicode" )
-
-parser.add_option( "-r", "--raw",
-        help="With -d/--display or -k/--display-task, write out "
-        "the broadcast config structure in raw Python form.",
-        action="store_true", default=False, dest="raw" )
-
-( options, args ) = parser.parse_args()
-
-suite = args[0]
-
-suite, pphrase = prep_pyro( suite, options ).execute()
-
-debug = False
-if cylc.flags.debug:
-    debug = True
-else:
-    try:
-        # from task execution environment
-        if os.environ['CYLC_DEBUG'] == 'True':
-            debug = True
-    except KeyError:
-        pass
-
-pclient = BroadcastClient(
-    suite, pphrase, options.owner, options.host, options.pyro_timeout,
-    options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-
-if options.show or options.showtask:
-    if options.showtask:
-        try:
-            name, point_string = TaskID.split(options.showtask)
-        except ValueError:
-            parser.error("TASKID must be " + TaskID.SYNTAX)
-    settings = pclient.broadcast('get', options.showtask)
-    padding = get_padding(settings) * ' '
-    if options.raw:
-        print str(settings)
+def get_rdict(left, right=None):
+    # left is [section]item, or just item
+    rdict = {}
+    m = re.match('^\[(.*)\](.*)$', left)
+    if m:
+        # [sect]item = right
+        sect, var = m.groups()
+        if not var:
+            rdict = {sect: right}
+        else:
+            rdict = {sect: {var: right}}
     else:
-        print_tree(settings, padding, options.unicode)
-    sys.exit(0)
+        # item = right
+        rdict = {left: right}
+    return rdict
 
-if options.clear:
-    modified_settings, bad_options = pclient.broadcast(
-        'clear', options.point_strings, options.namespaces)
-    if modified_settings:
-        print get_broadcast_change_report(
-            modified_settings, is_cancel=True)
-    sys.exit(get_broadcast_bad_options_report(bad_options))
 
-if options.expire:
-    modified_settings, bad_options = pclient.broadcast(
-        'expire', options.expire)
-    if modified_settings:
-        print get_broadcast_change_report(
-            modified_settings, is_cancel=True)
-    sys.exit(get_broadcast_bad_options_report(bad_options))
+def main():
+    parser = cop(__doc__, pyro=True)
 
-# implement namespace and cycle point defaults here
-namespaces = options.namespaces
-if not namespaces:
-    namespaces = ["root"]
-point_strings = options.point_strings
-if not point_strings:
-    point_strings = ["*"]
+    parser.add_option(
+        "-t", "--tag", metavar="CYCLE_POINT",
+        help="(Deprecated). "
+             "Target cycle point. More than one can be added. "
+             "Defaults to '*' for all cycle points with --set and --cancel, "
+             "and nothing with --clear.",
+        action="append", dest="point_strings", default=[])
 
-if options.cancel:
-    settings = []
-    for option_item in options.cancel:
-        if "=" in option_item:
-            raise ValueError(
-                "ERROR: --cancel=[SEC]ITEM does not take a value")
-        option_item = option_item.strip()
-        if option_item == "inherit":
-            raise ValueError(
-                "ERROR: Inheritance cannot be changed by broadcast")
-        setting = get_rdict(option_item)
-        upg({'runtime': {'__MANY__': setting}}, 'test')
-        validate(setting, SPEC['runtime']['__MANY__'])
-        settings.append(setting)
-    modified_settings, bad_options = pclient.broadcast(
-        'clear', point_strings, namespaces, settings)
-    if modified_settings:
-        print get_broadcast_change_report(
-            modified_settings, is_cancel=True)
-    sys.exit(get_broadcast_bad_options_report(bad_options))
+    parser.add_option(
+        "-p", "--point", metavar="CYCLE_POINT",
+        help="Target cycle point. More than one can be added. "
+             "Defaults to '*' with --set and --cancel, "
+             "and nothing with --clear.",
+        action="append", dest="point_strings", default=[])
 
-if options.set:
-    settings = []
-    for option_item in options.set:
-        if "=" not in option_item:
-            raise ValueError(
-                "ERROR: --set=[SEC]ITEM=VALUE requires a value")
-        lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
-        if lhs == "inherit":
-            raise ValueError(
-                "ERROR: Inheritance cannot be changed by broadcast")
-        setting = get_rdict(lhs, rhs)
-        upg({'runtime': {'__MANY__': setting}}, 'test')
-        validate(setting, SPEC['runtime']['__MANY__'])
-        settings.append(setting)
-    modified_settings, bad_options = pclient.broadcast(
-        'put', point_strings, namespaces, settings)
-    print get_broadcast_change_report(modified_settings)
-    sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))
+    parser.add_option(
+        "-n", "--namespace", metavar="NAME",
+        help="Target namespace. Defaults to 'root' with "
+             "--set and --cancel, and nothing with --clear.",
+        action="append", dest="namespaces", default=[])
+
+    parser.add_option(
+        "-s", "--set", metavar="[SEC]ITEM=VALUE",
+        help="A [runtime] config item and value to broadcast.",
+        action="append", dest="set", default=[])
+
+    parser.add_option(
+        "-c", "--cancel", metavar="[SEC]ITEM",
+        help="An item-specific broadcast to cancel.",
+        action="append", dest="cancel", default=[])
+
+    parser.add_option(
+        "-C", "--clear",
+        help="Cancel all broadcasts, or with -p/--point, "
+             "-n/--namespace, cancel all broadcasts to targeted "
+             "namespaces and/or cycle points. Use \"-C -p '*'\" "
+             "to cancel all all-cycle broadcasts without canceling "
+             "all specific-cycle broadcasts.",
+        action="store_true", dest="clear", default=False)
+
+    parser.add_option(
+        "-e", "--expire", metavar="CYCLE_POINT",
+        help="Cancel any broadcasts that target cycle "
+             "points earlier than, but not inclusive of, CYCLE_POINT.",
+        action="store", default=None, dest="expire")
+
+    parser.add_option(
+        "-d", "--display",
+        help="Display active broadcasts.",
+        action="store_true", default=False, dest="show")
+
+    parser.add_option(
+        "-k", "--display-task", metavar="TASKID",
+        help="Print active broadcasts for a given task "
+             "(" + TaskID.SYNTAX + ").",
+        action="store", default=None, dest="showtask")
+
+    parser.add_option(
+        "-b", "--box",
+        help="Use unicode box characters with -d, -k.",
+        action="store_true", default=False, dest="unicode")
+
+    parser.add_option(
+        "-r", "--raw",
+        help="With -d/--display or -k/--display-task, write out "
+             "the broadcast config structure in raw Python form.",
+        action="store_true", default=False, dest="raw")
+
+    (options, args) = parser.parse_args()
+    suite = args[0]
+
+    debug = False
+    if cylc.flags.debug:
+        debug = True
+    else:
+        try:
+            # from task execution environment
+            if os.environ['CYLC_DEBUG'] == 'True':
+                debug = True
+        except KeyError:
+            pass
+
+    pclient = BroadcastClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, print_uuid=options.print_uuid)
+
+    if options.show or options.showtask:
+        if options.showtask:
+            try:
+                name, point_string = TaskID.split(options.showtask)
+            except ValueError:
+                parser.error("TASKID must be " + TaskID.SYNTAX)
+        settings = pclient.broadcast('get', options.showtask)
+        padding = get_padding(settings) * ' '
+        if options.raw:
+            print str(settings)
+        else:
+            print_tree(settings, padding, options.unicode)
+        sys.exit(0)
+
+    if options.clear:
+        modified_settings, bad_options = pclient.broadcast(
+            'clear', options.point_strings, options.namespaces)
+        if modified_settings:
+            print get_broadcast_change_report(
+                modified_settings, is_cancel=True)
+        sys.exit(get_broadcast_bad_options_report(bad_options))
+
+    if options.expire:
+        modified_settings, bad_options = pclient.broadcast(
+            'expire', options.expire)
+        if modified_settings:
+            print get_broadcast_change_report(
+                modified_settings, is_cancel=True)
+        sys.exit(get_broadcast_bad_options_report(bad_options))
+
+    # implement namespace and cycle point defaults here
+    namespaces = options.namespaces
+    if not namespaces:
+        namespaces = ["root"]
+    point_strings = options.point_strings
+    if not point_strings:
+        point_strings = ["*"]
+
+    if options.cancel:
+        settings = []
+        for option_item in options.cancel:
+            if "=" in option_item:
+                raise ValueError(
+                    "ERROR: --cancel=[SEC]ITEM does not take a value")
+            option_item = option_item.strip()
+            if option_item == "inherit":
+                raise ValueError(
+                    "ERROR: Inheritance cannot be changed by broadcast")
+            setting = get_rdict(option_item)
+            upg({'runtime': {'__MANY__': setting}}, 'test')
+            validate(setting, SPEC['runtime']['__MANY__'])
+            settings.append(setting)
+        modified_settings, bad_options = pclient.broadcast(
+            'clear', point_strings, namespaces, settings)
+        if modified_settings:
+            print get_broadcast_change_report(
+                modified_settings, is_cancel=True)
+        sys.exit(get_broadcast_bad_options_report(bad_options))
+
+    if options.set:
+        settings = []
+        for option_item in options.set:
+            if "=" not in option_item:
+                raise ValueError(
+                    "ERROR: --set=[SEC]ITEM=VALUE requires a value")
+            lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
+            if lhs == "inherit":
+                raise ValueError(
+                    "ERROR: Inheritance cannot be changed by broadcast")
+            setting = get_rdict(lhs, rhs)
+            upg({'runtime': {'__MANY__': setting}}, 'test')
+            validate(setting, SPEC['runtime']['__MANY__'])
+            settings.append(setting)
+        modified_settings, bad_options = pclient.broadcast(
+            'put', point_strings, namespaces, settings)
+        print get_broadcast_change_report(modified_settings)
+        sys.exit(get_broadcast_bad_options_report(bad_options, is_set=True))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

@@ -16,6 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [info] documentation|browse [OPTIONS] [SUITE]
+
+Open cylc or suite documentation in your browser or PDF viewer (as defined
+in cylc global config files).
+
+% cylc doc [OPTIONS]
+   Open local or internet [--www] cylc documentation (locations must be
+specified in cylc global config files).
+
+% cylc doc -u [-t TASK] SUITE
+    Open suite or task documentation if corresponding URL items are specified
+in the suite definition.
+
+Arguments:
+   [TARGET]    File, URL, or suite name"""
+
 import sys
 for arg in sys.argv[1:]:
     if arg.startswith('--host=') or arg.startswith('--user='):
@@ -32,126 +48,121 @@ from cylc.run_get_stdout import run_get_stdout
 from cylc.suite_host import get_hostname
 from cylc.owner import user
 
-parser = OptionParser(
-    """cylc [info] documentation|browse [OPTIONS] [SUITE]
 
-Open cylc or suite documentation in your browser or PDF viewer (as defined
-in cylc global config files).
+def main():
+    parser = OptionParser(__doc__)
 
-% cylc doc [OPTIONS]
-   Open local or internet [--www] cylc documentation (locations must be
-specified in cylc global config files).
+    parser.add_option(
+        "-p", "--pdf", help="Open the PDF User Guide directly.",
+        action="store_true", default=False, dest="pdf")
 
-% cylc doc -u [-t TASK] SUITE
-    Open suite or task documentation if corresponding URL items are specified
-in the suite definition.
-                      
-Arguments:
-   [TARGET]    File, URL, or suite name""")
+    parser.add_option(
+        "-w", "--www", help="Open the cylc internet homepage",
+        action="store_true", default=False, dest="www")
 
-parser.add_option(
-    "-p", "--pdf", help="Open the PDF User Guide directly.",
-    action="store_true", default=False, dest="pdf")
+    parser.add_option(
+        "-t", "--task", help="Browse task documentation URLs.",
+        metavar="TASK_NAME", action="store", default=None, dest="task_name")
 
-parser.add_option(
-    "-w", "--www", help="Open the cylc internet homepage",
-    action="store_true", default=False, dest="www")
+    parser.add_option(
+        "-s", "--stdout", help="Just print the URL to stdout.",
+        action="store_true", default=False, dest="stdout")
 
-parser.add_option(
-    "-t", "--task", help="Browse task documentation URLs.",
-    metavar="TASK_NAME", action="store", default=None, dest="task_name")
+    parser.add_option(
+        "--user",
+        help="Other user account name. This results in "
+             "command reinvocation on the remote account.",
+        metavar="USER", default=user, action="store", dest="owner")
 
-parser.add_option(
-    "-s", "--stdout", help="Just print the URL to stdout.",
-    action="store_true", default=False, dest="stdout")
+    parser.add_option(
+        "--host",
+        help="Other host name. This results in "
+             "command reinvocation on the remote account.",
+        metavar="HOST", action="store", default=get_hostname(), dest="host")
 
-parser.add_option(
-    "--user",
-    help="Other user account name. This results in "
-         "command reinvocation on the remote account.",
-    metavar="USER", default=user, action="store", dest="owner")
+    (options, args) = parser.parse_args()
 
-parser.add_option(
-    "--host",
-    help="Other host name. This results in "
-         "command reinvocation on the remote account.",
-    metavar="HOST", action="store", default=get_hostname(), dest="host")
-
-(options, args) = parser.parse_args()
-
-intranet_url = GLOBAL_CFG.get(['documentation','urls','local index'])
-internet_url = GLOBAL_CFG.get(['documentation','urls','internet homepage'])
-html_file = GLOBAL_CFG.get(['documentation','files','html index'])
-html_viewer = GLOBAL_CFG.get(['document viewers','html'])
-pdf_file = GLOBAL_CFG.get(['documentation','files','pdf user guide'])
-pdf_viewer = GLOBAL_CFG.get(['document viewers','pdf'])
-if len(args) == 0:
-    # Cylc documentation.
-    if options.pdf:
-        # Force PDF.
-        viewer = pdf_viewer
-        target = pdf_file
-    else:
-        # HTML documentation index.
-        viewer = html_viewer
-        if options.www:
-            # Force internet.
-            if internet_url is not None:
-                target = internet_url
+    intranet_url = GLOBAL_CFG.get(['documentation', 'urls', 'local index'])
+    internet_url = GLOBAL_CFG.get(['documentation', 'urls',
+                                   'internet homepage'])
+    html_file = GLOBAL_CFG.get(['documentation', 'files', 'html index'])
+    html_viewer = GLOBAL_CFG.get(['document viewers', 'html'])
+    pdf_file = GLOBAL_CFG.get(['documentation', 'files', 'pdf user guide'])
+    pdf_viewer = GLOBAL_CFG.get(['document viewers', 'pdf'])
+    if len(args) == 0:
+        # Cylc documentation.
+        if options.pdf:
+            # Force PDF.
+            viewer = pdf_viewer
+            target = pdf_file
+        else:
+            # HTML documentation index.
+            viewer = html_viewer
+            if options.www:
+                # Force internet.
+                if internet_url is not None:
+                    target = internet_url
+                else:
+                    sys.exit("ERROR: cylc internet URL not defined.")
+            elif intranet_url is not None:
+                # Intranet.
+                target = intranet_url
             else:
-                sys.exit("ERROR: cylc internet URL not defined.")
-        elif intranet_url is not None:
-            # Intranet.
-            target = intranet_url
-        else:
-            # Open in file:// mode as a last resort.
+                # Open in file:// mode as a last resort.
+                print >> sys.stderr, ("WARNING: cylc intranet URL not "
+                                      "defined, trying file mode.")
+                target = html_file
+
+    elif len(args) == 1:
+        # Suite or task documentation.
+        if options.pdf or options.www:
             print >> sys.stderr, (
-                "WARNING: cylc intranet URL not defined, trying file mode.")
-            target = html_file
-
-elif len(args) == 1:
-    # Suite or task documentation.
-    if options.pdf or options.www:
-        print >> sys.stderr, (
-            "(Note: --pdf and --www are ignored for suite documentation).")
-    suite = args[0]
-    if options.task_name:
-        # Task documentation.
-        res, stdout = run_get_stdout(
-            "cylc get-suite-config -i [runtime][%s]URL %s" % (
-                options.task_name, suite))
-    else:
-        # Suite documentation.
-        res, stdout = run_get_stdout(
-            "cylc get-suite-config -i URL %s" % suite)
-    if not res:
-        # (Illegal config item)
-        sys.exit(stdout)
-    elif len(stdout) == 0:
-        if options.task_name is not None:
-            sys.exit("ERROR: No URL defined for %s in %s." % (
-                options.task_name, suite))
+                "(Note: --pdf and --www are ignored for suite documentation).")
+        suite = args[0]
+        if options.task_name:
+            # Task documentation.
+            res, stdout = run_get_stdout(
+                "cylc get-suite-config -i [runtime][%s]URL %s" % (
+                    options.task_name, suite))
         else:
-            sys.exit("ERROR: No URL defined for %s." % suite)
- 
-    target = stdout[0]
-    viewer = html_viewer
+            # Suite documentation.
+            res, stdout = run_get_stdout(
+                "cylc get-suite-config -i URL %s" % suite)
+        if not res:
+            # (Illegal config item)
+            sys.exit(stdout)
+        elif len(stdout) == 0:
+            if options.task_name is not None:
+                sys.exit("ERROR: No URL defined for %s in %s." % (
+                    options.task_name, suite))
+            else:
+                sys.exit("ERROR: No URL defined for %s." % suite)
+        target = stdout[0]
+        viewer = html_viewer
+    else:
+        parser.error("Too many arguments.")
 
-else:
-    parser.error("Too many arguments.")
+    if target in [pdf_file, html_file] and not os.path.isfile(target):
+        sys.exit("ERROR, file not found: %s (see your cylc admin)" % target)
 
-if target in [pdf_file, html_file] and not os.path.isfile(target):
-    sys.exit("ERROR, file not found: %s (see your cylc admin)" % target)
+    # viewer may have spaces (e.g. 'firefox --no-remote'):
+    command = '%s %s' % (viewer, target)
+    command_list = re.split(' ', command)
 
-# viewer may have spaces (e.g. 'firefox --no-remote'):
-command = '%s %s' % (viewer, target)
-command_list = re.split(' ', command)
+    if options.stdout:
+        print target
+        sys.exit(0)
 
-if options.stdout:
-    print target
-    sys.exit(0)
+    retcode = subprocess.call(command_list)
+    if retcode != 0:
+        print >> sys.stderr, 'ERROR, command failed: %s' % command
+    sys.exit(retcode)
 
-retcode = subprocess.call(command_list)
-if retcode != 0:
-    print >> sys.stderr, 'ERROR, command failed: %s' % command
-sys.exit(retcode)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

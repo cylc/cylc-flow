@@ -16,15 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os
-from optparse import OptionParser
-import pickle
-from cylc.registration import localdb, RegistrationError
-
-oldpath = os.path.join( os.environ['HOME'], '.cylc', 'DB' )
-newpath = os.path.join( os.environ['HOME'], '.cylc', 'REGDB' )
-
-parser = OptionParser( usage = """cylc upgrade-db
+"""cylc upgrade-db
 
 Upgrade a pre-cylc-5.4 suite name database to the new cylc-5.4+ format.
 This will create a new-format DB if necessary, or if one already exists
@@ -37,28 +29,53 @@ $HOME/.cylc/REGDB/ containing one file per registered suite. The
 filenames are the suite names, and the file contains key=value pairs:
   shell$ cat $HOME/.cylc/REGDB/my.suite
   title=my suite title
-  path=/path/to/my/suite/""")
+  path=/path/to/my/suite/"""
 
-parser.add_option( "--from", help="Path to pre-cylc-5.4 db; "
-        "default:" + oldpath,
-        metavar="PATH", action="store", default=oldpath )
+import sys
+import os
+from optparse import OptionParser
+import pickle
 
-parser.add_option( "--to", help="Path to new cylc-5.4+ db; "
-        "default:" + newpath,
-        metavar="PATH", action="store", default=newpath )
+from cylc.registration import localdb, RegistrationError
 
-( options, args ) = parser.parse_args()
 
-if not os.path.isfile( oldpath ):
-    sys.exit( "ERROR, old DB not found: " + oldpath )
+def main():
 
-# load old DB
-olditems = pickle.load( open( oldpath, 'r' ))
+    oldpath = os.path.join(os.environ['HOME'], '.cylc', 'DB')
+    newpath = os.path.join(os.environ['HOME'], '.cylc', 'REGDB')
 
-# new db
-db = localdb( file=newpath )
-for suite, (dir,title) in olditems.items():
+    parser = OptionParser(__doc__)
+
+    parser.add_option(
+        "--from",
+        help="Path to pre-cylc-5.4 db; default:" + oldpath,
+        metavar="PATH", action="store", default=oldpath)
+
+    parser.add_option(
+        "--to", help="Path to new cylc-5.4+ db; default:" + newpath,
+        metavar="PATH", action="store", default=newpath)
+
+    (options, args) = parser.parse_args()
+
+    if not os.path.isfile(oldpath):
+        sys.exit("ERROR, old DB not found: " + oldpath)
+
+    # load old DB
+    olditems = pickle.load(open(oldpath, 'r'))
+
+    # new db
+    db = localdb(file=newpath)
+    for suite, (dir, title) in olditems.items():
+        try:
+            db.register(suite, dir)
+        except RegistrationError, x:
+            print >> sys.stderr, x
+
+
+if __name__ == "__main__":
     try:
-        db.register( suite, dir )
-    except RegistrationError, x:
-        print >> sys.stderr, x
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

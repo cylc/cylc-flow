@@ -16,6 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [control] trigger [OPTIONS] ARGS
+
+Manually trigger a task or tasks. For single tasks you can choose to edit the
+generated job script first, to apply one-off changes (--edit).  Triggering a
+waiting task queues it for execution (cylc internal queues). If its queue is
+not limited it will submit immediately, otherwise it will submit when released
+by its queue.  Triggering a queued task causes it to submit immediately even if
+that violates the queue limit.
+
+In an edit run a diff between the original and edited job script is saved to
+the task job log directory.
+"""
+
 import sys
 
 if '--host' in sys.argv[1:] and '--edit' in sys.argv[1:]:
@@ -35,125 +48,126 @@ import time
 import shutil
 import difflib
 import subprocess
+
+import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.CylcOptionParsers import cop, multitask_usage
-from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.job_logs import CommandLogger
 from cylc.task_id import TaskID
-import cylc.flags
 
-parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
-Manually trigger a task or tasks. For single tasks you can choose to edit the
-generated job script first, to apply one-off changes (--edit).  Triggering a
-waiting task queues it for execution (cylc internal queues). If its queue is
-not limited it will submit immediately, otherwise it will submit when released
-by its queue.  Triggering a queued task causes it to submit immediately even if
-that violates the queue limit.
+def main():
+    parser = cop(
+        __doc__ + multitask_usage, pyro=True, multitask=True,
+        argdoc=[
+            ('REG', 'Suite name'),
+            ('MATCH', 'Task or family name matching regular expression'),
+            ('POINT', 'Task cycle point (e.g. date-time or integer)')])
 
-In an edit run a diff between the original and edited job script is saved to
-the task job log directory.
-""" + multitask_usage, pyro=True, multitask=True, argdoc=[
-    ('REG', 'Suite name'),
-    ('MATCH', 'Task or family name matching regular expression'),
-    ('POINT', 'Task cycle point (e.g. date-time or integer)')
-    ]
-)
+    parser.add_option(
+        "-e", "--edit",
+        help="Manually edit the job script before running it.",
+        action="store_true", default=False, dest="edit_run")
 
-parser.add_option(
-    "-e", "--edit",
-    help="Manually edit the job script before running it.",
-    action="store_true", default=False, dest="edit_run")
+    parser.add_option(
+        "-g", "--geditor",
+        help="(with --edit) force use of the configured GUI editor.",
+        action="store_true", default=False, dest="geditor")
 
-parser.add_option(
-    "-g", "--geditor",
-    help="(with --edit) force use of the configured GUI editor.",
-    action="store_true", default=False, dest="geditor")
+    (options, args) = parser.parse_args()
+    suite = args[0]
 
-(options, args) = parser.parse_args()
-suite, pphrase = prep_pyro(args[0], options).execute()
-name = args[1]
-point_string = args[2]
+    name = args[1]
+    point_string = args[2]
 
-msg = 'Trigger task(s) %s at %s in %s' % (name, point_string, suite)
-prompt(msg, options.force)
+    msg = 'Trigger task(s) %s at %s in %s' % (name, point_string, suite)
+    prompt(msg, options.force)
 
-cmd_client = SuiteCommandClient(suite, pphrase, options.owner, options.host,
-                                options.pyro_timeout, options.port)
-my_uuid = cmd_client.get_client_uuid()
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % my_uuid
+    cmd_client = SuiteCommandClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, print_uuid=options.print_uuid)
 
-if options.edit_run:
-    # Check that TASK is a unique task.
-    task_id = TaskID.get(name, point_string)
-    info_client = SuiteInfoClient(suite, pphrase, options.owner, options.host,
-                                  options.pyro_timeout, options.port, my_uuid)
-    success, msg = info_client.get_info('ping_task', task_id, True)
-    if not success:
-        sys.exit('ERROR: %s' % msg)
+    if options.edit_run:
+        # Check that TASK is a unique task.
+        task_id = TaskID.get(name, point_string)
+        info_client = SuiteInfoClient(
+            suite, options.owner, options.host, options.pyro_timeout,
+            options.port, options.db, my_uuid=cmd_client.my_uuid)
+        success, msg = info_client.get_info('ping_task', task_id, True)
+        if not success:
+            sys.exit('ERROR: %s' % msg)
 
-    # Get the current job file mtime, if the file exists.
-    jobfile_path = CommandLogger.get_latest_job_log(
-        suite, name, point_string)
-    try:
-        jobfile_mtime = os.stat(jobfile_path).st_mtime
-    except OSError:
-        # Does not exist.
-        jobfile_mtime = None
-
-    # Tell the suite daemon to generate the job file.
-    cmd_client.put_command('dry_run_task', name, point_string)
-
-    # Wait for the new job file to be written.
-    count = 0
-    MAX_TRIES = 10
-    while True:
-        count += 1
+        # Get the current job file mtime, if the file exists.
+        jobfile_path = CommandLogger.get_latest_job_log(
+            suite, name, point_string)
         try:
-            if os.stat(jobfile_path).st_mtime > jobfile_mtime:
-                break
-        except:
-            pass
-        if count > MAX_TRIES:
-            sys.exit('ERROR: no job file after %s seconds' % MAX_TRIES)
-        time.sleep(1)
+            jobfile_mtime = os.stat(jobfile_path).st_mtime
+        except OSError:
+            # Does not exist.
+            jobfile_mtime = None
 
-    # Make a pre-edit copy to allow a post-edit diff.
-    jobfile_copy_path = "%s.ORIG" % jobfile_path
-    shutil.copy(jobfile_path, jobfile_copy_path)
+        # Tell the suite daemon to generate the job file.
+        cmd_client.put_command('dry_run_task', name, point_string)
 
-    # Edit the new job file.
-    if options.geditor:
-        editor = GLOBAL_CFG.get(['editors', 'gui'])
-    else:
-        editor = GLOBAL_CFG.get(['editors', 'terminal'])
-    # The editor command may have options, e.g. 'emacs -nw'.
-    command_list = re.split(' ', editor)
-    command_list.append(jobfile_path)
-    command = ' '.join(command_list)
+        # Wait for the new job file to be written.
+        count = 0
+        MAX_TRIES = 10
+        while True:
+            count += 1
+            try:
+                if os.stat(jobfile_path).st_mtime > jobfile_mtime:
+                    break
+            except:
+                pass
+            if count > MAX_TRIES:
+                sys.exit('ERROR: no job file after %s seconds' % MAX_TRIES)
+            time.sleep(1)
+
+        # Make a pre-edit copy to allow a post-edit diff.
+        jobfile_copy_path = "%s.ORIG" % jobfile_path
+        shutil.copy(jobfile_path, jobfile_copy_path)
+
+        # Edit the new job file.
+        if options.geditor:
+            editor = GLOBAL_CFG.get(['editors', 'gui'])
+        else:
+            editor = GLOBAL_CFG.get(['editors', 'terminal'])
+        # The editor command may have options, e.g. 'emacs -nw'.
+        command_list = re.split(' ', editor)
+        command_list.append(jobfile_path)
+        command = ' '.join(command_list)
+        try:
+            # Block until the editor exits.
+            retcode = subprocess.call(command_list)
+            if retcode != 0:
+                sys.exit(
+                    'ERROR, command failed with %d:\n %s' % (retcode, command))
+        except OSError:
+            sys.exit('ERROR, unable to execute:\n %s' % command)
+
+        # Save a diff to record the changes made.
+        log_dir = os.path.dirname(jobfile_path)
+        with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
+            for line in difflib.unified_diff(
+                    open(jobfile_copy_path).readlines(),
+                    open(jobfile_path).readlines(),
+                    fromfile="original",
+                    tofile="edited"):
+                diff_file.write(line)
+        os.unlink(jobfile_copy_path)
+
+    # Trigger the task proxy(s).
+    cmd_client.put_command('trigger_task', name, point_string,
+                           options.is_family)
+
+
+if __name__ == "__main__":
     try:
-        # Block until the editor exits.
-        retcode = subprocess.call(command_list)
-        if retcode != 0:
-            sys.exit(
-                'ERROR, command failed with %d:\n %s' % (retcode, command))
-    except OSError:
-        sys.exit('ERROR, unable to execute:\n %s' % command)
-
-    # Save a diff to record the changes made.
-    log_dir = os.path.dirname(jobfile_path)
-    with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
-        for line in difflib.unified_diff(
-                open(jobfile_copy_path).readlines(),
-                open(jobfile_path).readlines(),
-                fromfile="original",
-                tofile="edited"):
-            diff_file.write(line)
-    os.unlink(jobfile_copy_path)
-
-# Trigger the task proxy(s).
-cmd_client.put_command('trigger_task', name, point_string, options.is_family)
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

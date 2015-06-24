@@ -16,6 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [db] unregister [OPTIONS] ARGS
+
+Remove one or more suites from your suite database. The REGEX pattern
+must match whole suite names to avoid accidental de-registration of
+partial matches (e.g. 'bar.baz' will not match 'foo.bar.baz').
+
+Associated suite definition directories will not be deleted unless the
+'-d,--delete' option is used."""
+
 import sys
 from cylc.remote import remrun
 if remrun().execute():
@@ -27,74 +36,75 @@ from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb
 import cylc.flags
 
-parser = cop( usage = """cylc [db] unregister [OPTIONS] ARGS
 
-Remove one or more suites from your suite database. The REGEX pattern
-must match whole suite names to avoid accidental de-registration of
-partial matches (e.g. 'bar.baz' will not match 'foo.bar.baz').
+def main():
+    parser = cop(
+        __doc__,
+        argdoc=[('REGEX', 'Regular expression to match suite names.')])
 
-Associated suite definition directories will not be deleted unless the
-'-d,--delete' option is used.""",
-    argdoc=[('REGEX', 'Regular expression to match suite names.')] )
-
-parser.add_option( "-d", "--delete",
+    parser.add_option(
+        "-d", "--delete",
         help="Delete the suite definition directory too (!DANGEROUS!).",
-        action="store_true", default=False, dest="obliterate" )
+        action="store_true", default=False, dest="obliterate")
 
-parser.add_option( "-f", "--force",
+    parser.add_option(
+        "-f", "--force",
         help="Don't ask for confirmation before deleting suite definitions.",
-        action="store_true", default=False, dest="force" )
+        action="store_true", default=False, dest="force")
 
-( options, args ) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-arg = args[0]
+    db = localdb(file=options.db)
 
-db = localdb( file=options.db )
+    dirs = db.unregister(args[0])
 
-try:
-    dirs = db.unregister( arg )
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+    n = len(dirs)
+    if n == 0:
+        print 'No suites unregistered.'
+        sys.exit(0)
 
-n = len(dirs)
-if n == 0:
-    print 'No suites unregistered.'
-    sys.exit(0)
+    print len(dirs), 'suites unregistered.'
 
-print len(dirs), 'suites unregistered.'
-
-if options.obliterate and len(dirs) > 0:
-    for dir in dirs:
-        print 'DELETE ', dir
-
-    really_obliterate = False
-    if options.force:
-        really_obliterate = True
-    else:
-        if len(dirs) == 1:
-            words = "THIS SUITE DEFINITION"
-        else:
-            words = "THESE SUITE DEFINITIONS"
-        response = raw_input( "DO YOU REALLY WANT TO DELETE " + words + "? (y/n) " )
-        if response == 'y':
-            really_obliterate = True
-    if really_obliterate and len(dirs)>0:
+    if options.obliterate and len(dirs) > 0:
         for dir in dirs:
-            try:
-                rmtree(dir)
-            except OSError, x:
-                print >> sys.stderr, "ERROR, could not remove directory: " + dir
-                print >> sys.stderr, x
-                continue
-            # recursively remove empty superdirs
-            tmp = dir
-            while True:
-                tmp = os.path.split(tmp)[0]
+            print 'DELETE ', dir
+
+        really_obliterate = False
+        if options.force:
+            really_obliterate = True
+        else:
+            if len(dirs) == 1:
+                words = "THIS SUITE DEFINITION"
+            else:
+                words = "THESE SUITE DEFINITIONS"
+            response = raw_input(
+                "DO YOU REALLY WANT TO DELETE " + words + "? (y/n) ")
+            if response == 'y':
+                really_obliterate = True
+        if really_obliterate and len(dirs) > 0:
+            for dir in dirs:
                 try:
-                    os.rmdir(tmp)
-                except OSError:
-                    break
-                else:
-                    print 'Removed empty directory:', tmp
+                    rmtree(dir)
+                except OSError as exc:
+                    print >> sys.stderr, (
+                        "ERROR, could not remove directory: " + dir)
+                    print >> sys.stderr, str(exc)
+                    continue
+                # recursively remove empty superdirs
+                tmp = dir
+                while True:
+                    tmp = os.path.split(tmp)[0]
+                    try:
+                        os.rmdir(tmp)
+                    except OSError:
+                        break
+                    else:
+                        print 'Removed empty directory:', tmp
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

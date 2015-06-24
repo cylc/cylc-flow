@@ -16,20 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import os, re
-import tempfile
-import subprocess
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.CylcOptionParsers import cop
-from parsec.fileparse import read_and_proc
-import cylc.flags
-
-parser = cop( """cylc [prep] view [OPTIONS] ARGS 
+"""cylc [prep] view [OPTIONS] ARGS
 
 View a read-only temporary copy of suite NAME's suite.rc file, in your
 editor, after optional include-file inlining and Jinja2 preprocessing.
@@ -42,130 +29,157 @@ Where <editor> is defined in the cylc site and user config files
 For remote host or owner, the suite will be printed to stdout unless
 the '-g,--gui' flag is used to spawn a remote GUI edit session.
 
-See also 'cylc [prep] edit'.""", jset=True, prep=True )
+See also 'cylc [prep] edit'."""
 
-parser.add_option( "--inline", "-i",
-        help="Inline include-files.",
-        action="store_true", default=False, dest="inline" )
-
-parser.add_option( "--jinja2", "-j",
-        help="View after Jinja2 template processing "
-        "(implies '-i/--inline' as well).",
-        action="store_true", default=False, dest="jinja2" )
-
-parser.add_option( "-p", "--process", 
-        help="View after all processing (Jinja2, inlining, "
-        "line-continuation joining).",
-        action="store_true", default=False, dest="process" )
-
-parser.add_option( "--mark", "-m",
-        help="(With '-i') Mark inclusions in the left margin.",
-        action="store_true", default=False, dest="mark" )
-
-parser.add_option( "--label", "-l",
-        help="(With '-i') Label file inclusions with the file name. "
-        "Line numbers will not correspond to those reported by the parser.",
-        action="store_true", default=False, dest="label" )
-
-parser.add_option( "--single",
-        help="(With '-i') Inline only the first instances of any "
-        "multiply-included files. Line numbers will not correspond to "
-        "those reported by the parser.",
-        action="store_true", default=False, dest="single" )
-
-parser.add_option( "--cat", "-c",
-        help="Concatenate continuation lines (line numbers will "
-        "not correspond to those reported by the parser).",
-        action="store_true", default=False, dest="cat" )
-
-parser.add_option( "--gui", "-g",
-        help="Force use of the configured GUI editor.",
-        action="store_true", default=False, dest="geditor" )
-
-parser.add_option( "--stdout",
-        help="Print the suite definition to stdout.",
-        action="store_true", default=False, dest="stdout" )
-
-parser.add_option( "--mark-for-edit",
-        help="(With '-i') View file inclusion markers as "
-        "for 'cylc edit --inline'.",
-        action="store_true", default=False, dest="asedit" )
-
-( options, args ) = parser.parse_args()
-
-suite, suiterc, junk = parser.get_suite()
-
-cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
-if options.geditor:
-    editor = GLOBAL_CFG.get( ['editors','gui'] )
-else:
-    editor = GLOBAL_CFG.get( ['editors','terminal'] )
-
-global suitedir
-suitedir = os.path.dirname(suiterc)
-
-# read in the suite.rc file
-viewcfg = {
-        'mark'   : options.mark,
-        'single' : options.single,
-        'label'  : options.label,
-        'jinja2' : options.jinja2 or options.process,
-        'contin' : options.cat or options.process,
-        'inline' : options.inline or options.jinja2 or options.process,
-        }
-try:
-    lines = read_and_proc( suiterc,
-            options.templatevars, options.templatevars_file,
-            viewcfg=viewcfg, asedit=options.asedit )
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit( x )
-
-if options.stdout:
-    for line in lines:
-        print line
+import sys
+from cylc.remote import remrun
+if remrun().execute():
     sys.exit(0)
 
-# write to a temporary file
-viewfile = tempfile.mktemp( suffix = ".suite.rc", prefix = suite + '.', dir = cylc_tmpdir )
-h = open( viewfile, 'wb' )
-for line in lines:
-    h.write( line + '\n' )
-h.close()
+import os
+import re
+import tempfile
+import subprocess
 
-# set the file to be read only
-os.chmod( viewfile, 0444 )
+import cylc.flags
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.CylcOptionParsers import cop
+from parsec.fileparse import read_and_proc
 
-# capture the temp file's mod time in case the user edits it
-# and overrides the readonly mode.
-modtime1 = os.stat( viewfile ).st_mtime
 
-# in case editor has options, e.g. 'emacs -nw':
-command_list = re.split( ' ', editor )
-command_list.append( viewfile )
-command = ' '.join( command_list )
-try:
+def main():
+    parser = cop(__doc__, jset=True, prep=True)
+
+    parser.add_option(
+        "--inline", "-i", help="Inline include-files.", action="store_true",
+        default=False, dest="inline")
+
+    parser.add_option(
+        "--jinja2", "-j",
+        help="View after Jinja2 template processing "
+             "(implies '-i/--inline' as well).",
+        action="store_true", default=False, dest="jinja2")
+
+    parser.add_option(
+        "-p", "--process",
+        help="View after all processing (Jinja2, inlining, "
+             "line-continuation joining).",
+        action="store_true", default=False, dest="process")
+
+    parser.add_option(
+        "--mark", "-m",
+        help="(With '-i') Mark inclusions in the left margin.",
+        action="store_true", default=False, dest="mark")
+
+    parser.add_option(
+        "--label", "-l",
+        help="(With '-i') Label file inclusions with the file name. Line "
+             "numbers will not correspond to those reported by the parser.",
+        action="store_true", default=False, dest="label")
+
+    parser.add_option(
+        "--single",
+        help="(With '-i') Inline only the first instances of any "
+             "multiply-included files. Line numbers will not correspond to "
+             "those reported by the parser.",
+        action="store_true", default=False, dest="single")
+
+    parser.add_option(
+        "--cat", "-c",
+        help="Concatenate continuation lines (line numbers will "
+             "not correspond to those reported by the parser).",
+             action="store_true", default=False, dest="cat")
+
+    parser.add_option(
+        "--gui", "-g", help="Force use of the configured GUI editor.",
+        action="store_true", default=False, dest="geditor")
+
+    parser.add_option(
+        "--stdout", help="Print the suite definition to stdout.",
+        action="store_true", default=False, dest="stdout")
+
+    parser.add_option(
+        "--mark-for-edit",
+        help="(With '-i') View file inclusion markers as "
+             "for 'cylc edit --inline'.",
+        action="store_true", default=False, dest="asedit")
+
+    (options, args) = parser.parse_args()
+
+    suite, suiterc, junk = parser.get_suite()
+
+    cylc_tmpdir = GLOBAL_CFG.get_tmpdir()
+    if options.geditor:
+        editor = GLOBAL_CFG.get(['editors', 'gui'])
+    else:
+        editor = GLOBAL_CFG.get(['editors', 'terminal'])
+
+    global suitedir
+    suitedir = os.path.dirname(suiterc)
+
+    # read in the suite.rc file
+    viewcfg = {'mark': options.mark,
+               'single': options.single,
+               'label': options.label,
+               'jinja2': options.jinja2 or options.process,
+               'contin': options.cat or options.process,
+               'inline': options.inline or options.jinja2 or options.process,
+               }
+    lines = read_and_proc(
+        suiterc, options.templatevars, options.templatevars_file,
+        viewcfg=viewcfg, asedit=options.asedit)
+
+    if options.stdout:
+        for line in lines:
+            print line
+        sys.exit(0)
+
+    # write to a temporary file
+    viewfile = tempfile.mktemp(suffix=".suite.rc", prefix=suite + '.',
+                               dir=cylc_tmpdir)
+    h = open(viewfile, 'wb')
+    for line in lines:
+        h.write(line + '\n')
+    h.close()
+
+    # set the file to be read only
+    os.chmod(viewfile, 0444)
+
+    # capture the temp file's mod time in case the user edits it
+    # and overrides the readonly mode.
+    modtime1 = os.stat(viewfile).st_mtime
+
+    # in case editor has options, e.g. 'emacs -nw':
+    command_list = re.split(' ', editor)
+    command_list.append(viewfile)
+    command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = subprocess.call( command_list )
+    retcode = subprocess.call(command_list)
     if retcode != 0:
         # the command returned non-zero exist status
         print >> sys.stderr, command, 'failed:', retcode
         sys.exit(1)
-except OSError:
-    # the command was not invoked
-    print >> sys.stderr, 'ERROR: unable to execute:', command
-    sys.exit(1)
 
-# !!!VIEWING FINISHED!!!
+    # !!!VIEWING FINISHED!!!
 
-# Did the user edit the file
-modtime2 = os.stat( viewfile ).st_mtime
+    # Did the user edit the file
+    modtime2 = os.stat(viewfile).st_mtime
 
-if modtime2 > modtime1:
-    print
-    print >> sys.stderr, 'WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY SUITE COPY:'
-    print >> sys.stderr, viewfile
-    print >> sys.stderr, 'In future use \'cylc [prep] edit\' to edit a suite.'
-    print
-# DONE
+    if modtime2 > modtime1:
+        print
+        print >> sys.stderr, (
+            'WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY SUITE COPY:')
+        print >> sys.stderr, viewfile
+        print >> sys.stderr, (
+            'In future use \'cylc [prep] edit\' to edit a suite.')
+        print
+    # DONE
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

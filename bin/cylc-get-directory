@@ -16,6 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [db] get-directory REG
+
+Retrieve and print the directory location of suite REG.
+Here's an easy way to move to a suite directory:
+  $ cd $(cylc get-dir REG)."""
+
 import sys
 from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb
@@ -25,19 +31,21 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-parser = cop( usage = """cylc [db] get-directory REG
 
-Retrieve and print the directory location of suite REG.
-Here's an easy way to move to a suite directory:
-  $ cd $(cylc get-dir REG).""" )
+def main():
+    parser = cop(__doc__)
 
-( options, args ) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-reg = args[0]
-db = localdb( file=options.db )
-try:
+    reg = args[0]
+    db = localdb(file=options.db)
     print db.get_suitedir(reg)
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

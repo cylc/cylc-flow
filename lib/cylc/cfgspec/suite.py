@@ -38,6 +38,7 @@ from cylc.cycling.integer import REC_INTERVAL as REC_INTEGER_INTERVAL
 from cylc.cfgspec.utils import coerce_interval
 from cylc.cfgspec.utils import coerce_interval_list
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.network import PRIVILEGE_LEVELS
 
 "Define all legal items and values for cylc suite definition files."
 
@@ -215,6 +216,13 @@ SPEC = {
             'live mode suite timeout'         : vdr( vtype='interval_minutes', default=60 ),
             'dummy mode suite timeout'        : vdr( vtype='interval_minutes', default=60 ),
             'simulation mode suite timeout'   : vdr( vtype='interval_minutes', default=60 ),
+            },
+        'authentication': {
+            # Allow owners to grant public shutdown rights at the most, not full control.
+            'public': vdr(
+                vtype='string',
+                options=PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index('shutdown')+1],
+                default=GLOBAL_CFG.get(['authentication', 'public']))
             },
         },
     'scheduling' : {
@@ -455,4 +463,4 @@ def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=Fals
         # TODO - write_proc should be in loadcfg
         suitecfg = sconfig( SPEC, upg, tvars=tvars, tvars_file=tvars_file, write_proc=write_proc )
         suitecfg.loadcfg( fpath, "suite definition", strict=True )
-        return suitecfg
+    return suitecfg

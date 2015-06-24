@@ -21,7 +21,6 @@ import gobject
 #pygtk.require('2.0')
 import gtk
 
-from cylc.config import config, SuiteConfigError
 from gcapture import gcapture, gcapture_tmpfile
 from warning_dialog import warning_dialog
 

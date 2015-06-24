@@ -38,9 +38,11 @@ import sys
 from cylc.task_state import task_state
 from cylc.broker import broker
 import cylc.flags
+from cylc.get_task_proxy import get_task_proxy
 from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
 
+from cylc.config import SuiteConfig
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
@@ -52,17 +54,17 @@ from cylc.network.ext_trigger import ExtTriggerServer
 class TaskPool(object):
     """Task pool of a suite."""
 
-    def __init__(self, suite, pri_dao, pub_dao, stop_point, config, pyro, log,
+    def __init__(self, suite, pri_dao, pub_dao, stop_point, pyro, log,
                  run_mode):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
-        self.qconfig = config.cfg['scheduling']['queues']
         self.stop_point = stop_point
         self.reconfiguring = False
         self.pri_dao = pri_dao
         self.pub_dao = pub_dao
 
+        config = SuiteConfig.get_inst()
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_future_offset = None
         self._prev_runahead_base_point = None
@@ -71,8 +73,6 @@ class TaskPool(object):
         self._prev_runahead_base_point = None
         self._prev_runahead_sequence_points = None
         self.reload_warned = False
-
-        self.config = config
 
         self.pool = {}
         self.runahead_pool = {}
@@ -96,9 +96,11 @@ class TaskPool(object):
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
+        config = SuiteConfig.get_inst()
+        qconfig = config.cfg['scheduling']['queues']
         self.myq = {}
-        for queue in self.qconfig:
-            for taskname in self.qconfig[queue]['members']:
+        for queue in qconfig:
+            for taskname in qconfig[queue]['members']:
                 self.myq[taskname] = queue
 
     def add_to_runahead_pool(self, itask):
@@ -201,7 +203,8 @@ class TaskPool(object):
             sequence_points = self._prev_runahead_sequence_points
         else:
             sequence_points = []
-            for sequence in self.config.sequences:
+            config = SuiteConfig.get_inst()
+            for sequence in config.sequences:
                 point = runahead_base_point
                 for _ in range(limit):
                     point = sequence.get_next_point(point)
@@ -399,11 +402,13 @@ class TaskPool(object):
 
         # 2) submit queued tasks if manually forced or not queue-limited
         readytogo = []
+        config = SuiteConfig.get_inst()
+        qconfig = config.cfg['scheduling']['queues']
         for queue in self.queues:
             # 2.1) count active tasks and compare to queue limit
             n_active = 0
             n_release = 0
-            n_limit = self.qconfig[queue]['limit']
+            n_limit = qconfig[queue]['limit']
             tasks = self.queues[queue].values()
             if n_limit:
                 for itask in tasks:
@@ -495,19 +500,18 @@ class TaskPool(object):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
 
-    def reconfigure(self, config, stop_point):
+    def reconfigure(self, stop_point):
         """Set the task pool to reload mode."""
         self.reconfiguring = True
 
+        config = SuiteConfig.get_inst()
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_num_active_cycle_points = (
             config.get_max_num_active_cycle_points())
-        self.config = config
         self.stop_point = stop_point
 
         # reassign live tasks from the old queues to the new.
         # self.queues[queue][id_] = task
-        self.qconfig = config.cfg['scheduling']['queues']
         self.assign_queues()
         new_queues = {}
         for queue in self.queues:
@@ -535,6 +539,9 @@ class TaskPool(object):
     def reload_taskdefs(self):
         """Reload task definitions."""
         found = False
+
+        config = SuiteConfig.get_inst()
+ 
         for itask in self.get_all_tasks():
             if itask.state.is_currently('ready', 'submitted', 'running'):
                 # do not reload active tasks as it would be possible to
@@ -561,7 +568,7 @@ class TaskPool(object):
                 else:
                     self.log.info(
                         'RELOADING TASK DEFINITION FOR ' + itask.identity)
-                    new_task = self.config.get_task_proxy(
+                    new_task = get_task_proxy(
                         itask.tdef.name,
                         itask.point,
                         itask.state.get_status(),

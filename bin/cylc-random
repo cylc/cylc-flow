@@ -16,27 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
-import random
-from optparse import OptionParser
-
-parser = OptionParser( usage = """cylc [util] random A B
+"""cylc [util] random A B
 
 Generate a random integer in the range [A,B). This is just a command
 interface to Python's random.randrange() function.
 
 Arguments:
    A     start of the range interval (inclusive)
-   B     end of the random range (exclusive, so must be > A)""")
+   B     end of the random range (exclusive, so must be > A)"""
 
-(options, args) = parser.parse_args()
+import os
+import sys
+import random
+from optparse import OptionParser
 
-if len( args ) != 2:
-    parser.error( "Two integer arguments required" )
 
-try:
+def main():
+    parser = OptionParser(__doc__)
+    (options, args) = parser.parse_args()
+
+    if len(args) != 2:
+        parser.error("Two integer arguments required")
+
     start = int(args[0])
     end = int(args[1])
-    print random.randrange( start, end )
-except ValueError, x:
-    raise SystemExit(x)
+    print random.randrange(start, end)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

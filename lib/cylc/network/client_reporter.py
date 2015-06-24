@@ -18,26 +18,18 @@
 
 import logging
 import datetime
+import threading
 import cylc.flags
 
+
 class PyroClientReporter(object):
-    """Log commands from cylc clients with identifying information.
-    
-    For single-connect clients (e.g. CLI commands), log each command.
-
-    For multi-connect clients (e.g. cylc-gui, cylc-monitor) only sign-in and
-    sign-out are logged, except in debug mode. If no explicit sign-out is
-    received the client is forgotten after a time (any subsequent connect is
-    another sign-on). Individual commands are not logged except in debug mode.
-
-    Note that a client program can contain multiple Pyro client interfaces;
-    these can be a mix of single and multi-connect clients; and can all share
-    the same UUID.
-    """
+    """For logging cylc client requests with identifying information."""
 
     _INSTANCE = None
     CLIENT_FORGET_SEC = 60
-    LOG_TMPL = 'Client: %s (%s %s %s)'
+    LOG_COMMAND_TMPL = 'client command %s %s@%s:%s %s'
+    LOG_SIGNOUT_TMPL = 'client sign-out %s@%s:%s %s'
+    LOG_FORGET_TMPL = 'client forget %s'
 
     @classmethod
     def get_inst(cls):
@@ -47,53 +39,65 @@ class PyroClientReporter(object):
         return cls._INSTANCE
 
     def __init__(self):
-        self.log = logging.getLogger("main")
-        # {uuid: (info, datetime)}
-        self.clients = {}
+        self.clients = {}  # {uuid: time-of-last-connect}
 
-    def report(self, command, uuid, info, multi):
-        now = datetime.datetime.utcnow()
-        if multi:
-            if uuid not in self.clients:
-                self.log.info(
-                    self.__class__.LOG_TMPL % (
-                        'sign-in', info['name'], info['user_at_host'], uuid))
-            self.clients[uuid] = (info, now)
-        if not multi or cylc.flags.debug:
-            self.log.info(
-                self.__class__.LOG_TMPL % (
-                    command,
-                    info['name'], info['user_at_host'], uuid))
+    def report(self, request, server_obj):
+        """Log client requests with identifying information.
+
+        In debug mode log all requests including task messages. Otherwise log
+        all user commands, and just the first info request from each client.
+
+        """
+        if threading.current_thread().__class__.__name__ == '_MainThread':
+            # Server methods may be called internally as well as by clients.
+            return
+        name = server_obj.__class__.__name__
+        caller = server_obj.getLocalStorage().caller
+        log_me = (
+            cylc.flags.debug or
+            name in ["SuiteCommandServer",
+                     "ExtTriggerServer",
+                     "BroadcastServer"] or
+            (name != "TaskMessageServer" and
+             caller.uuid not in self.clients))
+        if log_me:
+            logging.getLogger("main").info(
+                self.__class__.LOG_COMMAND_TMPL % (
+                    request, caller.user, caller.host, caller.prog_name,
+                    caller.uuid))
+        self.clients[caller.uuid] = datetime.datetime.utcnow()
         self._housekeep()
 
-    def signout(self, uuid, info):
-        """Forget this client."""
-        self.log.info(
-            self.__class__.LOG_TMPL % (
-                'sign-out', info['name'], info['user_at_host'], uuid))
+    def signout(self, server_obj):
+        """Force forget this client (for use by GUI etc.)."""
+
+        caller = server_obj.getLocalStorage().caller
+        logging.getLogger("main").info(
+            self.__class__.LOG_SIGNOUT_TMPL % (
+                caller.user, caller.host, caller.prog_name, caller.uuid))
         try:
-            del self.clients[uuid]
+            del self.clients[caller.uuid]
         except:
-            # In case of multiple calls from a multi-client program.
+            # Already forgotten.
             pass
         self._housekeep()
 
     def _housekeep(self):
         """Forget inactive clients."""
-        now = datetime.datetime.utcnow()
+
         for uuid in self.clients.keys():
-            info, dtime = self.clients[uuid]
-            if (self._total_seconds(now - dtime) >
+            dtime = self.clients[uuid]
+            if (self._total_seconds(datetime.datetime.utcnow() - dtime) >
                     self.__class__.CLIENT_FORGET_SEC):
                 del self.clients[uuid]
-                self.log.info(
-                    self.__class__.LOG_TMPL % (
-                        'forget', info['name'], info['user_at_host'], uuid))
- 
-    def _total_seconds(self, td):
-        """Return total seconds in a datetime.timedelta object.
+                logging.getLogger("main").debug(
+                    self.__class__.LOG_FORGET_TMPL % uuid)
 
-        Back compat Python 2.6.x; timedelta.total_seconds() introduced in 2.7.
+    def _total_seconds(self, td):
+        """Return total seconds as a datetime.timedelta object.
+
+        For back compat - timedelta.total_seconds() in Pyton >= 2.7.
+
         """
         return (td.microseconds + (
-                td.seconds + td.days * 24 * 3600) * 10**6) / 10**6 
+                td.seconds + td.days * 24 * 3600) * 10**6) / 10**6

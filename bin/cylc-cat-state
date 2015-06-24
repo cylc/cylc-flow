@@ -16,46 +16,54 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [info] cat-state [OPTIONS] REG
+
+Print the suite state dump file directly to stdout."""
+
 import sys
 from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
+import cylc.flags
 from cylc.CylcOptionParsers import cop
-from cylc.command_prep import prep_file
+from cylc.registration import localdb
 from cylc.dump import dump_to_stdout, get_stop_state_summary
 from cylc.suite_state_dumping import SuiteStateDumper
-import cylc.flags
 
-parser = cop( usage = """cylc [info] cat-state [OPTIONS] REG
 
-Print the suite state dump file directly to stdout.""" )
+def main():
+    parser = cop(__doc__)
 
-parser.add_option( "-d", "--dump", help="Use the same display "
-        "format as the 'cylc dump' command.",
-        action="store_true", default=False, dest="dumpform" )
+    parser.add_option(
+        "-d", "--dump",
+        help="Use the same display format as the 'cylc dump' command.",
+        action="store_true", default=False, dest="dumpform")
 
-( options, args ) = parser.parse_args()
-owner = options.db_owner
+    (options, args) = parser.parse_args()
+    suite = args[0]
+    suiterc = localdb(options.db).get_suiterc(suite)
 
-suite, suiterc = prep_file( args[0], options ).execute()
-
-try:
+    owner = options.db_owner
     f = open(SuiteStateDumper(suite).file_name, 'rb')
-except (IOError, OSError), x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
-else:
     lines = f.readlines()
     f.close()
 
-lines = map( str.rstrip, lines )
+    lines = map(str.rstrip, lines)
 
-if not options.dumpform:
-    for line in lines:
-        print line
-else:
-    [glbl, states, fam_states] = get_stop_state_summary( suite,
-            options.owner, options.host, lines )
-    dump_to_stdout( states )
+    if not options.dumpform:
+        for line in lines:
+            print line
+    else:
+        [glbl, states, fam_states] = get_stop_state_summary(
+            suite, options.owner, options.host, lines)
+        dump_to_stdout(states)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

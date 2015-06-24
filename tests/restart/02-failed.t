@@ -39,7 +39,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
-# Sleep until penultimate task (the suite stops and starts, so port files alone
+# Sleep until penultimate task (the suite stops and starts, so port scan alone
 # won't help)
 TEST_NAME=$TEST_NAME_BASE-monitor
 START_TIME=$(date +%s)
