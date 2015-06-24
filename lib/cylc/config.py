@@ -150,8 +150,13 @@ class SuiteConfig(object):
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_restart=False, is_reload=False, write_proc=True,
-                 vis_start_string=None, vis_stop_string=None):
+                 vis_start_string=None, vis_stop_string=None,
+                 mem_log_func=None):
 
+        self.mem_log = mem_log_func
+        if mem_log_func is None:
+            self.mem_log = lambda *a: False
+        self.mem_log("config.py:config.py: start init config")
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
         self.fdir  = os.path.dirname(fpath)
@@ -204,10 +209,14 @@ class SuiteConfig(object):
         self.feet = []
 
         # parse, upgrade, validate the suite, but don't expand with default items
+        self.mem_log("config.py: before get_suitecfg")        
         self.pcfg = get_suitecfg(
             fpath, force=is_reload, tvars=template_vars,
             tvars_file=template_vars_file, write_proc=write_proc)
+        self.mem_log("config.py: after get_suitecfg")
+        self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
+        self.mem_log("config.py: after get(sparse=True)")
 
         # First check for the essential scheduling section.
         if 'scheduling' not in self.cfg:
@@ -309,9 +318,13 @@ class SuiteConfig(object):
         # check var names before inheritance to avoid repetition
         self.check_env_names()
 
+        self.mem_log("config.py: before compute_family_tree")
         # do sparse inheritance
         self.compute_family_tree()
+        self.mem_log("config.py: after compute_family_tree")
+        self.mem_log("config.py: before inheritance")
         self.compute_inheritance()
+        self.mem_log("config.py: after inheritance")
 
         #self.print_inheritance() # (debugging)
 
@@ -319,7 +332,9 @@ class SuiteConfig(object):
         self.filter_env()
 
         # now expand with defaults
+        self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get( sparse=False )
+        self.mem_log("config.py: after get(sparse=False)")
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
@@ -523,7 +538,9 @@ class SuiteConfig(object):
 
         self.process_directories()
 
+        self.mem_log("config.py: before load_graph()")
         self.load_graph()
+        self.mem_log("config.py: after load_graph()")
 
         self.compute_runahead_limits()
 
@@ -689,6 +706,7 @@ class SuiteConfig(object):
                     print >> sys.stderr, '  %s => %s' % e
                 raise SuiteConfigError('ERROR: cyclic dependence detected '
                                        '(graph the suite to see back-edges).')
+        self.mem_log("config.py: end init config")
  
     def dequote(self, s):
         """Strip quotes off a string."""
