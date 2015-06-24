@@ -113,10 +113,12 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
                 else:
                     connected = True
                     break
-            if cylc.flags.verbose:
-                if not connected:
+            if not connected:
+                if cylc.flags.verbose:
                     print >> sys.stderr, msg, "- connection denied (%s)" % exc
-                else:
+                continue
+            else:
+                if cylc.flags.verbose:
                     print >> sys.stderr, msg, "- connected with passphrase"
         except (Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # No suite at this port.

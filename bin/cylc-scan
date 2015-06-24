@@ -190,7 +190,6 @@ def main():
                 task_state.ctrl[state], state, task_state.ctrl_end)
         state_legend = state_legend.rstrip()
         print state_legend
-
     for result in scan_all(args, options.db, options.pyro_timeout):
         host, scan_result = result
         try:
