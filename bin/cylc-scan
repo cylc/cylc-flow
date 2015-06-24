@@ -56,6 +56,18 @@ from cylc.task_state import task_state
 from cylc.owner import user
 
 
+NO_BOLD = False
+
+
+def bold(line):
+    """Add terminal control characters for bold text."""
+    global NO_BOLD
+    if NO_BOLD:
+        return line
+    else:
+        return "\033[1m" + line + "\033[0m"
+
+
 def main():
     """Implement "cylc scan"."""
     parser = cop(
@@ -67,7 +79,7 @@ def main():
         )
 
     parser.add_option(
-        "-a", "--all-suites",
+        "-a", "--all", "--all-suites",
         help="List all suites found on all scanned hosts (the default is "
              "just your own suites).",
         action="store_true", default=False, dest="all_suites")
@@ -87,34 +99,20 @@ def main():
         action="append", dest="patterns_owner", default=[])
 
     parser.add_option(
-        "-t", "--title",
-        help="Print suite titles if possible.",
-        action="store_true", default=False, dest="print_titles")
+        "-d", "--describe",
+        help="Print suite titles and descriptions if available.",
+        action="store_true", default=False, dest="describe")
 
     parser.add_option(
-        "-d", "--description",
-        help="Print suite descriptions if possible.",
-        action="store_true", default=False, dest="print_descriptions")
-
-    parser.add_option(
-        "-s", "--state",
-        help="Print the number of tasks in each state.",
+        "-s", "--state-totals",
+        help="Print number of tasks in each state if available "
+             "(total, and by cycle point).",
         action="store_true", default=False, dest="print_totals")
 
     parser.add_option(
-        "-p", "--point-states",
-        help="Print the number of tasks in each state, per cycle point.",
-        action="store_true", default=False, dest="print_cycles")
-
-    parser.add_option(
         "-f", "--full",
-        help="Print all available information for selected suites.",
-        action="store_true", default=False, dest="print_all")
-
-    parser.add_option(
-        "-l", "--legend",
-        help="Print the task state color legend (with new output format).",
-        action="store_true", default=False, dest="print_legend")
+        help="Print all available information about each suite.",
+        action="store_true", default=False, dest="print_full")
 
     parser.add_option(
         "-c", "--color", "--colour",
@@ -122,9 +120,14 @@ def main():
         action="store_true", default=False, dest="color")
 
     parser.add_option(
-        "-b", "--bare",
-        help="Omit line prefix annotation for extra information.",
-        action="store_true", default=False, dest="bare")
+        "-l", "--legend",
+        help="Print task state color legend (with -c/--color).",
+        action="store_true", default=False, dest="print_legend")
+
+    parser.add_option(
+        "-b", "--no-bold",
+        help="Don't use any bold text in the command output.",
+        action="store_true", default=False, dest="no_bold")
 
     parser.add_option(
         "--print-ports",
@@ -133,15 +136,14 @@ def main():
         action="store_true", default=False, dest="print_ports")
 
     parser.add_option(
-        "--pyro-timeout",
-        metavar="SEC",
+        "--pyro-timeout", metavar="SEC",
         help="Set a timeout for network connections "
              "to running suites. The default is 60 seconds.",
         action="store", default=60, dest="pyro_timeout")
 
     parser.add_option(
         "--old", "--old-format",
-        help="Legacy output format (suite owner host port).",
+        help='Legacy output format ("suite owner host port").',
         action="store_true", default=False, dest="old_format")
 
     options, args = parser.parse_args()
@@ -151,6 +153,15 @@ def main():
         max_num_ports = GLOBAL_CFG.get(["pyro", "maximum number of ports"])
         print base, "<= port <=", base + max_num_ports
         sys.exit(0)
+
+    indent = "   "
+
+    global NO_BOLD
+    if options.no_bold:
+        NO_BOLD = True
+
+    if options.print_full:
+        options.describe = options.print_totals = True
 
     if options.all_suites:
         if options.patterns_name != []:
@@ -177,19 +188,17 @@ def main():
     pattern_name = "(" + ")|(".join(patterns_name) + ")"
     pattern_owner = "(" + ")|(".join(patterns_owner) + ")"
 
-    if options.print_all:
-        options.print_titles = True
-        options.print_descriptions = True
-        options.print_totals = True
-        options.print_cycles = True
-
     if options.print_legend and options.color and not options.old_format:
-        state_legend = ''
-        for state in task_state.legal:
-            state_legend += "%s%s%s" % (
+        state_legend = ""
+        n_states = len(task_state.legal)
+        for index, state in enumerate(task_state.legal):
+            state_legend += "%s%s%s " % (
                 task_state.ctrl[state], state, task_state.ctrl_end)
+            if index == n_states/2:
+                state_legend += "\n"
         state_legend = state_legend.rstrip()
-        print state_legend
+        print "\n" + state_legend
+
     for result in scan_all(args, options.db, options.pyro_timeout):
         host, scan_result = result
         try:
@@ -217,74 +226,67 @@ def main():
             print name, owner, host, port
             continue
 
-        print '%s %s@%s:%s' % (name, owner, host, port)
+        line = '%s %s@%s:%s' % (name, owner, host, port)
+        if options.describe or options.print_totals:
+            print "\n" + bold(line)
+        else:
+            print line
 
-        indent = "   "
-        if options.print_titles:
+        if options.describe:
             title = suite_identity.get('title', None)
             if title is None:
-                line = "(title withheld)"
-            elif title == "":
+                print indent + bold("(description and states withheld)")
+                continue
+            print indent + bold("Title:")
+            if title == "":
                 line = "(no title)"
             else:
                 line = '"%s"' % title
-            if not options.bare:
-                line = "Title: %s" % line
-            print indent + line
+            print indent * 2 + line
 
-        if options.print_descriptions:
             description = suite_identity.get('description', None)
-            if description is None:
-                lines = "(description withheld)"
-            elif description == "":
+            print indent + bold("Description:")
+            if description == "":
                 lines = "(no description)"
             else:
                 lines = '"%s"' % description
-            if not options.bare:
-                lines = "Description: %s" % lines
             line1 = True
             for line in lines.split('\n'):
-                if line1:
-                    print indent + line
-                    line1 = False
-                else:
-                    print indent*2 + line
+                line = line.lstrip()
+                if not line1:
+                    # Indent under the double quote.
+                    line = " " + line
+                line1 = False
+                print indent * 2 + line
 
         totals = suite_identity.get('states', None)
-        if totals is None:
-            if (options.print_totals or options.print_cycles):
-                line = indent
-                if not options.bare:
-                    line += "State totals: "
-                line += "(states withheld)"
-                print line
-            continue
+        if totals is not None:
+            state_count_totals, state_count_cycles = totals
 
-        state_count_totals, state_count_cycles = totals
         if options.print_totals:
-            line = indent
-            if not options.bare:
-                line += "State totals: "
+            if totals is None:
+                print indent + bold("(states withheld)")
+                continue
+            print indent + bold("State totals:")
+            line = ""
             for state, tot in state_count_totals.items():
                 if options.color:
                     line += '%s %d %s' % (
                         task_state.ctrl[state], tot, task_state.ctrl_end)
                 else:
                     line += '%s:%d ' % (state, tot)
-            print line.rstrip()
-        if options.print_cycles:
-            print indent + "State totals by cycle point:"
-            line = indent*2
+            print indent * 2 + line.strip()
+
+            print indent + bold("State totals by cycle point:")
             for point_string in sorted(state_count_cycles.keys()):
-                line += point_string + ' '
+                line = point_string + ' '
                 for st, tot in state_count_cycles[point_string].items():
                     if options.color:
                         line += '%s %d %s' % (
                                 task_state.ctrl[st], tot, task_state.ctrl_end)
                     else:
                         line += '%s:%d ' % (st, tot)
-                print line.rstrip()
-                line = indent*2
+                print indent * 2 + line.strip()
 
 
 def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
