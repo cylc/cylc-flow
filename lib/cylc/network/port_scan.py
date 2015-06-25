@@ -25,7 +25,7 @@ import cylc.flags
 from cylc.owner import user
 from cylc.suite_host import get_hostname
 from cylc.registration import localdb
-from cylc.passphrase import passphrase, get_passphrase
+from cylc.passphrase import passphrase, get_passphrase, PassphraseError
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PYRO_SUITEID_OBJ_NAME, NO_PASSPHRASE
 from cylc.network.connection_validator import ConnValidator
@@ -143,18 +143,16 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
             name = result[1].get('name')
             owner = result[1].get('owner')
             states = result[1].get('state', None)
-            if states is not None:
-                if cylc.flags.debug:
-                    print '    got suite info'
-            else:
-                if cylc.flags.debug:
-                    print '%s:%s (got suite id)' % (host, port),
+            if cylc.flags.debug:
+                print '   suite:', name, owner
+            if states is None:
                 # This suite keeps its state info private.
                 # Try again with the passphrase if I have it.
-                pphrase = get_passphrase(name, owner, host, localdb(db))
-                if pphrase is None:
+                try:
+                    pphrase = get_passphrase(name, owner, host, localdb(db))
+                except PassphraseError:
                     if cylc.flags.debug:
-                        print ' (no passphrase for states)'
+                        print '    (no passphrase)'
                 else:
                     try:
                         proxy = get_proxy(host, port, pyro_timeout)
@@ -164,9 +162,9 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
                     except Exception:
                         # Nope (private suite, wrong passphrase).
                         if cylc.flags.debug:
-                            print '(wrong passphrase for states)'
+                            print '    (wrong passphrase)'
                     else:
                         if cylc.flags.debug:
-                            print '(got states with passphrase)'
+                            print '    (got states with passphrase)'
         results.append(result)
     return results

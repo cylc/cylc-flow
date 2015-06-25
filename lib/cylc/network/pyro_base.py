@@ -70,6 +70,7 @@ class PyroClient(object):
         try:
             self.pphrase = get_passphrase(suite, owner, host, localdb(db))
         except PassphraseError:
+            # No passphrase: public access client.
             self.pphrase = None
          
     def call_server_func(self, fname, *fargs):
