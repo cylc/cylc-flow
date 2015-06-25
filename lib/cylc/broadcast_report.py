@@ -21,7 +21,7 @@
 BAD_OPTIONS_FMT = "\n  --%s=%s"
 BAD_OPTIONS_TITLE = "ERROR: No broadcast to cancel/clear for these options:"
 BAD_OPTIONS_TITLE_SET = "ERROR: Invalid broadcast set options:"
-CHANGE_FMT = "\n%(change)s [%(namespace)s.%(point_string)s] %(setting)s"
+CHANGE_FMT = "\n%(change)s [%(namespace)s.%(point)s] %(key)s=%(value)s"
 CHANGE_PREFIX_CANCEL = "-"
 CHANGE_PREFIX_SET = "+"
 CHANGE_TITLE_CANCEL = "Broadcast cancelled:"
@@ -54,7 +54,12 @@ def get_broadcast_bad_options_report(bad_options, is_set=False):
 
 
 def get_broadcast_change_iter(modified_settings, is_cancel=False):
-    """Return an iterator of (change, point, namespace, key, value)."""
+    """Return an iterator of broadcast changes.
+
+    Each broadcast change is a dict with keys:
+    change, point, namespace, key, value
+
+    """
     if not modified_settings:
         return
     if is_cancel:
@@ -62,7 +67,7 @@ def get_broadcast_change_iter(modified_settings, is_cancel=False):
     else:
         change = CHANGE_PREFIX_SET
     for modified_setting in sorted(modified_settings):
-        point_string, namespace, setting = modified_setting
+        point, namespace, setting = modified_setting
         value = setting
         keys_str = ""
         while isinstance(value, dict):
@@ -71,7 +76,12 @@ def get_broadcast_change_iter(modified_settings, is_cancel=False):
                 keys_str += "[" + key + "]"
             else:
                 keys_str += key
-                yield [change, point_string, namespace, keys_str, str(value)]
+                yield {
+                    "change": change,
+                    "point": point,
+                    "namespace": namespace,
+                    "key": keys_str,
+                    "value": str(value)}
 
 
 def get_broadcast_change_report(modified_settings, is_cancel=False):
@@ -84,12 +94,7 @@ def get_broadcast_change_report(modified_settings, is_cancel=False):
     else:
         change = CHANGE_PREFIX_SET
         msg = CHANGE_TITLE_SET
-    for items in get_broadcast_change_iter(modified_settings, is_cancel):
-        change, point_string, namespace, keys_str, value_str = items
-        msg += CHANGE_FMT % {
-            "change": change,
-            "point_string": point_string,
-            "namespace": namespace,
-            "setting": keys_str + "=" + value_str
-        }
+    for broadcast_change in get_broadcast_change_iter(
+            modified_settings, is_cancel):
+        msg += CHANGE_FMT % broadcast_change
     return msg

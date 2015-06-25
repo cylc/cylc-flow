@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Suite database content, broadcast + manual trigger to recover a failure.
 . "$(dirname "$0")/test_header"
-set_test_number 4
+set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -26,11 +26,18 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
 
-NAME='select-broadcasts.out'
+NAME='select-broadcast-events.out'
 sqlite3 "${DB_FILE}" \
-    'SELECT change, point, namespace, key, value FROM broadcasts' >"${NAME}"
+    'SELECT change, point, namespace, key, value FROM broadcast_events' >"${NAME}"
 cmp_ok "${NAME}" <<'__SELECT__'
 +|1|t1|[environment]HELLO|Hello
+__SELECT__
+
+NAME='select-broadcast-states.out'
+sqlite3 "${DB_FILE}" \
+    'SELECT point, namespace, key, value FROM broadcast_states' >"${NAME}"
+cmp_ok "${NAME}" <<'__SELECT__'
+1|t1|[environment]HELLO|Hello
 __SELECT__
 
 NAME='select-task-jobs.out'
