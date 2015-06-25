@@ -1292,12 +1292,12 @@ option of the \lstinline=rsync= command.
 \item {\em default:} None
 \end{myitemize}
 
-\subparagraph[retrieve job log retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job log retry delays}
+\subparagraph[retrieve job log delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job log delays}
 
 Some batch systems have considerable delays between the time when the job
 completes and when it writes the job logs in its normal location. If this is
-the case, you can configure retry delays for job log retrieval by setting some
-retry delays.
+the case, you can configure an initial delay and some retry delays between
+subsequent attempts.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
@@ -1473,9 +1473,9 @@ Item details:
     \item {\em example:} \lstinline@handler = submission failed, failed@
 \end{myitemize}
 
-\subparagraph[handler retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler retry delays}
+\subparagraph[handler delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler delays}
 
-Specify any retry delays in case an event handler does not return 0 (zero).
+Specify any delays in case an event handler does not return 0 (zero).
 
 Item details:
 \begin{myitemize}
@@ -1506,9 +1506,9 @@ Item details:
     \item {\em example:} \lstinline@mail from = no-reply\@your-org@
 \end{myitemize}
 
-\subparagraph[mail retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail retry delays}
+\subparagraph[mail delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail delays}
 
-Specify any retry delays in case the mail notification command fails.
+Specify any delays in case the mail notification command fails.
 
 Item details:
 \begin{myitemize}

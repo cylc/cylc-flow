@@ -81,7 +81,7 @@ class TryState(object):
     def is_delay_done(self, now=None):
         """Is timeout done?"""
         if self.timeout is None:
-            return False
+            return True
         if now is None:
             now = time.time()
         return (now > self.timeout)
@@ -802,9 +802,20 @@ class TaskProxy(object):
         ctx = SuiteProcContext(key, cmd)
         self.event_handler_try_states[key] = TryState(ctx)
         try_state = TryState(ctx)
-        try_state.delays += conf["retrieve job log retry delays"]
+        try_state.delays += conf["retrieve job log delays"]
+        try_state.next()
         self.event_handler_try_states[key] = try_state
-        SuiteProcPool.get_inst().put_command(ctx, self.event_handler_callback)
+        if try_state.is_delay_done():
+            SuiteProcPool.get_inst().put_command(
+                ctx, self.event_handler_callback)
+        else:
+            self.log(
+                INFO,
+                "%s will run after %s (after %s):\n\t%s" % (
+                    self.JOB_LOGS_RETRIEVE,
+                    try_state.delay_as_seconds(),
+                    try_state.timeout_as_str(),
+                    ctx.cmd))
 
     def send_event_mail(self, event, message):
         """Event notification, by email."""
@@ -840,9 +851,20 @@ class TaskProxy(object):
 
         ctx = SuiteProcContext(key, cmd, env=env, stdin_str=stdin_str)
         try_state = TryState(ctx)
-        try_state.delays += conf["mail retry delays"]
+        try_state.delays += conf["mail delays"]
+        try_state.next()
         self.event_handler_try_states[key] = try_state
-        SuiteProcPool.get_inst().put_command(ctx, self.event_handler_callback)
+        if try_state.is_delay_done():
+            SuiteProcPool.get_inst().put_command(
+                ctx, self.event_handler_callback)
+        else:
+            self.log(
+                INFO,
+                "%s will run after %s (after %s):\n\t%s" % (
+                    self.EVENT_MAIL,
+                    try_state.delay_as_seconds(),
+                    try_state.timeout_as_str(),
+                    ctx.cmd))
 
     def call_event_handlers(self, event, message, only_list=None):
         """Call custom event handlers."""
@@ -880,10 +902,20 @@ class TaskProxy(object):
                 env.update(TaskProxy.event_handler_env)
             ctx = SuiteProcContext(key, cmd, env=env, shell=True)
             try_state = TryState(ctx)
-            try_state.delays += conf["handler retry delays"]
+            try_state.delays += conf["handler delays"]
+            try_state.next()
             self.event_handler_try_states[key] = try_state
-            SuiteProcPool.get_inst().put_command(
-                ctx, self.event_handler_callback)
+            if try_state.is_delay_done():
+                SuiteProcPool.get_inst().put_command(
+                    ctx, self.event_handler_callback)
+            else:
+                self.log(
+                    INFO,
+                    "%s will run after %s (after %s):\n\t%s" % (
+                        self.EVENT_HANDLER,
+                        try_state.delay_as_seconds(),
+                        try_state.timeout_as_str(),
+                        ctx.cmd))
 
     def job_submission_failed(self):
         """Handle job submission failure."""
@@ -1654,7 +1686,7 @@ class TaskProxy(object):
                 self.state.get_status(), content))
 
     def process_event_handler_retries(self):
-        # Retry any failed event handlers
+        """Run delayed event handlers or retry failed ones."""
         for key, try_state in self.event_handler_try_states.items():
             if try_state.ctx and try_state.is_delay_done():
                 ctx = SuiteProcContext(

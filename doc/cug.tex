@@ -1422,11 +1422,10 @@ host each time a task job completes. E.g. if the job file is
 \lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job=, anything under
 \lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/= will be retrieved.
 
-Some batch systems have considerable
-delays between the time when the job completes and when it writes the job logs
-in its normal location. If this is the case, you can configure retry delays for
-job log retrieval by setting some
-\lstinline=[[[remote]]]retrieve job log retry delays=.  E.g.:
+Some batch systems have considerable delays between the time when the job
+completes and when it writes the job logs in its normal location. If this is
+the case, you can configure an initial delay and retry delays for job log
+retrieval by setting some \lstinline=[[[remote]]]retrieve job log delays=. E.g.:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1437,7 +1436,7 @@ job log retrieval by setting some
             host = server1.niwa.co.nz
             retrieve job log = True
             # Retry after 10 seconds, 1 minute and 3 minutes
-            retrieve job log retry delays = PT10S, PT1M, PT3M
+            retrieve job log delays = PT10S, PT1M, PT3M
 \end{lstlisting}
 
 Finally, if the disk space of the suite host is limited, you may want to

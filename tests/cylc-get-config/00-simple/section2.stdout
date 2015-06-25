@@ -35,8 +35,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -70,7 +70,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -113,8 +113,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -147,7 +147,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -190,8 +190,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -225,7 +225,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -268,8 +268,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -303,7 +303,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -346,8 +346,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -381,7 +381,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -409,8 +409,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -459,7 +459,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -487,8 +487,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -537,7 +537,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -565,8 +565,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -614,7 +614,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -642,8 +642,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -692,7 +692,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -720,8 +720,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -770,7 +770,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -798,8 +798,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -847,7 +847,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -875,8 +875,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -925,7 +925,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -953,8 +953,8 @@
       mail smtp = 
       handler = 
       mail events = 
-      mail retry delays = 
-      handler retry delays = 
+      mail delays = 
+      handler delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -1003,7 +1003,7 @@
       host = 
       retrieve job log = False
       retrieve job log max size = 
-      retrieve job log retry delays = 
+      retrieve job log delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
