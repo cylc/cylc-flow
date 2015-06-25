@@ -268,7 +268,7 @@ def main():
             if totals is None:
                 print indent + bold("(states withheld)")
                 continue
-            print indent + bold("State totals:")
+            print indent + bold("Task state totals:")
             line = ""
             for state, tot in state_count_totals.items():
                 if options.color:
@@ -278,7 +278,6 @@ def main():
                     line += '%s:%d ' % (state, tot)
             print indent * 2 + line.strip()
 
-            print indent + bold("State totals by cycle point:")
             for point_string in sorted(state_count_cycles.keys()):
                 line = point_string + ' '
                 for st, tot in state_count_cycles[point_string].items():
