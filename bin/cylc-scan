@@ -120,11 +120,6 @@ def main():
         action="store_true", default=False, dest="color")
 
     parser.add_option(
-        "-l", "--legend",
-        help="Print task state color legend (with -c/--color).",
-        action="store_true", default=False, dest="print_legend")
-
-    parser.add_option(
         "-b", "--no-bold",
         help="Don't use any bold text in the command output.",
         action="store_true", default=False, dest="no_bold")
@@ -188,8 +183,8 @@ def main():
     pattern_name = "(" + ")|(".join(patterns_name) + ")"
     pattern_owner = "(" + ")|(".join(patterns_owner) + ")"
 
-    if options.print_legend and options.color and not options.old_format:
-        state_legend = ""
+    state_legend = ""
+    if options.color:
         n_states = len(task_state.legal)
         for index, state in enumerate(task_state.legal):
             state_legend += "%s%s%s " % (
@@ -197,8 +192,8 @@ def main():
             if index == n_states/2:
                 state_legend += "\n"
         state_legend = state_legend.rstrip()
-        print "\n" + state_legend
 
+    skip_one = True
     for result in scan_all(args, options.db, options.pyro_timeout):
         host, scan_result = result
         try:
@@ -228,7 +223,13 @@ def main():
 
         line = '%s %s@%s:%s' % (name, owner, host, port)
         if options.describe or options.print_totals:
-            print "\n" + bold(line)
+            if skip_one:
+                skip_one = False
+                if state_legend != "":
+                    print state_legend + "\n"
+            else:
+                print
+            print bold(line)
         else:
             print line
 
