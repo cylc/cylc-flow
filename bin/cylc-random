@@ -30,6 +30,8 @@ import sys
 import random
 from optparse import OptionParser
 
+import cylc.flags
+
 
 def main():
     parser = OptionParser(__doc__)

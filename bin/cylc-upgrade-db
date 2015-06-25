@@ -36,6 +36,7 @@ import os
 from optparse import OptionParser
 import pickle
 
+import cylc.flags
 from cylc.registration import localdb, RegistrationError
 
 

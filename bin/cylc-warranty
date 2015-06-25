@@ -23,6 +23,7 @@ Options:
   --help   Print this usage message."""
 
 import sys
+import cylc.flags
 
 
 def main():

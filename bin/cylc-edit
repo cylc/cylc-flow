@@ -67,6 +67,7 @@ import datetime
 import subprocess
 from shutil import copy
 
+import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.CylcOptionParsers import cop
 from parsec.include import inline, \

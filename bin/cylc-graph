@@ -62,8 +62,10 @@ GRAPH VIEWER CONTROLS:
     * "ungroup" - open this family node.
     * "recursive ungroup" - ungroup all families below this node."""
 
-import StringIO
 import sys
+import StringIO
+
+import cylc.flags
 from cylc.remote import remrun
 from cylc.task_id import TaskID
 

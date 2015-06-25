@@ -68,6 +68,7 @@ import sys
 import re
 from optparse import OptionParser
 
+import cylc.flags
 import cylc.cycling.iso8601
 import isodatetime.data
 import isodatetime.dumpers

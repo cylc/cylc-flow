@@ -28,6 +28,7 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute():
         sys.exit(0)
 
+import cylc.flags
 from cylc.CylcOptionParsers import cop
 from cylc.task_id import TaskID
 from cylc.network.suite_info import SuiteInfoClient

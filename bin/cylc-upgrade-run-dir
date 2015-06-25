@@ -32,6 +32,7 @@ from collections import defaultdict
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.mkdir_p import mkdir_p
+import cylc.flags
 
 OLD_LOGFILE_RE = re.compile(
     """^
