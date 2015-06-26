@@ -1269,7 +1269,7 @@ the different selectable hosts, you can configure your
 
 Remote task job logs are saved to the suite run directory on the task host, not
 on the suite host. If you want the job logs pulled back to the suite host
-automatically, you can set this setting to \lstinline=True=. The suite will
+automatically, you can set this item to \lstinline=True=. The suite will
 then attempt to \lstinline=rsync= the job logs once from the remote host each
 time a task job completes. E.g. if the job file is
 \lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job=, anything under
@@ -1282,10 +1282,10 @@ time a task job completes. E.g. if the job file is
 
 \subparagraph[retrieve job log max size]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job log max size}
 
-If the disk space of the suite host is limited, you may want to restrict the
-maximum sizes of the job log files to retrieve by setting a maximum size. The
-value can be anything that is acceptable by the \lstinline@--max-size=SIZE@
-option of the \lstinline=rsync= command.
+If the disk space of the suite host is limited, you may want to set the maximum
+sizes of the job log files to retrieve. The value can be anything that is
+accepted by the \lstinline@--max-size=SIZE@ option of the \lstinline=rsync=
+command.
 
 \begin{myitemize}
 \item {\em type:} string
@@ -1301,7 +1301,7 @@ subsequent attempts.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
-    \item {\em default:} []
+    \item {\em default:} (none)
     \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
 \end{myitemize}
 
@@ -1341,18 +1341,18 @@ script templates.
 A shell script template may have any or all of these patterns which will be
 substituted with actual values:
 \begin{myitemize}
-    \item %(event)s: event name
-    \item %(suite)s: suite name
-    \item %(point)s: cycle point
-    \item %(name)s: task name
-    \item %(submit_num)s: submit number
-    \item %(id)s: task ID (i.e. %(name)s.%(point)s)
-    \item %(message)s: event message, if any
+    \item \%(event)s: event name
+    \item \%(suite)s: suite name
+    \item \%(point)s: cycle point
+    \item \%(name)s: task name
+    \item \%(submit\_num)s: submit number
+    \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
+    \item \%(message)s: event message, if any
 \end{myitemize}
 
 Otherwise, the shell script will be appended with the following arguments:
 \begin{lstlisting}
-<task-event-handler> '%(event)s' '%(suite)s' '%(id)s' '%(message)s'
+<task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
 Additional information can be passed to event handlers via the
@@ -1429,7 +1429,7 @@ see~\ref{SuiteEventHandling} for suite event hooks. See
 Event handler commands can be located in the suite \lstinline=bin/= directory,
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
 the shell in which cylc runs, on the suite host). The commands should require
-very little resource to run and should return instantaneously.
+very little resource to run and should return quickly.
 
 Each task event handler can be specified as a list of shell scripts or a shell
 script templates.
@@ -1441,35 +1441,36 @@ substituted with actual values:
     \item %(suite)s: suite name
     \item %(point)s: cycle point
     \item %(name)s: task name
-    \item %(submit_num)s: submit number
+    \item %(submit\_num)s: submit number
     \item %(id)s: task ID (i.e. %(name)s.%(point)s)
     \item %(message)s: event message, if any
 \end{myitemize}
 
-Otherwise, the shell script will be appended with the following arguments:
+Otherwise, the shell script will be called with the following command line
+arguments:
 \begin{lstlisting}
-<task-event-handler> '%(event)s' '%(suite)s' '%(id)s' '%(message)s'
+<task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
 \subparagraph[handler]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler}
 
-Specify a set of script or script templates as task event handlers.
+Specify a list of script or script templates as task event handlers.
 
 Item details:
 \begin{myitemize}
     \item {\em type:} Comma-separated list of strings (event handler scripts or script templates).
-    \item {\em default:} []
+    \item {\em default:} (none)
     \item {\em example:} \lstinline@handler = my-handler.sh@
 \end{myitemize}
 
 \subparagraph[handler events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler events}
 
-Specify the events when the general task event handlers should be invoked.
+Specify the events for which the general task event handlers should be invoked.
 
 Item details:
 \begin{myitemize}
     \item {\em type:} Comma-separated list of events
-    \item {\em default:} []
+    \item {\em default:} (none)
     \item {\em example:} \lstinline@handler = submission failed, failed@
 \end{myitemize}
 
@@ -1480,7 +1481,7 @@ Specify any delays in case an event handler does not return 0 (zero).
 Item details:
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
-    \item {\em default:} []
+    \item {\em default:} (none)
     \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
 \end{myitemize}
 
@@ -1491,7 +1492,7 @@ Specify the events when notification emails should be sent.
 Item details:
 \begin{myitemize}
     \item {\em type:} Comma-separated list of events
-    \item {\em default:} []
+    \item {\em default:} (none)
     \item {\em example:} \lstinline@handler = submission failed, failed@
 \end{myitemize}
 
@@ -1513,7 +1514,7 @@ Specify any delays in case the mail notification command fails.
 Item details:
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
-    \item {\em default:} []
+    \item {\em default:} (none)
     \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
 \end{myitemize}
 
@@ -1531,7 +1532,7 @@ Item details:
 \subparagraph[mail to]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail to}
 
 A list of email addresses to send task event notifications. The list can be
-anything acceptable by the \lstinline=mail= command.
+anything accepted by the \lstinline=mail= command.
 
 Item details:
 \begin{myitemize}

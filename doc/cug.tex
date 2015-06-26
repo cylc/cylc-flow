@@ -1405,7 +1405,7 @@ appear much simpler if the job log path was shorter!). Remote task job logs are
 saved to the suite run directory on the task host, not on the suite host,
 although they can be retrieved by right-clicking on the task in the GUI. If you
 want the job logs pulled back to the suite host automatically, you can set
-\lstinline@[[[remote]]]retrieve job log=True@:
+"retrieve job log=True" under the "[[[remote]]]" section:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1425,7 +1425,7 @@ host each time a task job completes. E.g. if the job file is
 Some batch systems have considerable delays between the time when the job
 completes and when it writes the job logs in its normal location. If this is
 the case, you can configure an initial delay and retry delays for job log
-retrieval by setting some \lstinline=[[[remote]]]retrieve job log delays=. E.g.:
+retrieval by setting some delays. E.g.:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1439,10 +1439,9 @@ retrieval by setting some \lstinline=[[[remote]]]retrieve job log delays=. E.g.:
             retrieve job log delays = PT10S, PT1M, PT3M
 \end{lstlisting}
 
-Finally, if the disk space of the suite host is limited, you may want to
-restrict the maximum sizes of the job log files to retrieve by setting
+Finally, if the disk space of the suite host is limited, you may want to set
 \lstinline@[[[remote]]]retrieve job log max size=SIZE@. The value of SIZE can
-be anything that is acceptable by the \lstinline@--max-size=SIZE@ option of the
+be anything that is accepted by the \lstinline@--max-size=SIZE@ option of the
 \lstinline=rsync= command. E.g.:
 
 \lstset{language=suiterc}
@@ -5878,9 +5877,9 @@ and so on; or intervene in the operation of their own suite using cylc
 commands.
 
 To send an email, you can use the built-in setting
-\lstinline=[[[events]]]mail events= to specify a list of events when
+\lstinline=[[[events]]]mail events= to specify a list of events for which
 notifications should be sent. E.g. to send an email on (submission) failed and
-retry, you can do:
+retry:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5901,7 +5900,12 @@ set to \lstinline=notifications@$(hostname)= using an SMTP server at
 Event handler commands can be located in the suite \lstinline=bin/= directory,
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
 the shell in which cylc runs, on the suite host). The commands should require
-very little resource to run and should return instantaneously.
+very little resource to run and should return instantaneously. (Each event
+handler is invoked by a child process in a finite process pool that is also
+used to submit, poll and kill jobs.  The child process will wait for the event
+handler to complete before moving on to the next item in the queue. If the
+process pool is saturated with long running event handlers, the suite will
+appear to hang.)
 
 Task event handlers can be specified using the
 \lstinline=[[[event hooks]]]<event> handler= settings, where
@@ -5919,33 +5923,31 @@ Task event handlers can be specified using the
     \item `execution timeout' - task execution timed out
 \end{myitemize}
 
-The value of each setting should be a set of shell scripts or shell script
+The value of each setting should be a list of shell scripts or shell script
 templates (see below).
 
 Alternatively, task event handlers can be specified using the
 \lstinline=[[[events]]]handler= and the \lstinline=[[[events]]]handler events=
-settings, where the former is a set of shell scripts or shell script templates
+settings, where the former is a list of shell scripts or shell script templates
 (see below) and the latter is a list of events when these commands should be
 invoked.
-
-Each task event handler can be specified as a list of shell scripts or a shell
-script templates.
 
 A shell script template may have any or all of these patterns which will be
 substituted with actual values:
 \begin{myitemize}
-    \item %(event)s: event name
-    \item %(suite)s: suite name
-    \item %(point)s: cycle point
-    \item %(name)s: task name
-    \item %(submit_num)s: submit number
-    \item %(id)s: task ID (i.e. %(name)s.%(point)s)
-    \item %(message)s: event message, if any
+    \item \%(event)s: event name
+    \item \%(suite)s: suite name
+    \item \%(point)s: cycle point
+    \item \%(name)s: task name
+    \item \%(submit\_num)s: submit number
+    \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
+    \item \%(message)s: event message, if any
 \end{myitemize}
 
-Otherwise, the shell script will be appended with the following arguments:
+Otherwise, the shell script will be called with the following command line
+arguments:
 \begin{lstlisting}
-<task-event-handler> '%(event)s' '%(suite)s' '%(id)s' '%(message)s'
+<task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
 The retry event occurs if a task fails and has any remaining retries
@@ -5983,8 +5985,8 @@ event handlers using the alternate methods:
             handler events = retry, failed
 \end{lstlisting}
 
-N.B. The handler commands is equivalent to
-\lstinline="echo '!!!!!EVENT!!!!!' '%(event)s' '%(suite)s' '%(id)s' '%(message)s'"=.
+Note: The handler commands is equivalent to
+\lstinline="echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s=.
 
 \subsection{Reloading The Suite Definition At Runtime}
 
