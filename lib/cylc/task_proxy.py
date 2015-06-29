@@ -1123,8 +1123,6 @@ class TaskProxy(object):
                 self.suite_name, self.tdef.name, self.point, submit_num)
             try:
                 for filename in os.listdir(job_log_dir):
-                    if filename.startswith("."):  # ignore hidden files
-                        continue
                     try:
                         stat = os.stat(os.path.join(job_log_dir, filename))
                     except OSError:

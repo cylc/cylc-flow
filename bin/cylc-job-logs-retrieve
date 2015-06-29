@@ -67,8 +67,6 @@ def main():
         sys.exit("ERROR: job.out: file not found")
     sys.stdout.write("%s:\n" % os.path.basename(sys.argv[0]))
     for filename in filenames:
-        if filename.startswith("."):  # ignore hidden files
-            continue
         stat = os.stat(os.path.join(target, filename))
         sys.stdout.write("%s\t%s\t%s\n" % (
             get_time_string_from_unix_time(stat.st_mtime),
