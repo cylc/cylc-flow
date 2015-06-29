@@ -49,7 +49,14 @@ class SuiteInfoServer(PyroServer):
         self.commands = info_commands
 
     def get(self, command, *command_args):
-        check_access_priv(self, 'full-read')
+        if ('ping' in command or 'version' in command):
+            # Free info.
+            pass
+        elif 'suite' in command and 'info' in command:
+            # Suite title and description only.
+            check_access_priv(self, 'description')
+        else:
+            check_access_priv(self, 'full-read')
         self.report(command)
         return self.commands[command](*command_args)
 

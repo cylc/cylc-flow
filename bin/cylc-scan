@@ -236,7 +236,7 @@ def main():
         if options.describe:
             title = suite_identity.get('title', None)
             if title is None:
-                print indent + bold("(description and states withheld)")
+                print indent + bold("(description and state totals withheld)")
                 continue
             print indent + bold("Title:")
             if title == "":
@@ -266,7 +266,7 @@ def main():
 
         if options.print_totals:
             if totals is None:
-                print indent + bold("(states withheld)")
+                print indent + bold("(state totals withheld)")
                 continue
             print indent + bold("Task state totals:")
             line = ""
