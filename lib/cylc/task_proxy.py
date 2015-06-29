@@ -795,18 +795,17 @@ class TaskProxy(object):
             self.register_job_logs(self.submit_num)
             return
         conf = self.tdef.rtconfig["remote"]
-        if not conf["retrieve job log"]:
+        if not conf["retrieve job logs"]:
             return
         source = (
             self.user_at_host + ":" +
             os.path.dirname(self.job_conf["job file path"]))
         cmd = ["cylc", self.JOB_LOGS_RETRIEVE]
-        if conf["retrieve job log max size"]:
-            cmd.append("--max-size=%s" % conf["retrieve job log max size"])
+        if conf["retrieve job logs max size"]:
+            cmd.append("--max-size=%s" % conf["retrieve job logs max size"])
         cmd += [source, os.path.dirname(self.job_conf["local job file path"])]
         ctx = SuiteProcContext(key, cmd)
-        self.event_handler_try_states[key] = TryState(ctx)
-        try_state = TryState(ctx, conf["retrieve job log delays"])
+        try_state = TryState(ctx, conf["retrieve job logs retry delays"])
         self.event_handler_try_states[key] = try_state
         if try_state.next() is None or try_state.is_delay_done():
             try_state.timeout = None
@@ -854,8 +853,7 @@ class TaskProxy(object):
             env["smtp"] = conf["mail smtp"]
 
         ctx = SuiteProcContext(key, cmd, env=env, stdin_str=stdin_str)
-        try_state = TryState(ctx, conf["mail delays"])
-        try_state.next()
+        try_state = TryState(ctx, conf["mail retry delays"])
         self.event_handler_try_states[key] = try_state
         if try_state.next() is None or try_state.is_delay_done():
             try_state.timeout = None
@@ -876,8 +874,8 @@ class TaskProxy(object):
         handlers = []
         if self.event_hooks[event + ' handler']:
             handlers = self.event_hooks[event + ' handler']
-        elif conf["handler"] and event in conf['handler events']:
-            handlers = self.tdef.rtconfig["events"]["handler"]
+        elif conf["handlers"] and event in conf['handler events']:
+            handlers = self.tdef.rtconfig["events"]["handlers"]
         env = None
         for i, handler in enumerate(handlers):
             key = (
@@ -905,7 +903,7 @@ class TaskProxy(object):
                 env = dict(os.environ)
                 env.update(TaskProxy.event_handler_env)
             ctx = SuiteProcContext(key, cmd, env=env, shell=True)
-            try_state = TryState(ctx, conf["handler delays"])
+            try_state = TryState(ctx, conf["handler retry delays"])
             self.event_handler_try_states[key] = try_state
             if try_state.next() is None or try_state.is_delay_done():
                 try_state.timeout = None

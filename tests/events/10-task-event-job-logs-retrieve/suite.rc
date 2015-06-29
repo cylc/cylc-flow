@@ -16,4 +16,4 @@ title=Task Event Job Log Retrieve
         retry delays=PT0S, 2*PT1S
         [[[remote]]]
             host = {{HOST}}
-            retrieve job log = True
+            retrieve job logs = True

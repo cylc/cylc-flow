@@ -1405,7 +1405,7 @@ appear much simpler if the job log path was shorter!). Remote task job logs are
 saved to the suite run directory on the task host, not on the suite host,
 although they can be retrieved by right-clicking on the task in the GUI. If you
 want the job logs pulled back to the suite host automatically, you can set
-"retrieve job log=True" under the "[[[remote]]]" section:
+"retrieve job logs=True" under the "[[[remote]]]" section:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1414,7 +1414,7 @@ want the job logs pulled back to the suite host automatically, you can set
         script = "sleep 10; echo Hello World!"
         [[[remote]]]
             host = server1.niwa.co.nz
-            retrieve job log = True
+            retrieve job logs = True
 \end{lstlisting}
 
 The suite will attempt to \lstinline=rsync= the job logs once from the remote
@@ -1434,13 +1434,13 @@ retrieval by setting some delays. E.g.:
         script = "sleep 10; echo Hello World!"
         [[[remote]]]
             host = server1.niwa.co.nz
-            retrieve job log = True
+            retrieve job logs = True
             # Retry after 10 seconds, 1 minute and 3 minutes
-            retrieve job log delays = PT10S, PT1M, PT3M
+            retrieve job logs retry delays = PT10S, PT1M, PT3M
 \end{lstlisting}
 
 Finally, if the disk space of the suite host is limited, you may want to set
-\lstinline@[[[remote]]]retrieve job log max size=SIZE@. The value of SIZE can
+\lstinline@[[[remote]]]retrieve job logs max size=SIZE@. The value of SIZE can
 be anything that is accepted by the \lstinline@--max-size=SIZE@ option of the
 \lstinline=rsync= command. E.g.:
 
@@ -1451,9 +1451,9 @@ be anything that is accepted by the \lstinline@--max-size=SIZE@ option of the
         script = "sleep 10; echo Hello World!"
         [[[remote]]]
             host = server1.niwa.co.nz
-            retrieve job log = True
+            retrieve job logs = True
             # Don't get anything bigger than 10MB
-            retrieve job log max size = 10M
+            retrieve job logs max size = 10M
 \end{lstlisting}
 
 \begin{myitemize}
@@ -5867,8 +5867,8 @@ suite listed below under~\ref{EventHandling}.
 \subsection{Suite And Task Event Handling}
 \label{EventHandling}
 
-See also~\ref{SuiteEventHandling} and~\ref{TaskEventHandling}
-in the {\em Suite.rc Reference}.
+See also~\ref{SuiteEventHandling},~\ref{TaskEventHandling}
+and~\ref{TaskEventHandling2} in the {\em Suite.rc Reference}.
 
 Cylc can call nominated event handlers when certain suite or task events occur.
 This is intended to facilitate centralized alerting and automated handling of
@@ -5891,16 +5891,25 @@ retry:
             mail events = submission failed, submission retry, failed, retry
 \end{lstlisting}
 
-By default, the emails will be sent to the current user with \lstinline=from:=
-set to \lstinline=notifications@$(hostname)= using an SMTP server at
-\lstinline=localhost:25=. These can be configured using the settings
-\lstinline=[[[events]]]mail to= (list of email addresses),
-\lstinline=[[[events]]]mail from= and \lstinline=[[[events]]]mail smtp=.
+By default, the emails will be sent to the current user with:
+
+\begin{myitemize}
+    \item \lstinline=to:= set as \lstinline=$USER=
+    \item \lstinline=from:= set as \lstinline=notifications@$(hostname)=
+    \item SMTP server at \lstinline=localhost:25=
+\end{myitemize}
+
+These can be configured using the settings:
+\begin{myitemize}
+    \item \lstinline=[[[events]]]mail to= (list of email addresses),
+    \item \lstinline=[[[events]]]mail from=
+    \item \lstinline=[[[events]]]mail smtp=.
+\end{myitemize}
 
 Event handler commands can be located in the suite \lstinline=bin/= directory,
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
 the shell in which cylc runs, on the suite host). The commands should require
-very little resource to run and should return instantaneously. (Each event
+very little resource to run and should return quickly. (Each event
 handler is invoked by a child process in a finite process pool that is also
 used to submit, poll and kill jobs.  The child process will wait for the event
 handler to complete before moving on to the next item in the queue. If the
@@ -5923,16 +5932,16 @@ Task event handlers can be specified using the
     \item `execution timeout' - task execution timed out
 \end{myitemize}
 
-The value of each setting should be a list of shell scripts or shell script
+The value of each setting should be a list of command lines or command line
 templates (see below).
 
 Alternatively, task event handlers can be specified using the
-\lstinline=[[[events]]]handler= and the \lstinline=[[[events]]]handler events=
-settings, where the former is a list of shell scripts or shell script templates
-(see below) and the latter is a list of events when these commands should be
-invoked.
+\lstinline=[[[events]]]handlers= and the \lstinline=[[[events]]]handler events=
+settings, where the former is a list of command lines or command line templates
+(see below) and the latter is a list of events for which these commands should
+be invoked.
 
-A shell script template may have any or all of these patterns which will be
+A command line template may have any or all of these patterns which will be
 substituted with actual values:
 \begin{myitemize}
     \item \%(event)s: event name
@@ -5944,11 +5953,15 @@ substituted with actual values:
     \item \%(message)s: event message, if any
 \end{myitemize}
 
-Otherwise, the shell script will be called with the following command line
+Otherwise, the command line will be called with the following command line
 arguments:
 \begin{lstlisting}
 <task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
+
+For an explanation of the substitution syntax, see String Formatting Operations
+in the Python documentation:
+\url{https://docs.python.org/2/library/stdtypes.html#string-formatting}.
 
 The retry event occurs if a task fails and has any remaining retries
 configured (see~\ref{TaskRetries}).
@@ -5981,12 +5994,14 @@ event handlers using the alternate methods:
         retry delays = PT0S, PT30S
         script = test "${CYLC_TASK_TRY_NUMBER}" -eq 2
         [[[events]]]
-            handler = "echo '!!!!!EVENT!!!!!' "
+            handlers = "echo '!!!!!EVENT!!!!!' "
             handler events = retry, failed
 \end{lstlisting}
 
-Note: The handler commands is equivalent to
-\lstinline="echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s=.
+Note: The handler command is called like this:
+\begin{lstlisting}
+echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s
+\end{lstlisting}
 
 \subsection{Reloading The Suite Definition At Runtime}
 

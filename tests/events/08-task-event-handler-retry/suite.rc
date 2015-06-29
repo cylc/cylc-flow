@@ -14,9 +14,9 @@ title=Task Event Handler Retry
     [[t1]]
         script=true
         [[[events]]]
-            handler=hello-event-handler '%(name)s' '%(event)s'
+            handlers=hello-event-handler '%(name)s' '%(event)s'
             handler events=succeeded, failed
-            handler delays=PT0S, 2*PT1S
+            handler retry delays=PT0S, 2*PT1S
     [[t2]]
         script="""
 LOG="${CYLC_SUITE_LOG_DIR}/../job/1/t1/NN/job-activity.log"

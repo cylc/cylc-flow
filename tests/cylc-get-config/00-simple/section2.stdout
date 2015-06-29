@@ -33,10 +33,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -68,9 +68,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -111,10 +111,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -145,9 +145,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -188,10 +188,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -223,9 +223,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -266,10 +266,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -301,9 +301,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -344,10 +344,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[environment]]]
@@ -379,9 +379,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -407,10 +407,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -457,9 +457,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -485,10 +485,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -535,9 +535,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -563,10 +563,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -612,9 +612,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -640,10 +640,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -690,9 +690,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -718,10 +718,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -768,9 +768,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -796,10 +796,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -845,9 +845,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -873,10 +873,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -923,9 +923,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -951,10 +951,10 @@
    [[[events]]]
       handler events = 
       mail smtp = 
-      handler = 
+      handlers = 
       mail events = 
-      mail delays = 
-      handler delays = 
+      mail retry delays = 
+      handler retry delays = 
       mail to = 
       mail from = 
    [[[event hooks]]]
@@ -1001,9 +1001,9 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job log = False
-      retrieve job log max size = 
-      retrieve job log delays = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
