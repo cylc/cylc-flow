@@ -388,10 +388,10 @@ class scheduler(object):
         """Stop job submission and set the flag for clean shutdown."""
         SuiteProcPool.get_inst().stop_job_submission()
         TaskProxy.stop_sim_mode_job_submission = True
-        if kill_active_tasks:
-            self.pool.kill_active_tasks()
         self.shut_down_cleanly = True
         self.kill_on_shutdown = kill_active_tasks
+        if kill_active_tasks:
+            self.pool.kill_active_tasks()
 
     def command_stop_now(self):
         """Shutdown immediately."""
@@ -1042,11 +1042,15 @@ class scheduler(object):
                 proc_pool.close()
                 self.shut_down_now = True
 
-            if (self.shut_down_cleanly and self.pool.unkillable_only() and 
-                    self.kill_on_shutdown):
-                print '\nWARNING some tasks were not killable at shutdown'
-                proc_pool.close()
-                self.shut_down_now = True
+            if (self.shut_down_cleanly and self.kill_on_shutdown):
+                time.sleep(5) # Needs a delay to allow kill operations to be actioned
+                if self.pool.unkillable_only():
+                    if not self.pool.no_active_tasks():
+                        print >>sys.stderr, '\nWARNING some tasks were not killable at shutdown'
+                    proc_pool.close()
+                    self.shut_down_now = True
+                else:
+                    self.pool.kill_active_tasks()
 
             if self.options.profile_mode:
                 t1 = time.time()
