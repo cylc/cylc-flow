@@ -47,7 +47,8 @@ class SLURMHandler(object):
             job_conf['suite name'] + '.' + job_conf['task id'])
         directives['--output'] = job_file_path + ".out"
         directives['--error'] = job_file_path + ".err"
-        directives.update(job_conf['directives'])
+        for key, value in job_conf['directives'].items():
+            directives[key] = value
         lines = []
         for key, value in directives.items():
             if value:
