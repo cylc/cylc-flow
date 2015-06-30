@@ -1344,7 +1344,6 @@ class TaskProxy(object):
             'post-script': postcommand
             }.items()
         )
-        })
         self.db_inserts_map[self.TABLE_TASK_JOBS].append({
             "is_manual_submit": self.is_manual_submit,
             "try_num": self.run_try_state.num,
