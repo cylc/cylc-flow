@@ -1,2 +1,2 @@
-def truly(boolean):
+def truly(bar):
     return 'true'
