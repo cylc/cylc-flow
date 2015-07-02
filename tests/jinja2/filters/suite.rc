@@ -1,0 +1,10 @@
+#!jinja2
+# {{ ""|hello }}
+[scheduling]
+    [[dependencies]]
+        graph = foo => bar
+[runtime]
+    [[foo]]
+        pre-command scripting = {{ true|truly }}
+        command scripting = {{ false|truly }}
+    [[bar]]
