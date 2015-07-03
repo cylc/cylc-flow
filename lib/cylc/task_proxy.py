@@ -430,8 +430,11 @@ class TaskProxy(object):
 
     def command_log(self, ctx):
         """Log an activity for a job of this task proxy."""
+        submit_num = "NN"
+        if isinstance(ctx.cmd_type, tuple):  # An event handler
+            submit_num = ctx.cmd_type[-1]
         job_log_dir = self.get_job_log_dir(
-            self.suite_name, self.tdef.name, self.point)
+            self.suite_name, self.tdef.name, self.point, submit_num)
         handle = open(os.path.join(job_log_dir, "job-activity.log"), "a")
         for attr in "cmd", "ret_code", "out", "err":
             value = getattr(ctx, attr, None)
