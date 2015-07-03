@@ -144,6 +144,8 @@ class config( object ):
         self.triggering_families = []
         self.vis_start_point_string = vis_start_string
         self.vis_stop_point_string = vis_stop_string
+        self._last_graph_raw_id = None
+        self._last_graph_raw_edges = []
 
         self.sequences = []
         self.actual_first_point = None
@@ -1740,6 +1742,15 @@ class config( object ):
                     for fam in copy(self.closed_families):
                         if fam in members[node]:
                             self.closed_families.remove(fam)
+       
+        n_points = self.cfg['visualization']['number of cycle points']
+
+        graph_id = (start_point_string, stop_point_string, set(group_nodes),
+                    set(ungroup_nodes), ungroup_recursive, group_all, 
+                    ungroup_all, check_suicide, set(self.closed_families),
+                    set(self.edges), n_points)
+        if graph_id == self._last_graph_raw_id:
+            return self._last_graph_raw_edges
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = {}
@@ -1748,7 +1759,6 @@ class config( object ):
 
         # For the computed stop point, we store n_points of each sequence,
         # and then cull later to the first n_points over all sequences.
-        n_points = self.cfg['visualization']['number of cycle points']
         if stop_point_string is not None:
             stop_point = get_point(stop_point_string)
         else:
@@ -1823,6 +1833,8 @@ class config( object ):
             # Flatten nested list.
             edges = [i for sublist in values for i in sublist]
 
+        self._last_graph_raw_id = graph_id
+        self._last_graph_raw_edges = edges 
         return edges
 
     def get_graph(self, start_point_string=None, stop_point_string=None,
