@@ -390,9 +390,7 @@ class scheduler(object):
         TaskProxy.stop_sim_mode_job_submission = True
         self.shut_down_cleanly = True
         self.kill_on_shutdown = kill_active_tasks
-        if kill_active_tasks:
-            self.pool.poll_tasks()
-            self.pool.kill_active_tasks()
+        self.next_kill_issue = datetime.datetime.utcnow()
 
     def command_stop_now(self):
         """Shutdown immediately."""
@@ -919,7 +917,7 @@ class scheduler(object):
             # Periodic check that the suite directory still exists
             # - designed to catch stalled suite daemons where the suite
             # directory has been deleted out from under itself
-            if datetime.datetime.now() > next_fs_check:
+            if datetime.datetime.utcnow() > next_fs_check:
                 if not os.path.exists(suite_run_dir):
                     os.kill(os.getpid(), signal.SIGKILL)
                 else:
@@ -1043,11 +1041,18 @@ class scheduler(object):
                 proc_pool.close()
                 self.shut_down_now = True
 
-            if (self.shut_down_cleanly and self.kill_on_shutdown and self.pool.unkillable_only()):
-                if not self.pool.no_active_tasks():
-                    self.log.warning('some tasks were not killable at shutdown')
-                proc_pool.close()
-                self.shut_down_now = True
+            if (self.shut_down_cleanly and self.kill_on_shutdown):
+                if self.pool.unkillable_only():
+                    if not self.pool.no_active_tasks():
+                        self.log.warning('some tasks were not killable at shutdown')
+                    proc_pool.close()
+                    self.shut_down_now = True
+                else:
+                    if datetime.datetime.utcnow() > self.next_kill_issue:
+                        print >>sys.stderr, "polling and killing"
+                        self.pool.poll_tasks()
+                        self.pool.kill_active_tasks()
+                        self.next_kill_issue = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
             if self.options.profile_mode:
                 t1 = time.time()
