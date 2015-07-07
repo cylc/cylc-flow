@@ -882,9 +882,9 @@ class scheduler(object):
                     # Note: test suites depends on this message:
                     print >> sys.stderr, (
                         '\nERROR: %s EVENT HANDLER FAILED' % name)
-                    raise SchedulerError(x)
                     if name == 'shutdown' and self.reference_test_mode:
                         sys.exit('\nERROR: SUITE REFERENCE TEST FAILED')
+                    raise SchedulerError(x)
                 else:
                     if name == 'shutdown' and self.reference_test_mode:
                         # TODO - this isn't true, it just means the
@@ -978,6 +978,7 @@ class scheduler(object):
                         "END TASK PROCESSING (took " + str(seconds) + " sec)")
 
             self.pool.process_queued_task_messages()
+            self.pool.process_event_handler_retries()
             try:
                 self.pool.process_queued_db_ops()
             except OSError as err:
@@ -999,7 +1000,6 @@ class scheduler(object):
                             "pub_db_name": self.pub_dao.db_file_name,
                             "pri_db_name": self.pri_dao.db_file_name})
                     self.pub_dao.n_tries = 0
-
 
             self.process_command_queue()
 

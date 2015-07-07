@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
 import sys
 
 if '--use-ssh' in sys.argv[1:]:
@@ -29,7 +30,15 @@ from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop
 from cylc.command_prep import prep_pyro
 import cylc.flags
-from cylc.job_logs import CommandLogger
+
+LOGGING_LVL_OF = {
+    "INFO": INFO,
+    "NORMAL": INFO,
+    "WARNING": WARNING,
+    "ERROR": ERROR,
+    "CRITICAL": CRITICAL,
+    "DEBUG": DEBUG,
+}
 
 parser = cop("""cylc [control] set-verbosity [OPTIONS] ARGS
 
@@ -39,7 +48,7 @@ choose WARNING, only warnings and critical messages will be logged.""",
     pyro=True,
     argdoc=[
         ('REG', 'Suite name'),
-        ('LEVEL', ', '.join(CommandLogger.LOGGING_PRIORITY.keys()))
+        ('LEVEL', ', '.join(LOGGING_LVL_OF.keys()))
     ]
 )
 
@@ -49,7 +58,7 @@ suite, pphrase = prep_pyro(args[0], options).execute()
 
 priority_str = args[1]
 try:
-    priority = CommandLogger.LOGGING_PRIORITY[priority_str]
+    priority = LOGGING_LVL_OF[priority_str]
 except KeyError:
     parser.error("Illegal logging level, %s" % priority)
 

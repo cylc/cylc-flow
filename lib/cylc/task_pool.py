@@ -588,27 +588,11 @@ class TaskPool(object):
                     # if currently retrying, retain the old retry delay
                     # list, to avoid extra retries (the next instance
                     # of the task will still be as newly configured)
-                    if itask.state.is_currently('retrying'):
-                        new_task.retry_delay = itask.retry_delay
-                        new_task.retry_delays = itask.retry_delays
-                        new_task.retry_delay_timer_timeout = (
-                            itask.retry_delay_timer_timeout)
-                    elif itask.state.is_currently('submit-retrying'):
-                        new_task.sub_retry_delay = itask.sub_retry_delay
-                        new_task.sub_retry_delays = itask.sub_retry_delays
-                        new_task.sub_retry_delays_orig = (
-                            itask.sub_retry_delays_orig)
-                        new_task.sub_retry_delay_timer_timeout = (
-                            itask.sub_retry_delay_timer_timeout)
-
-                    new_task.try_number = itask.try_number
-                    new_task.sub_try_number = itask.sub_try_number
+                    new_task.run_try_state = itask.run_try_state
+                    new_task.sub_try_state = itask.sub_try_state
                     new_task.submit_num = itask.submit_num
-                    new_task.db_jobs_inserts = itask.db_jobs_inserts
-                    new_task.db_jobs_updates = itask.db_jobs_updates
-                    new_task.db_states_inserts = itask.db_states_inserts
-                    new_task.db_states_updates = itask.db_states_updates
-                    new_task.db_events_inserts = itask.db_events_inserts
+                    new_task.db_inserts_map = itask.db_inserts_map
+                    new_task.db_updates_map = itask.db_updates_map
 
                     self.remove(itask, '(suite definition reload)')
                     self.add_to_runahead_pool(new_task)
@@ -639,7 +623,8 @@ class TaskPool(object):
 
     def no_active_tasks(self):
         for itask in self.get_tasks():
-            if itask.state.is_currently('running', 'submitted'):
+            if (itask.state.is_currently('running', 'submitted') or
+                    itask.event_handler_try_states):
                 return False
         return True
 
@@ -734,27 +719,28 @@ class TaskPool(object):
         for itask in self.get_tasks():
             itask.process_incoming_messages()
 
+    def process_event_handler_retries(self):
+        """Retry, where applicable, any failed task event handlers."""
+        for itask in self.get_tasks():
+            itask.process_event_handler_retries()
+
     def process_queued_db_ops(self):
         """Handle queued db operations for each task proxy."""
         for itask in self.get_all_tasks():
             # (runahead pool tasks too, to get new state recorders).
-            for table_name, db_inserts in [
-                    (self.pri_dao.TABLE_TASK_JOBS, itask.db_jobs_inserts),
-                    (self.pri_dao.TABLE_TASK_STATES, itask.db_states_inserts),
-                    (self.pri_dao.TABLE_TASK_EVENTS, itask.db_events_inserts)]:
+            for table_name, db_inserts in sorted(itask.db_inserts_map.items()):
                 while db_inserts:
                     db_insert = db_inserts.pop(0)
                     db_insert.update({
                         "name": itask.tdef.name,
                         "cycle": str(itask.point),
-                        "submit_num": itask.submit_num,
                     })
+                    if "submit_num" not in db_insert:
+                        db_insert["submit_num"] = itask.submit_num
                     self.pri_dao.add_insert_item(table_name, db_insert)
                     self.pub_dao.add_insert_item(table_name, db_insert)
 
-            for table_name, db_updates in [
-                    (self.pri_dao.TABLE_TASK_JOBS, itask.db_jobs_updates),
-                    (self.pri_dao.TABLE_TASK_STATES, itask.db_states_updates)]:
+            for table_name, db_updates in sorted(itask.db_updates_map.items()):
                 while db_updates:
                     set_args = db_updates.pop(0)
                     where_args = {
@@ -854,11 +840,11 @@ class TaskPool(object):
         # now check each succeeded task against the cutoff
         spent = []
         for itask in self.get_tasks():
-            if (not itask.state.is_currently('succeeded', 'expired') or
-                not itask.state.has_spawned() or
-                itask.cleanup_cutoff is None):
-                continue
-            if cutoff > itask.cleanup_cutoff:
+            if (itask.state.is_currently('succeeded', 'expired') and
+                    itask.state.has_spawned() and
+                    not itask.event_handler_try_states and
+                    itask.cleanup_cutoff is not None and
+                    cutoff > itask.cleanup_cutoff):
                 spent.append(itask)
         for itask in spent:
             self.remove(itask)
@@ -934,7 +920,8 @@ class TaskPool(object):
         for itask in self.get_all_tasks():
             if self.stop_point is None:
                 # Don't if any unsucceeded task exists.
-                if not itask.state.is_currently('succeeded', 'expired'):
+                if (not itask.state.is_currently('succeeded', 'expired') or
+                        itask.event_handler_try_states):
                     shutdown = False
                     break
             elif (itask.point <= self.stop_point and
