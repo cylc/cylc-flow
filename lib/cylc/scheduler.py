@@ -1049,7 +1049,6 @@ class scheduler(object):
                     self.shut_down_now = True
                 else:
                     if datetime.datetime.utcnow() > self.next_kill_issue:
-                        print >>sys.stderr, "polling and killing"
                         self.pool.poll_tasks()
                         self.pool.kill_active_tasks()
                         self.next_kill_issue = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
