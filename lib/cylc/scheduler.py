@@ -390,7 +390,7 @@ class scheduler(object):
         TaskProxy.stop_sim_mode_job_submission = True
         self.shut_down_cleanly = True
         self.kill_on_shutdown = kill_active_tasks
-        self.next_kill_issue = datetime.datetime.utcnow()
+        self.next_kill_issue = time.time()
 
     def command_stop_now(self):
         """Shutdown immediately."""
@@ -1042,16 +1042,16 @@ class scheduler(object):
                 self.shut_down_now = True
 
             if (self.shut_down_cleanly and self.kill_on_shutdown):
-                if self.pool.unkillable_only():
+                if self.pool.has_unkillable_tasks_only():
                     if not self.pool.no_active_tasks():
                         self.log.warning('some tasks were not killable at shutdown')
                     proc_pool.close()
                     self.shut_down_now = True
                 else:
-                    if datetime.datetime.utcnow() > self.next_kill_issue:
+                    if time.time() > self.next_kill_issue:
                         self.pool.poll_tasks()
                         self.pool.kill_active_tasks()
-                        self.next_kill_issue = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+                        self.next_kill_issue = time.time() + 10.0
 
             if self.options.profile_mode:
                 t1 = time.time()
