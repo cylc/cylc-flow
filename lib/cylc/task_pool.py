@@ -628,6 +628,18 @@ class TaskPool(object):
                 return False
         return True
 
+    def has_unkillable_tasks_only(self):
+        """Used to identify if a task pool contains unkillable tasks.
+
+        Return True if all running and submitted tasks in the pool have had
+        kill operations fail, False otherwise.
+        """
+        for itask in self.get_tasks():
+            if itask.state.is_currently('running', 'submitted'):
+                if not itask.kill_failed:
+                    return False
+        return True
+
     def poll_tasks(self, ids=None):
         for itask in self.get_tasks():
             if itask.state.is_currently('running', 'submitted'):

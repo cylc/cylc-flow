@@ -325,6 +325,8 @@ class TaskProxy(object):
         self.expire_time_str = None
         self.expire_time = None
 
+        self.kill_failed = False
+
     def _add_prerequisites(self, point):
         """Add task prerequisites."""
         # NOTE: Task objects hold all triggers defined for the task
@@ -568,6 +570,7 @@ class TaskProxy(object):
         seen as incomplete outputs when the task finishes.
         """
         self.hold_on_retry = False
+        self.kill_failed = False
         for state in ["failed", "submit-failed", "expired"]:
             msg = "%s %s" % (self.identity, state)
             if self.outputs.exists(msg):
@@ -736,6 +739,7 @@ class TaskProxy(object):
             self.summary['latest_message'] = 'kill failed'
             self.log(WARNING, 'job(%02d) kill failed' % self.submit_num)
             flags.iflag = True
+            self.kill_failed = True
         elif self.state.is_currently('submitted'):
             self.log(INFO, 'job(%02d) killed' % self.submit_num)
             self.job_submission_failed()
