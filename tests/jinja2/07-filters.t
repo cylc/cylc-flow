@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,28 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test writing various messages to the job activity log.
+# basic jinja2 expansion test
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 7
+set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_suite $TEST_NAME_BASE filters
 #-------------------------------------------------------------------------------
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --debug --reference-test "${SUITE_NAME}"
-
-SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-T1_ACTIVITY_LOG="${SUITE_RUN_DIR}/log/job/1/t1/NN/job-activity.log"
-
-grep_ok '\[job-submit ret_code\] 0' "${T1_ACTIVITY_LOG}"
-grep_ok '\[job-kill err\]' "${T1_ACTIVITY_LOG}"
-grep_ok 'OSError: \[Errno 3\] No such process' "${T1_ACTIVITY_LOG}"
-grep_ok '\[job-poll out\] polled t1\.1 failed at unknown-time' \
-    "${T1_ACTIVITY_LOG}"
-grep_ok \
-    "\\[('event-handler-00', 'failed', '01') out\\] failed ${SUITE_NAME} t1\\.1 job failed" \
-    "${T1_ACTIVITY_LOG}"
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-purge_suite "${SUITE_NAME}"
-exit
+TEST_NAME=$TEST_NAME_BASE-check-expansion
+cmp_ok $TEST_DIR/$SUITE_NAME/suite.rc.processed $TEST_DIR/$SUITE_NAME/suite.rc-expanded
+#-------------------------------------------------------------------------------
+#purge_suite $SUITE_NAME

@@ -1,0 +1,24 @@
+#!jinja2
+
+title=Task Event Job Log Retrieve
+
+[cylc]
+    UTC mode = True
+    cycle point format=%Y-%m-%dT%H:%MZ
+    [[reference test]]
+        live mode suite timeout=PT1M
+
+[scheduling]
+    initial cycle point=2020-02-02T02:02Z
+    final cycle point=2020-02-02T02:02Z
+    [[dependencies]]
+        [[[R1]]]
+            graph=t1
+
+[runtime]
+    [[t1]]
+        script=test "${CYLC_TASK_TRY_NUMBER}" -eq 3
+        retry delays=PT0S, 2*PT1S
+        [[[remote]]]
+            host = {{HOST}}
+            retrieve job logs = True

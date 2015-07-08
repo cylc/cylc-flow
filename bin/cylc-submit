@@ -42,7 +42,7 @@ import cylc.flags
 from parsec.OrderedDict import OrderedDict
 from cylc.execute import execute
 from cylc.job_file import JOB_FILE
-from cylc.config import SuiteConfig, SuiteConfigError, TaskNotDefinedError
+from cylc.config import SuiteConfig
 from cylc.CylcOptionParsers import cop
 from cylc.registration import localdb
 from cylc.task_id import TaskID
@@ -53,7 +53,7 @@ from cylc.suite_host import get_suite_host, get_hostname
 from cylc.regpath import RegPath
 from cylc.suite_logging import suite_log
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.mp_pool import SuiteProcPool, CMD_TYPE_JOB_SUBMISSION
+from cylc.mp_pool import SuiteProcPool
 
 
 def commandline_parser():
@@ -174,7 +174,7 @@ def main():
         print "JOB SCRIPT=%s" % task_proxy.submit(dry_run=True)
     else:
         task_proxy.submit()
-        while proc_pool.unhandled_results:
+        while proc_pool.results:
             proc_pool.handle_results_async()
         proc_pool.close()
         proc_pool.join()

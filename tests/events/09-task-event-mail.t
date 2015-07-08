@@ -15,18 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc scan is picking up running suite
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 2
-export CYLC_CONF_PATH=
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE simple
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+# Test event mail.
+. "$(dirname "$0")/test_header"
+set_test_number 3
+mock_smtpd_init
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate -s "MAIL_SMTP=${TEST_SMTPD_HOST}" "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --reference-test --debug \
+    -s "MAIL_SMTP=${TEST_SMTPD_HOST}" "${SUITE_NAME}"
+
+grep '^\(Subject:\|\[retry\]\|\[succeeded\]\) ' "${TEST_SMTPD_LOG}" \
+    >'edited-smtpd.log'
+cmp_ok 'edited-smtpd.log' <<__LOG__
+Subject: [retry]
+[retry] ${SUITE_NAME}.1.t1.01: job failed, retrying in PT1S
+Subject: [succeeded]
+[succeeded] ${SUITE_NAME}.1.t1.02: job succeeded
+__LOG__
+
+purge_suite "${SUITE_NAME}"
+mock_smtpd_kill
+exit

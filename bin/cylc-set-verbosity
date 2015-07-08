@@ -22,6 +22,7 @@ Change the logging priority level of a running suite.  Only messages at
 or above the chosen priority level will be logged; for example, if you
 choose WARNING, only warnings and critical messages will be logged."""
 
+from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
 import sys
 
 if '--use-ssh' in sys.argv[1:]:
@@ -34,7 +35,15 @@ import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop
-from cylc.job_logs import CommandLogger
+
+LOGGING_LVL_OF = {
+    "INFO": INFO,
+    "NORMAL": INFO,
+    "WARNING": WARNING,
+    "ERROR": ERROR,
+    "CRITICAL": CRITICAL,
+    "DEBUG": DEBUG,
+}
 
 
 def main():
@@ -42,14 +51,15 @@ def main():
         __doc__, pyro=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('LEVEL', ', '.join(CommandLogger.LOGGING_PRIORITY.keys()))])
-
+            ('LEVEL', ', '.join(LOGGING_LVL_OF.keys()))
+        ]
+    )
     (options, args) = parser.parse_args()
     suite = args[0]
 
     priority_str = args[1]
     try:
-        priority = CommandLogger.LOGGING_PRIORITY[priority_str]
+        priority = LOGGING_LVL_OF[priority_str]
     except KeyError:
         parser.error("Illegal logging level, %s" % priority)
 

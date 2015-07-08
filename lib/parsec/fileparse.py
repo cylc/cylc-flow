@@ -298,7 +298,7 @@ def parse( fpath, write_proc=False,
         if cylc.flags.verbose:
             print "Writing file " + fpath_processed
         f = open( fpath_processed, 'w' )
-        f.write('\n'.join(flines))
+        f.write('\n'.join(flines) + '\n')
         f.close()
 
     nesting_level = 0

@@ -173,8 +173,68 @@ class CylcSuiteDAO(object):
     MAX_TRIES = 100
     TABLE_BROADCASTS = "broadcasts"
     TABLE_TASK_JOBS = "task_jobs"
+    TABLE_TASK_JOB_LOGS = "task_job_logs"
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_STATES = "task_states"
+
+    TABLES_ATTRS = {
+        TABLE_BROADCASTS: [
+            ["time"],
+            ["change"],
+            ["point"],
+            ["namespace"],
+            ["key"],
+            ["value"],
+        ],
+        TABLE_TASK_JOBS: [
+            ["cycle"],
+            ["name"],
+            ["submit_num", {"datatype": "INTEGER"}],
+            ["is_manual_submit", {"datatype": "INTEGER"}],
+            ["try_num", {"datatype": "INTEGER"}],
+            ["time_submit"],
+            ["time_submit_exit"],
+            ["submit_status", {"datatype": "INTEGER"}],
+            ["time_run"],
+            ["time_run_exit"],
+            ["run_signal"],
+            ["run_status", {"datatype": "INTEGER"}],
+            ["user_at_host"],
+            ["batch_sys_name"],
+            ["batch_sys_job_id"],
+        ],
+        TABLE_TASK_JOB_LOGS: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["submit_num", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["filename", {"is_primary_key": True}],
+            ["location"],
+            ["mtime"],
+            ["size", {"datatype": "INTEGER"}],
+        ],
+        TABLE_TASK_EVENTS: [
+            ["name"],
+            ["cycle"],
+            ["time"],
+            ["submit_num", {"datatype": "INTEGER"}],
+            ["event"],
+            ["message"],
+            ["misc"],
+        ],
+        TABLE_TASK_STATES: [
+            ["name", {"is_primary_key": True}],
+            ["cycle", {"is_primary_key": True}],
+            ["time_created"],
+            ["time_updated"],
+            ["submit_num", {"datatype": "INTEGER"}],
+            ["is_manual_submit", {"datatype": "INTEGER"}],
+            ["try_num", {"datatype": "INTEGER"}],
+            ["host"],
+            ["submit_method"],
+            ["submit_method_id"],
+            ["status"],
+        ],
+    }
 
     def __init__(self, db_file_name=None, is_public=False):
         """Initialise object.
@@ -188,55 +248,9 @@ class CylcSuiteDAO(object):
         self.conn = None
         self.n_tries = 0
 
-        self.tables = {
-            self.TABLE_BROADCASTS: CylcSuiteDAOTable(self.TABLE_BROADCASTS, [
-                ["time"],
-                ["change"],
-                ["point"],
-                ["namespace"],
-                ["key"],
-                ["value"],
-            ]),
-            self.TABLE_TASK_JOBS: CylcSuiteDAOTable(self.TABLE_TASK_JOBS, [
-                ["cycle"],
-                ["name"],
-                ["submit_num", {"datatype": "INTEGER"}],
-                ["is_manual_submit", {"datatype": "INTEGER"}],
-                ["try_num", {"datatype": "INTEGER"}],
-                ["time_submit"],
-                ["time_submit_exit"],
-                ["submit_status"],
-                ["time_run"],
-                ["time_run_exit"],
-                ["run_signal"],
-                ["run_status"],
-                ["user_at_host"],
-                ["batch_sys_name"],
-                ["batch_sys_job_id"],
-            ]),
-            self.TABLE_TASK_EVENTS: CylcSuiteDAOTable(self.TABLE_TASK_EVENTS, [
-                ["name"],
-                ["cycle"],
-                ["time"],
-                ["submit_num", {"datatype": "INTEGER"}],
-                ["event"],
-                ["message"],
-                ["misc"],
-            ]),
-            self.TABLE_TASK_STATES: CylcSuiteDAOTable(self.TABLE_TASK_STATES, [
-                ["name", {"is_primary_key": True}],
-                ["cycle", {"is_primary_key": True}],
-                ["time_created"],
-                ["time_updated"],
-                ["submit_num", {"datatype": "INTEGER"}],
-                ["is_manual_submit", {"datatype": "INTEGER"}],
-                ["try_num", {"datatype": "INTEGER"}],
-                ["host"],
-                ["submit_method"],
-                ["submit_method_id"],
-                ["status"],
-            ]),
-        }
+        self.tables = {}
+        for name, attrs in sorted(self.TABLES_ATTRS.items()):
+            self.tables[name] = CylcSuiteDAOTable(name, attrs)
 
         if not self.is_public:
             self.create_tables()
