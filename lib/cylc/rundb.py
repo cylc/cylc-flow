@@ -318,57 +318,28 @@ class CylcSuiteDAO(object):
         self.connect()
         will_retry = False
         for table in self.tables.values():
+            # DELETE statements may have varying number of WHERE args
+            # so we can only executemany for each identical template statement.
+            for stmt, stmt_args_list in table.delete_queues.items():
+                if self._execute_stmt(table, stmt, stmt_args_list):
+                    table.delete_queues.pop(stmt)
+                else:
+                    will_retry = True
             # INSERT statements are uniform for each table, so all INSERT
             # statements can be executed using a single "executemany" call.
             if table.insert_queue:
-                try:
-                    stmt = table.get_insert_stmt()
-                    self.conn.executemany(stmt, table.insert_queue)
-                    self.conn.commit()
-                except sqlite3.Error:
-                    if not self.is_public:
-                        raise
-                    self.conn.rollback()
-                    will_retry = True
-                    if cylc.flags.debug:
-                        traceback.print_exc()
-                        sys.stderr.write(
-                            "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
-                                "file": self.db_file_name,
-                                "table": table.name,
-                                "stmt": stmt})
-                        for stmt_args in table.insert_queue:
-                            sys.stderr.write(
-                                "\t%(stmt_args)s\n" % {"stmt_args": stmt_args})
-                    # Not safe to do UPDATE if INSERT failed
-                    continue
-                else:
+                if self._execute_stmt(
+                        table, table.get_insert_stmt(), table.insert_queue):
                     table.insert_queue = []
-            # DELETE statements may have varying number of WHERE args
+                else:
+                    will_retry = True
             # UPDATE statements can have varying number of SET and WHERE args
             # so we can only executemany for each identical template statement.
-            for queues in table.delete_queues, table.update_queues:
-                for stmt, stmt_args_list in queues.items():
-                    try:
-                        self.conn.executemany(stmt, stmt_args_list)
-                        self.conn.commit()
-                    except sqlite3.Error:
-                        if not self.is_public:
-                            raise
-                        self.conn.rollback()
-                        will_retry = True
-                        if cylc.flags.debug:
-                            traceback.print_exc()
-                            sys.stderr.write(
-                                "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
-                                    "file": self.db_file_name,
-                                    "table": table.name,
-                                    "stmt": stmt})
-                            for stmt_args in stmt_args_list:
-                                sys.stderr.write("\t%(stmt_args)s\n" % {
-                                    "stmt_args": stmt_args})
-                    else:
-                        queues.pop(stmt)
+            for stmt, stmt_args_list in table.update_queues.items():
+                if self._execute_stmt(table, stmt, stmt_args_list):
+                    table.update_queues.pop(stmt)
+                else:
+                    will_retry = True
         if will_retry:
             self.n_tries += 1
             logger = getLogger("main")
@@ -389,6 +360,34 @@ class CylcSuiteDAO(object):
         # directory is removed, a forced reconnection to the private database
         # will ensure that the suite dies.
         self.close()
+
+    def _execute_stmt(self, table, stmt, stmt_args_list):
+        """Helper for "self.execute_queued_items".
+
+        Execute a statement. If this is the public database, return True on
+        success and False on failure. If this is the private database, return
+        True on success, and raise on failure.
+        """
+        try:
+            self.conn.executemany(stmt, stmt_args_list)
+            self.conn.commit()
+        except sqlite3.Error:
+            if not self.is_public:
+                raise
+            self.conn.rollback()
+            if cylc.flags.debug:
+                traceback.print_exc()
+                sys.stderr.write(
+                    "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
+                        "file": self.db_file_name,
+                        "table": table.name,
+                        "stmt": stmt})
+                for stmt_args in stmt_args_list:
+                    sys.stderr.write("\t%(stmt_args)s\n" % {
+                        "stmt_args": stmt_args})
+            return False
+        else:
+            return True
 
     def select_task_states_by_task_ids(self, keys, task_ids=None):
         """Select items from task_states by task IDs.

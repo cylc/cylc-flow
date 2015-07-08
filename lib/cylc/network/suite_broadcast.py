@@ -273,6 +273,29 @@ class BroadcastServer(PyroServer):
         """Load broadcast variables from the state dump file."""
         self.settings = pickle.loads(pickled_settings)
 
+        # Ensure database table is in sync
+        modified_settings = []
+        for point_string, point_string_settings in self.settings.items():
+            for namespace, namespace_settings in point_string_settings.items():
+                stuff_stack = [([], namespace_settings)]
+                while stuff_stack:
+                    keys, stuff = stuff_stack.pop()
+                    for key, value in stuff.items():
+                        if isinstance(value, dict):
+                            stuff_stack.append((keys + [key], value))
+                        else:
+                            setting = {key: value}
+                            for rkey in reversed(keys):
+                                setting = {rkey: setting}
+                            modified_settings.append(
+                                (point_string, namespace, setting))
+        for broadcast_change in get_broadcast_change_iter(modified_settings):
+            self.db_inserts_map[self.TABLE_BROADCAST_STATES].append({
+                "point": broadcast_change["point"],
+                "namespace": broadcast_change["namespace"],
+                "key": broadcast_change["key"],
+                "value": broadcast_change["value"]})
+
     def _get_dump(self):
         """Return broadcast variables as written to the state dump file."""
         return pickle.dumps(self.settings) + "\n"
