@@ -70,13 +70,14 @@ expensive real tasks during suite development.
 
 Cylc runs off the suite host's system clock by default. This item allows
 you to run the suite in UTC even if the system clock is set to local time.
-Clock-triggered tasks will trigger when the current UTC time is equal to
+Clock-trigger tasks will trigger when the current UTC time is equal to
 their cycle point date-time plus offset; other time values used, reported,
-or logged by the suite daemon will usually also be in UTC.
+or logged by the suite daemon will usually also be in UTC. The default for
+this can be set at the site level (see ~\ref{SiteUTCMode}).
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} False
+    \item {\em default:} False, unless overridden at site level.
 \end{myitemize}
 
 \subsubsection[cycle point format]{ [cylc] $\rightarrow$ cycle point format}
@@ -221,10 +222,13 @@ following EVENTs occurs:
     \item {\bf timeout}  - the suite has timed out
 \end{myitemize}
 
+Default values for these can be set at the site level via the siterc file
+(see ~\ref{SiteCylcHooks}).
+
 Item details:
 \begin{myitemize}
     \item {\em type:} string (event handler script name)
-    \item {\em default:} None
+    \item {\em default:} None, unless defined at the site level.
     \item {\em example:} \lstinline@startup handler = my-handler.sh@
 \end{myitemize}
 
@@ -232,12 +236,13 @@ Item details:
 
 If a timeout is set and the timeout event is handled, the timeout event
 handler(s) will be called if the suite times out before it finishes.
-The timer is set initially at suite start up.
+The timer is set initially at suite start up. It is possible to set a default
+for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 duration/interval representation (e.g.
  \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
-    \item {\em default:} (none)
+    \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
 
 \paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
@@ -255,11 +260,12 @@ time.
 \paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
-error status if the suite times out while still running.
+error status if the suite times out while still running. It is possible to set 
+a default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} False
+    \item {\em default:} False, unless set at the site level.
 \end{myitemize}
 
 \paragraph[abort if startup handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if EVENT handler fails}
@@ -455,9 +461,14 @@ the time zone determined by \ref{cycle-point-time-zone} if that is set.
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 date/time point representation (e.g.
- \lstinline=CCYYMMDDThhmm=, 19951231T0630)
+ \lstinline=CCYYMMDDThhmm=, 19951231T0630) or ``now''.
     \item {\em default:} (none)
 \end{myitemize}
+
+The string ``now'' converts to the current date-time on the suite host (adjusted
+to UTC if the suite is in UTC mode but the host is not) to minute resolution.
+Minutes (or hours, etc.) may be ignored depending on your cycle point format
+(\ref{cycle-point-format}).
 
 \subsubsection[final cycle point]{[scheduling] $\rightarrow$ final cycle point}
 
@@ -502,6 +513,13 @@ constraints.
         representations (e.g. T00, T06, T-30).
     \item {\em default:} (none)
 \end{myitemize}
+
+\subsubsection[hold after point]{[scheduling] $\rightarrow$ hold after point}
+
+Cycling tasks are held once they pass the hold after cycle point, if one is
+specified. Unlike the final cycle point suite will not shut down once all tasks
+have passed this point. If this item is provided you can override it on the 
+command line or in the gcylc suite start panel.
 
 \subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
 \label{runahead limit}
@@ -578,9 +596,9 @@ A list of member tasks, or task family names, to assign to this queue
 This section is used to identify tasks with special behaviour. Family names can
 be used in special task lists as shorthand for listing all member tasks.
 
-\paragraph[clock-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-triggered}
+\paragraph[clock-trigger]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-trigger}
 
-Clock-triggered tasks (see~\ref{ClockTriggeredTasks}) wait on a wall clock time
+Clock-trigger tasks (see~\ref{ClockTriggerTasks}) wait on a wall clock time
 specified as an offset from their own cycle point.
 
 \begin{myitemize}
@@ -591,11 +609,31 @@ specified as an offset from their own cycle point.
     \item {\em default:} (none)
     \item {\em example:}
 \begin{lstlisting}
-    clock-triggered = foo(PT1H30M), bar(PT1.5H), baz
+    clock-trigger = foo(PT1H30M), bar(PT1.5H), baz
 \end{lstlisting}
 \end{myitemize}
 
-\paragraph[external-triggered]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ external-triggered}
+\paragraph[clock-expire]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-expire}
+\label{ClockExpireRef}
+
+Clock-expire tasks enter the {\em expired} state and skip job submission if too
+far behind the wall clock when they become ready to run.  The expiry time is
+specified as an offset from wall-clock time; typically it should be negative -
+see~\ref{ClockExpireTasks}. 
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of task or family names with
+        associated date-time offsets expressed as ISO8601 interval strings,
+        positive or negative, e.g. \lstinline=PT1H= for 1 hour.  The offset
+        may be omitted if it is zero.
+    \item {\em default:} (none)
+    \item {\em example:}
+\begin{lstlisting}
+    clock-expire = foo(-P1D)
+\end{lstlisting}
+\end{myitemize}
+
+\paragraph[external-trigger]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ external-trigger}
 
 Externally triggered tasks (see~\ref{ExternalTriggers}) wait on external events
 reported via the \lstinline=cylc ext-trigger= command.
@@ -606,7 +644,7 @@ reported via the \lstinline=cylc ext-trigger= command.
     \item {\em default:} (none)
     \item {\em example:} (note the comma and line-continuation character)
 \begin{lstlisting}
-    external-triggered = get-satx("new sat-X data ready"), \
+    external-trigger = get-satx("new sat-X data ready"), \
                          get-saty("new sat-Y data ready")
 \end{lstlisting}
 \end{myitemize}
@@ -1227,6 +1265,47 @@ the different selectable hosts, you can configure your
 \item {\em default:} (none)
 \end{myitemize}
 
+\subparagraph[retrieve job logs]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs}
+
+Remote task job logs are saved to the suite run directory on the task host, not
+on the suite host. If you want the job logs pulled back to the suite host
+automatically, you can set this item to \lstinline=True=. The suite will
+then attempt to \lstinline=rsync= the job logs once from the remote host each
+time a task job completes. E.g. if the job file is
+\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job=, anything under
+\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/= will be retrieved.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} False
+\end{myitemize}
+
+\subparagraph[retrieve job logs max size]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs max size}
+
+If the disk space of the suite host is limited, you may want to set the maximum
+sizes of the job log files to retrieve. The value can be anything that is
+accepted by the \lstinline@--max-size=SIZE@ option of the \lstinline=rsync=
+command.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} None
+\end{myitemize}
+
+\subparagraph[retrieve job logs retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs retry delays}
+
+Some batch systems have considerable delays between the time when the job
+completes and when it writes the job logs in its normal location. If this is
+the case, you can configure an initial delay and some retry delays between
+subsequent attempts. The default behaviour is to attempt once without any
+delay.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
+\end{myitemize}
+
 \subparagraph[suite definition directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$  suite definition directory}
 
 The path to the suite definition directory on the remote host, needed if
@@ -1247,29 +1326,39 @@ interpretation on the remote host.
 \paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
 \label{TaskEventHandling}
 
-Cylc has internal ``hooks'' to which you can attach handlers that are
-called by the suite daemon whenever certain events occur. This section
-configures task event hooks; see~\ref{SuiteEventHandling} for
-suite event hooks.
+Cylc can call nominated event handlers when certain task events occur. This
+section configures specific task event handlers; see~\ref{SuiteEventHandling} for
+suite event hooks. See ~\ref{TaskEventHandling2} for general and built-in
+task event handlers.
 
-Event handlers can send an email or an SMS, call a pager, intervene
-in the operation of their own suite, or whatever.
-They can be held in the suite bin directory, otherwise it is up to you
-to ensure their location is in \lstinline=$PATH= (in the shell in which
-cylc runs, on the suite host).
-\lstinline=cylc [hook] email-task= is a simple task event handler.
+Event handler commands can be located in the suite \lstinline=bin/= directory,
+otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
+the shell in which cylc runs, on the suite host). The commands should require
+very little resource to run and should return quickly.
 
-Task event handlers are called by the suite daemon with the following arguments:
-\begin{lstlisting}
-<task-event-handler> EVENT SUITE TASK MESSAGE
-\end{lstlisting}
-where,
+Each task event handler can be specified as a list of command lines or command
+line templates.
+
+A command line template may have any or all of these patterns which will be
+substituted with actual values:
 \begin{myitemize}
-    \item EVENT - event name (see below)
-    \item SUITE - suite name
-    \item TASK  - task ID
-    \item MESSAGE - describes what has happened.
+    \item \%(event)s: event name
+    \item \%(suite)s: suite name
+    \item \%(point)s: cycle point
+    \item \%(name)s: task name
+    \item \%(submit\_num)s: submit number
+    \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
+    \item \%(message)s: event message, if any
 \end{myitemize}
+
+Otherwise, the command line will be called with the following arguments:
+\begin{lstlisting}
+<task-event-handler> %(event)s %(suite)s %(id)s %(message)s
+\end{lstlisting}
+
+For an explanation of the substitution syntax, see String Formatting Operations
+in the Python documentation:
+\url{https://docs.python.org/2/library/stdtypes.html#string-formatting}.
 
 Additional information can be passed to event handlers via the
 [cylc] $\rightarrow$ [[environment]] (but not via task
@@ -1332,6 +1421,125 @@ finish in the alotted time regardless of incoming messages.
 \begin{myitemize}
 \item {\em type:} boolean
 \item {\em default:} False
+\end{myitemize}
+
+\paragraph[{[[[}events{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]]}
+\label{TaskEventHandling2}
+
+Cylc can call nominated event handlers when certain task events occur. This
+section configures general and built-in task event handlers;
+see~\ref{SuiteEventHandling} for suite event hooks. See
+~\ref{TaskEventHandling} for specific task event handlers.
+
+Event handler commands can be located in the suite \lstinline=bin/= directory,
+otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
+the shell in which cylc runs, on the suite host). The commands should require
+very little resource to run and should return quickly.
+
+Each task event handler can be specified as a list of command lines or command
+line templates.
+
+A command line template may have any or all of these patterns which will be
+substituted with actual values:
+\begin{myitemize}
+    \item \%(event)s: event name
+    \item \%(suite)s: suite name
+    \item \%(point)s: cycle point
+    \item \%(name)s: task name
+    \item \%(submit\_num)s: submit number
+    \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
+    \item \%(message)s: event message, if any
+\end{myitemize}
+
+Otherwise, the command line will be called with the following command line
+arguments:
+\begin{lstlisting}
+<task-event-handler> %(event)s %(suite)s %(id)s %(message)s
+\end{lstlisting}
+
+\subparagraph[handlers]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handlers}
+
+Specify a list of command lines or command line templates as task event handlers.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of strings (event handler command line or command line templates).
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@handler = my-handler.sh@
+\end{myitemize}
+
+\subparagraph[handler events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler events}
+
+Specify the events for which the general task event handlers should be invoked.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of events
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@handler = submission failed, failed@
+\end{myitemize}
+
+\subparagraph[handler retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler retry delays}
+
+Specify an initial delay before running an event handler command and any retry
+delays in case the command returns a non-zero code. The default behaviour is to
+run an event handler command once without any delay.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
+\end{myitemize}
+
+\subparagraph[mail events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail events}
+
+Specify the events for which notification emails should be sent.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of events
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@handler = submission failed, failed@
+\end{myitemize}
+
+\subparagraph[mail from]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail from}
+
+Specify an alternate \lstinline=from:= email address for event notifications.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em default:} None, (notifications@HOSTNAME)
+    \item {\em example:} \lstinline@mail from = no-reply\@your-org@
+\end{myitemize}
+
+\subparagraph[mail retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail retry delays}
+
+Specify an initial delay before running the mail notification command and any
+retry delays in case the command returns a non-zero code. The default behaviour
+is to run the mail notification command once without any delay.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations, optionally {\em preceded} by multipliers.
+    \item {\em default:} (none)
+    \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
+\end{myitemize}
+
+\subparagraph[mail smtp]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail smtp}
+
+Specify the SMTP server for sending email notifications.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em default:} None, (localhost:25)
+    \item {\em example:} \lstinline@mail smtp = smtp.yourorg@
+\end{myitemize}
+
+\subparagraph[mail to]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail to}
+
+A list of email addresses to send task event notifications. The list can be
+anything accepted by the \lstinline=mail= command.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em default:} None, (USER@HOSTNAME)
+    \item {\em example:} \lstinline@mail to = your.colleague@
 \end{myitemize}
 
 \paragraph[{[[[}environment{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]]}

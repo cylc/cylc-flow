@@ -1,0 +1,9 @@
+# Hello from a filter!
+[scheduling]
+    [[dependencies]]
+        graph = foo => bar
+[runtime]
+    [[foo]]
+        pre-command scripting = true
+        command scripting = true
+    [[bar]]

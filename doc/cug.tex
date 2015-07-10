@@ -1400,12 +1400,61 @@ ssh -oBatchMode=yes -oConnectTimeout=10 wrh-1.niwa.co.nz\
 ' "/opt/cylc/bin/cylc" '"'"'job-submit'"'"\
 ' --remote-mode "/home/oliverh/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job"'
 \end{lstlisting}
-(Don't be intimated by this - it really quite straightforward and would appear
-much simpler if the job log path was shorter!). Remote task job logs are
+(Don't be intimated by this - it is really quite straightforward and would
+appear much simpler if the job log path was shorter!). Remote task job logs are
 saved to the suite run directory on the task host, not on the suite host,
-although they can be retrieved by right-clicking on the task in the GUI. Rose
-(section~\ref{Rose}) provides a task event handler to pull logs back to
-the suite host.
+although they can be retrieved by right-clicking on the task in the GUI. If you
+want the job logs pulled back to the suite host automatically, you can set
+"retrieve job logs=True" under the "[[[remote]]]" section:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[hello]]
+        script = "sleep 10; echo Hello World!"
+        [[[remote]]]
+            host = server1.niwa.co.nz
+            retrieve job logs = True
+\end{lstlisting}
+
+The suite will attempt to \lstinline=rsync= the job logs once from the remote
+host each time a task job completes. E.g. if the job file is
+\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job=, anything under
+\lstinline=~/cylc-run/tut.oneoff.remote/log/job/1/hello/01/= will be retrieved.
+
+Some batch systems have considerable delays between the time when the job
+completes and when it writes the job logs in its normal location. If this is
+the case, you can configure an initial delay and retry delays for job log
+retrieval by setting some delays. E.g.:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[hello]]
+        script = "sleep 10; echo Hello World!"
+        [[[remote]]]
+            host = server1.niwa.co.nz
+            retrieve job logs = True
+            # Retry after 10 seconds, 1 minute and 3 minutes
+            retrieve job logs retry delays = PT10S, PT1M, PT3M
+\end{lstlisting}
+
+Finally, if the disk space of the suite host is limited, you may want to set
+\lstinline@[[[remote]]]retrieve job logs max size=SIZE@. The value of SIZE can
+be anything that is accepted by the \lstinline@--max-size=SIZE@ option of the
+\lstinline=rsync= command. E.g.:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[hello]]
+        script = "sleep 10; echo Hello World!"
+        [[[remote]]]
+            host = server1.niwa.co.nz
+            retrieve job logs = True
+            # Don't get anything bigger than 10MB
+            retrieve job logs max size = 10M
+\end{lstlisting}
 
 \begin{myitemize}
 \item For more on remote tasks see~\ref{RunningTasksOnARemoteHost}
@@ -2462,7 +2511,7 @@ configuration items grouped under several top level section headings:
     \item {\bf [cylc] } - {\em non task-specific suite configuration}
     \item {\bf [scheduling] } - {\em determines when tasks are ready to run}
         \begin{myitemize}
-            \item tasks with special behaviour, e.g. clock-triggered tasks
+            \item tasks with special behaviour, e.g. clock-trigger tasks
             \item the dependency graph, which defines the relationships
                 between tasks
         \end{myitemize}
@@ -3809,34 +3858,69 @@ because it is beyond the suite stop point. Consequently cylc prevents tasks
 from spawning successors that depend on other tasks beyond the stop point.
 
 \paragraph{Clock Triggers}
-\label{ClockTriggeredTasks}
+\label{ClockTriggerTasks}
 
 In addition to depending on other tasks (and on external events -
 see~\ref{ExternalTriggers}) tasks can depend on the wall clock: specifically,
-they can trigger off a wall clock time expressed as an offset from cycle point:
+they can trigger off a wall clock time expressed as an offset from their own
+cycle point:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[special tasks]]
-        clock-triggered = foo(PT2H)
+        clock-trigger = foo(PT2H)
     [[dependencies]]
         [[[T00]]]
             graph = foo
 \end{lstlisting} 
 Here, \lstinline=foo[2015-08-23T00]= would trigger (other dependencies allowing)
-when the wall clock time reaches \lstinline=2015-08-23T02=.
+when the wall clock time reaches \lstinline=2015-08-23T02=. Clock-trigger
+offsets are normally positive, to trigger some time {\em after} the wall-clock
+time is equal to task cycle point.
 
 Clock-triggers have no effect on scheduling if the suite is running sufficiently
 far behind the clock (e.g.\ after a delay, or because it is processing archived
 historical data) that the trigger times, which are relative to task cycle
 point, have already passed.
 
+\paragraph{Clock-Expire Triggers}
+\label{ClockExpireTasks}
 
-\paragraph{External Event Triggers}
+Tasks can be configured to {\em expire} - i.e.\ to skip job submission and
+enter the {\em expired} state - if they are too far behind the wall clock when
+they become ready to run, and other tasks can trigger off this.  As a possible
+use case, consider a cycling task that copies the latest of a set of files to
+overwrite the previous set: if the task is delayed by more than one cycle there
+may be no point in running it because the freshly copied files will just be
+overwritten immediately by the next task instance as the suite catches back up
+to real time operation.  Clock-expire tasks are configured like clock-trigger
+tasks, with a date-time offset relative to cycle point (\ref{ClockExpireRef}).
+The offset should be positive to make the task expire if the wall-clock time
+has gone beyond the cycle point.  Triggering off an expired task typically
+requires suicide triggers to remove the workflow that runs if the task has not
+expired. Here a task called \lstinline=copy= expires, and its downstream
+workflow is skipped, if it is more than one day behind the wall-clock (see also
+\lstinline=examples/clock-expire=):
+\lstset{language=suiterc}
+\begin{lstlisting}
+[cylc]
+   cycle point format = %Y-%m-%dT%H
+[scheduling]
+    initial cycle point = 2015-08-15T00
+    [[special tasks]]
+        clock-expire = copy(-P1D)
+    [[dependencies]]
+        [[[P1D]]]
+            graph = """
+        model[-P1D] => model => copy => proc
+              copy:expired => !proc"""
+\end{lstlisting}
+
+\paragraph{External Triggers}
 \label{ExternalTriggers}
 
 In addition to depending on other tasks (and on the wall clock -
-see~\ref{ClockTriggeredTasks}) tasks can trigger off events reported by an
+see~\ref{ClockTriggerTasks}) tasks can trigger off events reported by an
 external system.  For example, an external process could detect incoming data
 on an ftp server, and then notify a suite containing a task to retrieve the
 new data for processing. This is an alternative to long-running tasks that poll
@@ -3879,7 +3963,7 @@ scheduling section:
     cycling mode = integer
     initial cycle point = 1
     [[special tasks]]
-        external-triggered = get-data("new sat X data avail")
+        external-trigger = get-data("new sat X data avail")
     [[dependencies]]
         [[[P1]]]
             graph = get-data => conv-data => products
@@ -5612,7 +5696,7 @@ As a suite runs its task proxies may pass through the following states:
 
 \begin{myitemize}
     \item {\bf waiting} - prerequisites not satisfied yet
-    (note that clock-triggered tasks also wait on their trigger time).
+    (note that clock-trigger tasks also wait on their trigger time).
 
     \item {\bf queued} - ready to run (prerequisites satisfied) but
     temporarily held back by an {\em internal cylc queue}
@@ -5783,28 +5867,58 @@ suite listed below under~\ref{EventHandling}.
 \subsection{Suite And Task Event Handling}
 \label{EventHandling}
 
-See also~\ref{SuiteEventHandling} and~\ref{TaskEventHandling}
-in the {\em Suite.rc Reference}.
+See also~\ref{SuiteEventHandling},~\ref{TaskEventHandling}
+and~\ref{TaskEventHandling2} in the {\em Suite.rc Reference}.
 
-Cylc can call nominated event handlers when certain suite or task events
-occur. This is intended to facilitate centralized alerting and automated
-handling of critical events. Event handlers can send an email or an SMS,
-call a pager, and so on; or intervene in the operation of their own
-suite using cylc commands.  \lstinline=cylc [hook] email-suite= and
-\lstinline=cylc [hook] email-task= are example event handlers packaged
-with cylc.
+Cylc can call nominated event handlers when certain suite or task events occur.
+This is intended to facilitate centralized alerting and automated handling of
+critical events. Event handlers can be used to send a message, call a pager,
+and so on; or intervene in the operation of their own suite using cylc
+commands.
 
-Event handlers can be located in the suite bin directory, otherwise
-it is up to you to ensure their location is in \lstinline=$PATH=
-(in the shell in which cylc runs, on the suite host).
+To send an email, you can use the built-in setting
+\lstinline=[[[events]]]mail events= to specify a list of events for which
+notifications should be sent. E.g. to send an email on (submission) failed and
+retry:
 
-Task event handlers are passed the following arguments by the suite daemon:
-
+\lstset{language=suiterc}
 \begin{lstlisting}
-<task-event-handler> EVENT SUITE TASKID MESSAGE
+[runtime]
+    [[foo]]
+        retry delays = PT0S, PT30S
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 3
+        [[[events]]]
+            mail events = submission failed, submission retry, failed, retry
 \end{lstlisting}
-where EVENT is one of the following:
 
+By default, the emails will be sent to the current user with:
+
+\begin{myitemize}
+    \item \lstinline=to:= set as \lstinline=$USER=
+    \item \lstinline=from:= set as \lstinline=notifications@$(hostname)=
+    \item SMTP server at \lstinline=localhost:25=
+\end{myitemize}
+
+These can be configured using the settings:
+\begin{myitemize}
+    \item \lstinline=[[[events]]]mail to= (list of email addresses),
+    \item \lstinline=[[[events]]]mail from=
+    \item \lstinline=[[[events]]]mail smtp=.
+\end{myitemize}
+
+Event handler commands can be located in the suite \lstinline=bin/= directory,
+otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
+the shell in which cylc runs, on the suite host). The commands should require
+very little resource to run and should return quickly. (Each event
+handler is invoked by a child process in a finite process pool that is also
+used to submit, poll and kill jobs.  The child process will wait for the event
+handler to complete before moving on to the next item in the queue. If the
+process pool is saturated with long running event handlers, the suite will
+appear to hang.)
+
+Task event handlers can be specified using the
+\lstinline=[[[event hooks]]]<event> handler= settings, where
+\lstinline=<event>= is one of:
 \begin{myitemize}
     \item `submitted' - the job submit command was successful
     \item `submission failed' - the job submit command failed
@@ -5817,8 +5931,37 @@ where EVENT is one of the following:
     \item `retry' - the task failed but will retry
     \item `execution timeout' - task execution timed out
 \end{myitemize}
-MESSAGE, if provided, describes what has happened, and TASKID identifies
-the task (\lstinline=NAME.CYCLE= for cycling tasks).
+
+The value of each setting should be a list of command lines or command line
+templates (see below).
+
+Alternatively, task event handlers can be specified using the
+\lstinline=[[[events]]]handlers= and the \lstinline=[[[events]]]handler events=
+settings, where the former is a list of command lines or command line templates
+(see below) and the latter is a list of events for which these commands should
+be invoked.
+
+A command line template may have any or all of these patterns which will be
+substituted with actual values:
+\begin{myitemize}
+    \item \%(event)s: event name
+    \item \%(suite)s: suite name
+    \item \%(point)s: cycle point
+    \item \%(name)s: task name
+    \item \%(submit\_num)s: submit number
+    \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
+    \item \%(message)s: event message, if any
+\end{myitemize}
+
+Otherwise, the command line will be called with the following command line
+arguments:
+\begin{lstlisting}
+<task-event-handler> %(event)s %(suite)s %(id)s %(message)s
+\end{lstlisting}
+
+For an explanation of the substitution syntax, see
+\href{https://docs.python.org/2/library/stdtypes.html#string-formatting}{String Formatting Operations}
+in the Python documentation.
 
 The retry event occurs if a task fails and has any remaining retries
 configured (see~\ref{TaskRetries}).
@@ -5830,34 +5973,34 @@ running tasks} so if you wish to pass them additional information via
 the environment you must use [cylc] $\rightarrow$ [[environment]],
 not task runtime environments.
 
-Here is an example suite that tests the {\em retry} and {\em failed} events.
-The handler in this case simply echoes its command line arguments to
-suite stdout.
+The following 2 \lstinline=suite.rc= snippets are examples on how to specify
+event handlers using the alternate methods:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-[scheduling]
-    initial cycle point = 20100808T00
-    final cycle point = 20100810T00
-    [[dependencies]]
-        [[[T00]]]
-            graph = "foo => bar"
 [runtime]
     [[foo]]
         retry delays = PT0S, PT30S
-        script = """
-echo TRY NUMBER: $CYLC_TASK_TRY_NUMBER
-sleep 10
-# retry twice and succeed on the final try,
-# but fail definitively in the final cycle.
-if (( CYLC_TASK_TRY_NUMBER <= 2 )) || \
-    (( CYLC_TASK_CYCLE_POINT == CYLC_SUITE_FINAL_CYCLE_POINT )); then
-    echo ABORTING
-    /bin/false
-fi"""
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 2
         [[[event hooks]]]
-            retry handler = "echo !!!!!EVENT!!!!! "
-            failed handler = "echo !!!!!EVENT!!!!! "
+            retry handler = "echo '!!!!!EVENT!!!!!' "
+            failed handler = "echo '!!!!!EVENT!!!!!' "
+\end{lstlisting}
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[foo]]
+        retry delays = PT0S, PT30S
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 2
+        [[[events]]]
+            handlers = "echo '!!!!!EVENT!!!!!' "
+            handler events = retry, failed
+\end{lstlisting}
+
+Note: The handler command is called like this:
+\begin{lstlisting}
+echo '!!!!!EVENT!!!!!' %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
 \subsection{Reloading The Suite Definition At Runtime}
@@ -6577,11 +6720,11 @@ require that. One way to do this is to declare the product upload task to be
 {\em sequential}, which is equivalent to making it depend on its own previous
 instance (see~\ref{SequentialTasks}).
 
-\subsection{Use Of Clock-Triggered Tasks}
+\subsection{Use Of Clock-Trigger Tasks}
 
 Tasks that wait on external real time data should have a clock-trigger to delay
 submission until roughly the expected time of data availability
-(see~\ref{ClockTriggeredTasks}), otherwise they could clutter up your batch
+(see~\ref{ClockTriggerTasks}), otherwise they could clutter up your batch
 scheduler queue by submitting hours earlier. Similarly, suite polling tasks
 (for inter-suite dependence in real time operation) should use a clock-trigger
 to delay their submission until the expected time of the remote suite event.
@@ -6591,7 +6734,7 @@ to delay their submission until the expected time of the remote suite event.
 Some tasks wait on external events and therefore need to repeatedly check and
 wait for the event before reporting eventual success (or perhaps failure after
 a timeout). For example, a task that waits for a file to appear on an ftp
-server. Typically these should be clock-triggered tasks (see above), but once
+server. Typically these should be clock-trigger tasks (see above), but once
 triggered there are two ways to handle the repeated checking: the task itself
 could implement a check-and-wait loop; or you could just configure multiple
 retries for the task (see~\ref{TaskRetries}).
@@ -6599,12 +6742,12 @@ retries for the task (see~\ref{TaskRetries}).
 \subsection{Do Not Treat Real Time Operation As Special}
 
 Cylc suites, without modification, can handle real time and delayed operation
-equally well.  In caught-up real time operation, clock-triggered tasks
+equally well.  In caught-up real time operation, clock-trigger tasks
 constrain the behaviour of the whole suite, or at least of any tasks
 downstream of them in the dependency graph.  In delayed or historical operation
-clock-triggered tasks will not constrain the suite at all, and cylc's cycle
+clock-trigger tasks will not constrain the suite at all, and cylc's cycle
 point interleaving abilities come to the fore, because the clock-trigger times
-have already passed. But if a clock-triggered task catches up to the wall
+have already passed. But if a clock-trigger task catches up to the wall
 clock, it will automatically wait again. In this way cylc suites naturally 
 transition between delayed and real time operation as required.
 

@@ -174,12 +174,13 @@ class StateSummaryClient(PyroClient):
 
 def extract_group_state(child_states, is_stopped=False):
     """Summarise child states as a group."""
-    ordered_states = ['submit-failed', 'failed', 'submit-retrying', 'retrying', 'running',
-            'submitted', 'ready', 'queued', 'waiting', 'held', 'succeeded', 'runahead']
+    ordered_states = ['submit-failed', 'failed', 'expired', 'submit-retrying',
+            'retrying', 'running', 'submitted', 'ready', 'queued', 'waiting',
+            'held', 'succeeded', 'runahead']
     if is_stopped:
         ordered_states = ['submit-failed', 'failed', 'running', 'submitted',
-            'ready', 'submit-retrying', 'retrying', 'succeeded', 'queued', 'waiting',
-            'held', 'runahead']
+            'expired', 'ready', 'submit-retrying', 'retrying', 'succeeded',
+            'queued', 'waiting', 'held', 'runahead']
     for state in ordered_states:
         if state in child_states:
             return state

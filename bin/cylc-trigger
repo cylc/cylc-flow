@@ -95,10 +95,19 @@ if options.edit_run:
 
     # Retrieve the filename from the suite (the task cycle point may need
     # standardising to the suite cycle point format).
-    success, jobfile_path = info_proxy.get_info(
+    success, jobfile_path = info_client.get_info(
         'get_task_jobfile_path', task_id)
     if not success:
         sys.exit('ERROR: %s' % jobfile_path)
+    # TODO - THIS IS NO LONGER NEEDED?:
+    ## Get the current job file mtime, if the file exists.
+    #jobfile_path = os.path.join(
+    #    TaskProxy.get_job_log_dir(suite, name, point_string), "job")
+    #try:
+    #    jobfile_mtime = os.stat(jobfile_path).st_mtime
+    #except OSError:
+    #    # Does not exist.
+    #    jobfile_mtime = None
 
     # Replace the submit number with the 'NN' symnlink as it will increment
     # when we trigger the job file write.

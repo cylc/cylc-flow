@@ -26,6 +26,7 @@ from cylc.cycling.loader import (get_point, get_point_relative,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
                                  ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
+from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
@@ -134,16 +135,17 @@ class config( object ):
         self.validation = validation
         self.initial_point = None
         self.start_point = None
-        self._cli_initial_point_string = cli_initial_point_string
-        self._cli_start_point_string = cli_start_point_string
         self.is_restart = is_restart
         self.first_graph = True
         self.clock_offsets = {}
+        self.expiration_offsets = {}
         self.ext_triggers = {}
         self.suite_polling_tasks = {}
         self.triggering_families = []
         self.vis_start_point_string = vis_start_string
         self.vis_stop_point_string = vis_stop_string
+        self._last_graph_raw_id = None
+        self._last_graph_raw_edges = []
 
         self.sequences = []
         self.actual_first_point = None
@@ -178,9 +180,25 @@ class config( object ):
                 write_proc=write_proc )
         self.cfg = self.pcfg.get(sparse=True)
 
-        if self._cli_initial_point_string is not None:
+        # First check for the essential scheduling section.
+        if 'scheduling' not in self.cfg:
+            raise SuiteConfigError("ERROR: missing [scheduling] section.")
+        if 'dependencies' not in self.cfg['scheduling']:
+            raise SuiteConfigError(
+                "ERROR: missing [scheduling][[dependencies]] section.")
+        # (The check that 'graph' is definied is below).
+        # The two runahead limiting schemes are mutually exclusive.
+        rlim = self.cfg['scheduling'].get('runahead limit', None) 
+        mact = self.cfg['scheduling'].get('max active cycle points', None)
+        if rlim is not None and mact is not None:
+            raise SuiteConfigError(
+                "ERROR: use 'runahead limit' OR "
+                "'max active cycle points', not both")
+
+        # Override the suite defn with an initial point from the CLI.
+        if cli_initial_point_string is not None:
             self.cfg['scheduling']['initial cycle point'] = (
-                self._cli_initial_point_string)
+                cli_initial_point_string)
 
         dependency_map = self.cfg.get('scheduling', {}).get(
             'dependencies', {})
@@ -276,28 +294,35 @@ class config( object ):
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
 
-        initial_point = None
-        if self.cfg['scheduling']['initial cycle point'] is not None:
-            initial_point = get_point(
-                self.cfg['scheduling']['initial cycle point']).standardise()
-            self.cfg['scheduling']['initial cycle point'] = str(initial_point)
+        # Running in UTC time? (else just use the system clock)
+        flags.utc = self.cfg['cylc']['UTC mode']
+        # Capture cycling mode
+        flags.cycling_mode = self.cfg['scheduling']['cycling mode']
 
-        self.cli_initial_point = get_point(self._cli_initial_point_string)
-        if self.cli_initial_point is not None:
-            self.cli_initial_point.standardise()
-
-        self.initial_point = self.cli_initial_point or initial_point
-        if self.initial_point is None:
+        # Initial point from suite definition (or CLI override above).
+        icp = self.cfg['scheduling']['initial cycle point']
+        if icp is None:
             raise SuiteConfigError(
                 "This suite requires an initial cycle point.")
+        if icp == "now":
+            icp = get_current_time_string()
+        self.initial_point = get_point(icp).standardise()
+        self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
+        if cli_start_point_string:
+            # Warm start from a point later than initial point.
+            if cli_start_point_string == "now":
+                cli_start_point_string = get_current_time_string()
+            cli_start_point = get_point(cli_start_point_string).standardise()
+            self.start_point = cli_start_point
         else:
-            self.initial_point.standardise()
+            # Cold start.
+            self.start_point = self.initial_point
 
         # Validate initial cycle point against any constraints
         if self.cfg['scheduling']['initial cycle point constraints']:
             valid_icp = False
             for entry in self.cfg['scheduling']['initial cycle point constraints']:
-                possible_pt = get_point_relative(entry, initial_point).standardise()
+                possible_pt = get_point_relative(entry, self.initial_point).standardise()
                 if self.initial_point == possible_pt:
                     valid_icp = True
                     break
@@ -356,13 +381,7 @@ class config( object ):
                     str(self.cfg['scheduling']['final cycle point constraints']))
                     )
 
-        self.start_point = (
-            get_point(self._cli_start_point_string) or self.initial_point)
-        if self.start_point is not None:
-            self.start_point.standardise()
-
-        # Parse clock-trigger offsets and external trigger messages and replace
-        # families with members.
+        # Parse special task cycle point offsets, and replace family names.
         if flags.verbose:
             print "Parsing [special tasks]"
         for type in self.cfg['scheduling']['special tasks']:
@@ -370,7 +389,7 @@ class config( object ):
             extn = ''
             for item in self.cfg['scheduling']['special tasks'][type]:
                 name = item
-                if type == 'external-triggered':
+                if type == 'external-trigger':
                     m = re.match(EXT_TRIGGER_RE, item)
                     if m is None:
                         raise SuiteConfigError(
@@ -379,7 +398,7 @@ class config( object ):
                     name, ext_trigger_msg = m.groups()
                     extn = "(" + ext_trigger_msg + ")"
   
-                elif type == 'clock-triggered':
+                elif type in ['clock-trigger', 'clock-expire']:
                     m = re.match(CLOCK_OFFSET_RE, item)
                     if m is None:
                         raise SuiteConfigError(
@@ -388,13 +407,18 @@ class config( object ):
                     if (self.cfg['scheduling']['cycling mode'] !=
                             Calendar.MODE_GREGORIAN):
                         raise SuiteConfigError(
-                            "ERROR: clock-triggered tasks require " +
-                            "[scheduling]cycling mode=%s" %
-                            Calendar.MODE_GREGORIAN
+                            "ERROR: %s tasks require "
+                            "[scheduling]cycling mode=%s" % (
+                                type, Calendar.MODE_GREGORIAN)
                         )
                     name, offset_string = m.groups()
                     if not offset_string:
                         offset_string = "PT0M"
+                    if flags.verbose:
+                        if offset_string.startswith("-"):
+                                print >> sys.stderr, (
+                                    "WARNING: %s offsets are "
+                                    "normally positive: %s" % (type, item))
                     offset_converted_from_prev = False
                     try:
                         float(offset_string)
@@ -405,7 +429,7 @@ class config( object ):
                         # Backward-compatibility for a raw float number of hours.
                         set_syntax_version(
                             VERSION_PREV,
-                            "clock-triggered=%s: integer offset" % item
+                            "%s=%s: integer offset" % (type, item)
                         )
                         if get_interval_cls().get_null().TYPE == ISO8601_CYCLING_TYPE:
                             seconds = int(float(offset_string)*3600)
@@ -415,13 +439,13 @@ class config( object ):
                         offset_interval = get_interval(offset_string).standardise()
                     except IntervalParsingError as exc:
                         raise SuiteConfigError(
-                            "ERROR: Illegal clock-trigger spec: %s" % offset_string
+                            "ERROR: Illegal %s spec: %s" % (type, offset_string)
                         )
                     else:
                         if not offset_converted_from_prev:
                             set_syntax_version(
                                 VERSION_NEW,
-                                "clock-triggered=%s: ISO 8601 offset" % item
+                                "%s=%s: ISO 8601 offset" % (type, item)
                             )
                     extn = "(" + offset_string + ")"
 
@@ -433,13 +457,17 @@ class config( object ):
                             # (sub-family)
                             continue
                         result.append(member + extn)
-                        if type == 'clock-triggered':
+                        if type == 'clock-trigger':
                             self.clock_offsets[member] = offset_interval
-                        if type == 'external-triggered':
+                        if type == 'clock-expire':
+                            self.expiration_offsets[member] = offset_interval
+                        if type == 'external-trigger':
                             self.ext_triggers[member] = ext_trigger_msg
-                elif type == 'clock-triggered':
+                elif type == 'clock-trigger':
                     self.clock_offsets[name] = offset_interval
-                elif type == 'external-triggered':
+                elif type == 'clock-expire':
+                    self.expiration_offsets[name] = offset_interval
+                elif type == 'external-trigger':
                     self.ext_triggers[name] = self.dequote(ext_trigger_msg)
 
             self.cfg['scheduling']['special tasks'][type] = result
@@ -588,7 +616,7 @@ class config( object ):
             try:
                 vfcp = get_point_relative(
                     self.cfg['visualization']['final cycle point'],
-                    initial_point).standardise()
+                    self.initial_point).standardise()
             except ValueError:
                 vfcp = get_point(
                     self.cfg['visualization']['final cycle point']).standardise()
@@ -1067,19 +1095,22 @@ class config( object ):
             for name in self.cfg['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.runtime['descendants']:
-                        # any family triggers have have been replaced with members by now.
-                        print >> sys.stderr, '  WARNING: task "' + name + '" is not used in the graph.'
-
+                        # Family triggers have been replaced with members.
+                        print >> sys.stderr, (
+                            '  WARNING: task "%s" not used in the graph.' % (
+                                name))
         # Check declared special tasks are valid.
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
-                if task_type in ['clock-triggered', 'external-triggered']:
+                if task_type in ['clock-trigger', 'clock-expire',
+                                 'external-trigger']:
                     name = re.sub('\(.*\)','',name)
                 if not TaskID.is_valid_name(name):
                     raise SuiteConfigError(
                         'ERROR: Illegal %s task name: %s' % (task_type, name))
-                if name not in self.taskdefs and name not in self.cfg['runtime']:
-                    msg = '%s task "%s" is not defined.' % (task_type % name)
+                if (name not in self.taskdefs and
+                    name not in self.cfg['runtime']):
+                    msg = '%s task "%s" is not defined.' % (task_type, name)
                     if self.strict:
                         raise SuiteConfigError("ERROR: " + msg)
                     else:
@@ -1711,6 +1742,15 @@ class config( object ):
                     for fam in copy(self.closed_families):
                         if fam in members[node]:
                             self.closed_families.remove(fam)
+       
+        n_points = self.cfg['visualization']['number of cycle points']
+
+        graph_id = (start_point_string, stop_point_string, set(group_nodes),
+                    set(ungroup_nodes), ungroup_recursive, group_all, 
+                    ungroup_all, check_suicide, set(self.closed_families),
+                    set(self.edges), n_points)
+        if graph_id == self._last_graph_raw_id:
+            return self._last_graph_raw_edges
 
         # Now define the concrete graph edges (pairs of nodes) for plotting.
         gr_edges = {}
@@ -1719,7 +1759,6 @@ class config( object ):
 
         # For the computed stop point, we store n_points of each sequence,
         # and then cull later to the first n_points over all sequences.
-        n_points = self.cfg['visualization']['number of cycle points']
         if stop_point_string is not None:
             stop_point = get_point(stop_point_string)
         else:
@@ -1794,6 +1833,8 @@ class config( object ):
             # Flatten nested list.
             edges = [i for sublist in values for i in sublist]
 
+        self._last_graph_raw_id = graph_id
+        self._last_graph_raw_edges = edges 
         return edges
 
     def get_graph(self, start_point_string=None, stop_point_string=None,
@@ -2083,6 +2124,8 @@ class config( object ):
 
         if name in self.clock_offsets:
             taskd.clocktrigger_offset = self.clock_offsets[name]
+        if name in self.expiration_offsets:
+            taskd.expiration_offset = self.expiration_offsets[name]
         if name in self.ext_triggers:
             taskd.external_triggers.append(self.ext_triggers[name])
 

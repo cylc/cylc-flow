@@ -18,6 +18,7 @@
 
 from copy import deepcopy
 import datetime
+import time
 import gobject
 import itertools
 import threading
@@ -64,7 +65,8 @@ class TreeUpdater(threading.Thread):
         self._prev_data = {}
         self._prev_fam_data = {}
 
-        self.autoexpand_states = [ 'queued', 'ready', 'submitted', 'running', 'failed' ]
+        self.autoexpand_states = [
+            'queued', 'ready', 'expired', 'submitted', 'running', 'failed']
         self._last_autoexpand_me = []
         self.ttree_paths = ttree_paths  # Dict of paths vs all descendant node states
         self.should_group_families = ("text" not in self.cfg.ungrouped_views)
@@ -233,6 +235,7 @@ class TreeUpdater(threading.Thread):
                     for dt in tkeys:
                         t_info[dt] = ""
                         t_info['mean_total_elapsed_time_string'] = ""
+                        t_info['progress'] = 0
                 else:
                     meant = summary[id].get('mean total elapsed time')
                     tstart = summary[id].get('started_time')
@@ -257,13 +260,24 @@ class TreeUpdater(threading.Thread):
                                 # Remove decimal fraction seconds.
                                 t_info[dt] = t_info[dt].split('.')[0]
 
+                    # Compute percent progress.
+                    if (isinstance(tstart, float) and (isinstance(meant, float) or
+                        isinstance(meant, int))):
+                        tetc_unix = tstart + meant
+                        tnow = time.time()
+                        if tnow > tetc_unix:
+                            t_info['progress'] = 100
+                        else:
+                            t_info['progress'] = int(100*(tnow - tstart)/(tetc_unix - tstart))
+                    else:
+                        t_info['progress'] = 0
+
                     if (t_info['finished_time_string'] is None and
                             isinstance(tstart, float) and
                             (isinstance(meant, float) or
                              isinstance(meant, int))):
                         # Task not finished, but has started and has a meant;
                         # so we can compute an expected time of completion.
-                        tetc_unix = tstart + meant
                         tetc_string = (
                             self._id_tetc_cache.get(id, {}).get(tetc_unix))
                         if tetc_string is None:
@@ -301,8 +315,7 @@ class TreeUpdater(threading.Thread):
                             t_info[dt] = "*"
 
                     if estimated_t_finish:
-                        # TODO - this markup probably affects sort order?
-                        t_info['finished_time_string'] = "<i>%s?</i>" % (
+                        t_info['finished_time_string'] = "%s?" % (
                                 t_info['finished_time_string'])
     
                 # Use "*" (or "" for family rows) until slot is populated
@@ -339,7 +352,7 @@ class TreeUpdater(threading.Thread):
                     t_info['started_time_string'],
                     t_info['finished_time_string'],
                     t_info['mean_total_elapsed_time_string'],
-                    message, icon
+                    message, icon, t_info['progress']
                 ]
                 dest[point_string][name] = new_info
 

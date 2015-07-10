@@ -1,0 +1,5 @@
+CREATE TABLE broadcasts(time TEXT, change TEXT, point TEXT, namespace TEXT, key TEXT, value TEXT);
+CREATE TABLE task_events(name TEXT, cycle TEXT, time TEXT, submit_num INTEGER, event TEXT, message TEXT, misc TEXT);
+CREATE TABLE task_job_logs(cycle TEXT, name TEXT, submit_num INTEGER, filename TEXT, location TEXT, mtime TEXT, size INTEGER, PRIMARY KEY(cycle, name, submit_num, filename));
+CREATE TABLE task_jobs(cycle TEXT, name TEXT, submit_num INTEGER, is_manual_submit INTEGER, try_num INTEGER, time_submit TEXT, time_submit_exit TEXT, submit_status INTEGER, time_run TEXT, time_run_exit TEXT, run_signal TEXT, run_status INTEGER, user_at_host TEXT, batch_sys_name TEXT, batch_sys_job_id TEXT);
+CREATE TABLE task_states(name TEXT, cycle TEXT, time_created TEXT, time_updated TEXT, submit_num INTEGER, is_manual_submit INTEGER, try_num INTEGER, host TEXT, submit_method TEXT, submit_method_id TEXT, status TEXT, PRIMARY KEY(name, cycle));

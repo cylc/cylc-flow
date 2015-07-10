@@ -1,0 +1,20 @@
+#!/bin/bash
+set -eu
+NAME="$1"
+EVENT="$2"
+cd "${CYLC_SUITE_RUN_DIR}"
+FILE="${NAME}-${EVENT}.out"
+HELLO='hello'
+if [[ -e "${FILE}" && "$(<"${FILE}")" == "${HELLO}" ]]; then
+    # 3rd attempt
+    cat "${FILE}"
+    rm -f "${FILE}"
+    exit 0
+elif [[ -e "${FILE}" ]]; then
+    # 2nd attempt
+    echo "${HELLO}" >"${FILE}"
+else
+    # 1st attempt
+    touch "${FILE}"
+fi
+exit 1

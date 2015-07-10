@@ -15,29 +15,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# basic tests for suite database contents
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 5
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE simple
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-db-schema
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db ".schema" > schema
-cmp_ok $TEST_SOURCE_DIR/simple/db-schema schema
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-db-states
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select name, cycle, status from task_states order by name" > states
-cmp_ok $TEST_SOURCE_DIR/simple/db-states states
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-db-events
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select name, cycle, event, message, misc from task_events" > events
-cmp_ok $TEST_SOURCE_DIR/simple/db-events events
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+# Suite database content, a basic non-cycling suite of 3 tasks
+. "$(dirname "$0")/test_header"
+set_test_number 7
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
+
+DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
+
+NAME='schema.out'
+sqlite3 "${DB_FILE}" ".schema" | sort >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-states.out'
+sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-events.out'
+sqlite3 "${DB_FILE}" 'SELECT name, cycle, event, message, misc FROM task_events' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-job-logs.out'
+sqlite3 "${DB_FILE}" \
+    'SELECT cycle, name, submit_num, filename
+     FROM task_job_logs ORDER BY name, filename' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-jobs.out'
+sqlite3 "${DB_FILE}" \
+    'SELECT cycle, name, submit_num, try_num, submit_status, run_status,
+            user_at_host, batch_sys_name
+     FROM task_jobs ORDER BY name' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+purge_suite "${SUITE_NAME}"
+exit

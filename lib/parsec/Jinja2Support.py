@@ -82,7 +82,7 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None ):
     for filterdir in usedfdirs:
         sys.path.append( os.path.abspath( filterdir ))
         for f in glob.glob( os.path.join( filterdir, '*.py' )):
-            fname = os.path.basename( f ).rstrip( '.py' )
+            fname = os.path.splitext(os.path.basename(f))[0]
             # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
             m = __import__( fname )
             env.filters[ fname ] = getattr( m, fname )

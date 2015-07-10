@@ -41,7 +41,6 @@ import cylc.flags
 from Pyro.errors import NamingError
 from logging import WARNING, DEBUG, INFO
 
-import cylc.rundb
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
@@ -53,16 +52,16 @@ from cylc.network.ext_trigger import ExtTriggerServer
 class TaskPool(object):
     """Task pool of a suite."""
 
-    def __init__(
-            self, suite, db, view_db, stop_point, config, pyro, log, run_mode):
+    def __init__(self, suite, pri_dao, pub_dao, stop_point, config, pyro, log,
+                 run_mode):
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.qconfig = config.cfg['scheduling']['queues']
         self.stop_point = stop_point
         self.reconfiguring = False
-        self.db = db
-        self.view_db = view_db
+        self.pri_dao = pri_dao
+        self.pub_dao = pub_dao
 
         self.custom_runahead_limit = config.get_custom_runahead_limit()
         self.max_future_offset = None
@@ -170,7 +169,7 @@ class TaskPool(object):
         # restart when all tasks are initially loaded into the runahead pool).
         for itask_id_maps in self.runahead_pool.values():
             for itask in itask_id_maps.values():
-                if itask.state.is_currently('failed', 'succeeded'):
+                if itask.state.is_currently('failed', 'succeeded', 'expired'):
                     self.release_runahead_task(itask)
                     self.rhpool_changed = True
 
@@ -181,7 +180,7 @@ class TaskPool(object):
                 self.get_tasks_by_point(incl_runahead=True).items()):
             has_unfinished_itasks = False
             for itask in itasks:
-                if not itask.state.is_currently('failed', 'succeeded'):
+                if not itask.state.is_currently('failed', 'succeeded', 'expired'):
                     has_unfinished_itasks = True
                     break
             if not points and not has_unfinished_itasks:
@@ -346,7 +345,6 @@ class TaskPool(object):
         self.update_rhpool_list()
         return self.rhpool_list
 
-
     def get_tasks_by_point(self, incl_runahead):
         """Return a map of task proxies by cycle point."""
         point_itasks = {}
@@ -397,8 +395,7 @@ class TaskPool(object):
                 if itask.manual_trigger or itask.ready_to_run():
                     # queue the task
                     itask.set_status('queued')
-                    if itask.manual_trigger:
-                        itask.reset_manual_trigger()
+                    itask.reset_manual_trigger()
 
         # 2) submit queued tasks if manually forced or not queue-limited
         readytogo = []
@@ -425,8 +422,7 @@ class TaskPool(object):
                     # manual release, or no limit, or not currently limited
                     n_release -= 1
                     readytogo.append(itask)
-                    if itask.manual_trigger:
-                        itask.reset_manual_trigger()
+                    itask.reset_manual_trigger()
                 # else leaved queued
 
         self.log.debug('%d task(s) de-queued' % len(readytogo))
@@ -592,23 +588,11 @@ class TaskPool(object):
                     # if currently retrying, retain the old retry delay
                     # list, to avoid extra retries (the next instance
                     # of the task will still be as newly configured)
-                    if itask.state.is_currently('retrying'):
-                        new_task.retry_delay = itask.retry_delay
-                        new_task.retry_delays = itask.retry_delays
-                        new_task.retry_delay_timer_timeout = (
-                            itask.retry_delay_timer_timeout)
-                    elif itask.state.is_currently('submit-retrying'):
-                        new_task.sub_retry_delay = itask.sub_retry_delay
-                        new_task.sub_retry_delays = itask.sub_retry_delays
-                        new_task.sub_retry_delays_orig = (
-                            itask.sub_retry_delays_orig)
-                        new_task.sub_retry_delay_timer_timeout = (
-                            itask.sub_retry_delay_timer_timeout)
-
-                    new_task.try_number = itask.try_number
-                    new_task.sub_try_number = itask.sub_try_number
+                    new_task.run_try_state = itask.run_try_state
+                    new_task.sub_try_state = itask.sub_try_state
                     new_task.submit_num = itask.submit_num
-                    new_task.db_queue = itask.db_queue
+                    new_task.db_inserts_map = itask.db_inserts_map
+                    new_task.db_updates_map = itask.db_updates_map
 
                     self.remove(itask, '(suite definition reload)')
                     self.add_to_runahead_pool(new_task)
@@ -639,8 +623,21 @@ class TaskPool(object):
 
     def no_active_tasks(self):
         for itask in self.get_tasks():
-            if itask.state.is_currently('running', 'submitted'):
+            if (itask.state.is_currently('running', 'submitted') or
+                    itask.event_handler_try_states):
                 return False
+        return True
+
+    def has_unkillable_tasks_only(self):
+        """Used to identify if a task pool contains unkillable tasks.
+
+        Return True if all running and submitted tasks in the pool have had
+        kill operations fail, False otherwise.
+        """
+        for itask in self.get_tasks():
+            if itask.state.is_currently('running', 'submitted'):
+                if not itask.kill_failed:
+                    return False
         return True
 
     def poll_tasks(self, ids=None):
@@ -734,73 +731,57 @@ class TaskPool(object):
         for itask in self.get_tasks():
             itask.process_incoming_messages()
 
+    def process_event_handler_retries(self):
+        """Retry, where applicable, any failed task event handlers."""
+        for itask in self.get_tasks():
+            itask.process_event_handler_retries()
+
     def process_queued_db_ops(self):
         """Handle queued db operations for each task proxy."""
-        state_recorders = []
-        state_updaters = []
-        event_recorders = []
-        other = []
-
         for itask in self.get_all_tasks():
             # (runahead pool tasks too, to get new state recorders).
-            for oper in itask.get_db_ops():
-                if isinstance(oper, cylc.rundb.UpdateObject):
-                    state_updaters += [oper]
-                elif isinstance(oper, cylc.rundb.RecordStateObject):
-                    state_recorders += [oper]
-                elif isinstance(oper, cylc.rundb.RecordEventObject):
-                    event_recorders += [oper]
-                else:
-                    other += [oper]
+            for table_name, db_inserts in sorted(itask.db_inserts_map.items()):
+                while db_inserts:
+                    db_insert = db_inserts.pop(0)
+                    db_insert.update({
+                        "name": itask.tdef.name,
+                        "cycle": str(itask.point),
+                    })
+                    if "submit_num" not in db_insert:
+                        db_insert["submit_num"] = itask.submit_num
+                    self.pri_dao.add_insert_item(table_name, db_insert)
+                    self.pub_dao.add_insert_item(table_name, db_insert)
 
-        # precedence is record states > update_states > record_events >
-        # anything_else
-        db_ops = state_recorders + state_updaters + event_recorders + other
-        # compact the set of operations
-        if len(db_ops) > 1:
-            db_opers = [db_ops[0]]
-            for i in range(1, len(db_ops)):
-                if db_opers[-1].s_fmt == db_ops[i].s_fmt:
-                    if isinstance(db_opers[-1], cylc.rundb.BulkDBOperObject):
-                        db_opers[-1].add_oper(db_ops[i])
-                    else:
-                        new_oper = cylc.rundb.BulkDBOperObject(db_opers[-1])
-                        new_oper.add_oper(db_ops[i])
-                        db_opers.pop(-1)
-                        db_opers += [new_oper]
-                else:
-                    db_opers += [db_ops[i]]
-        else:
-            db_opers = db_ops
+            for table_name, db_updates in sorted(itask.db_updates_map.items()):
+                while db_updates:
+                    set_args = db_updates.pop(0)
+                    where_args = {
+                        "cycle": str(itask.point), "name": itask.tdef.name}
+                    if "submit_num" not in set_args:
+                        where_args["submit_num"] = itask.submit_num
+                    self.pri_dao.add_update_item(
+                        table_name, set_args, where_args)
+                    self.pub_dao.add_update_item(
+                        table_name, set_args, where_args)
 
         # record any broadcast settings to be dumped out
         bcast = BroadcastServer.get_inst()
-        for db_oper in bcast.get_db_ops():
-            db_opers += [db_oper]
+        table_name = self.pri_dao.TABLE_BROADCASTS
+        while bcast.db_inserts:
+            db_insert = bcast.db_inserts.pop(0)
+            self.pri_dao.add_insert_item(table_name, db_insert)
+            self.pub_dao.add_insert_item(table_name, db_insert)
 
-        for db_oper in db_opers:
-            if self.db.c.is_alive():
-                self.db.run_db_op(db_oper)
-            elif self.db.c.exception:
-                self.view_db.close()
-                raise self.db.c.exception
-            else:
-                raise SchedulerError(
-                    'An unexpected error occurred while writing to the ' +
-                    'suite database')
-
-        # we should filter down to only recording the utility relevent
-        # entries in the viewable database following database refactoring
-        for db_oper in db_opers:
-            if self.view_db.c.is_alive():
-                self.view_db.run_db_op(db_oper)
-            elif self.view_db.c.exception:
-                self.db.close()
-                raise self.view_db.c.exception
-            else:
-                raise SchedulerError(
-                    'An unexpected error occurred while writing to the ' +
-                    'viewable database')
+        # Previously, we used a separate thread for database writes. This has
+        # now been removed. For the private database, there is no real
+        # advantage in using a separate thread, because we want it to be like
+        # the state dump - always in sync with what is current. For the public
+        # database, which does not need to be fully in sync, there is some
+        # advantage of using a separate thread/process, if writing to it
+        # becomes a bottleneck. At the moment, there is no evidence that this
+        # is a bottleneck, so it is better to keep the logic simple.
+        self.pri_dao.execute_queued_items()
+        self.pub_dao.execute_queued_items()
 
     def force_spawn(self, itask):
         """Spawn successor of itask."""
@@ -856,28 +837,26 @@ class TaskPool(object):
         prerequisites.  Each task proxy knows its "cleanup cutoff" from the
         graph. For example:
           graph = 'foo[T-6]=>bar \n foo[T-12]=>baz'
-        implies foo's cutoff is T+12: if foo has succeeded and spawned,
-        it can be removed if no unsatisfied task proxy exists with
+        implies foo's cutoff is T+12: if foo has succeeded (or expired) and
+        spawned, it can be removed if no unsatisfied task proxy exists with
         T<=T+12. Note this only uses information about the cycle point of
         downstream dependents - if we used specific IDs instead spent
         tasks could be identified and removed even earlier).
 
         """
-
         # first find the cycle point of the earliest unsatisfied task
         cutoff = self._get_earliest_unsatisfied_point()
-
         if not cutoff:
             return
 
         # now check each succeeded task against the cutoff
         spent = []
         for itask in self.get_tasks():
-            if not itask.state.is_currently('succeeded') or \
-                    not itask.state.has_spawned() or \
-                    itask.cleanup_cutoff is None:
-                continue
-            if cutoff > itask.cleanup_cutoff:
+            if (itask.state.is_currently('succeeded', 'expired') and
+                    itask.state.has_spawned() and
+                    not itask.event_handler_try_states and
+                    itask.cleanup_cutoff is not None and
+                    cutoff > itask.cleanup_cutoff):
                 spent.append(itask)
         for itask in spent:
             self.remove(itask)
@@ -953,11 +932,12 @@ class TaskPool(object):
         for itask in self.get_all_tasks():
             if self.stop_point is None:
                 # Don't if any unsucceeded task exists.
-                if not itask.state.is_currently('succeeded'):
+                if (not itask.state.is_currently('succeeded', 'expired') or
+                        itask.event_handler_try_states):
                     shutdown = False
                     break
             elif (itask.point <= self.stop_point and
-                    not itask.state.is_currently('succeeded')):
+                    not itask.state.is_currently('succeeded', 'expired')):
                 # Don't if any unsucceeded task exists < stop point...
                 if itask.identity not in self.held_future_tasks:
                     # ...unless it has a future trigger extending > stop point.

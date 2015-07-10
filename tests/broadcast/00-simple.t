@@ -16,16 +16,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test broadcasts
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+. "$(dirname "$0")/test_header"
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run --debug --reference-test "${SUITE_NAME}"
+
+DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
+NAME='select-broadcasts.out'
+sqlite3 "${DB_FILE}" \
+    'SELECT change, point, namespace, key, value FROM broadcasts
+     ORDER BY time, change, point, namespace, key' >"${NAME}"
+cmp_ok "${NAME}" <<'__SELECT__'
++|*|root|[environment]BCAST|ROOT
++|2010080800|foo|[environment]BCAST|FOO
++|*|bar|[environment]BCAST|BAR
++|2010080900|baz|[environment]BCAST|BAZ
++|2010080900|qux|[environment]BCAST|QUX
+-|2010080900|qux|[environment]BCAST|QUX
++|*|wibble|[environment]BCAST|WIBBLE
+-|*|wibble|[environment]BCAST|WIBBLE
++|*|ENS|[environment]BCAST|ENS
++|*|ENS1|[environment]BCAST|ENS1
++|2010080900|m2|[environment]BCAST|M2
++|*|m7|[environment]BCAST|M7
++|*|m8|[environment]BCAST|M8
++|*|m9|[environment]BCAST|M9
+-|2010080800|foo|[environment]BCAST|FOO
+__SELECT__
+
+purge_suite "${SUITE_NAME}"
+exit

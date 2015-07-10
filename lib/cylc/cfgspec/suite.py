@@ -35,9 +35,12 @@ from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
 from cylc.cycling.integer import REC_INTERVAL as REC_INTEGER_INTERVAL
 
+from cylc.cfgspec.utils import coerce_interval
+from cylc.cfgspec.utils import coerce_interval_list
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+
 "Define all legal items and values for cylc suite definition files."
 
-interval_parser = DurationParser()
 
 def _coerce_cycleinterval( value, keys, args ):
     """Coerce value to a cycle interval."""
@@ -66,6 +69,9 @@ def _coerce_cycleinterval( value, keys, args ):
 
 def _coerce_cycletime( value, keys, args ):
     """Coerce value to a cycle point."""
+    if value == "now":
+        # Handle this later in config.py when the suite UTC mode is known.
+        return value
     value = _strip_and_unquote( keys, value )
     if re.match(r"\d+$", value):
         # Could be an old date-time cycle point format, or integer format.
@@ -101,7 +107,7 @@ def _coerce_cycletime_format( value, keys, args ):
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
-    if "/" in value or ":" in value:
+    if "/" in value:
         raise IllegalValueError("cycle point format", keys, value)
     if "%" in value:
         try:
@@ -153,51 +159,6 @@ def _coerce_final_cycletime( value, keys, args ):
     return value
 
 
-def coerce_interval(value, keys, args, back_comp_unit_factor=1,
-                    check_syntax_version=True):
-    """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
-    value = _strip_and_unquote( keys, value )
-    try:
-        backwards_compat_value = float(value) * back_comp_unit_factor
-    except (TypeError, ValueError):
-        pass
-    else:
-        if check_syntax_version:
-            set_syntax_version(VERSION_PREV,
-                               "integer interval: %s" % itemstr(
-                                   keys[:-1], keys[-1], value))
-        return backwards_compat_value
-    try:
-        interval = interval_parser.parse(value)
-    except ValueError:
-        raise IllegalValueError("ISO 8601 interval", keys, value)
-    if check_syntax_version:
-        try:
-            set_syntax_version(VERSION_NEW,
-                               "ISO 8601 interval: %s" % itemstr(
-                                   keys[:-1], keys[-1], value))
-        except SyntaxVersionError as exc:
-            raise Exception(str(exc))
-    days, seconds = interval.get_days_and_seconds()
-    seconds += days * Calendar.default().SECONDS_IN_DAY
-    return seconds
-
-
-def coerce_interval_list(value, keys, args, back_comp_unit_factor=1,
-                         check_syntax_version=True):
-    """Coerce a list of intervals (or numbers: back-comp) into seconds."""
-    values_list = _strip_and_unquote_list( keys, value )
-    type_converter = (
-        lambda v: coerce_interval(
-            v, keys, args,
-            back_comp_unit_factor=back_comp_unit_factor,
-            check_syntax_version=check_syntax_version,
-        )
-    )
-    seconds_list = _expand_list( values_list, keys, type_converter, True )
-    return seconds_list
-
-
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
@@ -218,7 +179,7 @@ SPEC = {
     'description'                             : vdr( vtype='string', default="" ),
     'URL'                                     : vdr( vtype='string', default="" ),
     'cylc' : {
-        'UTC mode'                            : vdr( vtype='boolean', default=False),
+        'UTC mode'                            : vdr( vtype='boolean', default=GLOBAL_CFG.get( ['cylc','UTC mode'] )),
         'cycle point format'                  : vdr( vtype='cycletime_format', default=None),
         'cycle point num expanded year digits': vdr( vtype='integer', default=0),
         'cycle point time zone'               : vdr( vtype='cycletime_time_zone', default=None),
@@ -230,15 +191,15 @@ SPEC = {
             '__MANY__'                        : vdr( vtype='string' ),
             },
         'event hooks' : {
-            'startup handler'                 : vdr( vtype='string_list', default=[] ),
-            'timeout handler'                 : vdr( vtype='string_list', default=[] ),
-            'shutdown handler'                : vdr( vtype='string_list', default=[] ),
-            'timeout'                         : vdr( vtype='interval_minutes'  ),
+            'startup handler'                 : vdr( vtype='string_list', default=GLOBAL_CFG.get( ['cylc','event hooks', 'startup handler'] ) ),
+            'timeout handler'                 : vdr( vtype='string_list', default=GLOBAL_CFG.get( ['cylc','event hooks', 'timeout handler'] ) ),
+            'shutdown handler'                : vdr( vtype='string_list', default=GLOBAL_CFG.get( ['cylc','event hooks', 'shutdown handler'] ) ),
+            'timeout'                         : vdr( vtype='interval_minutes', default=GLOBAL_CFG.get( ['cylc','event hooks', 'timeout'] ) ),
             'reset timer'                     : vdr( vtype='boolean', default=True ),
             'abort if startup handler fails'  : vdr( vtype='boolean', default=False ),
             'abort if shutdown handler fails' : vdr( vtype='boolean', default=False ),
             'abort if timeout handler fails'  : vdr( vtype='boolean', default=False ),
-            'abort on timeout'                : vdr( vtype='boolean', default=False ),
+            'abort on timeout'                : vdr( vtype='boolean', default=GLOBAL_CFG.get( ['cylc','event hooks', 'abort on timeout'] ) ),
             },
         'simulation mode' : {
             'disable suite event hooks'       : vdr( vtype='boolean', default=True ),
@@ -261,6 +222,7 @@ SPEC = {
         'final cycle point'                   : vdr(vtype='final_cycletime'),
         'initial cycle point constraints'     : vdr(vtype='string_list', default=[]),
         'final cycle point constraints'       : vdr(vtype='string_list', default=[]),
+        'hold after point'                    : vdr(vtype='cycletime'),
         'cycling mode'                        : vdr(vtype='string', default=Calendar.MODE_GREGORIAN, options=Calendar.MODES.keys() + ["integer"] ),
         'runahead limit'                      : vdr(vtype='cycleinterval' ),
         'max active cycle points'             : vdr(vtype='integer', default=3),
@@ -274,8 +236,9 @@ SPEC = {
                 },
             },
         'special tasks' : {
-            'clock-triggered'                 : vdr(vtype='string_list', default=[]),
-            'external-triggered'              : vdr(vtype='string_list', default=[]),
+            'clock-trigger'                   : vdr(vtype='string_list', default=[]),
+            'external-trigger'                : vdr(vtype='string_list', default=[]),
+            'clock-expire'                    : vdr(vtype='string_list', default=[]),
             'sequential'                      : vdr(vtype='string_list', default=[]),
             'start-up'                        : vdr(vtype='string_list', default=[]),
             'cold-start'                      : vdr(vtype='string_list', default=[]),
@@ -335,8 +298,12 @@ SPEC = {
                 'host'                        : vdr( vtype='string' ),
                 'owner'                       : vdr( vtype='string' ),
                 'suite definition directory'  : vdr( vtype='string' ),
+                'retrieve job logs'           : vdr( vtype='boolean', default=False ),
+                'retrieve job logs max size'  : vdr( vtype='string' ),
+                'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
                 },
             'event hooks' : {
+                'expired handler'             : vdr( vtype='string_list', default=[] ),
                 'submitted handler'           : vdr( vtype='string_list', default=[] ),
                 'started handler'             : vdr( vtype='string_list', default=[] ),
                 'succeeded handler'           : vdr( vtype='string_list', default=[] ),
@@ -350,6 +317,16 @@ SPEC = {
                 'execution timeout handler'   : vdr( vtype='string_list', default=[] ),
                 'execution timeout'           : vdr( vtype='interval_minutes'),
                 'reset timer'                 : vdr( vtype='boolean', default=False ),
+                },
+            'events' : {
+                'handlers'                    : vdr( vtype='string_list', default=[] ),
+                'handler events'              : vdr( vtype='string_list', default=[] ),
+                'handler retry delays'        : vdr( vtype='interval_minutes_list', default=[] ),
+                'mail events'                 : vdr( vtype='string_list', default=[] ),
+                'mail from'                   : vdr( vtype='string' ),
+                'mail retry delays'           : vdr( vtype='interval_minutes_list', default=[] ),
+                'mail smtp'                   : vdr( vtype='string' ),
+                'mail to'                     : vdr( vtype='string' ),
                 },
             'suite state polling' : {
                 'user'                        : vdr( vtype='string' ),
@@ -433,6 +410,16 @@ def upg( cfg, descr ):
             ['runtime', '__MANY__', old],
             ['runtime', '__MANY__', new],
             silent=True)
+    u.deprecate(
+        '6.5.0',
+        ['scheduling', 'special tasks', 'clock-triggered'],
+        ['scheduling', 'special tasks', 'clock-trigger'],
+    )
+    u.deprecate(
+        '6.5.0',
+        ['scheduling', 'special tasks', 'external-triggered'],
+        ['scheduling', 'special tasks', 'external-trigger'],
+    )
     u.upgrade()
 
     # Force pre cylc-6 "cycling = Yearly" type suites to the explicit

@@ -99,7 +99,7 @@ determine what happened to them while the suite was down."""
     def get_state_initial_point_string( self ):
         """Return the initial point string from the state file, if any."""
         return self.get_state_file_info()[0]
-        
+
     def get_state_file_path( self ):
         """Return the state file path that we are restarting from."""
         my_dumper = self.state_dumper
@@ -122,10 +122,10 @@ determine what happened to them while the suite was down."""
         """Return the state file start & stop strings, broadcast, tasks.
 
         The state dump file format is:
-        run mode : <mode> 
+        run mode : <mode>
         time : <time> (<unix time>)
         initial cycle : 2014050100
-        final cycle : (none)
+        final cycle : None
         (dp1   # (Broadcast pickle string)
         .      # (Broadcast pickle string)
         Begin task states
@@ -155,7 +155,7 @@ determine what happened to them while the suite was down."""
                 print ' ', l.rstrip()
             raise Exception(
                 "ERROR, incomplete suite state dump: %s" % file_name)
-       
+
         index = 0
         # run mode : <mode>
         line0 = lines[index].rstrip()
@@ -188,7 +188,7 @@ determine what happened to them while the suite was down."""
                 'ERROR, Illegal state dump line 2 (initial cycle):')
             print >> sys.stderr, ' ', line2
             raise Exception("ERROR: corrupted state dump")
-        if oldstartcycle != '(none)':
+        if oldstartcycle != 'None':
             state_start_string = oldstartcycle
 
         state_stop_string = None
@@ -203,7 +203,7 @@ determine what happened to them while the suite was down."""
             print >> sys.stderr, ' ', line3
             raise Exception("ERROR: corrupted state dump")
 
-        if oldstopcycle != '(none)':
+        if oldstopcycle != 'None':
             state_stop_string = oldstopcycle
 
         # broadcast variables (universal):
@@ -281,7 +281,7 @@ determine what happened to them while the suite was down."""
             else:
                 # reinstate the former start cycle
                 self.start_point = state_start_point
-        
+
         if state_stop_string is not None:
             # the state dump prescribes a stop cycle
             # (else we take whatever the command line or suite.rc file gives us)
@@ -343,13 +343,11 @@ determine what happened to them while the suite was down."""
             task_point_strings.append(point_string)
 
         task_point_strings = list(set(task_point_strings))
-        cycleinfo = {}
 
         print "LOADING data from suite db"
 
-        for point_string in task_point_strings:
-            res = self.db.get_restart_info(point_string)
-            cycleinfo[point_string] = res
+        task_states_data = self.pri_dao.select_task_states_by_cycles(
+            ["submit_num", "try_num", "host"], task_point_strings)
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
         #
         # The state of task prerequisites (satisfied or not) and outputs
@@ -384,10 +382,10 @@ determine what happened to them while the suite was down."""
                 continue
 
             print " +", id
+            task_states_datum = task_states_data.get((name, point_string))
             try:
+                submit_num = task_states_datum.get("submit_num", 0)
                 # startup is True only for a cold start
-                submit_num = cycleinfo[point_string].get(name, 0)
-                
                 itask = self.config.get_task_proxy(
                     name,
                     get_point(point_string),
@@ -430,51 +428,24 @@ determine what happened to them while the suite was down."""
 
             elif itask.state.is_currently('submitted', 'running'):
                 itask.prerequisites.set_all_satisfied()
-                # get user_at_host from run-db
-                user_at_host = None
-                row = self.db.get_task_location(name, point_string)
-                if row and row[0]:
-                    user_at_host = row[0]
-                    self.old_user_at_host_set.add(str(user_at_host))
+                # update the task proxy with submit ID etc.
+                itask.try_number = task_states_datum.get("try_num")
+                itask.user_at_host = task_states_datum.get("host")
+                self.old_user_at_host_set.add(itask.user_at_host)
+                if itask.user_at_host is None:
+                    itask.user_at_host = "localhost"
+                # poll the task
+                try:
+                    itask.poll()
+                except Exception as exc:
+                    print >>sys.stderr, "WARNING: %s: poll failed" % id
+                # update poll timers in case regular polling is configured for itask
+                if '@' in itask.user_at_host:
+                    owner, host = itask.user_at_host.split('@')
                 else:
-                    print >> sys.stderr, (
-                        "WARNING: %s " % id +
-                        "failed to read user@host from run-db!"
-                    )
-
-                # get submit_method_id and try_num from run-db
-                submit_method_id = try_num = None
-                row = self.db.get_task_submit_method_id_and_try(
-                    name, point_string)
-                if row and row[0]:
-                    submit_method_id, try_num = row
-                else:
-                    print >> sys.stderr, (
-                        "WARNING: %s " % id +
-                        "failed to read submit_method_id and try_num from " +
-                        "run-db!"
-                    )
-
-                if None in [ user_at_host, submit_method_id, try_num ]:
-                    print >> sys.stderr, (
-                        "WARNING: cannot determine what happened to %s" % id)
-                else:
-                    # update the task proxy with submit ID etc.
-                    itask.submit_method_id = submit_method_id
-                    itask.try_number = try_num
-                    itask.user_at_host = user_at_host
-                    # poll the task
-                    try:
-                        itask.poll()
-                    except Exception as exc:
-                        print >>sys.stderr, "WARNING: %s: poll failed" % id
-                    # update poll timers in case regular polling is configured for itask
-                    if '@' in user_at_host:
-                        owner, host = user_at_host.split('@')
-                    else:
-                        host = user_at_host
-                    itask.submission_poll_timer.set_host( host, set_timer=True )
-                    itask.execution_poll_timer.set_host( host, set_timer=True )
+                    host = itask.user_at_host
+                itask.submission_poll_timer.set_host(host, set_timer=True)
+                itask.execution_poll_timer.set_host(host, set_timer=True)
 
             elif itask.state.is_currently( 'queued', 'ready','submit-retrying', 'submit-failed', 'retrying', 'failed'):
                 itask.prerequisites.set_all_satisfied()

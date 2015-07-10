@@ -15,11 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test extra pyc files that may allow imports from non-existent modules.
+# basic jinja2 expansion test
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 2
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-py_files=$(find "$CYLC_DIR" -name "*.pyc" -type f | sed "s/pyc$/py/g")
-run_ok $TEST_NAME ls $py_files
+install_suite $TEST_NAME_BASE filters
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-check-expansion
+cmp_ok $TEST_DIR/$SUITE_NAME/suite.rc.processed $TEST_DIR/$SUITE_NAME/suite.rc-expanded
+#-------------------------------------------------------------------------------
+#purge_suite $SUITE_NAME

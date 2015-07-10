@@ -24,7 +24,7 @@ install_suite $TEST_NAME_BASE clock-360
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_fail $TEST_NAME cylc validate $SUITE_NAME
-grep_ok "ERROR: clock-triggered tasks require \[scheduling\]cycling mode=" \
+grep_ok "ERROR: clock-trigger tasks require \[scheduling\]cycling mode=" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

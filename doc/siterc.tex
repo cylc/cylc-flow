@@ -637,3 +637,29 @@ running the test battery.
 
 The minimum set of directives that must be supplied to the batch system on the
 site to initiate jobs for the tests.
+
+\subsection{[cylc]}
+
+Default values for entries in the suite.rc [cylc] section.
+
+\subsubsection[UTC mode]{[cylc] $\rightarrow$ UTC mode}
+\label{SiteUTCMode}
+
+Allows you to set a default value for UTC mode in a suite at the site level.
+See ~\ref{UTC-mode} for details.
+
+\subsubsection[event hooks]{[cylc] $\rightarrow$ [event hooks]}
+\label{SiteCylcHooks}
+
+You can define site defaults for each of the following options, details 
+of which can be found under ~\ref{SuiteEventHandling}:
+
+\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ startup handler}
+
+\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ shutdown handler}
+
+\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ timeout handler}
+
+\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ timeout}
+
+\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ abort on timeout}

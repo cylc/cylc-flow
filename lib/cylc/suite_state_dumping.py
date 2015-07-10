@@ -46,19 +46,8 @@ class SuiteStateDumper(object):
 
     def set_cts(self, ict, fct):
         """Set initial and final cycle time strings."""
-        ict_string = str(ict)
-        stop_string = str(fct)
-
-        self.cts_str = ""
-        if ict_string:
-            self.cts_str += 'initial cycle : ' + ict_string + '\n'
-        else:
-            self.cts_str += 'initial cycle : (none)\n'
-
-        if stop_string:
-            self.cts_str += 'final cycle : ' + stop_string + '\n'
-        else:
-            self.cts_str += 'final cycle : (none)\n'
+        self.cts_str = "initial cycle : %s\n" % str(ict)
+        self.cts_str += "final cycle : %s\n" % str(fct)
 
     def dump(self, tasks=None):
         """Dump suite states to disk. Return state file basename on success."""

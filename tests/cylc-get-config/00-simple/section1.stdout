@@ -1,10 +1,11 @@
-cycling mode = integer
-initial cycle point constraints = 
+runahead limit = 
+hold after point = 
 max active cycle points = 3
 final cycle point constraints = 
+cycling mode = integer
 initial cycle point = 1
+initial cycle point constraints = 
 final cycle point = 1
-runahead limit = 
 [[dependencies]]
    graph = OPS:finish-all => VAR
 [[queues]]
@@ -12,10 +13,11 @@ runahead limit =
       limit = 0
       members = ops_s1, ops_s2, ops_p1, ops_p2, var_p1, var_p2, var_s1, var_s2
 [[special tasks]]
+   clock-trigger = 
+   external-trigger = 
+   sequential = 
+   clock-expire = 
    include at start-up = 
    start-up = 
-   cold-start = 
-   sequential = 
-   external-triggered = 
-   clock-triggered = 
    exclude at start-up = 
+   cold-start = 

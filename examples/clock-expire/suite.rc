@@ -1,0 +1,20 @@
+title = task expire example suite
+description = """
+Skip a daily post-processing workflow if the 'copy' task has expired."""
+
+[cylc]
+   cycle point format = %Y-%m-%dT%H
+[scheduling]
+    initial cycle point = now
+    final cycle point = +P3D
+    [[special tasks]]
+        clock-expire = copy(-P1DT1H)
+        # NOTE this would normally be copy(P1D) i.e. expire if more than 1 day
+        # behind the wall clock, but here we have to start from 'now' in order
+        # to stay near the wall clock, so expire the task if more than 1 day
+        # behind "now + 1 day". This makes the first two 'copy' tasks expire.
+    [[dependencies]]
+        [[[P1D]]]
+            graph = """
+        model[-P1D] => model => copy => proc
+              copy:expired => !proc"""

@@ -20,6 +20,7 @@
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -29,6 +30,15 @@
       execution timeout = 
       failed handler = 
       submission timeout = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[environment]]]
    [[[directives]]]
       job_type = parallel
@@ -58,6 +68,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -85,6 +98,7 @@
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -94,6 +108,15 @@
       execution timeout = 
       failed handler = 
       submission timeout = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[environment]]]
    [[[directives]]]
    [[[environment filter]]]
@@ -122,6 +145,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -149,6 +175,7 @@
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -158,6 +185,15 @@
       execution timeout = 
       failed handler = 
       submission timeout = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[environment]]]
    [[[directives]]]
       job_type = serial
@@ -187,6 +223,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -214,6 +253,7 @@
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -223,6 +263,15 @@
       execution timeout = 
       failed handler = 
       submission timeout = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[environment]]]
    [[[directives]]]
       job_type = serial
@@ -252,6 +301,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -279,6 +331,7 @@
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -288,6 +341,15 @@
       execution timeout = 
       failed handler = 
       submission timeout = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[environment]]]
    [[[directives]]]
       job_type = parallel
@@ -317,6 +379,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -339,11 +404,21 @@
    pre-script = 
    post-script = 
    inherit = OPS, PARALLEL
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -382,6 +457,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -404,11 +482,21 @@
    pre-script = 
    post-script = 
    inherit = VAR, PARALLEL
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -447,6 +535,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -469,11 +560,21 @@
    pre-script = 
    post-script = 
    inherit = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -511,6 +612,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -533,11 +637,21 @@
    pre-script = 
    post-script = 
    inherit = VAR, SERIAL
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -576,6 +690,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -598,11 +715,21 @@
    pre-script = 
    post-script = 
    inherit = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -641,6 +768,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -663,11 +793,21 @@
    pre-script = 
    post-script = 
    inherit = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -705,6 +845,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -727,11 +870,21 @@
    pre-script = 
    post-script = 
    inherit = 
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -770,6 +923,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
@@ -792,11 +948,21 @@
    pre-script = 
    post-script = 
    inherit = VAR, SERIAL
+   [[[events]]]
+      handler events = 
+      mail smtp = 
+      handlers = 
+      mail events = 
+      mail retry delays = 
+      handler retry delays = 
+      mail to = 
+      mail from = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
       execution timeout handler = 
+      expired handler = 
       submission failed handler = 
       submission retry handler = 
       warning handler = 
@@ -835,6 +1001,9 @@
       owner = 
       suite definition directory = 
       host = 
+      retrieve job logs = False
+      retrieve job logs max size = 
+      retrieve job logs retry delays = 
    [[[job submission]]]
       shell = /bin/bash
       command template = 
