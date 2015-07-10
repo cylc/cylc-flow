@@ -358,6 +358,18 @@ class BroadcastServer(PyroServer):
                     "point": broadcast_change["point"],
                     "namespace": broadcast_change["namespace"],
                     "key": broadcast_change["key"]})
+                # Delete statements are currently executed before insert
+                # statements, so we should clear out any insert statements that
+                # are deleted here.
+                # (Not the most efficient logic here, but unless we have a
+                # large number of inserts, then this should not be a big
+                # concern.)
+                inserts = []
+                for insert in self.db_inserts_map[self.TABLE_BROADCAST_STATES]:
+                    if any([insert[key] != broadcast_change[key] for key in
+                            ["point", "namespace", "key"]]):
+                        inserts.append(insert)
+                self.db_inserts_map[self.TABLE_BROADCAST_STATES] = inserts
             else:
                 self.db_inserts_map[self.TABLE_BROADCAST_STATES].append({
                     "point": broadcast_change["point"],
