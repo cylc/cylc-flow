@@ -56,19 +56,19 @@ __END__
 TEST_NAME="${TEST_NAME_BASE}-show1"
 run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}"
 cylc log "${SUITE_NAME}" > suite.log1
-grep_ok "client command get_suite_info ${USER}@.*:cylc-show" suite.log1
+grep_ok "\[client-command] get_suite_info ${USER}@.*:cylc-show" suite.log1
 
 # "cylc show" (task info) OK.
 TEST_NAME="${TEST_NAME_BASE}-show2"
 run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}" foo.1
 cylc log "${SUITE_NAME}" > suite.log2
-grep_ok "client command get_task_info ${USER}@.*:cylc-show" suite.log2
+grep_ok "\[client-command] get_task_info ${USER}@.*:cylc-show" suite.log2
 
 # Commands (other than shutdown) should be denied.
 TEST_NAME="${TEST_NAME_BASE}-trigger"
 run_fail "${TEST_NAME}" cylc trigger "${SUITE_NAME}" foo 1
 cylc log "${SUITE_NAME}" > suite.log3
-grep_ok "client DENIED (privilege 'shutdown' < 'full-control') ${USER}@.*:cylc-trigger" suite.log3
+grep_ok "\[client-connect] DENIED (privilege 'shutdown' < 'full-control') ${USER}@.*:cylc-trigger" suite.log3
 
 # Stop OK (without the passphrase!).
 TEST_NAME="${TEST_NAME_BASE}-stop"

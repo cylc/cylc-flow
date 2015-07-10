@@ -70,7 +70,8 @@ See also 'cylc [control] release'.""", pyro=True, multitask=True,
 
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
-        options.port, options.db, print_uuid=options.print_uuid)
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
     if options.hold_point_string:
         pclient.put_command('hold_after_point_string',
                             options.hold_point_string)

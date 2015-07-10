@@ -114,7 +114,8 @@ def main():
 
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
-        options.port, options.db, print_uuid=options.print_uuid)
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)

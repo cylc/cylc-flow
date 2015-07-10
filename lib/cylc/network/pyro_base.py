@@ -66,7 +66,7 @@ class PyroClient(object):
         self.pyro_proxy = None
         self.my_uuid = my_uuid or uuid4()
         if print_uuid:
-            print >> sys.stderr, 'Client UUID: %s' % my_uuid
+            print >> sys.stderr, '%s' % self.my_uuid
         try:
             self.pphrase = get_passphrase(suite, owner, host, localdb(db))
         except PassphraseError:

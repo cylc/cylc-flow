@@ -49,7 +49,8 @@ def main():
 
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
-        options.port, options.db, print_uuid=options.print_uuid)
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
 
     success, msg = pclient.put_command('nudge')
     if success:

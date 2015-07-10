@@ -190,10 +190,21 @@ Arguments:"""
                 pass
 
             try:
-                self.add_option("--uuid",
+                self.add_option("--print-uuid",
                     help="Print the client UUID to stderr. This can be matched "
                     "to information logged by the receiving suite daemon.",
                     action="store_true", default=False, dest="print_uuid")
+            except OptionConflictError:
+                pass
+
+            try:
+                self.add_option("--set-uuid", metavar="UUID",
+                    help="Set the client UUID manually (e.g. from prior use of "
+                    "--print-uuid). This can be used to log multiple commands "
+                    "under the same UUID (but note that only the first [info] "
+                    "command from the same client ID will be logged unless the "
+                    "suite is running in debug mode).",
+                    action="store", default=None, dest="set_uuid")
             except OptionConflictError:
                 pass
 

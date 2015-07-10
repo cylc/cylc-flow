@@ -27,9 +27,9 @@ class PyroClientReporter(object):
 
     _INSTANCE = None
     CLIENT_FORGET_SEC = 60
-    LOG_COMMAND_TMPL = 'client command %s %s@%s:%s %s'
-    LOG_SIGNOUT_TMPL = 'client sign-out %s@%s:%s %s'
-    LOG_FORGET_TMPL = 'client forget %s'
+    LOG_COMMAND_TMPL = '[client-command] %s %s@%s:%s %s'
+    LOG_SIGNOUT_TMPL = '[client-sign-out] %s@%s:%s %s'
+    LOG_FORGET_TMPL = '[client-forget] %s'
 
     @classmethod
     def get_inst(cls):

@@ -42,6 +42,9 @@ PRIVILEGE_LEVELS = [
     "full-control"
 ]
 
+CONNECT_DENIED_PRIV_TMPL = (
+    "[client-connect] DENIED (privilege '%s' < '%s') %s@%s:%s %s")
+
 # Dummy passphrase for client access from users without the suite passphrase.
 NO_PASSPHRASE = 'the quick brown fox'
 
@@ -75,7 +78,7 @@ def check_access_priv(server_obj, required_privilege_level):
     client_privilege_level = caller.privilege_level
     if not (PRIVILEGE_LEVELS.index(client_privilege_level) >=
             PRIVILEGE_LEVELS.index(required_privilege_level)):
-        err = "client DENIED (privilege '%s' < '%s') %s@%s:%s %s" % (
+        err = CONNECT_DENIED_PRIV_TMPL % (
             client_privilege_level, required_privilege_level,
             caller.user, caller.host, caller.prog_name, caller.uuid)
         getLogger("main").warn(err)

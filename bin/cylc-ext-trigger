@@ -71,7 +71,8 @@ def main():
 
     pclient = ExtTriggerClient(
         suite, options.owner, options.host, options.pyro_timeout,
-        options.port, options.db, print_uuid=options.print_uuid)
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
 
     pclient.send_retry(
         event_msg, event_id, options.max_n_tries, options.retry_intvl_secs)

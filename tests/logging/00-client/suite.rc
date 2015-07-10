@@ -7,11 +7,11 @@ title = Generate log messages for various suite connection types.
         script = """
 sleep 5
 # COMMAND INTERFACE:
-cylc hold $CYLC_SUITE_NAME
+UUID=$(cylc hold --print-uuid $CYLC_SUITE_NAME 2>&1 > /dev/null)
 # INFO INTERFACE:
-cylc show $CYLC_SUITE_NAME
+cylc show --set-uuid=$UUID $CYLC_SUITE_NAME
 # BROADCAST INTERFACE:
-cylc broadcast -d $CYLC_SUITE_NAME
+cylc broadcast --set-uuid=$UUID -d $CYLC_SUITE_NAME
 # COMMAND INTERFACE:
-cylc release $CYLC_SUITE_NAME
+cylc release --set-uuid=$UUID $CYLC_SUITE_NAME
 sleep 5"""

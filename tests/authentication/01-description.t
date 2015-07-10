@@ -60,13 +60,13 @@ run_ok "${TEST_NAME}" cylc show "${SUITE_NAME}"
 TEST_NAME="${TEST_NAME_BASE}-show2"
 run_fail "${TEST_NAME}" cylc show "${SUITE_NAME}" foo.1
 cylc log "${SUITE_NAME}" > suite.log1
-grep_ok "client DENIED (privilege 'description' < 'full-read') ${USER}@.*:cylc-show" suite.log1
+grep_ok "\[client-connect] DENIED (privilege 'description' < 'full-read') ${USER}@.*:cylc-show" suite.log1
 
 # Commands should be denied.
 TEST_NAME="${TEST_NAME_BASE}-stop"
 run_fail "${TEST_NAME}" cylc stop "${SUITE_NAME}"
 cylc log "${SUITE_NAME}" > suite.log2
-grep_ok "client DENIED (privilege 'description' < 'shutdown') ${USER}@.*:cylc-stop" suite.log2
+grep_ok "\[client-connect] DENIED (privilege 'description' < 'shutdown') ${USER}@.*:cylc-stop" suite.log2
 
 # Restore the passphrase.
 mv "${TEST_DIR}/${SUITE_NAME}/passphrase.DIS" \

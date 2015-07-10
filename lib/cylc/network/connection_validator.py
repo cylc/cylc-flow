@@ -45,12 +45,12 @@ from cylc.owner import user, host
 # passphrase is unnecessary, but doing so allows common passphrase handling.
 NO_PASSPHRASE_MD5 = md5(NO_PASSPHRASE).hexdigest()
 
+CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
+CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
+
 
 class ConnValidator(DefaultConnValidator):
     """Custom Pyro connection validator for user authentication."""
-
-    DENIED_TMPL = "client connect DENIED %s@%s:%s %s"
-    ALLOWED_TMPL = "client connect %s@%s:%s privilege='%s' %s"
 
     def set_pphrase(self, pphrase):
         """Store encrypted suite passphrase (called by the server)."""
@@ -84,7 +84,7 @@ class ConnValidator(DefaultConnValidator):
             priv_level = config.cfg['cylc']['authentication']['public']
         else:
             # Access denied.
-            logger.warn(self.__class__.DENIED_TMPL % (
+            logger.warn(CONNECT_DENIED_TMPL % (
                         user, host, prog_name, uuid))
             return (0, Pyro.constants.DENIED_SECURITY)
 
@@ -94,7 +94,7 @@ class ConnValidator(DefaultConnValidator):
         connection.prog_name = prog_name
         connection.uuid = uuid
         connection.privilege_level = priv_level
-        logger.debug(self.__class__.ALLOWED_TMPL % (
+        logger.debug(CONNECT_ALLOWED_TMPL % (
                      user, host, prog_name, priv_level, uuid))
         return (1, 0)
 

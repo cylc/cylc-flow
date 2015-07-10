@@ -46,7 +46,8 @@ def main():
 
     pclient = SuiteInfoClient(
         suite, options.owner, options.host, options.pyro_timeout,
-        options.port, options.db, print_uuid=options.print_uuid)
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
 
     if len(args) == 1:
         # Print suite info.
