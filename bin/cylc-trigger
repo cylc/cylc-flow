@@ -151,6 +151,16 @@ if options.edit_run:
         # Alert stdout of the dialog window, in case it's missed.
         print "Editing done. I'm popping up a confirmation dialog now."
 
+    # Save a diff to record the changes made.
+    with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
+        for line in difflib.unified_diff(
+                open(jobfile_copy_path).readlines(),
+                open(jobfile_path).readlines(),
+                fromfile="original",
+                tofile="edited"):
+            diff_file.write(line)
+    os.unlink(jobfile_copy_path)
+
     log_dir = os.path.dirname(jobfile_path)
     msg = "Trigger edited task %s?" % task_id
     if not prompt(msg, gui=options.geditor, no_force=True, no_abort=True):
@@ -161,16 +171,6 @@ if options.edit_run:
                 log_file.write("This edit run was aborted\n")
         print "Run aborted."
         sys.exit(0)
-
-    # Save a diff to record the changes made.
-    with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
-        for line in difflib.unified_diff(
-                open(jobfile_copy_path).readlines(),
-                open(jobfile_path).readlines(),
-                fromfile="original",
-                tofile="edited"):
-            diff_file.write(line)
-    os.unlink(jobfile_copy_path)
 
 # Trigger the task proxy(s).
 cmd_client.put_command('trigger_task', name, point_string, options.is_family)
