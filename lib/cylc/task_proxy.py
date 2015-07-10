@@ -1193,7 +1193,10 @@ class TaskProxy(object):
                 self.job_submission_failed()
                 return
             if dry_run:
-                self.log(WARNING, "Job file written for an edit-run.")
+                msg = "job file written for edit-run"
+                self.log(WARNING, msg)
+                # This will be shown next to submit num in gcylc:
+                self.summary['latest_message'] = msg
                 return
 
         # The job file is now (about to be) used: reset the file write flag so
