@@ -28,7 +28,6 @@ class MoabHandler(object):
     KILL_CMD_TMPL = "mjobctl -c '%(job_id)s'"
     # N.B. The "qstat JOB_ID" command returns 1 if JOB_ID is no longer in the
     # system, so there is no need to filter its output.
-#TODO: how is this output used?
     POLL_CMD_TMPL = "checkjob '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A\s*(?P<id>\S+)\s*\Z""")
     SUBMIT_CMD_TMPL = "msub '%s'"
@@ -38,13 +37,9 @@ class MoabHandler(object):
         job_file_path = job_conf["job file path"].replace(r"$HOME/", "")
         directives = job_conf["directives"].__class__()  # an ordereddict
 
-        # Old versions of PBS (< 11) requires jobs names <= 15 characters.
-        # Version 12 appears to truncate the job name to 15 characters if it is
-        # longer.
         directives["-N"] = (
             job_conf["task id"] + "." + job_conf["suite name"])
 
-        #directives["-j"] = "oe"
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
         # restartable? 
