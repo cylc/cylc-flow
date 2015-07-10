@@ -548,7 +548,7 @@ class TaskProxy(object):
             self.expire_time_str = get_time_string_from_unix_time(
                 self.expire_time)
         return time.time() > self.expire_time
- 
+
     def get_resolved_dependencies(self):
         """report who I triggered off"""
         # Used by the test-battery log comparator
@@ -1193,11 +1193,8 @@ class TaskProxy(object):
                 self.job_submission_failed()
                 return
             if dry_run:
-                # Note this is used to bail out in the first stage of an
-                # edit-run (i.e. write the job file but don't submit it).
-                # In a suite daemon, this must be an edit run.
                 self.log(WARNING, "Job file written for an edit-run.")
-                return self.job_conf['local job file path']
+                return
 
         # The job file is now (about to be) used: reset the file write flag so
         # that subsequent manual retrigger will generate a new job file.
@@ -1796,7 +1793,7 @@ class TaskProxy(object):
         return self._manip_job_status(
             self.JOB_KILL,
             self.job_kill_callback, ['running', 'submitted'])
- 
+
     def _create_job_log_path(self, new_mode=False):
         """Return a new job log path on the suite host, in two parts.
 
@@ -1871,6 +1868,12 @@ class TaskProxy(object):
             # Ensure settings are ready for manipulation on restart, etc.
             self._prepare_manip()
         return self.job_conf[item]
+
+    def get_task_log_dir(self):
+        """Return my job log dir, sans submit number."""
+        suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
+            self.suite_name, "suite job log directory")
+        return os.path.join(suite_job_log_dir, str(self.point), self.tdef.name)
 
     def _run_job_command(
             self, cmd_key, args, callback, is_bg_submit=None,

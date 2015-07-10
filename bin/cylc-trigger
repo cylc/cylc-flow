@@ -93,27 +93,18 @@ if options.edit_run:
     if not success:
         sys.exit('ERROR: %s' % msg)
 
-    # Retrieve the filename from the suite (the task cycle point may need
-    # standardising to the suite cycle point format).
-    success, jobfile_path = info_client.get_info(
+    # Get the job filename from the suite daemon - the task cycle point may
+    # need standardising to the suite cycle point format.
+    success, job_dir = info_client.get_info(
         'get_task_jobfile_path', task_id)
     if not success:
-        sys.exit('ERROR: %s' % jobfile_path)
-    # TODO - THIS IS NO LONGER NEEDED?:
-    ## Get the current job file mtime, if the file exists.
-    #jobfile_path = os.path.join(
-    #    TaskProxy.get_job_log_dir(suite, name, point_string), "job")
-    #try:
-    #    jobfile_mtime = os.stat(jobfile_path).st_mtime
-    #except OSError:
-    #    # Does not exist.
-    #    jobfile_mtime = None
+        sys.exit('ERROR: %s' % job_dir)
 
-    # Replace the submit number with the 'NN' symnlink as it will increment
-    # when we trigger the job file write.
-    jobfile_path = re.sub('/\d+/job$', '/NN/job', jobfile_path)
+    # Add the 'NN' symlink for latest job file regardless of submit number.
+    jobfile_path = os.path.join(job_dir, 'NN', 'job')
 
     current_time = time.time()
+
     # Tell the suite daemon to generate the job file.
     cmd_client.put_command('dry_run_task', name, point_string)
 
@@ -167,7 +158,7 @@ if options.edit_run:
         for log in ["job.out", "job.err"]:
             lf = os.path.join(log_dir, log)
             with open(lf, 'wb') as log_file:
-                log_file.write("This edit run was aborted")
+                log_file.write("This edit run was aborted\n")
         print "Run aborted."
         sys.exit(0)
 
