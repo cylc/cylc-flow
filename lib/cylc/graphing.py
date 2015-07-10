@@ -366,12 +366,7 @@ class edge( object):
                   conditional=False ):
         """contains qualified node names, e.g. 'foo[T-6]:out1'"""
         self.left = left
-        if suicide:
-            # Change name of suicide nodes to avoid cyclic dep check.
-            # (this is removed in config.get_graph() for normal use).
-            self.right = "!" + right
-        else:
-            self.right = right
+        self.right = right
         self.suicide = suicide
         self.sequence = sequence
         self.conditional = conditional
