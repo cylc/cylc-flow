@@ -1197,7 +1197,8 @@ class TaskProxy(object):
                 self.log(WARNING, msg)
                 # This will be shown next to submit num in gcylc:
                 self.summary['latest_message'] = msg
-                return
+                # Return value used by "cylc submit" and "cylc jobscript":
+                return self.job_conf['local job file path']
 
         # The job file is now (about to be) used: reset the file write flag so
         # that subsequent manual retrigger will generate a new job file.

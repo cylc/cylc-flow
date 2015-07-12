@@ -349,7 +349,7 @@ class scheduler(object):
     def get_standardised_point(self, point_string):
         """Return a standardised point."""
         point_string = self.get_standardised_point_string(point_string)
-        return point(point_string)
+        return get_point(point_string)
 
     def get_standardised_taskid(self, task_id):
         """Return task ID with standardised cycle point."""
