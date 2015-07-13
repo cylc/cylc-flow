@@ -97,6 +97,8 @@ class request_handler(threading.Thread):
 
 class scheduler(object):
 
+    FS_CHECK_PERIOD = 600.0 # 600 seconds
+
     def __init__(self, is_restart=False):
 
         # SUITE OWNER
@@ -906,8 +908,7 @@ class scheduler(object):
 
         proc_pool = SuiteProcPool.get_inst()
 
-        fs_check_period = datetime.timedelta(minutes=10)
-        next_fs_check = datetime.datetime.utcnow() + fs_check_period
+        next_fs_check = time.time() + self.FS_CHECK_PERIOD
 
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')
@@ -917,11 +918,11 @@ class scheduler(object):
             # Periodic check that the suite directory still exists
             # - designed to catch stalled suite daemons where the suite
             # directory has been deleted out from under itself
-            if datetime.datetime.utcnow() > next_fs_check:
+            if time.time() > next_fs_check:
                 if not os.path.exists(suite_run_dir):
                     os.kill(os.getpid(), signal.SIGKILL)
                 else:
-                    next_fs_check = datetime.datetime.utcnow() + fs_check_period
+                    next_fs_check = time.time() + self.FS_CHECK_PERIOD
 
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
