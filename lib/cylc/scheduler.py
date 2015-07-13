@@ -97,6 +97,8 @@ class request_handler(threading.Thread):
 
 class scheduler(object):
 
+    FS_CHECK_PERIOD = 600.0 # 600 seconds
+
     def __init__(self, is_restart=False):
 
         # SUITE OWNER
@@ -906,8 +908,7 @@ class scheduler(object):
 
         proc_pool = SuiteProcPool.get_inst()
 
-        fs_check_period = 600.0
-        next_fs_check = time.time() + fs_check_period
+        next_fs_check = time.time() + self.FS_CHECK_PERIOD
 
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')
@@ -921,7 +922,7 @@ class scheduler(object):
                 if not os.path.exists(suite_run_dir):
                     os.kill(os.getpid(), signal.SIGKILL)
                 else:
-                    next_fs_check = time.time() + fs_check_period
+                    next_fs_check = time.time() + self.FS_CHECK_PERIOD
 
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
