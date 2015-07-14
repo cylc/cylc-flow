@@ -1705,8 +1705,7 @@ shown here in the state they were in at the time of triggering.''')
             return False
         cmd = "reset"
         name, point_string = TaskID.split(task_id)
-        msg = "reset " + task_id + " to " + state + "?"
-        if not self.get_confirmation(cmd, task_id, msg):
+        if not self.get_confirmation("reset %s to %s?" % (task_id, state)):
             return
         self.put_pyro_command('reset_task_state', name, point_string, state,
                               is_family)
@@ -2214,7 +2213,7 @@ shown here in the state they were in at the time of triggering.''')
         foo.run()
 
     def reload_suite(self, w):
-        if not self.get_confirmation("Reload suite definiton?"):
+        if not self.get_confirmation("Reload suite definition?"):
             return
         self.put_pyro_command('reload_suite')
 
@@ -3143,7 +3142,7 @@ For more Stop options use the Control menu.""")
 
     def _alter_status_toolbar_menu(self, new_status):
         """Handle changes in status for some toolbar/menuitems.
-        
+
        Example status strings:
          * connected
          * initialising
@@ -3155,7 +3154,7 @@ For more Stop options use the Control menu.""")
          * reloading
          * stopping
          * stopped
-         * stopped with 'succeeded' 
+         * stopped with 'succeeded'
          * stopped with 'running'
         """
         if new_status == self._prev_status:
@@ -3164,7 +3163,7 @@ For more Stop options use the Control menu.""")
         self._prev_status = new_status
         run_ok = "stopped" in new_status
         # Pause: avoid "stopped with 'running'".
-        pause_ok = (new_status == "reloading" or 
+        pause_ok = (new_status == "reloading" or
                 "running" in new_status and not "stopped" in new_status)
         unpause_ok = "held" == new_status
         stop_ok = ("stopped" not in new_status and
