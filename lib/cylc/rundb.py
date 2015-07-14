@@ -37,6 +37,7 @@ class CylcSuiteDAOTable(object):
     """Represent a table in the suite runtime database."""
 
     FMT_CREATE = "CREATE TABLE %(name)s(%(columns_str)s%(primary_keys_str)s)"
+    FMT_DELETE = "DELETE FROM %(name)s%(where_str)s"
     FMT_INSERT = "INSERT OR REPLACE INTO %(name)s VALUES(%(values_str)s)"
     FMT_UPDATE = "UPDATE %(name)s SET %(set_str)s%(where_str)s"
 
@@ -52,6 +53,7 @@ class CylcSuiteDAOTable(object):
                 name,
                 attrs.get("datatype", "TEXT"),
                 attrs.get("is_primary_key", False)))
+        self.delete_queues = {}
         self.insert_queue = []
         self.update_queues = {}
 
@@ -77,23 +79,14 @@ class CylcSuiteDAOTable(object):
             "name": self.name,
             "values_str": ", ".join("?" * len(self.columns))}
 
-    def get_update_stmt(self, set_args, where_args=None):
-        """Return an update statement and its args to update a row.
+    def add_delete_item(self, where_args):
+        """Queue a DELETE item.
 
-        return (stmt, stmt_args)
-
-        set_args should be a dict, with colum keys and values to be set.
-        where_args should be a dict, update will only apply to rows matching
+        where_args should be a dict, delete will only apply to rows matching
         all these items.
 
         """
-        set_strs = []
         stmt_args = []
-        for column in self.columns:
-            if column.name in set_args:
-                set_strs.append(column.name + "=?")
-                stmt_args.append(set_args[column.name])
-        set_str = ", ".join(set_strs)
         where_str = ""
         if where_args:
             where_strs = []
@@ -103,11 +96,10 @@ class CylcSuiteDAOTable(object):
                     stmt_args.append(where_args[column.name])
             if where_strs:
                 where_str = " WHERE " + " AND ".join(where_strs)
-        stmt = self.FMT_UPDATE % {
-            "name": self.name,
-            "set_str": set_str,
-            "where_str": where_str}
-        return stmt, stmt_args
+        stmt = self.FMT_DELETE % {"name": self.name, "where_str": where_str}
+        if stmt not in self.delete_queues:
+            self.delete_queues[stmt] = []
+        self.delete_queues[stmt].append(stmt_args)
 
     def add_insert_item(self, args):
         """Queue an INSERT args.
@@ -171,19 +163,26 @@ class CylcSuiteDAO(object):
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "cylc-suite.db"
     MAX_TRIES = 100
-    TABLE_BROADCASTS = "broadcasts"
+    TABLE_BROADCAST_EVENTS = "broadcast_events"
+    TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_JOB_LOGS = "task_job_logs"
     TABLE_TASK_EVENTS = "task_events"
     TABLE_TASK_STATES = "task_states"
 
     TABLES_ATTRS = {
-        TABLE_BROADCASTS: [
+        TABLE_BROADCAST_EVENTS: [
             ["time"],
             ["change"],
             ["point"],
             ["namespace"],
             ["key"],
+            ["value"],
+        ],
+        TABLE_BROADCAST_STATES: [
+            ["point", {"is_primary_key": True}],
+            ["namespace", {"is_primary_key": True}],
+            ["key", {"is_primary_key": True}],
             ["value"],
         ],
         TABLE_TASK_JOBS: [
@@ -255,6 +254,15 @@ class CylcSuiteDAO(object):
         if not self.is_public:
             self.create_tables()
 
+    def add_delete_item(self, table_name, where_args=None):
+        """Queue a DELETE item for a given table.
+
+        where_args should be a dict, update will only apply to rows matching
+        all these items.
+
+        """
+        self.tables[table_name].add_delete_item(where_args)
+
     def add_insert_item(self, table_name, args):
         """Queue an INSERT args for a given table.
 
@@ -310,55 +318,28 @@ class CylcSuiteDAO(object):
         self.connect()
         will_retry = False
         for table in self.tables.values():
+            # DELETE statements may have varying number of WHERE args
+            # so we can only executemany for each identical template statement.
+            for stmt, stmt_args_list in table.delete_queues.items():
+                if self._execute_stmt(table, stmt, stmt_args_list):
+                    table.delete_queues.pop(stmt)
+                else:
+                    will_retry = True
             # INSERT statements are uniform for each table, so all INSERT
             # statements can be executed using a single "executemany" call.
             if table.insert_queue:
-                try:
-                    stmt = table.get_insert_stmt()
-                    self.conn.executemany(stmt, table.insert_queue)
-                    self.conn.commit()
-                except sqlite3.Error:
-                    if not self.is_public:
-                        raise
-                    self.conn.rollback()
-                    will_retry = True
-                    if cylc.flags.debug:
-                        traceback.print_exc()
-                        sys.stderr.write(
-                            "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
-                                "file": self.db_file_name,
-                                "table": table.name,
-                                "stmt": stmt})
-                        for stmt_args in table.insert_queue:
-                            sys.stderr.write(
-                                "\t%(stmt_args)s\n" % {"stmt_args": stmt_args})
-                    # Not safe to do UPDATE if INSERT failed
-                    continue
-                else:
+                if self._execute_stmt(
+                        table, table.get_insert_stmt(), table.insert_queue):
                     table.insert_queue = []
-            # UPDATE statements can be used to update any fields in many rows
+                else:
+                    will_retry = True
+            # UPDATE statements can have varying number of SET and WHERE args
             # so we can only executemany for each identical template statement.
             for stmt, stmt_args_list in table.update_queues.items():
-                try:
-                    self.conn.executemany(stmt, stmt_args_list)
-                    self.conn.commit()
-                except sqlite3.Error:
-                    if not self.is_public:
-                        raise
-                    self.conn.rollback()
-                    will_retry = True
-                    if cylc.flags.debug:
-                        traceback.print_exc()
-                        sys.stderr.write(
-                            "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
-                                "file": self.db_file_name,
-                                "table": table.name,
-                                "stmt": stmt})
-                        for stmt_args in stmt_args_list:
-                            sys.stderr.write("\t%(stmt_args)s\n" % {
-                                "stmt_args": stmt_args})
-                else:
+                if self._execute_stmt(table, stmt, stmt_args_list):
                     table.update_queues.pop(stmt)
+                else:
+                    will_retry = True
         if will_retry:
             self.n_tries += 1
             logger = getLogger("main")
@@ -379,6 +360,34 @@ class CylcSuiteDAO(object):
         # directory is removed, a forced reconnection to the private database
         # will ensure that the suite dies.
         self.close()
+
+    def _execute_stmt(self, table, stmt, stmt_args_list):
+        """Helper for "self.execute_queued_items".
+
+        Execute a statement. If this is the public database, return True on
+        success and False on failure. If this is the private database, return
+        True on success, and raise on failure.
+        """
+        try:
+            self.conn.executemany(stmt, stmt_args_list)
+            self.conn.commit()
+        except sqlite3.Error:
+            if not self.is_public:
+                raise
+            self.conn.rollback()
+            if cylc.flags.debug:
+                traceback.print_exc()
+                sys.stderr.write(
+                    "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
+                        "file": self.db_file_name,
+                        "table": table.name,
+                        "stmt": stmt})
+                for stmt_args in stmt_args_list:
+                    sys.stderr.write("\t%(stmt_args)s\n" % {
+                        "stmt_args": stmt_args})
+            return False
+        else:
+            return True
 
     def select_task_states_by_task_ids(self, keys, task_ids=None):
         """Select items from task_states by task IDs.

@@ -20,15 +20,16 @@ import sys
 import logging
 import cPickle as pickle
 
-import cylc.flags
 from cylc.broadcast_report import (
     get_broadcast_change_iter,
     get_broadcast_change_report,
     get_broadcast_bad_options_report)
-from cylc.task_id import TaskID
 from cylc.cycling.loader import get_point, standardise_point_string
-from cylc.wallclock import get_current_time_string
+import cylc.flags
 from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.rundb import CylcSuiteDAO
+from cylc.task_id import TaskID
+from cylc.wallclock import get_current_time_string
 
 PYRO_BCAST_OBJ_NAME = 'broadcast_receiver'
 
@@ -43,6 +44,8 @@ class BroadcastServer(PyroServer):
 
     _INSTANCE = None
     ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
+    TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
+    TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES
 
     @classmethod
     def get_inst(cls, linearized_ancestors=None):
@@ -60,7 +63,11 @@ class BroadcastServer(PyroServer):
         super(BroadcastServer, self).__init__()
         self.log = logging.getLogger('main')
         self.settings = {}
-        self.db_inserts = []
+        self.db_inserts_map = {
+            self.TABLE_BROADCAST_EVENTS: [],
+            self.TABLE_BROADCAST_STATES: []}
+        self.db_deletes_map = {
+            self.TABLE_BROADCAST_STATES: []}
         self.linearized_ancestors = linearized_ancestors
 
     def _prune(self):
@@ -135,7 +142,7 @@ class BroadcastServer(PyroServer):
                             (point_string, namespace, setting))
 
         # Log the broadcast
-        self._append_db_inserts(modified_settings)
+        self._append_db_queue(modified_settings)
         self.log.info(get_broadcast_change_report(modified_settings))
 
         bad_options = {}
@@ -225,7 +232,7 @@ class BroadcastServer(PyroServer):
             self._prune(), point_strings, namespaces, cancel_keys_list)
 
         # Log the broadcast
-        self._append_db_inserts(modified_settings, is_cancel=True)
+        self._append_db_queue(modified_settings, is_cancel=True)
         self.log.info(
             get_broadcast_change_report(modified_settings, is_cancel=True))
         if bad_options:
@@ -265,6 +272,29 @@ class BroadcastServer(PyroServer):
     def load(self, pickled_settings):
         """Load broadcast variables from the state dump file."""
         self.settings = pickle.loads(pickled_settings)
+
+        # Ensure database table is in sync
+        modified_settings = []
+        for point_string, point_string_settings in self.settings.items():
+            for namespace, namespace_settings in point_string_settings.items():
+                stuff_stack = [([], namespace_settings)]
+                while stuff_stack:
+                    keys, stuff = stuff_stack.pop()
+                    for key, value in stuff.items():
+                        if isinstance(value, dict):
+                            stuff_stack.append((keys + [key], value))
+                        else:
+                            setting = {key: value}
+                            for rkey in reversed(keys):
+                                setting = {rkey: setting}
+                            modified_settings.append(
+                                (point_string, namespace, setting))
+        for broadcast_change in get_broadcast_change_iter(modified_settings):
+            self.db_inserts_map[self.TABLE_BROADCAST_STATES].append({
+                "point": broadcast_change["point"],
+                "namespace": broadcast_change["namespace"],
+                "key": broadcast_change["key"],
+                "value": broadcast_change["value"]})
 
     def _get_dump(self):
         """Return broadcast variables as written to the state dump file."""
@@ -315,11 +345,37 @@ class BroadcastServer(PyroServer):
         return (list(cancel_keys) in
                 [prune[2:] for prune in prunes if prune[2:]])
 
-    def _append_db_inserts(self, modified_settings, is_cancel=False):
+    def _append_db_queue(self, modified_settings, is_cancel=False):
         """Update the queue to the runtime DB."""
         now = get_current_time_string(display_sub_seconds=True)
-        for ctx in get_broadcast_change_iter(modified_settings, is_cancel):
-            self.db_inserts.append([now] + ctx)
+        for broadcast_change in (
+                get_broadcast_change_iter(modified_settings, is_cancel)):
+            broadcast_change["time"] = now
+            self.db_inserts_map[self.TABLE_BROADCAST_EVENTS].append(
+                broadcast_change)
+            if is_cancel:
+                self.db_deletes_map[self.TABLE_BROADCAST_STATES].append({
+                    "point": broadcast_change["point"],
+                    "namespace": broadcast_change["namespace"],
+                    "key": broadcast_change["key"]})
+                # Delete statements are currently executed before insert
+                # statements, so we should clear out any insert statements that
+                # are deleted here.
+                # (Not the most efficient logic here, but unless we have a
+                # large number of inserts, then this should not be a big
+                # concern.)
+                inserts = []
+                for insert in self.db_inserts_map[self.TABLE_BROADCAST_STATES]:
+                    if any([insert[key] != broadcast_change[key] for key in
+                            ["point", "namespace", "key"]]):
+                        inserts.append(insert)
+                self.db_inserts_map[self.TABLE_BROADCAST_STATES] = inserts
+            else:
+                self.db_inserts_map[self.TABLE_BROADCAST_STATES].append({
+                    "point": broadcast_change["point"],
+                    "namespace": broadcast_change["namespace"],
+                    "key": broadcast_change["key"],
+                    "value": broadcast_change["value"]})
 
 
 class BroadcastClient(PyroClient):
