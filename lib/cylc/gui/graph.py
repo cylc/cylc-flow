@@ -91,7 +91,7 @@ def graph_suite(reg, start, stop, graph_opts,
     """Launch the cylc graph command with some options."""
     options = graph_opts
     options += ' ' + reg + ' ' + start + ' ' + stop
-    command = "cylc graph --notify-completion " + template_opts + " " + options
+    command = "cylc graph " + template_opts + " " + options
     foo = gcapture_tmpfile( command, tmpdir )
     gcapture_windows.append(foo)
     foo.run()

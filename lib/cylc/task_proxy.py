@@ -548,7 +548,7 @@ class TaskProxy(object):
             self.expire_time_str = get_time_string_from_unix_time(
                 self.expire_time)
         return time.time() > self.expire_time
- 
+
     def get_resolved_dependencies(self):
         """report who I triggered off"""
         # Used by the test-battery log comparator
@@ -1193,10 +1193,11 @@ class TaskProxy(object):
                 self.job_submission_failed()
                 return
             if dry_run:
-                # Note this is used to bail out in the first stage of an
-                # edit-run (i.e. write the job file but don't submit it).
-                # In a suite daemon, this must be an edit run.
-                self.log(WARNING, "Job file written for an edit-run.")
+                msg = "job file written for edit-run"
+                self.log(WARNING, msg)
+                # This will be shown next to submit num in gcylc:
+                self.summary['latest_message'] = msg
+                # Return value used by "cylc submit" and "cylc jobscript":
                 return self.job_conf['local job file path']
 
         # The job file is now (about to be) used: reset the file write flag so
@@ -1796,7 +1797,7 @@ class TaskProxy(object):
         return self._manip_job_status(
             self.JOB_KILL,
             self.job_kill_callback, ['running', 'submitted'])
- 
+
     def _create_job_log_path(self, new_mode=False):
         """Return a new job log path on the suite host, in two parts.
 
@@ -1859,15 +1860,24 @@ class TaskProxy(object):
                 "Cannot %s detaching tasks (job ID unknown)" % (cmd_key))
             return
 
-        # Ensure settings are ready for manipulation on suite restart, etc
-        if self.job_conf is None:
-            self._prepare_manip()
-
         # Invoke the manipulation
         return self._run_job_command(
             cmd_key,
-            args=[self.job_conf["job file path"] + ".status"],
+            args=[self.get_job_conf_item("job file path") + ".status"],
             callback=callback)
+
+    def get_job_conf_item(self, item):
+        if self.job_conf is None:
+            # Job hasn't run yet, or it ran before a suite restart.
+            # Ensure settings are ready for manipulation on restart, etc.
+            self._prepare_manip()
+        return self.job_conf[item]
+
+    def get_task_log_dir(self):
+        """Return my job log dir, sans submit number."""
+        suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
+            self.suite_name, "suite job log directory")
+        return os.path.join(suite_job_log_dir, str(self.point), self.tdef.name)
 
     def _run_job_command(
             self, cmd_key, args, callback, is_bg_submit=None,

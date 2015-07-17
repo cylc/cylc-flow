@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """The main control GUI of gcylc."""
 
 import os
@@ -957,6 +958,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
+        if not self.get_confirmation("Stop suite %s?" % self.cfg.suite):
+            return
         self.put_pyro_command('set_stop_cleanly')
 
     def stopsuite(self, bt, window, kill_rb, stop_rb, stopat_rb, stopct_rb,
@@ -1638,39 +1641,24 @@ shown here in the state they were in at the time of triggering.''')
         self.quitters.remove(lv)
         w.destroy()
 
-    def get_confirmation(self, cmd, name, msg=None):
-
+    def get_confirmation(self, question):
         if self.cfg.no_prompt:
             return True
-
-        if not msg:
-            msg = cmd + " " + name + "?"
-
         prompt = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,
                                    gtk.MESSAGE_QUESTION,
-                                   gtk.BUTTONS_OK_CANCEL, msg)
-
-        prompt.add_button(gtk.STOCK_HELP, gtk.RESPONSE_HELP)
+                                   gtk.BUTTONS_YES_NO, question)
         response = prompt.run()
-
-        while response == gtk.RESPONSE_HELP:
-            self.command_help(cmd)
-            response = prompt.run()
-
         prompt.destroy()
-        if response != gtk.RESPONSE_OK:
-            return False
+        return response == gtk.RESPONSE_YES
 
     def hold_task(self, b, task_id, stop=True, is_family=False):
         if stop:
-            cmd = "hold"
+            cmd = "Hold"
         else:
-            cmd = "release"
-        if not self.get_confirmation(cmd, task_id):
+            cmd = "Release"
+        if not self.get_confirmation("%s %s?" % (cmd, task_id)):
             return
-
         name, point_string = TaskID.split(task_id)
-
         if stop:
             self.put_pyro_command('hold_task', name, point_string,
                                   is_family)
@@ -1680,10 +1668,8 @@ shown here in the state they were in at the time of triggering.''')
 
     def trigger_task_now(self, b, task_id, is_family=False):
         """Trigger task via the suite daemon's command interface."""
-        cmd = "trigger"
-        if not self.get_confirmation(cmd, task_id):
+        if not self.get_confirmation("Trigger %s?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         self.put_pyro_command('trigger_task', name, point_string, is_family)
 
@@ -1691,9 +1677,11 @@ shown here in the state they were in at the time of triggering.''')
         """
         Do an edit-run by invoking 'cylc trigger --edit' on the suite host.
         """
+        if not self.get_confirmation("Edit run %s?" % task_id):
+            return
         name, point_string = TaskID.split(task_id)
         command = (
-            "cylc trigger --notify-completion --use-ssh --edit --geditor -f" +
+            "cylc trigger --use-ssh --edit --geditor -f" +
             self.get_remote_run_opts() + " " + self.cfg.suite +
             " %s %s" % (name, point_string))
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
@@ -1701,15 +1689,13 @@ shown here in the state they were in at the time of triggering.''')
         foo.run()
 
     def poll_task(self, b, task_id, is_family=False):
-        cmd = "poll"
-        if not self.get_confirmation(cmd, task_id):
+        if not self.get_confirmation("Poll %s?" % task_id):
             return
         name, point_string = TaskID.split(task_id)
         self.put_pyro_command('poll_tasks', name, point_string, is_family)
 
     def kill_task(self, b, task_id, is_family=False):
-        cmd = "kill"
-        if not self.get_confirmation(cmd, task_id):
+        if not self.get_confirmation("Kill %s?" % task_id):
             return
         name, point_string = TaskID.split(task_id)
         self.put_pyro_command('kill_tasks', name, point_string, is_family)
@@ -1719,28 +1705,21 @@ shown here in the state they were in at the time of triggering.''')
             return False
         cmd = "reset"
         name, point_string = TaskID.split(task_id)
-        msg = "reset " + task_id + " to " + state + "?"
-        if not self.get_confirmation(cmd, task_id, msg):
+        if not self.get_confirmation("reset %s to %s?" % (task_id, state)):
             return
         self.put_pyro_command('reset_task_state', name, point_string, state,
                               is_family)
 
     def remove_task(self, b, task_id, is_family):
-        cmd = "remove"
-        msg = "remove " + task_id + " (after spawning)?"
-        if not self.get_confirmation(cmd, task_id, msg):
+        if not self.get_confirmation("Remove %s after spawning?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         self.put_pyro_command('remove_task', name, point_string, is_family,
                               True)
 
     def remove_task_nospawn(self, b, task_id, is_family=False):
-        cmd = "remove"
-        msg = "remove " + task_id + " (without spawning)?"
-        if not self.get_confirmation(cmd, task_id, msg):
+        if not self.get_confirmation("Remove %s without spawning?" % task_id):
             return
-
         name, point_string = TaskID.split(task_id)
         self.put_pyro_command('remove_task', name, point_string, is_family,
                               False)
@@ -2234,9 +2213,13 @@ shown here in the state they were in at the time of triggering.''')
         foo.run()
 
     def reload_suite(self, w):
+        if not self.get_confirmation("Reload suite definition?"):
+            return
         self.put_pyro_command('reload_suite')
 
     def nudge_suite(self, w):
+        if not self.get_confirmation("Nudge suite?"):
+            return
         self.put_pyro_command('nudge')
 
     def popup_logview(self, task_id, logfiles, choice=None):
@@ -2832,7 +2815,7 @@ to reduce network traffic.""")
         if not yesbin_cb.get_active():
             options += ' -x '
         command = (
-            "cylc search --notify-completion %s %s %s" % (
+            "cylc search %s %s %s" % (
                 options, reg, pattern)
         )
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, width=600,
@@ -3159,7 +3142,7 @@ For more Stop options use the Control menu.""")
 
     def _alter_status_toolbar_menu(self, new_status):
         """Handle changes in status for some toolbar/menuitems.
-        
+
        Example status strings:
          * connected
          * initialising
@@ -3171,7 +3154,7 @@ For more Stop options use the Control menu.""")
          * reloading
          * stopping
          * stopped
-         * stopped with 'succeeded' 
+         * stopped with 'succeeded'
          * stopped with 'running'
         """
         if new_status == self._prev_status:
@@ -3180,7 +3163,7 @@ For more Stop options use the Control menu.""")
         self._prev_status = new_status
         run_ok = "stopped" in new_status
         # Pause: avoid "stopped with 'running'".
-        pause_ok = (new_status == "reloading" or 
+        pause_ok = (new_status == "reloading" or
                 "running" in new_status and not "stopped" in new_status)
         unpause_ok = "held" == new_status
         stop_ok = ("stopped" not in new_status and
@@ -3299,7 +3282,7 @@ For more Stop options use the Control menu.""")
 
     def run_suite_validate(self, w):
         command = ("cylc validate -v " + self.get_remote_run_opts() +
-                   " --notify-completion " + self.cfg.template_vars_opts +
+                   " " + self.cfg.template_vars_opts +
                    " " + self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700)
         self.gcapture_windows.append(foo)
@@ -3310,7 +3293,7 @@ For more Stop options use the Control menu.""")
         extra = ''
         if inlined:
             extra = '-i '
-        command = ("cylc edit --notify-completion -g" + " " +
+        command = ("cylc edit -g " +
                    self.cfg.template_vars_opts + " " +
                    self.get_remote_run_opts() + " " + extra + ' ' +
                    self.cfg.suite)
@@ -3321,7 +3304,7 @@ For more Stop options use the Control menu.""")
 
     def run_suite_graph(self, w, show_ns=False):
         if show_ns:
-            command = "cylc graph --notify-completion -n %s %s %s" % (
+            command = "cylc graph -n %s %s %s" % (
                 self.cfg.template_vars_opts,
                 self.get_remote_run_opts(),
                 self.cfg.suite)
@@ -3338,7 +3321,7 @@ For more Stop options use the Control menu.""")
 
     def run_suite_info(self, w):
         command = (
-            "cylc show --notify-completion" + self.get_remote_run_opts() +
+            "cylc show " + self.get_remote_run_opts() +
             " " + self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
         self.gcapture_windows.append(foo)
@@ -3347,7 +3330,7 @@ For more Stop options use the Control menu.""")
     def run_suite_list(self, w, opt=''):
         command = (
             "cylc list " + self.get_remote_run_opts() + " " + opt +
-            " --notify-completion " + " " + self.cfg.template_vars_opts + " " +
+            " " + self.cfg.template_vars_opts + " " +
             self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 600)
         self.gcapture_windows.append(foo)
@@ -3362,7 +3345,7 @@ For more Stop options use the Control menu.""")
             else:
                 xopts = ' '
 
-            command = ("cylc cat-log --notify-completion" +
+            command = ("cylc cat-log " +
                        self.get_remote_run_opts() +
                        xopts + self.cfg.suite)
             foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400,
@@ -3383,7 +3366,7 @@ For more Stop options use the Control menu.""")
         elif method == 'processed':
             extra = ' -j'
 
-        command = ("cylc view --notify-completion -g " +
+        command = ("cylc view -g " +
                    self.get_remote_run_opts() + " " + extra + " " +
                    self.cfg.template_vars_opts + " " + self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400)

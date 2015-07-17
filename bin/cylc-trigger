@@ -41,21 +41,18 @@ from cylc.network.suite_info import SuiteInfoClient
 from cylc.CylcOptionParsers import cop, multitask_usage
 from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.task_proxy import TaskProxy
 from cylc.task_id import TaskID
 import cylc.flags
 
 parser = cop("""cylc [control] trigger [OPTIONS] ARGS
 
-Manually trigger a task or tasks. For single tasks you can choose to edit the
-generated job script first, to apply one-off changes (--edit).  Triggering a
-waiting task queues it for execution (cylc internal queues). If its queue is
-not limited it will submit immediately, otherwise it will submit when released
-by its queue.  Triggering a queued task causes it to submit immediately even if
-that violates the queue limit.
+Manually trigger one or more tasks. Waiting tasks will be queued (cylc internal
+queues) and will submit as normal when released by the queue. Queued tasks will
+submit immediately even if that violates the queue limit.
 
-In an edit run a diff between the original and edited job script is saved to
-the task job log directory.
+For single tasks you can use "--edit" to edit the generated job script first,
+to apply one-off changes. In an edit run a diff between the original and edited
+job script is saved to the task job log directory.
 """ + multitask_usage, pyro=True, multitask=True, argdoc=[
     ('REG', 'Suite name'),
     ('MATCH', 'Task or family name matching regular expression'),
@@ -96,25 +93,29 @@ if options.edit_run:
     if not success:
         sys.exit('ERROR: %s' % msg)
 
-    # Get the current job file mtime, if the file exists.
-    jobfile_path = os.path.join(
-        TaskProxy.get_job_log_dir(suite, name, point_string), "job")
-    try:
-        jobfile_mtime = os.stat(jobfile_path).st_mtime
-    except OSError:
-        # Does not exist.
-        jobfile_mtime = None
+    # Get the job filename from the suite daemon - the task cycle point may
+    # need standardising to the suite cycle point format.
+    success, job_dir = info_client.get_info(
+        'get_task_jobfile_path', task_id)
+    if not success:
+        sys.exit('ERROR: %s' % job_dir)
+
+    # Add the 'NN' symlink for latest job file regardless of submit number.
+    jobfile_path = os.path.join(job_dir, 'NN', 'job')
+
+    current_time = time.time()
 
     # Tell the suite daemon to generate the job file.
     cmd_client.put_command('dry_run_task', name, point_string)
 
-    # Wait for the new job file to be written.
+    # Wait for the new job file to be written. Use mtime because the same
+    # file could potentially exist already, left from a previous run.
     count = 0
     MAX_TRIES = 10
     while True:
         count += 1
         try:
-            if os.stat(jobfile_path).st_mtime > jobfile_mtime:
+            if os.stat(jobfile_path).st_mtime > current_time:
                 break
         except:
             pass
@@ -144,8 +145,13 @@ if options.edit_run:
     except OSError:
         sys.exit('ERROR, unable to execute:\n %s' % command)
 
+    # Get confirmation after editing is done.
+    # Don't allow force-no-prompt in this case.
+    if options.geditor:
+        # Alert stdout of the dialog window, in case it's missed.
+        print "Editing done. I'm popping up a confirmation dialog now."
+
     # Save a diff to record the changes made.
-    log_dir = os.path.dirname(jobfile_path)
     with open("%s-edit.diff" % jobfile_path, 'wb') as diff_file:
         for line in difflib.unified_diff(
                 open(jobfile_copy_path).readlines(),
@@ -154,6 +160,17 @@ if options.edit_run:
                 tofile="edited"):
             diff_file.write(line)
     os.unlink(jobfile_copy_path)
+
+    log_dir = os.path.dirname(jobfile_path)
+    msg = "Trigger edited task %s?" % task_id
+    if not prompt(msg, gui=options.geditor, no_force=True, no_abort=True):
+        # Generate placeholder log files for the aborted run.
+        for log in ["job.out", "job.err"]:
+            lf = os.path.join(log_dir, log)
+            with open(lf, 'wb') as log_file:
+                log_file.write("This edit run was aborted\n")
+        print "Run aborted."
+        sys.exit(0)
 
 # Trigger the task proxy(s).
 cmd_client.put_command('trigger_task', name, point_string, options.is_family)
