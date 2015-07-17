@@ -7,7 +7,7 @@
 <meta name="keywords" content="cylc, forecast, suite, suite engine, metascheduler"/>
 <meta name="description" content="The cylc suite engine home page on GitHub." />
 <meta name="robots" content="all"/>
-<meta name="google-site-verification" content="80O-lgcVlVkKfF1yVyn0Q05W6QuN-WjcP30UftFhmiM" /> 
+<meta name="google-site-verification" content="80O-lgcVlVkKfF1yVyn0Q05W6QuN-WjcP30UftFhmiM" />
 
 <title>The Cylc Suite Engine</title>
 
@@ -38,13 +38,13 @@
         </div> <!--pageHeader-->
 
         <div id="banner">
-            <p class="p1"><span><b>The cylc suite engine</b> (<em>"silk"</em>) 
+            <p class="p1"><span><b>The cylc suite engine</b> (<em>"silk"</em>)
                 is a <b>workflow engine</b> and <b>meta-scheduler</b>. It
                 specialises in cycling (regularly repeating) workflows such as
                 those used in weather forecasting and climate modeling, but it
                 can also be used for non-cycling suites.
                 <b>Cylc is free software under the GNU GPL v3 license.</b>
-            </span></p> 
+            </span></p>
 
             <p class="p2"><span>.</span></p> <!-- p2 is required to get
         the lower banner background image, and the . is required
@@ -64,7 +64,7 @@
                 <h3><span>Overview</span></h3>
 
                 <p class="p3"><span>
-                    Cylc's suite design paradigm is simple and intuitive: configure 
+                    Cylc's suite design paradigm is simple and intuitive: configure
                     task scheduling with a dependency graph, then configure
                     task runtime properties in an efficient inheritance hierarchy.
                 </span></p>
@@ -72,7 +72,7 @@
                 <p class="p3"><span>
                     Cylc handles inter-cycle dependence explicitly and can
                     therefore interleave tasks from multiple cycles for
-                    efficient scheduling.                
+                    efficient scheduling.
                 </span></p>
 
                 <p class="p1"><span>
@@ -100,15 +100,15 @@
             <div id="navlist">
                 <h3 class="select"><span>Navigation:</span></h3>
                 <ul>
-                    <li> <a href="#overview">Overview</a> 
-                    <li> <a href="#who">Who's Using Cylc?</a> 
-                    <li> <a href="#features">Features</a> 
-                    <li> <a href="#requirements">Requirements</a> 
-                    <li> <a href="#download">Download</a> 
-                    <li> <a href="#installation">Installation</a> 
-                    <li> <a href="#documentation">Documentation</a> 
-                    <li> <a href="#support">Support</a> 
-                    <li> <a href="#development">Development</a> 
+                    <li> <a href="#overview">Overview</a>
+                    <li> <a href="#who">Who's Using Cylc?</a>
+                    <li> <a href="#features">Features</a>
+                    <li> <a href="#requirements">Requirements</a>
+                    <li> <a href="#download">Download</a>
+                    <li> <a href="#installation">Installation</a>
+                    <li> <a href="#documentation">Documentation</a>
+                    <li> <a href="#support">Support</a>
+                    <li> <a href="#development">Development</a>
                 </ul>
             </div> <!--navlist-->
 
@@ -129,14 +129,14 @@
                 </span></p>
 
                 <ul>
-                    <li> <a href="http://www.niwa.co.nz">NIWA</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
-                    <li> <a href="http://www.metoffice.gov.uk">Met Office (UK)</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
+                    <li> <a href="http://www.niwa.co.nz">NIWA</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a>
+                    <li> <a href="http://www.metoffice.gov.uk">Met Office (UK)</a> - cylc is used with <a href="https://github.com/metomi/rose">Rose</a>
                     <li> <a href="http://www.nrlmry.navy.mil">NRL Marine Meteorology Division</a> (USA)
-                    <li> <a href="http://www.mpimet.mpg.de">Max Planck Institute for Meteorology</a> (Germany) 
-                    <li> <a href="http://www.bom.gov.au">Bureau of Meteorology</a> (Australia)  - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
+                    <li> <a href="http://www.mpimet.mpg.de">Max Planck Institute for Meteorology</a> (Germany)
+                    <li> <a href="http://www.bom.gov.au">Bureau of Meteorology</a> (Australia)  - cylc is used with <a href="https://github.com/metomi/rose">Rose</a>
                     <li> <a href="http://www.gfdl.noaa.gov">GFDL</a> (NOAA/Princeton University, USA)
-                    <li> <a href="http://www.ncmrwf.gov.in">NCMRWF</a> (India)  - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
-                    <li> <a href="http://kma.go.kr">KMA</a> (Korea) - cylc is used with <a href="https://github.com/metomi/rose">Rose</a> 
+                    <li> <a href="http://www.ncmrwf.gov.in">NCMRWF</a> (India)  - cylc is used with <a href="https://github.com/metomi/rose">Rose</a>
+                    <li> <a href="http://kma.go.kr">KMA</a> (Korea) - cylc is used with <a href="https://github.com/metomi/rose">Rose</a>
                 </ul>
 
                 <p class="nav"><span><a href="#">(back to top)</a></span></p>
@@ -156,33 +156,41 @@
                         <li> efficient task runtime configuration by <b>multiple inheritance</b>
                     </ul>
                     <li> <b>Distributed suites</b> - run tasks on multiple hosts.
-                    <li> Supports many different job submission methods (PBS, slurm, etc.).
+                    <li> Supports many different <b>job submission</b> methods (PBS, slurm, etc.).
                     <li> <b>cycling workflows</b>
                     <ul>
                         <li> ISO 8601 compliant <b>date-time cycling</b> - easily
-                        generate sequences from minutes to billions of years, future or past. 
+                        generate sequences from minutes to billions of years, future or past.
                         <li> <b>Integer cycling</b>
                         <li> <b>Inter-cycle triggers</b> allow automatic
                         cycle-interleaving (dependencies allowing)
                     </ul>
                     <li> Supports tasks that run only at the initial and final
-                    cycle points, or at any point or points between. 
+                    cycle points, or at any point or points between.
                     <li> Handles <b>several thousand tasks</b> in a single suite.
-                    <li> <b>Inter-suite dependence</b> - triggering tasks off tasks in other suites. 
+                    <li> <b>Inter-suite dependence</b> - triggering tasks off tasks in other suites.
                     <li> <b>Suite validation</b> - catch many errors prior to run time.
                     <li> Advanced <b>restart</b> capability - cylc can restart from any
                     point in a workflow, and can determine what happened to
-                    submitted or running tasks while the suite was down.
+                    active tasks while the suite was down.
                     <li> <b>Conditional triggering</b>.
-                    <li> <b>Task family triggering</b>.
+                    <li> <b>Task families</b> - for triggering, and inheritance of shared task runtime settings.
                     <li> <b>Automated failure recovery</b> by task retry or alternate workflows (via suicide triggers).
                     <li> <b>Task and suite event hooks and timeouts</b> for central alerting.
                     <li> <b>Simulation and dummy modes</b> - get the scheduling right without running real tasks.
                     <li> Supports use of the <b>Jinja2 Template Processor</b> in suite definitions.
                     <li> <b>Internal Queues</b> to limit the number of simultaneously active tasks.
                     <li> <b>Task Poll and Kill</b> for all supported job submission methods.
-										<li> <b>Edit Runs</b> - edit the final task job script
-										before (re)triggering a job manually
+                    <li> <b>Edit Runs</b> - edit the final task job script
+                    before (re)triggering a job manually
+                    <li> <b>Clock triggering</b> - in date-time cycling suites,
+                    tasks can trigger off the wall clock as well as off other
+                    tasks.
+                    <li> <b>Expiring tasks</b> - in date-time cycling suites,
+                    tasks can expire and not submit jobs if too far behind the wall clock.
+                    <li> <b>External event triggering</b> - tasks can trigger
+                    off external events as well as other tasks and the wall
+                    clock.
                 </ul>
 
                 <p class="nav"><span><a href="#">(back to top)</a></span></p>
@@ -199,7 +207,7 @@
                     <li> Python 2.6 or later (but not 3.x as yet).
                     <!-- <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup> -->
 
-                    <li> <a href="http://www.pygtk.org">PyGTK</a>, 
+                    <li> <a href="http://www.pygtk.org">PyGTK</a>,
                     a Python wrapper for the GTK+ graphical user
                     interface toolkit, included in most Linux Distributions.
 
@@ -209,8 +217,8 @@
                     <li> The <a href="http://www.graphviz.org">graphviz</a> graph
                     layout engine (latest version tested: 2.28.0).
 
-                    <li> <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>, 
-                    a python interface to graphviz (latest version tested: 1.1). 
+                    <li> <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>,
+                    a python interface to graphviz (latest version tested: 1.1).
 
                     <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template processor for Python.
 
@@ -220,8 +228,8 @@
                 </ul>
 
                 <p class="p1"><span>
-                    Cylc has also absorbed <a href="http://code.google.com/p/jrfonseca/wiki/XDot">xdot</a> 
-                    (LGPL license) in modified form (no need to install separately).  
+                    Cylc has also absorbed <a href="http://code.google.com/p/jrfonseca/wiki/XDot">xdot</a>
+                    (LGPL license) in modified form (no need to install separately).
                 </span></p>
 
                 <p class="nav"><span><a href="#">(back to top)</a></span></p>
@@ -233,7 +241,7 @@
                 <p class="p1"><span>
                     Go to the
                     <a href="https://github.com/cylc/cylc/releases/">releases</a>
-                    page at the cylc repository on github, and 
+                    page at the cylc repository on github, and
                     download a compressed archive of the cylc source tree.
                 </span></p>
 
@@ -265,12 +273,12 @@
                     held online in HTML format:</span></p>
 
                 <ul>
-                    <li> <a href="html/multi/cug-html.html">Cylc User Guide (HTML multi-page)</a> 
-                    <li> <a href="html/single/cug-html.html">Cylc User Guide (HTML single-page)</a> 
+                    <li> <a href="html/multi/cug-html.html">Cylc User Guide (HTML multi-page)</a>
+                    <li> <a href="html/single/cug-html.html">Cylc User Guide (HTML single-page)</a>
                 </ul>
 
                 <p class="p2"><span>These documents, and a <b>PDF</b> version,
-                    can also be generated in your local cylc installation 
+                    can also be generated in your local cylc installation
                     by running <code>make</code> in the source tree. Local
                     documentation can be accessed by running the <code>cylc
                         doc</code> command.
@@ -289,7 +297,7 @@
                     future development planning.</span></p>
 
                 <!-- HJO: embedding the group causes the web page to jump down to the embedding location
-            <iframe id="forum_embed" 
+            <iframe id="forum_embed"
                 src="javascript:void(0)"
                 scrolling="no"
                 frameborder="0"
@@ -298,10 +306,10 @@
             </iframe>
             <script type="text/javascript">
                 document.getElementById('forum_embed').src =
-                'https://groups.google.com/forum/embed/?place=forum/cylc-dev' + 
-                '&amp;showsearch=true&amp;showpopout=true&amp;showtabs=false' + 
+                'https://groups.google.com/forum/embed/?place=forum/cylc-dev' +
+                '&amp;showsearch=true&amp;showpopout=true&amp;showtabs=false' +
                 '&amp;parenturl=' + encodeURIComponent(window.location.href);
-            </script> 
+            </script>
             -->
 
                 <p class="nav"><span><a href="#">(back to top)</a></span></p>
@@ -315,13 +323,13 @@
                     Cylc uses the powerful <a href="git-scm.com">Git</a>
                     distributed source code management system.  Git makes
                     branching and merging, forking/cloning, and pushing and
-                    pulling changes between repositories very easy. The 
-                    <a href="http://github.com/cylc/cylc">cylc repository</a> 
+                    pulling changes between repositories very easy. The
+                    <a href="http://github.com/cylc/cylc">cylc repository</a>
                     is hosted on <a href="http://github.com">GitHub</a>.
                 </span></p>
 
                 <p class="p2"><span>
-                    We use the <em>integrator</em> or 
+                    We use the <em>integrator</em> or
                     <em>fork and pull</em> model of distributed development.
                     Developers fork the master repository on GitHub, and
                     clone their fork to their local workstation.  Changes

@@ -667,7 +667,9 @@ class SuiteConfig(object):
 
         if self.validation:
             # Detect cyclic dependence.
-            graph = self.get_graph(ungroup_all=True, check_suicide=True)
+            # (ignore suicide triggers as they look like cyclic dependence:
+            #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
+            graph = self.get_graph(ungroup_all=True, ignore_suicide=True)
             # Original edges.
             o_edges = graph.edges()
             # Reverse any back edges using graphviz 'acyclic'.
@@ -1681,7 +1683,7 @@ class SuiteConfig(object):
 
     def get_graph_raw( self, start_point_string, stop_point_string,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
-            group_all=False, ungroup_all=False, check_suicide=False ):
+            group_all=False, ungroup_all=False):
         """Convert the abstract graph edges held in self.edges (etc.) to
         actual edges for a concrete range of cycle points."""
 
@@ -1731,7 +1733,7 @@ class SuiteConfig(object):
 
         graph_id = (start_point_string, stop_point_string, set(group_nodes),
                     set(ungroup_nodes), ungroup_recursive, group_all, 
-                    ungroup_all, check_suicide, set(self.closed_families),
+                    ungroup_all, set(self.closed_families),
                     set(self.edges), n_points)
         if graph_id == self._last_graph_raw_id:
             return self._last_graph_raw_edges
@@ -1799,9 +1801,6 @@ class SuiteConfig(object):
                     nl, nr = self.close_families(l_id, r_id)
                     if point not in gr_edges:
                         gr_edges[point] = []
-                    if not check_suicide and e.suicide:
-                        # Remove initial '!' from suicide node names.
-                        nr = nr[1:]
                     gr_edges[point].append((nl, nr, None, e.suicide, e.conditional))
                 # Increment the cycle point.
                 point = e.sequence.get_next_point_on_sequence(point)
@@ -1824,7 +1823,7 @@ class SuiteConfig(object):
     def get_graph(self, start_point_string=None, stop_point_string=None,
             group_nodes=[], ungroup_nodes=[], ungroup_recursive=False,
             group_all=False, ungroup_all=False, ignore_suicide=False,
-            subgraphs_on=False, check_suicide=False):
+            subgraphs_on=False):
 
         # If graph extent is not given, use visualization settings.
         if start_point_string is None:
@@ -1849,7 +1848,7 @@ class SuiteConfig(object):
         gr_edges = self.get_graph_raw(
             start_point_string, stop_point_string,
             group_nodes, ungroup_nodes, ungroup_recursive,
-            group_all, ungroup_all, check_suicide,
+            group_all, ungroup_all
         )
         graph = graphing.CGraph(
                 self.suite, self.suite_polling_tasks, self.cfg['visualization'])

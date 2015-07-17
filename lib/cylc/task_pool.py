@@ -635,6 +635,18 @@ class TaskPool(object):
                 return False
         return True
 
+    def has_unkillable_tasks_only(self):
+        """Used to identify if a task pool contains unkillable tasks.
+
+        Return True if all running and submitted tasks in the pool have had
+        kill operations fail, False otherwise.
+        """
+        for itask in self.get_tasks():
+            if itask.state.is_currently('running', 'submitted'):
+                if not itask.kill_failed:
+                    return False
+        return True
+
     def poll_tasks(self, ids=None):
         for itask in self.get_tasks():
             if itask.state.is_currently('running', 'submitted'):
@@ -761,11 +773,16 @@ class TaskPool(object):
 
         # record any broadcast settings to be dumped out
         bcast = BroadcastServer.get_inst()
-        table_name = self.pri_dao.TABLE_BROADCASTS
-        while bcast.db_inserts:
-            db_insert = bcast.db_inserts.pop(0)
-            self.pri_dao.add_insert_item(table_name, db_insert)
-            self.pub_dao.add_insert_item(table_name, db_insert)
+        for table_name, db_inserts in sorted(bcast.db_inserts_map.items()):
+            while db_inserts:
+                db_insert = db_inserts.pop(0)
+                self.pri_dao.add_insert_item(table_name, db_insert)
+                self.pub_dao.add_insert_item(table_name, db_insert)
+        for table_name, db_deletes in sorted(bcast.db_deletes_map.items()):
+            while db_deletes:
+                where_args = db_deletes.pop(0)
+                self.pri_dao.add_delete_item(table_name, where_args)
+                self.pub_dao.add_delete_item(table_name, where_args)
 
         # Previously, we used a separate thread for database writes. This has
         # now been removed. For the private database, there is no real

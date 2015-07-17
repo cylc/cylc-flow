@@ -1,0 +1,8 @@
+[scheduling]
+    [[dependencies]]
+        graph = foo => !BAR
+[runtime]
+    [[foo]]
+    [[BAR]]
+    [[bar1, bar2, bar3]]
+        inherit = BAR

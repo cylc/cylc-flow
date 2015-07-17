@@ -1253,9 +1253,9 @@ DONE
 
 Cylc supports a number of different job submission methods. Tasks
 submitted to external batch queuing systems like \lstinline=at=,
-\lstinline=PBS=, \lstinline=SLURM=, or \lstinline=loadleveler=, are
-displayed as {\em submitted} in the cylc GUI until they actually start
-executing.
+\lstinline=PBS=, \lstinline=SLURM=, \lstinline=Moab=, or
+\lstinline=LoadLeveler=, are displayed as {\em submitted} in the cylc GUI until
+they actually start executing.
 
 \begin{myitemize}
 \item For more on task job scripts, see~\ref{JobScripts}.
@@ -5099,6 +5099,36 @@ These are written to the top of the task job script like this:
 #PBS -l nodes=1
 #PBS -l walltime=00:01:00
 \end{lstlisting}
+
+\subsubsection{moab}
+
+Submits tasks to the Moab workload manager by the \lstinline=msub= command.
+Moab directives can be provided in the suite.rc file; the syntax is very
+similar to PBS:
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[my_task]]
+        [[[job submission]]]
+            method = moab
+        [[[directives]]]
+            -V =
+            -q = foo
+            -l nodes = 1
+            -l walltime = 00:01:00
+\end{lstlisting}
+These are written to the top of the task job script like this:
+\lstset{language=bash}
+\begin{lstlisting}
+#!/bin/bash
+# DIRECTIVES
+#PBS -V
+#PBS -q foo
+#PBS -l nodes=1
+#PBS -l walltime=00:01:00
+\end{lstlisting}
+(Moab understands \lstinline=#PBS= directives).
+
 
 \subsubsection{sge}
 
