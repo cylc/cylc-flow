@@ -14,6 +14,8 @@ title=Task Event Mail
     [[t1]]
         script=test "${CYLC_TASK_TRY_NUMBER}" -eq 2
         retry delays = PT1S
+{% if GLOBALCFG is not defined %}
         [[[events]]]
             mail events = failed, retry, succeeded
             mail smtp = {{MAIL_SMTP}}
+{% endif %}{# not GLOBALCFG is not defined #}
