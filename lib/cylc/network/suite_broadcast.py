@@ -19,6 +19,7 @@
 import sys
 import logging
 import cPickle as pickle
+import threading
 
 from cylc.broadcast_report import (
     get_broadcast_change_iter,
@@ -69,6 +70,7 @@ class BroadcastServer(PyroServer):
         self.db_deletes_map = {
             self.TABLE_BROADCAST_STATES: []}
         self.linearized_ancestors = linearized_ancestors
+        self.lock = threading.RLock()
 
     def _prune(self):
         """Remove empty leaves left by unsetting broadcast values.
@@ -118,28 +120,32 @@ class BroadcastServer(PyroServer):
         bad_point_strings = []
         bad_namespaces = []
 
-        for setting in settings:
-            for point_string in point_strings:
-                # Standardise the point and check its validity.
-                bad_point = False
-                try:
-                    point_string = standardise_point_string(point_string)
-                except Exception as exc:
-                    if point_string != '*':
-                        bad_point_strings.append(point_string)
-                        bad_point = True
-                if not bad_point and point_string not in self.settings:
-                    self.settings[point_string] = {}
-                for namespace in namespaces:
-                    if namespace not in self.linearized_ancestors:
-                        bad_namespaces.append(namespace)
-                    elif not bad_point:
-                        if namespace not in self.settings[point_string]:
-                            self.settings[point_string][namespace] = {}
-                        self._addict(
-                            self.settings[point_string][namespace], setting)
-                        modified_settings.append(
-                            (point_string, namespace, setting))
+        self.lock.acquire()
+        try:
+            for setting in settings:
+                for point_string in point_strings:
+                    # Standardise the point and check its validity.
+                    bad_point = False
+                    try:
+                        point_string = standardise_point_string(point_string)
+                    except Exception as exc:
+                        if point_string != '*':
+                            bad_point_strings.append(point_string)
+                            bad_point = True
+                    if not bad_point and point_string not in self.settings:
+                        self.settings[point_string] = {}
+                    for namespace in namespaces:
+                        if namespace not in self.linearized_ancestors:
+                            bad_namespaces.append(namespace)
+                        elif not bad_point:
+                            if namespace not in self.settings[point_string]:
+                                self.settings[point_string][namespace] = {}
+                            self._addict(
+                                self.settings[point_string][namespace], setting)
+                            modified_settings.append(
+                                (point_string, namespace, setting))
+        finally:
+            self.lock.release()
 
         # Log the broadcast
         self._append_db_queue(modified_settings)
@@ -206,26 +212,30 @@ class BroadcastServer(PyroServer):
 
         # Clear settings
         modified_settings = []
-        for point_string, point_string_settings in self.settings.items():
-            if point_strings and point_string not in point_strings:
-                continue
-            for namespace, namespace_settings in point_string_settings.items():
-                if namespaces and namespace not in namespaces:
+        self.lock.acquire()
+        try:
+            for point_string, point_string_settings in self.settings.items():
+                if point_strings and point_string not in point_strings:
                     continue
-                stuff_stack = [([], namespace_settings)]
-                while stuff_stack:
-                    keys, stuff = stuff_stack.pop()
-                    for key, value in stuff.items():
-                        if isinstance(value, dict):
-                            stuff_stack.append((keys + [key], value))
-                        elif (not cancel_keys_list or
-                                keys + [key] in cancel_keys_list):
-                            stuff[key] = None
-                            setting = {key: value}
-                            for rkey in reversed(keys):
-                                setting = {rkey: setting}
-                            modified_settings.append(
-                                (point_string, namespace, setting))
+                for namespace, namespace_settings in point_string_settings.items():
+                    if namespaces and namespace not in namespaces:
+                        continue
+                    stuff_stack = [([], namespace_settings)]
+                    while stuff_stack:
+                        keys, stuff = stuff_stack.pop()
+                        for key, value in stuff.items():
+                            if isinstance(value, dict):
+                                stuff_stack.append((keys + [key], value))
+                            elif (not cancel_keys_list or
+                                    keys + [key] in cancel_keys_list):
+                                stuff[key] = None
+                                setting = {key: value}
+                                for rkey in reversed(keys):
+                                    setting = {rkey: setting}
+                                modified_settings.append(
+                                    (point_string, namespace, setting))
+        finally:
+            self.lock.release()
 
         # Prune any empty branches
         bad_options = self._get_bad_options(
@@ -266,12 +276,21 @@ class BroadcastServer(PyroServer):
 
     def dump(self, file_):
         """Write broadcast variables to the state dump file."""
-        pickle.dump(self.settings, file_)
-        file_.write("\n")
+        self.lock.acquire()
+        try:
+            pickle.dump(self.settings, file_)
+            file_.write("\n")
+        finally:
+            self.lock.release()
 
     def load(self, pickled_settings):
         """Load broadcast variables from the state dump file."""
-        self.settings = pickle.loads(pickled_settings)
+        self.lock.acquire()
+        try:
+            self.settings = pickle.loads(pickled_settings)
+        finally:
+            self.lock.release()
+
 
         # Ensure database table is in sync
         modified_settings = []
@@ -298,7 +317,11 @@ class BroadcastServer(PyroServer):
 
     def _get_dump(self):
         """Return broadcast variables as written to the state dump file."""
-        return pickle.dumps(self.settings) + "\n"
+        self.lock.acquire()
+        try:
+            return pickle.dumps(self.settings) + "\n"
+        finally:
+            self.lock.release()
 
     @classmethod
     def _get_bad_options(
