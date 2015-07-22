@@ -1,0 +1,7 @@
+[cylc]
+    cycle point format = %Y-%m
+[scheduling]
+    initial cycle point = 2015-08
+    [[dependencies]]
+        [[[P1D]]]
+            graph = foo
