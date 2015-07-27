@@ -120,8 +120,7 @@ class BroadcastServer(PyroServer):
         bad_point_strings = []
         bad_namespaces = []
 
-        self.lock.acquire()
-        try:
+        with self.lock:
             for setting in settings:
                 for point_string in point_strings:
                     # Standardise the point and check its validity.
@@ -144,8 +143,6 @@ class BroadcastServer(PyroServer):
                                 self.settings[point_string][namespace], setting)
                             modified_settings.append(
                                 (point_string, namespace, setting))
-        finally:
-            self.lock.release()
 
         # Log the broadcast
         self._append_db_queue(modified_settings)
@@ -212,8 +209,7 @@ class BroadcastServer(PyroServer):
 
         # Clear settings
         modified_settings = []
-        self.lock.acquire()
-        try:
+        with self.lock:
             for point_string, point_string_settings in self.settings.items():
                 if point_strings and point_string not in point_strings:
                     continue
@@ -234,8 +230,6 @@ class BroadcastServer(PyroServer):
                                     setting = {rkey: setting}
                                 modified_settings.append(
                                     (point_string, namespace, setting))
-        finally:
-            self.lock.release()
 
         # Prune any empty branches
         bad_options = self._get_bad_options(
@@ -276,21 +270,14 @@ class BroadcastServer(PyroServer):
 
     def dump(self, file_):
         """Write broadcast variables to the state dump file."""
-        self.lock.acquire()
-        try:
+        with self.lock:
             pickle.dump(self.settings, file_)
             file_.write("\n")
-        finally:
-            self.lock.release()
 
     def load(self, pickled_settings):
         """Load broadcast variables from the state dump file."""
-        self.lock.acquire()
-        try:
+        with self.lock:
             self.settings = pickle.loads(pickled_settings)
-        finally:
-            self.lock.release()
-
 
         # Ensure database table is in sync
         modified_settings = []
@@ -317,11 +304,8 @@ class BroadcastServer(PyroServer):
 
     def _get_dump(self):
         """Return broadcast variables as written to the state dump file."""
-        self.lock.acquire()
-        try:
+        with self.lock:
             return pickle.dumps(self.settings) + "\n"
-        finally:
-            self.lock.release()
 
     @classmethod
     def _get_bad_options(
