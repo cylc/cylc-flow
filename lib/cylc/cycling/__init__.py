@@ -53,7 +53,8 @@ class SequenceDegenerateError(Exception):
 
     """An error raised when adjacent points on a sequence are equal."""
 
-    ERROR_MESSAGE = "Sequence {0}: equal adjacent points: {1} => {2}."
+    ERROR_MESSAGE = (
+        "Sequence {0}, point format {1}: equal adjacent points: {2} => {3}.")
 
     def __str__(self):
         return self.ERROR_MESSAGE.format(*self.args)

@@ -391,6 +391,7 @@ class ISO8601Sequence(SequenceBase):
             res = ISO8601Point(str(prev_point))
             if res == point:
                 raise SequenceDegenerateError(self.recurrence,
+                                              SuiteSpecifics.DUMP_FORMAT,
                                               res, point)
         return res
 
@@ -410,7 +411,9 @@ class ISO8601Sequence(SequenceBase):
         nearest_point = ISO8601Point(str(prev_iso_point))
         if nearest_point == point:
             raise SequenceDegenerateError(
-                self.recurrence, nearest_point, point)
+                self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                nearest_point, point
+            )
         return nearest_point
 
     def get_next_point(self, point):
@@ -430,7 +433,9 @@ class ISO8601Sequence(SequenceBase):
                 next_point = ISO8601Point(next_point_value)
                 if next_point == point:
                     raise SequenceDegenerateError(
-                        self.recurrence, nearest_point, point)
+                        self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                        nearest_point, point
+                    )
                 return next_point
         return None
 
@@ -442,7 +447,10 @@ class ISO8601Sequence(SequenceBase):
         if next_point:
             result = ISO8601Point(str(next_point))
             if result == point:
-                raise SequenceDegenerateError(self.recurrence, point, result)
+                raise SequenceDegenerateError(
+                    self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                    point, result
+                )
         return result
 
     def get_first_point(self, point):
