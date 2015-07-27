@@ -758,10 +758,9 @@ class config( object ):
                 exc_lines =  traceback.format_exc().splitlines()
                 if exc_lines[-1].startswith(
                     "RuntimeError: maximum recursion depth exceeded"):
-                    sys.stderr.write("ERROR: circular [runtime] inheritance?\n")
-                else:
-                    sys.stderr.write("ERROR: %s\n" % str(exc))
-                sys.exit(1)
+                    raise SuiteConfigError(
+                        "ERROR: circular [runtime] inheritance?")
+                raise
 
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
