@@ -183,7 +183,6 @@ class task_state(object):
             raise TaskStateError, 'ERROR, task spawned status not defined'
         if self.state[ 'spawned' ] not in [ 'true', 'false' ]:
             raise TaskStateError, 'ERROR, illegal task spawned status: ' + str( self.state[ 'spawned' ])
-            sys.exit(1)
 
     def dump( self ):
         # format: 'item1=value1, item2=value2, ...'
