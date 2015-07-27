@@ -467,5 +467,5 @@ def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=Fals
         cfpath = fpath
         # TODO - write_proc should be in loadcfg
         suitecfg = sconfig( SPEC, upg, tvars=tvars, tvars_file=tvars_file, write_proc=write_proc )
-        suitecfg.loadcfg( fpath, "suite definition", strict=True )
+        suitecfg.loadcfg(fpath, "suite definition")
         return suitecfg

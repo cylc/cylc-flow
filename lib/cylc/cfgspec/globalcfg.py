@@ -26,6 +26,7 @@ from parsec.validate import (
     coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
     IllegalValueError
 )
+from parsec import ParsecError
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
@@ -231,6 +232,7 @@ class GlobalConfig( config ):
                 print "Loading site/user config files"
             cls._DEFAULT = cls(SPEC, upg)
             conf_path_str = os.getenv("CYLC_CONF_PATH")
+            count = 0
             if conf_path_str is None:
                 # CYLC_CONF_PATH not defined, use default locations
                 for old_base, conf_dir in [
@@ -239,16 +241,26 @@ class GlobalConfig( config ):
                     for base in [cls.CONF_BASE, old_base]:
                         file_name = os.path.join(conf_dir, base)
                         if os.access(file_name, os.F_OK | os.R_OK):
-                            cls._DEFAULT.loadcfg(
-                                file_name, "global config", silent=True)
+                            try:
+                                cls._DEFAULT.loadcfg(file_name, "global config")
+                            except ParsecError as exc:
+                                if count == 0:
+                                    sys.stderr.write(
+                                        "WARNING: ignoring bad site config %s:\n"
+                                        "%s\n" % (file_name, str(exc)))
+                                else:
+                                    sys.stderr.write(
+                                        "ERROR: bad user config %s:\n" % (
+                                            file_name))
+                                    raise
+                            count += 1
                             break
             elif conf_path_str:
                 # CYLC_CONF_PATH defined with a value
                 for path in conf_path_str.split(os.pathsep):
                     file_name = os.path.join(path, cls.CONF_BASE)
                     if os.access(file_name, os.F_OK | os.R_OK):
-                        cls._DEFAULT.loadcfg(
-                            file_name, "global config", silent=True)
+                        cls._DEFAULT.loadcfg(file_name, "global config")
             cls._DEFAULT.transform()
         return cls._DEFAULT
         

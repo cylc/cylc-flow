@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, sys, re
+from parsec import ParsecError
 from parsec.fileparse import parse, FileNotFoundError
 from parsec.util import printcfg
 from parsec.validate import validate, check_compulsory, expand, validator
@@ -25,19 +26,16 @@ from parsec.util import replicate, itemstr
 from parsec.upgrade import UpgradeError
 import cylc.flags
 
-class ParsecError( Exception ):
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
 
-class ItemNotFoundError( ParsecError ):
-    def __init__( self, msg ):
-        self.msg = 'ERROR: item not found: ' + msg
+class ItemNotFoundError(ParsecError):
+    def __init__(self, msg):
+        self.msg = 'ERROR: item not found: %s' % msg
 
-class NotSingleItemError( ParsecError ):
-    def __init__( self, msg ):
-        self.msg = 'ERROR: not a singular item: ' + msg
+
+class NotSingleItemError(ParsecError):
+    def __init__(self, msg):
+        self.msg = 'ERROR: not a singular item: %s' % msg
+
 
 class config( object ):
     "Object wrapper for parsec functions"
@@ -62,48 +60,31 @@ class config( object ):
                 self.checkspec( value, pars )
             else:
                 if not isinstance( value, validator ):
-                    raise ParsecError( "Illegal file spec item: " + itemstr( pars, repr(value)) )
+                    raise ParsecError(
+                        "Illegal file spec item: %s" % itemstr(
+                            pars, repr(value)))
 
 
-    def loadcfg( self, rcfile, title="", strict=False, silent=False ):
+    def loadcfg(self, rcfile, title=""):
         """Parse a config file, upgrade or deprecate items if necessary,
         validate it against the spec, and if this is not the first load,
         combine/override with the existing loaded config."""
-        try:
-            sparse = parse( rcfile, write_proc=self.write_proc,
-                template_vars=self.tvars, template_vars_file=self.tvars_file )
-        except Exception, x:
-            if strict:
-                raise
-            if not silent or cylc.flags.verbose:
-                # no global.rc file, for instance, is not really an error.
-                print >> sys.stderr, x
-                print >> sys.stderr, "WARNING: " + title + " parsing failed (continuing)"
+
+        sparse = parse(
+                rcfile, write_proc=self.write_proc,
+                template_vars=self.tvars,
+                template_vars_file=self.tvars_file)
+
+        if self.upgrader is not None:
+            self.upgrader(sparse, title)
+
+        self.validate(sparse)
+
+        if not self.sparse:
+            self.sparse = sparse
         else:
-            # upgrade deprecated items if necessary
-            # (before validation, else validation will fail)
-            if self.upgrader is not None:
-                try:
-                    self.upgrader( sparse, title )
-                except UpgradeError, x:
-                    print >> sys.stderr, x
-                    print >> sys.stderr, "WARNING: " + title + " upgrade error, validation may fail"
-
-            try:
-                self.validate( sparse )
-            except Exception, x:
-                if strict:
-                    raise
-                if cylc.flags.verbose:
-                    print >> sys.stderr, x
-                    print >> sys.stderr, "WARNING: " + title + " validation failed"
-
-            else:
-                if not self.sparse:
-                    self.sparse = sparse
-                else:
-                    # already loaded, this must be an override
-                    replicate( self.sparse, sparse )
+            # Already loaded, override with new items.
+            replicate(self.sparse, sparse)
 
     def validate( self, sparse ):
         "Validate sparse config against the file spec."
@@ -134,7 +115,7 @@ class config( object ):
             try:
                 cfg = cfg[key]
             except KeyError, x:
-                raise ItemNotFoundError( itemstr(parents,key) )
+                raise ItemNotFoundError(itemstr(parents,key))
             else:
                 parents.append(key)
 
@@ -163,7 +144,7 @@ class config( object ):
             for keys in mkeys:
                 item = self.get( keys, sparse )
                 if isinstance( item, list ) or isinstance( item, dict ):
-                    raise NotSingleItemError( itemstr(keys) )
+                    raise NotSingleItemError(itemstr(keys))
                 if not item:
                     item = none_str or "None"
                 items.append(str(item))

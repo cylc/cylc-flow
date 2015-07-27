@@ -17,7 +17,7 @@ rcfile = rcname + '.rc'
 
 cfg = config( SPEC )
 
-cfg.loadcfg( rcfile, strict=True )
+cfg.loadcfg( rcfile )
 
 res = cfg.get( sparse=True)
 
