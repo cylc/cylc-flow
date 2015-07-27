@@ -903,7 +903,7 @@ class scheduler(object):
                     if name == 'shutdown' and self.reference_test_mode:
                         # TODO - this isn't true, it just means the
                         # shutdown handler run successfully:
-                        print 'SUITE REFERENCE TEST PASSED\n'
+                        print 'SUITE REFERENCE TEST PASSED'
 
     def run(self):
 
