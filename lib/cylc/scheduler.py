@@ -962,13 +962,16 @@ class scheduler(object):
 
             proc_pool.handle_results_async()
 
+            # External triggers must be matched now. If any are matched pflag
+            # is set to tell process_tasks() that task processing is required.
+            self.pool.match_ext_triggers()
+
             if self.process_tasks():
                 if cylc.flags.debug:
                     self.log.debug("BEGIN TASK PROCESSING")
                     main_loop_start_time = time.time()
 
                 self.pool.match_dependencies()
-                self.pool.match_ext_triggers()
 
                 ready_tasks = self.pool.submit_tasks()
                 if (ready_tasks and
