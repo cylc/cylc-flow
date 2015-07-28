@@ -85,7 +85,7 @@ def get_host_ip_address():
     return host_ip_address
 
 def get_suite_host():
-    from cylc.cfgspec.globalcfg import GLOBAL_CFG
+    from cylc.cfgspec.globalcfg import GLOBAL_CFG, GlobalConfigError
     global suite_host
     if suite_host is None:
         hardwired = GLOBAL_CFG.get( ['suite host self-identification','host'] )
@@ -97,10 +97,16 @@ def get_suite_host():
             suite_host = get_host_ip_address()
         elif method == 'hardwired':
             if not hardwired:
-                sys.exit( 'ERROR, no hardwired hostname is configured' )
+                raise GlobalConfigError(
+                    'ERROR, no hardwired hostname is configured (%s)' %
+                    ['suite host self-identification', 'host']
+                )
             suite_host = hardwired
         else:
-            sys.exit( 'ERROR, unknown host method: ' + method )
+            raise GlobalConfigError(
+                'ERROR, unknown host method (%s): %s' % (
+                    ['suite host self-identification', 'method'], method)
+            )
     return suite_host
 
 def is_remote_host(name):

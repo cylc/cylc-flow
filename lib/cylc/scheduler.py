@@ -893,16 +893,17 @@ class scheduler(object):
                     RunHandler(name, handler, self.suite, msg=msg, fg=fg)
                 except Exception, x:
                     # Note: test suites depends on this message:
-                    print >> sys.stderr, (
-                        '\nERROR: %s EVENT HANDLER FAILED' % name)
+                    sys.stderr.write(
+                        'ERROR: %s EVENT HANDLER FAILED\n' % name)
                     if name == 'shutdown' and self.reference_test_mode:
-                        sys.exit('\nERROR: SUITE REFERENCE TEST FAILED')
+                        sys.stderr.write(
+                            'ERROR: SUITE REFERENCE TEST FAILED\n')
                     raise SchedulerError(x)
                 else:
                     if name == 'shutdown' and self.reference_test_mode:
                         # TODO - this isn't true, it just means the
                         # shutdown handler run successfully:
-                        print '\nSUITE REFERENCE TEST PASSED'
+                        print 'SUITE REFERENCE TEST PASSED'
 
     def run(self):
 

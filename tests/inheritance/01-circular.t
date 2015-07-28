@@ -27,7 +27,7 @@ run_fail $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-cmp
 cmp_ok $TEST_NAME_BASE-validate.stderr <<__ERR__
-ERROR: circular [runtime] inheritance?
+'ERROR: circular [runtime] inheritance?'
 __ERR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
