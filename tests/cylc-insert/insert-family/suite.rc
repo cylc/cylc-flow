@@ -1,0 +1,33 @@
+title = Test removal and insertion of task familes.
+description = """Two families are removed, then one is re-inserted.
+The ref test will fail if either operation fails to work properly."""
+
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
+[scheduling]
+    initial cycle point = 1
+    final cycle point = 2
+    cycling mode = integer
+    [[dependencies]]
+        [[[P1]]]
+            graph = """
+        remover => inserter => FAM-A & FAM-B
+        FAM-A[-P1]:succeed-all => remover"""
+[runtime]
+    [[root]]
+        script = /bin/true
+    [[remover]]
+        # Remove both families (also tests removal by pattern).
+        script = """
+cylc remove --no-spawn -m $CYLC_SUITE_NAME 'FAM-.' $CYLC_TASK_CYCLE_POINT"""
+    [[inserter]]
+        # Re-insert one family.
+        script = """
+cylc insert -m $CYLC_SUITE_NAME 'FAM-A' $CYLC_TASK_CYCLE_POINT"""
+    [[FAM-A, FAM-B]]
+    [[a1, a2]]
+        inherit = FAM-A
+    [[b1, b2]]
+        inherit = FAM-B

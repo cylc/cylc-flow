@@ -541,7 +541,7 @@ class scheduler(object):
                 submit_num = task_states_data[(task_name, task_point)].get(
                     "submit_num")
             new_task = self.config.get_task_proxy(
-                name, point, 'waiting', stop_point, submit_num=submit_num)
+                task_name, point, 'waiting', stop_point, submit_num=submit_num)
             if new_task:
                 self.pool.add_to_runahead_pool(new_task)
 
@@ -1317,35 +1317,32 @@ class scheduler(object):
         task_id = TaskID.get(matches[0], point_string)
         self.pool.dry_run_task(task_id)
 
-    def get_matching_task_names(self, expr, is_family=False):
-        """Return task names that match expr (for task or family name)."""
-        matches = []
-        tasks = self.config.get_task_name_list()
+    def get_matching_task_names(self, pattern, is_family=False):
+        """Return task names that match pattern (by task or family name)."""
+
+        matching_tasks = []
+        all_tasks = self.config.get_task_name_list()
         if is_family:
-            families = self.config.runtime['first-parent descendants']
+            fp_desc = self.config.runtime['first-parent descendants']
+            matching_mems = []
             try:
                 # Exact family match.
-                f_matches = families[expr]
+                matching_mems = fp_desc[pattern]
             except KeyError:
-                # Regex familyi match
-                f_matches = []
-                for fam, mems in families.items():
-                    if re.match(expr, fam):
-                        f_matches += mems
-            matches = []
-            for m in f_matches:
-                if m in tasks:
-                    matches.append(m)
+                # Regex family match
+                for fam, mems in fp_desc.items():
+                    if re.match(pattern, fam):
+                        matching_mems += mems
+            # Keep family members that are tasks (not sub-families).
+            matching_tasks = [m for m in matching_mems if m in all_tasks]
         else:
-            if expr in tasks:
+            if pattern in all_tasks:
                 # Exact task match.
-                matches.append(expr)
+                matching_tasks = [pattern]
             else:
                 # Regex task match.
-                for task in tasks:
-                    if re.match(expr, task):
-                        matches.append(task)
-        return matches
+                matching_tasks = [t for t in all_tasks if re.match(pattern, t)]
+        return matching_tasks
 
     def command_reset_task_state(self, name, point_string, state, is_family):
         matches = self.get_matching_task_names(name, is_family)

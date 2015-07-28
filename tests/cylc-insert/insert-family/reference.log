@@ -1,0 +1,63 @@
+2015-07-17T14:57:39+12 INFO - port:7766
+2015-07-17T14:57:39+12 INFO - Suite starting at 2015-07-17T14:57:39+12
+2015-07-17T14:57:39+12 INFO - Run mode: live
+2015-07-17T14:57:39+12 INFO - Initial point: 1
+2015-07-17T14:57:39+12 INFO - Final point: 2
+2015-07-17T14:57:39+12 INFO - Cold Start 1
+2015-07-17T14:57:39+12 INFO - [remover.1] -job(01) initiate job-submit
+2015-07-17T14:57:39+12 INFO - [remover.1] -triggered off []
+2015-07-17T14:57:39+12 INFO - Client: remove_task (cylc-remove oliverh@oliverh-34403DL.niwa.local 7a3be907-3ab8-441b-b053-a936ee65e941)
+2015-07-17T14:57:40+12 INFO - [remover.1] -submit_method_id=31752
+2015-07-17T14:57:40+12 INFO - [remover.1] -submission succeeded
+2015-07-17T14:57:40+12 INFO - [remover.1] -(current:submitted)> remover.1 started at 2015-07-17T14:57:39+12
+2015-07-17T14:57:40+12 INFO - [remover.1] -(current:running)> remover.1 succeeded at 2015-07-17T14:57:40+12
+2015-07-17T14:57:40+12 INFO - Command succeeded: remove_task(FAM-.,1,True,False)
+2015-07-17T14:57:41+12 INFO - [inserter.1] -job(01) initiate job-submit
+2015-07-17T14:57:41+12 INFO - [inserter.1] -triggered off ['remover.1']
+2015-07-17T14:57:42+12 INFO - Client: insert_task (cylc-insert oliverh@oliverh-34403DL.niwa.local ae74aa6d-c344-4792-9ca5-1eee2896ecdb)
+2015-07-17T14:57:42+12 INFO - [inserter.1] -submit_method_id=31832
+2015-07-17T14:57:42+12 INFO - [inserter.1] -submission succeeded
+2015-07-17T14:57:42+12 INFO - [inserter.1] -(current:submitted)> inserter.1 started at 2015-07-17T14:57:41+12
+2015-07-17T14:57:42+12 INFO - [inserter.1] -(current:running)> inserter.1 succeeded at 2015-07-17T14:57:42+12
+2015-07-17T14:57:42+12 INFO - Command succeeded: insert_task(FAM-A,1,True,None)
+2015-07-17T14:57:43+12 INFO - [a2.1] -job(01) initiate job-submit
+2015-07-17T14:57:43+12 INFO - [a1.1] -job(01) initiate job-submit
+2015-07-17T14:57:43+12 INFO - [a2.1] -triggered off ['inserter.1']
+2015-07-17T14:57:43+12 INFO - [a1.1] -triggered off ['inserter.1']
+2015-07-17T14:57:46+12 INFO - [a2.1] -submit_method_id=31931
+2015-07-17T14:57:46+12 INFO - [a2.1] -submission succeeded
+2015-07-17T14:57:46+12 INFO - [a1.1] -submit_method_id=31930
+2015-07-17T14:57:46+12 INFO - [a1.1] -submission succeeded
+2015-07-17T14:57:47+12 INFO - [a2.1] -(current:submitted)> a2.1 started at 2015-07-17T14:57:45+12
+2015-07-17T14:57:47+12 INFO - [a2.1] -(current:running)> a2.1 succeeded at 2015-07-17T14:57:46+12
+2015-07-17T14:57:47+12 INFO - [a1.1] -(current:submitted)> a1.1 started at 2015-07-17T14:57:45+12
+2015-07-17T14:57:47+12 INFO - [a1.1] -(current:running)> a1.1 succeeded at 2015-07-17T14:57:46+12
+2015-07-17T14:57:48+12 INFO - [remover.2] -job(01) initiate job-submit
+2015-07-17T14:57:48+12 INFO - [remover.2] -triggered off ['a1.1', 'a2.1']
+2015-07-17T14:57:48+12 INFO - Client: remove_task (cylc-remove oliverh@oliverh-34403DL.niwa.local 6112821f-b7ab-4243-b82f-bcaadb1772e8)
+2015-07-17T14:57:49+12 INFO - [remover.2] -submit_method_id=32055
+2015-07-17T14:57:49+12 INFO - [remover.2] -submission succeeded
+2015-07-17T14:57:49+12 INFO - [remover.2] -(current:submitted)> remover.2 started at 2015-07-17T14:57:48+12
+2015-07-17T14:57:49+12 INFO - [remover.2] -(current:running)> remover.2 succeeded at 2015-07-17T14:57:49+12
+2015-07-17T14:57:49+12 INFO - Command succeeded: remove_task(FAM-.,2,True,False)
+2015-07-17T14:57:50+12 INFO - [inserter.2] -job(01) initiate job-submit
+2015-07-17T14:57:50+12 INFO - [inserter.2] -triggered off ['remover.2']
+2015-07-17T14:57:51+12 INFO - Client: insert_task (cylc-insert oliverh@oliverh-34403DL.niwa.local 9275ddcb-f67c-48a2-9626-795925b9020b)
+2015-07-17T14:57:51+12 INFO - [inserter.2] -submit_method_id=32136
+2015-07-17T14:57:51+12 INFO - [inserter.2] -submission succeeded
+2015-07-17T14:57:51+12 INFO - [inserter.2] -(current:submitted)> inserter.2 started at 2015-07-17T14:57:51+12
+2015-07-17T14:57:51+12 INFO - [inserter.2] -(current:running)> inserter.2 succeeded at 2015-07-17T14:57:51+12
+2015-07-17T14:57:51+12 INFO - Command succeeded: insert_task(FAM-A,2,True,None)
+2015-07-17T14:57:52+12 INFO - [a2.2] -job(01) initiate job-submit
+2015-07-17T14:57:52+12 INFO - [a1.2] -job(01) initiate job-submit
+2015-07-17T14:57:52+12 INFO - [a2.2] -triggered off ['inserter.2']
+2015-07-17T14:57:52+12 INFO - [a1.2] -triggered off ['inserter.2']
+2015-07-17T14:57:54+12 INFO - [a2.2] -submit_method_id=32226
+2015-07-17T14:57:54+12 INFO - [a2.2] -submission succeeded
+2015-07-17T14:57:54+12 INFO - [a1.2] -submit_method_id=32240
+2015-07-17T14:57:54+12 INFO - [a1.2] -submission succeeded
+2015-07-17T14:57:54+12 INFO - [a2.2] -(current:submitted)> a2.2 started at 2015-07-17T14:57:53+12
+2015-07-17T14:57:54+12 INFO - [a2.2] -(current:running)> a2.2 succeeded at 2015-07-17T14:57:53+12
+2015-07-17T14:57:54+12 INFO - [a1.2] -(current:submitted)> a1.2 started at 2015-07-17T14:57:53+12
+2015-07-17T14:57:54+12 INFO - [a1.2] -(current:running)> a1.2 succeeded at 2015-07-17T14:57:53+12
+2015-07-17T14:57:55+12 INFO - Suite shutting down at 2015-07-17T14:57:55+12
