@@ -82,21 +82,22 @@ class BroadcastServer(PyroServer):
             ["20020202", "bar", "environment", "BAR"],
         ]
         """
-        prunes = []
-        stuff_stack = [([], self.settings, True)]
-        while stuff_stack:
-            keys, stuff, is_new = stuff_stack.pop()
-            if is_new:
-                stuff_stack.append((keys, stuff, False))
-                for key, value in stuff.items():
-                    if isinstance(value, dict):
-                        stuff_stack.append((keys + [key], value, True))
-            else:
-                for key, value in stuff.items():
-                    if value in [None, {}]:
-                        del stuff[key]
-                        prunes.append(keys + [key])
-        return prunes
+        with self.lock:
+            prunes = []
+            stuff_stack = [([], self.settings, True)]
+            while stuff_stack:
+                keys, stuff, is_new = stuff_stack.pop()
+                if is_new:
+                    stuff_stack.append((keys, stuff, False))
+                    for key, value in stuff.items():
+                        if isinstance(value, dict):
+                            stuff_stack.append((keys + [key], value, True))
+                else:
+                    for key, value in stuff.items():
+                        if value in [None, {}]:
+                            del stuff[key]
+                            prunes.append(keys + [key])
+            return prunes
 
     def _addict(self, target, source):
         """Recursively add source dict to target dict."""
