@@ -21,17 +21,16 @@
 Print name, owner, host, and port for suites found running on scanned hosts,
 specified in global config under [suite host scanning] or on the command line.
 
-Optional information can be printed if it is available - this is determined by
-the suite owner's public access settings (via site, user, and/or suite config):
-suite title, description, state totals, and cycle point state totals.
+Suite titles, descriptions, state totals, and cycle point state totals can
+optionally be printed as well, if suite public access settings allow.
 
 By default, just your own suites are listed (this assumes your username is the
 same on all scanned hosts). Use -a/--all-suites to see all suites on all hosts,
 or restrict suites displayed with the -o/--owner and -n/--name options (with
 --name the default owner restriction (i.e. just your own suites) is disabled.
 
-Authentication credentials are not required to get this public information
-from suite servers running at >= cylc-6.5.0.  With -v/--verbose you'll see
+Authentication credentials are not required to get public information from
+suite servers running at >= cylc-6.5.0.  With -v/--verbose you'll see
 "connection denied (security reasons)" from older suite servers.
 
 WARNING: a suite suspended with Ctrl-Z will cause port scans to hang until the
