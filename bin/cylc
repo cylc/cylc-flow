@@ -515,12 +515,6 @@ args = sys.argv[1:]
 # Set environment variables from arguments like --env=key=val
 args = set_environment_vars(args)
 
-if '--notify-completion' in args:
-    notify = True
-    args.remove('--notify-completion')
-else:
-    notify = False
-
 if len(args) == 1:
     if args[0] == 'categories':
         # secret argument for document processing

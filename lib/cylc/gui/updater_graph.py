@@ -367,6 +367,9 @@ class GraphUpdater(threading.Thread):
                                 break
                         if remove:
                             nodes_to_remove.add(node)
+                    elif id in self.updater.full_fam_state_summary:
+                        # An updater-filtered-out family.
+                        nodes_to_remove.add(node)
 
             # Base node cropping.
             if self.crop:

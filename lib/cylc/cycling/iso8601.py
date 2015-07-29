@@ -28,7 +28,7 @@ from cylc.syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
 from cylc.time_parser import CylcTimeParser
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, PointParsingError,
-    IntervalParsingError)
+    IntervalParsingError, SequenceDegenerateError)
 from parsec.validate import IllegalValueError
 
 CYCLER_TYPE_ISO8601 = "iso8601"
@@ -389,6 +389,10 @@ class ISO8601Sequence(SequenceBase):
         prev_point = self.recurrence.get_prev(point_parse(point.value))
         if prev_point:
             res = ISO8601Point(str(prev_point))
+            if res == point:
+                raise SequenceDegenerateError(self.recurrence,
+                                              SuiteSpecifics.DUMP_FORMAT,
+                                              res, point)
         return res
 
     def get_nearest_prev_point(self, point):
@@ -404,7 +408,13 @@ class ISO8601Sequence(SequenceBase):
             prev_iso_point = recurrence_iso_point
         if prev_iso_point is None:
             return None
-        return ISO8601Point(str(prev_iso_point))
+        nearest_point = ISO8601Point(str(prev_iso_point))
+        if nearest_point == point:
+            raise SequenceDegenerateError(
+                self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                nearest_point, point
+            )
+        return nearest_point
 
     def get_next_point(self, point):
         """Return the next point > p, or None if out of bounds."""
@@ -420,7 +430,13 @@ class ISO8601Sequence(SequenceBase):
                         self._MAX_CACHED_POINTS):
                     self._cached_next_point_values.popitem()
                 self._cached_next_point_values[point.value] = next_point_value
-                return ISO8601Point(next_point_value)
+                next_point = ISO8601Point(next_point_value)
+                if next_point == point:
+                    raise SequenceDegenerateError(
+                        self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                        nearest_point, point
+                    )
+                return next_point
         return None
 
     def get_next_point_on_sequence(self, point):
@@ -430,6 +446,11 @@ class ISO8601Sequence(SequenceBase):
         next_point = self.recurrence.get_next(point_parse(point.value))
         if next_point:
             result = ISO8601Point(str(next_point))
+            if result == point:
+                raise SequenceDegenerateError(
+                    self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                    point, result
+                )
         return result
 
     def get_first_point(self, point):

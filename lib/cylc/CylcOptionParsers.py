@@ -30,7 +30,8 @@ multitask_usage = """
 To match multiple tasks or families at once, MATCH is interpreted as a
 Python-style regular expression, not a simple shell glob.
 
-To match family rather than task names, use the -m/--family option."""
+To match family rather than task names, use the -m/--family option. This is
+required because MATCH could potentially match task or family names."""
 
 class db_optparse( object ):
     def __init__( self, dbopt ):

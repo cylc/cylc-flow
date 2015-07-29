@@ -1029,17 +1029,22 @@ class TaskPool(object):
                     return False, "task not running"
 
     def get_task_jobfile_path(self, id_):
+        """Return a task job log dir, sans submit number.
+
+        TODO - this method name (and same in scheduler.py) should be changed.
+
+        """
         found = False
         running = False
         for itask in self.get_tasks():
             if itask.identity == id_:
                 found = True
-                jobfile_path = itask.job_conf['local job file path']
+                job_parent_dir = itask.get_task_log_dir()
                 break
         if not found:
             return False, "task not found"
         else:
-            return True, jobfile_path
+            return True, job_parent_dir
 
     def get_task_requisites(self, taskid):
         info = {}

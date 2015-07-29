@@ -60,7 +60,7 @@ Other examples:
   foo-2012-08.nc
 
 Arguments:
-   [CYCLE]  ISO 8601 date-time, e.g. 20140201T0000Z, default
+   [POINT]  ISO 8601 date-time, e.g. 20140201T0000Z, default
       $CYLC_TASK_CYCLE_POINT"""
 
 import os

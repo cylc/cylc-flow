@@ -20,7 +20,8 @@
 
 Print the location or content of any suite or task log file, or a listing of a
 task log directory on the suite or task host.  By default the suite event log
-or task job script is printed."""
+or task job script is printed. For task logs you must use the same cycle
+point format as the suite (list the log directory to see what it is)."""
 
 import sys
 from cylc.remote import remrun

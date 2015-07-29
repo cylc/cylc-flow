@@ -15,19 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check circular inheritance fails validation with the correct error message.
+# Test validation with a new-style cycle point and an async graph.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-validate
-run_fail $TEST_NAME cylc validate $SUITE_NAME
+TEST_NAME=$TEST_NAME_BASE
+run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
+grep_ok "Sequence R/2015-08/P1D, point format %Y-%m: equal adjacent points: 2015-08 => 2015-08." \
+    $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-cmp
-cmp_ok $TEST_NAME_BASE-validate.stderr <<__ERR__
-'ERROR: circular [runtime] inheritance?'
-__ERR__
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+exit

@@ -19,27 +19,28 @@
 set -e
 
 usage() {
-    echo ""
-    echo "Usage: cylc [prep] jobscript [OPTIONS] REG TASK"
-    echo ""
-    echo "Generate a task job script and print it to stdout."
-    echo ""
-    echo "Here's how to capture the script in the vim editor:"
-    echo "  % cylc jobscript REG TASK | vim -"
-    echo "Emacs unfortunately cannot read from stdin:"
-    echo "  % cylc jobscript REG TASK > tmp.sh; emacs tmp.sh"
-    echo ""
-    echo "This command wraps 'cylc [control] submit --dry-run'."
-    echo "Other options (e.g. for suite host and owner) are passed"
-    echo "through to the submit command."
-    echo ""
-    echo "Options:"
-    echo "  -h,--help   - print this usage message."
-    echo " (see also 'cylc submit --help')"
-    echo ""
-    echo "Arguments:"
-    echo "  REG         - Registered suite name."
-    echo "  TASK        - Task ID (NAME.CYCLE_POINT)"
+    cat <<__END__
+Usage: cylc [prep] jobscript [OPTIONS] REG TASK
+
+Generate a task job script and print it to stdout.
+
+Here's how to capture the script in the vim editor:
+  % cylc jobscript REG TASK | vim -
+Emacs unfortunately cannot read from stdin:
+  % cylc jobscript REG TASK > tmp.sh; emacs tmp.sh
+
+This command wraps 'cylc [control] submit --dry-run'.
+Other options (e.g. for suite host and owner) are passed
+through to the submit command.
+
+Options:
+  -h,--help   - print this usage message.
+ (see also 'cylc submit --help')
+
+Arguments:
+  REG         - Registered suite name.
+  TASK        - Task ID (NAME.CYCLE_POINT)
+__END__
 }
 
 for arg in "${@}"; do

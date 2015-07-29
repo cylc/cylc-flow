@@ -186,9 +186,9 @@ class CylcSuiteDAO(object):
             ["value"],
         ],
         TABLE_TASK_JOBS: [
-            ["cycle"],
-            ["name"],
-            ["submit_num", {"datatype": "INTEGER"}],
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["submit_num", {"datatype": "INTEGER", "is_primary_key": True}],
             ["is_manual_submit", {"datatype": "INTEGER"}],
             ["try_num", {"datatype": "INTEGER"}],
             ["time_submit"],
