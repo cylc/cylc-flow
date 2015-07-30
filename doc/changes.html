@@ -127,6 +127,10 @@ For the definitive record see the cylc git repository change log.</p>
             points</code>).
         <li> Fixed errors in gcylc and monitor due to attempted connection during
         suite initialization.
+				<li> Fixed a bug in the cylc-6.4.1 job kill mechanism: it reported "job
+				killed failed" even on a successful kill. A killed 'running' task would
+				still enter the 'failed' state due to task runtime error trapping, but
+				a killed 'submitted' task would stay in the 'submitted' state.
     </ul>
 
 
