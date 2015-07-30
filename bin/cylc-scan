@@ -18,20 +18,23 @@
 
 """cylc [discovery] scan [OPTIONS] [HOSTS ...]
 
-Print name, owner, host, and port for suites found running on scanned hosts,
-specified in global config under [suite host scanning] or on the command line.
-
-Suite titles, descriptions, state totals, and cycle point state totals can
-optionally be printed as well, if suite public access settings allow.
+Print information about cylc suites currently running on scanned hosts. The
+list of hosts to scan is determined by the global configuration "[suite host
+scanning]" setting, or hosts can be specified explicitly on the command line.
 
 By default, just your own suites are listed (this assumes your username is the
 same on all scanned hosts). Use -a/--all-suites to see all suites on all hosts,
 or restrict suites displayed with the -o/--owner and -n/--name options (with
 --name the default owner restriction (i.e. just your own suites) is disabled.
 
-Authentication credentials are not required to get public information from
-suite servers running at >= cylc-6.5.0.  With -v/--verbose you'll see
-"connection denied (security reasons)" from older suite servers.
+Suite passphrases are not needed to get identity information (name and owner)
+from suites running cylc >= 6.6.0.  Titles, descriptions, state totals, and
+cycle point state totals may also be revealed publicly, depending on global
+and sutie authentication settings. Suite passphrases still grant full access
+regardless of what is revealed publicly.
+
+Passphrases are still required to get identity information from older suites
+(cylc <= 6.5.0), otherwise you'll see "connection denied (security reasons)".
 
 WARNING: a suite suspended with Ctrl-Z will cause port scans to hang until the
 connection times out (see --pyro-timeout)."""
@@ -157,6 +160,9 @@ def main():
     if options.print_full:
         options.describe = options.print_totals = True
 
+    if options.color:
+        options.print_totals = True
+
     if options.all_suites:
         if options.patterns_name != []:
             parser.error("-a and -n are mutually exclusive.")
@@ -198,7 +204,7 @@ def main():
         try:
             port, suite_identity = scan_result
         except ValueError:
-            # Back-compat (<= 6.4.1 no title or state totals).
+            # Back-compat (<= 6.5.0 no title or state totals).
             port, name, owner = scan_result
             if not (re.match(pattern_name, name) and
                     re.match(pattern_owner, owner)):
