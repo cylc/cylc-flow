@@ -142,7 +142,7 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
         else:
             name = result[1].get('name')
             owner = result[1].get('owner')
-            states = result[1].get('state', None)
+            states = result[1].get('states', None)
             if cylc.flags.debug:
                 print '   suite:', name, owner
             if states is None:
