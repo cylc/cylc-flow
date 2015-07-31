@@ -16,10 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+"""gcapture [options] COMMAND
+Run a command as a subprocess and capture the resulting stdout and
+stderr to display in a dialog. Examples:
+    $ capture "echo foo" &
+
+Arguments:
+   COMMAND    - the command line to run"""
+
+import os
+import sys
 from optparse import OptionParser
 
-sys.path.append(os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
+sys.path.append(
+    os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../lib')
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.gcapture import gcapture, gcapture_tmpfile
@@ -27,30 +37,28 @@ from cylc.gui.gcapture import gcapture, gcapture_tmpfile
 # This is a unit test for $CYLC_DIR/lib/cylc/gui/gcapture.py
 # but it may be more generally useful.
 
-parser = OptionParser( """gcapture [options] COMMAND
-Run a command as a subprocess and capture the resulting stdout and
-stderr to display in a dialog. Examples:
-    $ capture "echo foo" &
+parser = OptionParser(__doc__)
 
-Arguments:
-   COMMAND    - the command line to run""")
-
-parser.add_option( "--width",
+parser.add_option(
+    "--width",
     help="dialog window width in pixels (default 400)",
-    metavar='INT', action="store", default=400, dest="width" )
+    metavar='INT', action="store", default=400, dest="width")
 
-parser.add_option( "--height",
+parser.add_option(
+    "--height",
     help="dialog window height in pixels (default 200)",
-    metavar='INT', action="store", default=200, dest="height" )
+    metavar='INT', action="store", default=200, dest="height")
 
-parser.add_option( "--file",
+parser.add_option(
+    "--file",
     help="(optional) capture stdout and stderr in FILE"
     "(full path, e.g. /path/to/foo/output.txt).",
-    metavar='FILE', action="store", default=None, dest="filep" )
+    metavar='FILE', action="store", default=None, dest="filep")
 
-parser.add_option( "--other",
+parser.add_option(
+    "--other",
     help="(optional) view the output (--prefix) of another gcapture process.",
-    action="store_true", default=False, dest="other" )
+    action="store_true", default=False, dest="other")
 
 (options, args) = parser.parse_args()
 
@@ -61,7 +69,7 @@ import gtk
 import gobject
 
 if options.other and not options.filep:
-    parser.error( '--other requires --prefix' )
+    parser.error('--other requires --prefix')
 
 command = ' '.join(args)
 
@@ -77,12 +85,15 @@ if options.filep:
     try:
         if ignore_command:
             # open existing file
-            stdout = open( options.filep, 'rb' )
+            stdout = open(options.filep, 'rb')
         else:
-            stdout = open( options.filep, 'wb' )
+            stdout = open(options.filep, 'wb')
     except IOError, x:
         raise SystemExit(x)
-    gcapture( command, stdout, width=int(options.width), height=int(options.height), standalone=True, ignore_command=ignore_command ).run()
+    gcapture(command, stdout, width=int(options.width),
+             height=int(options.height), standalone=True,
+             ignore_command=ignore_command).run()
 else:
-    gcapture_tmpfile( command, cylc_tmpdir, width=int(options.width), height=int(options.height), standalone=True ).run()
+    gcapture_tmpfile(command, cylc_tmpdir, width=int(options.width),
+                     height=int(options.height), standalone=True).run()
 gtk.main()

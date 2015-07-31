@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from cylc.network import PYRO_LOG_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import check_access_priv
 
-PYRO_LOG_OBJ_NAME = 'log'
 
 class SuiteLogServer(PyroServer):
     """Server-side suite log interface."""
@@ -35,6 +36,7 @@ class SuiteLogServer(PyroServer):
 
     def _get_err_size(self):
         """Return the os.path.getsize result for the error file."""
+
         try:
             size = os.path.getsize(self.err_file)
         except (IOError, OSError) as e:
@@ -44,6 +46,9 @@ class SuiteLogServer(PyroServer):
 
     def get_err_content(self, prev_size=0, max_lines=100):
         """Return the content and new size of the error file."""
+
+        check_access_priv(self, 'full-read')
+        self.report("get_err_content")
         if not self._get_err_has_changed(prev_size):
             return [], prev_size
         try:
@@ -64,6 +69,6 @@ class SuiteLogClient(PyroClient):
 
     target_server_object = PYRO_LOG_OBJ_NAME
 
-    def get_err_content(self, prev_size, max_lines):
-        self._report('get_err_content')
-        return self.pyro_proxy.get_err_content(prev_size, max_lines)
+    def get_err_content(self, *args):
+        #return self.pyro_proxy.get_err_content(prev_size, max_lines)
+        return self.call_server_func("get_err_content", *args)

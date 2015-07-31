@@ -741,7 +741,7 @@ in the running suite - i.e.\ different tasks may pass through the
 ``current cycle point'' (etc.) at different times as the suite evolves,
 particularly in delayed (catch up) operation.
 
-\section{Site And User Configuration Files}
+\section{Global (Site, User) Configuration Files}
 \label{SiteAndUserConfiguration}
 
 Cylc site and user global configuration files contain settings that affect all
@@ -776,8 +776,8 @@ Settings that do not need to be changed should be deleted or commented
 out of user global config files so that they don't override future changes to
 the site file.
 
-Legal items, values, and system defaults are documented in the
-{\em Site And User Config File Reference} (\ref{SiteRCReference}).
+Legal items, values, and system defaults are documented in
+(\ref{SiteRCReference}).
 
 %\pagebreak
 \section{Tutorial}
@@ -915,17 +915,19 @@ and~\ref{SuiteStorageEtc}).
 \subsection{Suite Passphrases}
 \label{tutPassphrases}
 
-At registration time a random string of characters is written to a
-file called \lstinline=passphrase= in the suite definition directory.
-At run time any contact from cylc client programs (running tasks, user
-commands, the cylc GUI) must use the same passphrase to authenticate
-with the running suite. This prevents unauthorized users from interfering with
-your suites (network communication between running processes is not
-subject to Unix user account permissions). Local tasks and user commands
-on the suite host automatically use the passphrase in the suite
-definition directory. For remote tasks and commands, however, the
-passphrase must be installed appropriately on the remote
-account - see~\ref{RemoteTasks} below.
+A suite-specific passphrase file is automatically generated in the suite
+definition directory at registration time. It is loaded by the suite daemon at
+start-up and used to authenticate all client connections.  Clients on the suite
+host account automatically load the passphrase from the suite definition
+directory, but on other accounts, including task host accounts, it has to be
+installed manually.
+
+Possession of a suite passphrase gives full control and full read-access to the
+suite.  Without it, client access is determined by the suite's public access
+privilege level.
+
+For more on connection authentication, suite passphrases, and public access,
+see~\ref{ConnectionAuthentication}.
 
 \subsection{Import The Example Suites}
 \label{ImportTheExampleSuites}
@@ -2189,7 +2191,7 @@ as the suite runs.
 \end{myitemize}
 
 
-\section{Suite Name Registration And Passphrases}
+\section{Suite Name Registration}
 \label{SuiteRegistration}
 
 Cylc commands target suites via names registered in a {\em suite name
@@ -2251,7 +2253,7 @@ exist yet unless you specify the entire target suite name.
 
 \lstinline=cylc db register --help= shows a number of other examples.
 
-\subsection{Database Operations}
+\subsection{Suite Name Registration Commands}
 
 On the command line, the  `database' (or `db') command category contains
 commands to implement the aforementioned operations.
@@ -2307,33 +2309,6 @@ suite name hierarchy. \lstinline=cylc copy --help= has some explicit examples.
 
 The same functionality is also available by right-clicking on suites
 or groups in the gcylc ``Open Registered Suite'' dialog.
-
-\subsection{Suite Passphrases}
-
-Any client process that connects to a running suite (this includes task
-messaging and user-invoked interrogation and control commands) must
-authenticate with a secure passphrase that has been loaded by the suite.
-A random passphrase is generated automatically in the suite definition
-directory at registration time if one does not already exist there. For
-the default Pyro-based connection method the passphrase file must be
-distributed to other accounts that host running tasks or from which
-you need monitoring or control access to the running suite.
-
-Alternatively, cylc can be configured to,
-\begin{myenumerate}
-\item use ssh to re-invoke task messaging commands on the suite host; or
-\item use a one-way polling mechanism for tracking task progress.
-\end{myenumerate}
-Neither of these methods require the suite passphrase to be installed
-on the task host. For ssh re-invocation ssh keys must be installed for
-the task-to-suite direction in addition to the suite-to-task setup
-already required for job submission. The automatic polling mechanism can
-be used as a last resort for hosts that do not allow routing back to the
-suite host for pyro or ssh. It can also be used as regular health check
-on submitted tasks under the other communications methods.
-
-See~\ref{RunningSuites} for more detail on cylc client/server
-communications, and how to use it.
 
 
 %\pagebreak
@@ -5638,45 +5613,59 @@ The gcylc GUI requires direct Pyro connections to its target suite. If
 that is not possible, run gcylc on the suite host.
 
 
-\subsection{Connection Authentication}
+\subsection{Client Authentication and Passphrases}
 \label{ConnectionAuthentication}
 
-All Pyro connections to a running suite (task messaging and
-user-invoked commands) must authenticate with an arbitrary single line of
-text in a file called \lstinline=passphrase=, which will be found and
-used automatically if installed properly - see below.  A secure MD5
-checksum, not the raw passphrase, is passed across the network. A random
-passphrase is generated in the suite definition directory when a suite
-is registered, but you can create your own if you wish.
+Suite daemons listen on dedicated network ports for incoming client requests -
+task messages and user-invoked commands (CLI or GUI). The \lstinline=cylc scan=
+command reveals which suites are running on scanned hosts, and what ports they
+are listening on.
 
-For ssh task messaging and user command re-invocation, on the other
-hand, the suite passphrase is only required on the suite host account
-but ssh keys must be installed for passwordless connections instead.
+Client programs have to authenticate with the target suite daemon before
+issuing commands or requesting information.  Cylc has two authentication
+levels: full read and control via a suite-specific passphrase
+(see~\ref{passphrases}); and configurable free ``public'' access
+(see~\ref{PublicAccess}).
 
-\subsubsection{Suite Pyro Passphrase Locations}
+\subsubsection{Full Control - Suite Passphrases}
 \label{passphrases}
 
-Suite passphrases currently have to be installed manually to all task
-host accounts that use the Pyro communication method (see above); and
-also to accounts used to run commands that interact directly with the
-suite via Pyro.
+A file called \lstinline=passphrase= is generated in the suite definition
+directory at registration time, containing a single line of random text.
+The passphrase is loaded by the suite daemon at start-up and used to
+authenticate client connections. Suite passphrases are used in an encrypted
+challenge-response scheme; they are never sent raw over the network.
 
-Legal passphrase locations, in order of preference, are:
+Clients on the suite host account automatically pick up the passphrase from the
+suite definition directory. On other accounts the passphrase has to be
+installed manually. This includes task host accounts unless the suite uses ssh
+messaging on that host (see~\ref{TaskComms}).  Allowed passphrase locations are:
 \begin{myenumerate}
-    \item \lstinline=$CYLC_SUITE_DEF_PATH/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
 \end{myenumerate}
-Remote tasks know the location of the remote suite definition directory
-(if one exists) through their execution environment. Local (suite host)
-user command invocations can find the suite definition directory in the
-suite name database. Remote user command invocations, however,
-cannot interrogate the database on the command host because the suite
-will not be registered there (cylc cannot assume that the command host
-shares a common filesystem with the suite host). Consequently remote
-command host accounts must have the suite passphrase installed in one of
-the secondary locations under \lstinline=$HOME/.cylc/=.
+
+\subsubsection{Public Access - No Passphrase}
+\label{PublicAccess}
+
+Possession of a suite passphrase gives full read and control access to the
+suite.  Without the passphrase the amount of information revealed by a suite
+daemon is determined by the public access privilege level set in global
+site/user config (\ref{GlobalAuth}) and optionally overidden in suites
+(\ref{SuiteAuth}):
+\begin{myitemize}
+    \item {\em identity} - only suite and owner names revealed
+    \item {\em description} - identity plus suite title and description
+    \item {\em state-totals} - identity, description, and task state totals
+    \item {\em full-read} - full read-only access for monitor and GUI
+    \item {\em shutdown} - full read access plus shutdown, but no other
+        control.
+\end{myitemize}
+The default public access level is {\em state-totals}.
+The \lstinline=cylc scan= command can print descriptions and task state totals
+in addition to basic suite identity, if you have the right passphrases or if
+the requested information is revealed publicly.
 
 
 \subsection{How Tasks Get Access To Cylc}
@@ -5801,8 +5790,9 @@ remote port file. Then use the \lstinline=--user= and
 \begin{lstlisting}
 shell$ cylc monitor --user=USER --host=HOST SUITE
 \end{lstlisting}
-If you know the port number of the target suite, give it on the command
-line to prevent the port-retrieving ssh connection being attempted:
+
+Alternatively, you can determine suite port numbers using \lstinline=cylc scan=,
+and use them explicitly on the command line:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc monitor --user=USER --host=HOST --port=PORT SUITE

@@ -16,25 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute( force_required=True ):
-        sys.exit(0)
-
-from cylc.prompt import prompt
-from cylc.task_id import TaskID
-from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop
-from cylc.command_prep import prep_pyro
-import cylc.flags
-
-# Development note: post cylc-3.0 we could potentially use the suite
-# graph to determine downstream tasks to remove in a purge operation without
-# doing an internal triggering simulation.
-
-parser = cop( """cylc [control] purge [OPTIONS] ARGS
+"""cylc [control] purge [OPTIONS] ARGS
 
 Remove an entire tree of dependent tasks, over multiple cycles, from a running
 suite. The top task will be forced to spawn and will then be removed, then so
@@ -55,28 +37,56 @@ for removal.  Consequently:
    already spawned into the top cycle - so let them catch up first.
  * You can't purge a tree of tasks that has already triggered, because the
    algorithm relies on detecting new triggering.
-Note that suite runahead must be sufficient enough to bridge the purge gap.""",
-    pyro=True, argdoc=[("REG", "Suite name"),
-                ("TASK", "Task (NAME.CYCLE_POINT) to start purge"),
-                ("STOP_POINT", "Cycle point (inclusive!) to stop purge")])
+Note that suite runahead must be sufficient enough to bridge the purge gap."""
 
-(options, args) = parser.parse_args()
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute(force_required=True):
+        sys.exit(0)
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+import cylc.flags
+from cylc.prompt import prompt
+from cylc.task_id import TaskID
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.CylcOptionParsers import cop
 
-target = args[1]
-stop_point_string = args[2]
+# Development note: post cylc-3.0 we could potentially use the suite
+# graph to determine downstream tasks to remove in a purge operation without
+# doing an internal triggering simulation.
 
-if not TaskID.is_valid_id(target):
-    sys.exit("Invalid Task ID: " + target)
 
-name, start = TaskID.split(target)
+def main():
+    parser = cop(__doc__, pyro=True, argdoc=[("REG", "Suite name"),
+                 ("TASK", "Task (NAME.CYCLE_POINT) to start purge"),
+                 ("STOP_POINT", "Cycle point (inclusive!) to stop purge")])
 
-stop = stop_point_string
+    (options, args) = parser.parse_args()
+    suite = args[0]
 
-prompt('Purge from %s to %s in %s' % (target, stop, suite), options.force)
-pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
-                             options.pyro_timeout, options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-pclient.put_command('purge_tree', target, stop)
+    target = args[1]
+    stop_point_string = args[2]
+
+    if not TaskID.is_valid_id(target):
+        sys.exit("Invalid Task ID: " + target)
+    name, start = TaskID.split(target)
+
+    stop = stop_point_string
+
+    prompt('Purge from %s to %s in %s' % (target, stop, suite), options.force)
+
+    pclient = SuiteCommandClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
+    pclient.put_command('purge_tree', target, stop)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

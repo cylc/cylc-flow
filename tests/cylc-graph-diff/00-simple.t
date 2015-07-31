@@ -40,7 +40,7 @@ TEST_NAME=$TEST_NAME_BASE-bad-suites-number-1
 run_fail $TEST_NAME cylc graph-diff "$DIFF_SUITE_NAME"
 cmp_ok "$TEST_NAME.stdout" </dev/null
 cmp_ok "$TEST_NAME.stderr" <<'__ERR__'
-USAGE: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
+Usage: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
 
 Difference 'cylc graph --reference' output for SUITE1 and SUITE2.
 
@@ -56,7 +56,7 @@ run_fail $TEST_NAME cylc graph-diff "$DIFF_SUITE_NAME" "$CONTROL_SUITE_NAME" \
     "$SAME_SUITE_NAME"
 cmp_ok "$TEST_NAME.stdout" </dev/null
 cmp_ok "$TEST_NAME.stderr" <<'__ERR__'
-USAGE: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
+Usage: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
 
 Difference 'cylc graph --reference' output for SUITE1 and SUITE2.
 

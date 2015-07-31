@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re, sys
+import os
+import re
+import sys
 
 
 def prelude():
@@ -33,40 +35,42 @@ prelude()
 
 try:
     os.getcwd()
-except OSError,x:
+except OSError as exc:
     # The current working directory has been deleted (or filesystem
     # problems of some kind...). This results in Pyro not being found,
     # immediately below. We cannot just chdir to $HOME as gcylc does
     # because that would break relative directory path command arguments
     # (cylc reg SUITE PATH).
-    print >> sys.stderr, x
-    raise SystemExit('ERROR: your current working directory does not exist!')
+    sys.exit(exc)
 
 from cylc.version import CYLC_VERSION
 from parsec.OrderedDict import OrderedDict
 
+
 class CommandError(Exception):
+
     def __init__(self, msg):
         self.msg = msg
+
     def __str__(self):
         return repr(self.msg)
+
 
 class CommandNotFoundError(CommandError):
     pass
 
+
 class CommandNotUniqueError(CommandError):
     pass
 
+
 def is_help(str):
-    if str == '-h' or \
-        str == '--help' or \
-        str == '--hlep' or \
-        str == 'help' or \
-        str == 'hlep' or \
-        str == '?':
+    if (str == '-h' or str == '--help' or str == '--hlep' or str == 'help' or
+            str == 'hlep' or str == '?'):
         return True
     else:
         return False
+
 
 def match_dict(abbrev, categories, title):
     # allow any unique abbreviation to cylc categories
@@ -77,31 +81,32 @@ def match_dict(abbrev, categories, title):
                 if cat not in matches:
                     matches.append(cat)
     if len(matches) == 0:
-        raise CommandNotFoundError, title + ' not found: ' + abbrev
+        raise CommandNotFoundError(title + ' not found: ' + abbrev)
     elif len(matches) > 1:
         # multiple matches
         res = ''
         for cat in matches:
             res += ' ' + '|'.join(categories[cat])
-        raise CommandNotUniqueError, title + ' "' + abbrev + '" not unique:' + res
+        raise CommandNotUniqueError(
+            title + ' "' + abbrev + '" not unique:' + res)
     else:
         return matches[0]
+
 
 def match_command(abbrev):
     # allow any unique abbreviation to commands when no category is specified
     matches = []
     finished_matching = False
-    for dct in [
-        admin_commands,
-        license_commands,
-        database_commands,
-        preparation_commands,
-        information_commands,
-        discovery_commands,
-        control_commands,
-        utility_commands,
-        hook_commands,
-        task_commands]:
+    for dct in [admin_commands,
+                license_commands,
+                database_commands,
+                preparation_commands,
+                information_commands,
+                discovery_commands,
+                control_commands,
+                utility_commands,
+                hook_commands,
+                task_commands]:
         for com in dct.keys():
             if com == abbrev:
                 matches = [com]
@@ -114,15 +119,17 @@ def match_command(abbrev):
             if finished_matching:
                 break
     if len(matches) == 0:
-        raise CommandNotFoundError, 'COMMAND not found: ' + abbrev
+        raise CommandNotFoundError('COMMAND not found: ' + abbrev)
     elif len(matches) > 1:
         # multiple matches
         res = ''
         for com in matches:
             res += ' ' + '|'.join(all_commands[com])
-        raise CommandNotUniqueError, 'COMMAND "' + abbrev + '" not unique:' + res
+        raise CommandNotUniqueError(
+            'COMMAND "' + abbrev + '" not unique:' + res)
     else:
         return matches[0]
+
 
 def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
     # pretty print commands or topics from a dict:
@@ -190,13 +197,15 @@ information_commands['dump'] = ['dump']
 information_commands['cat-state'] = ['cat-state']
 information_commands['show'] = ['show']
 information_commands['cat-log'] = ['cat-log', 'log']
-information_commands['get-suite-version'] = ['get-suite-version', 'get-cylc-version']
+information_commands['get-suite-version'] = [
+    'get-suite-version', 'get-cylc-version']
 information_commands['version'] = ['version']
 
 information_commands['documentation'] = ['documentation', 'browse']
 information_commands['monitor'] = ['monitor']
 information_commands['get-suite-config'] = ['get-suite-config', 'get-config']
-information_commands['get-site-config'] = ['get-site-config', 'get-global-config']
+information_commands['get-site-config'] = [
+    'get-site-config', 'get-global-config']
 information_commands['get-gui-config'] = ['get-gui-config']
 
 control_commands = OrderedDict()
@@ -225,7 +234,8 @@ control_commands['broadcast'] = ['broadcast', 'bcast']
 control_commands['ext-trigger'] = ['ext-trigger', 'external-trigger']
 
 utility_commands = OrderedDict()
-utility_commands['cycle-point'] = ['cycle-point', 'cyclepoint', 'datetime','cycletime']
+utility_commands['cycle-point'] = [
+    'cycle-point', 'cyclepoint', 'datetime', 'cycletime']
 utility_commands['random'] = ['random', 'rnd']
 utility_commands['scp-transfer'] = ['scp-transfer']
 utility_commands['suite-state'] = ['suite-state']
@@ -250,7 +260,7 @@ license_commands['conditions'] = ['conditions']
 
 database_commands = OrderedDict()
 database_commands['register'] = ['register']
-database_commands['reregister'] = ['reregister','rename']
+database_commands['reregister'] = ['reregister', 'rename']
 database_commands['unregister'] = ['unregister']
 database_commands['copy'] = ['copy', 'cp']
 database_commands['print'] = ['print']
@@ -322,17 +332,17 @@ USAGE:
 
 # topic summaries
 catsum = OrderedDict()
-catsum['all']        = "The complete command set."
-catsum['admin']   = "Cylc installation, testing, and example suites."
-catsum['license']   = "Software licensing information (GPL v3.0)."
-catsum['database']   = "Suite name registration, copying, deletion, etc."
-catsum['information']   = "Interrogate suite definitions and running suites."
-catsum['preparation']   = "Suite editing, validation, visualization, etc."
-catsum['discovery']   = "Detect running suites."
-catsum['control']   = "Suite start up, monitoring, and control."
-catsum['task']   = "The task messaging interface."
-catsum['hook']   = "Suite and task event hook scripts."
-catsum['utility']   = "Cycle arithmetic and templating, etc."
+catsum['all'] = "The complete command set."
+catsum['admin'] = "Cylc installation, testing, and example suites."
+catsum['license'] = "Software licensing information (GPL v3.0)."
+catsum['database'] = "Suite name registration, copying, deletion, etc."
+catsum['information'] = "Interrogate suite definitions and running suites."
+catsum['preparation'] = "Suite editing, validation, visualization, etc."
+catsum['discovery'] = "Detect running suites."
+catsum['control'] = "Suite start up, monitoring, and control."
+catsum['task'] = "The task messaging interface."
+catsum['hook'] = "Suite and task event hook scripts."
+catsum['utility'] = "Cycle arithmetic and templating, etc."
 
 usage = general_usage + """
 
@@ -365,8 +375,8 @@ HOW TO DRILL DOWN TO COMMAND USAGE HELP:
 
 Command CATEGORIES:"""
 
-#Some commands and categories are aliased (db|database, cp|copy) and
-#some common typographical errors are corrected (e.g. cycl => cylc).
+# Some commands and categories are aliased (db|database, cp|copy) and
+# some common typographical errors are corrected (e.g. cycl => cylc).
 
 # command summaries
 comsum = OrderedDict()
@@ -408,7 +418,7 @@ comsum['monitor'] = 'An in-terminal suite monitor (see also gcylc)'
 comsum['get-suite-config'] = 'Print suite configuration items'
 comsum['get-site-config'] = 'Print site/user configuration items'
 comsum['get-gui-config'] = 'Print gcylc configuration items'
-comsum['get-suite-version'] = 'Print the cylc version of a running suite daemon'
+comsum['get-suite-version'] = 'Print the cylc version of a suite daemon'
 comsum['version'] = 'Print the cylc release version'
 comsum['gsummary'] = 'Summary GUI for monitoring multiple suites'
 comsum['gpanel'] = 'Internal interface for GNOME 2 panel applet'
@@ -458,11 +468,13 @@ comsum['job-logs-retrieve'] = (
     '(Internal) Retrieve logs from a remote host for a task job')
 comsum['check-triggering'] = 'A suite shutdown event hook for cylc testing'
 
+
 def typo(str):
     corrected = str
     if str == 'gcycl':
         corrected = 'gcylc'
     return corrected
+
 
 def category_help(category):
     coms = eval(category + '_commands')
@@ -478,6 +490,7 @@ def category_help(category):
     print 'COMMANDS:'
     pretty_print(comsum, coms, sort=True)
 
+
 def set_environment_vars(args):
     """
     Set --env=key=val arguments as environment variables & remove
@@ -486,9 +499,10 @@ def set_environment_vars(args):
     regex = re.compile('\A--env=(\S+)=(\S+)\Z')
     for arg in args:
         match = regex.match(arg)
-        if match == None: continue
+        if match is None:
+            continue
         os.environ[match.group(1)] = match.group(2)
-    return filter(lambda i: not regex.search(i),args)
+    return filter(lambda i: not regex.search(i), args)
 
 # no arguments: print help and exit
 if len(sys.argv) == 1:
@@ -656,15 +670,6 @@ args = args_new
 
 cmd = sys.argv[0] + '-' + command
 
-####BACKGROUNDED MESSAGING CALLS: this results in a currently
-####undiagnosed error in Pyro core when the 'message' command is
-####invoked - but not for the 'started' command (try it and see the task
-####stderr log).
-##if command in ['started', 'message']:
-##    # Run non job-ending task message commands in the background.
-##    p = subprocess.Popen([cmd] + args)
-##    sys.exit(0)
-##else:
 # Replace the current process with that of the sub-command.
 try:
     os.execvp(cmd, [cmd] + args)

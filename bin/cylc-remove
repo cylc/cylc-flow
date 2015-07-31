@@ -16,59 +16,75 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute( force_required=True ):
-        sys.exit(0)
-
-from cylc.prompt import prompt
-from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop, multitask_usage
-from cylc.command_prep import prep_pyro
-import cylc.flags
-
-parser = cop( """cylc [control] remove [OPTIONS] ARGS
+"""cylc [control] remove [OPTIONS] ARGS
 
 Remove one or more tasks (cylc remove REG MATCH POINT), or all tasks with a
 given cycle point (cylc remove REG POINT) from a running suite.
 
 Tasks will spawn successors first if they have not done so already.
-""" + multitask_usage, pyro=True, multitask=True,
-    argdoc=[("REG", "Suite name"),
-        ('[MATCH]', 'Task or family name matching regular expression'),
-        ('[POINT]', 'Task cycle point (e.g. date-time or integer)') ])
+"""
 
-parser.add_option( "--no-spawn",
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute(force_required=True):
+        sys.exit(0)
+
+import cylc.flags
+from cylc.prompt import prompt
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.CylcOptionParsers import cop, multitask_usage
+
+
+def main():
+    parser = cop(
+        __doc__ + multitask_usage, pyro=True, multitask=True,
+        argdoc=[
+            ("REG", "Suite name"),
+            ('[MATCH]', 'Task or family name matching regular expression'),
+            ('[POINT]', 'Task cycle point (e.g. date-time or integer)')])
+
+    parser.add_option(
+        "--no-spawn",
         help="Do not spawn successors before removal.",
-        action="store_true", default=False, dest="no_spawn" )
+        action="store_true", default=False, dest="no_spawn")
 
-(options, args) = parser.parse_args()
+    (options, args) = parser.parse_args()
+    suite = args[0]
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+    if len(args) == 3:
+        name = args[1]
+        point_string = args[2]
+        remove_point = False
+    elif len(args) == 2:
+        point_string = args[1]
+        remove_point = True
+    else:
+        parser.error("Wrong number of arguments.")
 
-if len(args) == 3:
-    name = args[1]
-    point_string = args[2]
-    remove_point = False
-elif len(args) == 2:
-    point_string = args[1]
-    remove_point = True
-else:
-    parser.error("Wrong number of arguments.")
+    spawn = not options.no_spawn
 
-spawn = not options.no_spawn
+    pclient = SuiteCommandClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
 
-pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
-                             options.pyro_timeout, options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-if remove_point:
-    prompt('remove ALL tasks at %s in %s' % (point_string, suite),
-           options.force)
-    pclient.put_command('remove_cycle', point_string, spawn)
-else:
-    prompt('remove task(s) %s at %s in %s' % (name, point_string, suite),
-           options.force)
-    pclient.put_command('remove_task', name, point_string, options.is_family, spawn)
+    if remove_point:
+        prompt('remove ALL tasks at %s in %s' % (point_string, suite),
+               options.force)
+        pclient.put_command('remove_cycle', point_string, spawn)
+    else:
+        prompt('remove task(s) %s at %s in %s' % (name, point_string, suite),
+               options.force)
+        pclient.put_command('remove_task', name, point_string,
+                            options.is_family, spawn)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

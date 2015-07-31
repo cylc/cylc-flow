@@ -16,74 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import StringIO
-import sys
-from cylc.remote import remrun
-from cylc.task_id import TaskID
-
-if remrun().execute():
-    sys.exit(0)
-
-from cylc.CylcOptionParsers import cop
-
-# DEVELOPER NOTE: family grouping controls via the viewer toolbar and
-# right-click menu have been rather hastily stuck on to the original
-# viewer, via changes to this file and to lib/cylc/cylc_xdot.py - all
-# of which could stand some refactoring to streamline the code a bit.
-
-# TODO - clarify what it means to choose visualization boundaries (by CLI
-# or in-suite) outside of the defined suite initial and final cycle times.
-
-def on_url_clicked( widget, url, event, window ):
-    if event.button != 3:
-        return False
-    # URL is node ID
-    right_click_menu( event, url, type='live task', window=window )
-
-def right_click_menu( event, task_id, type='live task', window=None ):
-    name, point_string = TaskID.split(task_id)
-
-    menu = gtk.Menu()
-    menu_root = gtk.MenuItem( task_id )
-    menu_root.set_submenu( menu )
-
-    group_item = gtk.MenuItem( 'Group' )
-    group_item.connect( 'activate', grouping, name, window, False, False )
-    ungroup_item = gtk.MenuItem( 'UnGroup' )
-    ungroup_item.connect( 'activate', grouping, name, window, True, False )
-    ungroup_rec_item = gtk.MenuItem( 'Recursive UnGroup' )
-    ungroup_rec_item.connect( 'activate', grouping, name, window, True, True )
-
-    title_item = gtk.MenuItem( task_id )
-    title_item.set_sensitive(False)
-    menu.append( title_item )
-
-    menu.append( gtk.SeparatorMenuItem() )
-
-    menu.append( group_item )
-    menu.append( ungroup_item )
-    menu.append( ungroup_rec_item )
-
-    menu.show_all()
-    menu.popup( None, None, None, event.button, event.time )
-
-    # TODO - popup menus are not automatically destroyed and can be
-    # reused if saved; however, we need to reconstruct or at least
-    # alter ours dynamically => should destroy after each use to
-    # prevent a memory leak? But I'm not sure how to do this as yet.)
-
-    return True
-
-def grouping( w, name, window, un, recursive ):
-    if not un:
-        window.get_graph( group_nodes=[name] )
-    else:
-        if recursive:
-            window.get_graph( ungroup_nodes=[name], ungroup_recursive=True )
-        else:
-            window.get_graph( ungroup_nodes=[name], ungroup_recursive=False )
-
-parser = cop( """1/ cylc [prep] graph [OPTIONS] SUITE [START[STOP]]
+"""1/ cylc [prep] graph [OPTIONS] SUITE [START[STOP]]
      Plot the suite.rc dependency graph for SUITE.
        2/ cylc [prep] graph [OPTIONS] -f,--file FILE
      Plot the specified dot-language graph file.
@@ -127,130 +60,212 @@ GRAPH VIEWER CONTROLS:
     Right-click menu:
     * "group" - close this node's parent family.
     * "ungroup" - open this family node.
-    * "recursive ungroup" - ungroup all families below this node.""",
-    jset=True, prep=True, argdoc = [('[SUITE]', 'Suite name or path'),
-        ('[START]', 'Initial cycle point to plot (default=2999010100)'),
-        ('[STOP]', 'Final cycle point to plot (default=2999010123)')])
+    * "recursive ungroup" - ungroup all families below this node."""
 
-parser.add_option( "-n", "--namespaces",
-    help="Plot the suite namespace inheritance hierarchy "
-    "(task run time properties).",
-    action="store_true", default=False, dest="namespaces" )
+import sys
+import StringIO
 
-parser.add_option( "-f", "--file",
-    help="View a specific dot-language graphfile.",
-    metavar="FILE", action="store", default=None, dest="filename" )
+import cylc.flags
+from cylc.remote import remrun
+from cylc.task_id import TaskID
 
-parser.add_option( "--filter",
-    help="Filter out one or many nodes.",
-    metavar="NODE_NAME_PATTERN", action="append", dest="filter_patterns" )
+if remrun().execute():
+    sys.exit(0)
 
-parser.add_option( "-O", "--output-file",
-    help="Output to a specific file, with a format given by --output-format" +
-         " or extrapolated from the extension. " +
-         "'-' implies stdout in plain format.",
-    metavar="FILE", action="store", default=None, dest="output_filename" )
+from cylc.CylcOptionParsers import cop
 
-parser.add_option( "--output-format",
-    help="Specify a format for writing out the graph to --output-file " +
-         "e.g. png, svg, jpg, eps, dot. 'ref' is a special sorted plain " +
-         "text format for comparison and reference purposes.",
-    metavar="FORMAT", action="store", default=None, dest="output_format" )
+# DEVELOPER NOTE: family grouping controls via the viewer toolbar and
+# right-click menu have been rather hastily stuck on to the original
+# viewer, via changes to this file and to lib/cylc/cylc_xdot.py - all
+# of which could stand some refactoring to streamline the code a bit.
 
-parser.add_option( "-r", "--reference",
-    help="Output in a sorted plain text format for comparison purposes." +
-         " If not given, assume --output-file=-.",
-    action="store_true", default=False, dest="reference")
+# TODO - clarify what it means to choose visualization boundaries (by CLI
+# or in-suite) outside of the defined suite initial and final cycle times.
 
-(options, args) = parser.parse_args()
 
-# import modules that require gtk now, so that a display is not needed
-# just to get command help (e.g. when running make on a post-commit hook
-# on a remote repository).
-import gtk, gobject
-from xdot import DotWindow
-try:
+def on_url_clicked(widget, url, event, window):
+    if event.button != 3:
+        return False
+    # URL is node ID
+    right_click_menu(event, url, type='live task', window=window)
+
+
+def right_click_menu(event, task_id, type='live task', window=None):
+    name, point_string = TaskID.split(task_id)
+
+    menu = gtk.Menu()
+    menu_root = gtk.MenuItem(task_id)
+    menu_root.set_submenu(menu)
+
+    group_item = gtk.MenuItem('Group')
+    group_item.connect('activate', grouping, name, window, False, False)
+    ungroup_item = gtk.MenuItem('UnGroup')
+    ungroup_item.connect('activate', grouping, name, window, True, False)
+    ungroup_rec_item = gtk.MenuItem('Recursive UnGroup')
+    ungroup_rec_item.connect('activate', grouping, name, window, True, True)
+
+    title_item = gtk.MenuItem(task_id)
+    title_item.set_sensitive(False)
+    menu.append(title_item)
+
+    menu.append(gtk.SeparatorMenuItem())
+
+    menu.append(group_item)
+    menu.append(ungroup_item)
+    menu.append(ungroup_rec_item)
+
+    menu.show_all()
+    menu.popup(None, None, None, event.button, event.time)
+
+    # TODO - popup menus are not automatically destroyed and can be
+    # reused if saved; however, we need to reconstruct or at least
+    # alter ours dynamically => should destroy after each use to
+    # prevent a memory leak? But I'm not sure how to do this as yet.)
+
+    return True
+
+
+def grouping(w, name, window, un, recursive):
+    if not un:
+        window.get_graph(group_nodes=[name])
+    else:
+        if recursive:
+            window.get_graph(ungroup_nodes=[name], ungroup_recursive=True)
+        else:
+            window.get_graph(ungroup_nodes=[name], ungroup_recursive=False)
+
+
+def main():
+    parser = cop(
+        __doc__, jset=True, prep=True,
+        argdoc=[
+            ('[SUITE]', 'Suite name or path'),
+            ('[START]', 'Initial cycle point to plot (default=2999010100)'),
+            ('[STOP]', 'Final cycle point to plot (default=2999010123)')])
+
+    parser.add_option(
+        "-n", "--namespaces",
+        help="Plot the suite namespace inheritance hierarchy "
+             "(task run time properties).",
+        action="store_true", default=False, dest="namespaces")
+
+    parser.add_option(
+        "-f", "--file",
+        help="View a specific dot-language graphfile.",
+        metavar="FILE", action="store", default=None, dest="filename")
+
+    parser.add_option(
+        "--filter", help="Filter out one or many nodes.",
+        metavar="NODE_NAME_PATTERN", action="append", dest="filter_patterns")
+
+    parser.add_option(
+        "-O", "--output-file",
+        help="Output to a specific file, with a format given by "
+             "--output-format or extrapolated from the extension. "
+             "'-' implies stdout in plain format.",
+        metavar="FILE", action="store", default=None, dest="output_filename")
+
+    parser.add_option(
+        "--output-format",
+        help="Specify a format for writing out the graph to --output-file "
+             "e.g. png, svg, jpg, eps, dot. 'ref' is a special sorted plain "
+             "text format for comparison and reference purposes.",
+        metavar="FORMAT", action="store", default=None, dest="output_format")
+
+    parser.add_option(
+        "-r", "--reference",
+        help="Output in a sorted plain text format for comparison purposes. "
+             "If not given, assume --output-file=-.",
+        action="store_true", default=False, dest="reference")
+
+    (options, args) = parser.parse_args()
+
+    # import modules that require gtk now, so that a display is not needed
+    # just to get command help (e.g. when running make on a post-commit hook
+    # on a remote repository).
+    import gtk
+    import gobject
+    from xdot import DotWindow
     from cylc.cylc_xdot import (
         MyDotWindow, MyDotWindow2, get_reference_from_plain_format)
-except ImportError, x:
-    # this imports pygraphviz via cylc.graphing
-    print >> sys.stderr, str(x)
-    raise SystemExit( "ERROR: please install pygraphviz." )
 
-if options.filename:
-    if len(args) != 0:
-        parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )
-        sys.exit(1)
-    file = options.filename
-    try:
+    if options.filename:
+        if len(args) != 0:
+            parser.error(
+                "file graphing arguments: '-f FILE' or '--file=FILE'")
+            sys.exit(1)
+        file = options.filename
         from xdot import DotWindow
-    except:
-        raise SystemExit( "Failed to import the xdot viewer.")
-    if options.output_filename:
-        raise SystemExit( "ERROR: output-file not supported for " +
-                          "dot files. Use 'dot' command instead." )
-    window = DotWindow()
-    try:
-        window.update( file )
-    except OSError, x:
-        print >> sys.stderr, x
-        sys.exit(1)
-    window.connect( 'destroy', gtk.main_quit)
-    # checking periodically for file changed
-    gobject.timeout_add(1000, window.update, file)
-    gtk.main()
-    sys.exit(0)
+        if options.output_filename:
+            raise SystemExit("ERROR: output-file not supported for "
+                             "dot files. Use 'dot' command instead.")
+        window = DotWindow()
+        window.update(file)
+        window.connect('destroy', gtk.main_quit)
+        # checking periodically for file changed
+        gobject.timeout_add(1000, window.update, file)
+        gtk.main()
+        sys.exit(0)
 
-should_hide_gtk_window = (options.output_filename is not None)
+    should_hide_gtk_window = (options.output_filename is not None)
 
-suite, suiterc, junk = parser.get_suite()
+    suite, suiterc, junk = parser.get_suite()
 
-start_point_string = stop_point_string = None
-if len(args) >= 2:
-    start_point_string = args[1]
-if len(args) == 3:
-    stop_point_string = args[2]
+    start_point_string = stop_point_string = None
+    if len(args) >= 2:
+        start_point_string = args[1]
+    if len(args) == 3:
+        stop_point_string = args[2]
 
-if options.namespaces:
-    window = MyDotWindow2(suite, suiterc, options.templatevars,
-            options.templatevars_file, 
-            should_hide=should_hide_gtk_window)
-else:
-    window = MyDotWindow(suite, suiterc, start_point_string,
-            stop_point_string, options.templatevars,
-            options.templatevars_file,
-            should_hide=should_hide_gtk_window)
-
-window.widget.connect('clicked', on_url_clicked, window)
-if options.filter_patterns:
-    filter_patterns = set(options.filter_patterns)
-    window.set_filter_graph_patterns(options.filter_patterns)
-window.get_graph()
-
-if options.reference and options.output_filename is None:
-    options.output_filename = "-"
-
-if options.output_filename:
-    if (options.reference or options.output_filename.endswith(".ref") or
-            options.output_format == "ref"):
-        dest = StringIO.StringIO()
-        window.graph.draw(dest, format="plain", prog="dot")
-        output_text = get_reference_from_plain_format(dest.getvalue())
-        if options.output_filename == "-":
-            sys.stdout.write(output_text)
-        else:
-            open(options.output_filename).write(output_text)
+    if options.namespaces:
+        window = MyDotWindow2(suite, suiterc, options.templatevars,
+                              options.templatevars_file,
+                              should_hide=should_hide_gtk_window)
     else:
-        if options.output_filename == "-":
-            window.graph.draw(sys.stdout, format="plain", prog="dot")
-        elif options.output_format:
-            window.graph.draw(
-                options.output_filename, format=options.output_format,
-                prog="dot"
-            )
-        else:
-            window.graph.draw(options.output_filename, prog="dot")
-    sys.exit(0)
+        window = MyDotWindow(suite, suiterc, start_point_string,
+                             stop_point_string, options.templatevars,
+                             options.templatevars_file,
+                             should_hide=should_hide_gtk_window)
 
-window.connect('destroy', gtk.main_quit)
-gtk.main()
+    window.widget.connect('clicked', on_url_clicked, window)
+    if options.filter_patterns:
+        filter_patterns = set(options.filter_patterns)
+        window.set_filter_graph_patterns(options.filter_patterns)
+    window.get_graph()
+
+    if options.reference and options.output_filename is None:
+        options.output_filename = "-"
+
+    if options.output_filename:
+        if (options.reference or options.output_filename.endswith(".ref") or
+                options.output_format == "ref"):
+            dest = StringIO.StringIO()
+            window.graph.draw(dest, format="plain", prog="dot")
+            output_text = get_reference_from_plain_format(dest.getvalue())
+            if options.output_filename == "-":
+                sys.stdout.write(output_text)
+            else:
+                open(options.output_filename).write(output_text)
+        else:
+            if options.output_filename == "-":
+                window.graph.draw(sys.stdout, format="plain", prog="dot")
+            elif options.output_format:
+                window.graph.draw(
+                    options.output_filename, format=options.output_format,
+                    prog="dot"
+                )
+            else:
+                window.graph.draw(options.output_filename, prog="dot")
+        sys.exit(0)
+
+    window.connect('destroy', gtk.main_quit)
+    gtk.main()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

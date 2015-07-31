@@ -26,13 +26,12 @@ from cylc.broadcast_report import (
     get_broadcast_change_report,
     get_broadcast_bad_options_report)
 from cylc.cycling.loader import get_point, standardise_point_string
-import cylc.flags
-from cylc.network.pyro_base import PyroClient, PyroServer
-from cylc.rundb import CylcSuiteDAO
-from cylc.task_id import TaskID
 from cylc.wallclock import get_current_time_string
-
-PYRO_BCAST_OBJ_NAME = 'broadcast_receiver'
+from cylc.network import PYRO_BCAST_OBJ_NAME
+from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import check_access_priv
+from cylc.task_id import TaskID
+from cylc.rundb import CylcSuiteDAO
 
 
 class BroadcastServer(PyroServer):
@@ -110,13 +109,15 @@ class BroadcastServer(PyroServer):
                 target[key] = source[key]
 
     def put(self, point_strings, namespaces, settings):
-        """Add new broadcast settings.
+        """Add new broadcast settings (server side interface).
 
         Return a tuple (modified_settings, bad_options) where:
           modified_settings is list of modified settings in the form:
             [("20200202", "foo", {"command scripting": "true"}, ...]
           bad_options is as described in the docstring for self.clear().
         """
+        check_access_priv(self, 'full-control')
+        self.report('broadcast_put')
         modified_settings = []
         bad_point_strings = []
         bad_namespaces = []
@@ -158,6 +159,8 @@ class BroadcastServer(PyroServer):
 
     def get(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID."""
+        check_access_priv(self, 'full-read')
+        self.report('broadcast_get')
         if not task_id:
             # all broadcast settings requested
             return self.settings
@@ -391,15 +394,5 @@ class BroadcastClient(PyroClient):
 
     target_server_object = PYRO_BCAST_OBJ_NAME
 
-    def broadcast(self, command, *command_args):
-        """CLI suite broadcast interface."""
-        try:
-            self._report(command)
-            try:
-                return getattr(self.pyro_proxy, command)(*command_args)
-            except AttributeError:
-                sys.exit("Illegal broadcast command: %s" % command)
-        except Exception as exc:
-            if cylc.flags.debug:
-                raise
-            sys.exit(exc)
+    def broadcast(self, cmd, *args):
+        return self.call_server_func(cmd, *args)

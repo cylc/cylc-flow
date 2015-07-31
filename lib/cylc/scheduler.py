@@ -43,9 +43,11 @@ from cylc.job_file import JOB_FILE
 from cylc.suite_host import get_suite_host
 from cylc.owner import user
 from cylc.version import CYLC_VERSION
-from cylc.config import config
+from cylc.config import SuiteConfig
+from cylc.passphrase import passphrase
+from cylc.get_task_proxy import get_task_proxy
 from parsec.util import printcfg
-from copy import deepcopy
+from copy import copy, deepcopy
 import time
 import datetime
 import logging
@@ -54,7 +56,6 @@ import os
 import sys
 import traceback
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.port_file import port_file, PortFileExistsError, PortFileError
 from cylc.regpath import RegPath
 from cylc.CylcError import TaskNotFoundError, SchedulerError
 from cylc.RunEventHandler import RunHandler
@@ -69,14 +70,18 @@ from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
+from cylc.network import (PYRO_SUITEID_OBJ_NAME, PYRO_STATE_OBJ_NAME,
+        PYRO_CMD_OBJ_NAME, PYRO_BCAST_OBJ_NAME, PYRO_EXT_TRIG_OBJ_NAME,
+        PYRO_INFO_OBJ_NAME, PYRO_LOG_OBJ_NAME)
 from cylc.network.pyro_daemon import PyroDaemon
-from cylc.network.suite_state import StateSummaryServer, PYRO_STATE_OBJ_NAME
-from cylc.network.suite_command import SuiteCommandServer, PYRO_CMD_OBJ_NAME
-from cylc.network.suite_broadcast import BroadcastServer, PYRO_BCAST_OBJ_NAME
-from cylc.network.ext_trigger import ExtTriggerServer, PYRO_EXT_TRIG_OBJ_NAME
-from cylc.network.suite_info import SuiteInfoServer, PYRO_INFO_OBJ_NAME
-from cylc.network.suite_log import SuiteLogServer, PYRO_LOG_OBJ_NAME
-from cylc.network.suite_id import identifier
+from cylc.network.suite_state import StateSummaryServer
+from cylc.network.suite_command import SuiteCommandServer
+from cylc.network.suite_broadcast import BroadcastServer
+from cylc.network.ext_trigger import ExtTriggerServer
+from cylc.network.suite_info import SuiteInfoServer
+from cylc.network.suite_log import SuiteLogServer
+from cylc.network.suite_identifier import SuiteIdServer
+from cylc.network.port_file import PortFile, PortFileExistsError, PortFileError
 
 
 class request_handler(threading.Thread):
@@ -120,7 +125,6 @@ class scheduler(object):
 
         # initialize some items in case of early shutdown
         # (required in the shutdown() method)
-        self.suite_id = None
         self.suite_state = None
         self.command_queue = None
         self.pool = None
@@ -186,18 +190,13 @@ class scheduler(object):
     def configure(self):
         SuiteProcPool.get_inst()
 
-        # Get control and info commands.
         self.info_commands = {}
-        self.control_command_names = []
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
             if not callable(attr):
                 continue
             if attr_name.startswith('info_'):
                 self.info_commands[attr_name.replace('info_', '')] = attr
-            elif attr_name.startswith('command_'):
-                self.control_command_names.append(
-                    attr_name.replace('command_', ''))
 
         # Run dependency negotation etc. after these commands.
         self.proc_cmds = [
@@ -214,10 +213,6 @@ class scheduler(object):
             'add_prerequisite'
         ]
         self.configure_suite()
-
-        # Remotely accessible suite identifier
-        self.suite_id = identifier(self.suite, self.owner)
-        self.pyro.connect(self.suite_id, 'cylcid', qualified=False)
 
         reqmode = self.config.cfg['cylc']['required run mode']
         if reqmode:
@@ -241,7 +236,7 @@ class scheduler(object):
         self.log.info('Final point: ' + str(self.final_point))
 
         self.pool = TaskPool(
-            self.suite, self.pri_dao, self.pub_dao, self.final_point, self.config,
+            self.suite, self.pri_dao, self.pub_dao, self.final_point,
             self.pyro, self.log, self.run_mode)
         self.state_dumper.pool = self.pool
         self.request_handler = request_handler(self.pyro)
@@ -540,7 +535,7 @@ class scheduler(object):
             if (task_name, task_point) in task_states_data:
                 submit_num = task_states_data[(task_name, task_point)].get(
                     "submit_num")
-            new_task = self.config.get_task_proxy(
+            new_task = get_task_proxy(
                 task_name, point, 'waiting', stop_point, submit_num=submit_num)
             if new_task:
                 self.pool.add_to_runahead_pool(new_task)
@@ -570,9 +565,8 @@ class scheduler(object):
         print "RELOADING the suite definition"
         self.configure_suite(reconfigure=True)
 
-        self.pool.reconfigure(self.config, self.final_point)
+        self.pool.reconfigure(self.final_point)
 
-        self.suite_state.config = self.config
         self.configure_suite_environment()
 
         if self.gen_reference_log or self.reference_test_mode:
@@ -600,13 +594,13 @@ class scheduler(object):
             self.gen_reference_log = self.options.genref
 
     def configure_pyro(self):
-        self.pyro = PyroDaemon(self.suite, self.suite_dir,
-                GLOBAL_CFG.get(['pyro','base port']),
-                GLOBAL_CFG.get(['pyro','maximum number of ports']))
+        self.pyro = PyroDaemon(self.suite)
+        pphrase = passphrase(
+            self.suite, user, get_suite_host()).get(suitedir=self.suite_dir)
+        self.pyro.set_auth(pphrase) 
         self.port = self.pyro.get_port()
-
         try:
-            self.port_file = port_file(self.suite, self.port)
+            self.portfile = PortFile(self.suite, self.port)
         except PortFileExistsError, x:
             print >> sys.stderr, x
             raise SchedulerError(
@@ -617,7 +611,8 @@ class scheduler(object):
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
 
-        self.config = config(
+        SuiteConfig._FORCE = True  # Reset the singleton!
+        self.config = SuiteConfig.get_inst(
             self.suite, self.suiterc,
             self.options.templatevars,
             self.options.templatevars_file, run_mode=self.run_mode,
@@ -626,7 +621,6 @@ class scheduler(object):
             cli_final_point_string=self.options.final_point_string,
             is_restart=self.is_restart, is_reload=reconfigure
         )
-
         # Dump the loaded suiterc for future reference.
         cfg_logdir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite config log directory')
@@ -683,6 +677,8 @@ class scheduler(object):
             self.run_mode = self.config.run_mode
 
         if not reconfigure:
+            # Things that can't change on suite reload.
+
             self.state_dumper = SuiteStateDumper(
                 self.suite, self.run_mode, self.initial_point,
                 self.final_point)
@@ -735,17 +731,19 @@ class scheduler(object):
             if self._pool_hold_point:
                 print "Suite will hold after " + str(self._pool_hold_point)
 
-        if not reconfigure:
             slog = suite_log(self.suite)
             self.suite_log_dir = slog.get_dir()
             slog.pimp(self.logging_level)
             self.log = slog.get_log()
             self.logfile = slog.get_path()
 
+            suite_id = SuiteIdServer.get_inst(self.suite, self.owner)
+            self.pyro.connect(suite_id, PYRO_SUITEID_OBJ_NAME)
+
             bcast = BroadcastServer.get_inst(self.config.get_linearized_ancestors())
             self.pyro.connect(bcast, PYRO_BCAST_OBJ_NAME)
 
-            self.command_queue = SuiteCommandServer(self.control_command_names)
+            self.command_queue = SuiteCommandServer()
             self.pyro.connect(self.command_queue, PYRO_CMD_OBJ_NAME)
 
             ets = ExtTriggerServer.get_inst()
@@ -757,7 +755,7 @@ class scheduler(object):
             self.log_interface = SuiteLogServer(slog)
             self.pyro.connect(self.log_interface, PYRO_LOG_OBJ_NAME)
 
-            self.suite_state = StateSummaryServer(self.config, self.run_mode)
+            self.suite_state = StateSummaryServer.get_inst(self.run_mode)
             self.pyro.connect(self.suite_state, PYRO_STATE_OBJ_NAME)
 
             self.log.info("port:" + str(self.port))
@@ -820,7 +818,7 @@ class scheduler(object):
             os.environ[var] = val
         for var, val in self.suite_task_env.items():
             os.environ[var] = val
-        cenv = self.config.cfg['cylc']['environment']
+        cenv = copy(self.config.cfg['cylc']['environment'])
         for var, val in cenv.items():
             cenv[var] = os.path.expandvars(val)
         # path to suite bin directory for suite and task event handlers
@@ -1201,7 +1199,8 @@ class scheduler(object):
             self.request_handler.quit = True
             self.request_handler.join()
 
-        for iface in [self.command_queue, self.suite_id, self.suite_state,
+        for iface in [self.command_queue,
+                      SuiteIdServer.get_inst(), StateSummaryServer.get_inst(),
                       ExtTriggerServer.get_inst(), BroadcastServer.get_inst()]:
             try:
                 self.pyro.disconnect(iface)
@@ -1213,7 +1212,7 @@ class scheduler(object):
             self.pyro.shutdown()
 
         try:
-            self.port_file.unlink()
+            self.portfile.unlink()
         except PortFileError, x:
             # port file may have been deleted
             print >> sys.stderr, x

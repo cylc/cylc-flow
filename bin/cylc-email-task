@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 usage() {
-    echo "USAGE: cylc [hook] email-task EVENT SUITE TASKID MESSAGE"
+    echo "Usage: cylc [hook] email-task EVENT SUITE TASKID MESSAGE"
     echo ""
     echo "This is a simple task event hook handler script that sends an email."
     echo "The command line arguments are supplied automatically by cylc."

@@ -16,21 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute():
-        sys.exit(0)
-
-from cylc.network.suite_command import SuiteCommandClient
-from cylc.config import config
-from cylc.CylcOptionParsers import cop
-from cylc.command_prep import prep_pyro
-from cylc.prompt import prompt
-import cylc.flags
-
-parser = cop( """cylc [control] reload [OPTIONS] ARGS
+"""cylc [control] reload [OPTIONS] ARGS
 
 Tell a suite to reload its definition at run time. All settings
 including task definitions, with the exception of suite log
@@ -51,15 +37,38 @@ apply to the reload (only changes to the suite.rc file itself are
 reloaded).
 
 If the modified suite definition does not parse, failure to reload will
-be reported but no harm will be done to the running suite.""", pyro=True )
+be reported but no harm will be done to the running suite."""
 
-(options, args) = parser.parse_args()
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute():
+        sys.exit(0)
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+import cylc.flags
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.CylcOptionParsers import cop
+from cylc.prompt import prompt
 
-prompt('Reload %s' % suite, options.force)
-pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
-                             options.pyro_timeout, options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-pclient.put_command('reload_suite')
+
+def main():
+    parser = cop(__doc__, pyro=True)
+    (options, args) = parser.parse_args()
+    suite = args[0]
+
+    prompt('Reload %s' % suite, options.force)
+    pclient = SuiteCommandClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
+    pclient.put_command('reload_suite')
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

@@ -16,20 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import os, re
-import shutil
-from cylc.CylcOptionParsers import cop
-from cylc.mkdir_p import mkdir_p
-from cylc.registration import localdb, RegistrationError
-from cylc.regpath import RegPath
-import cylc.flags
-
-parser = cop( usage = """cylc [db] copy|cp [OPTIONS] REG REG2 TOPDIR
+"""cylc [db] copy|cp [OPTIONS] REG REG2 TOPDIR
 
 Copy suite or group REG to TOPDIR, and register the copy as REG2.
 
@@ -76,72 +63,69 @@ EXAMPLES (using the three suites above):
   Copying suite definition for orange.baz
 % cylc db pr "^orange"
   orange.qux | "Test Suite Two" | /home/bob/orange/qux
-  orange.baz | "Test Suite One" | /home/bob/orange/baz""",
-  argdoc=[("REG", "Source suite name"),
-          ("REG2", "Target suite name"),
-          ("TOPDIR", "Top level target directory.")] )
+  orange.baz | "Test Suite One" | /home/bob/orange/baz"""
 
-parser.add_option( "--db-from",
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import os
+import re
+import shutil
+
+import cylc.flags
+from cylc.CylcOptionParsers import cop
+from cylc.mkdir_p import mkdir_p
+from cylc.registration import localdb, RegistrationError
+from cylc.regpath import RegPath
+
+
+def main():
+    parser = cop(__doc__,
+                 argdoc=[("REG", "Source suite name"),
+                         ("REG2", "Target suite name"),
+                         ("TOPDIR", "Top level target directory.")])
+
+    parser.add_option(
+        "--db-from",
         help="Copy suites from another DB (defaults to --db).",
-        metavar='PATH', action="store", default=None, dest="dbfrom" )
+        metavar='PATH', action="store", default=None, dest="dbfrom")
 
-( options, args ) = parser.parse_args()
+    (options, args) = parser.parse_args()
+    arg_from = args[0]
+    arg_to = args[1]
+    arg_dir = args[2]
 
-arg_from = args[0]
-arg_to = args[1]
-arg_dir = args[2]
+    if options.dbfrom:
+        dbfrom = localdb(file=options.dbfrom)
+    else:
+        dbfrom = localdb(file=options.db)
+    db = localdb(file=options.db)
 
-if options.dbfrom:
-    dbfrom = localdb( file=options.dbfrom )
-else:
-    dbfrom = localdb( file=options.db )
-db = localdb( file=options.db )
-
-try:
-    flist = dbfrom.get_list( '^' + arg_from + r'\b' )
+    flist = dbfrom.get_list('^' + arg_from + r'\b')
     if len(flist) == 0:
-        sys.exit( 'ERROR, no suites matched: ' + arg_from )
+        sys.exit('ERROR, no suites matched: ' + arg_from)
 
     for item in flist:
         freg, fdir, ftitle = item
-        treg = re.sub( r'\b' + arg_from + r'\b', arg_to, freg )
+        treg = re.sub(r'\b' + arg_from + r'\b', arg_to, freg)
 
         tdir = RegPath(treg).get_fpath()
-        tdir = os.path.join( arg_dir, tdir )
+        tdir = os.path.join(arg_dir, tdir)
 
-        if os.path.exists( tdir ):
-            print >> sys.stderr, 'SKIPPING, directory already exists: ' + tdir
-            continue
-
-        tdir = os.path.abspath( tdir )
-        #print 'Making directory ', tdir
-        try:
-            mkdir_p( os.path.dirname(tdir))
-        except Exception,x:
-            print >> sys.stderr, 'ERROR, illegal target directory?', tdir
-            print >> sys.stderr, x
-            continue
+        tdir = os.path.abspath(tdir)
+        mkdir_p(os.path.dirname(tdir))
 
         print 'COPY', fdir, '\n  TO', tdir
-        try:
-            shutil.copytree( fdir, tdir )
-        except OSError, x:
-            print >> sys.stderr,x
-            continue
-        except shutil.Error, x:
-            # if one or more files could not be read
-            print 'WARNINGS:'
-            for e in x.args[0]:
-                src, trg, err = e
-                print >> sys.stderr, "  ", src, '-->', trg
-                print >> sys.stderr, "     ", err
-        try:
-            db.register( treg, tdir )
-        except RegistrationError, x:
-            print >> sys.stderr, 'ERROR, ' + str(x)
-            continue
+        shutil.copytree(fdir, tdir)
+        db.register(treg, tdir)
 
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

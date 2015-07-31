@@ -34,6 +34,7 @@ from optparse import OptionParser
 import cylc.flags
 from cylc.task_message import TaskMessage
 
+
 def main():
     """CLI."""
     parser = OptionParser(__doc__)

@@ -19,7 +19,7 @@ set -eu
 
 usage() {
   cat <<'__USAGE__'
-USAGE: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
+Usage: cylc graph-diff [OPTIONS] SUITE1 SUITE2 -- [GRAPH_OPTIONS_ARGS]
 
 Difference 'cylc graph --reference' output for SUITE1 and SUITE2.
 

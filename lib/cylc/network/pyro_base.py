@@ -16,20 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import sys
+from uuid import uuid4
+
 try:
     import Pyro.core
+    import Pyro.errors
 except ImportError, x:
     raise SystemExit("ERROR: Pyro is not installed")
 
-import os
-import sys
-from time import sleep
-from uuid import uuid4
-
 import cylc.flags
-from cylc.suite_host import get_hostname
-from cylc.owner import user, user_at_host
-from cylc.port_file import port_retriever
+from cylc.owner import user, host, user_at_host
+from cylc.passphrase import get_passphrase, PassphraseError
+from cylc.registration import localdb
+from cylc.network.port_file import PortRetriever
+from cylc.network.connection_validator import ConnValidator
 from cylc.network.client_reporter import PyroClientReporter
 
 
@@ -40,11 +42,11 @@ class PyroServer(Pyro.core.ObjBase):
         Pyro.core.ObjBase.__init__(self)
         self.client_reporter = PyroClientReporter.get_inst()
 
-    def signout(self, uuid, info):
-        self.client_reporter.signout(uuid, info)
+    def signout(self):
+        self.client_reporter.signout(self)
 
-    def report(self, command, uuid, info, multi):
-        self.client_reporter.report(command, uuid, info, multi)
+    def report(self, command):
+        self.client_reporter.report(command, self)
 
 
 class PyroClient(object):
@@ -52,70 +54,84 @@ class PyroClient(object):
 
     target_server_object = None
 
-    def __init__(
-        self, suite, pphrase, owner=user, host=get_hostname(),
-        pyro_timeout=None, port=None, my_uuid=None):
-
+    def __init__(self, suite, owner=user, host=host, pyro_timeout=None,
+                 port=None, db=None, my_uuid=None, print_uuid=False):
         self.suite = suite
         self.host = host
         self.owner = owner
         if pyro_timeout is not None:
             pyro_timeout = float(pyro_timeout)
         self.pyro_timeout = pyro_timeout
-        self.pphrase = pphrase
         self.hard_port = port
         self.pyro_proxy = None
-        # Multi-client programs (cylc-gui) can give their own client ID:
         self.my_uuid = my_uuid or uuid4()
-        # Possibly non-unique client info:
-        self.my_info = {
-            'user_at_host': user_at_host,
-            'name': os.path.basename(sys.argv[0])
-        }
-        self.multi = False
+        if print_uuid:
+            print >> sys.stderr, '%s' % self.my_uuid
+        try:
+            self.pphrase = get_passphrase(suite, owner, host, localdb(db))
+        except PassphraseError:
+            # No passphrase: public access client.
+            self.pphrase = None
+         
+    def call_server_func(self, fname, *fargs):
+        """Call server_object.fname(*fargs)
+        
+        Get a Pyro proxy for the server object if we don't already have it,
+        and handle back compat retry for older daemons.
 
-    def get_client_uuid(self):
-        return self.my_uuid
+        """
+        self._get_proxy()
+        func = getattr(self.pyro_proxy, fname)
+        try:
+            return func(*fargs)
+        except Pyro.errors.ConnectionDeniedError:
+            # Back compat for daemons <= 6.4.1: passphrase-only auth.
+            if cylc.flags.debug:
+                print >> sys.stderr, "Old daemon? - trying passphrases."
+            self.pyro_proxy = None
+            self._get_proxy_old()
+            func = getattr(self.pyro_proxy, fname)
+            return func(*fargs)
 
-    def set_multi(self):
-        """Declare this to be a multi-connect client (GUI, monitor)."""
-        self.multi = True
+    def _set_uri(self):
+        # Find the suite port number (fails if port file not found)
+        port = (self.hard_port or
+                PortRetriever(self.suite, self.host, self.owner).get())
+        # Qualify the obj name with user and suite name (unnecessary but
+        # can't change it until we break back-compat with older daemons).
+        name = "%s.%s.%s" % (self.owner, self.suite,
+                             self.__class__.target_server_object)
+        self.uri = "PYROLOC://%s:%s/%s" % (self.host, str(port), name)
 
-    def reset(self):
-        """Cause _get_proxy() to start from scratch."""
-        self.pyro_proxy = None
+    def _get_proxy_common(self):
+        if self.pyro_proxy is None:
+            self._set_uri()
+            # Fails only for unknown hosts (no connection till RPC call).
+            self.pyro_proxy = Pyro.core.getProxyForURI(self.uri)
+            self.pyro_proxy._setTimeout(self.pyro_timeout)
 
     def _get_proxy(self):
-        """Get the Pyro proxy if we don't already have it."""
-        if self.pyro_proxy is None:
-            # The following raises a PortFileError if the port file is not found.
-            port = (self.hard_port or
-                    port_retriever(self.suite, self.host, self.owner).get())
-            objname = "%s.%s.%s" % (self.owner, self.suite, self.__class__.target_server_object)
-            uri = "PYROLOC://%s:%s/%s" % (self.host, str(port), objname)
-            # The following only fails for unknown hosts.
-            # No connection is made until an RPC call is attempted.
-            self.pyro_proxy = Pyro.core.getProxyForURI(uri)
-            self.pyro_proxy._setTimeout(self.pyro_timeout)
-            self.pyro_proxy._setIdentification(self.pphrase)
+        self._get_proxy_common()
+        self.pyro_proxy._setNewConnectionValidator(ConnValidator())
+        self.pyro_proxy._setIdentification((self.my_uuid, self.pphrase))
+
+    def _get_proxy_old(self):
+        """Back compat: passphrase-only daemons (<= 6.4.1)."""
+        self._get_proxy_common()
+        self.pyro_proxy._setIdentification(self.pphrase)
+
+    def reset(self):
+        self.pyro_proxy = None
 
     def signout(self):
         """Multi-connect clients should call this on exit."""
         try:
             self._get_proxy()
             try:
-                self.pyro_proxy.signout(self.my_uuid, self.my_info)
+                self.pyro_proxy.signout()
             except AttributeError:
-                # Back compat.
+                # Back-compat for pre client reporting daemons <= 6.4.1.
                 pass
         except Exception:
             # Suite may have stopped before the client exits.
-            pass
-
-    def _report(self, cmd):
-        self._get_proxy()
-        try:
-            self.pyro_proxy.report(cmd, self.my_uuid, self.my_info, self.multi)
-        except AttributeError:
-            # Back compat.
             pass

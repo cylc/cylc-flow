@@ -17,16 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import os
 from Queue import Queue
+
 import cylc.flags
+from cylc.network import PYRO_CMD_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import check_access_priv
 
-
-PYRO_CMD_OBJ_NAME = 'command-interface'
-ILLEGAL_CMD_MSG = 'ERROR: Illegal command:'
-
-# Backward compatibility for suite daemons running at <= 6.4.0.
-# TODO - this should eventually be removed.
+# Back-compat for older suite daemons <= 6.4.1.
 back_compat = {
     'set_stop_cleanly': 'stop cleanly',
     'stop_now': 'stop now',
@@ -51,26 +50,25 @@ back_compat = {
     'reload_suite': 'reload suite',
     'add_prerequisite': 'add prerequisite',
     'poll_tasks': 'poll tasks',
-    'kill_tasks': 'kill tasks',
+    'kill_tasks': 'kill tasks'
 }
 
 
 class SuiteCommandServer(PyroServer):
     """Server-side suite command interface."""
 
-    def __init__(self, legal_commands=[]):
+    def __init__(self):
         super(SuiteCommandServer, self).__init__()
-        self.legal = legal_commands
         self.queue = Queue()
 
     def put(self, command, *command_args):
-        if command not in self.legal:
-            # TODO - an illegal command indicates a programming error, not a
-            # user error, so we shouldn't bother with this.
-            return (False, '%s: %s' % (ILLEGAL_CMD_MSG, command))
+        if 'stop' in command:
+            check_access_priv(self, 'shutdown')
         else:
-            self.queue.put((command, command_args))
-            return (True, 'Command queued')
+            check_access_priv(self, 'full-control')
+        self.report(command)
+        self.queue.put((command, command_args))
+        return (True, 'Command queued')
 
     def get_queue(self):
         return self.queue
@@ -81,26 +79,11 @@ class SuiteCommandClient(PyroClient):
 
     target_server_object = PYRO_CMD_OBJ_NAME
 
-    def put_command_gui(self, command, *command_args):
-        """GUI suite command interface."""
-        self._report(command)
-        success, msg = self.pyro_proxy.put(command, *command_args)
-        if msg.startswith(ILLEGAL_CMD_MSG):
-            # Back compat.
-            success, msg = self.put_command_gui(
-                back_compat[command], *command_args)
-        return success, msg
-
-
-    def put_command(self, command, *command_args):
-        """CLI suite command interface."""
-        try:
-            success, msg = self.put_command_gui(command, *command_args)
-        except Exception as exc:
-            if cylc.flags.debug:
-                raise
-            sys.exit(exc)
-        if success:
-            print msg
-        else:
-            sys.exit(msg)
+    def put_command(self, *args):
+        success, msg = self.call_server_func("put", *args)
+        if msg.startswith('ERROR: Illegal command:'):
+            # Back-compat for older suite daemons <= 6.4.1.
+            command = back_compat[args[0]]
+            args = tuple([command]) + args[1:]
+            success, msg = self.call_server_func("put", *args)
+        return (success, msg)

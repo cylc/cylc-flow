@@ -228,7 +228,7 @@ class db_updater(threading.Thread):
             return
         # [(name, owner, host, port)]
         results = scan(pyro_timeout=self.pyro_timeout)
-        choices = [(result[0], result[3]) for result in results]
+        choices = [(result[1]['name'], result[0]) for result in results]
         choices.sort()
         if choices != self.running_choices:
             self.running_choices = choices
@@ -237,20 +237,12 @@ class db_updater(threading.Thread):
             return False
 
     def statecol( self, state ):
-        grnbg = '#19ae0a'
-        grnfg = '#030'
-        #red = '#ff1a45'
-        red = '#845'
-        white = '#fff'
-        black='#000'
-        hilight = '#faf'
-        hilight2 = '#f98e3a'
+        bg = '#19ae0a'
+        fg = '#030' 
         if state == '-':
-            #return (black, None, hilight)
             return (None, None, None)
         else:
-            #return (grnfg, grnbg, hilight2 )
-            return (grnfg, grnbg, grnbg )
+            return (fg, bg, bg )
 
     def search_level( self, model, iter, func, data ):
         while iter:

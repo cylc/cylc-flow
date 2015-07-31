@@ -20,7 +20,7 @@
 
 usage() {
     cat <<eof
-USAGE: cylc [admin] check-software
+Usage: cylc [admin] check-software
 
 Check that the external software required by cylc is installed.
 

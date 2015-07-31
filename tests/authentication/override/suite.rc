@@ -1,0 +1,17 @@
+title = Authentication test suite.
+description = """Stalls when the first task fails.
+Suite overrides global authentication settings."""
+[cylc]
+    [[event hooks]]
+        timeout = PT30S
+        abort on timeout = True
+    [[authentication]]
+        public = shutdown
+[scheduling]
+    [[dependencies]]
+        graph = foo => bar
+[runtime]
+    [[foo]]
+        script = /bin/false
+    [[bar]]
+        script = /bin/true

@@ -16,59 +16,113 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-from cylc.CylcOptionParsers import cop
-from cylc.version import CYLC_VERSION
-from cylc.config import config
-import cylc.flags
-
-parser = cop( """cylc [prep] validate [OPTIONS] ARGS
+"""cylc [prep] validate [OPTIONS] ARGS
 
 Validate a suite definition against the official specification
 files held in $CYLC_DIR/conf/suiterc/.
 
 If the suite definition uses include-files reported line numbers
 will correspond to the inlined version seen by the parser; use
-'cylc view -i,--inline SUITE' for comparison.""",
-jset=True, prep=True )
+'cylc view -i,--inline SUITE' for comparison."""
+
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import cylc.flags
+from cylc.CylcOptionParsers import cop
+from cylc.version import CYLC_VERSION
+from cylc.config import SuiteConfig
+from cylc.task_proxy import TaskProxy
 
 
-parser.add_option( "--ict",
+def main():
+
+    parser = cop(__doc__, jset=True, prep=True)
+
+    parser.add_option(
+        "--ict",
         help="Set an initial cycle time to validate against. This "
-        "may be required if the suite does not supply one.")
+             "may be required if the suite does not supply one.")
 
-parser.add_option( "--strict",
+    parser.add_option(
+        "--strict",
         help="Fail any use of unsafe or experimental features. "
-        "Currently this just means naked dummy tasks (tasks with no "
-        "corresponding runtime section) as these may result from "
-        "unintentional typographic errors in task names.",
-        action="store_true", default=False, dest="strict" )
+             "Currently this just means naked dummy tasks (tasks with no "
+             "corresponding runtime section) as these may result from "
+             "unintentional typographic errors in task names.",
+        action="store_true", default=False, dest="strict")
 
-parser.add_option( "--no-write", 
+    parser.add_option(
+        "--no-write",
         help="Don't write out the processed suite definition.",
-        action="store_true", default=False, dest="nowrite" )
+        action="store_true", default=False, dest="nowrite")
 
-(options, args) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-suite, suiterc, junk = parser.get_suite()
+    suite, suiterc, junk = parser.get_suite()
 
-if cylc.flags.verbose:
-    print "Parsing suite " + suite + ":", suiterc
+    cfg = SuiteConfig.get_inst(
+        suite, suiterc,
+        cli_initial_point_string=options.ict,
+        template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file,
+        validation=True, strict=options.strict,
+        write_proc=not options.nowrite)
 
-try:
-    config( suite, suiterc,
-            cli_initial_point_string=options.ict,
-            template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file,
-            validation=True, strict=options.strict,
-            write_proc=not options.nowrite )
-except Exception,x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+    # Instantiate tasks and force evaluation of trigger expressions.
+    # (Taken from config.py to avoid circular import problems.)
+    # TODO - This is not exhaustive, it only uses the initial cycle point.
+    if cylc.flags.verbose:
+        print "Instantiating tasks to check trigger expressions"
+    for name in cfg.taskdefs.keys():
+        try:
+            itask = TaskProxy(
+                cfg.taskdefs[name],
+                cfg.start_point,
+                'waiting',
+                is_startup=True,
+                validate_mode=True)
+        except Exception as exc:
+            print >> sys.stderr, str(exc)
+            raise SuiteConfigError(
+                'ERROR, failed to instantiate task %s' % name)
+        if itask.point is None:
+            if cylc.flags.verbose:
+                print >> sys.stderr, (
+                    " + Task out of bounds for " + str(cfg.start_point) +
+                    ": " + itask.name)
+            continue
 
-print "Valid for cylc-" + CYLC_VERSION
+        # Warn for purely-implicit-cycling tasks (these are deprecated).
+        if itask.tdef.sequences == itask.tdef.implicit_sequences:
+            print >> sys.stderr, (
+                "WARNING, " + name + ": not explicitly defined in " +
+                "dependency graphs (deprecated)"
+            )
+
+        # force trigger evaluation now
+        try:
+            itask.prerequisites.eval_all()
+        except TriggerExpressionError as exc:
+            print >> sys.stderr, str(exc)
+            raise SuiteConfigError(
+                "ERROR, " + name + ": invalid trigger expression.")
+        except Exception as exc:
+            print >> sys.stderr, str(exc)
+            raise SuiteConfigError(
+                'ERROR, ' + name + ': failed to evaluate triggers.')
+        if cylc.flags.verbose:
+            print "  + " + itask.identity + " ok"
+
+    print "Valid for cylc-" + CYLC_VERSION
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

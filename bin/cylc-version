@@ -16,20 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Print the cylc release or git repository version number."""
-
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-from cylc.CylcOptionParsers import cop
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.version import CYLC_VERSION
-import cylc.flags
-
-
-parser = cop("""cylc [info] version
+"""cylc [info] version
 
 Print the cylc version invoked at the command line.
 
@@ -38,8 +25,29 @@ command interface, whereas this is a proper cylc command that can take the
 standard --host and --user options, etc.
 
 For the cylc version of running a suite daemon see
-  "cylc get-suite-version".""")
+  "cylc get-suite-version"."""
 
-(options, args) = parser.parse_args()
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
 
-print CYLC_VERSION
+import cylc.flags
+from cylc.CylcOptionParsers import cop
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.version import CYLC_VERSION
+
+
+def main():
+    parser = cop(__doc__, argdoc=[])
+    (options, args) = parser.parse_args()
+    print CYLC_VERSION
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

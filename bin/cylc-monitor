@@ -34,11 +34,11 @@ from time import sleep
 
 from cylc.CylcOptionParsers import cop
 from cylc.task_state import task_state
-from cylc.command_prep import prep_pyro
+from cylc.registration import localdb
 from cylc.network.suite_state import (
     StateSummaryClient, SuiteStillInitialisingError)
 from cylc.wallclock import get_time_string_from_unix_time
-from cylc.port_file import PortFileError
+
 
 class SuiteMonitor(object):
     def __init__(self):
@@ -73,12 +73,14 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
 
         self.parser.add_option(
             "-i", "--interval",
-            help="Interval between suite state retrievals, in seconds (default 1).",
-            metavar="SECONDS", action="store", default=1, dest="update_interval")
+            help="Interval between suite state retrievals, "
+                 "in seconds (default 1).",
+            metavar="SECONDS", action="store", default=1,
+            dest="update_interval")
 
     def run(self):
         (options, args) = self.parser.parse_args()
-        suite, pphrase = prep_pyro(args[0], options).execute()
+        suite = args[0]
 
         client_name = os.path.basename(sys.argv[0])
         if options.restricted:
@@ -86,15 +88,14 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
 
         legend = ''
         for state in task_state.legal:
-            legend += "%s%s%s " % (
+            legend += "%s%s%s" % (
                 task_state.ctrl[state], state, task_state.ctrl_end)
         legend = legend.rstrip()
-        len_header = sum(len(s) for s in task_state.legal) + len(task_state.legal) - 1
+        len_header = sum(len(s) for s in task_state.legal)
 
         self.pclient = StateSummaryClient(
-            suite, pphrase, options.owner, options.host, options.pyro_timeout,
-            options.port)
-        self.pclient.set_multi()
+            suite, options.owner, options.host, options.pyro_timeout,
+            options.port, options.db)
 
         while True:
             try:
@@ -109,14 +110,6 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
             else:
                 states = [t["state"] for t in task_summaries.values() if (
                           "state" in t)]
-                state_count = {}
-                for state in states:
-                    state_count.setdefault(state, 0)
-                    state_count[state] += 1
-                state_totals = state_count.items()
-                state_totals.sort()
-                state_totals.sort(lambda x, y: cmp(y[1], x[1]))
-
                 n_tasks_total = len(states)
                 if options.restricted:
                     task_summaries = dict(
@@ -160,7 +153,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                 if run_mode != "live":
                     suite_name += " (%s)" % run_mode
                 prefix = "%s - %d tasks" % (suite_name, int(n_tasks_total))
-                suffix = "%s %s" % (client_name, self.pclient.get_client_uuid())
+                suffix = "%s %s" % (client_name, self.pclient.my_uuid)
                 title_str = ' ' * len_header
                 title_str = prefix + title_str[len(prefix):]
                 title_str = '\033[1;37;44m%s%s%s' % (
@@ -173,8 +166,16 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                 blit.append(updated_str)
 
                 summary = 'state summary:'
-                for state, tot in state_totals:
-                    summary += ' %s %d %s' % (
+                try:
+                    state_totals = glbl['state totals']
+                except KeyError:
+                    # Back-compat for suite daemons <= 6.4.1.
+                    state_totals = {}
+                    for state in states:
+                        state_totals.setdefault(state, 0)
+                        state_totals[state] += 1
+                for state, tot in state_totals.items():
+                    summary += '%s %d %s' % (
                         task_state.ctrl[state], tot, task_state.ctrl_end)
                 blit.append(summary)
 

@@ -16,21 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# A minimal Pyro-connected object to allow client programs to identify
-# what suite is running at a given cylc port - by suite name and owner.
+from cylc.task_proxy import TaskProxy
+from cylc.config import SuiteConfig, TaskNotDefinedError
 
-# All *other* suite objects should be connected to Pyro via qualified
-# names: owner.suite.object, to prevent accidental access to the wrong
-# suite. This object, however, should be connected unqualified so that
-# that same ID method can be called on any active cylc port.
+def get_task_proxy(name, *args, **kwargs):
+    config = SuiteConfig.get_inst()
+    """Return a task proxy for a named task."""
+    try:
+        tdef = config.taskdefs[name]
+    except KeyError:
+        raise TaskNotDefinedError(name)
+    return TaskProxy(tdef, *args, **kwargs)
 
-import Pyro.core
 
-class identifier( Pyro.core.ObjBase ):
-    def __init__( self, name, owner ):
-        self.owner = owner
-        self.name = name
-        Pyro.core.ObjBase.__init__( self )
 
-    def id( self ):
-        return ( self.name, self.owner )
+
