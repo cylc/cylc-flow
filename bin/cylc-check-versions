@@ -16,22 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import subprocess
-
-import cylc.flags
-from cylc.remote import remrun
-from cylc.CylcOptionParsers import cop
-from cylc.version import CYLC_VERSION
-from cylc.config import config, SuiteConfigError
-from cylc.host_select import get_task_host
-
-
-parser = cop(
-    """cylc [discovery] check-versions [OPTIONS] ARGS
+"""cylc [discovery] check-versions [OPTIONS] ARGS
 
 Check the version of cylc invoked on each of SUITE's task host accounts when
-CYLC_VERSION is set to """ + CYLC_VERSION + """ (i.e. *this* version).
+CYLC_VERSION is set to *the version running this command line tool*.
 Different versions are reported but are not considered an error unless the
 -e|--error option is specified, because different cylc versions from 6.0.0
 onward should at least be backward compatible.
@@ -44,30 +32,37 @@ if $CYLC_VERSION is defined.
 
 User -v/--verbose to see the command invoked to determine the remote version
 (all remote cylc command invocations will be of the same form, which may be
-site dependent -- see cylc global config documentation.""",
-    prep=True, jset=True)
+site dependent -- see cylc global config documentation."""
 
-parser.add_option(
-    "-e", "--error", help="Exit with error status "
-    "if " + CYLC_VERSION + " is not available on all remote accounts.",
-    action="store_true", default=False, dest="error")
+import sys
+import subprocess
 
-(options, args) = parser.parse_args(remove_opts=['--host', '--user'])
+import cylc.flags
+from cylc.remote import remrun
+from cylc.CylcOptionParsers import cop
+from cylc.version import CYLC_VERSION
+from cylc.config import SuiteConfig, SuiteConfigError
+from cylc.host_select import get_task_host
 
-# suite name or file path
-suite, suiterc, junk = parser.get_suite()
 
-# extract task host accounts from the suite
-try:
-    config = config(
+def main():
+    parser = cop(__doc__, prep=True, jset=True)
+
+    parser.add_option(
+        "-e", "--error", help="Exit with error status "
+        "if " + CYLC_VERSION + " is not available on all remote accounts.",
+        action="store_true", default=False, dest="error")
+
+    (options, args) = parser.parse_args(remove_opts=['--host', '--user'])
+
+    # suite name or file path
+    suite, suiterc, junk = parser.get_suite()
+
+    # extract task host accounts from the suite
+    config = SuiteConfig.get_inst(
         suite, suiterc,
         template_vars=options.templatevars,
         template_vars_file=options.templatevars_file)
-except Exception as exc:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(exc)
-else:
     result = config.get_namespace_list('all tasks')
     namespaces = result.keys()
     accounts = set()
@@ -78,55 +73,64 @@ else:
         accounts.add((owner, host))
     accounts = list(accounts)
 
-# Interrogate the each remote account with CYLC_VERSION set to our version.
-# Note that post backward compatibility concerns to do this we can just run:
-#   cylc version --host=HOST --user=USER
-# but this command only exists for version > 6.3.0.
-# So for the moment generate an actual remote invocation command string for
-# "cylc -v".
+    # Interrogate the each remote account with CYLC_VERSION set to our version.
+    # Post backward compatibility concerns to do this we can just run:
+    #   cylc version --host=HOST --user=USER
+    # but this command only exists for version > 6.3.0.
+    # So for the moment generate an actual remote invocation command string for
+    # "cylc -v".
 
-# (save verbose flag as gets reset in remrun)
-verbose = cylc.flags.verbose
+    # (save verbose flag as gets reset in remrun)
+    verbose = cylc.flags.verbose
 
-warn = {}
-contacted = 0
-for user, host in accounts:
-    argv = ["cylc", "--version"]
-    if user and host:
-        argv += ["--user=%s" % user, "--host=%s" % host]
-        user_at_host = "%s@%s" % (user, host)
-    elif user:
-        argv += ["--user=%s" % user]
-        user_at_host = "%s@localhost" % user
-    elif host:
-        argv += ["--host=%s" % host]
-        user_at_host = host
-    cmd = remrun(argv).execute(dry_run=True)
-    if verbose:
-        print "%s: %s" % (user_at_host, ' '.join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = p.communicate()
-    res = p.wait()
-    if res == 0:
+    warn = {}
+    contacted = 0
+    for user, host in accounts:
+        argv = ["cylc", "version"]
+        if user and host:
+            argv += ["--user=%s" % user, "--host=%s" % host]
+            user_at_host = "%s@%s" % (user, host)
+        elif user:
+            argv += ["--user=%s" % user]
+            user_at_host = "%s@localhost" % user
+        elif host:
+            argv += ["--host=%s" % host]
+            user_at_host = host
         if verbose:
-            print "   %s" % out
-        contacted += 1
-        out = out.strip()
-        if out != CYLC_VERSION:
-            warn[user_at_host] = out
-    else:
-        print >> sys.stderr, 'ERROR ' + user_at_host + ':'
-        print >> sys.stderr, err
+            print "%s: %s" % (user_at_host, ' '.join(argv))
+        p = subprocess.Popen(
+            argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        res = p.wait()
+        if res == 0:
+            if verbose:
+                print "   %s" % out
+            contacted += 1
+            out = out.strip()
+            if out != CYLC_VERSION:
+                warn[user_at_host] = out
+        else:
+            print >> sys.stderr, 'ERROR ' + user_at_host + ':'
+            print >> sys.stderr, err
 
-# report results
-if not warn:
-    if contacted:
-        print "All", contacted, "accounts have cylc-" + CYLC_VERSION
-else:
-    print "WARNING: failed to invoke cylc-%s on %d accounts:" % (
-        CYLC_VERSION, len(warn.keys()))
-    m = max([len(ac) for ac in warn.keys()])
-    for ac, warning in warn.items():
-        print ' ', ac.ljust(m), warning
-    if options.error:
-        sys.exit(1)
+    # report results
+    if not warn:
+        if contacted:
+            print "All", contacted, "accounts have cylc-" + CYLC_VERSION
+    else:
+        print "WARNING: failed to invoke cylc-%s on %d accounts:" % (
+            CYLC_VERSION, len(warn.keys()))
+        m = max([len(ac) for ac in warn.keys()])
+        for ac, warning in warn.items():
+            print ' ', ac.ljust(m), warning
+        if options.error:
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

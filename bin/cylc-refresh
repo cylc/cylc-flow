@@ -16,52 +16,57 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb, RegistrationError
-from cylc.config import config, SuiteConfigError
-from cylc.regpath import RegPath
-import cylc.flags
-
-parser = cop( usage = """cylc [db] refresh [OPTIONS] ARGS
+"""cylc [db] refresh [OPTIONS] ARGS
 
 Check a suite database for invalid registrations (no suite definition
 directory or suite.rc file) and refresh suite titles in case they have
 changed since the suite was registered. Explicit wildcards must be
 used in the match pattern (e.g. 'f' will not match 'foo.bar' unless
-you use 'f.*').""",
-argdoc=[('[REGEX]', 'Suite name match pattern')])
+you use 'f.*')."""
 
-parser.add_option( "-u","--unregister",
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import cylc.flags
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb, RegistrationError
+from cylc.config import SuiteConfigError
+from cylc.regpath import RegPath
+
+
+def main():
+    parser = cop(__doc__,
+                 argdoc=[('[REGEX]', 'Suite name match pattern')])
+
+    parser.add_option(
+        "-u", "--unregister",
         help="Automatically unregister invalid registrations.",
-        action="store_true", default=False, dest="unregister" )
+        action="store_true", default=False, dest="unregister")
 
-( options, args ) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-db = localdb(file=options.db )
+    db = localdb(file=options.db)
 
-if len(args) == 0:
-    pattern = '.*'
-else:
-    pattern = args[0]
-    # force explicit wildcards
-    if not pattern.startswith( '^' ):
-        pattern = '^' + pattern
-    if not pattern.endswith( '$' ):
-        pattern += '$'
+    if len(args) == 0:
+        pattern = '.*'
+    else:
+        pattern = args[0]
+        # force explicit wildcards
+        if not pattern.startswith('^'):
+            pattern = '^' + pattern
+        if not pattern.endswith('$'):
+            pattern += '$'
 
-invalid = []    # no suite.rc file
-readerror = []  # can't read title (suite.rc parse error)
-try:
+    invalid = []  # no suite.rc file
+    readerror = []  # can't read title (suite.rc parse error)
+
     # check validity
     invalid = db.get_invalid()
     # refresh titles
     changed = []
-    items = db.get_list( pattern )
+    items = db.get_list(pattern)
     if len(items) == 0:
         if pattern:
             print 'No suites found to match', pattern
@@ -71,23 +76,29 @@ try:
         if suite in invalid:
             continue
         try:
-            db.refresh_suite_title( suite )
+            db.refresh_suite_title(suite)
         except (RegistrationError, SuiteConfigError), x:
             print >> sys.stderr, x
             readerror.append(suite)
     if len(invalid) > 0:
-        print 'ERROR,', len(invalid), 'invalid registrations (no suite.rc file):'
+        print ("ERROR, %d invalid registrations "
+               "(no suite.rc file):" % len(invalid))
         for i in invalid:
             if options.unregister:
                 db.unregister(i)
             else:
                 print ' -', i
     if len(readerror) > 0:
-        print 'ERROR,', len(readerror), 'title parse failures (bad suite.rc file):'
+        print ("ERROR, %d title parse failures "
+               "(bad suite.rc file):" % len(readerror))
         for i in readerror:
             print ' -', i
 
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

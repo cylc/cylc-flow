@@ -43,7 +43,6 @@ from parsec.OrderedDict import OrderedDict
 import flags
 from syntax_flags import (
     SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
-from cylc.task_proxy import TaskProxy
 
 """
 Parse and validate the suite definition file, do some consistency
@@ -115,7 +114,37 @@ class TaskNotDefinedError(SuiteConfigError):
 
 # TODO: separate config for run and non-run purposes?
 
-class config( object ):
+class SuiteConfig(object):
+    """Class for suite configuration items and derived quantities."""
+
+    _INSTANCE = None
+    _FORCE = False  # Override singleton behaviour (only used by "cylc diff"!)
+
+    @classmethod
+    def get_inst(cls, suite=None, fpath=None,
+                 template_vars=[], template_vars_file=None,
+                 owner=None, run_mode='live', validation=False, strict=False,
+                 collapsed=[], cli_initial_point_string=None,
+                 cli_start_point_string=None, cli_final_point_string=None,
+                 is_restart=False, is_reload=False, write_proc=True,
+                 vis_start_string=None, vis_stop_string=None):
+        """Return a singleton instance.
+
+        On 1st call, instantiate the singleton.
+        Argument list is only relevant on 1st call.
+
+        """
+        if cls._INSTANCE is None or cls._FORCE:
+            cls._FORCE = False
+            cls._INSTANCE = cls(
+                suite, fpath, template_vars, template_vars_file, owner,
+                run_mode, validation, strict, collapsed,
+                cli_initial_point_string, cli_start_point_string,
+                cli_final_point_string, is_restart, is_reload, write_proc,
+                vis_start_string, vis_stop_string)
+        return cls._INSTANCE
+
+
     def __init__(self, suite, fpath, template_vars=[], template_vars_file=None,
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
@@ -175,9 +204,9 @@ class config( object ):
         self.feet = []
 
         # parse, upgrade, validate the suite, but don't expand with default items
-        self.pcfg = get_suitecfg( fpath, force=is_reload,
-                tvars=template_vars, tvars_file=template_vars_file,
-                write_proc=write_proc )
+        self.pcfg = get_suitecfg(
+            fpath, force=is_reload, tvars=template_vars,
+            tvars_file=template_vars_file, write_proc=write_proc)
         self.cfg = self.pcfg.get(sparse=True)
 
         # First check for the essential scheduling section.
@@ -758,10 +787,9 @@ class config( object ):
                 exc_lines =  traceback.format_exc().splitlines()
                 if exc_lines[-1].startswith(
                     "RuntimeError: maximum recursion depth exceeded"):
-                    sys.stderr.write("ERROR: circular [runtime] inheritance?\n")
-                else:
-                    sys.stderr.write("ERROR: %s\n" % str(exc))
-                sys.exit(1)
+                    raise SuiteConfigError(
+                        "ERROR: circular [runtime] inheritance?")
+                raise
 
         for name in self.cfg['runtime']:
             ancestors = self.runtime['linearized ancestors'][name]
@@ -1117,51 +1145,6 @@ class config( object ):
                         raise SuiteConfigError("ERROR: " + msg)
                     else:
                         print >> sys.stderr, "WARNING: " + msg
-
-        try:
-            import Pyro.constants
-        except:
-            print >> sys.stderr, "WARNING, INCOMPLETE VALIDATION: Pyro is not installed"
-            return
-
-        # Instantiate tasks and force evaluation of trigger expressions.
-        # TODO - This is not exhaustive, it only uses the initial cycle point.
-        if flags.verbose:
-            print "Instantiating tasks to check trigger expressions"
-        for name in self.taskdefs.keys():
-            try:
-                itask = TaskProxy(
-                    self.taskdefs[name],
-                    self.start_point,
-                    'waiting',
-                    is_startup=True,
-                    validate_mode=True)
-            except Exception, x:
-                raise SuiteConfigError(
-                    'ERROR, failed to instantiate task %s: %s' % (name, x))
-            if itask.point is None:
-                if flags.verbose:
-                    print " + Task out of bounds for " + str(self.start_point) + ": " + itask.name
-                continue
-
-            # warn for purely-implicit-cycling tasks (these are deprecated).
-            if itask.tdef.sequences == itask.tdef.implicit_sequences:
-                print >> sys.stderr, (
-                    "WARNING, " + name + ": not explicitly defined in " +
-                    "dependency graphs (deprecated)"
-                )
-
-            # force trigger evaluation now
-            try:
-                itask.prerequisites.eval_all()
-            except TriggerExpressionError, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, "ERROR, " + name + ": invalid trigger expression."
-            except Exception, x:
-                print >> sys.stderr, x
-                raise SuiteConfigError, 'ERROR, ' + name + ': failed to evaluate triggers.'
-            if flags.verbose:
-                print "  + " + itask.identity + " ok"
 
         # Check custom script is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
@@ -2137,13 +2120,13 @@ class config( object ):
 
         return taskd
 
-    def get_task_proxy(self, name, *args, **kwargs):
-        """Return a task proxy for a named task."""
-        try:
-            tdef = self.taskdefs[name]
-        except KeyError:
-            raise TaskNotDefinedError(name)
-        return TaskProxy(tdef, *args, **kwargs)
+    #def get_task_proxy(self, name, *args, **kwargs):
+    #    """Return a task proxy for a named task."""
+    #    try:
+    #        tdef = self.taskdefs[name]
+    #    except KeyError:
+    #        raise TaskNotDefinedError(name)
+    #    return TaskProxy(tdef, *args, **kwargs)
 
     def describe(self, name):
         """Return title and description of the named task."""

@@ -1,0 +1,14 @@
+title = Authentication test suite.
+description = Stalls when the first task fails.
+[cylc]
+    [[event hooks]]
+        timeout = PT30S
+        abort on timeout = True
+[scheduling]
+    [[dependencies]]
+        graph = foo => bar
+[runtime]
+    [[foo]]
+        script = /bin/false
+    [[bar]]
+        script = /bin/true

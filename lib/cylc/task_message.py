@@ -21,7 +21,6 @@ import os
 import sys
 from time import sleep
 from cylc.remote import remrun
-from cylc.passphrase import passphrase
 from cylc.wallclock import get_current_time_string
 import cylc.flags
 
@@ -126,13 +125,9 @@ class TaskMessage(object):
 
     def _get_client(self):
         """Return the Pyro client."""
-        # get passphrase here, not in __init__, because it is not needed
-        # on remote task hosts if 'ssh messaging = True' (otherwise, if
-        # it is needed, we will end up in this method).
-        pphrase = passphrase(self.suite, self.owner, self.host).get(None, None)
         from cylc.network.task_msgqueue import TaskMessageClient
         return TaskMessageClient(
-            self.suite, self.task_id, pphrase, self.owner, self.host,
+            self.suite, self.task_id, self.owner, self.host,
             self.try_timeout, self.port)
 
     def _load_suite_contact_file(self):

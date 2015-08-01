@@ -16,6 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [info] get-suite-version [OPTIONS] ARGS
+
+Interrogate running suite REG to find what version of cylc is running it.
+
+To find the version you've invoked at the command line see "cylc version"."""
+
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
@@ -23,27 +29,30 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute():
         sys.exit(0)
 
+import cylc.flags
 from cylc.CylcOptionParsers import cop
 from cylc.task_id import TaskID
 from cylc.network.suite_info import SuiteInfoClient
-from cylc.command_prep import prep_pyro
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-import cylc.flags
 
-parser = cop("""cylc [info] get-suite-version [OPTIONS] ARGS
 
-Interrogate running suite REG to find what version of cylc is running it.
+def main():
+    parser = cop(__doc__, pyro=True, argdoc=[('REG', 'Suite name')])
 
-To find the version you've invoked at the command line see "cylc version".""",
-    pyro=True,
-    argdoc=[('REG', 'Suite name')])
+    (options, args) = parser.parse_args()
+    suite = args[0]
 
-(options, args) = parser.parse_args()
+    pclient = SuiteInfoClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
+    print pclient.get_info('get_cylc_version')
 
-suite, pphrase = prep_pyro(args[0], options).execute()
 
-pclient = SuiteInfoClient(suite, pphrase, options.owner, options.host,
-                          options.pyro_timeout, options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
-print pclient.get_info('get_cylc_version')
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

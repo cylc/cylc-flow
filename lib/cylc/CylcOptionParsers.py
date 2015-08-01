@@ -16,12 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, re
+import os
+import re
 from optparse import OptionParser, OptionConflictError
-from suite_host import get_hostname
-from owner import user
-from cylc.command_prep import prep_file
 import cylc.flags
+from cylc.suite_host import get_hostname
+from cylc.owner import user
+from cylc.registration import localdb
 
 """Common options for all cylc commands."""
 
@@ -190,10 +191,21 @@ Arguments:"""
                 pass
 
             try:
-                self.add_option("--uuid",
+                self.add_option("--print-uuid",
                     help="Print the client UUID to stderr. This can be matched "
                     "to information logged by the receiving suite daemon.",
                     action="store_true", default=False, dest="print_uuid")
+            except OptionConflictError:
+                pass
+
+            try:
+                self.add_option("--set-uuid", metavar="UUID",
+                    help="Set the client UUID manually (e.g. from prior use of "
+                    "--print-uuid). This can be used to log multiple commands "
+                    "under the same UUID (but note that only the first [info] "
+                    "command from the same client ID will be logged unless the "
+                    "suite is running in debug mode).",
+                    action="store", default=None, dest="set_uuid")
             except OptionConflictError:
                 pass
 
@@ -240,7 +252,7 @@ Arguments:"""
     def get_suite( self, index=0 ):
         return self.suite_info[index]
 
-    def _getdef( self, arg, options ):
+    def _getdef(self, arg, options):
         suiterc = arg
         if os.path.isdir( suiterc ):
             # directory
@@ -254,10 +266,9 @@ Arguments:"""
             watchers = [suiterc]
         else:
             # must be a registered suite name
-            prepper = prep_file( arg, options )
-            suite, suiterc = prepper.execute()
-            # This lists top level suite def include files too:
-            watchers = prepper.get_rcfiles()
+            suite = arg
+            suiterc = localdb(options.db).get_suiterc(suite)
+            watchers = localdb(options.db).get_rcfiles(suite)
         return suite, suiterc, watchers
 
     def parse_args( self, remove_opts=[] ):

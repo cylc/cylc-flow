@@ -40,7 +40,7 @@ cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --debug -v $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
-# Sleep until penultimate task (the suite stops and starts, so port files alone
+# Sleep until penultimate task (the suite stops and starts, so port scan alone
 # won't help)
 TEST_NAME=$TEST_NAME_BASE-monitor
 START_TIME=$(date +%s)

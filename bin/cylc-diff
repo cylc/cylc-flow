@@ -16,20 +16,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [prep] diff|compare [OPTIONS] SUITE1 SUITE2
+
+Compare two suite definitions and display any differences.
+
+Differencing is done after parsing the suite.rc files so it takes
+account of default values that are not explicitly defined, it disregards
+the order of configuration items, and it sees any include-file content
+after inlining has occurred.
+
+Note that seemingly identical suites normally differ due to inherited
+default configuration values (e.g. the default job submission log
+directory.
+
+Files in the suite bin directory and other sub-directories of the
+suite definition directory are not currently differenced."""
+
 import sys
 from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-from cylc.CylcOptionParsers import cop
-from cylc.config import config
 import cylc.flags
+from cylc.CylcOptionParsers import cop
+from cylc.config import SuiteConfig
 
 n_oone = 0
 n_otwo = 0
 n_diff = 0
 
-def diffdict( one, two, oone, otwo, diff ):
+
+def diffdict(one, two, oone, otwo, diff):
     global n_oone, n_otwo, n_diff
     # Recursively difference two dictionaries in which any element
     # may be another dictionary, keeping items that appear only
@@ -39,13 +56,13 @@ def diffdict( one, two, oone, otwo, diff ):
             oone[key] = one[key]
             n_oone += 1
         elif one[key] != two[key]:
-            if isinstance( one[key], dict ):
+            if isinstance(one[key], dict):
                 for item in oone, otwo, diff:
                     if key not in item:
                         item[key] = {}
-                diffdict( one[key], two[key], oone[key], otwo[key], diff[key] )
+                diffdict(one[key], two[key], oone[key], otwo[key], diff[key])
             else:
-                diff[key] = ( one[key], two[key] )
+                diff[key] = (one[key], two[key])
                 n_diff += 1
 
     for key in two:
@@ -53,7 +70,8 @@ def diffdict( one, two, oone, otwo, diff ):
             otwo[key] = two[key]
             n_otwo += 1
 
-def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
+
+def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
     # Recursively print, in pseudo 'diff' format, the contents of
     # one of the three dictionaries populated by the diffdict() function
     # above (any element may itself be a dictionary).
@@ -73,13 +91,15 @@ def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
     foo = False
 
     for key in dct:
-        if isinstance( dct[key], dict ):
+        if isinstance(dct[key], dict):
             lvl = level + 1
             if nested:
                 pre = prfx + '\n' + '   '*lvl
             else:
                 pre = prfx
-            prdict( dct[key], arrow, pre + '['*lvl + str(key) + ']'*lvl, lvl, diff, nested )
+            prdict(dct[key], arrow,
+                   pre + '['*lvl + str(key) + ']'*lvl, lvl,
+                   diff, nested)
         else:
             if not foo:
                 if nested:
@@ -94,76 +114,72 @@ def prdict( dct, arrow='<', section='', level=0, diff=False, nested=False ):
             else:
                 print ' ' + arrow + '  ', key, '=', dct[key]
 
-parser = cop( """cylc [prep] diff|compare [OPTIONS] SUITE1 SUITE2
 
-Compare two suite definitions and display any differences.
+def main():
+    parser = cop(
+        __doc__, jset=True, prep=True, twosuites=True,
+        argdoc=[('SUITE1', 'Suite name or path'),
+                ('SUITE2', 'Suite name or path')])
 
-Differencing is done after parsing the suite.rc files so it takes
-account of default values that are not explicitly defined, it disregards
-the order of configuration items, and it sees any include-file content
-after inlining has occurred.
+    parser.add_option(
+        "-n", "--nested",
+        help="print suite.rc section headings in nested form.",
+        action="store_true", default=False, dest="nested")
 
-Note that seemingly identical suites normally differ due to inherited
-default configuration values (e.g. the default job submission log
-directory.
+    (options, args) = parser.parse_args()
 
-Files in the suite bin directory and other sub-directories of the
-suite definition directory are not currently differenced.""",
-    jset=True, prep=True, twosuites=True,
-    argdoc=[('SUITE1', 'Suite name or path'), ('SUITE2', 'Suite name or path')] )
+    suite1, suite1rc, junk = parser.get_suite()
+    suite2, suite2rc, junk = parser.get_suite(index=1)
+    if suite1 == suite2:
+        parser.error("You can't diff a single suite.")
+    print "Parsing %s (%s)" % (suite1, suite1rc)
+    config1 = SuiteConfig.get_inst(
+        suite1, suite1rc,
+        template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file).cfg
+    SuiteConfig._FORCE = True
+    print "Parsing %s (%s)" % (suite2, suite2rc)
+    config2 = SuiteConfig.get_inst(
+        suite2, suite2rc,
+        template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file).cfg
 
-parser.add_option( "-n", "--nested", help="print suite.rc "
-        "section headings in nested form.",
-        action="store_true", default=False, dest="nested" )
+    if config1 == config2:
+        print "Suite definitions %s and %s are identical" % (suite1, suite2)
+        sys.exit(0)
 
-(options, args) = parser.parse_args()
+    print "Suite definitions %s and %s differ" % (suite1, suite2)
 
-suite1, suite1rc, junk = parser.get_suite()
-suite2, suite2rc, junk = parser.get_suite(index=1)
+    suite1_only = {}
+    suite2_only = {}
+    diff_1_2 = {}
 
-try:
-    print "Parsing", suite1
-    config1 = config( suite1, suite1rc,
-            template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file )
-    print "Parsing", suite2
-    config2 = config( suite2, suite2rc,
-            template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file )
-except Exception,x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+    diffdict(config1, config2, suite1_only, suite2_only, diff_1_2)
 
-if config1 == config2: # does this work, or do we need to do key by key comparison?
-    print "Suite definitions " + suite1 + " and " + suite2 + " are identical."
-    sys.exit(0)
+    if n_oone > 0:
+        print
+        msg = str(n_oone) + ' items only in ' + suite1 + ' (<)'
+        print msg
+        prdict(suite1_only, '<', nested=options.nested)
 
-print "Suite definitions " + suite1 + " and " + suite2 + " differ."
+    if n_otwo > 0:
+        print
+        msg = str(n_otwo) + ' items only in ' + suite2 + ' (>)'
+        print msg
+        prdict(suite2_only, '>', nested=options.nested)
 
-suite1_only = {}
-suite2_only = {}
-diff_1_2 = {}
+    if n_diff > 0:
+        print
+        msg = (str(n_diff) + ' common items differ ' +
+               suite1 + '(<) ' + suite2 + '(>)')
+        print msg
+        prdict(diff_1_2, '', diff=True, nested=options.nested)
 
-diffdict( config1, config2, suite1_only, suite2_only, diff_1_2 )
 
-if n_oone > 0:
-    print
-    msg = str(n_oone) + ' items only in ' + suite1 + ' (<)'
-    print msg
-    #print '-' * len(msg)
-    prdict( suite1_only, '<', nested=options.nested )
-
-if n_otwo > 0:
-    print
-    msg = str(n_otwo) + ' items only in ' + suite2 + ' (>)'
-    print msg
-    #print '-' * len(msg)
-    prdict( suite2_only, '>', nested=options.nested )
-
-if n_diff > 0:
-    print
-    msg = str(n_diff) + ' common items differ ' + suite1 + '(<) ' + suite2 + '(>)'
-    print msg
-    #print '-' * len(msg)
-    prdict( diff_1_2, '', diff=True, nested=options.nested )
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

@@ -305,7 +305,7 @@ class GraphUpdater(threading.Thread):
             newest = self.newest_point_string
 
         try:
-            res = self.updater.suite_info_client.get_info_gui(
+            res = self.updater.suite_info_client.get_info(
                 'get_graph_raw', oldest, newest, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except TypeError:
@@ -367,6 +367,9 @@ class GraphUpdater(threading.Thread):
                                 break
                         if remove:
                             nodes_to_remove.add(node)
+                    elif id in self.updater.full_fam_state_summary:
+                        # An updater-filtered-out family.
+                        nodes_to_remove.add(node)
 
             # Base node cropping.
             if self.crop:

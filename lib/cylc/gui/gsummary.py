@@ -53,7 +53,8 @@ def get_host_suites(hosts, timeout=None, owner=None):
     host_suites_map = {}
     if timeout is None:
         timeout = PYRO_TIMEOUT
-    command = ["cylc", "scan", "--pyro-timeout=%s" % timeout]
+    command = ["cylc", "scan", "--old-format",
+               "--pyro-timeout=%s" % timeout]
     if owner:
         command.append("--owner=%s" % owner)
     if hosts:
@@ -408,6 +409,7 @@ class SummaryApp(object):
                     cell_text_host, self._set_cell_text_host)
         host_name_column.set_sort_column_id(0)
         host_name_column.set_visible(False)
+        host_name_column.set_resizable(True)
 
         # Construct the suite name column.
         suite_name_column = gtk.TreeViewColumn("Suite")
@@ -416,6 +418,7 @@ class SummaryApp(object):
         suite_name_column.set_cell_data_func(
                    cell_text_name, self._set_cell_text_name)
         suite_name_column.set_sort_column_id(1)
+        suite_name_column.set_resizable(True)
 
         # Construct the suite title column.
         suite_title_column = gtk.TreeViewColumn("Title")
@@ -425,6 +428,7 @@ class SummaryApp(object):
                     cell_text_title, self._set_cell_text_title)
         suite_title_column.set_sort_column_id(3)
         suite_title_column.set_visible(False)
+        suite_title_column.set_resizable(True)
 
         # Construct the update time column.
         time_column = gtk.TreeViewColumn("Updated")
@@ -434,6 +438,7 @@ class SummaryApp(object):
                     cell_text_time, self._set_cell_text_time)
         time_column.set_sort_column_id(4)
         time_column.set_visible(False)
+        time_column.set_resizable(True)
 
         self.suite_treeview.append_column(host_name_column)
         self.suite_treeview.append_column(suite_name_column)
@@ -443,6 +448,7 @@ class SummaryApp(object):
       # Construct the status column.
         status_column = gtk.TreeViewColumn("Status")
         status_column.set_sort_column_id(6)
+        status_column.set_resizable(True)
         status_column_info = 7
         cycle_column_info = 6
         cell_text_cycle = gtk.CellRendererText()

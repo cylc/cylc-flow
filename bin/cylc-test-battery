@@ -20,7 +20,7 @@ set -u
 
 usage() {
   cat <<eof
-USAGE: cylc test-battery [OPTIONS] [FILES or DIRECTORIES] -- [prove OPTIONS]
+Usage: cylc test-battery [OPTIONS] [FILES or DIRECTORIES] -- [prove OPTIONS]
 
 Run automated cylc and parsec tests under [FILES or DIRECTORIES].
 Test locations default to the following directory tree:

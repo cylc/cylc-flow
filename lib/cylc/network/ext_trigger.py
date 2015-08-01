@@ -17,16 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from time import sleep 
+from time import sleep
 from Queue import Queue, Empty
 import Pyro.errors
 import cylc.flags
+from cylc.network import PYRO_EXT_TRIG_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network.suite_broadcast import BroadcastServer
+from cylc.network import check_access_priv
 from cylc.task_id import TaskID
-
-
-PYRO_EXT_TRIG_OBJ_NAME = 'ext-trigger-interface'
 
 
 class ExtTriggerServer(PyroServer):
@@ -44,8 +43,12 @@ class ExtTriggerServer(PyroServer):
     def __init__(self):
         super(ExtTriggerServer, self).__init__()
         self.queue = Queue()
- 
+
     def put(self, event_message, event_id):
+        """Server-side external event trigger interface."""
+
+        check_access_priv(self, 'full-control')
+        self.report("ext_trigger")
         self.queue.put((event_message, event_id))
         return (True, 'event queued')
 
@@ -103,15 +106,12 @@ class ExtTriggerClient(PyroClient):
     MAX_N_TRIES = 5
     RETRY_INTVL_SECS = 10.0
 
-    MSG_CLIENT_REPORT = '"%s" %s'
     MSG_SEND_FAILED = "Send message: try %s of %s failed"
     MSG_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
     MSG_SEND_SUCCEED = "Send message: try %s of %s succeeded"
 
-    def put(self, event_message, event_id):
-        self._report(self.__class__.MSG_CLIENT_REPORT % (
-            event_message, event_id))
-        return self.pyro_proxy.put(event_message, event_id)
+    def put(self, *args):
+        return self.call_server_func("put", *args)
 
     def send_retry(self, event_message, event_id,
                    max_n_tries, retry_intvl_secs):

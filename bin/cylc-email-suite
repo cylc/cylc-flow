@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 usage() {
-    echo "USAGE: cylc [hook] email-suite EVENT SUITE MESSAGE"
+    echo "Usage: cylc [hook] email-suite EVENT SUITE MESSAGE"
     echo ""
     echo "This is a simple suite event hook script that sends an email."
     echo "The command line arguments are supplied automatically by cylc."

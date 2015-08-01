@@ -71,14 +71,7 @@ class localdb(object):
             # full 'fileset' prefix. Manual use of $PWD to absolutize a
             # relative path gives a cleaner result.
             dir = os.path.join( os.environ['PWD'], dir )
-        try:
-            title = self.get_suite_title( name, path=dir )
-        except Exception, x:
-            print >> sys.stderr, 'WARNING: an error occurred parsing the suite definition:\n  ', x
-            print >> sys.stderr, "Registering the suite with temporary title 'SUITE PARSE ERROR'."
-            print >> sys.stderr, "You can update the title later with 'cylc db refresh'.\n"
-            title = "SUITE PARSE ERROR"
-
+        title = self.get_suite_title(name, path=dir)
         title = title.split('\n')[0] # use the first of multiple lines
         print 'REGISTER', name + ':', dir
         with open( os.path.join( self.dbpath, name ), 'w' ) as file:

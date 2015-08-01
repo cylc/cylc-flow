@@ -20,16 +20,19 @@ from Queue import Queue
 from cylc.owner import user
 from cylc.suite_host import get_hostname
 from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import check_access_priv
 
 
 class TaskMessageServer(PyroServer):
     """Server-side task messaging interface"""
 
     def __init__(self):
-        super(PyroServer, self).__init__()
+        super(TaskMessageServer, self).__init__()
         self.queue = Queue()
 
     def put(self, priority, message):
+        check_access_priv(self, 'full-control')
+        self.report('task_message')
         self.queue.put((priority, message))
         return (True, 'Message queued')
 
@@ -40,11 +43,11 @@ class TaskMessageServer(PyroServer):
 class TaskMessageClient(PyroClient):
     """Client-side task messaging interface"""
 
-    def __init__(self, suite, task_id, pphrase, owner=user, host=get_hostname(),
-                 pyro_timeout=None, port=None):
+    def __init__(self, suite, task_id, pphrase, owner=user,
+                 host=get_hostname(), pyro_timeout=None, port=None):
         self.__class__.target_server_object = task_id
-        super(TaskMessageClient, self).__init__(suite, pphrase, owner, host,
-                                                pyro_timeout, port)
+        super(TaskMessageClient, self).__init__(
+            suite, pphrase, owner, host, pyro_timeout, port)
+
     def put(self, *args):
-        self._report('task_message')
-        self.pyro_proxy.put(*args)
+        self.call_server_func('put', *args)

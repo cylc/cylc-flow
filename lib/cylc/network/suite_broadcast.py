@@ -19,19 +19,19 @@
 import sys
 import logging
 import cPickle as pickle
+import threading
 
 from cylc.broadcast_report import (
     get_broadcast_change_iter,
     get_broadcast_change_report,
     get_broadcast_bad_options_report)
 from cylc.cycling.loader import get_point, standardise_point_string
-import cylc.flags
-from cylc.network.pyro_base import PyroClient, PyroServer
-from cylc.rundb import CylcSuiteDAO
-from cylc.task_id import TaskID
 from cylc.wallclock import get_current_time_string
-
-PYRO_BCAST_OBJ_NAME = 'broadcast_receiver'
+from cylc.network import PYRO_BCAST_OBJ_NAME
+from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import check_access_priv
+from cylc.task_id import TaskID
+from cylc.rundb import CylcSuiteDAO
 
 
 class BroadcastServer(PyroServer):
@@ -69,6 +69,7 @@ class BroadcastServer(PyroServer):
         self.db_deletes_map = {
             self.TABLE_BROADCAST_STATES: []}
         self.linearized_ancestors = linearized_ancestors
+        self.lock = threading.RLock()
 
     def _prune(self):
         """Remove empty leaves left by unsetting broadcast values.
@@ -80,21 +81,22 @@ class BroadcastServer(PyroServer):
             ["20020202", "bar", "environment", "BAR"],
         ]
         """
-        prunes = []
-        stuff_stack = [([], self.settings, True)]
-        while stuff_stack:
-            keys, stuff, is_new = stuff_stack.pop()
-            if is_new:
-                stuff_stack.append((keys, stuff, False))
-                for key, value in stuff.items():
-                    if isinstance(value, dict):
-                        stuff_stack.append((keys + [key], value, True))
-            else:
-                for key, value in stuff.items():
-                    if value in [None, {}]:
-                        del stuff[key]
-                        prunes.append(keys + [key])
-        return prunes
+        with self.lock:
+            prunes = []
+            stuff_stack = [([], self.settings, True)]
+            while stuff_stack:
+                keys, stuff, is_new = stuff_stack.pop()
+                if is_new:
+                    stuff_stack.append((keys, stuff, False))
+                    for key, value in stuff.items():
+                        if isinstance(value, dict):
+                            stuff_stack.append((keys + [key], value, True))
+                else:
+                    for key, value in stuff.items():
+                        if value in [None, {}]:
+                            del stuff[key]
+                            prunes.append(keys + [key])
+            return prunes
 
     def _addict(self, target, source):
         """Recursively add source dict to target dict."""
@@ -107,39 +109,42 @@ class BroadcastServer(PyroServer):
                 target[key] = source[key]
 
     def put(self, point_strings, namespaces, settings):
-        """Add new broadcast settings.
+        """Add new broadcast settings (server side interface).
 
         Return a tuple (modified_settings, bad_options) where:
           modified_settings is list of modified settings in the form:
             [("20200202", "foo", {"command scripting": "true"}, ...]
           bad_options is as described in the docstring for self.clear().
         """
+        check_access_priv(self, 'full-control')
+        self.report('broadcast_put')
         modified_settings = []
         bad_point_strings = []
         bad_namespaces = []
 
-        for setting in settings:
-            for point_string in point_strings:
-                # Standardise the point and check its validity.
-                bad_point = False
-                try:
-                    point_string = standardise_point_string(point_string)
-                except Exception as exc:
-                    if point_string != '*':
-                        bad_point_strings.append(point_string)
-                        bad_point = True
-                if not bad_point and point_string not in self.settings:
-                    self.settings[point_string] = {}
-                for namespace in namespaces:
-                    if namespace not in self.linearized_ancestors:
-                        bad_namespaces.append(namespace)
-                    elif not bad_point:
-                        if namespace not in self.settings[point_string]:
-                            self.settings[point_string][namespace] = {}
-                        self._addict(
-                            self.settings[point_string][namespace], setting)
-                        modified_settings.append(
-                            (point_string, namespace, setting))
+        with self.lock:
+            for setting in settings:
+                for point_string in point_strings:
+                    # Standardise the point and check its validity.
+                    bad_point = False
+                    try:
+                        point_string = standardise_point_string(point_string)
+                    except Exception as exc:
+                        if point_string != '*':
+                            bad_point_strings.append(point_string)
+                            bad_point = True
+                    if not bad_point and point_string not in self.settings:
+                        self.settings[point_string] = {}
+                    for namespace in namespaces:
+                        if namespace not in self.linearized_ancestors:
+                            bad_namespaces.append(namespace)
+                        elif not bad_point:
+                            if namespace not in self.settings[point_string]:
+                                self.settings[point_string][namespace] = {}
+                            self._addict(
+                                self.settings[point_string][namespace], setting)
+                            modified_settings.append(
+                                (point_string, namespace, setting))
 
         # Log the broadcast
         self._append_db_queue(modified_settings)
@@ -154,6 +159,8 @@ class BroadcastServer(PyroServer):
 
     def get(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID."""
+        check_access_priv(self, 'full-read')
+        self.report('broadcast_get')
         if not task_id:
             # all broadcast settings requested
             return self.settings
@@ -206,26 +213,27 @@ class BroadcastServer(PyroServer):
 
         # Clear settings
         modified_settings = []
-        for point_string, point_string_settings in self.settings.items():
-            if point_strings and point_string not in point_strings:
-                continue
-            for namespace, namespace_settings in point_string_settings.items():
-                if namespaces and namespace not in namespaces:
+        with self.lock:
+            for point_string, point_string_settings in self.settings.items():
+                if point_strings and point_string not in point_strings:
                     continue
-                stuff_stack = [([], namespace_settings)]
-                while stuff_stack:
-                    keys, stuff = stuff_stack.pop()
-                    for key, value in stuff.items():
-                        if isinstance(value, dict):
-                            stuff_stack.append((keys + [key], value))
-                        elif (not cancel_keys_list or
-                                keys + [key] in cancel_keys_list):
-                            stuff[key] = None
-                            setting = {key: value}
-                            for rkey in reversed(keys):
-                                setting = {rkey: setting}
-                            modified_settings.append(
-                                (point_string, namespace, setting))
+                for namespace, namespace_settings in point_string_settings.items():
+                    if namespaces and namespace not in namespaces:
+                        continue
+                    stuff_stack = [([], namespace_settings)]
+                    while stuff_stack:
+                        keys, stuff = stuff_stack.pop()
+                        for key, value in stuff.items():
+                            if isinstance(value, dict):
+                                stuff_stack.append((keys + [key], value))
+                            elif (not cancel_keys_list or
+                                    keys + [key] in cancel_keys_list):
+                                stuff[key] = None
+                                setting = {key: value}
+                                for rkey in reversed(keys):
+                                    setting = {rkey: setting}
+                                modified_settings.append(
+                                    (point_string, namespace, setting))
 
         # Prune any empty branches
         bad_options = self._get_bad_options(
@@ -266,12 +274,14 @@ class BroadcastServer(PyroServer):
 
     def dump(self, file_):
         """Write broadcast variables to the state dump file."""
-        pickle.dump(self.settings, file_)
-        file_.write("\n")
+        with self.lock:
+            pickle.dump(self.settings, file_)
+            file_.write("\n")
 
     def load(self, pickled_settings):
         """Load broadcast variables from the state dump file."""
-        self.settings = pickle.loads(pickled_settings)
+        with self.lock:
+            self.settings = pickle.loads(pickled_settings)
 
         # Ensure database table is in sync
         modified_settings = []
@@ -298,7 +308,8 @@ class BroadcastServer(PyroServer):
 
     def _get_dump(self):
         """Return broadcast variables as written to the state dump file."""
-        return pickle.dumps(self.settings) + "\n"
+        with self.lock:
+            return pickle.dumps(self.settings) + "\n"
 
     @classmethod
     def _get_bad_options(
@@ -383,15 +394,5 @@ class BroadcastClient(PyroClient):
 
     target_server_object = PYRO_BCAST_OBJ_NAME
 
-    def broadcast(self, command, *command_args):
-        """CLI suite broadcast interface."""
-        try:
-            self._report(command)
-            try:
-                return getattr(self.pyro_proxy, command)(*command_args)
-            except AttributeError:
-                sys.exit("Illegal broadcast command: %s" % command)
-        except Exception as exc:
-            if cylc.flags.debug:
-                raise
-            sys.exit(exc)
+    def broadcast(self, cmd, *args):
+        return self.call_server_func(cmd, *args)

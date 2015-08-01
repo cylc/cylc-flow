@@ -36,6 +36,7 @@ from cylc.mkdir_p import mkdir_p
 import cylc.flags
 from cylc.cfgspec.utils import coerce_interval
 from cylc.cfgspec.utils import coerce_interval_list
+from cylc.network import PRIVILEGE_LEVELS
 
 
 "Cylc site and user configuration file spec."
@@ -169,11 +170,18 @@ SPEC = {
         'host'                            : vdr( vtype='string' ),
         },
 
-    'suite host scanning' : {
-        'hosts'                           : vdr( vtype='string_list', default=["localhost"]),
+    'suite host scanning': {
+        'hosts': vdr(vtype='string_list', default=["localhost"])
+        },
+
+    'authentication': {
+        # Allow owners to grant public shutdown rights at the most, not full control.
+        'public': vdr(
+            vtype='string',
+            options=PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index('shutdown')+1],
+            default="state-totals")
         }
     }
-
 
 def upg( cfg, descr ):
     add_bin_dir = converter( lambda x: x + '/bin', "Added + '/bin' to path" )
@@ -251,7 +259,6 @@ class GlobalConfig( config ):
                             file_name, "global config", silent=True)
             cls._DEFAULT.transform()
         return cls._DEFAULT
-        
 
     def get_derived_host_item( self, suite, item, host=None, owner=None, replace=False ):
         """Compute hardwired paths relative to the configurable top dirs."""
