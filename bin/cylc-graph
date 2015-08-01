@@ -63,6 +63,7 @@ GRAPH VIEWER CONTROLS:
     * "recursive ungroup" - ungroup all families below this node."""
 
 import sys
+import gtk
 import StringIO
 
 import cylc.flags
