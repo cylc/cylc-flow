@@ -20,7 +20,8 @@
 
 BAD_OPTIONS_FMT = "\n  --%s=%s"
 BAD_OPTIONS_TITLE = "ERROR: No broadcast to cancel/clear for these options:"
-BAD_OPTIONS_TITLE_SET = "ERROR: Invalid broadcast set options:"
+BAD_OPTIONS_TITLE_SET = ("ERROR: Rejected broadcast: settings are not" +
+                         " compatible with the suite")
 CHANGE_FMT = "\n%(change)s [%(namespace)s.%(point)s] %(key)s=%(value)s"
 CHANGE_PREFIX_CANCEL = "-"
 CHANGE_PREFIX_SET = "+"
