@@ -15,19 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Check circular inheritance fails validation with the correct error message.
+# Test "cylc insert" on insertion of a task family (and family remove too).
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+install_suite $TEST_NAME_BASE insert-family
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_fail $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-cmp
-cmp_ok $TEST_NAME_BASE-validate.stderr <<__ERR__
-'ERROR: circular [runtime] inheritance?'
-__ERR__
+TEST_NAME=$TEST_NAME_BASE-run
+suite_run_ok $TEST_NAME cylc run -v --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

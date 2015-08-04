@@ -2870,6 +2870,10 @@ For example, all these are valid in cylc:
         [[[ R1/T06 ]]]
             graph = "delayed_cold_corge => corge"
 
+        # Repeat once at the final cycle point
+        [[[ R1/P0Y ]]]
+            graph = "end_garply"
+
         # Repeat 3 times, every day at 08:30 after the initial cycle point
         [[[ R3/T0830 ]]]
             graph = "triple_grault => triple_garply"

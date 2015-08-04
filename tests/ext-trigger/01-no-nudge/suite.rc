@@ -1,0 +1,29 @@
+title = "Test for Github Issue 1543"
+description = """
+External trigger events should stimulate task processing without requiring a
+manual suite nudge, even when nothing else is happening in the suite.  Here,
+long-running task bar ext-triggers foo when nothing else is happening.  If 
+task processing occurs foo will submit and kill bar, allowing the suite
+to shutdown.  Otherwise, foo won't submit, bar will keep running, and the suite
+will time out."""
+
+[cylc]
+    [[event hooks]]
+        abort on timeout = True
+        timeout = PT30S
+[scheduling]
+    [[special tasks]]
+        external-trigger = foo("drugs and money")
+    [[dependencies]]
+        graph = """foo & bar
+                   bar:fail => !bar"""
+[runtime]
+    [[foo]]
+        # If triggered, remove the long-running bar task
+        # to allow the suite to shut down quickly.
+        script = cylc kill $CYLC_SUITE_NAME bar 1
+    [[bar]]
+        script = """
+sleep 5
+cylc ext-trigger $CYLC_SUITE_NAME "drugs and money" 12345
+sleep 60"""

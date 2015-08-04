@@ -541,7 +541,7 @@ class scheduler(object):
                 submit_num = task_states_data[(task_name, task_point)].get(
                     "submit_num")
             new_task = self.config.get_task_proxy(
-                name, point, 'waiting', stop_point, submit_num=submit_num)
+                task_name, point, 'waiting', stop_point, submit_num=submit_num)
             if new_task:
                 self.pool.add_to_runahead_pool(new_task)
 
@@ -893,16 +893,17 @@ class scheduler(object):
                     RunHandler(name, handler, self.suite, msg=msg, fg=fg)
                 except Exception, x:
                     # Note: test suites depends on this message:
-                    print >> sys.stderr, (
-                        '\nERROR: %s EVENT HANDLER FAILED' % name)
+                    sys.stderr.write(
+                        'ERROR: %s EVENT HANDLER FAILED\n' % name)
                     if name == 'shutdown' and self.reference_test_mode:
-                        sys.exit('\nERROR: SUITE REFERENCE TEST FAILED')
+                        sys.stderr.write(
+                            'ERROR: SUITE REFERENCE TEST FAILED\n')
                     raise SchedulerError(x)
                 else:
                     if name == 'shutdown' and self.reference_test_mode:
                         # TODO - this isn't true, it just means the
                         # shutdown handler run successfully:
-                        print '\nSUITE REFERENCE TEST PASSED'
+                        print 'SUITE REFERENCE TEST PASSED'
 
     def run(self):
 
@@ -962,13 +963,16 @@ class scheduler(object):
 
             proc_pool.handle_results_async()
 
+            # External triggers must be matched now. If any are matched pflag
+            # is set to tell process_tasks() that task processing is required.
+            self.pool.match_ext_triggers()
+
             if self.process_tasks():
                 if cylc.flags.debug:
                     self.log.debug("BEGIN TASK PROCESSING")
                     main_loop_start_time = time.time()
 
                 self.pool.match_dependencies()
-                self.pool.match_ext_triggers()
 
                 ready_tasks = self.pool.submit_tasks()
                 if (ready_tasks and
@@ -1314,35 +1318,32 @@ class scheduler(object):
         task_id = TaskID.get(matches[0], point_string)
         self.pool.dry_run_task(task_id)
 
-    def get_matching_task_names(self, expr, is_family=False):
-        """Return task names that match expr (for task or family name)."""
-        matches = []
-        tasks = self.config.get_task_name_list()
+    def get_matching_task_names(self, pattern, is_family=False):
+        """Return task names that match pattern (by task or family name)."""
+
+        matching_tasks = []
+        all_tasks = self.config.get_task_name_list()
         if is_family:
-            families = self.config.runtime['first-parent descendants']
+            fp_desc = self.config.runtime['first-parent descendants']
+            matching_mems = []
             try:
                 # Exact family match.
-                f_matches = families[expr]
+                matching_mems = fp_desc[pattern]
             except KeyError:
-                # Regex familyi match
-                f_matches = []
-                for fam, mems in families.items():
-                    if re.match(expr, fam):
-                        f_matches += mems
-            matches = []
-            for m in f_matches:
-                if m in tasks:
-                    matches.append(m)
+                # Regex family match
+                for fam, mems in fp_desc.items():
+                    if re.match(pattern, fam):
+                        matching_mems += mems
+            # Keep family members that are tasks (not sub-families).
+            matching_tasks = [m for m in matching_mems if m in all_tasks]
         else:
-            if expr in tasks:
+            if pattern in all_tasks:
                 # Exact task match.
-                matches.append(expr)
+                matching_tasks = [pattern]
             else:
                 # Regex task match.
-                for task in tasks:
-                    if re.match(expr, task):
-                        matches.append(task)
-        return matches
+                matching_tasks = [t for t in all_tasks if re.match(pattern, t)]
+        return matching_tasks
 
     def command_reset_task_state(self, name, point_string, state, is_family):
         matches = self.get_matching_task_names(name, is_family)
