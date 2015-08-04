@@ -16,32 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import os, re
-from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
-from cylc.print_tree import print_tree
-from cylc.regpath import RegPath
-import cylc.flags
-
-def get_padding( reglist ):
-    maxlen = 0
-    for reg in reglist:
-        items = RegPath(reg[0]).get_list()
-        for i in range(0,len(items)):
-            if i == 0:
-                tmp = len(items[i])
-            else:
-                tmp = 2*i + 1 + len(items[i])
-            if tmp > maxlen:
-                maxlen = tmp
-    return maxlen * ' '
-
-parser = cop( usage = """cylc [db] print [OPTIONS] [REGEX]
+"""cylc [db] print [OPTIONS] [REGEX]
 
 Print suite database registrations.
 
@@ -50,47 +25,79 @@ Note on result filtering:
 the general wildcard is '.*' (match zero or more of anything), NOT '*'.
   (b) For printing purposes there is an implicit wildcard at the end of
 each pattern ('foo' is the same as 'foo.*'); use the string end marker
-to prevent this ('foo$' matches only literal 'foo').""",
-        argdoc=[('[REGEX]', 'Suite name regular expression pattern')])
+to prevent this ('foo$' matches only literal 'foo')."""
 
-parser.add_option( "-t","--tree",
-        help="Print registrations in nested tree form.",
-        action="store_true", default=False, dest="tree" )
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
 
-parser.add_option( "-b", "--box",
+import os
+import re
+
+import cylc.flags
+from cylc.CylcOptionParsers import cop
+from cylc.registration import localdb
+from cylc.print_tree import print_tree
+from cylc.regpath import RegPath
+
+
+def get_padding(reglist):
+    maxlen = 0
+    for reg in reglist:
+        items = RegPath(reg[0]).get_list()
+        for i in range(0, len(items)):
+            if i == 0:
+                tmp = len(items[i])
+            else:
+                tmp = 2*i + 1 + len(items[i])
+            if tmp > maxlen:
+                maxlen = tmp
+    return maxlen * ' '
+
+
+def main():
+    parser = cop(__doc__,
+                 argdoc=[('[REGEX]', 'Suite name regular expression pattern')])
+
+    parser.add_option(
+        "-t", "--tree", help="Print registrations in nested tree form.",
+        action="store_true", default=False, dest="tree")
+
+    parser.add_option(
+        "-b", "--box",
         help="Use unicode box drawing characters in tree views.",
-        action="store_true", default=False, dest="unicode" )
+        action="store_true", default=False, dest="unicode")
 
-parser.add_option( "-a","--align",
-        help="Align columns.",
-        action="store_true", default=False, dest="align" )
+    parser.add_option(
+        "-a", "--align", help="Align columns.",
+        action="store_true", default=False, dest="align")
 
-parser.add_option( "-x",
-        help="don't print suite definition directory paths.",
-        action="store_true", default=False, dest="x" )
+    parser.add_option(
+        "-x", help="don't print suite definition directory paths.",
+        action="store_true", default=False, dest="x")
 
-parser.add_option( "-y",
-        help="Don't print suite titles.",
-        action="store_true", default=False, dest="y" )
+    parser.add_option(
+        "-y", help="Don't print suite titles.",
+        action="store_true", default=False, dest="y")
 
-parser.add_option( "--fail",
-        help="Fail (exit 1) if no matching suites are found.",
-        action="store_true", default=False, dest="fail" )
+    parser.add_option(
+        "--fail", help="Fail (exit 1) if no matching suites are found.",
+        action="store_true", default=False, dest="fail")
 
-( options, args ) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
-if len(args) == 0:
-    regfilter = None
-elif len(args) == 1:
-    regfilter = args[0]
-else:
-    parser.error( "Wrong number of arguments.")
+    if len(args) == 0:
+        regfilter = None
+    elif len(args) == 1:
+        regfilter = args[0]
+    else:
+        parser.error("Wrong number of arguments.")
 
-db = localdb(file=options.db )
-try:
+    db = localdb(file=options.db)
     allsuites = db.get_list(regfilter)
     if options.fail and len(allsuites) == 0:
-        raise SystemExit( 'ERROR: no suites matched.' )
+        raise SystemExit('ERROR: no suites matched.')
     if not options.tree:
         if options.align:
             maxlen_suite = 0
@@ -103,10 +110,10 @@ try:
             spacer_suite = maxlen_suite * ' '
             spacer_title = maxlen_title * ' '
         for suite, dir, title in allsuites:
-            dir = re.sub( '^' + os.environ['HOME'], '~', dir )
+            dir = re.sub('^' + os.environ['HOME'], '~', dir)
             if options.align:
-                suite = suite + spacer_suite[ len(suite): ]
-                title = title + spacer_title[ len(title): ]
+                suite = suite + spacer_suite[len(suite):]
+                title = title + spacer_title[len(title):]
             if not options.x and not options.y:
                 line = suite + ' | ' + title + ' | ' + dir
             elif not options.y:
@@ -126,9 +133,9 @@ try:
             spacer_title = maxlen_title * ' '
 
         for suite, dir, title in allsuites:
-            dir = re.sub( '^' + os.environ['HOME'], '~', dir )
+            dir = re.sub('^' + os.environ['HOME'], '~', dir)
             if options.align:
-                title = title + spacer_title[ len(title): ]
+                title = title + spacer_title[len(title):]
             regpath = RegPath(suite).get_list()
             sub = tree
             for key in regpath[:-1]:
@@ -145,10 +152,14 @@ try:
                 line = ''
             sub[regpath[-1]] = line
 
-        pad = get_padding( allsuites )
-        print_tree(tree, pad, options.unicode )
+        pad = get_padding(allsuites)
+        print_tree(tree, pad, options.unicode)
 
-except Exception,x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

@@ -17,14 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+
 import cylc.flags
+from cylc.network import PYRO_INFO_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import check_access_priv
 
 
-PYRO_INFO_OBJ_NAME = 'suite-info'
-
-# Backward compatibility for suite daemons running at <= 6.4.0.
-# TODO - this should eventually be removed.
+# Back-compat for older suite daemons <= 6.4.1.
 back_compat = {
     'ping_suite': 'ping suite',
     'ping_task': 'ping task',
@@ -35,8 +35,8 @@ back_compat = {
     'get_first_parent_ancestors': 'first-parent ancestors',
     'get_first_parent_descendants': 'first-parent descendants',
     'get_graph_raw': 'graph raw',
-    'get_task_requisites': 'task requisites', 
-    'get_cylc_version': 'get cylc version', 
+    'get_task_requisites': 'task requisites',
+    'get_cylc_version': 'get cylc version',
     'get_task_jobfile_path': 'task job file path'
 }
 
@@ -49,6 +49,15 @@ class SuiteInfoServer(PyroServer):
         self.commands = info_commands
 
     def get(self, command, *command_args):
+        if ('ping' in command or 'version' in command):
+            # Free info.
+            pass
+        elif 'suite' in command and 'info' in command:
+            # Suite title and description only.
+            check_access_priv(self, 'description')
+        else:
+            check_access_priv(self, 'full-read')
+        self.report(command)
         return self.commands[command](*command_args)
 
 
@@ -57,20 +66,11 @@ class SuiteInfoClient(PyroClient):
 
     target_server_object = PYRO_INFO_OBJ_NAME
 
-    def get_info_gui(self, command, *command_args):
-        """GUI suite info interface."""
-        self._report(command)
+    def get_info(self, *args):
         try:
-            return self.pyro_proxy.get(command, *command_args)
+            return self.call_server_func("get", *args)
         except KeyError:
-            # Back compat.
-            return self.pyro_proxy.get(back_compat[command], *command_args)
-
-    def get_info(self, command, *command_args):
-        """CLI suite info interface."""
-        try:
-            return self.get_info_gui(command, *command_args)
-        except Exception, x:
-            if cylc.flags.debug:
-                raise
-            sys.exit(x)
+            # Back-compat for older suite daemons <= 6.4.1.
+            command = back_compat[args[0]]
+            args = tuple([command]) + args[1:]
+            return self.call_server_func("get", *args)

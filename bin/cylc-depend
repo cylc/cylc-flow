@@ -16,22 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-if '--use-ssh' in sys.argv[1:]:
-    sys.argv.remove( '--use-ssh' )
-    from cylc.remote import remrun
-    if remrun().execute( force_required=True ):
-        sys.exit(0)
-
-import os
-from cylc.prompt import prompt
-from cylc.task_id import TaskID
-from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop
-from cylc.command_prep import prep_pyro
-import cylc.flags
-
-parser = cop( """cylc [control] depend [OPTIONS] ARGS
+"""cylc [control] depend [OPTIONS] ARGS
 
 Add new dependencies on the fly to tasks in running suite REG. If DEP
 is a task ID the target TASK will depend on that task finishing,
@@ -41,29 +26,58 @@ otherwise DEP can be an explicit quoted message such as
 one, that reports that message as an output).
 
 Prerequisites added on the fly are not propagated to the successors
-of TASK, and they will not persist in TASK across a suite restart.""",
-    pyro=True, argdoc = [ ( 'REG', 'Suite name' ),
-                          ( 'TASK', 'Target task' ),
-                          ( 'DEP', 'New dependency' )] )
+of TASK, and they will not persist in TASK across a suite restart."""
 
-(options, args) = parser.parse_args()
+import sys
+if '--use-ssh' in sys.argv[1:]:
+    sys.argv.remove('--use-ssh')
+    from cylc.remote import remrun
+    if remrun().execute(force_required=True):
+        sys.exit(0)
 
-suite, pphrase = prep_pyro( args[0], options ).execute()
+import os
 
-task_id = args[1]
-dep = args[2]
+import cylc.flags
+from cylc.prompt import prompt
+from cylc.task_id import TaskID
+from cylc.network.suite_command import SuiteCommandClient
+from cylc.CylcOptionParsers import cop
 
-if TaskID.is_valid_id(dep):
-    msg = dep + ' succeeded'
-else:
-    msg = dep
 
-if not TaskID.is_valid_id(task_id):
-    sys.exit("Invalid task ID: " + task_id)
+def main():
+    parser = cop(
+        __doc__,
+        pyro=True, argdoc=[('REG', 'Suite name'),
+                           ('TASK', 'Target task'),
+                           ('DEP', 'New dependency')])
 
-prompt('Add new prerequisite to %s in %s' % (task_id, suite), options.force)
-pclient = SuiteCommandClient(suite, pphrase, options.owner, options.host,
-                             options.pyro_timeout, options.port)
-pclient.put_command('add_prerequisite', task_id, msg)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+    (options, args) = parser.parse_args()
+    suite = args[0]
+
+    task_id = args[1]
+    dep = args[2]
+
+    if TaskID.is_valid_id(dep):
+        msg = dep + ' succeeded'
+    else:
+        msg = dep
+
+    if not TaskID.is_valid_id(task_id):
+        sys.exit("Invalid task ID: " + task_id)
+
+    prompt('Add new prerequisite to %s in %s' % (task_id, suite),
+           options.force)
+    pclient = SuiteCommandClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
+    pclient.put_command('add_prerequisite', task_id, msg)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

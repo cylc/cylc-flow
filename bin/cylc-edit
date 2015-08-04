@@ -16,22 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import os, re
-import datetime
-from shutil import copy
-import subprocess
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.CylcOptionParsers import cop
-from parsec.include import inline, \
-    split_file, backup, backups, newfiles, cleanup, modtimes
-from cylc.wallclock import get_current_time_string
-
-parser = cop( """cylc [prep] edit [OPTIONS] ARGS
+"""cylc [prep] edit [OPTIONS] ARGS
 
 Edit suite definitions without having to move to their directory
 locations, and with optional reversible inlining of include-files. Note
@@ -69,150 +54,162 @@ The edit process is spawned in the foreground as follows:
   % <editor> suite.rc
 Where <editor> is defined in the cylc site/user config files.
 
-See also 'cylc [prep] view'.""", prep=True )
+See also 'cylc [prep] view'."""
 
-parser.add_option( "--inline", "-i",
-        help="Edit with include-files inlined as described above.",
-        action="store_true", default=False, dest="inline" )
-
-parser.add_option( "--cleanup",
-        help="Remove backup files left by previous inlined edit sessions.",
-        action="store_true", default=False, dest="cleanup" )
-
-parser.add_option( "--gui", "-g",
-        help="Force use of the configured GUI editor.",
-        action="store_true", default=False, dest="geditor" )
-
-( options, args ) = parser.parse_args()
-
-suite, suiterc, junk = parser.get_suite()
-
-if options.geditor:
-    editor = GLOBAL_CFG.get( ['editors','gui'] )
-else:
-    editor = GLOBAL_CFG.get( ['editors','terminal'] )
-
-suitedir = os.path.dirname(suiterc)
-
-if options.cleanup:
-    # remove backup files left by inlined editing sessions
-    cleanup( suitedir )
+import sys
+from cylc.remote import remrun
+if remrun().execute():
     sys.exit(0)
 
-if not options.inline:
-    # plain old editing.
-    # move to suite def dir
-    try:
-        os.chdir( suitedir )
-    except OSError, x:
-        print >> sys.stderr, x
-        sys.exit(1)
+import os
+import re
+import datetime
+import subprocess
+from shutil import copy
 
-    # edit the suite.rc file
-    if not os.path.isfile( suiterc ):
-        print  >> sys.stderr, 'ERROR, file not found: ', suiterc
-        sys.exit(1)
+import cylc.flags
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.CylcOptionParsers import cop
+from parsec.include import inline, \
+    split_file, backup, backups, newfiles, cleanup, modtimes
+from cylc.wallclock import get_current_time_string
 
-    # in case editor has options, e.g. 'emacs -nw':
-    command_list = re.split( ' ', editor )
-    command_list.append( suiterc )
-    command = ' '.join( command_list )
-    try:
+
+def main():
+    parser = cop(__doc__, prep=True)
+
+    parser.add_option(
+        "--inline", "-i",
+        help="Edit with include-files inlined as described above.",
+        action="store_true", default=False, dest="inline")
+
+    parser.add_option(
+        "--cleanup",
+        help="Remove backup files left by previous inlined edit sessions.",
+        action="store_true", default=False, dest="cleanup")
+
+    parser.add_option(
+        "--gui", "-g", help="Force use of the configured GUI editor.",
+        action="store_true", default=False, dest="geditor")
+
+    (options, args) = parser.parse_args()
+
+    suite, suiterc, junk = parser.get_suite()
+
+    if options.geditor:
+        editor = GLOBAL_CFG.get(['editors', 'gui'])
+    else:
+        editor = GLOBAL_CFG.get(['editors', 'terminal'])
+
+    suitedir = os.path.dirname(suiterc)
+
+    if options.cleanup:
+        # remove backup files left by inlined editing sessions
+        cleanup(suitedir)
+        sys.exit(0)
+
+    if not options.inline:
+        # plain old editing.
+        # move to suite def dir
+        os.chdir(suitedir)
+
+        # edit the suite.rc file
+        if not os.path.isfile(suiterc):
+            print >> sys.stderr, 'ERROR, file not found: ', suiterc
+            sys.exit(1)
+
+        # in case editor has options, e.g. 'emacs -nw':
+        command_list = re.split(' ', editor)
+        command_list.append(suiterc)
+        command = ' '.join(command_list)
         # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-        retcode = subprocess.call( command_list )
+        retcode = subprocess.call(command_list)
         if retcode != 0:
             # the command returned non-zero exist status
             print >> sys.stderr, command, 'failed:', retcode
             sys.exit(1)
-    except OSError:
-        # the command was not invoked
-        print >> sys.stderr, 'ERROR: unable to execute:', command
-        sys.exit(1)
 
-    # !!!EDITING FINISHED!!!
-    sys.exit(0)
+        # !!!EDITING FINISHED!!!
+        sys.exit(0)
 
-# read the suite.rc file
-if os.path.isfile( suiterc ):
-    # back up the original
-    try:
-        backup( suiterc )
-    except IOError, x:
-        # e.g. if attempting inlined edit of another user's suite.
-        print >> sys.stderr, x
-        sys.exit("Write access to suite definition directory is required.")
-    # record original modtime
-    modtimes[suiterc] = os.stat( suiterc ).st_mtime
-    # read the file
-    h = open( suiterc, 'rb' )
-    lines0 = h.readlines()
-    h.close()
-    if lines0[0].startswith( '# !WARNING! CYLC EDIT INLINED' ):
-        print 'WARNING: RECOVERING A PREVIOUSLY INLINED FILE'
-        recovery = True
-        lines = lines0
+    # read the suite.rc file
+    if os.path.isfile(suiterc):
+        # back up the original
+        backup(suiterc)
+        # record original modtime
+        modtimes[suiterc] = os.stat(suiterc).st_mtime
+        # read the file
+        h = open(suiterc, 'rb')
+        lines0 = h.readlines()
+        h.close()
+        if lines0[0].startswith('# !WARNING! CYLC EDIT INLINED'):
+            print 'WARNING: RECOVERING A PREVIOUSLY INLINED FILE'
+            recovery = True
+            lines = lines0
+        else:
+            recovery = False
+            lines = inline(lines0, suitedir, suiterc, for_edit=True)
     else:
-        recovery = False
-        lines = inline( lines0, suitedir, suiterc, for_edit=True )
-else:
-    parser.error("File not found: " + suiterc )
+        parser.error("File not found: " + suiterc)
 
-lines = [ i.rstrip() for i in lines ]
+    lines = [i.rstrip() for i in lines]
 
-# overwrite the (now backed up) original with the inlined file:
-h = open( suiterc, 'wb' )
-for line in lines:
-    h.write( line + '\n' )
-h.close()
+    # overwrite the (now backed up) original with the inlined file:
+    h = open(suiterc, 'wb')
+    for line in lines:
+        h.write(line + '\n')
+    h.close()
 
-print 'PRE-EDIT BACKUPS:'
-for file in backups:
-    src = re.sub( suitedir + '/', '', file )
-    dst = re.sub( suitedir + '/', '', backups[file] )
-    print ' + ' + src + ' ---> ' + dst
+    print 'PRE-EDIT BACKUPS:'
+    for file in backups:
+        src = re.sub(suitedir + '/', '', file)
+        dst = re.sub(suitedir + '/', '', backups[file])
+        print ' + ' + src + ' ---> ' + dst
 
-# in case editor has options, e.g. 'emacs -nw':
-command_list = re.split( ' ', editor )
-command_list.append( suiterc )
-command = ' '.join( command_list )
-try:
+    # in case editor has options, e.g. 'emacs -nw':
+    command_list = re.split(' ', editor)
+    command_list.append(suiterc)
+    command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
-    retcode = subprocess.call( command_list )
+    retcode = subprocess.call(command_list)
     if retcode != 0:
         # the command returned non-zero exist status
         print >> sys.stderr, command, 'failed:', retcode
         sys.exit(1)
-except OSError:
-    # the command was not invoked
-    print >> sys.stderr, 'ERROR: unable to execute:', command
-    sys.exit(1)
+    print 'EDITING DONE'
 
-print 'EDITING DONE'
+    # Now back up the inlined file in case of absolute disaster, so as the
+    # user or his editor corrupting the inlined-include-file marker lines.
+    inlined_suiterc_backup = (
+        suitedir + '/suite.rc.INLINED.EDIT.' +
+        get_current_time_string(override_use_utc=True, use_basic_format=True)
+    )
+    copy(suiterc, inlined_suiterc_backup)
 
-# Now back up the inlined file in case of absolute disaster, so as the
-# user or his editor corrupting the inlined-include-file marker lines.
-inlined_suiterc_backup = (
-    suitedir + '/suite.rc.INLINED.EDIT.' +
-    get_current_time_string(override_use_utc=True, use_basic_format=True)
-)
-copy( suiterc, inlined_suiterc_backup )
+    # read in the edited inlined file
+    h = open(suiterc, 'rb')
+    lines = h.readlines()
+    h.close()
 
-# read in the edited inlined file
-h = open( suiterc, 'rb' )
-lines = h.readlines()
-h.close()
+    # split it back into separate files
+    split_file(suitedir, lines, suiterc, recovery)
 
-# split it back into separate files
-split_file( suitedir, lines, suiterc, recovery )
+    print ' + edited:', suiterc
+    print ' + backup:', inlined_suiterc_backup
+    print 'INCLUDE-FILES WRITTEN:'
+    for file in newfiles:
+        f = re.sub(suitedir + '/', '', file)
+        if re.search('\.EDIT\.NEW\.', f):
+            print ' + ' + f + ' (!!! WARNING: original changed on disk !!!)'
+        else:
+            print ' + ' + f
+    # DONE
 
-print ' + edited:', suiterc
-print ' + backup:', inlined_suiterc_backup
-print 'INCLUDE-FILES WRITTEN:'
-for file in newfiles:
-    f = re.sub( suitedir + '/', '', file )
-    if re.search( '\.EDIT\.NEW\.', f ):
-        print ' + ' + f + ' (!!! WARNING: original changed on disk !!!)'
-    else:
-        print ' + ' + f
 
-# DONE
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

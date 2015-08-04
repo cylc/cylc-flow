@@ -427,6 +427,18 @@ it is not possible to arrive at a sensible default for all suites.
     \item {\em default:} PT1M (1 minute)
 \end{myitemize}
 
+\subsection{[authentication]}
+\label{SuiteAuth}
+
+Authentication of client programs with suite daemons can be configured in the
+global site/user files (\ref{GlobalAuth}) and overridden here if necessary.
+See~\ref{GlobalAuth} for more information.
+
+\subsubsection{[authentication] $\rightarrow$ public}
+
+The client privilege level granted for public access - i.e.\ no suite passphrase
+required.  See~\ref{GlobalAuth} for legal values.
+
 \subsection{[scheduling]}
 
 This section allows cylc to determine when tasks are ready to run.

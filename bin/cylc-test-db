@@ -19,7 +19,7 @@
 set -e
 
 usage() {
-    echo "USAGE: cylc [admin] test-db [--help]"
+    echo "Usage: cylc [admin] test-db [--help]"
     echo "A thorough test of suite registration database functionality."
     echo "Options:"
     echo "  --help   Print this usage message."

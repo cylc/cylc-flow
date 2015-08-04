@@ -1,5 +1,5 @@
 
-\section{Site And User Config File Reference}
+\section{Global (Site, User) Config File Reference}
 \label{SiteRCReference}
 
 \lstset{language=bash}
@@ -663,3 +663,34 @@ of which can be found under ~\ref{SuiteEventHandling}:
 \subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ timeout}
 
 \subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ abort on timeout}
+
+\subsection{[authentication]}
+\label{GlobalAuth}
+
+Authentication of client programs with suite daemons can be configured here, and
+overridden in suites if necessary (see~\ref{SuiteAuth}).
+
+The suite-specific passphrase must be installed on a user's account to
+authorize full control privileges (see~\ref{tutPassphrases}
+and~\ref{ConnectionAuthentication}). In the future we plan to move to a more
+traditional user account model so that each authorized user can have their own
+password.
+
+\subsubsection{[authentication] $\rightarrow$ public}
+
+This sets the client privilege level for public access - i.e.\ no suite passphrase
+required.
+
+\begin{myitemize}
+\item {\em type:} string (must be one of the following options)
+\item {\em options:}
+    \begin{myitemize}
+        \item {\em identity} - only suite and owner names revealed
+        \item {\em description} - identity plus suite title and description
+        \item {\em state-totals} - identity, description, and task state totals
+        \item {\em full-read} - full read-only access for monitor and GUI
+        \item {\em shutdown} - full read access plus shutdown, but no other
+            control.
+    \end{myitemize}
+\item {\em default:} state-totals
+\end{myitemize}

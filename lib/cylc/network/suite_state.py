@@ -22,14 +22,17 @@ import datetime
 import cylc.flags
 from cylc.task_id import TaskID
 from cylc.wallclock import TIME_ZONE_LOCAL_INFO, TIME_ZONE_UTC_INFO
+from cylc.config import SuiteConfig
+from cylc.network import PYRO_STATE_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import check_access_priv
 
-PYRO_STATE_OBJ_NAME = 'state_summary'
 
 class SuiteStillInitialisingError(Exception):
     """Exception raised if a summary is requested before the first update.
-    
+
     This can happen if client connects during start-up for large suites.
+
     """
     def __str__(self):
         return "Suite initializing..."
@@ -38,22 +41,30 @@ class SuiteStillInitialisingError(Exception):
 class StateSummaryServer(PyroServer):
     """Server-side suite state summary interface."""
 
-    def __init__(self, config, run_mode):
+    _INSTANCE = None
+
+    @classmethod
+    def get_inst(cls, run_mode=None):
+        """Return a singleton instance."""
+        if cls._INSTANCE is None:
+            cls._INSTANCE = cls(run_mode)
+        return cls._INSTANCE
+
+    def __init__(self, run_mode):
         super(StateSummaryServer, self).__init__()
         self.task_summary = {}
         self.global_summary = {}
         self.family_summary = {}
-        # external monitors should access config via methods in this
-        # class, in case config items are ever updated dynamically by
-        # remote control
-        self.config = config
         self.run_mode = run_mode
         self.first_update_completed = False
         self._summary_update_time = None
 
-    def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh, paused,
-               will_pause_at, stopping, will_stop_at, ns_defn_order, reloading):
+        self.state_count_totals = {}
+        self.state_count_cycles = {}
 
+    def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh,
+               paused, will_pause_at, stopping, will_stop_at, ns_defn_order,
+               reloading):
         task_summary = {}
         global_summary = {}
         family_summary = {}
@@ -80,8 +91,10 @@ class StateSummaryServer(PyroServer):
             # based on the first-parent single-inheritance tree
 
             c_fam_task_states = {}
+            config = SuiteConfig.get_inst()
 
-            for key, parent_list in self.config.get_first_parent_ancestors().items():
+            for key, parent_list in (
+                    config.get_first_parent_ancestors().items()):
                 state = c_task_states.get(key)
                 if state is None:
                     continue
@@ -98,7 +111,7 @@ class StateSummaryServer(PyroServer):
                 if state is None:
                     continue
                 try:
-                    famcfg = self.config.cfg['runtime'][fam]
+                    famcfg = config.cfg['runtime'][fam]
                 except KeyError:
                     famcfg = {}
                 description = famcfg.get('description')
@@ -110,6 +123,22 @@ class StateSummaryServer(PyroServer):
                                         'state': state}
 
         all_states.sort()
+
+        # Compute state_counts (total, and per cycle).
+        state_count_totals = {}
+        state_count_cycles = {}
+        for point_string, name_states in task_states.items():
+            count = {}
+            for name, state in name_states.items():
+                try:
+                    count[state] += 1
+                except KeyError:
+                    count[state] = 1
+                try:
+                    state_count_totals[state] += 1
+                except KeyError:
+                    state_count_totals[state] = 1
+            state_count_cycles[point_string] = count
 
         global_summary['oldest cycle point string'] = (
             self.str_or_None(min_point))
@@ -130,14 +159,18 @@ class StateSummaryServer(PyroServer):
         global_summary['states'] = all_states
         global_summary['namespace definition order'] = ns_defn_order
         global_summary['reloading'] = reloading
+        global_summary['state totals'] = state_count_totals
 
         self._summary_update_time = time.time()
-        # replace the originals
+
+        # Replace the originals (atomic update, for access from other threads).
         self.task_summary = task_summary
         self.global_summary = global_summary
         self.family_summary = family_summary
         task_states = {}
         self.first_update_completed = True
+        self.state_count_totals = state_count_totals
+        self.state_count_cycles = state_count_cycles
 
     def str_or_None(self, s):
         if s:
@@ -145,14 +178,22 @@ class StateSummaryServer(PyroServer):
         else:
             return None
 
+    def get_state_totals(self):
+        # (Access to this is controlled via the suite_identity server.)
+        return (self.state_count_totals, self.state_count_cycles)
+
     def get_state_summary(self):
         """Return the global, task, and family summary data structures."""
+        check_access_priv(self, 'full-read')
+        self.report('get_state_summary')
         if not self.first_update_completed:
             raise SuiteStillInitialisingError()
         return (self.global_summary, self.task_summary, self.family_summary)
 
     def get_summary_update_time(self):
         """Return the last time the summaries were changed (Unix time)."""
+        check_access_priv(self, 'full-read')
+        self.report('get_state_summary_update_time')
         if not self.first_update_completed:
             raise SuiteStillInitialisingError()
         return self._summary_update_time
@@ -162,25 +203,24 @@ class StateSummaryClient(PyroClient):
     """Client-side suite state summary interface."""
 
     target_server_object = PYRO_STATE_OBJ_NAME
- 
+
     def get_suite_state_summary(self):
-        self._report('get_state_summary')
-        return self.pyro_proxy.get_state_summary()
+        return self.call_server_func("get_state_summary")
 
     def get_suite_state_summary_update_time(self):
-        self._report('get_state_summary_update_time')
-        return self.pyro_proxy.get_summary_update_time()
+        return self.call_server_func("get_summary_update_time")
 
 
 def extract_group_state(child_states, is_stopped=False):
     """Summarise child states as a group."""
+
     ordered_states = ['submit-failed', 'failed', 'expired', 'submit-retrying',
-            'retrying', 'running', 'submitted', 'ready', 'queued', 'waiting',
-            'held', 'succeeded', 'runahead']
+                      'retrying', 'running', 'submitted', 'ready', 'queued',
+                      'waiting', 'held', 'succeeded', 'runahead']
     if is_stopped:
         ordered_states = ['submit-failed', 'failed', 'running', 'submitted',
-            'expired', 'ready', 'submit-retrying', 'retrying', 'succeeded',
-            'queued', 'waiting', 'held', 'runahead']
+                          'expired', 'ready', 'submit-retrying', 'retrying',
+                          'succeeded', 'queued', 'waiting', 'held', 'runahead']
     for state in ordered_states:
         if state in child_states:
             return state

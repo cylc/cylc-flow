@@ -16,22 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import datetime
-import os
-from cylc.CylcOptionParsers import cop
-from cylc.scheduler import scheduler
-from cylc.run import main
-from cylc.command_prep import prep_file
-from cylc.task_proxy import TaskProxySequenceBoundsError
-
-class start( scheduler ):
-    def __init__( self ):
-        usage = """cylc [control] run|start [OPTIONS] ARGS
+"""cylc [control] run|start [OPTIONS] ARGS
 
 Start a suite run from scratch, wiping out any previous suite state. To
 restart from a previous state see 'cylc restart --help'.
@@ -54,45 +39,67 @@ Aside from the starting cycle point there is no difference between cold and
 warm start unless you use special cold-start tasks. See "Suite Start-up" and
 "Cold-Start Tasks" in the User Guide for more."""
 
-        self.parser = cop( usage, jset=True, argdoc=[ ("REG", "Suite name"),
-                ("[START_POINT]",
-                """Initial cycle point or 'now';
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import os
+import datetime
+
+from cylc.CylcOptionParsers import cop
+from cylc.scheduler import scheduler
+from cylc.run import main
+from cylc.registration import localdb
+from cylc.task_proxy import TaskProxySequenceBoundsError
+from cylc.get_task_proxy import get_task_proxy
+
+
+class start(scheduler):
+    def __init__(self):
+        self.parser = cop(
+            __doc__, jset=True,
+            argdoc=[("REG", "Suite name"),
+                    ("[START_POINT]",
+                    """Initial cycle point or 'now';
                                overrides the suite definition.""")])
 
-        self.parser.add_option( "--non-daemon",
-                help="(deprecated: use --no-detach)",
-                action="store_true", default=False, dest="no_detach" )
+        self.parser.add_option(
+            "--non-daemon", help="(deprecated: use --no-detach)",
+            action="store_true", default=False, dest="no_detach")
 
-        self.parser.add_option( "-n", "--no-detach",
-                help="Do not daemonize the suite",
-                action="store_true", default=False, dest="no_detach" )
+        self.parser.add_option(
+            "-n", "--no-detach", help="Do not daemonize the suite",
+            action="store_true", default=False, dest="no_detach")
 
-        self.parser.add_option( "--profile",
-                help="Output profiling (performance) information",
-                action="store_true", default=False, dest="profile_mode" )
+        self.parser.add_option(
+            "--profile", help="Output profiling (performance) information",
+            action="store_true", default=False, dest="profile_mode")
 
-        self.parser.add_option( "-w", "--warm", help="Warm start the suite. "
-                "The default is to cold start.",
-                action="store_true", default=False, dest="warm" )
+        self.parser.add_option(
+            "-w", "--warm",
+            help="Warm start the suite. "
+                 "The default is to cold start.",
+            action="store_true", default=False, dest="warm")
 
-        self.parser.add_option( "--ict",
-                help="Set $CYLC_SUITE_INITIAL_CYCLE_POINT to the initial "
-                "cycle point even in a warm start (as for cold starts).",
-                action="store_true", default=False, dest="set_ict" )
+        self.parser.add_option(
+            "--ict",
+            help="Set $CYLC_SUITE_INITIAL_CYCLE_POINT to the initial "
+                 "cycle point even in a warm start (as for cold starts).",
+            action="store_true", default=False, dest="set_ict")
 
-        scheduler.__init__( self )
+        scheduler.__init__(self)
 
-    def parse_commandline( self ):
-        ( self.options, self.args ) = self.parser.parse_args()
-
-        self.suite, self.suiterc = prep_file( self.args[0], self.options ).execute()
-
-        self.suite_dir = os.path.dirname( self.suiterc )
+    def parse_commandline(self):
+        (self.options, self.args) = self.parser.parse_args()
+        self.suite = self.args[0]
+        self.suiterc = localdb(self.options.db).get_suiterc(self.suite)
+        self.suite_dir = os.path.dirname(self.suiterc)
 
         # For user-defined job submission methods:
-        sys.path.append( os.path.join( self.suite_dir, 'python' ))
+        sys.path.append(os.path.join(self.suite_dir, 'python'))
 
-        if len( self.args ) == 2:
+        if len(self.args) == 2:
             if self.options.warm:
                 self._cli_start_point_string = self.args[1]
             else:
@@ -101,16 +108,17 @@ warm start unless you use special cold-start tasks. See "Suite Start-up" and
             # No warm-start cycle point supplied.
             sys.exit(self.parser.get_usage())
 
-        scheduler.parse_commandline( self )
+        scheduler.parse_commandline(self)
 
-    def load_tasks( self ):
+    def load_tasks(self):
         if self.start_point is not None:
             if self.options.warm:
-                self.log.info( 'Warm Start %s' % self.start_point)
+                self.log.info('Warm Start %s' % self.start_point)
             else:
-                self.log.info( 'Cold Start %s' % self.start_point )
+                self.log.info('Cold Start %s' % self.start_point)
 
-        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+        task_list = self.filter_initial_task_list(
+            self.config.get_task_name_list())
         coldstart_tasks = self.config.get_coldstart_task_list()
 
         for name in task_list:
@@ -118,17 +126,17 @@ warm start unless you use special cold-start tasks. See "Suite Start-up" and
                 # No start cycle point at which to load cycling tasks.
                 continue
             try:
-                itask = self.config.get_task_proxy(
+                itask = get_task_proxy(
                     name, self.start_point, 'waiting', is_startup=True)
             except TaskProxySequenceBoundsError as exc:
                 self.log.debug(str(exc))
                 continue
             if name in coldstart_tasks and self.options.warm:
-                itask.state.set_status( 'succeeded' )
+                itask.state.set_status('succeeded')
                 itask.prerequisites.set_all_satisfied()
                 itask.outputs.set_all_completed()
             # Load task.
-            self.pool.add_to_runahead_pool( itask )
+            self.pool.add_to_runahead_pool(itask)
 
 if __name__ == '__main__':
     main("run", start)

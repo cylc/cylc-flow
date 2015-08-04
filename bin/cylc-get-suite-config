@@ -2,7 +2,7 @@
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,17 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-import re
-from cylc.config import config, SuiteConfigError
-from cylc.CylcOptionParsers import cop
-import cylc.flags
-
-parser = cop( usage = """cylc [info] get-suite-config [OPTIONS] ARGS
+"""cylc [info] get-suite-config [OPTIONS] ARGS
 
 Print parsed suite configuration items, after runtime inheritance.
 
@@ -50,7 +40,7 @@ Example:
 $ cylc get-suite-config --item=[runtime][modelX][environment]FOO SUITE
 foo
 
-$ cylc get-suite-config --item=[runtime][modelX][environment] SUITE 
+$ cylc get-suite-config --item=[runtime][modelX][environment] SUITE
 FOO = foo
 BAR = bar
 
@@ -59,71 +49,98 @@ $ cylc get-suite-config --item=[runtime][modelX] SUITE
 [[[environment]]]
     FOO = foo
     BAR = bar
-...""", jset=True, prep=True )
+..."""
 
-parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+import sys
+from cylc.remote import remrun
+if remrun().execute():
+    sys.exit(0)
+
+import re
+from cylc.config import SuiteConfig, SuiteConfigError
+from cylc.CylcOptionParsers import cop
+import cylc.flags
+
+
+def main():
+    parser = cop(__doc__, jset=True, prep=True)
+
+    parser.add_option(
+        "-i", "--item", metavar="[SEC...]ITEM",
         help="Item or section to print (multiple use allowed).",
-        action="append", dest="item", default=[] )
+        action="append", dest="item", default=[])
 
-parser.add_option( "-r", "--sparse",
+    parser.add_option(
+        "-r", "--sparse",
         help="Only print items explicitly set in the config files.",
-        action="store_true", default=False, dest="sparse" )
+        action="store_true", default=False, dest="sparse")
 
-parser.add_option( "-p", "--python",
+    parser.add_option(
+        "-p", "--python",
         help="Print native Python format.",
-        action="store_true", default=False, dest="pnative" )
+        action="store_true", default=False, dest="pnative")
 
-parser.add_option( "-a", "--all-tasks",
+    parser.add_option(
+        "-a", "--all-tasks",
         help="For [runtime] items (e.g. --item='script') report "
         "values for all tasks prefixed by task name.",
-        action="store_true", default=False, dest="alltasks" )
+        action="store_true", default=False, dest="alltasks")
 
-parser.add_option( "-n", "--null-value",
+    parser.add_option(
+        "-n", "--null-value",
         help="The string to print for unset values (default nothing).",
-        metavar="STRING", action="store", default='', dest="none_str" )
+        metavar="STRING", action="store", default='', dest="none_str")
 
-parser.add_option( "-m", "--mark-up",
+    parser.add_option(
+        "-m", "--mark-up",
         help="Prefix each line with '!cylc!'.",
-        action="store_true", default=False, dest="markup" )
+        action="store_true", default=False, dest="markup")
 
-parser.add_option( "-o", "--one-line",
+    parser.add_option(
+        "-o", "--one-line",
         help="Print multiple single-value items at once.",
-        action="store_true", default=False, dest="oneline" )
+        action="store_true", default=False, dest="oneline")
 
-parser.add_option( "-t", "--tasks",
+    parser.add_option(
+        "-t", "--tasks",
         help="Print the suite task list "
-        "[DEPRECATED: use 'cylc list SUITE'].",
-        action="store_true", default=False, dest="tasks" )
+             "[DEPRECATED: use 'cylc list SUITE'].",
+        action="store_true", default=False, dest="tasks")
 
-( options, args ) = parser.parse_args()
+    (options, args) = parser.parse_args()
+    owner = options.db_owner
+    suite, suiterc, junk = parser.get_suite()
 
-# TODO - check db owner still is (or should be?) passed through to taskdefs:
-owner = options.db_owner
+    if options.markup:
+        prefix = '!cylc!'
+    else:
+        prefix = ''
 
-suite, suiterc, junk = parser.get_suite()
-
-if options.markup:
-    prefix = '!cylc!'
-else:
-    prefix = ''
-
-try:
-    config = config( suite, suiterc, 
-            template_vars=options.templatevars,
-            template_vars_file=options.templatevars_file,
-            owner=owner )
+    config = SuiteConfig(
+        suite, suiterc,
+        template_vars=options.templatevars,
+        template_vars_file=options.templatevars_file,
+        owner=owner)
     if options.tasks:
         for task in config.get_task_name_list():
             print prefix + task
     elif options.alltasks:
         for task in config.get_task_name_list():
-            items = [ '[runtime]['+task+']'+i for i in options.item ]
+            items = ['[runtime]['+task+']'+i for i in options.item]
             print prefix+task,
-            config.pcfg.idump( items, options.sparse, options.pnative, prefix, options.oneline, none_str=options.none_str )
+            config.pcfg.idump(
+                items, options.sparse, options.pnative, prefix,
+                options.oneline, none_str=options.none_str)
     else:
-        config.pcfg.idump( options.item, options.sparse, options.pnative, prefix, options.oneline, none_str=options.none_str )
+        config.pcfg.idump(
+            options.item, options.sparse, options.pnative, prefix,
+            options.oneline, none_str=options.none_str)
 
-except Exception,x:
-    if cylc.flags.debug:
-        raise
-    raise SystemExit(x)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

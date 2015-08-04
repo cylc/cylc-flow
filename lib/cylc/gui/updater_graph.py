@@ -305,7 +305,7 @@ class GraphUpdater(threading.Thread):
             newest = self.newest_point_string
 
         try:
-            res = self.updater.suite_info_client.get_info_gui(
+            res = self.updater.suite_info_client.get_info(
                 'get_graph_raw', oldest, newest, self.group, self.ungroup,
                 self.ungroup_recursive, self.group_all, self.ungroup_all)
         except TypeError:

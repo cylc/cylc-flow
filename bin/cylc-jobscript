@@ -20,7 +20,7 @@ set -e
 
 usage() {
     cat <<__END__
-USAGE: cylc [prep] jobscript [OPTIONS] REG TASK
+Usage: cylc [prep] jobscript [OPTIONS] REG TASK
 
 Generate a task job script and print it to stdout.
 

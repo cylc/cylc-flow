@@ -16,6 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""cylc [info] show [OPTIONS] ARGS
+
+Interrogate a suite daemon for the suite title and description; or for the
+title and description of one of its tasks; or for the current state of the
+prerequisites, outputs, and clock-triggering of a specific task instance."""
+
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
@@ -23,85 +29,90 @@ if '--use-ssh' in sys.argv[1:]:
     if remrun().execute():
         sys.exit(0)
 
+import cylc.flags
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.CylcOptionParsers import cop
 from cylc.task_id import TaskID
-from cylc.command_prep import prep_pyro
-import cylc.flags
 
-parser = cop(
-    """cylc [info] show [OPTIONS] ARGS
 
-Interrogate a suite daemon for the suite title and description; or for the
-title and description of one of its tasks; or for the current state of the
-prerequisites, outputs, and clock-triggering of a specific task instance.""",
-    pyro=True, noforce=True,
-    argdoc=[('REG', 'Suite name'),
-            ('[' + TaskID.SYNTAX_OPT_POINT + ']', 'Task name or ID')])
+def main():
+    parser = cop(
+        __doc__, pyro=True, noforce=True,
+        argdoc=[('REG', 'Suite name'),
+                ('[' + TaskID.SYNTAX_OPT_POINT + ']', 'Task name or ID')])
 
-(options, args) = parser.parse_args()
-suite, pphrase = prep_pyro(args[0], options).execute()
+    (options, args) = parser.parse_args()
+    suite = args[0]
 
-pclient = SuiteInfoClient(suite, pphrase, options.owner, options.host,
-                          options.pyro_timeout, options.port)
-if options.print_uuid:
-    print >> sys.stderr, 'Client UUID: %s' % pclient.get_client_uuid()
+    pclient = SuiteInfoClient(
+        suite, options.owner, options.host, options.pyro_timeout,
+        options.port, options.db, my_uuid=options.set_uuid,
+        print_uuid=options.print_uuid)
 
-if len(args) == 1:
-    # Print suite info.
-    suite_info = pclient.get_info('get_suite_info')
-    for key, value in sorted(suite_info.items(), reverse=True):
-        print '%s: %s' % (key,value or "(not given)")
-    sys.exit(0)
+    if len(args) == 1:
+        # Print suite info.
+        suite_info = pclient.get_info('get_suite_info')
+        for key, value in sorted(suite_info.items(), reverse=True):
+            print '%s: %s' % (key, value or "(not given)")
+        sys.exit(0)
 
-point_string = None
-arg = args[1]
-try:
-    name, point_string = TaskID.split(arg)
-except ValueError:
-    # Print task info.
-    name = arg
-else:
-    # Print task instance info.
-    task_id = arg
+    point_string = None
+    arg = args[1]
+    try:
+        name, point_string = TaskID.split(arg)
+    except ValueError:
+        # Print task info.
+        name = arg
+    else:
+        # Print task instance info.
+        task_id = arg
 
-info = pclient.get_info('get_task_info', name)
-if not info:
-    sys.exit("ERROR: task not found: %s" % name)
-for key, value in sorted(info.items(), reverse=True):
-    print "%s: %s" % (key, value or "(not given)")
+    info = pclient.get_info('get_task_info', name)
+    if not info:
+        sys.exit("ERROR: task not found: %s" % name)
+    for key, value in sorted(info.items(), reverse=True):
+        print "%s: %s" % (key, value or "(not given)")
 
-if point_string is not None:
-    result = pclient.get_info('get_task_requisites', name, point_string)
-    if not result:
-        sys.exit("ERROR: task instance not found: %s" % task_id)
+    if point_string is not None:
+        result = pclient.get_info('get_task_requisites', name, point_string)
+        if not result:
+            sys.exit("ERROR: task instance not found: %s" % task_id)
 
-    for task_id in result.keys():
-        [pre, out, extra_info] = result[task_id]
+        for task_id in result.keys():
+            [pre, out, extra_info] = result[task_id]
 
-        print '\nprerequisites (- => not satisfied):'
-        if len(pre) == 0:
-            print '  (None)'
-        for item in sorted(pre):
-            [msg, state] = item
-            if state:
-                descr = '  + '
-            else:
-                descr = '  - '
-            print descr + msg
+            print '\nprerequisites (- => not satisfied):'
+            if len(pre) == 0:
+                print '  (None)'
+            for item in sorted(pre):
+                [msg, state] = item
+                if state:
+                    descr = '  + '
+                else:
+                    descr = '  - '
+                print descr + msg
 
-        print '\noutputs (- => not completed):'
-        if len(out) == 0:
-            print '  (None)'
-        for item in sorted(out):
-            [msg, state] = item
-            if state:
-                descr = '  + '
-            else:
-                descr = '  - '
-            print descr + msg
+            print '\noutputs (- => not completed):'
+            if len(out) == 0:
+                print '  (None)'
+            for item in sorted(out):
+                [msg, state] = item
+                if state:
+                    descr = '  + '
+                else:
+                    descr = '  - '
+                print descr + msg
 
-        if len(extra_info.keys()) > 0:
-            print '\nother:'
-            for item in extra_info:
-                print '  o ', item, '...', extra_info[item]
+            if len(extra_info.keys()) > 0:
+                print '\nother:'
+                for item in extra_info:
+                    print '  o ', item, '...', extra_info[item]
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

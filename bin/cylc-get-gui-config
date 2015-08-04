@@ -2,7 +2,7 @@
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,52 +16,61 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from optparse import OptionParser
-import cylc.flags
-from parsec.util import itemstr
-
-parser = OptionParser( usage = """cylc [admin] get-gui-config [OPTIONS] 
+"""cylc [admin] get-gui-config [OPTIONS]
 
 Print gcylc configuration settings.
 
 By default all settings are printed. For specific sections or items
 use -i/--item and wrap parent sections in square brackets:
    cylc get-gui-config --item '[themes][default]succeeded'
-Multiple items can be specified at once.""" )
+Multiple items can be specified at once."""
 
-parser.add_option( "-v", "--verbose", help="Print extra information.",
-        action="store_true", default=False, dest="verbose" )
+import sys
+from optparse import OptionParser
+import cylc.flags
+from parsec.util import itemstr
 
-parser.add_option( "--debug",
-        help="Show exception tracebacks.",
-        action="store_true", default=False, dest="debug" )
 
-parser.add_option( "-i", "--item", metavar="[SEC...]ITEM", 
+def main():
+    parser = OptionParser(__doc__)
+
+    parser.add_option(
+        "-v", "--verbose", help="Print extra information.",
+        action="store_true", default=False, dest="verbose")
+
+    parser.add_option(
+        "--debug", help="Show exception tracebacks.",
+        action="store_true", default=False, dest="debug")
+
+    parser.add_option(
+        "-i", "--item", metavar="[SEC...]ITEM",
         help="Item or section to print (multiple use allowed).",
-        action="append", dest="item", default=[] )
+        action="append", dest="item", default=[])
 
-parser.add_option( "--sparse",
+    parser.add_option(
+        "--sparse",
         help="Only print items explicitly set in the config files.",
-        action="store_true", default=False, dest="sparse" )
+        action="store_true", default=False, dest="sparse")
 
-parser.add_option( "-p", "--python",
-        help="Print native Python format.",
-        action="store_true", default=False, dest="pnative" )
+    parser.add_option(
+        "-p", "--python", help="Print native Python format.",
+        action="store_true", default=False, dest="pnative")
 
-(options, args) = parser.parse_args()
-cylc.flags.verbose = options.verbose
-cylc.flags.debug = options.debug
+    (options, args) = parser.parse_args()
+    cylc.flags.verbose = options.verbose
+    cylc.flags.debug = options.debug
 
-if len(args) != 0:
-    parser.error( "ERROR: wrong number of arguments" )
+    if len(args) != 0:
+        parser.error("ERROR: wrong number of arguments")
 
-try:
-    # import gcfg here to avoid aborting before command help is printed
+    # Import gcfg here to avoid aborting before command help is printed.
     from cylc.cfgspec.gcylc import gcfg
-    gcfg.idump( options.item, sparse=options.sparse, pnative=options.pnative )
+    gcfg.idump(options.item, sparse=options.sparse, pnative=options.pnative)
 
-except Exception, x:
-    if cylc.flags.debug:
-        raise
-    sys.exit( str(x) )
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

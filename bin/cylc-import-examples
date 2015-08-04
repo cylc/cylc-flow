@@ -20,7 +20,7 @@ set -e
 
 usage() {
     echo ""
-    echo "USAGE: cylc [admin] import-examples DIR [GROUP]"
+    echo "Usage: cylc [admin] import-examples DIR [GROUP]"
     echo ""
     echo "Copy the cylc example suites to DIR/GROUP and register"
     echo "them for use under the GROUP suite name group."

@@ -20,7 +20,7 @@
 
 usage() {
     cat <<eof
-USAGE: cylc [prep] 5to6 FILE
+Usage: cylc [prep] 5to6 FILE
 
 Suggest changes to a cylc 5 suite file to make it more cylc 6 compatible.
 This may be a suite.rc file, an include file, or a suite.rc.processed file.

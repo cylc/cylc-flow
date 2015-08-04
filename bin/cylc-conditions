@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 usage() {
-    echo "USAGE: cylc [license] warranty [--help]"
+    echo "Usage: cylc [license] warranty [--help]"
     echo "Cylc is release under the GNU General Public License v3.0"
     echo "This command prints the GPL v3.0 license in full."
     echo ""

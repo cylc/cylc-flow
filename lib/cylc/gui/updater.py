@@ -32,31 +32,13 @@ from cylc.network.suite_state import (
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
+from cylc.network.port_file import PortFileError
 from cylc.task_state import task_state
 from cylc.gui.dot_maker import DotMaker
 from cylc.wallclock import get_time_string_from_unix_time
-from cylc.port_file import PortFileError
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
 from cylc.gui.warning_dialog import warning_dialog
-
-
-MSG_PORT_FILE_ERR = """Suite port file not found.
-
-This is normal for a stopped suite!
-
-(If you deleted the port file of a running
-suite, restore it to restore communications 
-or kill the suite manually and do a restart)."""
-
-MSG_PROTOCOL_ERR = """Connection failed.
-
-This could mean:
- (a) The suite died without cleaning up its port
-   file: use "ps -fu $USER" to check that it's
-   not running, then delete the file and restart.
- (b) A network problem is blocking communication
-   with the suite server."""
 
 
 class PollSchd(object):
@@ -167,17 +149,13 @@ class Updater(threading.Thread):
         self.connect_fail_warned = False
         self.version_mismatch_warned = False
 
-        client_args = (
-            self.cfg.suite, self.cfg.pphrase, self.cfg.owner, self.cfg.host,
-            self.cfg.pyro_timeout, self.cfg.port, self.cfg.my_uuid)
+        client_args = (self.cfg.suite, self.cfg.owner, self.cfg.host,
+                       self.cfg.pyro_timeout, self.cfg.port, self.cfg.db,
+                       self.cfg.my_uuid)
         self.state_summary_client = StateSummaryClient(*client_args)
         self.suite_info_client = SuiteInfoClient(*client_args)
         self.suite_log_client = SuiteLogClient(*client_args)
         self.suite_command_client = SuiteCommandClient(*client_args)
-        # Don't report every call to these clients unless in debug mode:
-        self.suite_log_client.set_multi()
-        self.suite_info_client.set_multi()
-        self.state_summary_client.set_multi()
         # Report sign-out on exit.
         atexit.register(self.state_summary_client.signout)
 
@@ -194,41 +172,40 @@ class Updater(threading.Thread):
         self.suite_info_client.reset()
         self.suite_command_client.reset()
         try:
-            self.daemon_version = self.suite_info_client.get_info_gui(
+            self.daemon_version = self.suite_info_client.get_info(
                 'get_cylc_version')
         except KeyError:
             self.daemon_version = "??? (pre 6.1.2?)"
             if cylc.flags.debug:
                 print >> sys.stderr, "succeeded (old daemon)"
-        except Exception as exc:
+        except PortFileError as exc:
             # Failed to (re)connect.
-            if isinstance(exc, PortFileError):
-                # Probably normal shutdown.
-                msg = MSG_PORT_FILE_ERR
-            elif isinstance(exc, Pyro.errors.ProtocolError):
-                # Port file exists but connection failed.
-                msg = MSG_PROTOCOL_ERR
-            else:
-                # Other.
-                msg = str(exc)
-
+            # Probably normal shutdown; get a stop summary if available.
             if not self.connect_fail_warned:
-                gobject.idle_add(self.warn, msg)
                 self.connect_fail_warned = True
-
-            if cylc.flags.debug:
-                print >> sys.stderr, "failed: %s" % str(exc)
+                gobject.idle_add(self.warn, str(exc))
             if self.stop_summary is None:
                 self.stop_summary = get_stop_state_summary(
-                        self.cfg.suite, self.cfg.owner, self.cfg.host)
+                    self.cfg.suite, self.cfg.owner, self.cfg.host)
                 self._flag_new_update()
             if self.stop_summary is not None and any(self.stop_summary):
-                self.info_bar.set_stop_summary(self.stop_summary)
-            return False
-        else:
+                gobject.idle_add(
+                    self.info_bar.set_stop_summary, self.stop_summary)
+            return
+        except Exception as exc:
             if cylc.flags.debug:
-                print >> sys.stderr, "succeeded"
+                print >> sys.stderr, "failed: %s" % str(exc)
+            if not self.connect_fail_warned:
+                self.connect_fail_warned = True
+                if isinstance(exc, Pyro.errors.ConnectionDeniedError):
+                    gobject.idle_add(
+                        self.warn, "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
+                else:
+                    gobject.idle_add(self.warn, str(exc))
+            return
 
+        if cylc.flags.debug:
+            print >> sys.stderr, "succeeded"
         # Connected.
         self.connected = True
         self.set_status("connected")
@@ -253,9 +230,6 @@ class Updater(threading.Thread):
         self.err_log_lines = []
         self.err_log_size = 0
         self._flag_new_update()
-        # This is an idle_add callback; always return False so that it is only
-        # called on the GUI's own update cycle.
-        return False
 
     def set_update(self, should_update):
         if should_update:
@@ -300,11 +274,11 @@ class Updater(threading.Thread):
 
     def retrieve_state_summaries(self):
         glbl, states, fam_states = self.state_summary_client.get_suite_state_summary()
-        self.ancestors = self.suite_info_client.get_info_gui('get_first_parent_ancestors')
-        self.ancestors_pruned = self.suite_info_client.get_info_gui('get_first_parent_ancestors', True)
-        self.descendants = self.suite_info_client.get_info_gui('get_first_parent_descendants')
-        self.all_families = self.suite_info_client.get_info_gui('get_all_families')
-        self.triggering_families = self.suite_info_client.get_info_gui('get_triggering_families')
+        self.ancestors = self.suite_info_client.get_info('get_first_parent_ancestors')
+        self.ancestors_pruned = self.suite_info_client.get_info('get_first_parent_ancestors', True)
+        self.descendants = self.suite_info_client.get_info('get_first_parent_descendants')
+        self.all_families = self.suite_info_client.get_info('get_all_families')
+        self.triggering_families = self.suite_info_client.get_info('get_triggering_families')
 
         self.mode = glbl['run_mode']
 
@@ -382,7 +356,7 @@ class Updater(threading.Thread):
             print >> sys.stderr, "UPDATE", ctime().split()[3],
         if not self.connected:
             # Only reconnect via self.reconnect().
-            gobject.idle_add(self.reconnect)
+            self.reconnect()
             if cylc.flags.debug:
                 print >> sys.stderr, "(not connected)"
             return False
@@ -416,7 +390,7 @@ class Updater(threading.Thread):
                         self.info_bar.prog_bar_start, "suite initialising...")
                     self.info_bar.set_state([])
                 # Reconnect till we get the suite state object.
-                gobject.idle_add(self.reconnect)
+                self.reconnect()
                 return False
             else:
                 if cylc.flags.debug:
@@ -424,7 +398,7 @@ class Updater(threading.Thread):
                 self.set_stopped()
                 if self.info_bar.prog_bar_active():
                     gobject.idle_add(self.info_bar.prog_bar_stop)
-                gobject.idle_add(self.reconnect)
+                self.reconnect()
                 return False
         except Exception as exc:
             if self.status == "stopping":
@@ -435,7 +409,7 @@ class Updater(threading.Thread):
             self.set_stopped()
             if self.info_bar.prog_bar_active():
                 gobject.idle_add(self.info_bar.prog_bar_stop)
-            gobject.idle_add(self.reconnect)
+            self.reconnect()
             return False
         else:
             # Got suite data.
@@ -527,7 +501,7 @@ class Updater(threading.Thread):
                 and self.poll_schd.ready()
                 and self.update()):
                 self._flag_new_update()
-                gobject.idle_add( self.update_globals )
+                gobject.idle_add(self.update_globals)
             sleep(1)
         else:
             pass

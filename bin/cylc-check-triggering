@@ -1,10 +1,22 @@
 #!/usr/bin/env python
 
-import sys, os
-from cylc.LogDiagnosis import LogAnalyser
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if len(sys.argv) == 2 and sys.argv[1] == '--help':
-    print """USAGE: cylc [hook] check-triggering ARGS
+"""cylc [hook] check-triggering ARGS
 
 This is a cylc shutdown event handler that compares the newly generated
 suite log with a previously generated reference log "reference.log"
@@ -32,30 +44,37 @@ Reference tests can use any run mode:
  equivalent to the reference run, the test will abort with non-zero exit
  status - so reference tests can be used as automated tests to check
  that changes to cylc have not broken your suites."""
+
+import os
+import sys
+
+from cylc.LogDiagnosis import LogAnalyser
+
+if len(sys.argv) == 2 and sys.argv[1] == '--help':
+    print __doc__
     sys.exit(0)
 
-print
-print "This is the cylc check-triggering shutdown event handler"
+print "\nThis is the cylc check-triggering shutdown event handler"
 
 event, suite = sys.argv[1], sys.argv[2]
 
 if event != 'shutdown':
-    raise SystemExit( "ERROR: run this as a shutdown event handler")
+    raise SystemExit("ERROR: run this as a shutdown event handler")
 
 try:
-    log_dir = os.path.expandvars( os.environ['CYLC_SUITE_LOG_DIR'] )
-    suite_dir = os.path.expandvars( os.environ['CYLC_SUITE_DEF_PATH'] )
+    log_dir = os.path.expandvars(os.environ['CYLC_SUITE_LOG_DIR'])
+    suite_dir = os.path.expandvars(os.environ['CYLC_SUITE_DEF_PATH'])
 except KeyError, x:
     raise SystemExit(x)
 
-new_log = os.path.join( log_dir, 'log' )
-ref_log = os.path.join( suite_dir, 'reference.log' )
+new_log = os.path.join(log_dir, 'log')
+ref_log = os.path.join(suite_dir, 'reference.log')
 
 try:
-    lanal = LogAnalyser( ref_log, new_log )
+    lanal = LogAnalyser(ref_log, new_log)
     lanal.verify_triggering()
 except Exception, x:
     print >> sys.stderr, x
-    raise SystemExit( "ERROR: Triggering check FAILED" )
+    raise SystemExit("ERROR: Triggering check FAILED")
 else:
     print "Triggering check passed"

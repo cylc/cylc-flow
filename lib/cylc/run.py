@@ -56,7 +56,7 @@ def main(name, start):
     # Print copyright and license information
     print_blurb()
 
-    # Create run directory tree and get port file.
+    # Create run directory tree and get port.
     try:
         GLOBAL_CFG.create_cylc_run_tree(server.suite)
         server.configure_pyro()
