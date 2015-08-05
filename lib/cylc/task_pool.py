@@ -46,7 +46,6 @@ from cylc.config import SuiteConfig
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
 from cylc.CylcError import SchedulerError, TaskNotFoundError
-from cylc.prerequisites.plain_prerequisites import plain_prerequisites
 from cylc.network.suite_broadcast import BroadcastServer
 from cylc.network.ext_trigger import ExtTriggerServer
 
@@ -989,16 +988,6 @@ class TaskPool(object):
                 result = True
                 break
         return result
-
-    def add_prereq_to_task(self, id_, msg):
-        for itask in self.get_tasks():
-            if itask.identity == id_:
-                prereq = plain_prerequisites(id_)
-                prereq.add(msg)
-                itask.prerequisites.add_requisites(prereq)
-                break
-        else:
-            raise TaskNotFoundError("Task not present in suite: " + id_)
 
     def task_succeeded(self, id_):
         res = False
