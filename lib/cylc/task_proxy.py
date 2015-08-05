@@ -613,19 +613,14 @@ class TaskProxy(object):
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
 
-    def reset_state_succeeded(self, manual=True):
+    def reset_state_succeeded(self):
         """Reset state to succeeded.
 
         All prerequisites satisified and all outputs complete.
 
         """
         self.set_status('succeeded')
-        if manual:
-            self._db_events_insert(event="reset to succeeded")
-        else:
-            # Artificially set to succeeded but not by the user. E.g. by
-            # the purge algorithm and when reloading task definitions.
-            self._db_events_insert(event="set to succeeded")
+        self._db_events_insert(event="reset to succeeded")
         self.prerequisites.set_all_satisfied()
         self.unset_outputs()
         self.turn_off_timeouts()

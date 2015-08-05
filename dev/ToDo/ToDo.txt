@@ -77,16 +77,6 @@ messages such as remote error tracebacks to be sent to the handler.
   broker) for satisfaction. We could then eliminate the broker, and
   may significantly increase efficiency for very large suites?
 
-* RECURSIVE PURGE OVERHAUL? see documentation of limitations in the
-  purge command help. Post cylc-3.0 we could easily determine, via the
-  suite dependency graph, if any tasks that should be affected by the
-  purge have not yet reached the purge start time. Also: see TO DO in
-  the in-method comments: ensure that ALL tasks whose prerequisites get
-  satisfied in the virtual system evolution that occurs in the purge
-  algorithm, get unsatisfied again at the end of it.
- (consider also: clock-triggered tasks downstream of the purge root -
- they won't trigger in the purge simulation if their time is not up yet?)
-
 * a 'nudge' that just updates task state info, without going through
   the full task processing loop?
 
