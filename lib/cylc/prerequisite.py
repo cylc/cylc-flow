@@ -117,6 +117,7 @@ class Prerequisite(object):
             # be handled as "plain prerequisites" and not added to task
             # instances in task_proxy.py if prior to tdef.start_point).
             self.conditional_expression = '()'
+            self.raw_conditional_expression = '()'
         else:
             self.conditional_expression = expr
 
@@ -144,10 +145,13 @@ class Prerequisite(object):
     def dump( self ):
         # return an array of strings representing each message and its state
         res = []
+        if self.conditional_expression == '()':
+            # Trigger wiped out by pre-initial simplification.
+            return []
         for label in self.satisfied:
             msg = self.messages[label]
-            res.append( [ '    LABEL: ' + label + ' = ' + self.messages[label], self.satisfied[ label ] ]  )
-        res.append( [     'CONDITION: ' + self.raw_conditional_expression, self.is_satisfied() ] )
+            res.append(['    LABEL: ' + label + ' = ' + self.messages[label], self.satisfied[ label]])
+        res.append([    'CONDITION: ' + self.raw_conditional_expression, self.is_satisfied()])
         return res
 
     def set_satisfied(self):
