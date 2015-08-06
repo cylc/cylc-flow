@@ -50,7 +50,8 @@ title: (not given)
 description: (not given)
 
 prerequisites (- => not satisfied):
-  - show.20140808T0900$TZ_OFFSET_BASIC succeeded
+  -     LABEL: show = show.20140808T0900$TZ_OFFSET_BASIC succeeded
+  - CONDITION: show
 
 outputs (- => not completed):
   - foo.20140808T0900$TZ_OFFSET_BASIC started

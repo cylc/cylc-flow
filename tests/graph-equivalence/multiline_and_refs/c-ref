@@ -1,5 +1,6 @@
 prerequisites (- => not satisfied):
-  - a.1 succeeded
-  - b.1 succeeded
+  -     LABEL: a = a.1 succeeded
+  -     LABEL: b = b.1 succeeded
+  - CONDITION: a & b
 
 outputs (- => not completed):
