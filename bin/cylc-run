@@ -133,7 +133,7 @@ class start(scheduler):
                 continue
             if name in coldstart_tasks and self.options.warm:
                 itask.state.set_status('succeeded')
-                itask.prerequisites.set_all_satisfied()
+                itask.set_prerequisites_all_satisfied()
                 itask.outputs.set_all_completed()
             # Load task.
             self.pool.add_to_runahead_pool(itask)

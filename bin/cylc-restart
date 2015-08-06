@@ -440,7 +440,7 @@ class restart(scheduler):
                 itask.state.set_status('waiting')
 
             elif itask.state.is_currently('submitted', 'running'):
-                itask.prerequisites.set_all_satisfied()
+                itask.set_prerequisites_all_satisfied()
                 # update the task proxy with submit ID etc.
                 itask.try_number = task_states_datum.get("try_num")
                 itask.user_at_host = task_states_datum.get("host")
@@ -463,13 +463,13 @@ class restart(scheduler):
             elif itask.state.is_currently('queued', 'ready', 'submit-retrying',
                                           'submit-failed', 'retrying',
                                           'failed'):
-                itask.prerequisites.set_all_satisfied()
+                itask.set_prerequisites_all_satisfied()
                 if not itask.state.is_currently('failed', 'submit-failed'):
                     # reset to waiting as these had not been submitted yet.
                     itask.state.set_status('waiting')
 
             elif itask.state.is_currently('succeeded'):
-                itask.prerequisites.set_all_satisfied()
+                itask.set_prerequisites_all_satisfied()
                 itask.outputs.set_all_completed()
 
             else:

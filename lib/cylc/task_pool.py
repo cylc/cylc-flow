@@ -441,7 +441,7 @@ class TaskPool(object):
         """Check for future triggers extending beyond the final cycle."""
         if not self.stop_point:
             return False
-        for pct in set(itask.prerequisites.get_target_points()):
+        for pct in set(itask.prerequisites_get_target_points()):
             if pct > self.stop_point:
                 return True
         return False
@@ -815,8 +815,8 @@ class TaskPool(object):
     def remove_suiciding_tasks(self):
         """Remove any tasks that have suicide-triggered."""
         for itask in self.get_tasks():
-            if itask.suicide_prerequisites.count() != 0:
-                if itask.suicide_prerequisites.all_satisfied():
+            if len(itask.suicide_prerequisites) != 0:
+                if itask.suicide_prerequisites_are_all_satisfied():
                     if itask.state.is_currently(
                             'ready', 'submitted', 'running'):
                         itask.log(WARNING, 'suiciding while active')
@@ -1055,7 +1055,7 @@ class TaskPool(object):
                     extra_info['External trigger "%s"' % trig] = state
 
                 info[id_] = [
-                    itask.prerequisites.dump(),
+                    itask.prerequisites_dump(),
                     itask.outputs.dump(),
                     extra_info,
                 ]

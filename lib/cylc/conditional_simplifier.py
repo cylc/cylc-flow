@@ -21,7 +21,7 @@ import ast
 import copy
 
 
-class conditional_simplifier( object ):
+class ConditionalSimplifier(object):
     """A class to simplify logical expressions"""
 
     def __init__( self, expr, clean ):

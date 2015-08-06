@@ -33,7 +33,7 @@ from copy import deepcopy, copy
 from output import output
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
-from prerequisites.conditionals import TriggerExpressionError
+from cylc.prerequisite import TriggerExpressionError
 from regpath import RegPath
 from trigger import trigger
 from parsec.util import replicate
@@ -1564,22 +1564,11 @@ class SuiteConfig(object):
                     self.taskdefs[name].outputs.append(outp)
  
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
-        if not right:
-            # lefts are lone nodes; no more triggers to define.
+        if not right or not left_nodes:
+            # Lone nodes have no triggers.
             return
         
-        if not left_nodes:
-            # Nothing actually remains to trigger right.
-            return
-
         base_interval = seq.get_interval()
-
-        conditional = False
-        if re.search( '\|', lexpression ):
-            conditional = True
-            # For single triggers or '&'-only ones, which will be the
-            # vast majority, we needn't use conditional prerequisites
-            # (they may be less efficient due to python eval at run time).
 
         ctrig = {}
         cname = {}
@@ -1609,32 +1598,18 @@ class SuiteConfig(object):
                 ltaskdef.intercycle_offsets.append(offset_tuple)
 
             trig = trigger(
-                    lnode.name, lnode.output, lnode.offset_string,
-                    cycle_point, suicide,
-                    self.cfg['runtime'][lnode.name]['outputs'],
-                    base_interval
-            )
+                lnode.name, lnode.output, lnode.offset_string, cycle_point,
+                suicide, self.cfg['runtime'][lnode.name]['outputs'],
+                base_interval)
 
-            if self.run_mode != 'live' and not trig.is_standard():
-                # Dummy tasks do not report message outputs.
-                continue
-
-            if not conditional:
-                self.taskdefs[right].add_trigger( trig, seq )
-                continue
-
-            # CONDITIONAL TRIGGERS
-            # Use fully qualified name for the expression label
-            # (task name is not unique, e.g.: "F | F:fail => G")
+            # Use fully qualified name for trigger expression label
+            # (task name is not unique, e.g.: "F | F:fail => G").
             label = self.get_conditional_label(left)
             ctrig[label] = trig
             cname[label] = lnode.name
 
-        if not conditional:
-            return
-
         expr = self.get_conditional_label(lexpression)
-        self.taskdefs[right].add_conditional_trigger( ctrig, expr, seq )
+        self.taskdefs[right].add_trigger( ctrig, expr, seq )
 
     def get_actual_first_point( self, start_point ):
         # Get actual first cycle point for the suite (get all

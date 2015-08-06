@@ -52,9 +52,7 @@ from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.outputs import outputs
 from cylc.owner import is_remote_user, user
 from cylc.poll_timer import PollTimer
-from cylc.prerequisites.prerequisites import prerequisites
-from cylc.prerequisites.plain_prerequisites import plain_prerequisites
-from cylc.prerequisites.conditionals import conditional_prerequisites
+from cylc.prerequisite import Prerequisite
 from cylc.suite_host import is_remote_host, get_suite_host
 from parsec.util import pdeepcopy, poverride
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
@@ -208,9 +206,8 @@ class TaskProxy(object):
                 self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
-        # prerequisites
-        self.prerequisites = prerequisites(self.tdef.start_point)
-        self.suicide_prerequisites = prerequisites(self.tdef.start_point)
+        self.prerequisites = []
+        self.suicide_prerequisites = []
         self._add_prerequisites(self.point)
         self.point_as_seconds = None
 
@@ -329,23 +326,40 @@ class TaskProxy(object):
 
     def _add_prerequisites(self, point):
         """Add task prerequisites."""
-        # NOTE: Task objects hold all triggers defined for the task
-        # in all cycling graph sections in this data structure:
-        #     self.triggers[sequence] = [list of triggers for this
-        #     sequence]
-        # The list of triggers associated with sequenceX will only be
-        # used by a particular task if the task's cycle point is a
-        # valid member of sequenceX's sequence of cycle points.
+        # self.triggers[sequence] = [triggers for sequence]
+        # Triggers for sequence_i only used if my cycle point is a
+        # valid member of sequence_i's sequence of cycle points.
 
-        # 1) non-conditional triggers
-        ppre = plain_prerequisites(self.identity, self.tdef.start_point)
-        spre = plain_prerequisites(self.identity, self.tdef.start_point)
+        # TODO - self.tdef.max_future_prereq_offset COMPUTED IN
+        # THE OLD NON-CONDITIONAL TRIGGER SECTION - WHAT IS IT?
+
+        for sequence in self.tdef.triggers.keys():
+            for ctrig, exp in self.tdef.triggers[sequence]:
+                key = ctrig.keys()[0]
+                if not sequence.is_valid(self.point):
+                    # This trigger is not valid for current cycle (see NOTE
+                    # just above)
+                    continue
+                cpre = Prerequisite(self.identity, self.tdef.start_point)
+                for label in ctrig:
+                    trig = ctrig[label]
+                    if trig.graph_offset_string is not None:
+                        is_less_than_start = (
+                            get_point_relative(
+                                trig.graph_offset_string, point) <
+                            self.tdef.start_point
+                        )
+                        cpre.add(trig.get_prereq(point)[0], label, is_less_than_start)
+                    else:
+                        cpre.add(trig.get_prereq(point)[0], label)
+                cpre.set_condition(exp)
+                if ctrig[key].suicide:
+                    self.suicide_prerequisites.append(cpre)
+                else:
+                    self.prerequisites.append(cpre)
 
         if self.tdef.sequential:
-            # For tasks declared 'sequential' we automatically add a
-            # previous-instance inter-cycle trigger, and adjust the
-            # cleanup cutoff (determined by inter-cycle triggers)
-            # accordingly.
+            # Add a previous-instance prerequisite, adjust cleanup cutoff.
             p_next = None
             adjusted = []
             for seq in self.tdef.sequences:
@@ -358,72 +372,22 @@ class TaskProxy(object):
                 if (self.cleanup_cutoff is not None and
                         self.cleanup_cutoff < p_next):
                     self.cleanup_cutoff = p_next
-
             p_prev = None
             adjusted = []
             for seq in self.tdef.sequences:
                 prv = seq.get_nearest_prev_point(self.point)
                 if prv:
-                    # may be None if out of sequence bounds
+                    # None if out of sequence bounds.
                     adjusted.append(prv)
             if adjusted:
                 p_prev = max(adjusted)
-                ppre.add(TaskID.get(self.tdef.name, p_prev) + ' succeeded')
-
-        for sequence in self.tdef.triggers:
-            for trig in self.tdef.triggers[sequence]:
-                if not sequence.is_valid(self.point):
-                    # This trigger is not used in current cycle
-                    continue
-                if (trig.graph_offset_string is None or
-                        (get_point_relative(
-                            trig.graph_offset_string, point) >=
-                         self.tdef.start_point)):
-                    # i.c.t. can be None after a restart, if one
-                    # is not specified in the suite definition.
-
-                    message, prereq_point = trig.get(point)
-                    prereq_offset = prereq_point - point
-                    if (prereq_offset > get_interval_cls().get_null() and
-                            (self.tdef.max_future_prereq_offset is None or
-                             prereq_offset >
-                             self.tdef.max_future_prereq_offset)):
-                        self.tdef.max_future_prereq_offset = prereq_offset
-
-                    if trig.suicide:
-                        spre.add(message)
-                    else:
-                        ppre.add(message)
-
-        self.prerequisites.add_requisites(ppre)
-        self.suicide_prerequisites.add_requisites(spre)
-
-        # 2) conditional triggers
-        for sequence in self.tdef.cond_triggers.keys():
-            for ctrig, exp in self.tdef.cond_triggers[sequence]:
-                key = ctrig.keys()[0]
-                if not sequence.is_valid(self.point):
-                    # This trigger is not valid for current cycle (see NOTE
-                    # just above)
-                    continue
-                cpre = conditional_prerequisites(
-                    self.identity, self.tdef.start_point)
-                for label in ctrig:
-                    trig = ctrig[label]
-                    if trig.graph_offset_string is not None:
-                        is_less_than_start = (
-                            get_point_relative(
-                                trig.graph_offset_string, point) <
-                            self.tdef.start_point
-                        )
-                        cpre.add(trig.get(point)[0], label, is_less_than_start)
-                    else:
-                        cpre.add(trig.get(point)[0], label)
-                cpre.set_condition(exp)
-                if ctrig[key].suicide:
-                    self.suicide_prerequisites.add_requisites(cpre)
-                else:
-                    self.prerequisites.add_requisites(cpre)
+                cpre = Prerequisite(self.identity, self.tdef.start_point)
+                is_less_than_start = p_prev < self.tdef.start_point
+                prereq = TaskID.get(self.tdef.name, p_prev) + ' succeeded'
+                label = self.tdef.name
+                cpre.add(prereq, label, is_less_than_start)
+                cpre.set_condition(label)
+                self.prerequisites.append(cpre)
 
     def log(self, lvl=INFO, msg=""):
         """Log a message of this task proxy."""
@@ -490,7 +454,7 @@ class TaskProxy(object):
                 self.state.is_currently('queued') or
                 (
                     self.state.is_currently('waiting') and
-                    self.prerequisites.all_satisfied() and
+                    self.prerequisites_are_all_satisfied() and
                     all(self.external_triggers.values())
                 ) or
                 (
@@ -550,12 +514,11 @@ class TaskProxy(object):
         return time.time() > self.expire_time
 
     def get_resolved_dependencies(self):
-        """report who I triggered off"""
-        # Used by the test-battery log comparator
-        dep = []
-        satby = self.prerequisites.get_satisfied_by()
-        for label in satby.keys():
-            dep.append(satby[label])
+        """Report who I triggered off."""
+        satby = {}
+        for req in self.prerequisites:
+            satby.update(req.satisfied_by)
+        dep = satby.values()
         # order does not matter here; sort to allow comparison with
         # reference run task with lots of near-simultaneous triggers.
         dep.sort()
@@ -581,11 +544,44 @@ class TaskProxy(object):
         self.submission_timer_timeout = None
         self.execution_timer_timeout = None
 
+    def prerequisites_get_target_points(self):
+        """Return a list of cycle points targetted by each prerequisite."""
+        points = []
+        for preq in self.prerequisites:
+            points += preq.get_target_points()
+        return points
+
+    def prerequisites_dump(self):
+        res = []
+        for preq in self.prerequisites:
+            res += preq.dump()
+        return res
+
+    def prerequisites_eval_all(self):
+        # (Validation: will abort on illegal trigger expressions.)
+        for preqs in [self.prerequisites, self.suicide_prerequisites]:
+            for preq in preqs:
+                preq.is_satisfied()
+
+    def prerequisites_are_all_satisfied(self):
+        return all(preq.is_satisfied() for preq in self.prerequisites)
+
+    def suicide_prerequisites_are_all_satisfied(self):
+        return all(preq.is_satisfied() for preq in self.suicide_prerequisites)
+
+    def set_prerequisites_all_satisfied(self):
+        for prereq in self.prerequisites:
+            prereq.set_satisfied()
+
+    def set_prerequisites_not_satisfied(self):
+        for prereq in self.prerequisites:
+            prereq.set_not_satisfied()
+
     def reset_state_ready(self):
         """Reset state to "ready"."""
         self.set_status('waiting')
         self._db_events_insert(event="reset to ready")
-        self.prerequisites.set_all_satisfied()
+        self.set_prerequisites_all_satisfied()
         self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
@@ -594,7 +590,7 @@ class TaskProxy(object):
         """Reset state to "expired"."""
         self.set_status('expired')
         self._db_events_insert(event="reset to expired")
-        self.prerequisites.set_all_satisfied()
+        self.set_prerequisites_all_satisfied()
         self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
@@ -608,7 +604,7 @@ class TaskProxy(object):
         """
         self.set_status('waiting')
         self._db_events_insert(event="reset to waiting")
-        self.prerequisites.set_all_unsatisfied()
+        self.set_prerequisites_not_satisfied()
         self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
@@ -621,7 +617,7 @@ class TaskProxy(object):
         """
         self.set_status('succeeded')
         self._db_events_insert(event="reset to succeeded")
-        self.prerequisites.set_all_satisfied()
+        self.set_prerequisites_all_satisfied()
         self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_completed()
@@ -634,7 +630,7 @@ class TaskProxy(object):
         """
         self.set_status('failed')
         self._db_events_insert(event="reset to failed")
-        self.prerequisites.set_all_satisfied()
+        self.set_prerequisites_all_satisfied()
         self.hold_on_retry = False
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
@@ -950,7 +946,7 @@ class TaskProxy(object):
             self.set_status('submit-retrying')
             self._db_events_insert(
                 event="submission failed", message=delay_msg)
-            self.prerequisites.set_all_satisfied()
+            self.set_prerequisites_all_satisfied()
             self.outputs.set_all_incomplete()
 
             # TODO - is this record is redundant with that in handle_event?
@@ -1048,7 +1044,7 @@ class TaskProxy(object):
             self.summary['latest_message'] = msg
 
             self.set_status('retrying')
-            self.prerequisites.set_all_satisfied()
+            self.set_prerequisites_all_satisfied()
             self.outputs.set_all_incomplete()
             self.handle_event(
                 "retry", "job failed, " + delay_msg, db_msg=delay_msg)
@@ -1759,14 +1755,14 @@ class TaskProxy(object):
 
     def not_fully_satisfied(self):
         """Return True if prerequisites are not fully satisfied."""
-        return (not self.prerequisites.all_satisfied() or
-                not self.suicide_prerequisites.all_satisfied())
+        return (not self.prerequisites_are_all_satisfied() or
+                not self.suicide_prerequisites_are_all_satisfied())
 
     def satisfy_me(self, task_outputs):
-        """Attempt to to satify the prerequisites of this task proxy."""
-        self.prerequisites.satisfy_me(task_outputs)
-        if self.suicide_prerequisites.count() > 0:
-            self.suicide_prerequisites.satisfy_me(task_outputs)
+        """Attempt to get my prerequisites satisfied."""
+        for preqs in [self.prerequisites, self.suicide_prerequisites]:
+            for preq in preqs:
+                preq.satisfy_me(task_outputs)
 
     def next_point(self):
         """Return the next cycle point."""

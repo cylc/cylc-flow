@@ -33,7 +33,8 @@ if remrun().execute():
 import cylc.flags
 from cylc.CylcOptionParsers import cop
 from cylc.version import CYLC_VERSION
-from cylc.config import SuiteConfig
+from cylc.config import SuiteConfig, SuiteConfigError
+from cylc.prerequisite import TriggerExpressionError
 from cylc.task_proxy import TaskProxy
 
 
@@ -104,7 +105,7 @@ def main():
 
         # force trigger evaluation now
         try:
-            itask.prerequisites.eval_all()
+            itask.prerequisites_eval_all()
         except TriggerExpressionError as exc:
             print >> sys.stderr, str(exc)
             raise SuiteConfigError(
