@@ -7,9 +7,10 @@
 #    (b) inheriting from an existing theme and overriding specific
 #     colors (see the "PinkRun" example below).
 
-initial views = text, dot     # set your default views
-ungrouped views = graph       # set your initially ungrouped views
-use theme = PinkRun           # set your default theme
+initial views = text, dot      # set your default views
+ungrouped views = graph        # set your initially ungrouped views
+use theme = PinkRun            # set your default theme
+initial orientation = vertical # set your default orientation
 
 [themes]
     [[PinkRun]] # override the 'running' color in the 'default' theme
