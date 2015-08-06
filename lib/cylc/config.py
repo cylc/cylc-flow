@@ -217,7 +217,7 @@ class SuiteConfig(object):
                 "ERROR: missing [scheduling][[dependencies]] section.")
         # (The check that 'graph' is definied is below).
         # The two runahead limiting schemes are mutually exclusive.
-        rlim = self.cfg['scheduling'].get('runahead limit', None) 
+        rlim = self.cfg['scheduling'].get('runahead limit', None)
         mact = self.cfg['scheduling'].get('max active cycle points', None)
         if rlim is not None and mact is not None:
             raise SuiteConfigError(
@@ -240,7 +240,7 @@ class SuiteConfig(object):
                     if m:
                         linemsg = line.strip()
                         raise SuiteConfigError(
-                            "ERROR: Illegal '%s' in '%s' at %s" 
+                            "ERROR: Illegal '%s' in '%s' at %s"
                             % (m.group(0), item, linemsg)
                         )
             if item == 'graph' or value.get('graph'):
@@ -362,7 +362,7 @@ class SuiteConfig(object):
                     str(self.cfg['scheduling']['initial cycle point constraints']))
                     )
 
-        if (self.cfg['scheduling']['final cycle point'] is not None and 
+        if (self.cfg['scheduling']['final cycle point'] is not None and
             self.cfg['scheduling']['final cycle point'].strip() is ""):
                 self.cfg['scheduling']['final cycle point'] = None
         final_point_string = (cli_final_point_string or
@@ -426,7 +426,7 @@ class SuiteConfig(object):
                         )
                     name, ext_trigger_msg = m.groups()
                     extn = "(" + ext_trigger_msg + ")"
-  
+
                 elif type in ['clock-trigger', 'clock-expire']:
                     m = re.match(CLOCK_OFFSET_RE, item)
                     if m is None:
@@ -688,7 +688,7 @@ class SuiteConfig(object):
                     print >> sys.stderr, '  %s => %s' % e
                 raise SuiteConfigError('ERROR: cyclic dependence detected '
                                        '(graph the suite to see back-edges).')
- 
+
     def dequote(self, s):
         """Strip quotes off a string."""
         if (s[0] == s[-1]) and s.startswith(("'", '"')):
@@ -1119,7 +1119,7 @@ class SuiteConfig(object):
                 taskdef.check_for_explicit_cycling()
             except TaskDefError as exc:
                 raise SuiteConfigError(str(exc))
- 
+
         if flags.verbose:
             print "Checking for defined tasks not used in the graph"
             for name in self.cfg['runtime']:
@@ -1197,6 +1197,18 @@ class SuiteConfig(object):
             mems = paren_open + connector.join( [ exclam + i + foffset + repl for i in members ] ) + paren_close
             line = re.sub( exclam + r"\b" + fam + r"\b" + re.escape(foffset) + orig, mems, line )
         return line
+
+    def prune_expression(self, expression, pruned):
+        """Remove pruned nodes from a graph string left-side.
+
+        Used for pruning back-compat (cylc-5) start-up tasks from non-R1
+        sections.
+        """
+        # TODO - MAKE THIS TIDIER AND MORE GENERAL? (e.g. 'OR' EXPRESSIONS?)
+        for node in pruned:
+            expression = re.sub(node + ' *&', '', expression)
+            expression = re.sub('& *' + node, '', expression)
+        return expression
 
     def process_graph_line( self, line, section, seq, offset_seq_map,
                             tasks_to_prune=None,
@@ -1391,7 +1403,7 @@ class SuiteConfig(object):
             n_close_brackets = lexpression.count(")")
             if n_open_brackets != n_close_brackets:
                 raise SuiteConfigError, (
-                    "ERROR: missing bracket in: \"" + lexpression + "\"") 
+                    "ERROR: missing bracket in: \"" + lexpression + "\"")
             nstr = re.sub( '[(|&)]', ' ', lexpression )
             nstr = nstr.strip()
             left_nodes = re.split( ' +', nstr )
@@ -1430,7 +1442,8 @@ class SuiteConfig(object):
                             special_dependencies.append(special_dep)
                     if left_name in tasks_to_prune:
                         pruned_left_nodes.remove(left_node)
-
+                        lexpression = self.prune_expression(lexpression,
+                                                            tasks_to_prune)
                 if right_name in tasks_to_prune:
                     continue
 
@@ -1562,12 +1575,12 @@ class SuiteConfig(object):
                 for lbl,msg in self.cfg['runtime'][name]['outputs'].items():
                     outp = output(msg, base_interval)
                     self.taskdefs[name].outputs.append(outp)
- 
+
     def generate_triggers( self, lexpression, left_nodes, right, seq, suicide ):
         if not right or not left_nodes:
             # Lone nodes have no triggers.
             return
-        
+
         base_interval = seq.get_interval()
 
         ctrig = {}
@@ -1702,11 +1715,11 @@ class SuiteConfig(object):
                     for fam in copy(self.closed_families):
                         if fam in members[node]:
                             self.closed_families.remove(fam)
-       
+
         n_points = self.cfg['visualization']['number of cycle points']
 
         graph_id = (start_point_string, stop_point_string, set(group_nodes),
-                    set(ungroup_nodes), ungroup_recursive, group_all, 
+                    set(ungroup_nodes), ungroup_recursive, group_all,
                     ungroup_all, set(self.closed_families),
                     set(self.edges), n_points)
         if graph_id == self._last_graph_raw_id:
@@ -1791,7 +1804,7 @@ class SuiteConfig(object):
             edges = [i for sublist in values for i in sublist]
 
         self._last_graph_raw_id = graph_id
-        self._last_graph_raw_edges = edges 
+        self._last_graph_raw_edges = edges
         return edges
 
     def get_graph(self, start_point_string=None, stop_point_string=None,
