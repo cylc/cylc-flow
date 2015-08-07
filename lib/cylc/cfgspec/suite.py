@@ -418,6 +418,10 @@ def upg( cfg, descr ):
             ['runtime', '__MANY__', old],
             ['runtime', '__MANY__', new],
             silent=True)
+        u.deprecate('6.4.0',
+            ['runtime', '__MANY__', 'dummy mode', old],
+            ['runtime', '__MANY__', 'dummy mode', new],
+            silent=True)
     u.deprecate(
         '6.5.0',
         ['scheduling', 'special tasks', 'clock-triggered'],
