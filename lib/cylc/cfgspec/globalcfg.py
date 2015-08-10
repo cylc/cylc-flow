@@ -123,6 +123,10 @@ SPEC = {
             'cylc executable'             : vdr( vtype='string', default='cylc'  ),
             'global init-script'          : vdr( vtype='string', default='' ),
             'copyable environment variables': vdr(vtype='string_list', default=[]),
+            'retrieve job logs'           : vdr( vtype='boolean', default=False ),
+            'retrieve job logs max size'  : vdr( vtype='string' ),
+            'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             },
         '__MANY__' : {
             'run directory'               : vdr( vtype='string'  ),
@@ -134,8 +138,26 @@ SPEC = {
             'cylc executable'             : vdr( vtype='string'  ),
             'global init-script'          : vdr( vtype='string'  ),
             'copyable environment variables': vdr(vtype='string_list', default=[]),
+            'retrieve job logs'           : vdr( vtype='boolean', default=False ),
+            'retrieve job logs max size'  : vdr( vtype='string' ),
+            'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             },
         },
+
+    'task events': {
+        'execution timeout': vdr(vtype='interval_minutes'),
+        'handlers': vdr(vtype='string_list', default=[]),
+        'handler events': vdr(vtype='string_list', default=[]),
+        'handler retry delays': vdr(vtype='interval_minutes_list', default=[]),
+        'mail events': vdr(vtype='string_list', default=[]),
+        'mail from': vdr(vtype='string'),
+        'mail retry delays': vdr(vtype='interval_minutes_list', default=[]),
+        'mail smtp': vdr(vtype='string'),
+        'mail to': vdr(vtype='string'),
+        'reset timer': vdr(vtype='boolean', default=False),
+        'submission timeout': vdr(vtype='interval_minutes'),
+    },
 
     'test battery': {
         'remote host with shared fs': vdr(vtype='string'),

@@ -1279,6 +1279,7 @@ the different selectable hosts, you can configure your
 \end{myitemize}
 
 \subparagraph[retrieve job logs]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs}
+\label{runtime-remote-retrieve-job-logs}
 
 Remote task job logs are saved to the suite run directory on the task host, not
 on the suite host. If you want the job logs pulled back to the suite host
@@ -1294,6 +1295,7 @@ time a task job completes. E.g. if the job file is
 \end{myitemize}
 
 \subparagraph[retrieve job logs max size]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs max size}
+\label{runtime-remote-retrieve-job-logs-max-size}
 
 If the disk space of the suite host is limited, you may want to set the maximum
 sizes of the job log files to retrieve. The value can be anything that is
@@ -1306,6 +1308,7 @@ command.
 \end{myitemize}
 
 \subparagraph[retrieve job logs retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs retry delays}
+\label{runtime-remote-retrieve-job-logs-retry-delays}
 
 Some batch systems have considerable delays between the time when the job
 completes and when it writes the job logs in its normal location. If this is
@@ -1405,6 +1408,7 @@ Item details:
 \end{myitemize}
 
 \subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
+\label{runtime-event-hooks-submission-timeout}
 
 If a task has not started after the specified ISO 8601 duration/interval, the
 {\em submission timeout} event handler(s) will be called.
@@ -1415,6 +1419,7 @@ If a task has not started after the specified ISO 8601 duration/interval, the
 \end{myitemize}
 
 \subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ execution timeout}
+\label{runtime-event-hooks-execution-timeout}
 
 If a task has not finished after the specified ISO 8601 duration/interval, the
 {\em execution timeout} event handler(s) will be called.
@@ -1425,6 +1430,7 @@ If a task has not finished after the specified ISO 8601 duration/interval, the
 \end{myitemize}
 
 \subparagraph[reset timer]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ reset timer}
+\label{runtime-event-hooks-reset-timer}
 
 If you set an execution timeout the timer can be reset to zero every
 time a message is received from the running task (which indicates the
@@ -1554,6 +1560,18 @@ anything accepted by the \lstinline=mail= command.
     \item {\em default:} None, (USER@HOSTNAME)
     \item {\em example:} \lstinline@mail to = your.colleague@
 \end{myitemize}
+
+\subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ submission timeout}
+
+Equivalent to~\ref{runtime-event-hooks-submission-timeout}.
+
+\subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ execution timeout}
+
+Equivalent to~\ref{runtime-event-hooks-execution-timeout}.
+
+\subparagraph[reset timer]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ reset timer}
+
+Equivalent to~\ref{runtime-event-hooks-reset-timer}.
 
 \paragraph[{[[[}environment{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]]}
 

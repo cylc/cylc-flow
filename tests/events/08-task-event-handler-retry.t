@@ -18,11 +18,23 @@
 # Test general task event handler + retry.
 . "$(dirname "$0")/test_header"
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+OPT_SET=
+if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
+    mkdir 'conf'
+cat >'conf/global.rc' <<'__GLOBALCFG__'
+[task events]
+    handlers=hello-event-handler '%(name)s' '%(event)s'
+    handler events=succeeded, failed
+    handler retry delays=PT0S, 2*PT1S
+__GLOBALCFG__
+    export CYLC_CONF_PATH="${PWD}/conf"
+    OPT_SET='-s GLOBALCFG=True'
+fi
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug "${SUITE_NAME}"
+    cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
 
 SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')"
 LOG="${SUITE_RUN_DIR}/${SUITE_NAME}/log/job/1/t1/NN/job-activity.log"
