@@ -3,6 +3,7 @@
 
 from fcntl import lockf, LOCK_SH
 import os
+import time
 from subprocess import call
 
 def main():
@@ -18,6 +19,7 @@ def main():
         for line in open(os.path.join(suite_log_dir, "log")):
             if "cylc-suite.db: recovered from" in line:
                 return
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
