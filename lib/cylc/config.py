@@ -127,7 +127,8 @@ class SuiteConfig(object):
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_restart=False, is_reload=False, write_proc=True,
-                 vis_start_string=None, vis_stop_string=None):
+                 vis_start_string=None, vis_stop_string=None,
+                 mem_log_func=None):
         """Return a singleton instance.
 
         On 1st call, instantiate the singleton.
@@ -141,7 +142,7 @@ class SuiteConfig(object):
                 run_mode, validation, strict, collapsed,
                 cli_initial_point_string, cli_start_point_string,
                 cli_final_point_string, is_restart, is_reload, write_proc,
-                vis_start_string, vis_stop_string)
+                vis_start_string, vis_stop_string, mem_log_func)
         return cls._INSTANCE
 
 
