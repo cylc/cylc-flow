@@ -23,6 +23,18 @@ if [[ -z "${HOST}" ]]; then
     skip_all '[test battery]remote host: not defined'
 fi
 set_test_number 4
+OPT_SET=
+if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
+    mkdir 'conf'
+    cat >'conf/global.rc' <<__GLOBALCFG__
+[hosts]
+    [[${HOST}]]
+        retrieve job logs = True
+__GLOBALCFG__
+    export CYLC_CONF_PATH="${PWD}/conf"
+    OPT_SET='-s GLOBALCFG=True'
+fi
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
@@ -32,9 +44,9 @@ ${SSH} "${HOST}" \
 set +eu
 
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug -s "HOST=${HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
 
 SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}"
 sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \

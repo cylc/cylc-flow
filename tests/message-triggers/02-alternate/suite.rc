@@ -1,0 +1,20 @@
+title = Test suite for alternate message triggers.
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT30S
+[scheduling]
+    [[dependencies]]
+           graph = """foo:x => run_me & !dont_run_me
+                      foo:y => dont_run_me & !run_me"""
+[runtime]
+    [[run_me]]
+        script = /bin/true
+    [[dont_run_me]]
+        script = /bin/false
+    [[foo]]
+        script = cylc message "message one for $CYLC_TASK_CYCLE_POINT"
+        [[[outputs]]]
+            x = "message one for []"
+            y = "message two for []"

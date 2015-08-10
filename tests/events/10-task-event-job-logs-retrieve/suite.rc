@@ -16,4 +16,6 @@ title=Task Event Job Log Retrieve
         retry delays=PT0S, 2*PT1S
         [[[remote]]]
             host = {{HOST}}
+{% if GLOBALCFG is not defined %}
             retrieve job logs = True
+{% endif %}{# not GLOBALCFG is not defined #}

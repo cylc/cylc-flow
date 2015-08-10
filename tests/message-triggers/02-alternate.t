@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Validate and run the task events suite.
+# Test alternate message triggers (task finish with incomplete outputs; #1551).
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE task
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME

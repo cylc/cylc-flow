@@ -18,6 +18,7 @@
 
 """Provide the main function for "cylc run" and "cylc restart"."""
 
+import re
 import sys
 from daemonize import daemonize
 from version import CYLC_VERSION
@@ -27,29 +28,34 @@ from exceptions import SchedulerStop, SchedulerError
 
 
 def print_blurb():
-    lines = []
-    lines.append(" The Cylc Suite Engine [" + CYLC_VERSION + "] ")
-    lines.append(" Copyright (C) 2008-2015 NIWA ")
-
-    lic = """
- This program comes with ABSOLUTELY NO WARRANTY.  It is free software;
- you are welcome to redistribute it under certain conditions. Details:
-  `cylc license conditions'; `cylc license warranty' """
-    lines += lic.split('\n')
-
-    mx = 0
-    for line in lines:
-        if len(line) > mx:
-            mx = len(line)
-
-    print '*' * (mx + 2)
-    for line in lines:
-        print '*' + line.center(mx) + '*'
-    print '*' * (mx + 2)
-
+    logo = """\
+            ,_,       
+            | |       
+,_____,_, ,_| |_____, 
+| ,___| | | | | ,___| 
+| |___| |_| | | |___  
+\_____\___, |_\_____| 
+      ,___| |         
+      \_____|         
+"""
+    license = """
+The Cylc Suite Engine [%s]
+Copyright (C) 2008-2015 NIWA
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+This program comes with ABSOLUTELY NO WARRANTY.   It is
+free software; you are welcome to redistribute it under
+certain conditions: "cylc warranty", "cylc conditions".
+ 
+  """ % CYLC_VERSION
+    
+    logo_lines = logo.splitlines()
+    license_lines = license.splitlines()
+    lmax = max(len(line) for line in license_lines)
+    for i in range(len(logo_lines)):
+        print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
+    print
 
 def main(name, start):
-
     # Parse the command line:
     server = start()
 

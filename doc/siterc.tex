@@ -533,6 +533,21 @@ to be copied from the suite daemon to a job.
 \item {\em localhost default:} \lstinline@[]@
 \end{myitemize}
 
+\paragraph[retrieve job logs]{[hosts] $\rightarrow$ HOST $\rightarrow$ retrieve job logs}
+
+Global default for the~\ref{runtime-remote-retrieve-job-logs} setting for the
+specified host.
+
+\paragraph[retrieve job logs max size]{[hosts] $\rightarrow$ HOST $\rightarrow$ retrieve job logs max size}
+
+Global default for the~\ref{runtime-remote-retrieve-job-logs-max-size} setting for the
+specified host.
+
+\paragraph[retrieve job logs retry delays]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ retrieve job logs retry delays}
+
+Global default for the~\ref{runtime-remote-retrieve-job-logs-retry-delays}
+setting for the specified host.
+
 \subsection{[suite host self-identification] }
 
 The suite host's identity must be determined locally by cylc and passed
@@ -600,6 +615,10 @@ A list of hosts to scan for running suites.
 \item {\em type:} comma-separated list of host names or IP addresses.
 \item {\em default:} localhost
 \end{myitemize}
+
+\subsection{[task events]}
+
+Global site/user defaults for~\ref{TaskEventHandling2}.
 
 \subsection{[test battery]}
 

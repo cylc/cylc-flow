@@ -19,13 +19,25 @@
 . "$(dirname "$0")/test_header"
 set_test_number 3
 mock_smtpd_init
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+OPT_SET=
+if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
+    mkdir 'conf'
+    cat >'conf/global.rc' <<__GLOBALCFG__
+[task events]
+    mail events = failed, retry, succeeded
+    mail smtp = ${TEST_SMTPD_HOST}
+__GLOBALCFG__
+    export CYLC_CONF_PATH="${PWD}/conf"
+    OPT_SET='-s GLOBALCFG=True'
+else
+    OPT_SET="-s MAIL_SMTP=${TEST_SMTPD_HOST}"
+fi
 
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "MAIL_SMTP=${TEST_SMTPD_HOST}" "${SUITE_NAME}"
+    cylc validate ${OPT_SET} "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
-    cylc run --reference-test --debug \
-    -s "MAIL_SMTP=${TEST_SMTPD_HOST}" "${SUITE_NAME}"
+    cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
 
 grep '^\(Subject:\|\[retry\]\|\[succeeded\]\) ' "${TEST_SMTPD_LOG}" \
     >'edited-smtpd.log'
