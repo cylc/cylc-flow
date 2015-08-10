@@ -470,6 +470,7 @@ class restart(scheduler):
 
             elif itask.state.is_currently('succeeded'):
                 itask.prerequisites.set_all_satisfied()
+                # TODO - just poll for outputs in the job status file.
                 itask.outputs.set_all_completed()
 
             else:

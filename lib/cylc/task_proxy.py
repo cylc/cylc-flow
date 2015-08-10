@@ -629,6 +629,7 @@ class TaskProxy(object):
         self.prerequisites.set_all_satisfied()
         self.unset_outputs()
         self.turn_off_timeouts()
+        # TODO - for message outputs this should be optional (see #1551):
         self.outputs.set_all_completed()
 
     def reset_state_failed(self):
@@ -1645,12 +1646,24 @@ class TaskProxy(object):
             self.set_status('succeeded')
             self.handle_event("succeeded", "job succeeded")
             if not self.outputs.all_completed():
-                # In case start or succeed before submitted message.
-                msg = "Assuming non-reported outputs were completed:"
+                msg = "Succeeded with unreported outputs:"
                 for key in self.outputs.not_completed:
-                    msg += "\n" + key
-                self.log(INFO, msg)
-                self.outputs.set_all_completed()
+                    msg += "\n  " + key
+                self.log(WARNING, msg)
+                if msg_was_polled:
+                    # Assume all outputs complete (e.g. poll at restart).
+                    # TODO - just poll for outputs in the job status file.
+                    self.log(WARNING, "Assuming ALL outputs completed.")
+                    self.outputs.set_all_completed()
+                else:
+                    # A succeeded task MUST have submitted and started.
+                    # TODO - just poll for outputs in the job status file?
+                    for output in [self.identity + ' submitted',
+                                   self.identity + ' started']:
+                        if not self.outputs.is_completed(output):
+                            msg = "Assuming output completed:  \n %s" % output
+                            self.log(WARNING, msg)
+                            self.outputs.set_completed(output)
 
         elif (content == TaskMessage.FAILED and
                 self.state.is_currently(
