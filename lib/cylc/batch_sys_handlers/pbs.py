@@ -45,7 +45,8 @@ class PBSHandler(object):
 
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
-        directives.update(job_conf["directives"])
+        for key, value in job_conf["directives"].items():
+            directives[key] = value
         lines = []
         for key, value in directives.items():
             if value and " " in key:

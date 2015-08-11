@@ -13,10 +13,12 @@ title=Task Event Handler Retry
 [runtime]
     [[t1]]
         script=true
+{% if GLOBALCFG is not defined %}
         [[[events]]]
             handlers=hello-event-handler '%(name)s' '%(event)s'
             handler events=succeeded, failed
             handler retry delays=PT0S, 2*PT1S
+{% endif %}{# not GLOBALCFG is not defined #}
     [[t2]]
         script="""
 LOG="${CYLC_SUITE_LOG_DIR}/../job/1/t1/NN/job-activity.log"

@@ -26,7 +26,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -39,6 +39,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[environment]]]
    [[[directives]]]
       job_type = parallel
@@ -68,7 +71,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -104,7 +107,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -117,6 +120,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[environment]]]
    [[[directives]]]
    [[[environment filter]]]
@@ -145,7 +151,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -181,7 +187,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -194,6 +200,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[environment]]]
    [[[directives]]]
       job_type = serial
@@ -223,7 +232,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -259,7 +268,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -272,6 +281,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[environment]]]
    [[[directives]]]
       job_type = serial
@@ -301,7 +313,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -337,7 +349,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -350,6 +362,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[environment]]]
    [[[directives]]]
       job_type = parallel
@@ -379,7 +394,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -413,6 +428,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -424,7 +442,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -457,7 +475,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -491,6 +509,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -502,7 +523,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -535,7 +556,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -569,6 +590,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -580,7 +604,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -612,7 +636,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -646,6 +670,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -657,7 +684,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -690,7 +717,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -724,6 +751,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -735,7 +765,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -768,7 +798,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -802,6 +832,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -813,7 +846,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -845,7 +878,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -879,6 +912,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -890,7 +926,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -923,7 +959,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]
@@ -957,6 +993,9 @@
       handler retry delays = 
       mail to = 
       mail from = 
+      execution timeout = 
+      submission timeout = 
+      reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
@@ -968,7 +1007,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = False
+      reset timer = 
       execution timeout = 
       failed handler = 
       submission timeout = 
@@ -1001,7 +1040,7 @@
       owner = 
       suite definition directory = 
       host = 
-      retrieve job logs = False
+      retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
    [[[job submission]]]

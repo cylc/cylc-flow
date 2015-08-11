@@ -22,7 +22,7 @@ import re
 import traceback
 
 from parsec import ParsecError
-from parsec.OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
 from parsec.util import itemstr
 import cylc.flags
@@ -143,7 +143,7 @@ def addsect( cfig, sname, parents ):
         if cylc.flags.verbose:
             print 'Section already encountered: ' + itemstr( parents + [sname] )
     else:
-        cfig[sname] = OrderedDict()
+        cfig[sname] = OrderedDictWithDefaults()
 
 def addict( cfig, key, val, parents, index ):
     """Add a new [parents...]key=value pair to a nested dict."""
@@ -303,7 +303,7 @@ def parse( fpath, write_proc=False,
         f.close()
 
     nesting_level = 0
-    config = OrderedDict()
+    config = OrderedDictWithDefaults()
     sect_name = None
     parents = []
 

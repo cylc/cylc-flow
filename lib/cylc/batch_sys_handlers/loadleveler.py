@@ -50,7 +50,8 @@ class LoadlevelerHandler(object):
         # executed* (that is determined by the '#!' at the top of the task
         # job script).
         directives["shell"] = "/bin/ksh"
-        directives.update(job_conf["directives"])
+        for key, value in job_conf["directives"].items():
+            directives[key] = value
         lines = []
         for key, value in directives.items():
             if value:

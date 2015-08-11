@@ -30,19 +30,19 @@ TEST_NAME=$TEST_NAME_BASE-get-config
 cylc get-config --sparse -i runtime $SUITE_NAME > runtime.out
 cmp_ok runtime.out <<'__DONE__'
 [[root]]
+[[FAMILY]]
 [[m1]]
    inherit = FAMILY
    [[[environment]]]
       FOO = foo
-[[m3]]
-   inherit = FAMILY
-   [[[environment]]]
-      FOO = foo
-[[FAMILY]]
 [[m2]]
    inherit = FAMILY
    [[[environment]]]
       FOO = bar
+[[m3]]
+   inherit = FAMILY
+   [[[environment]]]
+      FOO = foo
 __DONE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

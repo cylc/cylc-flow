@@ -39,7 +39,7 @@ from trigger import trigger
 from parsec.util import replicate
 from cylc.task_id import TaskID
 from C3MRO import C3
-from parsec.OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDictWithDefaults
 import flags
 from syntax_flags import (
     SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
@@ -127,7 +127,8 @@ class SuiteConfig(object):
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_restart=False, is_reload=False, write_proc=True,
-                 vis_start_string=None, vis_stop_string=None):
+                 vis_start_string=None, vis_stop_string=None,
+                 mem_log_func=None):
         """Return a singleton instance.
 
         On 1st call, instantiate the singleton.
@@ -141,7 +142,7 @@ class SuiteConfig(object):
                 run_mode, validation, strict, collapsed,
                 cli_initial_point_string, cli_start_point_string,
                 cli_final_point_string, is_restart, is_reload, write_proc,
-                vis_start_string, vis_stop_string)
+                vis_start_string, vis_stop_string, mem_log_func)
         return cls._INSTANCE
 
 
@@ -150,8 +151,13 @@ class SuiteConfig(object):
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
                  is_restart=False, is_reload=False, write_proc=True,
-                 vis_start_string=None, vis_stop_string=None):
+                 vis_start_string=None, vis_stop_string=None,
+                 mem_log_func=None):
 
+        self.mem_log = mem_log_func
+        if mem_log_func is None:
+            self.mem_log = lambda *a: False
+        self.mem_log("config.py:config.py: start init config")
         self.suite = suite  # suite name
         self.fpath = fpath  # suite definition
         self.fdir  = os.path.dirname(fpath)
@@ -204,10 +210,14 @@ class SuiteConfig(object):
         self.feet = []
 
         # parse, upgrade, validate the suite, but don't expand with default items
+        self.mem_log("config.py: before get_suitecfg")        
         self.pcfg = get_suitecfg(
             fpath, force=is_reload, tvars=template_vars,
             tvars_file=template_vars_file, write_proc=write_proc)
+        self.mem_log("config.py: after get_suitecfg")
+        self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
+        self.mem_log("config.py: after get(sparse=True)")
 
         # First check for the essential scheduling section.
         if 'scheduling' not in self.cfg:
@@ -280,10 +290,10 @@ class SuiteConfig(object):
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
-            self.cfg['runtime'] = {}
+            self.cfg['runtime'] = OrderedDictWithDefaults()
 
         if 'root' not in self.cfg['runtime']:
-            self.cfg['runtime']['root'] = {}
+            self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         # Replace [runtime][name1,name2,...] with separate namespaces.
         if flags.verbose:
@@ -291,26 +301,31 @@ class SuiteConfig(object):
         # This requires expansion into a new OrderedDict to preserve the
         # correct order of the final list of namespaces (add-or-override
         # by repeated namespace depends on this).
-        newruntime = OrderedDict()
+        newruntime = OrderedDictWithDefaults()
         for key, val in self.cfg['runtime'].items():
             if ',' in key:
                 for name in re.split(' *, *', key.rstrip(', ')):
                     if name not in newruntime:
-                        newruntime[name] = OrderedDict()
+                        newruntime[name] = OrderedDictWithDefaults()
                     replicate(newruntime[name], val)
             else:
                 if key not in newruntime:
-                    newruntime[key] = OrderedDict()
+                    newruntime[key] = OrderedDictWithDefaults()
                 replicate(newruntime[key], val)
         self.cfg['runtime'] = newruntime
+
         self.ns_defn_order = newruntime.keys()
 
         # check var names before inheritance to avoid repetition
         self.check_env_names()
 
+        self.mem_log("config.py: before compute_family_tree")
         # do sparse inheritance
         self.compute_family_tree()
+        self.mem_log("config.py: after compute_family_tree")
+        self.mem_log("config.py: before inheritance")
         self.compute_inheritance()
+        self.mem_log("config.py: after inheritance")
 
         #self.print_inheritance() # (debugging)
 
@@ -318,7 +333,9 @@ class SuiteConfig(object):
         self.filter_env()
 
         # now expand with defaults
+        self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get( sparse=False )
+        self.mem_log("config.py: after get(sparse=False)")
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
@@ -522,7 +539,9 @@ class SuiteConfig(object):
 
         self.process_directories()
 
+        self.mem_log("config.py: before load_graph()")
         self.load_graph()
+        self.mem_log("config.py: after load_graph()")
 
         self.compute_runahead_limits()
 
@@ -688,6 +707,7 @@ class SuiteConfig(object):
                     print >> sys.stderr, '  %s => %s' % e
                 raise SuiteConfigError('ERROR: cyclic dependence detected '
                                        '(graph the suite to see back-edges).')
+        self.mem_log("config.py: end init config")
  
     def dequote(self, s):
         """Strip quotes off a string."""
@@ -737,7 +757,7 @@ class SuiteConfig(object):
                 # no filtering to do
                 continue
 
-            nenv = OrderedDict()
+            nenv = OrderedDictWithDefaults()
             for key, val in oenv.items():
                 if ( not fincl or key in fincl ) and key not in fexcl:
                     nenv[key] = val
@@ -812,18 +832,21 @@ class SuiteConfig(object):
         if flags.verbose:
             print "Parsing the runtime namespace hierarchy"
 
-        results = {}
+        results = OrderedDictWithDefaults()
         n_reps = 0
 
         already_done = {} # to store already computed namespaces by mro
 
-        for ns in self.cfg['runtime']:
+        # Loop through runtime members, 'root' first.
+        nses = self.cfg['runtime'].keys()
+        nses.sort(key=lambda ns: ns != 'root')
+        for ns in nses:
             # for each namespace ...
 
             hierarchy = copy(self.runtime['linearized ancestors'][ns])
             hierarchy.reverse()
 
-            result = {}
+            result = OrderedDictWithDefaults()
 
             if use_simple_method:
                 # Go up the linearized MRO from root, replicating or
@@ -850,7 +873,7 @@ class SuiteConfig(object):
                         if prev_shortcut:
                             prev_shortcut = False
                             # copy ad_result (to avoid altering already_done)
-                            result = {}
+                            result = OrderedDictWithDefaults()
                             replicate(result,ad_result) # ...and use stored
                             n_reps += 1
                         # override name content into tmp
@@ -1504,7 +1527,7 @@ class SuiteConfig(object):
                 self.naked_dummy_tasks.append( name )
                 # These can't just be a reference to root runtime as we have to
                 # make some items task-specific: e.g. subst task name in URLs.
-                self.cfg['runtime'][name] = OrderedDict()
+                self.cfg['runtime'][name] = OrderedDictWithDefaults()
                 replicate(self.cfg['runtime'][name], self.cfg['runtime']['root'])
                 if 'root' not in self.runtime['descendants']:
                     # (happens when no runtimes are defined in the suite.rc)

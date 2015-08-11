@@ -1,0 +1,23 @@
+2015-07-24T01:13:30Z INFO - port:7766
+2015-07-24T01:13:30Z INFO - Suite starting at 2015-07-24T01:13:30Z
+2015-07-24T01:13:30Z INFO - Run mode: live
+2015-07-24T01:13:30Z INFO - Initial point: 1
+2015-07-24T01:13:30Z INFO - Final point: 1
+2015-07-24T01:13:30Z INFO - Cold Start 1
+2015-07-24T01:13:30Z INFO - [foo.1] -job(01) initiate job-submit
+2015-07-24T01:13:30Z INFO - [foo.1] -triggered off []
+2015-07-24T01:13:31Z INFO - [foo.1] -submit_method_id=7377
+2015-07-24T01:13:31Z INFO - [foo.1] -submission succeeded
+2015-07-24T01:13:31Z INFO - [foo.1] -(current:submitted)> foo.1 started at 2015-07-24T01:13:31Z
+2015-07-24T01:13:31Z INFO - [foo.1] -(current:running)> message one for 1 at 2015-07-24T01:13:31Z
+2015-07-24T01:13:31Z INFO - [foo.1] -(current:running)> foo.1 succeeded at 2015-07-24T01:13:31Z
+2015-07-24T01:13:31Z WARNING - [foo.1] -Succeeded with unreported outputs:
+  message two for 1
+2015-07-24T01:13:33Z INFO - [run_me.1] -job(01) initiate job-submit
+2015-07-24T01:13:33Z INFO - [run_me.1] -triggered off ['foo.1']
+2015-07-24T01:13:33Z INFO - [dont_run_me.1] -suiciding
+2015-07-24T01:13:34Z INFO - [run_me.1] -submit_method_id=7464
+2015-07-24T01:13:34Z INFO - [run_me.1] -submission succeeded
+2015-07-24T01:13:34Z INFO - [run_me.1] -(current:submitted)> run_me.1 started at 2015-07-24T01:13:33Z
+2015-07-24T01:13:34Z INFO - [run_me.1] -(current:running)> run_me.1 succeeded at 2015-07-24T01:13:34Z
+2015-07-24T01:13:35Z INFO - Suite shutting down at 2015-07-24T01:13:35Z
