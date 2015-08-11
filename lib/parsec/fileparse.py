@@ -21,6 +21,7 @@ import sys
 import re
 import traceback
 
+from parsec import ParsecError
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.include import inline, IncludeFileNotFoundError
 from parsec.util import itemstr
@@ -97,8 +98,8 @@ _TRIPLE_QUOTE = {
 }
 
 
-class ParseError( Exception ):
-    def __init__(self, reason, index=None, line=None, prefix="ParseError: "):
+class FileParseError(ParsecError):
+    def __init__(self, reason, index=None, line=None, prefix="FileParseError: "):
         self.msg = prefix + reason
         if index:
             self.msg += " (line " + str(index+1) + ")"
@@ -107,11 +108,11 @@ class ParseError( Exception ):
         if index:
             # TODO - make 'view' function independent of cylc:
             self.msg += "\n(line numbers match 'cylc view -p')"
-    def __str__( self ):
-        return self.msg
 
-class FileNotFoundError( ParseError ):
+
+class FileNotFoundError(FileParseError):
     pass
+
 
 def _concatenate( lines ):
     """concatenate continuation lines"""
@@ -153,7 +154,7 @@ def addict( cfig, key, val, parents, index ):
     if not isinstance( cfig, dict ):
         # an item of this name has already been encountered at this level
         print >> sys.stderr, itemstr( parents, key, val )
-        raise ParseError( 'ERROR line ' + str(index) + ': already encountered ' + itemstr( parents ))
+        raise FileParseError( 'ERROR line ' + str(index) + ': already encountered ' + itemstr( parents ))
 
     if key in cfig:
         # this item already exists
@@ -193,7 +194,7 @@ def multiline( flines, value, index, maxline ):
     elif newvalue.find(quot) != -1:
         # TODO - this should be handled by validation?:
         # e.g. non-comment follows single-line triple-quoted string
-        raise ParseError( 'Invalid line', o_index, flines[index] )
+        raise FileParseError( 'Invalid line', o_index, flines[index] )
 
     while index < maxline:
         index += 1
@@ -205,12 +206,12 @@ def multiline( flines, value, index, maxline ):
             # end of multiline, process it
             break
     else:
-        raise ParseError( 'Multiline string not closed', o_index, flines[o_index] )
+        raise FileParseError( 'Multiline string not closed', o_index, flines[o_index] )
 
     mat = multi_line.match(line)
     if not mat:
         # e.g. end multi-line string followed by a non-comment
-        raise ParseError( 'Invalid line', o_index, line )
+        raise FileParseError( 'Invalid line', o_index, line )
 
     #value, comment = mat.groups()
     return quot + newvalue + line, index
@@ -250,13 +251,13 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
         try:
             flines = inline( flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit )
         except IncludeFileNotFoundError, x:
-            raise ParseError( str(x) )
+            raise FileParseError( str(x) )
 
     # process with Jinja2
     if do_jinja2:
         if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
             if jinja2_disabled:
-                raise ParseError( 'Jinja2 is not installed' )
+                raise FileParseError( 'Jinja2 is not installed' )
             if cylc.flags.verbose:
                 print "Processing with Jinja2"
             try:
@@ -276,7 +277,7 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
                     if re.match("\s*File", line):
                         break
                 msg = '\n'.join(reversed(suffix))
-                raise ParseError(msg, prefix="Jinja2 Error:\n")
+                raise FileParseError(msg, prefix="Jinja2 Error:\n")
 
     # concatenate continuation lines
     if do_contin:
@@ -328,7 +329,7 @@ def parse( fpath, write_proc=False,
             nb = len(s_open)
 
             if nb != len(s_close):
-                raise ParseError('bracket mismatch', index, line )
+                raise FileParseError('bracket mismatch', index, line )
             elif nb == nesting_level:
                 # sibling section
                 parents = parents[:-1] + [sect_name]
@@ -340,7 +341,7 @@ def parse( fpath, write_proc=False,
                 ndif = nesting_level -nb
                 parents = parents[:-ndif-1] + [sect_name]
             else:
-                raise ParseError( 'Error line ' + str(index+1) + ': ' + line )
+                raise FileParseError( 'Error line ' + str(index+1) + ': ' + line )
             nesting_level = nb
             addsect( config, sect_name, parents[:-1] )
 
@@ -355,6 +356,6 @@ def parse( fpath, write_proc=False,
                 addict( config, key, val, parents, index )
             else:
                 # no match
-                raise ParseError( 'Invalid line ' + str(index+1) + ': ' + line )
+                raise FileParseError( 'Invalid line ' + str(index+1) + ': ' + line )
 
     return config
