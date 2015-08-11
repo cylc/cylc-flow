@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, re
-from parsec.OrderedDict import OrderedDict
+from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import m_override, un_many, itemstr
 from copy import copy
 
@@ -111,14 +111,14 @@ def _populate_spec_defaults( defs, spec ):
     for key,val in spec.items():
         if isinstance( val, dict ):
             if key not in defs:
-                defs[key] = OrderedDict()
+                defs[key] = OrderedDictWithDefaults()
             _populate_spec_defaults( defs[key], spec[key] )
         else:
             defs[key] = spec[key].args['default']
 
 def get_defaults( spec ):
     """Return a nested dict of default values from a parsec spec."""
-    defs = OrderedDict()
+    defs = OrderedDictWithDefaults()
     _populate_spec_defaults( defs, spec )
     return defs
 

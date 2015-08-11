@@ -56,6 +56,8 @@ from cylc.prerequisites.prerequisites import prerequisites
 from cylc.prerequisites.plain_prerequisites import plain_prerequisites
 from cylc.prerequisites.conditionals import conditional_prerequisites
 from cylc.suite_host import is_remote_host, get_suite_host
+from parsec.util import pdeepcopy, poverride
+from parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_id import TaskID
@@ -1339,8 +1341,9 @@ class TaskProxy(object):
             'use manual completion': use_manual,
             'pre-script': precommand,
             'script': command,
-            'post-script': postcommand,
-        })
+            'post-script': postcommand
+            }.items()
+        )
         self.db_inserts_map[self.TABLE_TASK_JOBS].append({
             "is_manual_submit": self.is_manual_submit,
             "try_num": self.run_try_state.num,
@@ -1374,7 +1377,7 @@ class TaskProxy(object):
             self, rtconfig, local_jobfile_path, common_job_log_path):
         """Populate the configuration for submitting or manipulating a job."""
         self.batch_sys_name = rtconfig['job submission']['method']
-        self.job_conf = {
+        self.job_conf = OrderedDictWithDefaults({
             'suite name': self.suite_name,
             'task id': self.identity,
             'batch system name': rtconfig['job submission']['method'],
@@ -1403,7 +1406,7 @@ class TaskProxy(object):
             'common job log path': common_job_log_path,
             'local job file path': local_jobfile_path,
             'job file path': local_jobfile_path,
-        }
+        }.items())
 
         log_files = self.job_conf['log files']
         log_files.add_path(local_jobfile_path)
