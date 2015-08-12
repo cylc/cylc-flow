@@ -225,11 +225,13 @@ if not gcfg:
         sys.stderr.write(
             "WARNING: ignoring bad site GUI config %s:\n"
             "%s\n" % (SITE_FILE, str(exc)))
-    try:
-        gcfg.loadcfg(USER_FILE, "user config")
-    except ParsecError as exc:
-        sys.stderr.write("ERROR: bad user GUI config %s:\n" % USER_FILE)
-        raise
+
+    if os.access(USER_FILE, os.F_OK | os.R_OK):
+        try:
+            gcfg.loadcfg(USER_FILE, "user config")
+        except ParsecError as exc:
+            sys.stderr.write("ERROR: bad user GUI config %s:\n" % USER_FILE)
+            raise
 
     # check and correct initial view config etc.
     gcfg.check()
