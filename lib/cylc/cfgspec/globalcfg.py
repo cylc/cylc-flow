@@ -26,6 +26,7 @@ from parsec.validate import (
     coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
     IllegalValueError
 )
+from parsec import ParsecError
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
@@ -123,6 +124,10 @@ SPEC = {
             'cylc executable'             : vdr( vtype='string', default='cylc'  ),
             'global init-script'          : vdr( vtype='string', default='' ),
             'copyable environment variables': vdr(vtype='string_list', default=[]),
+            'retrieve job logs'           : vdr( vtype='boolean', default=False ),
+            'retrieve job logs max size'  : vdr( vtype='string' ),
+            'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             },
         '__MANY__' : {
             'run directory'               : vdr( vtype='string'  ),
@@ -134,8 +139,26 @@ SPEC = {
             'cylc executable'             : vdr( vtype='string'  ),
             'global init-script'          : vdr( vtype='string'  ),
             'copyable environment variables': vdr(vtype='string_list', default=[]),
+            'retrieve job logs'           : vdr( vtype='boolean', default=False ),
+            'retrieve job logs max size'  : vdr( vtype='string' ),
+            'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             },
         },
+
+    'task events': {
+        'execution timeout': vdr(vtype='interval_minutes'),
+        'handlers': vdr(vtype='string_list', default=[]),
+        'handler events': vdr(vtype='string_list', default=[]),
+        'handler retry delays': vdr(vtype='interval_minutes_list', default=[]),
+        'mail events': vdr(vtype='string_list', default=[]),
+        'mail from': vdr(vtype='string'),
+        'mail retry delays': vdr(vtype='interval_minutes_list', default=[]),
+        'mail smtp': vdr(vtype='string'),
+        'mail to': vdr(vtype='string'),
+        'reset timer': vdr(vtype='boolean', default=False),
+        'submission timeout': vdr(vtype='interval_minutes'),
+    },
 
     'test battery': {
         'remote host with shared fs': vdr(vtype='string'),
@@ -239,6 +262,7 @@ class GlobalConfig( config ):
                 print "Loading site/user config files"
             cls._DEFAULT = cls(SPEC, upg)
             conf_path_str = os.getenv("CYLC_CONF_PATH")
+            count = 0
             if conf_path_str is None:
                 # CYLC_CONF_PATH not defined, use default locations
                 for old_base, conf_dir in [
@@ -247,16 +271,26 @@ class GlobalConfig( config ):
                     for base in [cls.CONF_BASE, old_base]:
                         file_name = os.path.join(conf_dir, base)
                         if os.access(file_name, os.F_OK | os.R_OK):
-                            cls._DEFAULT.loadcfg(
-                                file_name, "global config", silent=True)
+                            try:
+                                cls._DEFAULT.loadcfg(file_name, "global config")
+                            except ParsecError as exc:
+                                if count == 0:
+                                    sys.stderr.write(
+                                        "WARNING: ignoring bad site config %s:\n"
+                                        "%s\n" % (file_name, str(exc)))
+                                else:
+                                    sys.stderr.write(
+                                        "ERROR: bad user config %s:\n" % (
+                                            file_name))
+                                    raise
+                            count += 1
                             break
             elif conf_path_str:
                 # CYLC_CONF_PATH defined with a value
                 for path in conf_path_str.split(os.pathsep):
                     file_name = os.path.join(path, cls.CONF_BASE)
                     if os.access(file_name, os.F_OK | os.R_OK):
-                        cls._DEFAULT.loadcfg(
-                            file_name, "global config", silent=True)
+                        cls._DEFAULT.loadcfg(file_name, "global config")
             cls._DEFAULT.transform()
         return cls._DEFAULT
 

@@ -43,7 +43,7 @@ sleep 5
 touch typing
                             """
         [[[outputs]]]
-            out1 = "the cheese is ready for [T+3]"
+            out1 = "the cheese is ready for [+P3]"
 
 [visualization]
     default node attributes = "style=filled"

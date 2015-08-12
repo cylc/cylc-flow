@@ -10,9 +10,7 @@ locker:lock => TRUES:succeed-all
 """
 [runtime]
     [[locker]]
-        script = """
-timeout 300 cylc-db-lock
-"""
+        script = timeout 400 cylc-db-lock
         [[[outputs]]]
             lock = "[] I have locked the public database file"
     [[TRUES]]

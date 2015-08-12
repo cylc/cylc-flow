@@ -306,9 +306,9 @@ SPEC = {
                 'host'                        : vdr( vtype='string' ),
                 'owner'                       : vdr( vtype='string' ),
                 'suite definition directory'  : vdr( vtype='string' ),
-                'retrieve job logs'           : vdr( vtype='boolean', default=False ),
+                'retrieve job logs'           : vdr( vtype='boolean' ),
                 'retrieve job logs max size'  : vdr( vtype='string' ),
-                'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+                'retrieve job logs retry delays': vdr( vtype='interval_minutes_list' ),
                 },
             'event hooks' : {
                 'expired handler'             : vdr( vtype='string_list', default=[] ),
@@ -322,19 +322,22 @@ SPEC = {
                 'submission retry handler'    : vdr( vtype='string_list', default=[] ),
                 'submission timeout handler'  : vdr( vtype='string_list', default=[] ),
                 'submission timeout'          : vdr( vtype='interval_minutes' ),
-                'execution timeout handler'   : vdr( vtype='string_list', default=[] ),
+                'execution timeout handler'   : vdr( vtype='string_list' ),
                 'execution timeout'           : vdr( vtype='interval_minutes'),
-                'reset timer'                 : vdr( vtype='boolean', default=False ),
+                'reset timer'                 : vdr( vtype='boolean' ),
                 },
             'events' : {
-                'handlers'                    : vdr( vtype='string_list', default=[] ),
-                'handler events'              : vdr( vtype='string_list', default=[] ),
-                'handler retry delays'        : vdr( vtype='interval_minutes_list', default=[] ),
-                'mail events'                 : vdr( vtype='string_list', default=[] ),
+                'execution timeout'           : vdr( vtype='interval_minutes'),
+                'handlers'                    : vdr( vtype='string_list' ),
+                'handler events'              : vdr( vtype='string_list' ),
+                'handler retry delays'        : vdr( vtype='interval_minutes_list' ),
+                'mail events'                 : vdr( vtype='string_list' ),
                 'mail from'                   : vdr( vtype='string' ),
-                'mail retry delays'           : vdr( vtype='interval_minutes_list', default=[] ),
+                'mail retry delays'           : vdr( vtype='interval_minutes_list' ),
                 'mail smtp'                   : vdr( vtype='string' ),
                 'mail to'                     : vdr( vtype='string' ),
+                'reset timer'                 : vdr( vtype='boolean' ),
+                'submission timeout'          : vdr( vtype='interval_minutes' ),
                 },
             'suite state polling' : {
                 'user'                        : vdr( vtype='string' ),
@@ -475,5 +478,5 @@ def get_suitecfg( fpath, force=False, tvars=[], tvars_file=None, write_proc=Fals
         cfpath = fpath
         # TODO - write_proc should be in loadcfg
         suitecfg = sconfig( SPEC, upg, tvars=tvars, tvars_file=tvars_file, write_proc=write_proc )
-        suitecfg.loadcfg( fpath, "suite definition", strict=True )
+        suitecfg.loadcfg(fpath, "suite definition")
     return suitecfg

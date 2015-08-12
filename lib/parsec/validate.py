@@ -17,7 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys, re
-from parsec.OrderedDict import OrderedDict
+from parsec import ParsecError
+from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import m_override, un_many, itemstr
 from copy import copy
 
@@ -44,21 +45,20 @@ _UQLP = re.compile(r"""(['"]?)(.*?)\1(,|$)""")
 _SQV = re.compile( "((?:^[^']*(?:'[^']*')*[^']*)*)(#.*)$" )
 _DQV = re.compile( '((?:^[^"]*(?:"[^"]*")*[^"]*)*)(#.*)$' )
 
-class ValidationError( Exception ):
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
 
-class IllegalValueError( ValidationError ):
-    def __init__( self, vtype, keys, value ):
-        msg = 'Illegal ' + vtype + ' value: ' + itemstr( keys, value=value )
-        ValidationError.__init__( self, msg )
+class ValidationError(ParsecError):
+    pass
 
-class IllegalItemError( ValidationError ):
-    def __init__( self, keys, key ):
-        msg = 'Illegal item: ' + itemstr( keys, key )
-        ValidationError.__init__( self, msg )
+
+class IllegalValueError(ValidationError):
+    def __init__(self, vtype, keys, value):
+        self.msg = 'Illegal %s value: %s' % (vtype, itemstr(keys, value=value))
+
+
+class IllegalItemError(ValidationError):
+    def __init__(self, keys, key):
+        self.msg = 'Illegal item: %s' % itemstr(keys, key)
+
 
 def validate( cfig, spec, keys=[] ):
     """Validate and coerce a nested dict against a parsec spec."""
@@ -111,14 +111,14 @@ def _populate_spec_defaults( defs, spec ):
     for key,val in spec.items():
         if isinstance( val, dict ):
             if key not in defs:
-                defs[key] = OrderedDict()
+                defs[key] = OrderedDictWithDefaults()
             _populate_spec_defaults( defs[key], spec[key] )
         else:
             defs[key] = spec[key].args['default']
 
 def get_defaults( spec ):
     """Return a nested dict of default values from a parsec spec."""
-    defs = OrderedDict()
+    defs = OrderedDictWithDefaults()
     _populate_spec_defaults( defs, spec )
     return defs
 
