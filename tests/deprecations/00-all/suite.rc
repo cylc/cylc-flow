@@ -33,6 +33,8 @@
         pre-command scripting = "echo pre-script" # deprecate
         command scripting = "echo script" # deprecate
         post-command scripting = "echo post-script" # deprecate
+        [[[dummy mode]]]
+        command scripting = "echo script" # deprecate
 
 [visualization]
     enable live graph movie = True # obsolete
