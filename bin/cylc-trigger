@@ -113,7 +113,8 @@ def main():
         #       so the safe way to detect whether a new file is modified
         #       or is to detect whether time stamp has changed or not.
         #       Comparing the localhost time with the file timestamp is unsafe
-        #       and may cause the "while True" loop the follows to hang.
+        #       and may cause the "while True" loop that follows to sys.exit
+        #       with an error message after MAX_TRIES.
         try:
             old_mtime = os.stat(jobfile_path).st_mtime
         except OSError:
