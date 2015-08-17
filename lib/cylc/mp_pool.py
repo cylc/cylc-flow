@@ -102,6 +102,11 @@ def _run_command(ctx):
 class SuiteProcContext(object):
     """Represent the context of a command to run."""
 
+    # Format string for single line output
+    JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_type)s %(attr)s] %(mesg)s"
+    # Format string for multi-line output
+    JOB_LOG_FMT_M = "%(timestamp)s [%(cmd_type)s %(attr)s]\n\n%(mesg)s\n"
+
     def __init__(self, cmd_type, cmd, **cmd_kwargs):
         self.timestamp = get_current_time_string()
         self.cmd_type = cmd_type
@@ -111,6 +116,35 @@ class SuiteProcContext(object):
         self.err = cmd_kwargs.get('err')
         self.ret_code = cmd_kwargs.get('ret_code')
         self.out = cmd_kwargs.get('out')
+
+    def __str__(self):
+        ret = ""
+        for attr in "cmd", "ret_code", "out", "err":
+            value = getattr(self, attr, None)
+            if value is not None and str(value).strip():
+                if attr == "cmd" and isinstance(value, list):
+                    mesg = " ".join(quote(item) for item in value)
+                else:
+                    mesg = str(value).strip()
+                if attr == "cmd":
+                    if self.cmd_kwargs.get("stdin_file_path"):
+                        mesg += " <%s" % quote(
+                            self.cmd_kwargs.get("stdin_file_path"))
+                    elif self.cmd_kwargs.get("stdin_str"):
+                        mesg += " <<<%s" % quote(
+                            self.cmd_kwargs.get("stdin_str"))
+                if len(mesg.splitlines()) > 1:
+                    fmt = self.JOB_LOG_FMT_M
+                else:
+                    fmt = self.JOB_LOG_FMT_1
+                if not mesg.endswith("\n"):
+                    mesg += "\n"
+                ret += fmt % {
+                    "timestamp": self.timestamp,
+                    "cmd_type": self.cmd_type,
+                    "attr": attr,
+                    "mesg": mesg}
+        return ret
 
 class SuiteProcPool(object):
     """Use a process pool to execute shell commands."""

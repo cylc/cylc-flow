@@ -1,0 +1,26 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
+        expected task failures = local-1.1, local-2.1, local-3.1, remote-1.1, remote-2.1
+[scheduling]
+    [[dependencies]]
+        graph="""
+KILLABLE:start-all => killer
+"""
+[runtime]
+    [[KILLABLE]]
+        script=sleep 60
+    [[local-1, local-2, local-3]]
+        inherit = KILLABLE
+    [[remote-1, remote-2]]
+        inherit = KILLABLE
+        [[[remote]]]
+            host={{CYLC_TEST_HOST}}
+    [[killer]]
+        script="""
+cylc kill -m "${CYLC_SUITE_NAME}" KILLABLE 1
+cylc stop "${CYLC_SUITE_NAME}"
+"""

@@ -26,7 +26,8 @@ class LoadlevelerHandler(object):
 
     DIRECTIVE_PREFIX = "# @ "
     KILL_CMD_TMPL = "llcancel '%(job_id)s'"
-    POLL_CMD_TMPL = "llq -f%%id '%(job_id)s'"
+    POLL_CMD = "llq"
+    POLL_CMD_TMPL = POLL_CMD + " -f%%id '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(
         r"""\Allsubmit:\sThe\sjob\s"(?P<id>[^"]+)"\s""")
     REC_ERR_FILTERS = [
