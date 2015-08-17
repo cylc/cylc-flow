@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""cylc [control] job-poll JOB-LOG-ROOT [JOB-LOG-DIR ...]
+
+(This command is for internal use. Users should use "cylc poll".) Read job
+status files to obtain the statuses of the jobs. If necessary, Invoke the
+relevant batch system commands to ask the batch systems for more statuses.
+
+"""
+
+
+import sys
+from cylc.remote import remrun
+
+
+def main():
+    """CLI main."""
+    parser = cop(__doc__, argdoc=[
+        ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
+        ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory")])
+    args = parser.parse_args()[1]
+    sys.stdout.write(BATCH_SYS_MANAGER.jobs_poll(args[0], args[1:]))
+
+
+if __name__ == "__main__" and not remrun().execute():
+    from cylc.CylcOptionParsers import cop
+    from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+    main()

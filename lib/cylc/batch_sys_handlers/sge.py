@@ -28,7 +28,8 @@ class SGEHandler(object):
     KILL_CMD_TMPL = "qdel '%(job_id)s'"
     # N.B. The "qstat -j JOB_ID" command returns 1 if JOB_ID is no longer in
     # the system, so there is no need to filter its output.
-    POLL_CMD_TMPL = "qstat -j '%(job_id)s'"
+    POLL_CMD = "qstat"
+    POLL_CMD_TMPL = POLL_CMD + " -j '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"\D+(?P<id>\d+)\D+")
     SUBMIT_CMD_TMPL = "qsub '%(job)s'"
 

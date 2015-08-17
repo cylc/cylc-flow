@@ -18,8 +18,9 @@
 
 """cylc [control] poll [OPTIONS] ARGS
 
-Poll active tasks (those in the 'submitted' or 'running' states) to verify
-or update their statuses - even if they have suffered an external hard kill.
+Poll jobs of active tasks (those in the 'submitted' or 'running' states) to
+verify or update their statuses - even if they have suffered an external hard
+kill.
 
 To poll one or more tasks, "cylc poll REG MATCH POINT"; to poll all active
 tasks: "cylc poll REG".
@@ -60,13 +61,16 @@ def main():
         name = args[1]
         point_string = args[2]
     elif len(args) == 1:
-        name = str(None)
-        point_string = str(None)
+        name = None
+        point_string = None
     else:
         parser.error("Wrong number of arguments.")
 
-    prompt('Poll task %s at %s in %s' % (name, point_string, suite),
-           options.force)
+    if name and point_string:
+        prompt('Poll task %s at %s in %s' % (name, point_string, suite),
+               options.force)
+    else:
+        prompt('Poll ALL task in %s' % (suite), options.force)
 
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,

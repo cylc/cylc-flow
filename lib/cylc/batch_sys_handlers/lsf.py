@@ -25,7 +25,8 @@ class LSFHandler(object):
 
     DIRECTIVE_PREFIX = "#BSUB "
     KILL_CMD_TMPL = "bkill '%(job_id)s'"
-    POLL_CMD_TMPL = "bjobs -noheader '%(job_id)s'"
+    POLL_CMD = "bjobs"
+    POLL_CMD_TMPL = POLL_CMD + " -noheader '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"^Job <(?P<id>\d+)>")
     SUBMIT_CMD_TMPL = "bsub"
     SUBMIT_CMD_STDIN_IS_JOB_FILE = True

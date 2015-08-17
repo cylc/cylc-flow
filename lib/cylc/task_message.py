@@ -34,6 +34,12 @@ class TaskMessage(object):
     SUCCEEDED = "succeeded"
     STATUSES = (STARTED, SUCCEEDED, FAILED)
 
+    CYLC_JOB_PID = "CYLC_JOB_PID"
+    CYLC_JOB_INIT_TIME = "CYLC_JOB_INIT_TIME"
+    CYLC_JOB_EXIT = "CYLC_JOB_EXIT"
+    CYLC_JOB_EXIT_TIME = "CYLC_JOB_EXIT_TIME"
+    CYLC_MESSAGE = "CYLC_MESSAGE"
+
     FAIL_MESSAGE_PREFIX = "Task job script received signal "
     VACATION_MESSAGE_PREFIX = "Task job script vacated by signal "
 
@@ -270,19 +276,23 @@ class TaskMessage(object):
             if job_status_file:
                 if message == self.STARTED:
                     job_status_file.write(
-                        ("CYLC_JOB_PID=%s\n" % os.getenv("CYLC_JOB_PID")) +
-                        ("CYLC_JOB_INIT_TIME=%s\n" % self.true_event_time))
+                        ("%s=%s\n" % (
+                            self.CYLC_JOB_PID, os.getenv(self.CYLC_JOB_PID))) +
+                        ("%s=%s\n" % (
+                            self.CYLC_JOB_INIT_TIME, self.true_event_time)))
                 elif message == self.SUCCEEDED:
                     job_status_file.write(
-                        ("CYLC_JOB_EXIT=%s\n" % self.SUCCEEDED.upper()) +
-                        ("CYLC_JOB_EXIT_TIME=%s\n" % self.true_event_time))
+                        ("%s=%s\n" % (
+                            self.CYLC_JOB_EXIT, self.SUCCEEDED.upper())) +
+                        ("%s=%s\n" % (
+                            self.CYLC_JOB_EXIT_TIME, self.true_event_time)))
                 elif message == self.FAILED:
-                    job_status_file.write(
-                        ("CYLC_JOB_EXIT_TIME=%s\n" % self.true_event_time))
+                    job_status_file.write("%s=%s\n" % (
+                        self.CYLC_JOB_EXIT_TIME, self.true_event_time))
                 elif message.startswith(self.FAIL_MESSAGE_PREFIX):
-                    job_status_file.write(
-                        "CYLC_JOB_EXIT=%s\n" %
-                        message.replace(self.FAIL_MESSAGE_PREFIX, ""))
+                    job_status_file.write("%s=%s\n" % (
+                        self.CYLC_JOB_EXIT,
+                        message.replace(self.FAIL_MESSAGE_PREFIX, "")))
                 elif message.startswith(self.VACATION_MESSAGE_PREFIX):
                     # Job vacated, remove entries related to current job
                     job_status_file_name = job_status_file.name
@@ -294,11 +304,13 @@ class TaskMessage(object):
                     job_status_file = open(job_status_file_name, "wb")
                     for line in lines:
                         job_status_file.write(line)
-                    job_status_file.write("CYLC_MESSAGE=%s [%s] %s\n" % (
-                        self.true_event_time, self.priority, message))
+                    job_status_file.write("%s=%s|%s|%s\n" % (
+                        self.CYLC_MESSAGE, self.true_event_time, self.priority,
+                        message))
                 else:
-                    job_status_file.write("CYLC_MESSAGE=%s [%s] %s\n" % (
-                        self.true_event_time, self.priority, message))
+                    job_status_file.write("%s=%s|%s|%s\n" % (
+                        self.CYLC_MESSAGE, self.true_event_time, self.priority,
+                        message))
             if message in self.STATUSES:
                 messages[i] = "%s %s" % (self.task_id, message)
             messages[i] += ' at ' + self.true_event_time

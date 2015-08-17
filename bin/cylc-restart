@@ -447,14 +447,9 @@ class restart(scheduler):
                 self.old_user_at_host_set.add(itask.user_at_host)
                 if itask.user_at_host is None:
                     itask.user_at_host = "localhost"
-                # poll the task
-                try:
-                    itask.poll()
-                except Exception as exc:
-                    print >>sys.stderr, "WARNING: %s: poll failed" % id
                 # update timers in case regular polling is configured for itask
                 if '@' in itask.user_at_host:
-                    owner, host = itask.user_at_host.split('@')
+                    host = itask.user_at_host.split('@', 1)[1]
                 else:
                     host = itask.user_at_host
                 itask.submission_poll_timer.set_host(host, set_timer=True)
@@ -478,6 +473,9 @@ class restart(scheduler):
                     'ERROR: unknown task state for %s' % itask.identity)
 
             self.pool.add_to_runahead_pool(itask)
+
+        # Poll all submitted and running task jobs
+        self.pool.poll_task_jobs()
 
 
 if __name__ == '__main__':
