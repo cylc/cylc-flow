@@ -23,6 +23,7 @@ if [[ -z "${HOST}" ]]; then
     skip_all '[test battery]remote host: not defined'
 fi
 set_test_number 4
+export CYLC_CONF_PATH=
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'

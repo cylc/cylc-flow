@@ -45,7 +45,7 @@ from cylc.network import PRIVILEGE_LEVELS
 coercers['interval_seconds'] = (
     lambda *args: coerce_interval(*args, check_syntax_version=False))
 coercers['interval_minutes'] = lambda *a: coerce_interval(
-    *a, back_comp_unit_factor=60)
+    *a, back_comp_unit_factor=60, check_syntax_version=False)
 coercers['interval_minutes_list'] = (
     lambda *args: coerce_interval_list(*args, back_comp_unit_factor=60,
                                        check_syntax_version=False))
