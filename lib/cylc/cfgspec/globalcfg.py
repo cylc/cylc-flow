@@ -42,13 +42,12 @@ from cylc.network import PRIVILEGE_LEVELS
 
 "Cylc site and user configuration file spec."
 
-coercers['interval_seconds'] = (
-    lambda *args: coerce_interval(*args, check_syntax_version=False))
-coercers['interval_minutes'] = lambda *a: coerce_interval(
-    *a, back_comp_unit_factor=60, check_syntax_version=False)
-coercers['interval_minutes_list'] = (
-    lambda *args: coerce_interval_list(*args, back_comp_unit_factor=60,
-                                       check_syntax_version=False))
+coercers['interval_seconds'] = lambda *args: coerce_interval(
+    *args, check_syntax_version=False)
+coercers['interval_minutes'] = lambda *args: coerce_interval(
+    *args, back_comp_unit_factor=60, check_syntax_version=False)
+coercers['interval_minutes_list'] = lambda *args: coerce_interval_list(
+    *args, back_comp_unit_factor=60, check_syntax_version=False)
 
 SPEC = {
     'process pool size'                   : vdr( vtype='integer', default=4 ),

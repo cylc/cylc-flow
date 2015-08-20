@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validatation error message, LHS suicide.
+# Test validatation, global.rc and suite.rc with opposing syntax.
 . "$(dirname "$0")/test_header"
-set_test_number 1
+set_test_number 2
 
 cat >'global.rc' <<'__GLOBAL_RC__'
 [cylc]
@@ -34,6 +34,25 @@ cat >'suite.rc' <<'__SUITE_RC__'
         script = true
         [[[events]]]
             execution timeout = 10
+__SUITE_RC__
+
+CYLC_CONF_PATH="${PWD}" run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+
+cat >'global.rc' <<'__GLOBAL_RC__'
+[cylc]
+    [[event hooks]]
+        timeout = 1440
+__GLOBAL_RC__
+
+cat >'suite.rc' <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph = t0
+[runtime]
+    [[t0]]
+        script = true
+        [[[events]]]
+            execution timeout = PT10M
 __SUITE_RC__
 
 CYLC_CONF_PATH="${PWD}" run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
