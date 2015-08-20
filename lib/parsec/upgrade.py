@@ -22,16 +22,14 @@ if __name__ == '__main__':
     here = os.path.dirname( __file__ )
     sys.path.append( here + '/..' )
 
+from parsec import ParsecError
 from parsec.OrderedDict import OrderedDict
 import cylc.flags
 
 """Support automatic deprecation and obsoletion of parsec config items."""
 
-class UpgradeError( Exception ):
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
+class UpgradeError(ParsecError):
+    pass
 
 class converter( object ):
     """Create custom config value converters."""
@@ -109,7 +107,7 @@ class upgrader( object ):
             return [upg]
         if upg['old'].count( '__MANY__' ) > 1:
             print >> sys.stderr, upg['old']
-            raise UpgradeError( "Multiple simultaneous __MANY__ not supported" )
+            raise UpgradeError("Multiple simultaneous __MANY__ not supported")
         exp_upgs = []
         pre = []
         post = []

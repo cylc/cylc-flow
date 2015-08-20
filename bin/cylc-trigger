@@ -109,7 +109,16 @@ def main():
         # Add the 'NN' symlink for latest job file regardless of submit number.
         jobfile_path = os.path.join(job_dir, 'NN', 'job')
 
-        current_time = time.time()
+        # Note: localhost time and file system time may be out of sync,
+        #       so the safe way to detect whether a new file is modified
+        #       or is to detect whether time stamp has changed or not.
+        #       Comparing the localhost time with the file timestamp is unsafe
+        #       and may cause the "while True" loop that follows to sys.exit
+        #       with an error message after MAX_TRIES.
+        try:
+            old_mtime = os.stat(jobfile_path).st_mtime
+        except OSError:
+            old_mtime = None
 
         # Tell the suite daemon to generate the job file.
         cmd_client.put_command('dry_run_task', name, point_string)
@@ -121,10 +130,12 @@ def main():
         while True:
             count += 1
             try:
-                if os.stat(jobfile_path).st_mtime > current_time:
-                    break
-            except:
+                mtime = os.stat(jobfile_path).st_mtime
+            except OSError:
                 pass
+            else:
+                if old_mtime is None or mtime > old_mtime:
+                    break
             if count > MAX_TRIES:
                 sys.exit('ERROR: no job file after %s seconds' % MAX_TRIES)
             time.sleep(1)

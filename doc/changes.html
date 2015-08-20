@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.6.0">6.6.0</a>
     <li><a href="#6.5.0">6.5.0</a>
     <li><a href="#6.4.1">6.4.1</a>
     <li><a href="#6.4.0">6.4.0</a>
@@ -56,8 +57,57 @@
 </ul>
 </div>
 
-<p>Some minor enhancements and bug fixes may be omitted from this page.
-For the definitive record see the cylc git repository change log.</p>
+<p>Selected enhancements and bug fixes.  Some changes may be omitted from this
+page; for the definitive record see the cylc repository change log.</p>
+
+<a name="6.6.0"/>
+    <h2>6.6.0</h2>
+
+    <h3>6.6.0 enhancements</h3>
+    <ul>
+        <li> <b>Finer-grained authentication to suite daemons:</b>
+        <ul>
+            <li> All suites now reveal identity (name and owner) publicly.
+            <li> Public access can also be granted, via suite or global config,
+            to suite titles and descriptions, state total summaries, full
+            read-only information, and shutdown priveleges.
+            <li> Possession of the suite passphrase is still required for full
+            control access (in the future, suite passphrases will be replaced
+            with proper user accounts in some form).
+        </ul>
+        <li> <b>Improved <code>cylc scan</code></b>: for all 6.6.0+ suites on
+        scanned hosts, scanning is faster, and suite identity can be printed
+        along with any other information revealed pubicly including state total
+        summaries.
+        <li> <b>Edit run (<code>cylc trigger --edit</code>) now prompts
+        for confirmation</b> before triggering the edited task.
+        <li> <b>Reduced memory use</b> by up to a factor of 2: default task runtime
+        settings are now shared instead of duplicated across tasks.
+        <li> <code>cylc gsummary</code> columns are now resizable again.
+        <li> <b>Bad global config files are no longer silently ignored</b>: a
+        bad site file (which users can't change) is ignored with a warning, and
+        a bad user config file causes cylc to abort.
+        <li> Message outputs are no longer automatically completed when a task
+        finishes, so <b>different message outputs can now be used to trigger
+            different workflows</b>.
+        <li> <b>Task event hook defaults</b> can now be set in global (site,
+        user) config files (as for suite event hooks in 6.5.0).
+        <li> Added a new example to the User Guide "Advanced Cycling" section,
+        on how to run R1 tasks in the final cycle point.
+    </ul>
+
+    <h3>6.6.0 fixes</h3>
+    <ul>
+        <li> Fail validation if the suite cycle point format is not
+        sufficiently fine-grained for the suite's cycling sequences (e.g.
+        if you try to do daily cycling with cycle point format truncated
+        to month (%Y-%m).
+        <li> Fixed a rare bug that could cause a suite daemon to crash due
+        if a new broadcast command was actioned at the same time as the suite 
+        was writing broadcast settings to the state dump.
+        <li> Fixed insertion of a task family into a suite, broken at 6.5.0.
+    </ul>
+
 
 <a name="6.5.0"/>
     <h2>6.5.0</h2>

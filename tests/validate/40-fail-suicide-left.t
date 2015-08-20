@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,13 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that missing config files yield empty config dicts
-. $(dirname $0)/test_header
+# Test validatation error message, LHS suicide.
+. "$(dirname "$0")/test_header"
+set_test_number 2
 
-#-------------------------------------------------------------------------------
-set_test_number 1
+cat >'suite.rc' <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph = """!dont-kill-me => no-problem"""
+[runtime]
+    [[dont-kill-me, no-problem]]
+__SUITE_RC__
 
-install_test $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}
-run_ok $TEST_NAME missing.py
+run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
+!dont-kill-me => no-problem
+'ERROR: suicide must be on the right of a trigger (!dont-kill-me)'
+__ERR__
+exit

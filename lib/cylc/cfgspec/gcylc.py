@@ -19,6 +19,7 @@
 import os, sys, gtk
 from copy import deepcopy, copy
 
+from parsec import ParsecError
 from parsec.config import config, ItemNotFoundError, itemstr
 from parsec.validate import validator as vdr
 from parsec.upgrade import upgrader
@@ -217,9 +218,21 @@ class gconfig( config ):
 # load on import if not already loaded
 gcfg = None
 if not gcfg:
-    gcfg = gconfig( SPEC, upg )
-    gcfg.loadcfg( SITE_FILE, "site config" )
-    gcfg.loadcfg( USER_FILE, "user config" )
+    gcfg = gconfig(SPEC, upg)
+    try:
+        gcfg.loadcfg(SITE_FILE, "site config")
+    except ParsecError as exc:
+        sys.stderr.write(
+            "WARNING: ignoring bad site GUI config %s:\n"
+            "%s\n" % (SITE_FILE, str(exc)))
+
+    if os.access(USER_FILE, os.F_OK | os.R_OK):
+        try:
+            gcfg.loadcfg(USER_FILE, "user config")
+        except ParsecError as exc:
+            sys.stderr.write("ERROR: bad user GUI config %s:\n" % USER_FILE)
+            raise
+
     # check and correct initial view config etc.
     gcfg.check()
     # add spec defaults and do theme inheritance

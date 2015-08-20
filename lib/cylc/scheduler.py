@@ -188,6 +188,7 @@ class scheduler(object):
         self.parse_commandline()
 
     def configure(self):
+        self.log_memory("scheduler.py: start configure")
         SuiteProcPool.get_inst()
 
         self.info_commands = {}
@@ -210,7 +211,10 @@ class scheduler(object):
             'insert_task',
             'reload_suite',
         ]
+
+        self.log_memory("scheduler.py: before configure_suite")
         self.configure_suite()
+        self.log_memory("scheduler.py: after configure_suite")
 
         reqmode = self.config.cfg['cylc']['required run mode']
         if reqmode:
@@ -241,7 +245,9 @@ class scheduler(object):
         self.request_handler.start()
 
         self.old_user_at_host_set = set()
+        self.log_memory("scheduler.py: before load_tasks")
         self.load_tasks()
+        self.log_memory("scheduler.py: after load_tasks")
 
         self.state_dumper.set_cts(self.initial_point, self.final_point)
         self.configure_suite_environment()
@@ -282,6 +288,7 @@ class scheduler(object):
         self.nudge_timer_start = None
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5  # seconds
+        self.log_memory("scheduler.py: end configure")
 
     def process_command_queue(self):
         queue = self.command_queue.get_queue()
@@ -617,7 +624,8 @@ class scheduler(object):
             cli_initial_point_string=self._cli_initial_point_string,
             cli_start_point_string=self._cli_start_point_string,
             cli_final_point_string=self.options.final_point_string,
-            is_restart=self.is_restart, is_reload=reconfigure
+            is_restart=self.is_restart, is_reload=reconfigure,
+            mem_log_func=self.log_memory
         )
         # Dump the loaded suiterc for future reference.
         cfg_logdir = GLOBAL_CFG.get_derived_host_item(
@@ -914,6 +922,7 @@ class scheduler(object):
             'cylc']['event hooks']['abort if startup handler fails']
         self.run_event_handlers('startup', abort, 'suite starting')
 
+        self.log_memory("scheduler.py: begin run while loop")
         proc_pool = SuiteProcPool.get_inst()
 
         next_fs_check = time.time() + self.FS_CHECK_PERIOD
@@ -1070,13 +1079,13 @@ class scheduler(object):
                 self._update_profile_info("scheduler loop dt (s)", t1 - t0,
                                           amount_format="%.3f")
                 self._update_cpu_usage()
-                self._update_profile_info(
-                    "jobqueue.qsize",
-                    float(self.pool.jobqueue.qsize()),
-                    amount_format="%.1f"
-                )
+                if (int(t1) % 60 == 0):
+                    # Only get this every minute.
+                    self.log_memory("scheduler.py: loop: " +
+                                    get_current_time_string())
             time.sleep(1)
 
+        self.log_memory("scheduler.py: end main loop")
         # END MAIN LOOP
 
     def update_state_summary(self):
@@ -1403,6 +1412,14 @@ class scheduler(object):
             if temp_pub_db_file_name:
                 os.unlink(temp_pub_db_file_name)
             raise
+    def log_memory(self, message):
+        """Print a message to standard out with the current memory usage."""
+        if not self.options.profile_mode:
+            return
+        proc = subprocess.Popen(["ps", "h", "-orss", str(os.getpid())],
+                                stdout=subprocess.PIPE)
+        memory = int(proc.communicate()[0])
+        print "PROFILE: Memory: %d KiB: %s" % (memory, message)
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         # Update the 1, 5, 15 minute dt averages for a given category.

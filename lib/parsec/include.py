@@ -20,17 +20,25 @@ import re, os, sys
 import datetime
 from shutil import copy as shcopy
 from copy import copy
+from parsec import ParsecError
 
-class IncludeFileNotFoundError( Exception ):
 
-    def __init__( self, flist ):
+class IncludeFileNotFoundError(ParsecError):
+
+    def __init__(self, flist):
+        """Missing include file error.
+
+        E.g. for [DIR/top.rc, DIR/inc/sub.rc, DIR/inc/gone.rc]
+        "Include-file not found: inc/gone.rc via inc/sub.rc from DIR/top.rc"
+        """
         rflist = copy(flist)
+        top_file = rflist[0]
+        top_dir = os.path.dirname(top_file) + '/'
         rflist.reverse()
-        self.msg = "File not found: " + rflist[0]
-        for rf in rflist[1:]:
-            self.msg += "\n   via " + rf
-    def __str__( self ):
-        return self.msg
+        self.msg = "Include-file not found: %s" % rflist[0].replace(top_dir, '')
+        for f in rflist[1:-1]:
+            self.msg += ' via %s' % f.replace(top_dir, '')
+        self.msg += ' from %s' % top_file
 
 done = []
 modtimes = {}
