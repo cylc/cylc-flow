@@ -1,117 +1,34 @@
 #!jinja2
-{%- if BATCH_SYS_NAME is defined and BATCH_SYS_NAME %}
-{%- set HOST = environ['CYLC_TEST_BATCH_TASK_HOST'] %}
-{%- set SITE_DIRECTIVES = environ['CYLC_TEST_BATCH_SITE_DIRECTIVES'] %}
-{%- else %}
-{%- set BATCH_SYS_NAME = none %}
-{%- set HOST = "" %}
-{%- set SITE_DIRECTIVES = "" %}
-{%- endif %}
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
+    UTC mode = True
     [[event hooks]]
-        timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
-        timeout = 3
+        timeout handler = shutdown_this_suite_hook
+        timeout = PT3M
 [scheduling]
-    initial cycle time = 2013092300
-    final cycle time   = 2013092306
-    runahead limit = 2
+    initial cycle time = 20130923T00
+    final cycle time   = 20130923T00
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[R1]]]
             graph = """
-                tidy[T-6] => retrying_task
-                retrying_task:start => force_restart
-                force_restart => output_states
-                output_states & retrying_task => tidy
+                retrying_task:start => shutdown
+                shutdown => output_states
+                output_states & retrying_task => finish
             """
 [runtime]
-    [[root]]
-        script = "sleep 1"
-    [[RESTART_TASKS]]
-        {%- if BATCH_SYS_NAME %}
-        [[[job submission]]]
-            method = {{ BATCH_SYS_NAME }}
-        [[[directives]]]
-        {%- if BATCH_SYS_NAME == 'loadleveler' %}
-            class            = serial
-            job_type         = serial
-            wall_clock_limit = '20,15'
-        {%- elif BATCH_SYS_NAME == 'slurm' %}
-            --time = 20
-        {%- elif BATCH_SYS_NAME == 'pbs' %}
-            -l walltime=120
-        {%- endif %}
-            {{ SITE_DIRECTIVES }}
-        [[[remote]]]
-            host = {{ HOST }}
-        {%- endif %}
     [[retrying_task]]
-        inherit = RESTART_TASKS
         script = """
+            sleep 1
             if [[ $CYLC_TASK_TRY_NUMBER -le 2 ]]; then
-                sleep 1
                 exit 1
             fi
         """
         description = "Retrying state task for restart"
-        retry delays = 0.5, 0.01
-    [[force_restart]]
-        pre-script = """
-            # We need to make sure that the results stay consistent.
-            sleep 2
-            cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=120 --status=retrying $CYLC_SUITE_REG_NAME
-            sleep 2
-            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
-                "select name, cycle, submit_num, try_num, status
-                 from task_states
-                 order by name, cycle;" > {{ TEST_DIR }}/states-db-pre-restart-$CYLC_TASK_CYCLE_TIME
-            cp $CYLC_SUITE_RUN_DIR/state/state {{ TEST_DIR }}/state-pre-restart-$CYLC_TASK_CYCLE_TIME
-            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
-                cd $CYLC_SUITE_RUN_DIR && \
-                    cylc shutdown --now --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart {% if BATCH_SYS_NAME %}--set=BATCH_SYS_NAME={{BATCH_SYS_NAME}} {% endif %}$CYLC_SUITE_REG_NAME && \
-                    touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
-            else
-                cd $CYLC_SUITE_RUN_DIR && \
-                    cylc shutdown --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart {% if BATCH_SYS_NAME %}--set=BATCH_SYS_NAME={{BATCH_SYS_NAME}} {% endif %}$CYLC_SUITE_REG_NAME && \
-                    touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
-            fi
-        """
-        description = "Force a shutdown and restart of the suite"
-        [[[environment]]]
-            CYLC_TEST_BATCH_TASK_HOST={{ HOST }}
-            TEST_DIR={{ TEST_DIR }}
+        retry delays = PT40S, PT1S
+{% include 'suite-runtime-restart.rc' %}
+    [[shutdown]]
+        pre-script = sleep 5  # Extra sleep as trigger from retry task start.
     [[output_states]]
-        script = """
-            while [[ ! -e $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME ]]; do
-                sleep 0.1
-            done
-            cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=10 --status=running $CYLC_SUITE_REG_NAME
-            cylc suite-state --interval=1 --task=retrying_task --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=120 --status=retrying $CYLC_SUITE_REG_NAME
-            sleep 5  # Wait a few typical loops so that the states make it into the database.
-            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
-                "select name, cycle, submit_num, try_num, status
-                 from task_states
-                 order by name, cycle;" > {{ TEST_DIR }}/states-db-post-restart-$CYLC_TASK_CYCLE_TIME
+        pre-script = """
+            sleep 10
         """
-        description = "Wait for the restart to complete"
-    [[tidy]]
-        script = """
-            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
-                touch {{ TEST_DIR }}/suite-stopping
-            fi
-            # Remove the following block once retrying initial tasks are fixed.
-            if grep -q 'retrying_task.*status=waiting' <<< $(cylc cat-state $CYLC_SUITE_REG_NAME); then
-                cylc reset -f -v -v -s succeeded $CYLC_SUITE_REG_NAME 'retrying_task' $CYLC_TASK_CYCLE_TIME
-            fi
-            sleep 5
-            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
-                "select name, cycle, submit_num, try_num, status
-                 from task_states
-                 order by name, cycle;" > {{ TEST_DIR }}/states-db-tidy-$CYLC_TASK_CYCLE_TIME
-        """
-        description = "Tidy up the cycle so that the next can start"

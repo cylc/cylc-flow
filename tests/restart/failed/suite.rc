@@ -1,93 +1,25 @@
 #!jinja2
-{%- if USE_LOADLEVELER is defined and USE_LOADLEVELER %}
-{%- set HOST = environ['CYLC_LL_TEST_TASK_HOST'] %}
-{%- set SITE_DIRECTIVES = environ['CYLC_LL_TEST_SITE_DIRECTIVES'] %}
-{%- else %}
-{%- set USE_LOADLEVELER = false %}
-{%- set HOST = "" %}
-{%- set SITE_DIRECTIVES = "" %}
-{%- endif %}
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
+    UTC mode = True
     [[event hooks]]
-        timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
-        timeout = 3
+        timeout handler = shutdown_this_suite_hook
+        timeout = PT3M
 [scheduling]
-    initial cycle point = 2013092300
-    final cycle point   = 2013092306
-    runahead limit = 2
+    initial cycle time = 20130923T00
+    final cycle time   = 20130923T00
     [[dependencies]]
-        [[[0,6,12,18]]]
+        [[[R1]]]
             graph = """
-                tidy[T-6] => failed_task:fail => force_restart
-                force_restart => output_states
-                output_states => tidy
-                tidy => !FAIL_TASKS
+                failed_task:fail => shutdown
+                shutdown => output_states
+                output_states => finish => !failed_task
             """
 [runtime]
-    [[root]]
-        script = "sleep 1"
-    [[FAIL_TASKS]]
-    [[RESTART_TASKS]]
-        {%- if USE_LOADLEVELER %}
-        [[[job submission]]]
-            method = loadleveler
-        [[[directives]]]
-            class            = serial
-            job_type         = serial
-            wall_clock_limit = '50,20'
-            {{ SITE_DIRECTIVES }}
-        [[[remote]]]
-            host = {{ HOST }}
-        {%- endif %}
     [[failed_task]]
-        inherit = RESTART_TASKS, FAIL_TASKS
-        script = "sleep 10; exit 1"
-        description = "Failed state task for restart"
-    [[force_restart]]
-        pre-script = """
-            # We need to make sure that the results stay consistent.
-            sleep 2
-            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
-                "select name, cycle, submit_num, try_num, status
-                 from task_states
-                 order by name, cycle;" > {{ TEST_DIR }}/states-db-pre-restart-$CYLC_TASK_CYCLE_TIME
-            cp $CYLC_SUITE_RUN_DIR/state/state {{ TEST_DIR }}/state-pre-restart-$CYLC_TASK_CYCLE_TIME
-            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_INITIAL_CYCLE_TIME ]]; then
-                cd $CYLC_SUITE_RUN_DIR && \
-                    cylc shutdown --now --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
-                    touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
-            else
-                cd $CYLC_SUITE_RUN_DIR && \
-                    cylc shutdown --interval=1 --max-polls=60 $CYLC_SUITE_REG_NAME && \
-                    cylc restart {% if USE_LOADLEVELER %}--set=USE_LOADLEVELER=true {% endif %}$CYLC_SUITE_REG_NAME && \
-                    touch $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME &
-            fi
-        """
-        description = "Force a shutdown and restart of the suite"
-        [[[environment]]]
-            CYLC_LL_TEST_TASK_HOST={{ HOST }}
-            CYLC_LL_TEST_SITE_DIRECTIVES={{ SITE_DIRECTIVES }}
-            TEST_DIR={{ TEST_DIR }}
-    [[output_states]]
+        description = "Failed task (runs before restart)"
         script = """
-            while [[ ! -e $CYLC_SUITE_SHARE_DIR/restart-done-$CYLC_TASK_CYCLE_TIME ]]; do
-                sleep 0.1
-            done
-            cylc suite-state --interval=1 --task=output_states --cycle=$CYLC_TASK_CYCLE_TIME \
-                --max-polls=10 --status=running $CYLC_SUITE_REG_NAME
-            sleep 5  # Wait a few typical loops so that the states make it into the database.
-            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
-                "select name, cycle, submit_num, try_num, status
-                 from task_states
-                 order by name, cycle;" > {{ TEST_DIR }}/states-db-post-restart-$CYLC_TASK_CYCLE_TIME
+            sleep 10
+            exit 1
         """
-        description = "Wait for the restart to complete"
-    [[tidy]]
-        script = """
-            if [[ $CYLC_TASK_CYCLE_TIME -eq $CYLC_SUITE_FINAL_CYCLE_TIME ]]; then
-                touch {{ TEST_DIR }}/suite-stopping
-            fi
-        """
-        description = "Tidy up the cycle so that the next can start"
+{% include 'suite-runtime-restart.rc' %}

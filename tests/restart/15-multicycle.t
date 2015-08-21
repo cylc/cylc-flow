@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a simple suite with a succeeded task
+# Test restarting a suite with multi-cycle tasks and interdependencies.
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
 set_test_number 9
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE succeeded
-cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/$SUITE_NAME/"
+install_suite $TEST_NAME_BASE multicycle
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -44,42 +43,79 @@ done
 cmp_ok $TEST_DIR/pre-restart-state <<'__STATE__'
 run mode : live
 initial cycle : 20130923T0000Z
-final cycle : 20130923T0000Z
+final cycle : 20130926T0000Z
 (dp1
 .
 Begin task states
-finish.20130923T0000Z : status=waiting, spawned=false
-output_states.20130923T0000Z : status=waiting, spawned=false
-succeeded_task.20130923T0000Z : status=succeeded, spawned=true
+bar.20130924T0000Z : status=succeeded, spawned=true
+bar.20130924T1200Z : status=succeeded, spawned=true
+bar.20130925T0000Z : status=waiting, spawned=false
+foo.20130924T1200Z : status=succeeded, spawned=true
+foo.20130925T0000Z : status=waiting, spawned=false
+output_states.20130925T0000Z : status=waiting, spawned=false
 __STATE__
-grep_ok "succeeded_task|20130923T0000Z|1|1|succeeded" \
-    $TEST_DIR/pre-restart-db
+cmp_ok $TEST_DIR/pre-restart-db <<'__DB_DUMP__'
+bar|20130923T0000Z|1|1|succeeded
+bar|20130923T1200Z|1|1|succeeded
+bar|20130924T0000Z|1|1|succeeded
+bar|20130924T1200Z|1|1|succeeded
+bar|20130925T0000Z|0|1|waiting
+foo|20130923T0000Z|1|1|succeeded
+foo|20130923T1200Z|1|1|succeeded
+foo|20130924T0000Z|1|1|succeeded
+foo|20130924T1200Z|1|1|succeeded
+foo|20130925T0000Z|0|1|waiting
+output_states|20130925T0000Z|0|1|waiting
+__DB_DUMP__
 contains_ok $TEST_DIR/post-restart-db <<'__DB_DUMP__'
-finish|20130923T0000Z|0|1|waiting
-shutdown|20130923T0000Z|1|1|succeeded
-succeeded_task|20130923T0000Z|1|1|succeeded
+bar|20130923T0000Z|1|1|succeeded
+bar|20130923T1200Z|1|1|succeeded
+bar|20130924T0000Z|1|1|succeeded
+bar|20130924T1200Z|1|1|succeeded
+bar|20130925T0000Z|0|1|waiting
+foo|20130923T0000Z|1|1|succeeded
+foo|20130923T1200Z|1|1|succeeded
+foo|20130924T0000Z|1|1|succeeded
+foo|20130924T1200Z|1|1|succeeded
+foo|20130925T0000Z|0|1|waiting
+shutdown|20130925T0000Z|1|1|succeeded
 __DB_DUMP__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
   from task_states
   order by name, cycle;" > $TEST_DIR/db
-contains_ok $TEST_DIR/db <<'__DB_DUMP__'
-finish|20130923T0000Z|1|1|succeeded
-output_states|20130923T0000Z|1|1|succeeded
-shutdown|20130923T0000Z|1|1|succeeded
-succeeded_task|20130923T0000Z|1|1|succeeded
+cmp_ok $TEST_DIR/db <<'__DB_DUMP__'
+bar|20130923T0000Z|1|1|succeeded
+bar|20130923T1200Z|1|1|succeeded
+bar|20130924T0000Z|1|1|succeeded
+bar|20130924T1200Z|1|1|succeeded
+bar|20130925T0000Z|1|1|succeeded
+bar|20130925T1200Z|1|1|succeeded
+bar|20130926T0000Z|1|1|succeeded
+bar|20130926T1200Z|0|1|held
+foo|20130923T0000Z|1|1|succeeded
+foo|20130923T1200Z|1|1|succeeded
+foo|20130924T0000Z|1|1|succeeded
+foo|20130924T1200Z|1|1|succeeded
+foo|20130925T0000Z|1|1|succeeded
+foo|20130925T1200Z|1|1|succeeded
+foo|20130926T0000Z|1|1|succeeded
+foo|20130926T1200Z|0|1|held
+output_states|20130925T0000Z|1|1|succeeded
+shutdown|20130925T0000Z|1|1|succeeded
 __DB_DUMP__
 cmp_ok $TEST_DIR/state <<'__STATE__'
 run mode : live
 initial cycle : 20130923T0000Z
-final cycle : 20130923T0000Z
+final cycle : 20130926T0000Z
 (dp1
 .
 Begin task states
-finish.20130923T0000Z : status=succeeded, spawned=true
-output_states.20130923T0000Z : status=succeeded, spawned=true
-shutdown.20130923T0000Z : status=succeeded, spawned=true
-succeeded_task.20130923T0000Z : status=succeeded, spawned=true
+bar.20130925T1200Z : status=succeeded, spawned=true
+bar.20130926T0000Z : status=succeeded, spawned=true
+bar.20130926T1200Z : status=held, spawned=false
+foo.20130926T0000Z : status=succeeded, spawned=true
+foo.20130926T1200Z : status=held, spawned=false
 __STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

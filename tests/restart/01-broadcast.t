@@ -20,18 +20,10 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 14
+set_test_number 10
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE broadcast
-TEST_SUITE_RUN_OPTIONS=
-SUITE_TIMEOUT=240
-if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' ]]; then
-    ssh $CYLC_LL_TEST_TASK_HOST mkdir -p .cylc/$SUITE_NAME/
-    scp $TEST_DIR/$SUITE_NAME/passphrase $CYLC_LL_TEST_TASK_HOST:.cylc/$SUITE_NAME/passphrase
-    export CYLC_LL_TEST_SITE_DIRECTIVES CYLC_LL_TEST_TASK_HOST
-    TEST_SUITE_RUN_OPTIONS="--set=USE_LOADLEVELER=true"
-    SUITE_TIMEOUT=900
-fi
+cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/$SUITE_NAME/"
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -39,34 +31,22 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
-# Sleep until penultimate task (the suite stops and starts, so port scan alone
-# won't help)
-TEST_NAME=$TEST_NAME_BASE-monitor
-START_TIME=$(date +%s)
-export START_TIME SUITE_NAME SUITE_TIMEOUT
-run_ok $TEST_NAME bash <<'__SCRIPT__'
-while [[ -e $HOME/.cylc/ports/$SUITE_NAME || ! -e $TEST_DIR/suite-stopping ]]; do
-    if [[ $(date +%s) > $(( START_TIME + SUITE_TIMEOUT )) ]]; then
-        echo "[ERROR] Suite Timeout - shutting down..." >&2
-        cylc shutdown --now --kill $SUITE_NAME &
-        exit 1
-    fi
-    sleep 1
-done
-__SCRIPT__
-cmp_ok "$TEST_NAME.stderr" </dev/null
+suite_run_ok $TEST_NAME cylc run --no-detach $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-restart-run
+suite_run_ok $TEST_NAME cylc restart --no-detach $SUITE_NAME
+#-------------------------------------------------------------------------------
 state_dir=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/state/
 cp $state_dir/state $TEST_DIR/
-for state_file in $(ls $TEST_DIR/state*); do
+for state_file in $(ls $TEST_DIR/*state*); do
     sed -i "/^time : /d" $state_file
 done
-cmp_ok $TEST_DIR/state-pre-restart-2013092300 <<'__STATE__'
+cmp_ok $TEST_DIR/pre-restart-state <<'__STATE__'
 run mode : live
-initial cycle : 2013092300
-final cycle : 2013092306
+initial cycle : 20130923T0000Z
+final cycle : 20130923T0000Z
 (dp1
-S'2013092300'
+S'20130923T0000Z'
 p2
 (dp3
 S'broadcast_task'
@@ -75,141 +55,63 @@ p4
 S'environment'
 p6
 (dp7
-S'MY_TIME'
+S'MY_VALUE'
 p8
-S'2013092300'
+S'something'
 p9
 ssss.
 Begin task states
-broadcast_task.2013092300 : status=waiting, spawned=false
-force_restart.2013092300 : status=running, spawned=true
-force_restart.2013092306 : status=waiting, spawned=false
-output_states.2013092300 : status=waiting, spawned=false
-send_a_broadcast_task.2013092300 : status=succeeded, spawned=true
-send_a_broadcast_task.2013092306 : status=waiting, spawned=false
-tidy.2013092300 : status=waiting, spawned=false
+broadcast_task.20130923T0000Z : status=waiting, spawned=false
+finish.20130923T0000Z : status=waiting, spawned=false
+output_states.20130923T0000Z : status=waiting, spawned=false
+send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=true
 __STATE__
-grep_ok "broadcast_task|2013092300|0|1|waiting" $TEST_DIR/states-db-pre-restart-2013092300
-grep_ok "send_a_broadcast_task|2013092300|1|1|succeeded" $TEST_DIR/states-db-pre-restart-2013092300
-contains_ok $TEST_DIR/states-db-post-restart-2013092300 <<'__DB_DUMP__'
-broadcast_task|2013092300|0|1|waiting
-force_restart|2013092300|1|1|succeeded
-output_states|2013092300|1|1|running
-send_a_broadcast_task|2013092300|1|1|succeeded
-tidy|2013092300|0|1|waiting
+grep_ok "broadcast_task|20130923T0000Z|0|1|waiting" \
+    $TEST_DIR/pre-restart-db
+grep_ok "send_a_broadcast_task|20130923T0000Z|1|1|succeeded" \
+    $TEST_DIR/pre-restart-db
+contains_ok $TEST_DIR/post-restart-db <<'__DB_DUMP__'
+broadcast_task|20130923T0000Z|0|1|waiting
+finish|20130923T0000Z|0|1|waiting
+send_a_broadcast_task|20130923T0000Z|1|1|succeeded
+shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-cmp_ok $TEST_DIR/state-pre-restart-2013092306 <<'__STATE__'
-run mode : live
-initial cycle : 2013092300
-final cycle : 2013092306
-(dp1
-S'2013092300'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_TIME'
-p8
-S'2013092300'
-p9
-ssssS'2013092306'
-p10
-(dp11
-S'broadcast_task'
-p12
-(dp13
-S'environment'
-p14
-(dp15
-S'MY_TIME'
-p16
-S'2013092306'
-p17
-ssss.
-Begin task states
-broadcast_task.2013092306 : status=waiting, spawned=false
-force_restart.2013092306 : status=running, spawned=true
-force_restart.2013092312 : status=held, spawned=false
-output_states.2013092306 : status=waiting, spawned=false
-send_a_broadcast_task.2013092306 : status=succeeded, spawned=true
-send_a_broadcast_task.2013092312 : status=held, spawned=false
-tidy.2013092300 : status=succeeded, spawned=true
-tidy.2013092306 : status=waiting, spawned=false
-__STATE__
-contains_ok $TEST_DIR/states-db-pre-restart-2013092306 <<'__DB_DUMP__'
-broadcast_task|2013092300|1|1|succeeded
-broadcast_task|2013092306|0|1|waiting
-force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|1|1|running
-output_states|2013092300|1|1|succeeded
-output_states|2013092306|0|1|waiting
-send_a_broadcast_task|2013092300|1|1|succeeded
-send_a_broadcast_task|2013092306|1|1|succeeded
-tidy|2013092300|1|1|succeeded
-tidy|2013092306|0|1|waiting
-__DB_DUMP__
-
-contains_ok $TEST_DIR/states-db-post-restart-2013092306 <<'__DB_DUMP__'
-broadcast_task|2013092300|1|1|succeeded
-broadcast_task|2013092306|0|1|waiting
-force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|1|1|succeeded
-output_states|2013092300|1|1|succeeded
-output_states|2013092306|1|1|running
-send_a_broadcast_task|2013092300|1|1|succeeded
-send_a_broadcast_task|2013092306|1|1|succeeded
-tidy|2013092300|1|1|succeeded
-tidy|2013092306|0|1|waiting
-__DB_DUMP__
-cmp_ok $TEST_DIR/state <<'__STATE__'
-run mode : live
-initial cycle : 2013092300
-final cycle : 2013092306
-(dp1
-S'2013092306'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_TIME'
-p8
-S'2013092306'
-p9
-ssss.
-Begin task states
-broadcast_task.2013092312 : status=held, spawned=false
-force_restart.2013092312 : status=held, spawned=false
-output_states.2013092312 : status=held, spawned=false
-send_a_broadcast_task.2013092312 : status=held, spawned=false
-tidy.2013092306 : status=succeeded, spawned=true
-tidy.2013092312 : status=held, spawned=false
-__STATE__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
   from task_states
-  order by name, cycle;" > $TEST_DIR/states-db
-contains_ok $TEST_DIR/states-db <<'__DB_DUMP__'
-broadcast_task|2013092300|1|1|succeeded
-broadcast_task|2013092306|1|1|succeeded
-force_restart|2013092300|1|1|succeeded
-force_restart|2013092306|1|1|succeeded
-output_states|2013092300|1|1|succeeded
-output_states|2013092306|1|1|succeeded
-send_a_broadcast_task|2013092300|1|1|succeeded
-send_a_broadcast_task|2013092306|1|1|succeeded
-tidy|2013092300|1|1|succeeded
-tidy|2013092306|1|1|succeeded
+  order by name, cycle;" > $TEST_DIR/db
+contains_ok $TEST_DIR/db <<'__DB_DUMP__'
+broadcast_task|20130923T0000Z|1|1|succeeded
+finish|20130923T0000Z|1|1|succeeded
+output_states|20130923T0000Z|1|1|succeeded
+send_a_broadcast_task|20130923T0000Z|1|1|succeeded
+shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
+cmp_ok $TEST_DIR/state <<'__STATE__'
+run mode : live
+initial cycle : 20130923T0000Z
+final cycle : 20130923T0000Z
+(dp1
+S'20130923T0000Z'
+p2
+(dp3
+S'broadcast_task'
+p4
+(dp5
+S'environment'
+p6
+(dp7
+S'MY_VALUE'
+p8
+S'something'
+p9
+ssss.
+Begin task states
+broadcast_task.20130923T0000Z : status=succeeded, spawned=true
+finish.20130923T0000Z : status=succeeded, spawned=true
+output_states.20130923T0000Z : status=succeeded, spawned=true
+send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=true
+shutdown.20130923T0000Z : status=succeeded, spawned=true
+__STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-if [[ -n ${CYLC_LL_TEST_TASK_HOST:-} && ${CYLC_LL_TEST_TASK_HOST:-} != 'None' && -n $SUITE_NAME ]]; then
-    ssh $CYLC_LL_TEST_TASK_HOST rm -rf .cylc/$SUITE_NAME
-fi

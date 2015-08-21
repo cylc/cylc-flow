@@ -1,0 +1,28 @@
+    [[OUTPUT]]
+        script = """
+            sleep 5
+            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
+                "select name, cycle, submit_num, try_num, status
+                 from task_states where name != '"$CYLC_TASK_NAME"'
+                 order by name, cycle;" > {{ TEST_DIR }}/$OUTPUT_SUFFIX-db
+            sed "/$CYLC_TASK_NAME/d" $CYLC_SUITE_RUN_DIR/state/state >{{ TEST_DIR }}/$OUTPUT_SUFFIX-state
+        """
+    [[shutdown]]
+        description = "Force a shutdown of the suite"
+        inherit = OUTPUT
+        post-script = """
+            cylc shutdown $CYLC_SUITE_REG_NAME
+            sleep 5
+        """
+        [[[environment]]]
+            OUTPUT_SUFFIX=pre-restart
+    [[output_states]]
+        description = "Wait for the restart to complete, then output states"
+        inherit = OUTPUT
+        pre-script = """
+            sleep 5
+        """
+        [[[environment]]]
+            OUTPUT_SUFFIX=post-restart
+    [[finish]]
+        script = true

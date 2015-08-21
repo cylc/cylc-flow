@@ -15,32 +15,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test restarting a simple suite with a succeeded task
+# Test restarting a suite with a non-now shutdown for a running task.
 if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
 set_test_number 9
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE succeeded
-cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/$SUITE_NAME/"
+install_suite $TEST_NAME_BASE clean-shutdown
+TEST_SUITE_RUN_OPTIONS=
+SUITE_TIMEOUT=240
+if [[ -n ${CYLC_TEST_BATCH_TASK_HOST:-} && ${CYLC_TEST_BATCH_TASK_HOST:-} != 'None' ]]
+then
+    ssh ${SSH_OPTS} -n "${CYLC_TEST_BATCH_TASK_HOST}" \
+        "mkdir -p '.cylc/${SUITE_NAME}/'"
+    scp ${SSH_OPTS} "${TEST_DIR}/${SUITE_NAME}/passphrase" \
+        "${CYLC_TEST_BATCH_TASK_HOST}:.cylc/${SUITE_NAME}/passphrase"
+    export CYLC_TEST_BATCH_SITE_DIRECTIVES CYLC_TEST_BATCH_TASK_HOST
+    TEST_SUITE_RUN_OPTIONS="--set=BATCH_SYS_NAME=$BATCH_SYS_NAME"
+    SUITE_TIMEOUT=900
+fi
 export TEST_DIR
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok $TEST_NAME cylc validate $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+suite_run_ok $TEST_NAME cylc run --no-detach $TEST_SUITE_RUN_OPTIONS $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-restart-run
-suite_run_ok $TEST_NAME cylc restart --debug $SUITE_NAME
+TEST_NAME=$TEST_NAME_BASE-restarted-run
+run_ok $TEST_NAME cylc restart --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
 state_dir=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/state/
 cp $state_dir/state $TEST_DIR/
 for state_file in $(ls $TEST_DIR/*state*); do
     sed -i "/^time : /d" $state_file
 done
+#-------------------------------------------------------------------------------
 cmp_ok $TEST_DIR/pre-restart-state <<'__STATE__'
 run mode : live
 initial cycle : 20130923T0000Z
@@ -50,24 +62,25 @@ final cycle : 20130923T0000Z
 Begin task states
 finish.20130923T0000Z : status=waiting, spawned=false
 output_states.20130923T0000Z : status=waiting, spawned=false
-succeeded_task.20130923T0000Z : status=succeeded, spawned=true
+running_task.20130923T0000Z : status=running, spawned=true
 __STATE__
-grep_ok "succeeded_task|20130923T0000Z|1|1|succeeded" \
+grep_ok "running_task|20130923T0000Z|1|1|running" \
     $TEST_DIR/pre-restart-db
 contains_ok $TEST_DIR/post-restart-db <<'__DB_DUMP__'
 finish|20130923T0000Z|0|1|waiting
+running_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
-succeeded_task|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
 sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
  "select name, cycle, submit_num, try_num, status
   from task_states
   order by name, cycle;" > $TEST_DIR/db
+# output_states has a submit number of 2, erroneously - see #1580.
 contains_ok $TEST_DIR/db <<'__DB_DUMP__'
 finish|20130923T0000Z|1|1|succeeded
-output_states|20130923T0000Z|1|1|succeeded
+output_states|20130923T0000Z|2|1|succeeded
+running_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
-succeeded_task|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
 cmp_ok $TEST_DIR/state <<'__STATE__'
 run mode : live
@@ -78,8 +91,8 @@ final cycle : 20130923T0000Z
 Begin task states
 finish.20130923T0000Z : status=succeeded, spawned=true
 output_states.20130923T0000Z : status=succeeded, spawned=true
+running_task.20130923T0000Z : status=succeeded, spawned=true
 shutdown.20130923T0000Z : status=succeeded, spawned=true
-succeeded_task.20130923T0000Z : status=succeeded, spawned=true
 __STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
