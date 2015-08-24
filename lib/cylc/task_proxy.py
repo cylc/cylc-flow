@@ -760,6 +760,12 @@ class TaskProxy(object):
             # The job never ran, and is in batch system
             self._process_poll_message(INFO, "submitted")
 
+    def _process_poll_message(self, priority, message):
+        """Wraps self.process_incoming_message for poll messages."""
+        self.process_incoming_message(
+            (priority, "%s %s" % (self.identity, message)),
+            msg_was_polled=True)
+
     def job_poll_message_callback(self, line):
         """Callback on job poll message."""
         ctx = SuiteProcContext(self.JOB_POLL, None)
@@ -769,13 +775,7 @@ class TaskProxy(object):
 
         items = line.split("|")
         priority, message = line.split("|")[3:5]
-        self._process_poll_message(priority, message)
-
-    def _process_poll_message(self, priority, message):
-        """Wraps self.process_incoming_message for poll messages."""
-        self.process_incoming_message(
-            (priority, "%s %s" % (self.identity, message)),
-            msg_was_polled=True)
+        self.process_incoming_message((priority, message), msg_was_polled=True)
 
     def job_kill_callback(self, line):
         """Callback on job kill."""
