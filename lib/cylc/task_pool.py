@@ -1343,7 +1343,7 @@ class TaskPool(object):
             if (itask.task_host, itask.task_owner) not in auth_itasks:
                 auth_itasks[(itask.task_host, itask.task_owner)] = []
             auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
-        for auth, itasks in auth_itasks.items():
+        for auth, itasks in sorted(auth_itasks.items()):
             cmd = ["cylc", cmd_key]
             host, owner = auth
             for key, value, test_func in [
@@ -1353,7 +1353,7 @@ class TaskPool(object):
                     cmd.append('--%s=%s' % (key, value))
             cmd.append(GLOBAL_CFG.get_derived_host_item(
                 self.suite_name, 'suite job log directory', host, owner))
-            for itask in itasks:
+            for itask in sorted(itasks, key=lambda itask: itask.identity):
                 cmd.append(itask.get_job_log_dir(
                     itask.tdef.name, itask.point, itask.submit_num))
             SuiteProcPool.get_inst().put_command(
