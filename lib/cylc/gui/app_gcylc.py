@@ -533,10 +533,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         setup_icons()
 
-        if gcfg.get(['initial orientation']) == "side-by-side":
-            self.view_layout_horizontal = True
-        else:
-           self.view_layout_horizontal = False
+        self.view_layout_horizontal = (
+                            gcfg.get(['initial side-by-side views']) is True)
         self.quitters = []
         self.gcapture_windows = []
 
@@ -3085,6 +3083,8 @@ This is what my suite does:..."""
         self.layout_toolbutton.set_homogeneous(False)
         self.layout_toolbutton.connect("toggled", self._cb_change_view_align)
         self.layout_toolbutton.set_active(self.view_layout_horizontal)
+        self._set_tooltip(self.layout_toolbutton,
+                          "Toggle views side-by-side.")
         # Insert the view choosers
         view0_label_item = gtk.ToolItem()
         view0_label_item.add(gtk.Label("View 1: "))

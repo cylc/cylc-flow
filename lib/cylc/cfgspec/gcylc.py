@@ -40,8 +40,7 @@ SPEC = {
                              options=["small","medium","large", "extra large"]),
     'sort by definition order' : vdr( vtype='boolean', default=True ), 
     'task filter highlight color' : vdr(vtype='string', default='PowderBlue'),
-    'initial orientation' : vdr(vtype='string', default="vertical",
-                                options=["vertical","side-by-side"]),
+    'initial side-by-side views' : vdr(vtype='boolean', default=False),
     'themes' : {
         '__MANY__' : {
             'inherit'       : vdr( vtype='string', default="default" ),
