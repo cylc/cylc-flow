@@ -533,8 +533,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         setup_icons()
 
-        self.view_layout_horizontal = (
-                            gcfg.get(['initial side-by-side views']) is True)
+        self.view_layout_horizontal = gcfg.get(['initial side-by-side views'])
         self.quitters = []
         self.gcapture_windows = []
 
