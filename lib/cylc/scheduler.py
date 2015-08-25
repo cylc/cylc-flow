@@ -984,14 +984,9 @@ class scheduler(object):
                     main_loop_start_time = time.time()
 
                 self.pool.match_dependencies()
-
-                ready_tasks = self.pool.submit_tasks()
-                if (ready_tasks and
-                        self.config.cfg['cylc']['log resolved dependencies']):
-                    self.log_resolved_deps(ready_tasks)
-
+                if not self.shut_down_cleanly:
+                    self.pool.submit_tasks()
                 self.pool.spawn_tasks()
-
                 self.pool.remove_spent_tasks()
                 self.pool.remove_suiciding_tasks()
 
@@ -1101,15 +1096,6 @@ class scheduler(object):
             self.pool.get_max_point_runahead(), self.paused(),
             self.will_pause_at(), self.shut_down_cleanly, self.will_stop_at(),
             self.config.ns_defn_order, self.pool.reconfiguring)
-
-    def log_resolved_deps(self, ready_tasks):
-        """Log what triggered off what."""
-        # Used in reference tests.
-        for itask in ready_tasks:
-            itask.log(
-                logging.INFO, 'triggered off %s' %
-                str(itask.get_resolved_dependencies())
-            )
 
     def check_suite_timer(self):
         if self.already_timed_out:

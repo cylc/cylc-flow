@@ -75,6 +75,8 @@ def commandline_parser():
 def main():
     parser = commandline_parser()
     (options, args) = parser.parse_args()
+    if options.debug:
+        cylc.flags.debug = True
     suite = args[0]
     suiterc = localdb(options.db).get_suiterc(suite)
 
@@ -171,8 +173,11 @@ def main():
         proc_pool = SuiteProcPool.get_inst(pool_size=1)
 
     if options.dry_run:
-        print "JOB SCRIPT=%s" % task_proxy.submit(dry_run=True)
+        task_proxy.prep_submit(dry_run=True)
+        print "JOB SCRIPT=%s" % task_proxy.job_conf['job file path']
     else:
+        if task_proxy.prep_submit() is None:
+            sys.exit(1)
         task_proxy.submit()
         while proc_pool.results:
             proc_pool.handle_results_async()

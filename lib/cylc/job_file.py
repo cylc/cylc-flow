@@ -86,6 +86,8 @@ class JobFile(object):
         for prefix, value in [
                 ("# Suite: ", job_conf['suite name']),
                 ("# Task: ", job_conf['task id']),
+                (BATCH_SYS_MANAGER.LINE_PREFIX_JOB_LOG_DIR,
+                 os.path.dirname(job_conf['common job log path'])),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SYS_NAME,
                  job_conf['batch system name']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
@@ -445,7 +447,7 @@ echo""")
 echo 'JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING'
 trap '' EXIT
 
-#EOF""")
+""")
         else:
             handle.write(r"""
 
@@ -460,7 +462,13 @@ cylc task message '%(message)s'
 echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
 trap '' EXIT
 
-#EOF""" % {"message": TaskMessage.SUCCEEDED})
+""" % {"message": TaskMessage.SUCCEEDED})
+
+        task_name, point_string = TaskID.split(job_conf['task id'])
+        job_conf['absolute submit number']
+        handle.write("%s%s" % (
+            BATCH_SYS_MANAGER.LINE_PREFIX_EOF,
+            os.path.dirname(job_conf['common job log path'])))
 
 
 JOB_FILE = JobFile()

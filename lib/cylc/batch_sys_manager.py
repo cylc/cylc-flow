@@ -65,7 +65,7 @@ batch_sys.get_vacation_signal(job_conf) => str
     * If relevant, return a string containing the name of the signal that
       indicates the job has been vacated by the batch system.
 
-batch_sys.submit(job_file_path) => proc
+batch_sys.submit(job_file_path) => ret_code, out, err
     * Submit a job and return an instance of the Popen object for the
       submission. This method is useful if the job submission requires logic
       beyond just running a system or shell command. See also
@@ -186,10 +186,13 @@ class BatchSysManager(object):
     LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
+    LINE_PREFIX_EOF = "#EOF: "
+    LINE_PREFIX_JOB_LOG_DIR = "# Job log directory: "
     LINE_UPDATE_CYLC_DIR = (
         "# N.B. CYLC_DIR has been updated on the remote host\n")
-    MESSAGE_PREFIX = "[CYLC MESSAGE]"
-    STATUS_SUMMARY_PREFIX = "[CYLC JOB STATUS SUMMARY]"
+    OUT_PREFIX_COMMAND = "[TASK JOB COMMAND]"
+    OUT_PREFIX_MESSAGE = "[TASK JOB MESSAGE]"
+    OUT_PREFIX_SUMMARY = "[TASK JOB SUMMARY]"
     _INSTANCES = {}
 
     @classmethod
@@ -234,10 +237,6 @@ class BatchSysManager(object):
         if hasattr(batch_sys, "get_vacation_signal"):
             return batch_sys.get_vacation_signal(job_conf)
 
-    def is_bg_submit(self, batch_sys_name):
-        """Return True if batch_sys_name behaves like background submit."""
-        return getattr(self.get_inst(batch_sys_name), "IS_BG_SUBMIT", False)
-
     def jobs_kill(self, job_log_root, job_log_dirs):
         """Kill multiple jobs.
 
@@ -251,14 +250,21 @@ class BatchSysManager(object):
         # command for a particular job is successful or not.
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
-        ret = ""
+        self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
         now = get_current_time_string()
         for job_log_dir in job_log_dirs:
-            ret_code = self.job_kill(
+            ret_code, err = self.job_kill(
                 os.path.join(job_log_root, job_log_dir, "job.status"))
-            ret += "%s%s|%s|%d\n" % (
-                self.STATUS_SUMMARY_PREFIX, now, job_log_dir, ret_code)
-        return ret
+            sys.stdout.write("%s%s|%s|%d\n" % (
+                self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code))
+            # Note: Print STDERR to STDOUT may look a bit strange, but it
+            # requires less logic for the suite to parse the output.
+            if err.strip():
+                for line in err.splitlines(True):
+                    if not line.endswith("\n"):
+                        line += "\n"
+                    sys.stdout.write("%s%s|%s|%s" % (
+                        self.OUT_PREFIX_CMD_ERR, now, job_log_dir, line))
 
     def jobs_poll(self, job_log_root, job_log_dirs):
         """Poll multiple jobs.
@@ -269,6 +275,7 @@ class BatchSysManager(object):
         """
         if "$" in job_log_root:
             job_log_root = os.path.expandvars(job_log_root)
+        self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
 
         ctx_list = []  # Contexts for all relevant jobs
         ctx_list_by_batch_sys = {}  # {batch_sys_name1: [ctx1, ...], ...}
@@ -301,19 +308,52 @@ class BatchSysManager(object):
                 job_log_root, batch_sys_name, my_ctx_list)
 
         cur_time_str = get_current_time_string()
-        ret = ""
         for ctx in ctx_list:
             for message in ctx.messages:
-                ret += "%s%s|%s|%s\n" % (
-                    self.MESSAGE_PREFIX,
+                sys.stdout.write("%s%s|%s|%s\n" % (
+                    self.OUT_PREFIX_MESSAGE,
                     cur_time_str,
                     ctx.job_log_dir,
-                    message)
-            ret += "%s%s|%s\n" % (
-                self.STATUS_SUMMARY_PREFIX,
+                    message))
+            sys.stdout.write("%s%s|%s\n" % (
+                self.OUT_PREFIX_SUMMARY,
                 cur_time_str,
-                ctx.get_summary_str())
-        return ret
+                ctx.get_summary_str()))
+
+    def jobs_submit(self, job_log_root, job_log_dirs, remote_mode=False):
+        """Submit multiple jobs.
+
+        job_log_root -- The log/job/ sub-directory of the suite.
+        job_log_dirs -- A list containing point/name/submit_num for task jobs.
+
+        """
+        if "$" in job_log_root:
+            job_log_root = os.path.expandvars(job_log_root)
+        self.configure_suite_run_dir(job_log_root.rsplit(os.sep, 2)[0])
+
+        if remote_mode:
+            items = self._jobs_submit_prep_by_stdin(job_log_root, job_log_dirs)
+        else:
+            items = self._jobs_submit_prep_by_args(job_log_root, job_log_dirs)
+        now = get_current_time_string()
+        for job_log_dir, batch_sys_name, batch_submit_cmd_tmpl in items:
+            job_file_path = os.path.join(job_log_root, job_log_dir, "job")
+            if not batch_sys_name:
+                sys.stdout.write("%s%s|%s|1|\n" % (
+                    self.OUT_PREFIX_SUMMARY, now, job_log_dir))
+                continue
+            ret_code, out, err, job_id = self._job_submit_impl(
+                job_file_path, batch_sys_name, batch_submit_cmd_tmpl)
+            sys.stdout.write("%s%s|%s|%d|%s\n" % (
+                self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code, job_id))
+            for key, value in [("STDERR", err), ("STDOUT", out)]:
+                if value is None or not value.strip():
+                    continue
+                for line in value.splitlines(True):
+                    if not value.endswith("\n"):
+                        value += "\n"
+                    sys.stdout.write("%s%s|%s|[%s] %s" % (
+                        self.OUT_PREFIX_COMMAND, now, job_log_dir, key, line))
 
     def job_kill(self, st_file_path):
         """Ask batch system to terminate the job specified in "st_file_path".
@@ -329,7 +369,7 @@ class BatchSysManager(object):
                 batch_sys = self.get_inst(line.strip().split("=", 1)[1])
                 break
         else:
-            return 1
+            return (1, "Cannot determine batch system from 'job.status' file")
         st_file.seek(0, 0)  # rewind
         if getattr(batch_sys, "CAN_KILL_PROC_GROUP", False):
             for line in st_file:
@@ -337,11 +377,11 @@ class BatchSysManager(object):
                     pid = line.strip().split("=", 1)[1]
                     try:
                         os.killpg(int(pid), SIGKILL)
-                    except OSError:
+                    except OSError as exc:
                         traceback.print_exc()
-                        return 1
+                        return (1, str(exc))
                     else:
-                        return 0
+                        return (0, "")
         st_file.seek(0, 0)  # rewind
         if hasattr(batch_sys, "KILL_CMD_TMPL"):
             for line in st_file:
@@ -351,17 +391,17 @@ class BatchSysManager(object):
                 command = shlex.split(
                     batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
                 try:
-                    ret_code = call(command)
+                    proc = Popen(command, stderr=PIPE)
                 except OSError as exc:
                     # subprocess.Popen has a bad habit of not setting the
                     # filename of the executable when it raises an OSError.
                     if not exc.filename:
                         exc.filename = command[0]
                     traceback.print_exc()
-                    return 1
+                    return (1, str(exc))
                 else:
-                    return ret_code
-        return 1
+                    return (proc.wait(), proc.communicate()[1])
+        return (1, "Cannot determine batch job ID from 'job.status' file")
 
     def job_poll(self, st_file_path):
         """Poll status of the job specified in the "st_file_path".
@@ -459,62 +499,8 @@ class BatchSysManager(object):
                     batch_submit_cmd_tmpl = line.replace(
                         self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
 
-        # Create NN symbolic link, if necessary
-        self._create_nn(job_file_path)
-
-        # Start new status file
-        job_status_file = open(job_file_path + ".status", "w")
-        job_status_file.write(
-            "%s=%s\n" % (self.CYLC_BATCH_SYS_NAME, batch_sys_name))
-        job_status_file.close()
-
-        # Submit job
-        batch_sys = self.get_inst(batch_sys_name)
-        proc_stdin_arg = None
-        proc_stdin_value = None
-        if getattr(batch_sys, "SUBMIT_CMD_STDIN_IS_JOB_FILE", False):
-            proc_stdin_arg = open(job_file_path)
-        elif hasattr(batch_sys, "SUBMIT_CMD_STDIN_TMPL"):
-            proc_stdin_value = batch_sys.SUBMIT_CMD_STDIN_TMPL % {
-                "job": job_file_path}
-            proc_stdin_arg = PIPE
-        if batch_submit_cmd_tmpl:
-            # No need to catch OSError when using shell. It is unlikely that we
-            # do not have a shell, and still manage to get as far as here.
-            batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
-            proc = Popen(
-                batch_sys_cmd,
-                stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE, shell=True)
-        elif hasattr(batch_sys, "submit"):
-            # batch_sys.submit should handle OSError, if relevant.
-            proc = batch_sys.submit(job_file_path)
-        else:
-            command = shlex.split(
-                batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
-            try:
-                proc = Popen(
-                    command, stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
-            except OSError as exc:
-                # subprocess.Popen has a bad habit of not setting the filename
-                # of the executable when it raises an OSError.
-                if not exc.filename:
-                    exc.filename = command[0]
-                raise
-        out, err = proc.communicate(proc_stdin_value)
-        ret_code = proc.wait()
-
-        # Filter submit command output, if relevant
-        # Get job ID, if possible
-        job_id = None
-        if out or err:
-            try:
-                out, err, job_id = self._filter_submit_output(
-                    job_file_path + ".status", batch_sys, out, err)
-            except OSError:
-                ret_code = 1
-                self.job_kill(job_file_path + ".status")
-
-        return ret_code, out, err, job_id
+        return self._job_submit_impl(
+            job_file_path, batch_sys_name, batch_submit_cmd_tmpl)
 
     @classmethod
     def _create_nn(cls, job_file_path):
@@ -564,7 +550,7 @@ class BatchSysManager(object):
             handle = open(os.path.join(
                 job_log_root, ctx.job_log_dir, "job.status"))
         except IOError as exc:
-            sys.stderr.write(str(exc))
+            sys.stderr.write(str(exc) + "\n")
             return
         for line in handle:
             if "=" not in line:
@@ -611,7 +597,7 @@ class BatchSysManager(object):
             # filename of the executable when it raises an OSError.
             if not exc.filename:
                 exc.filename = cmd[0]
-            sys.stderr.write(str(exc))
+            sys.stderr.write(str(exc) + "\n")
             return
         proc.wait()
         out, err = proc.communicate()
@@ -641,7 +627,174 @@ class BatchSysManager(object):
                         get_current_time_string()))
                     handle.close()
                 except IOError as exc:
-                    sys.stderr.write(str(exc))
+                    sys.stderr.write(str(exc) + "\n")
+
+    def _job_submit_impl(
+            self, job_file_path, batch_sys_name, batch_submit_cmd_tmpl):
+        """Helper for self.jobs_submit() and self.job_submit()."""
+
+        # Create NN symbolic link, if necessary
+        self._create_nn(job_file_path)
+
+        # Start new status file
+        job_status_file = open(job_file_path + ".status", "w")
+        job_status_file.write(
+            "%s=%s\n" % (self.CYLC_BATCH_SYS_NAME, batch_sys_name))
+        job_status_file.close()
+
+        # Submit job
+        batch_sys = self.get_inst(batch_sys_name)
+        proc_stdin_arg = None
+        proc_stdin_value = None
+        if getattr(batch_sys, "SUBMIT_CMD_STDIN_IS_JOB_FILE", False):
+            proc_stdin_arg = open(job_file_path)
+        elif hasattr(batch_sys, "SUBMIT_CMD_STDIN_TMPL"):
+            proc_stdin_value = batch_sys.SUBMIT_CMD_STDIN_TMPL % {
+                "job": job_file_path}
+            proc_stdin_arg = PIPE
+        if hasattr(batch_sys, "submit"):
+            # batch_sys.submit should handle OSError, if relevant.
+            ret_code, out, err = batch_sys.submit(job_file_path)
+        else:
+            if batch_submit_cmd_tmpl:
+                # No need to catch OSError when using shell. It is unlikely
+                # that we do not have a shell, and still manage to get as far
+                # as here.
+                batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
+                proc = Popen(
+                    batch_sys_cmd,
+                    stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE, shell=True)
+            else:
+                command = shlex.split(
+                    batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
+                try:
+                    proc = Popen(
+                        command, stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
+                except OSError as exc:
+                    # subprocess.Popen has a bad habit of not setting the
+                    # filename of the executable when it raises an OSError.
+                    if not exc.filename:
+                        exc.filename = command[0]
+                    return 1, "", str(exc), ""
+            out, err = proc.communicate(proc_stdin_value)
+            ret_code = proc.wait()
+
+        # Filter submit command output, if relevant
+        # Get job ID, if possible
+        job_id = None
+        if out or err:
+            try:
+                out, err, job_id = self._filter_submit_output(
+                    job_file_path + ".status", batch_sys, out, err)
+            except OSError:
+                ret_code = 1
+                self.job_kill(job_file_path + ".status")
+
+        return ret_code, out, err, job_id
+
+    def _jobs_submit_prep_by_args(self, job_log_root, job_log_dirs):
+        """Prepare job files for submit by reading files in arguments.
+
+        Job files are specified in the arguments in local mode. Extract job
+        submission methods and job submission command templates from each job
+        file.
+
+        Return a list, where each element contains something like:
+        (job_log_dir, batch_sys_name, batch_submit_cmd_tmpl)
+
+        """
+        items = []
+        for job_log_dir in job_log_dirs:
+            job_file_path = os.path.join(job_log_root, job_log_dir, "job")
+            batch_sys_name = None
+            batch_submit_cmd_tmpl = None
+            for line in open(job_file_path):
+                if line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
+                    batch_sys_name = line.replace(
+                        self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
+                elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
+                    batch_submit_cmd_tmpl = line.replace(
+                        self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
+            items.append((job_log_dir, batch_sys_name, batch_submit_cmd_tmpl))
+        return items
+
+    def _jobs_submit_prep_by_stdin(self, job_log_root, job_log_dirs):
+        """Prepare job files for submit by reading from STDIN.
+
+        Job files are uploaded via STDIN in remote mode. Modify job
+        files' CYLC_DIR for this host. Extract job submission methods
+        and job submission command templates from each job file.
+
+        Return a list, where each element contains something like:
+        (job_log_dir, batch_sys_name, batch_submit_cmd_tmpl)
+
+        """
+        items = [[job_log_dir, None, None] for job_log_dir in job_log_dirs]
+        items_map = {}
+        for item in items:
+            items_map[item[0]] = item
+        handle = None
+        batch_sys_name = None
+        batch_submit_cmd_tmpl = None
+        job_log_dir = None
+        lines = []
+        # Get job files from STDIN.
+        # Modify CYLC_DIR in job file, if necessary.
+        # Get batch system name and batch submit command template from each job
+        # file.
+        # Write job file in correct location.
+        while True:  # Note: "for cur_line in sys.stdin:" may hang
+            cur_line = sys.stdin.readline()
+            if not cur_line:
+                if handle is not None:
+                    handle.close()
+                break
+
+            if cur_line.startswith(self.LINE_PREFIX_CYLC_DIR):
+                old_line = cur_line
+                cur_line = (
+                    cur_line[0:cur_line.find(self.LINE_PREFIX_CYLC_DIR)] +
+                    self.LINE_PREFIX_CYLC_DIR +
+                    "'%s'\n" % os.environ["CYLC_DIR"])
+                if old_line != cur_line:
+                    lines.append(self.LINE_UPDATE_CYLC_DIR)
+            elif cur_line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
+                batch_sys_name = cur_line.replace(
+                    self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
+            elif cur_line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
+                batch_submit_cmd_tmpl = cur_line.replace(
+                    self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
+            elif cur_line.startswith(self.LINE_PREFIX_JOB_LOG_DIR):
+                job_log_dir = cur_line.replace(
+                    self.LINE_PREFIX_JOB_LOG_DIR, "").strip()
+                mkdir_p(os.path.join(job_log_root, job_log_dir))
+                handle = open(
+                    os.path.join(job_log_root, job_log_dir, "job.tmp"), "wb")
+
+            if handle is None:
+                lines.append(cur_line)
+            else:
+                for line in lines + [cur_line]:
+                    handle.write(line)
+                lines = []
+                if cur_line.startswith(self.LINE_PREFIX_EOF + job_log_dir):
+                    handle.close()
+                    # Make it executable
+                    os.chmod(handle.name, (
+                        os.stat(handle.name).st_mode |
+                        stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
+                    # Rename from "*/job.tmp" to "*/job"
+                    os.rename(handle.name, handle.name[:-4])
+                    try:
+                        items_map[job_log_dir][1] = batch_sys_name
+                        items_map[job_log_dir][2] = batch_submit_cmd_tmpl
+                    except KeyError:
+                        pass
+                    handle = None
+                    job_log_dir = None
+                    batch_sys_name = None
+                    batch_submit_cmd_tmpl = None
+        return items
 
     def _job_submit_prepare_remote(self, job_file_path):
         """Prepare a remote job file.

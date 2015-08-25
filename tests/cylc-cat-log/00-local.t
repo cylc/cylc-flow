@@ -24,9 +24,8 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
 # Run detached so we get suite out and err logs.
-suite_run_ok $TEST_NAME cylc run $SUITE_NAME
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 sleep 5
 # Wait for the suite to finish.
 cylc stop --max-polls=10 --interval=2 $SUITE_NAME 

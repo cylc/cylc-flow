@@ -45,8 +45,8 @@ LOG="${RUN_DIR}/log/suite/log"
 sed -n 's/^.*\(cylc jobs-kill\)/\1/p' "${LOG}" | sort >'edited-suite-log'
 
 sort >'edited-suite-log-ref' <<__LOG__
-cylc jobs-kill ${RUN_DIR}/log/job 1/local-1/01 1/local-2/01 1/local-3/01
-cylc jobs-kill --host=${CYLC_TEST_HOST} '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-1/01 1/remote-2/01
+cylc jobs-kill --debug --host=${CYLC_TEST_HOST} -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-1/01 1/remote-2/01
+cylc jobs-kill --debug -- ${RUN_DIR}/log/job 1/local-1/01 1/local-2/01 1/local-3/01
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 

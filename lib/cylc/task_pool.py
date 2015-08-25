@@ -38,7 +38,9 @@ from logging import ERROR, DEBUG, INFO, WARNING
 import os
 from Pyro.errors import NamingError
 import sys
+from tempfile import NamedTemporaryFile
 from time import time
+import traceback
 
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.broker import broker
@@ -63,6 +65,7 @@ class TaskPool(object):
 
     JOBS_KILL = "jobs-kill"
     JOBS_POLL = "jobs-poll"
+    JOBS_SUBMIT = "jobs-submit"
 
     def __init__(self, suite, pri_dao, pub_dao, stop_point, pyro, log,
                  run_mode):
@@ -413,7 +416,7 @@ class TaskPool(object):
                     itask.reset_manual_trigger()
 
         # 2) submit queued tasks if manually forced or not queue-limited
-        readytogo = []
+        ready_tasks = []
         config = SuiteConfig.get_inst()
         qconfig = config.cfg['scheduling']['queues']
         for queue in self.queues:
@@ -438,17 +441,93 @@ class TaskPool(object):
                 if itask.manual_trigger or not n_limit or n_release > 0:
                     # manual release, or no limit, or not currently limited
                     n_release -= 1
-                    readytogo.append(itask)
+                    ready_tasks.append(itask)
                     itask.reset_manual_trigger()
                 # else leaved queued
 
-        self.log.debug('%d task(s) de-queued' % len(readytogo))
+        self.log.debug('%d task(s) de-queued' % len(ready_tasks))
 
+        self.submit_task_jobs(ready_tasks)
+
+    def submit_task_jobs(self, ready_tasks):
+        """Prepare and submit task jobs."""
+        if not ready_tasks:
+            return
+
+        # Prepare tasks for job submission
+        config = SuiteConfig.get_inst()
         bcast = BroadcastServer.get_inst()
-        for itask in readytogo:
-            itask.submit(overrides=bcast.get(itask.identity))
+        prepared_tasks = []
+        for itask in ready_tasks:
+            if (config.cfg['cylc']['log resolved dependencies'] and
+                    not itask.job_file_written):
+                itask.log(
+                    INFO,
+                    'triggered off %s' % itask.get_resolved_dependencies())
+            overrides = bcast.get(itask.identity)
+            if self.run_mode =='simulation':
+                itask.job_submission_succeeded()
+            elif itask.prep_submit(overrides=overrides) is not None:
+                prepared_tasks.append(itask)
 
-        return readytogo
+        if not prepared_tasks:
+            return
+
+        # Submit task jobs
+        auth_itasks = {}
+        for itask in prepared_tasks:
+            # The job file is now (about to be) used: reset the file write flag
+            # so that subsequent manual retrigger will generate a new job file.
+            itask.job_file_written = False
+            itask.set_status('ready')
+            if (itask.task_host, itask.task_owner) not in auth_itasks:
+                auth_itasks[(itask.task_host, itask.task_owner)] = []
+            auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
+        for auth, itasks in sorted(auth_itasks.items()):
+            cmd = ["cylc", self.JOBS_SUBMIT]
+            if cylc.flags.debug:
+                cmd.append("--debug")
+            host, owner = auth
+            remote_mode = False
+            for key, value, test_func in [
+                    ('host', host, is_remote_host),
+                    ('user', owner, is_remote_user)]:
+                if test_func(value):
+                    cmd.append('--%s=%s' % (key, value))
+                    remote_mode = True
+            if remote_mode:
+                cmd.append('--remote-mode')
+            cmd.append("--")
+            cmd.append(GLOBAL_CFG.get_derived_host_item(
+                self.suite_name, 'suite job log directory', host, owner))
+            stdin_file_paths = []
+            job_log_dirs = []
+            for itask in sorted(itasks, key=lambda itask: itask.identity):
+                if remote_mode:
+                    stdin_file_paths.append(
+                        itask.job_conf['local job file path'])
+                job_log_dirs.append(itask.get_job_log_dir(
+                        itask.tdef.name, itask.point, itask.submit_num))
+            cmd += job_log_dirs
+            SuiteProcPool.get_inst().put_command(
+                SuiteProcContext(
+                    self.JOBS_SUBMIT,
+                    cmd,
+                    stdin_file_paths=stdin_file_paths,
+                    job_log_dirs=job_log_dirs,
+                ),
+                self.submit_task_jobs_callback)
+
+    def submit_task_jobs_callback(self, ctx):
+        """Callback when submit task jobs command exits."""
+        self._manip_task_jobs_callback(
+            ctx,
+            lambda itask, line: itask.job_submit_callback(line),
+            {
+                BATCH_SYS_MANAGER.OUT_PREFIX_COMMAND:
+                lambda itask, line: itask.job_cmd_out_callback(line),
+            },
+        )
 
     def task_has_future_trigger_overrun(self, itask):
         """Check for future triggers extending beyond the final cycle."""
@@ -697,7 +776,11 @@ class TaskPool(object):
         self._manip_task_jobs_callback(
             ctx,
             lambda itask, line: itask.job_poll_callback(line),
-            lambda itask, line: itask.job_poll_message_callback(line))
+            {
+                BATCH_SYS_MANAGER.OUT_PREFIX_MESSAGE:
+                lambda itask, line: itask.job_poll_message_callback(line),
+            },
+        )
 
     def kill_task_jobs(self, ids=None):
         """Kill jobs of active tasks.
@@ -727,7 +810,7 @@ class TaskPool(object):
                         # can also be an Exception raised by
                         # cylc.suite_host.is_remote_host
                         itask.command_log(SuiteProcContext(
-                            itask.JOB_POLL, '(prepare job kill)', err=exc,
+                            itask.JOB_KILL, '(prepare job kill)', err=exc,
                             ret_code=1))
                         continue
                 itask.reset_state_held()
@@ -743,10 +826,16 @@ class TaskPool(object):
     def kill_task_jobs_callback(self, ctx):
         """Callback when kill tasks command exits."""
         self._manip_task_jobs_callback(
-            ctx, lambda itask, line: itask.job_kill_callback(line))
+            ctx,
+            lambda itask, line: itask.job_kill_callback(line),
+            {
+                BATCH_SYS_MANAGER.OUT_PREFIX_COMMAND:
+                lambda itask, line: itask.job_cmd_out_callback(line),
+            },
+        )
 
     def _manip_task_jobs_callback(
-            self, ctx, summary_callback, message_callback=None):
+            self, ctx, summary_callback, more_callbacks=None):
         """Callback when poll/kill tasks command exits."""
         if ctx.ret_code:
             self.log.error(ctx)
@@ -758,15 +847,22 @@ class TaskPool(object):
         # will no longer be in the "submitted" or "running" state, and its
         # output line will be ignored here.
         for itask in self.get_tasks():
-            if itask.is_active():
-                point = str(itask.point)
+            if itask.point is not None and itask.submit_num:
                 submit_num = "%02d" % (itask.submit_num)
-                tasks[(point, itask.tdef.name, submit_num)] = itask
-        handlers = [
-            (BATCH_SYS_MANAGER.STATUS_SUMMARY_PREFIX, summary_callback)]
-        if callable(message_callback):
-            handlers.append(
-                (BATCH_SYS_MANAGER.MESSAGE_PREFIX, message_callback))
+                tasks[(str(itask.point), itask.tdef.name, submit_num)] = itask
+        handlers = [(BATCH_SYS_MANAGER.OUT_PREFIX_SUMMARY, summary_callback)]
+        if more_callbacks:
+            for prefix, callback in more_callbacks.items():
+                handlers.append((prefix, callback))
+        if not ctx.out:
+            # Something is very wrong here
+            # Fallback to use "job_log_dirs" list to report the problem
+            job_log_dirs = ctx.cmd_kwargs.get("job_log_dirs", [])
+            for job_log_dir in job_log_dirs:
+                point, name, submit_num = job_log_dir.split(os.sep, 2)
+                itask = tasks[(point, name, submit_num)]
+                callback(itask, "|".join([ctx.timestamp, job_log_dir, "1"]))
+            return
         for line in ctx.out.splitlines(True):
             for prefix, callback in handlers:
                 if line.startswith(prefix):
@@ -776,10 +872,12 @@ class TaskPool(object):
                         point, name, submit_num = path.split(os.sep, 2)
                         itask = tasks[(point, name, submit_num)]
                         callback(itask, line)
-                    except (KeyError, ValueError):
+                    except (KeyError, ValueError) as exc:
                         if cylc.flags.debug:
                             self.log.warning(
-                                'Unhandled poll/kill output: %s' % (line))
+                                'Unhandled %s output: %s' % (
+                                    ctx.cmd_type, line))
+                            traceback.print_exc()
 
     def get_hold_point(self):
         """Return the point after which tasks must be held."""
@@ -1044,10 +1142,12 @@ class TaskPool(object):
                     itask.reset_state_ready()
 
     def dry_run_task(self, id_):
+        """Create job file for "cylc trigger --edit"."""
         bcast = BroadcastServer.get_inst()
         for itask in self.get_tasks():
             if itask.identity == id_:
-                itask.submit(overrides=bcast.get(itask.identity), dry_run=True)
+                itask.prep_submit(
+                    overrides=bcast.get(itask.identity), dry_run=True)
 
     def check_task_timers(self):
         """Check submission and execution timeout timers for current tasks.
@@ -1329,8 +1429,8 @@ class TaskPool(object):
 
         print 'PURGE DONE'
 
-    def _run_job_cmd(self, cmd_key, itasks, callback):
-        """Run job commands, e.g. submit, poll, kill, etc.
+    def _run_job_cmd(self, cmd_key, itasks, callback, **kwargs):
+        """Run job commands, e.g. poll, kill, etc.
 
         Group itasks with their user@host.
         Put a job command for each user@host to the multiprocess pool.
@@ -1345,16 +1445,22 @@ class TaskPool(object):
             auth_itasks[(itask.task_host, itask.task_owner)].append(itask)
         for auth, itasks in sorted(auth_itasks.items()):
             cmd = ["cylc", cmd_key]
+            if cylc.flags.debug:
+                cmd.append("--debug")
             host, owner = auth
             for key, value, test_func in [
                     ('host', host, is_remote_host),
                     ('user', owner, is_remote_user)]:
                 if test_func(value):
                     cmd.append('--%s=%s' % (key, value))
+            cmd.append("--")
             cmd.append(GLOBAL_CFG.get_derived_host_item(
                 self.suite_name, 'suite job log directory', host, owner))
+            job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
-                cmd.append(itask.get_job_log_dir(
+                job_log_dirs.append(itask.get_job_log_dir(
                     itask.tdef.name, itask.point, itask.submit_num))
+            cmd += job_log_dirs
+            kwargs["job_log_dirs"] = job_log_dirs
             SuiteProcPool.get_inst().put_command(
-                SuiteProcContext(cmd_key, cmd), callback)
+                SuiteProcContext(cmd_key, cmd, **kwargs), callback)

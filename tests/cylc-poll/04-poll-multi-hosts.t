@@ -45,8 +45,8 @@ LOG="${RUN_DIR}/log/suite/log"
 sed -n 's/^.*\(cylc jobs-poll\)/\1/p' "${LOG}" | sort >'edited-suite-log'
 
 sort >'edited-suite-log-ref' <<__LOG__
-cylc jobs-poll ${RUN_DIR}/log/job 1/local-fail-1/01 1/local-fail-2/01 1/local-success-1/01
-cylc jobs-poll --host=${CYLC_TEST_HOST} '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-fail-1/01 1/remote-success-1/01 1/remote-success-2/01
+cylc jobs-poll --debug --host=${CYLC_TEST_HOST} -- '\$HOME/cylc-run/${SUITE_NAME}/log/job' 1/remote-fail-1/01 1/remote-success-1/01 1/remote-success-2/01
+cylc jobs-poll --debug -- ${RUN_DIR}/log/job 1/local-fail-1/01 1/local-fail-2/01 1/local-success-1/01
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 

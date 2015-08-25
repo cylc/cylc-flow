@@ -469,9 +469,9 @@ class TaskProxy(object):
             submit_num = ctx.cmd_type[-1]
         job_log_dir = self.get_job_log_dir(
             self.tdef.name, self.point, submit_num, self.suite_name)
-        handle = open(os.path.join(job_log_dir, "job-activity.log"), "a")
-        handle.write(ctx_str)
-        handle.close()
+        job_activity_log = os.path.join(job_log_dir, "job-activity.log")
+        with open(job_activity_log, "ab") as handle:
+            handle.write(ctx_str)
         if ctx.cmd and ctx.ret_code:
             self.log(ERROR, ctx_str)
         elif ctx.cmd:
@@ -686,7 +686,7 @@ class TaskProxy(object):
         self._db_events_insert(event="reset to %s" % (old_status))
         self.log(INFO, 'held => %s' % (old_status))
 
-    def job_submission_callback(self, result):
+    def job_submission_callback(self, result):  # TODO: remove
         """Callback on job submission."""
         if result.out is not None:
             out = ""
@@ -702,24 +702,11 @@ class TaskProxy(object):
 
         if result.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
             return
-        elif result.ret_code:
-            return self.job_submission_failed()
 
-        now = get_current_time_string()
-        if self.submit_method_id:
-            self.log(INFO, 'submit_method_id=' + self.submit_method_id)
-            self.db_updates_map[self.TABLE_TASK_STATES].append({
-                "time_updated": now,
-                "submit_method_id": self.submit_method_id})
-            self.db_updates_map[self.TABLE_TASK_JOBS].append({
-                "time_submit_exit": now,
-                "submit_status": 0,
-                "batch_sys_job_id": self.submit_method_id})
+        if self.submit_method_id and result.ret_code == 0:
+            self.job_submission_succeeded()
         else:
-            self.db_updates_map[self.TABLE_TASK_JOBS].append({
-                "time_submit_exit": now,
-                "submit_status": 0})
-        self.job_submission_succeeded()
+            self.job_submission_failed()
 
     def job_poll_callback(self, line):
         """Callback on job poll."""
@@ -730,7 +717,13 @@ class TaskProxy(object):
 
         items = line.split("|")
         # See cylc.batch_sys_manager.JobPollContext
-        batch_sys_exit_polled, run_status, run_signal, _, time_run = items[4:9]
+        try:
+            (
+                batch_sys_exit_polled, run_status, run_signal, _, time_run
+            ) = items[4:9]
+        except IndexError:
+            self.summary['latest_message'] = 'poll failed'
+            return
         if run_status == "1" and run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self._process_poll_message(INFO, TaskMessage.FAILED)
@@ -799,6 +792,37 @@ class TaskProxy(object):
             msg = ('ignoring job kill result, unexpected task state: %s'
                    % self.state.get_status())
             self.log(WARNING, msg)
+
+    def job_submit_callback(self, line):
+        """Callback on job submit."""
+        ctx = SuiteProcContext(self.JOB_SUBMIT, None)
+        items = line.split("|")
+        ctx.timestamp, _, ctx.ret_code = items[0:3]
+        ctx.out = line
+        ctx.ret_code = int(ctx.ret_code)
+        self.command_log(ctx)
+
+        if ctx.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
+            return
+
+        try:
+            self.submit_method_id = items[3]
+        except IndexError:
+            self.submit_method_id = None
+        if self.submit_method_id and ctx.ret_code == 0:
+            self.job_submission_succeeded()
+        else:
+            self.job_submission_failed()
+
+    def job_cmd_out_callback(self, line):
+        """Callback on job command STDOUT/STDERR."""
+        job_log_dir = self.get_job_log_dir(
+            self.tdef.name, self.point, "NN", self.suite_name)
+        job_activity_log = os.path.join(job_log_dir, "job-activity.log")
+        with open(job_activity_log, "ab") as handle:
+            if not line.endswith("\n"):
+                line += "\n"
+            handle.write(line)
 
     def event_handler_callback(self, result):
         """Callback when event handler is done."""
@@ -1017,7 +1041,17 @@ class TaskProxy(object):
 
     def job_submission_succeeded(self):
         """Handle job submission succeeded."""
+        if self.submit_method_id is not None:
+            self.log(INFO, 'submit_method_id=' + self.submit_method_id)
         self.log(INFO, 'submission succeeded')
+        now = get_current_time_string()
+        self.db_updates_map[self.TABLE_TASK_STATES].append({
+            "time_updated": now,
+            "submit_method_id": self.submit_method_id})
+        self.db_updates_map[self.TABLE_TASK_JOBS].append({
+            "time_submit_exit": now,
+            "submit_status": 0,
+            "batch_sys_job_id": self.submit_method_id})
         if self.tdef.run_mode == 'simulation':
             if self.__class__.stop_sim_mode_job_submission:
                 # Real jobs that are ready to run are queued to the proc pool
@@ -1209,56 +1243,40 @@ class TaskProxy(object):
                 "mtime": mtime,
                 "size": size})
 
-    def submit(self, dry_run=False, overrides=None):
-        """Submit a job for this task."""
+    def prep_submit(self, dry_run=False, overrides=None):
+        """Prepare job submission.
 
-        if self.tdef.run_mode == 'simulation':
-            self.job_submission_succeeded()
-            return
-
-        if dry_run or not self.job_file_written:
-            # Prepare the job submit command and write the job script.
-            # In a dry_run, force a rewrite in case of a previous aborted
-            # edit-run that left the file write flag set.
-            try:
-                self._prepare_submit(overrides=overrides)
-                JOB_FILE.write(self.job_conf)
-                self.job_file_written = True
-            except Exception, exc:
-                # Could be a bad command template.
-                if flags.debug:
-                    traceback.print_exc()
-                self.command_log(SuiteProcContext(
-                    self.JOB_SUBMIT, '(prepare job file)', err=exc,
-                    ret_code=1))
-                self.job_submission_failed()
-                return
-            if dry_run:
-                msg = 'job file written for edit-run'
-                self.log(WARNING, msg)
-                # This will be shown next to submit num in gcylc:
-                self.summary['latest_message'] = msg
-                # Return value used by "cylc submit" and "cylc jobscript":
-                return self.job_conf['local job file path']
-
-        # The job file is now (about to be) used: reset the file write flag so
-        # that subsequent manual retrigger will generate a new job file.
-        self.job_file_written = False
-        self.set_status('ready')
-        # Send the job to the command pool.
-        return self._run_job_command(
-            self.JOB_SUBMIT,
-            args=[self.job_conf['job file path']],
-            callback=self.job_submission_callback,
-            is_bg_submit=BATCH_SYS_MANAGER.is_bg_submit(self.batch_sys_name),
-            stdin_file_path=self.job_conf['local job file path'])
-
-    def _prepare_submit(self, overrides=None):
-        """Get the job submission command.
-
-        Exceptions here are caught in the task pool module.
+        Return self on a good preparation.
 
         """
+        if self.tdef.run_mode == 'simulation' or (
+                self.job_file_written and not dry_run):
+            return self
+
+        try:
+            self._prep_submit_impl(overrides=overrides)
+            JOB_FILE.write(self.job_conf)
+            self.job_file_written = True
+        except Exception, exc:
+            # Could be a bad command template.
+            if flags.debug:
+                traceback.print_exc()
+            self.command_log(SuiteProcContext(
+                self.JOB_SUBMIT, '(prepare job file)', err=exc,
+                ret_code=1))
+            self.job_submission_failed()
+            return
+
+        if dry_run:
+            # This will be shown next to submit num in gcylc:
+            self.summary['latest_message'] = 'job file written for edit-run'
+            self.log(WARNING, self.summary['latest_message'])
+
+        # Return value used by "cylc submit" and "cylc jobscript":
+        return self
+
+    def _prep_submit_impl(self, overrides=None):
+        """Helper for self.prep_submit."""
         self.log(DEBUG, "incrementing submit number")
         self.submit_num += 1
         self.summary['submit_num'] = self.submit_num
@@ -1364,6 +1382,19 @@ class TaskProxy(object):
             "batch_sys_name": self.batch_sys_name,
         })
         self.is_manual_submit = False
+
+    def submit(self):
+        """Submit a job for this task."""
+        # The job file is now (about to be) used: reset the file write flag so
+        # that subsequent manual retrigger will generate a new job file.
+        self.job_file_written = False
+        self.set_status('ready')
+        # Send the job to the command pool.
+        return self._run_job_command(
+            self.JOB_SUBMIT,
+            args=[self.job_conf['job file path']],
+            callback=self.job_submission_callback,
+            stdin_file_paths=[self.job_conf['local job file path']])
 
     def prep_manip(self):
         """A cut down version of prepare_submit().
@@ -1840,9 +1871,7 @@ class TaskProxy(object):
             raise exc
         return suite_job_log_dir, the_rest
 
-    def _run_job_command(
-            self, cmd_key, args, callback, is_bg_submit=None,
-            stdin_file_path=None):
+    def _run_job_command(self, cmd_key, args, callback, stdin_file_paths=None):
         """Run a job command, e.g. submit, poll, kill, etc.
 
         Run a job command with the multiprocess pool.
@@ -1860,7 +1889,7 @@ class TaskProxy(object):
             else:
                 sh_tmpl += "\"%s\" '%s'"
             sh_cmd = sh_tmpl % (os.environ['CYLC_VERSION'], r_cylc, cmd_key)
-            if stdin_file_path:
+            if stdin_file_paths:
                 sh_cmd += " --remote-mode"
             for arg in args:
                 sh_cmd += ' "%s"' % (arg)
@@ -1869,6 +1898,5 @@ class TaskProxy(object):
         # Queue the command for execution
         self.log(INFO, "job(%02d) initiate %s" % (self.submit_num, cmd_key))
         ctx = SuiteProcContext(
-            cmd_key, cmd, is_bg_submit=is_bg_submit,
-            stdin_file_path=stdin_file_path)
+            cmd_key, cmd, stdin_file_paths=stdin_file_paths)
         return SuiteProcPool.get_inst().put_command(ctx, callback)

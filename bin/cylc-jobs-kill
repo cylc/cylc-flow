@@ -35,7 +35,7 @@ def main():
         ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
         ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory")])
     args = parser.parse_args()[1]
-    sys.stdout.write(BATCH_SYS_MANAGER.jobs_kill(args[0], args[1:]))
+    BATCH_SYS_MANAGER.jobs_kill(args[0], args[1:])
 
 
 if __name__ == "__main__" and not remrun().execute():

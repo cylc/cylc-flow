@@ -29,11 +29,14 @@ Some notes:
   (early versions of this module gave a choice of process or thread).
 """
 
-import time
+import fileinput
 import logging
 from pipes import quote
 from subprocess import Popen, PIPE
 import multiprocessing
+from tempfile import TemporaryFile
+import time
+import traceback
 
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -59,41 +62,25 @@ def _run_command(ctx):
 
     try:
         stdin_file = None
-        if ctx.cmd_kwargs.get('stdin_file_path'):
-            stdin_file = open(ctx.cmd_kwargs['stdin_file_path'])
+        if ctx.cmd_kwargs.get('stdin_file_paths'):
+            stdin_file = TemporaryFile()
+            for file_path in ctx.cmd_kwargs['stdin_file_paths']:
+                for line in open(file_path):
+                    stdin_file.write(line)
+            stdin_file.seek(0)
         elif ctx.cmd_kwargs.get('stdin_str'):
             stdin_file = PIPE
         proc = Popen(
             ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
             env=ctx.cmd_kwargs.get('env'), shell=ctx.cmd_kwargs.get('shell'))
     except (IOError, OSError) as exc:
+        if cylc.flags.debug:
+            traceback.print_exc()
         ctx.ret_code = 1
         ctx.err = str(exc)
     else:
-        # Does this command behave like a background job submit where:
-        # 1. The process should print its job ID to STDOUT.
-        # 2. The process should then continue in background.
-        if ctx.cmd_kwargs.get('is_bg_submit'):
-            # Capture just the echoed PID then move on.
-            # N.B. Some hosts print garbage to STDOUT when going through a
-            # login shell, so we want to try a few lines
-            ctx.ret_code = 0
-            ctx.out = ""
-            for _ in range(10):  # Try 10 lines
-                line = proc.stdout.readline()
-                ctx.out += line
-                if line.startswith(BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID):
-                    break
-            # Check if submission is OK or not
-            if not ctx.out.rstrip():
-                ret_code = proc.poll()
-                if ret_code is not None:
-                    ctx.out, ctx.err = proc.communicate()
-                    ctx.ret_code = ret_code
-        else:
-            ctx.out, ctx.err = proc.communicate(
-                ctx.cmd_kwargs.get('stdin_str'))
-            ctx.ret_code = proc.wait()
+        ctx.out, ctx.err = proc.communicate(ctx.cmd_kwargs.get('stdin_str'))
+        ctx.ret_code = proc.wait()
 
     ctx.timestamp = get_current_time_string()
     return ctx
@@ -122,17 +109,18 @@ class SuiteProcContext(object):
         for attr in "cmd", "ret_code", "out", "err":
             value = getattr(self, attr, None)
             if value is not None and str(value).strip():
+                mesg = ""
+                if attr == "cmd" and self.cmd_kwargs.get("stdin_file_paths"):
+                    mesg += "cat"
+                    for file_path in self.cmd_kwargs.get("stdin_file_paths"):
+                        mesg += " " + quote(file_path)
+                    mesg += " | "
                 if attr == "cmd" and isinstance(value, list):
-                    mesg = " ".join(quote(item) for item in value)
+                    mesg += " ".join(quote(item) for item in value)
                 else:
                     mesg = str(value).strip()
-                if attr == "cmd":
-                    if self.cmd_kwargs.get("stdin_file_path"):
-                        mesg += " <%s" % quote(
-                            self.cmd_kwargs.get("stdin_file_path"))
-                    elif self.cmd_kwargs.get("stdin_str"):
-                        mesg += " <<<%s" % quote(
-                            self.cmd_kwargs.get("stdin_str"))
+                if attr == "cmd" and self.cmd_kwargs.get("stdin_str"):
+                    mesg += " <<<%s" % quote(self.cmd_kwargs.get("stdin_str"))
                 if len(mesg.splitlines()) > 1:
                     fmt = self.JOB_LOG_FMT_M
                 else:
