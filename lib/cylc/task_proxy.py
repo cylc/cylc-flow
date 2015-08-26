@@ -333,9 +333,6 @@ class TaskProxy(object):
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
 
-        # TODO - self.tdef.max_future_prereq_offset COMPUTED IN
-        # THE OLD NON-CONDITIONAL TRIGGER SECTION - WHAT IS IT?
-
         for sequence in self.tdef.triggers.keys():
             for ctrig, exp in self.tdef.triggers[sequence]:
                 key = ctrig.keys()[0]
@@ -343,16 +340,20 @@ class TaskProxy(object):
                     # This trigger is not valid for current cycle (see NOTE
                     # just above)
                     continue
+
                 cpre = Prerequisite(self.identity, self.tdef.start_point)
                 for label in ctrig:
                     trig = ctrig[label]
                     if trig.graph_offset_string is not None:
-                        is_less_than_start = (
-                            get_point_relative(
-                                trig.graph_offset_string, point) <
-                            self.tdef.start_point
-                        )
-                        cpre.add(trig.get_prereq(point)[0], label, is_less_than_start)
+                        prereq_offset_point = get_point_relative(
+                                trig.graph_offset_string, point)
+                        if prereq_offset_point > point:
+                            prereq_offset = prereq_offset_point - point
+                            if (self.tdef.max_future_prereq_offset is None or
+                                    prereq_offset > self.tdef.max_future_prereq_offset):
+                                self.tdef.max_future_prereq_offset = prereq_offset
+                        cpre.add(trig.get_prereq(point)[0], label,
+                                 prereq_offset_point < self.tdef.start_point)
                     else:
                         cpre.add(trig.get_prereq(point)[0], label)
                 cpre.set_condition(exp)
@@ -385,10 +386,9 @@ class TaskProxy(object):
             if adjusted:
                 p_prev = max(adjusted)
                 cpre = Prerequisite(self.identity, self.tdef.start_point)
-                is_less_than_start = p_prev < self.tdef.start_point
                 prereq = TaskID.get(self.tdef.name, p_prev) + ' succeeded'
                 label = self.tdef.name
-                cpre.add(prereq, label, is_less_than_start)
+                cpre.add(prereq, label, p_prev < self.tdef.start_point)
                 cpre.set_condition(label)
                 self.prerequisites.append(cpre)
 
