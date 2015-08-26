@@ -13,6 +13,8 @@
 [runtime]
     [[root]]
         script = true
+    [[bar]]
+        script = sleep 5
 [visualization]
     initial cycle point = 20130808T00
     final cycle point = 20130809T18
