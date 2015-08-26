@@ -249,11 +249,13 @@ class TaskMessage(object):
         # The path to cylc/bin on the remote end may be required:
         path = os.path.join(self.env_map['CYLC_DIR_ON_SUITE_HOST'], 'bin')
 
-        if remrun().execute(env=env, path=[path]):
-            # Return here if remote re-invocation occurred,
-            # otherwise drop through to local Pyro messaging.
-            # Note: do not sys.exit(0) here as the commands do, it
-            # will cause messaging failures on the remote host.
+        # Return here if remote re-invocation occurred,
+        # otherwise drop through to local Pyro messaging.
+        # Note: do not sys.exit(0) here as the commands do, it
+        # will cause messaging failures on the remote host.
+        try:
+            return remrun().execute(env=env, path=[path])
+        except SystemExit:
             return
 
     def _update_job_status_file(self, messages):
