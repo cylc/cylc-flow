@@ -192,7 +192,7 @@ class StateSummaryServer(PyroServer):
 
     def get_summary_update_time(self):
         """Return the last time the summaries were changed (Unix time)."""
-        check_access_priv(self, 'full-read')
+        check_access_priv(self, 'state-totals')
         self.report('get_state_summary_update_time')
         if not self.first_update_completed:
             raise SuiteStillInitialisingError()

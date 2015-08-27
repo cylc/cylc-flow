@@ -121,16 +121,15 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         self.theme_name = gcfg.get( ['use theme'] )
         self.theme = gcfg.get( ['themes', self.theme_name] )
         self.dots = DotMaker(self.theme)
-        self.statuses = {}
-        self.stop_summaries = {}
-        self.suite_update_times = {}
+        self.hosts_suites_info = {}
+        self.stopped_hosts_suites_info = {}
         self._set_exception_hook()
         super(SummaryPanelAppletUpdater, self).__init__(
                               hosts, owner=owner, poll_interval=poll_interval)
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
-        self.stop_summaries.clear()
+        self.stopped_hosts_suites_info.clear()
         gobject.idle_add(self.update)
 
     def start(self):
@@ -145,7 +144,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
     def launch_context_menu(self, event, suite_host_tuples=None,
                             extra_items=None):
-        has_stopped_suites = bool(self.stop_summaries)
+        has_stopped_suites = bool(self.stopped_hosts_suites_info)
 
         if suite_host_tuples is None:
             suite_host_tuples = []
@@ -177,16 +176,17 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         menu.popup( None, None, None, event.button, event.time )
         return False
 
-    def update(self, suite_update_times=None):
+    def update(self):
         """Update the Applet."""
+        info = copy.deepcopy(self.hosts_suites_info)
+        stop_info = copy.deepcopy(self.stopped_hosts_suites_info)
         suite_host_tuples = []
-        statuses = copy.deepcopy(self.statuses)
-        stop_summaries = copy.deepcopy(self.stop_summaries)
         for host in self.hosts:
-            suites = (statuses.get(host, {}).keys() +
-                      stop_summaries.get(host, {}).keys())
+            suites = (info.get(host, {}).keys() +
+                      stop_info.get(host, {}).keys())
             for suite in suites:
-                suite_host_tuples.append((suite, host))
+                if (suite, host) not in suite_host_tuples:
+                    suite_host_tuples.append((suite, host))
         suite_host_tuples.sort()
         for child in self.dot_hbox.get_children():
             self.dot_hbox.remove(child)
@@ -195,18 +195,19 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         suite_statuses = {}
         compact_suite_statuses = []
         for suite, host in suite_host_tuples:
-            if suite in statuses.get(host, {}):
-                task_cycle_states = statuses[host][suite]
+            if suite in info.get(host, {}):
+                suite_info = info[host][suite]
                 is_stopped = False
             else:
-                info = stop_summaries[host][suite]
-                task_cycle_states, suite_time = info
+                suite_info = stop_info[host][suite]
                 is_stopped = True
-            status_map = {}
-            for task, cycle, status in task_cycle_states:
-                status_map.setdefault(status, []).append(task + "." + cycle)
-            status = extract_group_state(status_map.keys(),
+
+            if "states" not in suite_info:
+                continue
+
+            status = extract_group_state(suite_info['states'].keys(),
                                          is_stopped=is_stopped)
+            status_map = suite_info['states']
             if number_mode:
                 suite_statuses.setdefault(is_stopped, {})
                 suite_statuses[is_stopped].setdefault(status, [])
@@ -221,6 +222,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         if number_mode:
             for is_stopped in sorted(suite_statuses.keys()):
                 statuses = suite_statuses[is_stopped].items()
+                # Sort by number of suites in this state.
                 statuses.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
                 for status, suite_host_states_tuples in statuses:
                     label = gtk.Label(
@@ -268,18 +270,18 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                          self._on_button_press_event)
 
         text_format = "%s - %s - %s"
-        long_text_format = text_format + "\n    Tasks: %s\n"
+        long_text_format = text_format + "\n    %s\n"
         text = ""
         tip_vbox = gtk.VBox()  # Only used in PyGTK 2.12+
         tip_vbox.show()
         for info_tuple in suite_host_info_tuples:
-            suite, host, status, task_states, is_stopped = info_tuple
-            task_states.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
+            suite, host, status, state_counts, is_stopped = info_tuple
+            state_counts.sort(lambda x, y: cmp(y[1], x[1]))
             tip_hbox = gtk.HBox()
             tip_hbox.show()
             state_info = []
-            for state_name, tasks in task_states:
-                state_info.append(str(len(tasks)) + " " + state_name)
+            for state_name, number in state_counts:
+                state_info.append("%d %s" % (number, state_name))
                 image = self.dots.get_image(state_name, is_stopped=is_stopped)
                 image.show()
                 tip_hbox.pack_start(image, expand=False, fill=False)
@@ -334,7 +336,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         info = "cylc gpanel has a problem.\n\n%s" % exc_text
         self._set_tooltip(self.gcylc_image, info.rstrip())
         if old_hook is not None:
-            old_hook(exception_class, exception, trace)
+            old_hook(e_type, e_value, e_traceback)
 
     def _set_gcylc_image_tooltip(self):
         if self.quit:

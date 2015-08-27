@@ -143,6 +143,12 @@ def main():
         help='Legacy output format ("suite owner host port").',
         action="store_true", default=False, dest="old_format")
 
+    parser.add_option(
+        "-r", "--raw", "--raw-format",
+        help='Parsable format ("suite|owner|host|property|value")',
+        action="store_true", default=False, dest="raw_format"
+    )
+
     options, args = parser.parse_args()
 
     if options.print_ports:
@@ -162,6 +168,11 @@ def main():
 
     if options.color:
         options.print_totals = True
+
+    if options.raw_format and (options.old_format or options.describe or
+                               options.print_totals or options.color):
+        parser.error(
+            "--raw-format cannot be used with other format options.")
 
     if options.all_suites:
         if options.patterns_name != []:
@@ -211,6 +222,8 @@ def main():
                 continue
             if options.old_format:
                 print name, owner, host, port
+            elif options.raw_format:
+                print "%s|%s|%s|port|%s" % (name, owner, host, port)
             else:
                 print "%s %s@%s:%s" % (name, owner, host, port)
             continue
@@ -226,6 +239,28 @@ def main():
             print name, owner, host, port
             continue
 
+        if options.raw_format:
+            print "%s|%s|%s|port|%s" % (name, owner, host, port)            
+            for property in ["title", "description", "update-time"]:
+                value = suite_identity.get(property, None)
+                if value:
+                    print "%s|%s|%s|%s|%s" % (
+                        name, owner, host, property,
+                        str(value).replace("\n", " ")
+                    )
+            totals = suite_identity.get('states', None)
+            if totals is None:
+                continue
+            point_state_lines = get_point_state_count_lines(
+                *totals, use_color=options.color)
+            for point, state_line in point_state_lines:
+                property = "states"
+                if point:
+                    property = "states:%s" % point
+                print "%s|%s|%s|%s|%s" % (
+                        name, owner, host, property, state_line)
+            continue
+        
         line = '%s %s@%s:%s' % (name, owner, host, port)
         if options.describe or options.print_totals:
             if skip_one:
@@ -274,24 +309,36 @@ def main():
                 print indent + bold("(state totals withheld)")
                 continue
             print indent + bold("Task state totals:")
-            line = ""
-            for state, tot in state_count_totals.items():
-                if options.color:
-                    line += '%s %d %s' % (
-                        task_state.ctrl[state], tot, task_state.ctrl_end)
-                else:
-                    line += '%s:%d ' % (state, tot)
-            print indent * 2 + line.strip()
+            point_state_lines = get_point_state_count_lines(
+                *totals, use_color=options.color)
+            for point, state_line in point_state_lines:
+                point_prefix = ""
+                if point:
+                    point_prefix = "%s " % point
+                print indent * 2 + "%s %s" % (point_prefix, state_line)
 
-            for point_string in sorted(state_count_cycles.keys()):
-                line = point_string + ' '
-                for st, tot in state_count_cycles[point_string].items():
-                    if options.color:
-                        line += '%s %d %s' % (
-                                task_state.ctrl[st], tot, task_state.ctrl_end)
-                    else:
-                        line += '%s:%d ' % (st, tot)
-                print indent * 2 + line.strip()
+
+def get_point_state_count_lines(state_count_totals, state_count_cycles,
+                                use_color=False):
+    """Yield (point, state_summary_text) tuples."""
+    line = ""
+    for state, tot in sorted(state_count_totals.items()):
+        if use_color:
+            line += '%s %d %s' % (
+                task_state.ctrl[state], tot, task_state.ctrl_end)
+        else:
+            line += '%s:%d ' % (state, tot)
+    yield ("", line.strip())
+
+    for point_string in sorted(state_count_cycles.keys()):
+        line = ""
+        for st, tot in sorted(state_count_cycles[point_string].items()):
+            if use_color:
+                line += '%s %d %s' % (
+                        task_state.ctrl[st], tot, task_state.ctrl_end)
+            else:
+                line += '%s:%d ' % (st, tot)
+        yield (point_string, line.strip())
 
 
 def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
