@@ -74,5 +74,9 @@ class SLURMHandler(object):
         """
         return ["EXIT", "ERR", "XCPU"]
 
+    def get_poll_many_cmd(cls, job_ids):
+        """Return the poll command for a list of job IDs."""
+        return ["squeue", "-h", "-j", ",".join(job_ids)]
+
 
 BATCH_SYS_HANDLER = SLURMHandler()

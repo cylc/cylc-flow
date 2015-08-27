@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Provide a class to represent a task proxy in a running suite."""
 
 import Queue
 import os
@@ -23,7 +24,6 @@ import socket
 import time
 from copy import copy
 from random import randrange
-from collections import deque
 from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 from pipes import quote
 import shlex
@@ -143,7 +143,7 @@ class TaskProxy(object):
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     JOB_POLL = "job-poll"
     JOB_SUBMIT = SuiteProcPool.JOB_SUBMIT
-    POLL_SUFFIX_RE = re.compile(
+    MESSAGE_SUFFIX_RE = re.compile(
         ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
 
     LOGGING_LVL_OF = {
@@ -165,19 +165,19 @@ class TaskProxy(object):
 
     @classmethod
     def get_job_log_dir(
-            cls, suite, task_name, task_point, submit_num="NN", rel=False):
+            cls, task_name, task_point, submit_num="NN", suite=None):
         """Return the latest job log path on the suite host."""
         try:
             submit_num = "%02d" % submit_num
         except TypeError:
             pass
-        if rel:
-            return os.path.join(str(task_point), task_name, submit_num)
-        else:
-            suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
-                suite, "suite job log directory")
+        if suite:
             return os.path.join(
-                suite_job_log_dir, str(task_point), task_name, submit_num)
+                GLOBAL_CFG.get_derived_host_item(
+                    suite, "suite job log directory"),
+                str(task_point), task_name, submit_num)
+        else:
+            return os.path.join(str(task_point), task_name, submit_num)
 
     def __init__(
             self, tdef, start_point, initial_state, stop_point=None,
@@ -461,42 +461,21 @@ class TaskProxy(object):
 
     def command_log(self, ctx):
         """Log an activity for a job of this task proxy."""
+        ctx_str = str(ctx)
+        if not ctx_str:
+            return
         submit_num = "NN"
         if isinstance(ctx.cmd_type, tuple):  # An event handler
             submit_num = ctx.cmd_type[-1]
         job_log_dir = self.get_job_log_dir(
-            self.suite_name, self.tdef.name, self.point, submit_num)
+            self.tdef.name, self.point, submit_num, self.suite_name)
         handle = open(os.path.join(job_log_dir, "job-activity.log"), "a")
-        for attr in "cmd", "ret_code", "out", "err":
-            value = getattr(ctx, attr, None)
-            if value is not None and str(value).strip():
-                if attr == "cmd" and isinstance(value, list):
-                    mesg = " ".join(quote(item) for item in value)
-                else:
-                    mesg = str(value).strip()
-                if attr == "cmd":
-                    if ctx.cmd_kwargs.get("stdin_file_path"):
-                        mesg += " <%s" % quote(
-                            ctx.cmd_kwargs.get("stdin_file_path"))
-                    elif ctx.cmd_kwargs.get("stdin_str"):
-                        mesg += " <<<%s" % quote(
-                            ctx.cmd_kwargs.get("stdin_str"))
-                if getattr(ctx, "ret-code", None):
-                    self.log(ERROR, mesg)
-                else:
-                    self.log(DEBUG, mesg)
-                if len(mesg.splitlines()) > 1:
-                    fmt = self.JOB_LOG_FMT_M
-                else:
-                    fmt = self.JOB_LOG_FMT_1
-                if not mesg.endswith("\n"):
-                    mesg += "\n"
-                handle.write(fmt % {
-                    "timestamp": ctx.timestamp,
-                    "cmd_type": ctx.cmd_type,
-                    "attr": attr,
-                    "mesg": mesg})
+        handle.write(ctx_str)
         handle.close()
+        if ctx.cmd and ctx.ret_code:
+            self.log(ERROR, ctx_str)
+        elif ctx.cmd:
+            self.log(DEBUG, ctx_str)
 
     def _db_events_insert(self, event="", message=""):
         """Record an event to the DB."""
@@ -685,7 +664,7 @@ class TaskProxy(object):
             self.turn_off_timeouts()
             self._db_events_insert(event="reset to held")
             self.log(INFO, '%s => held' % self.state_before_held.get_status())
-        elif self.state.is_currently('submitted', 'running'):
+        elif self.is_active():
             self.hold_on_retry = True
 
     def reset_state_unheld(self, stop_point=None):
@@ -742,30 +721,70 @@ class TaskProxy(object):
                 "submit_status": 0})
         self.job_submission_succeeded()
 
-    def job_poll_callback(self, result):
+    def job_poll_callback(self, line):
         """Callback on job poll."""
-        self.command_log(result)
-        if result.ret_code:  # non-zero exit status
-            self.summary['latest_message'] = 'poll failed'
-            self.log(WARNING, 'job(%02d) poll failed' % self.submit_num)
-            flags.iflag = True
-        elif self.state.is_currently('submitted', 'running'):
-            # poll results emulate task messages
-            for line in result.out.splitlines():
-                if line.startswith('polled %s' % (self.identity)):
-                    self.process_incoming_message(('NORMAL', line))
-                    break
-        else:
-            # Poll results can come in after a task finishes
-            msg = "Ignoring late poll result: task not active"
-            self.command_log(SuiteProcContext(
-                self.JOB_POLL, None,
-                err="Ignoring late poll result: task not active",))
+        ctx = SuiteProcContext(self.JOB_POLL, None)
+        ctx.out = line
+        ctx.ret_code = 0
+        self.command_log(ctx)
 
-    def job_kill_callback(self, result):
+        items = line.split("|")
+        # See cylc.batch_sys_manager.JobPollContext
+        batch_sys_exit_polled, run_status, run_signal, _, time_run = items[4:9]
+        if run_status == "1" and run_signal in ["ERR", "EXIT"]:
+            # Failed normally
+            self._process_poll_message(INFO, TaskMessage.FAILED)
+        elif run_status == "1" and batch_sys_exit_polled == "1":
+            # Failed by a signal, and no longer in batch system
+            self._process_poll_message(INFO, TaskMessage.FAILED)
+            self._process_poll_message(
+                INFO, TaskMessage.FAIL_MESSAGE_PREFIX + run_signal)
+        elif run_status == "1":
+            # The job has terminated, but is still managed by batch system.
+            # Some batch system may restart a job in this state, so don't
+            # mark as failed yet.
+            self._process_poll_message(INFO, TaskMessage.STARTED)
+        elif run_status == "0":
+            # The job succeeded
+            self._process_poll_message(INFO, TaskMessage.SUCCEEDED)
+        elif time_run and batch_sys_exit_polled == "1":
+            # The job has terminated without executing the error trap
+            self._process_poll_message(INFO, TaskMessage.FAILED)
+        elif time_run:
+            # The job has started, and is still managed by batch system
+            self._process_poll_message(INFO, TaskMessage.STARTED)
+        elif batch_sys_exit_polled == "1":
+            # The job never ran, and no longer in batch system
+            self._process_poll_message(INFO, "submission failed")
+        else:
+            # The job never ran, and is in batch system
+            self._process_poll_message(INFO, "submitted")
+
+    def _process_poll_message(self, priority, message):
+        """Wraps self.process_incoming_message for poll messages."""
+        self.process_incoming_message(
+            (priority, "%s %s" % (self.identity, message)),
+            msg_was_polled=True)
+
+    def job_poll_message_callback(self, line):
+        """Callback on job poll message."""
+        ctx = SuiteProcContext(self.JOB_POLL, None)
+        ctx.out = line
+        ctx.ret_code = 0
+        self.command_log(ctx)
+
+        items = line.split("|")
+        priority, message = line.split("|")[3:5]
+        self.process_incoming_message((priority, message), msg_was_polled=True)
+
+    def job_kill_callback(self, line):
         """Callback on job kill."""
-        self.command_log(result)
-        if result.ret_code:  # non-zero exit status
+        ctx = SuiteProcContext(self.JOB_KILL, None)
+        ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
+        ctx.out = line
+        ctx.ret_code = int(ctx.ret_code)
+        self.command_log(ctx)
+        if ctx.ret_code:  # non-zero exit status
             self.summary['latest_message'] = 'kill failed'
             self.log(WARNING, 'job(%02d) kill failed' % self.submit_num)
             flags.iflag = True
@@ -1156,7 +1175,7 @@ class TaskProxy(object):
         data = []
         if result is None:
             job_log_dir = self.get_job_log_dir(
-                self.suite_name, self.tdef.name, self.point, submit_num)
+                self.tdef.name, self.point, submit_num, self.suite_name)
             try:
                 for filename in os.listdir(job_log_dir):
                     try:
@@ -1181,7 +1200,7 @@ class TaskProxy(object):
                     has_found_delim = True
 
         rel_job_log_dir = self.get_job_log_dir(
-            self.suite_name, self.tdef.name, self.point, submit_num, rel=True)
+            self.tdef.name, self.point, submit_num)
         for mtime, size, filename in data:
             self.db_inserts_map[self.TABLE_TASK_JOB_LOGS].append({
                 "submit_num": submit_num,
@@ -1189,7 +1208,6 @@ class TaskProxy(object):
                 "location": os.path.join(rel_job_log_dir, filename),
                 "mtime": mtime,
                 "size": size})
-
 
     def submit(self, dry_run=False, overrides=None):
         """Submit a job for this task."""
@@ -1210,19 +1228,13 @@ class TaskProxy(object):
                 # Could be a bad command template.
                 if flags.debug:
                     traceback.print_exc()
-                ret_code = 1
-                if hasattr(exc, "errno"):
-                    ret_code = exc.errno
                 self.command_log(SuiteProcContext(
-                    self.JOB_SUBMIT, None,
-                    err="Failed to construct job submission command",
+                    self.JOB_SUBMIT, '(prepare job file)', err=exc,
                     ret_code=1))
-                self.command_log(SuiteProcContext(
-                    self.JOB_SUBMIT, None, err=exc, ret_code=1))
                 self.job_submission_failed()
                 return
             if dry_run:
-                msg = "job file written for edit-run"
+                msg = 'job file written for edit-run'
                 self.log(WARNING, msg)
                 # This will be shown next to submit num in gcylc:
                 self.summary['latest_message'] = msg
@@ -1353,7 +1365,7 @@ class TaskProxy(object):
         })
         self.is_manual_submit = False
 
-    def _prepare_manip(self):
+    def prep_manip(self):
         """A cut down version of prepare_submit().
 
         This provides access to job poll commands before the task is submitted,
@@ -1446,65 +1458,26 @@ class TaskProxy(object):
             log_files.add_path(self.job_conf['job file path'] + '.out')
             log_files.add_path(self.job_conf['job file path'] + '.err')
 
-    def check_timers(self):
-        """Check submission and execution timeout timers.
+    def handle_submission_timeout(self):
+        """Handle submission timeout, only called if in "submitted" state."""
+        msg = 'job submitted %s ago, but has not started' % (
+            get_seconds_as_interval_string(
+                self.event_hooks['submission timeout'])
+        )
+        self.log(WARNING, msg)
+        self.handle_event('submission timeout', msg)
 
-        Not called in simulation mode.
-
-        """
-        if self.state.is_currently('submitted'):
-            self.check_submission_timeout()
-            if self.submission_poll_timer:
-                if self.submission_poll_timer.get():
-                    self.poll()
-                    self.submission_poll_timer.set_timer()
-        elif self.state.is_currently('running'):
-            self.check_execution_timeout()
-            if self.execution_poll_timer:
-                if self.execution_poll_timer.get():
-                    self.poll()
-                    self.execution_poll_timer.set_timer()
-
-    def check_submission_timeout(self):
-        """Check submission timeout, only called if in "submitted" state."""
-        if self.submission_timer_timeout is None:
-            # (explicit None in case of a zero timeout!)
-            # no timer set
-            return
-
-        # if timed out, log warning, poll, queue event handler, and turn off
-        # the timer
-        if time.time() > self.submission_timer_timeout:
-            msg = 'job submitted %s ago, but has not started' % (
-                get_seconds_as_interval_string(
-                    self._get_events_conf('submission timeout'))
-            )
-            self.log(WARNING, msg)
-            self.poll()
-            self.handle_event('submission timeout', msg)
-            self.submission_timer_timeout = None
-
-    def check_execution_timeout(self):
-        """Check execution timeout, only called if in "running" state."""
-        if self.execution_timer_timeout is None:
-            # (explicit None in case of a zero timeout!)
-            # no timer set
-            return
-
-        # if timed out: log warning, poll, queue event handler, and turn off
-        # the timer
-        if time.time() > self.execution_timer_timeout:
-            if self._get_events_conf('reset timer'):
-                # the timer is being re-started by put messages
-                msg = 'last message %s ago, but job not finished'
-            else:
-                msg = 'job started %s ago, but has not finished'
-            msg = msg % get_seconds_as_interval_string(
-                self._get_events_conf('execution timeout'))
-            self.log(WARNING, msg)
-            self.poll()
-            self.handle_event('execution timeout', msg)
-            self.execution_timer_timeout = None
+    def handle_execution_timeout(self):
+        """Handle execution timeout, only called if in "running" state."""
+        if self.event_hooks['reset timer']:
+            # the timer is being re-started by put messages
+            msg = 'last message %s ago, but job not finished'
+        else:
+            msg = 'job started %s ago, but has not finished'
+        msg = msg % get_seconds_as_interval_string(
+            self.event_hooks['execution timeout'])
+        self.log(WARNING, msg)
+        self.handle_event('execution timeout', msg)
 
     def sim_time_check(self):
         """Check simulation time."""
@@ -1554,7 +1527,8 @@ class TaskProxy(object):
                 break
             queue.task_done()
 
-    def process_incoming_message(self, (priority, message)):
+    def process_incoming_message(
+            self, (priority, message), msg_was_polled=False):
         """Parse an incoming task message and update task state.
 
         Correctly handle late (out of order) message which would otherwise set
@@ -1576,26 +1550,8 @@ class TaskProxy(object):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
-        msg_was_polled = False
-        if message.startswith('polled '):
-            if not self.state.is_currently('submitted', 'running'):
-                # Polling can take a few seconds or more, so it is
-                # possible for a poll result to come in after a task
-                # finishes normally (success or failure) - in which case
-                # we should ignore the poll result.
-                self.log(
-                    WARNING,
-                    "Ignoring late poll result: task is not active")
-                return
-            # remove polling prefix and treat as a normal task message
-            msg_was_polled = True
-            message = message[7:]
-
-        # remove the remote event time (or "unknown-time" from polling) from
-        # the end:
-        message = self.POLL_SUFFIX_RE.sub('', message)
-
         # Remove the prepended task ID.
+        message = self.MESSAGE_SUFFIX_RE.sub('', message)
         content = message.replace(self.identity + ' ', '')
 
         # If the message matches a registered output, record it as completed.
@@ -1605,9 +1561,6 @@ class TaskProxy(object):
                 self.outputs.set_completed(message)
                 self._db_events_insert(
                     event="output completed", message=content)
-            elif content == 'started' and self.job_vacated:
-                self.job_vacated = False
-                self.log(WARNING, "Vacated job restarted: " + message)
             elif not msg_was_polled:
                 # This output has already been reported complete. Not an error
                 # condition - maybe the network was down for a bit. Ok for
@@ -1615,6 +1568,16 @@ class TaskProxy(object):
                 self.log(
                     WARNING,
                     "Unexpected output (already completed):\n  " + message)
+
+        if msg_was_polled and not self.is_active():
+            # Polling can take a few seconds or more, so it is
+            # possible for a poll result to come in after a task
+            # finishes normally (success or failure) - in which case
+            # we should ignore the poll result.
+            self.log(
+                WARNING,
+                "Ignoring late poll result: task is not active")
+            return
 
         if priority == TaskMessage.WARNING:
             self.handle_event('warning', content, db_update=False)
@@ -1630,6 +1593,9 @@ class TaskProxy(object):
         elif (content == TaskMessage.STARTED and
                 self.state.is_currently(
                     'ready', 'submitted', 'submit-failed')):
+            if self.job_vacated:
+                self.job_vacated = False
+                self.log(WARNING, "Vacated job restarted: " + message)
             # Received a 'task started' message
             flags.pflag = True
             self.set_status('running')
@@ -1736,7 +1702,7 @@ class TaskProxy(object):
 
     def process_event_handler_retries(self):
         """Run delayed event handlers or retry failed ones."""
-        for key, try_state in self.event_handler_try_states.items():
+        for try_state in self.event_handler_try_states.values():
             if try_state.ctx and try_state.is_delay_done():
                 try_state.timeout = None
                 ctx = SuiteProcContext(
@@ -1796,6 +1762,10 @@ class TaskProxy(object):
         return (
             self.state.is_currently('succeeded') and self.state.has_spawned())
 
+    def is_active(self):
+        """Return True if task is in "submitted" or "running" state."""
+        return self.state.is_currently('submitted', 'running')
+
     def get_state_summary(self):
         """Return a dict containing the state summary of this task proxy."""
         self.summary['state'] = self.state.get_status()
@@ -1827,18 +1797,6 @@ class TaskProxy(object):
         if adjusted:
             p_next = min(adjusted)
         return p_next
-
-    def poll(self):
-        """Poll my live task job and update status accordingly."""
-        return self._manip_job_status(
-            self.JOB_POLL, self.job_poll_callback)
-
-    def kill(self):
-        """Kill current job of this task."""
-        self.reset_state_held()
-        return self._manip_job_status(
-            self.JOB_KILL,
-            self.job_kill_callback, ['running', 'submitted'])
 
     def _create_job_log_path(self, new_mode=False):
         """Return a new job log path on the suite host, in two parts.
@@ -1881,45 +1839,6 @@ class TaskProxy(object):
                 exc.filename = target
             raise exc
         return suite_job_log_dir, the_rest
-
-    def _manip_job_status(self, cmd_key, callback, ok_states=None):
-        """Manipulate the job status, e.g. poll or kill."""
-        # No real jobs in simulation mode.
-        if self.tdef.run_mode == 'simulation':
-            if cmd_key == self.JOB_KILL:
-                self.reset_state_failed()
-            return
-        # Check that task states are compatible with the manipulation
-        if ok_states and not self.state.is_currently(*ok_states):
-            self.log(
-                WARNING,
-                'Can only do %s when in %s states' % (cmd_key, str(ok_states)))
-            return
-        # Detached tasks
-        if self.tdef.rtconfig['manual completion']:
-            self.log(
-                WARNING,
-                "Cannot %s detaching tasks (job ID unknown)" % (cmd_key))
-            return
-
-        # Invoke the manipulation
-        return self._run_job_command(
-            cmd_key,
-            args=[self.get_job_conf_item("job file path") + ".status"],
-            callback=callback)
-
-    def get_job_conf_item(self, item):
-        if self.job_conf is None:
-            # Job hasn't run yet, or it ran before a suite restart.
-            # Ensure settings are ready for manipulation on restart, etc.
-            self._prepare_manip()
-        return self.job_conf[item]
-
-    def get_task_log_dir(self):
-        """Return my job log dir, sans submit number."""
-        suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
-            self.suite_name, "suite job log directory")
-        return os.path.join(suite_job_log_dir, str(self.point), self.tdef.name)
 
     def _run_job_command(
             self, cmd_key, args, callback, is_bg_submit=None,

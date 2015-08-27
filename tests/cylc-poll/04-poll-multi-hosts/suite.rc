@@ -1,0 +1,52 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
+        expected task failures = local-fail-1.1, local-fail-2.1, remote-fail-1.1
+[scheduling]
+    [[dependencies]]
+        graph="""
+POLLABLE:start-all => poller
+"""
+[runtime]
+    [[POLLABLE]]
+        pre-script="""
+# Stop script from reporting anything back
+trap '' 'EXIT'
+trap '' 'ERR'
+"""
+    [[FAIL]]
+        inherit = POLLABLE
+        script="""
+echo 'I am failing...' >&2
+exit 1
+"""
+    [[local-fail-1, local-fail-2]]
+        inherit = FAIL
+    [[remote-fail-1]]
+        inherit = FAIL
+        [[[remote]]]
+            host={{CYLC_TEST_HOST}}
+    [[SUCCESS]]
+        inherit = POLLABLE
+        script="""
+echo 'I am OK.'
+{
+    echo 'CYLC_JOB_EXIT=SUCCEEDED'
+    echo "CYLC_JOB_EXIT_TIME=$(date +%FT%H:%M:%SZ)"
+} >>"${CYLC_TASK_LOG_ROOT}.status"
+exit
+"""
+    [[local-success-1]]
+        inherit = SUCCESS
+    [[remote-success-1, remote-success-2]]
+        inherit = SUCCESS
+        [[[remote]]]
+            host={{CYLC_TEST_HOST}}
+    [[poller]]
+        script="""
+cylc poll -m "${CYLC_SUITE_NAME}" POLLABLE 1
+cylc stop "${CYLC_SUITE_NAME}"
+"""

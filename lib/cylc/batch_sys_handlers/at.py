@@ -43,7 +43,8 @@ class AtCommandHandler(object):
     # process group, which allows the job script and its child processes to be
     # killed correctly.
     KILL_CMD_TMPL = "atrm '%(job_id)s'"
-    POLL_CMD_TMPL = "atq"
+    POLL_CMD = "atq"
+    POLL_CMD_TMPL = POLL_CMD
     REC_ERR_FILTERS = [
         re.compile("warning: commands will be executed using /bin/sh")]
     REC_ID_FROM_SUBMIT_ERR = re.compile(r"\Ajob\s(?P<id>\S+)\sat")

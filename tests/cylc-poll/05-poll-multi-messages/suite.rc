@@ -1,0 +1,45 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT1M
+[scheduling]
+    [[dependencies]]
+        graph="""
+speaker1:start & speaker2:start => poller
+speaker1:hello1 & speaker1:hello2 & speaker2:greet => finisher
+"""
+[runtime]
+    [[speaker1]]
+        script="""
+# Wait for "cylc task message started" command
+wait
+# Simulate "cylc task message", messages written to status file but failed to
+# get sent back to the suite
+{
+    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|NORMAL|hello1 ${CYLC_TASK_CYCLE_POINT}"
+    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|NORMAL|hello2 ${CYLC_TASK_CYCLE_POINT}"
+} >>"${CYLC_TASK_LOG_ROOT}.status"
+sleep 30
+"""
+        [[[outputs]]]
+            hello1 = "hello1 []"
+            hello2 = "hello2 []"
+    [[speaker2]]
+        script="""
+# Wait for "cylc task message started" command
+wait
+# Simulate "cylc task message", messages written to status file but failed to
+# get sent back to the suite
+{
+    echo "CYLC_MESSAGE=$(date +%FT%H:%M:%SZ)|NORMAL|greet ${CYLC_TASK_CYCLE_POINT}"
+} >>"${CYLC_TASK_LOG_ROOT}.status"
+sleep 30
+"""
+        [[[outputs]]]
+            greet = "greet []"
+    [[finisher]]
+        script=true
+    [[poller]]
+        script=cylc poll "${CYLC_SUITE_NAME}" 'speaker[12]' '1'
