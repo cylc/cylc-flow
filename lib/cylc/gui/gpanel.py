@@ -35,8 +35,8 @@ import warnings
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
-from cylc.gui.gsummary import (get_summary_menu, launch_gsummary,
-                               BaseSummaryTimeoutUpdater)
+from cylc.gui.gscan import (get_scan_menu, launch_gscan,
+                            BaseScanTimeoutUpdater)
 from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
@@ -44,7 +44,7 @@ from cylc.owner import user
 from cylc.network.suite_state import extract_group_state
 
 
-class SummaryPanelApplet(object):
+class ScanPanelApplet(object):
 
     """Panel Applet (GNOME 2) to summarise running suite statuses."""
 
@@ -78,10 +78,10 @@ class SummaryPanelApplet(object):
         self.top_hbox.pack_start(image_eb, expand=False, fill=False)
         self.top_hbox.pack_start(dot_eb, expand=False, fill=False, padding=2)
         self.top_hbox.show()
-        self.updater = SummaryPanelAppletUpdater(hosts, dot_hbox, image,
-                                                 self.is_compact,
-                                                 owner=owner,
-                                                 poll_interval=poll_interval)
+        self.updater = ScanPanelAppletUpdater(hosts, dot_hbox, image,
+                                              self.is_compact,
+                                              owner=owner,
+                                              poll_interval=poll_interval)
         self.top_hbox.connect("destroy", self.stop)
 
     def get_widget(self):
@@ -103,9 +103,9 @@ class SummaryPanelApplet(object):
         tooltip.set_tip(widget, text)
 
 
-class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
+class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
 
-    """Update the summary panel applet - subclass of gsummary equivalent."""
+    """Update the scan panel applet - subclass of gscan equivalent."""
 
     IDLE_STOPPED_TIME = 3600  # 1 hour.
     MAX_INDIVIDUAL_SUITES = 5
@@ -124,8 +124,8 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         self.hosts_suites_info = {}
         self.stopped_hosts_suites_info = {}
         self._set_exception_hook()
-        super(SummaryPanelAppletUpdater, self).__init__(
-                              hosts, owner=owner, poll_interval=poll_interval)
+        super(ScanPanelAppletUpdater, self).__init__(
+            hosts, owner=owner, poll_interval=poll_interval)
 
     def clear_stopped_suites(self):
         """Clear stopped suite information that may have built up."""
@@ -134,12 +134,12 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
     def start(self):
         self.gcylc_image.set_sensitive(True)
-        super(SummaryPanelAppletUpdater, self).start()
+        super(ScanPanelAppletUpdater, self).start()
         self._set_gcylc_image_tooltip()
 
     def stop(self):
         self.gcylc_image.set_sensitive(False)
-        super(SummaryPanelAppletUpdater, self).stop()
+        super(ScanPanelAppletUpdater, self).stop()
         self._set_gcylc_image_tooltip()
 
     def launch_context_menu(self, event, suite_host_tuples=None,
@@ -152,27 +152,27 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
         if extra_items is None:
             extra_items = []
 
-        gsummary_item = gtk.ImageMenuItem("Launch cylc gsummary")
+        gscan_item = gtk.ImageMenuItem("Launch cylc gscan")
         img = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
-        gsummary_item.set_image(img)
-        gsummary_item.show()
-        gsummary_item.connect("button-press-event",
-                                self._on_button_press_event_gsummary)
+        gscan_item.set_image(img)
+        gscan_item.show()
+        gscan_item.connect("button-press-event",
+                                self._on_button_press_event_gscan)
 
-        extra_items.append(gsummary_item)
+        extra_items.append(gscan_item)
 
-        menu = get_summary_menu(suite_host_tuples, 
-                                self.theme_name, self._set_theme,
-                                has_stopped_suites,
-                                self.clear_stopped_suites,
-                                self.hosts,
-                                self.set_hosts,
-                                self.update_now,
-                                self.start,
-                                program_name="cylc gpanel",
-                                extra_items=extra_items,
-                                owner=self.owner,
-                                is_stopped=self.quit)
+        menu = get_scan_menu(suite_host_tuples, 
+                             self.theme_name, self._set_theme,
+                             has_stopped_suites,
+                             self.clear_stopped_suites,
+                             self.hosts,
+                             self.set_hosts,
+                             self.update_now,
+                             self.start,
+                             program_name="cylc gpanel",
+                             extra_items=extra_items,
+                             owner=self.owner,
+                             is_stopped=self.quit)
         menu.popup( None, None, None, event.button, event.time )
         return False
 
@@ -314,8 +314,8 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
                                      suite_host_tuples=widget._connect_args)
         return False
 
-    def _on_button_press_event_gsummary(self, widget, event):
-        launch_gsummary(hosts=self.hosts, owner=self.owner)
+    def _on_button_press_event_gscan(self, widget, event):
+        launch_gscan(hosts=self.hosts, owner=self.owner)
 
     def _on_img_tooltip_query(self, widget, x, y, kbd, tooltip, tip_widget):
         tooltip.set_custom(tip_widget)
@@ -357,7 +357,7 @@ class SummaryPanelAppletUpdater(BaseSummaryTimeoutUpdater):
 
 def run_in_window(is_compact=False):
     """Run the panel applet in stand-alone mode."""
-    my_panel_app = SummaryPanelApplet(is_compact=is_compact)
+    my_panel_app = ScanPanelApplet(is_compact=is_compact)
     window = gtk.Window()
     window.set_title("cylc panel applet test")
     window.add(my_panel_app.top_hbox)

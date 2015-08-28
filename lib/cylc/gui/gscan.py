@@ -142,14 +142,14 @@ def get_unscannable_suite_info(host, suite, owner=None):
     return suite_info
 
 
-def get_summary_menu(suite_host_tuples,
+def get_scan_menu(suite_host_tuples,
                      theme_name, set_theme_func,
                      has_stopped_suites, clear_stopped_suites_func,
                      scanned_hosts, change_hosts_func,
                      update_now_func, start_func,
                      program_name, extra_items=None, owner=None,
                      is_stopped=False):
-    """Return a right click menu for summary GUIs.
+    """Return a right click menu for scan GUIs.
 
     suite_host_tuples should be a list of (suite, host) tuples (if any).
     theme_name should be the name of the current theme.
@@ -352,16 +352,16 @@ def launch_gcylc(host, suite, owner=None):
         Popen(["nohup"] + command, env=env, stdout=stdout, stderr=stderr)
 
 
-def launch_gsummary(hosts=None, owner=None):
-    """Launch gsummary for a given list of hosts and/or owner."""
+def launch_gscan(hosts=None, owner=None):
+    """Launch gscan for a given list of hosts and/or owner."""
     if cylc.flags.debug:
         stdout = sys.stdout
         stderr = sys.stderr
-        command = ["cylc", "gsummary", "--debug"]
+        command = ["cylc", "gscan", "--debug"]
     else:
         stdout = open(os.devnull, "w")
         stderr = STDOUT
-        command = ["cylc", "gsummary"]
+        command = ["cylc", "gscan"]
     if hosts is not None:
         for host in hosts:
             command += ["--host=%s" % host]
@@ -408,13 +408,13 @@ def launch_theme_legend(theme):
     ThemeLegendWindow(None, theme)
 
 
-class SummaryApp(object):
+class ScanApp(object):
 
     """Summarize running suite statuses for a given set of hosts."""
 
     def __init__(self, hosts=None, owner=None, poll_interval=None):
         gobject.threads_init()
-        set_exception_hook_dialog("cylc gsummary")
+        set_exception_hook_dialog("cylc gscan")
         setup_icons()
         if not hosts:
             hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
@@ -423,7 +423,7 @@ class SummaryApp(object):
             owner = user
         self.owner = owner
         self.window = gtk.Window()
-        self.window.set_title("cylc gsummary")
+        self.window.set_title("cylc gscan")
         self.window.set_icon(get_icon())
         self.vbox = gtk.VBox()
         self.vbox.show()
@@ -517,7 +517,7 @@ class SummaryApp(object):
         scrolled_window.add(self.suite_treeview)
         scrolled_window.show()
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
-        self.updater = SummaryAppUpdater(self.hosts, suite_treemodel,
+        self.updater = ScanAppUpdater(self.hosts, suite_treemodel,
                         self.suite_treeview, owner=self.owner,
                         poll_interval=poll_interval)
         self.updater.start()
@@ -550,7 +550,7 @@ class SummaryApp(object):
             iter_ = treemodel.get_iter(path)
             host, suite = treemodel.get(iter_, 0, 1)
             if suite is None:
-                # On an expanded cycle point summary row, so get from parent.
+                # On an expanded cycle point row, so get from parent.
                 host, suite = treemodel.get(treemodel.iter_parent(iter_), 0, 1)
             suite_host_tuples.append((suite, host))
 
@@ -577,7 +577,7 @@ class SummaryApp(object):
             column_item.show()
             view_menu.append(column_item)
 
-        menu = get_summary_menu(suite_host_tuples,
+        menu = get_scan_menu(suite_host_tuples,
                                 self.theme_name,
                                 self._set_theme,
                                 has_stopped_suites,
@@ -586,7 +586,7 @@ class SummaryApp(object):
                                 self.updater.set_hosts,
                                 self.updater.update_now,
                                 self.updater.start,
-                                program_name="cylc gsummary",
+                                program_name="cylc gscan",
                                 extra_items=[view_item],
                                 owner=self.owner)
         menu.popup( None, None, None, event.button, event.time )
@@ -726,9 +726,9 @@ class SummaryApp(object):
         tooltip.set_tip(widget, text)
 
 
-class BaseSummaryUpdater(threading.Thread):
+class BaseScanUpdater(threading.Thread):
 
-    """Retrieve running suite summary information.
+    """Retrieve running suite scan information.
 
     Subclasses must provide an update method.
 
@@ -749,7 +749,7 @@ class BaseSummaryUpdater(threading.Thread):
         self.prev_hosts_suites = []
         self._should_force_update = False
         self.quit = False
-        super(BaseSummaryUpdater, self).__init__()
+        super(BaseScanUpdater, self).__init__()
 
     def update(self):
         """An update method that must be defined in subclasses."""
@@ -804,9 +804,9 @@ class BaseSummaryUpdater(threading.Thread):
         self.update_now()
 
 
-class BaseSummaryTimeoutUpdater(object):
+class BaseScanTimeoutUpdater(object):
 
-    """Retrieve running suite summary information.
+    """Retrieve running suite scan information.
 
     Subclasses must provide an update method.
 
@@ -901,15 +901,15 @@ class BaseSummaryTimeoutUpdater(object):
         self.update_now()
 
 
-class SummaryAppUpdater(BaseSummaryUpdater):
+class ScanAppUpdater(BaseScanUpdater):
 
-    """Update the summary app."""
+    """Update the scan app."""
 
     def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
-        super(SummaryAppUpdater, self).__init__(hosts, owner=owner,
+        super(ScanAppUpdater, self).__init__(hosts, owner=owner,
                                                 poll_interval=poll_interval)
 
     def _add_expanded_row(self, view, rpath, row_ids):
