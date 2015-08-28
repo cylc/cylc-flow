@@ -1282,6 +1282,8 @@ been defined for this suite""").inform()
         items.append(poll_item)
         poll_item.connect('activate', self.poll_task, task_id, task_is_family)
 
+        items.append(gtk.SeparatorMenuItem())
+
         kill_item = gtk.ImageMenuItem('Kill')
         img = gtk.image_new_from_stock(gtk.STOCK_CANCEL, gtk.ICON_SIZE_MENU)
         kill_item.set_image(img)
@@ -1625,8 +1627,8 @@ shown here in the state they were in at the time of triggering.''')
         self.quitters.remove(lv)
         w.destroy()
 
-    def get_confirmation(self, question):
-        if self.cfg.no_prompt:
+    def get_confirmation(self, question, force_prompt=False):
+        if self.cfg.no_prompt and not force_prompt:
             return True
         prompt = gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,
                                    gtk.MESSAGE_QUESTION,
@@ -1679,7 +1681,7 @@ shown here in the state they were in at the time of triggering.''')
         self.put_pyro_command('poll_tasks', name, point_string, is_family)
 
     def kill_task(self, b, task_id, is_family=False):
-        if not self.get_confirmation("Kill %s?" % task_id):
+        if not self.get_confirmation("Kill %s?" % task_id, force_prompt=True):
             return
         name, point_string = TaskID.split(task_id)
         self.put_pyro_command('kill_tasks', name, point_string, is_family)
