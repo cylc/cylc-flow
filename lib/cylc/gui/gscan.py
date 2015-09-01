@@ -647,7 +647,7 @@ class ScanApp(object):
         for status_number in info:
             status, number = status_number.rsplit(" ", 1)
             state_texts.append(number + " " + status.strip())
-            text = "Tasks: " + ", ".join(state_texts)
+        text = "Tasks: " + ", ".join(state_texts)
         tooltip.set_text(text)
         return True
 
@@ -987,6 +987,9 @@ class ScanAppUpdater(BaseScanUpdater):
                         if state != "runahead":
                             # 'runahead' states are usually hidden.
                             states_text += '%s %d ' % (state, number)
+                    if not states_text:
+                        # Purely runahead cycle.
+                        continue
                     model_data.append(states_text.rstrip())
                     if key == "states":
                         parent_iter = self.suite_treemodel.append(None, model_data)
