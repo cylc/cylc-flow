@@ -815,7 +815,7 @@ class TaskPool(object):
     def remove_suiciding_tasks(self):
         """Remove any tasks that have suicide-triggered."""
         for itask in self.get_tasks():
-            if len(itask.suicide_prerequisites) != 0:
+            if itask.suicide_prerequisites:
                 if itask.suicide_prerequisites_are_all_satisfied():
                     if itask.state.is_currently(
                             'ready', 'submitted', 'running'):
