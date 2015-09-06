@@ -111,15 +111,15 @@ class Prerequisite(object):
                 self.satisfied.pop(label)
                 self.labels.pop(msg)
 
-        if self.satisfied == {}:
+        if self.satisfied:
+            self.conditional_expression = expr
+        else:
             # The pre-initial simplifier doesn't work properly for
             # non-conditional triggers like "foo[-P1M] => bar" (these used to
             # be handled as "plain prerequisites" and not added to task
             # instances in task_proxy.py if prior to tdef.start_point).
             self.conditional_expression = '()'
             self.raw_conditional_expression = '()'
-        else:
-            self.conditional_expression = expr
 
     def is_satisfied( self ):
         if self.conditional_expression == "()":
