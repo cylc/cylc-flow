@@ -21,10 +21,7 @@ import glob
 from jinja2 import (
         Environment,
         FileSystemLoader,
-        TemplateSyntaxError,
         TemplateError,
-        TemplateNotFound,
-        UndefinedError,
         StrictUndefined)
 import cylc.flags
 
@@ -96,14 +93,16 @@ def Jinja2Process( flines, dir, inputs=[], inputs_file=None ):
     # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
     # try:
     template = env.from_string( '\n'.join(flines[1:]) )
-    # except Exception, x:
+    # except Exception as exc:
     #     # This happens if we use an unknown Jinja2 filter, for example.
     ##     # TODO - THIS IS CAUGHT BY VALIDATE BUT NOT BY VIEW COMMAND...
-    #     raise TemplateError( x )
+    #     raise TemplateError(exc)
     try:
         template_vars = load_template_vars( inputs, inputs_file )
-    except Exception, x:
-        raise TemplateError( x )
+    except Exception as exc:
+        if isinstance(exc, TemplateError):
+            raise
+        raise TemplateError(exc)
 
     # CALLERS SHOULD HANDLE JINJA2 TEMPLATESYNTAXERROR AND TEMPLATEERROR
     # AND TYPEERROR (e.g. for not using "|int" filter on number inputs.

@@ -15,16 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation missing include-file.
+# Test validation for a bad no-line-number Jinja2 error.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
-echo '%include foo.rc' >suite.rc
-echo '%include bar.rc' >foo.rc
-run_fail "$TEST_NAME_BASE" cylc validate suite.rc
-cmp_ok "$TEST_NAME_BASE.stderr" <<__ERR__
-FileParseError:
-Include-file not found: bar.rc via foo.rc from $PWD/suite.rc
-__ERR__
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-val
+run_fail "$TEST_NAME" cylc validate suite.rc
+cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
+Jinja2Error:
+  File "/usr/lib/python2.6/site-packages/jinja2/filters.py", line 183, in do_dictsort
+    raise FilterArgumentError('You can only sort by either '
+FilterArgumentError: You can only sort by either "key" or "value"
+__ERROR__
 #-------------------------------------------------------------------------------
 exit

@@ -15,16 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation missing include-file.
+# Test validation for a bad Jinja2 TemplateSyntaxError in a jinja include.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
-echo '%include foo.rc' >suite.rc
-echo '%include bar.rc' >foo.rc
-run_fail "$TEST_NAME_BASE" cylc validate suite.rc
-cmp_ok "$TEST_NAME_BASE.stderr" <<__ERR__
-FileParseError:
-Include-file not found: bar.rc via foo.rc from $PWD/suite.rc
-__ERR__
+install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-val
+run_fail "$TEST_NAME" cylc validate suite.rc
+sed -i 's/^  File ".*", line/  File "FILE", line/g' "$TEST_NAME.stderr"
+cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
+Jinja2Error:
+  File "FILE", line 3, in template
+    {% end if %
+TemplateSyntaxError: Encountered unknown tag 'end'. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+__ERROR__
 #-------------------------------------------------------------------------------
 exit

@@ -1,0 +1,6 @@
+#!jinja2
+
+[scheduling]
+    [[dependencies]]
+        graph = foo
+{{ 1 / 'foo' }}

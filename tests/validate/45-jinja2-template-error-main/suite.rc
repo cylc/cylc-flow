@@ -1,0 +1,8 @@
+#!jinja2
+{% set foo = {} %}
+[scheduling]
+    [[dependencies]]
+        graph = {{ foo|dictsort(by='by') }}
+[runtime]
+    [[foo]]
+        script = sleep 1
