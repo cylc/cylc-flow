@@ -483,6 +483,8 @@ class BatchSysManager(object):
 
         """
         # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job
+        if "$" in job_file_path:
+            job_file_path = os.path.expandvars(job_file_path)
         self.configure_suite_run_dir(job_file_path.rsplit(os.sep, 6)[0])
 
         batch_sys_name = None

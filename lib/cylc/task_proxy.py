@@ -1872,28 +1872,25 @@ class TaskProxy(object):
         return suite_job_log_dir, the_rest
 
     def _run_job_command(self, cmd_key, args, callback, stdin_file_paths=None):
-        """Run a job command, e.g. submit, poll, kill, etc.
+        """Help for self.submit.
 
         Run a job command with the multiprocess pool.
 
         """
-        if self.user_at_host in [user + '@localhost', 'localhost']:
-            cmd = ["cylc", cmd_key] + list(args)
-        else:  # if it is a remote job
-            ssh_tmpl = self._get_host_conf('remote shell template').replace(
-                " %s", "")
-            r_cylc = self._get_host_conf('cylc executable')
-            sh_tmpl = "CYLC_VERSION='%s' "
-            if self._get_host_conf('use login shell'):
-                sh_tmpl += "bash -lc 'exec \"$0\" \"$@\"' \"%s\" '%s'"
-            else:
-                sh_tmpl += "\"%s\" '%s'"
-            sh_cmd = sh_tmpl % (os.environ['CYLC_VERSION'], r_cylc, cmd_key)
-            if stdin_file_paths:
-                sh_cmd += " --remote-mode"
-            for arg in args:
-                sh_cmd += ' "%s"' % (arg)
-            cmd = shlex.split(ssh_tmpl) + [str(self.user_at_host), sh_cmd]
+        cmd = ["cylc", cmd_key]
+        if cylc.flags.debug:
+            cmd.append("--debug")
+        remote_mode = False
+        for key, value, test_func in [
+                ('host', self.task_host, is_remote_host),
+                ('user', self.task_owner, is_remote_user)]:
+            if test_func(value):
+                cmd.append('--%s=%s' % (key, value))
+                remote_mode = True
+        if remote_mode:
+            cmd.append('--remote-mode')
+        cmd.append("--")
+        cmd += list(args)
 
         # Queue the command for execution
         self.log(INFO, "job(%02d) initiate %s" % (self.submit_num, cmd_key))
