@@ -686,7 +686,7 @@ class TaskProxy(object):
         self._db_events_insert(event="reset to %s" % (old_status))
         self.log(INFO, 'held => %s' % (old_status))
 
-    def job_submission_callback(self, result):  # TODO: remove
+    def job_submission_callback(self, result):
         """Callback on job submission."""
         if result.out is not None:
             out = ""
