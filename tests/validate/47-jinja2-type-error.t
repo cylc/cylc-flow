@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation for a bad no-line-number Jinja2 error.
+# Test validation for a Jinja2 type error, with no line number info.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
