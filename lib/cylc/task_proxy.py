@@ -333,8 +333,8 @@ class TaskProxy(object):
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
 
-        for sequence in self.tdef.triggers.keys():
-            for ctrig, exp in self.tdef.triggers[sequence]:
+        for sequence, exps in self.tdef.triggers.items():
+            for ctrig, exp in exps:
                 key = ctrig.keys()[0]
                 if not sequence.is_valid(self.point):
                     # This trigger is not valid for current cycle (see NOTE
