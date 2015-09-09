@@ -38,7 +38,7 @@ printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > {{ EVNTLOG }}
 if [[ $CYLC_TASK_TRY_NUMBER == 1 ]]; then
     false
 else
-    sleep 5; cylc task message -p WARNING 'this is a user-defined warning message'
+    sleep 10; cylc task message -p WARNING 'this is a user-defined warning message'
 fi"""
         [[[event hooks]]]
             succeeded handler = {{ HANDLER }}
