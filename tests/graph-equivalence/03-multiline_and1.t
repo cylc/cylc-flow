@@ -33,6 +33,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-c
 cylc run $SUITE_NAME --hold
+sleep 5
 cylc show $SUITE_NAME c.1 | sed -n "/prerequisites/,/outputs/p" > c-prereqs
 cmp_ok $TEST_SOURCE_DIR/multiline_and_refs/c-ref c-prereqs
 cylc shutdown $SUITE_NAME --now -f
