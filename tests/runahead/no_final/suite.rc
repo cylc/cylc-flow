@@ -1,7 +1,7 @@
 [cylc]
     cycle point time zone = Z
     [[event hooks]]
-        timeout = PT0.1M
+        timeout = PT0.3M
         abort on timeout = True
 [scheduling]
     runahead limit = PT18H
@@ -17,4 +17,6 @@
     [[bar]]
         script = true
     [[shutdown]]
-        script = cylc shutdown $CYLC_SUITE_REG_NAME
+        script = """
+sleep 5
+cylc shutdown $CYLC_SUITE_REG_NAME"""
