@@ -1,0 +1,7 @@
+#!jinja2
+[scheduling]
+    [[dependencies]]
+{% include 'suite-includeme.rc' %}
+[runtime]
+    [[foo]]
+        script = sleep 1

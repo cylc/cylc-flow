@@ -1,0 +1,6 @@
+#!jinja2
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+{% include 'suite-foo.rc' %}
