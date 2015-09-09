@@ -92,7 +92,7 @@ class suite_poller(poller):
                 connected = True
                 # ... but ensure at least one poll after connection:
                 self.n_polls -= 1
-            except DBOperationError:
+            except (DBOperationError, DBNotFoundError):
                 if self.n_polls >= max_polls:
                     raise
                 if cylc.flags.verbose:
