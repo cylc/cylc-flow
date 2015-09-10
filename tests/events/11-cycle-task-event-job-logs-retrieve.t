@@ -63,15 +63,9 @@ sed "/'job-logs-retrieve'/!d; s/^[^ ]* //" \
     "${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t1/"{01,02,03}"/job-activity.log" \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<__LOG__
-[('job-logs-retrieve', 'retry', '01') cmd] cylc job-logs-retrieve '${HOST}:\$HOME/cylc-run/${SUITE_NAME}/log/job/2020-02-02T02:02Z/t1/01' ${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t1/01
-[('job-logs-retrieve', 'retry', '01') ret_code] 0
-[('job-logs-retrieve', 'retry', '01') out]
-[('job-logs-retrieve', 'retry', '02') cmd] cylc job-logs-retrieve '${HOST}:\$HOME/cylc-run/${SUITE_NAME}/log/job/2020-02-02T02:02Z/t1/02' ${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t1/02
-[('job-logs-retrieve', 'retry', '02') ret_code] 0
-[('job-logs-retrieve', 'retry', '02') out]
-[('job-logs-retrieve', 'succeeded', '03') cmd] cylc job-logs-retrieve '${HOST}:\$HOME/cylc-run/${SUITE_NAME}/log/job/2020-02-02T02:02Z/t1/03' ${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t1/03
-[('job-logs-retrieve', 'succeeded', '03') ret_code] 0
-[('job-logs-retrieve', 'succeeded', '03') out]
+[('job-logs-retrieve', 1) ret_code] 0
+[('job-logs-retrieve', 2) ret_code] 0
+[('job-logs-retrieve', 3) ret_code] 0
 __LOG__
 
 ${SSH} "${HOST}" \

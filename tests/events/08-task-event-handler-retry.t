@@ -38,16 +38,16 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 
 SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')"
 LOG="${SUITE_RUN_DIR}/${SUITE_NAME}/log/job/1/t1/NN/job-activity.log"
-sed "/('event-handler-00', 'succeeded', '01')/!d; s/^.* \[/[/" "${LOG}" \
+sed "/(('event-handler-00', 'succeeded'), 1)/!d; s/^.* \[/[/" "${LOG}" \
     >'edited-job-activity.log'
 cmp_ok 'edited-job-activity.log' <<'__LOG__'
-[('event-handler-00', 'succeeded', '01') cmd] hello-event-handler 't1' 'succeeded'
-[('event-handler-00', 'succeeded', '01') ret_code] 1
-[('event-handler-00', 'succeeded', '01') cmd] hello-event-handler 't1' 'succeeded'
-[('event-handler-00', 'succeeded', '01') ret_code] 1
-[('event-handler-00', 'succeeded', '01') cmd] hello-event-handler 't1' 'succeeded'
-[('event-handler-00', 'succeeded', '01') ret_code] 0
-[('event-handler-00', 'succeeded', '01') out] hello
+[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler 't1' 'succeeded'
+[(('event-handler-00', 'succeeded'), 1) ret_code] 1
+[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler 't1' 'succeeded'
+[(('event-handler-00', 'succeeded'), 1) ret_code] 1
+[(('event-handler-00', 'succeeded'), 1) cmd] hello-event-handler 't1' 'succeeded'
+[(('event-handler-00', 'succeeded'), 1) ret_code] 0
+[(('event-handler-00', 'succeeded'), 1) out] hello
 __LOG__
 
 purge_suite "${SUITE_NAME}"

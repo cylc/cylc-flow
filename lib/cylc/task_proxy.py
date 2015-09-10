@@ -17,18 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide a class to represent a task proxy in a running suite."""
 
-import Queue
+from collections import namedtuple
+from copy import copy
+from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
 import os
+from pipes import quote
+import Queue
+from random import randrange
 import re
 import socket
-import time
-from copy import copy
-from random import randrange
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
-from pipes import quote
 import shlex
 from shutil import rmtree
+import time
 import traceback
+
 from isodatetime.timezone import get_local_time_zone
 
 from cylc.mkdir_p import mkdir_p
@@ -65,17 +67,34 @@ from parsec.util import pdeepcopy, poverride
 from parsec.config import ItemNotFoundError
 
 
+CustomTaskEventHandlerContext = namedtuple(
+    "CustomTaskEventHandlerContext",
+    ["key", "ctx_type", "cmd"])
+
+
+TaskEventMailContext = namedtuple(
+    "TaskEventMailContext",
+    ["key", "ctx_type", "event", "mail_from", "mail_to", "mail_smtp"])
+
+
+TaskJobLogsRetrieveContext = namedtuple(
+    "TaskJobLogsRetrieveContext",
+    ["key", "ctx_type", "user_at_host", "max_size"])
+
+
 class TryState(object):
     """Represent the current state of a (re)try."""
 
     def __init__(self, ctx=None, delays=None):
         self.ctx = ctx
-        self.delays = []
         if delays:
-            self.delays += delays
-        self.num = 1
+            self.delays = list(delays)
+        else:
+            self.delays = [0]
+        self.num = 0
         self.delay = None
         self.timeout = None
+        self.is_waiting = False
 
     def delay_as_seconds(self):
         """Return the delay as PTnS, where n is number of seconds."""
@@ -87,21 +106,32 @@ class TryState(object):
             return False
         if now is None:
             now = time.time()
-        if now > self.timeout:
-            return True
-        else:
-            return False
+        return now > self.timeout
+
+    def is_timeout_set(self):
+        """Return True if timeout is set."""
+        return self.timeout is not None
 
     def next(self):
         """Return the next retry delay if there is one, or None otherwise."""
         try:
-            self.delay = self.delays[self.num - 1]
+            self.delay = self.delays[self.num]
         except IndexError:
             return None
         else:
             self.timeout = time.time() + self.delay
             self.num += 1
             return self.delay
+
+    def set_waiting(self):
+        """Set waiting flag, while waiting for action to complete."""
+        self.delay = None
+        self.is_waiting = True
+        self.timeout = None
+
+    def unset_waiting(self):
+        """Unset waiting flag after an action has completed."""
+        self.is_waiting = False
 
     def timeout_as_str(self):
         """Return the timeout as an ISO8601 date-time string."""
@@ -131,11 +161,11 @@ class TaskProxy(object):
     # environments to allow changed behaviour after previous failures.
 
     # Format string for single line output
-    JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_type)s %(attr)s] %(mesg)s"
+    JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_key)s %(attr)s] %(mesg)s"
     # Format string for multi-line output
-    JOB_LOG_FMT_M = "%(timestamp)s [%(cmd_type)s %(attr)s]\n\n%(mesg)s\n"
+    JOB_LOG_FMT_M = "%(timestamp)s [%(cmd_key)s %(attr)s]\n\n%(mesg)s\n"
 
-    EVENT_HANDLER = "event-handler"
+    CUSTOM_EVENT_HANDLER = "event-handler"
     EVENT_MAIL = "event-mail"
     JOB_KILL = "job-kill"
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
@@ -308,7 +338,7 @@ class TaskProxy(object):
             self.db_inserts_map[self.TABLE_TASK_STATES].append({
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
-                "try_num": self.run_try_state.num,
+                "try_num": self.run_try_state.num + 1,
                 "status": self.state.get_status()})
 
         if not self.validate_mode and self.submit_num > 0:
@@ -429,8 +459,8 @@ class TaskProxy(object):
         if not ctx_str:
             return
         submit_num = "NN"
-        if isinstance(ctx.cmd_type, tuple):  # An event handler
-            submit_num = ctx.cmd_type[-1]
+        if isinstance(ctx.cmd_key, tuple):  # An event handler
+            submit_num = ctx.cmd_key[-1]
         job_log_dir = self.get_job_log_dir(
             self.tdef.name, self.point, submit_num, self.suite_name)
         job_activity_log = os.path.join(job_log_dir, "job-activity.log")
@@ -473,7 +503,8 @@ class TaskProxy(object):
         )
         if ready and self.has_expired():
             self.log(WARNING, 'Task expired (skipping job).')
-            self.handle_event('expired', 'Task expired (skipping job).')
+            self.setup_event_handlers(
+                'expired', 'Task expired (skipping job).')
             self.reset_state_expired()
             return False
         return ready
@@ -815,34 +846,9 @@ class TaskProxy(object):
                 line += "\n"
             handle.write(line)
 
-    def event_handler_callback(self, result):
-        """Callback when event handler is done."""
-        self.command_log(result)
-        if result.cmd_type not in self.event_handler_try_states:
-            return
-        try_state = self.event_handler_try_states.pop(result.cmd_type)
-        if result.ret_code == 0:
-            if result.cmd_type[0] == self.JOB_LOGS_RETRIEVE:
-                try:
-                    submit_num = int(result.cmd_type[2])
-                except ValueError:
-                    pass
-                else:
-                    self.register_job_logs(submit_num, result)
-        elif try_state.next() is None:
-            self.log(ERROR, "event handler failed:\n\t%s" % result.cmd)
-        else:
-            self.log(
-                WARNING,
-                "event handler failed, retrying in %s (after %s):\n\t%s" % (
-                    try_state.delay_as_seconds(),
-                    try_state.timeout_as_str(),
-                    result.cmd))
-            self.event_handler_try_states[result.cmd_type] = try_state
-
-    def handle_event(
+    def setup_event_handlers(
             self, event, message, db_update=True, db_event=None, db_msg=None):
-        """Call event handler."""
+        """Set up event handlers."""
         # extra args for inconsistent use between events, logging, and db
         # updates
         db_event = db_event or event
@@ -852,14 +858,14 @@ class TaskProxy(object):
         if self.tdef.run_mode != 'live':
             return
 
-        self.retrieve_job_logs(event, message)
-        self.send_event_mail(event, message)
-        self.call_event_handlers(event, message)
+        self.setup_job_logs_retrieval(event, message)
+        self.setup_event_mail(event, message)
+        self.setup_custom_event_handlers(event, message)
 
-    def retrieve_job_logs(self, event, _=None):
-        """Retrieve remote job logs."""
-        key = (self.JOB_LOGS_RETRIEVE, event, "%02d" % self.submit_num)
-        if (key in self.event_handler_try_states or
+    def setup_job_logs_retrieval(self, event, _=None):
+        """Set up remote job logs retrieval."""
+        key1 = self.JOB_LOGS_RETRIEVE
+        if ((key1, self.submit_num) in self.event_handler_try_states or
                 event not in ["failed", "retry", "succeeded"]):
             return
         if self.user_at_host in [user + '@localhost', 'localhost']:
@@ -867,77 +873,37 @@ class TaskProxy(object):
             return
         if not self._get_host_conf("retrieve job logs"):
             return
-        source = (
-            self.user_at_host + ":" +
-            os.path.dirname(self.job_conf["job file path"]))
-        cmd = ["cylc", self.JOB_LOGS_RETRIEVE]
-        max_size = self._get_host_conf("retrieve job logs max size")
-        if max_size:
-            cmd.append("--max-size=%s" % max_size)
-        cmd += [source, os.path.dirname(self.job_conf["local job file path"])]
-        ctx = SuiteProcContext(key, cmd)
-        try_state = TryState(
-            ctx, self._get_host_conf("retrieve job logs retry delays"))
-        self.event_handler_try_states[key] = try_state
-        if try_state.next() is None or try_state.is_delay_done():
-            try_state.timeout = None
-            SuiteProcPool.get_inst().put_command(
-                ctx, self.event_handler_callback)
-        else:
-            self.log(
-                INFO,
-                "%s will run after %s (after %s):\n\t%s" % (
-                    self.JOB_LOGS_RETRIEVE,
-                    try_state.delay_as_seconds(),
-                    try_state.timeout_as_str(),
-                    ctx.cmd))
+        self.event_handler_try_states[(key1, self.submit_num)] = TryState(
+            TaskJobLogsRetrieveContext(
+                key1,
+                self.JOB_LOGS_RETRIEVE,  # ctx_type
+                self.user_at_host,
+                self._get_host_conf("retrieve job logs max size"),  # max_size
+            ),
+            self._get_events_conf("retrieve job logs retry delays", []))
 
-    def send_event_mail(self, event, message):
+    def setup_event_mail(self, event, message):
         """Event notification, by email."""
-        key = (self.EVENT_MAIL, event, "%02d" % self.submit_num)
-        if (key in self.event_handler_try_states
+        key1 = (self.EVENT_MAIL, event)
+        if ((key1, self.submit_num) in self.event_handler_try_states
                 or event not in self._get_events_conf("mail events", [])):
             return
 
-        names = [self.suite_name, str(self.point), self.tdef.name]
-        if self.submit_num:
-            names.append("%02d" % self.submit_num)
-        subject = "[%(event)s] %(names)s" % {
-            "event": event, "names": ".".join(names)}
-        cmd = ["mail", "-s", subject]
-        # From:
-        cmd.append("-r")
-        cmd.append(self._get_events_conf(
-            "mail from", "notifications@" + get_suite_host()))
-        # To:
-        cmd.append(self._get_events_conf("mail to", user))
-        # Mail message
-        stdin_str = "%s: %s\n" % (subject, message)
-        # SMTP server
-        env = None
-        mail_smtp = self._get_events_conf("mail smtp")
-        if mail_smtp:
-            env = dict(os.environ)
-            env["smtp"] = mail_smtp
+        self.event_handler_try_states[(key1, self.submit_num)] = TryState(
+            TaskEventMailContext(
+                key1,
+                self.EVENT_MAIL,  # ctx_type
+                event,
+                self._get_events_conf(  # mail_from
+                    "mail from",
+                    "notifications@" + get_suite_host(),
+                ),
+                self._get_events_conf("mail to", user),  # mail_to
+                self._get_events_conf("mail smtp"),  # mail_smtp
+            ),
+            self._get_events_conf("mail retry delays", []))
 
-        ctx = SuiteProcContext(key, cmd, env=env, stdin_str=stdin_str)
-        try_state = TryState(
-            ctx, self._get_events_conf("mail retry delays", []))
-        self.event_handler_try_states[key] = try_state
-        if try_state.next() is None or try_state.is_delay_done():
-            try_state.timeout = None
-            SuiteProcPool.get_inst().put_command(
-                ctx, self.event_handler_callback)
-        else:
-            self.log(
-                INFO,
-                "%s will run after %s (after %s):\n\t%s" % (
-                    self.EVENT_MAIL,
-                    try_state.delay_as_seconds(),
-                    try_state.timeout_as_str(),
-                    ctx.cmd))
-
-    def call_event_handlers(self, event, message, only_list=None):
+    def setup_custom_event_handlers(self, event, message, only_list=None):
         """Call custom event handlers."""
         handlers = []
         if self.event_hooks[event + ' handler']:
@@ -948,11 +914,10 @@ class TaskProxy(object):
         retry_delays = self._get_events_conf('handler retry delays', [])
         env = None
         for i, handler in enumerate(handlers):
-            key = (
-                "%s-%02d" % (self.EVENT_HANDLER, i),
-                event,
-                "%02d" % self.submit_num)
-            if key in self.event_handler_try_states or (
+            key1 = (
+                "%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i),
+                event)
+            if (key1, self.submit_num) in self.event_handler_try_states or (
                     only_list and i not in only_list):
                 continue
             cmd = handler % {
@@ -969,24 +934,24 @@ class TaskProxy(object):
                 cmd = "%s '%s' '%s' '%s' '%s'" % (
                     handler, event, self.suite_name, self.identity, message)
             self.log(DEBUG, "Queueing %s handler: %s" % (event, cmd))
-            if env is None and TaskProxy.event_handler_env:
-                env = dict(os.environ)
-                env.update(TaskProxy.event_handler_env)
-            ctx = SuiteProcContext(key, cmd, env=env, shell=True)
-            try_state = TryState(ctx, retry_delays)
-            self.event_handler_try_states[key] = try_state
-            if try_state.next() is None or try_state.is_delay_done():
-                try_state.timeout = None
-                SuiteProcPool.get_inst().put_command(
-                    ctx, self.event_handler_callback)
+            self.event_handler_try_states[(key1, self.submit_num)] = TryState(
+                CustomTaskEventHandlerContext(
+                    key1,
+                    self.CUSTOM_EVENT_HANDLER,
+                    cmd,
+                ),
+                retry_delays)
+
+    def custom_event_handler_callback(self, result):
+        """Callback when a custom event handler is done."""
+        self.command_log(result)
+        try:
+            if result.ret_code == 0:
+                del self.event_handler_try_states[result.cmd_key]
             else:
-                self.log(
-                    INFO,
-                    "%s will run after %s (after %s):\n\t%s" % (
-                        self.EVENT_HANDLER,
-                        try_state.delay_as_seconds(),
-                        try_state.timeout_as_str(),
-                        ctx.cmd))
+                self.event_handler_try_states[result.cmd_key].unset_waiting()
+        except KeyError:
+            pass
 
     def job_submission_failed(self):
         """Handle job submission failure."""
@@ -1003,7 +968,8 @@ class TaskProxy(object):
             self.outputs.add(outp)
             self.outputs.set_completed(outp)
             self.set_status('submit-failed')
-            self.handle_event('submission failed', 'job submission failed')
+            self.setup_event_handlers(
+                'submission failed', 'job submission failed')
         else:
             # There is a submission retry lined up.
             timeout_str = self.sub_try_state.timeout_as_str()
@@ -1021,11 +987,12 @@ class TaskProxy(object):
             self.set_prerequisites_all_satisfied()
             self.outputs.set_all_incomplete()
 
-            # TODO - is this record is redundant with that in handle_event?
+            # TODO - is this record is redundant with that in
+            # setup_event_handlers?
             self._db_events_insert(
                 event="submission failed",
                 message="submit-retrying in " + str(self.sub_try_state.delay))
-            self.handle_event(
+            self.setup_event_handlers(
                 "submission retry", "job submission failed, " + delay_msg)
             if self.hold_on_retry:
                 self.reset_state_held()
@@ -1077,7 +1044,7 @@ class TaskProxy(object):
             get_time_string_from_unix_time(self.submitted_time))
         self.summary['submit_method_id'] = self.submit_method_id
         self.summary['latest_message'] = "submitted"
-        self.handle_event(
+        self.setup_event_handlers(
             'submitted', 'job submitted', db_event='submission succeeded')
 
         if self.state.is_currently('ready'):
@@ -1114,7 +1081,7 @@ class TaskProxy(object):
             self.outputs.add(msg)
             self.outputs.set_completed(msg)
             self.set_status('failed')
-            self.handle_event('failed', 'job failed')
+            self.setup_event_handlers('failed', 'job failed')
 
         else:
             # There is a retry lined up
@@ -1128,7 +1095,7 @@ class TaskProxy(object):
             self.set_status('retrying')
             self.set_prerequisites_all_satisfied()
             self.outputs.set_all_incomplete()
-            self.handle_event(
+            self.setup_event_handlers(
                 "retry", "job failed, " + delay_msg, db_msg=delay_msg)
             if self.hold_on_retry:
                 self.reset_state_held()
@@ -1195,34 +1162,24 @@ class TaskProxy(object):
             copy(GLOBAL_CFG.get(['execution polling intervals'])),
             'execution', self.log)
 
-    def register_job_logs(self, submit_num, result=None):
+    def register_job_logs(self, submit_num):
         """Register job logs in the runtime database."""
         data = []
-        if result is None:
-            job_log_dir = self.get_job_log_dir(
-                self.tdef.name, self.point, submit_num, self.suite_name)
-            try:
-                for filename in os.listdir(job_log_dir):
-                    try:
-                        stat = os.stat(os.path.join(job_log_dir, filename))
-                    except OSError:
-                        continue
-                    else:
-                        data.append((stat.st_mtime, stat.st_size, filename))
-            except OSError:
-                pass
-        else:
-            has_found_delim = False
-            for line in result.out.splitlines():
-                if has_found_delim:
-                    try:
-                        mtime, size, filename = line.split("\t")
-                    except ValueError:
-                        pass
-                    else:
-                        data.append((mtime, size, filename))
-                elif line == "cylc-" + self.JOB_LOGS_RETRIEVE + ":":
-                    has_found_delim = True
+        has_job_out = False
+        job_log_dir = self.get_job_log_dir(
+            self.tdef.name, self.point, submit_num, self.suite_name)
+        try:
+            for filename in os.listdir(job_log_dir):
+                try:
+                    stat = os.stat(os.path.join(job_log_dir, filename))
+                except OSError:
+                    continue
+                else:
+                    data.append((stat.st_mtime, stat.st_size, filename))
+                if filename == "job.out":
+                    has_job_out = True
+        except OSError:
+            pass
 
         rel_job_log_dir = self.get_job_log_dir(
             self.tdef.name, self.point, submit_num)
@@ -1233,6 +1190,7 @@ class TaskProxy(object):
                 "location": os.path.join(rel_job_log_dir, filename),
                 "mtime": mtime,
                 "size": size})
+        return has_job_out
 
     def prep_submit(self, dry_run=False, overrides=None):
         """Prepare job submission.
@@ -1367,7 +1325,7 @@ class TaskProxy(object):
         )
         self.db_inserts_map[self.TABLE_TASK_JOBS].append({
             "is_manual_submit": self.is_manual_submit,
-            "try_num": self.run_try_state.num,
+            "try_num": self.run_try_state.num + 1,
             "time_submit": get_current_time_string(),
             "user_at_host": self.user_at_host,
             "batch_sys_name": self.batch_sys_name,
@@ -1430,8 +1388,8 @@ class TaskProxy(object):
             'script': '',
             'post-script': '',
             'namespace hierarchy': self.tdef.namespace_hierarchy,
-            'submission try number': self.sub_try_state.num,
-            'try number': self.run_try_state.num,
+            'submission try number': self.sub_try_state.num + 1,
+            'try number': self.run_try_state.num + 1,
             'absolute submit number': self.submit_num,
             'is cold-start': self.tdef.is_coldstart,
             'owner': self.task_owner,
@@ -1487,7 +1445,7 @@ class TaskProxy(object):
                 self.event_hooks['submission timeout'])
         )
         self.log(WARNING, msg)
-        self.handle_event('submission timeout', msg)
+        self.setup_event_handlers('submission timeout', msg)
 
     def handle_execution_timeout(self):
         """Handle execution timeout, only called if in "running" state."""
@@ -1499,7 +1457,7 @@ class TaskProxy(object):
         msg = msg % get_seconds_as_interval_string(
             self.event_hooks['execution timeout'])
         self.log(WARNING, msg)
-        self.handle_event('execution timeout', msg)
+        self.setup_event_handlers('execution timeout', msg)
 
     def sim_time_check(self):
         """Check simulation time."""
@@ -1602,7 +1560,7 @@ class TaskProxy(object):
             return
 
         if priority == TaskMessage.WARNING:
-            self.handle_event('warning', content, db_update=False)
+            self.setup_event_handlers('warning', content, db_update=False)
 
         if self._get_events_conf('reset timer'):
             # Reset execution timer on incoming messages
@@ -1636,8 +1594,8 @@ class TaskProxy(object):
                 self.execution_timer_timeout = None
 
             # submission was successful so reset submission try number
-            self.sub_try_state.num = 1
-            self.handle_event('started', 'job started')
+            self.sub_try_state.num = 0
+            self.setup_event_handlers('started', 'job started')
             self.execution_poll_timer.set_timer()
 
         elif (content == TaskMessage.SUCCEEDED and
@@ -1661,7 +1619,7 @@ class TaskProxy(object):
             self.tdef.update_mean_total_elapsed_time(
                 self.started_time, self.finished_time)
             self.set_status('succeeded')
-            self.handle_event("succeeded", "job succeeded")
+            self.setup_event_handlers("succeeded", "job succeeded")
             if not self.outputs.all_completed():
                 msg = "Succeeded with unreported outputs:"
                 for key in self.outputs.not_completed:
@@ -1703,7 +1661,7 @@ class TaskProxy(object):
             # TODO - check summary item value compat with GUI:
             self.summary['started_time'] = None
             self.summary['started_time_string'] = None
-            self.sub_try_state.num = 1
+            self.sub_try_state.num = 0
             self.job_vacated = True
 
         elif content == "submission failed":
@@ -1722,19 +1680,6 @@ class TaskProxy(object):
             self.log(DEBUG, '(current: %s) unhandled: %s' % (
                 self.state.get_status(), content))
 
-    def process_event_handler_retries(self):
-        """Run delayed event handlers or retry failed ones."""
-        for try_state in self.event_handler_try_states.values():
-            if try_state.ctx and try_state.is_delay_done():
-                try_state.timeout = None
-                ctx = SuiteProcContext(
-                    try_state.ctx.cmd_type,
-                    try_state.ctx.cmd,
-                    **try_state.ctx.cmd_kwargs)
-                try_state.ctx = ctx
-                SuiteProcPool.get_inst().put_command(
-                    ctx, self.event_handler_callback)
-
     def set_status(self, status):
         """Set, log and record task status."""
         if status != self.state.get_status():
@@ -1744,7 +1689,7 @@ class TaskProxy(object):
             self.db_updates_map[self.TABLE_TASK_STATES].append({
                 "time_updated": get_current_time_string(),
                 "submit_num": self.submit_num,
-                "try_num": self.run_try_state.num,
+                "try_num": self.run_try_state.num + 1,
                 "status": status
             })
 

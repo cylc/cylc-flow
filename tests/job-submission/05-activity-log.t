@@ -35,7 +35,7 @@ grep_ok '\[job-kill out\] [^|]*\|1/t1/01\|1' "${T1_ACTIVITY_LOG}"
 grep_ok '\[job-poll out\] [^|]*\|1/t1/01\|background\|[^|]*\|1\|\|\|\|[^|]*\|' \
     "${T1_ACTIVITY_LOG}"
 grep_ok \
-    "\\[('event-handler-00', 'failed', '01') out\\] failed ${SUITE_NAME} t1\\.1 job failed" \
+    "\\[(('event-handler-00', 'failed'), 1) out\\] failed ${SUITE_NAME} t1\\.1 job failed" \
     "${T1_ACTIVITY_LOG}"
 #-------------------------------------------------------------------------------
 purge_suite "${SUITE_NAME}"

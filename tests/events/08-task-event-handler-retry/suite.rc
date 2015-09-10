@@ -22,6 +22,6 @@ title=Task Event Handler Retry
     [[t2]]
         script="""
 LOG="${CYLC_SUITE_LOG_DIR}/../job/1/t1/NN/job-activity.log"
-STR="[('event-handler-00', 'succeeded', '01') ret_code] 0"
+STR="[(('event-handler-00', 'succeeded'), 1) ret_code] 0"
 timeout 30 bash -c "while ! grep -q -F \"${STR}\" '${LOG}'; do sleep 1; done"
 """
