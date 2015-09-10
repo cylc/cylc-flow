@@ -18,6 +18,12 @@
 
 """cylc [control] kill [OPTIONS] ARGS
 
+Kill jobs of active tasks (those in the 'submitted' or 'running' states) and
+update their statuses accordingly.
+
+To kill one or more tasks, "cylc kill REG MATCH POINT"; to kill all active
+tasks: "cylc kill REG".
+
 Kill a 'submitted' or 'running' task and update the suite state accordingly.
 """
 
@@ -39,17 +45,26 @@ def main():
         __doc__ + multitask_usage,
         pyro=True, multitask=True,
         argdoc=[('REG', 'Suite name'),
-                ('MATCH', 'Task or family name matching regular expression'),
-                ('POINT', 'Task cycle point (e.g. date-time or integer)')])
+                ('[MATCH]', 'Task or family name matching regular expression'),
+                ('[POINT]', 'Task cycle point (e.g. date-time or integer)')])
 
     (options, args) = parser.parse_args()
     suite = args[0]
 
-    name = args[1]
-    point_string = args[2]
+    if len(args) == 3:
+        name = args[1]
+        point_string = args[2]
+    elif len(args) == 1:
+        name = None
+        point_string = None
+    else:
+        parser.error("Wrong number of arguments.")
 
-    prompt('Kill task %s at %s in %s' % (name, point_string, suite),
-           options.force)
+    if name and point_string:
+        prompt('Kill task %s at %s in %s' % (name, point_string, suite),
+               options.force)
+    else:
+        prompt('Kill ALL task in %s' % (suite), options.force)
 
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,

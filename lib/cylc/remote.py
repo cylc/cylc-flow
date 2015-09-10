@@ -105,7 +105,7 @@ class remrun(object):
                 "use login shell", self.host, self.owner)
 
         # Pass cylc version through.
-        command += ["CYLC_VERSION=%s" % CYLC_VERSION]
+        command += ["env", "CYLC_VERSION=%s" % CYLC_VERSION]
 
         if ssh_login_shell:
             # A login shell will always source /etc/profile and the user's bash

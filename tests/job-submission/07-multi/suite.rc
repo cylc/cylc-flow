@@ -1,0 +1,33 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = PT3M
+
+[scheduling]
+    initial cycle point=2020
+    final cycle point=2025
+    [[dependencies]]
+        [[[P1Y]]]
+            graph="""
+T[-P1Y]:succeed-all => T
+"""
+[runtime]
+    [[T]]
+        script = true
+#        script=sleep 120
+#        [[[remote]]]
+#            host=xcfl00
+#        [[[job submission]]]
+#            method = pbs
+#        [[[directives]]]
+#            -m = n
+#            -q = shared
+#            -r = n
+    [[t0,t1,t2,t3]]
+        inherit = T
+    [[t4,t5,t6]]
+        inherit = T
+        [[[remote]]]
+            host = {{CYLC_TEST_HOST}}

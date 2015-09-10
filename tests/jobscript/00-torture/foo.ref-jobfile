@@ -3,6 +3,7 @@
 # ++++ THIS IS A CYLC TASK JOB SCRIPT ++++
 # Suite: ##suitename##
 # Task: foo.1
+# Job log directory: 1/foo/01
 # Job submit method: background
 
 echo "JOB SCRIPT STARTING"
@@ -194,4 +195,4 @@ cylc task message 'succeeded'
 echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
 trap '' EXIT
 
-#EOF
+#EOF: 1/foo/01

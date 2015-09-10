@@ -15,11 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""cylc [control] jobs-kill JOB-LOG-ROOT [JOB-LOG-DIR ...]
 
-"""cylc [task] job-submit [--remote-mode] JOB-FILE-PATH
-
-(This command is for internal use. Users should use "cylc submit".)
-Submit a job file.
+(This command is for internal use. Users should use "cylc kill".) Read job
+status files to obtain the names of the batch systems and the job IDs in the
+systems. Invoke the relevant batch system commands to ask the batch systems to
+terminate the jobs.
 
 """
 
@@ -30,24 +31,11 @@ from cylc.remote import remrun
 
 def main():
     """CLI main."""
-    parser = cop(
-        __doc__,
-        argdoc=[("JOB-FILE-PATH", "the path of the job file")])
-    parser.add_option(
-        "--remote-mode",
-        help="Is this being run on a remote job host?",
-        action="store_true", dest="remote_mode", default=False)
-    opts, args = parser.parse_args()
-    ret_code, out, err, job_id = BATCH_SYS_MANAGER.job_submit(
-        args[0], opts.remote_mode)
-    if err:
-        sys.stderr.write(err)
-    if out:
-        sys.stdout.write(out)
-    if job_id:
-        sys.stdout.write(
-            "%s=%s\n" % (BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID, job_id))
-    sys.exit(ret_code)
+    parser = cop(__doc__, argdoc=[
+        ("JOB-LOG-ROOT", "The log/job sub-directory for the suite"),
+        ("[JOB-LOG-DIR ...]", "A point/name/submit_num sub-directory")])
+    args = parser.parse_args()[1]
+    BATCH_SYS_MANAGER.jobs_kill(args[0], args[1:])
 
 
 if __name__ == "__main__" and not remrun().execute():

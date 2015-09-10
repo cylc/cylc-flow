@@ -17,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Background job submission and manipulation."""
 
+import errno
 import os
 import re
-from subprocess import Popen
+from subprocess import Popen, STDOUT
 import sys
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 
@@ -27,41 +28,53 @@ from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 class BgCommandHandler(object):
     """Background job submission and manipulation.
 
-    Run a task job as a background process. Uses 'wait' to prevent exit before
-    the job is finished (which would be a problem for remote background jobs at
-    sites that do not allow unattended jobs on login nodes).
+    Run a task job as a nohup background process in its own process group.
 
     """
 
     CAN_KILL_PROC_GROUP = True
-    IS_BG_SUBMIT = True
-    POLL_CMD_TMPL = "ps '%(job_id)s'"
+    POLL_CMD = "ps"
+    POLL_CMD_TMPL = POLL_CMD + " '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A(?P<id>\d+)\Z""")
 
     @classmethod
     def submit(cls, job_file_path):
         """Submit "job_file_path"."""
-        out_file = open(job_file_path + ".out", "wb")
-        err_file = open(job_file_path + ".err", "wb")
-        proc = Popen(
-            [job_file_path], stdout=out_file, stderr=err_file,
-            preexec_fn=os.setpgrp)
-        # Send PID info back to suite
-        sys.stdout.write("%(pid)d\n%(key)s=%(pid)d\n" % {
-            "key": BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID,
-            "pid": proc.pid,
-        })
-        sys.stdout.flush()
-        # Write PID info to status file
-        job_status_file = open(job_file_path + ".status", "a")
-        job_status_file.write("%s=%d\n" % (
-            BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID, proc.pid))
-        job_status_file.close()
-        # Wait for job
-        proc.communicate()
-        out_file.close()
-        err_file.close()
-        return proc
+        # Check access permission here because we are unable to check the
+        # result of the nohup command.
+        if not os.access(job_file_path, os.R_OK | os.X_OK):
+            exc = OSError(
+                errno.EACCES, os.strerror(errno.EACCES), job_file_path)
+            return (1, None, str(exc))
+        job_file_path_dir = os.path.dirname(job_file_path)
+        if not os.access(job_file_path_dir, os.W_OK):
+            exc = OSError(
+                errno.EACCES, os.strerror(errno.EACCES), job_file_path_dir)
+            return (1, None, str(exc))
+        try:
+            # This is essentially a double fork to ensure that the child
+            # process can detach as a process group leader and not subjected to
+            # SIGHUP from the current process.
+            proc = Popen(
+                [
+                    "nohup",
+                    "bash",
+                    "-c",
+                    r'''exec "$0" <'/dev/null' >"$0.out" 2>"$0.err"''',
+                    job_file_path,
+                ],
+                preexec_fn=os.setpgrp,
+                stdin=open(os.devnull),
+                stdout=open(os.devnull, "wb"),
+                stderr=STDOUT)
+        except OSError as exc:
+            # subprocess.Popen has a bad habit of not setting the
+            # filename of the executable when it raises an OSError.
+            if not exc.filename:
+                exc.filename = command[0]
+            return (1, None, str(exc))
+        else:
+            return (0, "%d\n" % (proc.pid), None)
 
 
 BATCH_SYS_HANDLER = BgCommandHandler()
