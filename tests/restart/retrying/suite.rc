@@ -18,7 +18,7 @@
 [runtime]
     [[retrying_task]]
         script = """
-            sleep 1
+            sleep 10
             if [[ $CYLC_TASK_TRY_NUMBER -le 2 ]]; then
                 exit 1
             fi

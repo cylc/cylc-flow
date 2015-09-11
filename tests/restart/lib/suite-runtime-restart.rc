@@ -1,10 +1,14 @@
     [[OUTPUT]]
         script = """
             sleep 5
-            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
-                "select name, cycle, submit_num, try_num, status
-                 from task_states where name != '"$CYLC_TASK_NAME"'
-                 order by name, cycle;" > {{ TEST_DIR }}/$OUTPUT_SUFFIX-db
+            # Handle db locks.
+            for i in {0..10}; do
+                sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
+                    "select name, cycle, submit_num, try_num, status
+                     from task_states where name != '"$CYLC_TASK_NAME"'
+                     order by name, cycle;" > {{ TEST_DIR }}/$OUTPUT_SUFFIX-db && break
+                sleep 1
+            done
             sed "/$CYLC_TASK_NAME/d" $CYLC_SUITE_RUN_DIR/state/state >{{ TEST_DIR }}/$OUTPUT_SUFFIX-state
         """
     [[shutdown]]
