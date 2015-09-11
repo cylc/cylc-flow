@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tailer import tailer
+from cylc.gui.tailer import Tailer
 import gtk
 import gobject
 import pango
@@ -74,9 +74,6 @@ are displayed in red.
         self.textview.show()
 
         self.ftag = tb.create_tag( None, background="#70FFA9" )
-
-        self.warning_re = 'WARNING'
-        self.critical_re = 'CRITICAL|ERROR'
 
         vbox = gtk.VBox()
         vbox.show()
@@ -142,13 +139,16 @@ are displayed in red.
         close_button.grab_focus()
         self.window.show()
 
-    def run( self ):
+    def run(self):
+        proc = None
         if not self.ignore_command:
-            self.proc = subprocess.Popen( self.command, stdout=self.stdout, stderr=subprocess.STDOUT, shell=True )
-            self.stdout_updater = tailer( self.textview, self.stdout.name, proc=self.proc, warning_re=self.warning_re, critical_re=self.critical_re )
+            proc = subprocess.Popen(
+                self.command, stdout=self.stdout, stderr=subprocess.STDOUT,
+                shell=True)
+            self.proc = proc
             gobject.timeout_add(40, self.pulse_proc_progress)
-        else:
-            self.stdout_updater = tailer( self.textview, self.stdout.name, warning_re=self.warning_re, critical_re=self.critical_re )
+        self.stdout_updater = Tailer(
+            self.textview, self.stdout.name, pollable=proc)
         self.stdout_updater.start()
 
     def pulse_proc_progress( self ):
@@ -210,7 +210,7 @@ are displayed in red.
             # this is because gcylc currently maintains a list of *all*
             # gcapture windows, including those the user has closed.
             return
-        self.stdout_updater.quit = True
+        self.stdout_updater.stop()
         self.quit_already = True
         if self.standalone:
             #print 'GTK MAIN QUIT'

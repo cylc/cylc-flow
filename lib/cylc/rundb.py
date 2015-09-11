@@ -389,6 +389,36 @@ class CylcSuiteDAO(object):
         else:
             return True
 
+    def select_task_job(self, keys, cycle, name, submit_num=None):
+        """Select items from task_jobs by (cycle, name, submit_num).
+
+        Return a dict for mapping keys to the column values.
+
+        """
+        if keys is None:
+            keys = []
+            for column in self.tables[self.TABLE_TASK_JOBS].columns[3:]:
+                keys.append(column.name)
+        if submit_num in [None, "NN"]:
+            stmt = (r"SELECT %(keys_str)s FROM %(table)s" +
+                    r" WHERE cycle==? AND name==?" +
+                    r" ORDER BY submit_num DESC LIMIT 1") % {
+                "keys_str": ",".join(keys),
+                "table": self.TABLE_TASK_JOBS}
+            stmt_args = [cycle, name]
+        else:
+            stmt = (r"SELECT %(keys_str)s FROM %(table)s" +
+                    r" WHERE cycle==? AND name==? AND submit_num==?") % {
+                "keys_str": ",".join(keys),
+                "table": self.TABLE_TASK_JOBS}
+            stmt_args = [cycle, name, submit_num]
+        ret = {}
+        for row in self.connect().execute(stmt, stmt_args):
+            ret = {}
+            for key, value in zip(keys, row):
+                ret[key] = value
+            return ret
+
     def select_task_states_by_task_ids(self, keys, task_ids=None):
         """Select items from task_states by task IDs.
 

@@ -1143,8 +1143,6 @@ been defined for this suite""").inform()
     def view_task_info(self, w, e, task_id, choice):
         if hasattr(e, "button") and e.button != 1:
             return False
-        view = True
-        reasons = []
         try:
             task_state_summary = self.updater.full_state_summary[task_id]
         except KeyError:
@@ -1152,15 +1150,14 @@ been defined for this suite""").inform()
             return False
 
         logfiles = task_state_summary['logfiles']
-        if len(logfiles) == 0:
-            view = False
-            reasons.append(task_id + ' has no associated log files')
+        warnings = []
+        if not logfiles:
+            warnings.append(task_id + ' has no associated log files')
         if task_state_summary['state'] in [
                 'waiting', 'ready', 'submit-failed', 'queued']:
-            view = False
-            reasons.append(task_id + ' has not started running yet')
-        if not view:
-            warning_dialog('\n'.join(reasons), self.window).warn()
+            warnings.append(task_id + ' has not started running yet')
+        if warnings:
+            warning_dialog('\n'.join(warnings), self.window).warn()
         else:
             self.popup_logview(task_id, logfiles, choice)
 
@@ -2152,11 +2149,11 @@ shown here in the state they were in at the time of triggering.''')
                          gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_size_request(800, 400)
-        log_paths = list(logfiles)
-        log_paths.sort(key=self._sort_key_func, reverse=True)
+        filenames = list(logfiles)
+        filenames.sort(key=self._sort_key_func, reverse=True)
         init_active_index = None
         if choice:
-            for i, log in enumerate(log_paths):
+            for i, log in enumerate(filenames):
                 if log.endswith("/" + choice):
                     init_active_index = i
                     break
@@ -2167,22 +2164,54 @@ shown here in the state they were in at the time of triggering.''')
         elif is_remote_user(self.cfg.owner):
             auth = self.cfg.owner + "@" + self.cfg.host
         if auth:
-            for i, log in enumerate(log_paths):
+            for i, log in enumerate(filenames):
                 if ":" not in log:
-                    log_paths[i] = auth + ":" + log
+                    filenames[i] = auth + ":" + log
         window.set_title(task_id + ": Log Files")
-        lv = ComboLogViewer(task_id, log_paths, init_active_index)
-        self.quitters.append(lv)
+        viewer = ComboLogViewer(
+            task_id, filenames,
+            self._get_logview_cmd_tmpls_map(task_id, filenames),
+            init_active_index)
+        self.quitters.append(viewer)
 
-        window.add(lv.get_widget())
+        window.add(viewer.get_widget())
 
         quit_button = gtk.Button("_Close")
-        quit_button.connect("clicked", self.on_popup_quit, lv, window)
+        quit_button.connect("clicked", self.on_popup_quit, viewer, window)
 
-        lv.hbox.pack_start(quit_button, False)
+        viewer.hbox.pack_start(quit_button, False)
 
-        window.connect("delete_event", lv.quit_w_e)
+        window.connect("delete_event", viewer.quit_w_e)
         window.show_all()
+
+    def _get_logview_cmd_tmpls_map(self, task_id, filenames):
+        """Helper for self.popup_logview()."""
+        summary = self.updater.full_state_summary[task_id]
+        if summary["state"] != "running":
+            return {}
+        ret = {}
+        for key in "out", "err":
+            suffix = "/%(submit_num)02d/job.%(key)s" % {
+                "submit_num": summary["submit_num"], "key": key}
+            for filename in filenames:
+                if not filename.endswith(suffix):
+                    continue
+                user_at_host = None
+                if ":" in filename:
+                    user_at_host = filename.split(":", 1)[0]
+                if user_at_host and "@" in user_at_host:
+                    owner, host = user_at_host.split("@", 1)
+                else:
+                    owner, host = (None, user_at_host)
+                try:
+                    conf = GLOBAL_CFG.get_host_item(
+                        "batch systems", host, owner)
+                    cmd_tmpl = conf[summary["batch_sys_name"]][key + " tailer"]
+                    ret[filename] = cmd_tmpl % {
+                        "job_id": summary["submit_method_id"]}
+                except (KeyError, TypeError):
+                    continue
+        return ret
 
     def _sort_key_func(self, log_path):
         """Sort key for a task job log path."""

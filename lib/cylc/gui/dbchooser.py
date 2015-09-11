@@ -420,7 +420,7 @@ class dbchooser(object):
     def delete_all_event( self, w, e ):
         self.updater.quit = True
         # call quit on any remaining gcapture windows, which contain
-        # tailer threads that need to be stopped). Currently we maintain
+        # Tailer threads that need to be stopped). Currently we maintain
         # a list of all gcapture windows opened
         # since start-up, hence the use of 'quit_already' to
         # avoid calling window.destroy() on gcapture windows that have

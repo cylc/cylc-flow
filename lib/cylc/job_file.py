@@ -466,7 +466,7 @@ trap '' EXIT
 
         task_name, point_string = TaskID.split(job_conf['task id'])
         job_conf['absolute submit number']
-        handle.write("%s%s" % (
+        handle.write("%s%s\n" % (
             BATCH_SYS_MANAGER.LINE_PREFIX_EOF,
             os.path.dirname(job_conf['common job log path'])))
 

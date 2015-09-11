@@ -16,27 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from filtered_tailer import filtered_tailer
-from tailer import tailer
 import gtk
 import pygtk
 ####pygtk.require('2.0')
 import time, os, re, sys
-from warning_dialog import warning_dialog
-from util import get_icon
-from logviewer import logviewer
+from cylc.gui.logviewer import logviewer
+from cylc.gui.tailer import Tailer
+from cylc.gui.util import get_icon
+from cylc.gui.warning_dialog import warning_dialog
 
 class cylc_logviewer( logviewer ):
 
-    def __init__( self, name, dir, task_list ):
+    def __init__( self, name, dirname, task_list ):
         self.task_list = task_list
         self.main_log = name
         self.level = 0
         self.task_filter = None
         self.custom_filter = None
 
-        logviewer.__init__( self, name, dir, name,
-                warning_re = 'WARNING', critical_re = 'CRITICAL' )
+        logviewer.__init__(self, name, dirname, name)
 
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
@@ -135,7 +133,7 @@ At newest rotation; reloading in case
 the suite has been restarted.""", self.window ).warn()
             self.level = 0
             # but update view in case user started suite after gui
-        if self.current_log() not in os.listdir( self.dir ):
+        if self.current_log() not in os.listdir(self.dirname):
             if go_older:
                 warning_dialog( "Older log not available", self.window ).warn()
                 self.level -= 1
@@ -145,22 +143,18 @@ the suite has been restarted.""", self.window ).warn()
                 self.level += 1
                 return
         else:
-            self.file = self.current_log()
+            self.filename = self.current_log()
         self.update_view()
 
     def update_view( self ):
-        self.t.quit = True
+        self.t.stop()
         logbuffer = self.logview.get_buffer()
         s,e = logbuffer.get_bounds()
         self.reset_logbuffer()
         logbuffer.delete( s, e )
         self.log_label.set_text( self.path() )
-        if self.task_filter or self.custom_filter:
-            filters = [self.task_filter, self.custom_filter ]
-            self.t = filtered_tailer( self.logview, self.path(), filters,
-                    warning_re = 'WARNING', critical_re = 'CRITICAL' )
-        else:
-            self.t = tailer( self.logview, self.path(),
-                    warning_re = 'WARNING', critical_re = 'CRITICAL' )
+        self.t = Tailer(
+            self.logview, self.path(),
+            filters=[f for f in [self.task_filter, self.custom_filter] if f])
         ###print "Starting log viewer thread"
         self.t.start()
