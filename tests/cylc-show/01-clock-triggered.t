@@ -38,8 +38,7 @@ title: (not given)
 description: (not given)
 
 prerequisites (- => not satisfied):
-  -     LABEL: show = show.20141106T0900Z succeeded
-  - CONDITION: show
+  - show.20141106T0900Z succeeded
 
 outputs (- => not completed):
   - foo.20141106T0900Z started

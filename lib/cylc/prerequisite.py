@@ -49,6 +49,8 @@ class Prerequisite(object):
         self.target_point_strings = []   # list of target cycle points
         self.start_point = start_point
         self.pre_initial_messages = []
+        self.conditional_expression = None
+        self.raw_conditional_expression = None
 
     def add(self, message, label, pre_initial=False):
         # Add a new prerequisite message in an UNSATISFIED state.
@@ -94,16 +96,6 @@ class Prerequisite(object):
             for k in self.pre_initial_messages:
                 drop_these.append(k)
 
-        if drop_these:
-            simpler = ConditionalSimplifier(expr, drop_these)
-            expr = simpler.get_cleaned()
-
-        # make into a python expression
-        self.raw_conditional_expression = expr
-        for label in self.messages:
-            # match label start and end on on word boundary
-            expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
-
         for label in drop_these:
             if self.messages.get(label):
                 msg = self.messages[label]
@@ -111,22 +103,25 @@ class Prerequisite(object):
                 self.satisfied.pop(label)
                 self.labels.pop(msg)
 
-        if self.satisfied:
+        if '|' in expr:
+            if drop_these:
+                simpler = ConditionalSimplifier(expr, drop_these)
+                expr = simpler.get_cleaned()
+            # make into a python expression
+            self.raw_conditional_expression = expr
+            for label in self.messages:
+                # match label start and end on on word boundary
+                expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
             self.conditional_expression = expr
-        else:
-            # The pre-initial simplifier doesn't work properly for
-            # non-conditional triggers like "foo[-P1M] => bar" (these used to
-            # be handled as "plain prerequisites" and not added to task
-            # instances in task_proxy.py if prior to tdef.start_point).
-            self.conditional_expression = '()'
-            self.raw_conditional_expression = '()'
 
     def is_satisfied( self ):
-        if self.conditional_expression == "()":
+        if not self.satisfied:
             return True
+        elif not self.conditional_expression:
+            return all(self.satisfied.values())
         else:
             try:
-                res = eval( self.conditional_expression )
+                res = eval(self.conditional_expression)
             except Exception, x:
                 print >> sys.stderr, 'ERROR:', x
                 if str(x).find("unexpected EOF") != -1:
@@ -143,15 +138,17 @@ class Prerequisite(object):
                     self.satisfied_by[ label ] = outputs[msg] # owner_id
 
     def dump( self ):
+        # TODO - CHECK THIS WORKS NOW
         # return an array of strings representing each message and its state
         res = []
-        if self.conditional_expression == '()':
-            # Trigger wiped out by pre-initial simplification.
-            return []
-        for label in self.satisfied:
-            msg = self.messages[label]
-            res.append(['    LABEL: ' + label + ' = ' + self.messages[label], self.satisfied[ label]])
-        res.append([    'CONDITION: ' + self.raw_conditional_expression, self.is_satisfied()])
+        if self.raw_conditional_expression:
+            for label, val in self.satisfied.items():
+                res.append(['    LABEL: %s = %s' % (label, self.message[label]), val])
+            res.append(['CONDITION: %' % self.raw_conditional_expression, self.is_satisfied()])
+        elif self.satisfied:
+            for label, val in self.satisfied.items():
+                res.append([self.messages[label], val])
+        # (Else trigger wiped out by pre-initial simplification.)
         return res
 
     def set_satisfied(self):

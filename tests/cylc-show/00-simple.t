@@ -42,8 +42,7 @@ title: a task
 description: jumped over the lazy dog
 
 prerequisites (- => not satisfied):
-  -     LABEL: show = show.20141106T0900Z succeeded
-  - CONDITION: show
+  - show.20141106T0900Z succeeded
 
 outputs (- => not completed):
   - foo.20141106T0900Z started
