@@ -107,19 +107,21 @@ class Prerequisite(object):
             if drop_these:
                 simpler = ConditionalSimplifier(expr, drop_these)
                 expr = simpler.get_cleaned()
-            # make into a python expression
+            # Make a Python expression so we can eval() the logic.
             self.raw_conditional_expression = expr
             for label in self.messages:
-                # match label start and end on on word boundary
                 expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
             self.conditional_expression = expr
 
     def is_satisfied( self ):
         if not self.satisfied:
+            # No prerequisites left after pre-initial simplification.
             return True
         elif not self.conditional_expression:
+            # Single trigger or several with '&' only; don't need eval.
             return all(self.satisfied.values())
         else:
+            # Trigger expression with at least one '|': use eval.
             try:
                 res = eval(self.conditional_expression)
             except Exception, x:
