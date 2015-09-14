@@ -23,7 +23,7 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '[test battery]remote host: not defined'
 fi
 set_test_number 3
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_suite "${TEST_NAME_BASE}" bad-job-host
 ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
     "mkdir -p '.cylc/${SUITE_NAME}/' && cat >'.cylc/${SUITE_NAME}/passphrase'" \
     <"${TEST_DIR}/${SUITE_NAME}/passphrase"

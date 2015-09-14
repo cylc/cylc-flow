@@ -1,0 +1,53 @@
+#!jinja2
+{%- set TEST_DIR = environ['TEST_DIR'] %}
+[cylc]
+    UTC mode = True
+    [[event hooks]]
+        timeout handler = shutdown_this_suite_hook
+        timeout = PT3M
+[scheduling]
+    initial cycle time = 20130923T00
+    final cycle time   = 20130926T00
+    [[dependencies]]
+        [[[PT12H]]]
+            graph = """
+                foo[-PT12H] => foo => bar
+                bar[-P1D] => bar
+            """
+        [[[R1/20130925T0000Z]]]
+            graph = """
+                bar[-P1D] & bar[-PT12H] & foo[-PT12H] => shutdown => output_states
+                output_states => foo => bar
+            """
+[runtime]
+    [[foo,bar]]
+        description = "Placeholder tasks for dependencies"
+        script = """
+            sleep 1
+        """
+    [[OUTPUT]]
+        script = """
+            sleep 5
+            sqlite3 $CYLC_SUITE_RUN_DIR/cylc-suite.db \
+                "select name, cycle, submit_num, try_num, status
+                 from task_states where name != '"$CYLC_TASK_NAME"'
+                 order by name, cycle;" > {{ TEST_DIR }}/$OUTPUT_SUFFIX-db
+            sed "/$CYLC_TASK_NAME/d" $CYLC_SUITE_RUN_DIR/state/state >{{ TEST_DIR }}/$OUTPUT_SUFFIX-state
+        """
+    [[shutdown]]
+        description = "Force a shutdown of the suite"
+        inherit = OUTPUT
+        post-script = """
+            cylc shutdown $CYLC_SUITE_REG_NAME
+            sleep 5
+        """
+        [[[environment]]]
+            OUTPUT_SUFFIX=pre-restart
+    [[output_states]]
+        description = "Wait for the restart to complete, then output states"
+        inherit = OUTPUT
+        pre-script = """
+            sleep 5
+        """
+        [[[environment]]]
+            OUTPUT_SUFFIX=post-restart

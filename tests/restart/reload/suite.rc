@@ -8,7 +8,7 @@ which should run to completion on restarting."""
 [cylc]
     [[reference test]]
         required run mode = live
-        live mode suite timeout = 0.5
+        live mode suite timeout = 2
 [scheduling]
     initial cycle time = 2010080800
     final cycle time = 2010080900
