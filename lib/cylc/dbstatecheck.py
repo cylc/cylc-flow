@@ -31,7 +31,7 @@ class DBOperationError(Exception):
 
 class DBNotFoundError(Exception):
 
-    """An exception raised when a suite is already running."""
+    """An exception raised when a suite database is not found."""
 
     def __str__(self):
         return "Suite database not found at: %s" % self.args

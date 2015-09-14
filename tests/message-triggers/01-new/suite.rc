@@ -23,8 +23,8 @@ echo HELLO
 MESSAGE_X="file 1 for $CYLC_TASK_CYCLE_POINT done"
 MESSAGE_Y="file 2 for $(cylc cycle-point --offset P2M) done"
 cylc message "${MESSAGE_X}" "${MESSAGE_Y}"
-grep -q "CYLC_MESSAGE=.* \[NORMAL\] ${MESSAGE_X}" "$0.status"
-grep -q "CYLC_MESSAGE=.* \[NORMAL\] ${MESSAGE_Y}" "$0.status"
+grep -q "CYLC_MESSAGE=.*|NORMAL|${MESSAGE_X}" "$0.status"
+grep -q "CYLC_MESSAGE=.*|NORMAL|${MESSAGE_Y}" "$0.status"
 """
         [[[outputs]]]
             x = "file 1 for [] done"

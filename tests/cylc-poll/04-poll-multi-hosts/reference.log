@@ -1,0 +1,11 @@
+2015-08-24T13:53:25Z INFO - Run mode: live
+2015-08-24T13:53:25Z INFO - Initial point: 1
+2015-08-24T13:53:25Z INFO - Final point: 1
+2015-08-24T13:53:25Z INFO - Cold Start 1
+2015-08-24T13:53:26Z INFO - [remote-success-1.1] -triggered off []
+2015-08-24T13:53:26Z INFO - [remote-fail-1.1] -triggered off []
+2015-08-24T13:53:26Z INFO - [local-fail-2.1] -triggered off []
+2015-08-24T13:53:26Z INFO - [remote-success-2.1] -triggered off []
+2015-08-24T13:53:26Z INFO - [local-success-1.1] -triggered off []
+2015-08-24T13:53:26Z INFO - [local-fail-1.1] -triggered off []
+2015-08-24T13:53:31Z INFO - [poller.1] -triggered off ['local-fail-1.1', 'local-fail-2.1', 'local-success-1.1', 'remote-fail-1.1', 'remote-success-1.1', 'remote-success-2.1']

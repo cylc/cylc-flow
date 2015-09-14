@@ -45,16 +45,12 @@ parsec config file parsing:
 """
 
 try:
-    from Jinja2Support import (
-            Jinja2Process,
-            TemplateError,
-            TemplateNotFound,
-            UndefinedError,
-            TemplateSyntaxError)
+    from Jinja2Support import Jinja2Process, TemplateError
 except ImportError:
     jinja2_disabled = True
 else:
     jinja2_disabled = False
+
 
 # heading/sections can contain commas (namespace name lists) and any
 # regex pattern characters (this was for pre cylc-6 satellite tasks).
@@ -99,12 +95,19 @@ _TRIPLE_QUOTE = {
 
 
 class FileParseError(ParsecError):
-    def __init__(self, reason, index=None, line=None, prefix="FileParseError: "):
-        self.msg = prefix + reason
+
+    """An error raised when attempting to read in the config file(s)."""
+
+    def __init__(self, reason, index=None, line=None, lines=None,
+                 error_name="FileParseError"):
+        self.msg = error_name + ":\n" + reason
         if index:
             self.msg += " (line " + str(index+1) + ")"
         if line:
             self.msg += ":\n   " + line.strip()
+        if lines:
+            self.msg += "\nContext lines:\n" + "\n".join(lines)
+            self.msg += "\t<-- " + error_name
         if index:
             # TODO - make 'view' function independent of cylc:
             self.msg += "\n(line numbers match 'cylc view -p')"
@@ -263,12 +266,7 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
             try:
                 flines = Jinja2Process(
                         flines, fdir, template_vars, template_vars_file)
-            except (
-                    TemplateSyntaxError,
-                    TemplateNotFound,
-                    TemplateError,
-                    TypeError, 
-                    UndefinedError) as exc:
+            except (TemplateError, TypeError) as exc:
                 # Extract diagnostic info from the end of the Jinja2 traceback.
                 exc_lines = traceback.format_exc().splitlines()
                 suffix = []
@@ -277,7 +275,21 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
                     if re.match("\s*File", line):
                         break
                 msg = '\n'.join(reversed(suffix))
-                raise FileParseError(msg, prefix="Jinja2 Error:\n")
+                lines = None
+                if (hasattr(exc, 'lineno') and
+                        getattr(exc, 'filename', None) is None):
+                    # Jinja2 omits the line if it isn't from an external file.
+                    line_index = exc.lineno - 1
+                    if getattr(exc, 'source', None) is None:
+                        # Jinja2Support strips the shebang line.
+                        lines = flines[1:]
+                    elif isinstance(exc.source, basestring):
+                        lines = exc.source.splitlines()
+                    if lines:
+                        min_line_index = max(line_index - 3, 0)
+                        lines = lines[min_line_index: line_index + 1]
+                raise FileParseError(
+                    msg, lines=lines, error_name="Jinja2Error")
 
     # concatenate continuation lines
     if do_contin:

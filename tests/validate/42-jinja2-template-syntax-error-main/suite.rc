@@ -1,0 +1,10 @@
+#!jinja2
+
+[scheduling]
+    [[dependencies]]
+        {% if true %}
+        graph = foo
+        {% end if %
+[runtime]
+    [[foo]]
+        script = sleep 1

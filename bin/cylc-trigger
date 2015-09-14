@@ -58,6 +58,7 @@ from cylc.task_id import TaskID
 
 
 def main():
+    """CLI for "cylc trigger"."""
     parser = cop(
         __doc__ + multitask_usage, pyro=True, multitask=True,
         argdoc=[

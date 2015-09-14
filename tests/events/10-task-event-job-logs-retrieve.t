@@ -33,6 +33,8 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
 __GLOBALCFG__
     export CYLC_CONF_PATH="${PWD}/conf"
     OPT_SET='-s GLOBALCFG=True'
+else
+    export CYLC_CONF_PATH=
 fi
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

@@ -1183,8 +1183,7 @@ class XDotParser(DotParser):
                 pass
             else:
                 if float(xdotversion) > float(self.XDOTVERSION):
-                    pass
-                    #sys.stderr.write('warning: xdot version %s, but supported is %s\n' % (xdotversion, self.XDOTVERSION))
+                    sys.stderr.write('warning: xdot version %s, but supported is %s\n' % (xdotversion, self.XDOTVERSION))
 
             # Parse bounding box
             try:

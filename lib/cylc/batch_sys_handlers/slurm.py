@@ -18,6 +18,7 @@
 """SLURM job submission and manipulation."""
 
 import re
+import shlex
 
 
 class SLURMHandler(object):
@@ -27,7 +28,8 @@ class SLURMHandler(object):
     KILL_CMD_TMPL = "scancel '%(job_id)s'"
     # N.B. The "squeue -j JOB_ID" command returns 1 if JOB_ID is no longer in
     # the system, so there is no need to filter its output.
-    POLL_CMD_TMPL = "squeue -h -j '%(job_id)s'"
+    POLL_CMD = "squeue -h"
+    POLL_CMD_TMPL = POLL_CMD + " -j '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(
         r"\ASubmitted\sbatch\sjob\s(?P<id>\d+)")
     SUBMIT_CMD_TMPL = "sbatch '%(job)s'"
@@ -73,6 +75,10 @@ class SLURMHandler(object):
 
         """
         return ["EXIT", "ERR", "XCPU"]
+
+    def get_poll_many_cmd(cls, job_ids):
+        """Return the poll command for a list of job IDs."""
+        return shlex.split(cls.POLL_CMD) + ["-j", ",".join(job_ids)]
 
 
 BATCH_SYS_HANDLER = SLURMHandler()

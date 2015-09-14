@@ -1,0 +1,15 @@
+#!jinja2
+[cylc]
+    UTC mode = True # Ignore DST
+    [[reference test]]
+        live mode suite timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph=t0
+
+[runtime]
+    [[t0]]
+        script = true
+        [[[remote]]]
+            host = {{CYLC_TEST_HOST}}

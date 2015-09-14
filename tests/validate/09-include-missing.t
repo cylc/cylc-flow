@@ -23,7 +23,8 @@ echo '%include foo.rc' >suite.rc
 echo '%include bar.rc' >foo.rc
 run_fail "$TEST_NAME_BASE" cylc validate suite.rc
 cmp_ok "$TEST_NAME_BASE.stderr" <<__ERR__
-"FileParseError: 'Include-file not found: bar.rc via foo.rc from $PWD/suite.rc'"
+FileParseError:
+Include-file not found: bar.rc via foo.rc from $PWD/suite.rc
 __ERR__
 #-------------------------------------------------------------------------------
 exit

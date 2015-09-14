@@ -25,7 +25,8 @@ set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # Install suite passphrase.
 set -eu
-ssh -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
+SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
+${SSH} "${CYLC_TEST_HOST}" \
     "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
     <"${TEST_DIR}/${SUITE_NAME}/passphrase"
 set +eu
@@ -47,5 +48,8 @@ cmp_ok "${NAME}" <<__SELECT__
 20200101T0000Z|t2|1|1|0|0|${CYLC_TEST_HOST}|background
 __SELECT__
 
+if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
+    $SSH -n "$CYLC_TEST_HOST" "rm -rf '.cylc/$SUITE_NAME' 'cylc-run/$SUITE_NAME'"
+fi
 purge_suite "${SUITE_NAME}"
 exit

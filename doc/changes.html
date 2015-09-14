@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.6.1">6.6.1</a>
     <li><a href="#6.6.0">6.6.0</a>
     <li><a href="#6.5.0">6.5.0</a>
     <li><a href="#6.4.1">6.4.1</a>
@@ -60,6 +61,21 @@
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
 
+<a name="6.6.1"/>
+    <h2>6.6.1</h2>
+
+    <h3>6.6.1 fixes</h3>
+    <ul>
+        <li> At sites using ssh task messaging, 
+        prevent fall-through to Pyro RPC messaging after successful ssh
+        messaging (this would cause error messages in task output since
+        cylc-6.5.0, if using ssh messaging)
+        <li> Clearer error messages for invalid <code>cylc broadcast</code>
+        commands.
+        <li> Allow suite and global config files to have different
+        date-time syntax (pre and post ISO-8601) for time intervals.
+    </ul>
+ 
 <a name="6.6.0"/>
     <h2>6.6.0</h2>
 

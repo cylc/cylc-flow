@@ -1,0 +1,4 @@
+# This is a bit of graph configuration.
+        {% if true %}
+        graph = foo
+        {% end if %

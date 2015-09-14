@@ -1,0 +1,8 @@
+2015-08-24T16:19:01Z INFO - Run mode: live
+2015-08-24T16:19:01Z INFO - Initial point: 1
+2015-08-24T16:19:01Z INFO - Final point: 1
+2015-08-24T16:19:01Z INFO - Cold Start 1
+2015-08-24T16:19:01Z INFO - [speaker1.1] -triggered off []
+2015-08-24T16:19:01Z INFO - [speaker2.1] -triggered off []
+2015-08-24T16:19:04Z INFO - [poller.1] -triggered off ['speaker1.1', 'speaker2.1']
+2015-08-24T16:19:07Z INFO - [finisher.1] -triggered off ['speaker1.1', 'speaker1.1', 'speaker2.1']

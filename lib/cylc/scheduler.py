@@ -460,23 +460,27 @@ class scheduler(object):
 
     def command_poll_tasks(self, name, point_string, is_family):
         """Poll all tasks or a task/family if options are provided."""
-        if name == "None" and point_string == "None":
-            self.pool.poll_tasks()
-        else:
+        if name and point_string:
             matches = self.get_matching_task_names(name, is_family)
             if not matches:
                 raise TaskNotFoundError("No matching tasks found: %s" % name)
             point_string = self.get_standardised_point_string(point_string)
             task_ids = [TaskID.get(i, point_string) for i in matches]
-            self.pool.poll_tasks(task_ids)
+            self.pool.poll_task_jobs(task_ids)
+        else:
+            self.pool.poll_task_jobs()
 
     def command_kill_tasks(self, name, point_string, is_family):
-        matches = self.get_matching_task_names(name, is_family)
-        if not matches:
-            raise TaskNotFoundError("No matching tasks found: %s" % name)
-        point_string = self.get_standardised_point_string(point_string)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.kill_tasks(task_ids)
+        """Kill all tasks or a task/family if options are provided."""
+        if name and point_string:
+            matches = self.get_matching_task_names(name, is_family)
+            if not matches:
+                raise TaskNotFoundError("No matching tasks found: %s" % name)
+            point_string = self.get_standardised_point_string(point_string)
+            task_ids = [TaskID.get(i, point_string) for i in matches]
+            self.pool.kill_task_jobs(task_ids)
+        else:
+            self.pool.kill_task_jobs()
 
     def command_release_suite(self):
         self.release_suite()
@@ -978,14 +982,9 @@ class scheduler(object):
                     main_loop_start_time = time.time()
 
                 self.pool.match_dependencies()
-
-                ready_tasks = self.pool.submit_tasks()
-                if (ready_tasks and
-                        self.config.cfg['cylc']['log resolved dependencies']):
-                    self.log_resolved_deps(ready_tasks)
-
+                if not self.shut_down_cleanly:
+                    self.pool.submit_tasks()
                 self.pool.spawn_tasks()
-
                 self.pool.remove_spent_tasks()
                 self.pool.remove_suiciding_tasks()
 
@@ -1070,8 +1069,8 @@ class scheduler(object):
                     self.shut_down_now = True
                 else:
                     if time.time() > self.next_kill_issue:
-                        self.pool.poll_tasks()
-                        self.pool.kill_active_tasks()
+                        self.pool.poll_task_jobs()
+                        self.pool.kill_task_jobs()
                         self.next_kill_issue = time.time() + 10.0
 
             if self.options.profile_mode:
@@ -1095,15 +1094,6 @@ class scheduler(object):
             self.pool.get_max_point_runahead(), self.paused(),
             self.will_pause_at(), self.shut_down_cleanly, self.will_stop_at(),
             self.config.ns_defn_order, self.pool.reconfiguring)
-
-    def log_resolved_deps(self, ready_tasks):
-        """Log what triggered off what."""
-        # Used in reference tests.
-        for itask in ready_tasks:
-            itask.log(
-                logging.INFO, 'triggered off %s' %
-                str(itask.get_resolved_dependencies())
-            )
 
     def check_suite_timer(self):
         if self.already_timed_out:

@@ -32,6 +32,7 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-a
 cylc run $SUITE_NAME --hold
+sleep 5
 cylc show $SUITE_NAME a.1 | sed -n "/prerequisites/,/outputs/p" > a-prereqs
 cmp_ok $TEST_SOURCE_DIR/splitline_refs/a-ref a-prereqs
 #-------------------------------------------------------------------------------
