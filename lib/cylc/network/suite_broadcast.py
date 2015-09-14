@@ -184,11 +184,12 @@ class BroadcastServer(PyroServer):
         cutoff_point = None
         if cutoff is not None:
             cutoff_point = get_point(str(cutoff))
-        for point_string in self.settings:
-            if cutoff_point is None or (
-                    point_string not in self.ALL_CYCLE_POINTS_STRS and
-                    get_point(point_string) < cutoff_point):
-                point_strings.append(point_string)
+        with self.lock:
+            for point_string in self.settings:
+                if cutoff_point is None or (
+                        point_string not in self.ALL_CYCLE_POINTS_STRS and
+                        get_point(point_string) < cutoff_point):
+                    point_strings.append(point_string)
         if not point_strings:
             return (None, {"expire": [cutoff]})
         return self.clear(point_strings=point_strings)
@@ -283,22 +284,22 @@ class BroadcastServer(PyroServer):
         with self.lock:
             self.settings = pickle.loads(pickled_settings)
 
-        # Ensure database table is in sync
-        modified_settings = []
-        for point_string, point_string_settings in self.settings.items():
-            for namespace, namespace_settings in point_string_settings.items():
-                stuff_stack = [([], namespace_settings)]
-                while stuff_stack:
-                    keys, stuff = stuff_stack.pop()
-                    for key, value in stuff.items():
-                        if isinstance(value, dict):
-                            stuff_stack.append((keys + [key], value))
-                        else:
-                            setting = {key: value}
-                            for rkey in reversed(keys):
-                                setting = {rkey: setting}
-                            modified_settings.append(
-                                (point_string, namespace, setting))
+            # Ensure database table is in sync
+            modified_settings = []
+            for point_string, point_string_settings in self.settings.items():
+                for namespace, namespace_settings in point_string_settings.items():
+                    stuff_stack = [([], namespace_settings)]
+                    while stuff_stack:
+                        keys, stuff = stuff_stack.pop()
+                        for key, value in stuff.items():
+                            if isinstance(value, dict):
+                                stuff_stack.append((keys + [key], value))
+                            else:
+                                setting = {key: value}
+                                for rkey in reversed(keys):
+                                    setting = {rkey: setting}
+                                modified_settings.append(
+                                    (point_string, namespace, setting))
         for broadcast_change in get_broadcast_change_iter(modified_settings):
             self.db_inserts_map[self.TABLE_BROADCAST_STATES].append({
                 "point": broadcast_change["point"],
