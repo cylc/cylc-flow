@@ -68,7 +68,7 @@ class TaskDef(object):
         self.mean_total_elapsed_time = None
 
     def add_trigger(self, triggers, expression, sequence):
-        """Add conditional trigger to a named sequence."""
+        """Add triggers to a named sequence."""
         if sequence not in self.triggers:
             self.triggers[sequence] = []
         self.triggers[sequence].append([triggers, expression])
