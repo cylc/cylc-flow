@@ -28,8 +28,6 @@ import time
 import gtk
 import gobject
 from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
-#import pygtk
-#pygtk.require('2.0')
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
@@ -54,7 +52,7 @@ def parse_cylc_scan_raw(text):
     Return a nested host->suite->property->value dictionary,
     where the properties are as named in the 4th column of
     cylc scan --raw output.
-    
+
     For the states properties, translate the state lines into
     key-value pairs (e.g. failed:1 => {failed: 1}).
 
@@ -97,7 +95,7 @@ def get_hosts_suites_info(hosts, timeout=None, owner=None):
     if popen.wait() == 0:
         host_suites_map = parse_cylc_scan_raw(popen.communicate()[0])
     else:
-        print >>sys.stderr, popen.communicate()[1]
+        print >> sys.stderr, popen.communicate()[1]
     for host, suites_map in host_suites_map.items():
         for suite, suite_info in suites_map.items():
             if suite_info.keys() == ["port"]:
@@ -133,7 +131,8 @@ def get_unscannable_suite_info(host, suite, owner=None):
             suite_info.setdefault(states_point, {})
             suite_info[states_point].setdefault(state, 0)
             suite_info[states_point][state] += 1
-    suite_update_time_match = re.search("^time : [^ ]+ \(([0-9]+)\)$", out, re.M)
+    suite_update_time_match = re.search(
+        "^time : [^ ]+ \(([0-9]+)\)$", out, re.M)
     if suite_update_time_match is None:
         suite_update_time = int(time.time())
     else:
@@ -143,12 +142,12 @@ def get_unscannable_suite_info(host, suite, owner=None):
 
 
 def get_scan_menu(suite_host_tuples,
-                     theme_name, set_theme_func,
-                     has_stopped_suites, clear_stopped_suites_func,
-                     scanned_hosts, change_hosts_func,
-                     update_now_func, start_func,
-                     program_name, extra_items=None, owner=None,
-                     is_stopped=False):
+                  theme_name, set_theme_func,
+                  has_stopped_suites, clear_stopped_suites_func,
+                  scanned_hosts, change_hosts_func,
+                  update_now_func, start_func,
+                  program_name, extra_items=None, owner=None,
+                  is_stopped=False):
     """Return a right click menu for scan GUIs.
 
     suite_host_tuples should be a list of (suite, host) tuples (if any).
@@ -191,11 +190,12 @@ def get_scan_menu(suite_host_tuples,
         img = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
         gcylc_item.set_image(img)
         gcylc_item._connect_args = (suite, host)
-        gcylc_item.connect("button-press-event",
-                            lambda b, e: launch_gcylc(
-                                                b._connect_args[1],
-                                                b._connect_args[0],
-                                                owner=owner))
+        gcylc_item.connect(
+            "button-press-event",
+            lambda b, e: launch_gcylc(b._connect_args[1],
+                                      b._connect_args[0],
+                                      owner=owner)
+        )
         gcylc_item.show()
         menu.append(gcylc_item)
     if suite_host_tuples:
@@ -224,16 +224,17 @@ def get_scan_menu(suite_host_tuples,
     theme_items[theme] = gtk.RadioMenuItem(label=theme)
     thememenu.append(theme_items[theme])
     theme_items[theme].theme_name = theme
-    for theme in gcfg.get( ['themes'] ):
+    for theme in gcfg.get(['themes']):
         if theme == "default":
             continue
-        theme_items[theme] = gtk.RadioMenuItem(group=theme_items['default'], label=theme)
+        theme_items[theme] = gtk.RadioMenuItem(
+            group=theme_items['default'], label=theme)
         thememenu.append(theme_items[theme])
         theme_items[theme].theme_name = theme
 
     # set_active then connect, to avoid causing an unnecessary toggle now.
     theme_items[theme_name].set_active(True)
-    for theme in gcfg.get( ['themes'] ):
+    for theme in gcfg.get(['themes']):
         theme_items[theme].show()
         theme_items[theme].connect('toggled',
                                    lambda i: (i.get_active() and
@@ -243,9 +244,10 @@ def get_scan_menu(suite_host_tuples,
     theme_legend_item = gtk.MenuItem("Show task state key")
     theme_legend_item.show()
     theme_legend_item.set_sensitive(not is_stopped)
-    theme_legend_item.connect("button-press-event",
-                              lambda b, e: launch_theme_legend(
-                                        gcfg.get(['themes',theme_name])))
+    theme_legend_item.connect(
+        "button-press-event",
+        lambda b, e: launch_theme_legend(gcfg.get(['themes', theme_name]))
+    )
     menu.append(theme_legend_item)
     sep_item = gtk.SeparatorMenuItem()
     sep_item.show()
@@ -268,7 +270,7 @@ def get_scan_menu(suite_host_tuples,
     clear_item.show()
     clear_item.set_sensitive(has_stopped_suites)
     clear_item.connect("button-press-event",
-                        lambda b, e: clear_stopped_suites_func())
+                       lambda b, e: clear_stopped_suites_func())
     menu.append(clear_item)
 
     # Construct a configure scanned hosts item.
@@ -290,10 +292,11 @@ def get_scan_menu(suite_host_tuples,
     img = gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU)
     info_item.set_image(img)
     info_item.show()
-    info_item.connect("button-press-event",
-                      lambda b, e: launch_about_dialog(
-                                          program_name,
-                                          scanned_hosts))
+    info_item.connect(
+        "button-press-event",
+        lambda b, e: launch_about_dialog(program_name,
+                                         scanned_hosts)
+    )
     menu.append(info_item)
     return menu
 
@@ -428,8 +431,8 @@ class ScanApp(object):
         self.vbox = gtk.VBox()
         self.vbox.show()
 
-        self.theme_name = gcfg.get( ['use theme'] )
-        self.theme = gcfg.get( ['themes', self.theme_name] )
+        self.theme_name = gcfg.get(['use theme'])
+        self.theme = gcfg.get(['themes', self.theme_name])
 
         self.dots = DotMaker(self.theme)
         suite_treemodel = gtk.TreeStore(str, str, bool, str, int, str, str)
@@ -441,7 +444,7 @@ class ScanApp(object):
         cell_text_host = gtk.CellRendererText()
         host_name_column.pack_start(cell_text_host, expand=False)
         host_name_column.set_cell_data_func(
-                    cell_text_host, self._set_cell_text_host)
+            cell_text_host, self._set_cell_text_host)
         host_name_column.set_sort_column_id(0)
         host_name_column.set_visible(False)
         host_name_column.set_resizable(True)
@@ -451,7 +454,7 @@ class ScanApp(object):
         cell_text_name = gtk.CellRendererText()
         suite_name_column.pack_start(cell_text_name, expand=False)
         suite_name_column.set_cell_data_func(
-                   cell_text_name, self._set_cell_text_name)
+            cell_text_name, self._set_cell_text_name)
         suite_name_column.set_sort_column_id(1)
         suite_name_column.set_resizable(True)
 
@@ -460,7 +463,7 @@ class ScanApp(object):
         cell_text_title = gtk.CellRendererText()
         suite_title_column.pack_start(cell_text_title, expand=False)
         suite_title_column.set_cell_data_func(
-                    cell_text_title, self._set_cell_text_title)
+            cell_text_title, self._set_cell_text_title)
         suite_title_column.set_sort_column_id(3)
         suite_title_column.set_visible(False)
         suite_title_column.set_resizable(True)
@@ -470,7 +473,7 @@ class ScanApp(object):
         cell_text_time = gtk.CellRendererText()
         time_column.pack_start(cell_text_time, expand=False)
         time_column.set_cell_data_func(
-                    cell_text_time, self._set_cell_text_time)
+            cell_text_time, self._set_cell_text_time)
         time_column.set_sort_column_id(4)
         time_column.set_visible(False)
         time_column.set_resizable(True)
@@ -480,7 +483,7 @@ class ScanApp(object):
         self.suite_treeview.append_column(suite_title_column)
         self.suite_treeview.append_column(time_column)
 
-      # Construct the status column.
+        # Construct the status column.
         status_column = gtk.TreeViewColumn("Status")
         status_column.set_sort_column_id(5)
         status_column.set_resizable(True)
@@ -489,16 +492,16 @@ class ScanApp(object):
         cell_text_cycle = gtk.CellRendererText()
         status_column.pack_start(cell_text_cycle, expand=False)
         status_column.set_cell_data_func(
-                cell_text_cycle, self._set_cell_text_cycle,
-                cycle_column_info)
+            cell_text_cycle, self._set_cell_text_cycle, cycle_column_info)
         self.suite_treeview.append_column(status_column)
         distinct_states = len(task_state.legal)
         for i in range(distinct_states):
             cell_pixbuf_state = gtk.CellRendererPixbuf()
             status_column.pack_start(cell_pixbuf_state, expand=False)
             status_column.set_cell_data_func(
-                    cell_pixbuf_state, self._set_cell_pixbuf_state,
-                    (status_column_info, i))
+                cell_pixbuf_state, self._set_cell_pixbuf_state,
+                (status_column_info, i)
+            )
 
         self.suite_treeview.show()
         if hasattr(self.suite_treeview, "set_has_tooltip"):
@@ -517,9 +520,10 @@ class ScanApp(object):
         scrolled_window.add(self.suite_treeview)
         scrolled_window.show()
         self.vbox.pack_start(scrolled_window, expand=True, fill=True)
-        self.updater = ScanAppUpdater(self.hosts, suite_treemodel,
-                        self.suite_treeview, owner=self.owner,
-                        poll_interval=poll_interval)
+        self.updater = ScanAppUpdater(
+            self.hosts, suite_treemodel, self.suite_treeview,
+            owner=self.owner, poll_interval=poll_interval
+        )
         self.updater.start()
         self.window.add(self.vbox)
         self.window.connect("destroy", self._on_destroy_event)
@@ -531,7 +535,7 @@ class ScanApp(object):
         # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
 
         if (event.type != gtk.gdk._2BUTTON_PRESS and
-            event.button != 3):
+                event.button != 3):
             return False
 
         treemodel = treeview.get_model()
@@ -577,19 +581,21 @@ class ScanApp(object):
             column_item.show()
             view_menu.append(column_item)
 
-        menu = get_scan_menu(suite_host_tuples,
-                                self.theme_name,
-                                self._set_theme,
-                                has_stopped_suites,
-                                self.updater.clear_stopped_suites,
-                                self.hosts,
-                                self.updater.set_hosts,
-                                self.updater.update_now,
-                                self.updater.start,
-                                program_name="cylc gscan",
-                                extra_items=[view_item],
-                                owner=self.owner)
-        menu.popup( None, None, None, event.button, event.time )
+        menu = get_scan_menu(
+            suite_host_tuples,
+            self.theme_name,
+            self._set_theme,
+            has_stopped_suites,
+            self.updater.clear_stopped_suites,
+            self.hosts,
+            self.updater.set_hosts,
+            self.updater.update_now,
+            self.updater.start,
+            program_name="cylc gscan",
+            extra_items=[view_item],
+            owner=self.owner
+        )
+        menu.popup(None, None, None, event.button, event.time)
         return False
 
     def _on_destroy_event(self, widget):
@@ -604,8 +610,8 @@ class ScanApp(object):
             self._prev_tooltip_location_id = None
             return False
         x, y = self.suite_treeview.convert_widget_to_bin_window_coords(x, y)
-        path, column, cell_x, cell_y = self.suite_treeview.get_path_at_pos(
-                                                                    x, y)
+        path, column, cell_x, cell_y = (
+            self.suite_treeview.get_path_at_pos(x, y))
         model = self.suite_treeview.get_model()
         iter_ = model.get_iter(path)
         parent_iter = model.iter_parent(iter_)
@@ -631,7 +637,7 @@ class ScanApp(object):
         if column.get_title() == "Updated":
             time_point = get_timepoint_from_seconds_since_unix_epoch(
                 suite_update_time)
-            tooltip.set_text("Last updated at " + str(time_point))
+            tooltip.set_text(str(time_point))
             return True
 
         if column.get_title() != "Status":
@@ -699,8 +705,8 @@ class ScanApp(object):
             suite_update_time)
         time_point.set_time_zone_to_local()
         current_time = time.time()
-        current_point = get_timepoint_from_seconds_since_unix_epoch(
-                        current_time)
+        current_point = (
+            get_timepoint_from_seconds_since_unix_epoch(current_time))
         if str(time_point).split("T")[0] == str(current_point).split("T")[0]:
             time_string = str(time_point).split("T")[1]
         else:
@@ -717,7 +723,7 @@ class ScanApp(object):
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
-        self.theme = gcfg.get( ['themes',self.theme_name] )
+        self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
 
     def _set_tooltip(self, widget, text):
@@ -739,7 +745,7 @@ class BaseScanUpdater(threading.Thread):
     def __init__(self, hosts, owner=None, poll_interval=None):
         self.hosts = hosts
         if owner is None:
-           owner = user
+            owner = user
         if poll_interval is None:
             poll_interval = self.POLL_INTERVAL
         self.poll_interval = poll_interval
@@ -784,9 +790,11 @@ class BaseScanUpdater(threading.Thread):
             # Get new information.
             self.hosts_suites_info, self.stopped_hosts_suites_info = (
                 update_hosts_suites_info(
-                   self.hosts, self.owner,
-                   prev_stopped_hosts_suites_info=self.stopped_hosts_suites_info,
-                   prev_hosts_suites=self.prev_hosts_suites)
+                    self.hosts, self.owner,
+                    prev_stopped_hosts_suites_info=(
+                        self.stopped_hosts_suites_info),
+                    prev_hosts_suites=self.prev_hosts_suites
+                )
             )
             prev_hosts_suites = []
             for host, suites in self.hosts_suites_info.items():
@@ -856,13 +864,14 @@ class BaseScanTimeoutUpdater(object):
             return False
         current_time = time.time()
         if (self._last_running_time is not None and
-            self.IDLE_STOPPED_TIME is not None and
-            current_time > self._last_running_time + self.IDLE_STOPPED_TIME):
+                self.IDLE_STOPPED_TIME is not None and
+                current_time > (
+                    self._last_running_time + self.IDLE_STOPPED_TIME)):
             self.stop()
             return True
         if (not self._should_force_update and
-            (self.last_update_time is not None and
-             current_time < self.last_update_time + self.poll_interval)):
+                (self.last_update_time is not None and
+                 current_time < self.last_update_time + self.poll_interval)):
             return True
         if self._should_force_update:
             self._should_force_update = False
@@ -878,9 +887,10 @@ class BaseScanTimeoutUpdater(object):
         # Get new information.
         self.hosts_suites_info, self.stopped_hosts_suites_info = (
             update_hosts_suites_info(
-               self.hosts, self.owner,
-               prev_stopped_hosts_suites_info=self.stopped_hosts_suites_info,
-               prev_hosts_suites=self.prev_hosts_suites)
+                self.hosts, self.owner,
+                prev_stopped_hosts_suites_info=self.stopped_hosts_suites_info,
+                prev_hosts_suites=self.prev_hosts_suites
+            )
         )
         prev_hosts_suites = []
         for host, suites in self.hosts_suites_info.items():
@@ -910,7 +920,7 @@ class ScanAppUpdater(BaseScanUpdater):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
         super(ScanAppUpdater, self).__init__(hosts, owner=owner,
-                                                poll_interval=poll_interval)
+                                             poll_interval=poll_interval)
 
     def _add_expanded_row(self, view, rpath, row_ids):
         """Add user-expanded rows to a list of suite and hosts to be
@@ -992,7 +1002,8 @@ class ScanAppUpdater(BaseScanUpdater):
                         continue
                     model_data.append(states_text.rstrip())
                     if key == "states":
-                        parent_iter = self.suite_treemodel.append(None, model_data)
+                        parent_iter = self.suite_treemodel.append(
+                            None, model_data)
                     else:
                         self.suite_treemodel.append(parent_iter, model_data)
         self.suite_treemodel.foreach(self._expand_row, row_ids)
@@ -1000,7 +1011,8 @@ class ScanAppUpdater(BaseScanUpdater):
 
 
 def update_hosts_suites_info(hosts, owner, prev_stopped_hosts_suites_info=None,
-                             prev_hosts_suites=None, stop_suite_clear_time=86400):
+                             prev_hosts_suites=None,
+                             stop_suite_clear_time=86400):
     """Return dictionaries of host suite info and stopped host suite info."""
     hosts = copy.deepcopy(hosts)
     hosts_suites_info = get_hosts_suites_info(hosts, owner=owner)
@@ -1017,7 +1029,7 @@ def update_hosts_suites_info(hosts, owner, prev_stopped_hosts_suites_info=None,
             if 'state' not in suite_info or 'update-time' not in suite_info:
                 continue
             if (host in stopped_hosts_suites_info and
-                suite in stopped_hosts_suites_info[host]):
+                    suite in stopped_hosts_suites_info[host]):
                 stopped_hosts_suites_info[host].pop(suite)
             current_hosts_suites.append((host, suite))
 
@@ -1033,7 +1045,7 @@ def update_hosts_suites_info(hosts, owner, prev_stopped_hosts_suites_info=None,
     for host in stopped_hosts_suites_info:
         remove_suites = []
         for suite, suite_info in stopped_hosts_suites_info[host].items():
-            update_time = suite_info.get('update-time', 0) 
+            update_time = suite_info.get('update-time', 0)
             if (update_time + stop_suite_clear_time < current_time):
                 remove_suites.append(suite)
         for suite in remove_suites:
