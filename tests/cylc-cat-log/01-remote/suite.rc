@@ -2,7 +2,7 @@
 [cylc]
    [[event hooks]]
        abort on timeout = True
-       timeout = PT20S
+       timeout = PT1M
 [scheduling]
     [[dependencies]]
         graph = a-task

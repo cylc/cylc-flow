@@ -205,13 +205,11 @@ class scheduler(object):
             'release_task',
             'kill_tasks',
             'set_runahead',
-            'purge_tree',
             'reset_task_state',
             'trigger_task',
             'nudge',
             'insert_task',
             'reload_suite',
-            'add_prerequisite'
         ]
 
         self.log_memory("scheduler.py: before configure_suite")
@@ -1350,14 +1348,6 @@ class scheduler(object):
         point_string = self.get_standardised_point_string(point_string)
         task_ids = [TaskID.get(i, point_string) for i in matches]
         self.pool.reset_task_states(task_ids, state)
-
-    def command_add_prerequisite(self, task_id, message):
-        task_id = self.get_standardised_taskid(task_id)
-        self.pool.add_prereq_to_task(task_id, message)
-
-    def command_purge_tree(self, task_id, stop):
-        task_id = self.get_standardised_taskid(task_id)
-        self.pool.purge_tree(task_id, get_point(stop))
 
     def filter_initial_task_list(self, inlist):
         included_by_rc = self.config.cfg[

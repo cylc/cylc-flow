@@ -17,12 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re, sys
-from simplify import conditional_simplifier
+from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
 
-# label1 => "foo ready for <CYCLE_POINT>
-# label2 => "bar.<CYCLE_POINT> succeeded"
-# expr   => "( [label1] or [label2] )"
+
+"""A task prerequisite.
+
+The concrete result of an abstract logical trigger expression.
+
+"""
+
 
 class TriggerExpressionError( Exception ):
     def __init__( self, msg ):
@@ -30,7 +34,8 @@ class TriggerExpressionError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
-class conditional_prerequisites(object):
+
+class Prerequisite(object):
 
     # Extracts T from "foo.T succeeded" etc.
     CYCLE_POINT_RE = re.compile('^\w+\.(\S+) .*$')
@@ -42,30 +47,13 @@ class conditional_prerequisites(object):
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.target_point_strings = []   # list of target cycle points
-        self.auto_label = 0
-        self.excess_labels = []
         self.start_point = start_point
         self.pre_initial_messages = []
+        self.conditional_expression = None
+        self.raw_conditional_expression = None
 
-    def add( self, message, label = None, pre_initial = False ):
+    def add(self, message, label, pre_initial=False):
         # Add a new prerequisite message in an UNSATISFIED state.
-        if label:
-            # TODO - autolabelling NOT USED? (and is broken because the
-            # supplied condition is necessarily expressed in terms of
-            # user labels?).
-            pass
-        else:
-            self.auto_label += 1
-            label = str( self.auto_label )
-
-        if message in self.labels:
-            # DUPLICATE PREREQUISITE - IMPOSSIBLE IN CURRENT USE OF THIS CLASS?
-            # (TODO - if impossible, remove related code from this file)
-            #raise SystemExit( "Duplicate prerequisite: " + message )
-            print >> sys.stderr, "WARNING, " + self.owner_id + ": duplicate prerequisite: " + message
-            self.excess_labels.append(label)
-            return
-
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label]  = False
@@ -88,6 +76,8 @@ class conditional_prerequisites(object):
         # 'foo[T-6]:out1 | baz'
 
         drop_these = []
+
+        # TODO - WHY IS THIS SECTION NEEDED?:
         for k in self.messages:
             if self.start_point:
                 task = re.search( r'(.*).(.*) ', self.messages[k])
@@ -106,21 +96,6 @@ class conditional_prerequisites(object):
             for k in self.pre_initial_messages:
                 drop_these.append(k)
 
-        if drop_these:
-            simpler = conditional_simplifier(expr, drop_these)
-            expr = simpler.get_cleaned()
-
-        # make into a python expression
-        self.raw_conditional_expression = expr
-        for label in self.messages:
-            # match label start and end on on word boundary
-            expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
-
-        for label in self.excess_labels:
-            # treat duplicate triggers as always satisfied
-            expr = re.sub( r'\b' + label + r'\b', 'True', expr )
-            self.raw_conditional_expression = re.sub( r'\b' + label + r'\b', 'True', self.raw_conditional_expression )
-
         for label in drop_these:
             if self.messages.get(label):
                 msg = self.messages[label]
@@ -128,14 +103,27 @@ class conditional_prerequisites(object):
                 self.satisfied.pop(label)
                 self.labels.pop(msg)
 
-        self.conditional_expression = expr
+        if '|' in expr:
+            if drop_these:
+                simpler = ConditionalSimplifier(expr, drop_these)
+                expr = simpler.get_cleaned()
+            # Make a Python expression so we can eval() the logic.
+            self.raw_conditional_expression = expr
+            for label in self.messages:
+                expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
+            self.conditional_expression = expr
 
-    def all_satisfied( self ):
-        if self.conditional_expression == "()":
+    def is_satisfied( self ):
+        if not self.satisfied:
+            # No prerequisites left after pre-initial simplification.
             return True
+        elif not self.conditional_expression:
+            # Single trigger or several with '&' only; don't need eval.
+            return all(self.satisfied.values())
         else:
+            # Trigger expression with at least one '|': use eval.
             try:
-                res = eval( self.conditional_expression )
+                res = eval(self.conditional_expression)
             except Exception, x:
                 print >> sys.stderr, 'ERROR:', x
                 if str(x).find("unexpected EOF") != -1:
@@ -151,26 +139,27 @@ class conditional_prerequisites(object):
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs[msg] # owner_id
 
-    def count( self ):
-        # how many messages are stored
-        return len( self.satisfied.keys() )
-
     def dump( self ):
+        # TODO - CHECK THIS WORKS NOW
         # return an array of strings representing each message and its state
         res = []
-        for label in self.satisfied:
-            msg = self.messages[label]
-            res.append( [ '    LABEL: ' + label + ' = ' + self.messages[label], self.satisfied[ label ] ]  )
-        res.append( [     'CONDITION: ' + self.raw_conditional_expression, self.all_satisfied() ] )
+        if self.raw_conditional_expression:
+            for label, val in self.satisfied.items():
+                res.append(['    LABEL: %s = %s' % (label, self.message[label]), val])
+            res.append(['CONDITION: %' % self.raw_conditional_expression, self.is_satisfied()])
+        elif self.satisfied:
+            for label, val in self.satisfied.items():
+                res.append([self.messages[label], val])
+        # (Else trigger wiped out by pre-initial simplification.)
         return res
 
-    def set_all_satisfied( self ):
+    def set_satisfied(self):
         for label in self.messages:
-            self.satisfied[ label ] = True
+            self.satisfied[label] = True
 
-    def set_all_unsatisfied( self ):
+    def set_not_satisfied(self):
         for label in self.messages:
-            self.satisfied[ label ] = False
+            self.satisfied[label] = False
 
     def get_target_points( self ):
         """Return a list of cycle points target by each prerequisite,

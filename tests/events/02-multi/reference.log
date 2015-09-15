@@ -15,7 +15,7 @@
 2014/02/11 10:12:36 INFO - [fixer.1] -(current:submitted)> fixer.1 started at 2014-02-11T10:12:36
 2014/02/11 10:12:38 INFO - pre-trigger state dump: /home/oliverh/cylc-run/multi/state/state.2014:2:11:10:12:38
 2014/02/11 10:12:38 INFO - Command succeeded: trigger task(bar,1,False)
-2014/02/11 10:12:39 INFO - [bar.1] -triggered off [None]
+2014/02/11 10:12:39 INFO - [bar.1] -triggered off []
 2014/02/11 10:12:40 INFO - [bar.1] -(current:ready)> bar.1 submitting now
 2014/02/11 10:12:40 INFO - [bar.1] -(current:ready)> bar.1 submission succeeded
 2014/02/11 10:12:40 INFO - [bar.1] -(current:submitted)> bar.1 submit_method_id=29685

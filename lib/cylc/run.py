@@ -80,8 +80,8 @@ def main(name, start):
         server.configure()
         server.run()
         # For profiling (see Python docs for how to display the stats).
-        # import cProfile
-        # cProfile.run('server.run()', 'fooprof')
+        #import cProfile
+        #cProfile.runctx('server.run()', globals(), locals(), 'stats')
     except SchedulerStop, x:
         # deliberate stop
         print str(x)

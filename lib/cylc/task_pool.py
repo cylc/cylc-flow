@@ -55,7 +55,6 @@ from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.network.ext_trigger import ExtTriggerServer
 from cylc.network.suite_broadcast import BroadcastServer
 from cylc.owner import is_remote_user
-from cylc.prerequisites.plain_prerequisites import plain_prerequisites
 from cylc.suite_host import is_remote_host
 from cylc.task_state import task_state
 
@@ -533,7 +532,7 @@ class TaskPool(object):
         """Check for future triggers extending beyond the final cycle."""
         if not self.stop_point:
             return False
-        for pct in set(itask.prerequisites.get_target_points()):
+        for pct in set(itask.prerequisites_get_target_points()):
             if pct > self.stop_point:
                 return True
         return False
@@ -674,7 +673,7 @@ class TaskPool(object):
                         new_task.state.set_unspawned()
                     # succeeded tasks need their outputs set completed:
                     if itask.state.is_currently('succeeded'):
-                        new_task.reset_state_succeeded(manual=False)
+                        new_task.reset_state_succeeded()
 
                     # carry some task proxy state over to the new instance
                     new_task.logfiles = itask.logfiles
@@ -1029,8 +1028,8 @@ class TaskPool(object):
     def remove_suiciding_tasks(self):
         """Remove any tasks that have suicide-triggered."""
         for itask in self.get_tasks():
-            if itask.suicide_prerequisites.count() != 0:
-                if itask.suicide_prerequisites.all_satisfied():
+            if itask.suicide_prerequisites:
+                if itask.suicide_prerequisites_are_all_satisfied():
                     if itask.state.is_currently(
                             'ready', 'submitted', 'running'):
                         itask.log(WARNING, 'suiciding while active')
@@ -1233,16 +1232,6 @@ class TaskPool(object):
                 break
         return result
 
-    def add_prereq_to_task(self, id_, msg):
-        for itask in self.get_tasks():
-            if itask.identity == id_:
-                prereq = plain_prerequisites(id_)
-                prereq.add(msg)
-                itask.prerequisites.add_requisites(prereq)
-                break
-        else:
-            raise TaskNotFoundError("Task not present in suite: " + id_)
-
     def task_succeeded(self, id_):
         res = False
         for itask in self.get_tasks():
@@ -1309,7 +1298,7 @@ class TaskPool(object):
                     extra_info['External trigger "%s"' % trig] = state
 
                 info[id_] = [
-                    itask.prerequisites.dump(),
+                    itask.prerequisites_dump(),
                     itask.outputs.dump(),
                     extra_info,
                 ]
@@ -1323,111 +1312,6 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.external_triggers:
                 ets.retrieve(itask)
-
-    def purge_tree(self, id_, stop):
-        """Remove an entire dependency tree.
-
-        Remove an entire dependency tree rooted on the target task,
-        through to the given stop time (inclusive). In general this
-        involves tasks that do not even exist yet within the pool.
-
-        Method: trigger the target task *virtually* (i.e. without
-        running the real task) by: setting it to the succeeded state,
-        setting all of its outputs completed, and forcing it to spawn.
-        (this is equivalent to instantaneous successful completion as
-        far as cylc is concerned). Then enter the normal dependency
-        negotation process to trace the downstream effects of this,
-        also triggering subsequent tasks virtually. Each time a task
-        triggers mark it as a dependency of the target task for later
-        deletion (but not immmediate deletion because other downstream
-        tasks may still trigger off its outputs).  Downstream tasks
-        (freshly spawned or not) are not triggered if they have passed
-        the stop time, and the process is stopped is soon as a
-        dependency negotation round results in no new tasks
-        triggering.
-
-        Finally, reset the prerequisites of all tasks spawned during
-        the purge to unsatisfied, since they may have been satisfied
-        by the purged tasks in the "virtual" dependency negotiations.
-
-        TODO - THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
-        ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
-        so we should explicitly record the tasks that get satisfied
-        during the purge.
-
-        Purge is an infrequently used power tool, so print
-        comprehensive information on what it does to stdout.
-
-        """
-
-        print
-        print "PURGE ALGORITHM RESULTS:"
-
-        die = []
-        spawn = []
-
-        print 'ROOT TASK:'
-        for itask in self.get_all_tasks():
-            # Find the target task
-            if itask.identity == id_:
-                # set it succeeded
-                print '  Setting', itask.identity, 'succeeded'
-                itask.reset_state_succeeded(manual=False)
-                # force it to spawn
-                print '  Spawning', itask.identity
-                spawned = self.force_spawn(itask)
-                if spawned:
-                    spawn.append(spawned)
-                # mark it for later removal
-                print '  Marking', itask.identity, 'for deletion'
-                die.append(itask)
-                break
-
-        print 'VIRTUAL TRIGGERING STOPPING AT', stop
-        # trace out the tree of dependent tasks
-        something_triggered = True
-        while something_triggered:
-            self.match_dependencies()
-            something_triggered = False
-            for itask in sorted(self.get_all_tasks(), key=lambda t:
-                                t.identity):
-                if itask.point > stop:
-                    continue
-                if itask.ready_to_run():
-                    something_triggered = True
-                    print '  Triggering', itask.identity
-                    itask.reset_state_succeeded(manual=False)
-                    print '  Spawning', itask.identity
-                    spawned = self.force_spawn(itask)
-                    if spawned:
-                        spawn.append(spawned)
-                    print '  Marking', itask.identity, 'for deletion'
-                    # remove these later (their outputs may still be needed)
-                    die.append(itask)
-                elif itask.suicide_prerequisites.count() > 0:
-                    if itask.suicide_prerequisites.all_satisfied():
-                        print (
-                            '  Spawning virtually activated suicide task ' +
-                            itask.identity)
-                        self.force_spawn(itask)
-                        # remove these now (not setting succeeded; outputs not
-                        # needed)
-                        print '  Suiciding', itask.identity, 'now'
-                        self.remove(itask, 'purge')
-            self.release_runahead_tasks()
-        # reset any prerequisites "virtually" satisfied during the purge
-        print 'RESETTING spawned tasks to unsatisified:'
-        for itask in spawn:
-            print '  ', itask.identity
-            itask.prerequisites.set_all_unsatisfied()
-
-        # finally, purge all tasks marked as depending on the target
-        print 'REMOVING PURGED TASKS:'
-        for itask in die:
-            print '  ', itask.identity
-            self.remove(itask, 'purge')
-
-        print 'PURGE DONE'
 
     def _run_job_cmd(self, cmd_key, itasks, callback, **kwargs):
         """Run job commands, e.g. poll, kill, etc.

@@ -1376,15 +1376,6 @@ been defined for this suite""").inform()
                                     task_id, task_is_family)
 
         if not task_is_family:
-            purge_item = gtk.ImageMenuItem('Remove Tree (Recursive Purge)')
-            img = gtk.image_new_from_stock(gtk.STOCK_DELETE,
-                                           gtk.ICON_SIZE_MENU)
-            purge_item.set_image(img)
-            items.append(purge_item)
-            purge_item.connect('activate', self.popup_purge, task_id)
-
-            items.append(gtk.SeparatorMenuItem())
-
             addprereq_item = gtk.ImageMenuItem('Add A Prerequisite')
             img = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)
             addprereq_item.set_image(img)
@@ -1709,16 +1700,6 @@ shown here in the state they were in at the time of triggering.''')
         self.put_pyro_command('remove_task', name, point_string, is_family,
                               False)
 
-    def purge_cycle_entry(self, e, w, task_id):
-        stop = e.get_text()
-        w.destroy()
-        self.put_pyro_command('purge_tree', task_id, stop)
-
-    def purge_cycle_button(self, b, e, w, task_id):
-        stop = e.get_text()
-        w.destroy()
-        self.put_pyro_command('purge_tree', task_id, stop)
-
     def stopsuite_popup(self, b):
         window = gtk.Window()
         window.modify_bg(gtk.STATE_NORMAL,
@@ -2026,49 +2007,6 @@ shown here in the state they were in at the time of triggering.''')
         hbox.pack_end(cancel_button, False)
         hbox.pack_end(help_run_button, False)
         hbox.pack_end(help_restart_button, False)
-        vbox.pack_start(hbox)
-
-        window.add(vbox)
-        window.show_all()
-
-    def popup_purge(self, b, task_id):
-        window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title("Purge " + task_id)
-        window.set_transient_for(self.window)
-        window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-
-        vbox = gtk.VBox()
-        label = gtk.Label('stop cycle (inclusive)')
-
-        entry = gtk.Entry()
-        entry.set_max_length(14)
-        entry.connect("activate", self.purge_cycle_entry, window, task_id)
-
-        hbox = gtk.HBox()
-        hbox.pack_start(label, True)
-        hbox.pack_start(entry, True)
-        vbox.pack_start(hbox)
-
-        start_button = gtk.Button("_Purge")
-        start_button.connect(
-            "clicked", self.purge_cycle_button, entry, window, task_id)
-
-        help_button = gtk.Button("_Help")
-        help_button.connect("clicked", self.command_help, "control", "purge")
-
-        cancel_button = gtk.Button("_Cancel")
-        cancel_button.connect("clicked", lambda x: window.destroy())
-
-        hbox = gtk.HBox()
-        hbox.pack_start(start_button, True)
-        hbox.pack_start(help_button, True)
-        hbox.pack_start(cancel_button, True)
         vbox.pack_start(hbox)
 
         window.add(vbox)
