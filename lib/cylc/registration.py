@@ -113,7 +113,7 @@ class localdb(object):
         return os.path.join( data['path'], 'suite.rc' )
 
     def get_list( self, regfilter=None ):
-        # Return a filtered list of registered suites
+        # Return a filtered list of valid suite registrations.
         res = []
         for suite in self.list_all_suites():
             if regfilter:
@@ -122,27 +122,35 @@ class localdb(object):
                         continue
                 except:
                     raise RegistrationError, "ERROR, Invalid filter expression: " + regfilter
-            data = self.get_suite_data( suite )
-            dir, title = data['path'], data['title']
-            res.append( [suite, dir, title] )
+            try:
+                data = self.get_suite_data(suite)
+            except RegistrationError as exc:
+                print >> sys.stderr, str(exc)
+            else:
+                dir, title = data['path'], data['title']
+                res.append( [suite, dir, title] )
         return res
 
     def unregister( self, exp ):
         suitedirs = []
         for key in self.list_all_suites():
             if re.search( exp + '$', key ):
-                data = self.get_suite_data(key)
-                dir = data['path']
-                print 'UNREGISTER', key + ':', dir
+                print 'UNREGISTER', key
                 os.unlink( os.path.join( self.dbpath, key ) )
-                for f in ['passphrase', 'suite.rc.processed']:
-                    try:
-                        os.unlink( os.path.join( dir, f ) )
-                    except OSError:
-                        pass
-                if dir not in suitedirs:
-                    # (could be multiple registrations of the same suite).
-                    suitedirs.append(dir)
+                try:
+                    data = self.get_suite_data(key)
+                except RegistrationError:
+                    pass
+                else:
+                    dir = data['path']
+                    for f in ['passphrase', 'suite.rc.processed']:
+                        try:
+                            os.unlink( os.path.join( dir, f ) )
+                        except OSError:
+                            pass
+                    if dir not in suitedirs:
+                        # (could be multiple registrations of the same suite).
+                        suitedirs.append(dir)
         return suitedirs
 
     def reregister( self, srce, targ ):
@@ -171,11 +179,15 @@ class localdb(object):
     def get_invalid( self ):
         invalid = []
         for reg in self.list_all_suites():
-            data = self.get_suite_data(reg)
-            dir = data['path']
-            rcfile = os.path.join( dir, 'suite.rc' )
-            if not os.path.isfile( rcfile ):
-                invalid.append( reg )
+            try:
+                data = self.get_suite_data(reg)
+            except RegistrationError:
+                invalid.append(reg)
+            else:
+                dir = data['path']
+                rcfile = os.path.join(dir, 'suite.rc')
+                if not os.path.isfile(rcfile):
+                    invalid.append(reg)
         return invalid
 
     def get_suite_title( self, suite, path=None ):
