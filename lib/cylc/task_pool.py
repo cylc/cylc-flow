@@ -1071,12 +1071,21 @@ class TaskPool(object):
             s_user, s_host = (None, ctx.user_at_host)
         ssh_tmpl = str(GLOBAL_CFG.get_host_item(
             "remote shell template", s_host, s_user)).replace(" %s", "")
-        cmd = ["rsync", "-a", "--rsh=" + ssh_tmpl, "--exclude=/"]
+        cmd = ["rsync", "-a", "--rsh=" + ssh_tmpl]
+        if cylc.flags.debug:
+            cmd.append("-v")
         if ctx.max_size:
             cmd.append("--max-size=%s" % (ctx.max_size,))
-        # Includes
+        # Includes and excludes
+        includes = set()
         for _, point, name, submit_num in id_keys:
-            cmd.append("--include=/%s/%s/%02d" % (point, name, submit_num))
+            # Include relevant directories, all levels needed
+            includes.add("/%s" % (point))
+            includes.add("/%s/%s" % (point, name))
+            includes.add("/%s/%s/%02d" % (point, name, submit_num))
+            includes.add("/%s/%s/%02d/**" % (point, name, submit_num))
+        cmd += ["--include=%s" % (include) for include in sorted(includes)]
+        cmd.append("--exclude=/**")  # exclude everything else
         # Remote source
         cmd.append(ctx.user_at_host + ":" + GLOBAL_CFG.get_derived_host_item(
             self.suite_name, "suite job log directory", s_host, s_user) + "/")

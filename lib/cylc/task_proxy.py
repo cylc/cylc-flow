@@ -868,10 +868,9 @@ class TaskProxy(object):
         if ((key1, self.submit_num) in self.event_handler_try_states or
                 event not in ["failed", "retry", "succeeded"]):
             return
-        if self.user_at_host in [user + '@localhost', 'localhost']:
+        if (self.user_at_host in [user + '@localhost', 'localhost'] or
+                not self._get_host_conf("retrieve job logs")):
             self.register_job_logs(self.submit_num)
-            return
-        if not self._get_host_conf("retrieve job logs"):
             return
         self.event_handler_try_states[(key1, self.submit_num)] = TryState(
             TaskJobLogsRetrieveContext(
