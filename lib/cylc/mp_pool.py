@@ -54,7 +54,7 @@ def _run_command(ctx):
             print ' '.join([quote(cmd_str) for cmd_str in ctx.cmd])
 
     if (SuiteProcPool.STOP_JOB_SUBMISSION.value
-            and ctx.cmd_type == SuiteProcPool.JOB_SUBMIT):
+            and ctx.cmd_key == SuiteProcPool.JOB_SUBMIT):
         ctx.err = "job submission skipped (suite stopping)"
         ctx.ret_code = SuiteProcPool.JOB_SKIPPED_FLAG
         ctx.timestamp = get_current_time_string()
@@ -90,13 +90,13 @@ class SuiteProcContext(object):
     """Represent the context of a command to run."""
 
     # Format string for single line output
-    JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_type)s %(attr)s] %(mesg)s"
+    JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_key)s %(attr)s] %(mesg)s"
     # Format string for multi-line output
-    JOB_LOG_FMT_M = "%(timestamp)s [%(cmd_type)s %(attr)s]\n\n%(mesg)s\n"
+    JOB_LOG_FMT_M = "%(timestamp)s [%(cmd_key)s %(attr)s]\n\n%(mesg)s\n"
 
-    def __init__(self, cmd_type, cmd, **cmd_kwargs):
+    def __init__(self, cmd_key, cmd, **cmd_kwargs):
         self.timestamp = get_current_time_string()
-        self.cmd_type = cmd_type
+        self.cmd_key = cmd_key
         self.cmd = cmd
         self.cmd_kwargs = cmd_kwargs
 
@@ -129,7 +129,7 @@ class SuiteProcContext(object):
                     mesg += "\n"
                 ret += fmt % {
                     "timestamp": self.timestamp,
-                    "cmd_type": self.cmd_type,
+                    "cmd_key": self.cmd_key,
                     "attr": attr,
                     "mesg": mesg}
         return ret

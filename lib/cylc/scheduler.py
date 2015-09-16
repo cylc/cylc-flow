@@ -998,7 +998,7 @@ class scheduler(object):
                         "END TASK PROCESSING (took " + str(seconds) + " sec)")
 
             self.pool.process_queued_task_messages()
-            self.pool.process_event_handler_retries()
+            self.pool.process_queued_task_event_handlers()
             try:
                 self.pool.process_queued_db_ops()
             except OSError as err:

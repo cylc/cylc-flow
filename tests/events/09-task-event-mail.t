@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test event mail.
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 5
 mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
@@ -39,14 +39,9 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
 
-grep '^\(Subject:\|\[retry\]\|\[succeeded\]\) ' "${TEST_SMTPD_LOG}" \
-    >'edited-smtpd.log'
-cmp_ok 'edited-smtpd.log' <<__LOG__
-Subject: [retry]
-[retry] ${SUITE_NAME}.1.t1.01: job failed, retrying in PT1S
-Subject: [succeeded]
-[succeeded] ${SUITE_NAME}.1.t1.02: job succeeded
-__LOG__
+grep_ok 'Subject: \[1 task(s) retry\]' "${TEST_SMTPD_LOG}"
+grep_ok 'Subject: \[1 task(s) succeeded\]' "${TEST_SMTPD_LOG}"
+grep_ok '^1/t1/\(01: retry\|02: succeeded\)' "${TEST_SMTPD_LOG}"
 
 purge_suite "${SUITE_NAME}"
 mock_smtpd_kill
