@@ -33,7 +33,7 @@ def print_blurb():
             | |       
 ,_____,_, ,_| |_____, 
 | ,___| | | | | ,___| 
-| |___| |_| | | |___  
+| |___| |_| | | |___, 
 \_____\___, |_\_____| 
       ,___| |         
       \_____|         
@@ -41,10 +41,11 @@ def print_blurb():
     license = """
 The Cylc Suite Engine [%s]
 Copyright (C) 2008-2015 NIWA
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-This program comes with ABSOLUTELY NO WARRANTY.   It is
-free software; you are welcome to redistribute it under
-certain conditions: "cylc warranty", "cylc conditions".
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+This program comes with ABSOLUTELY NO WARRANTY;
+see `cylc warranty`.  It is free software, you
+are welcome to redistribute it under certain
+conditions; see `cylc conditions`.
  
   """ % CYLC_VERSION
     
