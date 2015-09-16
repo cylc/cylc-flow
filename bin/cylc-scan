@@ -315,7 +315,7 @@ def main():
                 point_prefix = ""
                 if point:
                     point_prefix = "%s " % point
-                print indent * 2 + "%s %s" % (point_prefix, state_line)
+                print indent * 2 + "%s%s" % (point_prefix, state_line)
 
 
 def get_point_state_count_lines(state_count_totals, state_count_cycles,
