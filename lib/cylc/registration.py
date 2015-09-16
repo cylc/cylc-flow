@@ -135,8 +135,6 @@ class localdb(object):
         suitedirs = []
         for key in self.list_all_suites():
             if re.search( exp + '$', key ):
-                print 'UNREGISTER', key
-                os.unlink( os.path.join( self.dbpath, key ) )
                 try:
                     data = self.get_suite_data(key)
                 except RegistrationError:
@@ -151,6 +149,8 @@ class localdb(object):
                     if dir not in suitedirs:
                         # (could be multiple registrations of the same suite).
                         suitedirs.append(dir)
+                print 'UNREGISTER', key
+                os.unlink( os.path.join( self.dbpath, key ) )
         return suitedirs
 
     def reregister( self, srce, targ ):
