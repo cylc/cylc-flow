@@ -38,6 +38,7 @@ import os
 import re
 from datetime import datetime
 
+import cylc.flags
 from cylc.config import SuiteConfig, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 from cylc.scheduler import scheduler
@@ -479,4 +480,9 @@ class restart(scheduler):
 
 
 if __name__ == '__main__':
-    main("restart", restart)
+    try:
+        main("restart", restart)
+    except Exception as exc:
+        if cylc.flags.debug:
+            raise
+        sys.exit(exc)

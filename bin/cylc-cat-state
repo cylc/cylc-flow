@@ -27,7 +27,6 @@ if remrun().execute():
 
 import cylc.flags
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
 from cylc.dump import dump_to_stdout, get_stop_state_summary
 from cylc.suite_state_dumping import SuiteStateDumper
 
@@ -42,7 +41,6 @@ def main():
 
     (options, args) = parser.parse_args()
     suite = args[0]
-    suiterc = localdb(options.db).get_suiterc(suite)
 
     owner = options.db_owner
     f = open(SuiteStateDumper(suite).file_name, 'rb')
