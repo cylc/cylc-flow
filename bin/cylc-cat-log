@@ -31,7 +31,7 @@ if remrun().execute():
 import os
 from pipes import quote
 import shlex
-from subprocess import call, PIPE
+from subprocess import Popen, PIPE
 import traceback
 
 from cylc.CylcOptionParsers import cop
@@ -284,14 +284,19 @@ def main():
         for i, command in enumerate(commands):
             commands[i] = shlex.split(ssh) + ["-n", user_at_host] + command
 
+    err = None
     for command in commands:
-        stderr=None
+        stderr=PIPE
         if options.debug:
             sys.stderr.write(" ".join([quote(item) for item in command]) + "\n")
-            stderr = PIPE
-        ret_code = call(command, stderr=stderr)
+            stderr=None
+        proc = Popen(command, stderr=stderr)
+        err = proc.communicate()[1]
+        ret_code = proc.wait()
         if ret_code == 0:
             break
+    if ret_code and err:
+        sys.stderr.write(err)
     sys.exit(ret_code)
 
 

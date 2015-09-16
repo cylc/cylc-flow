@@ -1,0 +1,33 @@
+#!Jinja2
+[cylc]
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT3M
+[scheduling]
+    [[dependencies]]
+        graph = a-task:echo => b-task
+[runtime]
+    [[a-task]]
+        script = """
+echo rubbish
+echo garbage >&2
+cylc message '1 echo done'
+sleep 60
+"""
+        [[[remote]]]
+            host={{environ["CYLC_TEST_HOST"]}}
+        [[[job submission]]]
+            method=pbs
+        [[[directives]]]
+{% if "CYLC_TEST_DIRECTIVES" in environ and environ["CYLC_TEST_DIRECTIVES"] %}
+            {{environ["CYLC_TEST_DIRECTIVES"]}}
+{% endif %}
+        [[[outputs]]]
+            echo = "[] echo done"
+
+    [[b-task]]
+        script = """
+sleep 10  # wait for buffer to flush?
+cylc cat-log --debug -o "${CYLC_SUITE_NAME}" 'a-task.1' | grep 'rubbish'
+cylc cat-log --debug -e "${CYLC_SUITE_NAME}" 'a-task.1' | grep 'garbage'
+"""

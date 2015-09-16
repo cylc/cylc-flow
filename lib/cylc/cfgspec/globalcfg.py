@@ -128,7 +128,7 @@ SPEC = {
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'batch systems': {
-                'pbs': {
+                '__MANY__': {
                     'err tailer': vdr(vtype='string'),
                     'out tailer': vdr(vtype='string'),
                     'err viewer': vdr(vtype='string'),
@@ -151,7 +151,7 @@ SPEC = {
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'batch systems': {
-                'pbs': {
+                '__MANY__': {
                     'err tailer': vdr(vtype='string'),
                     'out tailer': vdr(vtype='string'),
                     'out viewer': vdr(vtype='string'),
@@ -179,24 +179,10 @@ SPEC = {
         'remote host with shared fs': vdr(vtype='string'),
         'remote host': vdr(vtype='string'),
         'batch systems': {
-            'loadleveler': {
+            '__MANY__': {
                 'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'lsf': {
-                'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'pbs': {
-                'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'sge': {
-                'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'slurm': {
-                'host': vdr(vtype='string'),
+                'out viewer': vdr(vtype='string'),
+                'err viewer': vdr(vtype='string'),
                 'directives': {'__MANY__': vdr(vtype='string')},
             },
         },
