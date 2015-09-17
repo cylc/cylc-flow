@@ -5231,8 +5231,9 @@ means that \lstinline=cylc log= or the gcylc GUI will be unable to find the
 job's stdout and stderr streams while the job is running. Some sites with these
 job submission methods are known to provide commands for viewing and/or
 tail-follow a job's stdout and stderr streams that are redirected to these
-cache areas. If this is the case at your site, you can make use of the facility
-by adding some settings to the global site/user config. E.g.:
+cache areas. If this is the case at your site, you can configure cylc to make
+use of the provided commands by adding some settings to the global site/user
+config. E.g.:
 
 \begin{lstlisting}
 [hosts]

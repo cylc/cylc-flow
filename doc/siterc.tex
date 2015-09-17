@@ -550,25 +550,25 @@ setting for the specified host.
 
 \paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err tailer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err tailer}
 
-A command template (with \lstinline=\%(job_id)s= substitution) that can be used
+A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to tail-follow the stderr stream of a running job if JOB SUBMISSION METHOD does
 not use the normal location.
 
 \paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out tailer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out tailer}
 
-A command template (with \lstinline=\%(job_id)s= substitution) that can be used
+A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to tail-follow the stdout stream of a running job if JOB SUBMISSION METHOD does
 not use the normal location.
 
 \paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err viewer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err viewer}
 
-A command template (with \lstinline=\%(job_id)s= substitution) that can be used
+A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to view the stderr stream of a running job if JOB SUBMISSION METHOD does
 not use the normal location.
 
 \paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out viewer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out viewer}
 
-A command template (with \lstinline=\%(job_id)s= substitution) that can be used
+A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to view the stdout stream of a running job if JOB SUBMISSION METHOD does
 not use the normal location.
 
@@ -683,13 +683,13 @@ site to initiate jobs for the tests.
 
 \subparagraph[err viewer]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ err viewer}
 
-The command template (with \%(job_id)s substitution) for testing the run time
-stderr viewer functionality for this batch system.
+The command template (with \lstinline=\%(job_id)s= substitution) for testing
+the run time stderr viewer functionality for this batch system.
 
 \subparagraph[out viewer]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ out viewer}
 
-The command template (with \%(job_id)s substitution) for testing the run time
-stdout viewer functionality for this batch system.
+The command template (with \lstinline=\%(job_id)s= substitution) for testing
+the run time stdout viewer functionality for this batch system.
 
 \subsection{[cylc]}
 

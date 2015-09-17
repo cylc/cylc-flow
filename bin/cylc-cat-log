@@ -166,7 +166,7 @@ def get_task_job_attrs(options, suite, point, task, submit_num):
     """Return (user@host, command0) of a task job log.
 
     user@host is set if task job is run remotely and for relevant log files.
-    command0 is set if task job if running on a batch system that requires a
+    command0 is set if task job is running on a batch system that requires a
     special command to view stdout/stderr files.
 
     """
