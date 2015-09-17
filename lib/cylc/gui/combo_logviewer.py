@@ -85,7 +85,9 @@ class ComboLogViewer(logviewer):
         index = callback.get_active()
 
         name = model[index][0]
-        if name not in self.filenames:
+        if name in self.filenames:
+            filename = name
+        else:
             filename = os.path.join(self.common_dir, name)
         if filename != self.filename:
             self.filename = filename

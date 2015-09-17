@@ -75,7 +75,7 @@ class Tailer(threading.Thread):
         """Invoke the tailer."""
         command = []
         if ":" in self.filename:  # remote
-            user_at_host, name = self.filename.split(':')
+            user_at_host, filename = self.filename.split(':')
             if "@" in user_at_host:
                 owner, host = user_at_host.split("@", 1)
             else:
@@ -83,11 +83,13 @@ class Tailer(threading.Thread):
             ssh = str(GLOBAL_CFG.get_host_item(
                 "remote shell template", host, owner)).replace(" %s", "")
             command = shlex.split(ssh) + ["-n", user_at_host]
+        else:
+            filename = self.filename
 
         cmd_tmpl = self.CMD_TMPL
         if self.cmd_tmpl:
             cmd_tmpl = self.cmd_tmpl
-        command += shlex.split(cmd_tmpl % {"filename": self.filename})
+        command += shlex.split(cmd_tmpl % {"filename": filename})
         try:
             self.proc = Popen(
                 command, stdout=PIPE, stderr=STDOUT, preexec_fn=os.setpgrp)
