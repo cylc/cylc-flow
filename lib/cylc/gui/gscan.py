@@ -635,9 +635,18 @@ class ScanApp(object):
             tooltip.set_text(suite + " - " + host)
             return True
         if column.get_title() == "Updated":
-            time_point = get_timepoint_from_seconds_since_unix_epoch(
+            suite_update_point = get_timepoint_from_seconds_since_unix_epoch(
                 suite_update_time)
-            tooltip.set_text(str(time_point))
+            if (self.updater.last_update_time is not None and
+                    suite_update_time != int(self.updater.last_update_time)):
+                retrieval_point = get_timepoint_from_seconds_since_unix_epoch(
+                    int(self.updater.last_update_time))
+                text = "Last changed at %s\n" % suite_update_point
+                text += "Last scanned at %s" % retrieval_point
+            else:
+                # An older suite (or before any updates are made?)
+                text = "Last scanned at %s" % suite_update_point
+            tooltip.set_text(text)
             return True
 
         if column.get_title() != "Status":
@@ -753,6 +762,7 @@ class BaseScanUpdater(threading.Thread):
         self.hosts_suites_info = {}
         self.stopped_hosts_suites_info = {}
         self.prev_hosts_suites = []
+        self.last_update_time = None
         self._should_force_update = False
         self.quit = False
         super(BaseScanUpdater, self).__init__()
@@ -768,12 +778,12 @@ class BaseScanUpdater(threading.Thread):
     def run(self):
         """Execute the main loop of the thread."""
         prev_suites = []
-        last_update_time = None
         while not self.quit:
-            current_time = time.time()
-            if (not self._should_force_update and
-                (last_update_time is not None and
-                 current_time < last_update_time + self.poll_interval)):
+            time_for_update = (
+                self.last_update_time is None or
+                time.time() < self.last_update_time + self.poll_interval
+            )
+            if not self._should_force_update and not time_for_update:
                 time.sleep(1)
                 continue
             if self._should_force_update:
@@ -801,7 +811,7 @@ class BaseScanUpdater(threading.Thread):
                 for suite in suites:
                     prev_hosts_suites.append((host, suite))
             self.prev_hosts_suites = prev_hosts_suites
-            last_update_time = time.time()
+            self.last_update_time = time.time()
             gobject.idle_add(self.update)
             time.sleep(1)
 
