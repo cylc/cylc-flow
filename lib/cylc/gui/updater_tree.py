@@ -368,7 +368,7 @@ class TreeUpdater(threading.Thread):
                         name = point_string
                     update_row_ids.append((point_string, name, is_fam))
 
-                if not is_fam:
+                if not is_fam and self.ancestors.has_key(name):
                     # Calculate the family nesting for tasks.
                     families = list(self.ancestors[name])
                     families.sort(lambda x, y: (y in self.ancestors[x]) -
