@@ -13,12 +13,17 @@ title=Task Event Job Log Retrieve
     final cycle point=2020-02-02T02:02Z
     [[dependencies]]
         [[[R1]]]
-            graph=t1
+            graph=T
 
 [runtime]
-    [[t1]]
+    [[T]]
         script=test "${CYLC_TASK_TRY_NUMBER}" -eq 3
         retry delays=PT0S, 2*PT1S
         [[[remote]]]
             host = {{HOST}}
+    [[t1]]
+        inherit = T
+        [[[remote]]]
             retrieve job logs = True
+    [[t2]]
+        inherit = T
