@@ -355,8 +355,17 @@ class GraphUpdater(threading.Thread):
                     # Don't need to guard against special nodes here (yet).
                     name, point_string = TaskID.split(id)
                     if name not in self.all_families:
+                        # This node is a task, not a family.
                         if id in self.updater.filt_task_ids:
                             nodes_to_remove.add(node)
+                        elif id not in self.updater.kept_task_ids:
+                            # A base node - these only appear in the graph.
+                            filter_string = self.updater.filter_name_string
+                            if (filter_string and
+                                    filter_string not in name and
+                                    not re.search(filter_string, name)):
+                                # A base node that fails the name filter.
+                                nodes_to_remove.add(node)
                     elif id in self.fam_state_summary:
                         # Remove family nodes if all members filtered out.
                         remove = True
