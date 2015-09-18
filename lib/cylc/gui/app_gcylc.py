@@ -2872,11 +2872,13 @@ This is what my suite does:..."""
                         ebox.modify_bg(gtk.STATE_NORMAL,
                                        self.filter_highlight_color)
 
-        self.updater.filter_states_excl = task_states
         self.filter_states_excl = task_states
         self.info_bar.set_filter_state(task_states, self.filter_name_string)
-        self.updater.refilter()
         self.refresh_views()
+        if self.updater is not None:
+            # Else no suite is connected yet.
+            self.updater.filter_states_excl = task_states
+            self.updater.refilter()
 
     def reset_filter_box(self, w=None):
         for subbox in self.task_filter_box.get_children():
