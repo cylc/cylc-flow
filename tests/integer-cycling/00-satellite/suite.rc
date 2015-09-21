@@ -19,7 +19,7 @@ with previous cycles if the data comes in quickly."""
 [cylc]
     [[reference test]]
         required run mode = live
-        live mode suite timeout = PT40S
+        live mode suite timeout = PT1M
 
 [scheduling]
     cycling mode = integer
