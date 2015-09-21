@@ -299,6 +299,7 @@ class CylcSuiteDAO(object):
         """Connect to the database."""
         if self.conn is None:
             self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
+            self.conn.execute("BEGIN TRANSACTION;")
         return self.conn
 
     def create_tables(self):
@@ -315,12 +316,12 @@ class CylcSuiteDAO(object):
 
     def execute_queued_items(self):
         """Execute queued items for each table."""
-        self.connect()
         will_retry = False
         for table in self.tables.values():
             # DELETE statements may have varying number of WHERE args
             # so we can only executemany for each identical template statement.
             for stmt, stmt_args_list in table.delete_queues.items():
+                self.connect()
                 if self._execute_stmt(table, stmt, stmt_args_list):
                     table.delete_queues.pop(stmt)
                 else:
@@ -328,6 +329,7 @@ class CylcSuiteDAO(object):
             # INSERT statements are uniform for each table, so all INSERT
             # statements can be executed using a single "executemany" call.
             if table.insert_queue:
+                self.connect()
                 if self._execute_stmt(
                         table, table.get_insert_stmt(), table.insert_queue):
                     table.insert_queue = []
@@ -336,10 +338,30 @@ class CylcSuiteDAO(object):
             # UPDATE statements can have varying number of SET and WHERE args
             # so we can only executemany for each identical template statement.
             for stmt, stmt_args_list in table.update_queues.items():
+                self.connect()
                 if self._execute_stmt(table, stmt, stmt_args_list):
                     table.update_queues.pop(stmt)
                 else:
                     will_retry = True
+        if self.conn is not None:
+            try:
+                self.conn.commit()
+            except sqlite3.Error:
+                if not self.is_public:
+                    raise 
+                self.conn.rollback()
+                if cylc.flags.debug:
+                    traceback.print_exc()
+                    sys.stderr.write(
+                        "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
+                            "file": self.db_file_name,
+                            "table": table.name,
+                            "stmt": stmt})
+                    for stmt_args in stmt_args_list:
+                        sys.stderr.write("\t%(stmt_args)s\n" % {
+                            "stmt_args": stmt_args})
+                will_retry = True
+        
         if will_retry:
             self.n_tries += 1
             logger = getLogger("main")
@@ -370,11 +392,9 @@ class CylcSuiteDAO(object):
         """
         try:
             self.conn.executemany(stmt, stmt_args_list)
-            self.conn.commit()
         except sqlite3.Error:
             if not self.is_public:
                 raise
-            self.conn.rollback()
             if cylc.flags.debug:
                 traceback.print_exc()
                 sys.stderr.write(
