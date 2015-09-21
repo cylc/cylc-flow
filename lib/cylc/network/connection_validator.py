@@ -60,7 +60,7 @@ class ConnValidator(DefaultConnValidator):
         """Authorize client login."""
 
         logger = logging.getLogger('main')
-        is_old_daemon = False
+        is_old_client = False
         # Processes the token returned by createAuthToken.
         try:
             user, host, uuid, prog_name, proc_passwd = token.split(':', 4)
@@ -68,7 +68,7 @@ class ConnValidator(DefaultConnValidator):
             # Back compat for old suite client (passphrase only)
             # (Allows old scan to see new suites.)
             proc_passwd = token
-            is_old_daemon = True
+            is_old_client = True
 
         # Check username and password, and set privilege level accordingly.
         # The auth token has a binary hash that needs conversion to ASCII.
@@ -77,7 +77,7 @@ class ConnValidator(DefaultConnValidator):
             # The client has the suite passphrase.
             # Access granted at highest privilege level.
             priv_level = PRIVILEGE_LEVELS[-1]
-        elif is_old_daemon:
+        elif is_old_client:
             # These won't support NO_PASSPHRASE and aren't worth logging.
             return (0, Pyro.constants.DENIED_SECURITY)
         elif (hmac.new(
