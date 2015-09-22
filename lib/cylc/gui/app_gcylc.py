@@ -1372,14 +1372,6 @@ been defined for this suite""").inform()
         remove_nospawn_item.connect('activate', self.remove_task_nospawn,
                                     task_id, task_is_family)
 
-        if not task_is_family:
-            addprereq_item = gtk.ImageMenuItem('Add A Prerequisite')
-            img = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)
-            addprereq_item.set_image(img)
-            items.append(addprereq_item)
-            addprereq_item.connect('activate', self.add_prerequisite_popup,
-                                   task_id)
-
         return items
 
     def change_runahead_popup(self, b):
@@ -1446,74 +1438,6 @@ been defined for this suite""").inform()
                 limit = ent
         window.destroy()
         self.put_pyro_command('set_runahead', limit)
-
-    def add_prerequisite_popup(self, b, task_id):
-        window = gtk.Window()
-        window.modify_bg(gtk.STATE_NORMAL,
-                         gtk.gdk.color_parse(self.log_colors.get_color()))
-        window.set_border_width(5)
-        window.set_title("Add A Prequisite")
-        window.set_transient_for(self.window)
-        window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
-
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-
-        vbox = gtk.VBox()
-
-        label = gtk.Label('SUITE: ' + self.cfg.suite)
-        vbox.pack_start(label, True)
-
-        label = gtk.Label('TASK: ' + task_id)
-        vbox.pack_start(label, True)
-
-        label = gtk.Label(
-            'DEP (' + TaskID.SYNTAX + ' or message)')
-
-        entry = gtk.Entry()
-
-        hbox = gtk.HBox()
-        hbox.pack_start(label, True)
-        hbox.pack_start(entry, True)
-        vbox.pack_start(hbox)
-
-        cancel_button = gtk.Button("_Cancel")
-        cancel_button.connect("clicked", lambda x: window.destroy())
-
-        start_button = gtk.Button("_Add")
-        start_button.connect(
-            "clicked", self.add_prerequisite, entry, window, task_id)
-
-        help_button = gtk.Button("_Help")
-        help_button.connect("clicked", self.command_help, "control", "depend")
-
-        hbox = gtk.HBox()
-        hbox.pack_start(start_button, True)
-        hbox.pack_start(help_button, True)
-        hbox.pack_start(cancel_button, True)
-        vbox.pack_start(hbox)
-
-        window.add(vbox)
-        window.show_all()
-
-    def add_prerequisite(self, w, entry, window, task_id):
-        dep = entry.get_text()
-        if TaskID.is_valid_id(dep):
-            msg = dep + ' succeeded'
-        else:
-            msg = dep
-
-        try:
-            name, cycle = TaskID.split(task_id)
-        except ValueError:
-            warning_dialog(
-                "ERROR, Task or Group ID must be " + TaskID.SYNTAX,
-                self.window
-            ).warn()
-            return
-
-        window.destroy()
-        self.put_pyro_command('add_prerequisite', task_id, msg)
 
     def update_tb(self, tb, line, tags=None):
         if tags:
