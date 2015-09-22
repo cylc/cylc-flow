@@ -299,7 +299,6 @@ class CylcSuiteDAO(object):
         """Connect to the database."""
         if self.conn is None:
             self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
-            self.conn.execute("BEGIN TRANSACTION;")
         return self.conn
 
     def create_tables(self):
@@ -353,13 +352,7 @@ class CylcSuiteDAO(object):
                 if cylc.flags.debug:
                     traceback.print_exc()
                     sys.stderr.write(
-                        "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
-                            "file": self.db_file_name,
-                            "table": table.name,
-                            "stmt": stmt})
-                    for stmt_args in stmt_args_list:
-                        sys.stderr.write("\t%(stmt_args)s\n" % {
-                            "stmt_args": stmt_args})
+                        "WARNING: %s: db commit failed\n" % self.db_file_name)
                 will_retry = True
         
         if will_retry:
