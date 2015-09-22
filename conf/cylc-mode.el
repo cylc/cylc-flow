@@ -1,10 +1,10 @@
 ;; Simple syntax highlighting for cylc suite definition files.
 ;; Author: Luis Kornblueh, 2012
 ;;
-;; 1. copy this file to $HOME/.emacs.d
+;; 1. copy this file to $HOME/.emacs.d/lisp
 ;; 2. add in $HOME/.emacs the following lines:
 ;;
-;;   (setq load-path (cons (expand-file-name "~/.emacs.d") load-path))
+;;   (add-to-list 'load-path "~/.emacs.d/lisp/")
 ;;   (require 'cylc-mode)
 ;;   (setq auto-mode-alist (append auto-mode-alist 
 ;;			      (list '("\\.rc$" . cylc-mode))))
