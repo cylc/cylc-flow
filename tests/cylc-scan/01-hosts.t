@@ -17,7 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test cylc scan with multiple hosts
 . "$(dirname "$0")/test_header"
-HOSTS="$(cylc get-global-config '--item=[suite host scanning]hosts')"
+HOSTS="$( \
+    cylc get-global-config '--item=[suite host scanning]hosts' 2>'/dev/null')"
 if [[ -z "${HOSTS}" || "${HOSTS}" == 'localhost' ]]; then
     skip_all '"[suite host scanning]hosts" not defined with remote suite hosts'
 fi

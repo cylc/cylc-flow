@@ -21,15 +21,15 @@
 # require a site admin to pre-empt a job.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
+RC_PREV="[test battery][batch systems][loadleveler]"
 export CYLC_TEST_HOST=$( \
-    cylc get-global-config -i '[test battery][batch systems][loadleveler]host')
+    cylc get-global-config -i "${RC_PREV}host" 2>'/dev/null')
 if [[ -z $CYLC_TEST_HOST ]]; then
     skip_all '[test battery][batch systems][loadleveler]host: not defined'
 fi
 set_test_number 6
 export CYLC_TEST_DIRECTIVES=$( \
-    cylc get-global-config \
-    -i '[test battery][batch systems][loadleveler][directives]')
+    cylc get-global-config -i "${RC_PREV}[directives]" 2>'/dev/null')
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 set -eu
 if [[ $CYLC_TEST_HOST != 'localhost' ]]; then

@@ -18,7 +18,8 @@
 # Test restarting a suite when the host of a submitted or running job is not
 # available. https://github.com/cylc/cylc/issues/1327
 . "$(dirname "$0")/test_header"
-export CYLC_TEST_HOST=$(cylc get-global-config -i '[test battery]remote host')
+export CYLC_TEST_HOST=$( \
+    cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '[test battery]remote host: not defined'
 fi

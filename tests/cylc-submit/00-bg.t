@@ -24,7 +24,8 @@ if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
     if [[ "${TEST_NAME_BASE}" == *remote-with-shared-fs* ]]; then
         CONF_KEY='remote host with shared fs'
     fi
-    HOST="$(cylc get-global-config "--item=[test battery]${CONF_KEY}")"
+    RC_ITEM="[test battery]${CONF_KEY}"
+    HOST="$(cylc get-global-config "--item=${RC_ITEM}" 2>'/dev/null')"
     if [[ -z "${HOST}" ]]; then
         skip_all "[test battery]${CONF_KEY} not set"
     fi
@@ -44,12 +45,14 @@ then
 fi
 if [[ -n "${CONFIGURED_SYS_NAME}" ]]; then
     ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME]host"
-    CYLC_TEST_HOST="$(cylc get-global-config "--item=${ITEM_KEY}")"
+    CYLC_TEST_HOST="$( \
+        cylc get-global-config "--item=${ITEM_KEY}" 2>'/dev/null')"
     if [[ -z "${CYLC_TEST_HOST}" ]]; then
         skip_all "${ITEM_KEY} not set"
     fi
     ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME][directives]"
-    CYLC_TEST_DIRECTIVES="$(cylc get-global-config "--item=${ITEM_KEY}")"
+    CYLC_TEST_DIRECTIVES="$( \
+        cylc get-global-config "--item=${ITEM_KEY}" 2>'/dev/null')"
     CYLC_TEST_BATCH_SYS_NAME=$CONFIGURED_SYS_NAME
 fi
 export CYLC_CONF_DIR=

@@ -18,7 +18,8 @@
 # Test "cylc cat-log" for remote tasks.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-export CYLC_TEST_HOST=$(cylc get-global-config -i '[test battery]remote host')
+RC_ITEM='[test battery]remote host'
+export CYLC_TEST_HOST=$(cylc get-global-config -i "${RC_ITEM}" 2>'/dev/null')
 if [[ -z $CYLC_TEST_HOST ]]; then
     skip_all '[test battery]remote host: not defined'
 fi
