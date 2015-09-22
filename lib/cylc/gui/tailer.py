@@ -15,105 +15,141 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Logic to tail follow a log file for a GUI viewer."""
 
 import gobject
-import threading, subprocess
-import os, sys, re, time
-from cylc import tail
-from warning_dialog import warning_dialog
+import os
+from pipes import quote
+import re
+import select
+import shlex
+import signal
+from subprocess import Popen, PIPE, STDOUT
+import threading
+from time import sleep
 
-class tailer(threading.Thread):
-    def __init__( self, logview, log, proc=None, tag=None, warning_re=None, critical_re=None ):
-        super( tailer, self).__init__()
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.gui.warning_dialog import warning_dialog
+
+
+class Tailer(threading.Thread):
+    """Logic to tail follow a log file for a GUI viewer.
+
+    logview -- A GUI view to display the content of the log file.
+    filename -- The name of the log file.
+    cmd_tmpl -- The command template use to follow the log file.
+                (default=Tailer.CMD_TMPL)
+    pollable -- If specified, it must implement a pollable.poll() method,
+                which is called at regular intervals.
+    """
+
+    CMD_TMPL = "tail -n +1 -F %(filename)s"
+    READ_SIZE = 4096
+    TAGS = {
+        "CRITICAL": [re.compile(r"\b(?:CRITICAL|ERROR)\b"), "red"],
+        "WARNING": [re.compile(r"\bWARNING\b"), "#a83fd3"]}
+
+    def __init__(self, logview, filename, cmd_tmpl=None, pollable=None,
+                 filters=None):
+        super(Tailer, self).__init__()
+
         self.logview = logview
+        self.filename = filename
+        self.cmd_tmpl = cmd_tmpl
+        self.pollable = pollable
+        self.filters = filters
+
         self.logbuffer = logview.get_buffer()
-        self.logfile = log
         self.quit = False
-        self.tag = tag
-        self.proc = proc
+        self.proc = None
         self.freeze = False
         self.has_warned_corrupt = False
-        self.warning_re = warning_re
-        self.critical_re = critical_re
-        self.warning_tag = self.logbuffer.create_tag( None, foreground = "#a83fd3" )
-        self.critical_tag = self.logbuffer.create_tag( None, foreground = "red" )
+        self.tags = {}
 
-    def clear( self ):
-        s,e = self.logbuffer.get_bounds()
-        self.logbuffer.delete( s,e )
+    def clear(self):
+        """Clear the log buffer."""
+        pos_start, pos_end = self.logbuffer.get_bounds()
+        self.logbuffer.delete(pos_start, pos_end)
 
-    def run( self ):
-        #gobject.idle_add( self.clear )
-        #print "Starting tailer thread"
-
-        if ":" in self.logfile:
-            # Handle remote task output statically - can't get a live
-            # feed using 'ssh owner@host tail -f file' in a subprocess
-            # because p.stdout.readline() blocks waiting for more output.
-            #   Use shell=True in case the task owner is defined by
-            # environment variable (e.g. owner=nwp_$SYS, where
-            # SYS=${HOME##*_} for usernames like nwp_oper, nwp_test)
-            #   But quote the remote command so that '$HOME' in it is
-            # interpreted on the remote machine.
-            loc, file = self.logfile.split(':')
-            command = ["ssh -oBatchMode=yes " + loc + " 'cat " + file + "'"]
-            try:
-                p = subprocess.Popen( command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True )
-            except OSError, x:
-                # Probably: ssh command not found
-                out = str(x)
-                out += "\nERROR: failed to invoke ssh to cat the remote log file."
+    def run(self):
+        """Invoke the tailer."""
+        command = []
+        if ":" in self.filename:  # remote
+            user_at_host, filename = self.filename.split(':')
+            if "@" in user_at_host:
+                owner, host = user_at_host.split("@", 1)
             else:
-                # Success, or else problems reported by ssh (e.g. host
-                # not found or passwordless access  not configured) go
-                # to stdout/stderr.
-                out = ' '.join(command) + '\n'
-                out += p.communicate()[0]
-
-                out += """
-!!! gcylc WARNING: REMOTE TASK OUTPUT IS NOT LIVE, OPEN THE VIEWER AGAIN TO UPDATE !!!
-"""
-            gobject.idle_add( self.update_gui, out )
-            if self.proc != None:
-                # See comment below
-                self.proc.poll()
+                owner, host = (None, user_at_host)
+            ssh = str(GLOBAL_CFG.get_host_item(
+                "remote shell template", host, owner)).replace(" %s", "")
+            command = shlex.split(ssh) + ["-n", user_at_host]
         else:
-            # Live feed (pythonic 'tail -f') for local job submission.
-            #if not os.path.exists( self.logfile ):
-            #    #gobject.idle_add( self.warn, "File not found: " + self.logfile )
-            #    print "File not found: " + self.logfile
-            #    #print "Disconnecting from tailer thread"
-            #    return
+            filename = self.filename
+
+        cmd_tmpl = self.CMD_TMPL
+        if self.cmd_tmpl:
+            cmd_tmpl = self.cmd_tmpl
+        command += shlex.split(cmd_tmpl % {"filename": filename})
+        try:
+            self.proc = Popen(
+                command, stdout=PIPE, stderr=STDOUT, preexec_fn=os.setpgrp)
+        except OSError as exc:
+            # E.g. ssh command not found
+            dialog = warning_dialog("%s: %s" % (
+                exc, " ".join([quote(item) for item in command])))
+            gobject.idle_add(dialog.warn)
+            return
+        poller = select.poll()
+        poller.register(self.proc.stdout.fileno())
+
+        buf = ""
+        while not self.quit and self.proc.poll() is None:
             try:
-                gen = tail.tail( open( self.logfile ))
-            except Exception as x:
-                # e.g. file not found
-                dialog = warning_dialog( type(x).__name__ + ": " + str(x) )
+                self.pollable.poll()
+            except (TypeError, AttributeError):
+                pass
+            if self.freeze or not poller.poll(100):  # 100 ms timeout
+                sleep(1)
+                continue
+            # Both self.proc.stdout.read(SIZE) and self.proc.stdout.readline()
+            # can block. However os.read(FILENO, SIZE) should be fine after a
+            # poller.poll().
+            try:
+                data = os.read(self.proc.stdout.fileno(), self.READ_SIZE)
+            except (IOError, OSError) as exc:
+                dialog = warning_dialog("%s: %s" % (
+                    exc, " ".join([quote(item) for item in command])))
                 gobject.idle_add(dialog.warn)
-                return
+                break
+            if data:
+                # Manage buffer, only add full lines to display to ensure
+                # filtering and tagging work
+                for line in data.splitlines(True):
+                    if not line.endswith("\n"):
+                        buf += line
+                        continue
+                    elif buf:
+                        line = buf + line
+                        buf = ""
+                    if (not self.filters or
+                            all([re.search(f, line) for f in self.filters])):
+                        gobject.idle_add(self.update_gui, line)
+            sleep(0.01)
+        self.stop()
 
-            while not self.quit:
-                if not self.freeze:
-                    line = gen.next()
-                    if line:
-                        gobject.idle_add( self.update_gui, line )
-                if self.proc != None:
-                    # poll the subprocess; this reaps its exit code and thus
-                    # prevents the pid of the finished process staying in
-                    # the OS process table (a "defunct process") until the
-                    # parent process exits.
-                    self.proc.poll()
-                # The following doesn't work, not sure why, perhaps because
-                # the top level subprocess finishes before the next one
-                # (shows terminated too soon).
-                #    if self.proc.poll() != None:
-                #        (poll() returns None if process hasn't finished yet.)
-                #        #print 'process terminated'
-                #        gobject.idle_add( self.update_gui, '(PROCESS COMPLETED)\n' )
-                #        break
-            #print "Disconnecting from tailer thread"
+    def stop(self):
+        """Stop the tailer."""
+        self.quit = True
+        try:
+            # It is important that we kill processes like "tail -F", or it will
+            # hang the GUI.
+            os.killpg(self.proc.pid, signal.SIGTERM)
+            self.proc.wait()
+        except (AttributeError, OSError):
+            pass
 
-    def update_gui( self, line ):
+    def update_gui(self, line):
+        """Update the GUI viewer."""
         try:
             line.decode('utf-8')
         except UnicodeDecodeError as exc:
@@ -124,13 +160,16 @@ class tailer(threading.Thread):
                                     (type(exc).__name__, exc))
             gobject.idle_add(dialog.warn)
             return False
-        if self.critical_re and re.search( self.critical_re, line ):
-            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.critical_tag )
-        elif self.warning_re and re.search( self.warning_re, line ):
-            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.warning_tag )
-        elif self.tag:
-            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.tag )
+        for word, setting in self.TAGS.items():
+            rec, colour = setting
+            if rec.match(line):
+                if word not in self.tags:
+                    self.tags[word] = self.logbuffer.create_tag(
+                        None, foreground=colour)
+                self.logbuffer.insert_with_tags(
+                    self.logbuffer.get_end_iter(), line, self.tags[word])
+                break
         else:
-            self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
-        self.logview.scroll_to_iter( self.logbuffer.get_end_iter(), 0 )
+            self.logbuffer.insert(self.logbuffer.get_end_iter(), line)
+        self.logview.scroll_to_iter(self.logbuffer.get_end_iter(), 0)
         return False

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc job-poll, "pbs" jobs
+# Test cylc job-poll, "lsf" jobs
 . $(dirname $0)/test_header
 SSH='ssh -oBatchMode=yes'
 #-------------------------------------------------------------------------------

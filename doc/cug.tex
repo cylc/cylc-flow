@@ -5224,6 +5224,28 @@ that submit internal jobs and direct the associated output to other
 files). For less internally complex tasks, however, the files referred
 to here will be complete task job logs.
 
+Some job submission methods, such as \lstinline=pbs=, redirect a job's stdout
+and stderr streams to a separate cache area while the job is running. The
+contents are only copied to the normal locations when the job completes. This
+means that \lstinline=cylc log= or the gcylc GUI will be unable to find the
+job's stdout and stderr streams while the job is running. Some sites with these
+job submission methods are known to provide commands for viewing and/or
+tail-follow a job's stdout and stderr streams that are redirected to these
+cache areas. If this is the case at your site, you can configure cylc to make
+use of the provided commands by adding some settings to the global site/user
+config. E.g.:
+
+\begin{lstlisting}
+[hosts]
+    [[HOST]]  # <= replace this with a real host name
+        [[[batch systems]]]
+            [[[[pbs]]]]
+                err tailer = qcat -f -e \%(job_id)s
+                out tailer = qcat -f -o \%(job_id)s
+                err viewer = qcat -e \%(job_id)s
+                out viewer = qcat -o \%(job_id)s
+\end{lstlisting}
+
 \subsection{Overriding The Job Submission Command}
 \label{CommandTemplate}
 

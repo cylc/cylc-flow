@@ -29,227 +29,276 @@ if remrun().execute():
     sys.exit(0)
 
 import os
+from pipes import quote
+import shlex
 from subprocess import Popen, PIPE
+import traceback
 
-import cylc.flags
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
 from cylc.owner import is_remote_user
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
-from cylc.suite_logging import suite_log
-from cylc.suite_output import suite_output
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
 
 
-def main():
+NAME_DEFAULT = "log"
+NAME_ERR = "err"
+NAME_OUT = "out"
+NAME_JOB_ACTIVITY_LOG = "job-activity.log"
+NAME_JOB_EDIT_DIFF = "job-edit.diff"
+NAME_JOB_STATUS = "job.status"
+JOB_LOG_DEST_MAP = {
+    NAME_DEFAULT: "job", NAME_ERR: "job.err", NAME_OUT: "job.out"}
+JOB_LOG_LOCAL_ALWAYS = (NAME_JOB_EDIT_DIFF, NAME_JOB_ACTIVITY_LOG)
+LIST_MODE_LOCAL = "local"
+LIST_MODE_REMOTE = "remote"
 
+
+def get_option_parser():
+    """Set up the CLI option parser."""
     parser = cop(
         __doc__, argdoc=[("REG", "Suite name"), ("[TASK-ID]", """Task ID""")])
 
     parser.add_option(
         "-l", "--location",
-        help="Print the location of the file, and set exit status according"
-        "to whether or not the file exists (0 means it exists).",
-        action="store_true", default=False, dest="location")
+        help=("Print location of the log file, exit 0 if it exists," +
+              " exit 1 otherwise"),
+        action="store_true", default=False, dest="location_mode")
 
     parser.add_option(
         "-o", "--stdout",
-        help="Suite or task stdout log.",
-        action="store_true", default=False, dest="stdout")
+        help="Suite log: out, task job log: job.out",
+        action="store_const", const=NAME_OUT, dest="filename")
 
     parser.add_option(
         "-e", "--stderr",
-        help="Suite or task stderr log.",
-        action="store_true", default=False, dest="stderr")
+        help="Suite log: err, task job log: job.err",
+        action="store_const", const=NAME_ERR, dest="filename")
 
     parser.add_option(
         "-r", "--rotation",
-        help="Suite logs log rotation number (default 0)",
-        metavar="INT", action="store", default="0", dest="rotation")
+        help="Suite logs log rotation number", metavar="INT",
+        action="store", dest="rotation_num")
 
     parser.add_option(
         "-a", "--activity",
-        help="Task job activity log.",
-        action="store_true", default=False, dest="job_activity")
+        help="Task job log only: Short for --filename=job-activity.log",
+        action="store_const", const=NAME_JOB_ACTIVITY_LOG, dest="filename")
 
     parser.add_option(
         "-d", "--diff",
-        help="Task job script diff (present after an edit-run).",
-        action="store_true", default=False, dest="job_diff")
+        help=("Task job log only: Short for --filename=job-edit.diff" +
+              " (file present after an edit-run)."),
+        action="store_const", const=NAME_JOB_EDIT_DIFF, dest="filename")
 
     parser.add_option(
         "-u", "--status",
-        help="Task job status file.",
-        action="store_true", default=False, dest="job_status")
+        help="Task job log only: Short for --filename=job.status",
+        action="store_const", const=NAME_JOB_STATUS, dest="filename")
 
     parser.add_option(
-        "-c", "--custom",
-        help="Custom task log name, for tasks that write non-standard "
-        "files to their cylc log directory (e.g. 'job.stats').",
-        metavar="FILENAME", action="store", default=None, dest="job_custom")
+        "-f", "--filename", "-c", "--custom",
+        help="Name of log file (e.g. 'job.stats').", metavar="FILENAME",
+        action="store", dest="filename")
 
     parser.add_option(
-        "-s", "--submit-number",
-        help="Task logs only: job submit number (default latest).",
-        metavar="INT", action="store", default="NN", dest="subnum")
-
-    parser.add_option(
-        "-t", "--try-number",
-        help="(deprecated - use -s/--submit-number).",
-        metavar="INT", action="store", default="NN", dest="subnum")
+        "-s", "--submit-number", "-t", "--try-number",
+        help="Task job log only: submit number (default=NN).", metavar="INT",
+        action="store", dest="submit_num")
 
     parser.add_option(
         "-x", "--list-local",
-        help="List a task log directory on the suite host.",
-        action="store_true", default=False, dest="list_local")
+        help="List a log directory on the suite host",
+        action="store_const", const=LIST_MODE_LOCAL, dest="list_mode")
 
     parser.add_option(
         "-y", "--list-remote",
-        help="List a task log directory on the task host.",
-        action="store_true", default=False, dest="list_remote")
+        help="Task job log only: List log directory on the job host",
+        action="store_const", const=LIST_MODE_REMOTE, dest="list_mode")
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
-    suiterc = localdb(options.db).get_suiterc(suite)
+    return parser
 
-    owner = options.db_owner
 
-    # If --host is used, the command re-invokes itself on the remote suite
-    # host. For task logs we have to find retrieve task host from the suite run
-    # db located on the suite host.
-
-    user_at_host = None
-    suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-        suite, "suite run directory")
-
-    if len(args) == 1:
-        # Suite logs.
-        if any([options.job_activity, options.job_diff, options.job_status,
-                options.list_local or options.list_remote]) or (
-                options.job_custom is not None or
-                options.subnum != "NN"):
-            parser.error("Task log option(s) are not legal for suite logs.")
-
-        log_dir = os.path.join(suite_run_dir, "log", "suite")
-        if options.stdout:
-            fpath = os.path.join(log_dir, "out")
-        elif options.stderr:
-            fpath = os.path.join(log_dir, "err")
-        else:
-            fpath = os.path.join(log_dir, "log")
-            if options.rotation != "0":
-                fpath += "." + options.rotation
+def get_suite_log_path(options, suite):
+    """Return file name of a suite log, given the options."""
+    if options.list_mode:
+        basename = "."
     else:
-        # Task logs.
-        if [options.job_activity, options.job_diff, options.job_status,
-                options.stdout, options.stderr, options.list_local,
-                options.list_remote,
-                options.job_custom is not None].count(True) > 1:
-            parser.error("Choose only one log file type.")
-        taskid = args[1]
+        if options.filename:
+            basename = options.filename
+        else:
+            basename = NAME_DEFAULT
+        if options.rotation_num:
+            basename += "." + options.rotation_num
+    return os.path.normpath(os.path.join(
+        GLOBAL_CFG.get_derived_host_item(suite, "suite log directory"),
+        basename))
 
+
+def get_task_job_log_path(
+        options, suite, point, task, submit_num, user_at_host):
+    """Return file name of a task job log, given the options."""
+    if user_at_host and "@" in user_at_host:
+        owner, host = user_at_host.split("@", 1)
+    elif user_at_host:
+        owner, host = (None, user_at_host)
+    else:
+        owner, host = (None, None)
+    if options.list_mode:
+        basename = "."
+    elif options.filename:
         try:
-            task, point = TaskID.split(taskid)
-        except:
-            sys.exit("ERROR, illegal task ID: %s" % taskid)
+            basename = JOB_LOG_DEST_MAP[options.filename]
+        except KeyError:
+            basename = options.filename
+    else:
+        basename = JOB_LOG_DEST_MAP[NAME_DEFAULT]
+    if submit_num != "NN":
+        submit_num = "%02d" % submit_num
+    return os.path.normpath(os.path.join(
+        GLOBAL_CFG.get_derived_host_item(
+            suite, "suite job log directory", host, owner),
+        point, task, submit_num, basename))
 
-        if options.subnum == "NN":
-            # The latest submit.
-            log_sub_dir = os.path.join(point, task, "NN")
+
+def get_task_job_attrs(options, suite, point, task, submit_num):
+    """Return (user@host, command0) of a task job log.
+
+    user@host is set if task job is run remotely and for relevant log files.
+    command0 is set if task job is running on a batch system that requires a
+    special command to view stdout/stderr files.
+
+    """
+    if (options.filename in JOB_LOG_LOCAL_ALWAYS or
+             options.list_mode == LIST_MODE_LOCAL):
+        return (None, None)
+    suite_dao = CylcSuiteDAO(
+        os.path.join(
+            GLOBAL_CFG.get_derived_host_item(suite, "suite run directory"),
+            CylcSuiteDAO.DB_FILE_BASE_NAME),
+        is_public=True)
+    task_job_data = suite_dao.select_task_job(None, point, task, submit_num)
+    suite_dao.close()
+    if task_job_data is None:
+        return (None, None)
+    if "@" in task_job_data["user_at_host"]:
+        owner, host = str(task_job_data["user_at_host"]).split("@", 1)
+    else:
+        owner, host = (None, str(task_job_data["user_at_host"]))
+    user_at_host = None
+    if is_remote_host(host) or is_remote_user(owner):
+        if host and owner:
+            user_at_host = owner + "@" + host
+        elif host:
+            user_at_host = host
+        elif owner:
+            user_at_host = owner + "@localhost"
+    if (options.list_mode or
+           options.location_mode or
+           options.filename not in [
+               NAME_ERR, NAME_OUT,
+               JOB_LOG_DEST_MAP[NAME_ERR], JOB_LOG_DEST_MAP[NAME_OUT]] or
+           not task_job_data["batch_sys_name"] or
+           not task_job_data["batch_sys_job_id"] or
+           not task_job_data["time_run"] or
+           task_job_data["time_run_exit"]):
+        return (user_at_host, None)
+    try:
+        if user_at_host and "@" in user_at_host:
+           owner, host = user_at_host.split("@", 1)
         else:
-            # A specific submit.
+           owner, host = (None, user_at_host)
+        if options.filename in (NAME_OUT, JOB_LOG_DEST_MAP[NAME_OUT]):
+           key = "out viewer"
+        else:
+           key = "err viewer"
+        conf = GLOBAL_CFG.get_host_item("batch systems", host, owner)
+        command0_tmpl = conf[str(task_job_data["batch_sys_name"])][key]
+    except (KeyError, TypeError):
+        return (user_at_host, None)
+    else:
+        if command0_tmpl:
+            return (user_at_host, shlex.split(command0_tmpl % {
+                "job_id": str(task_job_data["batch_sys_job_id"])}))
+        else:
+            return (user_at_host, None)
+
+
+def main():
+    """Implement cylc cat-log CLI."""
+    parser = get_option_parser()
+    options, args = parser.parse_args()
+    suite = args[0]
+    if options.filename and options.list_mode:
+        parser.error("Choose either test/print log file or list log directory")
+    elif len(args) > 1:
+        # Task job log
+        try:
+            task, point = TaskID.split(args[1])
+        except ValueError:
+            parser.error("Illegal task ID: %s" % args[1])
+        if options.submit_num in [None, "NN"]:
+            submit_num = "NN"
+        else:
             try:
-                log_sub_dir = os.path.join(
-                    point, task, "%02d" % int(options.subnum))
+                submit_num = int(options.submit_num)
             except ValueError:
-                parser.error("Illegal submit number: %s" % options.subnum)
+                parser.error("Illegal submit number: %s" % options.submit_num)
+        user_at_host, command0 = get_task_job_attrs(
+            options, suite, point, task, submit_num)
+        filename = get_task_job_log_path(
+            options, args[0], point, task, submit_num, user_at_host)
+    else:
+        # Suite log
+        if options.submit_num or options.list_mode == LIST_MODE_REMOTE:
+            parser.error("Task log option(s) are not legal for suite logs.")
+        filename = get_suite_log_path(options, args[0])
+        user_at_host, command0 = (None, None)
 
-        # Get the task host from the suite run db.
-        if not (options.list_local or
-                options.job_diff or options.job_activity):
-            # Job diff and activity logs file are always located on the suite
-            # host; other logs are generated by the task on the task host.
-            suite_dao = CylcSuiteDAO(
-                os.path.join(suite_run_dir, CylcSuiteDAO.DB_FILE_BASE_NAME),
-                is_public=True)
-            task_states_data = suite_dao.select_task_states_by_task_ids(
-                ["host"], [[task, point]])
-            if (task, point) in task_states_data:
-                host = task_states_data[(task, point)].get("host")
-            suite_dao.close()
-            owner = None
-            if host and "@" in host:
-                owner, host = host.split("@", 1)
-            if is_remote_host(host) or is_remote_user(owner):
-                if host and owner:
-                    user_at_host = owner + "@" + host
-                elif host:
-                    user_at_host = host
-                elif owner:
-                    user_at_host = owner + "@localhost"
-            job_log_dir = GLOBAL_CFG.get_derived_host_item(
-                suite, "suite job log directory", host=host, owner=owner)
-        else:
-            user_at_host = None
-            job_log_dir = GLOBAL_CFG.get_derived_host_item(
-                suite, "suite job log directory")
-
-        log_dir = fpath = os.path.join(job_log_dir, log_sub_dir)
-        if options.stdout:
-            fpath = os.path.join(log_dir, "job.out")
-        elif options.stderr:
-            fpath = os.path.join(log_dir, "job.err")
-        elif options.job_diff:
-            fpath = os.path.join(log_dir, "job-edit.diff")
-        elif options.job_status:
-            fpath = os.path.join(log_dir, "job.status")
-        elif options.job_activity:
-            fpath = os.path.join(log_dir, "job-activity.log")
-        elif options.job_custom:
-            fpath = os.path.join(log_dir, options.job_custom)
-        elif options.list_remote or options.list_local:
-            fpath = log_dir
-        else:
-            fpath = os.path.join(log_dir, "job")
-
-    # Construct a command to print the file path or content.
-    if options.location:
+    # Construct the shell command
+    commands = []
+    if options.location_mode:
         if user_at_host is not None:
             sys.stdout.write("%s:" % user_at_host)
-        sys.stdout.write("%s\n" % fpath)
-        cmd = "test -e %s" % fpath
-    elif options.list_remote or options.list_local:
-        cmd = "ls %s" % fpath
+        sys.stdout.write("%s\n" % filename)
+        commands.append(["test", "-e", filename])
+    elif options.list_mode:
+        commands.append(["ls", filename])
+    elif command0 and user_at_host:
+        commands.append(command0 + ["||", "cat", filename])
+    elif command0:
+        commands.append(command0)
+        commands.append(["cat", filename])
     else:
-        cmd = "cat %s" % fpath
+        commands.append(["cat", filename])
 
-    if user_at_host is not None:
-        command = ["ssh", "-oBatchMode=yes", user_at_host, cmd]
-    else:
-        command = cmd.split()
+    # Deal with remote [user@]host
+    if user_at_host:
+        if "@" in user_at_host:
+            owner, host = user_at_host.split("@", 1)
+        else:
+            owner, host = (None, user_at_host)
+        ssh = str(GLOBAL_CFG.get_host_item(
+            "remote shell template", host, owner)).replace(" %s", "")
+        for i, command in enumerate(commands):
+            commands[i] = shlex.split(ssh) + ["-n", user_at_host] + command
 
-    # Execute the command.
-    try:
-        p = Popen(command, stdout=PIPE, stderr=PIPE)
-    except OSError as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(exc)
-    out, err, = p.communicate()
-    res = p.wait()
-    if out:
-        sys.stdout.write(out)
-    if err:
+    err = None
+    for command in commands:
+        stderr=PIPE
+        if options.debug:
+            sys.stderr.write(" ".join([quote(item) for item in command]) + "\n")
+            stderr=None
+        proc = Popen(command, stderr=stderr)
+        err = proc.communicate()[1]
+        ret_code = proc.wait()
+        if ret_code == 0:
+            break
+    if ret_code and err:
         sys.stderr.write(err)
-    sys.exit(res)
+    sys.exit(ret_code)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(exc)
+    main()

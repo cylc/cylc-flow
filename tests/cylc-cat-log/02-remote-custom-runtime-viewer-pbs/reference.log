@@ -1,0 +1,6 @@
+2015-06-19T14:47:30+01 INFO - Run mode: live
+2015-06-19T14:47:30+01 INFO - Initial point: 1
+2015-06-19T14:47:30+01 INFO - Final point: 1
+2015-06-19T14:47:30+01 INFO - Cold Start 1
+2015-06-19T14:47:30+01 INFO - [a-task.1] -triggered off []
+2015-06-19T14:47:30+01 INFO - [b-task.1] -triggered off ['a-task.1']

@@ -32,7 +32,6 @@ CYLC_CONF_PATH= suite_run_ok $TEST_NAME \
 TEST_NAME=$TEST_NAME_BASE-foo-jobscript-match
 CYLC_CONF_PATH= run_ok $TEST_NAME cylc jobscript $SUITE_NAME foo.1
 sed 's/\(export CYLC_.*=\).*/\1/g' $TEST_NAME.stdout >jobfile
-echo "" >> jobfile
 sed 's/##suitename##/'$SUITE_NAME'/' \
     $TEST_SOURCE_DIR/$TEST_NAME_BASE/foo.ref-jobfile >reffile
 cmp_ok jobfile reffile

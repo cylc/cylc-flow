@@ -637,6 +637,11 @@ class BatchSysManager(object):
 
         # Create NN symbolic link, if necessary
         self._create_nn(job_file_path)
+        for name in "job.err", "job.out":
+            try:
+                os.unlink(os.path.join(job_file_path, name))
+            except OSError:
+                pass
 
         # Start new status file
         job_status_file = open(job_file_path + ".status", "w")

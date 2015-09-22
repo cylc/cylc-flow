@@ -28,7 +28,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 sleep 5
 # Wait for the suite to finish.
-cylc stop --max-polls=10 --interval=2 $SUITE_NAME 
+cylc stop --max-polls=10 --interval=2 $SUITE_NAME 2>'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-suite-log-log
 cylc cat-log $SUITE_NAME >$TEST_NAME.out

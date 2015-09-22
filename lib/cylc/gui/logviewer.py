@@ -20,15 +20,15 @@ import gtk
 import pygtk
 ####pygtk.require('2.0')
 import time, os, re, sys
-from warning_dialog import warning_dialog
-from tailer import tailer
+from cylc.gui.tailer import Tailer
+from cylc.gui.warning_dialog import warning_dialog
 import pango
 
 class logviewer(object):
-    def __init__( self, name, dir, file, warning_re=None, critical_re=None ):
+    def __init__(self, name, dirname, filename):
         self.name = name
-        self.dir = dir
-        self.file = file
+        self.dirname = dirname
+        self.filename = filename
         self.t = None
 
         self.find_current = None
@@ -36,15 +36,12 @@ class logviewer(object):
         self.search_warning_done = False
 
         self.create_gui_panel()
-        logbuffer = self.logview.get_buffer()
-
-        self.critical_re = critical_re
-        self.warning_re = warning_re
+        self.logview.get_buffer()
 
         self.connect()
 
     def clear_and_reconnect( self ):
-        self.t.quit = True
+        self.t.stop()
         self.clear()
         self.connect()
 
@@ -53,23 +50,22 @@ class logviewer(object):
         s,e = logbuffer.get_bounds()
         logbuffer.delete( s,e )
 
-    def path( self ):
-        if self.dir:
-            return self.dir + '/' + self.file
+    def path(self):
+        if self.dirname and not os.path.isabs(self.filename):
+            return os.path.join(self.dirname, self.filename)
         else:
-            return self.file
+            return self.filename
 
     def connect( self ):
-        self.t = tailer( self.logview, self.path(),
-                warning_re=self.warning_re, critical_re=self.critical_re)
+        self.t = Tailer(self.logview, self.path())
         ####print "Starting log viewer thread for " + self.name
         self.t.start()
 
     def quit_w_e( self, w, e ):
-        self.t.quit = True
+        self.t.stop()
 
     def quit( self ):
-        self.t.quit = True
+        self.t.stop()
 
     def get_widget( self ):
         return self.vbox

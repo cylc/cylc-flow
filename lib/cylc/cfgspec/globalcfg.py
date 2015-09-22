@@ -65,7 +65,7 @@ SPEC = {
         'maximum number of tries'         : vdr( vtype='integer', vmin=1, default=7 ),
         'connection timeout'              : vdr( vtype='interval_seconds', default=30),
 
-        },
+    },
 
     'cylc' : {
         'UTC mode'                            : vdr( vtype='boolean', default=False),
@@ -75,14 +75,14 @@ SPEC = {
             'shutdown handler'                : vdr( vtype='string_list', default=[] ),
             'timeout'                         : vdr( vtype='interval_minutes'),
             'abort on timeout'                : vdr( vtype='boolean', default=False ),
-            },
         },
+    },
 
     'suite logging' : {
         'roll over at start-up'           : vdr( vtype='boolean', default=True ),
         'rolling archive length'          : vdr( vtype='integer', vmin=1, default=5 ),
         'maximum size in bytes'           : vdr( vtype='integer', vmin=1000, default=1000000 ),
-        },
+    },
 
     'documentation' : {
         'files' : {
@@ -94,23 +94,23 @@ SPEC = {
         'urls' : {
             'internet homepage'           : vdr( vtype='string', default="http://cylc.github.com/cylc/" ),
             'local index'                 : vdr( vtype='string', default=None ),
-            },
         },
+    },
 
     'document viewers' : {
         'pdf'                             : vdr( vtype='string', default="evince" ),
         'html'                            : vdr( vtype='string', default="firefox" ),
-        },
+    },
     'editors' : {
         'terminal'                        : vdr( vtype='string', default="vim" ),
         'gui'                             : vdr( vtype='string', default="gvim -f" ),
-        },
+    },
 
     'pyro' : {
         'base port'                       : vdr( vtype='integer', default=7766 ),
         'maximum number of ports'         : vdr( vtype='integer', default=100 ),
         'ports directory'                 : vdr( vtype='string', default="$HOME/.cylc/ports/" ),
-        },
+    },
 
     'hosts' : {
         'localhost' : {
@@ -127,7 +127,15 @@ SPEC = {
             'retrieve job logs max size'  : vdr( vtype='string' ),
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'batch systems': {
+                '__MANY__': {
+                    'err tailer': vdr(vtype='string'),
+                    'out tailer': vdr(vtype='string'),
+                    'err viewer': vdr(vtype='string'),
+                    'out viewer': vdr(vtype='string'),
+                },
             },
+        },
         '__MANY__' : {
             'run directory'               : vdr( vtype='string'  ),
             'work directory'              : vdr( vtype='string'  ),
@@ -142,8 +150,16 @@ SPEC = {
             'retrieve job logs max size'  : vdr( vtype='string' ),
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'batch systems': {
+                '__MANY__': {
+                    'err tailer': vdr(vtype='string'),
+                    'out tailer': vdr(vtype='string'),
+                    'out viewer': vdr(vtype='string'),
+                    'err viewer': vdr(vtype='string'),
+                },
             },
         },
+    },
 
     'task events': {
         'execution timeout': vdr(vtype='interval_minutes'),
@@ -163,24 +179,10 @@ SPEC = {
         'remote host with shared fs': vdr(vtype='string'),
         'remote host': vdr(vtype='string'),
         'batch systems': {
-            'loadleveler': {
+            '__MANY__': {
                 'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'lsf': {
-                'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'pbs': {
-                'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'sge': {
-                'host': vdr(vtype='string'),
-                'directives': {'__MANY__': vdr(vtype='string')},
-            },
-            'slurm': {
-                'host': vdr(vtype='string'),
+                'out viewer': vdr(vtype='string'),
+                'err viewer': vdr(vtype='string'),
                 'directives': {'__MANY__': vdr(vtype='string')},
             },
         },
@@ -190,11 +192,11 @@ SPEC = {
         'method'                          : vdr( vtype='string', options=["name","address","hardwired"], default="name" ),
         'target'                          : vdr( vtype='string', default="google.com" ),
         'host'                            : vdr( vtype='string' ),
-        },
+    },
 
     'suite host scanning': {
         'hosts': vdr(vtype='string_list', default=["localhost"])
-        },
+    },
 
     'authentication': {
         # Allow owners to grant public shutdown rights at the most, not full control.
@@ -202,8 +204,8 @@ SPEC = {
             vtype='string',
             options=PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index('shutdown')+1],
             default="state-totals")
-        }
-    }
+    },
+}
 
 def upg( cfg, descr ):
     add_bin_dir = converter( lambda x: x + '/bin', "Added + '/bin' to path" )
