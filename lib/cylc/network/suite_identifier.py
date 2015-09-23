@@ -60,6 +60,8 @@ class SuiteIdServer(PyroServer):
             result['description'] = config.cfg['description']
         if access_priv_ok(self, "state-totals"):
             result['states'] = StateSummaryServer.get_inst().get_state_totals()
+            result['update-time'] = (
+                StateSummaryServer.get_inst().get_summary_update_time())
         return result
 
     def id(self):

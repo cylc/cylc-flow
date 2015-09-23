@@ -18,7 +18,7 @@
 
 """cylc gpanel [OPTIONS]
 
-This is a cylc summary panel applet for monitoring running suites on a set of
+This is a cylc scan panel applet for monitoring running suites on a set of
 hosts in GNOME 2.
 
 To install this applet, run "cylc gpanel --install"
@@ -78,7 +78,7 @@ if os.path.basename(cylc_dir).startswith("cylc-"):
 if cylc_dir != os.getenv('CYLC_DIR', ''):
     os.environ['CYLC_DIR'] = cylc_dir
 
-from cylc.gui.gpanel import SummaryPanelApplet, run_in_window
+from cylc.gui.gpanel import ScanPanelApplet, run_in_window
 
 
 def install_panel_applet():
@@ -106,14 +106,14 @@ select "Add to Panel", then choose a Cylc Applet."""
 
 
 def panel_applet_factory_compact(applet, iid):
-    my_panel_app = SummaryPanelApplet(is_compact=True)
+    my_panel_app = ScanPanelApplet(is_compact=True)
     applet.add(my_panel_app.get_widget())
     applet.show_all()
     return True
 
 
 def panel_applet_factory(applet, iid):
-    my_panel_app = SummaryPanelApplet()
+    my_panel_app = ScanPanelApplet()
     applet.add(my_panel_app.get_widget())
     applet.show_all()
     return True

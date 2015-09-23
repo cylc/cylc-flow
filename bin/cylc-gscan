@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2015 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""cylc gscan [OPTIONS]
+
+This is the cylc scan gui for monitoring running suites on a set of
+hosts.
+
+To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
+$HOME/.cylc/gcylc.rc and follow the instructions in the file."""
+
+from cylc.CylcOptionParsers import cop
+
+parser = cop(__doc__, argdoc=[])
+
+parser.add_option("--host",
+                  help="Host names to monitor (override site default).",
+                  metavar="HOST", action="append",
+                  dest="hosts")
+parser.add_option("--poll-interval",
+                  help="Polling interval (time between updates) in seconds",
+                  type="int", metavar="SECONDS", dest="interval")
+
+options, args = parser.parse_args()
+
+import gtk
+import warnings
+warnings.filterwarnings('ignore', 'use the new', Warning)
+
+from cylc.gui.gscan import ScanApp
+
+ScanApp(hosts=options.hosts, owner=options.owner,
+        poll_interval=options.interval)
+gtk.main()
