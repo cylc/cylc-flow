@@ -136,7 +136,7 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
         except Exception as exc:
             if cylc.flags.debug:
                 print str(exc)
-                raise
+                break
             else:
                 print >> sys.stderr, str(exc)
         else:

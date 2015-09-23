@@ -49,7 +49,9 @@ if "--use-ssh" in sys.argv[1:]:
 import re
 from multiprocessing import cpu_count, Pool
 from time import sleep
+import traceback
 
+import cylc.flags
 from cylc.network.port_scan import scan
 from cylc.CylcOptionParsers import cop
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -369,9 +371,14 @@ def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
         for host, async_result in async_results.items():
             if async_result.ready():
                 async_results.pop(host)
-                res = async_result.get()
-                scan_results.extend(res)
-                hosts.extend([host]*len(res))
+                try:
+                    res = async_result.get()
+                except:
+                    if cylc.flags.debug:
+                        traceback.print_exc()
+                else:
+                    scan_results.extend(res)
+                    hosts.extend([host] * len(res))
     proc_pool.join()
     return zip(hosts, scan_results)
 

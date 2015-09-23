@@ -20,6 +20,7 @@ import copy
 import os
 import re
 import shlex
+import signal
 from subprocess import Popen, PIPE, STDOUT
 import sys
 import threading
@@ -49,7 +50,7 @@ PYRO_TIMEOUT = 2
 def parse_cylc_scan_raw(text):
     """Parse cylc scan --raw formatted output.
 
-    Return a nested host->suite->property->value dictionary,
+    Return a nested host->suite->prop->value dictionary,
     where the properties are as named in the 4th column of
     cylc scan --raw output.
 
@@ -59,17 +60,20 @@ def parse_cylc_scan_raw(text):
     """
     host_suite_properties = {}
     for line in text.splitlines():
-        suite, owner, host, property, value = line.strip().split("|")
+        try:
+            suite, owner, host, prop, value = line.strip().split("|")
+        except ValueError:
+            continue
         host_suite_properties.setdefault(host, {}).setdefault(suite, {})
-        if property.startswith("states"):
+        if prop.startswith("states"):
             new_value = {}
             for item in value.split():
                 state, num = item.rsplit(":", 1)
                 new_value[state] = int(num)
             value = new_value
-        if property == "update-time":
+        if prop == "update-time":
             value = int(float(value))
-        host_suite_properties[host][suite][property] = value
+        host_suite_properties[host][suite][prop] = value
     return host_suite_properties
 
 
@@ -78,8 +82,7 @@ def get_hosts_suites_info(hosts, timeout=None, owner=None):
     host_suites_map = {}
     if timeout is None:
         timeout = PYRO_TIMEOUT
-    command = ["cylc", "scan", "--raw",
-               "--pyro-timeout=%s" % timeout]
+    command = ["cylc", "scan", "--raw", "--pyro-timeout=%s" % timeout]
     if owner:
         command.append("--owner=%s" % owner)
     if hosts:
@@ -91,11 +94,21 @@ def get_hosts_suites_info(hosts, timeout=None, owner=None):
         stderr = PIPE
     env = os.environ.copy()
     env["PATH"] = ":".join(sys.path) + ":" + env["PATH"]
-    popen = Popen(command, stdout=PIPE, stderr=stderr, env=env)
-    if popen.wait() == 0:
-        host_suites_map = parse_cylc_scan_raw(popen.communicate()[0])
-    else:
-        print >> sys.stderr, popen.communicate()[1]
+    proc = Popen(
+        command, stdout=PIPE, stderr=stderr, env=env, preexec_fn=os.setpgrp)
+    try:
+        out, err = proc.communicate()
+        if proc.wait():
+            if cylc.flags.debug:
+                sys.stderr.write(err)
+        else:
+            host_suites_map = parse_cylc_scan_raw(out)
+    finally:
+        if proc.poll() is None:
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+            except OSError:
+                pass
     for host, suites_map in host_suites_map.items():
         for suite, suite_info in suites_map.items():
             if suite_info.keys() == ["port"]:
@@ -116,10 +129,20 @@ def get_unscannable_suite_info(host, suite, owner=None):
         command.append("--debug")
     else:
         stderr = PIPE
-    popen = Popen(command + [suite], stdout=PIPE, stderr=stderr)
-    out = popen.communicate()[0]
-    if popen.wait():  # non-zero return code
-        return {}
+    proc = Popen(
+        command + [suite], stdout=PIPE, stderr=stderr, preexec_fn=os.setpgrp)
+    try:
+        out, err = proc.communicate()
+        if proc.wait():  # non-zero return code
+            if cylc.flags.debug:
+                sys.stderr.write(err)
+            return {}
+    finally:
+        if proc.poll() is None:
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+            except OSError:
+                pass
     suite_info = {}
     for line in out.rpartition("Begin task states")[2].splitlines():
         task_result = re.match("([^ ]+) : status=([^,]+), spawned", line)
