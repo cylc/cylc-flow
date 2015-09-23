@@ -18,7 +18,7 @@
 # Test remote job logs retrieval, requires compatible version of cylc on remote
 # job host.
 . "$(dirname "$0")/test_header"
-HOST=$(cylc get-global-config -i '[test battery]remote host')
+HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
 if [[ -z "${HOST}" ]]; then
     skip_all '[test battery]remote host: not defined'
 fi

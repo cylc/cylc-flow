@@ -17,7 +17,8 @@
 #-------------------------------------------------------------------------------
 # Test kill multiple jobs on localhost and a remote host
 . "$(dirname "$0")/test_header"
-export CYLC_TEST_HOST=$(cylc get-global-config -i '[test battery]remote host')
+export CYLC_TEST_HOST=$(
+    cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '[test battery]remote host: not defined'
 fi

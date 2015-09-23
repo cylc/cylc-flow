@@ -19,10 +19,11 @@
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"
-export CYLC_TEST_BATCH_TASK_HOST=$(cylc get-global-config -i \
-    "[test battery][batch systems][$BATCH_SYS_NAME]host")
-export CYLC_TEST_BATCH_SITE_DIRECTIVES=$(cylc get-global-config -i \
-    "[test battery][batch systems][$BATCH_SYS_NAME][directives]")
+RC_PREF="[test battery][batch systems][$BATCH_SYS_NAME]"
+export CYLC_TEST_BATCH_TASK_HOST=$( \
+    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')
+export CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
+    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
 if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
     skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"

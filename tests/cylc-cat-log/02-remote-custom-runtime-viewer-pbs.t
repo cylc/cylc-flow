@@ -18,20 +18,19 @@
 # Test "cylc cat-log" for viewing PBS runtime STDOUT/STDERR by a custom command
 . "$(dirname "$0")/test_header"
 
-export CYLC_TEST_HOST="$(cylc get-global-config -i \
-    '[test battery][batch systems][pbs]host')"
+RC_PREF='[test battery][batch systems][pbs]'
+export CYLC_TEST_HOST="$( \
+    cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '[test battery][batch systems][pbs]host: not defined'
 fi
-ERR_VIEWER="$(cylc get-global-config -i \
-    "[test battery][batch systems][pbs]err viewer")"
-OUT_VIEWER="$(cylc get-global-config -i \
-    "[test battery][batch systems][pbs]out viewer")"
+ERR_VIEWER="$(cylc get-global-config -i "${RC_PREF}err viewer" 2>'/dev/null')"
+OUT_VIEWER="$(cylc get-global-config -i "${RC_PREF}out viewer" 2>'/dev/null')"
 if [[ -z "${ERR_VIEWER}" || -z "${OUT_VIEWER}" ]]; then
     skip_all "[test battery][pbs]* viewer: not defined"
 fi
-export CYLC_TEST_DIRECTIVES="$(cylc get-global-config -i \
-    "[test battery][batch systems][pbs][directives]")"
+export CYLC_TEST_DIRECTIVES="$( \
+    cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"
 set_test_number 2
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
