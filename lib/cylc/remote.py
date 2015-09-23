@@ -25,10 +25,6 @@ import subprocess
 import sys
 from textwrap import TextWrapper
 
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.suite_host import is_remote_host
-from cylc.owner import is_remote_user
-from cylc.version import CYLC_VERSION
 import cylc.flags
 
 
@@ -68,8 +64,13 @@ class remrun(object):
             else:
                 self.args.append(arg)
 
-        self.is_remote = (
-            is_remote_user(self.owner) or is_remote_host(self.host))
+        if self.owner is None and self.host is None:
+            self.is_remote = False
+        else:
+            from cylc.suite_host import is_remote_host
+            from cylc.owner import is_remote_user
+            self.is_remote = (
+                is_remote_user(self.owner) or is_remote_host(self.host))
 
     def execute(self, force_required=False, env=None, path=None, dry_run=False):
         """Execute command on remote host.
@@ -80,6 +81,9 @@ class remrun(object):
         """
         if not self.is_remote:
             return False
+
+        from cylc.cfgspec.globalcfg import GLOBAL_CFG
+        from cylc.version import CYLC_VERSION
 
         name = os.path.basename(self.argv[0])[5:]  # /path/to/cylc-foo => foo
 

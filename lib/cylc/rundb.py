@@ -315,12 +315,12 @@ class CylcSuiteDAO(object):
 
     def execute_queued_items(self):
         """Execute queued items for each table."""
-        self.connect()
         will_retry = False
         for table in self.tables.values():
             # DELETE statements may have varying number of WHERE args
             # so we can only executemany for each identical template statement.
             for stmt, stmt_args_list in table.delete_queues.items():
+                self.connect()
                 if self._execute_stmt(table, stmt, stmt_args_list):
                     table.delete_queues.pop(stmt)
                 else:
@@ -328,6 +328,7 @@ class CylcSuiteDAO(object):
             # INSERT statements are uniform for each table, so all INSERT
             # statements can be executed using a single "executemany" call.
             if table.insert_queue:
+                self.connect()
                 if self._execute_stmt(
                         table, table.get_insert_stmt(), table.insert_queue):
                     table.insert_queue = []
@@ -336,10 +337,24 @@ class CylcSuiteDAO(object):
             # UPDATE statements can have varying number of SET and WHERE args
             # so we can only executemany for each identical template statement.
             for stmt, stmt_args_list in table.update_queues.items():
+                self.connect()
                 if self._execute_stmt(table, stmt, stmt_args_list):
                     table.update_queues.pop(stmt)
                 else:
                     will_retry = True
+        if self.conn is not None:
+            try:
+                self.conn.commit()
+            except sqlite3.Error:
+                if not self.is_public:
+                    raise 
+                self.conn.rollback()
+                if cylc.flags.debug:
+                    traceback.print_exc()
+                    sys.stderr.write(
+                        "WARNING: %s: db commit failed\n" % self.db_file_name)
+                will_retry = True
+        
         if will_retry:
             self.n_tries += 1
             logger = getLogger("main")
@@ -370,11 +385,9 @@ class CylcSuiteDAO(object):
         """
         try:
             self.conn.executemany(stmt, stmt_args_list)
-            self.conn.commit()
         except sqlite3.Error:
             if not self.is_public:
                 raise
-            self.conn.rollback()
             if cylc.flags.debug:
                 traceback.print_exc()
                 sys.stderr.write(

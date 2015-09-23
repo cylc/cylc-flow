@@ -59,7 +59,7 @@ while ! sqlite3 $SUITE_RUN_DIR/cylc-suite.db \
 do
     sleep 1
 done
-cmp_ok "$TEST_NAME-db-t1" - <<<'submitted'
+grep_ok "^\(submitted\|running\)$" "$TEST_NAME-db-t1"
 # Start the job again and see what happens
 mkdir -p $SUITE_RUN_DIR/work/1/t1/
 touch $SUITE_RUN_DIR/work/1/t1/file # Allow t1 to complete

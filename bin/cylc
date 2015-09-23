@@ -42,7 +42,8 @@ except OSError as exc:
     # (cylc reg SUITE PATH).
     sys.exit(exc)
 
-from cylc.version import CYLC_VERSION
+# Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
+import cylc
 from parsec.OrderedDict import OrderedDict
 
 
@@ -312,7 +313,7 @@ cycling weather and climate forecasting suites and related processing
 (but it can also be used for one-off workflows of non-cycling tasks).
 For detailed documentation see the Cylc User Guide (cylc doc --help).
 
-Version """ + CYLC_VERSION + """
+Version __CYLC_VERSION__
 
 The graphical user interface for cylc is "gcylc" (a.k.a. "cylc gui").
 
@@ -507,7 +508,8 @@ def set_environment_vars(args):
 
 # no arguments: print help and exit
 if len(sys.argv) == 1:
-    print usage
+    from cylc.version import CYLC_VERSION
+    print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
     pretty_print(catsum, categories)
     sys.exit(1)
 
@@ -540,10 +542,12 @@ if len(args) == 1:
         sys.exit(0)
     if is_help(args[0]):
         # cylc help
-        print usage
+        from cylc.version import CYLC_VERSION        
+        print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
         pretty_print(catsum, categories)
         sys.exit(0)
     if (args[0] == '-v' or args[0] == '--version'):
+        from cylc.version import CYLC_VERSION                
         print CYLC_VERSION
         sys.exit(0)
 
