@@ -145,8 +145,8 @@ class Prerequisite(object):
         res = []
         if self.raw_conditional_expression:
             for label, val in self.satisfied.items():
-                res.append(['    LABEL: %s = %s' % (label, self.message[label]), val])
-            res.append(['CONDITION: %' % self.raw_conditional_expression, self.is_satisfied()])
+                res.append(['    LABEL: %s = %s' % (label, self.messages[label]), val])
+            res.append(['CONDITION: %s' % self.raw_conditional_expression, self.is_satisfied()])
         elif self.satisfied:
             for label, val in self.satisfied.items():
                 res.append([self.messages[label], val])
