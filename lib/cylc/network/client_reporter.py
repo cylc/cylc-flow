@@ -58,7 +58,7 @@ class PyroClientReporter(object):
             name in ["SuiteCommandServer",
                      "ExtTriggerServer",
                      "BroadcastServer"] or
-            (name != "TaskMessageServer" and
+            (name not in ["SuiteIdServer", "TaskMessageServer"] and
              caller.uuid not in self.clients))
         if log_me:
             logging.getLogger("main").info(
