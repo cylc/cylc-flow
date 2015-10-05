@@ -19,6 +19,7 @@
 import logging
 import datetime
 import threading
+import time
 import cylc.flags
 
 
@@ -27,7 +28,10 @@ class PyroClientReporter(object):
 
     _INSTANCE = None
     CLIENT_FORGET_SEC = 60
+    CLIENT_ID_MIN_REPORT_RATE = 1.0  # 1 Hz
+    CLIENT_ID_REPORT_SECONDS = 3600  # Report every 1 hour.
     LOG_COMMAND_TMPL = '[client-command] %s %s@%s:%s %s'
+    LOG_IDENTIFY_TMPL = '[client-identify] %d id requests in PT%dS'
     LOG_SIGNOUT_TMPL = '[client-sign-out] %s@%s:%s %s'
     LOG_FORGET_TMPL = '[client-forget] %s'
 
@@ -40,6 +44,8 @@ class PyroClientReporter(object):
 
     def __init__(self):
         self.clients = {}  # {uuid: time-of-last-connect}
+        self._id_start_time = time.time()  # Start of id requests measurement.
+        self._num_id_requests = 0  # Number of client id requests.
 
     def report(self, request, server_obj):
         """Log client requests with identifying information.
@@ -65,8 +71,30 @@ class PyroClientReporter(object):
                 self.__class__.LOG_COMMAND_TMPL % (
                     request, caller.user, caller.host, caller.prog_name,
                     caller.uuid))
+        if name == "SuiteIdServer":
+            self.report_id_requests()
+            self._num_id_requests += 1
         self.clients[caller.uuid] = datetime.datetime.utcnow()
         self._housekeep()
+
+    def report_id_requests(self):
+        """Report the frequency of identification (scan) requests."""
+        current_time = time.time()
+        interval = current_time - self._id_start_time
+        if interval > self.CLIENT_ID_REPORT_SECONDS:
+            rate = float(self._num_id_requests) / interval
+            if rate > self.CLIENT_ID_MIN_REPORT_RATE:
+                logging.getLogger("main").warning(
+                    self.__class__.LOG_IDENTIFY_TMPL % (
+                        self._num_id_requests, interval)
+                )
+            elif cylc.flags.debug:
+                logging.getLogger("main").info(
+                    self.__class__.LOG_IDENTIFY_TMPL % (
+                        self._num_id_requests, interval)
+                )
+            self._id_start_time = current_time
+            self._num_id_requests = 0
 
     def signout(self, server_obj):
         """Force forget this client (for use by GUI etc.)."""
