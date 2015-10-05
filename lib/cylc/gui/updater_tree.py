@@ -411,9 +411,10 @@ class TreeUpdater(threading.Thread):
             # For each id, calculate the new path and add or replace that path
             # in the self.ttreestore.
             for i, point_string in enumerate(point_strings):
-                p_data = [ None ] * 7
-                if "root" in new_fam_data[point_string]:
+                try:
                     p_data = new_fam_data[point_string]["root"]
+                except KeyError:
+                    p_data = [None] * 7
                 p_path = (i,)
                 p_row_id = (point_string, point_string)
                 p_data = list(p_row_id) + p_data
@@ -459,9 +460,10 @@ class TreeUpdater(threading.Thread):
                             f_path = family_paths[fam]
                         else:
                             # Add family to tree
-                            f_data = [ None ] * 7
-                            if fam in new_fam_data[point_string]:
+                            try:
                                 f_data = new_fam_data[point_string][fam]
+                            except KeyError:
+                                f_data = [None] * 7
                             if i > 0:
                                 parent_fam = named_path[i - 1]
                             else:
@@ -519,14 +521,13 @@ class TreeUpdater(threading.Thread):
             # Update the tree in place - no row has been added or deleted.
             # Our row_id_iters_left cache is still valid.
             for point_string, name, is_fam in sorted(update_row_ids):
-                if is_fam:
-                    if name == point_string:
-                        data = new_fam_data[point_string]["root"]
-                    else:
-                        data = new_fam_data[point_string][name]
-                else:
-                    data = new_data[point_string][name]
                 try:
+                    if is_fam and name == point_string:
+                        data = new_fam_data[point_string]["root"]
+                    elif is_fam:
+                        data = new_fam_data[point_string][name]
+                    else:
+                        data = new_data[point_string][name]
                     iter_, path = row_id_iters_left[(point_string, name)]
                 except KeyError:
                     if not is_fam:
