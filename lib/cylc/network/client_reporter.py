@@ -72,8 +72,8 @@ class PyroClientReporter(object):
                     request, caller.user, caller.host, caller.prog_name,
                     caller.uuid))
         if name == "SuiteIdServer":
+            self._num_id_requests += 1            
             self.report_id_requests()
-            self._num_id_requests += 1
         self.clients[caller.uuid] = datetime.datetime.utcnow()
         self._housekeep()
 
