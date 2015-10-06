@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-08-27 18:57:00"> 
+<meta name="date" content="2015-10-07 00:00:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -36,17 +36,17 @@ href="#x19-396000B.7">[pyro]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.8 <a 
 href="#x19-400000B.8">[hosts]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.9 <a 
-href="#x19-414000B.9">[suite host self-identification] </a></span>
+href="#x19-418000B.9">[suite host self-identification] </a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.10 <a 
-href="#x19-418000B.10">[suite host scanning]</a></span>
+href="#x19-422000B.10">[suite host scanning]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.11 <a 
-href="#x19-420000B.11">[task events]</a></span>
+href="#x19-424000B.11">[task events]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.12 <a 
-href="#x19-421000B.12">[test battery]</a></span>
+href="#x19-425000B.12">[test battery]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.13 <a 
-href="#x19-428000B.13">[cylc]</a></span>
+href="#x19-434000B.13">[cylc]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.14 <a 
-href="#x19-436000B.14">[authentication]</a></span>
+href="#x19-442000B.14">[authentication]</a></span>
    </div>
 <!--l. 7--><p class="indent" >   This section defines all legal items and values for cylc site and user config files. See <span 
 class="cmti-10">Site And User Config Files</span>
@@ -888,7 +888,7 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">use login shell </span></span>
    Whether to use a login shell or not for remote command invocation. By default cylc runs remote ssh commands
 using a login shell, <!--l. 482-->
-   <div class="lstlisting" id="listing-257"><span class="label"><a 
+   <div class="lstlisting" id="listing-258"><span class="label"><a 
  id="x19-407001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -919,7 +919,7 @@ to get, <!--l. 489-->
                                                                                          
 
                                                                                          
-   <div class="lstlisting" id="listing-258"><span class="label"><a 
+   <div class="lstlisting" id="listing-259"><span class="label"><a 
  id="x19-407002r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1045,22 +1045,97 @@ class="cmbx-10">retrieve job logs retry delays</span></span>
    Global default for the&#x00A0;<a 
 href="cug-htmlse17.html#x18-314000A.5.1.20.5">A.5.1.20.5<!--tex4ht:ref: runtime-remote-retrieve-job-logs-retry-delays --></a> setting for the specified host.
 <!--l. 551--><p class="noindent" >
-<!--l. 551--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
- id="x19-414000B.9"></a>[suite host self-identification]  </span></h4>
-<!--l. 553--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
+<!--l. 551--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-414000B.8.1.13"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOSTS </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">batch systems </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">JOB SUBMISSION METHOD </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">err tailer</span></span>
+   A command template (with <span class="lstinline"><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) that can be used to tail-follow the stderr stream of a
+running job if JOB SUBMISSION METHOD does not use the normal location.
+<!--l. 557--><p class="noindent" >
+<!--l. 557--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-415000B.8.1.14"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOSTS </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">batch systems </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">JOB SUBMISSION METHOD </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">out tailer</span></span>
+   A command template (with <span class="lstinline"><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) that can be used to tail-follow the stdout stream of a
+running job if JOB SUBMISSION METHOD does not use the normal location.
+<!--l. 563--><p class="noindent" >
+<!--l. 563--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-416000B.8.1.15"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOSTS </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">batch systems </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">JOB SUBMISSION METHOD </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">err viewer</span></span>
+   A command template (with <span class="lstinline"><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) that can be used to view the stderr stream of a running
+job if JOB SUBMISSION METHOD does not use the normal location.
+<!--l. 569--><p class="noindent" >
+<!--l. 569--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-417000B.8.1.16"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">HOSTS </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">batch systems </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">JOB SUBMISSION METHOD </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">out viewer</span></span>
+   A command template (with <span class="lstinline"><span 
+class="pcrr7t-">%(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) that can be used to view the stdout stream of a running
+job if JOB SUBMISSION METHOD does not use the normal location.
+<!--l. 575--><p class="noindent" >
+<!--l. 575--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
+ id="x19-418000B.9"></a>[suite host self-identification]  </span></h4>
+<!--l. 577--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_HOST</span></span>)
 so that task messages can target the right suite on the right host.
-<!--l. 561--><p class="noindent" >
-<!--l. 561--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
- id="x19-415000B.9.1"></a>[suite host self-identification] <span 
+<!--l. 585--><p class="noindent" >
+<!--l. 585--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
+ id="x19-419000B.9.1"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>method  </span></h4>
-<!--l. 563--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
+<!--l. 587--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
 class="cmti-10">name </span>method cylc asks the
 suite host for its host name. This should resolve on remote task hosts to the IP address of the suite host; if it
 doesn&#8217;t, adjust network settings or use one of the other methods. For the <span 
 class="cmti-10">address </span>method, cylc attempts to use a
 special external &#8220;target address&#8221; to determine the IP address of the suite host as seen by remote task hosts
+                                                                                         
+
+                                                                                         
 (in-source documentation in <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -1092,19 +1167,16 @@ class="cmti-10">host</span>, below)</li></ul>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>name</li></ul>
-<!--l. 585--><p class="noindent" >
-<!--l. 585--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
- id="x19-416000B.9.2"></a>[suite host self-identification] <span 
+<!--l. 609--><p class="noindent" >
+<!--l. 609--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
+ id="x19-420000B.9.2"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>target  </span></h4>
-<!--l. 587--><p class="indent" >   This item is required for the <span 
+<!--l. 611--><p class="indent" >   This item is required for the <span 
 class="cmti-10">address </span>self-identification method. If your suite host sees the internet, a common
 address such as <span class="lstinline"><span 
 class="pcrr7t-">google</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">com</span></span> will do; otherwise choose a host visible on your intranet.
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string (an inter- or intranet URL visible from the suite host)
@@ -1114,11 +1186,11 @@ class="cmti-10">default: </span><span class="lstinline"><span
 class="pcrr7t-">google</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">com</span></span></li></ul>
-<!--l. 597--><p class="noindent" >
-<!--l. 597--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
- id="x19-417000B.9.3"></a>[suite host self-identification] <span 
+<!--l. 621--><p class="noindent" >
+<!--l. 621--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
+ id="x19-421000B.9.3"></a>[suite host self-identification] <span 
 class="cmsy-10">&#x2192; </span>host  </span></h4>
-<!--l. 599--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
+<!--l. 623--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
 class="cmti-10">hardwired</span>
 self-identification method.
      <ul class="itemize1">
@@ -1127,56 +1199,56 @@ class="cmti-10">type: </span>string (host name or IP address)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 606--><p class="noindent" >
-<!--l. 606--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
- id="x19-418000B.10"></a>[suite host scanning] </span></h4>
-<!--l. 608--><p class="indent" >   Utilities such as <span class="lstinline"><span 
+<!--l. 630--><p class="noindent" >
+<!--l. 630--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
+ id="x19-422000B.10"></a>[suite host scanning] </span></h4>
+<!--l. 632--><p class="indent" >   Utilities such as <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">gsummary</span></span> need to scan hosts for running suites.
-<!--l. 611--><p class="noindent" >
-<!--l. 611--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
- id="x19-419000B.10.1"></a>[suite host scanning] <span 
+                                                                                         
+
+                                                                                         
+<!--l. 635--><p class="noindent" >
+<!--l. 635--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
+ id="x19-423000B.10.1"></a>[suite host scanning] <span 
 class="cmsy-10">&#x2192; </span>hosts  </span></h4>
-<!--l. 613--><p class="indent" >   A list of hosts to scan for running suites.
+<!--l. 637--><p class="indent" >   A list of hosts to scan for running suites.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>comma-separated list of host names or IP addresses.
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>localhost</li></ul>
-<!--l. 619--><p class="noindent" >
-<!--l. 619--><p class="indent" >    <h4 id="B.11" class="subsectionHead"> <span class="titlemark"> <a href="#B.11"> B.11</a>  <a 
- id="x19-420000B.11"></a>[task events] </span></h4>
-<!--l. 621--><p class="indent" >   Global site/user defaults for&#x00A0;<a 
+<!--l. 643--><p class="noindent" >
+<!--l. 643--><p class="indent" >    <h4 id="B.11" class="subsectionHead"> <span class="titlemark"> <a href="#B.11"> B.11</a>  <a 
+ id="x19-424000B.11"></a>[task events] </span></h4>
+<!--l. 645--><p class="indent" >   Global site/user defaults for&#x00A0;<a 
 href="cug-htmlse17.html#x18-321000A.5.1.22">A.5.1.22<!--tex4ht:ref: TaskEventHandling2 --></a>.
-<!--l. 623--><p class="noindent" >
-<!--l. 623--><p class="indent" >    <h4 id="B.12" class="subsectionHead"> <span class="titlemark"> <a href="#B.12"> B.12</a>  <a 
- id="x19-421000B.12"></a>[test battery] </span></h4>
-<!--l. 625--><p class="indent" >   Settings for the automated development tests.
-<!--l. 627--><p class="noindent" >
-<!--l. 627--><p class="indent" >    <h4 id="B.12.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.1"> B.12.1</a>  <a 
- id="x19-422000B.12.1"></a>[test battery] <span 
+<!--l. 647--><p class="noindent" >
+<!--l. 647--><p class="indent" >    <h4 id="B.12" class="subsectionHead"> <span class="titlemark"> <a href="#B.12"> B.12</a>  <a 
+ id="x19-425000B.12"></a>[test battery] </span></h4>
+<!--l. 649--><p class="indent" >   Settings for the automated development tests.
+<!--l. 651--><p class="noindent" >
+<!--l. 651--><p class="indent" >    <h4 id="B.12.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.1"> B.12.1</a>  <a 
+ id="x19-426000B.12.1"></a>[test battery] <span 
 class="cmsy-10">&#x2192; </span>remote host with shared fs </span></h4>
-<!--l. 629--><p class="indent" >   The name of a remote host with shared HOME file system as the host running the test battery.
-                                                                                         
-
-                                                                                         
-<!--l. 632--><p class="noindent" >
-<!--l. 632--><p class="indent" >    <h4 id="B.12.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.2"> B.12.2</a>  <a 
- id="x19-423000B.12.2"></a>[test battery] <span 
+<!--l. 653--><p class="indent" >   The name of a remote host with shared HOME file system as the host running the test battery.
+<!--l. 656--><p class="noindent" >
+<!--l. 656--><p class="indent" >    <h4 id="B.12.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.2"> B.12.2</a>  <a 
+ id="x19-427000B.12.2"></a>[test battery] <span 
 class="cmsy-10">&#x2192; </span>remote host </span></h4>
-<!--l. 634--><p class="indent" >   The name of a remote host without shared HOME file system as the host running the test battery.
-<!--l. 637--><p class="noindent" >
-<!--l. 637--><p class="indent" >    <h4 id="B.12.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.3"> B.12.3</a>  <a 
- id="x19-424000B.12.3"></a>[test battery] <span 
+<!--l. 658--><p class="indent" >   The name of a remote host without shared HOME file system as the host running the test battery.
+<!--l. 661--><p class="noindent" >
+<!--l. 661--><p class="indent" >    <h4 id="B.12.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.3"> B.12.3</a>  <a 
+ id="x19-428000B.12.3"></a>[test battery] <span 
 class="cmsy-10">&#x2192; </span>[batch systems] </span></h4>
-<!--l. 639--><p class="indent" >   Settings for testing supported batch systems (job submission methods). The tests for a batch system are only
+<!--l. 663--><p class="indent" >   Settings for testing supported batch systems (job submission methods). The tests for a batch system are only
 performed if the batch system is available on the test host or a remote host accessible via SSH from the test
 host.
-<!--l. 643--><p class="noindent" >
-<!--l. 643--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-425000B.12.3.1"></a><span 
+<!--l. 667--><p class="noindent" >
+<!--l. 667--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-429000B.12.3.1"></a><span 
 class="cmbx-10">[test battery] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[batch systems] </span><span 
@@ -1188,9 +1260,9 @@ class="cmbx-10">_</span><span
 class="cmbx-10">_]</span></span>
    __NAME__ is the name of a supported batch system with automated tests. This can currently be &#8221;loadleveler&#8221;,
 &#8221;lsf&#8221;, &#8221;pbs&#8221;, &#8221;sge&#8221; and/or &#8221;slurm&#8221;.
-<!--l. 648--><p class="noindent" >
-<!--l. 648--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-426000B.12.3.1.1"></a><span 
+<!--l. 672--><p class="noindent" >
+<!--l. 672--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-430000B.12.3.1.1"></a><span 
 class="cmbx-10">[test battery] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[batch systems] </span><span 
@@ -1205,9 +1277,12 @@ class="cmbx-10">host</span></span>
    The name of a host where commands for this batch system is available. Use &#8221;localhost&#8221; if the batch system is
 available on the host running the test battery. Any specified remote host should be accessible via SSH from the host
 running the test battery.
-<!--l. 655--><p class="noindent" >
-<!--l. 655--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-427000B.12.3.1.2"></a><span 
+                                                                                         
+
+                                                                                         
+<!--l. 679--><p class="noindent" >
+<!--l. 679--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-431000B.12.3.1.2"></a><span 
 class="cmbx-10">[test battery] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[batch systems] </span><span 
@@ -1221,82 +1296,122 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">[directives]</span></span>
    The minimum set of directives that must be supplied to the batch system on the site to initiate jobs for the
 tests.
-<!--l. 660--><p class="noindent" >
-<!--l. 660--><p class="indent" >    <h4 id="B.13" class="subsectionHead"> <span class="titlemark"> <a href="#B.13"> B.13</a>  <a 
- id="x19-428000B.13"></a>[cylc] </span></h4>
-<!--l. 662--><p class="indent" >   Default values for entries in the suite.rc [cylc] section.
-<!--l. 664--><p class="noindent" >
-<!--l. 664--><p class="indent" >    <h4 id="B.13.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.1"> B.13.1</a>  <a 
- id="x19-429000B.13.1"></a>[cylc] <span 
+<!--l. 684--><p class="noindent" >
+<!--l. 684--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-432000B.12.3.1.3"></a><span 
+class="cmbx-10">[test battery] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">[batch systems] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">[</span><span 
+class="cmbx-10">_</span><span 
+class="cmbx-10">_NAME</span><span 
+class="cmbx-10">_</span><span 
+class="cmbx-10">_] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">err viewer</span></span>
+   The command template (with <span class="lstinline"><span 
+class="pcrr7t-">\%(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) for testing the run time stderr viewer functionality
+for this batch system.
+<!--l. 689--><p class="noindent" >
+<!--l. 689--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-433000B.12.3.1.4"></a><span 
+class="cmbx-10">[test battery] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">[batch systems] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">[</span><span 
+class="cmbx-10">_</span><span 
+class="cmbx-10">_NAME</span><span 
+class="cmbx-10">_</span><span 
+class="cmbx-10">_] </span><span 
+class="cmsy-10">&#x2192; </span><span 
+class="cmbx-10">out viewer</span></span>
+   The command template (with <span class="lstinline"><span 
+class="pcrr7t-">\%(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) for testing the run time stdout viewer functionality
+for this batch system.
+<!--l. 694--><p class="noindent" >
+<!--l. 694--><p class="indent" >    <h4 id="B.13" class="subsectionHead"> <span class="titlemark"> <a href="#B.13"> B.13</a>  <a 
+ id="x19-434000B.13"></a>[cylc] </span></h4>
+<!--l. 696--><p class="indent" >   Default values for entries in the suite.rc [cylc] section.
+<!--l. 698--><p class="noindent" >
+<!--l. 698--><p class="indent" >    <h4 id="B.13.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.1"> B.13.1</a>  <a 
+ id="x19-435000B.13.1"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>UTC mode </span></h4>
-<!--l. 667--><p class="indent" >   Allows you to set a default value for UTC mode in a suite at the site level. See &#x00A0;<a 
+<!--l. 701--><p class="indent" >   Allows you to set a default value for UTC mode in a suite at the site level. See &#x00A0;<a 
 href="cug-htmlse17.html#x18-231000A.2.2">A.2.2<!--tex4ht:ref: UTC-mode --></a> for details.
-<!--l. 670--><p class="noindent" >
-<!--l. 670--><p class="indent" >    <h4 id="B.13.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.2"> B.13.2</a>  <a 
- id="x19-430000B.13.2"></a>[cylc] <span 
+<!--l. 704--><p class="noindent" >
+<!--l. 704--><p class="indent" >    <h4 id="B.13.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.2"> B.13.2</a>  <a 
+ id="x19-436000B.13.2"></a>[cylc] <span 
 class="cmsy-10">&#x2192; </span>[event hooks] </span></h4>
-<!--l. 673--><p class="indent" >   You can define site defaults for each of the following options, details of which can be found under
+<!--l. 707--><p class="indent" >   You can define site defaults for each of the following options, details of which can be found under
 &#x00A0;<a 
 href="cug-htmlse17.html#x18-237000A.2.8">A.2.8<!--tex4ht:ref: SuiteEventHandling --></a>:
-<!--l. 676--><p class="noindent" >
-<!--l. 676--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-431000B.13.2.0.3"></a><span 
+<!--l. 710--><p class="noindent" >
+<!--l. 710--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-437000B.13.2.0.5"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[event hooks] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">startup handler</span></span>
-                                                                                         
-
-                                                                                         
-<!--l. 678--><p class="noindent" >
-<!--l. 678--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-432000B.13.2.0.4"></a><span 
+<!--l. 712--><p class="noindent" >
+<!--l. 712--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-438000B.13.2.0.6"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[event hooks] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">shutdown handler</span></span>
-<!--l. 680--><p class="noindent" >
-<!--l. 680--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-433000B.13.2.0.5"></a><span 
+<!--l. 714--><p class="noindent" >
+<!--l. 714--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-439000B.13.2.0.7"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[event hooks] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">timeout handler</span></span>
-<!--l. 682--><p class="noindent" >
-<!--l. 682--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-434000B.13.2.0.6"></a><span 
+<!--l. 716--><p class="noindent" >
+<!--l. 716--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-440000B.13.2.0.8"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[event hooks] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">timeout</span></span>
-<!--l. 684--><p class="noindent" >
-<!--l. 684--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-435000B.13.2.0.7"></a><span 
+                                                                                         
+
+                                                                                         
+<!--l. 718--><p class="noindent" >
+<!--l. 718--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-441000B.13.2.0.9"></a><span 
 class="cmbx-10">[cylc] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">[event hooks] </span><span 
 class="cmsy-10">&#x2192; </span><span 
 class="cmbx-10">abort on timeout</span></span>
-<!--l. 686--><p class="noindent" >
-<!--l. 686--><p class="indent" >    <h4 id="B.14" class="subsectionHead"> <span class="titlemark"> <a href="#B.14"> B.14</a>  <a 
- id="x19-436000B.14"></a>[authentication] </span></h4>
-<!--l. 689--><p class="indent" >   Authentication of client programs with suite daemons can be configured here, and overridden in suites if
+<!--l. 720--><p class="noindent" >
+<!--l. 720--><p class="indent" >    <h4 id="B.14" class="subsectionHead"> <span class="titlemark"> <a href="#B.14"> B.14</a>  <a 
+ id="x19-442000B.14"></a>[authentication] </span></h4>
+<!--l. 723--><p class="indent" >   Authentication of client programs with suite daemons can be configured here, and overridden in suites if
 necessary (see&#x00A0;<a 
 href="cug-htmlse17.html#x18-253000A.3">A.3<!--tex4ht:ref: SuiteAuth --></a>).
-<!--l. 692--><p class="indent" >   The suite-specific passphrase must be installed on a user&#8217;s account to authorize full control privileges (see&#x00A0;<a 
+<!--l. 726--><p class="indent" >   The suite-specific passphrase must be installed on a user&#8217;s account to authorize full control privileges (see&#x00A0;<a 
 href="cug-htmlse7.html#x8-330007.5">7.5<!--tex4ht:ref: tutPassphrases --></a>
 and&#x00A0;<a 
 href="cug-htmlse12.html#x13-17100012.6">12.6<!--tex4ht:ref: ConnectionAuthentication --></a>). In the future we plan to move to a more traditional user account model so that each authorized user can
 have their own password.
-<!--l. 698--><p class="noindent" >
-<!--l. 698--><p class="indent" >    <h4 id="B.14.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.14.1"> B.14.1</a>  <a 
- id="x19-437000B.14.1"></a>[authentication] <span 
+<!--l. 732--><p class="noindent" >
+<!--l. 732--><p class="indent" >    <h4 id="B.14.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.14.1"> B.14.1</a>  <a 
+ id="x19-443000B.14.1"></a>[authentication] <span 
 class="cmsy-10">&#x2192; </span>public </span></h4>
-<!--l. 700--><p class="indent" >   This sets the client privilege level for public access - i.e.&#x00A0;no suite passphrase required.
+<!--l. 734--><p class="indent" >   This sets the client privilege level for public access - i.e.&#x00A0;no suite passphrase required.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string (must be one of the following options)

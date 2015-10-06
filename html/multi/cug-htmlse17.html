@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-08-27 18:57:00"> 
+<meta name="date" content="2015-10-07 00:00:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -137,7 +137,7 @@ even if the system clock is set to local time. Clock-trigger tasks will trigger 
 time is equal to their cycle point date-time plus offset; other time values used, reported, or logged by
 the suite daemon will usually also be in UTC. The default for this can be set at the site level (see
 &#x00A0;<a 
-href="cug-htmlse18.html#x19-429000B.13.1">B.13.1<!--tex4ht:ref: SiteUTCMode --></a>).
+href="cug-htmlse18.html#x19-435000B.13.1">B.13.1<!--tex4ht:ref: SiteUTCMode --></a>).
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
@@ -323,7 +323,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">suite</span></span> is a simple suite event
 handler.
 <!--l. 201--><p class="indent" >   Suite event handlers are called by the suite daemon with the following arguments: <!--l. 202-->
-   <div class="lstlisting" id="listing-244"><span class="label"><a 
+   <div class="lstlisting" id="listing-245"><span class="label"><a 
  id="x18-237001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">suite</span><span 
@@ -372,7 +372,7 @@ class="cmbx-10">shutdown </span>- the suite is shutting down
      <li class="itemize"><span 
 class="cmbx-10">timeout </span>- the suite has timed out</li></ul>
 <!--l. 225--><p class="indent" >   Default values for these can be set at the site level via the siterc file (see &#x00A0;<a 
-href="cug-htmlse18.html#x19-430000B.13.2">B.13.2<!--tex4ht:ref: SiteCylcHooks --></a>).
+href="cug-htmlse18.html#x19-436000B.13.2">B.13.2<!--tex4ht:ref: SiteCylcHooks --></a>).
 <!--l. 228--><p class="indent" >   Item details:
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -405,7 +405,7 @@ class="cmbx-10">timeout</span></span>
    If a timeout is set and the timeout event is handled, the timeout event handler(s) will be called if the suite times
 out before it finishes. The timer is set initially at suite start up. It is possible to set a default for this at the site level
 (see &#x00A0;<a 
-href="cug-htmlse18.html#x19-430000B.13.2">B.13.2<!--tex4ht:ref: SiteCylcHooks --></a>).
+href="cug-htmlse18.html#x19-436000B.13.2">B.13.2<!--tex4ht:ref: SiteCylcHooks --></a>).
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>ISO 8601 duration/interval representation (e.g. <span class="lstinline"><span 
@@ -446,7 +446,7 @@ class="cmsy-10">&#x2192; </span><span
 class="cmbx-10">abort on timeout</span></span>
    If a suite timer is set (above) this will cause the suite to abort with error status if the suite times out while still
 running. It is possible to set a default for this at the site level (see &#x00A0;<a 
-href="cug-htmlse18.html#x19-430000B.13.2">B.13.2<!--tex4ht:ref: SiteCylcHooks --></a>).
+href="cug-htmlse18.html#x19-436000B.13.2">B.13.2<!--tex4ht:ref: SiteCylcHooks --></a>).
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
@@ -485,7 +485,7 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_SUITE_RUN_DIR</span></span> are not passed to task event handlers by
      default, but you can make them available by extracting them to the cylc environment like this:
      <!--l. 298-->
-     <div class="lstlisting" id="listing-245"><span class="label"><a 
+     <div class="lstlisting" id="listing-246"><span class="label"><a 
  id="x18-243001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">cylc</span><span 
@@ -734,15 +734,15 @@ class="cmti-10">default: </span>PT1M (1 minute)</li></ul>
 <!--l. 430--><p class="indent" >    <h4 id="A.3" class="subsectionHead"> <span class="titlemark"> <a href="#A.3"> A.3</a>  <a 
  id="x18-253000A.3"></a>[authentication] </span></h4>
 <!--l. 433--><p class="indent" >   Authentication of client programs with suite daemons can be configured in the global site/user files (<a 
-href="cug-htmlse18.html#x19-436000B.14">B.14<!--tex4ht:ref: GlobalAuth --></a>) and
+href="cug-htmlse18.html#x19-442000B.14">B.14<!--tex4ht:ref: GlobalAuth --></a>) and
 overridden here if necessary. See&#x00A0;<a 
-href="cug-htmlse18.html#x19-436000B.14">B.14<!--tex4ht:ref: GlobalAuth --></a> for more information.
+href="cug-htmlse18.html#x19-442000B.14">B.14<!--tex4ht:ref: GlobalAuth --></a> for more information.
 <!--l. 437--><p class="noindent" >
 <!--l. 437--><p class="indent" >    <h4 id="A.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#A.3.1"> A.3.1</a>  <a 
  id="x18-254000A.3.1"></a>[authentication] <span 
 class="cmsy-10">&#x2192; </span>public </span></h4>
 <!--l. 439--><p class="indent" >   The client privilege level granted for public access - i.e.&#x00A0;no suite passphrase required. See&#x00A0;<a 
-href="cug-htmlse18.html#x19-436000B.14">B.14<!--tex4ht:ref: GlobalAuth --></a> for legal
+href="cug-htmlse18.html#x19-442000B.14">B.14<!--tex4ht:ref: GlobalAuth --></a> for legal
 values.
 <!--l. 442--><p class="noindent" >
 <!--l. 442--><p class="indent" >    <h4 id="A.4" class="subsectionHead"> <span class="titlemark"> <a href="#A.4"> A.4</a>  <a 
@@ -998,7 +998,7 @@ class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
 class="cmti-10">example: </span><!--l. 623-->
-     <div class="lstlisting" id="listing-246"><span class="label"><a 
+     <div class="lstlisting" id="listing-247"><span class="label"><a 
  id="x18-269001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1051,7 +1051,7 @@ class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
 class="cmti-10">example: </span><!--l. 643-->
-     <div class="lstlisting" id="listing-247"><span class="label"><a 
+     <div class="lstlisting" id="listing-248"><span class="label"><a 
  id="x18-270001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1098,7 +1098,7 @@ class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
 class="cmti-10">example: </span>(note the comma and line-continuation character) <!--l. 658-->
-     <div class="lstlisting" id="listing-248"><span class="label"><a 
+     <div class="lstlisting" id="listing-249"><span class="label"><a 
  id="x18-271001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -1390,7 +1390,7 @@ class="cmti-10">type: </span>string
      </li>
      <li class="itemize"><span 
 class="cmti-10">examples: </span><!--l. 791-->
-     <div class="lstlisting" id="listing-249"><span class="label"><a 
+     <div class="lstlisting" id="listing-250"><span class="label"><a 
  id="x18-280001r1"></a></span><span 
 class="pcrr7t-">graph</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2078,7 +2078,7 @@ class="cmti-10">default: </span>(none)
      <li class="itemize"><span 
 class="cmti-10">example: </span>you can set URLs to all tasks in a suite by putting something like the following in the root
      namespace: <!--l. 895-->
-     <div class="lstlisting" id="listing-250"><span class="label"><a 
+     <div class="lstlisting" id="listing-251"><span class="label"><a 
  id="x18-286001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
@@ -2260,7 +2260,7 @@ class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
 class="cmti-10">example: </span><!--l. 948-->
-     <div class="lstlisting" id="listing-251"><span class="label"><a 
+     <div class="lstlisting" id="listing-252"><span class="label"><a 
  id="x18-289001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3345,7 +3345,7 @@ values:
      </li>
      <li class="itemize">%(message)s: event message, if any</li></ul>
 <!--l. 1370--><p class="indent" >   Otherwise, the command line will be called with the following arguments: <!--l. 1371-->
-   <div class="lstlisting" id="listing-252"><span class="label"><a 
+   <div class="lstlisting" id="listing-253"><span class="label"><a 
  id="x18-316001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">task</span><span 
@@ -3573,7 +3573,7 @@ values:
      </li>
      <li class="itemize">%(message)s: event message, if any</li></ul>
 <!--l. 1473--><p class="indent" >   Otherwise, the command line will be called with the following command line arguments: <!--l. 1475-->
-   <div class="lstlisting" id="listing-253"><span class="label"><a 
+   <div class="lstlisting" id="listing-254"><span class="label"><a 
  id="x18-321001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">task</span><span 
@@ -4306,7 +4306,7 @@ class="cmti-10">default: </span>(none)
      <li class="itemize"> <span 
 class="cmti-10">examples:</span></li></ul>
 <!--l. 1692-->
-   <div class="lstlisting" id="listing-254"><span class="label"><a 
+   <div class="lstlisting" id="listing-255"><span class="label"><a 
  id="x18-341001r1"></a></span><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4715,7 +4715,7 @@ class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
 class="cmti-10">example: </span><!--l. 1879-->
-     <div class="lstlisting" id="listing-255"><span class="label"><a 
+     <div class="lstlisting" id="listing-256"><span class="label"><a 
  id="x18-359001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -4787,7 +4787,7 @@ class="cmti-10">default: </span>(none)
      </li>
      <li class="itemize"><span 
 class="cmti-10">example: </span>(with reference to the node groups defined above) <!--l. 1907-->
-     <div class="lstlisting" id="listing-256"><span class="label"><a 
+     <div class="lstlisting" id="listing-257"><span class="label"><a 
  id="x18-361001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 

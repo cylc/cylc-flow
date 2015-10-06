@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.7.0">6.7.0</a>
     <li><a href="#6.6.1">6.6.1</a>
     <li><a href="#6.6.0">6.6.0</a>
     <li><a href="#6.5.0">6.5.0</a>
@@ -61,6 +62,56 @@
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
 
+<a name="6.7.0"/>
+    <h2>6.7.0</h2>
+
+    <h3>6.7.0 enhancements</h3>
+    <ul>
+        <li> Suite identity requests from <code>cylc scan</code> and <code>cylc
+        gscan</code> are now only logged in debug mode, or in aggregrate if
+        exceeding 1 connection per second over an hour.
+        <li> Suite database interaction further optimized to speed up elapsed
+        times for fast-running suites.
+        <li> Built-in task event handlers are now grouped where possible - e.g.
+        to generate a single email for multiple task failures; and to group
+        rsync commands by host for remote job log retrieval.
+        <li> Job submit, job poll, and job kill actions are now grouped by
+        user@host
+        <li> 'background' job submission now detaches with <code>nohup</code> -
+                this should prevent creation of zombie processes (but it may
+                prevent use of 'background' jobs on remote hosts that don't
+                permit non terminal-attached processes on login nodes - submit
+                jobs to 'at' or your batch scheduler instead). 
+        <li> Polling a task now returns custom "message outputs" as well as job
+        status.
+        <li> <code>gcylc</code> can now tail-follow remote job log files.
+        <li> If your batch scheduler - e.g. PBS - hides the final job logs
+        until completion, <code>gcylc</code> and <code>cylc cat-log</code> can
+        now be configured to view job out and err files using special commands
+        while the job is running.
+        <li> Allow suite-state polling even if the target suite database does
+        not exist yet.
+        <li> Improved reporting of Jinja2 errors.
+        <li> The <code>cylc gscan</code> GUI (a.k.a. <code>cylc
+            gsummary</code>) can now display most of the information now
+        available from <code>cylc scan</code> (and more to come).
+        <li> Prompt for confirmation before actioning a job kill.
+        <li> New gcylc.rc configuration option to start <code>gcylc</code> with
+        side-by-side suite views.
+    </ul>
+ 
+    <h3>6.7.0 fixes</h3>
+    <ul>
+        <li> Fixed a bug that could cause a KeyError in the gcylc text tree
+        view.
+        <li> Corrected emacs cylc-mode installation instructions.
+        <li> Prevented a gcylc abort caused by clicking on the task state
+        filtering icon before any suite is connected.
+        <li> Corrected our (new-ish) support for <b>moab</b> job submission.
+        <li> Prevent occasional job submissions after a suite shutdown is
+        ordered.
+    </ul>
+ 
 <a name="6.6.1"/>
     <h2>6.6.1</h2>
 

@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-08-27 18:57:00"> 
+<meta name="date" content="2015-10-07 00:00:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -18,11 +18,11 @@ href="cug-htmlse18.html#tailcug-htmlse18.html" >prev-tail</a>] [<a
 href="#tailcug-htmlse19.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse19.html" >up</a>] </p></div>
 <!--l. 2--><p class="indent" >    <h3 id="C" class="sectionHead"><span class="titlemark"> <a href="#C">C</a>  <a 
- id="x20-438000C"></a>Gcylc Config File Reference </span></h3> <div class="sectionTOCS">
+ id="x20-444000C"></a>Gcylc Config File Reference </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >C.1 <a 
-href="#x20-439000C.1">Top Level Items</a></span>
+href="#x20-445000C.1">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >C.2 <a 
-href="#x20-446000C.2">[themes]</a></span>
+href="#x20-453000C.2">[themes]</a></span>
    </div>
 <!--l. 7--><p class="indent" >   This section defines all legal items and values for the gcylc user config file, which should be located
 in <span class="lstinline"><span 
@@ -44,10 +44,10 @@ class="pcrr7t-">config</span></span>
 command.
 <!--l. 13--><p class="noindent" >
 <!--l. 13--><p class="indent" >    <h4 id="C.1" class="subsectionHead"> <span class="titlemark"> <a href="#C.1"> C.1</a>  <a 
- id="x20-439000C.1"></a>Top Level Items </span></h4>
+ id="x20-445000C.1"></a>Top Level Items </span></h4>
 <!--l. 15--><p class="noindent" >
 <!--l. 15--><p class="indent" >    <h4 id="C.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.1"> C.1.1</a>  <a 
- id="x20-440000C.1.1"></a>initial views </span></h4>
+ id="x20-446000C.1.1"></a>initial views </span></h4>
 <!--l. 17--><p class="indent" >   Set the suite view panel(s) displayed initially, when the GUI starts. This can be changed later using the tool
 bar.
      <ul class="itemize1">
@@ -74,7 +74,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">dot</span></span></li></ul>
 <!--l. 27--><p class="noindent" >
 <!--l. 27--><p class="indent" >    <h4 id="C.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.2"> C.1.2</a>  <a 
- id="x20-441000C.1.2"></a>ungrouped views </span></h4>
+ id="x20-447000C.1.2"></a>ungrouped views </span></h4>
 <!--l. 29--><p class="indent" >   List suite views, if any, that should be displayed initially in an ungrouped state. Namespace family grouping can
 be changed later using the tool bar.
      <ul class="itemize1">
@@ -104,7 +104,7 @@ class="pcrr7t-">dot</span></span></li></ul>
                                                                                          
 <!--l. 40--><p class="noindent" >
 <!--l. 40--><p class="indent" >    <h4 id="C.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.3"> C.1.3</a>  <a 
- id="x20-442000C.1.3"></a>use theme </span></h4>
+ id="x20-448000C.1.3"></a>use theme </span></h4>
 <!--l. 42--><p class="indent" >   Set the task state color theme, common to all views, to use initially. The color theme can be changed later
 using the tool bar. See <span class="lstinline"><span 
 class="pcrr7t-">gcylc</span><span 
@@ -142,8 +142,22 @@ class="cmti-10">legal values: </span>&#8220;default&#8221;, &#8220;solid&#8221;,
 class="cmti-10">default: </span>&#8220;default&#8221;</li></ul>
 <!--l. 56--><p class="noindent" >
 <!--l. 56--><p class="indent" >    <h4 id="C.1.4" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.4"> C.1.4</a>  <a 
- id="x20-443000C.1.4"></a>dot icon size </span></h4>
-<!--l. 58--><p class="indent" >   Set the size of the task state dot icons displayed in the text and dot views.
+ id="x20-449000C.1.4"></a>initial side-by-side views </span></h4>
+<!--l. 58--><p class="indent" >   Set the suite view panels initial orientation when the GUI starts. This can be changed later using the &#8221;View&#8221;
+menu &#8221;Toggle views side-by-side&#8221; option.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>boolean (False or True)
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">legal values: </span>&#8220;False&#8221;, &#8220;True&#8221;.
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span>&#8220;False&#8221;</li></ul>
+<!--l. 68--><p class="noindent" >
+<!--l. 68--><p class="indent" >    <h4 id="C.1.5" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.5"> C.1.5</a>  <a 
+ id="x20-450000C.1.5"></a>dot icon size </span></h4>
+<!--l. 70--><p class="indent" >   Set the size of the task state dot icons displayed in the text and dot views.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
@@ -153,23 +167,26 @@ class="cmti-10">legal values: </span>&#8220;small&#8221; (10px), &#8220;medium&#
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>&#8220;medium&#8221;</li></ul>
-<!--l. 67--><p class="noindent" >
-<!--l. 67--><p class="indent" >    <h4 id="C.1.5" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.5"> C.1.5</a>  <a 
- id="x20-444000C.1.5"></a>sort by definition order </span></h4>
-<!--l. 69--><p class="indent" >   If this is not turned off the default sort order for task names and families in the dot and text views will the order
+<!--l. 79--><p class="noindent" >
+<!--l. 79--><p class="indent" >    <h4 id="C.1.6" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.6"> C.1.6</a>  <a 
+ id="x20-451000C.1.6"></a>sort by definition order </span></h4>
+<!--l. 81--><p class="indent" >   If this is not turned off the default sort order for task names and families in the dot and text views will the order
 they appear in the suite definition. Clicking on the task name column in the treeview will toggle to alphanumeric
 sort, and a View menu item does the same for the dot view. If turned off, the default sort order is alphanumeric and
 definition order is not available at all.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>True</li></ul>
-<!--l. 81--><p class="noindent" >
-<!--l. 81--><p class="indent" >    <h4 id="C.1.6" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.6"> C.1.6</a>  <a 
- id="x20-445000C.1.6"></a>task filter highlight color </span></h4>
-<!--l. 83--><p class="indent" >   The color used to highlight active task filters in gcylc. It must be a name from the X11 rgb.txt file,
+<!--l. 93--><p class="noindent" >
+<!--l. 93--><p class="indent" >    <h4 id="C.1.7" class="subsubsectionHead"><span class="titlemark"> <a href="#C.1.7"> C.1.7</a>  <a 
+ id="x20-452000C.1.7"></a>task filter highlight color </span></h4>
+<!--l. 95--><p class="indent" >   The color used to highlight active task filters in gcylc. It must be a name from the X11 rgb.txt file,
 e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">SteelBlue</span></span>; or a <span 
 class="cmti-10">quoted </span>hexadecimal color code, e.g.&#x00A0;<span class="lstinline"><span 
@@ -178,9 +195,6 @@ class="pcrr7t-">#</span><span
 class="pcrr7t-">ff0000</span><span 
 class="pcrr7t-">"</span></span> for red (quotes are required to prevent the
 hex code being interpreted as a comment).
-                                                                                         
-
-                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string
@@ -188,36 +202,39 @@ class="cmti-10">type: </span>string
      <li class="itemize"><span 
 class="cmti-10">default: </span><span class="lstinline"><span 
 class="pcrr7t-">PowderBlue</span></span></li></ul>
-<!--l. 93--><p class="noindent" >
-<!--l. 93--><p class="indent" >    <h4 id="C.2" class="subsectionHead"> <span class="titlemark"> <a href="#C.2"> C.2</a>  <a 
- id="x20-446000C.2"></a>[themes] </span></h4>
-<!--l. 95--><p class="indent" >   This section may contain task state color theme definitions.
-<!--l. 97--><p class="noindent" >
-<!--l. 97--><p class="indent" >    <h4 id="C.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.1"> C.2.1</a>  <a 
- id="x20-447000C.2.1"></a>[themes] <span 
+<!--l. 105--><p class="noindent" >
+<!--l. 105--><p class="indent" >    <h4 id="C.2" class="subsectionHead"> <span class="titlemark"> <a href="#C.2"> C.2</a>  <a 
+ id="x20-453000C.2"></a>[themes] </span></h4>
+<!--l. 107--><p class="indent" >   This section may contain task state color theme definitions.
+<!--l. 109--><p class="noindent" >
+<!--l. 109--><p class="indent" >    <h4 id="C.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.1"> C.2.1</a>  <a 
+ id="x20-454000C.2.1"></a>[themes] <span 
 class="cmsy-10">&#x2192; </span>THEME </span></h4>
-<!--l. 99--><p class="indent" >   The name of the task state color-theme to be defined in this section.
+<!--l. 111--><p class="indent" >   The name of the task state color-theme to be defined in this section.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string</li></ul>
-<!--l. 105--><p class="noindent" >
-<!--l. 105--><p class="indent" >    <h4 id="C.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.2"> C.2.2</a>  <a 
- id="x20-448000C.2.2"></a>[themes] <span 
+<!--l. 117--><p class="noindent" >
+<!--l. 117--><p class="indent" >    <h4 id="C.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.2"> C.2.2</a>  <a 
+ id="x20-455000C.2.2"></a>[themes] <span 
 class="cmsy-10">&#x2192; </span>[THEME] <span 
 class="cmsy-10">&#x2192; </span>inherit </span></h4>
-<!--l. 107--><p class="indent" >   You can inherit from another theme in order to avoid defining all states.
+<!--l. 119--><p class="indent" >   You can inherit from another theme in order to avoid defining all states.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string (parent theme name)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>&#8220;default&#8221;</li></ul>
-<!--l. 114--><p class="noindent" >
-<!--l. 114--><p class="indent" >    <h4 id="C.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.3"> C.2.3</a>  <a 
- id="x20-449000C.2.3"></a>[themes] <span 
+                                                                                         
+
+                                                                                         
+<!--l. 126--><p class="noindent" >
+<!--l. 126--><p class="indent" >    <h4 id="C.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.3"> C.2.3</a>  <a 
+ id="x20-456000C.2.3"></a>[themes] <span 
 class="cmsy-10">&#x2192; </span>[THEME] <span 
 class="cmsy-10">&#x2192; </span>defaults </span></h4>
-<!--l. 116--><p class="indent" >   Set default icon attributes for all state icons in this theme.
+<!--l. 128--><p class="indent" >   Set default icon attributes for all state icons in this theme.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string list (icon attributes)
@@ -242,7 +259,7 @@ class="pcrr7t-">"</span></span>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 124--><p class="indent" >   For the attribute values, COLOR and FONTCOLOR can be color names from the X11 rgb.txt file,
+<!--l. 136--><p class="indent" >   For the attribute values, COLOR and FONTCOLOR can be color names from the X11 rgb.txt file,
 e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">SteelBlue</span></span>; or hexadecimal color codes, e.g. <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
@@ -263,15 +280,12 @@ class="pcrr7t-">conf</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">gcylcrc</span><span 
 class="pcrr7t-">/</span></span> for examples.
-                                                                                         
-
-                                                                                         
-<!--l. 130--><p class="noindent" >
-<!--l. 130--><p class="indent" >    <h4 id="C.2.4" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.4"> C.2.4</a>  <a 
- id="x20-450000C.2.4"></a>[themes] <span 
+<!--l. 142--><p class="noindent" >
+<!--l. 142--><p class="indent" >    <h4 id="C.2.4" class="subsubsectionHead"><span class="titlemark"> <a href="#C.2.4"> C.2.4</a>  <a 
+ id="x20-457000C.2.4"></a>[themes] <span 
 class="cmsy-10">&#x2192; </span>[THEME] <span 
 class="cmsy-10">&#x2192; </span>STATE </span></h4>
-<!--l. 132--><p class="indent" >   Set icon attributes for all task states in THEME, or for a subset of them if you have used theme inheritance
+<!--l. 144--><p class="indent" >   Set icon attributes for all task states in THEME, or for a subset of them if you have used theme inheritance
 and/or defaults. Legal values of STATE are any of the cylc task proxy states: <span 
 class="cmti-10">waiting, runahead, held, queued, ready,</span>
 <span 
@@ -300,7 +314,7 @@ class="pcrr7t-">"</span></span>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 143--><p class="indent" >   For the attribute values, COLOR and FONTCOLOR can be color names from the X11 rgb.txt file,
+<!--l. 155--><p class="indent" >   For the attribute values, COLOR and FONTCOLOR can be color names from the X11 rgb.txt file,
 e.g.&#x00A0;<span class="lstinline"><span 
 class="pcrr7t-">SteelBlue</span></span>; or hexadecimal color codes, e.g. <span class="lstinline"><span 
 class="pcrro7t-">#</span><span 
@@ -327,12 +341,12 @@ class="pcrr7t-">/</span></span> for examples.
                                                                                          
 
                                                                                          
-   <!--l. 7130--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 7143--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse20.html" >next</a>] [<a 
 href="cug-htmlse18.html" >prev</a>] [<a 
 href="cug-htmlse18.html#tailcug-htmlse18.html" >prev-tail</a>] [<a 
 href="cug-htmlse19.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse19.html" >up</a>] </p></div>
-<!--l. 7130--><p class="indent" >   <a 
+<!--l. 7143--><p class="indent" >   <a 
  id="tailcug-htmlse19.html"></a>    
 </body></html> 

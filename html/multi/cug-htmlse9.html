@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-08-27 18:57:00"> 
+<meta name="date" content="2015-10-07 00:00:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -11115,19 +11115,13 @@ class="pcrr7t-">A</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 4008--><p class="indent" >   If you need to skip one or more cycle points in a suite like this, manually remove the tasks that cannot run (or
-use <span class="lstinline"><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">purge</span></span> to remove their downstream dependents too) and manually trigger the first post-gap
-task.
+<!--l. 4008--><p class="noindent" >
+<!--l. 4008--><p class="indent" >    <h4 id="9.4" class="subsectionHead"> <span class="titlemark"> <a href="#9.4"> 9.4</a>  <a 
+ id="x10-1050009.4"></a>Runtime - Task Configuration </span></h4>
                                                                                          
 
                                                                                          
-<!--l. 4013--><p class="noindent" >
-<!--l. 4013--><p class="indent" >    <h4 id="9.4" class="subsectionHead"> <span class="titlemark"> <a href="#9.4"> 9.4</a>  <a 
- id="x10-1050009.4"></a>Runtime - Task Configuration </span></h4>
-<!--l. 4016--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 4011--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span></span> section of a suite definition configures what to execute (and where and how to execute
@@ -11136,32 +11130,32 @@ class="cmti-10">multiple inheritance hierarchy </span>of <span
 class="cmti-10">namespaces </span>culminating in
 individual tasks. This allows all common configuration detail to be factored out and defined in one
 place.
-<!--l. 4022--><p class="indent" >   Any namespace can configure any or all of the items defined in the <span 
+<!--l. 4017--><p class="indent" >   Any namespace can configure any or all of the items defined in the <span 
 class="cmti-10">Suite.rc Reference </span>(<a 
 href="cug-htmlse17.html#x18-224000A">A<!--tex4ht:ref: SuiteRCReference --></a>).
-<!--l. 4025--><p class="indent" >   Namespaces that do not explicitly inherit from others automatically inherit from the <span 
+<!--l. 4020--><p class="indent" >   Namespaces that do not explicitly inherit from others automatically inherit from the <span 
 class="cmti-10">root </span>namespace
 (below).
-<!--l. 4028--><p class="indent" >   Nested namespaces define <span 
+<!--l. 4023--><p class="indent" >   Nested namespaces define <span 
 class="cmti-10">task families </span>that can be used in the graph as convenient shorthand for triggering all
 member tasks at once, or for triggering other tasks off all members at once - see&#x00A0;<a 
 href="#x10-960009.3.4.9">9.3.4.9<!--tex4ht:ref: FamilyTriggers --></a>. Nested namespaces can be
 progressively expanded and collapsed in the dependency graph viewer, and in the gcylc graph and text
 views. Only the first parent of each namespace (as for single-inheritance) is used for suite visualization
 purposes.
-<!--l. 4037--><p class="noindent" >
-<!--l. 4037--><p class="indent" >    <h4 id="9.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.1"> 9.4.1</a>  <a 
+<!--l. 4032--><p class="noindent" >
+<!--l. 4032--><p class="indent" >    <h4 id="9.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.1"> 9.4.1</a>  <a 
  id="x10-1060009.4.1"></a>Namespace Names </span></h4>
-<!--l. 4039--><p class="indent" >   Namespace names may contain letters, digits, underscores, and hyphens.
-<!--l. 4046--><p class="indent" >   Note that <span 
+<!--l. 4034--><p class="indent" >   Namespace names may contain letters, digits, underscores, and hyphens.
+<!--l. 4041--><p class="indent" >   Note that <span 
 class="cmti-10">task names need not be hardwired into task implementations </span>because task and suite identity can be
 extracted portably from the task execution environment supplied by the suite daemon (<a 
 href="#x10-1130009.4.7">9.4.7<!--tex4ht:ref: TaskExecutionEnvironment --></a>) - then to rename a
 task you can just change its name in the suite definition.
-<!--l. 4052--><p class="noindent" >
-<!--l. 4052--><p class="indent" >    <h4 id="9.4.2" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.2"> 9.4.2</a>  <a 
+<!--l. 4047--><p class="noindent" >
+<!--l. 4047--><p class="indent" >    <h4 id="9.4.2" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.2"> 9.4.2</a>  <a 
  id="x10-1070009.4.2"></a>Root - Runtime Defaults </span></h4>
-<!--l. 4054--><p class="indent" >   The root namespace, at the base of the inheritance hierarchy, provides default configuration for all tasks in the
+<!--l. 4049--><p class="indent" >   The root namespace, at the base of the inheritance hierarchy, provides default configuration for all tasks in the
 suite. Most root items are unset by default, but some have default values sufficient to allow test suites to be
 defined by dependency graph alone. The <span 
 class="cmti-10">script </span>item, for example, defaults to code that prints a message
@@ -11169,17 +11163,17 @@ then sleeps for between 1 and 15 seconds and exits. Default values are documente
 in&#x00A0;<a 
 href="cug-htmlse17.html#x18-224000A">A<!--tex4ht:ref: SuiteRCReference --></a>. You can override the defaults or provide your own defaults by explicitly configuring the root
 namespace.
-<!--l. 4064--><p class="noindent" >
-<!--l. 4064--><p class="indent" >    <h4 id="9.4.3" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.3"> 9.4.3</a>  <a 
+<!--l. 4059--><p class="noindent" >
+<!--l. 4059--><p class="indent" >    <h4 id="9.4.3" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.3"> 9.4.3</a>  <a 
  id="x10-1080009.4.3"></a>Defining Multiple Namespaces At Once </span></h4>
-<!--l. 4067--><p class="indent" >   If a namespace section heading is a comma-separated list of names then the subsequent configuration applies
+<!--l. 4062--><p class="indent" >   If a namespace section heading is a comma-separated list of names then the subsequent configuration applies
 to each list member. Particular tasks can be singled out at run time using the <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_TASK_NAME</span></span>
 variable.
-<!--l. 4072--><p class="indent" >   As an example, consider a suite containing an ensemble of closely related tasks that each invokes the same script
+<!--l. 4067--><p class="indent" >   As an example, consider a suite containing an ensemble of closely related tasks that each invokes the same script
 but with a unique argument that identifies the calling task name:
-   <!--l. 4077-->
+   <!--l. 4072-->
    <div class="lstlisting" id="listing-149"><span class="label"><a 
  id="x10-108001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -11250,19 +11244,19 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">ensemble</span>
    
    </div>
-<!--l. 4085--><p class="indent" >   For large ensembles Jinja2 template processing can be used to automatically generate the member names and
+<!--l. 4080--><p class="indent" >   For large ensembles Jinja2 template processing can be used to automatically generate the member names and
 associated dependencies (see&#x00A0;<a 
 href="#x10-1270009.6">9.6<!--tex4ht:ref: Jinja2 --></a>).
                                                                                          
 
                                                                                          
-<!--l. 4089--><p class="noindent" >
-<!--l. 4089--><p class="indent" >    <h4 id="9.4.4" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.4"> 9.4.4</a>  <a 
+<!--l. 4084--><p class="noindent" >
+<!--l. 4084--><p class="indent" >    <h4 id="9.4.4" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.4"> 9.4.4</a>  <a 
  id="x10-1090009.4.4"></a>Runtime Inheritance - Single </span></h4>
-<!--l. 4091--><p class="indent" >   The following listing of the <span 
+<!--l. 4086--><p class="indent" >   The following listing of the <span 
 class="cmti-10">inherit.single.one </span>example suite illustrates basic runtime inheritance with single
 parents.
-   <!--l. 4095--><div class="lstinputlisting">
+   <!--l. 4090--><div class="lstinputlisting">
 <a 
  id="x10-109001"></a>
    <span 
@@ -11986,10 +11980,10 @@ class="pcrro7t-">root</span><span
 class="pcrro7t-">.</span>
    
    </div>
-<!--l. 4098--><p class="noindent" >
-<!--l. 4098--><p class="indent" >    <h4 id="9.4.5" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.5"> 9.4.5</a>  <a 
+<!--l. 4093--><p class="noindent" >
+<!--l. 4093--><p class="indent" >    <h4 id="9.4.5" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.5"> 9.4.5</a>  <a 
  id="x10-1100009.4.5"></a>Runtime Inheritance - Multiple </span></h4>
-<!--l. 4100--><p class="indent" >   If a namespace inherits from multiple parents the linear order of precedence (which namespace
+<!--l. 4095--><p class="indent" >   If a namespace inherits from multiple parents the linear order of precedence (which namespace
 overrides which) is determined by the so-called <span 
 class="cmti-10">C3 algorithm </span>used to find the linear <span 
 class="cmti-10">method resolution</span>
@@ -12012,9 +12006,9 @@ class="pcrr7t-">releases</span><span
 class="pcrr7t-">/2.3/</span><span 
 class="pcrr7t-">mro</span><span 
 class="pcrr7t-">/</span></span>.
-<!--l. 4110--><p class="indent" >   The <span 
+<!--l. 4105--><p class="indent" >   The <span 
 class="cmti-10">inherit.multi.one </span>example suite, listed here, makes use of multiple inheritance:
-   <!--l. 4114--><div class="lstinputlisting">
+   <!--l. 4109--><div class="lstinputlisting">
 <a 
  id="x10-110001"></a>
    <span 
@@ -12994,7 +12988,7 @@ class="pcrro7t-">green</span><span
 class="pcrro7t-">"</span>
    
    </div>
-<!--l. 4117--><p class="indent" >   <span class="lstinline"><span 
+<!--l. 4112--><p class="indent" >   <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">get</span><span 
@@ -13002,7 +12996,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">suite</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">config</span></span> provides an easy way to check the result of inheritance in a suite. You can extract
-specific items, e.g.: <!--l. 4119-->
+specific items, e.g.: <!--l. 4114-->
    <div class="lstlisting" id="listing-150"><span class="label"><a 
  id="x10-110062r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -13055,10 +13049,10 @@ class="pcrr7t-">sh</span><span
 class="pcrr7t-">''</span>
    
    </div>
-<!--l. 4124--><p class="indent" >   or use the <span class="lstinline"><span 
+<!--l. 4119--><p class="indent" >   or use the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">sparse</span></span> option to print entire namespaces without obscuring the result with the dense runtime
-structure obtained from the root namespace: <!--l. 4127-->
+structure obtained from the root namespace: <!--l. 4122-->
    <div class="lstlisting" id="listing-151"><span class="label"><a 
  id="x10-110065r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -13137,13 +13131,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">serial</span>
    
    </div>
-<!--l. 4135--><p class="noindent" >
-<!--l. 4135--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4130--><p class="noindent" >
+<!--l. 4130--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1110009.4.5.1"></a><span 
 class="cmbx-10">Suite Visualization And Multiple Inheritance</span></span>
    The first parent inherited by a namespace is also used as the collapsible family group when visualizing the suite.
 If this is not what you want, you can demote the first parent for visualization purposes, without affecting the order
-of inheritance of runtime properties: <!--l. 4141-->
+of inheritance of runtime properties: <!--l. 4136-->
    <div class="lstlisting" id="listing-152"><span class="label"><a 
  id="x10-111001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -13236,29 +13230,29 @@ class="pcrr7t-">bar</span>
                                                                                          
 
                                                                                          
-<!--l. 4151--><p class="noindent" >
-<!--l. 4151--><p class="indent" >    <h4 id="9.4.6" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.6"> 9.4.6</a>  <a 
+<!--l. 4146--><p class="noindent" >
+<!--l. 4146--><p class="indent" >    <h4 id="9.4.6" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.6"> 9.4.6</a>  <a 
  id="x10-1120009.4.6"></a>How Runtime Inheritance Works </span></h4>
-<!--l. 4153--><p class="indent" >   The linear precedence order of ancestors is computed for each namespace using the C3 algorithm.
+<!--l. 4148--><p class="indent" >   The linear precedence order of ancestors is computed for each namespace using the C3 algorithm.
 Then any runtime items that are explicitly configured in the suite definition are &#8220;inherited&#8221; up the
 linearized hierarchy for each task, starting at the root namespace: if a particular item is defined at
 multiple levels in the hierarchy, the level nearest the final task namespace takes precedence. Finally, root
 namespace defaults are applied for every item that has not been configured in the inheritance process
 (this is more efficient than carrying the full dense namespace structure through from root from the
 beginning).
-<!--l. 4163--><p class="noindent" >
-<!--l. 4163--><p class="indent" >    <h4 id="9.4.7" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.7"> 9.4.7</a>  <a 
+<!--l. 4158--><p class="noindent" >
+<!--l. 4158--><p class="indent" >    <h4 id="9.4.7" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.7"> 9.4.7</a>  <a 
  id="x10-1130009.4.7"></a>Task Execution Environment </span></h4>
-<!--l. 4166--><p class="indent" >   The task execution environment contains suite and task identity variables provided by the suite daemon, and
+<!--l. 4161--><p class="indent" >   The task execution environment contains suite and task identity variables provided by the suite daemon, and
 user-defined environment variables. The environment is explicitly exported (by the task job script) prior to
 executing the task <span class="lstinline"><span 
 class="pcrr7t-">script</span></span> (see&#x00A0;<a 
 href="cug-htmlse11.html#x12-14100011">11<!--tex4ht:ref: TaskJobSubmission --></a>).
-<!--l. 4171--><p class="indent" >   Suite and task identity are exported first, so that user-defined variables can refer to them. Order of definition is
+<!--l. 4166--><p class="indent" >   Suite and task identity are exported first, so that user-defined variables can refer to them. Order of definition is
 preserved throughout so that variable assignment expressions can safely refer to previously defined
 variables.
-<!--l. 4176--><p class="indent" >   Additionally, access to cylc itself is configured prior to the user-defined environment, so that variable assignment
-expressions can make use of cylc utility commands:  <!--l. 4180-->
+<!--l. 4171--><p class="indent" >   Additionally, access to cylc itself is configured prior to the user-defined environment, so that variable assignment
+expressions can make use of cylc utility commands:  <!--l. 4175-->
    <div class="lstlisting" id="listing-153"><span class="label"><a 
  id="x10-113001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -13322,14 +13316,14 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">)</span>
    
    </div>
-<!--l. 4187--><p class="noindent" >
-<!--l. 4187--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4182--><p class="noindent" >
+<!--l. 4182--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1140009.4.7.1"></a><span 
 class="cmbx-10">User Environment Variables</span></span>
    A task&#8217;s user-defined environment results from its inherited <span class="lstinline"><span 
 class="pcrr7t-">[[[</span><span 
 class="pcrr7t-">environment</span><span 
-class="pcrr7t-">]]]</span></span> sections: <!--l. 4191-->
+class="pcrr7t-">]]]</span></span> sections: <!--l. 4186-->
    <div class="lstlisting" id="listing-154"><span class="label"><a 
  id="x10-114001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -13470,7 +13464,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">variable</span>
    
    </div>
-<!--l. 4202--><p class="indent" >   This results in a task <span 
+<!--l. 4197--><p class="indent" >   This results in a task <span 
 class="cmti-10">foo </span>with <span class="lstinline"><span 
 class="pcrr7t-">SHAPE</span><span 
 class="pcrr7t-">=</span><span 
@@ -13481,8 +13475,8 @@ class="pcrr7t-">blue</span></span>, and <span class="lstinline"><span
 class="pcrr7t-">TEXTURE</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">rough</span></span> in its environment.
-<!--l. 4207--><p class="noindent" >
-<!--l. 4207--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4202--><p class="noindent" >
+<!--l. 4202--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1150009.4.7.2"></a><span 
 class="cmbx-10">Overriding Environment Variables</span></span>
    When you override inherited namespace items the original parent item definition is <span 
@@ -13490,7 +13484,7 @@ class="cmti-10">replaced </span>by the new
 definition. This applies to all items including those in the environment sub-sections which, strictly speaking, are not
 &#8220;environment variables&#8221; until they are written, post inheritance processing, to the task job script that executes the
 associated task. Consequently, if you override an environment variable you cannot also access the original parent
-value: <!--l. 4216-->
+value: <!--l. 4211-->
    <div class="lstlisting" id="listing-155"><span class="label"><a 
  id="x10-115001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -13660,7 +13654,7 @@ class="pcrro7t-">foo</span><span
 class="pcrro7t-">.</span>
    
    </div>
-<!--l. 4227--><p class="indent" >   The compressed variant of this, <span class="lstinline"><span 
+<!--l. 4222--><p class="indent" >   The compressed variant of this, <span class="lstinline"><span 
 class="pcrr7t-">COLOR</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
@@ -13669,7 +13663,7 @@ class="pcrr7t-">dark</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">COLOR</span></span>, is also in error for the same reason. To achieve the
-desired result you must use a different name for the parent variable: <!--l. 4230-->
+desired result you must use a different name for the parent variable: <!--l. 4225-->
                                                                                          
 
                                                                                          
@@ -13785,11 +13779,11 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">OK</span>
    
    </div>
-<!--l. 4241--><p class="noindent" >
-<!--l. 4241--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4236--><p class="noindent" >
+<!--l. 4236--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1160009.4.7.3"></a><span 
 class="cmbx-10">Suite And Task Identity Variables</span></span>
-   The task identity variables provided to tasks by the suite daemon include:  <!--l. 4245-->
+   The task identity variables provided to tasks by the suite daemon include:  <!--l. 4240-->
    <div class="lstlisting" id="listing-157"><span class="label"><a 
  id="x10-116001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
@@ -14084,7 +14078,7 @@ class="pcrro7t-">False</span><span
 class="pcrro7t-">'</span>
    
    </div>
-<!--l. 4257--><p class="indent" >   And the suite identity variables are: <!--l. 4258-->
+<!--l. 4252--><p class="indent" >   And the suite identity variables are: <!--l. 4253-->
    <div class="lstlisting" id="listing-158"><span class="label"><a 
  id="x10-116011r1"></a></span><span 
 class="pcrr8c-">$</span><span 
@@ -14220,10 +14214,10 @@ class="pcrro7t-">g</span><span
 class="pcrro7t-">.)</span>
    
    </div>
-<!--l. 4266--><p class="indent" >   Some of these variables are also used by cylc task messaging commands in order to target the right task proxy
+<!--l. 4261--><p class="indent" >   Some of these variables are also used by cylc task messaging commands in order to target the right task proxy
 object in the right suite.
-<!--l. 4269--><p class="noindent" >
-<!--l. 4269--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4264--><p class="noindent" >
+<!--l. 4264--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1170009.4.7.4"></a><span 
 class="cmbx-10">Suite Share Directories</span></span>
    A <span 
@@ -14232,11 +14226,11 @@ location is available to tasks as <span class="lstinline"><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_SHARE_DIR</span></span>. In a cycling suite, output files are typically held in
 cycle point sub-directories of the suite share directory.
-<!--l. 4276--><p class="indent" >   The top level share and work directory (below) location can be changed (e.g.&#x00A0;to a large data area) by a global
+<!--l. 4271--><p class="indent" >   The top level share and work directory (below) location can be changed (e.g.&#x00A0;to a large data area) by a global
 config setting (see&#x00A0;<a 
 href="cug-htmlse18.html#x19-403000B.8.1.2">B.8.1.2<!--tex4ht:ref: workdirectory --></a>).
-<!--l. 4280--><p class="noindent" >
-<!--l. 4280--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4275--><p class="noindent" >
+<!--l. 4275--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1180009.4.7.5"></a><span 
 class="cmbx-10">Task Work Directories</span></span>
    Task job scripts are executed from within <span 
@@ -14251,15 +14245,15 @@ runtime). By default the location contains task name and cycle point, to provide
 instance of every task. This can be overridden in the suite definition, however, to get several tasks to share the same
 work directory (see&#x00A0;<a 
 href="cug-htmlse17.html#x18-296000A.5.1.14">A.5.1.14<!--tex4ht:ref: worksubdirectory --></a>).
-<!--l. 4291--><p class="indent" >   The top level work and share directory (above) location can be changed (e.g.&#x00A0;to a large data area) by a global
+<!--l. 4286--><p class="indent" >   The top level work and share directory (above) location can be changed (e.g.&#x00A0;to a large data area) by a global
 config setting (see&#x00A0;<a 
 href="cug-htmlse18.html#x19-403000B.8.1.2">B.8.1.2<!--tex4ht:ref: workdirectory --></a>).
-<!--l. 4296--><p class="noindent" >
-<!--l. 4296--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4291--><p class="noindent" >
+<!--l. 4291--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1190009.4.7.6"></a><span 
 class="cmbx-10">Other Cylc-Defined Environment Variables</span></span>
    Initial and final cycle points, if supplied via the suite.rc file or the command line, are passed to task execution
-environments as: <!--l. 4300-->
+environments as: <!--l. 4295-->
    <div class="lstlisting" id="listing-159"><span class="label"><a 
  id="x10-119001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
@@ -14270,15 +14264,15 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_SUITE_FINAL_CYCLE_POINT</span>
    
    </div>
-<!--l. 4304--><p class="indent" >   Tasks can use these to determine whether or not they are running in the first or final cycles. Note
+<!--l. 4299--><p class="indent" >   Tasks can use these to determine whether or not they are running in the first or final cycles. Note
 however that <span class="lstinline"><span 
 class="pcrr7t-">R1</span></span> graph sections are now the preferred way to get different behaviour at suite start-up or
 shutdown.
                                                                                          
 
                                                                                          
-<!--l. 4311--><p class="noindent" >
-<!--l. 4311--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4306--><p class="noindent" >
+<!--l. 4306--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1200009.4.7.7"></a><span 
 class="cmbx-10">Environment Variable Evaluation</span></span>
    Variables in the task execution environment are not evaluated in the shell in which the suite is running prior to
@@ -14289,10 +14283,10 @@ Thus <span class="lstinline"><span
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span></span>, for instance, evaluates at run time to the home directory of task owner on the task
 host.
-<!--l. 4321--><p class="noindent" >
-<!--l. 4321--><p class="indent" >    <h4 id="9.4.8" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.8"> 9.4.8</a>  <a 
+<!--l. 4316--><p class="noindent" >
+<!--l. 4316--><p class="indent" >    <h4 id="9.4.8" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.8"> 9.4.8</a>  <a 
  id="x10-1210009.4.8"></a>How Tasks Get Access To The Suite Directory </span></h4>
-<!--l. 4323--><p class="indent" >   Tasks can use <span class="lstinline"><span 
+<!--l. 4318--><p class="indent" >   Tasks can use <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_DEF_PATH</span></span> to access suite files on the task host, and the suite bin directory is
 automatically added <span class="lstinline"><span 
@@ -14302,13 +14296,13 @@ assumed with the local home directory, if present, swapped for literal <span cla
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">HOME</span></span> for evaluation on the task
 host.
-<!--l. 4330--><p class="noindent" >
-<!--l. 4330--><p class="indent" >    <h4 id="9.4.9" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.9"> 9.4.9</a>  <a 
+<!--l. 4325--><p class="noindent" >
+<!--l. 4325--><p class="indent" >    <h4 id="9.4.9" class="subsubsectionHead"><span class="titlemark"> <a href="#9.4.9"> 9.4.9</a>  <a 
  id="x10-1220009.4.9"></a>Remote Task Hosting </span></h4>
-<!--l. 4333--><p class="indent" >   If a task declares an owner other than the suite owner and/or a host other than the suite host, cylc will use
+<!--l. 4328--><p class="indent" >   If a task declares an owner other than the suite owner and/or a host other than the suite host, cylc will use
 passwordless ssh to execute the task on the <span class="lstinline"><span 
 class="pcrr7t-">owner@host</span></span> account by the configured job submission method,
-<!--l. 4338-->
+<!--l. 4333-->
    <div class="lstlisting" id="listing-160"><span class="label"><a 
  id="x10-122001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -14416,7 +14410,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">pbs</span>
    
    </div>
-<!--l. 4348--><p class="indent" >   For this to work,
+<!--l. 4343--><p class="indent" >   For this to work,
      <ul class="itemize1">
      <li class="itemize">passwordless ssh must be configured between the suite and task host accounts.
      </li>
@@ -14429,24 +14423,24 @@ class="pcrr7t-">pbs</span>
      </li>
      <li class="itemize">the suite definition directory, or some fraction of its content, can be installed on the task host, if
      needed.</li></ul>
-<!--l. 4364--><p class="indent" >   To learn how to give remote tasks access to cylc, see&#x00A0;<a 
+<!--l. 4359--><p class="indent" >   To learn how to give remote tasks access to cylc, see&#x00A0;<a 
 href="cug-htmlse12.html#x13-17400012.7">12.7<!--tex4ht:ref: HowTasksGetAccessToCylc --></a>.
-<!--l. 4367--><p class="indent" >   Tasks running on the suite host under another user account are treated as remote tasks.
-<!--l. 4370--><p class="indent" >   Remote hosting, like all namespace settings, can be declared globally in the root namespace, or per family, or for
+<!--l. 4362--><p class="indent" >   Tasks running on the suite host under another user account are treated as remote tasks.
+<!--l. 4365--><p class="indent" >   Remote hosting, like all namespace settings, can be declared globally in the root namespace, or per family, or for
 individual tasks.
                                                                                          
 
                                                                                          
-<!--l. 4373--><p class="noindent" >
-<!--l. 4373--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4368--><p class="noindent" >
+<!--l. 4368--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1230009.4.9.1"></a><span 
 class="cmbx-10">Dynamic Host Selection</span></span>
    Instead of hardwiring host names into the suite definition you can specify a shell command that prints a
 hostname, or an environment variable that holds a hostname, as the value of the host config item.
 See&#x00A0;<a 
 href="cug-htmlse17.html#x18-310000A.5.1.20.1">A.5.1.20.1<!--tex4ht:ref: DynamicHostSelection --></a>.
-<!--l. 4380--><p class="noindent" >
-<!--l. 4380--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 4375--><p class="noindent" >
+<!--l. 4375--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1240009.4.9.2"></a><span 
 class="cmbx-10">Remote Task Log Directories</span></span>
    Task stdout and stderr streams are written to log files in a suite-specific sub-directory of the <span 
@@ -14455,17 +14449,17 @@ as explained in&#x00A0;<a
 href="cug-htmlse11.html#x12-15400011.3">11.3<!--tex4ht:ref: WhitherStdoutAndStderr --></a>. For remote tasks the same directory is used, but <span 
 class="cmti-10">on the task host</span>. Remote task log directories,
 like local ones, are created on the fly, if necessary, during job submission.
-<!--l. 4389--><p class="noindent" >
-<!--l. 4389--><p class="indent" >    <h4 id="9.5" class="subsectionHead"> <span class="titlemark"> <a href="#9.5"> 9.5</a>  <a 
+<!--l. 4384--><p class="noindent" >
+<!--l. 4384--><p class="indent" >    <h4 id="9.5" class="subsectionHead"> <span class="titlemark"> <a href="#9.5"> 9.5</a>  <a 
  id="x10-1250009.5"></a>Visualization </span></h4>
-<!--l. 4392--><p class="indent" >   The visualization section of a suite definition is used to configure suite graphing, principally graph node (task)
+<!--l. 4387--><p class="indent" >   The visualization section of a suite definition is used to configure suite graphing, principally graph node (task)
 and edge (dependency arrow) style attributes. Tasks can be grouped for the purpose of applying common style
 attributes. See&#x00A0;<a 
 href="cug-htmlse17.html#x18-224000A">A<!--tex4ht:ref: SuiteRCReference --></a> for details.
-<!--l. 4397--><p class="noindent" >
-<!--l. 4397--><p class="indent" >    <h4 id="9.5.1" class="subsubsectionHead"><span class="titlemark"> <a href="#9.5.1"> 9.5.1</a>  <a 
+<!--l. 4392--><p class="noindent" >
+<!--l. 4392--><p class="indent" >    <h4 id="9.5.1" class="subsubsectionHead"><span class="titlemark"> <a href="#9.5.1"> 9.5.1</a>  <a 
  id="x10-1260009.5.1"></a>Collapsible Families In Suite Graphs </span></h4>
-   <!--l. 4400-->
+   <!--l. 4395-->
    <div class="lstlisting" id="listing-161"><span class="label"><a 
  id="x10-126001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -14489,7 +14483,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">family2</span>
    
    </div>
-<!--l. 4406--><p class="indent" >   Nested families from the runtime inheritance hierarchy can be expanded and collapsed in suite
+<!--l. 4401--><p class="indent" >   Nested families from the runtime inheritance hierarchy can be expanded and collapsed in suite
 graphs and the gcylc graph view. All families are displayed in the collapsed state at first, unless
 <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
@@ -14498,13 +14492,13 @@ class="pcrr7t-">]</span><span
 class="pcrr7t-">collapsed</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">families</span></span> is used to single out specific families for initial collapsing.
-<!--l. 4412--><p class="indent" >   In the gcylc graph view, nodes outside of the main graph (such as the members of collapsed families) are
+<!--l. 4407--><p class="indent" >   In the gcylc graph view, nodes outside of the main graph (such as the members of collapsed families) are
 plotted as rectangular nodes to the right if they are doing anything interesting (submitted, running,
 failed).
-<!--l. 4417--><p class="indent" >   Figure&#x00A0;<a 
+<!--l. 4412--><p class="indent" >   Figure&#x00A0;<a 
 href="#x10-12600328">28<!--tex4ht:ref: fig-namespaces --></a> illustrates successive expansion of nested task families in the <span 
 class="cmti-10">namespaces </span>example suite.
-<!--l. 4420--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 4415--><p class="indent" >   <hr class="figure"><div class="figure" 
 >
                                                                                          
 
@@ -14516,40 +14510,40 @@ class="cmti-10">namespaces </span>example suite.
                                                                                          
 <div class="minipage"><div class="center" 
 >
-<!--l. 4422--><p class="noindent" >
+<!--l. 4417--><p class="noindent" >
 
-<!--l. 4423--><p class="noindent" ><img 
+<!--l. 4418--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-2.png" alt="PIC"  
 ></div></div>                            <div class="minipage"><div class="center" 
 >
-<!--l. 4428--><p class="noindent" >
+<!--l. 4423--><p class="noindent" >
 
-<!--l. 4429--><p class="noindent" ><img 
+<!--l. 4424--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-3.png" alt="PIC"  
 ></div></div><div class="minipage"><div class="center" 
 >
-<!--l. 4434--><p class="noindent" >
+<!--l. 4429--><p class="noindent" >
 
-<!--l. 4435--><p class="noindent" ><img 
+<!--l. 4430--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-4.png" alt="PIC"  
 ></div></div>
 <div class="minipage"><div class="center" 
 >
-<!--l. 4440--><p class="noindent" >
+<!--l. 4435--><p class="noindent" >
 
-<!--l. 4441--><p class="noindent" ><img 
+<!--l. 4436--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-5.png" alt="PIC"  
 ></div></div>                            <div class="minipage"><div class="center" 
 >
-<!--l. 4446--><p class="noindent" >
+<!--l. 4441--><p class="noindent" >
 
-<!--l. 4447--><p class="noindent" ><img 
+<!--l. 4442--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-6.png" alt="PIC"  
 ></div></div><div class="minipage"><div class="center" 
 >
-<!--l. 4452--><p class="noindent" >
+<!--l. 4447--><p class="noindent" >
 
-<!--l. 4453--><p class="noindent" ><img 
+<!--l. 4448--><p class="noindent" ><img 
 src="../../graphics/png/scaled/inherit-7.png" alt="PIC"  
 ></div></div>
 <br /> <div class="caption" 
@@ -14565,14 +14559,14 @@ class="cmr-7">gcylc graph view.</span></span></div><!--tex4ht:label?: x10-126003
                                                                                          
 
                                                                                          
-<!--l. 4462--><p class="indent" >   </div><hr class="endfigure">
-<!--l. 4465--><p class="indent" >    <h4 id="9.6" class="subsectionHead"> <span class="titlemark"> <a href="#9.6"> 9.6</a>  <a 
+<!--l. 4457--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 4460--><p class="indent" >    <h4 id="9.6" class="subsectionHead"> <span class="titlemark"> <a href="#9.6"> 9.6</a>  <a 
  id="x10-1270009.6"></a>Jinja2 </span></h4>
-<!--l. 4468--><p class="indent" >   Cylc has built in support for the Jinja2 template processor in suite definitions. Jinja2 variables, mathematical
+<!--l. 4463--><p class="indent" >   Cylc has built in support for the Jinja2 template processor in suite definitions. Jinja2 variables, mathematical
 expressions, loop control structures, conditional logic, etc., are automatically processed to generate the final suite
 definition seen by cylc.
-<!--l. 4473--><p class="indent" >   The need for Jinja2 processing must be declared with a hash-bang comment as the first line of the suite.rc file:
-<!--l. 4475-->
+<!--l. 4468--><p class="indent" >   The need for Jinja2 processing must be declared with a hash-bang comment as the first line of the suite.rc file:
+<!--l. 4470-->
    <div class="lstlisting" id="listing-162"><span class="label"><a 
  id="x10-127001r1"></a></span><span 
 class="pcrr7t-">#</span><span 
@@ -14585,21 +14579,21 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">...</span>
    
    </div>
-<!--l. 4480--><p class="indent" >   Potential uses for this include automatic generation of repeated groups of similar tasks and dependencies, and
+<!--l. 4475--><p class="indent" >   Potential uses for this include automatic generation of repeated groups of similar tasks and dependencies, and
 inclusion or exclusion of entire suite sections according to the value of a single flag. Consider a large
 complicated operational suite and several related parallel test suites with slightly different task content and
 structure (the parallel suites, for instance, might take certain large input files from the operation or
 the archive rather than downloading them again) - these can now be maintained as a single master
 suite definition that reconfigures itself according to the value of a flag variable indicating the intended
 use.
-<!--l. 4490--><p class="indent" >   Template processing is the first thing done on parsing a suite definition so Jinja2 expressions can appear
+<!--l. 4485--><p class="indent" >   Template processing is the first thing done on parsing a suite definition so Jinja2 expressions can appear
 anywhere in the file (inside strings and namespace headings, for example).
-<!--l. 4494--><p class="indent" >   Jinja2 is well documented at <a 
+<!--l. 4489--><p class="indent" >   Jinja2 is well documented at <a 
 href="http://jinja.pocoo.org/docs" class="url" ><span 
 class="pcrr7t-">http://jinja.pocoo.org/docs</span></a>, so here we just provide an example suite that
 uses it. The meaning of the embedded Jinja2 code should be reasonably self-evident to anyone familiar with
 standard programming techniques.
-<!--l. 4499--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 4494--><p class="indent" >   <hr class="figure"><div class="figure" 
 >
                                                                                          
 
@@ -14611,9 +14605,9 @@ standard programming techniques.
                                                                                          
 <div class="center" 
 >
-<!--l. 4500--><p class="noindent" >
+<!--l. 4495--><p class="noindent" >
 
-<!--l. 4501--><p class="noindent" ><img 
+<!--l. 4496--><p class="noindent" ><img 
 src="../../graphics/png/scaled/jinja2-ensemble-graph.png" alt="PIC"  
 ></div>
 <br /> <div class="caption" 
@@ -14623,13 +14617,13 @@ class="cmr-7">The Jinja2 ensemble example suite graph.</span></span></div><!--te
                                                                                          
 
                                                                                          
-<!--l. 4506--><p class="indent" >   </div><hr class="endfigure">
-<!--l. 4508--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 4501--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 4503--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">jinja2</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">ensemble</span></span> example, graphed in Figure&#x00A0;<a 
 href="#x10-12700329">29<!--tex4ht:ref: fig-jinja2-ensemble --></a>, shows an ensemble of similar tasks generated using
-Jinja2:  <!--l. 4512-->
+Jinja2:  <!--l. 4507-->
    <div class="lstlisting" id="listing-163"><span class="label"><a 
  id="x10-127004r1"></a></span><span 
 class="pcrro7t-">#</span><span 
@@ -14784,7 +14778,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 4522--><p class="indent" >   Here is the generated suite definition, after Jinja2 processing:  <!--l. 4524-->
+<!--l. 4517--><p class="indent" >   Here is the generated suite definition, after Jinja2 processing:  <!--l. 4519-->
    <div class="lstlisting" id="listing-164"><span class="label"><a 
  id="x10-127012r1"></a></span><span 
 class="pcrro7t-">#</span><span 
@@ -14969,7 +14963,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 4537--><p class="indent" >   And finally, the <span class="lstinline"><span 
+<!--l. 4532--><p class="indent" >   And finally, the <span class="lstinline"><span 
 class="pcrr7t-">jinja2</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">cities</span></span> example uses variables, includes or excludes special cleanup tasks according to
@@ -14978,7 +14972,7 @@ tasks that is repeated for each city in the suite. To add a new city and associa
 the city name to list at the top of the file. The suite is graphed, with the New York City task family expanded, in
 Figure&#x00A0;<a 
 href="#x10-12708130">30<!--tex4ht:ref: fig-jinja2-cities --></a>.
-   <!--l. 4547--><div class="lstinputlisting">
+   <!--l. 4542--><div class="lstinputlisting">
 <a 
  id="x10-127022"></a>
    <span 
@@ -15948,7 +15942,7 @@ class="pcrr7t-">lightblue</span><span
 class="pcrr7t-">'</span>
    
    </div>
-<!--l. 4550--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 4545--><p class="indent" >   <hr class="figure"><div class="figure" 
 >
                                                                                          
 
@@ -15960,9 +15954,9 @@ class="pcrr7t-">'</span>
                                                                                          
 <div class="center" 
 >
-<!--l. 4551--><p class="noindent" >
+<!--l. 4546--><p class="noindent" >
 
-<!--l. 4552--><p class="noindent" ><img 
+<!--l. 4547--><p class="noindent" ><img 
 src="../../graphics/png/scaled/jinja2-suite-graph.png" alt="PIC"  
 ></div>
 <br /> <div class="caption" 
@@ -15972,12 +15966,12 @@ class="cmr-7">The Jinja2 cities example suite graph, with the New York City task
                                                                                          
 
                                                                                          
-<!--l. 4558--><p class="indent" >   </div><hr class="endfigure">
-<!--l. 4560--><p class="indent" >    <h4 id="9.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.1"> 9.6.1</a>  <a 
+<!--l. 4553--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 4555--><p class="indent" >    <h4 id="9.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.1"> 9.6.1</a>  <a 
  id="x10-1280009.6.1"></a>Accessing Environment Variables With Jinja2 </span></h4>
-<!--l. 4562--><p class="indent" >   This functionality is not provided by Jinja2 by default, but cylc automatically imports the user environment to
+<!--l. 4557--><p class="indent" >   This functionality is not provided by Jinja2 by default, but cylc automatically imports the user environment to
 the template in a dictionary structure called <span 
-class="cmti-10">environ</span>. A usage example: <!--l. 4565-->
+class="cmti-10">environ</span>. A usage example: <!--l. 4560-->
    <div class="lstlisting" id="listing-165"><span class="label"><a 
  id="x10-128001r1"></a></span><span 
 class="pcrr7t-">#</span><span 
@@ -16039,16 +16033,16 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">']}}</span>
    
    </div>
-<!--l. 4573--><p class="indent" >   This example is emphasizes that <span 
+<!--l. 4568--><p class="indent" >   This example is emphasizes that <span 
 class="cmti-10">the environment is read on the suite host at the time the suite definition is</span>
 <span 
 class="cmti-10">parsed </span>- it is not, for instance, read at task run time on the task host.
-<!--l. 4577--><p class="noindent" >
-<!--l. 4577--><p class="indent" >    <h4 id="9.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.2"> 9.6.2</a>  <a 
+<!--l. 4572--><p class="noindent" >
+<!--l. 4572--><p class="indent" >    <h4 id="9.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.2"> 9.6.2</a>  <a 
  id="x10-1290009.6.2"></a>Custom Jinja2 Filters </span></h4>
-<!--l. 4579--><p class="indent" >   Jinja2 variable values can be modified by &#8220;filters&#8221;, using pipe notation. For example, the built-in <span class="lstinline"><span 
+<!--l. 4574--><p class="indent" >   Jinja2 variable values can be modified by &#8220;filters&#8221;, using pipe notation. For example, the built-in <span class="lstinline"><span 
 class="pcrr7t-">trim</span></span> filter
-strips leading and trailing white space from a string:  <!--l. 4583-->
+strips leading and trailing white space from a string:  <!--l. 4578-->
    <div class="lstlisting" id="listing-166"><span class="label"><a 
  id="x10-129001r1"></a></span><span 
 class="pcrr7t-">{%</span><span 
@@ -16091,8 +16085,8 @@ class="pcrro7t-">dog</span><span
 class="pcrro7t-">"</span>
    
    </div>
-<!--l. 4587--><p class="indent" >   (See official Jinja2 documentation for available built-in filters.)
-<!--l. 4589--><p class="indent" >   Cylc also supports custom Jinja2 filters. A custom filter is a single Python function in a source file with the same
+<!--l. 4582--><p class="indent" >   (See official Jinja2 documentation for available built-in filters.)
+<!--l. 4584--><p class="indent" >   Cylc also supports custom Jinja2 filters. A custom filter is a single Python function in a source file with the same
 name as the function (plus &#8220;.py&#8221; extension) and stored in one of the following locations:
      <ul class="itemize1">
      <li class="itemize"><span class="lstinline"><span 
@@ -16124,11 +16118,11 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">Jinja2Filters</span><span 
 class="pcrr7t-">/</span></span></li></ul>
-<!--l. 4599--><p class="indent" >   In the filter function argument list, the first argument is the variable value to be &#8220;filtered&#8221;, and subsequent
+<!--l. 4594--><p class="indent" >   In the filter function argument list, the first argument is the variable value to be &#8220;filtered&#8221;, and subsequent
 arguments can be whatever is needed. Currently there is one custom filter called &#8220;pad&#8221; in the central cylc Jinja2
 filter directory, for padding string values to some constant length with a fill character - useful for generating task
 names and related values in ensemble suites:
-   <!--l. 4607-->
+   <!--l. 4602-->
    <div class="lstlisting" id="listing-167"><span class="label"><a 
  id="x10-129003r1"></a></span><span 
 class="pcrr7t-">{%</span><span 
@@ -16216,10 +16210,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">%}</span>
    
    </div>
-<!--l. 4614--><p class="noindent" >
-<!--l. 4614--><p class="indent" >    <h4 id="9.6.3" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.3"> 9.6.3</a>  <a 
+<!--l. 4609--><p class="noindent" >
+<!--l. 4609--><p class="indent" >    <h4 id="9.6.3" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.3"> 9.6.3</a>  <a 
  id="x10-1300009.6.3"></a>Associative Arrays In Jinja2 </span></h4>
-<!--l. 4616--><p class="indent" >   Associative arrays (<span 
+<!--l. 4611--><p class="indent" >   Associative arrays (<span 
 class="cmti-10">dicts </span>in Python) can be very useful. Here&#8217;s an example, from <br 
 class="newline" /><span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -16230,7 +16224,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">jinja2</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">dict</span></span>:
-   <!--l. 4621-->
+   <!--l. 4616-->
    <div class="lstlisting" id="listing-168"><span class="label"><a 
  id="x10-130001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
@@ -16468,7 +16462,7 @@ class="pcrr7t-">%}</span>
 
                                                                                          
    </div>
-<!--l. 4641--><p class="indent" >   Here&#8217;s the result:  <!--l. 4643-->
+<!--l. 4636--><p class="indent" >   Here&#8217;s the result:  <!--l. 4638-->
    <div class="lstlisting" id="listing-169"><span class="label"><a 
  id="x10-130018r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -16504,10 +16498,10 @@ class="pcrr7t-">ncpus</span><span
 class="pcrr7t-">=9</span>
    
    </div>
-<!--l. 4648--><p class="noindent" >
-<!--l. 4648--><p class="indent" >    <h4 id="9.6.4" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.4"> 9.6.4</a>  <a 
+<!--l. 4643--><p class="noindent" >
+<!--l. 4643--><p class="indent" >    <h4 id="9.6.4" class="subsubsectionHead"><span class="titlemark"> <a href="#9.6.4"> 9.6.4</a>  <a 
  id="x10-1310009.6.4"></a>Jinja2 Default Values And Template Inputs </span></h4>
-<!--l. 4650--><p class="indent" >   The values of Jinja2 variables can be passed in from the cylc command line rather than hardwired in the suite
+<!--l. 4645--><p class="indent" >   The values of Jinja2 variables can be passed in from the cylc command line rather than hardwired in the suite
 definition. Here&#8217;s an example, from <br 
 class="newline" /><span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -16518,7 +16512,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">jinja2</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">defaults</span></span>:
-   <!--l. 4656-->
+   <!--l. 4651-->
    <div class="lstlisting" id="listing-170"><span class="label"><a 
  id="x10-131001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
@@ -16921,8 +16915,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">%}</span>
    
    </div>
-<!--l. 4686--><p class="indent" >   Here&#8217;s the result:
-   <!--l. 4689-->
+<!--l. 4681--><p class="indent" >   Here&#8217;s the result:
+   <!--l. 4684-->
    <div class="lstlisting" id="listing-171"><span class="label"><a 
  id="x10-131028r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -17101,7 +17095,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">bob</span>
    
    </div>
-<!--l. 4725--><p class="indent" >   Note also that <span class="lstinline"><span 
+<!--l. 4720--><p class="indent" >   Note also that <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">view</span><span 
@@ -17111,24 +17105,24 @@ class="pcrr7t-">set</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">FIRST_TASK</span></span>bob &#8211;jinja2 SUITE= will show the suite with the Jinja2
 variables as set.
-<!--l. 4729--><p class="indent" >   <span 
+<!--l. 4724--><p class="indent" >   <span 
 class="cmti-10">Warning: </span>suites started with template variables set on the command line do not currently <span 
 class="cmti-10">restart </span>with the same
 settings - you have to set them again on the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">restart</span></span> command line.
-<!--l. 4734--><p class="noindent" >
-<!--l. 4734--><p class="indent" >    <h4 id="9.7" class="subsectionHead"> <span class="titlemark"> <a href="#9.7"> 9.7</a>  <a 
+<!--l. 4729--><p class="noindent" >
+<!--l. 4729--><p class="indent" >    <h4 id="9.7" class="subsectionHead"> <span class="titlemark"> <a href="#9.7"> 9.7</a>  <a 
  id="x10-1320009.7"></a>Omitting Tasks At Runtime </span></h4>
-<!--l. 4736--><p class="indent" >   It is sometimes convenient to omit certain tasks from the suite at runtime without actually deleting their
+<!--l. 4731--><p class="indent" >   It is sometimes convenient to omit certain tasks from the suite at runtime without actually deleting their
 definitions from the suite.
-<!--l. 4739--><p class="indent" >   Defining [runtime] properties for tasks that do not appear in the suite graph results in verbose-mode validation
+<!--l. 4734--><p class="indent" >   Defining [runtime] properties for tasks that do not appear in the suite graph results in verbose-mode validation
 warnings that the tasks are disabled. They cannot be used because the suite graph is what defines their
 dependencies and valid cycle points. Nevertheless, it is legal to leave these orphaned runtime sections in the suite
 definition because it allows you to temporarily remove tasks from the suite by simply commenting them out of the
 graph.
-<!--l. 4747--><p class="indent" >   To omit a task from the suite at runtime but still leave it fully defined and available for use (by insertion or
+<!--l. 4742--><p class="indent" >   To omit a task from the suite at runtime but still leave it fully defined and available for use (by insertion or
 <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -17141,16 +17135,16 @@ href="cug-htmlse17.html#x18-275000A.4.10.7">A.4.10.7<!--tex4ht:ref: EASU --></a>
 dependencies, but they are not actually loaded into the suite at start-up. Other tasks that depend on
 the omitted ones, if any, will have to wait on their insertion at a later time or otherwise be triggered
 manually.
-<!--l. 4757--><p class="indent" >   Finally, with Jinja2 (<a 
+<!--l. 4752--><p class="indent" >   Finally, with Jinja2 (<a 
 href="#x10-1270009.6">9.6<!--tex4ht:ref: Jinja2 --></a>) you can radically alter suite structure by including or excluding tasks from the
 [scheduling] and [runtime] sections according to the value of a single logical flag defined at the top of the
 suite.
                                                                                          
 
                                                                                          
-<!--l. 4761--><p class="indent" >    <h4 id="9.8" class="subsectionHead"> <span class="titlemark"> <a href="#9.8"> 9.8</a>  <a 
+<!--l. 4756--><p class="indent" >    <h4 id="9.8" class="subsectionHead"> <span class="titlemark"> <a href="#9.8"> 9.8</a>  <a 
  id="x10-1330009.8"></a>Naked Dummy Tasks And Strict Validation </span></h4>
-<!--l. 4763--><p class="indent" >   A <span 
+<!--l. 4758--><p class="indent" >   A <span 
 class="cmti-10">naked dummy task </span>appears in the suite graph but has no explicit runtime configuration section. Such tasks
 automatically inherit the default &#8220;dummy task&#8221; configuration from the root namespace. This is very useful because
 it allows functional suites to be mocked up quickly for test and demonstration purposes by simply defining the
@@ -17159,7 +17153,7 @@ from one generated by typographic error: misspelling a task name in the graph re
 replacing the intended task in the affected trigger expression; and misspelling a task name in a runtime section
 heading results in the intended task becoming a dummy task itself (by divorcing it from its intended runtime config
 section).
-<!--l. 4776--><p class="indent" >   To avoid this problem any dummy task used in a real suite should not be naked - i.e.&#x00A0;it should have an explicit
+<!--l. 4771--><p class="indent" >   To avoid this problem any dummy task used in a real suite should not be naked - i.e.&#x00A0;it should have an explicit
 entry in under the runtime section of the suite definition, even if the section is empty. This results
 in exactly the same dummy task behaviour, via implicit inheritance from root, but it allows use of
 <span class="lstinline"><span 
@@ -17182,12 +17176,12 @@ href="#fn3x0-bk" id="fn3x0"><sup class="textsuperscript">3</sup></a></span><span
 class="cmr-8">In NWP forecast analysis suites parts of the observation processing and data assimilation subsystem will typically also depend</span>
 <span 
 class="cmr-8">on model background fields generated by the previous forecast.</span>                                                                                   </div>
-<!--l. 4785--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 4780--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse10.html" >next</a>] [<a 
 href="cug-htmlse8.html" >prev</a>] [<a 
 href="cug-htmlse8.html#tailcug-htmlse8.html" >prev-tail</a>] [<a 
 href="cug-htmlse9.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse9.html" >up</a>] </p></div>
-<!--l. 4785--><p class="indent" >   <a 
+<!--l. 4780--><p class="indent" >   <a 
  id="tailcug-htmlse9.html"></a>   
 </body></html> 
