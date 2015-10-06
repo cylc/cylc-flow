@@ -28,7 +28,8 @@ from cylc.registration import localdb
 from cylc.passphrase import passphrase, get_passphrase, PassphraseError
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PYRO_SUITEID_OBJ_NAME, NO_PASSPHRASE
-from cylc.network.connection_validator import ConnValidator
+from cylc.network.connection_validator import (
+    ConnValidator, OK_HASHES, SCAN_HASH)
 
 passphrases = []
 
@@ -94,7 +95,9 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
     for port in range(base_port, last_port):
         try:
             proxy = get_proxy(host, port, pyro_timeout)
-            proxy._setNewConnectionValidator(ConnValidator())
+            conn_val = ConnValidator()
+            conn_val.set_default_hash(SCAN_HASH)
+            proxy._setNewConnectionValidator(conn_val)
             proxy._setIdentification((user, NO_PASSPHRASE))
             result = (port, proxy.identify())
         except Pyro.errors.ConnectionDeniedError as exc:
@@ -156,7 +159,9 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
                 else:
                     try:
                         proxy = get_proxy(host, port, pyro_timeout)
-                        proxy._setNewConnectionValidator(ConnValidator())
+                        conn_val = ConnValidator()
+                        conn_val.set_default_hash(SCAN_HASH)
+                        proxy._setNewConnectionValidator(conn_val)
                         proxy._setIdentification((user, pphrase))
                         result = (port, proxy.identify())
                     except Exception:

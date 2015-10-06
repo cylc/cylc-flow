@@ -853,3 +853,73 @@ required.
     \end{myitemize}
 \item {\em default:} state-totals
 \end{myitemize}
+
+\subsubsection{[authentication] $\rightarrow$ hashes}
+
+This sets the hash algorithms used for Pyro HMAC. SHA-256 and SHA-512 are
+the most secure. The first item is used as the default hash. Subsequent items
+(if any) are used as fallback hashes (e.g. for backwards compatibility should
+the hash change).
+
+The default value is SHA256 followed by MD5. You may want to exclude MD5 for
+security reasons - e.g. for FIPS compliance.
+
+MD5 is popularly used for HMAC, but is the least secure. SHA-1 is slightly
+better. Note that HMAC use is not as susceptible to hash collision weakness,
+so both algorithms are more secure for HMAC use than in the general case.
+
+Clients will attempt to establish a connection using the algorithms from first
+to last. The exception is scanning, which will use the algorithm configured in
+the [authentication] $\rightarrow$ scan hash setting below. If you have lots
+of suites running with e.g. MD5 hashes, you will want to include 'md5' in your
+list of hashes and set it as the default scan hash.
+
+If you are running cylc on a client with an old Python version (< 2.5) then
+you will need to include MD5 or preferably SHA-1 in your hash choices.
+
+See \url{https://docs.python.org/2/library/hmac.html} and
+\url{https://docs.python.org/2/library/hashlib.html} for discussion of hash
+algorithms.
+
+\begin{myitemize}
+\item {\em type:} comma-separated list of hash names (must each be one of the
+    following options)
+\item {\em options:}
+    \begin{myitemize}
+        \item {\em sha256} - SHA-256 (recommended, default)
+        \item {\em sha512} - SHA-512 (most secure, but slowest)
+        \item {\em sha1} - SHA-1 (may be the best option on legacy systems)
+        \item {\em md5} - MD5 (old default, usually used for HMAC, but the
+            least secure)
+    \end{myitemize}
+\item {\em default:} sha256,md5
+\end{myitemize}
+
+
+\subsubsection{[authentication] $\rightarrow$ scan hash}
+
+See [authentication] $\rightarrow$ hashes.
+
+Configure which of the specified hash algorithms in [authentication]
+$\rightarrow$ hashes is used for scanning.
+
+The default hash algorithm for scans is MD5, for backwards compatibility
+reasons. You can override it by specifying a different value for this setting
+(e.g. for FIPS compliance).
+
+The default will become SHA-256 sometime in 2016, when it is unlikely that any
+MD5 suites are still around.
+
+\begin{myitemize}
+\item {\em type:} hash name (must be one of the following options)
+\item {\em options:}
+    \begin{myitemize}
+        \item {\em sha256} - SHA-256 (recommended, future default)
+        \item {\em sha512} - SHA-512 (most secure, but slowest)
+        \item {\em sha1} - SHA-1 (may be the best option on legacy systems)
+        \item {\em md5} - MD5 (default, good for backwards compatibility, but
+            the least secure)
+    \end{myitemize}
+\item {\em default:} md5
+\end{myitemize}
+
