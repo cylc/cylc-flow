@@ -879,7 +879,7 @@ class TaskProxy(object):
                 self.user_at_host,
                 self._get_host_conf("retrieve job logs max size"),  # max_size
             ),
-            self._get_events_conf("retrieve job logs retry delays", []))
+            self._get_host_conf("retrieve job logs retry delays", []))
 
     def setup_event_mail(self, event, message):
         """Event notification, by email."""

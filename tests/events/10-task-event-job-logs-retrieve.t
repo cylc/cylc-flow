@@ -22,7 +22,7 @@ HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
 if [[ -z "${HOST}" ]]; then
     skip_all '[test battery]remote host: not defined'
 fi
-set_test_number 4
+set_test_number 5
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     mkdir 'conf'
@@ -30,6 +30,7 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
 [hosts]
     [[${HOST}]]
         retrieve job logs = True
+        retrieve job logs retry delays = PT5S
 __GLOBALCFG__
     export CYLC_CONF_PATH="${PWD}/conf"
     OPT_SET='-s GLOBALCFG=True'
@@ -75,11 +76,27 @@ __OUT__
 sed "/'job-logs-retrieve'/!d; s/^[^ ]* //" \
     "${SUITE_RUN_DIR}/log/job/1/t1/"{01,02,03}"/job-activity.log" \
     >'edited-activities.log'
-cmp_ok 'edited-activities.log' <<__LOG__
+cmp_ok 'edited-activities.log' <<'__LOG__'
 [('job-logs-retrieve', 1) ret_code] 0
 [('job-logs-retrieve', 2) ret_code] 0
 [('job-logs-retrieve', 3) ret_code] 0
 __LOG__
+
+grep -F 'will run after' "${SUITE_RUN_DIR}/log/suite/log" \
+    | cut -d' ' -f 4-10 | sort >"edited-log"
+if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
+    cmp_ok 'edited-log' <<'__LOG__'
+[t1.1] -('job-logs-retrieve', 1) will run after PT5S
+[t1.1] -('job-logs-retrieve', 2) will run after PT5S
+[t1.1] -('job-logs-retrieve', 3) will run after PT5S
+__LOG__
+else
+    cmp_ok 'edited-log' <<'__LOG__'
+[t1.1] -('job-logs-retrieve', 1) will run after P0Y
+[t1.1] -('job-logs-retrieve', 2) will run after P0Y
+[t1.1] -('job-logs-retrieve', 3) will run after P0Y
+__LOG__
+fi
 
 ${SSH} "${HOST}" \
     "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"

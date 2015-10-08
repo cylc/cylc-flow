@@ -966,23 +966,20 @@ class TaskPool(object):
                 # Set timer if timeout is None.
                 if not try_state.is_timeout_set():
                     if try_state.next() is None:
-                        itask.log(ERROR, "%s failed:\n\t%s" % (
-                            key,
-                            try_state.ctx))
+                        itask.log(ERROR, "%s failed" % (key))
                         del itask.event_handler_try_states[key]
                         continue
                     # Report 1st and retries
                     if try_state.num == 1:
                         level = INFO
-                        tmpl = "%s will run after %s (after %s):\n\t%s"
+                        tmpl = "%s will run after %s (after %s)"
                     else:
                         level = WARNING
-                        tmpl = "%s failed, retrying in %s (after %s):\n\t%s"
+                        tmpl = "%s failed, retrying in %s (after %s)"
                     itask.log(level, tmpl % (
                         key,
                         try_state.delay_as_seconds(),
-                        try_state.timeout_as_str(),
-                        try_state.ctx))
+                        try_state.timeout_as_str()))
                 # Ready to run?
                 if not try_state.is_delay_done():
                     continue
