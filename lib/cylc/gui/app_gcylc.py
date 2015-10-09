@@ -443,6 +443,9 @@ Class to create an information bar.
 
     def prog_bar_start(self, msg):
         """Start the progress bar running"""
+        if self.prog_bar_active():
+            # Already started (multiple calls are possible via idle_add).
+            return False
         self.prog_bar_timer = gobject.timeout_add(100, self.prog_bar_pulse)
         self.prog_bar.set_text(msg)
         self.prog_bar.show()
@@ -459,6 +462,9 @@ Class to create an information bar.
 
     def prog_bar_stop(self):
         """Stop the progress bar running."""
+        if not self.prog_bar_active():
+            # Already stopped (multiple calls are possible via idle_add).
+            return False
         gobject.source_remove(self.prog_bar_timer)
         self.prog_bar.set_fraction(0)
         self.prog_bar.set_text('')
