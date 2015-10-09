@@ -596,6 +596,7 @@ class SuiteConfig(object):
 
         if flags.verbose:
             print "Checking [visualization] node attributes"
+            # TODO - these should probably be done in non-verbose mode too.
             # 1. node groups should contain valid namespace names
             nspaces = self.cfg['runtime'].keys()
             bad = {}
@@ -621,6 +622,21 @@ class SuiteConfig(object):
                 for na in bad:
                     print >> sys.stderr, " + " + na
 
+        # 3. node attributes must be lists of quoted "key=value" pairs.
+        fail = False
+        for node, attrs in self.cfg['visualization']['node attributes'].items():
+            for attr in attrs:
+                try:
+                    key, value = re.split('\s*=\s*', attr)
+                except ValueError as exc:
+                    fail = True
+                    print >> sys.stderr, (
+                        "ERROR: [visualization][node attributes]%s = %s" % (
+                            node, attr))
+        if fail:
+            raise SuiteConfigError("Node attributes must be of the form "
+                                   "'key1=value1', 'key2=value2', etc.")
+ 
         # (Note that we're retaining 'default node attributes' even
         # though this could now be achieved by styling the root family,
         # because putting default attributes for root in the suite.rc spec
