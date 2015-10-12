@@ -425,12 +425,14 @@ class CylcSuiteDAO(object):
                 "keys_str": ",".join(keys),
                 "table": self.TABLE_TASK_JOBS}
             stmt_args = [cycle, name, submit_num]
-        ret = {}
-        for row in self.connect().execute(stmt, stmt_args):
-            ret = {}
-            for key, value in zip(keys, row):
-                ret[key] = value
-            return ret
+        try:
+            for row in self.connect().execute(stmt, stmt_args):
+                ret = {}
+                for key, value in zip(keys, row):
+                    ret[key] = value
+                return ret
+        except sqlite3.DatabaseError:
+            return None
 
     def select_task_states_by_task_ids(self, keys, task_ids=None):
         """Select items from task_states by task IDs.
