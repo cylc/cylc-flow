@@ -183,7 +183,7 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
-    LINE_PREFIX_CYLC_DIR = "export CYLC_DIR="
+    LINE_PREFIX_CYLC_DIR = "    export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
     LINE_PREFIX_EOF = "#EOF: "
@@ -759,10 +759,8 @@ class BatchSysManager(object):
 
             if cur_line.startswith(self.LINE_PREFIX_CYLC_DIR):
                 old_line = cur_line
-                cur_line = (
-                    cur_line[0:cur_line.find(self.LINE_PREFIX_CYLC_DIR)] +
-                    self.LINE_PREFIX_CYLC_DIR +
-                    "'%s'\n" % os.environ["CYLC_DIR"])
+                cur_line = "%s'%s'\n" % (
+                    self.LINE_PREFIX_CYLC_DIR, os.environ["CYLC_DIR"])
                 if old_line != cur_line:
                     lines.append(self.LINE_UPDATE_CYLC_DIR)
             elif cur_line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
@@ -822,12 +820,10 @@ class BatchSysManager(object):
             if not line:
                 sys.stdin.close()
                 break
-            if line.strip().startswith(self.LINE_PREFIX_CYLC_DIR):
+            if line.startswith(self.LINE_PREFIX_CYLC_DIR):
                 old_line = line
-                line = (
-                    line[0:line.find(self.LINE_PREFIX_CYLC_DIR)] +
-                    self.LINE_PREFIX_CYLC_DIR + "'%s'\n" %
-                    os.environ["CYLC_DIR"])
+                line = "%s'%s'\n" % (
+                    self.LINE_PREFIX_CYLC_DIR, os.environ["CYLC_DIR"])
                 if old_line != line:
                     job_file.write(self.LINE_UPDATE_CYLC_DIR)
             elif line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
