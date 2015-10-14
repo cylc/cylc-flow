@@ -28,7 +28,7 @@ cylc run "${SUITE_NAME}"
 
 # Scan to grab the suite's port.
 TEST_NAME="${TEST_NAME_BASE}-new-scan"
-cylc scan -fb -n "${SUITE_NAME}" localhost > scan.out
+cylc scan -fb -n "${SUITE_NAME}" localhost > scan.out 2>/dev/null
 run_ok "${TEST_NAME}" sed -n "s/.*@localhost:\([0-9][0-9]*\)/\1/gp" scan.out
 PORT=$(<"${TEST_NAME}.stdout")
 
