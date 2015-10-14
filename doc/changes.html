@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.7.1">6.7.1</a>
     <li><a href="#6.7.0">6.7.0</a>
     <li><a href="#6.6.1">6.6.1</a>
     <li><a href="#6.6.0">6.6.0</a>
@@ -62,6 +63,26 @@
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
 
+<a name="6.7.1"/>
+    <h2>6.7.1</h2>
+
+    <h3>6.7.1 fixes</h3>
+		<ul>
+				<li> Avoid remote "tail" processes left behind by the GUI remote job
+				log viewer (since 6.7.0).
+				<li> gcylc GUI - fixed a bug that under heavy load conditions could
+				lead to warning dialogs (non-fatal) associated with stopping the
+				progress bar.
+				<li> Use remote job log retrieval retries as configured.
+				<li> Fixed a problem (since 6.7.0) with updating CYLC_DIR for remote
+				hosts.
+				<li> Fixed a problem that could affect the ignoring of pre-initial
+				triggers (i.e. of dependence on tasks prior to the initial cycle point)
+				in conditional trigger expressions.
+				<li> Better error messages, for bad suite visualization config and bad
+				use of the "cylc cat-log" command.
+    </ul>
+ 
 <a name="6.7.0"/>
     <h2>6.7.0</h2>
 
