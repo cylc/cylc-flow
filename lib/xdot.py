@@ -524,6 +524,7 @@ UNDERLINE = 4
 SUPERSCRIPT = 8
 SUBSCRIPT = 16
 STRIKE_THROUGH = 32
+OVERLINE = 64
 
 
 class XDotAttrParser:
@@ -1162,7 +1163,7 @@ class DotParser(Parser):
 
 class XDotParser(DotParser):
 
-    XDOTVERSION = '1.6'
+    XDOTVERSION = '1.7'
 
     def __init__(self, xdotcode):
         lexer = DotLexer(buf = xdotcode)
