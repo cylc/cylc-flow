@@ -60,7 +60,7 @@ class GraphUpdater(threading.Thread):
 
         self.quit = False
         self.cleared = False
-        self.ignore_suicide = True
+        self.ignore_suicide = False
         self.focus_start_point_string = None
         self.focus_stop_point_string = None
         self.xdot = xdot
