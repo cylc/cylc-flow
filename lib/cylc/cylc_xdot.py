@@ -275,7 +275,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.subgraphs_on = subgraphs_on
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
-        self.ignore_suicide = False
+        self.ignore_suicide = True
         self.start_point_string = start_point_string
         self.stop_point_string = stop_point_string
         self.filter_recs = []
