@@ -19,6 +19,7 @@
 import re
 import ast
 import copy
+import sys
 
 
 class ConditionalSimplifier(object):
@@ -100,31 +101,40 @@ class ConditionalSimplifier(object):
         else:
             return nest_me
 
-    def clean_expr( self, nested_list, criteria ):
-        """Return a list with entries specified by 'critria' removed"""
+    def clean_expr( self, nested_list, criterion ):
+        """Return a list with entries specified by 'criterion' removed"""
         cleaned = copy.deepcopy( nested_list )
+
         # Make sure that we don't have extraneous nesting.
         while (isinstance(cleaned, list) and len(cleaned) == 1 and
                isinstance(cleaned[0], list)):
             cleaned = cleaned[0]
 
-        # Recurse through the nested list and remove criteria.
-        found = None
-        if isinstance(cleaned, str) or len(cleaned)==1:
-            if cleaned == criteria:
+        if len(cleaned) == 1:
+            cleaned = cleaned[0]
+
+        if isinstance(cleaned, str):
+            if cleaned == criterion:
                 return ""
             else:
                 return cleaned
+
+        # Recurse through the nested list and remove criterion.
+        found = None
         for i in range(0, len(cleaned)):
             if isinstance(cleaned[i], list):
-                cleaned[i] = self.clean_expr(cleaned[i], criteria)
-            if cleaned[i] == criteria:
+                cleaned[i] = self.clean_expr(cleaned[i], criterion)
+            if cleaned[i] in [criterion, '']:
                 found = i
+                break
+
         if found is not None:
+            # e.g. [ 'foo', '|', 'bar', '|']
             if found == 0:
-                return self.clean_expr(cleaned[2], criteria)
-            elif found == 2:
-                return self.clean_expr(cleaned[0], criteria)
+                cleaned = cleaned[2:]
+            else:
+                del cleaned[found-1:found+1]
+            return self.clean_expr(cleaned, criterion)
         else:
             return cleaned
 

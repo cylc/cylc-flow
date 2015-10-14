@@ -77,24 +77,23 @@ class Prerequisite(object):
 
         drop_these = []
 
-        # TODO - WHY IS THIS SECTION NEEDED?:
+        if self.pre_initial_messages:
+            for k in self.pre_initial_messages:
+                drop_these.append(k)
+
+        # Needed to drop pre warm-start dependence:
         for k in self.messages:
+            if k in drop_these:
+                continue
             if self.start_point:
                 task = re.search( r'(.*).(.*) ', self.messages[k])
                 if task.group:
                     try:
                         foo = task.group().split(".")[1].rstrip()
-                        if ( get_point( foo ) <  self.start_point and
-                                 foo != '1' ):
-                            # TODO - ASYNC TASKS '1' ONLY NEEDS UPDATING FOR
-                            # INTEGER CYCLING (AND MORE?)
+                        if get_point( foo ) <  self.start_point:
                             drop_these.append(k)
                     except IndexError:
                         pass
-
-        if self.pre_initial_messages:
-            for k in self.pre_initial_messages:
-                drop_these.append(k)
 
         for label in drop_these:
             if self.messages.get(label):
