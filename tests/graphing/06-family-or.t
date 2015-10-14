@@ -20,6 +20,8 @@
 set_test_number 2
 
 cat >'suite.rc' <<'__SUITE_RC__'
+[cylc]
+    UTC mode = True
 [scheduling]
     initial cycle point = 2000
     [[dependencies]]
@@ -42,20 +44,20 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${PWD}/suite.rc"
 
 graph_suite "${PWD}/suite.rc" 'graph.plain'
 cmp_ok 'graph.plain' - <<'__GRAPH__'
-edge "A.20000101T0000+01" "c.20000102T0000+01" solid
-edge "A.20000102T0000+01" "c.20000103T0000+01" solid
-edge "B.20000101T0000+01" "c.20000102T0000+01" solid
-edge "B.20000102T0000+01" "c.20000103T0000+01" solid
+edge "A.20000101T0000Z" "c.20000102T0000Z" solid
+edge "A.20000102T0000Z" "c.20000103T0000Z" solid
+edge "B.20000101T0000Z" "c.20000102T0000Z" solid
+edge "B.20000102T0000Z" "c.20000103T0000Z" solid
 graph
-node "A.20000101T0000+01" "A\n20000101T0000+01" unfilled doubleoctagon black
-node "A.20000102T0000+01" "A\n20000102T0000+01" unfilled doubleoctagon black
-node "A.20000103T0000+01" "A\n20000103T0000+01" unfilled doubleoctagon black
-node "B.20000101T0000+01" "B\n20000101T0000+01" unfilled doubleoctagon black
-node "B.20000102T0000+01" "B\n20000102T0000+01" unfilled doubleoctagon black
-node "B.20000103T0000+01" "B\n20000103T0000+01" unfilled doubleoctagon black
-node "c.20000101T0000+01" "c\n20000101T0000+01" unfilled box black
-node "c.20000102T0000+01" "c\n20000102T0000+01" unfilled box black
-node "c.20000103T0000+01" "c\n20000103T0000+01" unfilled box black
+node "A.20000101T0000Z" "A\n20000101T0000Z" unfilled doubleoctagon black
+node "A.20000102T0000Z" "A\n20000102T0000Z" unfilled doubleoctagon black
+node "A.20000103T0000Z" "A\n20000103T0000Z" unfilled doubleoctagon black
+node "B.20000101T0000Z" "B\n20000101T0000Z" unfilled doubleoctagon black
+node "B.20000102T0000Z" "B\n20000102T0000Z" unfilled doubleoctagon black
+node "B.20000103T0000Z" "B\n20000103T0000Z" unfilled doubleoctagon black
+node "c.20000101T0000Z" "c\n20000101T0000Z" unfilled box black
+node "c.20000102T0000Z" "c\n20000102T0000Z" unfilled box black
+node "c.20000103T0000Z" "c\n20000103T0000Z" unfilled box black
 stop
 __GRAPH__
 
