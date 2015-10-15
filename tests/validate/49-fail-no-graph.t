@@ -15,15 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with && in the graph.
+# Test validation fails if no graph is defined.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
+TEST_NAME=${TEST_NAME_BASE}-empty-graph
+cat > suite.rc <<__END__
+[scheduling]
+    [[dependencies]]
+        graph = ""
+__END__
+run_fail $TEST_NAME cylc validate --debug -v suite.rc
+grep_ok "No suite dependency graph defined." $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "ERROR: Illegal '&&' in 'graph' at" $TEST_NAME.stderr
-#-------------------------------------------------------------------------------
-exit
+TEST_NAME=${TEST_NAME_BASE}-no-graph
+cat > suite.rc <<__END__
+[scheduling]
+    initial cycle point = 2015
+    [[dependencies]]
+        [[[R1]]]
+__END__
+run_fail $TEST_NAME cylc validate --debug -v suite.rc
+grep_ok "No suite dependency graph defined." $TEST_NAME.stderr
