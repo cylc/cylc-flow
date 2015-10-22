@@ -3,11 +3,11 @@
 <html > 
 <head><title>Suite Definition</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
-<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
-<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="generator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-10-15 12:44:00"> 
+<meta name="date" content="2015-10-23 10:44:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -10390,8 +10390,8 @@ consider a cycling task that copies the latest of a set of files to overwrite th
 more than one cycle there may be no point in running it because the freshly copied files will just be
 overwritten immediately by the next task instance as the suite catches back up to real time operation.
 Clock-expire tasks are configured like clock-trigger tasks, with a date-time offset relative to cycle point
-(<span 
-class="cmbx-10">??</span>). The offset should be positive to make the task expire if the wall-clock time has gone beyond the
+(<a 
+href="cug-htmlse17.html#x18-270000A.4.10.2">A.4.10.2<!--tex4ht:ref: ClockExpireRef --></a>). The offset should be positive to make the task expire if the wall-clock time has gone beyond the
 cycle point. Triggering off an expired task typically requires suicide triggers to remove the workflow
 that runs if the task has not expired. Here a task called <span class="lstinline"><span 
 class="pcrr7t-">copy</span></span> expires, and its downstream workflow
@@ -14227,8 +14227,8 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_SUITE_SHARE_DIR</span></span>. In a cycling suite, output files are typically held in
 cycle point sub-directories of the suite share directory.
 <!--l. 4271--><p class="indent" >   The top level share and work directory (below) location can be changed (e.g.&#x00A0;to a large data area) by a global
-config setting (see&#x00A0;<span 
-class="cmbx-10">??</span>).
+config setting (see&#x00A0;<a 
+href="cug-htmlse18.html#x19-403000B.8.1.2">B.8.1.2<!--tex4ht:ref: workdirectory --></a>).
 <!--l. 4275--><p class="noindent" >
 <!--l. 4275--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1180009.4.7.5"></a><span 
@@ -14243,11 +14243,11 @@ class="pcrr7t-">PWD</span></span> if it does not <span class="lstinline"><span
 class="pcrb7t-">cd</span></span> elsewhere at
 runtime). By default the location contains task name and cycle point, to provide a unique workspace for every
 instance of every task. This can be overridden in the suite definition, however, to get several tasks to share the same
-work directory (see&#x00A0;<span 
-class="cmbx-10">??</span>).
+work directory (see&#x00A0;<a 
+href="cug-htmlse17.html#x18-296000A.5.1.14">A.5.1.14<!--tex4ht:ref: worksubdirectory --></a>).
 <!--l. 4286--><p class="indent" >   The top level work and share directory (above) location can be changed (e.g.&#x00A0;to a large data area) by a global
-config setting (see&#x00A0;<span 
-class="cmbx-10">??</span>).
+config setting (see&#x00A0;<a 
+href="cug-htmlse18.html#x19-403000B.8.1.2">B.8.1.2<!--tex4ht:ref: workdirectory --></a>).
 <!--l. 4291--><p class="noindent" >
 <!--l. 4291--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1190009.4.7.6"></a><span 
@@ -14437,8 +14437,8 @@ individual tasks.
 class="cmbx-10">Dynamic Host Selection</span></span>
    Instead of hardwiring host names into the suite definition you can specify a shell command that prints a
 hostname, or an environment variable that holds a hostname, as the value of the host config item.
-See&#x00A0;<span 
-class="cmbx-10">??</span>.
+See&#x00A0;<a 
+href="cug-htmlse17.html#x18-310000A.5.1.20.1">A.5.1.20.1<!--tex4ht:ref: DynamicHostSelection --></a>.
 <!--l. 4375--><p class="noindent" >
 <!--l. 4375--><p class="noindent" ><span class="paragraphHead"><a 
  id="x10-1240009.4.9.2"></a><span 
@@ -17128,11 +17128,10 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">submit</span></span>) use one or both of [scheduling][[special task]] lists, <span 
 class="cmti-10">include at start-up </span>or <span 
-class="cmti-10">exclude at</span>
-<span 
-class="cmti-10">start-up </span>(documented in&#x00A0;<span 
-class="cmbx-10">??</span> and&#x00A0;<span 
-class="cmbx-10">??</span>). Then the graph still defines the validity of the tasks and their
+class="cmti-10">exclude at start-up</span>
+(documented in&#x00A0;<a 
+href="cug-htmlse17.html#x18-276000A.4.10.8">A.4.10.8<!--tex4ht:ref: IASU --></a> and&#x00A0;<a 
+href="cug-htmlse17.html#x18-275000A.4.10.7">A.4.10.7<!--tex4ht:ref: EASU --></a>). Then the graph still defines the validity of the tasks and their
 dependencies, but they are not actually loaded into the suite at start-up. Other tasks that depend on
 the omitted ones, if any, will have to wait on their insertion at a later time or otherwise be triggered
 manually.
