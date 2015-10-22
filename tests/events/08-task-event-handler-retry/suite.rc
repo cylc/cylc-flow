@@ -13,6 +13,10 @@ title=Task Event Handler Retry
 [runtime]
     [[t1]]
         script=true
+{% if HOST is defined %}
+        [[[remote]]]
+            host = {{HOST}}
+{% endif %}
 {% if GLOBALCFG is not defined %}
         [[[events]]]
             handlers=hello-event-handler '%(name)s' '%(event)s'
