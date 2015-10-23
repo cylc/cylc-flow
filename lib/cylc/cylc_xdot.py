@@ -265,7 +265,7 @@ class MyDotWindow( CylcDotViewerCommon ):
     '''
     def __init__(self, suite, suiterc, start_point_string, stop_point_string,
             template_vars, template_vars_file, orientation="TB",
-            subgraphs_on=False, should_hide=False):
+            subgraphs_on=False, ignore_suicide=True, should_hide=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -275,7 +275,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.subgraphs_on = subgraphs_on
         self.template_vars = template_vars
         self.template_vars_file = template_vars_file
-        self.ignore_suicide = False
+        self.ignore_suicide = ignore_suicide
         self.start_point_string = start_point_string
         self.stop_point_string = stop_point_string
         self.filter_recs = []
@@ -359,6 +359,10 @@ class MyDotWindow( CylcDotViewerCommon ):
             '/ToolBar/Subgraphs')
         subgraphs_toolitem.set_active(self.subgraphs_on)
 
+        igsui_toolitem = uimanager.get_widget(
+            '/ToolBar/IgnoreSuicide')
+        igsui_toolitem.set_active(self.ignore_suicide)
+
         # Create a Toolbar
 
         toolbar = uimanager.get_widget('/ToolBar')
@@ -384,6 +388,8 @@ class MyDotWindow( CylcDotViewerCommon ):
 
     def get_graph( self, group_nodes=[], ungroup_nodes=[],
             ungroup_recursive=False, ungroup_all=False, group_all=False ):
+        if not self.suiterc:
+            return
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
         graphed_family_nodes = self.suiterc.triggering_families
         suite_polling_tasks = self.suiterc.suite_polling_tasks

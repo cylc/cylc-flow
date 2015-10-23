@@ -178,6 +178,11 @@ def main():
              "If not given, assume --output-file=-.",
         action="store_true", default=False, dest="reference")
 
+    parser.add_option(
+        "--show-graph",
+        help="Show the graph, default is to not display the graph.",
+        action="store_true", default=False, dest="show_graph")
+
     (options, args) = parser.parse_args()
 
     # import modules that require gtk now, so that a display is not needed
@@ -221,6 +226,12 @@ def main():
         window = MyDotWindow2(suite, suiterc, options.templatevars,
                               options.templatevars_file,
                               should_hide=should_hide_gtk_window)
+    elif options.show_graph:
+        window = MyDotWindow(suite, suiterc, start_point_string,
+                             stop_point_string, options.templatevars,
+                             options.templatevars_file,
+                             should_hide=should_hide_gtk_window,
+                             ignore_suicide=False)
     else:
         window = MyDotWindow(suite, suiterc, start_point_string,
                              stop_point_string, options.templatevars,
