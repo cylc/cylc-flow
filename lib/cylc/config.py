@@ -242,21 +242,7 @@ class SuiteConfig(object):
         dependency_map = self.cfg.get('scheduling', {}).get(
             'dependencies', {})
 
-        graph_found = False
-        for item, value in dependency_map.items():
-            if item == 'graph':
-                for line in value.split('\n'):
-                    m = re.search(r"(&&)|(\|\|)", line)
-                    if m:
-                        linemsg = line.strip()
-                        raise SuiteConfigError(
-                            "ERROR: Illegal '%s' in '%s' at %s"
-                            % (m.group(0), item, linemsg)
-                        )
-            if item == 'graph' or value.get('graph'):
-                graph_found = True
-                break
-        if not graph_found:
+        if not self.is_graph_defined(dependency_map):
             raise SuiteConfigError('No suite dependency graph defined.')
 
         if 'cycling mode' not in self.cfg.get('scheduling', {}):
@@ -725,6 +711,20 @@ class SuiteConfig(object):
                                        '(graph the suite to see back-edges).')
         self.mem_log("config.py: end init config")
  
+    def is_graph_defined(self, dependency_map):
+        for item, value in dependency_map.items():
+            if item == 'graph':
+                # Async graph.
+                if value != '':
+                    return True
+            else:
+                # Cycling section.
+                for subitem, subvalue in value.items():
+                    if subitem == 'graph':
+                        if subvalue != '':
+                            return True
+        return False
+
     def dequote(self, s):
         """Strip quotes off a string."""
         if (s[0] == s[-1]) and s.startswith(("'", '"')):
@@ -2111,6 +2111,15 @@ class SuiteConfig(object):
             # ignore blank lines
             if not line:
                 continue
+            # Check for illegal double-char conditional operators.
+            m = re.search(r"(&&)|(\|\|)", line)
+            if m:
+                bad_opr = m.groups()[0]
+                if bad_opr == '&&':
+                    raise SuiteConfigError("ERROR: the graph AND operator is '&': %s" % line)
+                else:
+                    raise SuiteConfigError("ERROR: the graph OR operator is '|': %s" % line)
+
             # generate pygraphviz graph nodes and edges, and task definitions
             special_dependencies.extend(self.process_graph_line(
                 line, section, seq, offset_seq_map,
