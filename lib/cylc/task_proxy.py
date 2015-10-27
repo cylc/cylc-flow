@@ -787,16 +787,14 @@ class TaskProxy(object):
         ctx.out = line
         try:
             priority, message = line.split("|")[3:5]
-        except IndexError:
+        except ValueError:
             ctx.ret_code = 1
         else:
+            ctx.ret_code = 0
             self.process_incoming_message(
                 (priority, message), msg_was_polled=True)
-            ctx.ret_code = 0
+            self.process_incoming_message((priority, message), msg_was_polled=True)
         self.command_log(ctx)
-
-        priority, message = line.split("|")[3:5]
-        self.process_incoming_message((priority, message), msg_was_polled=True)
 
     def job_kill_callback(self, line):
         """Callback on job kill."""
