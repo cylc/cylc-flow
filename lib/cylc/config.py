@@ -686,33 +686,34 @@ class SuiteConfig(object):
                 cfg['URL'] = re.sub(RE_TASK_NAME_VAR, name, cfg['URL'])
                 cfg['URL'] = re.sub(RE_SUITE_NAME_VAR, self.suite, cfg['URL'])
 
-        if self.validation and not graphing_disabled:
-            # Detect cyclic dependence.
-            # (ignore suicide triggers as they look like cyclic dependence:
-            #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
-            graph = self.get_graph(ungroup_all=True, ignore_suicide=True)
-            # Original edges.
-            o_edges = graph.edges()
-            # Reverse any back edges using graphviz 'acyclic'.
-            # (Note: use of acyclic(copy=True) reveals our CGraph class init
-            # should have the same arg list as its parent, pygraphviz.AGraph).
-            graph.acyclic()
-            # Look for reversed edges (note this does not detect self-edges).
-            n_edges = graph.edges()
-            back_edges = []
-            for e in o_edges:
-                if e not in n_edges:
-                    back_edges.append(e)
-            if len(back_edges) > 0:
-                print >> sys.stderr, "Back-edges:"
-                for e in back_edges:
-                    print >> sys.stderr, '  %s => %s' % e
-                raise SuiteConfigError('ERROR: cyclic dependence detected '
-                                       '(graph the suite to see back-edges).')
-        elif graphing_disabled:
-            print >> sys.stderr, (
-                "WARNING: skipping cyclic dependence check"
-                "  (importing graphviz library failed)")
+        if self.validation:
+            if graphing_disabled:
+                print >> sys.stderr, (
+                    "WARNING: skipping cyclic dependence check"
+                    "  (could not import graphviz library)")
+            else:
+                # Detect cyclic dependence.
+                # (ignore suicide triggers as they look like cyclic dependence:
+                #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
+                graph = self.get_graph(ungroup_all=True, ignore_suicide=True)
+                # Original edges.
+                o_edges = graph.edges()
+                # Reverse any back edges using graphviz 'acyclic'.
+                # (Note: use of acyclic(copy=True) reveals our CGraph class init
+                # should have the same arg list as its parent, pygraphviz.AGraph).
+                graph.acyclic()
+                # Look for reversed edges (note this does not detect self-edges).
+                n_edges = graph.edges()
+                back_edges = []
+                for e in o_edges:
+                    if e not in n_edges:
+                        back_edges.append(e)
+                if len(back_edges) > 0:
+                    print >> sys.stderr, "Back-edges:"
+                    for e in back_edges:
+                        print >> sys.stderr, '  %s => %s' % e
+                    raise SuiteConfigError('ERROR: cyclic dependence detected '
+                                           '(graph the suite to see back-edges).')
 
         self.mem_log("config.py: end init config")
  
