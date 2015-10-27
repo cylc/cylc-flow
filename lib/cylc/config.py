@@ -686,7 +686,7 @@ class SuiteConfig(object):
                 cfg['URL'] = re.sub(RE_TASK_NAME_VAR, name, cfg['URL'])
                 cfg['URL'] = re.sub(RE_SUITE_NAME_VAR, self.suite, cfg['URL'])
 
-        if self.validation:
+        if self.validation and not graphing_disabled:
             # Detect cyclic dependence.
             # (ignore suicide triggers as they look like cyclic dependence:
             #    "foo:fail => bar => !foo" looks like "foo => bar => foo").
@@ -709,6 +709,11 @@ class SuiteConfig(object):
                     print >> sys.stderr, '  %s => %s' % e
                 raise SuiteConfigError('ERROR: cyclic dependence detected '
                                        '(graph the suite to see back-edges).')
+        elif graphing_disabled:
+            print >> sys.stderr, (
+                "WARNING: skipping cyclic dependence check"
+                "  (importing graphviz library failed)")
+
         self.mem_log("config.py: end init config")
  
     def is_graph_defined(self, dependency_map):
