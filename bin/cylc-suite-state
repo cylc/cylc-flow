@@ -138,6 +138,12 @@ def main():
         action="store_true", dest="use_task_point", default=False)
 
     parser.add_option(
+        "--template", metavar="TEMPLATE",
+        help="Cyclepoint template string, used to reformat cyclepoints for "
+             "querying suites",
+        action="store", dest="template")
+
+    parser.add_option(
         "-d", "--run-dir",
         help="The top level cylc run directory if non-standard. The "
              "database should be DIR/REG/cylc-suite.db. Use to interrogate "
@@ -205,6 +211,16 @@ def main():
             sys.exit("ERROR: Unrecognised offset: %s" % options.offset)
 
         options.cycle = str(my_target_point)
+
+    # Reformat cycle point for querying targetted suite
+    if options.template:
+        if options.cycle:
+            my_parser = TimePointParser()
+            my_target_point = my_parser.parse(options.cycle,
+                                              dump_format=options.template)
+            options.cycle = str(my_target_point)
+        else:
+            sys.exit("ERROR: No cyclepoint to reformat using template")
 
     # this only runs locally (use of --host or --user results in remote
     # re-invocation).
