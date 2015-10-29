@@ -189,9 +189,11 @@ function cmp_ok() {
     local FILE_CONTROL=${2:--}
     local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
     local DIFF_CMD=${CYLC_TEST_DIFF_CMD:-'diff -u'}
-    if ${DIFF_CMD} "$FILE_TEST" "$FILE_CONTROL" 1>$TEST_NAME.stderr 2>&1; then
+    if ${DIFF_CMD} "$FILE_TEST" "$FILE_CONTROL" >"${TEST_NAME}.stderr" 2>&1;then
         ok $TEST_NAME
         return
+    else
+        cat "${TEST_NAME}.stderr" >&2
     fi
     mkdir -p $TEST_LOG_DIR
     cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr

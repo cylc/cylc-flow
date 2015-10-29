@@ -538,6 +538,16 @@ to be copied from the suite daemon to a job.
 Global default for the~\ref{runtime-remote-retrieve-job-logs} setting for the
 specified host.
 
+\paragraph[retrieve job logs command]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs command}
+
+If \lstinline@rsync -a@ is unavailable or insufficient to retrieve job logs
+from a remote host, you can use this setting to specify a suitable command.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} rsync -a
+\end{myitemize}
+
 \paragraph[retrieve job logs max size]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs max size}
 
 Global default for the~\ref{runtime-remote-retrieve-job-logs-max-size} setting for the

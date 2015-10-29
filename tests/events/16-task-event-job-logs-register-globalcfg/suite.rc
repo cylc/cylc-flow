@@ -1,0 +1,23 @@
+#!jinja2
+
+title=Task Event Job Log Retrieve
+
+[cylc]
+    [[reference test]]
+        live mode suite timeout=PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph=t1
+
+[runtime]
+    [[t1]]
+        script="""
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+mv "$0.out" "$0.out.keep"
+cylc task message 'succeeded' >>"$0.out.keep"
+sleep 5
+cp -p "$0.out.keep" "$0.out"
+
+trap '' EXIT
+"""
