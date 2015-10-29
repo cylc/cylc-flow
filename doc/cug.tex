@@ -6436,78 +6436,83 @@ you wish:
 \end{lstlisting}
 
 
-\subsection{Triggering Off Tasks In Other Suites}
+\subsection{Inter-suite Dependence: Triggering Off Tasks In Other Suites}
 \label{SuiteStatePolling}
 
-The \lstinline=cylc suite-state= command, which interrogates suite run
-databases, has a polling mode that waits on a given task achieving a
-given state.  See \lstinline=cylc suite-state --help= for command
-options and defaults.
+The \lstinline=cylc suite-state= command interrogates suite run databases. It
+has a polling mode that waits for a given task in the target suite to achieve a
+given state. This can be used to make task scripting wait for a remote task
+to succeed (for example). The suite graph notation also provides a way to
+define automatic suite-state polling tasks, which use the same polling command
+under the hood.
 
-The suite graph notation also allows you to define local tasks that, in
-effect, represent tasks in other suites by automatically polling for
-them using the \lstinline=cylc suite-state= command. Here's how to
-trigger a task \lstinline=bar= off a task \lstinline=foo= in another
-suite called \lstinline=other.suite=:
+Here's how to trigger a task \lstinline=bar= off a task \lstinline=foo= in
+a remote suite called \lstinline=other.suite=:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[T00,T12]]]
-            graph = "FOO<other.suite::foo> => bar"
+        [[[T00, T12]]]
+            graph = "my-foo<other.suite::foo> => bar"
 \end{lstlisting}
-Local task \lstinline=FOO= will poll for the success of \lstinline=foo=
-in suite \lstinline=other.suite= at the same cycle point. Other task states
-can be polled like this,
+Local task \lstinline=my-foo= will poll for the success of \lstinline=foo=
+in suite \lstinline=other.suite=, at the same cycle point, succeeding only when
+or if it succeeds. Other task states can also be polled,
 \begin{lstlisting}
-   graph = "FOO<other.suite::foo:fail> => bar"
+   graph = "my-foo<other.suite::foo:fail> => bar"
 \end{lstlisting}
 
-Default polling parameters (the maximum number of polls and the interval
-between them) are printed by \lstinline=cylc suite-state --help=.
-These can be configured if necessary under the local polling task
-runtime section:
+The default polling parameters (e.g.\ maximum number of polls and the interval
+between them) are printed by \lstinline=cylc suite-state --help= and can be
+configured if necessary under the local polling task runtime section:
 \begin{lstlisting}
 [scheduling]
     [[ dependencies]]
         [[[T00,T12]]]
-            graph = "FOO<other.suite::foo> => bar"
+            graph = "my-foo<other.suite::foo> => bar"
 [runtime]
-    [[FOO]]
+    [[my-foo]]
         [[[suite state polling]]]
             max-polls = 100
             interval = PT10S
 \end{lstlisting}
 
-The remote suite does not have to be running when polling commences (or
-at all if the remote condition has already been achieved) because the
-command interrogates the suite run database, not the suite server
-process.
-
-For suites owned by others or those with run databases in non-standard
-locations use the \lstinline=--run-dir= option or, in-suite,
+For suites owned by others, or those with run databases in non-standard
+locations, use the \lstinline=--run-dir= option, or in-suite:
 \begin{lstlisting}
 [runtime]
-    [[FOO]]
+    [[my-foo]]
         [[[suite state polling]]]
             run-dir = /path/to/top/level/cylc/run-directory
 \end{lstlisting}
 
-To trigger off remote tasks with different cycle points just arrange for
-the local polling task to be on the same cycling sequence as the remote
+If the remote task has a different cycling sequence, just arrange for the
+for the local polling task to be on the same sequence as the remote
 task that it represents. For instance, if local task \lstinline=cat=
 cycles 6-hourly at \lstinline=0,6,12,18= but needs to trigger off a
-remote task \lstinline=dog= with cycle points of \lstinline=3,9,15,21=
-hours,
+remote task \lstinline=dog= at \lstinline=3,9,15,21=,
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
+        [[[T03,T09,T15,T21]]]
+            graph = "my-dog<other.suite::dog>"
         [[[T00,T06,T12,T18]]]
-            graph = "DOG<other.suite::dog>[-PT3H] => cat"
+            graph = "my-dog[-PT3H] => cat"
 \end{lstlisting}
-This results in \lstinline=DOG= having cycle points of
-\lstinline=3,9,15,21= - the sames as \lstinline=dog= in
-\lstinline=other.suite=.
 
+For suite-state polling the cycle point of the target task is treated as a
+literal string so the polling command has to be told if the remote suite has a
+different cycle point format. Use the \lstinline=--template= option for this,
+or in-suite:
+\begin{lstlisting}
+[runtime]
+    [[my-foo]]
+        [[[suite state polling]]]
+            template = %Y-%m-%dT%H
+\end{lstlisting}
+
+Note that the remote suite does not have to be running when polling commences
+because the command interrogates the suite run database, not the suite server
+process.
 
 \section{Other Topics In Brief}
 
