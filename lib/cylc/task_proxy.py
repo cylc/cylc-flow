@@ -802,7 +802,7 @@ class TaskProxy(object):
         ctx.out = line
         try:
             ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
-        except IndexError:
+        except ValueError:
             ctx.ret_code = 1
         else:
             ctx.ret_code = int(ctx.ret_code)
@@ -830,7 +830,7 @@ class TaskProxy(object):
         items = line.split("|")
         try:
             ctx.timestamp, _, ctx.ret_code = items[0:3]
-        except IndexError:
+        except ValueError:
             ctx.ret_code = 1
         else:
             ctx.ret_code = int(ctx.ret_code)
