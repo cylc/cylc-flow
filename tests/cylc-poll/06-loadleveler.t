@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc poll" for loadleveler, slurm, or pbs jobs.
-# (TODO - replicate this test for slurm, pbs...)
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"

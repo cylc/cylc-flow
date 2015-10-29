@@ -1,0 +1,5 @@
+2013/12/09 16:14:26 INFO - Run mode: live
+2013/12/09 16:14:26 INFO - Initial point: 1
+2013/12/09 16:14:26 INFO - Final point: 1
+2013/12/09 16:14:26 INFO - [a.1] -triggered off []
+2013/12/09 16:14:29 INFO - [b.1] -triggered off ['a.1']
