@@ -18,7 +18,7 @@
 # Test authentication - ignore old client denials, report bad new clients.
 
 . $(dirname $0)/test_header
-set_test_number 14
+set_test_number 13
 
 # Set things up and run the suite.
 install_suite "${TEST_NAME_BASE}" basic
@@ -27,10 +27,9 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 cylc run "${SUITE_NAME}"
 
 # Scan to grab the suite's port.
+sleep 5  # Wait for the suite to initialize.
 TEST_NAME="${TEST_NAME_BASE}-new-scan"
-cylc scan -fb -n "${SUITE_NAME}" localhost > scan.out 2>/dev/null
-run_ok "${TEST_NAME}" sed -n "s/.*@localhost:\([0-9][0-9]*\)/\1/gp" scan.out
-PORT=$(<"${TEST_NAME}.stdout")
+PORT=$(cylc scan -b -n $SUITE_NAME localhost | sed -e 's/.*@localhost://')
 
 # Simulate an old client with the wrong passphrase.
 ERR_PATH="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
