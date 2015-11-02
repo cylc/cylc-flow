@@ -1718,6 +1718,16 @@ suite-name sub-directory of this location).
     \item {\em default:} as configured by site/user config (for your own suites)
 \end{myitemize}
 
+\subparagraph[template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ template}
+
+Cycle point template of the target suite, if different from that of the polling suite.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em default:} cycle point format of the polling suite
+    \item {\em example:} \lstinline=\%Y-\%m-\%dT\%H=
+\end{myitemize}
+
 \subparagraph[interval]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ interval}
 
 Polling interval expressed as an ISO 8601 duration/interval.

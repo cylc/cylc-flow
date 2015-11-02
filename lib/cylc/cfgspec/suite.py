@@ -345,6 +345,7 @@ SPEC = {
                 'interval'                    : vdr( vtype='interval_seconds' ),
                 'max-polls'                   : vdr( vtype='integer' ),
                 'run-dir'                     : vdr( vtype='string' ),
+                'template'                    : vdr( vtype='string' ),
                 'verbose mode'                : vdr( vtype='boolean' ),
                 },
             'environment' : {

@@ -42,6 +42,7 @@
         <RegExpr attribute='Keyword' String=' script '/>
         <RegExpr attribute='Keyword' String=' run time range '/>
         <RegExpr attribute='Keyword' String=' run-dir '/>
+        <RegExpr attribute='Keyword' String=' template '/>
         <RegExpr attribute='Keyword' String=' runahead limit '/>
         <RegExpr attribute='Keyword' String=' root '/>
         <RegExpr attribute='Keyword' String=' retry handler '/>
