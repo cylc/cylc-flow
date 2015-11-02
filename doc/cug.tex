@@ -1,4 +1,4 @@
-
+f
 \lstset{language=transcript}
 
 \section{Introduction: How Cylc Works}
@@ -6486,10 +6486,10 @@ locations, use the \lstinline=--run-dir= option, or in-suite:
 \end{lstlisting}
 
 If the remote task has a different cycling sequence, just arrange for the
-for the local polling task to be on the same sequence as the remote
-task that it represents. For instance, if local task \lstinline=cat=
-cycles 6-hourly at \lstinline=0,6,12,18= but needs to trigger off a
-remote task \lstinline=dog= at \lstinline=3,9,15,21=,
+local polling task to be on the same sequence as the remote task that it
+represents. For instance, if local task \lstinline=cat= cycles 6-hourly at
+\lstinline=0,6,12,18= but needs to trigger off a remote task \lstinline=dog=
+at \lstinline=3,9,15,21=,
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]

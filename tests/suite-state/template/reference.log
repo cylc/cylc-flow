@@ -1,0 +1,19 @@
+2015-11-02T15:30:50Z INFO - port:7766
+2015-11-02T15:30:50Z INFO - Suite starting at 2015-11-02T15:30:50Z
+2015-11-02T15:30:50Z INFO - Run mode: live
+2015-11-02T15:30:50Z INFO - Initial point: 20100101T0000Z
+2015-11-02T15:30:50Z INFO - Final point: 20110101T0000Z
+2015-11-02T15:30:50Z INFO - Cold Start 20100101T0000Z
+2015-11-02T15:30:50Z INFO - [poll_foo.20100101T0000Z] -triggered off []
+2015-11-02T15:30:51Z INFO - [poll_foo.20100101T0000Z] -submit_method_id=24838
+2015-11-02T15:30:51Z INFO - [poll_foo.20100101T0000Z] -submission succeeded
+2015-11-02T15:30:51Z INFO - [poll_foo.20100101T0000Z] -(current:submitted)> poll_foo.20100101T0000Z started at 2015-11-02T15:30:51Z
+2015-11-02T15:30:52Z INFO - [poll_foo.20110101T0000Z] -triggered off []
+2015-11-02T15:30:52Z INFO - [poll_foo.20100101T0000Z] -(current:running)> poll_foo.20100101T0000Z succeeded at 2015-11-02T15:30:51Z
+2015-11-02T15:30:53Z INFO - [poll_foo.20110101T0000Z] -submit_method_id=24941
+2015-11-02T15:30:53Z INFO - [poll_foo.20110101T0000Z] -submission succeeded
+2015-11-02T15:30:53Z INFO - [poll_foo.20120101T0000Z] -holding (beyond suite stop point) 20110101T0000Z
+2015-11-02T15:30:53Z INFO - [poll_foo.20120101T0000Z] -waiting => held
+2015-11-02T15:30:53Z INFO - [poll_foo.20110101T0000Z] -(current:submitted)> poll_foo.20110101T0000Z started at 2015-11-02T15:30:53Z
+2015-11-02T15:30:54Z INFO - [poll_foo.20110101T0000Z] -(current:running)> poll_foo.20110101T0000Z succeeded at 2015-11-02T15:30:53Z
+2015-11-02T15:30:55Z INFO - Suite shutting down at 2015-11-02T15:30:55Z
