@@ -38,4 +38,5 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME \
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME_REF
 purge_suite $SUITE_NAME
+#-------------------------------------------------------------------------------
 exit 0
