@@ -1296,6 +1296,10 @@ class TaskProxy(object):
                 comstr += (
                     " --run-dir=" +
                     str(rtconfig['suite state polling']['run-dir']))
+            if rtconfig['suite state polling']['template']:
+                comstr += (
+                    " --template=" +
+                    str(rtconfig['suite state polling']['template']))
             comstr += " " + self.tdef.suite_polling_cfg['suite']
             command = "echo " + comstr + "\n" + comstr
 

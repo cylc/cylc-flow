@@ -1,0 +1,19 @@
+2015-11-02T15:06:04Z INFO - port:7766
+2015-11-02T15:06:04Z INFO - Suite starting at 2015-11-02T15:06:04Z
+2015-11-02T15:06:04Z INFO - Run mode: live
+2015-11-02T15:06:04Z INFO - Initial point: 2010
+2015-11-02T15:06:04Z INFO - Final point: 2011
+2015-11-02T15:06:04Z INFO - Cold Start 2010
+2015-11-02T15:06:04Z INFO - [foo.2010] -triggered off []
+2015-11-02T15:06:05Z INFO - [foo.2010] -submit_method_id=22643
+2015-11-02T15:06:05Z INFO - [foo.2010] -submission succeeded
+2015-11-02T15:06:05Z INFO - [foo.2010] -(current:submitted)> foo.2010 started at 2015-11-02T15:06:05Z
+2015-11-02T15:06:06Z INFO - [foo.2011] -triggered off []
+2015-11-02T15:06:06Z INFO - [foo.2010] -(current:running)> foo.2010 succeeded at 2015-11-02T15:06:05Z
+2015-11-02T15:06:07Z INFO - [foo.2011] -submit_method_id=22741
+2015-11-02T15:06:07Z INFO - [foo.2011] -submission succeeded
+2015-11-02T15:06:07Z INFO - [foo.2012] -holding (beyond suite stop point) 2011
+2015-11-02T15:06:07Z INFO - [foo.2012] -waiting => held
+2015-11-02T15:06:07Z INFO - [foo.2011] -(current:submitted)> foo.2011 started at 2015-11-02T15:06:07Z
+2015-11-02T15:06:08Z INFO - [foo.2011] -(current:running)> foo.2011 succeeded at 2015-11-02T15:06:07Z
+2015-11-02T15:06:09Z INFO - Suite shutting down at 2015-11-02T15:06:09Z

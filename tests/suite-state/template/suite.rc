@@ -1,0 +1,16 @@
+#!jinja2
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        live mode suite timeout = PT1M
+[scheduling]
+    initial cycle point = 20100101T0000Z
+    final cycle point   = 20110101T0000Z
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = poll_foo<{{REF_SUITE}}::foo>
+
+[runtime]
+    [[poll_foo]]
+        [[[suite state polling]]]
+            template = %Y
