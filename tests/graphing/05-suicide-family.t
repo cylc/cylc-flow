@@ -18,7 +18,7 @@
 # Test that a suicide-triggered family plots as a collapsed family node (#1526).
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
@@ -27,5 +27,8 @@ run_ok $TEST_NAME cylc validate "$SUITE_NAME"
 #-------------------------------------------------------------------------------
 graph_suite $SUITE_NAME graph.plain
 cmp_ok graph.plain $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.plain.ref
+#-------------------------------------------------------------------------------
+graph_suite $SUITE_NAME graph.plain.suicide --show-suicide
+cmp_ok graph.plain.suicide $TEST_SOURCE_DIR/$TEST_NAME_BASE/graph.plain.suicide.ref
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
