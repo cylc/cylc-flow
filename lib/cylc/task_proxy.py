@@ -785,19 +785,27 @@ class TaskProxy(object):
         """Callback on job poll message."""
         ctx = SuiteProcContext(self.JOB_POLL, None)
         ctx.out = line
-        ctx.ret_code = 0
+        try:
+            priority, message = line.split("|")[3:5]
+        except ValueError:
+            ctx.ret_code = 1
+        else:
+            ctx.ret_code = 0
+            self.process_incoming_message(
+                (priority, message), msg_was_polled=True)
+            self.process_incoming_message((priority, message), msg_was_polled=True)
         self.command_log(ctx)
-
-        items = line.split("|")
-        priority, message = line.split("|")[3:5]
-        self.process_incoming_message((priority, message), msg_was_polled=True)
 
     def job_kill_callback(self, line):
         """Callback on job kill."""
         ctx = SuiteProcContext(self.JOB_KILL, None)
-        ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
         ctx.out = line
-        ctx.ret_code = int(ctx.ret_code)
+        try:
+            ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
+        except ValueError:
+            ctx.ret_code = 1
+        else:
+            ctx.ret_code = int(ctx.ret_code)
         self.command_log(ctx)
         if ctx.ret_code:  # non-zero exit status
             self.summary['latest_message'] = 'kill failed'
@@ -818,10 +826,14 @@ class TaskProxy(object):
     def job_submit_callback(self, line):
         """Callback on job submit."""
         ctx = SuiteProcContext(self.JOB_SUBMIT, None)
-        items = line.split("|")
-        ctx.timestamp, _, ctx.ret_code = items[0:3]
         ctx.out = line
-        ctx.ret_code = int(ctx.ret_code)
+        items = line.split("|")
+        try:
+            ctx.timestamp, _, ctx.ret_code = items[0:3]
+        except ValueError:
+            ctx.ret_code = 1
+        else:
+            ctx.ret_code = int(ctx.ret_code)
         self.command_log(ctx)
 
         if ctx.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:

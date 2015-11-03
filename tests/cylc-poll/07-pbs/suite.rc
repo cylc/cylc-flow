@@ -1,0 +1,25 @@
+#!Jinja2
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = PT5M
+[scheduling]
+    [[dependencies]]
+        graph = a:start => b
+[runtime]
+    [[a]]
+        script = sleep 20
+{% if "CYLC_TEST_BATCH_TASK_HOST" in environ and environ["CYLC_TEST_BATCH_TASK_HOST"] %}
+        [[[remote]]]
+            host={{environ["CYLC_TEST_BATCH_TASK_HOST"]}}
+{% endif %}
+        [[[job submission]]]
+            method = pbs
+        [[[directives]]]
+{% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and
+        environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
+    {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
+{% endif %}
+
+    [[b]]
+        script = cylc poll $CYLC_SUITE_REG_NAME a 1

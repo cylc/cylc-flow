@@ -613,7 +613,10 @@ class BatchSysManager(object):
             # ensure that any table header is ignored.
             job_ids = []
             for line in out.splitlines():
-                head = line.split(None, 1)[0]
+                try:
+                    head = line.split(None, 1)[0]
+                except IndexError:
+                    continue
                 if head in all_job_ids:
                     job_ids.append(head)
         for ctx in my_ctx_list:

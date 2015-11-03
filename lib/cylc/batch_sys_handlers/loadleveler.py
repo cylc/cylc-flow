@@ -93,6 +93,22 @@ class LoadlevelerHandler(object):
                 return True
         return False
 
+
+    @classmethod
+    def filter_poll_many_output(cls, out):
+        """Return a list of job IDs still in the batch system.
+        
+        Drop STEPID from the JOBID.STEPID returned by 'llq'.
+        """
+        job_ids = []
+        for line in out.splitlines():
+            try:
+                head = line.split(None, 1)[0]
+            except IndexError:
+                continue
+            job_ids.append(".".join(head.split(".")[:2]))
+        return job_ids
+
     def get_vacation_signal(self, job_conf):
         """Return "USR1" if "restart" directive is "yes"."""
         if job_conf["directives"].get("restart") == "yes":
