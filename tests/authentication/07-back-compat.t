@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test authentication - ignore old clients, report new bad clients.
+# Test authentication - ignore old client denials, report bad new clients.
 
 . $(dirname $0)/test_header
-set_test_number 11
+set_test_number 13
 
 # Set things up and run the suite.
 install_suite "${TEST_NAME_BASE}" basic
@@ -27,12 +27,11 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 cylc run "${SUITE_NAME}"
 
 # Scan to grab the suite's port.
+sleep 5  # Wait for the suite to initialize.
 TEST_NAME="${TEST_NAME_BASE}-new-scan"
-cylc scan -fb -n "${SUITE_NAME}" localhost > scan.out 2>/dev/null
-run_ok "${TEST_NAME}" sed -n "s/.*@localhost:\([0-9][0-9]*\)/\1/gp" scan.out
-PORT=$(<"${TEST_NAME}.stdout")
+PORT=$(cylc scan -b -n $SUITE_NAME localhost | sed -e 's/.*@localhost://')
 
-# Simulate an old client.
+# Simulate an old client with the wrong passphrase.
 ERR_PATH="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
 TEST_NAME="${TEST_NAME_BASE}-old-client-snapshot-err"
 run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
@@ -52,6 +51,22 @@ comm -13 err-before-scan "${ERR_PATH}" >"${TEST_NAME_BASE}-old-client-err-diff"
 TEST_NAME="${TEST_NAME_BASE}-log-old-client"
 run_fail "${TEST_NAME}" grep "WARNING - \[client-connect\] DENIED" \
     "${TEST_NAME_BASE}-old-client-err-diff"
+
+# Simulate an old client with the right passphrase.
+ERR_PATH="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
+TEST_NAME="${TEST_NAME_BASE}-old-client-snapshot-ok"
+run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
+TEST_NAME="${TEST_NAME_BASE}-old-client-simulate-ok"
+PASSPHRASE=$(cat $(cylc get-dir $SUITE_NAME)/passphrase)
+run_ok "${TEST_NAME}" python -c "
+import sys
+import Pyro.core
+uri = 'PYROLOC://localhost:' + sys.argv[1] + '"/${USER}.${SUITE_NAME}.suite-info"'
+print >> sys.stderr, uri
+proxy = Pyro.core.getProxyForURI(uri)
+proxy._setIdentification('"$PASSPHRASE"')
+info = proxy.get('get_suite_info')" "${PORT}"
+grep_ok "\[client-command\] get_suite_info (user)@(host):(OLD_CLIENT) (uuid)" "$(cylc cat-log -l $SUITE_NAME)"
 
 # Simulate a new, suspicious client.
 TEST_NAME="${TEST_NAME_BASE}-new-bad-client-snapshot-err"
