@@ -165,7 +165,7 @@ SPEC = {
         'execution timeout': vdr(vtype='interval_minutes'),
         'handlers': vdr(vtype='string_list', default=[]),
         'handler events': vdr(vtype='string_list', default=[]),
-        'handler retry delays': vdr(vtype='interval_minutes_list', default=[]),
+        'handler retry delays': vdr(vtype='interval_minutes_list'),
         'mail events': vdr(vtype='string_list', default=[]),
         'mail from': vdr(vtype='string'),
         'mail retry delays': vdr(vtype='interval_minutes_list', default=[]),

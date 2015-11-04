@@ -922,7 +922,9 @@ class TaskProxy(object):
         elif (self._get_events_conf('handlers', []) and
                 event in self._get_events_conf('handler events', [])):
             handlers = self._get_events_conf('handlers', [])
-        retry_delays = self._get_events_conf('handler retry delays', [])
+        retry_delays = self._get_events_conf(
+            'handler retry delays',
+            self._get_host_conf("task event handler retry delays", []))
         env = None
         for i, handler in enumerate(handlers):
             key1 = (
