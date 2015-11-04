@@ -180,8 +180,8 @@ def main():
 
     parser.add_option(
         "--show-suicide",
-        help="Show the suicide triggers, default is to not display the graph "
-             "and with the suicide triggers.",
+        help="Show suicide triggers.  They are not shown by default, unless "
+             "toggled on with the tool bar button.",
         action="store_true", default=False, dest="show_suicide")
 
     (options, args) = parser.parse_args()
