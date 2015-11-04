@@ -1,0 +1,5 @@
+edge "foo.1" "BAR.1" dashed
+graph
+node "BAR.1" "BAR\n1" unfilled doubleoctagon black
+node "foo.1" "foo\n1" unfilled box black
+stop

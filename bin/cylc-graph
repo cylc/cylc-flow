@@ -178,6 +178,12 @@ def main():
              "If not given, assume --output-file=-.",
         action="store_true", default=False, dest="reference")
 
+    parser.add_option(
+        "--show-suicide",
+        help="Show suicide triggers.  They are not shown by default, unless "
+             "toggled on with the tool bar button.",
+        action="store_true", default=False, dest="show_suicide")
+
     (options, args) = parser.parse_args()
 
     # import modules that require gtk now, so that a display is not needed
@@ -222,10 +228,12 @@ def main():
                               options.templatevars_file,
                               should_hide=should_hide_gtk_window)
     else:
+        hide_suicide = not options.show_suicide
         window = MyDotWindow(suite, suiterc, start_point_string,
                              stop_point_string, options.templatevars,
                              options.templatevars_file,
-                             should_hide=should_hide_gtk_window)
+                             should_hide=should_hide_gtk_window,
+                             ignore_suicide=hide_suicide)
 
     window.widget.connect('clicked', on_url_clicked, window)
     if options.filter_patterns:
