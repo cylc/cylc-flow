@@ -127,6 +127,7 @@ SPEC = {
             'retrieve job logs max size'  : vdr( vtype='string' ),
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'remote tail command template' : vdr( vtype='string', default="tail --pid=`ps h -o ppid $$ | sed -e s/[[:space:]]//g` -n +1 -F %(filename)s"),
             'batch systems': {
                 '__MANY__': {
                     'err tailer': vdr(vtype='string'),
@@ -150,6 +151,7 @@ SPEC = {
             'retrieve job logs max size'  : vdr( vtype='string' ),
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'remote tail command template' : vdr( vtype='string'),
             'batch systems': {
                 '__MANY__': {
                     'err tailer': vdr(vtype='string'),
