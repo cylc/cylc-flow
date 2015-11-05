@@ -106,7 +106,7 @@ are required to prevent the hex code being interpreted as a comment).
 
 This section may contain task state color theme definitions.
 
-\subsubsection[THEME]{[themes] $\rightarrow$ THEME}
+\subsubsection[{[}THEME{]}]{[themes] $\rightarrow$ [[THEME]]}
 
 The name of the task state color-theme to be defined in this section.
 
@@ -114,7 +114,7 @@ The name of the task state color-theme to be defined in this section.
 \item {\em type:} string
 \end{myitemize}
 
-\subsubsection[inherit]{[themes] $\rightarrow$ [THEME] $\rightarrow$ inherit}
+\paragraph[inherit]{[themes] $\rightarrow$ [[THEME]] $\rightarrow$ inherit}
 
 You can inherit from another theme in order to avoid defining all states.
 
@@ -123,7 +123,7 @@ You can inherit from another theme in order to avoid defining all states.
 \item {\em default:} ``default''
 \end{myitemize}
 
-\subsubsection[defaults]{[themes] $\rightarrow$ [THEME] $\rightarrow$ defaults}
+\paragraph[defaults]{[themes] $\rightarrow$ [[THEME]] $\rightarrow$ defaults}
 
 Set default icon attributes for all state icons in this theme.
 
@@ -139,7 +139,7 @@ rgb.txt file, e.g.\ \lstinline=SteelBlue=; or hexadecimal color codes, e.g.
 See \lstinline@gcylc.rc.eg@ and \lstinline@themes.rc@ in
 \lstinline@$CYLC_DIR/conf/gcylcrc/@ for examples. 
 
-\subsubsection[STATE]{[themes] $\rightarrow$ [THEME] $\rightarrow$ STATE}
+\paragraph[STATE]{[themes] $\rightarrow$ [[THEME]] $\rightarrow$ STATE}
 
 Set icon attributes for all task states in THEME, or for a subset of them if 
 you have used theme inheritance and/or defaults. Legal values of STATE are

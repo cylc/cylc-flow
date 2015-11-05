@@ -219,11 +219,11 @@ Suite event logs are rolled over when they reach this file size.
 Documentation locations for the \lstinline=cylc doc= command and gcylc
 Help menus.
 
-\subsubsection[{[[}files{]]}]{[documentation] $\rightarrow$ [files]}
+\subsubsection[{[[}files{]]}]{[documentation] $\rightarrow$ [[files]]}
 
 File locations of documentation held locally on the cylc host server.
 
-\paragraph[html index]{[documentation] $\rightarrow$ [files] $\rightarrow$ html index }
+\paragraph[html index]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ html index }
 
 File location of the main cylc documentation index.
 \begin{myitemize}
@@ -231,7 +231,7 @@ File location of the main cylc documentation index.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/index.html=
 \end{myitemize}
 
-\paragraph[pdf user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ pdf user guide }
+\paragraph[pdf user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ pdf user guide }
 
 File location of the cylc User Guide, PDF version.
 \begin{myitemize}
@@ -239,7 +239,7 @@ File location of the cylc User Guide, PDF version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/cug-pdf.pdf=
 \end{myitemize}
 
-\paragraph[multi-page html user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ multi-page html user guide }
+\paragraph[multi-page html user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ multi-page html user guide }
 
 File location of the cylc User Guide, multi-page HTML version.
 \begin{myitemize}
@@ -247,7 +247,7 @@ File location of the cylc User Guide, multi-page HTML version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/html/multi/cug-html.html=
 \end{myitemize}
 
-\paragraph[single-page html user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ single-page html user guide }
+\paragraph[single-page html user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ single-page html user guide }
 
 File location of the cylc User Guide, single-page HTML version.
 \begin{myitemize}
@@ -255,11 +255,11 @@ File location of the cylc User Guide, single-page HTML version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/html/single/cug-html.html=
 \end{myitemize}
 
-\subsubsection[{[[}urls{]]}]{[documentation] $\rightarrow$ [urls]}
+\subsubsection[{[[}urls{]]}]{[documentation] $\rightarrow$ [[urls]]}
 
 Online documentation URLs.
 
-\paragraph[internet homepage]{[documentation] $\rightarrow$ [urls] $\rightarrow$ internet homepage }
+\paragraph[internet homepage]{[documentation] $\rightarrow$ [[urls]] $\rightarrow$ internet homepage }
 
 URL of the cylc internet homepage, with links to documentation for the
 latest official release.
@@ -269,7 +269,7 @@ latest official release.
 \item {\em default:} http://cylc.github.com/cylc/
 \end{myitemize}
 
-\paragraph[local index]{[documentation] $\rightarrow$ [urls] $\rightarrow$ local index}
+\paragraph[local index]{[documentation] $\rightarrow$ [[urls]] $\rightarrow$ local index}
 
 Local intranet URL of the main cylc documentation index.
 
@@ -736,38 +736,38 @@ test battery.
 The name of a remote host without shared HOME file system as the host running
 the test battery.
 
-\subsubsection[{[[}batch systems{]]}]{[test battery] $\rightarrow$ [batch systems]}
+\subsubsection[{[[}batch systems{]]}]{[test battery] $\rightarrow$ [[batch systems]]}
 
 Settings for testing supported batch systems (job submission methods). The
 tests for a batch system are only performed if the batch system is available on
 the test host or a remote host accessible via SSH from the test host.
 
-\paragraph[{[[[}SYSTEM{]]]}]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [[SYSTEM]]}
+\paragraph[{[[[}SYSTEM{]]]}]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]]}
 
 SYSTEM is the name of a supported batch system with automated tests.
 This can currently be "loadleveler", "lsf", "pbs", "sge" and/or "slurm".
 
-\subparagraph[host]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [[SYSTEM]] $\rightarrow$ host}
+\subparagraph[host]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ host}
 
 The name of a host where commands for this batch system is available. Use
 "localhost" if the batch system is available on the host running the test
 battery. Any specified remote host should be accessible via SSH from the host
 running the test battery.
 
-\subparagraph[{[[[[}directives{]]]]}]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [[SYSTEM]] $\rightarrow$ [directives]}
-
-The minimum set of directives that must be supplied to the batch system on the
-site to initiate jobs for the tests.
-
-\subparagraph[err viewer]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [[SYSTEM]] $\rightarrow$ err viewer}
+\subparagraph[err viewer]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ err viewer}
 
 The command template (with \lstinline=\%(job_id)s= substitution) for testing
 the run time stderr viewer functionality for this batch system.
 
-\subparagraph[out viewer]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [[SYSTEM]] $\rightarrow$ out viewer}
+\subparagraph[out viewer]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ out viewer}
 
 The command template (with \lstinline=\%(job_id)s= substitution) for testing
 the run time stdout viewer functionality for this batch system.
+
+\subparagraph[{[[[[}directives{]]]]}]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ [[[[directives]]]]}
+
+The minimum set of directives that must be supplied to the batch system on the
+site to initiate jobs for the tests.
 
 \subsection{[cylc]}
 
@@ -779,21 +779,21 @@ Default values for entries in the suite.rc [cylc] section.
 Allows you to set a default value for UTC mode in a suite at the site level.
 See ~\ref{UTC-mode} for details.
 
-\subsubsection[event hooks]{[cylc] $\rightarrow$ [event hooks]}
+\subsubsection[{[}event hooks{]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SiteCylcHooks}
 
 You can define site defaults for each of the following options, details 
 of which can be found under ~\ref{SuiteEventHandling}:
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ startup handler}
+\subparagraph[startup handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ startup handler}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ shutdown handler}
+\subparagraph[shutdown handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ shutdown handler}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ timeout handler}
+\subparagraph[timeout handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout handler}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ timeout}
+\subparagraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ abort on timeout}
+\subparagraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 \subsection{[authentication]}
 \label{GlobalAuth}
@@ -807,7 +807,7 @@ and~\ref{ConnectionAuthentication}). In the future we plan to move to a more
 traditional user account model so that each authorized user can have their own
 password.
 
-\subsubsection{[authentication] $\rightarrow$ public}
+\subsubsection[public]{[authentication] $\rightarrow$ public}
 
 This sets the client privilege level for public access - i.e.\ no suite passphrase
 required.
