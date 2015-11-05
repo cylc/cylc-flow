@@ -289,7 +289,8 @@ def main():
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
         else:
             # Replace 'cat' with the local tail command.
-            cmd_tmpl = "tail -n +1 -F %(filename)s"
+            cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+                "local tail command template"))
             commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
     else:
         commands.append(["cat", filename])
