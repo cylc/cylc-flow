@@ -1,0 +1,14 @@
+[cylc]
+   [[event hooks]]
+       abort on timeout = True
+       timeout = PT2M
+[scheduling]
+    [[dependencies]]
+        graph = foo
+[runtime]
+    [[foo]]
+        script = """
+for I in $(seq 1 100); do
+    echo "from $CYLC_TASK_NAME $I"
+    sleep 1
+done"""
