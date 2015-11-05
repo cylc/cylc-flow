@@ -127,7 +127,17 @@ SPEC = {
             'retrieve job logs max size'  : vdr( vtype='string' ),
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'local tail command template' : vdr( vtype='string', default="tail -n +1 -F %(filename)s"),
             'remote tail command template' : vdr( vtype='string', default="tail --pid=`ps h -o ppid $$ | sed -e s/[[:space:]]//g` -n +1 -F %(filename)s"),
+            # Template for tail commands on remote files.
+            #   On signal to "ssh" client, a signal is sent to "sshd" on server.
+            #   However, "sshd" cannot send a signal to the "tail" command,
+            #   because it is not a terminal. Apparently, we can use "ssh -t" or
+            #   "ssh -tt", but that just causes the command to hang here for some
+            #   reason. The easiest solution is to use the "--pid=PID" option of
+            #   the "tail" command, so it dies as soon as PID dies. Note: if
+            #   remote login shell is bash/ksh, we can use $PPID instead of
+            #   `ps...` command, but we have to support login shell "tcsh" too.
             'batch systems': {
                 '__MANY__': {
                     'err tailer': vdr(vtype='string'),
@@ -151,6 +161,7 @@ SPEC = {
             'retrieve job logs max size'  : vdr( vtype='string' ),
             'retrieve job logs retry delays': vdr( vtype='interval_minutes_list', default=[] ),
             'task event handler retry delays': vdr( vtype='interval_minutes_list', default=[] ),
+            'local tail command template' : vdr( vtype='string'),
             'remote tail command template' : vdr( vtype='string'),
             'batch systems': {
                 '__MANY__': {

@@ -38,23 +38,11 @@ class Tailer(threading.Thread):
     logview -- A GUI view to display the content of the log file.
     filename -- The name of the log file.
     cmd_tmpl -- The command template use to follow the log file.
-                (default=Tailer.L_CMD_TMPL for local files, or global config
-                '[hosts][HOST]remote tail command template' for remote files)
+                (global cfg '[hosts][HOST]remote/local tail command template')
     pollable -- If specified, it must implement a pollable.poll() method,
                 which is called at regular intervals.
     """
 
-    # Template for tail commands on local files.
-    L_CMD_TMPL = "tail -n +1 -F %(filename)s"
-    # Template for tail commands on remote files.
-    # On signal to "ssh" client, a signal is sent to "sshd" on server.
-    # However, "sshd" cannot send a signal to the "tail" command, because it is
-    # not a terminal. Apparently, we can use "ssh -t" or "ssh -tt", but that
-    # just causes the command to hang here for some reason. The easiest
-    # solution is to use the "--pid=PID" option of the "tail" command, so it
-    # dies as soon as PID dies. Note: if remote login shell is bash/ksh, we can
-    # use $PPID instead of `ps ...` command, but we do have to support users
-    # whose login shell is "tcsh".
     READ_SIZE = 4096
     TAGS = {
         "CRITICAL": [re.compile(r"\b(?:CRITICAL|ERROR)\b"), "red"],
@@ -98,7 +86,8 @@ class Tailer(threading.Thread):
                 "remote tail command template", host, owner))
         else:
             filename = self.filename
-            cmd_tmpl = self.L_CMD_TMPL
+            cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+                "local tail command template"))
 
         if self.cmd_tmpl:
             cmd_tmpl = self.cmd_tmpl
