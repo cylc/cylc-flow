@@ -103,6 +103,11 @@ def get_option_parser():
         action="store", dest="filename")
 
     parser.add_option(
+        "--tail",
+        help="Tail the job log, if the task is running.", metavar="INT",
+        action="store_true", default=False, dest="tail")
+
+    parser.add_option(
         "-s", "--submit-number", "-t", "--try-number",
         help="Task job log only: submit number (default=NN).", metavar="INT",
         action="store", dest="submit_num")
@@ -256,6 +261,12 @@ def main():
         filename = get_suite_log_path(options, args[0])
         user_at_host, command0 = (None, None)
 
+    if user_at_host:
+        if "@" in user_at_host:
+            owner, host = user_at_host.split("@", 1)
+        else:
+            owner, host = (None, user_at_host)
+
     # Construct the shell command
     commands = []
     if options.location_mode:
@@ -270,15 +281,22 @@ def main():
     elif command0:
         commands.append(command0)
         commands.append(["cat", filename])
+    elif options.tail:
+        if user_at_host:
+            # Replace 'cat' with the remote tail command.
+            cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+                "remote tail command template", host, owner))
+            commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
+        else:
+            # Replace 'cat' with the local tail command.
+            cmd_tmpl = str(GLOBAL_CFG.get_host_item(
+                "local tail command template"))
+            commands.append(shlex.split(cmd_tmpl % {"filename": filename}))
     else:
         commands.append(["cat", filename])
 
     # Deal with remote [user@]host
     if user_at_host:
-        if "@" in user_at_host:
-            owner, host = user_at_host.split("@", 1)
-        else:
-            owner, host = (None, user_at_host)
         ssh = str(GLOBAL_CFG.get_host_item(
             "remote shell template", host, owner)).replace(" %s", "")
         for i, command in enumerate(commands):

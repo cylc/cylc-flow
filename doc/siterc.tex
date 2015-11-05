@@ -2,7 +2,7 @@
 \section{Global (Site, User) Config File Reference}
 \label{SiteRCReference}
 
-\lstset{language=bash}
+\lstset{language=transcript}
 
 This section defines all legal items and values for cylc site and
 user config files. See {\em Site And User Config Files}
@@ -219,11 +219,11 @@ Suite event logs are rolled over when they reach this file size.
 Documentation locations for the \lstinline=cylc doc= command and gcylc
 Help menus.
 
-\subsubsection[{[[}files{]]}]{[documentation] $\rightarrow$ [files]}
+\subsubsection[{[[}files{]]}]{[documentation] $\rightarrow$ [[files]]}
 
 File locations of documentation held locally on the cylc host server.
 
-\paragraph[html index]{[documentation] $\rightarrow$ [files] $\rightarrow$ html index }
+\paragraph[html index]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ html index }
 
 File location of the main cylc documentation index.
 \begin{myitemize}
@@ -231,7 +231,7 @@ File location of the main cylc documentation index.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/index.html=
 \end{myitemize}
 
-\paragraph[pdf user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ pdf user guide }
+\paragraph[pdf user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ pdf user guide }
 
 File location of the cylc User Guide, PDF version.
 \begin{myitemize}
@@ -239,7 +239,7 @@ File location of the cylc User Guide, PDF version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/cug-pdf.pdf=
 \end{myitemize}
 
-\paragraph[multi-page html user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ multi-page html user guide }
+\paragraph[multi-page html user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ multi-page html user guide }
 
 File location of the cylc User Guide, multi-page HTML version.
 \begin{myitemize}
@@ -247,7 +247,7 @@ File location of the cylc User Guide, multi-page HTML version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/html/multi/cug-html.html=
 \end{myitemize}
 
-\paragraph[single-page html user guide]{[documentation] $\rightarrow$ [files] $\rightarrow$ single-page html user guide }
+\paragraph[single-page html user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ single-page html user guide }
 
 File location of the cylc User Guide, single-page HTML version.
 \begin{myitemize}
@@ -255,11 +255,11 @@ File location of the cylc User Guide, single-page HTML version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/html/single/cug-html.html=
 \end{myitemize}
 
-\subsubsection[{[[}urls{]]}]{[documentation] $\rightarrow$ [urls]}
+\subsubsection[{[[}urls{]]}]{[documentation] $\rightarrow$ [[urls]]}
 
 Online documentation URLs.
 
-\paragraph[internet homepage]{[documentation] $\rightarrow$ [urls] $\rightarrow$ internet homepage }
+\paragraph[internet homepage]{[documentation] $\rightarrow$ [[urls]] $\rightarrow$ internet homepage }
 
 URL of the cylc internet homepage, with links to documentation for the
 latest official release.
@@ -269,7 +269,7 @@ latest official release.
 \item {\em default:} http://cylc.github.com/cylc/
 \end{myitemize}
 
-\paragraph[local index]{[documentation] $\rightarrow$ [urls] $\rightarrow$ local index}
+\paragraph[local index]{[documentation] $\rightarrow$ [[urls]] $\rightarrow$ local index}
 
 Local intranet URL of the main cylc documentation index.
 
@@ -379,7 +379,7 @@ are not listed here, in which case local settings will be assumed,
 with the local home directory path, if present, replaced by
 \lstinline=$HOME= in items that configure directory locations.
 
-\subsubsection[{[[}HOST{]]}]{[hosts] $\rightarrow$ HOST}
+\subsubsection[{[[}HOST{]]}]{[hosts] $\rightarrow$ [[HOST]]}
 
 The default task host is the suite host, {\bf localhost}, with default
 values as listed below. Use an explicit \lstinline=[hosts][[localhost]]=
@@ -414,7 +414,7 @@ file.
 \end{myitemize}
 \end{myitemize}
 
-\paragraph[run directory]{[hosts] $\rightarrow$ HOST $\rightarrow$ run directory }
+\paragraph[run directory]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ run directory }
 
 The top level of the directory tree that holds suite-specific output logs,
 state dump files, run database, etc.
@@ -424,7 +424,7 @@ state dump files, run database, etc.
 \item {\em default:} \lstinline=$HOME/cylc-run=
 \end{myitemize}
 
-\paragraph[work directory]{[hosts] $\rightarrow$ HOST $\rightarrow$ work directory }
+\paragraph[work directory]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ work directory }
 \label{workdirectory}
 
 The top level for suite work and share directories.
@@ -435,7 +435,7 @@ The top level for suite work and share directories.
 \end{myitemize}
 
 
-\paragraph[task communication method]{[hosts] $\rightarrow$ HOST $\rightarrow$ task communication method }
+\paragraph[task communication method]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ task communication method }
 \label{task_comms_method}
 
 The means by which task progress messages are reported back to the running suite.
@@ -452,7 +452,7 @@ See above for default polling intervals for the poll method.
 \item {\em localhost default:} pyro
 \end{myitemize}
 
-\paragraph[remote copy template]{[hosts] $\rightarrow$ HOST $\rightarrow$ remote copy template }
+\paragraph[remote copy template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ remote copy template }
 
 A string for the command used to copy files to a remote host. This is not used
 on the suite host unless you run local tasks under another user account.
@@ -462,7 +462,7 @@ on the suite host unless you run local tasks under another user account.
 \item {\em localhost default:} \lstinline@scp -oBatchMode=yes -oConnectTimeout=10@
 \end{myitemize}
 
-\paragraph[remote shell template]{[hosts] $\rightarrow$ HOST $\rightarrow$ remote shell template }
+\paragraph[remote shell template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ remote shell template }
 
 A string for the command used to invoke commands on this host.
 This is not used on the suite host unless you run local tasks under
@@ -475,7 +475,7 @@ being a placeholder for the name of the host. This is no longer the case. Any
 \item {\em localhost default:} \lstinline@ssh -oBatchMode=yes -oConnectTimeout=10@
 \end{myitemize}
 
-\paragraph[use login shell]{[hosts] $\rightarrow$ HOST $\rightarrow$ use login shell }
+\paragraph[use login shell]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ use login shell }
 
 Whether to use a login shell or not for remote command invocation. By
 default cylc runs remote ssh commands using a login shell,
@@ -498,7 +498,7 @@ environment.
 \item {\em localhost default:} true
 \end{myitemize}
 
-\paragraph[cylc executable]{[hosts] $\rightarrow$ HOST $\rightarrow$ cylc executable }
+\paragraph[cylc executable]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ cylc executable }
 
 The \lstinline=cylc= executable on a remote host. Note this should point to the 
 cylc multi-version wrapper (see~\ref{CUI}) on the host, not
@@ -511,7 +511,7 @@ invoked via \lstinline=ssh= on this host.
 \item {\em localhost default:} \lstinline@cylc@
 \end{myitemize}
 
-\paragraph[global init-script]{[hosts] $\rightarrow$ HOST $\rightarrow$ global init-script }
+\paragraph[global init-script]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ global init-script }
 \label{GlobalInitScript}
 
 If specified, the value of this setting will be inserted to just before the
@@ -523,7 +523,7 @@ submitted to the specified remote host.
 \item {\em localhost default:} \lstinline@""@
 \end{myitemize}
 
-\paragraph[copyable environment variables]{[hosts] $\rightarrow$ HOST $\rightarrow$ copyable environment variables }
+\paragraph[copyable environment variables]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ copyable environment variables }
 
 A list containing the names of the environment variables that can and/or need
 to be copied from the suite daemon to a job.
@@ -533,49 +533,122 @@ to be copied from the suite daemon to a job.
 \item {\em localhost default:} \lstinline@[]@
 \end{myitemize}
 
-\paragraph[retrieve job logs]{[hosts] $\rightarrow$ HOST $\rightarrow$ retrieve job logs}
+\paragraph[retrieve job logs]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs}
 
 Global default for the~\ref{runtime-remote-retrieve-job-logs} setting for the
 specified host.
 
-\paragraph[retrieve job logs max size]{[hosts] $\rightarrow$ HOST $\rightarrow$ retrieve job logs max size}
+\paragraph[retrieve job logs max size]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs max size}
 
 Global default for the~\ref{runtime-remote-retrieve-job-logs-max-size} setting for the
 specified host.
 
-\paragraph[retrieve job logs retry delays]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ retrieve job logs retry delays}
+\paragraph[retrieve job logs retry delays]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs retry delays}
 
 Global default for the~\ref{runtime-remote-retrieve-job-logs-retry-delays}
 setting for the specified host.
 
-\paragraph[task event handler retry delays]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ task event handler retry delays}
+\paragraph[task event handler retry delays]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ task event handler retry delays}
 
 Host specific default for the~\ref{runtime-events-handler-retry-delays}
 setting.
 
-\paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err tailer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err tailer}
+\paragraph[local tail command template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ local tail command template}
+\label{local-tail-template}
+
+A template (with \lstinline=%(filename)s= substitution) for the command used to
+tail-follow local job logs, used by the gcylc log viewer and
+\lstinline=cylc cat-log --tail=.  You are unlikely to need to override this.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline@tail -n +1 -F %(filename)s@ 
+\end{myitemize}
+
+\paragraph[remote tail command template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ remote tail command template}
+\label{remote-tail-template}
+
+A template (with \lstinline=%(filename)s= substitution) for the command used
+to tail-follow remote job logs, used by the gcylc log viewer and
+\lstinline=cylc cat-log --tail=.  The remote tail command needs to be told to
+die when its parent process exits. You may need to override this command for
+task hosts where the default \lstinline=tail= or \lstinline=ps= commands are
+not equivalent to the Gnu Linux versions.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} \lstinline@tail --pid=$(ps h -o ppid $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@ 
+\item {\em example:} for AIX hosts:\\
+    \lstinline@/gnu/tail --pid=$(ps -o ppid= -p $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@
+\end{myitemize}
+
+\paragraph[{[[[}batch systems{]]]}]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]]}
+
+Settings for particular batch systems on HOST. In the subsections below, SYSTEM
+should be replaced with the cylc job submission method name that represents the
+batch system (see~\ref{RuntimeJobSubMethods}).
+
+\subparagraph[{[[[[}SYSTEM{]]]]}err tailer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ err tailer}
+\label{err-tailer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
-to tail-follow the stderr stream of a running job if JOB SUBMISSION METHOD does
-not use the normal location.
+to tail-follow the stderr stream of a running job if SYSTEM does
+not use the normal log file location while the job is running.  This setting
+overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
 
-\paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out tailer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out tailer}
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} For PBS:
+    \begin{lstlisting}
+[hosts]
+    [[ myhpc*]]
+        [[[batch systems]]]
+            [[[[pbs]]]]
+                err tailer = qcat -f -e %(job_id)s
+                out tailer = qcat -f -o %(job_id)s
+                err viewer = qcat -e %(job_id)s
+                out viewer = qcat -o %(job_id)s
+    \end{lstlisting}
+\end{myitemize}
+
+\subparagraph[{[[[[}SYSTEM{]]]]}out tailer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ out tailer}
+\label{out-tailer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
-to tail-follow the stdout stream of a running job if JOB SUBMISSION METHOD does
-not use the normal location.
+to tail-follow the stdout stream of a running job if SYSTEM does
+not use the normal log file location while the job is running.  This setting
+overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
 
-\paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err viewer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ err viewer}
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} see~\ref{err-tailer}
+\end{myitemize}
+
+\subparagraph[{[[[[}SYSTEM{]]]]}err viewer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ err viewer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
-to view the stderr stream of a running job if JOB SUBMISSION METHOD does
-not use the normal location.
+to view the stderr stream of a running job if SYSTEM does
+not use the normal log file location while the job is running.
 
-\paragraph[batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out viewer]{[hosts] $\rightarrow$ HOSTS $\rightarrow$ batch systems $\rightarrow$ JOB SUBMISSION METHOD $\rightarrow$ out viewer}
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} see~\ref{err-tailer}
+\end{myitemize}
+
+\subparagraph[{[[[[}SYSTEM{]]]]}out viewer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ out viewer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
-to view the stdout stream of a running job if JOB SUBMISSION METHOD does
-not use the normal location.
+to view the stdout stream of a running job if SYSTEM does
+not use the normal log file location while the job is running.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em default:} (none)
+\item {\em example:} see~\ref{err-tailer}
+\end{myitemize}
 
 \subsection{[suite host self-identification] }
 
@@ -663,38 +736,38 @@ test battery.
 The name of a remote host without shared HOME file system as the host running
 the test battery.
 
-\subsubsection[{[[}batch systems{]]}]{[test battery] $\rightarrow$ [batch systems]}
+\subsubsection[{[[}batch systems{]]}]{[test battery] $\rightarrow$ [[batch systems]]}
 
 Settings for testing supported batch systems (job submission methods). The
 tests for a batch system are only performed if the batch system is available on
 the test host or a remote host accessible via SSH from the test host.
 
-\paragraph[{[[[}\_\_NAME\_\_{]]]}]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_]}
+\paragraph[{[[[}SYSTEM{]]]}]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]]}
 
-\_\_NAME\_\_ is the name of a supported batch system with automated tests.
+SYSTEM is the name of a supported batch system with automated tests.
 This can currently be "loadleveler", "lsf", "pbs", "sge" and/or "slurm".
 
-\subparagraph[host]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ host}
+\subparagraph[host]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ host}
 
 The name of a host where commands for this batch system is available. Use
 "localhost" if the batch system is available on the host running the test
 battery. Any specified remote host should be accessible via SSH from the host
 running the test battery.
 
-\subparagraph[{[[[[}directives{]]]]}]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ [directives]}
-
-The minimum set of directives that must be supplied to the batch system on the
-site to initiate jobs for the tests.
-
-\subparagraph[err viewer]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ err viewer}
+\subparagraph[err viewer]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ err viewer}
 
 The command template (with \lstinline=\%(job_id)s= substitution) for testing
 the run time stderr viewer functionality for this batch system.
 
-\subparagraph[out viewer]{[test battery] $\rightarrow$ [batch systems] $\rightarrow$ [\_\_NAME\_\_] $\rightarrow$ out viewer}
+\subparagraph[out viewer]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ out viewer}
 
 The command template (with \lstinline=\%(job_id)s= substitution) for testing
 the run time stdout viewer functionality for this batch system.
+
+\subparagraph[{[[[[}directives{]]]]}]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ [[[[directives]]]]}
+
+The minimum set of directives that must be supplied to the batch system on the
+site to initiate jobs for the tests.
 
 \subsection{[cylc]}
 
@@ -706,21 +779,21 @@ Default values for entries in the suite.rc [cylc] section.
 Allows you to set a default value for UTC mode in a suite at the site level.
 See ~\ref{UTC-mode} for details.
 
-\subsubsection[event hooks]{[cylc] $\rightarrow$ [event hooks]}
+\subsubsection[{[}event hooks{]}]{[cylc] $\rightarrow$ [[event hooks]]}
 \label{SiteCylcHooks}
 
 You can define site defaults for each of the following options, details 
 of which can be found under ~\ref{SuiteEventHandling}:
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ startup handler}
+\subparagraph[startup handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ startup handler}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ shutdown handler}
+\subparagraph[shutdown handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ shutdown handler}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ timeout handler}
+\subparagraph[timeout handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout handler}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ timeout}
+\subparagraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
 
-\subparagraph{[cylc] $\rightarrow$ [event hooks] $\rightarrow$ abort on timeout}
+\subparagraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
 
 \subsection{[authentication]}
 \label{GlobalAuth}
@@ -734,7 +807,7 @@ and~\ref{ConnectionAuthentication}). In the future we plan to move to a more
 traditional user account model so that each authorized user can have their own
 password.
 
-\subsubsection{[authentication] $\rightarrow$ public}
+\subsubsection[public]{[authentication] $\rightarrow$ public}
 
 This sets the client privilege level for public access - i.e.\ no suite passphrase
 required.
