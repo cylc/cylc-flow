@@ -242,7 +242,7 @@ def main():
             continue
 
         if options.raw_format:
-            print "%s|%s|%s|port|%s" % (name, owner, host, port)            
+            print "%s|%s|%s|port|%s" % (name, owner, host, port)
             for property in ["title", "description", "update-time"]:
                 value = suite_identity.get(property, None)
                 if value:
@@ -260,9 +260,9 @@ def main():
                 if point:
                     property = "states:%s" % point
                 print "%s|%s|%s|%s|%s" % (
-                        name, owner, host, property, state_line)
+                    name, owner, host, property, state_line)
             continue
-        
+
         line = '%s %s@%s:%s' % (name, owner, host, port)
         if options.describe or options.print_totals:
             if skip_one:

@@ -28,7 +28,7 @@ from time import sleep, time, ctime
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.network.suite_state import (
-        StateSummaryClient, SuiteStillInitialisingError)
+    StateSummaryClient, SuiteStillInitialisingError)
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
@@ -80,7 +80,7 @@ class PollSchd(object):
         for k, v in self.DELAYS.items():
             lower, upper = k
             if ((lower is None or dt_init >= lower) and
-                (upper is None or dt_init < upper)):
+                    (upper is None or dt_init < upper)):
                 if dt_prev > v:
                     self.t_prev = time()
                     return True
@@ -159,7 +159,7 @@ class Updater(threading.Thread):
         # Report sign-out on exit.
         atexit.register(self.state_summary_client.signout)
 
-    def _flag_new_update( self ):
+    def _flag_new_update(self):
         self.last_update_time = time()
 
     def reconnect(self):
@@ -199,7 +199,8 @@ class Updater(threading.Thread):
                 self.connect_fail_warned = True
                 if isinstance(exc, Pyro.errors.ConnectionDeniedError):
                     gobject.idle_add(
-                        self.warn, "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
+                        self.warn,
+                        "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
                 else:
                     gobject.idle_add(self.warn, str(exc))
             return
@@ -220,11 +221,11 @@ class Updater(threading.Thread):
             # (warn only once - reconnect() will be called multiple times
             # during initialisation of daemons at <= 6.4.0 (for which the state
             # summary object is not connected until all tasks are loaded).
-            gobject.idle_add(self.warn,
+            gobject.idle_add(
+                self.warn,
                 "Warning: cylc version mismatch!\n\n" +
                 "Suite running with %r.\n" % self.daemon_version +
-                "gcylc at %r.\n" % CYLC_VERSION
-            )
+                "gcylc at %r.\n" % CYLC_VERSION)
             self.version_mismatch_warned = True
         self.stop_summary = None
         self.err_log_lines = []
@@ -244,7 +245,7 @@ class Updater(threading.Thread):
                 self.suite_log_client.get_err_content(
                     self.err_log_size, self._err_num_log_lines))
         except AttributeError:
-            # TODO: post-backwards compatibility concerns, remove this handling.
+            # TODO: post-backwards compatibility concerns, remove this handling
             new_err_content = ""
             new_err_size = self.err_log_size
 
@@ -256,38 +257,44 @@ class Updater(threading.Thread):
         return err_log_changed
 
     def retrieve_summary_update_time(self):
-        """Retrieve suite summary update time; return True if it has changed."""
+        """Retrieve suite summary update time; return True if changed."""
         do_update = False
         try:
             summary_update_time = (
-                self.state_summary_client.get_suite_state_summary_update_time())
+                self.state_summary_client.get_suite_state_summary_update_time()
+            )
             if (summary_update_time is None or
                     self._summary_update_time is None or
                     summary_update_time != self._summary_update_time):
                 self._summary_update_time = summary_update_time
                 do_update = True
         except AttributeError as e:
-            # TODO: post-backwards compatibility concerns, remove this handling.
-            # Force an update for daemons using the old API.
+            # TODO: post-backwards compatibility concerns, remove this handling
+            # Force an update for daemons using the old API
             do_update = True
         return do_update
 
     def retrieve_state_summaries(self):
-        glbl, states, fam_states = self.state_summary_client.get_suite_state_summary()
-        self.ancestors = self.suite_info_client.get_info('get_first_parent_ancestors')
-        self.ancestors_pruned = self.suite_info_client.get_info('get_first_parent_ancestors', True)
-        self.descendants = self.suite_info_client.get_info('get_first_parent_descendants')
+        glbl, states, fam_states = (
+            self.state_summary_client.get_suite_state_summary())
+        self.ancestors = self.suite_info_client.get_info(
+            'get_first_parent_ancestors')
+        self.ancestors_pruned = self.suite_info_client.get_info(
+            'get_first_parent_ancestors', True)
+        self.descendants = self.suite_info_client.get_info(
+            'get_first_parent_descendants')
         self.all_families = self.suite_info_client.get_info('get_all_families')
-        self.triggering_families = self.suite_info_client.get_info('get_triggering_families')
+        self.triggering_families = self.suite_info_client.get_info(
+            'get_triggering_families')
 
         self.mode = glbl['run_mode']
 
-        if self.cfg.use_defn_order and 'namespace definition order' in glbl: 
+        if self.cfg.use_defn_order and 'namespace definition order' in glbl:
             # (protect for compat with old suite daemons)
             nsdo = glbl['namespace definition order']
             if self.ns_defn_order != nsdo:
                 self.ns_defn_order = nsdo
-                self.dict_ns_defn_order = dict(zip(nsdo, range(0,len(nsdo))))
+                self.dict_ns_defn_order = dict(zip(nsdo, range(0, len(nsdo))))
         try:
             self.dt = get_time_string_from_unix_time(glbl['last_updated'])
         except (TypeError, ValueError):
@@ -307,9 +314,9 @@ class Updater(threading.Thread):
         if glbl['stopping']:
             self.status = 'stopping'
         elif glbl['will_pause_at']:
-            self.status = 'running to hold at ' + glbl[ 'will_pause_at' ]
+            self.status = 'running to hold at ' + glbl['will_pause_at']
         elif glbl['will_stop_at']:
-            self.status = 'running to ' + glbl[ 'will_stop_at' ]
+            self.status = 'running to ' + glbl['will_stop_at']
         else:
             self.status = 'running'
 
@@ -414,14 +421,17 @@ class Updater(threading.Thread):
         else:
             # Got suite data.
             self.version_mismatch_warned = False
-            if (self.status == "stopping" and self.info_bar.prog_bar_can_start()):
+            if (self.status == "stopping" and
+                    self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
                     self.info_bar.prog_bar_start, "suite stopping...")
-            if (self.status == "reloading" and self.info_bar.prog_bar_can_start()):
+            if (self.status == "reloading" and
+                    self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
                     self.info_bar.prog_bar_start, "suite reloading...")
             if (self.info_bar.prog_bar_active() and
-                    self.status not in ["stopping", "initialising", "reloading"]):
+                    self.status not in
+                    ["stopping", "initialising", "reloading"]):
                 gobject.idle_add(self.info_bar.prog_bar_stop)
             if summaries_changed or err_log_changed:
                 return True
@@ -430,14 +440,14 @@ class Updater(threading.Thread):
 
     def filter_by_name(self, states):
         return dict(
-                (i, j) for i, j in states.items() if
-                self.filter_name_string in j['name'] or
-                re.search(self.filter_name_string, j['name']))
+            (i, j) for i, j in states.items() if
+            self.filter_name_string in j['name'] or
+            re.search(self.filter_name_string, j['name']))
 
     def filter_by_state(self, states):
         return dict(
-                (i, j) for i, j in states.items() if
-                j['state'] not in self.filter_states_excl)
+            (i, j) for i, j in states.items() if
+            j['state'] not in self.filter_states_excl)
 
     def filter_families(self, families):
         """Remove family summaries if no members are present."""
@@ -457,8 +467,8 @@ class Updater(threading.Thread):
 
     def filter_for_restricted_display(self, states):
         return dict(
-                (i, j) for i, j in states.items() if j['state'] in
-                task_state.legal_for_restricted_monitoring)
+            (i, j) for i, j in states.items() if j['state'] in
+            task_state.legal_for_restricted_monitoring)
 
     def refilter(self):
         """filter from the full state summary"""
@@ -480,16 +490,17 @@ class Updater(threading.Thread):
             self.fam_state_summary = self.full_fam_state_summary
             self.filt_task_ids = set()
             self.kept_task_ids = set(self.state_summary.keys())
-        self.task_list = list(set([t['name'] for t in self.state_summary.values()]))
+        self.task_list = list(
+            set([t['name'] for t in self.state_summary.values()]))
         self.task_list.sort()
 
-    def update_globals( self ):
-        self.info_bar.set_state( self.global_summary.get( "states", [] ) )
-        self.info_bar.set_mode( self.mode )
-        self.info_bar.set_time( self.dt )
-        self.info_bar.set_status( self.status )
-        self.info_bar.set_log( "\n".join(self.err_log_lines),
-                               self.err_log_size )
+    def update_globals(self):
+        self.info_bar.set_state(self.global_summary.get("states", []))
+        self.info_bar.set_mode(self.mode)
+        self.info_bar.set_time(self.dt)
+        self.info_bar.set_status(self.status)
+        self.info_bar.set_log("\n".join(self.err_log_lines),
+                              self.err_log_size)
         return False
 
     def stop(self):
@@ -498,8 +509,8 @@ class Updater(threading.Thread):
     def run(self):
         while not self.quit:
             if (not self._no_update_event.is_set()
-                and self.poll_schd.ready()
-                and self.update()):
+                    and self.poll_schd.ready()
+                    and self.update()):
                 self._flag_new_update()
                 gobject.idle_add(self.update_globals)
             sleep(1)

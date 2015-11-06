@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, re
+import sys
+import re
 import subprocess
 import flags
 
@@ -24,6 +25,7 @@ import flags
 # until process p finishes, after which it returns p's exit status; this
 # would allow print out of exactly when each process finishes. Same
 # result in the end though, in terms of whole batch wait.
+
 
 class batchproc:
     """ Batch process items that return a subprocess-style command list
@@ -34,7 +36,7 @@ class batchproc:
         Users should do a final call to process() to handle any final
         items in an incomplete batch."""
 
-    def __init__( self, size=1, shell=False ):
+    def __init__(self, size=1, shell=False):
         self.batchno = 0
         self.items = []
         self.size = int(size)
@@ -43,16 +45,16 @@ class batchproc:
         print "  Initializing parallel batch processing, batch size", size
         print
 
-    def add_or_process( self, item ):
+    def add_or_process(self, item):
         n_actioned = 0
-        self.items.append( item )
-        if len( self.items ) >= self.size:
+        self.items.append(item)
+        if len(self.items) >= self.size:
             n_actioned = self.process()
             self.items = []
         return n_actioned
 
-    def process( self ):
-        if len( self.items ) == 0:
+    def process(self):
+        if len(self.items) == 0:
             return 0
         self.batchno += 1
         if flags.verbose:
@@ -62,8 +64,9 @@ class batchproc:
         n_succeeded = 0
         for item in self.items:
             # SPAWN BATCH MEMBER PROCESSES IN PARALLEL
-            proc.append( subprocess.Popen( item.execute(), shell=self.shell, \
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE ))
+            proc.append(subprocess.Popen(
+                item.execute(), shell=self.shell,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE))
         for p in proc:
             # WAIT FOR ALL PROCESSES TO FINISH
             count += 1
@@ -72,41 +75,46 @@ class batchproc:
             error_reported = False
             if stderr != '':
                 error_reported = True
-                print '  ERROR reported in Batch', self.batchno, 'member', count
+                print (
+                    '  ERROR reported in Batch', self.batchno, 'member', count)
             if stdout != '':
                 if flags.verbose or error_reported:
                     print '    Batch', self.batchno, 'member', count, 'stdout:'
-                for line in re.split( r'\n', stdout ):
+                for line in re.split(r'\n', stdout):
                     if flags.verbose or error_reported:
                         print '   ', line
-                    if re.search( 'SUCCEEDED', line ):
+                    if re.search('SUCCEEDED', line):
                         n_succeeded += 1
             if error_reported:
                 print '    Batch', self.batchno, 'member', count, 'stderr:'
-                for line in re.split( r'\n', stderr ):
+                for line in re.split(r'\n', stderr):
                     print '   ', line
 
         return n_succeeded
 
-#========= test code follows: ========>
+# ========= test code follows: ========>
+
 
 class item:
-    def __init__( self, i ):
+    def __init__(self, i):
         self.i = str(i)
-    def execute( self ):
-        return 'echo hello from ' + self.i + '... && sleep 5 && echo ... bye from ' + self.i
+
+    def execute(self):
+        return (
+            'echo hello from ' + self.i +
+            '... && sleep 5 && echo ... bye from ' + self.i)
+
 
 if __name__ == "__main__":
-
     usage = "USAGE: " + sys.argv[0] + " <batch-size>"
-    if len( sys.argv ) != 2:
+    if len(sys.argv) != 2:
         print usage
         sys.exit(1)
 
     batchsize = sys.argv[1]
 
-    b = batchproc( batchsize, shell=True )
+    b = batchproc(batchsize, shell=True)
     for i in range(10):
-        b.add_or_process( item(i) )
+        b.add_or_process(item(i))
     # process any leftovers
     b.process()

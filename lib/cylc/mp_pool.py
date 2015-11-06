@@ -134,6 +134,7 @@ class SuiteProcContext(object):
                     "mesg": mesg}
         return ret
 
+
 class SuiteProcPool(object):
     """Use a process pool to execute shell commands."""
 
@@ -262,7 +263,7 @@ def main():
     log.info('  sleeping')
     time.sleep(3)
     pool.close()
-    #pool.terminate()
+    # pool.terminate()
     pool.handle_results_async()
     log.info('  sleeping')
     time.sleep(3)

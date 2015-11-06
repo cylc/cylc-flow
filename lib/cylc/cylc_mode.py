@@ -18,19 +18,19 @@
 
 import os
 
-class mode( object ):
-    def __init__( self ):
 
+class mode(object):
+    def __init__(self):
         self.mode = 'raw'
         if 'CYLC_MODE' in os.environ:
-            self.mode = os.environ[ 'CYLC_MODE' ]
+            self.mode = os.environ['CYLC_MODE']
             # 'scheduler' or 'submit'
 
-    def is_raw( self ):
+    def is_raw(self):
         return self.mode == 'raw'
 
-    def is_scheduler( self ):
+    def is_scheduler(self):
         return self.mode == 'scheduler'
 
-    def is_submit( self ):
+    def is_submit(self):
         return self.mode == 'submit'

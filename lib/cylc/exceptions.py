@@ -16,14 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-class SchedulerStop( Exception ):
-    def __init__( self, msg ):
+
+class SchedulerStop(Exception):
+    def __init__(self, msg):
         self.msg = msg
-    def __str__( self ):
+
+    def __str__(self):
         return repr(self.msg)
 
-class SchedulerError( Exception ):
-    def __init__( self, msg ):
+
+class SchedulerError(Exception):
+    def __init__(self, msg):
         self.msg = msg
-    def __str__( self ):
+
+    def __str__(self):
         return repr(self.msg)

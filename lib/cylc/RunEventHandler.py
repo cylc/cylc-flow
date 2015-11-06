@@ -19,7 +19,8 @@
 import subprocess
 import logging
 
-def RunHandler( event, script, suite, taskID=None, msg=None, fg=False ):
+
+def RunHandler(event, script, suite, taskID=None, msg=None, fg=False):
     """This is now only used for suite (not task) event handlers."""
 
     tolog = 'Calling ' + event + ' handler'
@@ -27,7 +28,7 @@ def RunHandler( event, script, suite, taskID=None, msg=None, fg=False ):
         tolog += ' in the foreground'
     print tolog
     logger = logging.getLogger('main')
-    logger.info( tolog )
+    logger.info(tolog)
     command = script + ' ' + event + ' ' + suite
     if taskID:
         command += ' ' + taskID
@@ -35,6 +36,6 @@ def RunHandler( event, script, suite, taskID=None, msg=None, fg=False ):
     if not fg:
         command += ' &'
 
-    res = subprocess.call( command, shell=True )
+    res = subprocess.call(command, shell=True)
     if fg and res != 0:
-        raise Exception( 'ERROR: event handler failed' )
+        raise Exception('ERROR: event handler failed')

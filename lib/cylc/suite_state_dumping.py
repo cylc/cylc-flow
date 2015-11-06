@@ -25,6 +25,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.wallclock import get_current_time_string
 from cylc.network.suite_broadcast import BroadcastServer
 
+
 class SuiteStateDumper(object):
     """Generate state dumps."""
 
@@ -72,7 +73,7 @@ class SuiteStateDumper(object):
 
                 handle.write('run mode : %s\n' % self.run_mode)
                 handle.write('time : %s (%d)\n' % (
-                   get_current_time_string(), time.time()))
+                    get_current_time_string(), time.time()))
 
                 handle.write(self.cts_str)
                 wireless.dump(handle)
@@ -86,7 +87,7 @@ class SuiteStateDumper(object):
 
                 # To generate "OSError [Errno 9] bad file descriptor",
                 # close the file with os.close() before calling fsync():
-                ## os.close( handle.fileno() )
+                # # os.close( handle.fileno() )
 
                 os.fsync(handle.fileno())
                 handle.close()
@@ -98,7 +99,7 @@ class SuiteStateDumper(object):
                 if not exc.filename:
                     exc.filename = file_name
                 self.log.warning(
-                    'State dumping failed, #%d %s' %(n_attempt, exc))
+                    'State dumping failed, #%d %s' % (n_attempt, exc))
                 if n_attempt >= max_attempts:
                     raise exc
                 n_attempt += 1

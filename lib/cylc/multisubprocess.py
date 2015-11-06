@@ -21,15 +21,17 @@ from cylc.wallclock import get_current_time_string
 
 
 class multisubprocess:
-    def __init__( self, commandlist, shell=True ):
+    def __init__(self, commandlist, shell=True):
         self.shell = shell
         self.commandlist = commandlist
 
-    def execute( self ):
+    def execute(self):
         procs = []
         for command in self.commandlist:
-            proc = subprocess.Popen( command, shell=self.shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
-            procs.append( proc )
+            proc = subprocess.Popen(
+                command, shell=self.shell,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            procs.append(proc)
 
         out = []
         err = []
@@ -38,21 +40,24 @@ class multisubprocess:
             out.append(o)
             err.append(e)
 
-        return ( out, err )
+        return (out, err)
+
 
 if __name__ == "__main__":
     commands = []
-    for i in range(1,5):
+    for i in range(1, 5):
         if i == 4:
-            command = "echoX hello from " + str(i) + "; sleep 10; echo bye from " + str(i)
+            command = ("echoX hello from " + str(i) +
+                       "; sleep 10; echo bye from " + str(i))
         else:
-            command = "echo hello from " + str(i) + "; sleep 10; echo bye from " + str(i)
+            command = ("echo hello from " + str(i) +
+                       "; sleep 10; echo bye from " + str(i))
 
-        commands.append( command )
+        commands.append(command)
 
     print 'SRT:', get_current_time_string(display_sub_seconds=True)
 
-    mp = multisubprocess( commands )
+    mp = multisubprocess(commands)
     out, err = mp.execute()
 
     count = 1

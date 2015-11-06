@@ -18,30 +18,35 @@
 
 """ environment variable utility functions """
 
-import os, re, sys
+import os
+import re
 
-class EnvVarError( Exception ):
-    def __init__( self, msg ):
+
+class EnvVarError(Exception):
+    def __init__(self, msg):
         self.msg = msg
-    def __str__( self ):
+
+    def __str__(self):
         return repr(self.msg)
 
-def check_varnames( env ):
+
+def check_varnames(env):
     """ check a bunch of putative environment names for legality,
     returns a list of bad names (empty implies success)."""
     bad = []
     for varname in env:
-        if not re.match( '^[a-zA-Z_][\w]*$', varname ):
+        if not re.match('^[a-zA-Z_][\w]*$', varname):
             bad.append(varname)
     return bad
 
-def expandvars( item, owner=None ):
+
+def expandvars(item, owner=None):
     if owner:
-        homedir = os.path.expanduser( '~' + owner )
+        homedir = os.path.expanduser('~' + owner)
     else:
-        homedir = os.environ[ 'HOME' ]
+        homedir = os.environ['HOME']
     # first replace '$HOME' with actual home dir
-    item = item.replace( '$HOME', homedir )
+    item = item.replace('$HOME', homedir)
     # now expand any other environment variable or tilde-username
-    item = os.path.expandvars( os.path.expanduser( item ))
+    item = os.path.expandvars(os.path.expanduser(item))
     return item

@@ -19,10 +19,11 @@ from cylc.cycling.integer import REC_INTERVAL as REC_INTEGER_INTERVAL
 
 interval_parser = DurationParser()
 
+
 def coerce_interval(value, keys, args, back_comp_unit_factor=1,
                     check_syntax_version=True):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
-    value = _strip_and_unquote( keys, value )
+    value = _strip_and_unquote(keys, value)
     try:
         backwards_compat_value = float(value) * back_comp_unit_factor
     except (TypeError, ValueError):
@@ -48,10 +49,11 @@ def coerce_interval(value, keys, args, back_comp_unit_factor=1,
     seconds += days * Calendar.default().SECONDS_IN_DAY
     return seconds
 
+
 def coerce_interval_list(value, keys, args, back_comp_unit_factor=1,
                          check_syntax_version=True):
     """Coerce a list of intervals (or numbers: back-comp) into seconds."""
-    values_list = _strip_and_unquote_list( keys, value )
+    values_list = _strip_and_unquote_list(keys, value)
     type_converter = (
         lambda v: coerce_interval(
             v, keys, args,
@@ -59,5 +61,5 @@ def coerce_interval_list(value, keys, args, back_comp_unit_factor=1,
             check_syntax_version=check_syntax_version,
         )
     )
-    seconds_list = _expand_list( values_list, keys, type_converter, True )
+    seconds_list = _expand_list(values_list, keys, type_converter, True)
     return seconds_list

@@ -28,16 +28,16 @@ from exceptions import SchedulerStop, SchedulerError
 
 
 def print_blurb():
-    logo = """\
-            ,_,       
-            | |       
-,_____,_, ,_| |_____, 
-| ,___| | | | | ,___| 
-| |___| |_| | | |___, 
-\_____\___, |_\_____| 
-      ,___| |         
-      \_____|         
-"""
+    logo = (
+        "            ,_,       \n"
+        "            | |       \n"
+        ",_____,_, ,_| |_____, \n"
+        "| ,___| | | | | ,___| \n"
+        "| |___| |_| | | |___, \n"
+        "\_____\___, |_\_____| \n"
+        "      ,___| |         \n"
+        "      \_____|         \n"
+    )
     license = """
 The Cylc Suite Engine [%s]
 Copyright (C) 2008-2015 NIWA
@@ -46,15 +46,16 @@ This program comes with ABSOLUTELY NO WARRANTY;
 see `cylc warranty`.  It is free software, you
 are welcome to redistribute it under certain
 conditions; see `cylc conditions`.
- 
+
   """ % CYLC_VERSION
-    
+
     logo_lines = logo.splitlines()
     license_lines = license.splitlines()
     lmax = max(len(line) for line in license_lines)
     for i in range(len(logo_lines)):
         print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
     print
+
 
 def main(name, start):
     # Parse the command line:
@@ -81,8 +82,8 @@ def main(name, start):
         server.configure()
         server.run()
         # For profiling (see Python docs for how to display the stats).
-        #import cProfile
-        #cProfile.runctx('server.run()', globals(), locals(), 'stats')
+        # import cProfile
+        # cProfile.runctx('server.run()', globals(), locals(), 'stats')
     except SchedulerStop, x:
         # deliberate stop
         print str(x)

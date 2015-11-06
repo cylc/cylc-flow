@@ -43,7 +43,7 @@ class MoabHandler(object):
 
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
-        # restartable? 
+        # restartable?
         directives.update(job_conf["directives"])
         lines = []
         for key, value in directives.items():
@@ -51,10 +51,10 @@ class MoabHandler(object):
                 # E.g. -l walltime=3:00:00
                 lines.append("%s%s=%s" % (self.DIRECTIVE_PREFIX, key, value))
             elif value:
-                # E.g. -q queue_name 
+                # E.g. -q queue_name
                 lines.append("%s%s %s" % (self.DIRECTIVE_PREFIX, key, value))
             else:
-                # E.g. -V 
+                # E.g. -V
                 lines.append(self.DIRECTIVE_PREFIX + key)
         return lines
 

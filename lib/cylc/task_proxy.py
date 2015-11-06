@@ -376,12 +376,14 @@ class TaskProxy(object):
                     trig = ctrig[label]
                     if trig.graph_offset_string is not None:
                         prereq_offset_point = get_point_relative(
-                                trig.graph_offset_string, point)
+                            trig.graph_offset_string, point)
                         if prereq_offset_point > point:
                             prereq_offset = prereq_offset_point - point
                             if (self.tdef.max_future_prereq_offset is None or
-                                    prereq_offset > self.tdef.max_future_prereq_offset):
-                                self.tdef.max_future_prereq_offset = prereq_offset
+                                    (prereq_offset >
+                                     self.tdef.max_future_prereq_offset)):
+                                self.tdef.max_future_prereq_offset = (
+                                    prereq_offset)
                         cpre.add(trig.get_prereq(point)[0], label,
                                  prereq_offset_point < self.tdef.start_point)
                     else:
@@ -793,7 +795,8 @@ class TaskProxy(object):
             ctx.ret_code = 0
             self.process_incoming_message(
                 (priority, message), msg_was_polled=True)
-            self.process_incoming_message((priority, message), msg_was_polled=True)
+            self.process_incoming_message(
+                (priority, message), msg_was_polled=True)
         self.command_log(ctx)
 
     def job_kill_callback(self, line):

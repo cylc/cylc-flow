@@ -218,8 +218,8 @@ Class to create an information bar.
         self._set_tooltip(self.mode_widget, "mode")
 
         self._runahead = ""
-        #self.runahead_widget = gtk.Label()
-        #self._set_tooltip(self.runahead_widget, "runahead limit")
+        # self.runahead_widget = gtk.Label()
+        # self._set_tooltip(self.runahead_widget, "runahead limit")
 
         self._time = "time..."
         self.time_widget = gtk.Label()
@@ -263,9 +263,9 @@ Class to create an information bar.
         eb.add(self.time_widget)
         hbox.pack_end(eb, False)
 
-        #eb = gtk.EventBox()
-        #eb.add(self.runahead_widget)
-        #hbox.pack_end(eb, False)
+        # eb = gtk.EventBox()
+        # eb.add(self.runahead_widget)
+        # hbox.pack_end(eb, False)
 
         eb = gtk.EventBox()
         eb.add(self.state_widget)
@@ -315,7 +315,7 @@ Class to create an information bar.
         text = "runahead:" + str(runahead) + "h  "
         if runahead is None:
             text = ""
-        #gobject.idle_add(self.runahead_widget.set_text, text)
+        # gobject.idle_add(self.runahead_widget.set_text, text)
 
     def set_state(self, suite_states, is_suite_stopped=None):
         """Set state text."""
@@ -1230,15 +1230,15 @@ been defined for this suite""").inform()
             img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
             out_item.set_image(img)
             view_menu.append(out_item)
-            out_item.connect('button-press-event', self.view_task_info, task_id,
-                             'job.out')
+            out_item.connect(
+                'button-press-event', self.view_task_info, task_id, 'job.out')
 
             err_item = gtk.ImageMenuItem('job stderr')
             img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
             err_item.set_image(img)
             view_menu.append(err_item)
-            err_item.connect('button-press-event', self.view_task_info, task_id,
-                             'job.err')
+            err_item.connect(
+                'button-press-event', self.view_task_info, task_id, 'job.err')
 
             info_item = gtk.ImageMenuItem('prereq\'s & outputs')
             img = gtk.image_new_from_stock(
@@ -2053,11 +2053,12 @@ shown here in the state they were in at the time of triggering.''')
         stop = None
         if stop_point_string != '':
             stop = stop_point_string
-        self.put_pyro_command('insert_task', match, point_string, is_family,
-                               stop)
+        self.put_pyro_command(
+            'insert_task', match, point_string, is_family, stop)
 
     def poll_all(self, w):
-        command = "cylc poll" + self.get_remote_run_opts() + " " + self.cfg.suite
+        command = (
+            "cylc poll" + self.get_remote_run_opts() + " " + self.cfg.suite)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
         self.gcapture_windows.append(foo)
         foo.run()
@@ -2640,12 +2641,13 @@ to reduce network traffic.""")
         if self.updater.connected:
             # Interrogate the suite daemon.
             info = self.get_pyro_info('get_suite_info')
-            descr = '\n'.join("%s: %s" % (key, val) for key, val in info.items())
+            descr = '\n'.join(
+                "%s: %s" % (key, val) for key, val in info.items())
             info_dialog(descr, self.window).inform()
         else:
             # Parse the suite definition.
             command = ("cylc get-suite-config -i title -i description " +
-                   self.get_remote_run_opts() + " " + self.cfg.suite)
+                       self.get_remote_run_opts() + " " + self.cfg.suite)
             foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 800, 400)
             self.gcapture_windows.append(foo)
             foo.run()
@@ -3049,8 +3051,9 @@ For more Stop options use the Control menu.""")
         self._prev_status = new_status
         run_ok = "stopped" in new_status
         # Pause: avoid "stopped with 'running'".
-        pause_ok = (new_status == "reloading" or
-                "running" in new_status and not "stopped" in new_status)
+        pause_ok = (
+            new_status == "reloading" or
+            "running" in new_status and "stopped" not in new_status)
         unpause_ok = "held" == new_status
         stop_ok = ("stopped" not in new_status and
                    "connected" != new_status and
@@ -3264,7 +3267,8 @@ For more Stop options use the Control menu.""")
         return " --host=" + self.cfg.host + " --user=" + self.cfg.owner
 
     def browse(self, b, *args):
-        command = 'cylc doc ' + self.get_remote_run_opts() + ' ' + ' '.join(args)
+        command = (
+            'cylc doc ' + self.get_remote_run_opts() + ' ' + ' '.join(args))
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 700)
         self.gcapture_windows.append(foo)
         foo.run()

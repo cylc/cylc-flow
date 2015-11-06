@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-import os, sys
+import os
+import sys
 from suite_output import suite_output
 
-def daemonize( suite, port ):
+
+def daemonize(suite, port):
     """
     ATTRIBUTION: base on a public domain code recipe by Jurgen Hermann:
     http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
@@ -12,7 +14,7 @@ def daemonize( suite, port ):
     # Do the UNIX double-fork magic, see Stevens' "Advanced
     # Programming in the UNIX Environment" for details (ISBN 0201563177)
 
-    sout = suite_output( suite )
+    sout = suite_output(suite)
 
     try:
         pid = os.fork()
@@ -37,7 +39,8 @@ def daemonize( suite, port ):
             print " + Name:", suite
             print " + PID: ", pid
             print " + Port:", port
-            print " + Logs: %s/{log,out,err}" % os.path.dirname( sout.get_path() )
+            print " + Logs: %s/{log,out,err}" % (
+                os.path.dirname(sout.get_path()))
             print
             print "To see if this suite is still running:"
             print " * cylc scan"
@@ -53,7 +56,7 @@ def daemonize( suite, port ):
         sys.exit(1)
 
     # reset umask
-    os.umask(022) # octal
+    os.umask(022)  # octal
 
     # redirect output to the suite log files
     sout.redirect()

@@ -18,27 +18,16 @@
 
 import time
 
-def tail( file ):
+
+def tail(file):
     while True:
         where = file.tell()
         line = file.readline()
         if not line:
-            time.sleep( 1 )
-            file.seek( where )
-            yield None  # return even if no new line so the host thread
-                        # doesn't hang when the gui exits.
+            time.sleep(1)
+            file.seek(where)
+            # return even if no new line so the host thread doesn't hang when
+            # the gui exits.
+            yield None
         else:
             yield line
-
-# FOR NORMAL 'tail -F' behaviour:
-#def tail( file ):
-#    interval = 1.0
-#
-#    while True:
-#        where = file.tell()
-#        line = file.readline()
-#        if not line:
-#            time.sleep( interval )
-#            file.seek( where )
-#        else:
-#            yield line

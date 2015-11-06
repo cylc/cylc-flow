@@ -70,5 +70,4 @@ class SuiteLogClient(PyroClient):
     target_server_object = PYRO_LOG_OBJ_NAME
 
     def get_err_content(self, *args):
-        #return self.pyro_proxy.get_err_content(prev_size, max_lines)
         return self.call_server_func("get_err_content", *args)

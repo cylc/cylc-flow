@@ -542,12 +542,12 @@ if len(args) == 1:
         sys.exit(0)
     if is_help(args[0]):
         # cylc help
-        from cylc.version import CYLC_VERSION        
+        from cylc.version import CYLC_VERSION
         print usage.replace("__CYLC_VERSION__", CYLC_VERSION)
         pretty_print(catsum, categories)
         sys.exit(0)
     if (args[0] == '-v' or args[0] == '--version'):
-        from cylc.version import CYLC_VERSION                
+        from cylc.version import CYLC_VERSION
         print CYLC_VERSION
         sys.exit(0)
 

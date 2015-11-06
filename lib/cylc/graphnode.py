@@ -75,20 +75,23 @@ IRREGULAR_OFFSET_RE = re.compile(
         $            # End of string
     """, re.X)
 
-class GraphNodeError( Exception ):
+
+class GraphNodeError(Exception):
     """
     Attributes:
         message - what the problem is.
     """
-    def __init__( self, msg ):
+    def __init__(self, msg):
         self.msg = msg
-    def __str__( self ):
+
+    def __str__(self):
         return repr(self.msg)
 
-class graphnode( object ):
+
+class graphnode(object):
     """A node in the cycle suite.rc dependency graph."""
 
-    def __init__( self, node, base_interval=None ):
+    def __init__(self, node, base_interval=None):
         node_in = node
         # Get task name and properties from a graph node name.
 
@@ -103,7 +106,7 @@ class graphnode( object ):
         self.offset_is_irregular = False
         self.is_absolute = False
 
-        m = re.match( NODE_ISO_ICT_RE, node )
+        m = re.match(NODE_ISO_ICT_RE, node)
         if m:
             # node looks like foo[^], foo[^-P4D], foo[^]:fail, etc.
             self.is_absolute = True
@@ -114,9 +117,9 @@ class graphnode( object ):
             # Can't always set syntax here, as we use [^] for backwards comp.
             if offset_string:
                 set_syntax_version(
-                        VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
+                    VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
         else:
-            m = re.match( NODE_ISO_RE, node )
+            m = re.match(NODE_ISO_RE, node)
             if m:
                 # node looks like foo, foo:fail, foo[-PT6H], foo[-P4D]:fail...
                 name, offset_string, outp = m.groups()
@@ -126,9 +129,9 @@ class graphnode( object ):
                     set_syntax_version(
                         VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
             else:
-                m = re.match( NODE_PREV_RE, node )
+                m = re.match(NODE_PREV_RE, node)
                 if not m:
-                    raise GraphNodeError( 'Illegal graph node: ' + node )
+                    raise GraphNodeError('Illegal graph node: ' + node)
                 # node looks like foo[T-6], foo[T-12]:fail...
                 name, sign, offset_string, outp = m.groups()
                 if sign and offset_string:
@@ -141,7 +144,7 @@ class graphnode( object ):
 
         if outp:
             self.special_output = True
-            self.output = outp[1:] # strip ':'
+            self.output = outp[1:]  # strip ':'
         else:
             self.special_output = False
             self.output = None
@@ -149,7 +152,7 @@ class graphnode( object ):
         if name:
             self.name = name
         else:
-            raise GraphNodeError( 'Illegal graph node: ' + node )
+            raise GraphNodeError('Illegal graph node: ' + node)
 
         if self.offset_is_from_ict and not offset_string:
             offset_string = str(get_interval_cls().get_null_offset())

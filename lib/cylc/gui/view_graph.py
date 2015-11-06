@@ -107,13 +107,11 @@ Dependency graph suite control interface.
         url = unicode(url.url)
         m = re.match('base:(.*)', url)
         if m:
-            #print 'BASE GRAPH'
             task_id = m.groups()[0]
             self.xdot.widget.set_tooltip_text(self.t.get_summary(task_id))
             return False
 
         # URL is task ID
-        #print 'LIVE TASK'
         self.xdot.widget.set_tooltip_text(self.t.get_summary(url))
         return False
 
@@ -132,9 +130,9 @@ Dependency graph suite control interface.
             'activate', self.focused_timezoom_direct, point_string)
 
         # TODO - pre cylc-6 could focus on a range of points (was hours-based).
-        #timezoom_item = gtk.MenuItem('Focus on Range')
-        #timezoom_item.connect(
-        #    'activate', self.focused_timezoom_popup, task_id)
+        # timezoom_item = gtk.MenuItem('Focus on Range')
+        # timezoom_item.connect(
+        #     'activate', self.focused_timezoom_popup, task_id)
 
         timezoom_reset_item = gtk.MenuItem('Focus Reset')
         timezoom_reset_item.connect('activate', self.focused_timezoom_direct,
@@ -179,7 +177,6 @@ Dependency graph suite control interface.
             menu.append(gtk.SeparatorMenuItem())
 
         menu.append(timezoom_item_direct)
-        #menu.append(timezoom_item)
         menu.append(timezoom_reset_item)
 
         menu.append(gtk.SeparatorMenuItem())
@@ -189,7 +186,8 @@ Dependency graph suite control interface.
 
         if type == 'live task':
             is_fam = (name in self.t.descendants)
-            default_menu = self.get_right_click_menu(task_id, task_is_family=is_fam)
+            default_menu = self.get_right_click_menu(
+                task_id, task_is_family=is_fam)
             dm_kids = default_menu.get_children()
             for item in reversed(dm_kids[:2]):
                 # Put task name and URL at the top.
@@ -544,7 +542,6 @@ Dependency graph suite control interface.
         hbox.pack_start(apply_button, False)
         hbox.pack_start(reset_button, False)
         hbox.pack_end(cancel_button, False)
-        #hbox.pack_end(help_button, False)
         vbox.pack_start(hbox)
 
         window.add(vbox)

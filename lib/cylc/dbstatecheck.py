@@ -23,7 +23,7 @@ import sys
 
 class DBOperationError(Exception):
 
-    """An exception raised when a db operation fails, typically due to a lock."""
+    """An exception raised on db operation failure, typically due to a lock."""
 
     def __str__(self):
         return "Suite database operation failed: %s" % self.args
@@ -41,17 +41,21 @@ class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
     DB_FILE_BASE_NAME = "cylc-suite.db"
     STATE_ALIASES = {}
-    STATE_ALIASES['finish' ] = ['failed', 'succeeded']
-    STATE_ALIASES['start'  ] = ['running', 'succeeded', 'failed', 'retrying']
-    STATE_ALIASES['submit' ] = ['submitted', 'submit-retrying', 'running','succeeded','failed','retrying']
-    STATE_ALIASES['fail'   ] = ['failed']
+    STATE_ALIASES['finish'] = ['failed', 'succeeded']
+    STATE_ALIASES['start'] = ['running', 'succeeded', 'failed', 'retrying']
+    STATE_ALIASES['submit'] = [
+        'submitted', 'submit-retrying', 'running', 'succeeded', 'failed',
+        'retrying']
+    STATE_ALIASES['fail'] = ['failed']
     STATE_ALIASES['succeed'] = ['succeeded']
 
-    def __init__(self, suite_dir, suite, dbname=None): # possible to set suite_dir to system default cylc-run dir?
+    def __init__(self, suite_dir, suite, dbname=None):
+        # possible to set suite_dir to system default cylc-run dir?
         suite_dir = os.path.expanduser(suite_dir)
         if dbname is not None:
             self.DB_FILE_BASE_NAME = dbname
-        self.db_address = suite_dir + "/" + suite + "/" + self.DB_FILE_BASE_NAME
+        self.db_address = (
+            suite_dir + "/" + suite + "/" + self.DB_FILE_BASE_NAME)
         if not os.path.exists(self.db_address):
             raise DBNotFoundError(self.db_address)
         self.conn = sqlite3.connect(self.db_address, timeout=10.0)
@@ -64,8 +68,9 @@ class CylcSuiteDBChecker(object):
             for row in res:
                 sys.stdout.write((", ").join(row).encode("utf-8") + "\n")
 
-    def state_lookup(self, state): #allows for multiple states to be searched via a status alias
-        if self.STATE_ALIASES.has_key(state):
+    def state_lookup(self, state):
+        """allows for multiple states to be searched via a status alias"""
+        if state in self.STATE_ALIASES:
             return self.STATE_ALIASES[state]
         else:
             return state
@@ -101,7 +106,7 @@ class CylcSuiteDBChecker(object):
             q = q_base
 
         try:
-            self.c.execute(q,vals)
+            self.c.execute(q, vals)
             next = self.c.fetchmany()
             while next:
                 res.append(next[0])
@@ -125,7 +130,7 @@ class CylcSuiteDBChecker(object):
         return len(res) > 0
 
     def validate_mask(self, mask):
-        fieldnames = ["name", "status", "cycle"] # extract from rundb.py?
+        fieldnames = ["name", "status", "cycle"]  # extract from rundb.py?
         for term in mask.split(","):
             if term.strip(" ") not in fieldnames:
                 return False

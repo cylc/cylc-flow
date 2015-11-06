@@ -471,7 +471,7 @@ class ISO8601Sequence(SequenceBase):
                 return ISO8601Point(first_point_value)
         return None
 
-    def get_start_point( self ):
+    def get_start_point(self):
         """Return the first point in this sequence, or None."""
         for recurrence_iso_point in self.recurrence:
             return ISO8601Point(str(recurrence_iso_point))
@@ -582,8 +582,8 @@ def init_from_cfg(cfg):
     while dep_sections:
         dep_section = dep_sections.pop(0)
         if re.search("(?![^(]+\)),", dep_section):
-            dep_sections.extend([i.strip() for i in
-                                    re.split("(?![^(]+\)),", dep_section)])
+            dep_sections.extend(
+                [i.strip() for i in re.split("(?![^(]+\)),", dep_section)])
             continue
         if dep_section == "graph":
             if cfg['scheduling']['dependencies']['graph']:
@@ -648,7 +648,6 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
             SuiteSpecifics.DUMP_FORMAT = EXPANDED_DATE_TIME_FORMAT + time_zone
         else:
             SuiteSpecifics.DUMP_FORMAT = DATE_TIME_FORMAT + time_zone
-        
     else:
         SuiteSpecifics.DUMP_FORMAT = custom_dump_format
         if u"+X" not in custom_dump_format and num_expanded_year_digits:

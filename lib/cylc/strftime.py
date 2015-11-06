@@ -18,34 +18,35 @@
 
 import datetime
 
-def strftime( dt, template ):
+
+def strftime(dt, template):
     """A replacement for datetime.strftime() which does not handle dates
     earlier than 1900 (or beyond 2048?)."""
 
     iso = dt.isoformat()
-    return isoformat_strftime( iso, template )
+    return isoformat_strftime(iso, template)
 
 
-def isoformat_strftime( iso_string, template ):
+def isoformat_strftime(iso_string, template):
     """Re-template a datetime.datetime isoformat string."""
-    d,t = iso_string.split('T')
-    Y,m,d = d.split('-')
-    H,M,S = t.split(':')
-    t = template.replace('%Y', Y )
-    t = t.replace('%m', m )
-    t = t.replace('%d', d )
-    t = t.replace('%H', H )
-    t = t.replace('%M', M )
-    t = t.replace('%S', S[0:2] )
+    d, t = iso_string.split('T')
+    Y, m, d = d.split('-')
+    H, M, S = t.split(':')
+    t = template.replace('%Y', Y)
+    t = t.replace('%m', m)
+    t = t.replace('%d', d)
+    t = t.replace('%H', H)
+    t = t.replace('%M', M)
+    t = t.replace('%S', S[0:2])
     return t
 
 
 if __name__ == '__main__':
-    dt1 = datetime.datetime(1900,1,1)
-    dt2 = datetime.datetime(1600,1,1)
+    dt1 = datetime.datetime(1900, 1, 1)
+    dt2 = datetime.datetime(1600, 1, 1)
 
-    print strftime( dt1, "%Y-%m-%d %H:%M:%S" )
-    print dt1.strftime( "%Y-%m-%d %H:%M:%S" )
+    print strftime(dt1, "%Y-%m-%d %H:%M:%S")
+    print dt1.strftime("%Y-%m-%d %H:%M:%S")
 
-    print strftime( dt2, "%Y-%m-%d %H:%M:%S" )
-    print dt2.strftime( "%Y-%m-%d %H:%M:%S" ) # FAILS
+    print strftime(dt2, "%Y-%m-%d %H:%M:%S")
+    print dt2.strftime("%Y-%m-%d %H:%M:%S")  # FAILS

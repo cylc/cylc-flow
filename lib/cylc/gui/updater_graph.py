@@ -216,7 +216,6 @@ class GraphUpdater(threading.Thread):
             return False
         elif not compare_dict_of_dict(states, self.state_summary):
             # state changed - implicitly includes family state change.
-            #print 'STATE CHANGED'
             self.state_summary = states
             self.fam_state_summary = f_states
             return True
@@ -232,12 +231,10 @@ class GraphUpdater(threading.Thread):
                 # DO NOT USE gobject.idle_add() HERE - IT DRASTICALLY
                 # AFFECTS PERFORMANCE FOR LARGE SUITES? appears to
                 # be unnecessary anyway (due to xdot internals?)
-                ################ gobject.idle_add(self.update_xdot)
                     self.update_xdot(no_zoom=needed_no_redraw)
             sleep(0.2)
         else:
             pass
-            ####print "Disconnecting task state info thread"
 
     def update_xdot(self, no_zoom=False):
         self.xdot.set_dotcode(self.graphw.to_string(), no_zoom=True)
@@ -311,8 +308,9 @@ class GraphUpdater(threading.Thread):
         except TypeError:
             # Back compat with pre cylc-6 suite daemons.
             res = self.updater.suite_info_client.get(
-                'get_graph_raw', oldest, newest, False, self.group, self.ungroup,
-                self.ungroup_recursive, self.group_all, self.ungroup_all)
+                'get_graph_raw', oldest, newest, False, self.group,
+                self.ungroup, self.ungroup_recursive, self.group_all,
+                self.ungroup_all)
         except Exception as exc:  # PyroError?
             print >> sys.stderr, str(exc)
             return False

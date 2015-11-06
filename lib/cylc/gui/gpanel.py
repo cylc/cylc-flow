@@ -30,8 +30,6 @@ import traceback
 import gtk
 import gobject
 import warnings
-#import pygtk
-#pygtk.require('2.0')
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
@@ -55,7 +53,7 @@ class ScanPanelApplet(object):
         setup_icons()
         if not hosts:
             try:
-                hosts = GLOBAL_CFG.get( ["suite host scanning","hosts"] )
+                hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
             except KeyError:
                 hosts = ["localhost"]
         self.is_compact = is_compact
@@ -118,8 +116,8 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
         self.is_compact = is_compact
         self._set_gcylc_image_tooltip()
         self.gcylc_image.set_sensitive(False)
-        self.theme_name = gcfg.get( ['use theme'] )
-        self.theme = gcfg.get( ['themes', self.theme_name] )
+        self.theme_name = gcfg.get(['use theme'])
+        self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
         self.hosts_suites_info = {}
         self.stopped_hosts_suites_info = {}
@@ -157,11 +155,11 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
         gscan_item.set_image(img)
         gscan_item.show()
         gscan_item.connect("button-press-event",
-                                self._on_button_press_event_gscan)
+                           self._on_button_press_event_gscan)
 
         extra_items.append(gscan_item)
 
-        menu = get_scan_menu(suite_host_tuples, 
+        menu = get_scan_menu(suite_host_tuples,
                              self.theme_name, self._set_theme,
                              has_stopped_suites,
                              self.clear_stopped_suites,
@@ -173,7 +171,7 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
                              extra_items=extra_items,
                              owner=self.owner,
                              is_stopped=self.quit)
-        menu.popup( None, None, None, event.button, event.time )
+        menu.popup(None, None, None, event.button, event.time)
         return False
 
     def update(self):
@@ -212,7 +210,7 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
                 suite_statuses.setdefault(is_stopped, {})
                 suite_statuses[is_stopped].setdefault(status, [])
                 suite_statuses[is_stopped][status].append(
-                                           (suite, host, status_map.items()))
+                    (suite, host, status_map.items()))
             elif self.is_compact:
                 compact_suite_statuses.append((suite, host, status,
                                                status_map.items(), is_stopped))
@@ -225,8 +223,7 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
                 # Sort by number of suites in this state.
                 statuses.sort(lambda x, y: cmp(len(y[1]), len(x[1])))
                 for status, suite_host_states_tuples in statuses:
-                    label = gtk.Label(
-                                str(len(suite_host_states_tuples)) + ":")
+                    label = gtk.Label(str(len(suite_host_states_tuples)) + ":")
                     label.show()
                     self.dot_hbox.pack_start(label, expand=False, fill=False)
                     suite_info_tuples = []
@@ -297,7 +294,8 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
             tip_hbox.pack_start(tip_label, expand=False, fill=False,
                                 padding=5)
             tip_vbox.pack_start(tip_hbox, expand=False, fill=False)
-            text += long_text_format % (suite, suite_summary, host, states_text)
+            text += long_text_format % (
+                suite, suite_summary, host, states_text)
         text = text.rstrip()
         if hasattr(gtk, "Tooltip"):
             image_eb.set_has_tooltip(True)
@@ -346,7 +344,7 @@ class ScanPanelAppletUpdater(BaseScanTimeoutUpdater):
 
     def _set_theme(self, new_theme_name):
         self.theme_name = new_theme_name
-        self.theme = gcfg.get( ['themes', self.theme_name] )
+        self.theme = gcfg.get(['themes', self.theme_name])
         self.dots = DotMaker(self.theme)
 
     def _set_tooltip(self, widget, text):

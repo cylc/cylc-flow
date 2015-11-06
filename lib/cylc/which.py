@@ -20,6 +20,7 @@
 
 import os
 
+
 def which(program):
     def is_exe(fpath):
         return os.path.exists(fpath) and os.access(fpath, os.X_OK)

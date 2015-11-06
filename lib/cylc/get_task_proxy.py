@@ -19,6 +19,7 @@
 from cylc.task_proxy import TaskProxy
 from cylc.config import SuiteConfig, TaskNotDefinedError
 
+
 def get_task_proxy(name, *args, **kwargs):
     config = SuiteConfig.get_inst()
     """Return a task proxy for a named task."""
@@ -27,7 +28,3 @@ def get_task_proxy(name, *args, **kwargs):
     except KeyError:
         raise TaskNotDefinedError(name)
     return TaskProxy(tdef, *args, **kwargs)
-
-
-
-

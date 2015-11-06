@@ -142,7 +142,8 @@ class BroadcastServer(PyroServer):
                             if namespace not in self.settings[point_string]:
                                 self.settings[point_string][namespace] = {}
                             self._addict(
-                                self.settings[point_string][namespace], setting)
+                                self.settings[point_string][namespace],
+                                setting)
                             modified_settings.append(
                                 (point_string, namespace, setting))
 
@@ -218,7 +219,8 @@ class BroadcastServer(PyroServer):
             for point_string, point_string_settings in self.settings.items():
                 if point_strings and point_string not in point_strings:
                     continue
-                for namespace, namespace_settings in point_string_settings.items():
+                for namespace, namespace_settings in (
+                        point_string_settings.items()):
                     if namespaces and namespace not in namespaces:
                         continue
                     stuff_stack = [([], namespace_settings)]
@@ -287,7 +289,8 @@ class BroadcastServer(PyroServer):
             # Ensure database table is in sync
             modified_settings = []
             for point_string, point_string_settings in self.settings.items():
-                for namespace, namespace_settings in point_string_settings.items():
+                for namespace, namespace_settings in (
+                        point_string_settings.items()):
                     stuff_stack = [([], namespace_settings)]
                     while stuff_stack:
                         keys, stuff = stuff_stack.pop()

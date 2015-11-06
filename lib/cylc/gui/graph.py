@@ -17,63 +17,62 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gobject
-#import pygtk
-#pygtk.require('2.0')
 import gtk
 
 from gcapture import gcapture, gcapture_tmpfile
 from warning_dialog import warning_dialog
 
-def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
-                       gcapture_windows, tmpdir, template_opts, parent_window=None ):
+
+def graph_suite_popup(reg, cmd_help, defstartc, defstopc, graph_opts,
+                      gcapture_windows, tmpdir, template_opts,
+                      parent_window=None):
     """Popup a dialog to allow a user to configure their suite graphing."""
     try:
         import xdot
     except Exception, x:
-        warning_dialog( str(x) + "\nGraphing disabled.", parent_window ).warn()
+        warning_dialog(str(x) + "\nGraphing disabled.", parent_window).warn()
         return False
 
     window = gtk.Window()
     window.set_border_width(5)
-    window.set_title( "cylc graph " + reg)
-    window.set_transient_for( parent_window )
-    window.set_type_hint( gtk.gdk.WINDOW_TYPE_HINT_DIALOG )
+    window.set_title("cylc graph " + reg)
+    window.set_transient_for(parent_window)
+    window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
 
     vbox = gtk.VBox()
 
-    label = gtk.Label("[START]: " )
+    label = gtk.Label("[START]: ")
     start_entry = gtk.Entry()
     start_entry.set_max_length(14)
     if defstartc:
-        start_entry.set_text( str(defstartc) )
+        start_entry.set_text(str(defstartc))
     ic_hbox = gtk.HBox()
-    ic_hbox.pack_start( label )
+    ic_hbox.pack_start(label)
     ic_hbox.pack_start(start_entry, True)
     vbox.pack_start(ic_hbox)
 
-    label = gtk.Label("[STOP]:" )
+    label = gtk.Label("[STOP]:")
     stop_entry = gtk.Entry()
     stop_entry.set_max_length(14)
     if defstopc:
-        stop_entry.set_text( str(defstopc) )
+        stop_entry.set_text(str(defstopc))
     fc_hbox = gtk.HBox()
-    fc_hbox.pack_start( label )
+    fc_hbox.pack_start(label)
     fc_hbox.pack_start(stop_entry, True)
-    vbox.pack_start (fc_hbox, True)
+    vbox.pack_start(fc_hbox, True)
 
-    cancel_button = gtk.Button( "_Close" )
-    cancel_button.connect("clicked", lambda x: window.destroy() )
-    ok_button = gtk.Button( "_Graph" )
-    ok_button.connect("clicked",
-              lambda w: graph_suite(
-                  reg,
-                  start_entry.get_text(),
-                  stop_entry.get_text(),
-                  graph_opts,  gcapture_windows,
-                  tmpdir, template_opts, parent_window))
+    cancel_button = gtk.Button("_Close")
+    cancel_button.connect("clicked", lambda x: window.destroy())
+    ok_button = gtk.Button("_Graph")
+    ok_button.connect("clicked", lambda w: graph_suite(
+        reg,
+        start_entry.get_text(),
+        stop_entry.get_text(),
+        graph_opts,  gcapture_windows,
+        tmpdir, template_opts, parent_window))
 
-    help_button = gtk.Button( "_Help" )
-    help_button.connect("clicked", cmd_help, 'prep', 'graph' )
+    help_button = gtk.Button("_Help")
+    help_button.connect("clicked", cmd_help, 'prep', 'graph')
 
     hbox = gtk.HBox()
     hbox.pack_start(ok_button, False)
@@ -86,12 +85,12 @@ def graph_suite_popup( reg, cmd_help, defstartc, defstopc, graph_opts,
 
 
 def graph_suite(reg, start, stop, graph_opts,
-        gcapture_windows, tmpdir, template_opts, window=None):
+                gcapture_windows, tmpdir, template_opts, window=None):
     """Launch the cylc graph command with some options."""
     options = graph_opts
     options += ' ' + reg + ' ' + start + ' ' + stop
     command = "cylc graph " + template_opts + " " + options
-    foo = gcapture_tmpfile( command, tmpdir )
+    foo = gcapture_tmpfile(command, tmpdir)
     gcapture_windows.append(foo)
     foo.run()
     return False
