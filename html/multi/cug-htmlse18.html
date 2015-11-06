@@ -3,11 +3,11 @@
 <html > 
 <head><title>Global (Site, User) Config File Reference</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
-<meta name="generator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
-<meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-10-23 10:44:00"> 
+<meta name="date" content="2015-11-06 06:46:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -18,35 +18,35 @@ href="cug-htmlse17.html#tailcug-htmlse17.html" >prev-tail</a>] [<a
 href="#tailcug-htmlse18.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse18.html" >up</a>] </p></div>
 <!--l. 2--><p class="indent" >    <h3 id="B" class="sectionHead"><span class="titlemark"> <a href="#B">B</a>  <a 
- id="x19-362000B"></a>Global (Site, User) Config File Reference </span></h3> <div class="sectionTOCS">
+ id="x19-363000B"></a>Global (Site, User) Config File Reference </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >B.1 <a 
-href="#x19-363000B.1">Top Level Items</a></span>
+href="#x19-364000B.1">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.2 <a 
-href="#x19-373000B.2">[task messaging]</a></span>
+href="#x19-374000B.2">[task messaging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.3 <a 
-href="#x19-377000B.3">[suite logging]</a></span>
+href="#x19-378000B.3">[suite logging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.4 <a 
-href="#x19-381000B.4">[documentation]</a></span>
+href="#x19-382000B.4">[documentation]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.5 <a 
-href="#x19-390000B.5">[document viewers]</a></span>
+href="#x19-391000B.5">[document viewers]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.6 <a 
-href="#x19-393000B.6">[editors]</a></span>
+href="#x19-394000B.6">[editors]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.7 <a 
-href="#x19-396000B.7">[pyro]</a></span>
+href="#x19-397000B.7">[pyro]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.8 <a 
-href="#x19-400000B.8">[hosts]</a></span>
+href="#x19-401000B.8">[hosts]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.9 <a 
-href="#x19-418000B.9">[suite host self-identification] </a></span>
+href="#x19-423000B.9">[suite host self-identification] </a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.10 <a 
-href="#x19-422000B.10">[suite host scanning]</a></span>
+href="#x19-427000B.10">[suite host scanning]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.11 <a 
-href="#x19-424000B.11">[task events]</a></span>
+href="#x19-429000B.11">[task events]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.12 <a 
-href="#x19-425000B.12">[test battery]</a></span>
+href="#x19-430000B.12">[test battery]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.13 <a 
-href="#x19-434000B.13">[cylc]</a></span>
+href="#x19-439000B.13">[cylc]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.14 <a 
-href="#x19-442000B.14">[authentication]</a></span>
+href="#x19-447000B.14">[authentication]</a></span>
    </div>
 <!--l. 7--><p class="indent" >   This section defines all legal items and values for cylc site and user config files. See <span 
 class="cmti-10">Site And User Config Files</span>
@@ -67,10 +67,10 @@ class="cmti-10">result parsed by cylc. </span>Use of Jinja2 in suite definitions
 href="cug-htmlse9.html#x10-1270009.6">9.6<!--tex4ht:ref: Jinja2 --></a>.
 <!--l. 18--><p class="noindent" >
 <!--l. 18--><p class="indent" >    <h4 id="B.1" class="subsectionHead"> <span class="titlemark"> <a href="#B.1"> B.1</a>  <a 
- id="x19-363000B.1"></a>Top Level Items </span></h4>
+ id="x19-364000B.1"></a>Top Level Items </span></h4>
 <!--l. 20--><p class="noindent" >
 <!--l. 20--><p class="indent" >    <h4 id="B.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.1"> B.1.1</a>  <a 
- id="x19-364000B.1.1"></a>temporary directory </span></h4>
+ id="x19-365000B.1.1"></a>temporary directory </span></h4>
 <!--l. 22--><p class="indent" >   A temporary directory is needed by a few cylc commands, and is cleaned automatically on exit. Leave unset for
 the default (usually <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -102,7 +102,7 @@ class="pcrr7t-">cylc</span></span></li></ul>
                                                                                          
 <!--l. 32--><p class="noindent" >
 <!--l. 32--><p class="indent" >    <h4 id="B.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.2"> B.1.2</a>  <a 
- id="x19-365000B.1.2"></a>process pool size </span></h4>
+ id="x19-366000B.1.2"></a>process pool size </span></h4>
 <!--l. 34--><p class="indent" >   Number of process pool worker processes used to execute shell commands (job submission, event handlers, job
 poll and kill commands).
      <ul class="itemize1">
@@ -113,7 +113,7 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>None (number of processor cores on the suite host)</li></ul>
 <!--l. 42--><p class="noindent" >
 <!--l. 42--><p class="indent" >    <h4 id="B.1.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.3"> B.1.3</a>  <a 
- id="x19-366000B.1.3"></a>state dump rolling archive length </span></h4>
+ id="x19-367000B.1.3"></a>state dump rolling archive length </span></h4>
 <!--l. 44--><p class="indent" >   A rolling archive of suite state dumps is maintained under the suite run directory, and is used for restarts; this
 item determines the number of previous states retained. The most recent saved state file is called <span class="lstinline"><span 
 class="pcrr7t-">state</span></span>.
@@ -142,7 +142,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">20</span></span></li></ul>
 <!--l. 56--><p class="noindent" >
 <!--l. 56--><p class="indent" >    <h4 id="B.1.4" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.4"> B.1.4</a>  <a 
- id="x19-367000B.1.4"></a>disable interactive command prompts </span></h4>
+ id="x19-368000B.1.4"></a>disable interactive command prompts </span></h4>
 <!--l. 58--><p class="indent" >   Commands that intervene in running suites can be made to ask for confirmation before acting. Some
 find this annoying and ineffective as a safety measure, however, so command prompts are disabled by
 default.
@@ -154,7 +154,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>True</li></ul>
 <!--l. 67--><p class="noindent" >
 <!--l. 67--><p class="indent" >    <h4 id="B.1.5" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.5"> B.1.5</a>  <a 
- id="x19-368000B.1.5"></a>enable run directory housekeeping </span></h4>
+ id="x19-369000B.1.5"></a>enable run directory housekeeping </span></h4>
 <!--l. 69--><p class="indent" >   The suite run directory tree is created anew with every suite start (not restart) but output from the most
 recent previous runs can be retained in a rolling archive. Set length to 0 to keep no backups. <span 
 class="cmbx-10">This is</span>
@@ -175,7 +175,7 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>False</li></ul>
 <!--l. 83--><p class="noindent" >
 <!--l. 83--><p class="indent" >    <h4 id="B.1.6" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.6"> B.1.6</a>  <a 
- id="x19-369000B.1.6"></a>run directory rolling archive length </span></h4>
+ id="x19-370000B.1.6"></a>run directory rolling archive length </span></h4>
 <!--l. 85--><p class="indent" >   The number of old run directory trees to retain if run directory housekeeping is enabled.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -185,7 +185,7 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>2</li></ul>
 <!--l. 92--><p class="noindent" >
 <!--l. 92--><p class="indent" >    <h4 id="B.1.7" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.7"> B.1.7</a>  <a 
- id="x19-370000B.1.7"></a>execution polling intervals </span></h4>
+ id="x19-371000B.1.7"></a>execution polling intervals </span></h4>
 <!--l. 95--><p class="indent" >   Cylc can poll running jobs to catch problems that prevent task messages from being sent back to the suite, such
 as hard job kills, network outages, or unplanned task host shutdown. Routine polling is done only for the polling
 <span 
@@ -224,7 +224,7 @@ class="pcrr7t-">5&#x22C6;</span><span
 class="pcrr7t-">PT1M</span></span></li></ul>
 <!--l. 113--><p class="noindent" >
 <!--l. 113--><p class="indent" >    <h4 id="B.1.8" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.8"> B.1.8</a>  <a 
- id="x19-371000B.1.8"></a>submission polling intervals </span></h4>
+ id="x19-372000B.1.8"></a>submission polling intervals </span></h4>
 <!--l. 116--><p class="indent" >   Cylc can also poll submitted jobs to catch problems that prevent the submitted job from executing at all, such as
 deletion from an external batch scheduler queue. Routine polling is done only for the polling <span 
 class="cmti-10">task communication</span>
@@ -248,7 +248,7 @@ class="cmti-10">example: </span>(see the execution polling example above)</li></
                                                                                          
 <!--l. 131--><p class="noindent" >
 <!--l. 131--><p class="indent" >    <h4 id="B.1.9" class="subsubsectionHead"><span class="titlemark"> <a href="#B.1.9"> B.1.9</a>  <a 
- id="x19-372000B.1.9"></a>task host select command timeout </span></h4>
+ id="x19-373000B.1.9"></a>task host select command timeout </span></h4>
 <!--l. 133--><p class="indent" >   When a task host in a suite is a shell command string, cylc calls the shell to determine the task
 host. This call is invoked by the main process, and may cause the suite to hang while waiting for
 the command to finish. This setting sets a timeout for such a command to ensure that the suite can
@@ -263,12 +263,12 @@ class="pcrr7t-">PT1M</span></span>, 1 minute).
 class="cmti-10">default: PT10S</span></li></ul>
 <!--l. 144--><p class="noindent" >
 <!--l. 144--><p class="indent" >    <h4 id="B.2" class="subsectionHead"> <span class="titlemark"> <a href="#B.2"> B.2</a>  <a 
- id="x19-373000B.2"></a>[task messaging] </span></h4>
+ id="x19-374000B.2"></a>[task messaging] </span></h4>
 <!--l. 146--><p class="indent" >   This section contains configuration items that affect task-to-suite communications.
 <!--l. 149--><p class="noindent" >
 <!--l. 149--><p class="indent" >    <h4 id="B.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.1"> B.2.1</a>  <a 
- id="x19-374000B.2.1"></a>[task messaging] <span 
-class="cmsy-10">&#x2192; </span>retry interval </span></h4>
+ id="x19-375000B.2.1"></a>[task messaging] <span 
+class="cmsy-10">&rarr; </span>retry interval </span></h4>
 <!--l. 151--><p class="indent" >   If a send fails, the messaging code will retry after a configured delay interval.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -280,8 +280,8 @@ class="pcrr7t-">PT1M</span></span>, 1 minute).
 class="cmti-10">default: </span>PT5S</li></ul>
 <!--l. 160--><p class="noindent" >
 <!--l. 160--><p class="indent" >    <h4 id="B.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.2"> B.2.2</a>  <a 
- id="x19-375000B.2.2"></a>[task messaging] <span 
-class="cmsy-10">&#x2192; </span>maximum number of tries </span></h4>
+ id="x19-376000B.2.2"></a>[task messaging] <span 
+class="cmsy-10">&rarr; </span>maximum number of tries </span></h4>
 <!--l. 162--><p class="indent" >   If successive sends fail, the messaging code will give up after a configured number of tries.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -294,8 +294,8 @@ class="cmti-10">minimum: </span>1
 class="cmti-10">default: </span>7</li></ul>
 <!--l. 171--><p class="noindent" >
 <!--l. 171--><p class="indent" >    <h4 id="B.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.2.3"> B.2.3</a>  <a 
- id="x19-376000B.2.3"></a>[task messaging] <span 
-class="cmsy-10">&#x2192; </span>connection timeout </span></h4>
+ id="x19-377000B.2.3"></a>[task messaging] <span 
+class="cmsy-10">&rarr; </span>connection timeout </span></h4>
 <!--l. 173--><p class="indent" >   This is the same as the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">pyro</span><span 
@@ -315,13 +315,13 @@ class="pcrr7t-">PT1M</span></span>, 1 minute).
 class="cmti-10">default: </span>PT30S</li></ul>
 <!--l. 183--><p class="noindent" >
 <!--l. 183--><p class="indent" >    <h4 id="B.3" class="subsectionHead"> <span class="titlemark"> <a href="#B.3"> B.3</a>  <a 
- id="x19-377000B.3"></a>[suite logging] </span></h4>
+ id="x19-378000B.3"></a>[suite logging] </span></h4>
 <!--l. 185--><p class="indent" >   The suite event log, held under the suite run directory, is maintained as a rolling archive. Logs are rolled over
 (backed up and started anew) when they reach a configurable limit size.
 <!--l. 189--><p class="noindent" >
 <!--l. 189--><p class="indent" >    <h4 id="B.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.1"> B.3.1</a>  <a 
- id="x19-378000B.3.1"></a>[suite logging] <span 
-class="cmsy-10">&#x2192; </span>roll over at start-up </span></h4>
+ id="x19-379000B.3.1"></a>[suite logging] <span 
+class="cmsy-10">&rarr; </span>roll over at start-up </span></h4>
 <!--l. 191--><p class="indent" >   If true, a new suite log will be started for a new suite run.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -331,8 +331,8 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">default: </span>True</li></ul>
 <!--l. 198--><p class="noindent" >
 <!--l. 198--><p class="indent" >    <h4 id="B.3.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.2"> B.3.2</a>  <a 
- id="x19-379000B.3.2"></a>[suite logging] <span 
-class="cmsy-10">&#x2192; </span>rolling archive length </span></h4>
+ id="x19-380000B.3.2"></a>[suite logging] <span 
+class="cmsy-10">&rarr; </span>rolling archive length </span></h4>
 <!--l. 200--><p class="indent" >   How many rolled logs to retain in the archive.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -345,8 +345,8 @@ class="cmti-10">minimum: </span>1
 class="cmti-10">default: </span>5</li></ul>
 <!--l. 208--><p class="noindent" >
 <!--l. 208--><p class="indent" >    <h4 id="B.3.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.3.3"> B.3.3</a>  <a 
- id="x19-380000B.3.3"></a>[suite logging] <span 
-class="cmsy-10">&#x2192; </span>maximum size in bytes </span></h4>
+ id="x19-381000B.3.3"></a>[suite logging] <span 
+class="cmsy-10">&rarr; </span>maximum size in bytes </span></h4>
 <!--l. 210--><p class="indent" >   Suite event logs are rolled over when they reach this file size.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -356,7 +356,7 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>1000000</li></ul>
 <!--l. 217--><p class="noindent" >
 <!--l. 217--><p class="indent" >    <h4 id="B.4" class="subsectionHead"> <span class="titlemark"> <a href="#B.4"> B.4</a>  <a 
- id="x19-381000B.4"></a>[documentation] </span></h4>
+ id="x19-382000B.4"></a>[documentation] </span></h4>
 <!--l. 219--><p class="indent" >   Documentation locations for the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -366,16 +366,16 @@ class="pcrr7t-">doc</span></span> command and gcylc Help menus.
                                                                                          
 <!--l. 222--><p class="noindent" >
 <!--l. 222--><p class="indent" >    <h4 id="B.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.4.1"> B.4.1</a>  <a 
- id="x19-382000B.4.1"></a>[documentation] <span 
-class="cmsy-10">&#x2192; </span>[files] </span></h4>
+ id="x19-383000B.4.1"></a>[documentation] <span 
+class="cmsy-10">&rarr; </span>[[files]] </span></h4>
 <!--l. 224--><p class="indent" >   File locations of documentation held locally on the cylc host server.
 <!--l. 226--><p class="noindent" >
 <!--l. 226--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-383000B.4.1.1"></a><span 
+ id="x19-384000B.4.1.1"></a><span 
 class="cmbx-10">[documentation] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[files] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[files]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">html index </span></span>
    File location of the main cylc documentation index.
      <ul class="itemize1">
@@ -394,11 +394,11 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">html</span></span></li></ul>
 <!--l. 234--><p class="noindent" >
 <!--l. 234--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-384000B.4.1.2"></a><span 
+ id="x19-385000B.4.1.2"></a><span 
 class="cmbx-10">[documentation] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[files] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[files]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">pdf user guide </span></span>
    File location of the cylc User Guide, PDF version.
      <ul class="itemize1">
@@ -419,11 +419,11 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">pdf</span></span></li></ul>
 <!--l. 242--><p class="noindent" >
 <!--l. 242--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-385000B.4.1.3"></a><span 
+ id="x19-386000B.4.1.3"></a><span 
 class="cmbx-10">[documentation] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[files] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[files]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">multi-page html user guide </span></span>
    File location of the cylc User Guide, multi-page HTML version.
      <ul class="itemize1">
@@ -448,11 +448,11 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">html</span></span></li></ul>
 <!--l. 250--><p class="noindent" >
 <!--l. 250--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-386000B.4.1.4"></a><span 
+ id="x19-387000B.4.1.4"></a><span 
 class="cmbx-10">[documentation] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[files] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[files]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">single-page html user guide </span></span>
    File location of the cylc User Guide, single-page HTML version.
      <ul class="itemize1">
@@ -477,19 +477,19 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">html</span></span></li></ul>
 <!--l. 258--><p class="noindent" >
 <!--l. 258--><p class="indent" >    <h4 id="B.4.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.4.2"> B.4.2</a>  <a 
- id="x19-387000B.4.2"></a>[documentation] <span 
-class="cmsy-10">&#x2192; </span>[urls] </span></h4>
+ id="x19-388000B.4.2"></a>[documentation] <span 
+class="cmsy-10">&rarr; </span>[[urls]] </span></h4>
 <!--l. 260--><p class="indent" >   Online documentation URLs.
                                                                                          
 
                                                                                          
 <!--l. 262--><p class="noindent" >
 <!--l. 262--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-388000B.4.2.1"></a><span 
+ id="x19-389000B.4.2.1"></a><span 
 class="cmbx-10">[documentation] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[urls] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[urls]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">internet homepage </span></span>
    URL of the cylc internet homepage, with links to documentation for the latest official release.
      <ul class="itemize1">
@@ -500,11 +500,11 @@ class="cmti-10">type: </span>string
 class="cmti-10">default: </span>http://cylc.github.com/cylc/</li></ul>
 <!--l. 272--><p class="noindent" >
 <!--l. 272--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-389000B.4.2.2"></a><span 
+ id="x19-390000B.4.2.2"></a><span 
 class="cmbx-10">[documentation] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[urls] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[urls]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">local index</span></span>
    Local intranet URL of the main cylc documentation index.
      <ul class="itemize1">
@@ -515,12 +515,12 @@ class="cmti-10">type: </span>string
 class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 281--><p class="noindent" >
 <!--l. 281--><p class="indent" >    <h4 id="B.5" class="subsectionHead"> <span class="titlemark"> <a href="#B.5"> B.5</a>  <a 
- id="x19-390000B.5"></a>[document viewers] </span></h4>
+ id="x19-391000B.5"></a>[document viewers] </span></h4>
 <!--l. 283--><p class="indent" >   PDF and HTML viewers can be launched by cylc to view the documentation.
 <!--l. 285--><p class="noindent" >
 <!--l. 285--><p class="indent" >    <h4 id="B.5.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.5.1"> B.5.1</a>  <a 
- id="x19-391000B.5.1"></a>[document viewers] <span 
-class="cmsy-10">&#x2192; </span>pdf </span></h4>
+ id="x19-392000B.5.1"></a>[document viewers] <span 
+class="cmsy-10">&rarr; </span>pdf </span></h4>
 <!--l. 287--><p class="indent" >   Your preferred PDF viewer program.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -530,8 +530,8 @@ class="cmti-10">type: </span>string
 class="cmti-10">default: </span>evince</li></ul>
 <!--l. 294--><p class="noindent" >
 <!--l. 294--><p class="indent" >    <h4 id="B.5.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.5.2"> B.5.2</a>  <a 
- id="x19-392000B.5.2"></a>[document viewers] <span 
-class="cmsy-10">&#x2192; </span>html </span></h4>
+ id="x19-393000B.5.2"></a>[document viewers] <span 
+class="cmsy-10">&rarr; </span>html </span></h4>
 <!--l. 296--><p class="indent" >   Your preferred web browser.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -544,12 +544,12 @@ class="cmti-10">default: </span>firefox</li></ul>
                                                                                          
 <!--l. 303--><p class="noindent" >
 <!--l. 303--><p class="indent" >    <h4 id="B.6" class="subsectionHead"> <span class="titlemark"> <a href="#B.6"> B.6</a>  <a 
- id="x19-393000B.6"></a>[editors] </span></h4>
+ id="x19-394000B.6"></a>[editors] </span></h4>
 <!--l. 305--><p class="indent" >   Choose your favourite text editor for editing suite definitions.
 <!--l. 307--><p class="noindent" >
 <!--l. 307--><p class="indent" >    <h4 id="B.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.6.1"> B.6.1</a>  <a 
- id="x19-394000B.6.1"></a>[editors] <span 
-class="cmsy-10">&#x2192; </span>terminal </span></h4>
+ id="x19-395000B.6.1"></a>[editors] <span 
+class="cmsy-10">&rarr; </span>terminal </span></h4>
 <!--l. 309--><p class="indent" >   The editor to be invoked by the cylc command line interface.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -591,8 +591,8 @@ class="pcrr7t-">f</span></span> (vim GUI)</li></ul>
      </li></ul>
 <!--l. 322--><p class="noindent" >
 <!--l. 322--><p class="indent" >    <h4 id="B.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.6.2"> B.6.2</a>  <a 
- id="x19-395000B.6.2"></a>[editors] <span 
-class="cmsy-10">&#x2192; </span>gui </span></h4>
+ id="x19-396000B.6.2"></a>[editors] <span 
+class="cmsy-10">&rarr; </span>gui </span></h4>
 <!--l. 324--><p class="indent" >   The editor to be invoked by the cylc GUI.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -629,7 +629,7 @@ class="pcrr7t-">vim</span></span></li></ul>
      </li></ul>
 <!--l. 337--><p class="noindent" >
 <!--l. 337--><p class="indent" >    <h4 id="B.7" class="subsectionHead"> <span class="titlemark"> <a href="#B.7"> B.7</a>  <a 
- id="x19-396000B.7"></a>[pyro] </span></h4>
+ id="x19-397000B.7"></a>[pyro] </span></h4>
 <!--l. 339--><p class="indent" >   Pyro is the RPC layer used for network communication between cylc clients (suite-connecting commands and
 guis) servers (running suites). Each suite listens on a dedicated network port, binding on the first available starting
 at the configured base port.
@@ -638,8 +638,8 @@ at the configured base port.
                                                                                          
 <!--l. 344--><p class="noindent" >
 <!--l. 344--><p class="indent" >    <h4 id="B.7.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.1"> B.7.1</a>  <a 
- id="x19-397000B.7.1"></a>[pyro] <span 
-class="cmsy-10">&#x2192; </span>base port  </span></h4>
+ id="x19-398000B.7.1"></a>[pyro] <span 
+class="cmsy-10">&rarr; </span>base port  </span></h4>
 <!--l. 346--><p class="indent" >   The first port that cylc is allowed to use.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -649,8 +649,8 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>7766</li></ul>
 <!--l. 353--><p class="noindent" >
 <!--l. 353--><p class="indent" >    <h4 id="B.7.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.2"> B.7.2</a>  <a 
- id="x19-398000B.7.2"></a>[pyro] <span 
-class="cmsy-10">&#x2192; </span>maximum number of ports </span></h4>
+ id="x19-399000B.7.2"></a>[pyro] <span 
+class="cmsy-10">&rarr; </span>maximum number of ports </span></h4>
 <!--l. 355--><p class="indent" >   This determines the maximum number of suites that can run at once on the suite host.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -660,8 +660,8 @@ class="cmti-10">type: </span>integer
 class="cmti-10">default: </span>100</li></ul>
 <!--l. 363--><p class="noindent" >
 <!--l. 363--><p class="indent" >    <h4 id="B.7.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.7.3"> B.7.3</a>  <a 
- id="x19-399000B.7.3"></a>[pyro] <span 
-class="cmsy-10">&#x2192; </span>ports directory </span></h4>
+ id="x19-400000B.7.3"></a>[pyro] <span 
+class="cmsy-10">&rarr; </span>ports directory </span></h4>
 <!--l. 365--><p class="indent" >   Each suite stores its port number, by suite name, under this directory.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -678,7 +678,7 @@ class="pcrr7t-">ports</span><span
 class="pcrr7t-">/</span></span></li></ul>
 <!--l. 372--><p class="noindent" >
 <!--l. 372--><p class="indent" >    <h4 id="B.8" class="subsectionHead"> <span class="titlemark"> <a href="#B.8"> B.8</a>  <a 
- id="x19-400000B.8"></a>[hosts] </span></h4>
+ id="x19-401000B.8"></a>[hosts] </span></h4>
 <!--l. 374--><p class="indent" >   The [hosts] section configures some important host-specific settings for the suite host (&#8216;localhost&#8217;) and remote
 task hosts. Note that <span 
 class="cmti-10">remote task behaviour is determined by the site/user config on the suite host, not on the task</span>
@@ -690,8 +690,8 @@ class="pcrr7t-">HOME</span></span> in items that configure directory
 locations.
 <!--l. 382--><p class="noindent" >
 <!--l. 382--><p class="indent" >    <h4 id="B.8.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.8.1"> B.8.1</a>  <a 
- id="x19-401000B.8.1"></a>[hosts] <span 
-class="cmsy-10">&#x2192; </span>HOST </span></h4>
+ id="x19-402000B.8.1"></a>[hosts] <span 
+class="cmsy-10">&rarr; </span>[[HOST]] </span></h4>
 <!--l. 384--><p class="indent" >   The default task host is the suite host, <span 
 class="cmbx-10">localhost</span>, with default values as listed below. Use an explicit
 <span class="lstinline"><span 
@@ -752,11 +752,11 @@ class="pcrr7t-">nz</span></span> - regular expression</li></ul>
      </li></ul>
 <!--l. 417--><p class="noindent" >
 <!--l. 417--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-402000B.8.1.1"></a><span 
+ id="x19-403000B.8.1.1"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">run directory </span></span>
    The top level of the directory tree that holds suite-specific output logs, state dump files, run database,
 etc.
@@ -774,11 +774,11 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">run</span></span></li></ul>
 <!--l. 427--><p class="noindent" >
 <!--l. 427--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-403000B.8.1.2"></a><span 
+ id="x19-404000B.8.1.2"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">work directory </span></span>
    The top level for suite work and share directories.
      <ul class="itemize1">
@@ -795,11 +795,11 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">run</span></span></li></ul>
 <!--l. 438--><p class="noindent" >
 <!--l. 438--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-404000B.8.1.3"></a><span 
+ id="x19-405000B.8.1.3"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">task communication method </span></span>
    The means by which task progress messages are reported back to the running suite. See above for default polling
 intervals for the poll method.
@@ -826,11 +826,11 @@ class="cmbx-10">poll </span>- the suite polls for the status of tasks (no task m
 class="cmti-10">localhost default: </span>pyro</li></ul>
 <!--l. 455--><p class="noindent" >
 <!--l. 455--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-405000B.8.1.4"></a><span 
+ id="x19-406000B.8.1.4"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">remote copy template </span></span>
    A string for the command used to copy files to a remote host. This is not used on the suite host unless you run
 local tasks under another user account.
@@ -852,11 +852,11 @@ class="pcrr7t-">oConnectTimeout</span><span
 class="pcrr7t-">=10</span></span></li></ul>
 <!--l. 465--><p class="noindent" >
 <!--l. 465--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-406000B.8.1.5"></a><span 
+ id="x19-407000B.8.1.5"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">remote shell template </span></span>
    A string for the command used to invoke commands on this host. This is not used on the suite host unless you
 run local tasks under another user account. (N.B. This setting used to be a string template with a %s being a
@@ -880,16 +880,16 @@ class="pcrr7t-">oConnectTimeout</span><span
 class="pcrr7t-">=10</span></span></li></ul>
 <!--l. 478--><p class="noindent" >
 <!--l. 478--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-407000B.8.1.6"></a><span 
+ id="x19-408000B.8.1.6"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">use login shell </span></span>
    Whether to use a login shell or not for remote command invocation. By default cylc runs remote ssh commands
 using a login shell, <!--l. 482-->
-   <div class="lstlisting" id="listing-258"><span class="label"><a 
- id="x19-407001r1"></a></span><span 
+   <div class="lstlisting" id="listing-259"><span class="label"><a 
+ id="x19-408001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -919,8 +919,8 @@ to get, <!--l. 489-->
                                                                                          
 
                                                                                          
-   <div class="lstlisting" id="listing-259"><span class="label"><a 
- id="x19-407002r1"></a></span><span 
+   <div class="lstlisting" id="listing-260"><span class="label"><a 
+ id="x19-408002r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">ssh</span><span 
@@ -947,11 +947,11 @@ class="cmti-10">type: </span>boolean
 class="cmti-10">localhost default: </span>true</li></ul>
 <!--l. 501--><p class="noindent" >
 <!--l. 501--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-408000B.8.1.7"></a><span 
+ id="x19-409000B.8.1.7"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">cylc executable </span></span>
    The <span class="lstinline"><span 
 class="pcrr7t-">cylc</span></span> executable on a remote host. Note this should point to the cylc multi-version wrapper (see&#x00A0;<a 
@@ -975,11 +975,11 @@ class="cmti-10">localhost default: </span><span class="lstinline"><span
 class="pcrr7t-">cylc</span></span></li></ul>
 <!--l. 514--><p class="noindent" >
 <!--l. 514--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-409000B.8.1.8"></a><span 
+ id="x19-410000B.8.1.8"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">global init-script </span></span>
    If specified, the value of this setting will be inserted to just before the <span class="lstinline"><span 
 class="pcrr7t-">init</span><span 
@@ -996,11 +996,11 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span></span></li></ul>
 <!--l. 526--><p class="noindent" >
 <!--l. 526--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-410000B.8.1.9"></a><span 
+ id="x19-411000B.8.1.9"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">copyable environment variables </span></span>
    A list containing the names of the environment variables that can and/or need to be copied from the suite
 daemon to a job.
@@ -1016,126 +1016,570 @@ class="pcrr7t-">[]</span></span></li></ul>
                                                                                          
 <!--l. 536--><p class="noindent" >
 <!--l. 536--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-411000B.8.1.10"></a><span 
+ id="x19-412000B.8.1.10"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">retrieve job logs</span></span>
    Global default for the&#x00A0;<a 
 href="cug-htmlse17.html#x18-312000A.5.1.20.3">A.5.1.20.3<!--tex4ht:ref: runtime-remote-retrieve-job-logs --></a> setting for the specified host.
 <!--l. 541--><p class="noindent" >
 <!--l. 541--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-412000B.8.1.11"></a><span 
+ id="x19-413000B.8.1.11"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOST </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">retrieve job logs max size</span></span>
    Global default for the&#x00A0;<a 
 href="cug-htmlse17.html#x18-313000A.5.1.20.4">A.5.1.20.4<!--tex4ht:ref: runtime-remote-retrieve-job-logs-max-size --></a> setting for the specified host.
 <!--l. 546--><p class="noindent" >
 <!--l. 546--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-413000B.8.1.12"></a><span 
+ id="x19-414000B.8.1.12"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOSTS </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">retrieve job logs retry delays</span></span>
    Global default for the&#x00A0;<a 
 href="cug-htmlse17.html#x18-314000A.5.1.20.5">A.5.1.20.5<!--tex4ht:ref: runtime-remote-retrieve-job-logs-retry-delays --></a> setting for the specified host.
 <!--l. 551--><p class="noindent" >
 <!--l. 551--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-414000B.8.1.13"></a><span 
+ id="x19-415000B.8.1.13"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOSTS </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">batch systems </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">JOB SUBMISSION METHOD </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">task event handler retry delays</span></span>
+   Host specific default for the&#x00A0;<a 
+href="cug-htmlse17.html#x18-324000A.5.1.22.3">A.5.1.22.3<!--tex4ht:ref: runtime-events-handler-retry-delays --></a> setting.
+<!--l. 556--><p class="noindent" >
+<!--l. 556--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-416000B.8.1.14"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">local tail command template</span></span>
+   A template (with <span class="lstinline"><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">filename</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) for the command used to tail-follow local job
+logs, used by the gcylc log viewer and <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">log</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">tail</span></span>. You are unlikely to need to override
+this.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span><span class="lstinline"><span 
+class="pcrr7t-">tail</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">n</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">+1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">F</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">filename</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span></li></ul>
+<!--l. 568--><p class="noindent" >
+<!--l. 568--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-417000B.8.1.15"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">remote tail command template</span></span>
+   A template (with <span class="lstinline"><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">filename</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span> substitution) for the command used to tail-follow remote job logs, used by the
+gcylc log viewer and <span class="lstinline"><span 
+class="pcrr7t-">cylc</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">cat</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">log</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">tail</span></span>. The remote tail command needs to be told to die when its parent
+process exits. You may need to override this command for task hosts where the default <span class="lstinline"><span 
+class="pcrr7t-">tail</span></span> or <span class="lstinline"><span 
+class="pcrr7t-">ps</span></span> commands are
+not equivalent to the Gnu Linux versions.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span><span class="lstinline"><span 
+class="pcrr7t-">tail</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">pid</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">ps</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">h</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">o</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ppid</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">|</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sed</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">e</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">/[[:</span><span 
+class="pcrr7t-">space</span><span 
+class="pcrr7t-">:]]//</span><span 
+class="pcrr7t-">g</span><span 
+class="pcrr7t-">')</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">n</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">+1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">F</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">filename</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span>
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">example: </span>for AIX hosts:<br 
+class="newline" /><span class="lstinline"><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">gnu</span><span 
+class="pcrr7t-">/</span><span 
+class="pcrr7t-">tail</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">--</span><span 
+class="pcrr7t-">pid</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr8c-">$</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">ps</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">o</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">ppid</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">p</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr8c-">$$</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">|</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">sed</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">e</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">'</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">/[[:</span><span 
+class="pcrr7t-">space</span><span 
+class="pcrr7t-">:]]//</span><span 
+class="pcrr7t-">g</span><span 
+class="pcrr7t-">')</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">n</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">+1</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">F</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">filename</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span></span></li></ul>
+                                                                                         
+
+                                                                                         
+<!--l. 585--><p class="noindent" >
+<!--l. 585--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-418000B.8.1.16"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[batch systems]]]</span></span>
+   Settings for particular batch systems on HOST. In the subsections below, SYSTEM should be replaced with the
+cylc job submission method name that represents the batch system (see&#x00A0;<a 
+href="cug-htmlse17.html#x18-305000A.5.1.19.1">A.5.1.19.1<!--tex4ht:ref: RuntimeJobSubMethods --></a>).
+<!--l. 591--><p class="noindent" >
+<!--l. 591--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-419000B.8.1.16.1"></a><span 
+class="cmbx-10">[hosts] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[batch systems]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[[SYSTEM]]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">err tailer</span></span>
    A command template (with <span class="lstinline"><span 
-class="pcrr7t-">%(</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
 class="pcrr7t-">job_id</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span></span> substitution) that can be used to tail-follow the stderr stream of a
-running job if JOB SUBMISSION METHOD does not use the normal location.
-<!--l. 557--><p class="noindent" >
-<!--l. 557--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-415000B.8.1.14"></a><span 
+running job if SYSTEM does not use the normal log file location while the job is running. This setting
+overrides&#x00A0;<a 
+href="#x19-416000B.8.1.14">B.8.1.14<!--tex4ht:ref: local-tail-template --></a> and&#x00A0;<a 
+href="#x19-417000B.8.1.15">B.8.1.15<!--tex4ht:ref: remote-tail-template --></a> above.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span>(none)
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">example: </span>For PBS: <!--l. 603-->
+     <div class="lstlisting" id="listing-261"><span class="label"><a 
+ id="x19-419001r1"></a></span><span 
+class="pcrr7t-">[</span><span 
+class="pcrr7t-">hosts</span><span 
+class="pcrr7t-">]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-419002r2"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">myhpc</span><span 
+class="pcrr7t-">&#x22C6;]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-419003r3"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[</span><span 
+class="pcrr7t-">batch</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">systems</span><span 
+class="pcrr7t-">]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-419004r4"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">[[[[</span><span 
+class="pcrr7t-">pbs</span><span 
+class="pcrr7t-">]]]]</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-419005r5"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">err</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tailer</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">qcat</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">f</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">e</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-419006r6"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">out</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">tailer</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">qcat</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">f</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">o</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-419007r7"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">err</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">viewer</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">qcat</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">e</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span><span 
+class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
+ id="x19-419008r8"></a></span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">out</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">viewer</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">=</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">qcat</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">o</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
+class="pcrr7t-">job_id</span><span 
+class="pcrr7t-">)</span><span 
+class="pcrr7t-">s</span>
+     
+     </div>
+     </li></ul>
+<!--l. 615--><p class="noindent" >
+<!--l. 615--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-420000B.8.1.16.2"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOSTS </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">batch systems </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">JOB SUBMISSION METHOD </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[batch systems]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[[SYSTEM]]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">out tailer</span></span>
    A command template (with <span class="lstinline"><span 
-class="pcrr7t-">%(</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
 class="pcrr7t-">job_id</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span></span> substitution) that can be used to tail-follow the stdout stream of a
-running job if JOB SUBMISSION METHOD does not use the normal location.
-<!--l. 563--><p class="noindent" >
-<!--l. 563--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-416000B.8.1.15"></a><span 
+running job if SYSTEM does not use the normal log file location while the job is running. This setting
+overrides&#x00A0;<a 
+href="#x19-416000B.8.1.14">B.8.1.14<!--tex4ht:ref: local-tail-template --></a> and&#x00A0;<a 
+href="#x19-417000B.8.1.15">B.8.1.15<!--tex4ht:ref: remote-tail-template --></a> above.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span>(none)
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">example: </span>see&#x00A0;<a 
+href="#x19-419000B.8.1.16.1">B.8.1.16.1<!--tex4ht:ref: err-tailer --></a></li></ul>
+<!--l. 629--><p class="noindent" >
+<!--l. 629--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-421000B.8.1.16.3"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOSTS </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">batch systems </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">JOB SUBMISSION METHOD </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[batch systems]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[[SYSTEM]]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">err viewer</span></span>
    A command template (with <span class="lstinline"><span 
-class="pcrr7t-">%(</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
 class="pcrr7t-">job_id</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span></span> substitution) that can be used to view the stderr stream of a running
-job if JOB SUBMISSION METHOD does not use the normal location.
-<!--l. 569--><p class="noindent" >
-<!--l. 569--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-417000B.8.1.16"></a><span 
+job if SYSTEM does not use the normal log file location while the job is running.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span>(none)
+                                                                                         
+
+                                                                                         
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">example: </span>see&#x00A0;<a 
+href="#x19-419000B.8.1.16.1">B.8.1.16.1<!--tex4ht:ref: err-tailer --></a></li></ul>
+<!--l. 641--><p class="noindent" >
+<!--l. 641--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-422000B.8.1.16.4"></a><span 
 class="cmbx-10">[hosts] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">HOSTS </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">batch systems </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">JOB SUBMISSION METHOD </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[HOST]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[batch systems]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[[SYSTEM]]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">out viewer</span></span>
    A command template (with <span class="lstinline"><span 
-class="pcrr7t-">%(</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
 class="pcrr7t-">job_id</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span></span> substitution) that can be used to view the stdout stream of a running
-job if JOB SUBMISSION METHOD does not use the normal location.
-<!--l. 575--><p class="noindent" >
-<!--l. 575--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
- id="x19-418000B.9"></a>[suite host self-identification]  </span></h4>
-<!--l. 577--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
+job if SYSTEM does not use the normal log file location while the job is running.
+     <ul class="itemize1">
+     <li class="itemize"><span 
+class="cmti-10">type: </span>string
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">default: </span>(none)
+     </li>
+     <li class="itemize"><span 
+class="cmti-10">example: </span>see&#x00A0;<a 
+href="#x19-419000B.8.1.16.1">B.8.1.16.1<!--tex4ht:ref: err-tailer --></a></li></ul>
+<!--l. 653--><p class="noindent" >
+<!--l. 653--><p class="indent" >    <h4 id="B.9" class="subsectionHead"> <span class="titlemark"> <a href="#B.9"> B.9</a>  <a 
+ id="x19-423000B.9"></a>[suite host self-identification]  </span></h4>
+<!--l. 655--><p class="indent" >   The suite host&#8217;s identity must be determined locally by cylc and passed to running tasks (via <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_HOST</span></span>)
 so that task messages can target the right suite on the right host.
-<!--l. 585--><p class="noindent" >
-<!--l. 585--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
- id="x19-419000B.9.1"></a>[suite host self-identification] <span 
-class="cmsy-10">&#x2192; </span>method  </span></h4>
-<!--l. 587--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
+<!--l. 663--><p class="noindent" >
+<!--l. 663--><p class="indent" >    <h4 id="B.9.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.1"> B.9.1</a>  <a 
+ id="x19-424000B.9.1"></a>[suite host self-identification] <span 
+class="cmsy-10">&rarr; </span>method  </span></h4>
+<!--l. 665--><p class="indent" >   This item determines how cylc finds the identity of the suite host. For the default <span 
 class="cmti-10">name </span>method cylc asks the
 suite host for its host name. This should resolve on remote task hosts to the IP address of the suite host; if it
 doesn&#8217;t, adjust network settings or use one of the other methods. For the <span 
 class="cmti-10">address </span>method, cylc attempts to use a
 special external &#8220;target address&#8221; to determine the IP address of the suite host as seen by remote task hosts
-                                                                                         
-
-                                                                                         
 (in-source documentation in <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -1167,11 +1611,14 @@ class="cmti-10">host</span>, below)</li></ul>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>name</li></ul>
-<!--l. 609--><p class="noindent" >
-<!--l. 609--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
- id="x19-420000B.9.2"></a>[suite host self-identification] <span 
-class="cmsy-10">&#x2192; </span>target  </span></h4>
-<!--l. 611--><p class="indent" >   This item is required for the <span 
+                                                                                         
+
+                                                                                         
+<!--l. 687--><p class="noindent" >
+<!--l. 687--><p class="indent" >    <h4 id="B.9.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.2"> B.9.2</a>  <a 
+ id="x19-425000B.9.2"></a>[suite host self-identification] <span 
+class="cmsy-10">&rarr; </span>target  </span></h4>
+<!--l. 689--><p class="indent" >   This item is required for the <span 
 class="cmti-10">address </span>self-identification method. If your suite host sees the internet, a common
 address such as <span class="lstinline"><span 
 class="pcrr7t-">google</span><span 
@@ -1186,11 +1633,11 @@ class="cmti-10">default: </span><span class="lstinline"><span
 class="pcrr7t-">google</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">com</span></span></li></ul>
-<!--l. 621--><p class="noindent" >
-<!--l. 621--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
- id="x19-421000B.9.3"></a>[suite host self-identification] <span 
-class="cmsy-10">&#x2192; </span>host  </span></h4>
-<!--l. 623--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
+<!--l. 699--><p class="noindent" >
+<!--l. 699--><p class="indent" >    <h4 id="B.9.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.9.3"> B.9.3</a>  <a 
+ id="x19-426000B.9.3"></a>[suite host self-identification] <span 
+class="cmsy-10">&rarr; </span>host  </span></h4>
+<!--l. 701--><p class="indent" >   Use this item to explicitly set the name or IP address of the suite host if you have to use the <span 
 class="cmti-10">hardwired</span>
 self-identification method.
      <ul class="itemize1">
@@ -1199,219 +1646,203 @@ class="cmti-10">type: </span>string (host name or IP address)
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 630--><p class="noindent" >
-<!--l. 630--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
- id="x19-422000B.10"></a>[suite host scanning] </span></h4>
-<!--l. 632--><p class="indent" >   Utilities such as <span class="lstinline"><span 
+<!--l. 708--><p class="noindent" >
+<!--l. 708--><p class="indent" >    <h4 id="B.10" class="subsectionHead"> <span class="titlemark"> <a href="#B.10"> B.10</a>  <a 
+ id="x19-427000B.10"></a>[suite host scanning] </span></h4>
+<!--l. 710--><p class="indent" >   Utilities such as <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">gsummary</span></span> need to scan hosts for running suites.
-                                                                                         
-
-                                                                                         
-<!--l. 635--><p class="noindent" >
-<!--l. 635--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
- id="x19-423000B.10.1"></a>[suite host scanning] <span 
-class="cmsy-10">&#x2192; </span>hosts  </span></h4>
-<!--l. 637--><p class="indent" >   A list of hosts to scan for running suites.
+<!--l. 713--><p class="noindent" >
+<!--l. 713--><p class="indent" >    <h4 id="B.10.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.10.1"> B.10.1</a>  <a 
+ id="x19-428000B.10.1"></a>[suite host scanning] <span 
+class="cmsy-10">&rarr; </span>hosts  </span></h4>
+<!--l. 715--><p class="indent" >   A list of hosts to scan for running suites.
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>comma-separated list of host names or IP addresses.
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>localhost</li></ul>
-<!--l. 643--><p class="noindent" >
-<!--l. 643--><p class="indent" >    <h4 id="B.11" class="subsectionHead"> <span class="titlemark"> <a href="#B.11"> B.11</a>  <a 
- id="x19-424000B.11"></a>[task events] </span></h4>
-<!--l. 645--><p class="indent" >   Global site/user defaults for&#x00A0;<a 
+<!--l. 721--><p class="noindent" >
+<!--l. 721--><p class="indent" >    <h4 id="B.11" class="subsectionHead"> <span class="titlemark"> <a href="#B.11"> B.11</a>  <a 
+ id="x19-429000B.11"></a>[task events] </span></h4>
+<!--l. 723--><p class="indent" >   Global site/user defaults for&#x00A0;<a 
 href="cug-htmlse17.html#x18-321000A.5.1.22">A.5.1.22<!--tex4ht:ref: TaskEventHandling2 --></a>.
-<!--l. 647--><p class="noindent" >
-<!--l. 647--><p class="indent" >    <h4 id="B.12" class="subsectionHead"> <span class="titlemark"> <a href="#B.12"> B.12</a>  <a 
- id="x19-425000B.12"></a>[test battery] </span></h4>
-<!--l. 649--><p class="indent" >   Settings for the automated development tests.
-<!--l. 651--><p class="noindent" >
-<!--l. 651--><p class="indent" >    <h4 id="B.12.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.1"> B.12.1</a>  <a 
- id="x19-426000B.12.1"></a>[test battery] <span 
-class="cmsy-10">&#x2192; </span>remote host with shared fs </span></h4>
-<!--l. 653--><p class="indent" >   The name of a remote host with shared HOME file system as the host running the test battery.
-<!--l. 656--><p class="noindent" >
-<!--l. 656--><p class="indent" >    <h4 id="B.12.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.2"> B.12.2</a>  <a 
- id="x19-427000B.12.2"></a>[test battery] <span 
-class="cmsy-10">&#x2192; </span>remote host </span></h4>
-<!--l. 658--><p class="indent" >   The name of a remote host without shared HOME file system as the host running the test battery.
-<!--l. 661--><p class="noindent" >
-<!--l. 661--><p class="indent" >    <h4 id="B.12.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.3"> B.12.3</a>  <a 
- id="x19-428000B.12.3"></a>[test battery] <span 
-class="cmsy-10">&#x2192; </span>[batch systems] </span></h4>
-<!--l. 663--><p class="indent" >   Settings for testing supported batch systems (job submission methods). The tests for a batch system are only
+<!--l. 725--><p class="noindent" >
+<!--l. 725--><p class="indent" >    <h4 id="B.12" class="subsectionHead"> <span class="titlemark"> <a href="#B.12"> B.12</a>  <a 
+ id="x19-430000B.12"></a>[test battery] </span></h4>
+<!--l. 727--><p class="indent" >   Settings for the automated development tests.
+                                                                                         
+
+                                                                                         
+<!--l. 729--><p class="noindent" >
+<!--l. 729--><p class="indent" >    <h4 id="B.12.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.1"> B.12.1</a>  <a 
+ id="x19-431000B.12.1"></a>[test battery] <span 
+class="cmsy-10">&rarr; </span>remote host with shared fs </span></h4>
+<!--l. 731--><p class="indent" >   The name of a remote host with shared HOME file system as the host running the test battery.
+<!--l. 734--><p class="noindent" >
+<!--l. 734--><p class="indent" >    <h4 id="B.12.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.2"> B.12.2</a>  <a 
+ id="x19-432000B.12.2"></a>[test battery] <span 
+class="cmsy-10">&rarr; </span>remote host </span></h4>
+<!--l. 736--><p class="indent" >   The name of a remote host without shared HOME file system as the host running the test battery.
+<!--l. 739--><p class="noindent" >
+<!--l. 739--><p class="indent" >    <h4 id="B.12.3" class="subsubsectionHead"><span class="titlemark"> <a href="#B.12.3"> B.12.3</a>  <a 
+ id="x19-433000B.12.3"></a>[test battery] <span 
+class="cmsy-10">&rarr; </span>[[batch systems]] </span></h4>
+<!--l. 741--><p class="indent" >   Settings for testing supported batch systems (job submission methods). The tests for a batch system are only
 performed if the batch system is available on the test host or a remote host accessible via SSH from the test
 host.
-<!--l. 667--><p class="noindent" >
-<!--l. 667--><p class="noindent" ><span class="paragraphHead"><a 
- id="x19-429000B.12.3.1"></a><span 
+<!--l. 745--><p class="noindent" >
+<!--l. 745--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x19-434000B.12.3.1"></a><span 
 class="cmbx-10">[test battery] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[batch systems] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_NAME</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_]</span></span>
-   __NAME__ is the name of a supported batch system with automated tests. This can currently be &#8221;loadleveler&#8221;,
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[batch systems]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[SYSTEM]]]</span></span>
+   SYSTEM is the name of a supported batch system with automated tests. This can currently be &#8221;loadleveler&#8221;,
 &#8221;lsf&#8221;, &#8221;pbs&#8221;, &#8221;sge&#8221; and/or &#8221;slurm&#8221;.
-<!--l. 672--><p class="noindent" >
-<!--l. 672--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-430000B.12.3.1.1"></a><span 
+<!--l. 750--><p class="noindent" >
+<!--l. 750--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-435000B.12.3.1.1"></a><span 
 class="cmbx-10">[test battery] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[batch systems] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_NAME</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[batch systems]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[SYSTEM]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">host</span></span>
    The name of a host where commands for this batch system is available. Use &#8221;localhost&#8221; if the batch system is
 available on the host running the test battery. Any specified remote host should be accessible via SSH from the host
 running the test battery.
-                                                                                         
-
-                                                                                         
-<!--l. 679--><p class="noindent" >
-<!--l. 679--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-431000B.12.3.1.2"></a><span 
+<!--l. 757--><p class="noindent" >
+<!--l. 757--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-436000B.12.3.1.2"></a><span 
 class="cmbx-10">[test battery] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[batch systems] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_NAME</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[directives]</span></span>
-   The minimum set of directives that must be supplied to the batch system on the site to initiate jobs for the
-tests.
-<!--l. 684--><p class="noindent" >
-<!--l. 684--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-432000B.12.3.1.3"></a><span 
-class="cmbx-10">[test battery] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[batch systems] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_NAME</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[batch systems]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[SYSTEM]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">err viewer</span></span>
    The command template (with <span class="lstinline"><span 
-class="pcrr7t-">\%(</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
 class="pcrr7t-">job_id</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span></span> substitution) for testing the run time stderr viewer functionality
 for this batch system.
-<!--l. 689--><p class="noindent" >
-<!--l. 689--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-433000B.12.3.1.4"></a><span 
+<!--l. 762--><p class="noindent" >
+<!--l. 762--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-437000B.12.3.1.3"></a><span 
 class="cmbx-10">[test battery] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[batch systems] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_NAME</span><span 
-class="cmbx-10">_</span><span 
-class="cmbx-10">_] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[batch systems]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[SYSTEM]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">out viewer</span></span>
    The command template (with <span class="lstinline"><span 
-class="pcrr7t-">\%(</span><span 
+class="pcrr7t-">\</span><span 
+class="pcrr7t-">%</span><span 
+class="pcrr7t-">(</span><span 
 class="pcrr7t-">job_id</span><span 
 class="pcrr7t-">)</span><span 
 class="pcrr7t-">s</span></span> substitution) for testing the run time stdout viewer functionality
 for this batch system.
-<!--l. 694--><p class="noindent" >
-<!--l. 694--><p class="indent" >    <h4 id="B.13" class="subsectionHead"> <span class="titlemark"> <a href="#B.13"> B.13</a>  <a 
- id="x19-434000B.13"></a>[cylc] </span></h4>
-<!--l. 696--><p class="indent" >   Default values for entries in the suite.rc [cylc] section.
-<!--l. 698--><p class="noindent" >
-<!--l. 698--><p class="indent" >    <h4 id="B.13.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.1"> B.13.1</a>  <a 
- id="x19-435000B.13.1"></a>[cylc] <span 
-class="cmsy-10">&#x2192; </span>UTC mode </span></h4>
-<!--l. 701--><p class="indent" >   Allows you to set a default value for UTC mode in a suite at the site level. See &#x00A0;<a 
-href="cug-htmlse17.html#x18-231000A.2.2">A.2.2<!--tex4ht:ref: UTC-mode --></a> for details.
-<!--l. 704--><p class="noindent" >
-<!--l. 704--><p class="indent" >    <h4 id="B.13.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.2"> B.13.2</a>  <a 
- id="x19-436000B.13.2"></a>[cylc] <span 
-class="cmsy-10">&#x2192; </span>[event hooks] </span></h4>
-<!--l. 707--><p class="indent" >   You can define site defaults for each of the following options, details of which can be found under
-&#x00A0;<a 
-href="cug-htmlse17.html#x18-237000A.2.8">A.2.8<!--tex4ht:ref: SuiteEventHandling --></a>:
-<!--l. 710--><p class="noindent" >
-<!--l. 710--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-437000B.13.2.0.5"></a><span 
-class="cmbx-10">[cylc] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[event hooks] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">startup handler</span></span>
-<!--l. 712--><p class="noindent" >
-<!--l. 712--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-438000B.13.2.0.6"></a><span 
-class="cmbx-10">[cylc] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[event hooks] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">shutdown handler</span></span>
-<!--l. 714--><p class="noindent" >
-<!--l. 714--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-439000B.13.2.0.7"></a><span 
-class="cmbx-10">[cylc] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[event hooks] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">timeout handler</span></span>
-<!--l. 716--><p class="noindent" >
-<!--l. 716--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-440000B.13.2.0.8"></a><span 
-class="cmbx-10">[cylc] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[event hooks] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">timeout</span></span>
+<!--l. 767--><p class="noindent" >
+<!--l. 767--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-438000B.12.3.1.4"></a><span 
+class="cmbx-10">[test battery] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[batch systems]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[SYSTEM]]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[[[directives]]]]</span></span>
+   The minimum set of directives that must be supplied to the batch system on the site to initiate jobs for the
+tests.
                                                                                          
 
                                                                                          
-<!--l. 718--><p class="noindent" >
-<!--l. 718--><p class="indent" >   <span class="subparagraphHead"> <a 
- id="x19-441000B.13.2.0.9"></a><span 
+<!--l. 772--><p class="noindent" >
+<!--l. 772--><p class="indent" >    <h4 id="B.13" class="subsectionHead"> <span class="titlemark"> <a href="#B.13"> B.13</a>  <a 
+ id="x19-439000B.13"></a>[cylc] </span></h4>
+<!--l. 774--><p class="indent" >   Default values for entries in the suite.rc [cylc] section.
+<!--l. 776--><p class="noindent" >
+<!--l. 776--><p class="indent" >    <h4 id="B.13.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.1"> B.13.1</a>  <a 
+ id="x19-440000B.13.1"></a>[cylc] <span 
+class="cmsy-10">&rarr; </span>UTC mode </span></h4>
+<!--l. 779--><p class="indent" >   Allows you to set a default value for UTC mode in a suite at the site level. See &#x00A0;<a 
+href="cug-htmlse17.html#x18-231000A.2.2">A.2.2<!--tex4ht:ref: UTC-mode --></a> for details.
+<!--l. 782--><p class="noindent" >
+<!--l. 782--><p class="indent" >    <h4 id="B.13.2" class="subsubsectionHead"><span class="titlemark"> <a href="#B.13.2"> B.13.2</a>  <a 
+ id="x19-441000B.13.2"></a>[cylc] <span 
+class="cmsy-10">&rarr; </span>[[event hooks]] </span></h4>
+<!--l. 785--><p class="indent" >   You can define site defaults for each of the following options, details of which can be found under
+&#x00A0;<a 
+href="cug-htmlse17.html#x18-237000A.2.8">A.2.8<!--tex4ht:ref: SuiteEventHandling --></a>:
+<!--l. 788--><p class="noindent" >
+<!--l. 788--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-442000B.13.2.0.5"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="cmsy-10">&#x2192; </span><span 
-class="cmbx-10">[event hooks] </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[event hooks]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">startup handler</span></span>
+<!--l. 790--><p class="noindent" >
+<!--l. 790--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-443000B.13.2.0.6"></a><span 
+class="cmbx-10">[cylc] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[event hooks]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">shutdown handler</span></span>
+<!--l. 792--><p class="noindent" >
+<!--l. 792--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-444000B.13.2.0.7"></a><span 
+class="cmbx-10">[cylc] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[event hooks]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">timeout handler</span></span>
+<!--l. 794--><p class="noindent" >
+<!--l. 794--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-445000B.13.2.0.8"></a><span 
+class="cmbx-10">[cylc] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[event hooks]] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">timeout</span></span>
+<!--l. 796--><p class="noindent" >
+<!--l. 796--><p class="indent" >   <span class="subparagraphHead"> <a 
+ id="x19-446000B.13.2.0.9"></a><span 
+class="cmbx-10">[cylc] </span><span 
+class="cmsy-10">&rarr; </span><span 
+class="cmbx-10">[[event hooks]] </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmbx-10">abort on timeout</span></span>
-<!--l. 720--><p class="noindent" >
-<!--l. 720--><p class="indent" >    <h4 id="B.14" class="subsectionHead"> <span class="titlemark"> <a href="#B.14"> B.14</a>  <a 
- id="x19-442000B.14"></a>[authentication] </span></h4>
-<!--l. 723--><p class="indent" >   Authentication of client programs with suite daemons can be configured here, and overridden in suites if
+<!--l. 798--><p class="noindent" >
+<!--l. 798--><p class="indent" >    <h4 id="B.14" class="subsectionHead"> <span class="titlemark"> <a href="#B.14"> B.14</a>  <a 
+ id="x19-447000B.14"></a>[authentication] </span></h4>
+<!--l. 801--><p class="indent" >   Authentication of client programs with suite daemons can be configured here, and overridden in suites if
 necessary (see&#x00A0;<a 
 href="cug-htmlse17.html#x18-253000A.3">A.3<!--tex4ht:ref: SuiteAuth --></a>).
-<!--l. 726--><p class="indent" >   The suite-specific passphrase must be installed on a user&#8217;s account to authorize full control privileges (see&#x00A0;<a 
+<!--l. 804--><p class="indent" >   The suite-specific passphrase must be installed on a user&#8217;s account to authorize full control privileges (see&#x00A0;<a 
 href="cug-htmlse7.html#x8-330007.5">7.5<!--tex4ht:ref: tutPassphrases --></a>
 and&#x00A0;<a 
 href="cug-htmlse12.html#x13-17100012.6">12.6<!--tex4ht:ref: ConnectionAuthentication --></a>). In the future we plan to move to a more traditional user account model so that each authorized user can
 have their own password.
-<!--l. 732--><p class="noindent" >
-<!--l. 732--><p class="indent" >    <h4 id="B.14.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.14.1"> B.14.1</a>  <a 
- id="x19-443000B.14.1"></a>[authentication] <span 
-class="cmsy-10">&#x2192; </span>public </span></h4>
-<!--l. 734--><p class="indent" >   This sets the client privilege level for public access - i.e.&#x00A0;no suite passphrase required.
+<!--l. 810--><p class="noindent" >
+<!--l. 810--><p class="indent" >    <h4 id="B.14.1" class="subsubsectionHead"><span class="titlemark"> <a href="#B.14.1"> B.14.1</a>  <a 
+ id="x19-448000B.14.1"></a>[authentication] <span 
+class="cmsy-10">&rarr; </span>public </span></h4>
+<!--l. 812--><p class="indent" >   This sets the client privilege level for public access - i.e.&#x00A0;no suite passphrase required.
+                                                                                         
+
+                                                                                         
      <ul class="itemize1">
      <li class="itemize"><span 
 class="cmti-10">type: </span>string (must be one of the following options)

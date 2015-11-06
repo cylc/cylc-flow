@@ -3,21 +3,21 @@
 <html > 
 <head><title>Tutorial</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
-<meta name="generator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
-<meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-10-23 10:44:00"> 
+<meta name="date" content="2015-11-06 06:46:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 783--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 782--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse8.html" >next</a>] [<a 
 href="cug-htmlse6.html" >prev</a>] [<a 
 href="cug-htmlse6.html#tailcug-htmlse6.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse7.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse7.html" >up</a>] </p></div>
-<!--l. 783--><p class="indent" >    <h3 id="7" class="sectionHead"><span class="titlemark"> <a href="#7">7</a>  <a 
+<!--l. 782--><p class="indent" >    <h3 id="7" class="sectionHead"><span class="titlemark"> <a href="#7">7</a>  <a 
  id="x8-250007"></a>Tutorial </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >7.1 <a 
 href="#x8-260007.1">User Config File</a></span>
@@ -76,17 +76,17 @@ href="#x8-620007.27">Searching A Suite</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >7.28 <a 
 href="#x8-630007.28">Other Things To Try</a></span>
    </div>
-<!--l. 786--><p class="indent" >   This section provides a hands-on tutorial introduction to basic cylc suite preparation and control. A number of
+<!--l. 785--><p class="indent" >   This section provides a hands-on tutorial introduction to basic cylc suite preparation and control. A number of
 features are not yet touched on by the tutorial examples, however, so please also read the rest of the User
 Guide.
-<!--l. 791--><p class="noindent" >
-<!--l. 791--><p class="indent" >    <h4 id="7.1" class="subsectionHead"> <span class="titlemark"> <a href="#7.1"> 7.1</a>  <a 
+<!--l. 790--><p class="noindent" >
+<!--l. 790--><p class="indent" >    <h4 id="7.1" class="subsectionHead"> <span class="titlemark"> <a href="#7.1"> 7.1</a>  <a 
  id="x8-260007.1"></a>User Config File </span></h4>
-<!--l. 793--><p class="indent" >   Some global parameters affecting cylc&#8217;s behaviour are defined in a <span 
+<!--l. 792--><p class="indent" >   Some global parameters affecting cylc&#8217;s behaviour are defined in a <span 
 class="cmti-10">site global config file</span>, and can be customized
 per user in <span 
 class="cmti-10">user global config files</span>. For example, to choose the text editor invoked by cylc on suite definitions:
-<!--l. 798-->
+<!--l. 797-->
    <div class="lstlisting" id="listing-13"><span class="label"><a 
  id="x8-26001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
@@ -137,11 +137,11 @@ class="pcrr7t-">f</span>
      <ul class="itemize1">
      <li class="itemize">For more on site and user global config files, including how to generate one at first, see&#x00A0;<a 
 href="cug-htmlse6.html#x7-240006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a> and&#x00A0;<a 
-href="cug-htmlse18.html#x19-362000B">B<!--tex4ht:ref: SiteRCReference --></a>.</li></ul>
-<!--l. 810--><p class="noindent" >
-<!--l. 810--><p class="indent" >    <h4 id="7.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.1.1"> 7.1.1</a>  <a 
+href="cug-htmlse18.html#x19-363000B">B<!--tex4ht:ref: SiteRCReference --></a>.</li></ul>
+<!--l. 809--><p class="noindent" >
+<!--l. 809--><p class="indent" >    <h4 id="7.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.1.1"> 7.1.1</a>  <a 
  id="x8-270007.1.1"></a>Configure Environment on Job Hosts </span></h4>
-<!--l. 812--><p class="indent" >   If you submit task jobs to hosts other than the hosts you use to run your suites, you may need to customise the
+<!--l. 811--><p class="indent" >   If you submit task jobs to hosts other than the hosts you use to run your suites, you may need to customise the
 environment for running cylc. A cylc suite generates task job scripts that normally invoke <span class="lstinline"><span 
 class="pcrr7t-">bash</span></span>. The job will
 attempt to source the first of these files it finds to set up its environment:
@@ -192,7 +192,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">default</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span></li></ul>
-<!--l. 824--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 823--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">{</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -247,23 +247,23 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">env</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span> file and populate it with the appropriate contents.
-<!--l. 833--><p class="noindent" >
-<!--l. 833--><p class="indent" >    <h4 id="7.2" class="subsectionHead"> <span class="titlemark"> <a href="#7.2"> 7.2</a>  <a 
+<!--l. 832--><p class="noindent" >
+<!--l. 832--><p class="indent" >    <h4 id="7.2" class="subsectionHead"> <span class="titlemark"> <a href="#7.2"> 7.2</a>  <a 
  id="x8-280007.2"></a>User Interfaces </span></h4>
-<!--l. 836--><p class="indent" >   Cylc has command line (CLI) and graphical (GUI) user interfaces. To access them <span 
+<!--l. 835--><p class="indent" >   Cylc has command line (CLI) and graphical (GUI) user interfaces. To access them <span 
 class="cmti-10">do not simply</span>
 <span 
 class="cmti-10">put the bin directory of the current release the shell search path for users. </span>Instead, as described in
 the cylc INSTALL file (<a 
-href="cug-htmlse23.html#x24-549000G">G<!--tex4ht:ref: INSTALL --></a>), configure the provided multi-version wrapper script to point to install
+href="cug-htmlse23.html#x24-554000G">G<!--tex4ht:ref: INSTALL --></a>), configure the provided multi-version wrapper script to point to install
 location for any or all cylc releases. This allows existing suites to continue running at old cylc versions if
 necessary.
-<!--l. 843--><p class="noindent" >
-<!--l. 843--><p class="indent" >    <h4 id="7.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.2.1"> 7.2.1</a>  <a 
+<!--l. 842--><p class="noindent" >
+<!--l. 842--><p class="indent" >    <h4 id="7.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.2.1"> 7.2.1</a>  <a 
  id="x8-290007.2.1"></a>Command Line Interface (CLI) </span></h4>
-<!--l. 845--><p class="indent" >   The command line interface is unified under a single top level <span class="lstinline"><span 
+<!--l. 844--><p class="indent" >   The command line interface is unified under a single top level <span class="lstinline"><span 
 class="pcrr7t-">cylc</span></span> command that provides access to many
-sub-commands and their help documentation.  <!--l. 849-->
+sub-commands and their help documentation.  <!--l. 848-->
    <div class="lstlisting" id="listing-14"><span class="label"><a 
  id="x8-29001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -315,7 +315,7 @@ class="pcrr7t-">.</span>
    </div>
      <ul class="itemize1">
      <li class="itemize">Command help transcripts are also printed in&#x00A0;<a 
-href="cug-htmlse20.html#x21-458000D">D<!--tex4ht:ref: CommandReference --></a>, and can be accessed from the <span class="lstinline"><span 
+href="cug-htmlse20.html#x21-463000D">D<!--tex4ht:ref: CommandReference --></a>, and can be accessed from the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">gui</span></span> Help menu.
@@ -325,12 +325,12 @@ class="cmti-10">scriptable </span>because the error status returned by all comma
                                                                                          
 
                                                                                          
-<!--l. 861--><p class="noindent" >
-<!--l. 861--><p class="indent" >    <h4 id="7.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#7.2.2"> 7.2.2</a>  <a 
+<!--l. 860--><p class="noindent" >
+<!--l. 860--><p class="indent" >    <h4 id="7.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#7.2.2"> 7.2.2</a>  <a 
  id="x8-300007.2.2"></a>Graphical User Interface (GUI) </span></h4>
-<!--l. 863--><p class="indent" >   The cylc GUI covers the same functionality as the CLI, but it has more sophisticated suite monitoring capability.
+<!--l. 862--><p class="indent" >   The cylc GUI covers the same functionality as the CLI, but it has more sophisticated suite monitoring capability.
 It can start and stop suites, or connect to suites that are already running; in either case, shutting down the GUI
-does not affect the suite itself.  <!--l. 868-->
+does not affect the suite itself.  <!--l. 867-->
    <div class="lstlisting" id="listing-15"><span class="label"><a 
  id="x8-30001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -402,12 +402,12 @@ class="pcrr7t-">suites</span><span
 class="pcrr7t-">.</span>
    
    </div>
-<!--l. 873--><p class="indent" >   Clicking on a suite in the scan GUI, shown in Figure&#x00A0;<a 
+<!--l. 872--><p class="indent" >   Clicking on a suite in the scan GUI, shown in Figure&#x00A0;<a 
 href="cug-htmlse2.html#x3-800313">13<!--tex4ht:ref: fig-gscan --></a>, opens a gcylc instance for it.
-<!--l. 876--><p class="noindent" >
-<!--l. 876--><p class="indent" >    <h4 id="7.3" class="subsectionHead"> <span class="titlemark"> <a href="#7.3"> 7.3</a>  <a 
+<!--l. 875--><p class="noindent" >
+<!--l. 875--><p class="indent" >    <h4 id="7.3" class="subsectionHead"> <span class="titlemark"> <a href="#7.3"> 7.3</a>  <a 
  id="x8-310007.3"></a>Suite Definitions </span></h4>
-<!--l. 878--><p class="indent" >   Cylc suites are defined by extended-INI format <span class="lstinline"><span 
+<!--l. 877--><p class="indent" >   Cylc suites are defined by extended-INI format <span class="lstinline"><span 
 class="pcrr7t-">suite</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">rc</span></span> files (the main file format extension is section
@@ -419,12 +419,12 @@ suite-related files.
      <li class="itemize">For more on the suite definition file format, see&#x00A0;<a 
 href="cug-htmlse9.html#x10-660009">9<!--tex4ht:ref: SuiteDefinition --></a> and&#x00A0;<a 
 href="cug-htmlse17.html#x18-224000A">A<!--tex4ht:ref: SuiteRCReference --></a>.</li></ul>
-<!--l. 888--><p class="noindent" >
-<!--l. 888--><p class="indent" >    <h4 id="7.4" class="subsectionHead"> <span class="titlemark"> <a href="#7.4"> 7.4</a>  <a 
+<!--l. 887--><p class="noindent" >
+<!--l. 887--><p class="indent" >    <h4 id="7.4" class="subsectionHead"> <span class="titlemark"> <a href="#7.4"> 7.4</a>  <a 
  id="x8-320007.4"></a>Suite Name Registration </span></h4>
-<!--l. 890--><p class="indent" >   Suite registration associates a name with a suite definition directory, in a simple database. Cylc commands that
+<!--l. 889--><p class="indent" >   Suite registration associates a name with a suite definition directory, in a simple database. Cylc commands that
 parse suite definition files can take the file path or the suite name as input; commands that interact with running
-suites have to target the suite by name.  <!--l. 895-->
+suites have to target the suite by name.  <!--l. 894-->
    <div class="lstlisting" id="listing-16"><span class="label"><a 
  id="x8-32001r1"></a></span><span 
 class="pcrr7t-">#</span><span 
@@ -601,26 +601,26 @@ class="pcrr7t-">--</span><span
 class="pcrr7t-">help</span></span> (see&#x00A0;<a 
 href="cug-htmlse8.html#x9-640008">8<!--tex4ht:ref: SuiteRegistration --></a> and&#x00A0;<a 
 href="cug-htmlse14.html#x15-19500014">14<!--tex4ht:ref: SuiteStorageEtc --></a>).</li></ul>
-<!--l. 915--><p class="noindent" >
-<!--l. 915--><p class="indent" >    <h4 id="7.5" class="subsectionHead"> <span class="titlemark"> <a href="#7.5"> 7.5</a>  <a 
+<!--l. 914--><p class="noindent" >
+<!--l. 914--><p class="indent" >    <h4 id="7.5" class="subsectionHead"> <span class="titlemark"> <a href="#7.5"> 7.5</a>  <a 
  id="x8-330007.5"></a>Suite Passphrases </span></h4>
-<!--l. 918--><p class="indent" >   A suite-specific passphrase file is automatically generated in the suite definition directory at registration time. It
+<!--l. 917--><p class="indent" >   A suite-specific passphrase file is automatically generated in the suite definition directory at registration time. It
 is loaded by the suite daemon at start-up and used to authenticate all client connections. Clients on the suite host
 account automatically load the passphrase from the suite definition directory, but on other accounts, including task
 host accounts, it has to be installed manually.
-<!--l. 925--><p class="indent" >   Possession of a suite passphrase gives full control and full read-access to the suite. Without it, client access is
+<!--l. 924--><p class="indent" >   Possession of a suite passphrase gives full control and full read-access to the suite. Without it, client access is
 determined by the suite&#8217;s public access privilege level.
-<!--l. 929--><p class="indent" >   For more on connection authentication, suite passphrases, and public access, see&#x00A0;<a 
+<!--l. 928--><p class="indent" >   For more on connection authentication, suite passphrases, and public access, see&#x00A0;<a 
 href="cug-htmlse12.html#x13-17100012.6">12.6<!--tex4ht:ref: ConnectionAuthentication --></a>.
                                                                                          
 
                                                                                          
-<!--l. 932--><p class="noindent" >
-<!--l. 932--><p class="indent" >    <h4 id="7.6" class="subsectionHead"> <span class="titlemark"> <a href="#7.6"> 7.6</a>  <a 
+<!--l. 931--><p class="noindent" >
+<!--l. 931--><p class="indent" >    <h4 id="7.6" class="subsectionHead"> <span class="titlemark"> <a href="#7.6"> 7.6</a>  <a 
  id="x8-340007.6"></a>Import The Example Suites </span></h4>
-<!--l. 935--><p class="indent" >   Run the following command to import cylc&#8217;s example suites to a chosen directory location and register them for
+<!--l. 934--><p class="indent" >   Run the following command to import cylc&#8217;s example suites to a chosen directory location and register them for
 use under the <span 
-class="cmti-10">examples </span>name group:  <!--l. 939-->
+class="cmti-10">examples </span>name group:  <!--l. 938-->
    <div class="lstlisting" id="listing-17"><span class="label"><a 
  id="x8-34001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -638,13 +638,13 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">examples</span>
    
    </div>
-<!--l. 942--><p class="indent" >   (first check that <span class="lstinline"><span 
+<!--l. 941--><p class="indent" >   (first check that <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">TMPDIR</span></span> is defined in your environment, or else use a different location). List the newly
 registered tutorial suites using the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">print</span></span> command:  <!--l. 946-->
+class="pcrr7t-">print</span></span> command:  <!--l. 945-->
    <div class="lstlisting" id="listing-18"><span class="label"><a 
  id="x8-34002r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -759,7 +759,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">...</span>
    
    </div>
-<!--l. 954--><p class="indent" >   See <span class="lstinline"><span 
+<!--l. 953--><p class="indent" >   See <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">db</span><span 
@@ -769,7 +769,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span> for other display options. The tree-form display shows how hierarchical suite
 names can be used to organize related suites nicely (suite names do not have to be related to their source directory
-paths, although they are in this case):  <!--l. 959-->
+paths, although they are in this case):  <!--l. 958-->
    <div class="lstlisting" id="listing-19"><span class="label"><a 
  id="x8-34008r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -1032,10 +1032,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">submission</span>
    
    </div>
-<!--l. 976--><p class="noindent" >
-<!--l. 976--><p class="indent" >    <h4 id="7.7" class="subsectionHead"> <span class="titlemark"> <a href="#7.7"> 7.7</a>  <a 
+<!--l. 975--><p class="noindent" >
+<!--l. 975--><p class="indent" >    <h4 id="7.7" class="subsectionHead"> <span class="titlemark"> <a href="#7.7"> 7.7</a>  <a 
  id="x8-350007.7"></a>Rename The Imported Tutorial Suites </span></h4>  &#x00A0;Rename (re-register) the tutorial suites to make their names a bit
-shorter: <!--l. 980-->
+shorter: <!--l. 979-->
    <div class="lstlisting" id="listing-20"><span class="label"><a 
  id="x8-35001r1"></a></span><span 
 class="pcrr8c-">$</span><span 
@@ -1118,14 +1118,14 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">...</span>
    
    </div>
-<!--l. 989--><p class="noindent" >
-<!--l. 989--><p class="indent" >    <h4 id="7.8" class="subsectionHead"> <span class="titlemark"> <a href="#7.8"> 7.8</a>  <a 
+<!--l. 988--><p class="noindent" >
+<!--l. 988--><p class="indent" >    <h4 id="7.8" class="subsectionHead"> <span class="titlemark"> <a href="#7.8"> 7.8</a>  <a 
  id="x8-360007.8"></a>Suite Validation </span></h4>
-<!--l. 991--><p class="indent" >   Suite definitions can be validated against the <span class="lstinline"><span 
+<!--l. 990--><p class="indent" >   Suite definitions can be validated against the <span class="lstinline"><span 
 class="pcrr7t-">suite</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">rc</span></span> file format specification to detect many types of error
-without running the suite.  <!--l. 995-->
+without running the suite.  <!--l. 994-->
    <div class="lstlisting" id="listing-21"><span class="label"><a 
  id="x8-36001r1"></a></span><span 
 class="pcrr7t-">#</span><span 
@@ -1215,8 +1215,8 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">1</span>
    
    </div>
-<!--l. 1008--><p class="noindent" >
-<!--l. 1008--><p class="indent" >    <h4 id="7.9" class="subsectionHead"> <span class="titlemark"> <a href="#7.9"> 7.9</a>  <a 
+<!--l. 1007--><p class="noindent" >
+<!--l. 1007--><p class="indent" >    <h4 id="7.9" class="subsectionHead"> <span class="titlemark"> <a href="#7.9"> 7.9</a>  <a 
  id="x8-370007.9"></a>Hello World in Cylc </span></h4>
    <div 
 class="colorbox" id="colorbox1"> suite: <span class="lstinline"><span 
@@ -1225,8 +1225,8 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">basic</span></span> </div>
-<!--l. 1013--><p class="indent" >   Here&#8217;s the traditional <span 
-class="cmti-10">Hello World </span>program rendered as a cylc suite:  <!--l. 1016--><div class="lstinputlisting">
+<!--l. 1012--><p class="indent" >   Here&#8217;s the traditional <span 
+class="cmti-10">Hello World </span>program rendered as a cylc suite:  <!--l. 1015--><div class="lstinputlisting">
 <a 
  id="x8-37001"></a>
    <span 
@@ -1324,7 +1324,7 @@ class="pcrr7t-">"</span>
 
                                                                                          
    </div>
-<!--l. 1019--><p class="indent" >   Cylc suites feature a clean separation of scheduling configuration, which determines <span 
+<!--l. 1018--><p class="indent" >   Cylc suites feature a clean separation of scheduling configuration, which determines <span 
 class="cmti-10">when </span>tasks are ready to run;
 and runtime configuration, which determines <span 
 class="cmti-10">what </span>to run (and <span 
@@ -1355,7 +1355,7 @@ provides a default task implementation that makes the entire <span class="lstinl
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span></span> section technically optional:
-<!--l. 1037--><div class="lstinputlisting">
+<!--l. 1036--><div class="lstinputlisting">
 <a 
  id="x8-37009"></a>
    <span 
@@ -1441,16 +1441,16 @@ class="pcrro7t-">comment</span><span
 class="pcrro7t-">)</span>
    
    </div>
-<!--l. 1039--><p class="noindent" >(the resulting <span 
+<!--l. 1038--><p class="noindent" >(the resulting <span 
 class="cmti-10">dummy task </span>just prints out some identifying information and exits).
-<!--l. 1042--><p class="noindent" >
-<!--l. 1042--><p class="indent" >    <h4 id="7.10" class="subsectionHead"> <span class="titlemark"> <a href="#7.10"> 7.10</a>  <a 
+<!--l. 1041--><p class="noindent" >
+<!--l. 1041--><p class="indent" >    <h4 id="7.10" class="subsectionHead"> <span class="titlemark"> <a href="#7.10"> 7.10</a>  <a 
  id="x8-380007.10"></a>Editing Suites </span></h4>
-<!--l. 1044--><p class="indent" >   The text editor invoked by cylc on suite definitions is determined by cylc site and user global config files, as
+<!--l. 1043--><p class="indent" >   The text editor invoked by cylc on suite definitions is determined by cylc site and user global config files, as
 shown above in&#x00A0;<a 
 href="#x8-280007.2">7.2<!--tex4ht:ref: CUI --></a>. Check that you have renamed the tutorial examples suites as described just above and open the
 <span 
-class="cmti-10">Hello World </span>suite definition in your text editor:  <!--l. 1050-->
+class="cmti-10">Hello World </span>suite definition in your text editor:  <!--l. 1049-->
    <div class="lstlisting" id="listing-22"><span class="label"><a 
  id="x8-38001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -1498,7 +1498,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">GUI</span>
    
    </div>
-<!--l. 1054--><p class="indent" >   Alternatively, start gcylc on the suite,  <!--l. 1056-->
+<!--l. 1053--><p class="indent" >   Alternatively, start gcylc on the suite,  <!--l. 1055-->
    <div class="lstlisting" id="listing-23"><span class="label"><a 
  id="x8-38003r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -1515,11 +1515,11 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&amp;</span>
    
    </div>
-<!--l. 1059--><p class="indent" >   and choose <span 
+<!--l. 1058--><p class="indent" >   and choose <span 
 class="cmti-10">Suite  </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmti-10">Edit </span>from the menu.
-<!--l. 1061--><p class="indent" >   The editor will be invoked from within the suite definition directory for easy access to other suite files (in
+<!--l. 1060--><p class="indent" >   The editor will be invoked from within the suite definition directory for easy access to other suite files (in
 this case there are none). There are syntax highlighting control files for several text editors under
 <span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
@@ -1531,11 +1531,11 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">conf</span><span 
 class="pcrr7t-">/</span></span>; see in-file comments for installation instructions.
-<!--l. 1067--><p class="noindent" >
-<!--l. 1067--><p class="indent" >    <h4 id="7.11" class="subsectionHead"> <span class="titlemark"> <a href="#7.11"> 7.11</a>  <a 
+<!--l. 1066--><p class="noindent" >
+<!--l. 1066--><p class="indent" >    <h4 id="7.11" class="subsectionHead"> <span class="titlemark"> <a href="#7.11"> 7.11</a>  <a 
  id="x8-390007.11"></a>Running Suites </span></h4>
-<!--l. 1070--><p class="noindent" >
-<!--l. 1070--><p class="indent" >    <h4 id="7.11.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.11.1"> 7.11.1</a>  <a 
+<!--l. 1069--><p class="noindent" >
+<!--l. 1069--><p class="indent" >    <h4 id="7.11.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.11.1"> 7.11.1</a>  <a 
  id="x8-400007.11.1"></a>CLI </span></h4>  Run <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
@@ -1549,7 +1549,7 @@ information is written to a <span
 class="cmti-10">suite log </span>and progress can be followed with cylc&#8217;s suite monitoring tools (below). By
 default a running suite daemonizes after printing a short message so that you can exit the terminal or even log out
 without killing the suite:
-   <!--l. 1078-->
+   <!--l. 1077-->
    <div class="lstlisting" id="listing-24"><span class="label"><a 
  id="x8-40001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -2036,11 +2036,11 @@ class="pcrr7t-">.</span>
 
                                                                                          
    </div>
-<!--l. 1104--><p class="indent" >   If you&#8217;re quick enough (this example only takes 10-15 seconds to run) the <span class="lstinline"><span 
+<!--l. 1103--><p class="indent" >   If you&#8217;re quick enough (this example only takes 10-15 seconds to run) the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">scan</span></span> command will detect the
-running suite: <!--l. 1106-->
+running suite: <!--l. 1105-->
    <div class="lstlisting" id="listing-25"><span class="label"><a 
  id="x8-40024r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -2101,7 +2101,7 @@ class="pcrr7t-">finished</span><span
 class="pcrr7t-">)</span>
    
    </div>
-<!--l. 1116--><p class="indent" >   Using the <span class="lstinline"><span 
+<!--l. 1115--><p class="indent" >   Using the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">no</span><span 
 class="pcrr7t-">-</span><span 
@@ -2110,7 +2110,7 @@ printed to the terminal. The <span class="lstinline"><span
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">debug</span></span> option, however, causes (among other things) task job submission commands
 to to be printed stdout:
-   <!--l. 1122-->
+   <!--l. 1121-->
    <div class="lstlisting" id="listing-26"><span class="label"><a 
  id="x8-40031r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -2447,7 +2447,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">DONE</span>
    
    </div>
-<!--l. 1137--><p class="indent" >   When a task is ready to run a <span 
+<!--l. 1136--><p class="indent" >   When a task is ready to run a <span 
 class="cmti-10">job script </span>is generated to run it. The command printed just above is how cylc
 executes background jobs on the suite host (this is the default), retrieves the job process ID, and directs the output
 to log files in standard locations. For the log file locations that can be seen above, in <span class="lstinline"><span 
@@ -2463,11 +2463,11 @@ class="pcrr7t-">01/</span></span> directory
 is its <span 
 class="cmti-10">submission number </span>(tasks can be made to retry on failure, manually or automatically, in which case the
 submission number increments).
-<!--l. 1147--><p class="indent" >   The suite shuts down automatically once all tasks have succeeded.
-<!--l. 1149--><p class="noindent" >
-<!--l. 1149--><p class="indent" >    <h4 id="7.11.2" class="subsubsectionHead"><span class="titlemark"> <a href="#7.11.2"> 7.11.2</a>  <a 
+<!--l. 1146--><p class="indent" >   The suite shuts down automatically once all tasks have succeeded.
+<!--l. 1148--><p class="noindent" >
+<!--l. 1148--><p class="indent" >    <h4 id="7.11.2" class="subsubsectionHead"><span class="titlemark"> <a href="#7.11.2"> 7.11.2</a>  <a 
  id="x8-410007.11.2"></a>GUI </span></h4>
-<!--l. 1151--><p class="indent" >   The cylc GUI can start and stop suites, or (re)connect to suites that are already running: <!--l. 1153-->
+<!--l. 1150--><p class="indent" >   The cylc GUI can start and stop suites, or (re)connect to suites that are already running: <!--l. 1152-->
    <div class="lstlisting" id="listing-27"><span class="label"><a 
  id="x8-41001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -2486,10 +2486,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&amp;</span>
    
    </div>
-<!--l. 1156--><p class="indent" >   Use the tool bar <span 
+<!--l. 1155--><p class="indent" >   Use the tool bar <span 
 class="cmti-10">Play </span>button, or the <span 
 class="cmti-10">Control </span><span 
-class="cmsy-10">&#x2192; </span><span 
+class="cmsy-10">&rarr; </span><span 
 class="cmti-10">Run </span>menu item, to run the suite again. You may want
 to alter the suite definition slightly to make the task take longer to run. Try right-clicking on the
 <span class="lstinline"><span 
@@ -2497,10 +2497,10 @@ class="pcrr7t-">hello</span></span> task to view its output logs. The relative m
 class="cmti-10">suite views </span>- dot, text, and graph
 - will be more apparent later when we have more tasks. Closing the GUI does not affect the suite
 itself.
-<!--l. 1164--><p class="noindent" >
-<!--l. 1164--><p class="indent" >    <h4 id="7.12" class="subsectionHead"> <span class="titlemark"> <a href="#7.12"> 7.12</a>  <a 
+<!--l. 1163--><p class="noindent" >
+<!--l. 1163--><p class="indent" >    <h4 id="7.12" class="subsectionHead"> <span class="titlemark"> <a href="#7.12"> 7.12</a>  <a 
  id="x8-420007.12"></a>Discovering Running Suites </span></h4>
-<!--l. 1166--><p class="indent" >   Suites that are currently running can be detected with command line or GUI tools: <!--l. 1168-->
+<!--l. 1165--><p class="indent" >   Suites that are currently running can be detected with command line or GUI tools: <!--l. 1167-->
    <div class="lstlisting" id="listing-28"><span class="label"><a 
  id="x8-42001r1"></a></span><span 
 class="pcrr7t-">#</span><span 
@@ -2574,18 +2574,18 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">&amp;</span>
    
    </div>
-<!--l. 1177--><p class="indent" >   The scan GUI is shown in Figure&#x00A0;<a 
+<!--l. 1176--><p class="indent" >   The scan GUI is shown in Figure&#x00A0;<a 
 href="cug-htmlse2.html#x3-800313">13<!--tex4ht:ref: fig-gscan --></a>; clicking on a suite in it opens gcylc.
                                                                                          
 
                                                                                          
-<!--l. 1180--><p class="noindent" >
-<!--l. 1180--><p class="indent" >    <h4 id="7.13" class="subsectionHead"> <span class="titlemark"> <a href="#7.13"> 7.13</a>  <a 
+<!--l. 1179--><p class="noindent" >
+<!--l. 1179--><p class="indent" >    <h4 id="7.13" class="subsectionHead"> <span class="titlemark"> <a href="#7.13"> 7.13</a>  <a 
  id="x8-430007.13"></a>Task Identifiers </span></h4>
-<!--l. 1182--><p class="indent" >   At run time, task instances are identified by <span 
+<!--l. 1181--><p class="indent" >   At run time, task instances are identified by <span 
 class="cmti-10">name</span>, which is determined entirely by the suite definition, and a
 <span 
-class="cmti-10">cycle point </span>which is usually a date-time or an integer:  <!--l. 1186-->
+class="cmti-10">cycle point </span>which is usually a date-time or an integer:  <!--l. 1185-->
    <div class="lstlisting" id="listing-29"><span class="label"><a 
  id="x8-43001r1"></a></span><span 
 class="pcrr7t-">foo</span><span 
@@ -2656,11 +2656,11 @@ class="pcrr7t-">cycling</span><span
 class="pcrr7t-">)</span>
    
    </div>
-<!--l. 1190--><p class="indent" >   Non-cycling tasks usually just have the cycle point <span class="lstinline"><span 
+<!--l. 1189--><p class="indent" >   Non-cycling tasks usually just have the cycle point <span class="lstinline"><span 
 class="pcrr7t-">1</span></span>, but this still has to be used to target the task instance
 with cylc commands.
-<!--l. 1193--><p class="noindent" >
-<!--l. 1193--><p class="indent" >    <h4 id="7.14" class="subsectionHead"> <span class="titlemark"> <a href="#7.14"> 7.14</a>  <a 
+<!--l. 1192--><p class="noindent" >
+<!--l. 1192--><p class="indent" >    <h4 id="7.14" class="subsectionHead"> <span class="titlemark"> <a href="#7.14"> 7.14</a>  <a 
  id="x8-440007.14"></a>Job Submission: How Tasks Are Executed </span></h4>
    <div 
 class="colorbox" id="colorbox2"> suite: <span class="lstinline"><span 
@@ -2669,13 +2669,13 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">jobsub</span></span> </div>
-<!--l. 1198--><p class="indent" >   Task <span 
+<!--l. 1197--><p class="indent" >   Task <span 
 class="cmti-10">job scripts </span>are generated by cylc to wrap the task implementation specified in the suite definition
 (environment, script, etc.) in error trapping code, messaging calls to report task progress back to the suite daemon,
 and so forth. Job scripts are written to the <span 
 class="cmti-10">suite job log directory </span>where they can be viewed alongside the job output
 logs. They can be accessed at run time by right-clicking on the task in the cylc GUI, or printed to the terminal:
-<!--l. 1206-->
+<!--l. 1205-->
    <div class="lstlisting" id="listing-30"><span class="label"><a 
  id="x8-44001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -2695,7 +2695,7 @@ class="pcrr7t-">hello</span><span
 class="pcrr7t-">.1</span>
    
    </div>
-<!--l. 1209--><p class="indent" >   This command can also print the suite log (and stdout and stderr for suites in daemon mode) and task stdout
+<!--l. 1208--><p class="indent" >   This command can also print the suite log (and stdout and stderr for suites in daemon mode) and task stdout
 and stderr logs (see <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -2703,7 +2703,7 @@ class="pcrr7t-">log</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span>). A new job script can also be generated on the fly for inspection,
-<!--l. 1214-->
+<!--l. 1213-->
    <div class="lstlisting" id="listing-31"><span class="label"><a 
  id="x8-44002r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -2723,11 +2723,11 @@ class="pcrr7t-">hello</span><span
 class="pcrr7t-">.1</span>
    
    </div>
-<!--l. 1218--><p class="indent" >   Take a look at the job script generated for <span class="lstinline"><span 
+<!--l. 1217--><p class="indent" >   Take a look at the job script generated for <span class="lstinline"><span 
 class="pcrr7t-">hello</span><span 
 class="pcrr7t-">.1</span></span> during the suite run above. The custom scripting should be
 clearly visible toward the bottom of the file.
-<!--l. 1222--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 1221--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">hello</span></span> task in the first tutorial suite defaults to running as a background job on the suite host. To submit it
 to the Unix <span class="lstinline"><span 
 class="pcrr7t-">at</span></span> scheduler instead, configure its job submission settings as in <span class="lstinline"><span 
@@ -2736,7 +2736,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">jobsub</span></span>:
-<!--l. 1227-->
+<!--l. 1226-->
    <div class="lstlisting" id="listing-32"><span class="label"><a 
  id="x8-44003r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -2813,10 +2813,10 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">at</span>
    
    </div>
-<!--l. 1234--><p class="indent" >   If you run the suite (first check that the <span 
+<!--l. 1233--><p class="indent" >   If you run the suite (first check that the <span 
 class="cmti-10">at daemon </span><span class="lstinline"><span 
 class="pcrr7t-">atd</span></span> is running on the suite host) you&#8217;ll see a slightly
-different job submission command printed to stdout:  <!--l. 1238-->
+different job submission command printed to stdout:  <!--l. 1237-->
    <div class="lstlisting" id="listing-33"><span class="label"><a 
  id="x8-44008r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -3133,7 +3133,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">DONE</span>
    
    </div>
-<!--l. 1254--><p class="indent" >   Cylc supports a number of different job submission methods. Tasks submitted to external batch queuing systems
+<!--l. 1253--><p class="indent" >   Cylc supports a number of different job submission methods. Tasks submitted to external batch queuing systems
 like <span class="lstinline"><span 
 class="pcrr7t-">at</span></span>, <span class="lstinline"><span 
 class="pcrr7t-">PBS</span></span>, <span class="lstinline"><span 
@@ -3151,10 +3151,10 @@ href="cug-htmlse11.html#x12-14200011.1">11.1<!--tex4ht:ref: JobScripts --></a>.
      </li>
      <li class="itemize">For more on job submission methods, see&#x00A0;<a 
 href="cug-htmlse11.html#x12-14300011.2">11.2<!--tex4ht:ref: AvailableMethods --></a>.</li></ul>
-<!--l. 1265--><p class="noindent" >
-<!--l. 1265--><p class="indent" >    <h4 id="7.15" class="subsectionHead"> <span class="titlemark"> <a href="#7.15"> 7.15</a>  <a 
+<!--l. 1264--><p class="noindent" >
+<!--l. 1264--><p class="indent" >    <h4 id="7.15" class="subsectionHead"> <span class="titlemark"> <a href="#7.15"> 7.15</a>  <a 
  id="x8-450007.15"></a>Locating Suite And Task Output </span></h4>
-<!--l. 1267--><p class="indent" >   If the <span class="lstinline"><span 
+<!--l. 1266--><p class="indent" >   If the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">no</span><span 
 class="pcrr7t-">-</span><span 
@@ -3167,7 +3167,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">run</span></span>:
-   <!--l. 1274-->
+   <!--l. 1273-->
    <div class="lstlisting" id="listing-34"><span class="label"><a 
  id="x8-45001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -4116,7 +4116,7 @@ class="pcrr7t-">.591110</span><span
 class="pcrr7t-">Z</span>
    
    </div>
-<!--l. 1304--><p class="indent" >   The suite run database, suite environment file, suite state files, and task status files are used internally by cylc.
+<!--l. 1303--><p class="indent" >   The suite run database, suite environment file, suite state files, and task status files are used internally by cylc.
 Tasks execute in private <span class="lstinline"><span 
 class="pcrr7t-">work</span><span 
 class="pcrr7t-">/</span></span> directories that are deleted automatically if empty when the task finishes. The suite
@@ -4127,15 +4127,15 @@ class="pcrr8c-">$</span><span
 class="pcrr7t-">CYLC_SUITE_SHARE_DIR</span></span>) as a common share space. The
 task submission number increments from 1 if a task retries on failure; this is used a sub-directory of the log tree to
 avoid overwriting log files from earlier job submissions.
-<!--l. 1314--><p class="indent" >   The top level run directory location can be changed in site and user config files if necessary, and the suite
+<!--l. 1313--><p class="indent" >   The top level run directory location can be changed in site and user config files if necessary, and the suite
 share and work locations can be configured separately because of the potentially larger disk space
 requirement.
-<!--l. 1319--><p class="indent" >   Task job logs can be viewed by right-clicking on tasks in the gcylc GUI (so long as the task proxy is live in the
+<!--l. 1318--><p class="indent" >   Task job logs can be viewed by right-clicking on tasks in the gcylc GUI (so long as the task proxy is live in the
 suite), manually accessed from the log directory (of course), or printed to the terminal with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">log</span></span>
-command:  <!--l. 1324-->
+command:  <!--l. 1323-->
    <div class="lstlisting" id="listing-35"><span class="label"><a 
  id="x8-45029r1"></a></span><span 
 class="pcrr7t-">#</span><span 
@@ -4358,8 +4358,8 @@ href="cug-htmlse14.html#x15-19500014">14<!--tex4ht:ref: SuiteStorageEtc --></a>.
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_SUITE_SHARE_DIR</span></span>, see&#x00A0;<a 
 href="cug-htmlse9.html#x10-1130009.4.7">9.4.7<!--tex4ht:ref: TaskExecutionEnvironment --></a>.</li></ul>
-<!--l. 1341--><p class="noindent" >
-<!--l. 1341--><p class="indent" >    <h4 id="7.16" class="subsectionHead"> <span class="titlemark"> <a href="#7.16"> 7.16</a>  <a 
+<!--l. 1340--><p class="noindent" >
+<!--l. 1340--><p class="indent" >    <h4 id="7.16" class="subsectionHead"> <span class="titlemark"> <a href="#7.16"> 7.16</a>  <a 
  id="x8-460007.16"></a>Remote Tasks </span></h4>
    <div 
 class="colorbox" id="colorbox3"> suite: <span class="lstinline"><span 
@@ -4368,14 +4368,14 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">remote</span></span> </div>
-<!--l. 1347--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 1346--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">hello</span></span> task in the first two tutorial suites defaults to running on the suite host. To make it run on a remote
 host instead change its runtime configuration as in <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">remote</span></span>:  <!--l. 1351-->
+class="pcrr7t-">remote</span></span>:  <!--l. 1350-->
    <div class="lstlisting" id="listing-36"><span class="label"><a 
  id="x8-46001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -4456,7 +4456,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">nz</span>
    
    </div>
-<!--l. 1359--><p class="indent" >   For remote task hosting to work several requirements must be satisfied:
+<!--l. 1358--><p class="indent" >   For remote task hosting to work several requirements must be satisfied:
                                                                                          
 
                                                                                          
@@ -4480,7 +4480,7 @@ class="cmti-10">task polling </span>communication method is used.
 class="pcrr7t-">hello</span></span> is inlined in the suite definition and thus ends up
      entirely contained within the task job script.
      </li></ul>
-<!--l. 1384--><p class="indent" >   If your username is different on the task host the <span class="lstinline"><span 
+<!--l. 1383--><p class="indent" >   If your username is different on the task host the <span class="lstinline"><span 
 class="pcrr7t-">[[[</span><span 
 class="pcrr7t-">remote</span><span 
 class="pcrr7t-">]]]</span></span> section also supports an <span class="lstinline"><span 
@@ -4494,12 +4494,12 @@ class="pcrr7t-">/.</span><span
 class="pcrr7t-">ssh</span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">config</span></span> file can be configured for username translation.
-<!--l. 1389--><p class="indent" >   If you configure a task host according to the requirements above and run the suite again in debug mode, you&#8217;ll
+<!--l. 1388--><p class="indent" >   If you configure a task host according to the requirements above and run the suite again in debug mode, you&#8217;ll
 see that the job submission command printed to suite stdout is now considerably more complicated. That&#8217;s
 because it has to create remote log directories, source login scripts on the remote host to ensure cylc is
 visible there, send the task job script over, and submit it to run there by the configured job submission
 method:
-   <!--l. 1397-->
+   <!--l. 1396-->
    <div class="lstlisting" id="listing-37"><span class="label"><a 
  id="x8-46006r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -4620,12 +4620,12 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">'</span>
    
    </div>
-<!--l. 1405--><p class="indent" >   (Don&#8217;t be intimated by this - it is really quite straightforward and would appear much simpler if the job log path
+<!--l. 1404--><p class="indent" >   (Don&#8217;t be intimated by this - it is really quite straightforward and would appear much simpler if the job log path
 was shorter!). Remote task job logs are saved to the suite run directory on the task host, not on the suite host,
 although they can be retrieved by right-clicking on the task in the GUI. If you want the job logs pulled
 back to the suite host automatically, you can set &#8221;retrieve job logs=True&#8221; under the &#8221;[[[remote]]]&#8221;
 section:
-   <!--l. 1413-->
+   <!--l. 1412-->
    <div class="lstlisting" id="listing-38"><span class="label"><a 
  id="x8-46012r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -4729,7 +4729,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">True</span>
    
    </div>
-<!--l. 1422--><p class="indent" >   The suite will attempt to <span class="lstinline"><span 
+<!--l. 1421--><p class="indent" >   The suite will attempt to <span class="lstinline"><span 
 class="pcrr7t-">rsync</span></span> the job logs once from the remote host each time a task job completes. E.g. if
 the job file is <span class="lstinline"><span 
 class="pcrr7t-">~/</span><span 
@@ -4768,10 +4768,10 @@ class="pcrr7t-">job</span><span
 class="pcrr7t-">/1/</span><span 
 class="pcrr7t-">hello</span><span 
 class="pcrr7t-">/01/</span></span> will be retrieved.
-<!--l. 1427--><p class="indent" >   Some batch systems have considerable delays between the time when the job completes and when it writes the
+<!--l. 1426--><p class="indent" >   Some batch systems have considerable delays between the time when the job completes and when it writes the
 job logs in its normal location. If this is the case, you can configure an initial delay and retry delays for job log
 retrieval by setting some delays. E.g.:
-   <!--l. 1433-->
+   <!--l. 1432-->
    <div class="lstlisting" id="listing-39"><span class="label"><a 
  id="x8-46018r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -4945,7 +4945,7 @@ class="pcrr7t-">PT3M</span>
                                                                                          
 
                                                                                          
-<!--l. 1444--><p class="indent" >   Finally, if the disk space of the suite host is limited, you may want to set <span class="lstinline"><span 
+<!--l. 1443--><p class="indent" >   Finally, if the disk space of the suite host is limited, you may want to set <span class="lstinline"><span 
 class="pcrr7t-">[[[</span><span 
 class="pcrr7t-">remote</span><span 
 class="pcrr7t-">]]]</span><span 
@@ -4969,7 +4969,7 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">SIZE</span></span> option of the <span class="lstinline"><span 
 class="pcrr7t-">rsync</span></span> command.
 E.g.:
-   <!--l. 1450-->
+   <!--l. 1449-->
    <div class="lstlisting" id="listing-40"><span class="label"><a 
  id="x8-46026r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -5141,8 +5141,8 @@ href="cug-htmlse12.html#x13-16600012.2">12.2<!--tex4ht:ref: TaskComms --></a>.
      <li class="itemize">For more on suite passphrases and authentication, see&#x00A0;<a 
 href="#x8-330007.5">7.5<!--tex4ht:ref: tutPassphrases --></a> and&#x00A0;<a 
 href="cug-htmlse12.html#x13-17100012.6">12.6<!--tex4ht:ref: ConnectionAuthentication --></a>.</li></ul>
-<!--l. 1471--><p class="noindent" >
-<!--l. 1471--><p class="indent" >    <h4 id="7.17" class="subsectionHead"> <span class="titlemark"> <a href="#7.17"> 7.17</a>  <a 
+<!--l. 1470--><p class="noindent" >
+<!--l. 1470--><p class="indent" >    <h4 id="7.17" class="subsectionHead"> <span class="titlemark"> <a href="#7.17"> 7.17</a>  <a 
  id="x8-470007.17"></a>Task Triggering </span></h4>
    <div 
 class="colorbox" id="colorbox4"> suite: <span class="lstinline"><span 
@@ -5151,7 +5151,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">goodbye</span></span> </div>
-<!--l. 1476--><p class="indent" >   To make a second task called <span class="lstinline"><span 
+<!--l. 1475--><p class="indent" >   To make a second task called <span class="lstinline"><span 
 class="pcrr7t-">goodbye</span></span> trigger after <span class="lstinline"><span 
 class="pcrr7t-">hello</span></span> finishes successfully, return to the
 original example, <span class="lstinline"><span 
@@ -5165,7 +5165,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">goodbye</span></span>:
-<!--l. 1481-->
+<!--l. 1480-->
    <div class="lstlisting" id="listing-41"><span class="label"><a 
  id="x8-47001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -5203,8 +5203,8 @@ class="pcrr7t-">goodbye</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1486--><p class="indent" >   or to trigger it at the same time as <span class="lstinline"><span 
-class="pcrr7t-">hello</span></span>,  <!--l. 1488-->
+<!--l. 1485--><p class="indent" >   or to trigger it at the same time as <span class="lstinline"><span 
+class="pcrr7t-">hello</span></span>,  <!--l. 1487-->
    <div class="lstlisting" id="listing-42"><span class="label"><a 
  id="x8-47004r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -5242,10 +5242,10 @@ class="pcrr7t-">goodbye</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1493--><p class="indent" >   and configure the new task&#8217;s behaviour under <span class="lstinline"><span 
+<!--l. 1492--><p class="indent" >   and configure the new task&#8217;s behaviour under <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
-class="pcrr7t-">]</span></span>:  <!--l. 1495-->
+class="pcrr7t-">]</span></span>:  <!--l. 1494-->
    <div class="lstlisting" id="listing-43"><span class="label"><a 
  id="x8-47007r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -5288,12 +5288,12 @@ class="pcrr7t-">!</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1501--><p class="indent" >   Run <span class="lstinline"><span 
+<!--l. 1500--><p class="indent" >   Run <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">goodbye</span></span> and check the output from the new task:  <!--l. 1504-->
+class="pcrr7t-">goodbye</span></span> and check the output from the new task:  <!--l. 1503-->
    <div class="lstlisting" id="listing-44"><span class="label"><a 
  id="x8-47010r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -5548,8 +5548,8 @@ class="pcrr7t-">SUCCEEDED</span><span
 class="pcrr7t-">)</span>
    
    </div>
-<!--l. 1525--><p class="noindent" >
-<!--l. 1525--><p class="indent" >    <h4 id="7.17.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.17.1"> 7.17.1</a>  <a 
+<!--l. 1524--><p class="noindent" >
+<!--l. 1524--><p class="indent" >    <h4 id="7.17.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.17.1"> 7.17.1</a>  <a 
  id="x8-480007.17.1"></a>Task Failure And Suicide Triggering </span></h4>
    <div 
 class="colorbox" id="colorbox5"> suite: <span class="lstinline"><span 
@@ -5558,8 +5558,8 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">suicide</span></span> </div>
-<!--l. 1530--><p class="indent" >   Task names in the graph string can be qualified with a state indicator to trigger off task states other than
-success:   <!--l. 1534-->
+<!--l. 1529--><p class="indent" >   Task names in the graph string can be qualified with a state indicator to trigger off task states other than
+success:   <!--l. 1533-->
                                                                                          
 
                                                                                          
@@ -5719,7 +5719,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1544--><p class="indent" >   A common use of this is to automate recovery from known modes of failure:  <!--l. 1546-->
+<!--l. 1543--><p class="indent" >   A common use of this is to automate recovery from known modes of failure:  <!--l. 1545-->
    <div class="lstlisting" id="listing-46"><span class="label"><a 
  id="x8-48008r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -5741,11 +5741,11 @@ class="pcrr7t-">really_goodbye</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1549--><p class="indent" >   i.e. if task <span class="lstinline"><span 
+<!--l. 1548--><p class="indent" >   i.e. if task <span class="lstinline"><span 
 class="pcrr7t-">goodbye</span></span> fails, trigger another task that (presumably) really says goodbye.
-<!--l. 1552--><p class="indent" >   Failure triggering generally requires use of <span 
+<!--l. 1551--><p class="indent" >   Failure triggering generally requires use of <span 
 class="cmti-10">suicide triggers </span>as well, to remove the recovery task if it isn&#8217;t required
-(otherwise it would hang about indefinitely in the waiting state): <!--l. 1555-->
+(otherwise it would hang about indefinitely in the waiting state): <!--l. 1554-->
    <div class="lstlisting" id="listing-47"><span class="label"><a 
  id="x8-48009r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -5829,13 +5829,13 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1562--><p class="indent" >   This means if <span class="lstinline"><span 
+<!--l. 1561--><p class="indent" >   This means if <span class="lstinline"><span 
 class="pcrr7t-">goodbye</span></span> fails, trigger <span class="lstinline"><span 
 class="pcrr7t-">really_goodbye</span></span>; and otherwise, if <span class="lstinline"><span 
 class="pcrr7t-">goodbye</span></span> succeeds, remove
 <span class="lstinline"><span 
 class="pcrr7t-">really_goodbye</span></span> from the suite.
-<!--l. 1566--><p class="indent" >   Try running <span class="lstinline"><span 
+<!--l. 1565--><p class="indent" >   Try running <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
@@ -5849,8 +5849,8 @@ href="cug-htmlse9.html#x10-760009.3">9.3<!--tex4ht:ref: ConfiguringScheduling --
      </li>
      <li class="itemize">For more on task triggering see&#x00A0;<a 
 href="cug-htmlse9.html#x10-870009.3.4">9.3.4<!--tex4ht:ref: TriggerTypes --></a>.</li></ul>
-<!--l. 1574--><p class="noindent" >
-<!--l. 1574--><p class="indent" >    <h4 id="7.18" class="subsectionHead"> <span class="titlemark"> <a href="#7.18"> 7.18</a>  <a 
+<!--l. 1573--><p class="noindent" >
+<!--l. 1573--><p class="indent" >    <h4 id="7.18" class="subsectionHead"> <span class="titlemark"> <a href="#7.18"> 7.18</a>  <a 
  id="x8-490007.18"></a>Runtime Inheritance </span></h4>
    <div 
 class="colorbox" id="colorbox6"> suite: <span class="lstinline"><span 
@@ -5859,7 +5859,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">inherit</span></span> </div>
-<!--l. 1579--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 1578--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span></span> section is actually a <span 
@@ -5867,7 +5867,7 @@ class="cmti-10">multiple inheritance </span>hierarchy. Each subsection is a <spa
 class="cmti-10">namespace </span>that
 represents a task, or if it is inherited by other namespaces, a <span 
 class="cmti-10">family</span>. This allows common configuration to be
-factored out of related tasks very efficiently.  <!--l. 1585--><div class="lstinputlisting">
+factored out of related tasks very efficiently.  <!--l. 1584--><div class="lstinputlisting">
 <a 
  id="x8-49001"></a>
    <span 
@@ -6046,7 +6046,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Goodbye</span>
    
    </div>
-<!--l. 1586--><p class="noindent" >The <span class="lstinline"><span 
+<!--l. 1585--><p class="noindent" >The <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">root</span><span 
 class="pcrr7t-">]</span></span> namespace provides defaults for all tasks in the suite. Here both tasks inherit <span class="lstinline"><span 
@@ -6069,8 +6069,8 @@ href="cug-htmlse9.html#x10-1050009.4">9.4<!--tex4ht:ref: NIORP --></a>.</li></ul
                                                                                          
 
                                                                                          
-<!--l. 1597--><p class="noindent" >
-<!--l. 1597--><p class="indent" >    <h4 id="7.19" class="subsectionHead"> <span class="titlemark"> <a href="#7.19"> 7.19</a>  <a 
+<!--l. 1596--><p class="noindent" >
+<!--l. 1596--><p class="indent" >    <h4 id="7.19" class="subsectionHead"> <span class="titlemark"> <a href="#7.19"> 7.19</a>  <a 
  id="x8-500007.19"></a>Triggering Families </span></h4>
    <div 
 class="colorbox" id="colorbox7"> suite: <span class="lstinline"><span 
@@ -6079,9 +6079,9 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">ftrigger1</span></span> </div>
-<!--l. 1602--><p class="indent" >   Task families defined by runtime inheritance can also be used as shorthand in graph trigger expressions. To see
+<!--l. 1601--><p class="indent" >   Task families defined by runtime inheritance can also be used as shorthand in graph trigger expressions. To see
 this, consider two &#8220;greeter&#8221; tasks that trigger off another task <span class="lstinline"><span 
-class="pcrr7t-">foo</span></span>,  <!--l. 1606-->
+class="pcrr7t-">foo</span></span>,  <!--l. 1605-->
    <div class="lstlisting" id="listing-48"><span class="label"><a 
  id="x8-50001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -6123,11 +6123,11 @@ class="pcrr7t-">greeter_2</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1611--><p class="indent" >   If we put the common greeting functionality of <span class="lstinline"><span 
+<!--l. 1610--><p class="indent" >   If we put the common greeting functionality of <span class="lstinline"><span 
 class="pcrr7t-">greeter_1</span></span> and <span class="lstinline"><span 
 class="pcrr7t-">greeter_2</span></span> into a special <span class="lstinline"><span 
 class="pcrr7t-">GREETERS</span></span> family,
-the graph can be expressed more efficiently like this:  <!--l. 1615-->
+the graph can be expressed more efficiently like this:  <!--l. 1614-->
    <div class="lstlisting" id="listing-49"><span class="label"><a 
  id="x8-50004r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -6165,10 +6165,10 @@ class="pcrr7t-">GREETERS</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1620--><p class="indent" >   i.e.&#x00A0;if <span class="lstinline"><span 
+<!--l. 1619--><p class="indent" >   i.e.&#x00A0;if <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> succeeds, trigger all members of <span class="lstinline"><span 
 class="pcrr7t-">GREETERS</span></span> at once. Here&#8217;s the full suite with runtime hierarchy
-shown:  <!--l. 1624--><div class="lstinputlisting">
+shown:  <!--l. 1623--><div class="lstinputlisting">
 <a 
  id="x8-50007"></a>
    <span 
@@ -6437,8 +6437,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Goodbye</span>
    
    </div>
-<!--l. 1626--><p class="indent" >   Verbose validation shows the family member substitution done when the suite definition is parsed:
-<!--l. 1629-->
+<!--l. 1625--><p class="indent" >   Verbose validation shows the family member substitution done when the suite definition is parsed:
+<!--l. 1628-->
    <div class="lstlisting" id="listing-50"><span class="label"><a 
  id="x8-50027r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -6502,14 +6502,14 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">...</span>
    
    </div>
-<!--l. 1638--><p class="indent" >   Experiment with the <span class="lstinline"><span 
+<!--l. 1637--><p class="indent" >   Experiment with the <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">ftrigger1</span></span> suite to see how this works.
-<!--l. 1641--><p class="noindent" >
-<!--l. 1641--><p class="indent" >    <h4 id="7.20" class="subsectionHead"> <span class="titlemark"> <a href="#7.20"> 7.20</a>  <a 
+<!--l. 1640--><p class="noindent" >
+<!--l. 1640--><p class="indent" >    <h4 id="7.20" class="subsectionHead"> <span class="titlemark"> <a href="#7.20"> 7.20</a>  <a 
  id="x8-510007.20"></a>Triggering Off Families </span></h4>
    <div 
 class="colorbox" id="colorbox8"> suite: <span class="lstinline"><span 
@@ -6518,12 +6518,12 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">ftrigger2</span></span> </div>
-<!--l. 1646--><p class="indent" >   Tasks (or families) can also trigger <span 
+<!--l. 1645--><p class="indent" >   Tasks (or families) can also trigger <span 
 class="cmti-10">off </span>other families, but in this case we need to specify what the trigger means
 in terms of the upstream family members. Here&#8217;s how to trigger another task <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span> if all members of <span class="lstinline"><span 
 class="pcrr7t-">GREETERS</span></span>
-succeed:  <!--l. 1651-->
+succeed:  <!--l. 1650-->
    <div class="lstlisting" id="listing-51"><span class="label"><a 
  id="x8-51001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -6588,7 +6588,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1657--><p class="indent" >   Verbose validation in this case reports:  <!--l. 1659-->
+<!--l. 1656--><p class="indent" >   Verbose validation in this case reports:  <!--l. 1658-->
    <div class="lstlisting" id="listing-52"><span class="label"><a 
  id="x8-51005r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -6660,11 +6660,11 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">...</span>
    
    </div>
-<!--l. 1667--><p class="indent" >   Cylc ignores family member qualifiers like <span class="lstinline"><span 
+<!--l. 1666--><p class="indent" >   Cylc ignores family member qualifiers like <span class="lstinline"><span 
 class="pcrr7t-">succeed</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">all</span></span> on the right side of a trigger arrow, where they don&#8217;t
-make sense, to allow the two graph lines above to be combined in simple cases:  <!--l. 1671-->
+make sense, to allow the two graph lines above to be combined in simple cases:  <!--l. 1670-->
    <div class="lstlisting" id="listing-53"><span class="label"><a 
  id="x8-51011r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -6713,7 +6713,7 @@ class="pcrr7t-">"</span>
 
                                                                                          
    </div>
-<!--l. 1677--><p class="indent" >   Any task triggering status qualified by <span class="lstinline"><span 
+<!--l. 1676--><p class="indent" >   Any task triggering status qualified by <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">all</span></span> or <span class="lstinline"><span 
 class="pcrr7t-">-</span><span 
@@ -6721,7 +6721,7 @@ class="pcrr7t-">any</span></span>, for the members, can be used with a family tr
 example, here&#8217;s how to trigger <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span> if all members of <span class="lstinline"><span 
 class="pcrr7t-">GREETERS</span></span> finish (succeed or fail) and any of them them
-succeed:  <!--l. 1683-->
+succeed:  <!--l. 1682-->
    <div class="lstlisting" id="listing-54"><span class="label"><a 
  id="x8-51014r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -6786,7 +6786,7 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1689--><p class="indent" >   (use of <span class="lstinline"><span 
+<!--l. 1688--><p class="indent" >   (use of <span class="lstinline"><span 
 class="pcrr7t-">GREETERS</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">succeed</span><span 
@@ -6795,7 +6795,7 @@ class="pcrr7t-">any</span></span> by itself here would trigger <span class="lsti
 class="pcrr7t-">bar</span></span> as soon as any one member of <span class="lstinline"><span 
 class="pcrr7t-">GREETERS</span></span>
 completed successfully). Verbose validation now begins to show how family triggers can simplify complex graphs,
-even for this tiny two-member family:  <!--l. 1695-->
+even for this tiny two-member family:  <!--l. 1694-->
    <div class="lstlisting" id="listing-55"><span class="label"><a 
  id="x8-51018r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -6931,7 +6931,7 @@ class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a
 class="pcrr7t-">...</span>
    
    </div>
-<!--l. 1706--><p class="indent" >   Experiment with <span class="lstinline"><span 
+<!--l. 1705--><p class="indent" >   Experiment with <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
@@ -6940,10 +6940,10 @@ class="pcrr7t-">ftrigger2</span></span> to see how this works.
      <ul class="itemize1">
      <li class="itemize">For more on family triggering, see&#x00A0;<a 
 href="cug-htmlse9.html#x10-960009.3.4.9">9.3.4.9<!--tex4ht:ref: FamilyTriggers --></a>.</li></ul>
-<!--l. 1713--><p class="noindent" >
-<!--l. 1713--><p class="indent" >    <h4 id="7.21" class="subsectionHead"> <span class="titlemark"> <a href="#7.21"> 7.21</a>  <a 
+<!--l. 1712--><p class="noindent" >
+<!--l. 1712--><p class="indent" >    <h4 id="7.21" class="subsectionHead"> <span class="titlemark"> <a href="#7.21"> 7.21</a>  <a 
  id="x8-520007.21"></a>Suite Visualization </span></h4>
-<!--l. 1716--><p class="indent" >   You can style dependency graphs with an optional <span class="lstinline"><span 
+<!--l. 1715--><p class="indent" >   You can style dependency graphs with an optional <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">visualization</span><span 
 class="pcrr7t-">]</span></span> section, as shown in
@@ -6952,7 +6952,7 @@ class="pcrr7t-">tut</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">ftrigger2</span></span>:  <!--l. 1720-->
+class="pcrr7t-">ftrigger2</span></span>:  <!--l. 1719-->
    <div class="lstlisting" id="listing-56"><span class="label"><a 
  id="x8-52001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -7054,7 +7054,7 @@ class="pcrr7t-">ab67</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1729--><p class="indent" >   To display the graph in an interactive viewer,  <!--l. 1731-->
+<!--l. 1728--><p class="indent" >   To display the graph in an interactive viewer,  <!--l. 1730-->
    <div class="lstlisting" id="listing-57"><span class="label"><a 
  id="x8-52007r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -7109,7 +7109,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">graph</span>
    
    </div>
-<!--l. 1735--><p class="indent" >   It should look like Figure&#x00A0;<a 
+<!--l. 1734--><p class="indent" >   It should look like Figure&#x00A0;<a 
 href="#x8-5200915">15<!--tex4ht:ref: fig-tut-hello-multi --></a> (with the GREETERS family node expanded on the right). <hr class="figure"><div class="figure" 
 >
                                                                                          
@@ -7122,9 +7122,9 @@ href="#x8-5200915">15<!--tex4ht:ref: fig-tut-hello-multi --></a> (with the GREET
                                                                                          
 <div class="center" 
 >
-<!--l. 1738--><p class="noindent" >
+<!--l. 1737--><p class="noindent" >
 
-<!--l. 1739--><p class="noindent" ><img 
+<!--l. 1738--><p class="noindent" ><img 
 src="../../graphics/png/scaled/tut-hello-multi-1.png" alt="PIC"  
 > &#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;                  <img 
 src="../../graphics/png/scaled/tut-hello-multi-2.png" alt="PIC"  
@@ -7138,10 +7138,10 @@ class="cmti-10">tut.oneoff.ftrigger2 </span>dependency and runtime inheritance g
                                                                                          
 
                                                                                          
-<!--l. 1747--><p class="indent" >   </div><hr class="endfigure">
-<!--l. 1749--><p class="indent" >   Graph styling can be applied to entire families at once, and custom &#8220;node groups&#8221; can also be defined for
+<!--l. 1746--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 1748--><p class="indent" >   Graph styling can be applied to entire families at once, and custom &#8220;node groups&#8221; can also be defined for
 non-family groups.
-<!--l. 1753--><p class="indent" >    <h4 id="7.22" class="subsectionHead"> <span class="titlemark"> <a href="#7.22"> 7.22</a>  <a 
+<!--l. 1752--><p class="indent" >    <h4 id="7.22" class="subsectionHead"> <span class="titlemark"> <a href="#7.22"> 7.22</a>  <a 
  id="x8-530007.22"></a>External Task Scripts </span></h4>
    <div 
 class="colorbox" id="colorbox9"> suite: <span class="lstinline"><span 
@@ -7150,14 +7150,14 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">external</span></span> </div>
-<!--l. 1758--><p class="indent" >   The tasks in our examples so far have all had inlined implementation, in the suite definition, but real tasks often
+<!--l. 1757--><p class="indent" >   The tasks in our examples so far have all had inlined implementation, in the suite definition, but real tasks often
 need to call external commands, scripts, or executables. To try this, let&#8217;s return to the basic Hello World suite
 and cut the implementation of the task <span class="lstinline"><span 
 class="pcrr7t-">hello</span></span> out to a file <span class="lstinline"><span 
 class="pcrr7t-">hello</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span> in the suite bin directory:
-<!--l. 1765--><div class="lstinputlisting">
+<!--l. 1764--><div class="lstinputlisting">
 <a 
  id="x8-53001"></a>
    <span 
@@ -7206,8 +7206,8 @@ class="pcrr7t-">0</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1766--><p class="noindent" >Make the task script executable, and change the <span class="lstinline"><span 
-class="pcrr7t-">hello</span></span> task runtime section to invoke it:  <!--l. 1769--><div class="lstinputlisting">
+<!--l. 1765--><p class="noindent" >Make the task script executable, and change the <span class="lstinline"><span 
+class="pcrr7t-">hello</span></span> task runtime section to invoke it:  <!--l. 1768--><div class="lstinputlisting">
 <a 
  id="x8-53008"></a>
    <span 
@@ -7348,7 +7348,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">Hello</span>
    
    </div>
-<!--l. 1771--><p class="indent" >   If you run the suite now the new greeting from the external task script should appear in the <span class="lstinline"><span 
+<!--l. 1770--><p class="indent" >   If you run the suite now the new greeting from the external task script should appear in the <span class="lstinline"><span 
 class="pcrr7t-">hello</span></span> task stdout
 log. This works because cylc automatically adds the suite bin directory to <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -7362,14 +7362,14 @@ class="pcrr7t-">HOME</span><span
 class="pcrr7t-">/.</span><span 
 class="pcrr7t-">profile</span></span>, which is sourced at the top of the task job
 script, or in the suite definition itself).
-<!--l. 1781--><p class="indent" >   Note the use of <span class="lstinline"><span 
+<!--l. 1780--><p class="indent" >   Note the use of <span class="lstinline"><span 
 class="pcrr7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span></span> above to make the script abort on error. This allows the error trapping code in the task
 job script to automatically detect unforeseen errors.
-<!--l. 1785--><p class="noindent" >
-<!--l. 1785--><p class="indent" >    <h4 id="7.23" class="subsectionHead"> <span class="titlemark"> <a href="#7.23"> 7.23</a>  <a 
+<!--l. 1784--><p class="noindent" >
+<!--l. 1784--><p class="indent" >    <h4 id="7.23" class="subsectionHead"> <span class="titlemark"> <a href="#7.23"> 7.23</a>  <a 
  id="x8-540007.23"></a>Cycling Tasks </span></h4>
    <div 
 class="colorbox" id="colorbox10"> suite: <span class="lstinline"><span 
@@ -7378,20 +7378,20 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">one</span></span> </div>
-<!--l. 1790--><p class="indent" >   So far we&#8217;ve considered non-cycling tasks, which finish without spawning a successor.
-<!--l. 1793--><p class="indent" >   Cycling is based around iterating through date-time or integer sequences. A cycling task may run at each cycle
+<!--l. 1789--><p class="indent" >   So far we&#8217;ve considered non-cycling tasks, which finish without spawning a successor.
+<!--l. 1792--><p class="indent" >   Cycling is based around iterating through date-time or integer sequences. A cycling task may run at each cycle
 point in a given sequence (cycle). For example, a sequence might be a set of date-times every 6 hours starting
 from a particular date-time. A cycling task may run for each date-time item (cycle point) in that
 sequence.
-<!--l. 1799--><p class="indent" >   There may be multiple instances of this type of task running in parallel, if the opportunity arises and their
+<!--l. 1798--><p class="indent" >   There may be multiple instances of this type of task running in parallel, if the opportunity arises and their
 dependencies allow it. Alternatively, a sequence can be defined with only one valid cycle point - in that case, a task
 belonging to that sequence may only run once.
-<!--l. 1804--><p class="indent" >   Open the <span class="lstinline"><span 
+<!--l. 1803--><p class="indent" >   Open the <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">one</span></span> suite:  <!--l. 1806--><div class="lstinputlisting">
+class="pcrr7t-">one</span></span> suite:  <!--l. 1805--><div class="lstinputlisting">
 <a 
  id="x8-54001"></a>
    <span 
@@ -7628,7 +7628,7 @@ class="pcrr7t-">"</span>
                                                                                          
 
                                                                                          
-<!--l. 1807--><p class="noindent" >The difference between cycling and non-cycling suites is all in the <span class="lstinline"><span 
+<!--l. 1806--><p class="noindent" >The difference between cycling and non-cycling suites is all in the <span class="lstinline"><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span></span> section, so we will leave the
@@ -7640,7 +7640,7 @@ under a new section heading that makes each task under it have a succession of c
 hours, between specified initial and final cycle points (or indefinitely if no final cycle point is given), as shown in
 Figure&#x00A0;<a 
 href="#x8-5401716">16<!--tex4ht:ref: fig-tut-one --></a>.
-<!--l. 1816--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 1815--><p class="indent" >   <hr class="figure"><div class="figure" 
 >
                                                                                          
 
@@ -7652,9 +7652,9 @@ href="#x8-5401716">16<!--tex4ht:ref: fig-tut-one --></a>.
                                                                                          
 <div class="center" 
 >
-<!--l. 1817--><p class="noindent" >
+<!--l. 1816--><p class="noindent" >
 
-<!--l. 1819--><p class="noindent" ><img 
+<!--l. 1818--><p class="noindent" ><img 
 src="../../graphics/png/scaled/tut-one.png" alt="PIC"  
 ></div>
 <br /> <div class="caption" 
@@ -7668,8 +7668,8 @@ class="pcrr7t-">one</span></span> suite</span></div><!--tex4ht:label?: x8-540171
                                                                                          
 
                                                                                          
-<!--l. 1823--><p class="indent" >   </div><hr class="endfigure">
-<!--l. 1827--><p class="indent" >   If you run this suite instances of <span class="lstinline"><span 
+<!--l. 1822--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 1826--><p class="indent" >   If you run this suite instances of <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> will spawn in parallel out to the <span 
 class="cmti-10">runahead limit</span>, and each <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span> will trigger
@@ -7677,13 +7677,13 @@ off the corresponding instance of <span class="lstinline"><span
 class="pcrr7t-">foo</span></span> at the same cycle point. The runahead limit, which defaults to a few cycles
 but is configurable, prevents uncontrolled spawning of cycling tasks in suites that are not constrained by clock
 triggers in real time operation.
-<!--l. 1834--><p class="indent" >   Experiment with <span class="lstinline"><span 
+<!--l. 1833--><p class="indent" >   Experiment with <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">one</span></span> to see how cycling tasks work.
-<!--l. 1836--><p class="noindent" ><span class="paragraphHead"><a 
+<!--l. 1835--><p class="noindent" ><span class="paragraphHead"><a 
  id="x8-550007.23.0.1"></a><span 
 class="cmbx-10">ISO 8601 Date-Time Syntax</span></span>
    The suite above is a very simple example of a cycling date-time workflow. More generally, cylc comprehensively
@@ -7725,7 +7725,7 @@ class="pcrr7t-">PT12H</span><span
 class="pcrr7t-">/]]]</span></span> - i.e.&#x00A0;repeat indefinitely every 12 hours starting at the initial cycle
 point. It is possible to add constraints to the suite to only allow initial cycle points at 00 or 12 hours
 e.g.
-   <!--l. 1853-->
+   <!--l. 1852-->
    <div class="lstlisting" id="listing-58"><span class="label"><a 
  id="x8-55001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -7775,8 +7775,8 @@ href="cug-htmlse9.html#x10-830009.3.3.2.1">9.3.3.2.1<!--tex4ht:ref: AdvancedCycl
      </li>
      <li class="itemize">For more on runahead limiting in cycling suites, see&#x00A0;<a 
 href="cug-htmlse12.html#x13-17900012.12">12.12<!--tex4ht:ref: RunaheadLimit --></a>.</li></ul>
-<!--l. 1868--><p class="noindent" >
-<!--l. 1868--><p class="indent" >    <h4 id="7.23.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.23.1"> 7.23.1</a>  <a 
+<!--l. 1867--><p class="noindent" >
+<!--l. 1867--><p class="indent" >    <h4 id="7.23.1" class="subsubsectionHead"><span class="titlemark"> <a href="#7.23.1"> 7.23.1</a>  <a 
  id="x8-560007.23.1"></a>Inter-Cycle Triggers </span></h4>
    <div 
 class="colorbox" id="colorbox11"> suite: <span class="lstinline"><span 
@@ -7785,12 +7785,12 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">two</span></span> </div>
-<!--l. 1874--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 1873--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">two</span></span> suite adds inter-cycle dependence to the previous example: <!--l. 1876-->
+class="pcrr7t-">two</span></span> suite adds inter-cycle dependence to the previous example: <!--l. 1875-->
    <div class="lstlisting" id="listing-59"><span class="label"><a 
  id="x8-56001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -7888,7 +7888,7 @@ class="pcrr7t-">bar</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1883--><p class="indent" >   For any given cycle point in the sequence defined by the cycling graph section heading, <span class="lstinline"><span 
+<!--l. 1882--><p class="indent" >   For any given cycle point in the sequence defined by the cycling graph section heading, <span class="lstinline"><span 
 class="pcrr7t-">bar</span></span> triggers off <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> as
 before, but now <span class="lstinline"><span 
@@ -7911,9 +7911,9 @@ sections together. <hr class="figure"><div class="figure"
                                                                                          
 <div class="center" 
 >
-<!--l. 1891--><p class="noindent" >
+<!--l. 1890--><p class="noindent" >
 
-<!--l. 1892--><p class="noindent" ><img 
+<!--l. 1891--><p class="noindent" ><img 
 src="../../graphics/png/scaled/tut-two.png" alt="PIC"  
 ></div>
 <br /> <div class="caption" 
@@ -7927,8 +7927,8 @@ class="pcrr7t-">two</span></span> suite</span></div><!--tex4ht:label?: x8-560061
                                                                                          
 
                                                                                          
-<!--l. 1896--><p class="indent" >   </div><hr class="endfigure">
-<!--l. 1898--><p class="indent" >   Experiment with this suite to see how inter-cycle triggers work. Note that the first instance of <span class="lstinline"><span 
+<!--l. 1895--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 1897--><p class="indent" >   Experiment with this suite to see how inter-cycle triggers work. Note that the first instance of <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span>, at suite
 start-up, will trigger immediately in spite of its inter-cycle trigger, because cylc ignores dependence on
 points earlier than the initial cycle point. However, the presence of an inter-cycle trigger usually implies
@@ -7936,7 +7936,7 @@ something special has to happen at start-up. If a model depends on its own previ
 restart files, for example, then some special process has to generate the initial set of restart files when
 there is no previous cycle point to do it. The following section shows one way to handle this in cylc
 suites.
-<!--l. 1908--><p class="indent" >    <h4 id="7.23.2" class="subsubsectionHead"><span class="titlemark"> <a href="#7.23.2"> 7.23.2</a>  <a 
+<!--l. 1907--><p class="indent" >    <h4 id="7.23.2" class="subsubsectionHead"><span class="titlemark"> <a href="#7.23.2"> 7.23.2</a>  <a 
  id="x8-570007.23.2"></a>Initial Non-Repeating (R1) Tasks </span></h4>  <span 
 class="colorbox" id="colorbox12"> suite: <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
@@ -7944,11 +7944,11 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">three</span></span> </span>
-<!--l. 1913--><p class="indent" >   Sometimes we want to be able to run a task at the initial cycle point, but refrain from running it in subsequent
+<!--l. 1912--><p class="indent" >   Sometimes we want to be able to run a task at the initial cycle point, but refrain from running it in subsequent
 cycles. We can do this by writing an extra set of dependencies that are only valid at a single date-time cycle
 point. If we choose this to be the initial cycle point, these will only apply at the very start of the
 suite.
-<!--l. 1919--><p class="indent" >   The cylc syntax for writing this single date-time cycle point occurrence is <span class="lstinline"><span 
+<!--l. 1918--><p class="indent" >   The cylc syntax for writing this single date-time cycle point occurrence is <span class="lstinline"><span 
 class="pcrr7t-">R1</span></span>, which stands for
 <span class="lstinline"><span 
 class="pcrr7t-">R1</span><span 
@@ -7979,17 +7979,17 @@ class="pcrr7t-">no</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">specified</span><span 
 class="pcrr7t-">-&#x22C6;</span></span> data.
-<!--l. 1926--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 1925--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">1</span></span> in the <span class="lstinline"><span 
 class="pcrr7t-">R1</span></span> means repeat once. As we&#8217;ve specified no date-time, Cylc will use the initial cycle point
 date-time by default, which is what we want. We&#8217;ve also missed out specifying the period - this is set by cylc to a
 zero amount of time in this case (as it never repeats, this is not significant).
-<!--l. 1932--><p class="indent" >   For example, in <span class="lstinline"><span 
+<!--l. 1931--><p class="indent" >   For example, in <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
-class="pcrr7t-">three</span></span>:  <!--l. 1934-->
+class="pcrr7t-">three</span></span>:  <!--l. 1933-->
    <div class="lstlisting" id="listing-60"><span class="label"><a 
  id="x8-57001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
@@ -8145,19 +8145,19 @@ class="pcrr7t-">bar</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 1947--><p class="indent" >   This is shown in Figure&#x00A0;<a 
+<!--l. 1946--><p class="indent" >   This is shown in Figure&#x00A0;<a 
 href="#x8-5701418">18<!--tex4ht:ref: fig-tut-three --></a>.
-<!--l. 1949--><p class="indent" >   Note that the time zone has been set to <span class="lstinline"><span 
+<!--l. 1948--><p class="indent" >   Note that the time zone has been set to <span class="lstinline"><span 
 class="pcrr7t-">+1300</span></span> in this case, instead of UTC (<span class="lstinline"><span 
 class="pcrr7t-">Z</span></span>) as before. If no time zone or
 UTC mode was set, the local time zone of your machine will be used in the cycle points.
-<!--l. 1954--><p class="indent" >   At the initial cycle point, <span class="lstinline"><span 
+<!--l. 1953--><p class="indent" >   At the initial cycle point, <span class="lstinline"><span 
 class="pcrr7t-">foo</span></span> will depend on <span class="lstinline"><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">[-</span><span 
 class="pcrr7t-">PT12H</span><span 
 class="pcrr7t-">]</span></span> and also on <span class="lstinline"><span 
-class="pcrr7t-">prep</span></span>:  <!--l. 1957-->
+class="pcrr7t-">prep</span></span>:  <!--l. 1956-->
    <div class="lstlisting" id="listing-61"><span class="label"><a 
  id="x8-57011r1"></a></span><span 
 class="pcrr7t-">prep</span><span 
@@ -8180,7 +8180,7 @@ class="pcrr7t-">T0000</span><span
 class="pcrr7t-">+13</span>
    
    </div>
-<!--l. 1962--><p class="indent" >   Thereafter, it will just look like e.g.:  <!--l. 1964-->
+<!--l. 1961--><p class="indent" >   Thereafter, it will just look like e.g.:  <!--l. 1963-->
    <div class="lstlisting" id="listing-62"><span class="label"><a 
  id="x8-57012r1"></a></span><span 
 class="pcrr7t-">foo</span><span 
@@ -8196,14 +8196,14 @@ class="pcrr7t-">T1200</span><span
 class="pcrr7t-">+13</span>
    
    </div>
-<!--l. 1969--><p class="indent" >   However, in our initial cycle point example, the dependence on <span class="lstinline"><span 
+<!--l. 1968--><p class="indent" >   However, in our initial cycle point example, the dependence on <span class="lstinline"><span 
 class="pcrr7t-">foo</span><span 
 class="pcrr7t-">.20130807</span><span 
 class="pcrr7t-">T1200</span><span 
 class="pcrr7t-">+13</span></span> will be ignored,
 because that task&#8217;s cycle point is earlier than the suite&#8217;s initial cycle point and so it cannot run. This means that the
 initial cycle point dependencies for <span class="lstinline"><span 
-class="pcrr7t-">foo</span></span> actually look like:  <!--l. 1975-->
+class="pcrr7t-">foo</span></span> actually look like:  <!--l. 1974-->
    <div class="lstlisting" id="listing-63"><span class="label"><a 
  id="x8-57013r1"></a></span><span 
 class="pcrr7t-">prep</span><span 
@@ -8219,7 +8219,7 @@ class="pcrr7t-">T0000</span><span
 class="pcrr7t-">+13</span>
    
    </div>
-<!--l. 1980--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 1979--><p class="indent" >   <hr class="figure"><div class="figure" 
 >
                                                                                          
 
@@ -8231,9 +8231,9 @@ class="pcrr7t-">+13</span>
                                                                                          
 <div class="center" 
 >
-<!--l. 1981--><p class="noindent" >
+<!--l. 1980--><p class="noindent" >
 
-<!--l. 1982--><p class="noindent" ><img 
+<!--l. 1981--><p class="noindent" ><img 
 src="../../graphics/png/scaled/tut-three.png" alt="PIC"  
 ></div>
 <br /> <div class="caption" 
@@ -8247,7 +8247,7 @@ class="pcrr7t-">three</span></span> suite</span></div><!--tex4ht:label?: x8-5701
                                                                                          
 
                                                                                          
-<!--l. 1986--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 1985--><p class="indent" >   </div><hr class="endfigure">
      <ul class="itemize1">
      <li class="itemize"><span class="lstinline"><span 
 class="pcrr7t-">R1</span></span> tasks can also be used to make something special happen at suite shutdown, or at any single cycle
@@ -8257,7 +8257,7 @@ href="cug-htmlse9.html#x10-830009.3.3.2.1">9.3.3.2.1<!--tex4ht:ref: AdvancedCycl
      <li class="itemize">For another way to make something different happen at start-up, see <span 
 class="cmti-10">cold start tasks </span>in&#x00A0;<a 
 href="cug-htmlse9.html#x10-980009.3.4.11">9.3.4.11<!--tex4ht:ref: SpecialColdStartTasks --></a>.</li></ul>
-<!--l. 1998--><p class="indent" >    <h4 id="7.23.3" class="subsubsectionHead"><span class="titlemark"> <a href="#7.23.3"> 7.23.3</a>  <a 
+<!--l. 1997--><p class="indent" >    <h4 id="7.23.3" class="subsubsectionHead"><span class="titlemark"> <a href="#7.23.3"> 7.23.3</a>  <a 
  id="x8-580007.23.3"></a>Integer Cycling </span></h4>  <span 
 class="colorbox" id="colorbox13"> suite: <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
@@ -8265,14 +8265,14 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">integer</span></span> </span>
-<!--l. 2003--><p class="indent" >   Cylc can do also do integer cycling for repeating workflows that are not date-time based.
-<!--l. 2006--><p class="indent" >   Open the <span class="lstinline"><span 
+<!--l. 2002--><p class="indent" >   Cylc can do also do integer cycling for repeating workflows that are not date-time based.
+<!--l. 2005--><p class="indent" >   Open the <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">cycling</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">integer</span></span> suite, which is plotted in Figure&#x00A0;<a 
-href="#x8-5802119">19<!--tex4ht:ref: fig-tut-int --></a>.  <!--l. 2009--><div class="lstinputlisting">
+href="#x8-5802119">19<!--tex4ht:ref: fig-tut-int --></a>.  <!--l. 2008--><div class="lstinputlisting">
 <a 
  id="x8-58001"></a>
    <span 
@@ -8601,7 +8601,7 @@ class="pcrr7t-">orangered</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 2011--><p class="indent" >   <hr class="figure"><div class="figure" 
+<!--l. 2010--><p class="indent" >   <hr class="figure"><div class="figure" 
 >
                                                                                          
 
@@ -8613,9 +8613,9 @@ class="pcrr7t-">"</span>
                                                                                          
 <div class="center" 
 >
-<!--l. 2012--><p class="noindent" >
+<!--l. 2011--><p class="noindent" >
 
-<!--l. 2013--><p class="noindent" ><img 
+<!--l. 2012--><p class="noindent" ><img 
 src="../../graphics/png/scaled/tut-cyc-int.png" alt="PIC"  
 ></div>
 <br /> <div class="caption" 
@@ -8629,8 +8629,8 @@ class="pcrr7t-">integer</span></span> suite</span></div><!--tex4ht:label?: x8-58
                                                                                          
 
                                                                                          
-<!--l. 2017--><p class="indent" >   </div><hr class="endfigure">
-<!--l. 2019--><p class="indent" >   The integer cycling notation is intended to look similar to the ISO 8601 date-time notation, but it is simpler for
+<!--l. 2016--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 2018--><p class="indent" >   The integer cycling notation is intended to look similar to the ISO 8601 date-time notation, but it is simpler for
 obvious reasons. The example suite illustrates two recurrence forms, <span class="lstinline"><span 
 class="pcrr7t-">Rn</span><span 
 class="pcrr7t-">/</span><span 
@@ -8661,7 +8661,7 @@ class="pcrr7t-">1,3,5,...</span></span>.
      <ul class="itemize1">
      <li class="itemize">For more on integer cycling, including a more realistic usage example see &#x00A0;<a 
 href="cug-htmlse9.html#x10-860009.3.3.2.4">9.3.3.2.4<!--tex4ht:ref: IntegerCycling --></a>.</li></ul>
-<!--l. 2036--><p class="indent" >    <h4 id="7.24" class="subsectionHead"> <span class="titlemark"> <a href="#7.24"> 7.24</a>  <a 
+<!--l. 2035--><p class="indent" >    <h4 id="7.24" class="subsectionHead"> <span class="titlemark"> <a href="#7.24"> 7.24</a>  <a 
  id="x8-590007.24"></a>Jinja2 </span></h4>  <span 
 class="colorbox" id="colorbox14"> suite: <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
@@ -8669,16 +8669,16 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">jinja2</span></span> </span>
-<!--l. 2040--><p class="indent" >   Cylc has built in support for the Jinja2 template processor, which allows us to embed code in suite definitions to
+<!--l. 2039--><p class="indent" >   Cylc has built in support for the Jinja2 template processor, which allows us to embed code in suite definitions to
 generate the final result seen by cylc.
-<!--l. 2044--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 2043--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">jinja2</span></span> suite illustrates two common uses of Jinja2: changing suite content or structure
 based on the value of a logical switch; and iteratively generating dependencies and runtime configuration for groups
-of related tasks:  <!--l. 2049--><div class="lstinputlisting">
+of related tasks:  <!--l. 2048--><div class="lstinputlisting">
 <a 
  id="x8-59001"></a>
    <span 
@@ -8965,9 +8965,9 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">%}</span>
    
    </div>
-<!--l. 2051--><p class="indent" >   To view the result of Jinja2 processing with the Jinja2 flag <span class="lstinline"><span 
+<!--l. 2050--><p class="indent" >   To view the result of Jinja2 processing with the Jinja2 flag <span class="lstinline"><span 
 class="pcrr7t-">MULTI</span></span> set to <span class="lstinline"><span 
-class="pcrr7t-">False</span></span>:  <!--l. 2054-->
+class="pcrr7t-">False</span></span>:  <!--l. 2053-->
    <div class="lstlisting" id="listing-64"><span class="label"><a 
  id="x8-59027r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -8990,7 +8990,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">jinja2</span>
    
    </div>
-   <!--l. 2058-->
+   <!--l. 2057-->
    <div class="lstlisting" id="listing-65"><span class="label"><a 
  id="x8-59028r1"></a></span><span 
 class="pcrr7t-">title</span><span 
@@ -9082,9 +9082,9 @@ class="pcrr7t-">!</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 2068--><p class="indent" >   And with <span class="lstinline"><span 
+<!--l. 2067--><p class="indent" >   And with <span class="lstinline"><span 
 class="pcrr7t-">MULTI</span></span> set to <span class="lstinline"><span 
-class="pcrr7t-">True</span></span>:  <!--l. 2070-->
+class="pcrr7t-">True</span></span>:  <!--l. 2069-->
    <div class="lstlisting" id="listing-66"><span class="label"><a 
  id="x8-59035r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -9107,7 +9107,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">jinja2</span>
    
    </div>
-   <!--l. 2074-->
+   <!--l. 2073-->
    <div class="lstlisting" id="listing-67"><span class="label"><a 
  id="x8-59036r1"></a></span><span 
 class="pcrr7t-">title</span><span 
@@ -9316,8 +9316,8 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">BYE</span>
    
    </div>
-<!--l. 2092--><p class="noindent" >
-<!--l. 2092--><p class="indent" >    <h4 id="7.25" class="subsectionHead"> <span class="titlemark"> <a href="#7.25"> 7.25</a>  <a 
+<!--l. 2091--><p class="noindent" >
+<!--l. 2091--><p class="indent" >    <h4 id="7.25" class="subsectionHead"> <span class="titlemark"> <a href="#7.25"> 7.25</a>  <a 
  id="x8-600007.25"></a>Task Retry On Failure </span></h4>
    <div 
 class="colorbox" id="colorbox15"> suite: <span class="lstinline"><span 
@@ -9329,11 +9329,11 @@ class="pcrr7t-">retry</span></span> </div>
                                                                                          
 
                                                                                          
-<!--l. 2097--><p class="indent" >   Tasks can be configured to retry a number of times if they fail. An environment variable <span class="lstinline"><span 
+<!--l. 2096--><p class="indent" >   Tasks can be configured to retry a number of times if they fail. An environment variable <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_TASK_TRY_NUBMER</span></span>
 increments from 1 on each successive try, and is passed to the task to allow different behaviour on the retry:
-<!--l. 2102--><div class="lstinputlisting">
+<!--l. 2101--><div class="lstinputlisting">
 <a 
  id="x8-60001"></a>
    <span 
@@ -9522,25 +9522,25 @@ class="pcrr7t-">"</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 2104--><p class="indent" >   When a task with configured retries fails, its cylc task proxy goes into the <span 
+<!--l. 2103--><p class="indent" >   When a task with configured retries fails, its cylc task proxy goes into the <span 
 class="cmti-10">retrying </span>state until the next retry
 delay is up, then it resubmits. It only enters the <span 
 class="cmti-10">failed </span>state on a final definitive failure.
-<!--l. 2109--><p class="indent" >   Experiment with <span class="lstinline"><span 
+<!--l. 2108--><p class="indent" >   Experiment with <span class="lstinline"><span 
 class="pcrr7t-">tut</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">oneoff</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">retry</span></span> to see how this works.
-<!--l. 2111--><p class="noindent" >
-<!--l. 2111--><p class="indent" >    <h4 id="7.26" class="subsectionHead"> <span class="titlemark"> <a href="#7.26"> 7.26</a>  <a 
+<!--l. 2110--><p class="noindent" >
+<!--l. 2110--><p class="indent" >    <h4 id="7.26" class="subsectionHead"> <span class="titlemark"> <a href="#7.26"> 7.26</a>  <a 
  id="x8-610007.26"></a>Other Users&#8217; Suites </span></h4>
-<!--l. 2113--><p class="indent" >   If you have read access to another user&#8217;s account (even on another host) it is possible to use <span class="lstinline"><span 
+<!--l. 2112--><p class="indent" >   If you have read access to another user&#8217;s account (even on another host) it is possible to use <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">monitor</span></span> to
 look at their suite&#8217;s progress without full shell access to their account. To do this, you will need to copy their suite
-passphrase to  <!--l. 2118-->
+passphrase to  <!--l. 2117-->
    <div class="lstlisting" id="listing-68"><span class="label"><a 
  id="x8-61001r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -9561,10 +9561,10 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">passphrase</span>
    
    </div>
-<!--l. 2121--><p class="indent" >   (use of the host and owner names is optional here - see&#x00A0;<a 
+<!--l. 2120--><p class="indent" >   (use of the host and owner names is optional here - see&#x00A0;<a 
 href="cug-htmlse12.html#x13-17200012.6.1">12.6.1<!--tex4ht:ref: passphrases --></a>) <span 
 class="cmti-10">and </span>also retrieve the port number of the running
-suite from, <!--l. 2123-->
+suite from, <!--l. 2122-->
    <div class="lstlisting" id="listing-69"><span class="label"><a 
  id="x8-61002r1"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -9581,7 +9581,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">SUITE_NAME</span>
    
    </div>
-<!--l. 2126--><p class="indent" >   Once you have this information, you can run <!--l. 2127-->
+<!--l. 2125--><p class="indent" >   Once you have this information, you can run <!--l. 2126-->
    <div class="lstlisting" id="listing-70"><span class="label"><a 
  id="x8-61003r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -9604,16 +9604,16 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">SUITE_NAME</span>
    
    </div>
-<!--l. 2130--><p class="indent" >   to view the progress of their suite.
-<!--l. 2132--><p class="indent" >   Other suite-connecting commands work in the same way too; see&#x00A0;<a 
+<!--l. 2129--><p class="indent" >   to view the progress of their suite.
+<!--l. 2131--><p class="indent" >   Other suite-connecting commands work in the same way too; see&#x00A0;<a 
 href="cug-htmlse12.html#x13-17700012.10">12.10<!--tex4ht:ref: RemoteControl --></a>.
-<!--l. 2135--><p class="noindent" >
-<!--l. 2135--><p class="indent" >    <h4 id="7.27" class="subsectionHead"> <span class="titlemark"> <a href="#7.27"> 7.27</a>  <a 
+<!--l. 2134--><p class="noindent" >
+<!--l. 2134--><p class="indent" >    <h4 id="7.27" class="subsectionHead"> <span class="titlemark"> <a href="#7.27"> 7.27</a>  <a 
  id="x8-620007.27"></a>Searching A Suite </span></h4>
-<!--l. 2137--><p class="indent" >   The cylc suite search tool reports pattern matches in the suite definition by line number, suite section, and
+<!--l. 2136--><p class="indent" >   The cylc suite search tool reports pattern matches in the suite definition by line number, suite section, and
 file, even if the suite uses nested include-files, and by file and line number for matches in suite bin
 scripts:
-   <!--l. 2143-->
+   <!--l. 2142-->
    <div class="lstlisting" id="listing-71"><span class="label"><a 
  id="x8-62001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -9770,10 +9770,10 @@ class="pcrr7t-">...</span>
                                                                                          
 
                                                                                          
-<!--l. 2157--><p class="noindent" >
-<!--l. 2157--><p class="indent" >    <h4 id="7.28" class="subsectionHead"> <span class="titlemark"> <a href="#7.28"> 7.28</a>  <a 
+<!--l. 2156--><p class="noindent" >
+<!--l. 2156--><p class="indent" >    <h4 id="7.28" class="subsectionHead"> <span class="titlemark"> <a href="#7.28"> 7.28</a>  <a 
  id="x8-630007.28"></a>Other Things To Try </span></h4>
-<!--l. 2159--><p class="indent" >   Almost every feature of cylc can be tested quickly and easily with a simple dummy suite. You can
+<!--l. 2158--><p class="indent" >   Almost every feature of cylc can be tested quickly and easily with a simple dummy suite. You can
 write your own, or start from one of the example suites in <span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">path</span><span 
@@ -9834,12 +9834,12 @@ href="cug-htmlse12.html#x13-18000012.13">12.13<!--tex4ht:ref: InternalQueues -->
                                                                                          
 
                                                                                          
-   <!--l. 2194--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 2193--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse8.html" >next</a>] [<a 
 href="cug-htmlse6.html" >prev</a>] [<a 
 href="cug-htmlse6.html#tailcug-htmlse6.html" >prev-tail</a>] [<a 
 href="cug-htmlse7.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse7.html" >up</a>] </p></div>
-<!--l. 2194--><p class="indent" >   <a 
+<!--l. 2193--><p class="indent" >   <a 
  id="tailcug-htmlse7.html"></a>   
 </body></html> 

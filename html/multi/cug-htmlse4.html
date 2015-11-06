@@ -3,21 +3,21 @@
 <html > 
 <head><title>Installation</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
-<meta name="generator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
-<meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-10-23 10:44:00"> 
+<meta name="date" content="2015-11-06 06:46:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 541--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 540--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse5.html" >next</a>] [<a 
 href="cug-htmlse3.html" >prev</a>] [<a 
 href="cug-htmlse3.html#tailcug-htmlse3.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse4.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse4.html" >up</a>] </p></div>
-<!--l. 541--><p class="indent" >    <h3 id="4" class="sectionHead"><span class="titlemark"> <a href="#4">4</a>  <a 
+<!--l. 540--><p class="indent" >    <h3 id="4" class="sectionHead"><span class="titlemark"> <a href="#4">4</a>  <a 
  id="x5-140004"></a>Installation </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >4.1 <a 
 href="#x5-150004.1">Install The External Dependencies</a></span>
@@ -30,15 +30,15 @@ href="#x5-200004.4">Local User Installation</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >4.5 <a 
 href="#x5-220004.5">Upgrading To New Cylc Versions</a></span>
    </div>
-<!--l. 544--><p class="noindent" >
-<!--l. 544--><p class="indent" >    <h4 id="4.1" class="subsectionHead"> <span class="titlemark"> <a href="#4.1"> 4.1</a>  <a 
+<!--l. 543--><p class="noindent" >
+<!--l. 543--><p class="indent" >    <h4 id="4.1" class="subsectionHead"> <span class="titlemark"> <a href="#4.1"> 4.1</a>  <a 
  id="x5-150004.1"></a>Install The External Dependencies </span></h4>
-<!--l. 546--><p class="indent" >   First install Pyro, graphviz, Pygraphviz, Jinja2, <span class="TEX">T<span 
+<!--l. 545--><p class="indent" >   First install Pyro, graphviz, Pygraphviz, Jinja2, <span class="TEX">T<span 
 class="E">E</span>X</span>, and ImageMagick using the package manager on your
 system if possible; otherwise download the packages manually and follow their native installation documentation. On
 a modern Linux system, this is very easy. For example, to install cylc-5.1.0 on the Fedora 18 Linux
 distribution:
-   <!--l. 553-->
+   <!--l. 552-->
    <div class="lstlisting" id="listing-4"><span class="label"><a 
  id="x5-15001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -264,11 +264,11 @@ class="pcrr7t-">system</span><span
 class="pcrr7t-">)</span>
    
    </div>
-<!--l. 574--><p class="indent" >   If you do not have root access on your intended cylc host machine and cannot get a sysadmin to do this at
+<!--l. 573--><p class="indent" >   If you do not have root access on your intended cylc host machine and cannot get a sysadmin to do this at
 system level, see&#x00A0;<a 
 href="#x5-200004.4">4.4<!--tex4ht:ref: LocalInstall --></a> for tips on installing everything to a local user account.
-<!--l. 578--><p class="indent" >   Now check that everything other than the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
-class="E">E</span>X</span></span>packages is installed properly:  <!--l. 581-->
+<!--l. 577--><p class="indent" >   Now check that everything other than the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+class="E">E</span>X</span></span>packages is installed properly:  <!--l. 580-->
    <div class="lstlisting" id="listing-5"><span class="label"><a 
  id="x5-15019r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -385,32 +385,32 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">ok</span>
    
    </div>
-<!--l. 593--><p class="indent" >   If this command reports any errors then the packages concerned are not installed, not in the system Python
+<!--l. 592--><p class="indent" >   If this command reports any errors then the packages concerned are not installed, not in the system Python
 search path, or (for a local install) not present in your <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PYTHONPATH</span></span> variable.
-<!--l. 597--><p class="noindent" >
-<!--l. 597--><p class="indent" >    <h4 id="4.2" class="subsectionHead"> <span class="titlemark"> <a href="#4.2"> 4.2</a>  <a 
+<!--l. 596--><p class="noindent" >
+<!--l. 596--><p class="indent" >    <h4 id="4.2" class="subsectionHead"> <span class="titlemark"> <a href="#4.2"> 4.2</a>  <a 
  id="x5-160004.2"></a>Install Cylc </span></h4>
-<!--l. 600--><p class="indent" >   Cylc installs into a normal user account, as an unpacked release tarball or a git repository clone. See the
+<!--l. 599--><p class="indent" >   Cylc installs into a normal user account, as an unpacked release tarball or a git repository clone. See the
 <span class="lstinline"><span 
 class="pcrr7t-">INSTALL</span></span> file in the source tree for instructions (also listed in&#x00A0;<a 
-href="cug-htmlse23.html#x24-549000G">G<!--tex4ht:ref: INSTALL --></a>).
-<!--l. 604--><p class="noindent" >
-<!--l. 604--><p class="indent" >    <h4 id="4.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#4.2.1"> 4.2.1</a>  <a 
+href="cug-htmlse23.html#x24-554000G">G<!--tex4ht:ref: INSTALL --></a>).
+<!--l. 603--><p class="noindent" >
+<!--l. 603--><p class="indent" >    <h4 id="4.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#4.2.1"> 4.2.1</a>  <a 
  id="x5-170004.2.1"></a>Create A Site Config File </span></h4>
-<!--l. 606--><p class="indent" >   Site and user global config files define some important parameters that affect all suites, some of which may need
+<!--l. 605--><p class="indent" >   Site and user global config files define some important parameters that affect all suites, some of which may need
 to be customized for your site. See&#x00A0;<a 
 href="cug-htmlse6.html#x7-240006">6<!--tex4ht:ref: SiteAndUserConfiguration --></a> for how to generate an initial site file and where to install it. All legal site and
 user global config items are defined in&#x00A0;<a 
-href="cug-htmlse18.html#x19-362000B">B<!--tex4ht:ref: SiteRCReference --></a>.
+href="cug-htmlse18.html#x19-363000B">B<!--tex4ht:ref: SiteRCReference --></a>.
                                                                                          
 
                                                                                          
-<!--l. 612--><p class="noindent" >
-<!--l. 612--><p class="indent" >    <h4 id="4.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#4.2.2"> 4.2.2</a>  <a 
+<!--l. 611--><p class="noindent" >
+<!--l. 611--><p class="indent" >    <h4 id="4.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#4.2.2"> 4.2.2</a>  <a 
  id="x5-180004.2.2"></a>Configure Site Environment on Job Hosts </span></h4>
-<!--l. 614--><p class="indent" >   If your users submit task jobs to hosts other than the hosts they use to run their suites, you should ensure that
+<!--l. 613--><p class="indent" >   If your users submit task jobs to hosts other than the hosts they use to run their suites, you should ensure that
 the job hosts have the correct environment for running cylc. A cylc suite generates task job scripts
 that normally invoke <span class="lstinline"><span 
 class="pcrr7t-">bash</span></span>. The job will attempt to source the first of these files it finds to set up its
@@ -462,7 +462,7 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">default</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span></li></ul>
-<!--l. 626--><p class="indent" >   The <span class="lstinline"><span 
+<!--l. 625--><p class="indent" >   The <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">{</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -503,10 +503,10 @@ class="pcrr7t-">env</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span></span> file and populate it with the appropriate
 contents.
-<!--l. 632--><p class="noindent" >
-<!--l. 632--><p class="indent" >    <h4 id="4.3" class="subsectionHead"> <span class="titlemark"> <a href="#4.3"> 4.3</a>  <a 
+<!--l. 631--><p class="noindent" >
+<!--l. 631--><p class="indent" >    <h4 id="4.3" class="subsectionHead"> <span class="titlemark"> <a href="#4.3"> 4.3</a>  <a 
  id="x5-190004.3"></a>Automated Tests </span></h4>
-<!--l. 635--><p class="indent" >   The cylc test battery is primarily intended for developers to check that changes to the source code don&#8217;t break
+<!--l. 634--><p class="indent" >   The cylc test battery is primarily intended for developers to check that changes to the source code don&#8217;t break
 existing functionality. Note that some test failures can be expected to result from suites timing out, even if nothing
 is wrong, if you run too many tests in parallel. See <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -517,10 +517,10 @@ class="pcrr7t-">battery</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">help</span></span>.
-<!--l. 641--><p class="noindent" >
-<!--l. 641--><p class="indent" >    <h4 id="4.4" class="subsectionHead"> <span class="titlemark"> <a href="#4.4"> 4.4</a>  <a 
+<!--l. 640--><p class="noindent" >
+<!--l. 640--><p class="indent" >    <h4 id="4.4" class="subsectionHead"> <span class="titlemark"> <a href="#4.4"> 4.4</a>  <a 
  id="x5-200004.4"></a>Local User Installation </span></h4>
-<!--l. 644--><p class="indent" >   It is possible to install cylc and all of its software prerequisites under your own user account. Cylc itself is
+<!--l. 643--><p class="indent" >   It is possible to install cylc and all of its software prerequisites under your own user account. Cylc itself is
 already designed to be installed into a normal user account, just follow the instructions above in&#x00A0;<a 
 href="#x5-160004.2">4.2<!--tex4ht:ref: InstallCylc --></a>. For the other
 packages, depending on the installation method used for each, it is just a matter of learning how to change the
@@ -540,8 +540,8 @@ class="pcrr7t-">local</span></span> and then
 ensuring that the resulting local package paths are set properly in your <span class="lstinline"><span 
 class="pcrr7t-">PYTHONPATH</span></span> environment
 variable.
-<!--l. 654--><p class="noindent" >
-<!--l. 654--><p class="indent" >    <h4 id="4.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#4.4.1"> 4.4.1</a>  <a 
+<!--l. 653--><p class="noindent" >
+<!--l. 653--><p class="indent" >    <h4 id="4.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#4.4.1"> 4.4.1</a>  <a 
  id="x5-210004.4.1"></a>Some Guidelines </span></h4>
      <ul class="itemize1">
      <li class="itemize">For <span class="lstinline"><span 
@@ -551,7 +551,7 @@ class="pcrr7t-">setup</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">install</span></span> installation: <!--l. 660-->
+class="pcrr7t-">install</span></span> installation: <!--l. 659-->
      <div class="lstlisting" id="listing-6"><span class="label"><a 
  id="x5-21001r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -578,7 +578,7 @@ class="pcrr7t-">path</span>
      
      </div>
      </li>
-     <li class="itemize">For building graphviz from source: <!--l. 664-->
+     <li class="itemize">For building graphviz from source: <!--l. 663-->
      <div class="lstlisting" id="listing-7"><span class="label"><a 
  id="x5-21002r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -623,7 +623,7 @@ class="pcrr7t-">install</span>
 
                                                                                          
      </div>
-     <!--l. 669--><p class="noindent" >The graphviz build reportedly may fail on systems that do not have QT installed, hence the
+     <!--l. 668--><p class="noindent" >The graphviz build reportedly may fail on systems that do not have QT installed, hence the
      <span class="lstinline"><span 
 class="pcrr7t-">./</span><span 
 class="pcrr7t-">configure</span><span 
@@ -640,7 +640,7 @@ class="pcrr7t-">no</span></span> option above. The graphviz lib and include loca
 class="pcrr7t-">setup</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">py</span></span> file may need to be edited to point at your local graphviz library and include
-     directories: <!--l. 675-->
+     directories: <!--l. 674-->
      <div class="lstlisting" id="listing-8"><span class="label"><a 
  id="x5-21005r1"></a></span><span 
 class="pcrr7t-">#</span><span 
@@ -698,9 +698,9 @@ class="pcrr7t-">easy_install</span></span> the local install location may
 class="pcrr7t-">PYTHONPATH</span></span> <span 
 class="cmti-10">before </span>you initiate the install
      process.</li></ul>
-<!--l. 686--><p class="indent" >   Finally, check that everything (other than <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+<!--l. 685--><p class="indent" >   Finally, check that everything (other than <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
 class="E">E</span>X</span></span>for document processing) is installed:
-   <!--l. 690-->
+   <!--l. 689-->
    <div class="lstlisting" id="listing-9"><span class="label"><a 
  id="x5-21008r1"></a></span><span 
 class="pcrr7t-">shell</span><span 
@@ -817,26 +817,26 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">ok</span>
    
    </div>
-<!--l. 702--><p class="indent" >   If this command reports any errors then the packages concerned are not installed, not in the system Python
+<!--l. 701--><p class="indent" >   If this command reports any errors then the packages concerned are not installed, not in the system Python
 search path, or (for a local install) not present in your <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">PYTHONPATH</span></span> variable.
-<!--l. 706--><p class="noindent" >
-<!--l. 706--><p class="indent" >    <h4 id="4.5" class="subsectionHead"> <span class="titlemark"> <a href="#4.5"> 4.5</a>  <a 
+<!--l. 705--><p class="noindent" >
+<!--l. 705--><p class="indent" >    <h4 id="4.5" class="subsectionHead"> <span class="titlemark"> <a href="#4.5"> 4.5</a>  <a 
  id="x5-220004.5"></a>Upgrading To New Cylc Versions </span></h4>
-<!--l. 708--><p class="indent" >   Upgrading is just a matter of unpacking the new cylc release. Successive cylc releases can be installed in parallel
+<!--l. 707--><p class="indent" >   Upgrading is just a matter of unpacking the new cylc release. Successive cylc releases can be installed in parallel
 as suggested in the <span class="lstinline"><span 
 class="pcrr7t-">INSTALL</span></span> file (<a 
-href="cug-htmlse23.html#x24-549000G">G<!--tex4ht:ref: INSTALL --></a>).
+href="cug-htmlse23.html#x24-554000G">G<!--tex4ht:ref: INSTALL --></a>).
                                                                                          
 
                                                                                          
-   <!--l. 712--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 711--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse5.html" >next</a>] [<a 
 href="cug-htmlse3.html" >prev</a>] [<a 
 href="cug-htmlse3.html#tailcug-htmlse3.html" >prev-tail</a>] [<a 
 href="cug-htmlse4.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse4.html" >up</a>] </p></div>
-<!--l. 712--><p class="indent" >   <a 
+<!--l. 711--><p class="indent" >   <a 
  id="tailcug-htmlse4.html"></a>   
 </body></html> 

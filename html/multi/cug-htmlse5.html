@@ -3,36 +3,36 @@
 <html > 
 <head><title>On The Meaning Of Cycle  and Cycle Point In Cylc</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
-<meta name="generator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
-<meta name="originator" content="TeX4ht (http://www.tug.org/tex4ht/)"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-10-23 10:44:00"> 
+<meta name="date" content="2015-11-06 06:46:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 712--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 711--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse6.html" >next</a>] [<a 
 href="cug-htmlse4.html" >prev</a>] [<a 
 href="cug-htmlse4.html#tailcug-htmlse4.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse5.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse5.html" >up</a>] </p></div>
-<!--l. 712--><p class="indent" >    <h3 id="5" class="sectionHead"><span class="titlemark"> <a href="#5">5</a>  <a 
+<!--l. 711--><p class="indent" >    <h3 id="5" class="sectionHead"><span class="titlemark"> <a href="#5">5</a>  <a 
  id="x6-230005"></a>On The Meaning Of <span 
 class="cmti-10">Cycle  </span>and <span 
 class="cmti-10">Cycle Point </span>In Cylc </span></h3> <div class="sectionTOCS">
    </div>
-<!--l. 714--><p class="indent" >   The problem with the word &#8220;cycle&#8221; is that it is often used to refer to a series of times (e.g. &#8220;an hourly cycle&#8221;) as
+<!--l. 713--><p class="indent" >   The problem with the word &#8220;cycle&#8221; is that it is often used to refer to a series of times (e.g. &#8220;an hourly cycle&#8221;) as
 well as a particular time (e.g. &#8220;current cycle&#8221; or &#8220;current cycle point&#8221;). Here, we use &#8220;cycle point&#8221; to refer to a
 particular (usually date-time) item. If a task has an hourly date-time cycle that starts at 2014-01-01T00 and ends at
 2014-01-02T00, the first &#8220;cycle point&#8221; will be 2014-01-01T01, the second &#8220;cycle point&#8221; will be 2014-01-01T02,
 etc.
-<!--l. 722--><p class="indent" >   You may be accustomed to the idea that a forecasting suite has a &#8220;current cycle&#8221; (our nomenclature: &#8220;current
+<!--l. 721--><p class="indent" >   You may be accustomed to the idea that a forecasting suite has a &#8220;current cycle&#8221; (our nomenclature: &#8220;current
 cycle point&#8221;), which is typically the analysis time or nominal start time of the main forecast model(s) in the suite,
 and that the whole suite advances to the next forecast cycle point when all tasks in the current cycle point have
 finished (or even when a particular wall clock time is reached, in real time operation). As explained in the
 Introduction, this is not how cylc works.
-<!--l. 730--><p class="indent" >   Cylc suites advance by means of individual tasks with private cycle points (times) independently spawning
+<!--l. 729--><p class="indent" >   Cylc suites advance by means of individual tasks with private cycle points (times) independently spawning
 successors at the next valid cycle point for the task, not by incrementing a suite-wide forecast cycle point. Each task
 will be submitted when its own prerequisites are satisfied, regardless of other tasks with other cycle points running,
 or not, at the time. It may still be convenient at times, however, to refer to the &#8220;current cycle point&#8221;, the &#8220;previous
@@ -44,12 +44,12 @@ operation.
                                                                                          
 
                                                                                          
-   <!--l. 744--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 743--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse6.html" >next</a>] [<a 
 href="cug-htmlse4.html" >prev</a>] [<a 
 href="cug-htmlse4.html#tailcug-htmlse4.html" >prev-tail</a>] [<a 
 href="cug-htmlse5.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse5.html" >up</a>] </p></div>
-<!--l. 744--><p class="indent" >   <a 
+<!--l. 743--><p class="indent" >   <a 
  id="tailcug-htmlse5.html"></a>  
 </body></html> 
