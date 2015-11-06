@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.7.2">6.7.2</a>
     <li><a href="#6.7.1">6.7.1</a>
     <li><a href="#6.7.0">6.7.0</a>
     <li><a href="#6.6.1">6.6.1</a>
@@ -63,6 +64,34 @@
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
 
+<a name="6.7.2"/>
+    <h2>6.7.2</h2>
+
+    <h3>6.7.2 enhancements</h3>
+		<ul>
+				<li> You can now live "tail-follow" local and remote suite and task job
+				logs in the terminal with <code>cylc cat-log --tail</code>.
+				<li> <code>cylc suite-state</code> can now take a custom cycle point
+				format if the target suite runs a different format.  Plus a
+				corresponding option for automatic suite-polling tasks.
+				<li> Configurable job log tailer command templates, for task hosts with
+				non Gnu-compatible 'tail' and 'ps' commands.
+		</ul>
+	
+    <h3>6.7.2 fixes</h3>
+		<ul>
+				<li> Restored validation on hosts with graphing disabled.
+				<li> Restored backward compatibility with pre-6.5.0 suite clients
+				(principally for any old versions of <code>cylc scan</code> still in
+				use).
+				<li> Enabled host-specific task event handler retry delays (global
+				config).
+				<li> A sensible validation error for a missing suite graph.
+				<li> (AIX hosts) Fixed polling of loadleveler jobs (broken since 6.7.0)
+				<li> (AIX hosts) Tail-following task job logs can now be made to work
+				on AIX hosts via a custom job log tailer command template (documented).  
+		</ul>
+	
 <a name="6.7.1"/>
     <h2>6.7.1</h2>
 
