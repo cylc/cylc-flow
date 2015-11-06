@@ -31,12 +31,12 @@ export CYLC_TEST_BATCH_SITE_DIRECTIVES=$( \
     cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')
 if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == None ]]
 then
-    skip_all "[directive tests]$BATCH_SYS_NAME host not defined"
+    skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"
 fi
 # check the host is reachable
 if ! ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" true 1>/dev/null 2>&1
 then
-    skip_all "Host "$CYLC_TEST_BATCH_TASK_HOST" unreachable"
+    skip_all "Host \"$CYLC_TEST_BATCH_TASK_HOST\" unreachable"
 fi
 
 set_test_number 2

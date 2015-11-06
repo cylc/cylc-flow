@@ -22,7 +22,7 @@ export CYLC_TEST_HOST=$( \
     cylc get-global-config -i '[test battery]remote host with shared fs' \
     2>'/dev/null')
 if [[ -z "$CYLC_TEST_HOST" ]]; then
-    skip_all '[test battery]remote host with shared fs: not defined'
+    skip_all '"[test battery]remote host with shared fs": not defined'
 fi
 set_test_number 2
 #-------------------------------------------------------------------------------

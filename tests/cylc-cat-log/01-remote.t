@@ -21,7 +21,7 @@
 RC_ITEM='[test battery]remote host'
 export CYLC_TEST_HOST=$(cylc get-global-config -i "${RC_ITEM}" 2>'/dev/null')
 if [[ -z $CYLC_TEST_HOST ]]; then
-    skip_all '[test battery]remote host: not defined'
+    skip_all '"[test battery]remote host": not defined'
 fi
 set_test_number 14
 export CYLC_CONF_PATH=

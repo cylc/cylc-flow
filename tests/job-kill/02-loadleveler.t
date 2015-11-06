@@ -31,7 +31,7 @@ fi
 # check the host is reachable
 if ! ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" true 1>/dev/null 2>&1
 then
-    skip_all "Host "$CYLC_TEST_BATCH_TASK_HOST" unreachable"
+    skip_all "Host \"$CYLC_TEST_BATCH_TASK_HOST\" unreachable"
 fi
 set_test_number 2
 

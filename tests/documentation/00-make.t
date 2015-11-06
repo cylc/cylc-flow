@@ -19,7 +19,7 @@
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 if [[ ! -w $CYLC_DIR/doc ]]; then
-    skip_all '$CYLC_DIR/doc: not writable'
+    skip_all '"$CYLC_DIR/doc": not writable'
 fi
 #-------------------------------------------------------------------------------
 set_test_number 1
