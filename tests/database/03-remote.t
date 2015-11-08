@@ -20,7 +20,7 @@
 export CYLC_TEST_HOST=$( \
     cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '[test battery]remote host: not defined'
+    skip_all '"[test battery]remote host": not defined'
 fi
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

@@ -22,12 +22,12 @@ RC_PREF='[test battery][batch systems][pbs]'
 export CYLC_TEST_HOST="$( \
     cylc get-global-config -i "${RC_PREF}host" 2>'/dev/null')"
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
-    skip_all '[test battery][batch systems][pbs]host: not defined'
+    skip_all '"[test battery][batch systems][pbs]host": not defined'
 fi
 ERR_VIEWER="$(cylc get-global-config -i "${RC_PREF}err viewer" 2>'/dev/null')"
 OUT_VIEWER="$(cylc get-global-config -i "${RC_PREF}out viewer" 2>'/dev/null')"
 if [[ -z "${ERR_VIEWER}" || -z "${OUT_VIEWER}" ]]; then
-    skip_all "[test battery][pbs]* viewer: not defined"
+    skip_all '"[test battery][pbs]* viewer": not defined'
 fi
 export CYLC_TEST_DIRECTIVES="$( \
     cylc get-global-config -i "${RC_PREF}[directives]" 2>'/dev/null')"

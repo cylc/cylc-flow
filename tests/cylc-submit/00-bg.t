@@ -27,7 +27,7 @@ if [[ "${TEST_NAME_BASE}" == *remote* ]]; then
     RC_ITEM="[test battery]${CONF_KEY}"
     HOST="$(cylc get-global-config "--item=${RC_ITEM}" 2>'/dev/null')"
     if [[ -z "${HOST}" ]]; then
-        skip_all "[test battery]${CONF_KEY} not set"
+        skip_all "\"[test battery]${CONF_KEY}\" not set"
     fi
     CYLC_TEST_HOST="${HOST}"
 fi
@@ -48,7 +48,7 @@ if [[ -n "${CONFIGURED_SYS_NAME}" ]]; then
     CYLC_TEST_HOST="$( \
         cylc get-global-config "--item=${ITEM_KEY}" 2>'/dev/null')"
     if [[ -z "${CYLC_TEST_HOST}" ]]; then
-        skip_all "${ITEM_KEY} not set"
+        skip_all "\"${ITEM_KEY}\" not set"
     fi
     ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME][directives]"
     CYLC_TEST_DIRECTIVES="$( \

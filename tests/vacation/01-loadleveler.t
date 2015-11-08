@@ -25,7 +25,7 @@ RC_PREV="[test battery][batch systems][loadleveler]"
 export CYLC_TEST_HOST=$( \
     cylc get-global-config -i "${RC_PREV}host" 2>'/dev/null')
 if [[ -z $CYLC_TEST_HOST ]]; then
-    skip_all '[test battery][batch systems][loadleveler]host: not defined'
+    skip_all '"[test battery][batch systems][loadleveler]host": not defined'
 fi
 set_test_number 6
 export CYLC_TEST_DIRECTIVES=$( \
