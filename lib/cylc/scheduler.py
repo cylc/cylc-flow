@@ -855,8 +855,8 @@ class scheduler(object):
             self.config.cfg['cylc']['log resolved dependencies'] = True
 
         elif self.reference_test_mode:
-            req = self.config.cfg[
-                'cylc']['reference test']['required run mode']
+            rtc = self.config.cfg['cylc']['reference test']
+            req = rtc['required run mode']
             if req and req != self.run_mode:
                 raise SchedulerError(
                     'ERROR: suite allows only ' + req + ' reference tests')
@@ -865,9 +865,8 @@ class scheduler(object):
             if handlers:
                 print >> sys.stderr, (
                     'WARNING: replacing shutdown handlers for reference test')
-            self.config.cfg['cylc']['event hooks']['shutdown handler'] = (
-                [self.config.cfg['cylc']['reference test'][
-                    'suite shutdown event handler']])
+            self.config.cfg['cylc']['event hooks']['shutdown handler'] = [
+                rtc['suite shutdown event handler']]
             self.config.cfg['cylc']['log resolved dependencies'] = True
             self.config.cfg['cylc']['event hooks'][
                 'abort if shutdown handler fails'] = True
@@ -877,15 +876,12 @@ class scheduler(object):
                 self.start_point = get_point(
                     spec.get_start_point_string()) or self.initial_point
                 self.final_point = get_point(spec.get_final_point_string())
-            self.ref_test_allowed_failures = self.config.cfg['cylc'][
-                'reference test']['expected task failures']
-            if not self.config.cfg['cylc']['reference test'][
-                    'allow task failures'] and len(
-                        self.ref_test_allowed_failures) == 0:
+            self.ref_test_allowed_failures = rtc['expected task failures']
+            if (not rtc['allow task failures'] and
+                    not self.ref_test_allowed_failures):
                 self.config.cfg['cylc']['abort if any task fails'] = True
             self.config.cfg['cylc']['event hooks']['abort on timeout'] = True
-            timeout = self.config.cfg['cylc'][
-                'reference test'][self.run_mode + ' mode suite timeout']
+            timeout = rtc[self.run_mode + ' mode suite timeout']
             if not timeout:
                 raise SchedulerError(
                     'ERROR: timeout not defined for %s reference tests' % (
