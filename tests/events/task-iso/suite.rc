@@ -10,7 +10,7 @@ title = "test all event hooks"
     [[environment]]
         EVNTLOG = {{ EVNTLOG }}
     [[reference test]]
-        live mode suite timeout = PT45S
+        live mode suite timeout = PT1M
         suite shutdown event handler = log-check.sh
         expected task failures = bar.1, baz.1
 
@@ -61,11 +61,11 @@ fi"""
 
      [[baz]]
         # submitted, submission timeout, started, failed
-        init-script = "sleep 5"
-        script = "false"
+        init-script = sleep 5
+        script = false
         [[[event hooks]]]
             submitted handler = {{ HANDLER }}
             started handler = {{ HANDLER }}
             failed handler = {{ HANDLER }}
-            submission timeout = PT3S
+            submission timeout = PT1S
             submission timeout handler = {{ HANDLER }}

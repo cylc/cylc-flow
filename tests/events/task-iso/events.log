@@ -2,7 +2,7 @@ EVENT                TASK     MESSAGE
 retry                foo.1    job failed, retrying in PT3S
 submission retry     bar.1    job submission failed, submit-retrying in PT3S
 submitted            baz.1    job submitted
-submission timeout   baz.1    job submitted PT3S ago, but has not started
+submission timeout   baz.1    job submitted PT1S ago, but has not started
 submission failed    bar.1    job submission failed
 execution timeout    foo.1    job started PT3S ago, but has not finished
 started              baz.1    job started
