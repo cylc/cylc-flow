@@ -1,4 +1,8 @@
 #!jinja2
+[cylc]
+    [[event hooks]]
+        timeout = PT2M
+        abort on timeout = True
 [scheduling]
     [[dependencies]]
             graph = """
@@ -29,6 +33,6 @@ rm -f "${CYLC_SUITE_WORK_DIR}/${CYLC_TASK_CYCLE_POINT}/t-remote/file"
             host = {{environ['CYLC_TEST_HOST']}}
     [[t-check-log]]
         script = """
-grep -q 'WARNING - garbage: initialisation did not complete' \
+timeout 30 grep -q 'ERROR - garbage: initialisation did not complete' \
     "${CYLC_SUITE_LOG_DIR}/log"
 """

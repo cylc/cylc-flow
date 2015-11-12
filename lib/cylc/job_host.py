@@ -18,7 +18,8 @@
 """Manage a remote job host."""
 
 import os
-from subprocess import check_call
+from pipes import quote
+from subprocess import Popen, PIPE
 from logging import getLogger, INFO
 import shlex
 
@@ -30,7 +31,18 @@ class RemoteJobHostInitError(Exception):
     """Cannot initialise suite run directory of remote job host."""
 
     def __str__(self):
-        return "%s: initialisation did not complete" % self.args[0]
+        user_at_host, cmd_str, ret_code, out, err = self.args
+        ret = (
+            # user_at_host
+            "%s: initialisation did not complete:\n" +
+            # command  # return code
+            "COMMAND FAILED (%d): %s\n"
+        ) % (user_at_host, ret_code, cmd_str)
+        for label, item in ("STDOUT", out), ("STDERR", err):
+            if item:
+                for line in item.splitlines(True):  # keep newline chars
+                    ret += "COMMAND %s: %s" % (label, line)
+        return ret
 
 
 class RemoteJobHostManager(object):
@@ -74,26 +86,28 @@ class RemoteJobHostManager(object):
         suite_run_py = os.path.join(suite_run_dir, "python")
         if os.path.isdir(suite_run_py):
             sources.append(suite_run_py)
-        try:
-            r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
-                suite_name, 'suite run directory', host, owner)
-            r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
-                suite_name, 'suite job log directory', host, owner)
-            getLogger('main').log(INFO, 'Initialising %s:%s' % (
-                user_at_host, r_suite_run_dir))
+        r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
+            suite_name, 'suite run directory', host, owner)
+        r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
+            suite_name, 'suite job log directory', host, owner)
+        getLogger('main').log(INFO, 'Initialising %s:%s' % (
+            user_at_host, r_suite_run_dir))
 
-            ssh_tmpl = GLOBAL_CFG.get_host_item(
-                'remote shell template', host, owner).replace(" %s", "")
-            scp_tmpl = GLOBAL_CFG.get_host_item(
-                'remote copy template', host, owner)
+        ssh_tmpl = GLOBAL_CFG.get_host_item(
+            'remote shell template', host, owner).replace(" %s", "")
+        scp_tmpl = GLOBAL_CFG.get_host_item(
+            'remote copy template', host, owner)
 
-            cmd1 = shlex.split(ssh_tmpl) + [
-                user_at_host,
-                'mkdir -p "%s" "%s"' % (r_suite_run_dir, r_log_job_dir)]
-            cmd2 = shlex.split(scp_tmpl) + ["-r"] + sources + [
-                user_at_host + ":" + r_suite_run_dir + "/"]
-            for cmd in [cmd1, cmd2]:
-                check_call(cmd)
-        except Exception:
-            raise RemoteJobHostInitError(user_at_host)
+        cmd1 = shlex.split(ssh_tmpl) + [
+            "-n", user_at_host,
+            'mkdir', '-p', r_suite_run_dir, r_log_job_dir]
+        cmd2 = shlex.split(scp_tmpl) + ["-r"] + sources + [
+            user_at_host + ":" + r_suite_run_dir + "/"]
+        for cmd in [cmd1, cmd2]:
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            out, err = proc.communicate()
+            if proc.wait():
+                raise RemoteJobHostInitError(
+                    user_at_host, " ".join([quote(item) for item in cmd]),
+                    proc.returncode, out, err)
         self.initialised_hosts.append(user_at_host)
