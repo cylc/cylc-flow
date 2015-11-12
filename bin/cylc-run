@@ -62,8 +62,9 @@ class start(scheduler):
             __doc__, jset=True,
             argdoc=[("REG", "Suite name"),
                     ("[START_POINT]",
-                     """Initial cycle point or 'now'; """
-                     """overrides the suite definition.""")])
+                     # 31 spaces, initial ident on 2nd line
+                     "Initial cycle point or 'now';\n" +
+                     " " * 31 + "overrides the suite definition.")])
 
         self.parser.add_option(
             "--non-daemon", help="(deprecated: use --no-detach)",

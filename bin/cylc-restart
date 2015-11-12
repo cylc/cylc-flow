@@ -270,9 +270,10 @@ class restart(scheduler):
                 # ignore it and take whatever the suite.rc file gives us
                 if self.start_point is not None:
                     print >> sys.stderr, (
-                        """WARNING: I'm ignoring the old initial cycle point"""
-                        """ as requested, but I can't ignore the one set in"""
-                        """ the suite definition.""")
+                        "WARNING: I'm ignoring the old initial cycle point"
+                        " as requested,\n"
+                        "but I can't ignore the one set in"
+                        " the suite definition.")
             elif self.start_point is not None:
                 # a start cycle was given in the suite.rc file
                 if self.start_point != state_start_point:
@@ -302,9 +303,10 @@ class restart(scheduler):
                 # take whatever the command line or suite.rc file gives us
                 if self.stop_point is not None:
                     print >> sys.stderr, (
-                        """WARNING: I'm ignoring the old final cycle point"""
-                        """ as requested, but I can't ignore the one set on"""
-                        """ the command line or in the suite definition.""")
+                        "WARNING: I'm ignoring the old final cycle point"
+                        " as requested,\n"
+                        "but I can't ignore the one set on"
+                        " the command line or in the suite definition.")
             elif self.stop_point is not None:
                 # a stop cycle was given on the command line or suite.rc file
                 if self.stop_point != state_stop_point:
