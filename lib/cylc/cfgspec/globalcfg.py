@@ -105,7 +105,7 @@ SPEC = {
             'single-page html user guide': vdr(
                 vtype='string',
                 default="$CYLC_DIR/doc/html/single/cug-html.html"),
-            },
+        },
         'urls': {
             'internet homepage': vdr(
                 vtype='string', default="http://cylc.github.com/cylc/"),
@@ -253,7 +253,7 @@ SPEC = {
         # control.
         'public': vdr(
             vtype='string',
-            options=PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index('shutdown')+1],
+            options=PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index('shutdown') + 1],
             default="state-totals")
     },
 }
@@ -380,7 +380,7 @@ class GlobalConfig(config):
 
         # suite run dir
         srdir = os.path.join(
-            self.get_host_item('run directory',  host, owner, replace), suite)
+            self.get_host_item('run directory', host, owner, replace), suite)
         # suite workspace
         swdir = os.path.join(
             self.get_host_item('work directory', host, owner, replace), suite)
@@ -461,7 +461,7 @@ class GlobalConfig(config):
         """
         for n in range(archlen, -1, -1):  # archlen...0
             if n > 0:
-                dpath = d+'.'+str(n)
+                dpath = d + '.' + str(n)
             else:
                 dpath = d
             if os.path.exists(dpath):
@@ -470,7 +470,7 @@ class GlobalConfig(config):
                     shutil.rmtree(dpath)
                 else:
                     # roll others over
-                    os.rename(dpath, d + '.' + str(n+1))
+                    os.rename(dpath, d + '.' + str(n + 1))
         self.create_directory(d, name)
 
     def create_directory(self, d, name):

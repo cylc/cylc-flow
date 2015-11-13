@@ -1336,11 +1336,12 @@ class TaskProxy(object):
             "submit_num": self.submit_num})
         self._populate_job_conf(
             rtconfig, local_jobfile_path, common_job_log_path)
-        self.job_conf.update({
-            'use manual completion': use_manual,
-            'pre-script': precommand,
-            'script': command,
-            'post-script': postcommand
+        self.job_conf.update(
+            {
+                'use manual completion': use_manual,
+                'pre-script': precommand,
+                'script': command,
+                'post-script': postcommand,
             }.items()
         )
         self.db_inserts_map[self.TABLE_TASK_JOBS].append({

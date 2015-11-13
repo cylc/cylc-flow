@@ -126,8 +126,8 @@ def main():
             print prefix + task
     elif options.alltasks:
         for task in config.get_task_name_list():
-            items = ['[runtime]['+task+']'+i for i in options.item]
-            print prefix+task,
+            items = ['[runtime][' + task + ']' + i for i in options.item]
+            print prefix + task,
             config.pcfg.idump(
                 items, options.sparse, options.pnative, prefix,
                 options.oneline, none_str=options.none_str)

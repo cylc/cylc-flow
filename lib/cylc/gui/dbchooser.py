@@ -331,7 +331,7 @@ class dbchooser(object):
         # immediately below (it may be possible to delay this till the
         # end of __init___() but it doesn't really matter.
         if self.db:
-            self.dbopt = '--db='+self.db
+            self.dbopt = '--db=' + self.db
         else:
             self.dbopt = ''
 

@@ -1882,7 +1882,7 @@ shown here in the state they were in at the time of triggering.''')
         warmstart_rb.connect(
             "toggled", self.startup_method, "warm", ic_box, is_box)
         restart_rb.connect(
-            "toggled", self.startup_method, "re",   ic_box, is_box)
+            "toggled", self.startup_method, "re", ic_box, is_box)
 
         hbox = gtk.HBox()
 
@@ -2804,7 +2804,7 @@ This is what my suite does:..."""
             cat_menu.append(foo_item)
             com_menu = gtk.Menu()
             foo_item.set_submenu(com_menu)
-            cout = subprocess.Popen(["cylc", "category="+category],
+            cout = subprocess.Popen(["cylc", "category=" + category],
                                     stdout=subprocess.PIPE).communicate()[0]
             commands = cout.rstrip().split()
             for command in commands:

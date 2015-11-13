@@ -132,10 +132,8 @@ class GraphUpdater(threading.Thread):
                 mkdir_p(self.suite_share_dir)
             except Exception as exc:
                 gobject.idle_add(warning_dialog(
-                    "%s\nCannot create graph frames directory." % (
-                        str(exc)).warn
-                    )
-                )
+                    "%s\nCannot create graph frames directory." % (str(exc))
+                ).warn)
                 self.write_dot_frames = False
 
     def clear_graph(self):

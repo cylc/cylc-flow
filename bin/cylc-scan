@@ -80,7 +80,7 @@ def main():
         noforce=True,
         argdoc=[(
             "[HOSTS ...]", "Hosts to scan instead of the configured hosts.")]
-        )
+    )
 
     parser.add_option(
         "-a", "--all", "--all-suites",
@@ -207,7 +207,7 @@ def main():
         for index, state in enumerate(task_state.legal):
             state_legend += "%s%s%s " % (
                 task_state.ctrl[state], state, task_state.ctrl_end)
-            if index == n_states/2:
+            if index == n_states / 2:
                 state_legend += "\n"
         state_legend = state_legend.rstrip()
 

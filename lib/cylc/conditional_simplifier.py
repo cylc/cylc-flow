@@ -68,8 +68,8 @@ class ConditionalSimplifier(object):
             if nest_me[i] == ")":
                 finish = i
                 break
-        bracket_nested = nest_me[0:start+1]
-        bracket_nested.append(self.get_bracketed(nest_me[start+1:finish]))
+        bracket_nested = nest_me[0:start + 1]
+        bracket_nested.append(self.get_bracketed(nest_me[start + 1:finish]))
         bracket_nested.extend(nest_me[finish:len(nest_me)])
         return bracket_nested
 
@@ -93,10 +93,10 @@ class ConditionalSimplifier(object):
         if len(nest_me) <= 3:
             return nest_me
         if found:
-            nested = nest_me[0:found-1]
-            nested += [nest_me[found-1:found+2]]
-            if (found+2) < len(nest_me):
-                nested += nest_me[found+2:]
+            nested = nest_me[0:found - 1]
+            nested += [nest_me[found - 1:found + 2]]
+            if (found + 2) < len(nest_me):
+                nested += nest_me[found + 2:]
             return self.nest_by_oper(nested, oper)
         else:
             return nest_me
@@ -133,7 +133,7 @@ class ConditionalSimplifier(object):
             if found == 0:
                 cleaned = cleaned[2:]
             else:
-                del cleaned[found-1:found+1]
+                del cleaned[found - 1:found + 1]
             return self.clean_expr(cleaned, criterion)
         else:
             return cleaned

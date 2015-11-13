@@ -68,7 +68,7 @@ def graph_suite_popup(reg, cmd_help, defstartc, defstopc, graph_opts,
         reg,
         start_entry.get_text(),
         stop_entry.get_text(),
-        graph_opts,  gcapture_windows,
+        graph_opts, gcapture_windows,
         tmpdir, template_opts, parent_window))
 
     help_button = gtk.Button("_Help")

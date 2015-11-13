@@ -483,7 +483,7 @@ class SuiteConfig(object):
                         )
                         if (get_interval_cls().get_null().TYPE ==
                                 ISO8601_CYCLING_TYPE):
-                            seconds = int(float(offset_string)*3600)
+                            seconds = int(float(offset_string) * 3600)
                             offset_string = "PT%sS" % seconds
                         offset_converted_from_prev = True
                     try:
@@ -1171,7 +1171,7 @@ class SuiteConfig(object):
                 items = copy(pruned_ancestors[ns])
                 items.reverse()
                 for i in range(len(items)):
-                    tmp = 2*i + 1 + len(items[i])
+                    tmp = 2 * i + 1 + len(items[i])
                     if i == 0:
                         tmp -= 1
                     if tmp > maxlen:
@@ -1462,7 +1462,7 @@ class SuiteConfig(object):
 
         # get list of pairs
         special_dependencies = []
-        for i in [0] + range(1, len(tasks)-1):
+        for i in [0] + range(1, len(tasks) - 1):
             lexpression = tasks[i]
 
             if len(tasks) == 1:
@@ -1474,7 +1474,7 @@ class SuiteConfig(object):
                         "ERROR: Lone node groups cannot contain OR" +
                         " conditionals: " + lexpression)
             else:
-                rgroup = tasks[i+1]
+                rgroup = tasks[i + 1]
 
             if rgroup:
                 # '|' (OR) is not allowed on the right side

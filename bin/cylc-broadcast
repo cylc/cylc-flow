@@ -81,7 +81,7 @@ from parsec.validate import validate
 def get_padding(settings, level=0, padding=0):
     level += 1
     for key, val in settings.items():
-        tmp = level*2 + len(key)
+        tmp = level * 2 + len(key)
         if tmp > padding:
             padding = tmp
         if isinstance(val, dict):

@@ -324,7 +324,7 @@ SPEC = {
                 'include': vdr(vtype='string_list'),
                 'exclude': vdr(vtype='string_list'),
             },
-            'simulation mode':  {
+            'simulation mode': {
                 'run time range': vdr(
                     vtype='interval_seconds_list', default=[1, 16]),
                 'simulate failure': vdr(vtype='boolean', default=False),
@@ -343,7 +343,7 @@ SPEC = {
             'job submission': {
                 'method': vdr(vtype='string', default='background'),
                 'command template': vdr(vtype='string'),
-                'shell': vdr(vtype='string',  default='/bin/bash'),
+                'shell': vdr(vtype='string', default='/bin/bash'),
                 'retry delays': vdr(vtype='interval_minutes_list', default=[]),
             },
             'remote': {

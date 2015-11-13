@@ -24,7 +24,7 @@ fi
 
 set_test_number 3
 
-run_ok "${TEST_NAME_BASE}" pep8 \
+run_ok "${TEST_NAME_BASE}" pep8 --ignore=E402 \
     "${CYLC_DIR}/lib/cylc" \
     $(grep -l '#!.*\<python\>' "${CYLC_DIR}/bin/"*)
 cmp_ok "${TEST_NAME_BASE}.stdout" <'/dev/null'

@@ -169,7 +169,10 @@ def pretty_print(incom, choose_dict, indent=True, numbered=False, sort=False):
             else:
                 digit = str(count)
             print digit + '/',
-        print label[item], '.'*(longest-len(label[item])) + '...', incom[item]
+        print (
+            label[item],
+            '.' * (longest - len(label[item])) + '...',
+            incom[item])
 
 # BEGIN MAIN
 

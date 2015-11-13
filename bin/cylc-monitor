@@ -189,7 +189,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     suffix = 'S_T_O_P_P_I_N_G__A_T__' + will_stop_at
                 else:
                     suffix = 'R_U_N_N_I_N_G'
-                divider_str = '_'*len_header
+                divider_str = '_' * len_header
                 divider_str = "\033[1;31m%s%s%s" % (
                     divider_str[:-len(suffix)], suffix, task_state.ctrl_end)
                 blit.append(divider_str)
@@ -204,7 +204,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                             if name in val:
                                 line += " %s" % val[name]
                             else:
-                                line += " %s" % (' '*len(name))
+                                line += " %s" % (' ' * len(name))
                     else:
                         for name, info in val.items():
                             line += " %s" % info

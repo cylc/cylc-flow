@@ -94,11 +94,11 @@ def prdict(dct, arrow='<', section='', level=0, diff=False, nested=False):
         if isinstance(dct[key], dict):
             lvl = level + 1
             if nested:
-                pre = prfx + '\n' + '   '*lvl
+                pre = prfx + '\n' + '   ' * lvl
             else:
                 pre = prfx
             prdict(dct[key], arrow,
-                   pre + '['*lvl + str(key) + ']'*lvl, lvl,
+                   pre + '[' * lvl + str(key) + ']' * lvl, lvl,
                    diff, nested)
         else:
             if not foo:

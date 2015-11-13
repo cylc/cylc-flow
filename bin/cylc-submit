@@ -142,7 +142,7 @@ def main():
         'CYLC_SUITE_INITIAL_CYCLE_TIME': str(ict),  # may be "None"
         'CYLC_SUITE_FINAL_CYCLE_TIME': str(fct),  # may be "None"
         'CYLC_SUITE_LOG_DIR': suite_log_dir  # needed by the test battery
-        }
+    }
 
     # Note: a suite contact env file is not written by this command (it
     # would overwrite the real one if the suite is running).
@@ -160,7 +160,7 @@ def main():
             suite, 'suite share directory'),
         'CYLC_SUITE_SHARE_PATH': '$CYLC_SUITE_SHARE_DIR',  # DEPRECATED
         'CYLC_SUITE_DEF_PATH': suite_dir
-        }
+    }
     # (GLOBAL_CFG automatically expands environment variables in local paths)
 
     JOB_FILE.set_suite_env(suite_env)

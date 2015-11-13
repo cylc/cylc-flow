@@ -687,8 +687,7 @@ def get_point_relative(offset_string, base_point):
     return ISO8601Point(str(
         SuiteSpecifics.abbrev_util.parse_timepoint(
             offset_string, context_point=_point_parse(base_point.value))
-        )
-    )
+    ))
 
 
 def interval_parse(interval_string):
