@@ -264,9 +264,8 @@ class scheduler(object):
         f.close()
 
         suite_py = os.path.join(self.suite_dir, "python")
-        if (os.path.realpath(self.suite_dir)
-                != os.path.realpath(suite_run_dir) and
-                os.path.isdir(suite_py)):
+        if (os.path.realpath(self.suite_dir) !=
+                os.path.realpath(suite_run_dir) and os.path.isdir(suite_py)):
             suite_run_py = os.path.join(suite_run_dir, "python")
             try:
                 rmtree(suite_run_py)

@@ -899,8 +899,8 @@ class TaskProxy(object):
     def setup_event_mail(self, event, message):
         """Event notification, by email."""
         key1 = (self.EVENT_MAIL, event)
-        if ((key1, self.submit_num) in self.event_handler_try_states
-                or event not in self._get_events_conf("mail events", [])):
+        if ((key1, self.submit_num) in self.event_handler_try_states or
+                event not in self._get_events_conf("mail events", [])):
             return
 
         self.event_handler_try_states[(key1, self.submit_num)] = TryState(

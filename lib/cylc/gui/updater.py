@@ -508,9 +508,8 @@ class Updater(threading.Thread):
 
     def run(self):
         while not self.quit:
-            if (not self._no_update_event.is_set()
-                    and self.poll_schd.ready()
-                    and self.update()):
+            if (not self._no_update_event.is_set() and
+                    self.poll_schd.ready() and self.update()):
                 self._flag_new_update()
                 gobject.idle_add(self.update_globals)
             sleep(1)
