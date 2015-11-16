@@ -680,7 +680,8 @@ class BatchSysManager(object):
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
                 try:
                     proc = Popen(
-                        command, stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE)
+                        command, stdin=proc_stdin_arg,
+                        stdout=PIPE, stderr=PIPE)
                 except OSError as exc:
                     # subprocess.Popen has a bad habit of not setting the
                     # filename of the executable when it raises an OSError.

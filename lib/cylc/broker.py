@@ -24,34 +24,35 @@ import logging
 # suite, and initialised from the outputs of all the tasks.
 # "Satisfied" => the output has been completed.
 
+
 class broker(object):
     # A broker aggregates output messages from many objects.
     # Each task registers its outputs with the suite broker, then each
     # task tries to get its prerequisites satisfied by the broker's
     # outputs.
 
-    def __init__( self ):
-         self.log = logging.getLogger( 'main' )
-         self.all_outputs = {}   # all_outputs[ message ] = taskid
+    def __init__(self):
+        self.log = logging.getLogger('main')
+        self.all_outputs = {}   # all_outputs[ message ] = taskid
 
-    def register( self, tasks ):
+    def register(self, tasks):
 
         for task in tasks:
-            self.all_outputs.update( task.outputs.completed )
+            self.all_outputs.update(task.outputs.completed)
             # TODO - SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
             # (note that successive tasks of the same type can register
             # identical outputs if they write staggered restart files).
 
-    def reset( self ):
+    def reset(self):
         # throw away all messages
         self.all_outputs = {}
 
-    def dump( self ):
+    def dump(self):
         # for debugging
         print "BROKER DUMP:"
         for msg in self.all_outputs:
             print " + " + self.all_outputs[msg], msg
 
-    def negotiate( self, task ):
+    def negotiate(self, task):
         # can my outputs satisfy any of task's prerequisites
-        task.satisfy_me( self.all_outputs )
+        task.satisfy_me(self.all_outputs)

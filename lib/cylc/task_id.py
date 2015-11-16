@@ -50,7 +50,7 @@ class TaskID(object):
     @classmethod
     def is_valid_id(cls, id_str):
         """Return whether a task id is valid."""
-        if not cls.DELIM in id_str:
+        if cls.DELIM not in id_str:
             return False
         name, point = cls.split(id_str)
         # N.B. only basic cycle point check

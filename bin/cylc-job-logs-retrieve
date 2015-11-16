@@ -41,7 +41,8 @@ def main():
         ("HOST:HOST-PATH", "Path to remote job logs directory"),
         ("LOCALHOST-PATH", "Path to local job logs directory"),
     ])
-    opt_parser.add_option("--max-size",
+    opt_parser.add_option(
+        "--max-size",
         help="Don't transfer any file larger than SIZE.",
         action="store", default="10M", dest="max_size", metavar="SIZE")
     opts, args = opt_parser.parse_args()

@@ -23,13 +23,13 @@ from cylc.task_state import task_state
 
 empty = {}
 empty['small'] = ["11 11 1 1", ". c None"]
-empty['small'].extend(["..........."]*11)
+empty['small'].extend(["..........."] * 11)
 empty['medium'] = ["17 17 1 1", ". c None"]
-empty['medium'].extend(["................."]*17)
+empty['medium'].extend(["................."] * 17)
 empty['large'] = ["22 22 1 1", ". c None"]
-empty['large'].extend(["......................"]*22)
+empty['large'].extend(["......................"] * 22)
 empty['extra large'] = ["32 32 1 1", ". c None"]
-empty['extra large'].extend(["................................"]*32)
+empty['extra large'].extend(["................................"] * 32)
 
 stopped = {
     'small': [

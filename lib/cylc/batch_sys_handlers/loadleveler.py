@@ -93,11 +93,10 @@ class LoadlevelerHandler(object):
                 return True
         return False
 
-
     @classmethod
     def filter_poll_many_output(cls, out):
         """Return a list of job IDs still in the batch system.
-        
+
         Drop STEPID from the JOBID.STEPID returned by 'llq'.
         """
         job_ids = []

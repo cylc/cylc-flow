@@ -55,6 +55,7 @@ class EntryTempText(gtk.Entry):
             return ""
         return text
 
+
 class EntryDialog(gtk.MessageDialog):
     def __init__(self, *args, **kwargs):
         '''
@@ -70,14 +71,18 @@ class EntryDialog(gtk.MessageDialog):
         super(EntryDialog, self).__init__(*args, **kwargs)
         entry = gtk.Entry()
         entry.set_text(str(default_value))
-        entry.connect("activate",
-                lambda ent, dlg, resp: dlg.response(resp),
-                self, gtk.RESPONSE_OK)
+        entry.connect(
+            "activate",
+            lambda ent, dlg, resp: dlg.response(resp),
+            self,
+            gtk.RESPONSE_OK)
         self.vbox.pack_end(entry, True, True, 0)
         self.vbox.show_all()
         self.entry = entry
+
     def set_value(self, text):
         self.entry.set_text(text)
+
     def run(self):
         result = super(EntryDialog, self).run()
         if result == gtk.RESPONSE_OK:
@@ -101,11 +106,11 @@ def get_icon():
     """Return the gcylc icon as a gtk.gdk.Pixbuf."""
     try:
         icon_path = os.path.join(get_image_dir(), "icon.svg")
-        icon      = gtk.gdk.pixbuf_new_from_file(icon_path)
+        icon = gtk.gdk.pixbuf_new_from_file(icon_path)
     except:
         # SVG error? Try loading it the old way.
         icon_path = os.path.join(get_image_dir(), "icon.png")
-        icon      = gtk.gdk.pixbuf_new_from_file(icon_path)
+        icon = gtk.gdk.pixbuf_new_from_file(icon_path)
     return icon
 
 
@@ -136,8 +141,7 @@ def set_exception_hook_dialog(program_name=None):
     """Set a custom uncaught exception hook for launching an error dialog."""
     old_hook = sys.excepthook
     sys.excepthook = lambda *a: _launch_exception_hook_dialog(
-                                                  *a, old_hook=old_hook,
-                                                  program_name=program_name)
+        *a, old_hook=old_hook, program_name=program_name)
 
 
 def setup_icons():
@@ -146,15 +150,16 @@ def setup_icons():
     root_img_dir = get_image_dir()
     pixbuf = get_icon()
     gcylc_iconset = gtk.IconSet(pixbuf)
-    pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/group.png' )
+    pixbuf = gtk.gdk.pixbuf_new_from_file(root_img_dir + '/icons/group.png')
     grp_iconset = gtk.IconSet(pixbuf)
-    pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/ungroup.png' )
+    pixbuf = gtk.gdk.pixbuf_new_from_file(root_img_dir + '/icons/ungroup.png')
     ungrp_iconset = gtk.IconSet(pixbuf)
-    pixbuf = gtk.gdk.pixbuf_new_from_file( root_img_dir + '/icons/transpose.png' )
+    pixbuf = gtk.gdk.pixbuf_new_from_file(
+        root_img_dir + '/icons/transpose.png')
     transpose_iconset = gtk.IconSet(pixbuf)
     factory = gtk.IconFactory()
-    factory.add( 'gcylc', gcylc_iconset )
-    factory.add( 'group', grp_iconset )
-    factory.add( 'ungroup', ungrp_iconset )
-    factory.add( 'transpose', transpose_iconset )
+    factory.add('gcylc', gcylc_iconset)
+    factory.add('group', grp_iconset)
+    factory.add('ungroup', ungrp_iconset)
+    factory.add('transpose', transpose_iconset)
     factory.add_default()

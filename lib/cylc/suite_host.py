@@ -16,13 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re, sys, socket
+import re
+import sys
+import socket
 
 hostname = None
 suite_host = None
 host_ip_address = None
 
-def get_local_ip_address( target ):
+
+def get_local_ip_address(target):
     """
 ATTRIBUTION:
 http://www.linux-support.com/cms/get-local-ip-address-with-python/
@@ -61,13 +64,14 @@ returning the IP address associated with this socket.
 
     ipaddr = ''
     try:
-        s = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
-        s.connect( (target, 8000) )
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((target, 8000))
         ipaddr = s.getsockname()[0]
         s.close()
     except:
         pass
     return ipaddr
+
 
 def get_hostname():
     global hostname
@@ -75,22 +79,25 @@ def get_hostname():
         hostname = socket.getfqdn()
     return hostname
 
+
 def get_host_ip_address():
     from cylc.cfgspec.globalcfg import GLOBAL_CFG
     global host_ip_address
     if host_ip_address is None:
-        target = GLOBAL_CFG.get( ['suite host self-identification','target'] )
+        target = GLOBAL_CFG.get(['suite host self-identification', 'target'])
         # external IP address of the suite host:
-        host_ip_address = get_local_ip_address( target )
+        host_ip_address = get_local_ip_address(target)
     return host_ip_address
+
 
 def get_suite_host():
     from cylc.cfgspec.globalcfg import GLOBAL_CFG, GlobalConfigError
     global suite_host
     if suite_host is None:
-        hardwired = GLOBAL_CFG.get( ['suite host self-identification','host'] )
-        method = GLOBAL_CFG.get( ['suite host self-identification','method'] )
-        # the following is for suite host self-identfication in task job scripts:
+        hardwired = GLOBAL_CFG.get(['suite host self-identification', 'host'])
+        method = GLOBAL_CFG.get(['suite host self-identification', 'method'])
+        # the following is for suite host self-identfication in task job
+        # scripts:
         if method == 'name':
             suite_host = hostname
         elif method == 'address':
@@ -109,6 +116,7 @@ def get_suite_host():
             )
     return suite_host
 
+
 def is_remote_host(name):
     """Return True if name has different IP address than the current host.
     Return False if name is None.  Abort if host is unknown.
@@ -120,13 +128,13 @@ def is_remote_host(name):
         ipa = socket.gethostbyname(name)
     except Exception, e:
         print >> sys.stderr, str(e)
-        raise Exception( 'ERROR, host not found: ' + name )
+        raise Exception('ERROR, host not found: ' + name)
     host_ip_address = get_host_ip_address()
     # local IP address of the suite host (may be 127.0.0.1, for e.g.)
     local_ip_address = socket.gethostbyname(get_hostname())
     return name and ipa != host_ip_address and ipa != local_ip_address
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     target = sys.argv[1]
-    print get_local_ip_address( target )
+    print get_local_ip_address(target)

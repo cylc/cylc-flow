@@ -25,19 +25,19 @@ import sys
 class ConditionalSimplifier(object):
     """A class to simplify logical expressions"""
 
-    def __init__( self, expr, clean ):
+    def __init__(self, expr, clean):
         self.raw_expression = expr
         self.clean_list = clean
-        self.nested_expr = self.format_expr( self.raw_expression )
+        self.nested_expr = self.format_expr(self.raw_expression)
 
-    def listify( self, message ):
+    def listify(self, message):
         """Convert a string containing a logical expression to a list"""
-        message = message.replace("'","\"")
+        message = message.replace("'", "\"")
         RE_CONDITIONALS = "(&|\||\(|\))"
         tokenised = re.split("(&|\||\(|\))", message)
         listified = ["["]
         for item in tokenised:
-            if item.strip() != "" and item.strip() not in ["(",")"]:
+            if item.strip() != "" and item.strip() not in ["(", ")"]:
                 listified.append("'" + item.strip() + "',")
             elif item.strip() == "(":
                 listified.append("[")
@@ -52,7 +52,7 @@ class ConditionalSimplifier(object):
         listified = ast.literal_eval(listified)
         return listified
 
-    def get_bracketed( self, nest_me ):
+    def get_bracketed(self, nest_me):
         """Nest a list according to any brackets in it"""
         start = 0
         finish = len(nest_me)
@@ -68,23 +68,23 @@ class ConditionalSimplifier(object):
             if nest_me[i] == ")":
                 finish = i
                 break
-        bracket_nested = nest_me[0:start+1]
-        bracket_nested.append(self.get_bracketed(nest_me[start+1:finish]))
+        bracket_nested = nest_me[0:start + 1]
+        bracket_nested.append(self.get_bracketed(nest_me[start + 1:finish]))
         bracket_nested.extend(nest_me[finish:len(nest_me)])
         return bracket_nested
 
-    def get_cleaned( self ):
+    def get_cleaned(self):
         """Return the simplified logical expression"""
         cleaned = self.nested_expr
         for item in self.clean_list:
-            cleaned = self.clean_expr( cleaned, item )
-        cleaned = self.flatten_nested_expr( cleaned )
+            cleaned = self.clean_expr(cleaned, item)
+        cleaned = self.flatten_nested_expr(cleaned)
         return cleaned
 
-    def nest_by_oper( self, nest_me, oper ):
+    def nest_by_oper(self, nest_me, oper):
         """Nest a list based on a specified logical operation"""
         found = False
-        for i in range(0,len(nest_me)):
+        for i in range(len(nest_me)):
             if isinstance(nest_me[i], list):
                 nest_me[i] = self.nest_by_oper(nest_me[i], oper)
             if nest_me[i] == oper:
@@ -93,17 +93,17 @@ class ConditionalSimplifier(object):
         if len(nest_me) <= 3:
             return nest_me
         if found:
-            nested = nest_me[0:found-1]
-            nested += [nest_me[found-1:found+2]]
-            if (found+2) < len(nest_me):
-                nested += nest_me[found+2:]
+            nested = nest_me[0:found - 1]
+            nested += [nest_me[found - 1:found + 2]]
+            if (found + 2) < len(nest_me):
+                nested += nest_me[found + 2:]
             return self.nest_by_oper(nested, oper)
         else:
             return nest_me
 
-    def clean_expr( self, nested_list, criterion ):
+    def clean_expr(self, nested_list, criterion):
         """Return a list with entries specified by 'criterion' removed"""
-        cleaned = copy.deepcopy( nested_list )
+        cleaned = copy.deepcopy(nested_list)
 
         # Make sure that we don't have extraneous nesting.
         while (isinstance(cleaned, list) and len(cleaned) == 1 and
@@ -133,26 +133,26 @@ class ConditionalSimplifier(object):
             if found == 0:
                 cleaned = cleaned[2:]
             else:
-                del cleaned[found-1:found+1]
+                del cleaned[found - 1:found + 1]
             return self.clean_expr(cleaned, criterion)
         else:
             return cleaned
 
-    def format_expr( self, expr ):
+    def format_expr(self, expr):
         """Carry out list conversion and nesting of a logical expression in
         the correct order."""
-        listified = self.listify( expr )
-        bracketed = self.get_bracketed( listified )
-        nested_by_and = self.nest_by_oper( bracketed, "&" )
-        nested_by_or = self.nest_by_oper( nested_by_and, "|" )
+        listified = self.listify(expr)
+        bracketed = self.get_bracketed(listified)
+        nested_by_and = self.nest_by_oper(bracketed, "&")
+        nested_by_or = self.nest_by_oper(nested_by_and, "|")
         return nested_by_or
 
-    def flatten_nested_expr( self, expr ):
+    def flatten_nested_expr(self, expr):
         """Convert a logical expression in a nested list back to a string"""
-        flattened = copy.deepcopy( expr )
-        for i in range(0,len(flattened)):
+        flattened = copy.deepcopy(expr)
+        for i in range(len(flattened)):
             if isinstance(flattened[i], list):
-                flattened[i] = self.flatten_nested_expr( flattened[i] )
+                flattened[i] = self.flatten_nested_expr(flattened[i])
         if isinstance(flattened, list):
             flattened = (" ").join(flattened)
         flattened = "(" + flattened

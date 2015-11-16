@@ -347,14 +347,14 @@ class CylcSuiteDAO(object):
                 self.conn.commit()
             except sqlite3.Error:
                 if not self.is_public:
-                    raise 
+                    raise
                 self.conn.rollback()
                 if cylc.flags.debug:
                     traceback.print_exc()
                     sys.stderr.write(
                         "WARNING: %s: db commit failed\n" % self.db_file_name)
                 will_retry = True
-        
+
         if will_retry:
             self.n_tries += 1
             logger = getLogger("main")

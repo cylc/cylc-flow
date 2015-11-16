@@ -30,12 +30,14 @@ def get_stop_state(suite, owner=None, host=None):
         return None
     command = "cylc cat-state"
     if host:
-        command += " --host=" +host
+        command += " --host=" + host
     if owner:
         command += " --user=" + owner
     command += " " + suite
     try:
-        p = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(
+            command, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+            shell=True)
         stdout, stderr = p.communicate()
     except:
         return None
@@ -45,7 +47,7 @@ def get_stop_state(suite, owner=None, host=None):
         return None
 
 
-def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
+def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
     """Load the contents of the last 'state' file into summary maps."""
     global_summary = {}
     task_summary = {}
@@ -61,8 +63,8 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
         if line.startswith('Remote command'):
             lines.remove(line)
     line0 = lines.pop(0)
-    if line0.startswith( 'suite time' ) or \
-            line0.startswith( 'simulation time' ):
+    if line0.startswith('suite time') or \
+            line0.startswith('simulation time'):
         # backward compatibility with pre-5.4.11 state dumps
         global_summary["last_updated"] = time.time()
     else:
@@ -77,7 +79,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
         except (TypeError, ValueError, IndexError):
             # back compat pre cylc-6
             global_summary["last_updated"] = time.time()
-  
+
     start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     stop = lines.pop(0).rstrip().rsplit(None, 1)[-1]
     if stop != "(none)":
@@ -87,7 +89,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
         if line.startswith("class") or line.startswith("Begin task"):
             continue
         try:
-            ( task_id, info ) = line.split(' : ')
+            (task_id, info) = line.split(' : ')
             name, point_string = TaskID.split(task_id)
         except ValueError:
             continue
@@ -102,25 +104,26 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None ):
         if state == 'submitting':
             # backward compabitility for state dumps generated prior to #787
             state = 'ready'
-        task_summary[task_id].update({"state": state })
+        task_summary[task_id].update({"state": state})
         task_summary[task_id].update({"spawned": items.get("spawned")})
     global_summary["run_mode"] = "dead"
     for key in ["paused", "stopping", "will_pause_at", "will_stop_at"]:
         global_summary.setdefault(key, "")
     return global_summary, task_summary, family_summary
 
-def dump_to_stdout( states, sort_by_cycle=False ):
+
+def dump_to_stdout(states, sort_by_cycle=False):
     lines = []
-    #print 'TASK INFORMATION'
+    # print 'TASK INFORMATION'
     task_ids = states.keys()
-    #task_ids.sort()
+    # task_ids.sort()
 
-    for id in task_ids:
-        name  = states[ id ][ 'name' ]
-        label = states[ id ][ 'label' ]
-        state = states[ id ][ 'state' ]
+    for task_id in task_ids:
+        name = states[task_id]['name']
+        label = states[task_id]['label']
+        state = states[task_id]['state']
 
-        if states[ id ][ 'spawned' ]:
+        if states[task_id]['spawned']:
             spawned = 'spawned'
         else:
             spawned = 'unspawned'
@@ -132,7 +135,7 @@ def dump_to_stdout( states, sort_by_cycle=False ):
 
         line += state + ', ' + spawned
 
-        lines.append( line )
+        lines.append(line)
 
     lines.sort()
     for line in lines:

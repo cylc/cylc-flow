@@ -70,9 +70,10 @@ from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
-from cylc.network import (PYRO_SUITEID_OBJ_NAME, PYRO_STATE_OBJ_NAME,
-        PYRO_CMD_OBJ_NAME, PYRO_BCAST_OBJ_NAME, PYRO_EXT_TRIG_OBJ_NAME,
-        PYRO_INFO_OBJ_NAME, PYRO_LOG_OBJ_NAME)
+from cylc.network import (
+    PYRO_SUITEID_OBJ_NAME, PYRO_STATE_OBJ_NAME,
+    PYRO_CMD_OBJ_NAME, PYRO_BCAST_OBJ_NAME, PYRO_EXT_TRIG_OBJ_NAME,
+    PYRO_INFO_OBJ_NAME, PYRO_LOG_OBJ_NAME)
 from cylc.network.pyro_daemon import PyroDaemon
 from cylc.network.suite_state import StateSummaryServer
 from cylc.network.suite_command import SuiteCommandServer
@@ -102,7 +103,7 @@ class request_handler(threading.Thread):
 
 class scheduler(object):
 
-    FS_CHECK_PERIOD = 600.0 # 600 seconds
+    FS_CHECK_PERIOD = 600.0  # 600 seconds
 
     def __init__(self, is_restart=False):
 
@@ -263,9 +264,8 @@ class scheduler(object):
         f.close()
 
         suite_py = os.path.join(self.suite_dir, "python")
-        if (os.path.realpath(self.suite_dir)
-                != os.path.realpath(suite_run_dir) and
-                os.path.isdir(suite_py)):
+        if (os.path.realpath(self.suite_dir) !=
+                os.path.realpath(suite_run_dir) and os.path.isdir(suite_py)):
             suite_run_py = os.path.join(suite_run_dir, "python")
             try:
                 rmtree(suite_run_py)
@@ -533,7 +533,8 @@ class scheduler(object):
         if stop_point_string is None:
             stop_point = None
         else:
-            stop_point_string = self.get_standardised_point_string(stop_point_string)
+            stop_point_string = self.get_standardised_point_string(
+                stop_point_string)
             stop_point = get_point(stop_point_string)
         task_states_data = self.pri_dao.select_task_states_by_task_ids(
             ["submit_num"], [TaskID.split(task_id) for task_id in task_ids])
@@ -606,7 +607,7 @@ class scheduler(object):
         self.pyro = PyroDaemon(self.suite)
         pphrase = passphrase(
             self.suite, user, get_suite_host()).get(suitedir=self.suite_dir)
-        self.pyro.set_auth(pphrase) 
+        self.pyro.set_auth(pphrase)
         self.port = self.pyro.get_port()
         try:
             self.portfile = PortFile(self.suite, self.port)
@@ -750,7 +751,8 @@ class scheduler(object):
             suite_id = SuiteIdServer.get_inst(self.suite, self.owner)
             self.pyro.connect(suite_id, PYRO_SUITEID_OBJ_NAME)
 
-            bcast = BroadcastServer.get_inst(self.config.get_linearized_ancestors())
+            bcast = BroadcastServer.get_inst(
+                self.config.get_linearized_ancestors())
             self.pyro.connect(bcast, PYRO_BCAST_OBJ_NAME)
 
             self.command_queue = SuiteCommandServer()
@@ -778,19 +780,25 @@ class scheduler(object):
             'CYLC_MODE': 'scheduler',
             'CYLC_DEBUG': str(cylc.flags.debug),
             'CYLC_VERBOSE': str(cylc.flags.verbose),
-            'CYLC_DIR_ON_SUITE_HOST': os.environ[ 'CYLC_DIR' ],
+            'CYLC_DIR_ON_SUITE_HOST': os.environ['CYLC_DIR'],
             'CYLC_SUITE_NAME': self.suite,
             'CYLC_SUITE_REG_NAME': self.suite,  # DEPRECATED
             'CYLC_SUITE_HOST': str(self.host),
             'CYLC_SUITE_OWNER': self.owner,
-            'CYLC_SUITE_PORT':  str(self.pyro.get_port()),
-            'CYLC_SUITE_REG_PATH': RegPath(self.suite).get_fpath(),  # DEPRECATED
+            'CYLC_SUITE_PORT': str(self.pyro.get_port()),
+            # DEPRECATED
+            'CYLC_SUITE_REG_PATH': RegPath(self.suite).get_fpath(),
             'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST': self.suite_dir,
-            'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),  # may be "None"
-            'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),  # may be "None"
-            'CYLC_SUITE_INITIAL_CYCLE_TIME': str(self.initial_point),  # may be "None"
-            'CYLC_SUITE_FINAL_CYCLE_TIME': str(self.final_point),  # may be "None"
-            'CYLC_SUITE_LOG_DIR': self.suite_log_dir  # needed by the test battery
+            # may be "None"
+            'CYLC_SUITE_INITIAL_CYCLE_POINT': str(self.initial_point),
+            # may be "None"
+            'CYLC_SUITE_FINAL_CYCLE_POINT': str(self.final_point),
+            # may be "None"
+            'CYLC_SUITE_INITIAL_CYCLE_TIME': str(self.initial_point),
+            # may be "None"
+            'CYLC_SUITE_FINAL_CYCLE_TIME': str(self.final_point),
+            # needed by the test battery
+            'CYLC_SUITE_LOG_DIR': self.suite_log_dir,
         }
 
         # Contact details for remote tasks, written to file on task
@@ -846,8 +854,8 @@ class scheduler(object):
             self.config.cfg['cylc']['log resolved dependencies'] = True
 
         elif self.reference_test_mode:
-            req = self.config.cfg[
-                'cylc']['reference test']['required run mode']
+            rtc = self.config.cfg['cylc']['reference test']
+            req = rtc['required run mode']
             if req and req != self.run_mode:
                 raise SchedulerError(
                     'ERROR: suite allows only ' + req + ' reference tests')
@@ -856,9 +864,8 @@ class scheduler(object):
             if handlers:
                 print >> sys.stderr, (
                     'WARNING: replacing shutdown handlers for reference test')
-            self.config.cfg['cylc']['event hooks']['shutdown handler'] = (
-                [self.config.cfg['cylc']['reference test'][
-                    'suite shutdown event handler']])
+            self.config.cfg['cylc']['event hooks']['shutdown handler'] = [
+                rtc['suite shutdown event handler']]
             self.config.cfg['cylc']['log resolved dependencies'] = True
             self.config.cfg['cylc']['event hooks'][
                 'abort if shutdown handler fails'] = True
@@ -868,15 +875,12 @@ class scheduler(object):
                 self.start_point = get_point(
                     spec.get_start_point_string()) or self.initial_point
                 self.final_point = get_point(spec.get_final_point_string())
-            self.ref_test_allowed_failures = self.config.cfg['cylc'][
-                'reference test']['expected task failures']
-            if not self.config.cfg['cylc']['reference test'][
-                    'allow task failures'] and len(
-                        self.ref_test_allowed_failures) == 0:
+            self.ref_test_allowed_failures = rtc['expected task failures']
+            if (not rtc['allow task failures'] and
+                    not self.ref_test_allowed_failures):
                 self.config.cfg['cylc']['abort if any task fails'] = True
             self.config.cfg['cylc']['event hooks']['abort on timeout'] = True
-            timeout = self.config.cfg['cylc'][
-                'reference test'][self.run_mode + ' mode suite timeout']
+            timeout = rtc[self.run_mode + ' mode suite timeout']
             if not timeout:
                 raise SchedulerError(
                     'ERROR: timeout not defined for %s reference tests' % (
@@ -1064,7 +1068,8 @@ class scheduler(object):
             if (self.shut_down_cleanly and self.kill_on_shutdown):
                 if self.pool.has_unkillable_tasks_only():
                     if not self.pool.no_active_tasks():
-                        self.log.warning('some tasks were not killable at shutdown')
+                        self.log.warning(
+                            'some tasks were not killable at shutdown')
                     proc_pool.close()
                     self.shut_down_now = True
                 else:
@@ -1122,7 +1127,7 @@ class scheduler(object):
 
         if cylc.flags.pflag:
             process = True
-            cylc.flags.pflag = False # reset
+            cylc.flags.pflag = False  # reset
             # New suite activity, so reset the suite timer.
             if (self.config.cfg['cylc']['event hooks']['timeout'] and
                     self.config.cfg['cylc']['event hooks']['reset timer']):
@@ -1140,7 +1145,8 @@ class scheduler(object):
         #    # that event ever happens in isolation the suite could stall
         #    # unless manually nudged ("cylc nudge SUITE").  If this
         #    # happens turn on debug logging to see what happens
-        #    # immediately before the stall, then set cylc.flags.pflag = True in
+        #    # immediately before the stall,
+        #    # then set cylc.flags.pflag = True in
         #    # the corresponding code section. Alternatively,
         #    # for an undiagnosed stall you can uncomment this section to
         #    # stimulate task processing every few seconds even during
@@ -1293,7 +1299,7 @@ class scheduler(object):
     def paused(self):
         return self.hold_suite_now
 
-    def will_pause_at( self ):
+    def will_pause_at(self):
         return self.pool.get_hold_point()
 
     def command_trigger_task(self, name, point_string, is_family):
@@ -1402,6 +1408,7 @@ class scheduler(object):
             if temp_pub_db_file_name:
                 os.unlink(temp_pub_db_file_name)
             raise
+
     def log_memory(self, message):
         """Print a message to standard out with the current memory usage."""
         if not self.options.profile_mode:

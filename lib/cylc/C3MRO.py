@@ -90,54 +90,64 @@ def print_mro(C):
 print_mro(ex_9.Z)
 """
 
-class C3( object ):
-    def __init__( self, tree={} ):
+
+class C3(object):
+    def __init__(self, tree={}):
         self.tree = tree
 
     def merge(self, seqs):
-        #print '\n\nCPL[%s]=%s' % (seqs[0][0],seqs),
-        res = []; i=0
+        # print '\n\nCPL[%s]=%s' % (seqs[0][0],seqs),
+        res = []
+        i = 0
         while 1:
-          nonemptyseqs=[seq for seq in seqs if seq]
-          if not nonemptyseqs: return res
-          i+=1; #print '\n',i,'round: candidates...',
-          for seq in nonemptyseqs: # find merge candidates among seq heads
-              cand = seq[0]; #print ' ',cand,
-              nothead=[s for s in nonemptyseqs if cand in s[1:]]
-              if nothead: cand=None #reject candidate
-              else: break
-          if not cand: raise Exception( "ERROR: bad runtime namespace inheritance hierarchy.\nSee the cylc documentation on multiple inheritance." )
-          res.append(cand)
-          for seq in nonemptyseqs: # remove cand
-              if seq[0] == cand: del seq[0]
+            nonemptyseqs = [seq for seq in seqs if seq]
+            if not nonemptyseqs:
+                return res
+            i += 1  # print '\n',i,'round: candidates...',
+            for seq in nonemptyseqs:  # find merge candidates among seq heads
+                cand = seq[0]  # print ' ',cand,
+                nothead = [s for s in nonemptyseqs if cand in s[1:]]
+                if nothead:
+                    cand = None  # reject candidate
+                else:
+                    break
+            if not cand:
+                raise Exception(
+                    "ERROR: bad runtime namespace inheritance hierarchy.\n"
+                    "See the cylc documentation on multiple inheritance.")
+            res.append(cand)
+            for seq in nonemptyseqs:  # remove cand
+                if seq[0] == cand:
+                    del seq[0]
 
-    def mro(self,C):
-        "Compute the precedence list (mro) according to C3"
+    def mro(self, C):
+        """Compute the precedence list (mro) according to C3"""
         # copy() required here for tree to remain unchanged
-        return self.merge([[C]]+map(self.mro,self.tree[C])+[copy(self.tree[C])])
+        return self.merge(
+            [[C]] + map(self.mro, self.tree[C]) + [copy(self.tree[C])])
 
 if __name__ == "__main__":
     parents = {}
-    parents['root' ] = []
-    parents['a' ] = ['root']
-    parents['b' ] = ['root']
-    parents['foo' ] = ['a','b']
+    parents['root'] = []
+    parents['a'] = ['root']
+    parents['b'] = ['root']
+    parents['foo'] = ['a', 'b']
 
-    print 'foo', C3( parents ).mro( 'foo' )
+    print 'foo', C3(parents).mro('foo')
 
     parents = {}
-    parents['o' ] = []
-    parents['a' ] = ['o']
-    parents['b' ] = ['o']
-    parents['c' ] = ['o']
-    parents['d' ] = ['o']
-    parents['e' ]=  ['o']
-    parents['k1'] = ['a','b','c']
-    parents['k2'] = ['d','b','e']
-    parents['k3'] = ['d','a']
-    parents['z' ] = ['k1','k2','k3']
+    parents['o'] = []
+    parents['a'] = ['o']
+    parents['b'] = ['o']
+    parents['c'] = ['o']
+    parents['d'] = ['o']
+    parents['e'] = ['o']
+    parents['k1'] = ['a', 'b', 'c']
+    parents['k2'] = ['d', 'b', 'e']
+    parents['k3'] = ['d', 'a']
+    parents['z'] = ['k1', 'k2', 'k3']
 
-    print 'z', C3( parents ).mro( 'z' )
+    print 'z', C3(parents).mro('z')
 
     # Note we can get Python's result by defining an equivalent class
     # hierarchy (with empty class bodies) and printing foo.__mro__.

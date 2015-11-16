@@ -23,9 +23,9 @@ queues) and will submit as normal when released by the queue; queued tasks will
 submit immediately even if that violates the queue limit (so you may need to
 trigger a queue-limited task twice to get it to submit).
 
-For single tasks you can use "--edit" to edit the generated job script before it
-submits, to apply one-off changes.  A diff between the original and edited job
-script will be saved to the task job log directory.
+For single tasks you can use "--edit" to edit the generated job script before
+it submits, to apply one-off changes. A diff between the original and edited
+job script will be saved to the task job log directory.
 """
 
 import sys
@@ -103,7 +103,7 @@ def main():
         # Get the job filename from the suite daemon - the task cycle point may
         # need standardising to the suite cycle point format.
         success, job_dir = info_client.get_info(
-           'get_task_jobfile_path', task_id)
+            'get_task_jobfile_path', task_id)
         if not success:
             sys.exit('ERROR: %s' % job_dir)
 

@@ -72,7 +72,7 @@ class PyroClientReporter(object):
                     request, caller.user, caller.host, caller.prog_name,
                     caller.uuid))
         if name == "SuiteIdServer":
-            self._num_id_requests += 1            
+            self._num_id_requests += 1
             self.report_id_requests()
         self.clients[caller.uuid] = datetime.datetime.utcnow()
         self._housekeep()
@@ -128,4 +128,4 @@ class PyroClientReporter(object):
 
         """
         return (td.microseconds + (
-                td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+                td.seconds + td.days * 24 * 3600) * 10 ** 6) / 10 ** 6

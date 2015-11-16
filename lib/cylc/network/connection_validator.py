@@ -82,8 +82,8 @@ class ConnValidator(DefaultConnValidator):
             # Access granted at highest privilege level.
             priv_level = PRIVILEGE_LEVELS[-1]
         elif (hmac.new(
-                 challenge,
-                 NO_PASSPHRASE_MD5.decode("hex")).digest() == proc_passwd):
+                challenge,
+                NO_PASSPHRASE_MD5.decode("hex")).digest() == proc_passwd):
             # The client does not have the suite passphrase.
             # Public access granted at level determined by global/suite config.
             config = SuiteConfig.get_inst()
@@ -94,7 +94,7 @@ class ConnValidator(DefaultConnValidator):
                 # Avoid logging large numbers of denials from old scan clients
                 # that try all passphrases available to them.
                 logger.warn(CONNECT_DENIED_TMPL % (
-                        user, host, prog_name, uuid))
+                    user, host, prog_name, uuid))
             return (0, Pyro.constants.DENIED_SECURITY)
 
         # Store client details for use in the connection thread.

@@ -72,10 +72,10 @@ class PyroClient(object):
         except PassphraseError:
             # No passphrase: public access client.
             self.pphrase = None
-         
+
     def call_server_func(self, fname, *fargs):
         """Call server_object.fname(*fargs)
-        
+
         Get a Pyro proxy for the server object if we don't already have it,
         and handle back compat retry for older daemons.
 

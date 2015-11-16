@@ -26,7 +26,7 @@ from cylc.gui.tailer import Tailer
 class ComboLogViewer(logviewer):
 
     """Implement a viewer for task jobs in the "cylc gui".
-    
+
     It has a a combo box for log file selection.
 
     task_id -- The NAME.POINT of a task proxy.

@@ -465,7 +465,7 @@ class TaskPool(object):
                     INFO,
                     'triggered off %s' % itask.get_resolved_dependencies())
             overrides = bcast.get(itask.identity)
-            if self.run_mode =='simulation':
+            if self.run_mode == 'simulation':
                 itask.job_submission_succeeded()
             elif itask.prep_submit(overrides=overrides) is not None:
                 prepared_tasks.append(itask)
@@ -507,7 +507,7 @@ class TaskPool(object):
                     stdin_file_paths.append(
                         itask.job_conf['local job file path'])
                 job_log_dirs.append(itask.get_job_log_dir(
-                        itask.tdef.name, itask.point, itask.submit_num))
+                    itask.tdef.name, itask.point, itask.submit_num))
             cmd += job_log_dirs
             SuiteProcPool.get_inst().put_command(
                 SuiteProcContext(
@@ -632,7 +632,7 @@ class TaskPool(object):
         found = False
 
         config = SuiteConfig.get_inst()
- 
+
         for itask in self.get_all_tasks():
             if itask.state.is_currently('ready', 'submitted', 'running'):
                 # do not reload active tasks as it would be possible to

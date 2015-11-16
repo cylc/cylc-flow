@@ -54,10 +54,10 @@ class PBSHandler(object):
                 # E.g. -l walltime=3:00:00
                 lines.append("%s%s=%s" % (self.DIRECTIVE_PREFIX, key, value))
             elif value:
-                # E.g. -q queue_name 
+                # E.g. -q queue_name
                 lines.append("%s%s %s" % (self.DIRECTIVE_PREFIX, key, value))
             else:
-                # E.g. -V 
+                # E.g. -V
                 lines.append(self.DIRECTIVE_PREFIX + key)
         return lines
 

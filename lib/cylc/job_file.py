@@ -42,12 +42,12 @@ class JobFile(object):
     def write(self, job_conf):
         """Write each job script section in turn."""
 
-        ############# !!!!!!!! WARNING !!!!!!!!!!! #####################
+        # ########### !!!!!!!! WARNING !!!!!!!!!!! #####################
         # BE EXTREMELY WARY OF CHANGING THE ORDER OF JOB SCRIPT SECTIONS
         # Users may be relying on the existing order (see for example
         # the comment below on suite bin path being required before
         # task runtime environment setup).
-        ################################################################
+        # ##############################################################
 
         # Access to cylc must be configured before user environment so
         # that cylc commands can be used in defining user environment
@@ -353,11 +353,11 @@ unset S""" % args)
 
         # NOTE ON TILDE EXPANSION:
         # The code above handles the following correctly:
-        #| ~foo/bar
-        #| ~/bar
-        #| ~/filename with spaces
-        #| ~foo
-        #| ~
+        # | ~foo/bar
+        # | ~/bar
+        # | ~/filename with spaces
+        # | ~foo
+        # | ~
 
         # NOTE: the reason for separate export of user-specified
         # variables is this: inline export does not activate the

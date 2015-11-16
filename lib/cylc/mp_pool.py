@@ -53,8 +53,8 @@ def _run_command(ctx):
         else:
             print ' '.join([quote(cmd_str) for cmd_str in ctx.cmd])
 
-    if (SuiteProcPool.STOP_JOB_SUBMISSION.value
-            and ctx.cmd_key == SuiteProcPool.JOB_SUBMIT):
+    if (SuiteProcPool.STOP_JOB_SUBMISSION.value and
+            ctx.cmd_key == SuiteProcPool.JOB_SUBMIT):
         ctx.err = "job submission skipped (suite stopping)"
         ctx.ret_code = SuiteProcPool.JOB_SKIPPED_FLAG
         ctx.timestamp = get_current_time_string()
@@ -133,6 +133,7 @@ class SuiteProcContext(object):
                     "attr": attr,
                     "mesg": mesg}
         return ret
+
 
 class SuiteProcPool(object):
     """Use a process pool to execute shell commands."""
@@ -262,7 +263,7 @@ def main():
     log.info('  sleeping')
     time.sleep(3)
     pool.close()
-    #pool.terminate()
+    # pool.terminate()
     pool.handle_results_async()
     log.info('  sleeping')
     time.sleep(3)

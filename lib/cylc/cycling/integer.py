@@ -41,7 +41,7 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 # can use absolute integer points such as "5" or "10". We also can't
 # extrapolate intervals from the date-time truncation information -
 # e.g. assuming 'T00/P1D' from 'T00'.
-# 
+#
 # We can also use relative point notation in a similar way to the
 # date-time offset notation. For example, we can write "5 after the
 # initial cycle point" as '+P5'.
@@ -68,7 +68,7 @@ RE_COMPONENTS = {
 
 RECURRENCE_FORMAT_RECS = [
     (re.compile(regex % RE_COMPONENTS), format_num)
-     for (regex, format_num) in [
+    for (regex, format_num) in [
         # START (not supported)
         # (r"^%(start)s$", 3),
         # Rn/START/END
@@ -99,7 +99,7 @@ RECURRENCE_FORMAT_RECS = [
         # e.g. R5/P2, R7/P1
         (r"^%(reps)s?/%(intv)s/?$", 4),
         # Rn//END (not supported)
-        #(r"^%(reps_1)s//%(end)s$", 4),
+        # (r"^%(reps_1)s//%(end)s$", 4),
         # R1, repeat once at INITIAL
         # e.g. R1, R1/
         (r"^%(reps_1)s/?(?P<start>$)", 3),
@@ -490,7 +490,7 @@ class IntegerSequence(SequenceBase):
             point = self.get_next_point(point)
         return point
 
-    def get_start_point( self ):
+    def get_start_point(self):
         """Return the first point in this sequence, or None."""
         return self.p_start
 
@@ -539,10 +539,10 @@ def get_point_from_expression(point_expr, context_point, is_required=False):
 def test():
     """Run some simple tests for integer cycling."""
     sequence = IntegerSequence('R/1/P3', 1, 10)
-    #sequence = IntegerSequence('R/c2/P2', 1, 10)
-    #sequence = IntegerSequence('R2/c2/P2', 1, 10)
-    #sequence = IntegerSequence('R2/c4/c6', 1, 10)
-    #sequence = IntegerSequence('R2/P2/c6', 1, 10)
+    # sequence = IntegerSequence('R/c2/P2', 1, 10)
+    # sequence = IntegerSequence('R2/c2/P2', 1, 10)
+    # sequence = IntegerSequence('R2/c4/c6', 1, 10)
+    # sequence = IntegerSequence('R2/P2/c6', 1, 10)
 
     sequence.set_offset(IntegerInterval('P4'))
 

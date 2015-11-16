@@ -21,12 +21,12 @@ import gtk
 import gobject
 import pango
 import tempfile
-import os, re, sys
 from warning_dialog import warning_dialog, info_dialog
 from util import get_icon
 import subprocess
 
 # unit test: see the command $CYLC_DIR/bin/gcapture
+
 
 class gcapture(object):
     """
@@ -39,21 +39,21 @@ Lines containing:
 are displayed in red.
     $ capture "echo foo && echox bar"
     """
-    def __init__( self, command, stdoutfile, width=400, height=400, standalone=False, ignore_command=False,
-                  title=None ):
-        self.standalone=standalone
+    def __init__(self, command, stdoutfile, width=400, height=400,
+                 standalone=False, ignore_command=False, title=None):
+        self.standalone = standalone
         self.command = command
         self.ignore_command = ignore_command
         self.stdout = stdoutfile
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_border_width( 5 )
+        self.window.set_border_width(5)
         if title is None:
-            self.window.set_title( 'Command Output' )
+            self.window.set_title('Command Output')
         else:
-            self.window.set_title( title )
+            self.window.set_title(title)
         self.window.connect("delete_event", self.quit)
         self.window.set_default_size(width, height)
-        self.window.set_icon( get_icon() )
+        self.window.set_icon(get_icon())
         self.quit_already = False
 
         self.find_current = None
@@ -61,34 +61,33 @@ are displayed in red.
         self.search_warning_done = False
 
         sw = gtk.ScrolledWindow()
-        sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
+        sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         sw.show()
 
         self.textview = gtk.TextView()
         self.textview.set_editable(False)
-        self.textview.set_wrap_mode( gtk.WRAP_WORD )
+        self.textview.set_wrap_mode(gtk.WRAP_WORD)
         # Use a monospace font. This is safe - by testing - setting an
         # illegal font description has no effect.
-        self.textview.modify_font( pango.FontDescription("monospace") )
+        self.textview.modify_font(pango.FontDescription("monospace"))
         tb = self.textview.get_buffer()
         self.textview.show()
 
-        self.ftag = tb.create_tag( None, background="#70FFA9" )
+        self.ftag = tb.create_tag(None, background="#70FFA9")
 
         vbox = gtk.VBox()
         vbox.show()
 
         if not self.ignore_command:
             self.progress_bar = gtk.ProgressBar()
-            self.progress_bar.set_text( command )
-            self.progress_bar.set_pulse_step( 0.04 )
+            self.progress_bar.set_text(command)
+            self.progress_bar.set_pulse_step(0.04)
             self.progress_bar.show()
-            vbox.pack_start( self.progress_bar, expand=False )
-        self.command_label = gtk.Label( self.command )
+            vbox.pack_start(self.progress_bar, expand=False)
+        self.command_label = gtk.Label(self.command)
         if self.ignore_command:
             self.command_label.show()
-        vbox.pack_start( self.command_label, expand=False )
-
+        vbox.pack_start(self.command_label, expand=False)
 
         sw.add(self.textview)
 
@@ -97,43 +96,43 @@ are displayed in red.
         frame.show()
         vbox.add(frame)
 
-        save_button = gtk.Button( "Save As" )
-        save_button.connect("clicked", self.save, self.textview )
+        save_button = gtk.Button("Save As")
+        save_button.connect("clicked", self.save, self.textview)
         save_button.show()
 
         hbox = gtk.HBox()
-        hbox.pack_start( save_button, False )
+        hbox.pack_start(save_button, False)
         hbox.show()
 
-        output_label = gtk.Label( 'output : ' + stdoutfile.name )
+        output_label = gtk.Label('output : ' + stdoutfile.name)
         output_label.show()
-        hbox.pack_start( output_label, expand=True )
+        hbox.pack_start(output_label, expand=True)
 
-        self.freeze_button = gtk.ToggleButton( "_Disconnect" )
+        self.freeze_button = gtk.ToggleButton("_Disconnect")
         self.freeze_button.set_active(False)
-        self.freeze_button.connect("toggled", self.freeze )
+        self.freeze_button.connect("toggled", self.freeze)
         self.freeze_button.show()
 
         searchbox = gtk.HBox()
         searchbox.show()
         entry = gtk.Entry()
         entry.show()
-        entry.connect( "activate", self.enter_clicked )
-        searchbox.pack_start (entry, True)
-        b = gtk.Button ("Find Next")
-        b.connect_object ('clicked', self.on_find_clicked, entry)
+        entry.connect("activate", self.enter_clicked)
+        searchbox.pack_start(entry, True)
+        b = gtk.Button("Find Next")
+        b.connect_object('clicked', self.on_find_clicked, entry)
         b.show()
-        searchbox.pack_start (b, False)
-        searchbox.pack_start( self.freeze_button, False )
+        searchbox.pack_start(b, False)
+        searchbox.pack_start(self.freeze_button, False)
 
-        close_button = gtk.Button( "_Close" )
-        close_button.connect("clicked", self.quit, None, None )
+        close_button = gtk.Button("_Close")
+        close_button.connect("clicked", self.quit, None, None)
         close_button.show()
 
         hbox.pack_end(close_button, False)
 
-        vbox.pack_start( searchbox, False )
-        vbox.pack_start( hbox, False )
+        vbox.pack_start(searchbox, False)
+        vbox.pack_start(hbox, False)
 
         self.window.add(vbox)
         close_button.grab_focus()
@@ -151,7 +150,7 @@ are displayed in red.
             self.textview, self.stdout.name, pollable=proc)
         self.stdout_updater.start()
 
-    def pulse_proc_progress( self ):
+    def pulse_proc_progress(self):
         """While the process is running, pulse the progress bar a bit."""
         self.progress_bar.pulse()
         self.proc.poll()
@@ -163,29 +162,33 @@ are displayed in red.
         # Break gobject.timeout_add loop.
         return False
 
-    def freeze( self, b ):
+    def freeze(self, b):
         if b.get_active():
             self.stdout_updater.freeze = True
-            b.set_label( '_Reconnect' )
+            b.set_label('_Reconnect')
         else:
             self.stdout_updater.freeze = False
-            b.set_label( '_Disconnect' )
+            b.set_label('_Disconnect')
 
-    def save( self, w, tv ):
+    def save(self, w, tv):
         tb = tv.get_buffer()
 
         start = tb.get_start_iter()
         end = tb.get_end_iter()
-        txt = tb.get_text( start, end )
+        txt = tb.get_text(start, end)
 
-        dialog = gtk.FileChooserDialog(title='Save As',
-                action=gtk.FILE_CHOOSER_ACTION_SAVE,
-                buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
-                    gtk.STOCK_SAVE,gtk.RESPONSE_OK))
+        dialog = gtk.FileChooserDialog(
+            title='Save As',
+            action=gtk.FILE_CHOOSER_ACTION_SAVE,
+            buttons=(
+                gtk.STOCK_CANCEL,
+                gtk.RESPONSE_CANCEL,
+                gtk.STOCK_SAVE,
+                gtk.RESPONSE_OK))
         filter = gtk.FileFilter()
         filter.set_name("any")
         filter.add_pattern("*")
-        dialog.add_filter( filter )
+        dialog.add_filter(filter)
 
         response = dialog.run()
 
@@ -197,15 +200,15 @@ are displayed in red.
         dialog.destroy()
 
         try:
-            f = open( fname, 'wb' )
+            f = open(fname, 'wb')
         except IOError, x:
-            warning_dialog( str(x), self.window ).warn()
+            warning_dialog(str(x), self.window).warn()
         else:
-            f.write( txt )
+            f.write(txt)
             f.close()
-            info_dialog( "Buffer saved to " + fname, self.window ).inform()
+            info_dialog("Buffer saved to " + fname, self.window).inform()
 
-    def quit( self, w, e, data=None ):
+    def quit(self, w, e, data=None):
         if self.quit_already:
             # this is because gcylc currently maintains a list of *all*
             # gcapture windows, including those the user has closed.
@@ -213,49 +216,50 @@ are displayed in red.
         self.stdout_updater.stop()
         self.quit_already = True
         if self.standalone:
-            #print 'GTK MAIN QUIT'
             gtk.main_quit()
         else:
-            #print 'WINDOW DESTROY'
             self.window.destroy()
 
-    def enter_clicked( self, e ):
-        self.on_find_clicked( e )
+    def enter_clicked(self, e):
+        self.on_find_clicked(e)
 
-    def on_find_clicked( self, e ):
+    def on_find_clicked(self, e):
         tv = self.textview
-        tb = tv.get_buffer ()
+        tb = tv.get_buffer()
         needle = e.get_text()
 
         if not needle:
-            s,e = tb.get_bounds()
-            tb.remove_tag( self.ftag, s,e )
+            s, e = tb.get_bounds()
+            tb.remove_tag(self.ftag, s, e)
             return
 
         self.stdout_updater.freeze = True
         self.freeze_button.set_active(True)
         self.freeze_button.set_label('_Reconnect')
         if not self.search_warning_done:
-            warning_dialog( "Find Next disconnects the live feed. Click Reconnect when you're done.",
-                            self.window ).warn()
+            warning_dialog(
+                ("Find Next disconnects the live feed." +
+                 " Click Reconnect when you're done."),
+                self.window).warn()
             self.search_warning_done = True
 
         if needle == self.find_current:
             s = self.find_current_iter
         else:
-            s,e = tb.get_bounds()
-            tb.remove_tag( self.ftag, s,e )
+            s, e = tb.get_bounds()
+            tb.remove_tag(self.ftag, s, e)
             s = tb.get_end_iter()
-            tv.scroll_to_iter( s, 0 )
+            tv.scroll_to_iter(s, 0)
         try:
             f, l = s.backward_search(needle, gtk.TEXT_SEARCH_VISIBLE_ONLY)
         except:
-            warning_dialog( '"' + needle + '"' + " not found", self.window ).warn()
+            warning_dialog(
+                '"' + needle + '"' + " not found", self.window).warn()
         else:
-            tb.apply_tag( self.ftag, f, l )
+            tb.apply_tag(self.ftag, f, l)
             self.find_current_iter = f
             self.find_current = needle
-            tv.scroll_to_iter( f, 0 )
+            tv.scroll_to_iter(f, 0)
 
     def _handle_proc_completed(self):
         self.progress_bar.hide()
@@ -265,8 +269,11 @@ are displayed in red.
         self.command_label.show()
         return False
 
-class gcapture_tmpfile( gcapture ):
-    def __init__( self, command, tmpdir, width=400, height=400, standalone=False, title=None ):
-        stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
-        gcapture.__init__(self, command, stdout, width=width, height=height, standalone=standalone,
-                          title=title )
+
+class gcapture_tmpfile(gcapture):
+    def __init__(self, command, tmpdir, width=400, height=400,
+                 standalone=False, title=None):
+        stdout = tempfile.NamedTemporaryFile(dir=tmpdir)
+        gcapture.__init__(
+            self, command, stdout, width=width, height=height,
+            standalone=standalone, title=title)

@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
-import logging, logging.handlers
+import os
+import sys
+import logging
+import logging.handlers
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from rolling_archive import rolling_archive
 
@@ -25,25 +27,28 @@ from rolling_archive import rolling_archive
 sub-directory of the suite running directory. Can also be used to simply
 get the configure log locations."""
 
-class suite_output( object ):
 
-    def __init__( self, suite ):
+class suite_output(object):
 
-        sodir = GLOBAL_CFG.get_derived_host_item( suite, 'suite log directory' )
-        self.opath = os.path.join( sodir, 'out' ) 
-        self.epath = os.path.join( sodir, 'err' ) 
+    def __init__(self, suite):
+
+        sodir = GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory')
+        self.opath = os.path.join(sodir, 'out')
+        self.epath = os.path.join(sodir, 'err')
 
         # use same archive length as logging (TODO: document this)
-        self.roll_at_startup = GLOBAL_CFG.get( ['suite logging','roll over at start-up'] )
-        self.arclen = GLOBAL_CFG.get( ['suite logging','rolling archive length'] )
+        self.roll_at_startup = GLOBAL_CFG.get(
+            ['suite logging', 'roll over at start-up'])
+        self.arclen = GLOBAL_CFG.get(
+            ['suite logging', 'rolling archive length'])
 
-    def get_path( self, err=False ):
+    def get_path(self, err=False):
         if err:
             return self.epath
         else:
             return self.opath
 
-    def redirect( self ):
+    def redirect(self):
         """redirect the standard file descriptors to suite log files."""
 
         self.roll()
@@ -51,32 +56,32 @@ class suite_output( object ):
         # record current standard file descriptors
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
-        self.sys_stdin  = sys.stdin
+        self.sys_stdin = sys.stdin
 
         # redirect standard file descriptors
         # note that simply reassigning the sys streams is not sufficient
         # if we import modules that write to stdin and stdout from C
         # code - evidently the subprocess module is in this category!
-        sout = file( self.opath, 'a+', 0 ) # 0 => unbuffered
-        serr = file( self.epath, 'a+', 0 )
-        dvnl = file( '/dev/null', 'r' )
-        os.dup2( sout.fileno(), sys.stdout.fileno() )
-        os.dup2( serr.fileno(), sys.stderr.fileno() )
-        os.dup2( dvnl.fileno(), sys.stdin.fileno() )
+        sout = file(self.opath, 'a+', 0)  # 0 => unbuffered
+        serr = file(self.epath, 'a+', 0)
+        dvnl = file('/dev/null', 'r')
+        os.dup2(sout.fileno(), sys.stdout.fileno())
+        os.dup2(serr.fileno(), sys.stderr.fileno())
+        os.dup2(dvnl.fileno(), sys.stdin.fileno())
 
-    def restore( self ):
+    def restore(self):
         # (not used)
         sys.stdout.close()
         sys.stderr.close()
         sys.stdout = self.sys_stdout
         sys.stderr = self.sys_stderr
-        sys.stdin  = self.sys_stdin
+        sys.stdin = self.sys_stdin
         print "\n Restored stdout and stderr to normal"
 
-    def roll( self ):
+    def roll(self):
         # roll the stdout and stderr log files
-        oarchive = rolling_archive( self.opath, self.arclen, sep='.' )
-        earchive = rolling_archive( self.epath, self.arclen, sep='.' )
+        oarchive = rolling_archive(self.opath, self.arclen, sep='.')
+        earchive = rolling_archive(self.epath, self.arclen, sep='.')
         if self.roll_at_startup:
             oarchive.roll()
             earchive.roll()

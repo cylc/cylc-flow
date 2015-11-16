@@ -23,7 +23,8 @@ import gtk
 import time
 import gobject
 from cylc.config import SuiteConfig
-import os, sys
+import os
+import sys
 import re
 from graphing import CGraphPlain
 from cylc.task_id import TaskID
@@ -32,6 +33,7 @@ from cylc.task_id import TaskID
 Cylc-modified xdot windows for the "cylc graph" command.
 TODO - factor more commonality out of MyDotWindow, MyDotWindow2
 """
+
 
 class CylcDotViewerCommon(xdot.DotWindow):
     def load_config(self):
@@ -73,7 +75,7 @@ class CylcDotViewerCommon(xdot.DotWindow):
 
 
 class MyDotWindow2(CylcDotViewerCommon):
-    """Override xdot to get rid of some buttons and parse graph from suite.rc"""
+    """Override xdot to get rid of some buttons + parse graph from suite.rc"""
     # used by "cylc graph" to plot runtime namespace graphs
 
     ui = '''
@@ -91,9 +93,9 @@ class MyDotWindow2(CylcDotViewerCommon):
         </toolbar>
     </ui>
     '''
+
     def __init__(self, suite, suiterc, template_vars,
-            template_vars_file, orientation="TB",
-            should_hide=False):
+                 template_vars_file, orientation="TB", should_hide=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -116,7 +118,7 @@ class MyDotWindow2(CylcDotViewerCommon):
 
         window.set_title('Cylc Suite Runtime Inheritance Graph Viewer')
         window.set_default_size(512, 512)
-        window.set_icon( util.get_icon() )
+        window.set_icon(util.get_icon())
 
         vbox = gtk.VBox()
         window.add(vbox)
@@ -174,17 +176,17 @@ class MyDotWindow2(CylcDotViewerCommon):
             self.show_all()
         self.load_config()
 
-    def get_graph( self ):
+    def get_graph(self):
         title = self.suite + ': runtime inheritance graph'
-        graph = CGraphPlain( title )
+        graph = CGraphPlain(title)
         graph.graph_attr['rankdir'] = self.orientation
         for ns in self.inherit:
             for p in self.inherit[ns]:
                 attr = {}
                 attr['color'] = 'royalblue'
-                graph.add_edge( p, ns, **attr )
-                nl = graph.get_node( p )
-                nr = graph.get_node( ns )
+                graph.add_edge(p, ns, **attr)
+                nl = graph.get_node(p)
+                nr = graph.get_node(ns)
                 for n in nl, nr:
                     n.attr['shape'] = 'box'
                     n.attr['style'] = 'filled'
@@ -193,15 +195,15 @@ class MyDotWindow2(CylcDotViewerCommon):
 
         self.graph = graph
         self.filter_graph()
-        self.set_dotcode( graph.string() )
+        self.set_dotcode(graph.string())
 
-    def on_left_to_right( self, toolitem ):
+    def on_left_to_right(self, toolitem):
         if toolitem.get_active():
-            self.set_orientation( "LR" )  # Left to right ordering of nodes
+            self.set_orientation("LR")  # Left to right ordering of nodes
         else:
-            self.set_orientation( "TB" )  # Top to bottom (default) ordering
+            self.set_orientation("TB")  # Top to bottom (default) ordering
 
-    def save_action( self, toolitem ):
+    def save_action(self, toolitem):
         chooser = gtk.FileChooserDialog(title="Save Graph",
                                         action=gtk.FILE_CHOOSER_ACTION_SAVE,
                                         buttons=(gtk.STOCK_CANCEL,
@@ -216,7 +218,7 @@ class MyDotWindow2(CylcDotViewerCommon):
             self.outfile = chooser.get_filename()
             if self.outfile:
                 try:
-                    self.graph.draw( self.outfile, prog='dot' )
+                    self.graph.draw(self.outfile, prog='dot')
                 except IOError, x:
                     msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                             buttons=gtk.BUTTONS_OK,
@@ -227,7 +229,7 @@ class MyDotWindow2(CylcDotViewerCommon):
         else:
             chooser.destroy()
 
-    def set_orientation( self, orientation="TB" ):
+    def set_orientation(self, orientation="TB"):
         """Set the orientation of the graph node ordering."""
         if orientation == self.orientation:
             return False
@@ -240,8 +242,8 @@ class MyDotWindow2(CylcDotViewerCommon):
         return True
 
 
-class MyDotWindow( CylcDotViewerCommon ):
-    """Override xdot to get rid of some buttons and parse graph from suite.rc"""
+class MyDotWindow(CylcDotViewerCommon):
+    """Override xdot to get rid of some buttons + parse graph from suite.rc"""
     # used by "cylc graph" to plot dependency graphs
 
     ui = '''
@@ -263,9 +265,10 @@ class MyDotWindow( CylcDotViewerCommon ):
         </toolbar>
     </ui>
     '''
+
     def __init__(self, suite, suiterc, start_point_string, stop_point_string,
-            template_vars, template_vars_file, orientation="TB",
-            subgraphs_on=False, ignore_suicide=True, should_hide=False):
+                 template_vars, template_vars_file, orientation="TB",
+                 subgraphs_on=False, ignore_suicide=True, should_hide=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -290,7 +293,7 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         window.set_title('Cylc Suite Dependency Graph Viewer')
         window.set_default_size(512, 512)
-        window.set_icon( util.get_icon() )
+        window.set_icon(util.get_icon())
         vbox = gtk.VBox()
         window.add(vbox)
 
@@ -308,12 +311,12 @@ class MyDotWindow( CylcDotViewerCommon ):
         self.actiongroup = actiongroup
 
         # create new stock icons for group and ungroup actions
-        imagedir = os.environ[ 'CYLC_DIR' ] + '/images/icons'
+        imagedir = os.environ['CYLC_DIR'] + '/images/icons'
         factory = gtk.IconFactory()
-        for i in [ 'group', 'ungroup' ]:
-            pixbuf = gtk.gdk.pixbuf_new_from_file( imagedir + '/' + i + '.png' )
+        for i in ['group', 'ungroup']:
+            pixbuf = gtk.gdk.pixbuf_new_from_file(imagedir + '/' + i + '.png')
             iconset = gtk.IconSet(pixbuf)
-            factory.add( i, iconset )
+            factory.add(i, iconset)
         factory.add_default()
 
         actiongroup.add_actions((
@@ -370,9 +373,9 @@ class MyDotWindow( CylcDotViewerCommon ):
         vbox.pack_start(self.widget)
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "right-click on nodes to control family grouping" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#8be' ) )
-        vbox.pack_start( eb, False )
+        eb.add(gtk.Label("right-click on nodes to control family grouping"))
+        eb.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse('#8be'))
+        vbox.pack_start(eb, False)
 
         self.set_focus(self.widget)
 
@@ -380,14 +383,14 @@ class MyDotWindow( CylcDotViewerCommon ):
             self.show_all()
         self.load_config()
 
-    def group_all( self, w ):
-        self.get_graph( group_all=True )
+    def group_all(self, w):
+        self.get_graph(group_all=True)
 
-    def ungroup_all( self, w ):
-        self.get_graph( ungroup_all=True )
+    def ungroup_all(self, w):
+        self.get_graph(ungroup_all=True)
 
-    def get_graph( self, group_nodes=[], ungroup_nodes=[],
-            ungroup_recursive=False, ungroup_all=False, group_all=False ):
+    def get_graph(self, group_nodes=[], ungroup_nodes=[],
+                  ungroup_recursive=False, ungroup_all=False, group_all=False):
         if not self.suiterc:
             return
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
@@ -396,12 +399,12 @@ class MyDotWindow( CylcDotViewerCommon ):
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
         graph = self.suiterc.get_graph(
-                group_nodes=group_nodes,
-                ungroup_nodes=ungroup_nodes,
-                ungroup_recursive=ungroup_recursive,
-                group_all=group_all, ungroup_all=ungroup_all,
-                ignore_suicide=self.ignore_suicide,
-                subgraphs_on=self.subgraphs_on )
+            group_nodes=group_nodes,
+            ungroup_nodes=ungroup_nodes,
+            ungroup_recursive=ungroup_recursive,
+            group_all=group_all, ungroup_all=ungroup_all,
+            ignore_suicide=self.ignore_suicide,
+            subgraphs_on=self.subgraphs_on)
 
         graph.graph_attr['rankdir'] = self.orientation
 
@@ -415,23 +418,23 @@ class MyDotWindow( CylcDotViewerCommon ):
 
         self.graph = graph
         self.filter_graph()
-        self.set_dotcode( graph.string() )
+        self.set_dotcode(graph.string())
 
-    def on_left_to_right( self, toolitem ):
+    def on_left_to_right(self, toolitem):
         if toolitem.get_active():
-            self.set_orientation( "LR" )  # Left to right ordering of nodes
+            self.set_orientation("LR")  # Left to right ordering of nodes
         else:
-            self.set_orientation( "TB" )  # Top to bottom (default) ordering
+            self.set_orientation("TB")  # Top to bottom (default) ordering
 
-    def on_subgraphs( self, toolitem ):
+    def on_subgraphs(self, toolitem):
         self.subgraphs_on = toolitem.get_active()
         self.get_graph()
- 
-    def on_igsui( self, toolitem ):
+
+    def on_igsui(self, toolitem):
         self.ignore_suicide = toolitem.get_active()
         self.get_graph()
 
-    def save_action( self, toolitem ):
+    def save_action(self, toolitem):
         chooser = gtk.FileChooserDialog(title="Save Graph",
                                         action=gtk.FILE_CHOOSER_ACTION_SAVE,
                                         buttons=(gtk.STOCK_CANCEL,
@@ -446,7 +449,7 @@ class MyDotWindow( CylcDotViewerCommon ):
             self.outfile = chooser.get_filename()
             if self.outfile:
                 try:
-                    self.graph.draw( self.outfile, prog='dot' )
+                    self.graph.draw(self.outfile, prog='dot')
                 except IOError, x:
                     msg = gtk.MessageDialog(type=gtk.MESSAGE_ERROR,
                                             buttons=gtk.BUTTONS_OK,
@@ -457,7 +460,7 @@ class MyDotWindow( CylcDotViewerCommon ):
         else:
             chooser.destroy()
 
-    def set_orientation( self, orientation="TB" ):
+    def set_orientation(self, orientation="TB"):
         """Set the orientation of the graph node ordering."""
         if orientation == self.orientation:
             return False
@@ -490,33 +493,33 @@ class xdot_widgets(object):
 
         self.widget = DotTipWidget()
 
-        zoomin_button = gtk.Button( stock=gtk.STOCK_ZOOM_IN )
+        zoomin_button = gtk.Button(stock=gtk.STOCK_ZOOM_IN)
         zoomin_button.connect('clicked', self.widget.on_zoom_in)
-        zoomout_button = gtk.Button( stock=gtk.STOCK_ZOOM_OUT )
+        zoomout_button = gtk.Button(stock=gtk.STOCK_ZOOM_OUT)
         zoomout_button.connect('clicked', self.widget.on_zoom_out)
-        zoomfit_button = gtk.Button( stock=gtk.STOCK_ZOOM_FIT )
+        zoomfit_button = gtk.Button(stock=gtk.STOCK_ZOOM_FIT)
         zoomfit_button.connect('clicked', self.widget.on_zoom_fit)
-        zoom100_button = gtk.Button( stock=gtk.STOCK_ZOOM_100 )
+        zoom100_button = gtk.Button(stock=gtk.STOCK_ZOOM_100)
         zoom100_button.connect('clicked', self.widget.on_zoom_100)
 
-        self.graph_disconnect_button = gtk.ToggleButton( '_DISconnect' )
+        self.graph_disconnect_button = gtk.ToggleButton('_DISconnect')
         self.graph_disconnect_button.set_active(False)
-        self.graph_update_button = gtk.Button( '_Update' )
+        self.graph_update_button = gtk.Button('_Update')
         self.graph_update_button.set_sensitive(False)
 
         bbox = gtk.HButtonBox()
-        bbox.add( zoomin_button )
-        bbox.add( zoomout_button )
-        bbox.add( zoomfit_button )
-        bbox.add( zoom100_button )
-        bbox.add( self.graph_disconnect_button )
-        bbox.add( self.graph_update_button )
+        bbox.add(zoomin_button)
+        bbox.add(zoomout_button)
+        bbox.add(zoomfit_button)
+        bbox.add(zoom100_button)
+        bbox.add(self.graph_disconnect_button)
+        bbox.add(self.graph_update_button)
         bbox.set_layout(gtk.BUTTONBOX_SPREAD)
 
         self.vbox.pack_start(self.widget)
         self.vbox.pack_start(bbox, False)
 
-    def get( self ):
+    def get(self):
         return self.vbox
 
     def set_filter(self, filter):
@@ -527,18 +530,18 @@ class xdot_widgets(object):
             old_zoom_func = self.widget.zoom_image
             self.widget.zoom_image = lambda *a, **b: self.widget.queue_draw()
         if self.widget.set_dotcode(dotcode, filename):
-            #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
             # disable automatic zoom-to-fit on update
-            #self.widget.zoom_to_fit()
+            # self.widget.zoom_to_fit()
             pass
         if no_zoom:
             self.widget.zoom_image = old_zoom_func
 
     def set_xdotcode(self, xdotcode, filename='<stdin>'):
         if self.widget.set_xdotcode(xdotcode):
-            #self.set_title(os.path.basename(filename) + ' - Dot Viewer')
+            # self.set_title(os.path.basename(filename) + ' - Dot Viewer')
             # disable automatic zoom-to-fit on update
-            #self.widget.zoom_to_fit()
+            # self.widget.zoom_to_fit()
             pass
 
     def on_reload(self, action):

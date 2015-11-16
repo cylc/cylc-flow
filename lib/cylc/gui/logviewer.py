@@ -18,11 +18,11 @@
 
 import gtk
 import pygtk
-####pygtk.require('2.0')
-import time, os, re, sys
+import os
 from cylc.gui.tailer import Tailer
 from cylc.gui.warning_dialog import warning_dialog
 import pango
+
 
 class logviewer(object):
     def __init__(self, name, dirname, filename):
@@ -40,15 +40,15 @@ class logviewer(object):
 
         self.connect()
 
-    def clear_and_reconnect( self ):
+    def clear_and_reconnect(self):
         self.t.stop()
         self.clear()
         self.connect()
 
     def clear(self):
         logbuffer = self.logview.get_buffer()
-        s,e = logbuffer.get_bounds()
-        logbuffer.delete( s,e )
+        s, e = logbuffer.get_bounds()
+        logbuffer.delete(s, e)
 
     def path(self):
         if self.dirname and not os.path.isabs(self.filename):
@@ -56,33 +56,32 @@ class logviewer(object):
         else:
             return self.filename
 
-    def connect( self ):
+    def connect(self):
         self.t = Tailer(self.logview, self.path())
-        ####print "Starting log viewer thread for " + self.name
         self.t.start()
 
-    def quit_w_e( self, w, e ):
+    def quit_w_e(self, w, e):
         self.t.stop()
 
-    def quit( self ):
+    def quit(self):
         self.t.stop()
 
-    def get_widget( self ):
+    def get_widget(self):
         return self.vbox
 
-    def reset_logbuffer( self ):
+    def reset_logbuffer(self):
         # clear log buffer iters and tags
         logbuffer = self.logview.get_buffer()
-        s,e = logbuffer.get_bounds()
-        logbuffer.remove_all_tags( s,e )
+        s, e = logbuffer.get_bounds()
+        logbuffer.remove_all_tags(s, e)
         self.find_current_iter = None
         self.find_current = None
 
-    def enter_clicked( self, e, tv ):
-        self.on_find_clicked( tv, e )
+    def enter_clicked(self, e, tv):
+        self.on_find_clicked(tv, e)
 
-    def on_find_clicked( self, tv, e ):
-        needle = e.get_text ()
+    def on_find_clicked(self, tv, e):
+        needle = e.get_text()
         if not needle:
             return
 
@@ -90,78 +89,79 @@ class logviewer(object):
         self.freeze_button.set_active(True)
         self.freeze_button.set_label('Reconnect')
         if not self.search_warning_done:
-            warning_dialog( "Find Next disconnects the live feed; click Reconnect when you're done" ).warn()
+            warning_dialog(
+                "Find Next disconnects the live feed;" +
+                " click Reconnect when you're done").warn()
             self.search_warning_done = True
 
-        tb = tv.get_buffer ()
+        tb = tv.get_buffer()
 
         if needle == self.find_current:
             s = self.find_current_iter
         else:
-            s,e = tb.get_bounds()
-            tb.remove_all_tags( s,e )
+            s, e = tb.get_bounds()
+            tb.remove_all_tags(s, e)
             s = tb.get_end_iter()
-            tv.scroll_to_iter( s, 0 )
+            tv.scroll_to_iter(s, 0)
         try:
-            f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY)
+            f, l = s.backward_search(needle, gtk.TEXT_SEARCH_TEXT_ONLY)
         except:
-            warning_dialog( '"' + needle + '"' + " not found" ).warn()
+            warning_dialog('"' + needle + '"' + " not found").warn()
         else:
-            tag = tb.create_tag( None, background="#70FFA9" )
-            tb.apply_tag( tag, f, l )
+            tag = tb.create_tag(None, background="#70FFA9")
+            tb.apply_tag(tag, f, l)
             self.find_current_iter = f
             self.find_current = needle
-            tv.scroll_to_iter( f, 0 )
+            tv.scroll_to_iter(f, 0)
 
-    def freeze_log( self, b ):
+    def freeze_log(self, b):
         # TODO - HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN
         # PASSING IN ARGUMENTS?
         if b.get_active():
             self.t.freeze = True
-            b.set_label( 'Re_connect' )
+            b.set_label('Re_connect')
             self.reset_logbuffer()
         else:
             self.t.freeze = False
-            b.set_label( 'Dis_connect' )
+            b.set_label('Dis_connect')
 
         return False
 
-    def create_gui_panel( self ):
+    def create_gui_panel(self):
         self.logview = gtk.TextView()
-        self.logview.set_editable( False )
+        self.logview.set_editable(False)
         # Use a monospace font. This is safe - by testing - setting an
         # illegal font description has no effect.
-        self.logview.modify_font( pango.FontDescription("monospace") )
+        self.logview.modify_font(pango.FontDescription("monospace"))
 
         searchbox = gtk.HBox()
         entry = gtk.Entry()
-        entry.connect( "activate", self.enter_clicked, self.logview )
-        searchbox.pack_start (entry, True)
-        b = gtk.Button ("Find Next")
-        b.connect_object ('clicked', self.on_find_clicked, self.logview, entry)
-        searchbox.pack_start (b, False)
+        entry.connect("activate", self.enter_clicked, self.logview)
+        searchbox.pack_start(entry, True)
+        b = gtk.Button("Find Next")
+        b.connect_object('clicked', self.on_find_clicked, self.logview, entry)
+        searchbox.pack_start(b, False)
 
         self.hbox = gtk.HBox()
 
-        self.freeze_button = gtk.ToggleButton( "Dis_connect" )
+        self.freeze_button = gtk.ToggleButton("Dis_connect")
         self.freeze_button.set_active(False)
-        self.freeze_button.connect("toggled", self.freeze_log )
+        self.freeze_button.connect("toggled", self.freeze_log)
 
-        searchbox.pack_end( self.freeze_button, False )
+        searchbox.pack_end(self.freeze_button, False)
 
         sw = gtk.ScrolledWindow()
-        #sw.set_border_width(5)
-        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        sw.add( self.logview )
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        sw.add(self.logview)
         self.logview.set_border_width(5)
-        self.logview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
+        self.logview.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#fff"))
 
         self.vbox = gtk.VBox()
 
-        self.log_label = gtk.Label( self.path() )
-        self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#00a" ))
-        self.vbox.pack_start( self.log_label, False )
+        self.log_label = gtk.Label(self.path())
+        self.log_label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#00a"))
+        self.vbox.pack_start(self.log_label, False)
 
-        self.vbox.pack_start( sw, True )
-        self.vbox.pack_start( searchbox, False )
-        self.vbox.pack_start( self.hbox, False )
+        self.vbox.pack_start(sw, True)
+        self.vbox.pack_start(searchbox, False)
+        self.vbox.pack_start(self.hbox, False)

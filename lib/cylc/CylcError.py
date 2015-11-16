@@ -19,24 +19,26 @@
 """Here lies the unfinished early beginnings of more consistent
 cylc-wide exception handling ..."""
 
-class CylcError( Exception ):
+
+class CylcError(Exception):
     """
     Attributes:
         message - what the problem is.
     """
-    def __init__( self, msg ):
+    def __init__(self, msg):
         self.msg = msg
-    def __str__( self ):
+
+    def __str__(self):
         return repr(self.msg)
 
 
-class SchedulerError( CylcError ):
+class SchedulerError(CylcError):
     pass
 
 
-class TaskStateError( CylcError ):
+class TaskStateError(CylcError):
     pass
 
 
-class TaskNotFoundError( CylcError ):
+class TaskNotFoundError(CylcError):
     pass

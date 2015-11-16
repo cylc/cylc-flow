@@ -28,18 +28,20 @@
 # Judging from discussion on the Python dev list in 2010, this problem
 # will be fixed in Python 3.?.  For now we have to roll our own ...
 
-import os, errno
+import errno
+import os
 
-def mkdir_p( path, mode=None ):
+
+def mkdir_p(path, mode=None):
     if mode:
         # reset mode and get current value
-        old_mode = os.umask( 0 )
+        old_mode = os.umask(0)
 
     try:
         if mode:
-            os.makedirs( path, int(mode, 8) )
+            os.makedirs(path, int(mode, 8))
         else:
-            os.makedirs( path )
+            os.makedirs(path)
 
     except OSError, err:
         if err.errno != errno.EEXIST:
@@ -49,4 +51,4 @@ def mkdir_p( path, mode=None ):
             pass
 
     if mode:
-        os.umask( old_mode )
+        os.umask(old_mode)

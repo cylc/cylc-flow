@@ -50,7 +50,7 @@ def get_padding(reglist):
             if i == 0:
                 tmp = len(items[i])
             else:
-                tmp = 2*i + 1 + len(items[i])
+                tmp = 2 * i + 1 + len(items[i])
             if tmp > maxlen:
                 maxlen = tmp
     return maxlen * ' '

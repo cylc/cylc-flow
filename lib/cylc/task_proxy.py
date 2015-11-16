@@ -376,12 +376,14 @@ class TaskProxy(object):
                     trig = ctrig[label]
                     if trig.graph_offset_string is not None:
                         prereq_offset_point = get_point_relative(
-                                trig.graph_offset_string, point)
+                            trig.graph_offset_string, point)
                         if prereq_offset_point > point:
                             prereq_offset = prereq_offset_point - point
                             if (self.tdef.max_future_prereq_offset is None or
-                                    prereq_offset > self.tdef.max_future_prereq_offset):
-                                self.tdef.max_future_prereq_offset = prereq_offset
+                                    (prereq_offset >
+                                     self.tdef.max_future_prereq_offset)):
+                                self.tdef.max_future_prereq_offset = (
+                                    prereq_offset)
                         cpre.add(trig.get_prereq(point)[0], label,
                                  prereq_offset_point < self.tdef.start_point)
                     else:
@@ -793,7 +795,8 @@ class TaskProxy(object):
             ctx.ret_code = 0
             self.process_incoming_message(
                 (priority, message), msg_was_polled=True)
-            self.process_incoming_message((priority, message), msg_was_polled=True)
+            self.process_incoming_message(
+                (priority, message), msg_was_polled=True)
         self.command_log(ctx)
 
     def job_kill_callback(self, line):
@@ -896,8 +899,8 @@ class TaskProxy(object):
     def setup_event_mail(self, event, message):
         """Event notification, by email."""
         key1 = (self.EVENT_MAIL, event)
-        if ((key1, self.submit_num) in self.event_handler_try_states
-                or event not in self._get_events_conf("mail events", [])):
+        if ((key1, self.submit_num) in self.event_handler_try_states or
+                event not in self._get_events_conf("mail events", [])):
             return
 
         self.event_handler_try_states[(key1, self.submit_num)] = TryState(
@@ -1333,11 +1336,12 @@ class TaskProxy(object):
             "submit_num": self.submit_num})
         self._populate_job_conf(
             rtconfig, local_jobfile_path, common_job_log_path)
-        self.job_conf.update({
-            'use manual completion': use_manual,
-            'pre-script': precommand,
-            'script': command,
-            'post-script': postcommand
+        self.job_conf.update(
+            {
+                'use manual completion': use_manual,
+                'pre-script': precommand,
+                'script': command,
+                'post-script': postcommand,
             }.items()
         )
         self.db_inserts_map[self.TABLE_TASK_JOBS].append({

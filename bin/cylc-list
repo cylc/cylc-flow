@@ -136,16 +136,16 @@ def main():
             for ns in namespaces:
                 if len(ns) > maxlen:
                     maxlen = len(ns)
-            padding = maxlen*' '
+            padding = maxlen * ' '
 
         for ns in namespaces:
             if options.mro:
-                print ns, padding[0:len(padding)-len(ns)],
+                print ns, padding[0:len(padding) - len(ns)],
                 for i in config.get_mro(ns):
                     print i,
                 print
             elif options.titles:
-                print ns, padding[0:len(padding)-len(ns)],
+                print ns, padding[0:len(padding) - len(ns)],
                 print result[ns]
             else:
                 print ns

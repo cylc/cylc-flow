@@ -181,4 +181,4 @@ for file in os.listdir(bin):
             if new_file:
                 print '\nFILE:', os.path.join(bin, file)
                 new_file = False
-            print '   ('+str(count)+'): ' + line
+            print '   (' + str(count) + '): ' + line

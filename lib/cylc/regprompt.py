@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-def prompt( question, default ):
+
+def prompt(question, default):
     def explain():
         print "Valid responses:"
         print "  [enter] - accept the default"
@@ -28,7 +29,8 @@ def prompt( question, default ):
     try_again = True
     while try_again:
         try_again = False
-        res = raw_input( question + " (default '" + default + "', else VALUE,q,s,?) " )
+        res = raw_input(
+            question + " (default '" + default + "', else VALUE,q,s,?) ")
         if res == '?':
             explain()
             try_again = True

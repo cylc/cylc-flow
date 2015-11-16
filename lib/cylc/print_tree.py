@@ -33,12 +33,14 @@ u_vbar = u'\u2502'
 u_tee = u'\u251C' + u_hbar
 u_trm = u'\u2514' + u_hbar
 
-def print_tree( tree, padding, use_unicode=False, prefix='', labels=None, eq=False ):
+
+def print_tree(tree, padding, use_unicode=False, prefix='', labels=None,
+               eq=False):
     if use_unicode:
         vbar = u_vbar
         trm = u_trm
         tee = u_tee
-        tee_re= tee
+        tee_re = tee
     else:
         vbar = a_vbar
         trm = a_trm
@@ -55,15 +57,15 @@ def print_tree( tree, padding, use_unicode=False, prefix='', labels=None, eq=Fal
             pprefix = prefix + ' ' + tee
 
         pp = pprefix
-        pp = re.sub( '^ (' + trm + '|' + tee_re + ')', '', pp )
-        pp = re.sub( trm + ' ', '  ', pp )
-        pp = re.sub( tee_re + ' ', vbar + ' ', pp )
+        pp = re.sub('^ (' + trm + '|' + tee_re + ')', '', pp)
+        pp = re.sub(trm + ' ', '  ', pp)
+        pp = re.sub(tee_re + ' ', vbar + ' ', pp)
 
         result = pp + item
-        line = result + ' ' + padding[ len(result): ]
-        if isinstance( tree[item], dict ):
+        line = result + ' ' + padding[len(result):]
+        if isinstance(tree[item], dict):
             print line
-            print_tree( tree[item], padding, use_unicode, pprefix, labels, eq )
+            print_tree(tree[item], padding, use_unicode, pprefix, labels, eq)
         else:
             if labels:
                 if item in labels:
@@ -76,4 +78,4 @@ def print_tree( tree, padding, use_unicode=False, prefix='', labels=None, eq=Fal
                     joiner = '= '
                 else:
                     joiner = ''
-                print line + joiner + str( tree[item] )
+                print line + joiner + str(tree[item])

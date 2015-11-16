@@ -23,9 +23,10 @@ import os
 import pwd
 from cylc.suite_host import get_hostname
 
-user = os.environ.get( 'USER', pwd.getpwuid(os.getuid()).pw_name )
+user = os.environ.get('USER', pwd.getpwuid(os.getuid()).pw_name)
 host = get_hostname()
 user_at_host = "%s@%s" % (user, host)
+
 
 def is_remote_user(name):
     """Return True if name is different than the current username.

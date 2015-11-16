@@ -29,11 +29,13 @@ BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
 MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 
 
-class TriggerError( Exception ):
-    def __init__( self, msg ):
+class TriggerError(Exception):
+    def __init__(self, msg):
         self.msg = msg
-    def __str__( self ):
-        return repr( self.msg )
+
+    def __str__(self):
+        return repr(self.msg)
+
 
 class trigger(object):
     """
@@ -79,10 +81,9 @@ Task triggers, used to generate prerequisite messages.
         try:
             msg = outputs[qualifier]
         except KeyError:
-            raise TriggerError, (
-                    "ERROR: undefined trigger qualifier: %s:%s" % (
-                        task_name, qualifier)
-            )
+            raise TriggerError(
+                "ERROR: undefined trigger qualifier: %s:%s" % (
+                    task_name, qualifier))
         else:
             # Back compat for [T+n] in message string.
             m = re.match(BACK_COMPAT_MSG_RE, msg)
@@ -90,7 +91,8 @@ Task triggers, used to generate prerequisite messages.
             if m:
                 prefix, signed_offset, sign, offset, suffix = m.groups()
                 if offset:
-                    msg_offset = base_interval.get_inferred_child(signed_offset)
+                    msg_offset = base_interval.get_inferred_child(
+                        signed_offset)
                 else:
                     msg_offset = get_interval_cls().get_null()
             else:
@@ -102,10 +104,9 @@ Task triggers, used to generate prerequisite messages.
                     else:
                         msg_offset = get_interval_cls().get_null()
                 else:
-                    raise TriggerError, (
-                            "ERROR: undefined trigger qualifier: %s:%s" % (
-                                task_name, qualifier)
-                    )
+                    raise TriggerError(
+                        "ERROR: undefined trigger qualifier: %s:%s" % (
+                            task_name, qualifier))
             self.message = msg
             self.message_offset = msg_offset
 
@@ -123,9 +124,8 @@ Task triggers, used to generate prerequisite messages.
                 if self.message_offset:
                     point += self.message_offset
                 if self.graph_offset_string:
-                    point = get_point_relative(
-                            self.graph_offset_string, point)
-            preq = re.sub( '\[.*\]', str(point), preq )
+                    point = get_point_relative(self.graph_offset_string, point)
+            preq = re.sub('\[.*\]', str(point), preq)
         else:
             # Built-in trigger
             if self.cycle_point:

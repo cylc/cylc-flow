@@ -79,9 +79,9 @@ class DotUpdater(threading.Thread):
     def _set_tooltip(self, widget, tip_text):
         tip = gtk.Tooltips()
         tip.enable()
-        tip.set_tip( widget, tip_text )
+        tip.set_tip(widget, tip_text)
 
-    def clear_list( self ):
+    def clear_list(self):
         self.led_liststore.clear()
         # gtk idle functions must return false or will be called multiple times
         return False
@@ -96,7 +96,7 @@ class DotUpdater(threading.Thread):
 
         if not self.action_required and (
                 self.last_update_time is not None and
-                self.last_update_time >= self.updater.last_update_time ):
+                self.last_update_time >= self.updater.last_update_time):
             return False
 
         self.last_update_time = self.updater.last_update_time
@@ -133,14 +133,16 @@ class DotUpdater(threading.Thread):
                 if item not in self.task_list:
                     self.task_list.append(item)
 
-        if self.cfg.use_defn_order and self.updater.ns_defn_order and self.defn_order_on:
-            self.task_list = [ i for i in self.updater.ns_defn_order if i in self.task_list ]
+        if (self.cfg.use_defn_order and self.updater.ns_defn_order and
+                self.defn_order_on):
+            self.task_list = [
+                i for i in self.updater.ns_defn_order if i in self.task_list]
         else:
             self.task_list.sort()
 
         return True
 
-    def set_led_headings( self ):
+    def set_led_headings(self):
         if not self.should_transpose_view:
             new_headings = ['Name'] + self.point_strings
         else:
@@ -161,10 +163,10 @@ class DotUpdater(threading.Thread):
             label.show()
             labels.append(label)
             label_box = gtk.VBox()
-            label_box.pack_start( label, expand=False, fill=False )
+            label_box.pack_start(label, expand=False, fill=False)
             label_box.show()
-            self._set_tooltip( label_box, tip )
-            tvcs[n].set_widget( label_box )
+            self._set_tooltip(label_box, tip)
+            tvcs[n].set_widget(label_box)
         max_pixel_length = -1
         for label in labels:
             x, y = label.get_layout().get_size()
@@ -174,14 +176,14 @@ class DotUpdater(threading.Thread):
             while label.get_layout().get_size()[0] < max_pixel_length:
                 label.set_text(label.get_text() + ' ')
 
-    def ledview_widgets( self ):
+    def ledview_widgets(self):
         if not self.should_transpose_view:
-            types = [str] + [gtk.gdk.Pixbuf] * len( self.point_strings )
+            types = [str] + [gtk.gdk.Pixbuf] * len(self.point_strings)
             num_new_columns = len(types)
         else:
-            types = [str] + [gtk.gdk.Pixbuf] * len( self.task_list) + [str]
+            types = [str] + [gtk.gdk.Pixbuf] * len(self.task_list) + [str]
             num_new_columns = 1 + len(self.task_list)
-        new_led_liststore = gtk.ListStore( *types )
+        new_led_liststore = gtk.ListStore(*types)
         old_types = []
         for i in range(self.led_liststore.get_n_columns()):
             old_types.append(self.led_liststore.get_column_type(i))
@@ -202,7 +204,7 @@ class DotUpdater(threading.Thread):
                 self.is_transposed == self.should_transpose_view):
 
             tvcs_for_removal = self.led_treeview.get_columns()[
-                 num_new_columns:]
+                num_new_columns:]
 
             for tvc in tvcs_for_removal:
                 self.led_treeview.remove_column(tvc)
@@ -212,12 +214,11 @@ class DotUpdater(threading.Thread):
             for model_col_num in range(num_columns, num_new_columns):
                 # Add newly-needed columns.
                 cr = gtk.CellRendererPixbuf()
-                #cr.set_property( 'cell_background', 'black' )
-                cr.set_property( 'xalign', 0 )
-                tvc = gtk.TreeViewColumn( ""  )
-                tvc.pack_end( cr, True )
-                tvc.set_attributes( cr, pixbuf=model_col_num )
-                self.led_treeview.append_column( tvc )
+                cr.set_property('xalign', 0)
+                tvc = gtk.TreeViewColumn("")
+                tvc.pack_end(cr, True)
+                tvc.set_attributes(cr, pixbuf=model_col_num)
+                self.led_treeview.append_column(tvc)
             self.set_led_headings()
             return False
 
@@ -225,7 +226,7 @@ class DotUpdater(threading.Thread):
         for tvc in tvcs:
             self.led_treeview.remove_column(tvc)
 
-        self.led_treeview.set_model( self.led_liststore )
+        self.led_treeview.set_model(self.led_liststore)
 
         if not self.should_transpose_view:
             tvc = gtk.TreeViewColumn('Name')
@@ -233,24 +234,23 @@ class DotUpdater(threading.Thread):
             tvc = gtk.TreeViewColumn('Point')
 
         cr = gtk.CellRendererText()
-        tvc.pack_start( cr, False )
-        tvc.set_attributes( cr, text=0 )
+        tvc.pack_start(cr, False)
+        tvc.set_attributes(cr, text=0)
 
-        self.led_treeview.append_column( tvc )
+        self.led_treeview.append_column(tvc)
 
         if not self.should_transpose_view:
-            data_range = range(1, len( self.point_strings ) + 1)
+            data_range = range(1, len(self.point_strings) + 1)
         else:
-            data_range = range(1, len( self.task_list ) + 1)
+            data_range = range(1, len(self.task_list) + 1)
 
         for n in data_range:
             cr = gtk.CellRendererPixbuf()
-            #cr.set_property( 'cell_background', 'black' )
-            cr.set_property( 'xalign', 0 )
-            tvc = gtk.TreeViewColumn( ""  )
-            tvc.pack_end( cr, True )
-            tvc.set_attributes( cr, pixbuf=n )
-            self.led_treeview.append_column( tvc )
+            cr.set_property('xalign', 0)
+            tvc = gtk.TreeViewColumn("")
+            tvc.pack_end(cr, True)
+            tvc.set_attributes(cr, pixbuf=n)
+            self.led_treeview.append_column(tvc)
 
         self.set_led_headings()
         self.is_transposed = self.should_transpose_view
@@ -296,27 +296,27 @@ class DotUpdater(threading.Thread):
         if col_index == 0:
             tooltip.set_text(task_id)
             return True
-        text = get_id_summary( task_id, self.state_summary,
-                               self.fam_state_summary, self.descendants )
+        text = get_id_summary(task_id, self.state_summary,
+                              self.fam_state_summary, self.descendants)
         if text == task_id:
             return False
         tooltip.set_text(text)
         return True
 
-    def update_gui( self ):
+    def update_gui(self):
         new_data = {}
         state_summary = {}
-        state_summary.update( self.state_summary )
-        state_summary.update( self.fam_state_summary )
+        state_summary.update(self.state_summary)
+        state_summary.update(self.fam_state_summary)
         self.ledview_widgets()
 
         tasks_by_point_string = {}
         tasks_by_name = {}
         for id_ in state_summary:
             name, point_string = TaskID.split(id_)
-            tasks_by_point_string.setdefault( point_string, [] )
+            tasks_by_point_string.setdefault(point_string, [])
             tasks_by_point_string[point_string].append(name)
-            tasks_by_name.setdefault( name, [] )
+            tasks_by_name.setdefault(name, [])
             tasks_by_name[name].append(point_string)
 
         # flat (a liststore would do)
@@ -376,9 +376,8 @@ class DotUpdater(threading.Thread):
         states = {}
         while not self.quit:
             if self.update() or self.action_required:
-                gobject.idle_add( self.update_gui )
+                gobject.idle_add(self.update_gui)
                 self.action_required = False
             sleep(0.2)
         else:
             pass
-            ####print "Disconnecting task state info thread"
