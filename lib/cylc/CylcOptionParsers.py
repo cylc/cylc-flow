@@ -261,7 +261,7 @@ Arguments:"""
                     help=(
                         "Set the value of a Jinja2 template variable in the "
                         "suite definition. This option can be used multiple "
-                        "times on the command line.  "
+                        "times on the command line. "
                         "WARNING: these settings do not persist across suite "
                         "restarts; "
                         "they need to be set again on the \"cylc restart\" "
