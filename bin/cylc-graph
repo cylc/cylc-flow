@@ -69,6 +69,16 @@ import cylc.flags
 from cylc.remote import remrun
 from cylc.task_id import TaskID
 
+try:
+    import gtk
+    import gobject
+    from xdot import DotWindow
+    from cylc.cylc_xdot import (
+        MyDotWindow, MyDotWindow2, get_reference_from_plain_format)
+except ImportError as exc:
+    # Allow command help generation without a graphical environment.
+    print >> sys.stderr, 'WARNING: no X environment? %s' % exc
+
 if remrun().execute():
     sys.exit(0)
 
@@ -185,15 +195,6 @@ def main():
         action="store_true", default=False, dest="show_suicide")
 
     (options, args) = parser.parse_args()
-
-    # import modules that require gtk now, so that a display is not needed
-    # just to get command help (e.g. when running make on a post-commit hook
-    # on a remote repository).
-    import gtk
-    import gobject
-    from xdot import DotWindow
-    from cylc.cylc_xdot import (
-        MyDotWindow, MyDotWindow2, get_reference_from_plain_format)
 
     if options.filename:
         if len(args) != 0:
