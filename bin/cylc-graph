@@ -150,8 +150,10 @@ def main():
         __doc__, jset=True, prep=True,
         argdoc=[
             ('[SUITE]', 'Suite name or path'),
-            ('[START]', 'Initial cycle point to plot (default=2999010100)'),
-            ('[STOP]', 'Final cycle point to plot (default=2999010123)')])
+            ('[START]', 'Initial cycle point '
+             '(default: suite initial point)'),
+            ('[STOP]', 'Final cycle point '
+             '(default: initial + 3 points)')])
 
     parser.add_option(
         "-n", "--namespaces",
