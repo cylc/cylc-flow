@@ -279,7 +279,7 @@ class scheduler(object):
                 RemoteJobHostManager.get_inst().init_suite_run_dir(
                     self.suite, user_at_host)
             except RemoteJobHostInitError as exc:
-                self.log.warning(str(exc))
+                self.log.error(str(exc))
 
         self.already_timed_out = False
         if self.config.cfg['cylc']['event hooks']['timeout']:

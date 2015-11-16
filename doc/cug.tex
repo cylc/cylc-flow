@@ -1361,6 +1361,10 @@ For remote task hosting to work several requirements must be satisfied:
 \item Passwordless ssh must be enabled from the suite host account to
 the task host account, for task job submission.
 
+\item Your shell initialization (.profile, .bashrc, .cshrc, etc) on the remote
+host must not produce any standard output as it may confuse commands such as
+scp. See \url{http://www.openssh.com/faq.html#2.9} for more information.
+
 \item Networking settings must allow communication {\em back} from
 the task host to the suite host, either by network ports (Pyro) or ssh,
 unless the last-resort one way {\em task polling} communication method
@@ -4343,6 +4347,12 @@ For this to work,
 \begin{myitemize}
     \item passwordless ssh must be configured between the suite and task
     host accounts.
+
+    \item Your shell initialization (.profile, .bashrc, .cshrc, etc) on the
+    remote host must not produce any standard output as it may confuse commands
+    such as scp. See \url{http://www.openssh.com/faq.html#2.9} for more
+    information.
+
     \item cylc must be installed on task hosts so that remote tasks can
     use cylc messaging and poll or kill commands.
     \begin{myitemize}
