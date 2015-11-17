@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.7.3">6.7.3</a>
     <li><a href="#6.7.2">6.7.2</a>
     <li><a href="#6.7.1">6.7.1</a>
     <li><a href="#6.7.0">6.7.0</a>
@@ -64,6 +65,29 @@
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
 
+<a name="6.7.3"/>
+    <h2>6.7.3</h2>
+
+    <h3>6.7.3 enhancements</h3>
+    <ul>
+	    <li> Better diagnostics for remote job submission problems.
+	  <div style="background:yellow">Note that any
+	    output printed from non-interactive shell login scripts such as
+	    <code>.bashrc</code> and <code>.tcshrc</code> will break remote job
+	    submission - this is due to a known deficiency of
+	    <code>scp</code>.</div>
+    </ul>
+
+    <h3>6.7.3 fixes</h3>
+    <ul>
+	    <li> Restored the right-click group/ungroup menu in the <code>cylc
+		    graph</code> viewer (broken at 6.7.2).
+	    <li> Fixed delayed 
+	    <code>gcylc</code> text view update after changing task filter
+	    settings (broken at 6.7.0).
+    </ul>
+
+	
 <a name="6.7.2"/>
     <h2>6.7.2</h2>
 
