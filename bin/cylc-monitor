@@ -67,6 +67,11 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
             action="store_true", default=False, dest="once")
 
         self.parser.add_option(
+            "-s", "--sort",
+            help="Sort task names under each cycle point.",
+            action="store_true", default=False, dest="sort_columns")
+
+        self.parser.add_option(
             "-u", "--runahead",
             help="Display task proxies in the runahead pool (off by default).",
             action="store_true", default=False, dest="display_runahead")
@@ -205,6 +210,10 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                                 line += " %s" % val[name]
                             else:
                                 line += " %s" % (' ' * len(name))
+                    elif options.sort_columns:
+                        for name in sorted(name_list):
+                            if name in val:
+                                line += " %s" % val[name]
                     else:
                         for name, info in val.items():
                             line += " %s" % info
