@@ -199,15 +199,14 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     indx = point_str
                     line = "%s%s%s" % (
                         '\033[1;34m', point_str, task_state.ctrl_end)
-                    if options.align_columns:
-                        for name in sorted(name_list):
-                            if name in val:
-                                line += " %s" % val[name]
-                            else:
+
+                    for name in sorted(name_list):
+                        try:
+                            line += " %s" % val[name]
+                        except KeyError:
+                            if options.align_columns:
                                 line += " %s" % (' ' * len(name))
-                    else:
-                        for name, info in val.items():
-                            line += " %s" % info
+
                     blitlines[indx] = line
 
                 if not options.once:
