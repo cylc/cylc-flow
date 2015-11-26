@@ -469,8 +469,8 @@ class TaskProxy(object):
         try:
             with open(job_activity_log, "ab") as handle:
                 handle.write(ctx_str)
-        except IOError:
-            pass
+        except IOError as exc:
+            self.log(WARNING, "%s: write failed\n%s" % (job_activity_log, exc))
         if ctx.cmd and ctx.ret_code:
             self.log(ERROR, ctx_str)
         elif ctx.cmd:
@@ -864,8 +864,8 @@ class TaskProxy(object):
                 if not line.endswith("\n"):
                     line += "\n"
                 handle.write(line)
-        except IOError:
-            pass
+        except IOError as exc:
+            self.log(WARNING, "%s: write failed\n%s" % (job_activity_log, exc))
 
     def setup_event_handlers(
             self, event, message, db_update=True, db_event=None, db_msg=None):
