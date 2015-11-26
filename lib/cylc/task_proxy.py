@@ -466,8 +466,11 @@ class TaskProxy(object):
         job_log_dir = self.get_job_log_dir(
             self.tdef.name, self.point, submit_num, self.suite_name)
         job_activity_log = os.path.join(job_log_dir, "job-activity.log")
-        with open(job_activity_log, "ab") as handle:
-            handle.write(ctx_str)
+        try:
+            with open(job_activity_log, "ab") as handle:
+                handle.write(ctx_str)
+        except IOError:
+            pass
         if ctx.cmd and ctx.ret_code:
             self.log(ERROR, ctx_str)
         elif ctx.cmd:
@@ -856,10 +859,13 @@ class TaskProxy(object):
         job_log_dir = self.get_job_log_dir(
             self.tdef.name, self.point, "NN", self.suite_name)
         job_activity_log = os.path.join(job_log_dir, "job-activity.log")
-        with open(job_activity_log, "ab") as handle:
-            if not line.endswith("\n"):
-                line += "\n"
-            handle.write(line)
+        try:
+            with open(job_activity_log, "ab") as handle:
+                if not line.endswith("\n"):
+                    line += "\n"
+                handle.write(line)
+        except IOError:
+            pass
 
     def setup_event_handlers(
             self, event, message, db_update=True, db_event=None, db_msg=None):
