@@ -39,6 +39,7 @@ from cylc.registration import localdb
 from cylc.network.suite_state import (
     StateSummaryClient, SuiteStillInitialisingError)
 from cylc.wallclock import get_time_string_from_unix_time
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
 class SuiteMonitor(object):
@@ -62,12 +63,20 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
             "line still represents all task proxies.",
             action="store_true", default=False, dest="restricted")
 
+        if GLOBAL_CFG.get(["monitor", "sort by definition order"]):
+            self.default_sort = "definition"
+            self.other_sort = "alphanumeric"
+        else:
+            self.default_sort = "alphanumeric"
+            self.other_sort = "definition"
+
         self.parser.add_option(
             "-s", "--sort",
-            help="Sort tasks into alphanumeric order. The default is "
-            "definition order (i.e. the order tasks are defined under "
-            "[runtime] in the suite definition.",
-            action="store_true", default=False, dest="sort_alphanumeric")
+            help="Sort tasks into " + self.other_sort + " order. "
+            "The default is " + self.default_sort + " order, as specified by "
+            "global config. (Definition order is the order that tasks appear "
+            "under [runtime] in the suite definition).",
+            action="store_true", default=False, dest="alt_sort")
 
         self.parser.add_option(
             "-o", "--once",
@@ -155,11 +164,17 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     task_info[point_string][name] = "%s%s%s" % (
                         task_state.ctrl[state], name, task_state.ctrl_end)
 
-                # Put each cycle point's tasks in alphanumeric order.
-                if options.sort_alphanumeric:
+                # Sort the tasks in each cycle point.
+                if options.alt_sort:
+                    sort_order = self.other_sort
+                else:
+                    sort_order = self.default_sort
+
+                if sort_order == "alphanumeric":
                     sorted_name_list = sorted(name_list)
                 else:
                     sorted_name_list = ns_defn_order
+
                 sorted_task_info = {}
                 for point_str, info in task_info.items():
                     sorted_task_info[point_str] = OrderedDict()
