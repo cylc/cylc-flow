@@ -129,7 +129,9 @@ SPEC = {
     },
 
     'monitor': {
-        'sort by definition order': vdr(vtype='boolean', default=True),
+        'sort order': vdr(vtype='string',
+                          options=["alphanumeric", "definition"],
+                          default="definition"),
     },
 
     'hosts': {

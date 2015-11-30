@@ -373,16 +373,18 @@ Each suite stores its port number, by suite name, under this directory.
 
 Configurable settings for the command line \lstinline=cylc monitor= tool.
 
-\subsubsection[monitor]{[monitor] $\rightarrow$ sort by definition order}
+\subsubsection[monitor]{[monitor] $\rightarrow$ sort order}
 
-If True, display tasks in definition order by default, i.e.\ the order in which
-they appear under \lstinline=[runtime]= in the suite definition.  Otherwise,
-the default is alphanumeric sort.  The monitor has a command line option to
-switch to the non-default sort order.
-
+The sort order for tasks in the monitor view.
 \begin{myitemize}
-\item {\em type:} boolean
-\item {\em default:} True
+\item {\em type:} string
+\item {\em options:}
+    \begin{myitemize}
+    \item {\bf alphanumeric}
+    \item {\bf definition} -  the order that tasks appear under
+	    \lstinline=[runtime]= in the suite definition.
+  \end{myitemize}
+\item {\em default:} definition
 \end{myitemize}
 
 \subsection{[hosts]}
