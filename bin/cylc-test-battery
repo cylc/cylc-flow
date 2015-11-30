@@ -20,7 +20,7 @@ set -u
 
 usage() {
   cat <<eof
-Usage: cylc test-battery [OPTIONS] [FILES or DIRECTORIES] -- [prove OPTIONS]
+Usage: cylc test-battery [...]
 
 Run automated cylc and parsec tests under [FILES or DIRECTORIES].
 Test locations default to the following directory tree:
@@ -36,45 +36,47 @@ Requirements:
   * Passwordless ssh must be configured to task host accounts.
   * Some test suites submit jobs to 'at' so atd must be running.
 
-Suite run directories are cleaned up on the suite host (but not on
-remote task hosts) for passing tests - otherwise they are left alone.
+Options and arguments are appended to the "prove -j \$NPROC -s -r \${@:-tests}"
+command, where NPROC is the number of child processes that can be used to run
+the test files.
 
-By default the command uses the number of processors in your system to
-determine the number of tests to run in parallel. This may be anti-social
-on systems shared with many other users. On slow or loaded
-machines this may result in some test failures due to timeouts intended
-to catch problems that can prevent a suite from shutting down normally.
-In such cases, you can change the amount of concurrency by setting either:
-  * the "-j N" option, or
-  * the "process pool size = N" option in the site/user global
-    configuration.
+The command normally uses the "process pool size" setting (default=4) in the
+site/user global configuration file to determine the number of tests to run in
+parallel. You can also change the amount of concurrency with the "-j N" option.
 
-To output stderr from failed tests to the terminal, "export CYLC_TEST_DEBUG=true"
-before running this command. By default, it uses "diff -u" to compare files.
-However, if an alternate command such as "xxdiff -D" is desirable (e.g. for
-debugging), "export CYLC_TEST_DIFF_CMD=xxdiff -D".
+Suite run directories are cleaned up on the suite host for passing tests -
+otherwise they are left alone.
+
+To output stderr from failed tests to the terminal,
+"export CYLC_TEST_DEBUG=true" before running this command.
+
+The command normally uses "diff -u" to compare files.  However, if an alternate
+command such as "xxdiff -D" is desirable (e.g. for debugging), "export
+CYLC_TEST_DIFF_CMD=xxdiff -D".
 
 For more information see "Reference Tests" in the User Guide.
 
 Options:
   -h, --help   Print this help message and exit.
 
-Options after '--' are passed through to "prove".
-E.g. to run N tests at once, in parallel:
-  cylc test-battery -- -j N      
+Examples:
+
+Run the full test suite with the default options.
+  cylc test-battery
+Run the full test suite with 12 processes.
+  cylc test-battery- j 12
+Run only tests under "tests/cyclers/" with 12 processes.
+  cylc test-battery -j 12 tests/cyclers
+Run only "tests/cyclers/16-weekly.t" in verbose mode
+  cylc test-battery -v tests/cyclers/16-weekly.t
 eof
 }
 
 TESTS=""
 for ARG in "$@"; do
-    shift
-    if [[ "$ARG" == '--' ]]; then
-        break
-    elif [[ "$ARG" == '--help' ]]; then
+    if [[ "$ARG" == '--help' || "$ARG" == '-h' ]]; then
         usage
         exit 0
-    else
-        TESTS="$TESTS $ARG"
     fi
 done
 
@@ -94,8 +96,8 @@ if perl -e 'use Test::Harness 3.00' 2>/dev/null; then
     if [[ -z "${NPROC}" ]]; then
         NPROC=$(python -c 'import multiprocessing as mp; print mp.cpu_count()')
     fi
-    exec prove -j "$NPROC" -s -r ${TESTS:-tests}
+    exec prove -j "$NPROC" -s -r ${@:-tests}
 else
     echo "WARNING: cannot run tests in parallel (Test::Harness < 3.00)" >&2
-    exec prove -s -r ${TESTS:-tests}
+    exec prove -s -r ${@:-tests}
 fi
