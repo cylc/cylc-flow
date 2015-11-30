@@ -513,12 +513,17 @@ class BatchSysManager(object):
 
         """
         job_file_dir = os.path.dirname(job_file_path)
+        source = os.path.basename(job_file_dir)
         nn_path = os.path.join(os.path.dirname(job_file_dir), "NN")
         try:
-            os.unlink(nn_path)
+            old_source = os.readlink(nn_path)
         except OSError:
-            pass
-        os.symlink(os.path.basename(job_file_dir), nn_path)
+            old_source = None
+        if old_source is not None and old_source != source:
+            os.unlink(nn_path)
+            old_source = None
+        if old_source is None:
+            os.symlink(source, nn_path)
 
     def _filter_submit_output(self, st_file_path, batch_sys, out, err):
         """Filter submit command output, if relevant."""
