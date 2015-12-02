@@ -28,3 +28,5 @@ run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
 grep_ok "ERROR: use 'runahead limit' OR 'max active cycle points', not both" \
   $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
+exit

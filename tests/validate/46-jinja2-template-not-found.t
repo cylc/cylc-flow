@@ -31,4 +31,5 @@ Jinja2Error:
 TemplateNotFound: suite-foo.rc
 __ERROR__
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

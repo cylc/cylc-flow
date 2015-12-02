@@ -30,4 +30,5 @@ vs pre-cylc-6 syntax \
 (integer interval: \[runtime\]\[root\]\[event hooks\]execution timeout = 3)" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

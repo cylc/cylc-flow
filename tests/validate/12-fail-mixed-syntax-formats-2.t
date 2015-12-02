@@ -30,4 +30,5 @@ vs pre-cylc-6 syntax \
 (graphnode foo\[T-24\]: old-style offset)" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

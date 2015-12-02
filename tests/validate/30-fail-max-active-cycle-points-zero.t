@@ -26,4 +26,5 @@ TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
 grep_ok "ERROR: max cycle points must be greater than 0" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

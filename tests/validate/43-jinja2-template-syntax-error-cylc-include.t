@@ -34,4 +34,5 @@ Context lines:
         {% end if %	<-- Jinja2Error
 __ERROR__
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit
