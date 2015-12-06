@@ -32,12 +32,14 @@ import os
 import re
 from time import sleep
 
+from parsec.OrderedDict import OrderedDict
 from cylc.CylcOptionParsers import cop
 from cylc.task_state import task_state
 from cylc.registration import localdb
 from cylc.network.suite_state import (
     StateSummaryClient, SuiteStillInitialisingError)
 from cylc.wallclock import get_time_string_from_unix_time
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
 class SuiteMonitor(object):
@@ -60,6 +62,16 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
             "This may be needed for very large suites. The state summary "
             "line still represents all task proxies.",
             action="store_true", default=False, dest="restricted")
+
+        def_sort_order = GLOBAL_CFG.get(["monitor", "sort order"])
+
+        self.parser.add_option(
+            "-s", "--sort", metavar="ORDER",
+            help="Task sort order: \"definition\" or \"alphanumeric\"."
+            "The default is " + def_sort_order + " order, as determined by "
+            "global config. (Definition order is the order that tasks appear "
+            "under [runtime] in the suite definition).",
+            action="store", default=def_sort_order, dest="sort_order")
 
         self.parser.add_option(
             "-o", "--once",
@@ -132,6 +144,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                 stopping = glbl['stopping']
                 will_pause_at = glbl['will_pause_at']
                 will_stop_at = glbl['will_stop_at']
+                ns_defn_order = glbl['namespace definition order']
 
                 task_info = {}
                 name_list = set()
@@ -145,6 +158,20 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                         task_info[point_string] = {}
                     task_info[point_string][name] = "%s%s%s" % (
                         task_state.ctrl[state], name, task_state.ctrl_end)
+
+                # Sort the tasks in each cycle point.
+                if options.sort_order == "alphanumeric":
+                    sorted_name_list = sorted(name_list)
+                else:
+                    sorted_name_list = ns_defn_order
+
+                sorted_task_info = {}
+                for point_str, info in task_info.items():
+                    sorted_task_info[point_str] = OrderedDict()
+                    for name in sorted_name_list:
+                        if name in name_list:
+                            # (Defn order includes family names.).
+                            sorted_task_info[point_str][name] = info.get(name)
 
                 # Construct lines to blit to the screen.
                 blit = []
@@ -195,18 +222,15 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                 blit.append(divider_str)
 
                 blitlines = {}
-                for point_str, val in task_info.items():
+                for point_str, val in sorted_task_info.items():
                     indx = point_str
                     line = "%s%s%s" % (
                         '\033[1;34m', point_str, task_state.ctrl_end)
-
-                    for name in sorted(name_list):
-                        try:
-                            line += " %s" % val[name]
-                        except KeyError:
-                            if options.align_columns:
-                                line += " %s" % (' ' * len(name))
-
+                    for name, info in val.items():
+                        if info is not None:
+                            line += " %s" % info
+                        elif options.align_columns:
+                            line += " %s" % (' ' * len(name))
                     blitlines[indx] = line
 
                 if not options.once:

@@ -128,6 +128,12 @@ SPEC = {
         'ports directory': vdr(vtype='string', default="$HOME/.cylc/ports/"),
     },
 
+    'monitor': {
+        'sort order': vdr(vtype='string',
+                          options=["alphanumeric", "definition"],
+                          default="definition"),
+    },
+
     'hosts': {
         'localhost': {
             'run directory': vdr(vtype='string', default="$HOME/cylc-run"),
