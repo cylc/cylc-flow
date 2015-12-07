@@ -31,4 +31,5 @@ Jinja2Error:
 TemplateSyntaxError: Encountered unknown tag 'end'. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
 __ERROR__
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

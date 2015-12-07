@@ -27,4 +27,5 @@ run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
 grep_ok "Sequence R/2015-08/P1D, point format %Y-%m: equal adjacent points: 2015-08 => 2015-08." \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

@@ -29,4 +29,5 @@ grep_ok "Conflicting syntax: pre-cylc-6 syntax \
 vs post-cylc-6 syntax \
 (graphnode: cold_foo\[^T00\]: ISO 8601 offset)" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

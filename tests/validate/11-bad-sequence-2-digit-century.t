@@ -25,4 +25,5 @@ TEST_NAME=$TEST_NAME_BASE-val
 run_fail "$TEST_NAME" cylc validate suite.rc
 grep_ok "2 digit centuries not allowed" "$TEST_NAME.stderr"
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

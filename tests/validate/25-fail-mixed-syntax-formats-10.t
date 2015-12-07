@@ -30,4 +30,5 @@ vs post-cylc-6 syntax \
 (ISO 8601 interval: \[runtime\]\[A\]retry delays = PT30M)" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

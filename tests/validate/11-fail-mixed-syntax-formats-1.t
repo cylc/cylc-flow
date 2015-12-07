@@ -30,4 +30,5 @@ vs pre-cylc-6 syntax \
 (\[scheduling\]\[\[dependencies\]\]\[\[\[0\]\]\]: old-style cycling)" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

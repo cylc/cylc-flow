@@ -63,6 +63,7 @@ for ITEM in $(<'host-work-dirs.list'); do
         rm -fr "$(cylc get-global-config '--print-run-dir')/${UUID}-${HOST}"
     fi
     rm -fr "${HOME}/.cylc/${UUID}-${HOST}"
+    cylc unregister "--host=${HOST}" "${UUID}-${HOST}"
 done
 #-------------------------------------------------------------------------------
 exit

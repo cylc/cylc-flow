@@ -30,4 +30,5 @@ vs post-cylc-6 syntax \
 (\[scheduling\]\[\[dependencies\]\]\[\[\[T12\]\]\]: ISO 8601-style cycling)" \
     $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

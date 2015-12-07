@@ -105,5 +105,5 @@ title = Simple start-up suite.
 __OUT__
 cmp_ok "$TEST_NAME.stderr" </dev/null
 #-------------------------------------------------------------------------------
-#purge_suite $SUITE_NAME
+purge_suite $SUITE_NAME
 exit

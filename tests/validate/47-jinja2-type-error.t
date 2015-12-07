@@ -29,4 +29,5 @@ Jinja2Error:
 TypeError: unsupported operand type(s) for /: 'int' and 'str'
 __ERROR__
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

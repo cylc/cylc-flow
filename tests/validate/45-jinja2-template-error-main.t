@@ -32,4 +32,5 @@ Jinja2Error:
 FilterArgumentError: You can only sort by either "key" or "value"
 __ERROR__
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

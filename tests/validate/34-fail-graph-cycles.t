@@ -26,3 +26,5 @@ TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v $SUITE_NAME
 grep_ok "ERROR: cyclic dependence detected" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
+exit

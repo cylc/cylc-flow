@@ -29,4 +29,5 @@ grep_ok "Conflicting syntax: post-cylc-6 syntax \
 vs pre-cylc-6 syntax \
 (start-up tasks: cold_foo)" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

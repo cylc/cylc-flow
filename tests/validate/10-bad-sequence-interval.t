@@ -26,4 +26,5 @@ run_fail "$TEST_NAME_BASE" cylc validate suite.rc
 grep_ok "Invalid ISO 8601 duration representation: PT5D" \
     "$TEST_NAME_BASE.stderr"
 #-------------------------------------------------------------------------------
+purge_suite $SUITE_NAME
 exit

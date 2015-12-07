@@ -28,4 +28,4 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-check-expansion
 cmp_ok $TEST_DIR/$SUITE_NAME/suite.rc.processed $TEST_DIR/$SUITE_NAME/suite.rc-expanded
 #-------------------------------------------------------------------------------
-#purge_suite $SUITE_NAME
+purge_suite $SUITE_NAME
