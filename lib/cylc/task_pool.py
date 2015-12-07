@@ -37,6 +37,7 @@ as such, on restart, into the runahead pool.
 from logging import ERROR, DEBUG, INFO, WARNING
 import os
 from Pyro.errors import NamingError
+import shlex
 import sys
 from tempfile import NamedTemporaryFile
 from time import time
@@ -987,9 +988,10 @@ class TaskPool(object):
 
                 if try_state.ctx.ctx_type == TaskProxy.CUSTOM_EVENT_HANDLER:
                     # Run custom event handlers on their own
-                    if env is None and TaskProxy.event_handler_env:
+                    if env is None:
                         env = dict(os.environ)
-                        env.update(TaskProxy.event_handler_env)
+                        if TaskProxy.event_handler_env:
+                            env.update(TaskProxy.event_handler_env)
                     SuiteProcPool.get_inst().put_command(
                         SuiteProcContext(
                             key, try_state.ctx.cmd, env=env, shell=True,
@@ -1007,6 +1009,8 @@ class TaskPool(object):
         for ctx, id_keys in ctx_groups.items():
             if ctx.ctx_type == TaskProxy.EVENT_MAIL:
                 self._process_task_event_email(ctx, id_keys)
+            elif ctx.ctx_type == TaskProxy.JOB_LOGS_REGISTER:
+                self._process_task_job_logs_register(ctx, id_keys)
             elif ctx.ctx_type == TaskProxy.JOB_LOGS_RETRIEVE:
                 self._process_task_job_logs_retrieval(ctx, id_keys)
 
@@ -1027,10 +1031,9 @@ class TaskPool(object):
             stdin_str += "%s/%s/%02d: %s\n" % (
                 point, name, submit_num, ctx.event)
         # SMTP server
-        env = None
+        env = dict(os.environ)
         mail_smtp = ctx.mail_smtp
         if mail_smtp:
-            env = dict(os.environ)
             env["smtp"] = mail_smtp
         SuiteProcPool.get_inst().put_command(
             SuiteProcContext(
@@ -1051,9 +1054,32 @@ class TaskPool(object):
                 try_states = itask.event_handler_try_states
                 if ctx.ret_code == 0:
                     del try_states[(key1, submit_num)]
-                    ctx = SuiteProcContext((key1, submit_num), None)
-                    ctx.ret_code = 0
-                    itask.command_log(ctx)
+                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                    log_ctx.ret_code = 0
+                    itask.command_log(log_ctx)
+                else:
+                    try_states[(key1, submit_num)].unset_waiting()
+            except KeyError:
+                if cylc.flags.debug:
+                    traceback.print_exc()
+
+    def _process_task_job_logs_register(self, ctx, id_keys):
+        """Register task job logs."""
+        tasks = {}
+        for itask in self.get_tasks():
+            if itask.point is not None and itask.submit_num:
+                tasks[(str(itask.point), itask.tdef.name)] = itask
+        for id_key in id_keys:
+            key1, point, name, submit_num = id_key
+            try:
+                itask = tasks[(point, name)]
+                try_states = itask.event_handler_try_states
+                filenames = itask.register_job_logs(submit_num)
+                if "job.out" in filenames and "job.err" in filenames:
+                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                    log_ctx.ret_code = 0
+                    itask.command_log(log_ctx)
+                    del try_states[(key1, submit_num)]
                 else:
                     try_states[(key1, submit_num)].unset_waiting()
             except KeyError:
@@ -1068,7 +1094,10 @@ class TaskPool(object):
             s_user, s_host = (None, ctx.user_at_host)
         ssh_tmpl = str(GLOBAL_CFG.get_host_item(
             "remote shell template", s_host, s_user)).replace(" %s", "")
-        cmd = ["rsync", "-a", "--rsh=" + ssh_tmpl]
+        rsync_str = str(GLOBAL_CFG.get_host_item(
+            "retrieve job logs command", s_host, s_user))
+
+        cmd = shlex.split(rsync_str) + ["--rsh=" + ssh_tmpl]
         if cylc.flags.debug:
             cmd.append("-v")
         if ctx.max_size:
@@ -1090,7 +1119,7 @@ class TaskPool(object):
         cmd.append(GLOBAL_CFG.get_derived_host_item(
             self.suite_name, "suite job log directory") + "/")
         SuiteProcPool.get_inst().put_command(
-            SuiteProcContext(ctx, cmd, id_keys=id_keys),
+            SuiteProcContext(ctx, cmd, env=dict(os.environ), id_keys=id_keys),
             self._task_job_logs_retrieval_callback)
 
     def _task_job_logs_retrieval_callback(self, ctx):
@@ -1104,10 +1133,13 @@ class TaskPool(object):
             try:
                 itask = tasks[(point, name)]
                 try_states = itask.event_handler_try_states
-                if ctx.ret_code == 0 and itask.register_job_logs(submit_num):
-                    ctx = SuiteProcContext((key1, submit_num), None)
-                    ctx.ret_code = 0
-                    itask.command_log(ctx)
+                filenames = []
+                if ctx.ret_code == 0:
+                    filenames = itask.register_job_logs(submit_num)
+                if "job.out" in filenames and "job.err" in filenames:
+                    log_ctx = SuiteProcContext((key1, submit_num), None)
+                    log_ctx.ret_code = 0
+                    itask.command_log(log_ctx)
                     del try_states[(key1, submit_num)]
                 else:
                     try_states[(key1, submit_num)].unset_waiting()

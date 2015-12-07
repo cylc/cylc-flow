@@ -840,7 +840,8 @@ class scheduler(object):
         for var, val in cenv.items():
             cenv[var] = os.path.expandvars(val)
         # path to suite bin directory for suite and task event handlers
-        cenv['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH']
+        cenv['PATH'] = os.pathsep.join([
+            os.path.join(self.suite_dir, 'bin'), os.environ['PATH']])
 
         # Make [cylc][environment] available to task event handlers in worker
         # processes,

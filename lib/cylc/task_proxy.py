@@ -77,6 +77,11 @@ TaskEventMailContext = namedtuple(
     ["key", "ctx_type", "event", "mail_from", "mail_to", "mail_smtp"])
 
 
+TaskJobLogsRegisterContext = namedtuple(
+    "TaskJobLogsRegisterContext",
+    ["key", "ctx_type"])
+
+
 TaskJobLogsRetrieveContext = namedtuple(
     "TaskJobLogsRetrieveContext",
     ["key", "ctx_type", "user_at_host", "max_size"])
@@ -168,9 +173,11 @@ class TaskProxy(object):
     CUSTOM_EVENT_HANDLER = "event-handler"
     EVENT_MAIL = "event-mail"
     JOB_KILL = "job-kill"
+    JOB_LOGS_REGISTER = "job-logs-register"
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     JOB_POLL = "job-poll"
     JOB_SUBMIT = SuiteProcPool.JOB_SUBMIT
+    MANAGE_JOB_LOGS_TRY_DELAYS = (0, 30, 180)  # PT0S, PT30S, PT3M
     MESSAGE_SUFFIX_RE = re.compile(
         ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
 
@@ -849,6 +856,7 @@ class TaskProxy(object):
             self.submit_method_id = items[3]
         except IndexError:
             self.submit_method_id = None
+        self.register_job_logs(self.submit_num)
         if self.submit_method_id and ctx.ret_code == 0:
             self.job_submission_succeeded()
         else:
@@ -885,22 +893,34 @@ class TaskProxy(object):
 
     def setup_job_logs_retrieval(self, event, _=None):
         """Set up remote job logs retrieval."""
-        key1 = self.JOB_LOGS_RETRIEVE
-        if ((key1, self.submit_num) in self.event_handler_try_states or
-                event not in ["failed", "retry", "succeeded"]):
+        if event not in ["failed", "retry", "succeeded"]:
             return
         if (self.user_at_host in [user + '@localhost', 'localhost'] or
                 not self._get_host_conf("retrieve job logs")):
-            self.register_job_logs(self.submit_num)
-            return
-        self.event_handler_try_states[(key1, self.submit_num)] = TryState(
-            TaskJobLogsRetrieveContext(
-                key1,
-                self.JOB_LOGS_RETRIEVE,  # ctx_type
-                self.user_at_host,
-                self._get_host_conf("retrieve job logs max size"),  # max_size
-            ),
-            self._get_host_conf("retrieve job logs retry delays", []))
+            key2 = (self.JOB_LOGS_REGISTER, self.submit_num)
+            if key2 in self.event_handler_try_states:
+                return
+            self.event_handler_try_states[key2] = TryState(
+                TaskJobLogsRegisterContext(
+                    # key, ctx_type
+                    self.JOB_LOGS_REGISTER, self.JOB_LOGS_REGISTER,
+                ),
+                self._get_events_conf("register job logs retry delays", []))
+        else:
+            key2 = (self.JOB_LOGS_RETRIEVE, self.submit_num)
+            if key2 in self.event_handler_try_states:
+                return
+            self.event_handler_try_states[key2] = TryState(
+                TaskJobLogsRetrieveContext(
+                    # key
+                    self.JOB_LOGS_RETRIEVE,
+                    # ctx_type
+                    self.JOB_LOGS_RETRIEVE,
+                    self.user_at_host,
+                    # max_size
+                    self._get_host_conf("retrieve job logs max size"),
+                ),
+                self._get_host_conf("retrieve job logs retry delays", []))
 
     def setup_event_mail(self, event, message):
         """Event notification, by email."""
@@ -934,7 +954,6 @@ class TaskProxy(object):
         retry_delays = self._get_events_conf(
             'handler retry delays',
             self._get_host_conf("task event handler retry delays", []))
-        env = None
         for i, handler in enumerate(handlers):
             key1 = (
                 "%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i),
@@ -1185,9 +1204,12 @@ class TaskProxy(object):
             'execution', self.log)
 
     def register_job_logs(self, submit_num):
-        """Register job logs in the runtime database."""
+        """Register job logs in the runtime database.
+
+        Return a list containing the names of the job logs.
+
+        """
         data = []
-        has_job_out = False
         job_log_dir = self.get_job_log_dir(
             self.tdef.name, self.point, submit_num, self.suite_name)
         try:
@@ -1198,8 +1220,6 @@ class TaskProxy(object):
                     continue
                 else:
                     data.append((stat.st_mtime, stat.st_size, filename))
-                if filename == "job.out":
-                    has_job_out = True
         except OSError:
             pass
 
@@ -1212,7 +1232,8 @@ class TaskProxy(object):
                 "location": os.path.join(rel_job_log_dir, filename),
                 "mtime": mtime,
                 "size": size})
-        return has_job_out
+
+        return [datum[2] for datum in data]
 
     def prep_submit(self, dry_run=False, overrides=None):
         """Prepare job submission.

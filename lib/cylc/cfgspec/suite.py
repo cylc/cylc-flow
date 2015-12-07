@@ -384,6 +384,8 @@ SPEC = {
                 'mail retry delays': vdr(vtype='interval_minutes_list'),
                 'mail smtp': vdr(vtype='string'),
                 'mail to': vdr(vtype='string'),
+                'register job logs retry delays': vdr(
+                    vtype='interval_minutes_list'),
                 'reset timer': vdr(vtype='boolean'),
                 'submission timeout': vdr(vtype='interval_minutes'),
             },

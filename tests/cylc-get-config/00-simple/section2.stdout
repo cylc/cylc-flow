@@ -41,6 +41,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[environment]]]
    [[[directives]]]
@@ -123,6 +124,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[environment]]]
    [[[directives]]]
@@ -204,6 +206,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[environment]]]
    [[[directives]]]
@@ -286,6 +289,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[environment]]]
    [[[directives]]]
@@ -368,6 +372,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[environment]]]
    [[[directives]]]
@@ -435,6 +440,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
@@ -517,6 +523,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
@@ -599,6 +606,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
@@ -680,6 +688,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
@@ -762,6 +771,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
@@ -844,6 +854,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
@@ -925,6 +936,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 
@@ -1007,6 +1019,7 @@
       mail from = 
       execution timeout = 
       submission timeout = 
+      register job logs retry delays = 
       reset timer = 
    [[[event hooks]]]
       submission timeout handler = 

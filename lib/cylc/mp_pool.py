@@ -73,7 +73,14 @@ def _run_command(ctx):
         proc = Popen(
             ctx.cmd, stdin=stdin_file, stdout=PIPE, stderr=PIPE,
             env=ctx.cmd_kwargs.get('env'), shell=ctx.cmd_kwargs.get('shell'))
-    except (IOError, OSError) as exc:
+    except IOError as exc:
+        if cylc.flags.debug:
+            traceback.print_exc()
+        ctx.ret_code = 1
+        ctx.err = str(exc)
+    except OSError as exc:
+        if exc.filename is None:
+            exc.filename = ctx.cmd[0]
         if cylc.flags.debug:
             traceback.print_exc()
         ctx.ret_code = 1

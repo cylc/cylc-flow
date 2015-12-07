@@ -153,6 +153,8 @@ SPEC = {
             'copyable environment variables': vdr(
                 vtype='string_list', default=[]),
             'retrieve job logs': vdr(vtype='boolean', default=False),
+            'retrieve job logs command': vdr(
+                vtype='string', default='rsync -a'),
             'retrieve job logs max size': vdr(vtype='string'),
             'retrieve job logs retry delays': vdr(
                 vtype='interval_minutes_list', default=[]),
@@ -195,12 +197,13 @@ SPEC = {
             'global init-script': vdr(vtype='string'),
             'copyable environment variables': vdr(
                 vtype='string_list', default=[]),
-            'retrieve job logs': vdr(vtype='boolean', default=False),
+            'retrieve job logs': vdr(vtype='boolean'),
+            'retrieve job logs command': vdr(vtype='string'),
             'retrieve job logs max size': vdr(vtype='string'),
             'retrieve job logs retry delays': vdr(
-                vtype='interval_minutes_list', default=[]),
+                vtype='interval_minutes_list'),
             'task event handler retry delays': vdr(
-                vtype='interval_minutes_list', default=[]),
+                vtype='interval_minutes_list'),
             'local tail command template': vdr(vtype='string'),
             'remote tail command template': vdr(vtype='string'),
             'batch systems': {
@@ -224,6 +227,8 @@ SPEC = {
         'mail retry delays': vdr(vtype='interval_minutes_list', default=[]),
         'mail smtp': vdr(vtype='string'),
         'mail to': vdr(vtype='string'),
+        'register job logs retry delays': vdr(
+            vtype='interval_minutes_list', default=[]),
         'reset timer': vdr(vtype='boolean', default=False),
         'submission timeout': vdr(vtype='interval_minutes'),
     },
