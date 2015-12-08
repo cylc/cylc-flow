@@ -97,9 +97,9 @@ def get_rdict(left, right=None):
         # [sect]item = right
         sect, var = m.groups()
         if not var:
-            rdict = {sect: right}
+            rdict = {sect.strip(): right}
         else:
-            rdict = {sect: {var: right}}
+            rdict = {sect.strip(): {var.strip(): right}}
     else:
         # item = right
         rdict = {left: right}
