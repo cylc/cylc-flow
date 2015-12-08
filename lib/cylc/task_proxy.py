@@ -757,6 +757,7 @@ class TaskProxy(object):
             ) = items[4:9]
         except IndexError:
             self.summary['latest_message'] = 'poll failed'
+            flags.iflag = True
             return
         if run_status == "1" and run_signal in ["ERR", "EXIT"]:
             # Failed normally
@@ -805,8 +806,6 @@ class TaskProxy(object):
             ctx.ret_code = 0
             self.process_incoming_message(
                 (priority, message), msg_was_polled=True)
-            self.process_incoming_message(
-                (priority, message), msg_was_polled=True)
         self.command_log(ctx)
 
     def job_kill_callback(self, line):
@@ -820,21 +819,24 @@ class TaskProxy(object):
         else:
             ctx.ret_code = int(ctx.ret_code)
         self.command_log(ctx)
+        log_lvl = INFO
+        log_msg = 'killed'
         if ctx.ret_code:  # non-zero exit status
-            self.summary['latest_message'] = 'kill failed'
-            self.log(WARNING, 'job(%02d) kill failed' % self.submit_num)
-            flags.iflag = True
+            log_lvl = WARNING
+            log_msg = 'kill failed'
             self.kill_failed = True
         elif self.state.is_currently('submitted'):
-            self.log(INFO, 'job(%02d) killed' % self.submit_num)
             self.job_submission_failed()
         elif self.state.is_currently('running'):
-            self.log(INFO, 'job(%02d) killed' % self.submit_num)
             self.job_execution_failed()
         else:
-            msg = ('ignoring job kill result, unexpected task state: %s'
-                   % self.state.get_status())
-            self.log(WARNING, msg)
+            log_lvl = WARNING
+            log_msg = (
+                'ignoring job kill result, unexpected task state: %s' %
+                self.state.get_status())
+        self.summary['latest_message'] = log_msg
+        self.log(log_lvl, "job(%02d) %s" % (self.submit_num, log_msg))
+        flags.iflag = True
 
     def job_submit_callback(self, line):
         """Callback on job submit."""
@@ -1572,6 +1574,8 @@ class TaskProxy(object):
         # always update the suite state summary for latest message
         self.summary['latest_message'] = message.replace(
             self.identity, "", 1).strip()
+        if msg_was_polled:
+            self.summary['latest_message'] += " (polled)"
         flags.iflag = True
 
         if self.reject_if_failed(message):
