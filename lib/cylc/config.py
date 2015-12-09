@@ -1700,10 +1700,12 @@ class SuiteConfig(object):
                     outp = output(msg, base_interval)
                     # Check for a cycle offset placeholder.
                     if not re.match('\[.*\]', msg):
-                        print >> sys.stderr, ("Message outputs require an "
+                        print >> sys.stderr, (
+                            "Message outputs require an "
                             "offset placeholder (e.g. '[]' or '[-P2M]'):")
                         print >> sys.stderr, "  %s = %s" % (lbl, msg)
-                        raise SuiteConfigError('ERROR: bad message output string')
+                        raise SuiteConfigError(
+                            'ERROR: bad message output string')
                     self.taskdefs[name].outputs.append(outp)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq, suicide):
