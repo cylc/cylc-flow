@@ -2,6 +2,7 @@ title=broadcast section-space-key
 description=Test broadcast set section-space-key syntax
 [cylc]
     abort if any task fails = True
+    UTC mode = True
     [[event hooks]]
         abort on timeout = True
         timeout=PT1M
