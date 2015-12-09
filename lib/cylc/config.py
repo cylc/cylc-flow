@@ -1695,9 +1695,15 @@ class SuiteConfig(object):
                     self.taskdefs[name].add_sequence(seq)
 
             if self.run_mode == 'live':
-                # Register explicit output messages.
+                # Record message outputs.
                 for lbl, msg in self.cfg['runtime'][name]['outputs'].items():
                     outp = output(msg, base_interval)
+                    # Check for a cycle offset placeholder.
+                    if not re.match('\[.*\]', msg):
+                        print >> sys.stderr, ("Message outputs require an "
+                            "offset placeholder (e.g. '[]' or '[-P2M]'):")
+                        print >> sys.stderr, "  %s = %s" % (lbl, msg)
+                        raise SuiteConfigError('ERROR: bad message output string')
                     self.taskdefs[name].outputs.append(outp)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq, suicide):
