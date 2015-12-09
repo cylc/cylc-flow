@@ -1,0 +1,12 @@
+[scheduling]
+    cycling mode = integer
+    initial cycle point = 1
+    [[dependencies]]
+        [[[P1]]]
+            graph = foo:x => bar
+[runtime]
+    [[foo]]
+        script = cylc message "hello to $CYLC_TASK_CYCLE_POINT"
+        [[[outputs]]]
+            x = "hello to Bob"
+            # (should be "hello to []")
