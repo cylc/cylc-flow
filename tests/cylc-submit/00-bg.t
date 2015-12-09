@@ -51,7 +51,7 @@ if [[ -n "${CONFIGURED_SYS_NAME}" ]]; then
         skip_all "\"${ITEM_KEY}\" not set"
     fi
     ITEM_KEY="[test battery][batch systems][$CONFIGURED_SYS_NAME][directives]"
-    CYLC_TEST_DIRECTIVES="$( \
+    export CYLC_TEST_DIRECTIVES="$( \
         cylc get-global-config "--item=${ITEM_KEY}" 2>'/dev/null')"
     CYLC_TEST_BATCH_SYS_NAME=$CONFIGURED_SYS_NAME
 fi
