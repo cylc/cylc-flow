@@ -1699,7 +1699,7 @@ class SuiteConfig(object):
                 for lbl, msg in self.cfg['runtime'][name]['outputs'].items():
                     outp = output(msg, base_interval)
                     # Check for a cycle offset placeholder.
-                    if not re.match('\[.*\]', msg):
+                    if not re.search(r'\[[^\]]*\]', msg):
                         print >> sys.stderr, (
                             "Message outputs require an "
                             "offset placeholder (e.g. '[]' or '[-P2M]'):")
