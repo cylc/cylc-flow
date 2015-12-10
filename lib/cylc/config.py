@@ -701,6 +701,7 @@ class SuiteConfig(object):
                     self.cfg['visualization']['final cycle point']
                 ).standardise()
 
+        # A viz final point can't be beyond the suite final point.
         if vfcp is not None and final_point is not None:
             if vfcp > final_point:
                 self.cfg['visualization']['final cycle point'] = str(
@@ -1863,6 +1864,9 @@ class SuiteConfig(object):
         start_point = get_point(start_point_string)
         actual_first_point = self.get_actual_first_point(start_point)
 
+        suite_final_point = get_point(
+            self.cfg['scheduling']['final cycle point'])
+
         # For the computed stop point, we store n_points of each sequence,
         # and then cull later to the first n_points over all sequences.
         if stop_point_string is not None:
@@ -1888,10 +1892,12 @@ class SuiteConfig(object):
                 if stop_point is not None and point > stop_point:
                     # Beyond requested final cycle point.
                     break
+                if suite_final_point is not None and point > suite_final_point:
+                    # Beyond suite final cycle point.
+                    break
                 if stop_point is None and len(new_points) > n_points:
                     # Take n_points cycles from each sequence.
                     break
-                not_initial_cycle = (point != i_point)
 
                 r_id = e.get_right(point, start_point)
                 l_id = e.get_left(
@@ -2043,8 +2049,6 @@ class SuiteConfig(object):
             )
         back_comp_initial_tasks = list(start_up_tasks)
 
-        has_non_async_graphs = False
-
         section_seq_map = {}
 
         # Set up our backwards-compatibility handling of async graphs.
@@ -2066,7 +2070,6 @@ class SuiteConfig(object):
         for item, value in self.cfg['scheduling']['dependencies'].items():
             if item == 'graph':
                 continue
-            has_non_async_graphs = True
             items.append((item, value, back_comp_initial_tasks))
 
         back_comp_initial_dep_points = {}

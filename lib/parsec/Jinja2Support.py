@@ -41,7 +41,7 @@ def load_template_vars( pairs, pairs_file ):
                 if re.match( '^\s*$', line ):
                     # skip blank lines:
                     continue
-                var, val = line.split('=')
+                var, val = line.split('=', 1)
                 var = var.strip()
                 val = val.strip()
                 res[var] = val
@@ -49,7 +49,7 @@ def load_template_vars( pairs, pairs_file ):
         else:
             raise TemplateError, "ERROR: template vars file not found: " + pairs_file
     for i in pairs:
-        var, val = i.split('=')
+        var, val = i.split('=', 1)
         var = var.strip()
         val = val.strip()
         res[var] = val
