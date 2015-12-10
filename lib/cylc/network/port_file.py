@@ -115,7 +115,7 @@ class PortRetriever(object):
         if err:
             print >> sys.stderr, err.rstrip('\n')
         if res != 0:
-            raise PortFileError("ERROR, remote port file not found")
+            raise PortFileError("Port file not found - suite not running?.")
         return str_port
 
     def get(self):
