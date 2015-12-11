@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.7.4">6.7.4</a>
     <li><a href="#6.7.3">6.7.3</a>
     <li><a href="#6.7.2">6.7.2</a>
     <li><a href="#6.7.1">6.7.1</a>
@@ -64,6 +65,41 @@
 
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
+
+<a name="6.7.4"/>
+    <h2>6.7.4</h2>
+
+    <h3>6.7.4 enhancements</h3>
+    <ul>
+        <li> <code>cylc monitor</code> - sort tasks by definition order or
+        alphanumeric order.  The default can be set in global config, and
+        overridden by command line option.
+        <li> <code>gcylc</code> - friendlier message dialog for remote suite
+        port file not found, which normally just indicates that the suite is
+        not running: "Port file not found - suite not running?".
+        <li> configurable retries for registration of job logs in suite runtime
+        databases, to handle batch systems that don't immediately write job
+        logs to their final locations.
+        <li> configurable job log retrieval command. The default is
+            <code>rsync -a</code>.
+    </ul>
+
+    <h3>6.7.4 fixes</h3>
+    <ul>
+        <li> <code>gcylc</code> - restored job poll and kill result
+        notification in the text view message column.
+        <li> suite visualization - don't plot graph nodes beyond a suite final
+        cycle point.
+        <li> strip any leading whitespace from <code>cylc broadcast</code>
+        settings, which could lead to a broadcast setting not being recognized
+        as the same setting as its target item.
+        <li> Safer write to <code>NN/job-activity.log</code>. It was previously
+        possible, though unlikely, on very slow filesystems for the suite
+        daemon to attempt to write to the job activity log while the "NN" link
+        (to the log directory for the latest job submit number) was still being
+        created by the job submission process.
+    </ul>
+
 
 <a name="6.7.3"/>
     <h2>6.7.3</h2>

@@ -3,7 +3,7 @@
 <html > 
 <head>   <title>The Cylc Suite Engine
 User Guide
-6.7.3
+6.7.4-1-g6f74a
 GNU GPL v3.0 Software License
 Copyright (C) 2008-2015 NIWA</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
@@ -11,7 +11,7 @@ Copyright (C) 2008-2015 NIWA</title>
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2015-11-17 03:26:00"> 
+<meta name="date" content="2015-12-11 11:41:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -22,13 +22,13 @@ Copyright (C) 2008-2015 NIWA</title>
 
 <h2 class="titleHead">The Cylc Suite Engine<br />
 User Guide<br />
-6.7.3 <br />
+6.7.4-1-g6f74a <br />
 GNU GPL v3.0 Software License<br />
 Copyright (C) 2008-2015 NIWA</h2>
 <div class="author" ><span 
 class="cmr-12">Hilary Oliver</span></div><br />
 <div class="date" ><span 
-class="cmr-12">November 17, 2015</span></div>
+class="cmr-12">December 11, 2015</span></div>
 
 <img 
 src="../../graphics/png/scaled/logo.png" alt="PIC"  
@@ -306,76 +306,78 @@ href="cug-htmlse17.html#x18-255000A.4" id="QQ2-18-304">[scheduling]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.5 <a 
 href="cug-htmlse17.html#x18-281000A.5" id="QQ2-18-330">[runtime]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >A.6 <a 
-href="cug-htmlse17.html#x18-350000A.6" id="QQ2-18-399">[visualization]</a></span>
+href="cug-htmlse17.html#x18-351000A.6" id="QQ2-18-400">[visualization]</a></span>
 <br />   <span class="sectionToc" >B <a 
-href="cug-htmlse18.html#x19-363000B" id="QQ2-19-412">Global (Site, User) Config File Reference</a></span>
+href="cug-htmlse18.html#x19-364000B" id="QQ2-19-413">Global (Site, User) Config File Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.1 <a 
-href="cug-htmlse18.html#x19-364000B.1" id="QQ2-19-413">Top Level Items</a></span>
+href="cug-htmlse18.html#x19-365000B.1" id="QQ2-19-414">Top Level Items</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.2 <a 
-href="cug-htmlse18.html#x19-374000B.2" id="QQ2-19-423">[task messaging]</a></span>
+href="cug-htmlse18.html#x19-375000B.2" id="QQ2-19-424">[task messaging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.3 <a 
-href="cug-htmlse18.html#x19-378000B.3" id="QQ2-19-427">[suite logging]</a></span>
+href="cug-htmlse18.html#x19-379000B.3" id="QQ2-19-428">[suite logging]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.4 <a 
-href="cug-htmlse18.html#x19-382000B.4" id="QQ2-19-431">[documentation]</a></span>
+href="cug-htmlse18.html#x19-383000B.4" id="QQ2-19-432">[documentation]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.5 <a 
-href="cug-htmlse18.html#x19-391000B.5" id="QQ2-19-440">[document viewers]</a></span>
+href="cug-htmlse18.html#x19-392000B.5" id="QQ2-19-441">[document viewers]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.6 <a 
-href="cug-htmlse18.html#x19-394000B.6" id="QQ2-19-443">[editors]</a></span>
+href="cug-htmlse18.html#x19-395000B.6" id="QQ2-19-444">[editors]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.7 <a 
-href="cug-htmlse18.html#x19-397000B.7" id="QQ2-19-446">[pyro]</a></span>
+href="cug-htmlse18.html#x19-398000B.7" id="QQ2-19-447">[pyro]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.8 <a 
-href="cug-htmlse18.html#x19-401000B.8" id="QQ2-19-450">[hosts]</a></span>
+href="cug-htmlse18.html#x19-402000B.8" id="QQ2-19-451">[monitor]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.9 <a 
-href="cug-htmlse18.html#x19-423000B.9" id="QQ2-19-472">[suite host self-identification] </a></span>
+href="cug-htmlse18.html#x19-404000B.9" id="QQ2-19-453">[hosts]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.10 <a 
-href="cug-htmlse18.html#x19-427000B.10" id="QQ2-19-476">[suite host scanning]</a></span>
+href="cug-htmlse18.html#x19-427000B.10" id="QQ2-19-476">[suite host self-identification] </a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.11 <a 
-href="cug-htmlse18.html#x19-429000B.11" id="QQ2-19-478">[task events]</a></span>
+href="cug-htmlse18.html#x19-431000B.11" id="QQ2-19-480">[suite host scanning]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.12 <a 
-href="cug-htmlse18.html#x19-430000B.12" id="QQ2-19-479">[test battery]</a></span>
+href="cug-htmlse18.html#x19-433000B.12" id="QQ2-19-482">[task events]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.13 <a 
-href="cug-htmlse18.html#x19-439000B.13" id="QQ2-19-488">[cylc]</a></span>
+href="cug-htmlse18.html#x19-434000B.13" id="QQ2-19-483">[test battery]</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >B.14 <a 
-href="cug-htmlse18.html#x19-447000B.14" id="QQ2-19-496">[authentication]</a></span>
+href="cug-htmlse18.html#x19-443000B.14" id="QQ2-19-492">[cylc]</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >B.15 <a 
+href="cug-htmlse18.html#x19-451000B.15" id="QQ2-19-500">[authentication]</a></span>
 <br />   <span class="sectionToc" >C <a 
-href="cug-htmlse19.html#x20-449000C" id="QQ2-20-498">Gcylc Config File Reference</a></span>
+href="cug-htmlse19.html#x20-453000C" id="QQ2-20-502">Gcylc Config File Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >C.1 <a 
-href="cug-htmlse19.html#x20-450000C.1" id="QQ2-20-499">Top Level Items</a></span>
-<br />   &#x00A0;<span class="subsectionToc" >C.2 <a 
-href="cug-htmlse19.html#x20-458000C.2" id="QQ2-20-507">[themes]</a></span>
+href="cug-htmlse19.html#x20-454000C.1" id="QQ2-20-503">Top Level Items</a></span>
                                                                                          
 
                                                                                          
+<br />   &#x00A0;<span class="subsectionToc" >C.2 <a 
+href="cug-htmlse19.html#x20-462000C.2" id="QQ2-20-511">[themes]</a></span>
 <br />   <span class="sectionToc" >D <a 
-href="cug-htmlse20.html#x21-463000D" id="QQ2-21-512">Command Reference</a></span>
+href="cug-htmlse20.html#x21-467000D" id="QQ2-21-516">Command Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >D.1 <a 
-href="cug-htmlse20.html#x21-464000D.1" id="QQ2-21-514">Command Categories</a></span>
+href="cug-htmlse20.html#x21-468000D.1" id="QQ2-21-518">Command Categories</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >D.2 <a 
-href="cug-htmlse20.html#x21-476000D.2" id="QQ2-21-537">Commands</a></span>
+href="cug-htmlse20.html#x21-480000D.2" id="QQ2-21-541">Commands</a></span>
 <br />   <span class="sectionToc" >E <a 
-href="cug-htmlse21.html#x22-552000E" id="QQ2-22-688">The gcylc Graph View</a></span>
+href="cug-htmlse21.html#x22-556000E" id="QQ2-22-692">The gcylc Graph View</a></span>
 <br />   <span class="sectionToc" >F <a 
-href="cug-htmlse22.html#x23-553000F" id="QQ2-23-689">Cylc README File</a></span>
+href="cug-htmlse22.html#x23-557000F" id="QQ2-23-693">Cylc README File</a></span>
 <br />   <span class="sectionToc" >G <a 
-href="cug-htmlse23.html#x24-554000G" id="QQ2-24-691">Cylc INSTALL File</a></span>
+href="cug-htmlse23.html#x24-558000G" id="QQ2-24-695">Cylc INSTALL File</a></span>
 <br />   <span class="sectionToc" >H <a 
-href="cug-htmlse24.html#x25-555000H" id="QQ2-25-693">Cylc Development History - Major Changes</a></span>
+href="cug-htmlse24.html#x25-559000H" id="QQ2-25-697">Cylc Development History - Major Changes</a></span>
 <br />   <span class="sectionToc" >I <a 
-href="cug-htmlse25.html#x26-556000I" id="QQ2-26-694">Pyro</a></span>
+href="cug-htmlse25.html#x26-560000I" id="QQ2-26-698">Pyro</a></span>
 <br />   <span class="sectionToc" >J <a 
-href="cug-htmlse26.html#x27-557000J" id="QQ2-27-695">Cylc 6 Migration Reference</a></span>
+href="cug-htmlse26.html#x27-561000J" id="QQ2-27-699">Cylc 6 Migration Reference</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.1 <a 
-href="cug-htmlse26.html#x27-558000J.1" id="QQ2-27-696">Timeouts and Delays</a></span>
+href="cug-htmlse26.html#x27-562000J.1" id="QQ2-27-700">Timeouts and Delays</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.2 <a 
-href="cug-htmlse26.html#x27-559000J.2" id="QQ2-27-698">Runahead Limit</a></span>
+href="cug-htmlse26.html#x27-563000J.2" id="QQ2-27-702">Runahead Limit</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.3 <a 
-href="cug-htmlse26.html#x27-560000J.3" id="QQ2-27-699">Cycle Time/Cycle Point</a></span>
+href="cug-htmlse26.html#x27-564000J.3" id="QQ2-27-703">Cycle Time/Cycle Point</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.4 <a 
-href="cug-htmlse26.html#x27-561000J.4" id="QQ2-27-702">Cycling</a></span>
+href="cug-htmlse26.html#x27-565000J.4" id="QQ2-27-706">Cycling</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >J.5 <a 
-href="cug-htmlse26.html#x27-562000J.5" id="QQ2-27-705">No Implicit Creation of Tasks by Offset Triggers</a></span>
+href="cug-htmlse26.html#x27-566000J.5" id="QQ2-27-709">No Implicit Creation of Tasks by Offset Triggers</a></span>
 <br />   <span class="sectionToc" >K <a 
-href="cug-htmlse27.html#x28-563000K" id="QQ2-28-706">GNU GENERAL PUBLIC LICENSE v3.0</a></span>
+href="cug-htmlse27.html#x28-567000K" id="QQ2-28-710">GNU GENERAL PUBLIC LICENSE v3.0</a></span>
    </div>
 
 
