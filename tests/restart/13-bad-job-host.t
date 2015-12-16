@@ -25,9 +25,6 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
 fi
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" bad-job-host
-ssh ${SSH_OPTS} "${CYLC_TEST_HOST}" \
-    "mkdir -p '.cylc/${SUITE_NAME}/' && cat >'.cylc/${SUITE_NAME}/passphrase'" \
-    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
@@ -41,7 +38,7 @@ for DB_NAME in 'cylc-suite.db' 'state/cylc-suite.db'; do
 done
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-ssh ${SSH_OPTS} $CYLC_TEST_HOST \
-    "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"
+ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite "${SUITE_NAME}"
 exit

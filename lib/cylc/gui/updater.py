@@ -25,6 +25,7 @@ import gobject
 import threading
 from time import sleep, time, ctime
 
+from cylc.CylcError import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.network.suite_state import (
@@ -32,7 +33,6 @@ from cylc.network.suite_state import (
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.network.port_file import PortFileError
 from cylc.task_state import task_state
 from cylc.gui.dot_maker import DotMaker
 from cylc.wallclock import get_time_string_from_unix_time
@@ -108,14 +108,15 @@ class Updater(threading.Thread):
 
     """Retrieve information about the running or stopped suite."""
 
-    def __init__(self, cfg, info_bar, restricted_display):
+    def __init__(self, app):
 
         super(Updater, self).__init__()
 
         self.quit = False
 
-        self.cfg = cfg
-        self.info_bar = info_bar
+        self.app_window = app.window
+        self.cfg = app.cfg
+        self.info_bar = app.info_bar
 
         self._summary_update_time = None
         self.err_log_lines = []
@@ -140,7 +141,7 @@ class Updater(threading.Thread):
         self._flag_new_update()
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
-        self.restricted_display = restricted_display
+        self.restricted_display = app.restricted_display
         self.filter_name_string = ''
         self.filter_states_excl = []
         self.kept_task_ids = set()
@@ -205,6 +206,10 @@ class Updater(threading.Thread):
                     gobject.idle_add(self.warn, str(exc))
             return
 
+        self.app_window.set_title("%s - %s:%d" % (
+            self.cfg.suite,
+            self.suite_info_client.host,
+            self.suite_info_client.port))
         if cylc.flags.debug:
             print >> sys.stderr, "succeeded"
         # Connected.

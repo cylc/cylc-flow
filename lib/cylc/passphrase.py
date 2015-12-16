@@ -45,10 +45,16 @@ class PassphraseError(Exception):
 
 
 class passphrase(object):
-    def __init__(self, suite, owner=user, host=get_hostname()):
+    """Pyro passphrase file utility."""
+
+    def __init__(self, suite, owner=None, host=None):
         self.suite = suite
         self.owner = owner
         self.host = host
+        if self.owner is None:
+            self.owner = user
+        if self.host is None:
+            self.host = get_hostname()
         self.location = None
 
     def get_passphrase_file(self, pfile=None, suitedir=None):
@@ -115,18 +121,15 @@ that do not actually need the suite definition directory to be installed.
                 # called by a task
                 if is_remote_host(suite_host) or is_remote_user(suite_owner):
                     # 2(i)/ Task messaging call on a remote account.
-
-                    # First look in the remote suite definition
-                    # directory ($CYLC_SUITE_DEF_PATH is modified for
-                    # remote tasks):
-                    try:
-                        pfile = os.path.join(
-                            os.environ['CYLC_SUITE_DEF_PATH'], 'passphrase')
-                    except KeyError:
-                        pass
-                    else:
-                        if os.path.isfile(pfile):
-                            self.set_location(pfile)
+                    # First look in the remote suite run directory than suite
+                    # definition directory ($CYLC_SUITE_DEF_PATH is modified
+                    # for remote tasks):
+                    for key in ['CYLC_SUITE_RUN_DIR', 'CYLC_SUITE_DEF_PATH']:
+                        if key in os.environ:
+                            pfile = os.path.join(os.environ[key], 'passphrase')
+                            if os.path.isfile(pfile):
+                                self.set_location(pfile)
+                                break
                 else:
                     # 2(ii)/ Task messaging call on the suite host account.
 

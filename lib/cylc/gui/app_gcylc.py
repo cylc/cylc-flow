@@ -609,8 +609,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.cfg.reset(suite)
 
         win_title = suite
-        if self.cfg.host != socket.getfqdn():
-            win_title += " - %s" % self.cfg.host
+        if (self.cfg.host is not None and self.cfg.port is not None and
+                is_remote_host(self.cfg.host)):
+            win_title += " - %s:%d" % (self.cfg.host, int(self.cfg.port))
         self.window.set_title(win_title)
 
         self.tool_bar_box.set_sensitive(True)
@@ -619,8 +620,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         if self.updater is not None:
             self.updater.stop()
-        self.updater = Updater(self.cfg, self.info_bar,
-                               self.restricted_display)
+        self.updater = Updater(self)
         self.updater.start()
         self.restart_views()
 
@@ -2057,11 +2057,9 @@ shown here in the state they were in at the time of triggering.''')
             'insert_task', match, point_string, is_family, stop)
 
     def poll_all(self, w):
-        command = (
-            "cylc poll" + self.get_remote_run_opts() + " " + self.cfg.suite)
-        foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 600, 400)
-        self.gcapture_windows.append(foo)
-        foo.run()
+        if not self.get_confirmation("Poll all submitted/running task jobs?"):
+            return
+        self.put_pyro_command('poll_tasks', None, None, None)
 
     def reload_suite(self, w):
         if not self.get_confirmation("Reload suite definition?"):
@@ -3264,7 +3262,12 @@ For more Stop options use the Control menu.""")
         return False
 
     def get_remote_run_opts(self):
-        return " --host=" + self.cfg.host + " --user=" + self.cfg.owner
+        ret = ""
+        if self.cfg.host is not None:
+            ret += " --host=" + self.cfg.host
+        if self.cfg.owner is not None:
+            ret += " --user=" + self.cfg.owner
+        return ret
 
     def browse(self, b, *args):
         command = (

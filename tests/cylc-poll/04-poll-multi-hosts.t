@@ -27,12 +27,6 @@ set_test_number 3
 
 export CYLC_CONF_PATH=
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-set -eu
-SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${CYLC_TEST_HOST}" \
-    "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
-    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
-set +eu
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" -s "CYLC_TEST_HOST=${CYLC_TEST_HOST}"
@@ -51,6 +45,7 @@ cylc jobs-poll --debug -- ${RUN_DIR}/log/job 1/local-fail-1/01 1/local-fail-2/01
 __LOG__
 cmp_ok 'edited-suite-log' 'edited-suite-log-ref'
 
-$SSH -n "$CYLC_TEST_HOST" "rm -rf '.cylc/$SUITE_NAME' 'cylc-run/$SUITE_NAME'"
+ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite "${SUITE_NAME}"
 exit

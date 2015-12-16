@@ -10,9 +10,6 @@ test suite it just returns the value of $CYLC_TEST_TASK_HOST as used
 by many of the other test suites (see "cylc test-battery --help")."""
 
 [cylc]
-    [[event hooks]]
-        startup handler = startup.sh
-        abort if startup handler fails = True
     [[reference test]]
         live mode suite timeout = 0.5
         suite shutdown event handler = cleanup.sh

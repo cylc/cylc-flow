@@ -25,12 +25,6 @@ fi
 set_test_number 4
 export CYLC_CONF_PATH=
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-set -eu
-SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${HOST}" \
-    "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
-    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
-set +eu
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate -s "HOST=${HOST}" "${SUITE_NAME}"
@@ -76,7 +70,7 @@ cmp_ok 'edited-activities.log' <<__LOG__
 [('job-logs-retrieve', 3) ret_code] 0
 __LOG__
 
-${SSH} "${HOST}" \
-    "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"
+ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite "${SUITE_NAME}"
 exit

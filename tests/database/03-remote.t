@@ -24,13 +24,6 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
 fi
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-# Install suite passphrase.
-set -eu
-SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${CYLC_TEST_HOST}" \
-    "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
-    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
-set +eu
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
@@ -50,7 +43,8 @@ cmp_ok "${NAME}" <<__SELECT__
 __SELECT__
 
 if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
-    $SSH -n "$CYLC_TEST_HOST" "rm -rf '.cylc/$SUITE_NAME' 'cylc-run/$SUITE_NAME'"
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "$CYLC_TEST_HOST" \
+        "rm -rf 'cylc-run/$SUITE_NAME'"
 fi
 purge_suite "${SUITE_NAME}"
 exit

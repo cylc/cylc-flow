@@ -31,14 +31,6 @@ set_test_number 6
 export CYLC_TEST_DIRECTIVES=$( \
     cylc get-global-config -i "${RC_PREV}[directives]" 2>'/dev/null')
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-set -eu
-if [[ $CYLC_TEST_HOST != 'localhost' ]]; then
-    SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-    $SSH $CYLC_TEST_HOST \
-        "mkdir -p .cylc/$SUITE_NAME/ && cat >.cylc/$SUITE_NAME/passphrase" \
-        <$TEST_DIR/$SUITE_NAME/passphrase
-fi
-set +eu
 SUITE_RUN_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
@@ -58,8 +50,8 @@ exists_ok $T2_JOB_FILE
 grep_ok '^# TRAP VACATION SIGNALS:' $T2_JOB_FILE
 #-------------------------------------------------------------------------------
 if [[ $CYLC_TEST_HOST != 'localhost' ]]; then
-    $SSH $CYLC_TEST_HOST \
-        "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
+        "rm -rf 'cylc-run/${SUITE_NAME}'"
 fi
 purge_suite $SUITE_NAME
 exit

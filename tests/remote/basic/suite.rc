@@ -7,9 +7,6 @@
 # determined by the [hosts] section in site/user config files.
 
 [cylc]
-    [[event hooks]]
-        startup handler = startup.sh
-        abort if startup handler fails = True
     [[reference test]]
         live mode suite timeout = 0.5
         suite shutdown event handler = cleanup.sh

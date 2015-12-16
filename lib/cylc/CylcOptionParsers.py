@@ -134,8 +134,7 @@ Arguments:"""
                 "--host",
                 help="Other host name. This results in "
                 "command reinvocation on the remote account.",
-                metavar="HOST", action="store", default=get_hostname(),
-                dest="host")
+                metavar="HOST", action="store", dest="host")
         except OptionConflictError:
             pass
 

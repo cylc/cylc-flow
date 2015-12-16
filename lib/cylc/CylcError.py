@@ -32,6 +32,11 @@ class CylcError(Exception):
         return repr(self.msg)
 
 
+class PortFileError(CylcError):
+    """Error reading a port file."""
+    pass
+
+
 class SchedulerError(CylcError):
     pass
 

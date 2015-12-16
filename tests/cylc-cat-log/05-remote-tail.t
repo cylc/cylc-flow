@@ -29,9 +29,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
 SCP='scp -oBatchMode=yes -oConnectTimeout=5'
-$SSH $CYLC_TEST_HOST \
-    "mkdir -p .cylc/$SUITE_NAME/bin && cat >.cylc/$SUITE_NAME/passphrase" \
-    <$TEST_DIR/$SUITE_NAME/passphrase
+$SSH -n "${CYLC_TEST_HOST}" "mkdir -p .cylc/$SUITE_NAME/bin"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -56,7 +54,7 @@ grep_ok "HELLO from foo 1" ${TEST_NAME}.out
 TEST_NAME=$TEST_NAME_BASE-stop
 run_ok $TEST_NAME cylc stop --kill --max-polls=10 --interval=1 $SUITE_NAME
 #-------------------------------------------------------------------------------
-$SSH $CYLC_TEST_HOST \
-    "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"
+$SSH -n "${CYLC_TEST_HOST}" \
+    "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"
 purge_suite $SUITE_NAME
 

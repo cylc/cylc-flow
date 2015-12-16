@@ -26,12 +26,7 @@ fi
 N_TESTS=3
 set_test_number $N_TESTS
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-$SSH $CYLC_TEST_HOST \
-    "mkdir -p .cylc/$SUITE_NAME/ && cat >.cylc/$SUITE_NAME/passphrase" \
-    <$TEST_DIR/$SUITE_NAME/passphrase
-set +eu
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -41,9 +36,10 @@ suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-ps
 run_fail $TEST_NAME \
-    $SSH $CYLC_TEST_HOST "ps \$(cat cylc-run/$SUITE_NAME/work/*/t*/file)"
+    ${SSH} -n "${CYLC_TEST_HOST}" \
+    "ps \$(cat cylc-run/$SUITE_NAME/work/*/t*/file)"
 #-------------------------------------------------------------------------------
-$SSH $CYLC_TEST_HOST \
-    "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"
+${SSH} -n "${CYLC_TEST_HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite $SUITE_NAME
 exit

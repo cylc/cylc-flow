@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shlex
+from subprocess import Popen, PIPE
 import sys
 from uuid import uuid4
 
@@ -26,13 +28,15 @@ try:
 except ImportError, x:
     raise SystemExit("ERROR: Pyro is not installed")
 
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.CylcError import PortFileError
 import cylc.flags
-from cylc.owner import user, host, user_at_host
+from cylc.network.client_reporter import PyroClientReporter
+from cylc.network.connection_validator import ConnValidator
+from cylc.owner import is_remote_user, user, host, user_at_host
 from cylc.passphrase import get_passphrase, PassphraseError
 from cylc.registration import localdb
-from cylc.network.port_file import PortRetriever
-from cylc.network.connection_validator import ConnValidator
-from cylc.network.client_reporter import PyroClientReporter
+from cylc.suite_host import is_remote_host
 
 
 class PyroServer(Pyro.core.ObjBase):
@@ -62,7 +66,7 @@ class PyroClient(object):
         if pyro_timeout is not None:
             pyro_timeout = float(pyro_timeout)
         self.pyro_timeout = pyro_timeout
-        self.hard_port = port
+        self.port = port
         self.pyro_proxy = None
         self.my_uuid = my_uuid or uuid4()
         if print_uuid:
@@ -94,14 +98,68 @@ class PyroClient(object):
             return func(*fargs)
 
     def _set_uri(self):
-        # Find the suite port number (fails if port file not found)
-        port = (self.hard_port or
-                PortRetriever(self.suite, self.host, self.owner).get())
+        """Set Pyro URI.
+
+        Determine host and port using content in port file, unless already
+        specified.
+
+        """
+        uri_data = {
+            "host": self.host,
+            "port": self.port,
+            "suite": self.suite,
+            "owner": self.owner,
+            "target": self.target_server_object}
+        port_file_path = os.path.join(
+            GLOBAL_CFG.get(['pyro', 'ports directory']), self.suite)
+        if self.host is None or self.port is None:
+            if is_remote_host(self.host) or is_remote_user(self.owner):
+                ssh_tmpl = str(GLOBAL_CFG.get_host_item(
+                    'remote shell template', self.host, self.owner))
+                ssh_tmpl = ssh_tmpl.replace(' %s', '')
+                user_at_host = ''
+                if self.owner:
+                    user_at_host = self.owner + '@'
+                if self.host:
+                    user_at_host += self.host
+                else:
+                    user_at_host += 'localhost'
+                r_port_file_path = port_file_path.replace(
+                    os.environ['HOME'], '$HOME')
+                command = shlex.split(ssh_tmpl) + [
+                    user_at_host, 'cat', r_port_file_path]
+                proc = Popen(command, stdout=PIPE, stderr=PIPE)
+                out, err = proc.communicate()
+                if proc.wait():
+                    raise PortFileError(
+                        "Port file '%s:%s' not found - suite not running?." %
+                        (user_at_host, r_port_file_path))
+            else:
+                try:
+                    out = open(port_file_path).read()
+                except IOError as exc:
+                    raise PortFileError(
+                        "Port file '%s' not found - suite not running?." %
+                        (port_file_path))
+            lines = out.splitlines()
+            try:
+                if uri_data["port"] is None:
+                    uri_data["port"] = int(lines[0])
+                    self.port = uri_data["port"]
+            except (IndexError, ValueError):
+                raise PortFileError(
+                    "ERROR, bad content in port file: %s" % port_file_path)
+            if uri_data["host"] is None:
+                if len(lines) >= 2:
+                    uri_data["host"] = lines[1].strip()
+                else:
+                    uri_data["host"] = "localhost"
+                self.host = uri_data["host"]
         # Qualify the obj name with user and suite name (unnecessary but
         # can't change it until we break back-compat with older daemons).
-        name = "%s.%s.%s" % (self.owner, self.suite,
-                             self.__class__.target_server_object)
-        self.uri = "PYROLOC://%s:%s/%s" % (self.host, str(port), name)
+        self.uri = (
+            'PYROLOC://%(host)s:%(port)s/%(owner)s.%(suite)s.%(target)s' %
+            uri_data)
 
     def _get_proxy_common(self):
         if self.pyro_proxy is None:

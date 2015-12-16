@@ -35,12 +35,6 @@ export CYLC_CONF_PATH="${PWD}/conf"
 OPT_SET='-s GLOBALCFG=True'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-set -eu
-SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${HOST}" \
-    "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
-    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
-set +eu
 
 mkdir -p "${TEST_DIR}/${SUITE_NAME}/bin"
 cat >"${TEST_DIR}/${SUITE_NAME}/bin/my-rsync" <<'__BASH__'
@@ -69,7 +63,7 @@ ${OPT_HEAD} --include=/1/t1/02 --include=/1/t1/02/** ${OPT_TAIL} ${ARGS}
 ${OPT_HEAD} --include=/1/t1/03 --include=/1/t1/03/** ${OPT_TAIL} ${ARGS}
 __LOG__
 
-${SSH} "${HOST}" \
-    "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"
+ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite "${SUITE_NAME}"
 exit

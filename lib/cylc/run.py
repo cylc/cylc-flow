@@ -76,7 +76,7 @@ def main(name, start):
 
     # Daemonize the suite
     if not server.options.no_detach and not flags.debug:
-        daemonize(server.suite, server.port)
+        daemonize(server)
 
     try:
         server.configure()

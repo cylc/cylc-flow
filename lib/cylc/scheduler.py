@@ -82,7 +82,6 @@ from cylc.network.ext_trigger import ExtTriggerServer
 from cylc.network.suite_info import SuiteInfoServer
 from cylc.network.suite_log import SuiteLogServer
 from cylc.network.suite_identifier import SuiteIdServer
-from cylc.network.port_file import PortFile, PortFileExistsError, PortFileError
 
 
 class request_handler(threading.Thread):
@@ -107,11 +106,10 @@ class scheduler(object):
 
     def __init__(self, is_restart=False):
 
-        # SUITE OWNER
         self.owner = user
-
-        # SUITE HOST
         self.host = get_suite_host()
+        self.port = None
+        self.port_file = None
 
         self.is_restart = is_restart
 
@@ -229,9 +227,9 @@ class scheduler(object):
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest()
 
+        self.log.info('Suite starting on %s:%s' % (self.host, self.port))
         # Note that the following lines must be present at the top of
         # the suite log file for use in reference test runs:
-        self.log.info('Suite starting at ' + get_current_time_string())
         self.log.info('Run mode: ' + self.run_mode)
         self.log.info('Initial point: ' + str(self.initial_point))
         if self.start_point != self.initial_point:
@@ -258,10 +256,9 @@ class scheduler(object):
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')
         env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
-        f = open(env_file_path, 'wb')
-        for key, value in self.suite_contact_env.items():
-            f.write("%s=%s\n" % (key, value))
-        f.close()
+        with open(env_file_path, 'wb') as handle:
+            for key, value in self.suite_contact_env.items():
+                handle.write("%s=%s\n" % (key, value))
 
         # Copy local python modules from source to run directory.
         for sub_dir in ["python", os.path.join("lib", "python")]:
@@ -609,18 +606,23 @@ class scheduler(object):
 
     def configure_pyro(self):
         self.pyro = PyroDaemon(self.suite)
-        pphrase = passphrase(
-            self.suite, user, get_suite_host()).get(suitedir=self.suite_dir)
+        pphrase = passphrase(self.suite, user, self.host).get(
+            suitedir=self.suite_dir)
         self.pyro.set_auth(pphrase)
         self.port = self.pyro.get_port()
-        try:
-            self.portfile = PortFile(self.suite, self.port)
-        except PortFileExistsError, x:
-            print >> sys.stderr, x
+        self.port_file = os.path.join(
+            GLOBAL_CFG.get(['pyro', 'ports directory']), self.suite)
+        if os.path.exists(self.port_file):
             raise SchedulerError(
+                'ERROR, port file exists: %s\n' % self.port_file +
                 'Suite already running? (if not, delete the port file)')
-        except PortFileError, x:
-            raise SchedulerError(str(x))
+        try:
+            with open(self.port_file, 'w') as handle:
+                handle.write("%d\n%s\n" % (self.port, self.host))
+        except IOError as exc:
+            raise SchedulerError(
+                'ERROR, cannot write port file: %s\n' % self.port_file +
+                str(exc))
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
@@ -714,7 +716,7 @@ class scheduler(object):
             else:
                 # Remove database created by previous runs
                 if os.path.isdir(pri_db_path):
-                    shutil.rmtree(pri_db_path)
+                    rmtree(pri_db_path)
                 else:
                     try:
                         os.unlink(pri_db_path)
@@ -773,8 +775,6 @@ class scheduler(object):
 
             self.suite_state = StateSummaryServer.get_inst(self.run_mode)
             self.pyro.connect(self.suite_state, PYRO_STATE_OBJ_NAME)
-
-            self.log.info("port:" + str(self.port))
 
     def configure_suite_environment(self):
         # static cylc and suite-specific variables:
@@ -1222,10 +1222,11 @@ class scheduler(object):
             self.pyro.shutdown()
 
         try:
-            self.portfile.unlink()
-        except PortFileError, x:
-            # port file may have been deleted
-            print >> sys.stderr, x
+            os.unlink(self.port_file)
+        except OSError as exc:
+            sys.stderr.write(
+                "WARNING, failed to remove port file: %s\n%s\n" % (
+                    self.port_file, exc))
 
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:

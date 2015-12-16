@@ -40,7 +40,7 @@ cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --cycle=1 \
 mv "${TEST_DIR}/${SUITE_NAME}/passphrase" \
     "${TEST_DIR}/${SUITE_NAME}/passphrase.DIS"
 
-PORT=$(cylc ping -v "${SUITE_NAME}" | awk '{print $4}')
+PORT=$(cylc ping -v "${SUITE_NAME}" | cut -d':' -f 2)
 cylc scan -fb -n "${SUITE_NAME}" 'localhost' >'scan.out' 2>'/dev/null'
 cmp_ok scan.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}

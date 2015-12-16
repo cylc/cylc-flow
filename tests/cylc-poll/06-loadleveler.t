@@ -28,23 +28,9 @@ if [[ -z "${CYLC_TEST_BATCH_TASK_HOST}" || "${CYLC_TEST_BATCH_TASK_HOST}" == Non
 then
     skip_all "\"[test battery][batch systems][$BATCH_SYS_NAME]host\" not defined"
 fi
-# check the host is reachable
-if ! ssh -n ${SSH_OPTS} "${CYLC_TEST_BATCH_TASK_HOST}" true 1>/dev/null 2>&1
-then
-    skip_all "Host "$CYLC_TEST_BATCH_TASK_HOST" unreachable"
-fi
 set_test_number 2
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-# copy across passphrase as not all remote hosts will have a shared file system
-# the .cylc location is used as registration and run directory won't be the same
-if [[ $CYLC_TEST_BATCH_TASK_HOST != 'localhost' ]]; then
-    ssh ${SSH_OPTS} -n "${CYLC_TEST_BATCH_TASK_HOST}" \
-        "mkdir -p '.cylc/${SUITE_NAME}/'"
-    scp ${SSH_OPTS} "${TEST_DIR}/${SUITE_NAME}/passphrase" \
-        "${CYLC_TEST_BATCH_TASK_HOST}:.cylc/${SUITE_NAME}/passphrase"
-fi
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
@@ -52,4 +38,8 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
+if [[ "${CYLC_TEST_BATCH_TASK_HOST}" != 'localhost' ]]; then
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_BATCH_TASK_HOST}" \
+        "rm -fr 'cylc-run/${SUITE_NAME}'"
+fi
 purge_suite $SUITE_NAME
