@@ -263,15 +263,19 @@ class scheduler(object):
             f.write("%s=%s\n" % (key, value))
         f.close()
 
-        suite_py = os.path.join(self.suite_dir, "python")
-        if (os.path.realpath(self.suite_dir) !=
-                os.path.realpath(suite_run_dir) and os.path.isdir(suite_py)):
-            suite_run_py = os.path.join(suite_run_dir, "python")
-            try:
-                rmtree(suite_run_py)
-            except OSError:
-                pass
-            copytree(suite_py, suite_run_py)
+        # Copy local python modules from source to run directory.
+        for sub_dir in ["python", os.path.join("lib", "python")]:
+            # TODO - eventually drop the deprecated "python" sub-dir.
+            suite_py = os.path.join(self.suite_dir, sub_dir)
+            if (os.path.realpath(self.suite_dir) !=
+                    os.path.realpath(suite_run_dir) and
+                    os.path.isdir(suite_py)):
+                suite_run_py = os.path.join(suite_run_dir, sub_dir)
+                try:
+                    rmtree(suite_run_py)
+                except OSError:
+                    pass
+                copytree(suite_py, suite_run_py)
 
         # 2) restart only: copy to other accounts with still-running tasks
         for user_at_host in self.old_user_at_host_set:

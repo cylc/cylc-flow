@@ -198,10 +198,12 @@ class BatchSysManager(object):
 
     @classmethod
     def configure_suite_run_dir(cls, suite_run_dir):
-        """Add "suite_run_dir"/python to sys.path if not already done."""
-        suite_py = os.path.join(suite_run_dir, "python")
-        if os.path.isdir(suite_py) and suite_py not in sys.path:
-            sys.path.append(suite_py)
+        """Add local python module paths if not already done."""
+        for sub_dir in ["python", os.path.join("lib", "python")]:
+            # TODO - eventually drop the deprecated "python" sub-dir.
+            suite_py = os.path.join(suite_run_dir, sub_dir)
+            if os.path.isdir(suite_py) and suite_py not in sys.path:
+                sys.path.append(suite_py)
 
     def get_inst(self, batch_sys_name):
         """Return an instance of the class for "batch_sys_name"."""
