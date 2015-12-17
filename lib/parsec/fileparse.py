@@ -229,14 +229,19 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
     if not os.path.isfile( fpath ):
         raise FileNotFoundError, 'File not found: ' + fpath
 
+    fdir = os.path.dirname(fpath)
+
+    # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).
+    suite_lib_python = os.path.join(fdir, "lib", "python")
+    if os.path.isdir(suite_lib_python) and suite_lib_python not in sys.path:
+        sys.path.append(suite_lib_python)
+
     if cylc.flags.verbose:
         print "Reading file", fpath
 
     # read the file into a list, stripping newlines
     with open( fpath ) as f:
         flines = [ line.rstrip('\n') for line in f ]
-
-    fdir = os.path.dirname(fpath)
 
     do_inline = True
     do_jinja2 = True
