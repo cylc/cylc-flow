@@ -199,7 +199,7 @@ class BatchSysManager(object):
     @classmethod
     def configure_suite_run_dir(cls, suite_run_dir):
         """Add local python module paths if not already done."""
-        for sub_dir in [ "python", os.path.join("lib", "python")]:
+        for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
             suite_py = os.path.join(suite_run_dir, sub_dir)
             if os.path.isdir(suite_py) and suite_py not in sys.path:
