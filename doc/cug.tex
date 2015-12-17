@@ -2338,9 +2338,8 @@ A cylc {\em suite definition directory} contains:
             \item And any include-files used in it (see below; may be
                 kept in sub-directories).
         \end{myitemize}
-    \item {\bf A \lstinline=bin/= sub-directory}.
+    \item {\bf A \lstinline=bin/= sub-directory} (optional)
         \begin{myitemize}
-            \item {\em Optional.}
             \item For scripts and executables that implement, or are
                 used by, suite tasks.
             \item Automatically added to \lstinline=$PATH= in task
@@ -2349,19 +2348,16 @@ A cylc {\em suite definition directory} contains:
                 commands, scripts, or programs; or they can be scripted
                 entirely within the suite.rc file.
         \end{myitemize}
-    \item {\bf A \lstinline=python/= sub-directory}.
+    \item {\bf A \lstinline=lib/python/= sub-directory} (optional)
         \begin{myitemize}
-            \item {\em Optional.}
-            \item For user-defined job-submission methods, if needed
-                (see~\ref{TaskJobSubmission}).
-            \item Alternatively, new job submission methods can be
-                installed into the cylc source tree, or in any directory
-                in your \lstinline=$PYTHONPATH=.
+            \item For custom job submission modules
+                (see~\ref{CustomJobSubmissionMethods})
+                and local Python modules imported by custom Jinja2 filters
+                (see~\ref{CustomJinja2Filters}).
         \end{myitemize}
     \item {\bf Any other sub-directories and files} - documentation,
-        control files, etc.
+        control files, etc. (optional)
         \begin{myitemize}
-            \item {\em Optional.}
             \item Holding everything in one place makes proper suite
                 revision control possible.
             \item Portable access to files here, for running tasks, is
@@ -4579,6 +4575,7 @@ host at the time the suite definition is parsed} - it is not, for
 instance, read at task run time on the task host.
 
 \subsubsection{Custom Jinja2 Filters}
+\label{CustomJinja2Filters}
 
 Jinja2 variable values can be modified by ``filters'', using pipe
 notation. For example, the built-in \lstinline=trim= filter strips
@@ -5014,7 +5011,7 @@ how cylc wraps and runs your tasks.
 \label{AvailableMethods}
 
 Cylc supports a number of commonly used job submission methods. 
-See~\ref{DefiningNewJobSubmissionMethods} for how to add new job
+See~\ref{CustomJobSubmissionMethods} for how to add new job
 submission methods.
 
 \subsubsection{background}
@@ -5323,14 +5320,13 @@ to its job submission method.
 Tasks can be killed on demand by right-clicking on them in gcylc or using the
 \lstinline=cylc kill= command.
 
-\subsection{Defining New Job Submission Methods}
-\label{DefiningNewJobSubmissionMethods}
+\subsection{Custom Job Submission Methods}
+\label{CustomJobSubmissionMethods}
 
-Defining a new handler for a new job submission method requires a little Python
-programming. You can derive (in the sense of object oriented programming
-inheritance) new classes from one of the existing ones, or simply write a new
-one using the existing ones as examples. Full reference can be found in the
-header \lstinline=cylc.batch_sys_manager= module.
+Defining a new job submission method requires a little Python programming.  You
+can use one of the built-in methods as an example, and read the documentation
+in the header of the \lstinline=cylc.batch_sys_manager= module.
+
 \lstset{language=Python}
 
 \subsubsection{An Example}
@@ -5377,7 +5373,7 @@ and generate a job script to see the resulting directives:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc db reg test $HOME/test
-shell$ cylc jobscript test a | grep QSUB
+shell$ cylc jobscript test a.1 | grep QSUB
 #QSUB -e /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.err
 #QSUB -l nodes=1
 #QSUB -l walltime=00:01:00
@@ -5395,18 +5391,12 @@ in any of the following locations, depending on how generally useful
 the new method is and whether or not you have write-access to the cylc
 source tree:
 \begin{myitemize}
-    \item a \lstinline=python= sub-directory of your suite definition
+    \item a \lstinline=lib/python= sub-directory of your suite definition
         directory.
-    \item any directory in, or added to, your \lstinline=PYTHONPATH=
-        environment variable.
-    \item in the \lstinline=lib/cylc/job_sys_handlers= directory of
+    \item any directory in your \lstinline=$PYTHONPATH=.
+    \item in the \lstinline=lib/cylc/batch_sys_handlers= directory of
         the cylc source tree.
 \end{myitemize}
-Note that the form of the import statement at the top of the new
-user-defined Python module differs depending on whether or not
-the file is installed in the cylc source tree (see the comment
-at the top of the example file above).
-
 
 %\pagebreak
 
