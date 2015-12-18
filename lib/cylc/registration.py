@@ -230,7 +230,7 @@ class localdb(object):
         dir, title = data['path'], data['title']
         new_title = self.get_suite_title(suite)
         if title == new_title:
-            if flags.verbose:
+            if cylc.flags.verbose:
                 print 'unchanged:', suite
             changed = False
         else:
