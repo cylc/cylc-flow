@@ -612,17 +612,41 @@ class scheduler(object):
         self.port = self.pyro.get_port()
         self.port_file = os.path.join(
             GLOBAL_CFG.get(['pyro', 'ports directory']), self.suite)
-        if os.path.exists(self.port_file):
+        try:
+            port, host = open(self.port_file).read().splitlines()
+        except (IOError, ValueError):
+            # Suite is not likely to be running if port file does not exist
+            # or if port file does not contain good values of port and host.
+            pass
+        else:
+            sys.stderr.write(
+                (
+                    r"""
+Is suite already running on '%(host)s:%(port)s'?
+(If not, kill off any left over processes and delete the port file.)
+
+To see if a suite of the same name is still running, try:
+ * cylc scan, or
+ * cylc ping -v %(suite)s, or
+ * ssh %(host)s pgrep -fu $USER 'cylc-r .* \<%(suite)s\>'
+
+"""
+                ) % {
+                    "host": host,
+                    "port": port,
+                    "port_file": self.port_file,
+                    "suite": self.suite,
+                }
+            )
             raise SchedulerError(
-                'ERROR, port file exists: %s\n' % self.port_file +
-                'Suite already running? (if not, delete the port file)')
+                "ERROR, port file exists: %s" % self.port_file)
         try:
             with open(self.port_file, 'w') as handle:
                 handle.write("%d\n%s\n" % (self.port, self.host))
         except IOError as exc:
+            sys.stderr.write(str(exc) + "\n")
             raise SchedulerError(
-                'ERROR, cannot write port file: %s\n' % self.port_file +
-                str(exc))
+                'ERROR, cannot write port file: %s' % self.port_file)
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
