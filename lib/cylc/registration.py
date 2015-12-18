@@ -19,8 +19,8 @@
 import os
 import sys
 import re
-import flags
-from regpath import RegPath
+import cylc.flags
+from cylc.regpath import RegPath
 from cylc.passphrase import passphrase
 from cylc.suite_host import get_hostname
 from cylc.owner import user
@@ -39,6 +39,10 @@ class RegistrationError(Exception):
 
 
 class localdb(object):
+    """Represents a simple suite name registration database."""
+
+    Error = RegistrationError
+
     def __init__(self, file=None):
         dbpath = file  # (back compat)
         global regdb_path

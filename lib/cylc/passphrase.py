@@ -221,9 +221,9 @@ that do not actually need the suite definition directory to be installed.
 
 def get_passphrase(suite, owner, host, db):
     """Find a suite passphrase."""
-    if not is_remote_host(host) and not is_remote_user(owner):
+    try:
         # Local suite, retrieve suite definition directory location.
         suitedir = os.path.dirname(db.get_suiterc(suite))
-    else:
+    except db.Error:
         suitedir = None
     return passphrase(suite, owner, host).get(None, suitedir)
