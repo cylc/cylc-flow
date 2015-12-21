@@ -1067,6 +1067,7 @@ class scheduler(object):
 
             if ((self.shut_down_cleanly or auto_stop) and
                     self.pool.no_active_tasks()):
+                self.update_state_summary()
                 proc_pool.close()
                 self.shut_down_now = True
 
@@ -1075,6 +1076,7 @@ class scheduler(object):
                     if not self.pool.no_active_tasks():
                         self.log.warning(
                             'some tasks were not killable at shutdown')
+                    self.update_state_summary()
                     proc_pool.close()
                     self.shut_down_now = True
                 else:
