@@ -41,9 +41,11 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
     echo "${HOST}:${HOST_WORK_DIR}" >>'host-work-dirs.list'
     cylc register "--host=${HOST}" "${UUID}-${HOST}" "${HOST_WORK_DIR}" \
         1>/dev/null 2>&1
-    mkdir -p "${HOME}/.cylc/${UUID}-${HOST}"
-    ${SCP} -p \
-        "${HOST}:${HOST_WORK_DIR}/passphrase" "${HOME}/.cylc/${UUID}-${HOST}/"
+    if [[ "${HOST}" != 'localhost' ]]; then
+        mkdir -p "${HOME}/.cylc/${UUID}-${HOST}"
+        ${SCP} -p "${HOST}:${HOST_WORK_DIR}/passphrase" \
+            "${HOME}/.cylc/${UUID}-${HOST}/"
+    fi
     cylc run "--host=${HOST}" "${UUID}-${HOST}" 1>/dev/null 2>&1
     poll '!' ${SSH} -n "${HOST}" "test -e '.cylc/ports/${UUID}-${HOST}'"
 done
