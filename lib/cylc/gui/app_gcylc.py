@@ -24,7 +24,6 @@ import sys
 import gtk
 import pango
 import gobject
-import socket
 import subprocess
 from uuid import uuid4
 from isodatetime.parsers import TimePointParser
