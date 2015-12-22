@@ -20,7 +20,6 @@ import os
 import re
 from optparse import OptionParser, OptionConflictError
 import cylc.flags
-from cylc.suite_host import get_hostname
 from cylc.owner import user
 from cylc.registration import localdb
 
