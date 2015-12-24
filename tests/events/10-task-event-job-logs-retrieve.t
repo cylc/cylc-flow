@@ -39,12 +39,6 @@ else
 fi
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-set -eu
-SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${HOST}" \
-    "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
-    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
-set +eu
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate ${OPT_SET} -s "HOST=${HOST}" "${SUITE_NAME}"
@@ -98,7 +92,7 @@ else
 __LOG__
 fi
 
-${SSH} "${HOST}" \
-    "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"
+ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite "${SUITE_NAME}"
 exit

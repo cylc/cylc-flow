@@ -62,6 +62,8 @@ def main():
 
     # cylc ping SUITE
     pclient.get_info('ping_suite')  # (no need to check the result)
+    if cylc.flags.verbose:
+        sys.stdout.write("Running on %s:%s\n" % (pclient.host, pclient.port))
     if len(args) == 1:
         sys.exit(0)
 

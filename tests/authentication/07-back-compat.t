@@ -28,9 +28,7 @@ cylc run "${SUITE_NAME}"
 
 # Scan to grab the suite's port.
 sleep 5  # Wait for the suite to initialize.
-TEST_NAME="${TEST_NAME_BASE}-new-scan"
-PORT=$(cylc scan -b -n $SUITE_NAME 'localhost' 2>'/dev/null' \
-    | sed -e 's/.*@localhost://')
+PORT=$(cylc ping -v "${SUITE_NAME}" | cut -d':' -f 2)
 
 # Simulate an old client with the wrong passphrase.
 ERR_PATH="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"

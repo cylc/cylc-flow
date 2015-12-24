@@ -27,14 +27,6 @@ fi
 set_test_number 2
 #-------------------------------------------------------------------------------
 install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
-set -eu
-if [[ $CYLC_TEST_HOST != 'localhost' ]]; then
-    SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-    $SSH "$CYLC_TEST_HOST" \
-        "mkdir -p .cylc/$SUITE_NAME/ && cat >.cylc/$SUITE_NAME/passphrase" \
-        <"$TEST_DIR/$SUITE_NAME/passphrase"
-fi
-set +eu
 #-------------------------------------------------------------------------------
 TEST_NAME="$TEST_NAME_BASE-validate"
 run_ok "$TEST_NAME" cylc validate "$SUITE_NAME"
@@ -43,7 +35,8 @@ TEST_NAME="$TEST_NAME_BASE-run"
 suite_run_ok "$TEST_NAME" cylc run --reference-test --debug "$SUITE_NAME"
 #-------------------------------------------------------------------------------
 if [[ "$CYLC_TEST_HOST" != 'localhost' ]]; then
-    $SSH "$CYLC_TEST_HOST" "rm -rf '.cylc/$SUITE_NAME' 'cylc-run/$SUITE_NAME'"
+    ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
+        "rm -rf 'cylc-run/${SUITE_NAME}'"
 fi
 purge_suite "$SUITE_NAME"
 exit

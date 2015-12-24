@@ -19,8 +19,8 @@
 import os
 import sys
 import re
-import flags
-from regpath import RegPath
+import cylc.flags
+from cylc.regpath import RegPath
 from cylc.passphrase import passphrase
 from cylc.suite_host import get_hostname
 from cylc.owner import user
@@ -39,6 +39,10 @@ class RegistrationError(Exception):
 
 
 class localdb(object):
+    """Represents a simple suite name registration database."""
+
+    Error = RegistrationError
+
     def __init__(self, file=None):
         dbpath = file  # (back compat)
         global regdb_path
@@ -226,7 +230,7 @@ class localdb(object):
         dir, title = data['path'], data['title']
         new_title = self.get_suite_title(suite)
         if title == new_title:
-            if flags.verbose:
+            if cylc.flags.verbose:
                 print 'unchanged:', suite
             changed = False
         else:

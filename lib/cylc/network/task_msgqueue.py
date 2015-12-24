@@ -43,11 +43,11 @@ class TaskMessageServer(PyroServer):
 class TaskMessageClient(PyroClient):
     """Client-side task messaging interface"""
 
-    def __init__(self, suite, task_id, pphrase, owner=user,
+    def __init__(self, suite, task_id, owner=user,
                  host=get_hostname(), pyro_timeout=None, port=None):
-        self.__class__.target_server_object = task_id
+        self.target_server_object = task_id
         super(TaskMessageClient, self).__init__(
-            suite, pphrase, owner, host, pyro_timeout, port)
+            suite, owner, host, pyro_timeout, port)
 
     def put(self, *args):
         self.call_server_func('put', *args)

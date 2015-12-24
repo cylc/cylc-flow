@@ -1,6 +1,6 @@
 [cylc]
     [[event hooks]]
-        timeout = PT2M
+        timeout = PT5M
         abort on timeout = True
 [scheduling]
     [[dependencies]]

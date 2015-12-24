@@ -82,8 +82,11 @@ class RemoteJobHostManager(object):
 
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             suite_name, 'suite run directory')
-        sources = [os.path.join(suite_run_dir, "cylc-suite-env")]
-        suite_run_py = os.path.join(suite_run_dir, "python")
+        sources = [os.path.join(suite_run_dir, 'cylc-suite-env')]
+        if 'CYLC_SUITE_DEF_PATH' in os.environ:
+            sources.append(
+                os.path.join(os.getenv('CYLC_SUITE_DEF_PATH'), 'passphrase'))
+        suite_run_py = os.path.join(suite_run_dir, 'python')
         if os.path.isdir(suite_run_py):
             sources.append(suite_run_py)
         r_suite_run_dir = GLOBAL_CFG.get_derived_host_item(
@@ -94,15 +97,15 @@ class RemoteJobHostManager(object):
             user_at_host, r_suite_run_dir))
 
         ssh_tmpl = GLOBAL_CFG.get_host_item(
-            'remote shell template', host, owner).replace(" %s", "")
+            'remote shell template', host, owner).replace(' %s', '')
         scp_tmpl = GLOBAL_CFG.get_host_item(
             'remote copy template', host, owner)
 
         cmd1 = shlex.split(ssh_tmpl) + [
             "-n", user_at_host,
             'mkdir', '-p', r_suite_run_dir, r_log_job_dir]
-        cmd2 = shlex.split(scp_tmpl) + ["-r"] + sources + [
-            user_at_host + ":" + r_suite_run_dir + "/"]
+        cmd2 = shlex.split(scp_tmpl) + ['-pr'] + sources + [
+            user_at_host + ":" + r_suite_run_dir + '/']
         for cmd in [cmd1, cmd2]:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
             out, err = proc.communicate()

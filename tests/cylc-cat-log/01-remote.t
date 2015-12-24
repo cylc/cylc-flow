@@ -27,13 +27,6 @@ set_test_number 14
 export CYLC_CONF_PATH=
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-# Install suite passphrase.
-set -eu
-ssh -oBatchMode=yes -oConnectTimeout=5 $CYLC_TEST_HOST \
-    "mkdir -p .cylc/$SUITE_NAME/ && cat >.cylc/$SUITE_NAME/passphrase" \
-    <$TEST_DIR/$SUITE_NAME/passphrase
-set +eu
-#-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
@@ -119,7 +112,7 @@ cylc cat-log -l $SUITE_NAME a-task.1 >$TEST_NAME.out
 grep_ok "$SUITE_NAME/log/job/1/a-task/NN/job$" $TEST_NAME.out
 #-------------------------------------------------------------------------------
 # Clean up the task host.
-ssh -oBatchMode=yes -oConnectTimeout=5 $CYLC_TEST_HOST \
-    "rm -rf .cylc/$SUITE_NAME cylc-run/$SUITE_NAME"
+ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite $SUITE_NAME
 exit

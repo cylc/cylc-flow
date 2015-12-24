@@ -35,12 +35,6 @@ __GLOBALCFG__
 
 export CYLC_CONF_PATH="${PWD}/conf"
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-set -eu
-SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
-${SSH} "${HOST}" \
-    "mkdir -p .cylc/${SUITE_NAME}/ && cat >.cylc/${SUITE_NAME}/passphrase" \
-    <"${TEST_DIR}/${SUITE_NAME}/passphrase"
-set +eu
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate -s "HOST=${HOST}" -s 'GLOBALCFG=True' "${SUITE_NAME}"
@@ -69,6 +63,7 @@ cmp_ok 'edited-log' <<'__LOG__'
 [t2.1] -(('event-handler-00', 'succeeded'), 1) will run after P0Y
 __LOG__
 
-${SSH} "${HOST}" "rm -rf '.cylc/${SUITE_NAME}' 'cylc-run/${SUITE_NAME}'"
+ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
+    "rm -rf 'cylc-run/${SUITE_NAME}'"
 purge_suite "${SUITE_NAME}"
 exit
