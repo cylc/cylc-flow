@@ -241,17 +241,3 @@ class localdb(object):
             self.unregister(suite)
             self.register(suite, dir)
         return changed
-
-    def get_rcfiles(self, suite):
-        # return a list of all include-files used by this suite
-        # TODO - this needs to be made recursive
-        rcfiles = []
-        data = self.get_suite_data(suite)
-        dir = data['path']
-        suiterc = os.path.join(dir, 'suite.rc')
-        rcfiles.append(suiterc)
-        for line in open(suiterc, 'rb'):
-            m = re.match('^\s*%include\s+([\/\w\-\.]+)', line)
-            if m:
-                rcfiles.append(os.path.join(dir, m.groups()[0]))
-        return rcfiles

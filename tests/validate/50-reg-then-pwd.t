@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,16 +15,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a new-style cycle point and an async graph.
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
+# Test validation order, registered suites before current working directory.
+. "$(dirname "$0")/test_header"
 set_test_number 2
-#-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE $TEST_NAME_BASE
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "No suite dependency graph defined\." $TEST_NAME.stderr
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+
+SUITE_NAME="$(uuidgen)"
+
+mkdir 'good' "${SUITE_NAME}"
+cat >'good/suite.rc' <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph = t0
+[runtime]
+    [[t0]]
+        script = true
+__SUITE_RC__
+cat >"${SUITE_NAME}/suite.rc" <<'__SUITE_RC__'
+[scheduling]
+    [[dependencies]]
+        graph = t0
+[runtime]
+    [[t0]]
+        scribble = true
+__SUITE_RC__
+
+# This should validate bad suite under current directory
+run_fail "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
+
+# This should validate registered good suite
+cylc register "${SUITE_NAME}" "${PWD}/good"
+run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
+cylc unregister "${SUITE_NAME}"
+
 exit

@@ -109,7 +109,7 @@ def main():
 
     (options, args) = parser.parse_args()
     owner = options.db_owner
-    suite, suiterc, junk = parser.get_suite()
+    suite, suiterc = parser.get_suite()
 
     if options.markup:
         prefix = '!cylc!'

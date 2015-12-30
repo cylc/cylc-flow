@@ -84,7 +84,7 @@ def main():
         metavar="START[,STOP]", action="store", default=None, dest="crange")
 
     (options, args) = parser.parse_args()
-    suite, suiterc, junk = parser.get_suite()
+    suite, suiterc = parser.get_suite()
 
     if options.all_tasks and options.all_namespaces:
         parser.error("Choose either -a or -n")

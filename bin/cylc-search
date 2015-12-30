@@ -70,7 +70,7 @@ parser.add_option(
 
 (options, args) = parser.parse_args()
 
-suite, suiterc, junk = parser.get_suite()
+suite, suiterc = parser.get_suite()
 
 # cylc search SUITE PATTERN
 pattern = '|'.join(args[1:])
