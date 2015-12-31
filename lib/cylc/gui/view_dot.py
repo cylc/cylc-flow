@@ -102,7 +102,10 @@ LED suite control interface.
 
         is_fam = (name in self.t.descendants)
 
-        menu = self.get_right_click_menu(task_id, task_is_family=is_fam)
+        task_state = treemodel.get_value(iter,2)
+
+        menu = self.get_right_click_menu(
+                        task_id, t_state=task_state, task_is_family=is_fam)
 
         sep = gtk.SeparatorMenuItem()
         sep.show()

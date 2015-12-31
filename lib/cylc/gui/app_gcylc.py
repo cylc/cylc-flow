@@ -509,6 +509,29 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS["graph"] = ControlGraph
         VIEWS_ORDERED.append("graph")
 
+    STATES_TRIGGERABLE = [
+        'waiting',
+        'held',
+        'queued',
+        'ready',
+        'expired',
+        'submit-failed',
+        'succeeded',
+        'failed',
+        'runahead'
+    ]
+
+    STATES_KILLABLE = [
+        'submitted',
+        'running'
+    ]
+
+    STATES_POLLABLE = [
+        'submitted',
+        'running'
+    ]
+
+
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
                  template_vars, template_vars_file, restricted_display):
 
@@ -1168,7 +1191,7 @@ been defined for this suite""").inform()
 
         return False
 
-    def get_right_click_menu(self, task_id, task_is_family=False):
+    def get_right_click_menu(self, task_id, t_state, task_is_family=False):
         """Return the default menu for a task."""
         menu = gtk.Menu()
         menu_root = gtk.MenuItem(task_id)
@@ -1183,14 +1206,14 @@ been defined for this suite""").inform()
         url_item.connect('activate', self.browse, "-t", name, self.cfg.suite)
         menu.append(url_item)
 
-        menu_items = self._get_right_click_menu_items(task_id, task_is_family)
+        menu_items = self._get_right_click_menu_items(task_id, t_state, task_is_family)
         for item in menu_items:
             menu.append(item)
 
         menu.show_all()
         return menu
 
-    def _get_right_click_menu_items(self, task_id, task_is_family=False):
+    def _get_right_click_menu_items(self, task_id, t_state, task_is_family=False):
         # Return the default menu items for a task
         name, point_string = TaskID.split(task_id)
 
@@ -1264,6 +1287,7 @@ been defined for this suite""").inform()
         items.append(trigger_now_item)
         trigger_now_item.connect(
             'activate', self.trigger_task_now, task_id, task_is_family)
+        trigger_now_item.set_sensitive(t_state in self.STATES_TRIGGERABLE)
 
         if not task_is_family:
             trigger_edit_item = gtk.ImageMenuItem('Trigger (edit run)')
@@ -1282,6 +1306,7 @@ been defined for this suite""").inform()
         poll_item.set_image(img)
         items.append(poll_item)
         poll_item.connect('activate', self.poll_task, task_id, task_is_family)
+        poll_item.set_sensitive(t_state in self.STATES_POLLABLE)
 
         items.append(gtk.SeparatorMenuItem())
 
@@ -1290,6 +1315,7 @@ been defined for this suite""").inform()
         kill_item.set_image(img)
         items.append(kill_item)
         kill_item.connect('activate', self.kill_task, task_id, task_is_family)
+        kill_item.set_sensitive(t_state in self.STATES_KILLABLE)
 
         items.append(gtk.SeparatorMenuItem())
 
