@@ -185,8 +185,12 @@ Dependency graph suite control interface.
         menu.append(ungroup_rec_item)
 
         if type == 'live task':
-            t_state = self.t.state_summary[task_id]['state']
             is_fam = (name in self.t.descendants)
+            if is_fam:
+                t_state = self.t.fam_state_summary[task_id]['state']
+            else:
+                t_state = self.t.state_summary[task_id]['state']
+            
             default_menu = self.get_right_click_menu(
                 task_id, t_state, task_is_family=is_fam)
             dm_kids = default_menu.get_children()
