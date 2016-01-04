@@ -22,7 +22,7 @@ Poll jobs of active tasks (those in the 'submitted' or 'running' states) to
 verify or update their statuses - even if they have suffered an external hard
 kill.
 
-To poll one or more tasks, "cylc poll REG MATCH POINT"; to poll all active
+To poll one or more tasks, "cylc poll REG TASKID"; to poll all active
 tasks: "cylc poll REG".
 
 Note that automatic job polling can used to track task status on task hosts
@@ -43,40 +43,29 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop, multitask_usage
+from cylc.CylcOptionParsers import cop
 
 
 def main():
     parser = cop(
-        __doc__ + multitask_usage,
-        pyro=True, multitask=True,
-        argdoc=[('REG', 'Suite name'),
-                ('[MATCH]', 'Task or family name matching regular expression'),
-                ('[POINT]', 'Task cycle point (e.g. date-time or integer)')])
+        __doc__, pyro=True, multitask=True,
+        argdoc=[
+            ('REG', 'Suite name'),
+            ('[TASKID ...]', 'Task identifiers')])
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    options, args = parser.parse_args()
 
-    if len(args) == 3:
-        name = args[1]
-        point_string = args[2]
-    elif len(args) == 1:
-        name = None
-        point_string = None
+    suite = args.pop(0)
+    if args:
+        prompt('Poll task %s in %s' % (args, suite), options.force)
     else:
-        parser.error("Wrong number of arguments.")
-
-    if name and point_string:
-        prompt('Poll task %s at %s in %s' % (name, point_string, suite),
-               options.force)
-    else:
-        prompt('Poll ALL task in %s' % (suite), options.force)
-
+        prompt('Poll ALL tasks in %s' % (suite), options.force)
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
-    pclient.put_command('poll_tasks', name, point_string, options.is_family)
+    items, compat = parser.parse_multitask_compat(options, args)
+    pclient.put_command('poll_tasks', items, compat)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
     UTC mode = True
     [[reference test]]
         required run mode = live
-        live mode suite timeout = PT6M
+        live mode suite timeout = PT8M
 [scheduling]
     [[dependencies]]
         graph = """

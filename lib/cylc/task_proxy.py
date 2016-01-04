@@ -34,7 +34,7 @@ import traceback
 from isodatetime.timezone import get_local_time_zone
 
 from cylc.mkdir_p import mkdir_p
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.cycling.iso8601
 from cylc.cycling.loader import get_interval_cls, get_point_relative
@@ -267,7 +267,7 @@ class TaskProxy(object):
         self.stop_point = stop_point
 
         self.job_conf = None
-        self.state = task_state(initial_state)
+        self.state = TaskState(initial_state)
         self.state_before_held = None  # state before being held
         self.hold_on_retry = False
         self.manual_trigger = False
@@ -693,7 +693,7 @@ class TaskProxy(object):
         """Reset state to "held"."""
         if self.state.is_currently(
                 'waiting', 'queued', 'submit-retrying', 'retrying'):
-            self.state_before_held = task_state(self.state.get_status())
+            self.state_before_held = TaskState(self.state.get_status())
             self.set_status('held')
             self.turn_off_timeouts()
             self._db_events_insert(event="reset to held")

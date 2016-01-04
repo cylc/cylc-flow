@@ -18,8 +18,8 @@
 
 """cylc [control] remove [OPTIONS] ARGS
 
-Remove one or more tasks (cylc remove REG MATCH POINT), or all tasks with a
-given cycle point (cylc remove REG POINT) from a running suite.
+Remove one or more tasks (cylc remove REG TASKID), or all tasks with a
+given cycle point (cylc remove REG *.POINT) from a running suite.
 
 Tasks will spawn successors first if they have not done so already.
 """
@@ -34,51 +34,31 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop, multitask_usage
+from cylc.CylcOptionParsers import cop
 
 
 def main():
     parser = cop(
-        __doc__ + multitask_usage, pyro=True, multitask=True,
+        __doc__, pyro=True, multitask=True,
         argdoc=[
             ("REG", "Suite name"),
-            ('[MATCH]', 'Task or family name matching regular expression'),
-            ('[POINT]', 'Task cycle point (e.g. date-time or integer)')])
+            ('TASKID [...]', 'Task identifiers')])
 
     parser.add_option(
         "--no-spawn",
         help="Do not spawn successors before removal.",
-        action="store_true", default=False, dest="no_spawn")
+        action="store_false", default=True, dest="spawn")
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    options, args = parser.parse_args()
 
-    if len(args) == 3:
-        name = args[1]
-        point_string = args[2]
-        remove_point = False
-    elif len(args) == 2:
-        point_string = args[1]
-        remove_point = True
-    else:
-        parser.error("Wrong number of arguments.")
-
-    spawn = not options.no_spawn
-
+    suite = args.pop(0)
+    prompt('remove task(s) %s in %s' % (args, suite), options.force)
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
-
-    if remove_point:
-        prompt('remove ALL tasks at %s in %s' % (point_string, suite),
-               options.force)
-        pclient.put_command('remove_cycle', point_string, spawn)
-    else:
-        prompt('remove task(s) %s at %s in %s' % (name, point_string, suite),
-               options.force)
-        pclient.put_command('remove_task', name, point_string,
-                            options.is_family, spawn)
+    items, compat = parser.parse_multitask_compat(options, args)
+    pclient.put_command('remove_task', items, compat, options.spawn)
 
 
 if __name__ == "__main__":

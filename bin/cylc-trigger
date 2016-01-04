@@ -52,7 +52,7 @@ import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
 from cylc.network.suite_info import SuiteInfoClient
-from cylc.CylcOptionParsers import cop, multitask_usage
+from cylc.CylcOptionParsers import cop
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
 
@@ -60,11 +60,10 @@ from cylc.task_id import TaskID
 def main():
     """CLI for "cylc trigger"."""
     parser = cop(
-        __doc__ + multitask_usage, pyro=True, multitask=True,
+        __doc__, pyro=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('MATCH', 'Task or family name matching regular expression'),
-            ('POINT', 'Task cycle point (e.g. date-time or integer)')])
+            ('[TASKID ...]', 'Task identifiers')])
 
     parser.add_option(
         "-e", "--edit",
@@ -76,13 +75,12 @@ def main():
         help="(with --edit) force use of the configured GUI editor.",
         action="store_true", default=False, dest="geditor")
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    options, args = parser.parse_args()
+    suite = args.pop(0)
 
-    name = args[1]
-    point_string = args[2]
+    task_ids = args
 
-    msg = 'Trigger task(s) %s at %s in %s' % (name, point_string, suite)
+    msg = 'Trigger task(s) %s in %s' % (args, suite)
     prompt(msg, options.force)
 
     cmd_client = SuiteCommandClient(
@@ -91,8 +89,12 @@ def main():
         print_uuid=options.print_uuid)
 
     if options.edit_run:
+        items, compat = parser.parse_multitask_compat(options, args)
+        if compat:
+            task_id = TaskID.get(items, compat)
+        else:
+            task_id = args[0]
         # Check that TASK is a unique task.
-        task_id = TaskID.get(name, point_string)
         info_client = SuiteInfoClient(
             suite, options.owner, options.host, options.pyro_timeout,
             options.port, options.db, my_uuid=cmd_client.my_uuid)
@@ -122,7 +124,7 @@ def main():
             old_mtime = None
 
         # Tell the suite daemon to generate the job file.
-        cmd_client.put_command('dry_run_task', name, point_string)
+        cmd_client.put_command('dry_run_task', [task_id])
 
         # Wait for the new job file to be written. Use mtime because the same
         # file could potentially exist already, left from a previous run.
@@ -192,8 +194,8 @@ def main():
                     sys.exit(0)
 
     # Trigger the task proxy(s).
-    cmd_client.put_command('trigger_task', name, point_string,
-                           options.is_family)
+    items, compat = parser.parse_multitask_compat(options, args)
+    cmd_client.put_command('trigger_task', items, compat)
 
 
 if __name__ == "__main__":

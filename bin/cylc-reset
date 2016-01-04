@@ -36,43 +36,37 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop, multitask_usage
-from cylc.task_state import task_state
+from cylc.CylcOptionParsers import cop
+from cylc.task_state import TaskState
 
 
 def main():
     parser = cop(
-        __doc__ + multitask_usage, pyro=True, multitask=True,
+        __doc__, pyro=True, multitask=True,
         argdoc=[
             ('REG', 'Suite name'),
-            ('MATCH', 'Task or family name matching regular expression'),
-            ('POINT', 'Task cycle point (e.g. date-time or integer)')])
+            ('[TASKID ...]', 'Task identifiers')])
 
     parser.add_option(
         "-s", "--state", metavar="STATE",
         help="Reset task state to STATE to on of %s" % (
-            ', '.join(task_state.legal_for_reset)),
+            ', '.join(TaskState.legal_for_reset)),
         action="store", default=None, dest="state")
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    options, args = parser.parse_args()
 
-    if options.state not in task_state.legal_for_reset:
+    suite = args.pop(0)
+
+    if options.state not in TaskState.legal_for_reset:
         parser.error("Illegal STATE value: " + options.state)
 
-    name = args[1]
-    point_string = args[2]
-
-    prompt('Reset task(s) ' + name + ' at ' + point_string + ' in ' + suite,
-           options.force)
-
+    prompt('Reset task(s) %s in %s' % (args, suite), options.force)
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
-
-    pclient.put_command('reset_task_state', name, point_string, options.state,
-                        options.is_family)
+    items, compat = parser.parse_multitask_compat(options, args)
+    pclient.put_command('reset_task_state', items, compat, options.state)
 
 
 if __name__ == "__main__":

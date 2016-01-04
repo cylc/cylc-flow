@@ -20,7 +20,7 @@ import gtk
 
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 
 
 class ThemeLegendWindow(gtk.Window):
@@ -74,6 +74,6 @@ class ThemeLegendWindow(gtk.Window):
     def _set_key_liststore(self):
         dotm = DotMaker(self._theme, self._dot_size)
         self._key_liststore.clear()
-        for state in task_state.legal:
+        for state in TaskState.legal:
             dot = dotm.get_icon(state)
             self._key_liststore.append([state, dot])

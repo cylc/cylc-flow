@@ -34,25 +34,26 @@ time for inter-cycle task references such as "foo[-P6Y] => foo".
 import re
 import unittest
 
-import cylc.CylcError
 import isodatetime.data
 import isodatetime.parsers
+
+from cylc.exceptions import CylcError
 
 
 UTC_UTC_OFFSET_HOURS_MINUTES = (0, 0)
 
 
-class CylcTimeSyntaxError(cylc.CylcError.CylcError):
+class CylcTimeSyntaxError(CylcError):
 
     """An error denoting invalid ISO/Cylc input syntax."""
 
 
-class CylcMissingContextPointError(cylc.CylcError.CylcError):
+class CylcMissingContextPointError(CylcError):
 
     """An error denoting a missing (but required) context cycle point."""
 
 
-class CylcMissingFinalCyclePointError(cylc.CylcError.CylcError):
+class CylcMissingFinalCyclePointError(CylcError):
 
     """An error denoting a missing (but required) final cycle point."""
 

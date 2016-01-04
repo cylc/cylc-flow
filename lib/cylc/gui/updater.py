@@ -25,7 +25,7 @@ import gobject
 import threading
 from time import sleep, time, ctime
 
-from cylc.CylcError import PortFileError
+from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.network.suite_state import (
@@ -33,7 +33,7 @@ from cylc.network.suite_state import (
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 from cylc.gui.dot_maker import DotMaker
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_id import TaskID
@@ -484,7 +484,7 @@ class Updater(threading.Thread):
     def filter_for_restricted_display(self, states):
         return dict(
             (i, j) for i, j in states.items() if j['state'] in
-            task_state.legal_for_restricted_monitoring)
+            TaskState.legal_for_restricted_monitoring)
 
     def refilter(self):
         """filter from the full state summary"""

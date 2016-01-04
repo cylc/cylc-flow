@@ -20,11 +20,12 @@
 
 import re
 import sys
-from daemonize import daemonize
-from version import CYLC_VERSION
+
+from cylc.daemonize import daemonize
+from cylc.scheduler import SchedulerStop, SchedulerError
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-import flags
-from exceptions import SchedulerStop, SchedulerError
+import cylc.flags
+from cylc.version import CYLC_VERSION
 
 
 def print_blurb():
@@ -69,13 +70,13 @@ def main(name, start):
         GLOBAL_CFG.create_cylc_run_tree(server.suite)
         server.configure_pyro()
     except Exception as exc:
-        if flags.debug:
+        if cylc.flags.debug:
             raise
         else:
             sys.exit(exc)
 
     # Daemonize the suite
-    if not server.options.no_detach and not flags.debug:
+    if not server.options.no_detach and not cylc.flags.debug:
         daemonize(server)
 
     try:
@@ -112,7 +113,7 @@ def main(name, start):
         except Exception, y:
             # In case of exceptions in the shutdown method itself
             traceback.print_exc(y)
-        if flags.debug:
+        if cylc.flags.debug:
             raise
         else:
             print >> sys.stderr, "THE ERROR WAS:"

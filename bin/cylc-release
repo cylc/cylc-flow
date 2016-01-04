@@ -18,9 +18,12 @@
 
 """cylc [control] release|unhold [OPTIONS] ARGS
 
-Release one or more held tasks (cylc release REG MATCH POINT)
+Release one or more held tasks (cylc release REG TASKID)
 or the whole suite (cylc release REG). Held tasks do not
-submit even if they are ready to run."""
+submit even if they are ready to run.
+
+See also 'cylc [control] hold'.
+"""
 
 import sys
 if '--use-ssh' in sys.argv[1:]:
@@ -32,44 +35,32 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop, multitask_usage
+from cylc.CylcOptionParsers import cop
 
 
 def main():
     parser = cop(
-        __doc__ + multitask_usage + "\nSee also 'cylc [control] hold'.",
-        pyro=True, multitask=True,
+        __doc__, pyro=True, multitask=True,
         argdoc=[
             ("REG", 'Suite name'),
-            ('[MATCH]', 'Task or family name matching regular expression'),
-            ('[POINT]', 'Task cycle point (e.g. date-time or integer)')])
+            ('[TASKID ...]', 'Task identifiers')])
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    options, args = parser.parse_args()
+    suite = args.pop(0)
 
-    if len(args) == 3:
-        whole_suite = False
-        name = args[1]
-        point_string = args[2]
-        prompt('Release task(s) %s at %s in %s' % (name, point_string, suite),
-               options.force)
-
-    elif len(args) == 1:
-        whole_suite = True
-        prompt('Release suite %s' % suite, options.force)
+    if args:
+        prompt('Release task(s) %s in %s' % (args, suite), options.force)
     else:
-        parser.error("Wrong number of arguments.")
-
+        prompt('Release suite %s' % suite, options.force)
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
-
-    if whole_suite:
-        pclient.put_command('release_suite')
+    if args:
+        items, compat = parser.parse_multitask_compat(options, args)
+        pclient.put_command('release_task', items, compat)
     else:
-        pclient.put_command('release_task', name, point_string,
-                            options.is_family)
+        pclient.put_command('release_suite')
 
 
 if __name__ == "__main__":

@@ -59,7 +59,7 @@ from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import rotator
 from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 from cylc.suite_logging import suite_log
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
@@ -612,9 +612,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start(self.views_parent, True)
 
         if self.restricted_display:
-            self.legal_task_states = task_state.legal_for_restricted_monitoring
+            self.legal_task_states = TaskState.legal_for_restricted_monitoring
         else:
-            self.legal_task_states = task_state.legal
+            self.legal_task_states = TaskState.legal
 
         self.filter_states_excl = ["runahead"]
         self.filter_name_string = None
@@ -1584,26 +1584,21 @@ shown here in the state they were in at the time of triggering.''')
         return response == gtk.RESPONSE_YES
 
     def hold_task(self, b, task_id, stop=True, is_family=False):
+        """Hold or release a task."""
         if stop:
-            cmd = "Hold"
+            if not self.get_confirmation("Hold %s?" % (task_id)):
+                return
+            self.put_pyro_command('hold_task', [task_id])
         else:
-            cmd = "Release"
-        if not self.get_confirmation("%s %s?" % (cmd, task_id)):
-            return
-        name, point_string = TaskID.split(task_id)
-        if stop:
-            self.put_pyro_command('hold_task', name, point_string,
-                                  is_family)
-        else:
-            self.put_pyro_command('release_task', name, point_string,
-                                  is_family)
+            if not self.get_confirmation("Release %s?" % (task_id)):
+                return
+            self.put_pyro_command('release_task', [task_id])
 
     def trigger_task_now(self, b, task_id, is_family=False):
         """Trigger task via the suite daemon's command interface."""
         if not self.get_confirmation("Trigger %s?" % task_id):
             return
-        name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('trigger_task', name, point_string, is_family)
+        self.put_pyro_command('trigger_task', [task_id])
 
     def trigger_task_edit_run(self, b, task_id):
         """
@@ -1611,50 +1606,44 @@ shown here in the state they were in at the time of triggering.''')
         """
         if not self.get_confirmation("Edit run %s?" % task_id):
             return
-        name, point_string = TaskID.split(task_id)
-        command = (
-            "cylc trigger --use-ssh --edit --geditor -f" +
-            self.get_remote_run_opts() + " " + self.cfg.suite +
-            " %s %s" % (name, point_string))
+        command = "cylc trigger --use-ssh --edit --geditor -f%s %s %s" % (
+            self.get_remote_run_opts(), self.cfg.suite, task_id)
         foo = gcapture_tmpfile(command, self.cfg.cylc_tmpdir, 400, 400)
         self.gcapture_windows.append(foo)
         foo.run()
 
     def poll_task(self, b, task_id, is_family=False):
+        """Poll a task/family."""
         if not self.get_confirmation("Poll %s?" % task_id):
             return
-        name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('poll_tasks', name, point_string, is_family)
+        self.put_pyro_command('poll_tasks', [task_id])
 
     def kill_task(self, b, task_id, is_family=False):
+        """Kill a task/family."""
         if not self.get_confirmation("Kill %s?" % task_id, force_prompt=True):
             return
-        name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('kill_tasks', name, point_string, is_family)
+        self.put_pyro_command('kill_tasks', [task_id])
 
     def reset_task_state(self, b, e, task_id, state, is_family=False):
+        """Reset the state of a task/family."""
         if hasattr(e, "button") and e.button != 1:
             return False
-        cmd = "reset"
-        name, point_string = TaskID.split(task_id)
         if not self.get_confirmation("reset %s to %s?" % (task_id, state)):
             return
-        self.put_pyro_command('reset_task_state', name, point_string, state,
-                              is_family)
+        self.put_pyro_command('reset_task_state', [task_id], state)
 
     def remove_task(self, b, task_id, is_family):
+        """Remove a task."""
         if not self.get_confirmation("Remove %s after spawning?" % task_id):
             return
         name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('remove_task', name, point_string, is_family,
-                              True)
+        self.put_pyro_command('remove_task', [task_id], None, True)
 
     def remove_task_nospawn(self, b, task_id, is_family=False):
+        """Remove a task, without spawn."""
         if not self.get_confirmation("Remove %s without spawning?" % task_id):
             return
-        name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('remove_task', name, point_string, is_family,
-                              False)
+        self.put_pyro_command('remove_task', [task_id], None, False)
 
     def stopsuite_popup(self, b):
         window = gtk.Window()
@@ -2074,6 +2063,7 @@ shown here in the state they were in at the time of triggering.''')
 
     def insert_task(self, w, window, entry_match, entry_point_string,
                     entry_stoppoint, fam_cb):
+        """Insert a task."""
         match = entry_match.get_text()
         point_string = entry_point_string.get_text()
         is_family = fam_cb.get_active()
@@ -2088,9 +2078,10 @@ shown here in the state they were in at the time of triggering.''')
         if stop_point_string != '':
             stop = stop_point_string
         self.put_pyro_command(
-            'insert_task', match, point_string, is_family, stop)
+            'insert_task', match + "." + point_string, None, None, stop)
 
     def poll_all(self, w):
+        """Poll all active tasks."""
         if not self.get_confirmation("Poll all submitted/running task jobs?"):
             return
         self.put_pyro_command('poll_tasks', None, None, None)
@@ -2975,7 +2966,7 @@ This is what my suite does:..."""
                     pass
                 else:
                     icon = dotm.get_image(st)
-                    cb = gtk.CheckButton(task_state.labels[st])
+                    cb = gtk.CheckButton(TaskState.labels[st])
                     cb.set_active(st not in self.filter_states_excl)
                     cb.connect('toggled', self.check_task_filter_buttons)
                     tooltip = gtk.Tooltips()
