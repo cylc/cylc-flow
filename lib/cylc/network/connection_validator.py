@@ -20,6 +20,7 @@ try:
     import Pyro.core
 except ImportError, x:
     raise SystemExit("ERROR: Pyro is not installed")
+import hashlib
 import logging
 import os
 import sys
@@ -44,13 +45,6 @@ SCAN_HASH = GLOBAL_CFG.get()['authentication']['scan hash']
 if SCAN_HASH not in OK_HASHES:
     OK_HASHES.append(SCAN_HASH)
 
-try:
-    import hashlib
-except ImportError:
-    # We can only use MD5 or SHA1 here.
-    for hash_name in list(OK_HASHES):
-        if hash_name not in ("md5", "sha1"):
-            OK_HASHES.remove(hash_name)
 
 CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
 CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
@@ -192,19 +186,7 @@ class ConnValidator(DefaultConnValidator):
         if hash_name is None:
             hash_name = self._get_default_hash_name()
 
-        try:
-            import hashlib
-            self.HASHES[hash_name_dest] = getattr(hashlib, hash_name)
-        except ImportError:
-            # < Python 2.5
-            if hash_name == 'sha1':
-                import sha
-                self.HASHES[hash_name_dest] = sha.sha
-            elif hash_name == 'md5':
-                import md5
-                self.HASHES[hash_name_dest] = md5.md5
-            else:
-                raise
+        self.HASHES[hash_name_dest] = getattr(hashlib, hash_name)
         return self.HASHES[hash_name_dest]
 
     def _get_hash_name_from_digest_length(self, digest):
