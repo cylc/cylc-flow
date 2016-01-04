@@ -862,7 +862,7 @@ the most secure. The first item is used as the default hash. Subsequent items
 the hash change).
 
 The default value is SHA256 followed by MD5. You may want to exclude MD5 for
-security reasons - e.g. for FIPS compliance.
+security reasons - e.g. for FIPS compliance. Older cylc versions use MD5.
 
 MD5 is popularly used for HMAC, but is the least secure. SHA-1 is slightly
 better. Note that HMAC use is not as susceptible to hash collision weakness,
@@ -873,9 +873,6 @@ to last. The exception is scanning, which will use the algorithm configured in
 the [authentication] $\rightarrow$ scan hash setting below. If you have lots
 of suites running with e.g. MD5 hashes, you will want to include 'md5' in your
 list of hashes and set it as the default scan hash.
-
-If you are running cylc on a client with an old Python version (< 2.5) then
-you will need to include MD5 or preferably SHA-1 in your hash choices.
 
 See \url{https://docs.python.org/2/library/hmac.html} and
 \url{https://docs.python.org/2/library/hashlib.html} for discussion of hash
@@ -908,7 +905,7 @@ reasons. You can override it by specifying a different value for this setting
 (e.g. for FIPS compliance).
 
 The default will become SHA-256 sometime in 2016, when it is unlikely that any
-MD5 suites are still around.
+old MD5 suites are still around.
 
 \begin{myitemize}
 \item {\em type:} hash name (must be one of the following options)
