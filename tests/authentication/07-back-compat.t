@@ -139,6 +139,7 @@ run_ok "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
 # Now run an MD5 suite and see if we can trigger with a different
 # default hash (SHA256), falling back to MD5.
 
+purge_suite "${SUITE_NAME}" basic
 # Set things up and run the suite.
 cat > global.rc << __END__
 [authentication]
