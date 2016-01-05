@@ -1909,7 +1909,11 @@ shown here in the state they were in at the time of triggering.''')
         nodetach_group.pack(hbox)
         vbox.pack_start(hbox)
 
-        optgroups = [nodetach_group, debug_group]
+        noautoshutdown_group = controlled_option_group("No-auto-shutdown", "--no-auto-shutdown")
+        noautoshutdown_group.pack(hbox)
+        vbox.pack_start(hbox)
+
+        optgroups = [nodetach_group, noautoshutdown_group, debug_group]
 
         cancel_button = gtk.Button("_Cancel")
         cancel_button.connect("clicked", lambda x: window.destroy())
