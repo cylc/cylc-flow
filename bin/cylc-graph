@@ -218,7 +218,7 @@ def main():
 
     should_hide_gtk_window = (options.output_filename is not None)
 
-    suite, suiterc, junk = parser.get_suite()
+    suite, suiterc = parser.get_suite()
 
     start_point_string = stop_point_string = None
     if len(args) >= 2:

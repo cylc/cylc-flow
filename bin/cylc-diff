@@ -128,8 +128,8 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    suite1, suite1rc, junk = parser.get_suite()
-    suite2, suite2rc, junk = parser.get_suite(index=1)
+    suite1, suite1rc = parser.get_suite()
+    suite2, suite2rc = parser.get_suite(index=1)
     if suite1 == suite2:
         parser.error("You can't diff a single suite.")
     print "Parsing %s (%s)" % (suite1, suite1rc)

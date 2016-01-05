@@ -62,7 +62,7 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    suite, suiterc, junk = parser.get_suite()
+    suite, suiterc = parser.get_suite()
 
     cfg = SuiteConfig.get_inst(
         suite, suiterc,

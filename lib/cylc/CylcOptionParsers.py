@@ -16,12 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from optparse import OptionParser, OptionConflictError
 import os
 import re
-from optparse import OptionParser, OptionConflictError
 import cylc.flags
 from cylc.owner import user
-from cylc.registration import localdb
+from cylc.registration import localdb, RegistrationError
+from cylc.regpath import IllegalRegPathError
 
 """Common options for all cylc commands."""
 
@@ -298,23 +299,26 @@ Arguments:"""
         return self.suite_info[index]
 
     def _getdef(self, arg, options):
-        suiterc = arg
-        if os.path.isdir(suiterc):
-            # directory
-            suite = suiterc
-            suiterc = os.path.join(suiterc, 'suite.rc')
-        if os.path.isfile(suiterc):
-            # suite.rc file
-            suite = os.path.basename(os.path.dirname(suiterc))
-            suiterc = os.path.abspath(suiterc)
-            # TODO - return suite def include files to, as below
-            watchers = [suiterc]
-        else:
-            # must be a registered suite name
-            suite = arg
-            suiterc = localdb(options.db).get_suiterc(suite)
-            watchers = localdb(options.db).get_rcfiles(suite)
-        return suite, suiterc, watchers
+        """Return (suite_name, suite_rc_path).
+
+        If arg is a registered suite, suite name is the registered suite name.
+        If arg is a directory, suite name is the name of the directory.
+        If arg is a file, suite name is the name of its container directory.
+
+        """
+        reg_db = localdb(options.db)
+        try:
+            path = reg_db.get_suiterc(arg)
+            name = arg
+        except (IllegalRegPathError, RegistrationError):
+            arg = os.path.abspath(arg)
+            if os.path.isdir(arg):
+                path = os.path.join(arg, 'suite.rc')
+                name = os.path.basename(arg)
+            else:
+                path = arg
+                name = os.path.basename(os.path.dirname(arg))
+        return name, path
 
     def parse_args(self, remove_opts=[]):
         if self.auto_add:
