@@ -268,6 +268,7 @@ SPEC = {
             default="state-totals"),
         'hashes': vdr(
             vtype='string_list',
+            options=['md5', 'sha1', 'sha256', 'sha512'],
             default=['sha256', 'md5']),
         'scan hash': vdr(
             vtype='string',

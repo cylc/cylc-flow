@@ -320,6 +320,11 @@ class validator(object):
         value = self.coercer( value, keys, self.args )
         # handle option lists centrally here
         if self.args['options']:
-            if value not in self.args['options']:
-                raise IllegalValueError( 'option', keys, value )
+            if isinstance(value, list):
+                for val in value:
+                    if val not in self.args['options']:
+                        raise IllegalValueError( 'option', keys, val )
+            else:
+                if value not in self.args['options']:
+                    raise IllegalValueError( 'option', keys, value )
         return value
