@@ -1909,7 +1909,8 @@ shown here in the state they were in at the time of triggering.''')
         nodetach_group.pack(hbox)
         vbox.pack_start(hbox)
 
-        noautoshutdown_group = controlled_option_group("No-auto-shutdown", "--no-auto-shutdown")
+        noautoshutdown_group = controlled_option_group(
+            "No-auto-shutdown", "--no-auto-shutdown")
         noautoshutdown_group.pack(hbox)
         vbox.pack_start(hbox)
 
