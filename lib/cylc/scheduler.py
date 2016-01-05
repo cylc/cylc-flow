@@ -1084,7 +1084,10 @@ To see if a suite of the same name is still running, try:
             if self.run_mode != 'simulation':
                 self.pool.check_task_timers()
 
-            auto_stop = self.pool.check_auto_shutdown()
+            if self.options.no_auto_shutdown:
+                auto_stop = False
+            else:
+                auto_stop = self.pool.check_auto_shutdown()
 
             if self.stop_clock_done() or self.stop_task_done() or auto_stop:
                 self.command_set_stop_cleanly()

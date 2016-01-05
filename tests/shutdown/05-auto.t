@@ -15,17 +15,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite can shutdown successfully if its run dir is deleted
+# Test auto shutdown after all tasks have finished.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 4
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-run
-run_fail $TEST_NAME cylc run $SUITE_NAME --debug
+# Test that normal auto-shutdown works.
+TEST_NAME=$TEST_NAME_BASE-auto-stop
+suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
+#-------------------------------------------------------------------------------
+# Test that auto-shutdown can be disabled.
+TEST_NAME=$TEST_NAME_BASE-no-autostop-ping
+cylc run --no-auto-shutdown $SUITE_NAME
+sleep 15
+run_ok $TEST_NAME cylc ping $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-stop
+run_ok $TEST_NAME cylc stop --max-polls=5 --interval=2 $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

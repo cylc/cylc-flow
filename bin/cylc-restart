@@ -75,6 +75,11 @@ class restart(scheduler):
             action="store_true", default=False, dest="no_detach")
 
         self.parser.add_option(
+            "-a", "--no-auto-shutdown", help="Do not shut down"
+            " the suite automatically when all tasks have finished.",
+            action="store_true", default=False, dest="no_auto_shutdown")
+
+        self.parser.add_option(
             "--profile", help="Output profiling (performance) information",
             action="store_true", default=False, dest="profile_mode")
 
