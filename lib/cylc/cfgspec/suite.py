@@ -195,6 +195,7 @@ SPEC = {
             vtype='string', options=['live', 'dummy', 'simulation']),
         'abort if any task fails': vdr(vtype='boolean', default=False),
         'log resolved dependencies': vdr(vtype='boolean', default=False),
+        'disable automatic shutdown': vdr(vtype='boolean', default=False),
         'environment': {
             '__MANY__': vdr(vtype='string'),
         },

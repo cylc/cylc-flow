@@ -1084,7 +1084,8 @@ To see if a suite of the same name is still running, try:
             if self.run_mode != 'simulation':
                 self.pool.check_task_timers()
 
-            if self.options.no_auto_shutdown:
+            if (self.config.cfg['cylc']['disable automatic shutdown'] or
+                    self.options.no_auto_shutdown):
                 auto_stop = False
             else:
                 auto_stop = self.pool.check_auto_shutdown()
