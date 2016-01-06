@@ -315,47 +315,37 @@ class CylcSuiteDAO(object):
 
     def execute_queued_items(self):
         """Execute queued items for each table."""
-        will_retry = False
-        for table in self.tables.values():
-            # DELETE statements may have varying number of WHERE args
-            # so we can only executemany for each identical template statement.
-            for stmt, stmt_args_list in table.delete_queues.items():
-                self.connect()
-                if self._execute_stmt(table, stmt, stmt_args_list):
+        try:
+            for table in self.tables.values():
+                # DELETE statements may have varying number of WHERE args so we
+                # can only executemany for each identical template statement.
+                for stmt, stmt_args_list in table.delete_queues.items():
+                    self._execute_stmt(table, stmt, stmt_args_list)
                     table.delete_queues.pop(stmt)
-                else:
-                    will_retry = True
-            # INSERT statements are uniform for each table, so all INSERT
-            # statements can be executed using a single "executemany" call.
-            if table.insert_queue:
-                self.connect()
-                if self._execute_stmt(
-                        table, table.get_insert_stmt(), table.insert_queue):
+                # INSERT statements are uniform for each table, so all INSERT
+                # statements can be executed using a single "executemany" call.
+                if table.insert_queue:
+                    self._execute_stmt(
+                        table, table.get_insert_stmt(), table.insert_queue)
                     table.insert_queue = []
-                else:
-                    will_retry = True
-            # UPDATE statements can have varying number of SET and WHERE args
-            # so we can only executemany for each identical template statement.
-            for stmt, stmt_args_list in table.update_queues.items():
-                self.connect()
-                if self._execute_stmt(table, stmt, stmt_args_list):
+                # UPDATE statements can have varying number of SET and WHERE
+                # args so we can only executemany for each identical template
+                # statement.
+                for stmt, stmt_args_list in table.update_queues.items():
+                    self._execute_stmt(table, stmt, stmt_args_list)
                     table.update_queues.pop(stmt)
-                else:
-                    will_retry = True
-        if self.conn is not None:
-            try:
+            if self.conn is not None:
                 self.conn.commit()
-            except sqlite3.Error:
-                if not self.is_public:
-                    raise
-                self.conn.rollback()
-                if cylc.flags.debug:
-                    traceback.print_exc()
-                    sys.stderr.write(
-                        "WARNING: %s: db commit failed\n" % self.db_file_name)
-                will_retry = True
-
-        if will_retry:
+            will_retry = False
+        except sqlite3.Error:
+            if not self.is_public:
+                raise
+            self.conn.rollback()
+            if cylc.flags.debug:
+                traceback.print_exc()
+                sys.stderr.write(
+                    "WARNING: %s: db write failed\n" % self.db_file_name)
+            will_retry = True
             self.n_tries += 1
             logger = getLogger("main")
             logger.log(
@@ -383,6 +373,7 @@ class CylcSuiteDAO(object):
         success and False on failure. If this is the private database, return
         True on success, and raise on failure.
         """
+        self.connect()
         try:
             self.conn.executemany(stmt, stmt_args_list)
         except sqlite3.Error:
@@ -390,17 +381,15 @@ class CylcSuiteDAO(object):
                 raise
             if cylc.flags.debug:
                 traceback.print_exc()
-                sys.stderr.write(
-                    "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
-                        "file": self.db_file_name,
-                        "table": table.name,
-                        "stmt": stmt})
-                for stmt_args in stmt_args_list:
-                    sys.stderr.write("\t%(stmt_args)s\n" % {
-                        "stmt_args": stmt_args})
-            return False
-        else:
-            return True
+            sys.stderr.write(
+                "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
+                    "file": self.db_file_name,
+                    "table": table.name,
+                    "stmt": stmt})
+            for stmt_args in stmt_args_list:
+                sys.stderr.write("\t%(stmt_args)s\n" % {
+                    "stmt_args": stmt_args})
+            raise
 
     def select_task_job(self, keys, cycle, name, submit_num=None):
         """Select items from task_jobs by (cycle, name, submit_num).
