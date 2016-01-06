@@ -156,6 +156,11 @@ def main():
              '(default: initial + 3 points)')])
 
     parser.add_option(
+        "-u", "--ungrouped",
+        help="Start with task families ungrouped (the default is grouped).",
+        action="store_true", default=False, dest="start_ungrouped")
+
+    parser.add_option(
         "-n", "--namespaces",
         help="Plot the suite namespace inheritance hierarchy "
              "(task run time properties).",
@@ -237,6 +242,9 @@ def main():
                              options.templatevars_file,
                              should_hide=should_hide_gtk_window,
                              ignore_suicide=hide_suicide)
+
+    if options.start_ungrouped:
+        window.ungroup_all(None)
 
     window.widget.connect('clicked', on_url_clicked, window)
     if options.filter_patterns:

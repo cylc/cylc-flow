@@ -72,7 +72,7 @@ def graph_suite_popup(reg, cmd_help, defstartc, defstopc, graph_opts,
         tmpdir, template_opts, parent_window))
 
     help_button = gtk.Button("_Help")
-    help_button.connect("clicked", cmd_help, 'prep', 'graph')
+    help_button.connect("clicked", cmd_help, '', 'graph')
 
     hbox = gtk.HBox()
     hbox.pack_start(ok_button, False)
