@@ -76,7 +76,8 @@ class restart(scheduler):
 
         self.parser.add_option(
             "-a", "--no-auto-shutdown", help="Do not shut down"
-            " the suite automatically when all tasks have finished.",
+            " the suite automatically when all tasks have finished."
+            " This flag overrides the corresponding suite config item.",
             action="store_true", default=False, dest="no_auto_shutdown")
 
         self.parser.add_option(
