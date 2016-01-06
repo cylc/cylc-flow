@@ -171,6 +171,20 @@ on it will abort with exit status 1 if any task fails.
     \item {\em default:} False
 \end{myitemize}
 
+\subsubsection[disable automatic shutdown]{[cylc] $\rightarrow$ disable automatic shutdown}
+
+This has the same effect as the \lstinline{--no-auto-shutdown} option for
+the suite run commands: it prevents the suite daemon from shutting down
+normally when all tasks have finished (a suite timeout can still be used to
+stop the daemon after a period of inactivity, however).  This option can
+make it easier to re-trigger tasks manually near the end of a suite run,
+during suite development and debugging.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
 \subsubsection[log resolved dependencies]{[cylc] $\rightarrow$ log resolved dependencies}
 
 If this is turned on cylc will write the resolved dependencies of each
