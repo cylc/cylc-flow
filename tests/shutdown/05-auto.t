@@ -18,7 +18,7 @@
 # Test auto shutdown after all tasks have finished.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 6
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
@@ -29,13 +29,23 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-auto-stop
 suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
-# Test that auto-shutdown can be disabled.
+# Test that auto-shutdown can be disabled (CLI)
 TEST_NAME=$TEST_NAME_BASE-no-autostop-ping
 cylc run --no-auto-shutdown $SUITE_NAME
 sleep 15
 run_ok $TEST_NAME cylc ping $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-stop
+run_ok $TEST_NAME cylc stop --max-polls=5 --interval=2 $SUITE_NAME
+#-------------------------------------------------------------------------------
+# Test that auto-shutdown can be disabled (suite.rc)
+export SUITE_DISABLE_AUTO_SHUTDOWN=true
+TEST_NAME=$TEST_NAME_BASE-no-autostop-ping-2
+cylc run $SUITE_NAME
+sleep 15
+run_ok $TEST_NAME cylc ping $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-stop-2
 run_ok $TEST_NAME cylc stop --max-polls=5 --interval=2 $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
