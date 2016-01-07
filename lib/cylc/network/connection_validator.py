@@ -20,6 +20,7 @@ try:
     import Pyro.core
 except ImportError, x:
     raise SystemExit("ERROR: Pyro is not installed")
+import hashlib
 import logging
 import os
 import sys
@@ -28,13 +29,8 @@ from Pyro.protocol import DefaultConnValidator
 import Pyro.constants
 import Pyro.errors
 import hmac
-try:
-    import hashlib
-    md5 = hashlib.md5
-except ImportError:
-    import md5
-    md5 = md5.md5
 
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import NO_PASSPHRASE, PRIVILEGE_LEVELS
 from cylc.config import SuiteConfig
 from cylc.suite_host import is_remote_host
@@ -43,7 +39,12 @@ from cylc.owner import user, host
 
 # Access for users without the suite passphrase: encrypting the "no passphrase"
 # passphrase is unnecessary, but doing so allows common passphrase handling.
-NO_PASSPHRASE_MD5 = md5(NO_PASSPHRASE).hexdigest()
+
+OK_HASHES = GLOBAL_CFG.get()['authentication']['hashes']
+SCAN_HASH = GLOBAL_CFG.get()['authentication']['scan hash']
+if SCAN_HASH not in OK_HASHES:
+    OK_HASHES.append(SCAN_HASH)
+
 
 CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
 CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
@@ -52,9 +53,22 @@ CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
 class ConnValidator(DefaultConnValidator):
     """Custom Pyro connection validator for user authentication."""
 
+    HASHES = {}
+    LENGTH_HASH_DIGESTS = {}
+    NO_PASSPHRASE_HASHES = {}
+
     def set_pphrase(self, pphrase):
         """Store encrypted suite passphrase (called by the server)."""
-        self.pphrase = md5(pphrase).hexdigest()
+        self.pphrase_hashes = {}
+        for hash_name in OK_HASHES:
+            hash_ = self._get_hash(hash_name)
+            self.pphrase_hashes[hash_name] = hash_(pphrase).hexdigest()
+
+    def set_default_hash(self, hash_name):
+        """Configure a hash to use as the default."""
+        self._default_hash_name = hash_name
+        if None in self.HASHES:
+            self.HASHES.pop(None)  # Pop default setting.
 
     def acceptIdentification(self, daemon, connection, token, challenge):
         """Authorize client login."""
@@ -64,7 +78,7 @@ class ConnValidator(DefaultConnValidator):
         # Processes the token returned by createAuthToken.
         try:
             user, host, uuid, prog_name, proc_passwd = token.split(':', 4)
-        except ValueError as exc:
+        except ValueError:
             # Back compat for old suite client (passphrase only)
             # (Allows old scan to see new suites.)
             proc_passwd = token
@@ -74,16 +88,32 @@ class ConnValidator(DefaultConnValidator):
             uuid = "(uuid)"
             prog_name = "(OLD_CLIENT)"
 
+        hash_name = self._get_hash_name_from_digest_length(proc_passwd)
+
+        if hash_name not in OK_HASHES:
+            return (0, Pyro.constants.DENIED_SECURITY)
+
+        hash_ = self._get_hash(hash_name)
+
+        # Access for users without the suite passphrase: encrypting the
+        # no-passphrase is unnecessary, but doing so allows common handling.
+        no_passphrase_hash = self._get_no_passphrase_hash(hash_name)
+
         # Check username and password, and set privilege level accordingly.
         # The auth token has a binary hash that needs conversion to ASCII.
-        if hmac.new(challenge,
-                    self.pphrase.decode("hex")).digest() == proc_passwd:
+        if self._compare_hmacs(
+                hmac.new(challenge,
+                         self.pphrase_hashes[hash_name].decode("hex"),
+                         hash_).digest(),
+                proc_passwd):
             # The client has the suite passphrase.
             # Access granted at highest privilege level.
             priv_level = PRIVILEGE_LEVELS[-1]
-        elif (hmac.new(
-                challenge,
-                NO_PASSPHRASE_MD5.decode("hex")).digest() == proc_passwd):
+        elif not is_old_client and self._compare_hmacs(
+                hmac.new(challenge,
+                         no_passphrase_hash.decode("hex"),
+                         hash_).digest(),
+                proc_passwd):
             # The client does not have the suite passphrase.
             # Public access granted at level determined by global/suite config.
             config = SuiteConfig.get_inst()
@@ -113,8 +143,11 @@ class ConnValidator(DefaultConnValidator):
         Argument authid is what's returned by mungeIdent().
 
         """
+        hash_ = self._get_hash()
         return ":".join(
-            list(authid[:4]) + [hmac.new(challenge, authid[4]).digest()])
+            list(authid[:4]) +
+            [hmac.new(challenge, authid[4], hash_).digest()]
+        )
 
     def mungeIdent(self, ident):
         """Receive (uuid, passphrase) from client. Encrypt the passphrase.
@@ -123,8 +156,54 @@ class ConnValidator(DefaultConnValidator):
         (user, host, prog name).
 
         """
+        hash_ = self._get_hash()
         uuid, passphrase = ident
         prog_name = os.path.basename(sys.argv[0])
         if passphrase is None:
             passphrase = NO_PASSPHRASE
-        return (user, host, str(uuid), prog_name, md5(passphrase).digest())
+        return (user, host, str(uuid), prog_name, hash_(passphrase).digest())
+
+    def _compare_hmacs(self, hmac1, hmac2):
+        """Compare hmacs as securely as possible."""
+        try:
+            return hmac.compare_hmacs(hmac1, hmac2)
+        except AttributeError:
+            # < Python 2.7.7.
+            return (hmac1 == hmac2)
+
+    def _get_default_hash_name(self):
+        if hasattr(self, "_default_hash_name"):
+            return self._default_hash_name
+        return GLOBAL_CFG.get()['authentication']['hashes'][0]
+
+    def _get_hash(self, hash_name=None):
+        try:
+            return self.HASHES[hash_name]
+        except KeyError:
+            pass
+
+        hash_name_dest = hash_name
+        if hash_name is None:
+            hash_name = self._get_default_hash_name()
+
+        self.HASHES[hash_name_dest] = getattr(hashlib, hash_name)
+        return self.HASHES[hash_name_dest]
+
+    def _get_hash_name_from_digest_length(self, digest):
+        if len(digest) in self.LENGTH_HASH_DIGESTS:
+            return self.LENGTH_HASH_DIGESTS[len(digest)]
+        for hash_name in OK_HASHES:
+            hash_ = self._get_hash(hash_name)
+            len_hash = len(hash_("foo").digest())
+            self.LENGTH_HASH_DIGESTS[len_hash] = hash_name
+            if len_hash == len(digest):
+                return hash_name
+
+    def _get_no_passphrase_hash(self, hash_name=None):
+        try:
+            return self.NO_PASSPHRASE_HASHES[hash_name]
+        except KeyError:
+            hash_ = self._get_hash(hash_name)
+            self.NO_PASSPHRASE_HASHES[hash_name] = (
+                hash_(NO_PASSPHRASE).hexdigest())
+        return self.NO_PASSPHRASE_HASHES[hash_name]

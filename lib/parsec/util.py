@@ -213,8 +213,8 @@ def itemstr( parents=[], item=None, value=None ):
         # last parent is the item
         item = keys[-1]
         keys.remove(item)
-    if parents:
-        s = '[' + ']['.join(parents) + ']'
+    if keys:
+        s = '[' + ']['.join(keys) + ']'
     else:
         s = ''
     if item:

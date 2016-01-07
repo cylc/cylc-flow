@@ -18,9 +18,16 @@
 # Test authentication - ignore old client denials, report bad new clients.
 
 . $(dirname $0)/test_header
-set_test_number 13
+set_test_number 23
 
 # Set things up and run the suite.
+# Choose the default global.rc hash settings, for reference.
+cat > global.rc << __END__
+[authentication]
+    hashes = sha256,md5
+    scan hash = md5
+__END__
+export CYLC_CONF_PATH="${PWD}"
 install_suite "${TEST_NAME_BASE}" basic
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
@@ -80,7 +87,7 @@ class MyConnValidator(Pyro.protocol.DefaultConnValidator):
     """Create an incorrect but plausible auth token."""
 
     def createAuthToken(self, authid, challenge, peeraddr, URI, daemon):
-        return "colonel_mustard:drawing_room:dagger:mystery:57abbed"
+        return "colonel_mustard:drawing_room:dagger:mystery:decea5ede57abbed"
 
 uri = "PYROLOC://localhost:" + sys.argv[1] + "/cylcid"
 proxy = Pyro.core.getProxyForURI(uri)
@@ -92,13 +99,83 @@ grep_ok "ConnectionDeniedError" "${TEST_NAME}.stderr"
 # Check that the new client connection failure is logged (it is suspicious).
 TEST_NAME="${TEST_NAME_BASE}-log-new-client"
 # Get any new lines added to the error file.
-comm -13 err-before-scan "${ERR_PATH}" >"${TEST_NAME_BASE}-new-client-err-diff"
+comm -13 err-before-scan "${ERR_PATH}" >"${TEST_NAME}-new-client-err-diff"
 # Check the new lines for a connection denied report.
 grep_ok "WARNING - \[client-connect\] DENIED colonel_mustard@drawing_room:mystery dagger$" \
-    "${TEST_NAME_BASE}-new-client-err-diff"
+    "${TEST_NAME}-new-client-err-diff"
 
-# Shutdown and purge.
+# Simulate a client with the wrong hash.
+TEST_NAME="${TEST_NAME_BASE}-new-wrong-hash-client-snapshot-err"
+run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
+cat > global.rc << __END__
+[authentication]
+    hashes = sha1
+    scan hash = sha1
+__END__
+export CYLC_CONF_PATH="${PWD}"
+run_ok "${TEST_NAME}" cylc scan -fb -n "${SUITE_NAME}" 'localhost'
+comm -13 err-before-scan "${ERR_PATH}" >"${TEST_NAME}-diff"
+# Wrong hash usage should not be logged as the hash choice may change.
+cat "${TEST_NAME}-diff" >/dev/tty
+diff "${TEST_NAME}-diff" - </dev/null >/dev/tty
+cmp_ok "${TEST_NAME}-diff" </dev/null
+
+# Run a scan using SHA256 hashing (default is MD5).
+TEST_NAME="${TEST_NAME_BASE}-scan-sha256"
+cat > global.rc << __END__
+[authentication]
+    scan hash = sha256
+__END__
+export CYLC_CONF_PATH="${PWD}"
+run_ok "${TEST_NAME}" cylc scan -fb -n "${SUITE_NAME}" 'localhost'
+grep_ok "${SUITE_NAME} ${USER}@localhost:${PORT}" "${TEST_NAME}.stdout"
+export CYLC_CONF_PATH=
+rm global.rc
+
+# Shutdown.
 TEST_NAME="${TEST_NAME_BASE}-stop"
 run_ok "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
+
+# Now run an MD5 suite and see if we can trigger with a different
+# default hash (SHA256), falling back to MD5.
+
+purge_suite "${SUITE_NAME}" basic
+# Set things up and run the suite.
+cat > global.rc << __END__
+[authentication]
+    hashes = md5
+__END__
+export CYLC_CONF_PATH="${PWD}"
+install_suite "${TEST_NAME_BASE}" basic
+TEST_NAME="${TEST_NAME_BASE}-validate-md5"
+run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
+cylc run "${SUITE_NAME}"
+
+# Scan to grab the suite's port.
+sleep 5  # Wait for the suite to initialize.
+TEST_NAME="${TEST_NAME_BASE}-new-scan-md5"
+PORT=$(cylc scan -b -n $SUITE_NAME 'localhost' 2>'/dev/null' \
+    | sed -e 's/.*@localhost://')
+
+# Connect using SHA256 hash.
+cat > global.rc << __END__
+[authentication]
+    hashes = sha256,md5
+__END__
+
+# Connect using SHA256 hash.
+TEST_NAME="${TEST_NAME_BASE}-new-scan-md5-sha256"
+run_ok "${TEST_NAME}" cylc trigger "${SUITE_NAME}" bar 1
+grep_ok "INFO - \[client-command\] trigger_task" "$(cylc cat-log -l $SUITE_NAME)"
+
+# Shutdown using SHA256.
+TEST_NAME="${TEST_NAME_BASE}-stop-md5-sha256"
+run_ok "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
+
+# Double check shutdown.
+TEST_NAME="${TEST_NAME_BASE}-stop-md5"
+run_fail "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
+
+# Purge.
 purge_suite "${SUITE_NAME}"
 exit

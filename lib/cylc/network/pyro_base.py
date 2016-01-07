@@ -37,6 +37,7 @@ from cylc.owner import is_remote_user, user, host, user_at_host
 from cylc.passphrase import get_passphrase, PassphraseError
 from cylc.registration import localdb
 from cylc.suite_host import is_remote_host
+from cylc.network.connection_validator import ConnValidator, OK_HASHES
 
 
 class PyroServer(Pyro.core.ObjBase):
@@ -95,7 +96,20 @@ class PyroClient(object):
             self.pyro_proxy = None
             self._get_proxy_old()
             func = getattr(self.pyro_proxy, fname)
-            return func(*fargs)
+            try:
+                return func(*fargs)
+            except Pyro.errors.ConnectionClosedError:
+                # Back compat for daemons <= 6.7.1.
+                # Try alternate hashes.
+                for alt_hash_name in OK_HASHES[1:]:
+                    self.pyro_proxy = None
+                    self._get_proxy(hash_name=alt_hash_name)
+                    func = getattr(self.pyro_proxy, fname)
+                    try:
+                        return func(*fargs)
+                    except Pyro.errors.ConnectionClosedError:
+                        continue
+                raise
 
     def _set_uri(self):
         """Set Pyro URI.
@@ -168,9 +182,12 @@ class PyroClient(object):
             self.pyro_proxy = Pyro.core.getProxyForURI(self.uri)
             self.pyro_proxy._setTimeout(self.pyro_timeout)
 
-    def _get_proxy(self):
+    def _get_proxy(self, hash_name=None):
         self._get_proxy_common()
-        self.pyro_proxy._setNewConnectionValidator(ConnValidator())
+        conn_val = ConnValidator()
+        if hash_name is not None and hash_name in OK_HASHES:
+            conn_val.set_default_hash(hash_name)
+        self.pyro_proxy._setNewConnectionValidator(conn_val)
         self.pyro_proxy._setIdentification((self.my_uuid, self.pphrase))
 
     def _get_proxy_old(self):
