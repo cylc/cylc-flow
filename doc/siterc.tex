@@ -856,17 +856,21 @@ required.
 
 \subsubsection{[authentication] $\rightarrow$ hashes}
 
-This sets the hash algorithms used for Pyro HMAC. SHA-256 and SHA-512 are
-the most secure. The first item is used as the default hash. Subsequent items
-(if any) are used as fallback hashes (e.g. for backwards compatibility should
-the hash change).
+This sets the hash algorithms used for Pyro HMAC, which are used to
+authenticate a client (e.g. gcylc) to the suite daemon. The first item is used
+as the default hash. Subsequent items (if any) are used as fallback hashes
+(e.g. for backwards compatibility with older suite daemons that are still
+running with an alternative hash).
 
 The default hashes are SHA-256 followed by MD5. You may want to exclude MD5 for
-security reasons - e.g. for FIPS compliance. Older cylc versions use MD5.
+security reasons - e.g. for FIPS
+(\url{https://en.wikipedia.org/wiki/FIPS_140-2}) compliance. Older cylc
+versions use MD5.
 
-MD5 is popularly used for HMAC, but is the least secure. SHA-1 is slightly
-better. Note that HMAC use is not as susceptible to hash collision weakness,
-so both algorithms are more secure for HMAC use than in the general case.
+SHA-256 and SHA-512 are the most secure. MD5 is popularly used for HMAC, but is
+the least secure. SHA-1 is slightly better. Note that HMAC use is not as
+susceptible to hash collision weakness, so both algorithms are more secure for
+HMAC use than in the general case.
 
 Clients will attempt to establish a connection using the algorithms from first
 to last. The exception is scanning, which will use the algorithm configured in
