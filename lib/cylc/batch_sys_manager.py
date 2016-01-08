@@ -72,8 +72,12 @@ batch_sys.submit(job_file_path) => ret_code, out, err
       "batch_sys.SUBMIT_CMD".
 
 batch_sys.CAN_KILL_PROC_GROUP
-    * A boolean to indicate whether it is possible to kill the job by sending
+    * A boolean to indicate whether it is possible to kill a job by sending
       a signal to its Unix process group.
+
+batch_sys.CAN_POLL_PROC_GROUP
+    * A boolean to indicate whether it is necessary to poll a job by its PID
+      as well as the job ID.
 
 batch_sys.KILL_CMD_TMPL
     *  A Python string template for getting the batch system command to remove
@@ -116,7 +120,7 @@ import os
 import shlex
 from signal import SIGKILL
 import stat
-from subprocess import call, Popen, PIPE
+from subprocess import Popen, PIPE
 import sys
 import traceback
 from cylc.mkdir_p import mkdir_p
@@ -145,6 +149,7 @@ class JobPollContext(object):
         self.batch_sys_name = None
         self.batch_sys_job_id = None
         self.batch_sys_exit_polled = None
+        self.pid = None
         self.run_status = None
         self.run_signal = None
         self.time_submit_exit = None
@@ -183,6 +188,7 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
+    CYLC_JOB_PID = "CYLC_JOB_PID"
     LINE_PREFIX_CYLC_DIR = "    export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
@@ -376,7 +382,7 @@ class BatchSysManager(object):
         st_file.seek(0, 0)  # rewind
         if getattr(batch_sys, "CAN_KILL_PROC_GROUP", False):
             for line in st_file:
-                if line.startswith("CYLC_JOB_PID="):
+                if line.startswith(self.CYLC_JOB_PID + "="):
                     pid = line.strip().split("=", 1)[1]
                     try:
                         os.killpg(int(pid), SIGKILL)
@@ -572,6 +578,8 @@ class BatchSysManager(object):
                 ctx.batch_sys_job_id = value
             elif key == self.CYLC_BATCH_SYS_EXIT_POLLED:
                 ctx.batch_sys_exit_polled = 1
+            elif key == self.CYLC_JOB_PID:
+                ctx.pid = value
             elif key == self.CYLC_BATCH_SYS_JOB_SUBMIT_TIME:
                 ctx.time_submit_exit = value
             elif key == TaskMessage.CYLC_JOB_INIT_TIME:
@@ -592,44 +600,59 @@ class BatchSysManager(object):
 
     def _jobs_poll_batch_sys(self, job_log_root, batch_sys_name, my_ctx_list):
         """Helper 2 for self.jobs_poll(job_log_root, job_log_dirs)."""
-        batch_sys = self.get_inst(batch_sys_name)
-        all_job_ids = [ctx.batch_sys_job_id for ctx in my_ctx_list]
-        if hasattr(batch_sys, "get_poll_many_cmd"):
-            # Some poll commands may not be as simple
-            cmd = batch_sys.get_poll_many_cmd(all_job_ids)
-        else:  # if hasattr(batch_sys, "POLL_CMD"):
-            # Simple poll command that takes a list of job IDs
-            cmd = [batch_sys.POLL_CMD] + all_job_ids
-        try:
-            proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
-        except OSError as exc:
-            # subprocess.Popen has a bad habit of not setting the
-            # filename of the executable when it raises an OSError.
-            if not exc.filename:
-                exc.filename = cmd[0]
-            sys.stderr.write(str(exc) + "\n")
-            return
-        proc.wait()
-        out, err = proc.communicate()
-        sys.stderr.write(err)
-        if hasattr(batch_sys, "filter_poll_many_output"):
-            # Allow custom filter
-            job_ids = batch_sys.filter_poll_many_output(out)
-        else:
-            # Just about all poll commands return a table, with column 1
-            # being the job ID. The logic here should be sufficient to
-            # ensure that any table header is ignored.
-            job_ids = []
-            for line in out.splitlines():
-                try:
-                    head = line.split(None, 1)[0]
-                except IndexError:
-                    continue
-                if head in all_job_ids:
-                    job_ids.append(head)
+        exp_job_ids = [ctx.batch_sys_job_id for ctx in my_ctx_list]
+        bad_job_ids = list(exp_job_ids)
+        exp_pids = []
+        bad_pids = []
+        items = [[self.get_inst(batch_sys_name), exp_job_ids, bad_job_ids]]
+        if getattr(items[0][0], "CAN_POLL_PROC_GROUP", False):
+            exp_pids = [ctx.pid for ctx in my_ctx_list if ctx.pid is not None]
+            bad_pids = bad_pids.extend(exp_pids)
+            items.append([self.get_inst("background"), exp_pids, bad_pids])
+        for batch_sys, exp_ids, bad_ids in items:
+            batch_sys = self.get_inst(batch_sys_name)
+            if hasattr(batch_sys, "get_poll_many_cmd"):
+                # Some poll commands may not be as simple
+                cmd = batch_sys.get_poll_many_cmd(exp_ids)
+            else:  # if hasattr(batch_sys, "POLL_CMD"):
+                # Simple poll command that takes a list of job IDs
+                cmd = [batch_sys.POLL_CMD] + exp_ids
+            try:
+                proc = Popen(cmd, stderr=PIPE, stdout=PIPE)
+            except OSError as exc:
+                # subprocess.Popen has a bad habit of not setting the
+                # filename of the executable when it raises an OSError.
+                if not exc.filename:
+                    exc.filename = cmd[0]
+                sys.stderr.write(str(exc) + "\n")
+                return
+            proc.wait()
+            out, err = proc.communicate()
+            sys.stderr.write(err)
+            if hasattr(batch_sys, "filter_poll_many_output"):
+                # Allow custom filter
+                for id_ in batch_sys.filter_poll_many_output(out):
+                    bad_ids.remove(id_)
+            else:
+                # Just about all poll commands return a table, with column 1
+                # being the job ID. The logic here should be sufficient to
+                # ensure that any table header is ignored.
+                for line in out.splitlines():
+                    try:
+                        head = line.split(None, 1)[0]
+                    except IndexError:
+                        continue
+                    if head in exp_ids:
+                        bad_ids.remove(head)
+
         for ctx in my_ctx_list:
             ctx.batch_sys_exit_polled = int(
-                ctx.batch_sys_job_id not in job_ids)
+                ctx.batch_sys_job_id in bad_job_ids)
+            # Exited batch system, but process still running
+            # This can happen to jobs in some "at" implementation
+            if (ctx.batch_sys_exit_polled and
+                    ctx.pid in exp_pids and ctx.pid not in bad_pids):
+                ctx.batch_sys_exit_polled = 0
             # Add information to "job.status"
             if ctx.batch_sys_exit_polled:
                 try:

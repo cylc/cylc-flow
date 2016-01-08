@@ -43,9 +43,7 @@ class AtCommandHandler(object):
         "Warning: at daemon not running",
     ]
     CAN_KILL_PROC_GROUP = True
-    # N.B. The perl command ensures that the job script is executed in its own
-    # process group, which allows the job script and its child processes to be
-    # killed correctly.
+    CAN_POLL_PROC_GROUP = True
     KILL_CMD_TMPL = "atrm '%(job_id)s'"
     POLL_CMD = "atq"
     POLL_CMD_TMPL = POLL_CMD
@@ -53,6 +51,9 @@ class AtCommandHandler(object):
         re.compile("warning: commands will be executed using /bin/sh")]
     REC_ID_FROM_SUBMIT_ERR = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
     SUBMIT_CMD_TMPL = "at now"
+    # N.B. The perl command ensures that the job script is executed in its own
+    # process group, which allows the job script and its child processes to be
+    # killed correctly.
     SUBMIT_CMD_STDIN_TMPL = (
         r"exec perl -e 'setpgrp(0,0);exec(@ARGV)'" +
         r" '%(job)s' 1>'%(job)s.out' 2>'%(job)s.err'")
