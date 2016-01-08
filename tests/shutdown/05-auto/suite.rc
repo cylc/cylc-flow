@@ -1,4 +1,7 @@
+#!Jinja2
+
 [cylc]
+    disable automatic shutdown = {{environ['SUITE_DISABLE_AUTO_SHUTDOWN'] | default(false)}}
     [[event hooks]]
         timeout = PT1M
         abort on timeout = true
