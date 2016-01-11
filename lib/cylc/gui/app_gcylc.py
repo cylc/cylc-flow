@@ -528,9 +528,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     STATES_POLLABLE = [
         'submitted',
-        'running'
+        'running',
+        'succeeded',
+        'failed'
     ]
-
 
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
                  template_vars, template_vars_file, restricted_display):
@@ -1206,14 +1207,16 @@ been defined for this suite""").inform()
         url_item.connect('activate', self.browse, "-t", name, self.cfg.suite)
         menu.append(url_item)
 
-        menu_items = self._get_right_click_menu_items(task_id, t_state, task_is_family)
+        menu_items = self._get_right_click_menu_items(
+            task_id, t_state, task_is_family)
         for item in menu_items:
             menu.append(item)
 
         menu.show_all()
         return menu
 
-    def _get_right_click_menu_items(self, task_id, t_state, task_is_family=False):
+    def _get_right_click_menu_items(
+            self, task_id, t_state, task_is_family=False):
         # Return the default menu items for a task
         name, point_string = TaskID.split(task_id)
 
@@ -1297,7 +1300,7 @@ been defined for this suite""").inform()
             items.append(trigger_edit_item)
             trigger_edit_item.connect(
                 'activate', self.trigger_task_edit_run, task_id)
-
+            trigger_edit_item.set_sensitive(t_state in self.STATES_TRIGGERABLE)
         items.append(gtk.SeparatorMenuItem())
 
         # TODO - grey out poll and kill if the task is not active.

@@ -180,7 +180,7 @@ class ControlTree(object):
             task_state = self.t.state_summary[task_id]['state']
 
         menu = self.get_right_click_menu(
-                        task_id, t_state=task_state, task_is_family=is_fam)
+            task_id, t_state=task_state, task_is_family=is_fam)
 
         sep = gtk.SeparatorMenuItem()
         sep.show()
