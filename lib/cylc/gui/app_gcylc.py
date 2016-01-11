@@ -533,6 +533,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         'failed'
     ]
 
+    STATES_VIEW_LOGS = [
+        'running',
+        'succeeded',
+        'failed',
+        'retrying',
+    ]
+
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
                  template_vars, template_vars_file, restricted_display):
 
@@ -1192,7 +1199,8 @@ been defined for this suite""").inform()
 
         return False
 
-    def get_right_click_menu(self, task_id, t_state, task_is_family=False):
+    def get_right_click_menu(
+            self, task_id, t_state, task_is_family=False, submit_num=None):
         """Return the default menu for a task."""
         menu = gtk.Menu()
         menu_root = gtk.MenuItem(task_id)
@@ -1208,7 +1216,7 @@ been defined for this suite""").inform()
         menu.append(url_item)
 
         menu_items = self._get_right_click_menu_items(
-            task_id, t_state, task_is_family)
+            task_id, t_state, task_is_family, submit_num)
         for item in menu_items:
             menu.append(item)
 
@@ -1216,7 +1224,7 @@ been defined for this suite""").inform()
         return menu
 
     def _get_right_click_menu_items(
-            self, task_id, t_state, task_is_family=False):
+            self, task_id, t_state, task_is_family=False, submit_num=None):
         # Return the default menu items for a task
         name, point_string = TaskID.split(task_id)
 
@@ -1240,6 +1248,9 @@ been defined for this suite""").inform()
             view_item.set_image(img)
             view_item.set_submenu(view_menu)
             items.append(view_item)
+
+            view_item.set_sensitive(
+                t_state in self.STATES_VIEW_LOGS or submit_num > 0)
 
             # NOTE: we have to respond to 'button-press-event' rather than
             # 'activate' in order for sub-menus to work in the graph-view.

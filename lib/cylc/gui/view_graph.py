@@ -188,10 +188,12 @@ Dependency graph suite control interface.
             is_fam = (name in self.t.descendants)
             if is_fam:
                 t_state = self.t.fam_state_summary[task_id]['state']
+                submit_num = None
             else:
                 t_state = self.t.state_summary[task_id]['state']
+                submit_num = self.t.state_summary[task_id]['submit_num']
             default_menu = self.get_right_click_menu(
-                task_id, t_state, task_is_family=is_fam)
+                task_id, t_state, task_is_family=is_fam, submit_num=submit_num)
             dm_kids = default_menu.get_children()
             for item in reversed(dm_kids[:2]):
                 # Put task name and URL at the top.

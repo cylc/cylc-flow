@@ -104,11 +104,14 @@ LED suite control interface.
 
         if is_fam:
             task_state = self.t.fam_state_summary[task_id]['state']
+            submit_num = None
         else:
             task_state = self.t.state_summary[task_id]['state']
+            submit_num = self.t.state_summary[task_id]['submit_num']
 
         menu = self.get_right_click_menu(
-            task_id, t_state=task_state, task_is_family=is_fam)
+            task_id, t_state=task_state,
+            task_is_family=is_fam, submit_num=submit_num)
 
         sep = gtk.SeparatorMenuItem()
         sep.show()
