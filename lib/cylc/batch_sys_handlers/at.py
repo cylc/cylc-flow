@@ -42,8 +42,8 @@ class AtCommandHandler(object):
         "Can't open /var/run/atd.pid to signal atd. No atd running?",
         "Warning: at daemon not running",
     ]
-    CAN_KILL_PROC_GROUP = True
-    CAN_POLL_PROC_GROUP = True
+    SHOULD_KILL_PROC_GROUP = True
+    SHOULD_POLL_PROC_GROUP = True
     KILL_CMD_TMPL = "atrm '%(job_id)s'"
     POLL_CMD = "atq"
     POLL_CMD_TMPL = POLL_CMD

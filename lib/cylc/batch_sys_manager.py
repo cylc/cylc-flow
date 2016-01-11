@@ -71,11 +71,11 @@ batch_sys.submit(job_file_path) => ret_code, out, err
       beyond just running a system or shell command. See also
       "batch_sys.SUBMIT_CMD".
 
-batch_sys.CAN_KILL_PROC_GROUP
-    * A boolean to indicate whether it is possible to kill a job by sending
+batch_sys.SHOULD_KILL_PROC_GROUP
+    * A boolean to indicate whether it is necessary to kill a job by sending
       a signal to its Unix process group.
 
-batch_sys.CAN_POLL_PROC_GROUP
+batch_sys.SHOULD_POLL_PROC_GROUP
     * A boolean to indicate whether it is necessary to poll a job by its PID
       as well as the job ID.
 
@@ -380,7 +380,7 @@ class BatchSysManager(object):
         else:
             return (1, "Cannot determine batch system from 'job.status' file")
         st_file.seek(0, 0)  # rewind
-        if getattr(batch_sys, "CAN_KILL_PROC_GROUP", False):
+        if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
             for line in st_file:
                 if line.startswith(self.CYLC_JOB_PID + "="):
                     pid = line.strip().split("=", 1)[1]
@@ -605,12 +605,11 @@ class BatchSysManager(object):
         exp_pids = []
         bad_pids = []
         items = [[self.get_inst(batch_sys_name), exp_job_ids, bad_job_ids]]
-        if getattr(items[0][0], "CAN_POLL_PROC_GROUP", False):
+        if getattr(items[0][0], "SHOULD_POLL_PROC_GROUP", False):
             exp_pids = [ctx.pid for ctx in my_ctx_list if ctx.pid is not None]
-            bad_pids = bad_pids.extend(exp_pids)
+            bad_pids.extend(exp_pids)
             items.append([self.get_inst("background"), exp_pids, bad_pids])
         for batch_sys, exp_ids, bad_ids in items:
-            batch_sys = self.get_inst(batch_sys_name)
             if hasattr(batch_sys, "get_poll_many_cmd"):
                 # Some poll commands may not be as simple
                 cmd = batch_sys.get_poll_many_cmd(exp_ids)
