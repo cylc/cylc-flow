@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.8.0">6.8.0</a>
     <li><a href="#6.7.4">6.7.4</a>
     <li><a href="#6.7.3">6.7.3</a>
     <li><a href="#6.7.2">6.7.2</a>
@@ -65,6 +66,43 @@
 
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
+
+<a name="6.8.0"/>
+    <h2>6.8.0</h2>
+
+    <h3>6.8.0 enhancements</h3>
+    <ul>
+        <li> <b>Security upgrade</b> for client authentication to suite
+        daemons, from HMAC-MD5 to HMAC-SHA256 (default) or HMAC-SHA512. We
+        currently fall back to MD5 for backward compatibility, but this can
+        be turned off in global config.
+
+        <li> <b>Suite passphrases</b> are now automatically installed to remote
+        task accounts.
+
+        <li> <b>Suite port files</b> now store host as well as port number;
+        this makes cylc easier to use in shared filesystem cluster
+        environments.
+
+        <li> Support in-suite <code>lib/python</code> directories to hold modules
+        for use by custom Jinja filters. and to replace the deprecated
+        <code>python</code> directory for custom job submission modules.
+
+        <li> A new <code>--no-auto-shutdown</code> option for <code>cylc
+        run/restart</code>, and a corresponding suite config item, to prevent
+        the suite daemon shutting down normally once all tasks have finished.
+
+        <li> A new <code>--ungrouped</code> option for <code>cylc graph</code> to
+        start with all task families ungrouped. This is pariticularly for use
+        with the non-GUI <code>-O/--output-file</code> option.
+
+        <li> For cylc commands that can accept a registered suite name or a
+        suite definition directory name, let registered suites take priority
+        in case of a directory of the same name in the current working directory.
+
+        <li> Better detection of normal suite shutdown by connection
+        <code>gcylc</code> instances.
+    </ul>
 
 <a name="6.7.4"/>
     <h2>6.7.4</h2>
