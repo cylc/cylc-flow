@@ -25,7 +25,7 @@ sleep 5
 cylc hold $CYLC_SUITE_NAME
 sleep 5
 # Release all tasks in the first cycle point.
-cylc release $CYLC_SUITE_NAME '.*' 20141009T0000Z
+cylc release "$CYLC_SUITE_NAME" '*.20141009T0000Z'
 """
     [[foo,bar]]
         script = true

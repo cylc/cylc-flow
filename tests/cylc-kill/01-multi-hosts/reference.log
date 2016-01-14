@@ -1,0 +1,10 @@
+2015-08-24T15:20:15Z INFO - Run mode: live
+2015-08-24T15:20:15Z INFO - Initial point: 1
+2015-08-24T15:20:15Z INFO - Final point: 1
+2015-08-24T15:20:15Z INFO - Cold Start 1
+2015-08-24T15:20:16Z INFO - [remote-1.1] -triggered off []
+2015-08-24T15:20:16Z INFO - [local-1.1] -triggered off []
+2015-08-24T15:20:16Z INFO - [local-2.1] -triggered off []
+2015-08-24T15:20:16Z INFO - [remote-2.1] -triggered off []
+2015-08-24T15:20:16Z INFO - [local-3.1] -triggered off []
+2015-08-24T15:20:19Z INFO - [killer.1] -triggered off ['local-1.1', 'local-2.1', 'local-3.1', 'remote-1.1', 'remote-2.1']

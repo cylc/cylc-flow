@@ -1,0 +1,22 @@
+[cylc]
+   UTC mode = True
+   [[reference test]]
+       live mode suite timeout = PT1M
+       required run mode = live
+[scheduling]
+    initial cycle point = 1990
+    final cycle point = 2030
+    [[dependencies]]
+        [[[P20Y]]]
+            graph = """t1"""
+        [[[R1/2030]]]
+            graph = """t1:start => holder"""
+[runtime]
+    [[holder]]
+        script = cylc hold "${CYLC_SUITE_NAME}" '20*/t*'
+    [[t1]]
+        script = """
+test "${CYLC_TASK_TRY_NUMBER}" -eq 2
+cylc stop "${CYLC_SUITE_NAME}"
+"""
+        retry delays = PT15S

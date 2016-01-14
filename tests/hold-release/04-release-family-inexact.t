@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite hold and family release, using a regular expression.
+# Test suite hold and family release, using a glob.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -23,10 +23,10 @@ set_test_number 2
 install_suite $TEST_NAME_BASE release-family
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate --set=RELEASE_MATCH='ST[A-Z]+' $SUITE_NAME
+run_ok $TEST_NAME cylc validate --set=RELEASE_MATCH='ST*' $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --set=RELEASE_MATCH='ST[A-Z]+' --reference-test \
+suite_run_ok $TEST_NAME cylc run --set=RELEASE_MATCH='ST*' --reference-test \
     --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

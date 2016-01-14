@@ -188,7 +188,6 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
-    CYLC_JOB_PID = "CYLC_JOB_PID"
     LINE_PREFIX_CYLC_DIR = "    export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
@@ -382,7 +381,7 @@ class BatchSysManager(object):
         st_file.seek(0, 0)  # rewind
         if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
             for line in st_file:
-                if line.startswith(self.CYLC_JOB_PID + "="):
+                if line.startswith(TaskMessage.CYLC_JOB_PID + "="):
                     pid = line.strip().split("=", 1)[1]
                     try:
                         os.killpg(int(pid), SIGKILL)
@@ -431,15 +430,15 @@ class BatchSysManager(object):
         except IOError:
             return "polled %s submission failed\n" % (task_id)
 
-        if (statuses.get("CYLC_JOB_EXIT_TIME") and
-                statuses.get("CYLC_JOB_EXIT") == "SUCCEEDED"):
+        if (statuses.get(TaskMessage.CYLC_JOB_EXIT_TIME) and
+                statuses.get(TaskMessage.CYLC_JOB_EXIT) == "SUCCEEDED"):
             return "polled %s succeeded at %s\n" % (
-                task_id, statuses["CYLC_JOB_EXIT_TIME"])
+                task_id, statuses[TaskMessage.CYLC_JOB_EXIT_TIME])
 
-        if (statuses.get("CYLC_JOB_EXIT_TIME") and
-                statuses.get("CYLC_JOB_EXIT")):
+        if (statuses.get(TaskMessage.CYLC_JOB_EXIT_TIME) and
+                statuses.get(TaskMessage.CYLC_JOB_EXIT)):
             return "polled %s failed at %s\n" % (
-                task_id, statuses["CYLC_JOB_EXIT_TIME"])
+                task_id, statuses[TaskMessage.CYLC_JOB_EXIT_TIME])
 
         if (self.CYLC_BATCH_SYS_NAME not in statuses or
                 self.CYLC_BATCH_SYS_JOB_ID not in statuses):
@@ -462,14 +461,14 @@ class BatchSysManager(object):
             is_in_batch_sys = batch_sys.filter_poll_output(
                 proc.communicate()[0], job_id)
 
-        if is_in_batch_sys and "CYLC_JOB_INIT_TIME" in statuses:
+        if is_in_batch_sys and TaskMessage.CYLC_JOB_INIT_TIME in statuses:
             return "polled %s started at %s\n" % (
-                task_id, statuses["CYLC_JOB_INIT_TIME"])
+                task_id, statuses[TaskMessage.CYLC_JOB_INIT_TIME])
 
         if is_in_batch_sys:
             return "polled %s submitted\n" % (task_id)
 
-        if "CYLC_JOB_INIT_TIME" in statuses:
+        if TaskMessage.CYLC_JOB_INIT_TIME in statuses:
             return "polled %s failed at unknown-time\n" % (task_id)
 
         # Submitted but disappeared
@@ -578,7 +577,7 @@ class BatchSysManager(object):
                 ctx.batch_sys_job_id = value
             elif key == self.CYLC_BATCH_SYS_EXIT_POLLED:
                 ctx.batch_sys_exit_polled = 1
-            elif key == self.CYLC_JOB_PID:
+            elif key == TaskMessage.CYLC_JOB_PID:
                 ctx.pid = value
             elif key == self.CYLC_BATCH_SYS_JOB_SUBMIT_TIME:
                 ctx.time_submit_exit = value

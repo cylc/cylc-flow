@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE insert-bad-cycle-point
+install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME

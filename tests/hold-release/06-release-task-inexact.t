@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite hold and task release, using a regular expression for the task.
+# Test suite hold and task release, using a glob for the task.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -23,10 +23,10 @@ set_test_number 2
 install_suite $TEST_NAME_BASE release-task
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate --set=RELEASE_MATCH='.t..' $SUITE_NAME
+run_ok $TEST_NAME cylc validate --set=RELEASE_MATCH='?t??' $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --set=RELEASE_MATCH='.t..' --reference-test \
+suite_run_ok $TEST_NAME cylc run --set=RELEASE_MATCH='?t??' --reference-test \
     --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

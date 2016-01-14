@@ -1,1 +1,1 @@
-00-basic.t
+00-compat.t
