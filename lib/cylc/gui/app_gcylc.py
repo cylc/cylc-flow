@@ -24,6 +24,7 @@ import sys
 import gtk
 import pango
 import gobject
+import shlex
 import subprocess
 from uuid import uuid4
 from isodatetime.parsers import TimePointParser
@@ -1630,7 +1631,7 @@ shown here in the state they were in at the time of triggering.''')
             return False
         if not self.get_confirmation("reset %s to %s?" % (task_id, state)):
             return
-        self.put_pyro_command('reset_task_state', [task_id], state)
+        self.put_pyro_command('reset_task_state', [task_id], None, state)
 
     def remove_task(self, b, task_id, is_family):
         """Remove a task."""
@@ -1992,11 +1993,12 @@ shown here in the state they were in at the time of triggering.''')
         window.show_all()
 
     def insert_task_popup(self, *b, **kwargs):
+        """Display "Insert Task(s)" pop up box."""
         window = gtk.Window()
         window.modify_bg(gtk.STATE_NORMAL,
                          gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title("Insert Task")
+        window.set_title("Insert Task(s)")
         window.set_transient_for(self.window)
         window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
 
@@ -2008,38 +2010,23 @@ shown here in the state they were in at the time of triggering.''')
         label = gtk.Label('SUITE: ' + self.cfg.suite)
         vbox.pack_start(label, True)
 
-        fam_cb = gtk.CheckButton("Insert a family?")
-        vbox.pack_start(fam_cb, True)
-
-        if "is_fam" in kwargs:
-            fam_cb.set_active(kwargs['is_fam'])
-
         hbox = gtk.HBox()
-        label = gtk.Label('MATCH')
+        label = gtk.Label('TASK-ID ... (NAME.POINT ...)')
         hbox.pack_start(label, True)
-        entry_match = gtk.Entry()
-        hbox.pack_start(entry_match, True)
+        entry_task_ids = gtk.Entry()
+        hbox.pack_start(entry_task_ids, True)
         vbox.pack_start(hbox)
 
-        if "name" in kwargs:
-            entry_match.set_text(kwargs['name'])
+        if "name" in kwargs and "point_string" in kwargs:
+            entry_task_ids.set_text(
+                kwargs['name'] + '.' + kwargs['point_string'])
 
         hbox = gtk.HBox()
-        label = gtk.Label('CYCLE_POINT')
+        label = gtk.Label('[--hold-point=POINT]')
         hbox.pack_start(label, True)
-        entry_point_string = gtk.Entry()
-        hbox.pack_start(entry_point_string, True)
-        vbox.pack_start(hbox)
-
-        if "point_string" in kwargs:
-            entry_point_string.set_text(kwargs['point_string'])
-
-        hbox = gtk.HBox()
-        label = gtk.Label('[STOP]')
-        hbox.pack_start(label, True)
-        entry_stoppoint = gtk.Entry()
-        entry_stoppoint.set_max_length(20)
-        hbox.pack_start(entry_stoppoint, True)
+        entry_hold_point = gtk.Entry()
+        entry_hold_point.set_max_length(20)
+        hbox.pack_start(entry_hold_point, True)
         vbox.pack_start(hbox)
 
         help_button = gtk.Button("_Help")
@@ -2048,8 +2035,8 @@ shown here in the state they were in at the time of triggering.''')
         hbox = gtk.HBox()
         insert_button = gtk.Button("_Insert")
         insert_button.connect(
-            "clicked", self.insert_task, window, entry_match,
-            entry_point_string, entry_stoppoint, fam_cb
+            "clicked", self.insert_task, window, entry_task_ids,
+            entry_hold_point,
         )
         cancel_button = gtk.Button("_Cancel")
         cancel_button.connect("clicked", lambda x: window.destroy())
@@ -2061,24 +2048,18 @@ shown here in the state they were in at the time of triggering.''')
         window.add(vbox)
         window.show_all()
 
-    def insert_task(self, w, window, entry_match, entry_point_string,
-                    entry_stoppoint, fam_cb):
-        """Insert a task."""
-        match = entry_match.get_text()
-        point_string = entry_point_string.get_text()
-        is_family = fam_cb.get_active()
-        stop_point_string = entry_stoppoint.get_text()
-        if match == '' or point_string == '':
-            warning_dialog(
-                "Enter task or family name MATCH expression",
-                self.window).warn()
+    def insert_task(self, w, window, entry_task_ids, entry_hold_point):
+        """Insert a task, callback for "insert_task_popup"."""
+        task_ids = shlex.split(entry_task_ids.get_text())
+        if not task_ids:
+            warning_dialog("Enter task/family IDs", self.window).warn()
             return
         window.destroy()
-        stop = None
-        if stop_point_string != '':
-            stop = stop_point_string
+        hold_point_str = entry_hold_point.get_text()
+        if not hold_point_str.strip():
+            hold_point_str = None
         self.put_pyro_command(
-            'insert_task', match + "." + point_string, None, None, stop)
+            'insert_task', task_ids, None, None, hold_point_str)
 
     def poll_all(self, w):
         """Poll all active tasks."""
