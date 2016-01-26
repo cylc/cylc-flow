@@ -19,8 +19,11 @@
 import gtk
 import os
 
+from parsec.OrderedDict import OrderedDict
+
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
+from cylc.task_id import TaskID
 
 
 class ComboLogViewer(logviewer):
@@ -39,12 +42,24 @@ class ComboLogViewer(logviewer):
     LABEL_TEXT = "Choose Log File: "
 
     def __init__(self, task_id, filenames, cmd_tmpls, init_active_index):
-        self.filenames = filenames
+        self.filenames = OrderedDict()
+        name_str, point_str = TaskID.split(task_id)
+        for filename in filenames:
+            try:
+                f_point_str, f_name_str, f_submit_num_str, f_base_name = (
+                    filename.rsplit(os.sep, 4)[1:])
+                if (f_point_str == point_str and f_name_str == name_str and
+                        int(f_submit_num_str) and f_base_name):
+                    name = f_submit_num_str + os.sep + f_base_name
+                if ":" in filename:
+                    name += " (%s)" % (filename.split(":", 1)[0])
+            except ValueError:
+                name = filename
+            self.filenames[name] = filename
         self.init_active_index = init_active_index
         self.cmd_tmpls = cmd_tmpls
-        self.common_dir = os.path.dirname(os.path.commonprefix(self.filenames))
         logviewer.__init__(
-            self, task_id, None, self.filenames[self.init_active_index])
+            self, task_id, None, filenames[self.init_active_index])
 
     def connect(self):
         """Connect to the selected log file tailer."""
@@ -61,12 +76,8 @@ class ComboLogViewer(logviewer):
         label = gtk.Label(self.LABEL_TEXT)
         combobox = gtk.combo_box_new_text()
 
-        for filename in self.filenames:
-            relpath = os.path.relpath(filename, self.common_dir)
-            if len(relpath) < len(filename):
-                combobox.append_text(relpath)
-            else:
-                combobox.append_text(filename)
+        for name in self.filenames:
+            combobox.append_text(name)
 
         combobox.connect("changed", self.switch_log)
         if self.init_active_index:
@@ -85,10 +96,7 @@ class ComboLogViewer(logviewer):
         index = callback.get_active()
 
         name = model[index][0]
-        if name in self.filenames:
-            filename = name
-        else:
-            filename = os.path.join(self.common_dir, name)
+        filename = self.filenames[name]
         if filename != self.filename:
             self.filename = filename
             self.t.stop()

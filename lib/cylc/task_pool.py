@@ -678,7 +678,6 @@ class TaskPool(object):
                         new_task.reset_state_succeeded()
 
                     # carry some task proxy state over to the new instance
-                    new_task.logfiles = itask.logfiles
                     new_task.summary = itask.summary
                     new_task.started_time = itask.started_time
                     new_task.submitted_time = itask.submitted_time
