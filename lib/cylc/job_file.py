@@ -21,9 +21,10 @@ import os
 import re
 import stat
 import StringIO
-from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.task_id import TaskID
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+import cylc.flags
+from cylc.task_id import TaskID
 from cylc.task_message import TaskMessage
 
 
@@ -107,6 +108,10 @@ class JobFile(object):
     @classmethod
     def _write_prelude(cls, handle, job_conf):
         """Job script prelude."""
+        if cylc.flags.verbose and cylc.flags.debug:
+            if 'bash' in job_conf['job script shell']:
+                handle.write("\n\nPS4='[\D{%Y%m%dT%H%M%S%z}]\u@\h+ '")
+            handle.write('\n\nset -x')
         handle.write('\n\necho "JOB SCRIPT STARTING"')
         # set cylc version and source profile scripts before turning on
         # error trapping so that profile errors do not abort the job

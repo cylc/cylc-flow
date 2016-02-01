@@ -91,9 +91,6 @@ class TaskMessage(object):
         except ValueError:
             pass
 
-        cylc.flags.verbose = (
-            cylc.flags.verbose or self.env_map.get('CYLC_VERBOSE') == 'True')
-
         # 'scheduler' or 'submit', (or 'raw' if job script run manually)
         self.mode = self.env_map.get('CYLC_MODE', 'raw')
 
