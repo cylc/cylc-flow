@@ -75,6 +75,14 @@
 #         echo "1..0 # SKIP SKIP_REASON" and exit.
 #     ssh_install_cylc HOST
 #         Install cylc on a remote host.
+#     create_clean_globalrc [PRE [POST]]
+#         Create a clean global.rc in $PWD/conf, containing only the critical
+#         bits of the existing global config, and export $CYLC_CONF_PATH.
+#         If strings PRE, POST are provided they will be prepended and appended
+#         to the new global config file (use to prepend top level items with no
+#         section heading and append sectioned items). Multi-line bash strings:
+#           $'the quick
+#           brown fox'
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -386,6 +394,35 @@ function mock_smtpd_kill() {  # Logic borrowed from Rose
         wait "${TEST_SMTPD_PID}" 2>/dev/null || true
         unset TEST_SMTPD_HOST TEST_SMTPD_LOG TEST_SMTPD_PID
     fi
+}
+
+function create_clean_globalrc() {
+    PRE=""
+    POST=""
+    if (( $# == 1 )); then
+        PRE=$1
+    elif (( $# == 2 )); then
+        PRE=$1
+        POST=$2
+    elif (( $# > 2 )); then
+        >&2 echo "ERROR, too many args (create_clean_globalrc)"
+        exit 1
+    fi
+    # The following global config items, if defined, will be critical to test
+    # jobs too (tests can still override them if necessary).
+    # Tidy in case of previous use of this function.
+    unset CYLC_CONF_PATH
+    rm -rf conf
+    mkdir conf
+    # Suite host self-identification method.
+    echo "$PRE" > conf/global.rc
+    echo "[suite host self-identification]" >> conf/global.rc
+    cylc get-global-config -i 'suite host self-identification' >> conf/global.rc
+    # Hosts settings (e.g. comms method for this host, cylc exec location...)
+    echo "[hosts]" >> conf/global.rc
+    cylc get-global-config -i 'hosts' >> conf/global.rc
+    echo "$POST" >> conf/global.rc
+    export CYLC_CONF_PATH=$PWD/conf
 }
 
 CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}

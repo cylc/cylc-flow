@@ -20,9 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 3
 #-------------------------------------------------------------------------------
-mkdir 'conf'
-export CYLC_CONF_PATH="${PWD}/conf"
-cat > "$PWD/conf/global.rc" <<__GLOBAL_RC__
+create_clean_globalrc '' $'
 [documentation]
    [[files]]
       pdf user guide = ${PWD}/doc/pdf/cug-pdf.pdf
@@ -31,8 +29,7 @@ cat > "$PWD/conf/global.rc" <<__GLOBAL_RC__
       single-page html user guide = /home/bob/cylc/cylc.git/doc/html/single/cug-html.html
    [[urls]]
       internet homepage = http://cylc.github.com/cylc/
-      local index = http://localhost/cylc/index.html
-__GLOBAL_RC__
+      local index = http://localhost/cylc/index.html'
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------

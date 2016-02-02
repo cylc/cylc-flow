@@ -55,19 +55,15 @@ if [[ -n "${CONFIGURED_SYS_NAME}" ]]; then
         cylc get-global-config "--item=${ITEM_KEY}" 2>'/dev/null')"
     CYLC_TEST_BATCH_SYS_NAME=$CONFIGURED_SYS_NAME
 fi
-export CYLC_CONF_DIR=
 SSH=
 if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
     SSH="ssh -oBatchMode=yes -oConnectTimeout=5 ${CYLC_TEST_HOST}"
     ssh_install_cylc "${CYLC_TEST_HOST}"
-    mkdir -p 'conf'
-    cat >"conf/global.rc" <<__GLOBAL_RC__
+    create_clean_globalrc '' $'
 [hosts]
     [[${CYLC_TEST_HOST}]]
         cylc executable = ${TEST_RHOST_CYLC_DIR#*:}/bin/cylc
-        use login shell = False
-__GLOBAL_RC__
-    export CYLC_CONF_DIR="${PWD}/conf"
+        use login shell = False'
 fi
 #-------------------------------------------------------------------------------
 set_test_number 4

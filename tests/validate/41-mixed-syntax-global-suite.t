@@ -19,11 +19,10 @@
 . "$(dirname "$0")/test_header"
 set_test_number 2
 
-cat >'global.rc' <<'__GLOBAL_RC__'
+create_clean_globalrc '' $'
 [cylc]
     [[event hooks]]
-        timeout = P1D
-__GLOBAL_RC__
+        timeout = P1D'
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
@@ -36,13 +35,12 @@ cat >'suite.rc' <<'__SUITE_RC__'
             execution timeout = 10
 __SUITE_RC__
 
-CYLC_CONF_PATH="${PWD}" run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 
-cat >'global.rc' <<'__GLOBAL_RC__'
+create_clean_globalrc '' $'
 [cylc]
     [[event hooks]]
-        timeout = 1440
-__GLOBAL_RC__
+        timeout = 1440'
 
 cat >'suite.rc' <<'__SUITE_RC__'
 [scheduling]
@@ -55,5 +53,5 @@ cat >'suite.rc' <<'__SUITE_RC__'
             execution timeout = PT10M
 __SUITE_RC__
 
-CYLC_CONF_PATH="${PWD}" run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
+run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 exit

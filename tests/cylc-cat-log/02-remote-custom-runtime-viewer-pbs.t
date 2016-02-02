@@ -35,16 +35,13 @@ set_test_number 2
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-mkdir 'conf'
-cat >'conf/global.rc' <<__GLOBAL_RC__
+create_clean_globalrc '' $'
 [hosts]
     [[${CYLC_TEST_HOST}]]
         [[[batch systems]]]
             [[[[pbs]]]]
                 err viewer = ${ERR_VIEWER}
-                out viewer = ${OUT_VIEWER}
-__GLOBAL_RC__
-export CYLC_CONF_PATH="${PWD}/conf"
+                out viewer = ${OUT_VIEWER}'
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --reference-test "${SUITE_NAME}"

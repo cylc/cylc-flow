@@ -27,13 +27,10 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-mkdir 'conf'
-export CYLC_CONF_PATH="${PWD}/conf"
-cat > "$PWD/conf/global.rc" <<__GLOBAL_RC__
+create_clean_globalrc '' $'
 [hosts]
    [[localhost]]
-        local tail command template = $PWD/bin/my-tailer.sh %(filename)s
-__GLOBAL_RC__
+        local tail command template = $PWD/bin/my-tailer.sh %(filename)s'
 #-------------------------------------------------------------------------------
 sleep 10
 TEST_NAME=$TEST_NAME_BASE-cat-log

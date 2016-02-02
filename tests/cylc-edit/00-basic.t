@@ -25,8 +25,10 @@ TEST_NAME="${TEST_NAME_BASE}-validate-before"
 run_fail "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}"
-PATH=$PWD/bin:$PATH CYLC_CONF_PATH=$PWD/conf \
-    run_ok "${TEST_NAME}" cylc edit -i "${SUITE_NAME}"
+create_clean_globalrc '' $'
+[editors]
+    terminal = my-edit'
+PATH=$PWD/bin:$PATH run_ok "${TEST_NAME}" cylc edit -i "${SUITE_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}-validate-after"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"

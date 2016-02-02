@@ -22,7 +22,16 @@ set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-export CYLC_CONF_PATH="${PWD}/conf"
+create_clean_globalrc \
+   $'execution polling intervals = PT0.2M, PT0.1M
+submission polling intervals = PT0.2M, PT0.1M' \
+   $'[task messaging]
+   connection timeout = PT20S
+   retry interval = PT9S
+[hosts]
+   [[localhost]]
+      task communication method = poll'
+
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------

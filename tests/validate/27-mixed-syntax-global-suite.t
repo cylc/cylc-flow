@@ -21,9 +21,8 @@
 set_test_number 1
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-echo 'submission polling intervals = 1, 5, 15' >'global.rc'
-CYLC_CONF_PATH="${PWD}" \
-    run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
+create_clean_globalrc $'submission polling intervals = 1, 5, 15'
+run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 purge_suite "${SUITE_NAME}"
 exit

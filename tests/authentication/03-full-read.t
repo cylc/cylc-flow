@@ -26,11 +26,11 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # Run the suite.
-cat > global.rc << __END__
+create_clean_globalrc '' $'
 [authentication]
-    public = full-read
-__END__
-CYLC_CONF_PATH="${PWD}" cylc run "${SUITE_NAME}"
+    public = full-read'
+cylc run "${SUITE_NAME}"
+unset CYLC_CONF_PATH
 
 # Wait for first task 'foo' to fail.
 cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --cycle=1 \
