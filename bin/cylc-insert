@@ -54,7 +54,7 @@ def main():
             ('TASKID [...]', 'Task identifier')])
 
     parser.add_option(
-        "--hold-point", "--stop-point"
+        "--hold-point", "--stop-point",
         help="Optional hold/stop cycle point for inserted task.",
         metavar="POINT", action="store", dest="hold_point_string")
 
