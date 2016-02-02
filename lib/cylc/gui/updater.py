@@ -358,7 +358,7 @@ class Updater(threading.Thread):
         self.all_families = {}
         self.triggering_families = {}
         self.global_summary = {}
-        for client in [self.state_summary_client,  self.suite_info_client,
+        for client in [self.state_summary_client, self.suite_info_client,
                        self.suite_log_client, self.suite_command_client]:
             if self.cfg.host is None:
                 client.host = None
