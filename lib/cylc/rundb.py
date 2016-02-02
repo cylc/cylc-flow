@@ -336,7 +336,6 @@ class CylcSuiteDAO(object):
                     table.update_queues.pop(stmt)
             if self.conn is not None:
                 self.conn.commit()
-            will_retry = False
         except sqlite3.Error:
             if not self.is_public:
                 raise
@@ -345,7 +344,6 @@ class CylcSuiteDAO(object):
                 traceback.print_exc()
                 sys.stderr.write(
                     "WARNING: %s: db write failed\n" % self.db_file_name)
-            will_retry = True
             self.n_tries += 1
             logger = getLogger("main")
             logger.log(
