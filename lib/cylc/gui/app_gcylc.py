@@ -528,16 +528,14 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     STATES_POLLABLE = [
         'submitted',
-        'running',
-        'succeeded',
-        'failed'
+        'running'
     ]
 
     STATES_VIEW_LOGS = [
         'running',
         'succeeded',
         'failed',
-        'retrying',
+        'retrying'
     ]
 
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
