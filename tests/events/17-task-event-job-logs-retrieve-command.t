@@ -24,11 +24,11 @@ if [[ -z "${HOST}" ]]; then
 fi
 set_test_number 3
 
-create_clean_globalrc '' $'
+create_clean_globalrc '' $"
 [hosts]
     [[${HOST}]]
         retrieve job logs = True
-        retrieve job logs command = my-rsync'
+        retrieve job logs command = my-rsync"
 OPT_SET='-s GLOBALCFG=True'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

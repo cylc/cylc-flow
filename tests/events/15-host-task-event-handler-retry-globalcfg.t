@@ -23,13 +23,13 @@ if [[ -z "${HOST}" ]]; then
 fi
 set_test_number 4
 
-create_clean_globalrc '' $'
+create_clean_globalrc '' $"
 [hosts]
     [[${HOST}]]
         task event handler retry delays=3*PT1S
 [task events]
     handlers=hello-event-handler '%(name)s' '%(event)s'
-    handler events=succeeded, failed'
+    handler events=succeeded, failed"
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

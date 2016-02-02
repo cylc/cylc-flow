@@ -24,10 +24,10 @@ set_test_number 5
 mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_clean_globalrc '' $'
+    create_clean_globalrc '' $"
 [task events]
     mail events = failed, retry, succeeded
-    mail smtp = ${TEST_SMTPD_HOST}'
+    mail smtp = ${TEST_SMTPD_HOST}"
     OPT_SET='-s GLOBALCFG=True'
 else
     OPT_SET="-s MAIL_SMTP=${TEST_SMTPD_HOST}"
