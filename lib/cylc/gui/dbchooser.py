@@ -21,27 +21,16 @@ import gtk
 import time
 import os
 import re
-import sys
 import threading
-from util import EntryTempText, EntryDialog
-from cylc.run_get_stdout import run_get_stdout
 
-try:
-    import Pyro.core
-except BaseException, x:  # this catches SystemExit
-    PyroInstalled = False
-    print >> sys.stderr, "WARNING: Pyro is not installed."
-else:
-    PyroInstalled = True
-    from cylc.network.port_scan import scan
-
+import cylc.flags
+from cylc.gui.warning_dialog import warning_dialog, info_dialog
+from cylc.gui.util import get_icon, EntryTempText, EntryDialog
+from cylc.network.port_scan import scan_all
+from cylc.owner import is_remote_user
 from cylc.registration import RegistrationDB
 from cylc.regpath import RegPath
-from warning_dialog import warning_dialog, info_dialog, question_dialog
-from util import get_icon
-from gcapture import gcapture, gcapture_tmpfile
-
-debug = False
+from cylc.run_get_stdout import run_get_stdout
 
 
 class db_updater(threading.Thread):
@@ -70,23 +59,23 @@ class db_updater(threading.Thread):
 
         # not needed:
         # self.build_treestore(self.newtree)
-        self.construct_newtree()
-        self.update()
+        # self.construct_newtree()
+        # self.update()
 
     def construct_newtree(self):
         # construct self.newtree[one][two]...[nnn] = [state, descr, dir ]
         self.running_choices_changed()
-        ports = {}
+        auths = {}
         for suite in self.running_choices:
             reg, port = suite
-            ports[reg] = port
+            auths[reg] = port
 
         self.newtree = {}
         for reg in self.regd_choices:
             suite, suite_dir, descr = reg
             suite_dir = re.sub('^' + os.environ['HOME'], '~', suite_dir)
-            if suite in ports:
-                state = str(ports[suite])
+            if suite in auths:
+                state = str(auths[suite])
             else:
                 state = '-'
             nest2 = self.newtree
@@ -224,24 +213,33 @@ class db_updater(threading.Thread):
                             self.update_treestore(new[item], chiter)
 
     def run(self):
-        global debug
-        if debug:
+        if cylc.flags.debug:
             print '* thread', self.me, 'starting'
         while not self.quit:
             if self.running_choices_changed() or self.reload:
                 gobject.idle_add(self.update)
             time.sleep(1)
         else:
-            if debug:
+            if cylc.flags.debug:
                 print '* thread', self.me, 'quitting'
             self.__class__.count -= 1
 
     def running_choices_changed(self):
-        if not PyroInstalled:
-            return
-        # [(name, owner, host, port)]
-        results = scan(pyro_timeout=self.pyro_timeout)
-        choices = [(result[1]['name'], result[0]) for result in results]
+        """Scan running choices. Return True if changed."""
+        choices = []
+        for host, scan_result in scan_all(pyro_timeout=self.pyro_timeout):
+            try:
+                port, suite_identity = scan_result
+            except ValueError:
+                # Back-compat (<= 6.5.0 no title or state totals).
+                port, name, owner = scan_result
+            else:
+                name = suite_identity['name']
+                owner = suite_identity['owner']
+            auth = "%s:%d" % (host, port)
+            if is_remote_user(owner):
+                auth = "%s@%s" % (owner, auth)
+            choices.append((name, auth))
         choices.sort()
         if choices != self.running_choices:
             self.running_choices = choices
@@ -348,7 +346,7 @@ class dbchooser(object):
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn(
-            'Port', cr, text=1, foreground=4, background=5)
+            'Server', cr, text=1, foreground=4, background=5)
         tvc.set_resizable(True)
         # not sure how this sorting works
         # tvc.set_sort_column_id(1)
