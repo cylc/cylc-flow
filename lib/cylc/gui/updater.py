@@ -124,7 +124,14 @@ class Updater(threading.Thread):
         self.err_log_size = 0
         self.task_list = []
 
-        self.clear_data()
+        self.state_summary = {}
+        self.full_state_summary = {}
+        self.fam_state_summary = {}
+        self.full_fam_state_summary = {}
+        self.all_families = {}
+        self.triggering_families = {}
+        self.global_summary = {}
+
         self.daemon_version = None
 
         self.stop_summary = None
@@ -339,17 +346,11 @@ class Updater(threading.Thread):
                 pass
 
     def set_stopped(self):
+        """Reset data and clients when suite is stopped."""
         self.connected = False
         self.set_status("stopped")
         self.poll_schd.start()
         self._summary_update_time = None
-        self.clear_data()
-
-    def set_status(self, status):
-        self.status = status
-        self.info_bar.set_status(self.status)
-
-    def clear_data(self):
         self.state_summary = {}
         self.full_state_summary = {}
         self.fam_state_summary = {}
@@ -357,6 +358,16 @@ class Updater(threading.Thread):
         self.all_families = {}
         self.triggering_families = {}
         self.global_summary = {}
+        for client in [self.state_summary_client, self.suite_info_client,
+                       self.suite_log_client, self.suite_command_client]:
+            if self.cfg.host is None:
+                client.host = None
+            if self.cfg.port is None:
+                client.port = None
+
+    def set_status(self, status):
+        self.status = status
+        self.info_bar.set_status(self.status)
 
     def warn(self, msg):
         """Pop up a warning dialog; call on idle_add!"""
