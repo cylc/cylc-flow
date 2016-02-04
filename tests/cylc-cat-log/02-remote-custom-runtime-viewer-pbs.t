@@ -35,13 +35,13 @@ set_test_number 2
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-create_clean_globalrc '' $'
+create_clean_globalrc '' $"
 [hosts]
     [[${CYLC_TEST_HOST}]]
         [[[batch systems]]]
             [[[[pbs]]]]
                 err viewer = ${ERR_VIEWER}
-                out viewer = ${OUT_VIEWER}'
+                out viewer = ${OUT_VIEWER}"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}" \
     cylc run --debug --reference-test "${SUITE_NAME}"
