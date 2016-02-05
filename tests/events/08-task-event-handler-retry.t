@@ -21,7 +21,7 @@ set_test_number 3
 
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_clean_globalrc '' $"
+    create_test_globalrc '' $"
 [task events]
     handlers=hello-event-handler '%(name)s' '%(event)s'
     handler events=succeeded, failed

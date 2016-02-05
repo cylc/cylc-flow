@@ -37,7 +37,7 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 # Run detached.
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-create_clean_globalrc '' $"
+create_test_globalrc '' $"
 [hosts]
    [[$CYLC_TEST_HOST]]
         remote tail command template = \$HOME/.cylc/$SUITE_NAME/bin/my-tailer.sh %(filename)s"

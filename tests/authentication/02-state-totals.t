@@ -26,7 +26,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # Run the suite.
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [authentication]
     public = state-totals'
 cylc run "${SUITE_NAME}"

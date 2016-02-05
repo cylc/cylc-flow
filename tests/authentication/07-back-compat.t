@@ -22,7 +22,7 @@ set_test_number 23
 
 # Set things up and run the suite.
 # Choose the default global.rc hash settings, for reference.
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [authentication]
     hashes = sha256,md5
     scan hash = md5'
@@ -105,7 +105,7 @@ grep_ok "WARNING - \[client-connect\] DENIED colonel_mustard@drawing_room:myster
 # Simulate a client with the wrong hash.
 TEST_NAME="${TEST_NAME_BASE}-new-wrong-hash-client-snapshot-err"
 run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [authentication]
     hashes = sha1
     scan hash = sha1'
@@ -118,12 +118,12 @@ cmp_ok "${TEST_NAME}-diff" </dev/null
 
 # Run a scan using SHA256 hashing (default is MD5).
 TEST_NAME="${TEST_NAME_BASE}-scan-sha256"
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [authentication]
     scan hash = sha256'
 run_ok "${TEST_NAME}" cylc scan -fb -n "${SUITE_NAME}" 'localhost'
 grep_ok "${SUITE_NAME} ${USER}@localhost:${PORT}" "${TEST_NAME}.stdout"
-create_clean_globalrc
+create_test_globalrc
 
 # Shutdown.
 TEST_NAME="${TEST_NAME_BASE}-stop"
@@ -134,7 +134,7 @@ run_ok "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
 
 purge_suite "${SUITE_NAME}" basic
 # Set things up and run the suite.
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [authentication]
     hashes = md5'
 install_suite "${TEST_NAME_BASE}" basic
@@ -149,7 +149,7 @@ PORT=$(cylc scan -b -n $SUITE_NAME 'localhost' 2>'/dev/null' \
     | sed -e 's/.*@localhost://')
 
 # Connect using SHA256 hash.
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [authentication]
     hashes = sha256,md5'
 

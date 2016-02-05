@@ -24,7 +24,7 @@ if [[ -z $CYLC_TEST_HOST ]]; then
     skip_all '"[test battery]remote host": not defined'
 fi
 set_test_number 14
-create_clean_globalrc '' $"
+create_test_globalrc '' $"
 [hosts]
    [[$CYLC_TEST_HOST]]
        retrieve job logs = False"

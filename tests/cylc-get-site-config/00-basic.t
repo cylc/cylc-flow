@@ -19,7 +19,7 @@
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 9
-create_clean_globalrc
+create_test_globalrc
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-get-config
 run_ok $TEST_NAME.validate cylc get-site-config

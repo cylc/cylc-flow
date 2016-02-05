@@ -26,7 +26,7 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
 fi
 set_test_number 3
 
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [hosts]
     [[${CYLC_TEST_HOST}]]
         task communication method = ssh'

@@ -25,14 +25,14 @@ fi
 set_test_number 5
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_clean_globalrc '' $"
+    create_test_globalrc '' $"
 [hosts]
     [[${HOST}]]
         retrieve job logs = True
         retrieve job logs retry delays = PT5S"
     OPT_SET='-s GLOBALCFG=True'
 else
-    create_clean_globalrc
+    create_test_globalrc
 fi
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

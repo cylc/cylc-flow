@@ -20,7 +20,7 @@
 . "$(dirname "$0")/test_header"
 set_test_number 5
 
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [task events]
     register job logs retry delays = PT0S, PT15S'
 

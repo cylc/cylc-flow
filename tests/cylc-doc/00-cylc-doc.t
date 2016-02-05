@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [documentation]
    [[files]]
       pdf user guide = ${PWD}/doc/pdf/cug-pdf.pdf

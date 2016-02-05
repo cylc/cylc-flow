@@ -23,7 +23,7 @@ if [[ -z "${HOST}" ]]; then
 fi
 set_test_number 4
 
-create_clean_globalrc '' $"
+create_test_globalrc '' $"
 [hosts]
     [[${HOST}]]
         task event handler retry delays=3*PT1S

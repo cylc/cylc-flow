@@ -27,7 +27,7 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # Run the suite.
 # Set public auth low to test that passphrase gives full control
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [authentication]
     public = identity'
 cylc run "${SUITE_NAME}"

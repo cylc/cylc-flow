@@ -21,7 +21,7 @@
 set_test_number 2
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE task-iso
-create_clean_globalrc
+create_test_globalrc
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME

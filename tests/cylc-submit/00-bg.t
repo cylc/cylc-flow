@@ -59,7 +59,7 @@ SSH=
 if [[ "${CYLC_TEST_HOST}" != 'localhost' ]]; then
     SSH="ssh -oBatchMode=yes -oConnectTimeout=5 ${CYLC_TEST_HOST}"
     ssh_install_cylc "${CYLC_TEST_HOST}"
-    create_clean_globalrc '' $'
+    create_test_globalrc '' $'
 [hosts]
     [[${CYLC_TEST_HOST}]]
         cylc executable = ${TEST_RHOST_CYLC_DIR#*:}/bin/cylc

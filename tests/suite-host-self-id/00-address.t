@@ -29,7 +29,7 @@ MY_HOST_IP=$(python -m cylc.suite_host "${MY_INET_TARGET}")
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}" "--set=MY_HOST_IP=${MY_HOST_IP}"
 
-create_clean_globalrc '' $'
+create_test_globalrc '' $'
 [suite host self-identification]
     method = address'
 suite_run_ok "${TEST_NAME_BASE}-run" \

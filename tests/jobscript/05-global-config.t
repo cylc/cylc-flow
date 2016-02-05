@@ -22,7 +22,7 @@ set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-create_clean_globalrc \
+create_test_globalrc \
    $'execution polling intervals = PT0.2M, PT0.1M
 submission polling intervals = PT0.2M, PT0.1M' \
    $'[task messaging]
