@@ -2022,11 +2022,11 @@ shown here in the state they were in at the time of triggering.''')
                 kwargs['name'] + '.' + kwargs['point_string'])
 
         hbox = gtk.HBox()
-        label = gtk.Label('[--hold-point=POINT]')
+        label = gtk.Label('[--stop-point=POINT]')
         hbox.pack_start(label, True)
-        entry_hold_point = gtk.Entry()
-        entry_hold_point.set_max_length(20)
-        hbox.pack_start(entry_hold_point, True)
+        entry_stop_point = gtk.Entry()
+        entry_stop_point.set_max_length(20)
+        hbox.pack_start(entry_stop_point, True)
         vbox.pack_start(hbox)
 
         help_button = gtk.Button("_Help")
@@ -2036,7 +2036,7 @@ shown here in the state they were in at the time of triggering.''')
         insert_button = gtk.Button("_Insert")
         insert_button.connect(
             "clicked", self.insert_task, window, entry_task_ids,
-            entry_hold_point,
+            entry_stop_point,
         )
         cancel_button = gtk.Button("_Cancel")
         cancel_button.connect("clicked", lambda x: window.destroy())
@@ -2048,18 +2048,18 @@ shown here in the state they were in at the time of triggering.''')
         window.add(vbox)
         window.show_all()
 
-    def insert_task(self, w, window, entry_task_ids, entry_hold_point):
+    def insert_task(self, w, window, entry_task_ids, entry_stop_point):
         """Insert a task, callback for "insert_task_popup"."""
         task_ids = shlex.split(entry_task_ids.get_text())
         if not task_ids:
             warning_dialog("Enter task/family IDs", self.window).warn()
             return
         window.destroy()
-        hold_point_str = entry_hold_point.get_text()
-        if not hold_point_str.strip():
-            hold_point_str = None
+        stop_point_str = entry_stop_point.get_text()
+        if not stop_point_str.strip():
+            stop_point_str = None
         self.put_pyro_command(
-            'insert_task', task_ids, None, None, hold_point_str)
+            'insert_task', task_ids, None, None, stop_point_str)
 
     def poll_all(self, w):
         """Poll all active tasks."""

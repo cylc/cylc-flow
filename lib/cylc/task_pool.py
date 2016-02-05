@@ -121,7 +121,7 @@ class TaskPool(object):
             for taskname in qconfig[queue]['members']:
                 self.myq[taskname] = queue
 
-    def insert_tasks(self, items, hold_point_str, compat=None):
+    def insert_tasks(self, items, stop_point_str, compat=None):
         """Insert tasks."""
         n_warnings = 0
         if isinstance(items, str) or compat is not None:
@@ -163,15 +163,15 @@ class TaskPool(object):
                 self.log.warning(self.ERR_PREFIX_TASKID_MATCH + item)
                 n_warnings += 1
                 continue
-        if hold_point_str is None:
-            hold_point = None
+        if stop_point_str is None:
+            stop_point = None
         else:
             try:
-                hold_point = get_point(
-                    standardise_point_string(hold_point_str))
+                stop_point = get_point(
+                    standardise_point_string(stop_point_str))
             except ValueError as exc:
-                self.log.warning("Invalid hold point: %s (%s)" % (
-                    hold_point_str, exc))
+                self.log.warning("Invalid stop point: %s (%s)" % (
+                    stop_point_str, exc))
                 n_warnings += 1
                 return n_warnings
         task_states_data = self.pri_dao.select_task_states_by_task_ids(
@@ -183,7 +183,7 @@ class TaskPool(object):
                 submit_num = task_states_data[(name_str, point_str)].get(
                     "submit_num")
             new_task = get_task_proxy(
-                name_str, get_point(point_str), 'waiting', hold_point,
+                name_str, get_point(point_str), 'waiting', stop_point,
                 submit_num=submit_num)
             if new_task:
                 self.add_to_runahead_pool(new_task)

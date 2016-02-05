@@ -57,10 +57,12 @@ class cop(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = """
-A TASKID is an identifier for matching task proxies.
-It can be written in either syntax:
+A TASKID is an identifier for matching task proxies and/or families or task
+proxies. It can be written in these syntax:
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
+* [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
+* FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
 
 For example, to match:
 * all tasks in a cycle: '20200202T0000Z/*' or '*.20200202T0000Z'
@@ -68,6 +70,8 @@ For example, to match:
 * retrying 'foo*' tasks in 0000Z cycles: 'foo*.*0000Z:retrying' or
   '*0000Z/foo*:retrying'
 * retrying tasks in 'BAR' family: '*/BAR:retrying' or 'BAR.*:retrying'
+* retrying tasks in 'BAR' or 'BAZ' families: '*/BA[RZ]:retrying' or
+  'BA[RZ].*:retrying'
 
 The old 'MATCH POINT' syntax will be automatically detected and supported. To
 avoid this, use the '--no-multitask-compat' option, or use the new syntax
@@ -303,7 +307,11 @@ Arguments:"""
             try:
                 self.add_option(
                     "-m", "--family",
-                    help="Match members of named families rather than tasks.",
+                    help=(
+                        "(Obsolete) This option is now ignored "
+                        "and is retained for backward compatibility only. "
+                        "TASKID in the argument list can be used to match "
+                        "task and family names regardless of this option."),
                     action="store_true", default=False, dest="is_family")
             except OptionConflictError:
                 pass

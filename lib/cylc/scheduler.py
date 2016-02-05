@@ -501,9 +501,9 @@ class Scheduler(object):
         return self.pool.remove_tasks(items, spawn, compat)
 
     def command_insert_task(
-            self, items, compat=None, _=None, hold_point_string=None):
+            self, items, compat=None, _=None, stop_point_string=None):
         """Insert tasks."""
-        return self.pool.insert_tasks(items, hold_point_string, compat)
+        return self.pool.insert_tasks(items, stop_point_string, compat)
 
     def command_nudge(self):
         """Cause the task processing loop to be invoked"""

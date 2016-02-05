@@ -24,4 +24,4 @@ title = "test insertion of a task with a bad cycle point."
         script = "sleep 1" # quick
     [[prep]]
         # Insert the task with a bad cycle point
-        script = cylc insert --hold-point=soon $CYLC_SUITE_NAME foo.20140101T00
+        script = cylc insert --stop-point=soon $CYLC_SUITE_NAME foo.20140101T00
