@@ -57,8 +57,8 @@ class cop(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = """
-A TASKID is an identifier for matching task proxies and/or families or task
-proxies. It can be written in these syntax:
+A TASKID is an identifier for matching individual task proxies and/or families
+of them. It can be written in these syntaxes:
 * [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
 * [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
 * TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
