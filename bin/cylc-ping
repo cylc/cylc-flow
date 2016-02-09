@@ -59,6 +59,7 @@ def main():
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
+    pclient.set_use_scan_hash()
 
     # cylc ping SUITE
     pclient.get_info('ping_suite')  # (no need to check the result)

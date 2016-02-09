@@ -873,10 +873,10 @@ susceptible to hash collision weakness, so both algorithms are more secure for
 HMAC use than in the general case.
 
 Clients will attempt to establish a connection using the algorithms from first
-to last. The exception is scanning, which will use the algorithm configured in
-the [authentication] $\rightarrow$ scan hash setting below. If you have lots
-of suites running with e.g. MD5 hashes, you will want to include 'md5' in your
-list of hashes and set it as the default scan hash.
+to last. The exceptions are scanning and pinging, which will use the algorithm
+configured in the [authentication] $\rightarrow$ scan hash setting below. If
+you have lots of suites running with e.g. MD5 hashes, you will want to include
+'md5' in your list of hashes and set it as the default scan hash.
 
 See \url{https://docs.python.org/2/library/hmac.html} and
 \url{https://docs.python.org/2/library/hashlib.html} for discussion of hash
@@ -902,7 +902,7 @@ algorithms.
 See [authentication] $\rightarrow$ hashes.
 
 Configure which of the specified hash algorithms in [authentication]
-$\rightarrow$ hashes is used for scanning.
+$\rightarrow$ hashes is used for scanning and pinging (cylc scan, cylc ping).
 
 The default hash algorithm for scans is MD5, for backwards compatibility
 reasons. You can override it by specifying a different value for this setting

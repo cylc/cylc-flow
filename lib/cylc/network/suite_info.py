@@ -22,6 +22,7 @@ import cylc.flags
 from cylc.network import PYRO_INFO_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network import check_access_priv
+from cylc.network.connection_validator import SCAN_HASH
 
 
 # Back-compat for older suite daemons <= 6.4.1.
@@ -74,3 +75,12 @@ class SuiteInfoClient(PyroClient):
             command = back_compat[args[0]]
             args = tuple([command]) + args[1:]
             return self.call_server_func("get", *args)
+
+    def set_use_scan_hash(self):
+        """Use the configured scan hash for backwards compatibility."""
+        self._hash_name = SCAN_HASH
+
+    def _get_proxy(self, hash_name=None):
+        if hash_name is None and hasattr(self, "_hash_name"):
+            hash_name = self._hash_name
+        return super(SuiteInfoClient, self)._get_proxy(hash_name=hash_name)
