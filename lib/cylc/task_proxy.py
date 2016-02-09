@@ -62,7 +62,6 @@ from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.rundb import CylcSuiteDAO
 from cylc.task_id import TaskID
 from cylc.task_message import TaskMessage
-from cylc.task_output_logs import logfiles
 from parsec.util import pdeepcopy, poverride
 from parsec.config import ItemNotFoundError
 
@@ -251,10 +250,6 @@ class TaskProxy(object):
         self._add_prerequisites(self.point)
         self.point_as_seconds = None
 
-        self.logfiles = logfiles()
-        for lfile in self.tdef.rtconfig['extra log files']:
-            self.logfiles.add_path(lfile)
-
         # outputs
         self.outputs = outputs(self.identity)
         for outp in self.tdef.outputs:
@@ -284,6 +279,7 @@ class TaskProxy(object):
         self.submitted_time = None
         self.started_time = None
         self.finished_time = None
+
         self.summary = {
             'latest_message': "",
             'submitted_time': None,
@@ -297,8 +293,12 @@ class TaskProxy(object):
             'description': self.tdef.rtconfig['description'],
             'title': self.tdef.rtconfig['title'],
             'label': str(self.point),
-            'logfiles': self.logfiles.get_paths()
+            'logfiles': [],
+            'job_hosts': {},
         }
+        for lfile in self.tdef.rtconfig['extra log files']:
+            self.summary['logfiles'].append(expandvars(lfile))
+
         self.job_file_written = False
 
         self.retries_configured = False
@@ -1444,14 +1444,18 @@ class TaskProxy(object):
             'is cold-start': self.tdef.is_coldstart,
             'owner': self.task_owner,
             'host': self.task_host,
-            'log files': self.logfiles,
             'common job log path': common_job_log_path,
             'local job file path': local_jobfile_path,
             'job file path': local_jobfile_path,
         }.items())
 
-        log_files = self.job_conf['log files']
-        log_files.add_path(local_jobfile_path)
+        # Locations of logfiles for gcylc
+        # Locations can now be derived from self.summary['job_hosts']
+        # This should reduce the number of unique strings that need to be
+        # stored in memory.
+        # self.summary['logfiles'] retained for backward compat
+        logfiles = self.summary['logfiles']
+        logfiles.append(local_jobfile_path)
 
         if not self.job_conf['host']:
             self.job_conf['host'] = socket.gethostname()
@@ -1475,18 +1479,18 @@ class TaskProxy(object):
             #      accessible from the suite daemon, mounted under the same
             #      path or otherwise.
             prefix = self.job_conf['host'] + ':' + remote_path
+            self.summary['job_hosts'][self.submit_num] = self.job_conf['host']
             if self.job_conf['owner']:
                 prefix = self.job_conf['owner'] + "@" + prefix
-            log_files.add_path(prefix + '.out')
-            log_files.add_path(prefix + '.err')
+                self.summary['job_hosts'][self.submit_num] = (
+                    self.job_conf['owner'] + "@" + self.job_conf['host'])
+            logfiles.append(prefix + '.out')
+            logfiles.append(prefix + '.err')
         else:
-            # interpolate environment variables in extra logs
-            for idx in range(len(log_files.paths)):
-                log_files.paths[idx] = expandvars(log_files.paths[idx])
-
-            # Record paths of local log files for access by gui
-            log_files.add_path(self.job_conf['job file path'] + '.out')
-            log_files.add_path(self.job_conf['job file path'] + '.err')
+            # Record paths of local logfiles for access by gui
+            logfiles.append(self.job_conf['job file path'] + '.out')
+            logfiles.append(self.job_conf['job file path'] + '.err')
+            self.summary['job_hosts'][self.submit_num] = 'localhost'
 
     def handle_submission_timeout(self):
         """Handle submission timeout, only called if in "submitted" state."""

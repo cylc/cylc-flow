@@ -389,6 +389,23 @@ class CylcSuiteDAO(object):
                     "stmt_args": stmt_args})
             raise
 
+    def select_all_task_jobs(self, keys):
+        """Select items from all task_jobs.
+
+        Return a dict for mapping keys to the column values.
+
+        """
+        stmt = (r"SELECT %(keys_str)s FROM %(table)s") % {
+            "keys_str": ",".join(keys),
+            "table": self.TABLE_TASK_JOBS}
+        try:
+            data = []
+            for row in self.connect().execute(stmt):
+                data.append(row)
+            return data
+        except sqlite3.DatabaseError:
+            return None
+
     def select_task_job(self, keys, cycle, name, submit_num=None):
         """Select items from task_jobs by (cycle, name, submit_num).
 

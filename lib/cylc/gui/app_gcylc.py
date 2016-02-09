@@ -1183,17 +1183,16 @@ been defined for this suite""").inform()
             warning_dialog(task_id + ' is not live', self.window).warn()
             return False
 
-        logfiles = task_state_summary['logfiles']
         warnings = []
-        if not logfiles:
+        if (not task_state_summary['logfiles'] and
+                not task_state_summary.get('job_hosts')):
             warnings.append(task_id + ' has no associated log files')
-        if task_state_summary['state'] in [
-                'waiting', 'ready', 'submit-failed', 'queued']:
-            warnings.append(task_id + ' has not started running yet')
+        if task_state_summary['state'] in ['waiting', 'ready', 'queued']:
+            warnings.append(task_id + ' has not been submitted yet')
         if warnings:
             warning_dialog('\n'.join(warnings), self.window).warn()
         else:
-            self.popup_logview(task_id, logfiles, choice)
+            self._popup_logview(task_id, task_state_summary, choice)
 
         return False
 
@@ -1223,7 +1222,7 @@ been defined for this suite""").inform()
 
     def _get_right_click_menu_items(
             self, task_id, t_state, task_is_family=False, submit_num=None):
-        # Return the default menu items for a task
+        """Return the default menu items for a task"""
         name, point_string = TaskID.split(task_id)
 
         items = []
@@ -1253,26 +1252,19 @@ been defined for this suite""").inform()
             # NOTE: we have to respond to 'button-press-event' rather than
             # 'activate' in order for sub-menus to work in the graph-view.
 
-            js_item = gtk.ImageMenuItem('job script')
-            img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
-            js_item.set_image(img)
-            view_menu.append(js_item)
-            js_item.connect('button-press-event', self.view_task_info, task_id,
-                            'job')
-
-            out_item = gtk.ImageMenuItem('job stdout')
-            img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
-            out_item.set_image(img)
-            view_menu.append(out_item)
-            out_item.connect(
-                'button-press-event', self.view_task_info, task_id, 'job.out')
-
-            err_item = gtk.ImageMenuItem('job stderr')
-            img = gtk.image_new_from_stock(gtk.STOCK_DND, gtk.ICON_SIZE_MENU)
-            err_item.set_image(img)
-            view_menu.append(err_item)
-            err_item.connect(
-                'button-press-event', self.view_task_info, task_id, 'job.err')
+            for key, filename in [
+                    ('job script', 'job'),
+                    ('job activity log', 'job-activity.log'),
+                    ('job stdout', 'job.out'),
+                    ('job stderr', 'job.err'),
+                    ('job status file', 'job.status')]:
+                item = gtk.ImageMenuItem(key)
+                item.set_image(gtk.image_new_from_stock(
+                    gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
+                view_menu.append(item)
+                item.connect(
+                    'button-press-event', self.view_task_info, task_id,
+                    filename)
 
             info_item = gtk.ImageMenuItem('prereq\'s & outputs')
             img = gtk.image_new_from_stock(
@@ -2113,15 +2105,54 @@ shown here in the state they were in at the time of triggering.''')
             return
         self.put_pyro_command('nudge')
 
-    def popup_logview(self, task_id, logfiles, choice=None):
+    def _popup_logview(self, task_id, task_state_summary, choice=None):
         """Display task job log files in a combo log viewer."""
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.modify_bg(gtk.STATE_NORMAL,
                          gtk.gdk.color_parse(self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_size_request(800, 400)
-        filenames = list(logfiles)
-        filenames.sort(key=self._sort_key_func, reverse=True)
+
+        # Derive file names from the job host of each submit
+        # task_state_summary['logfiles'] logic retained for backward compat
+        job_hosts = task_state_summary.get('job_hosts')
+        if job_hosts:
+            filenames = []
+            name, point_str = TaskID.split(task_id)
+            itask_log_dir = os.path.join(
+                GLOBAL_CFG.get_derived_host_item(
+                    self.cfg.suite, "suite job log directory",
+                ),
+                point_str,
+                name,
+            )
+            for submit_num, job_user_at_host in sorted(
+                    job_hosts.items(), reverse=True):
+                submit_num_str = "%02d" % submit_num
+                local_job_log_dir = os.path.join(itask_log_dir, submit_num_str)
+                for filename in ["job", "job-activity.log"]:
+                    filenames.append(os.path.join(local_job_log_dir, filename))
+                if '@' in job_user_at_host:
+                    job_user, job_host = job_user_at_host.split('@', 1)
+                else:
+                    job_user, job_host = (None, job_user_at_host)
+                if is_remote_host(job_host) or is_remote_user(job_user):
+                    job_log_dir = job_user_at_host + ':' + os.path.join(
+                        GLOBAL_CFG.get_derived_host_item(
+                            self.cfg.suite, 'suite job log directory',
+                            job_host, job_user,
+                        ),
+                        point_str, name, submit_num_str,
+                    )
+                else:
+                    job_log_dir = local_job_log_dir
+                for filename in ["job.out", "job.err", "job.status"]:
+                    filenames.append(os.path.join(job_log_dir, filename))
+
+        for filename in sorted(list(task_state_summary['logfiles'])):
+            if filename not in filenames:
+                filenames.append(filename)
+
         init_active_index = None
         if choice:
             for i, log in enumerate(filenames):
@@ -2156,7 +2187,7 @@ shown here in the state they were in at the time of triggering.''')
         window.show_all()
 
     def _get_logview_cmd_tmpls_map(self, task_id, filenames):
-        """Helper for self.popup_logview()."""
+        """Helper for self._popup_logview()."""
         summary = self.updater.full_state_summary[task_id]
         if summary["state"] != "running":
             return {}

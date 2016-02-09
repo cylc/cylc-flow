@@ -333,8 +333,8 @@ class restart(scheduler):
         for line in task_lines:
             # instance variables
             try:
-                (id, state) = line.split(' : ')
-                name, point_string = TaskID.split(id)
+                (id_, state) = line.split(' : ')
+                name, point_string = TaskID.split(id_)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
                 print >> sys.stderr, " ", line
@@ -345,8 +345,8 @@ class restart(scheduler):
                 point_string = str(self.start_point)
                 new_id = TaskID.get(name, point_string)
                 print >> sys.stderr, (
-                    "WARNING: converting %s to %s" % (id, new_id))
-                id = new_id
+                    "WARNING: converting %s to %s" % (id_, new_id))
+                id_ = new_id
             tasknames[name] = True
             if 'status=submitting,' in state:
                 # back compat for state dumps generated prior to #787
@@ -361,7 +361,7 @@ class restart(scheduler):
             except Exception as e:
                 print >> sys.stderr, "ERROR: ", type(e).__name__, e
                 raise Exception("ERROR: corrupted state dump")
-            taskstates[id] = (name, point_string, state)
+            taskstates[id_] = (name, point_string, state)
             task_point_strings.append(point_string)
 
         task_point_strings = list(set(task_point_strings))
@@ -399,12 +399,13 @@ class restart(scheduler):
         print "RELOADING task proxies"
 
         config = SuiteConfig.get_inst()
-        for id in taskstates:
-            name, point_string, state = taskstates[id]
+        itasks = {}
+        for id_ in taskstates:
+            name, point_string, state = taskstates[id_]
             if name not in task_list:
                 continue
 
-            print " +", id
+            print " +", id_
             task_states_datum = task_states_data.get((name, point_string))
             try:
                 submit_num = task_states_datum.get("submit_num", 0)
@@ -484,7 +485,19 @@ class restart(scheduler):
                 raise Exception(
                     'ERROR: unknown task state for %s' % itask.identity)
 
+            itasks[(point_string, name)] = itask
             self.pool.add_to_runahead_pool(itask)
+
+        # Re-populate summary, a job host for each submit
+        # for display of logs in GUI
+        for datum in self.pri_dao.select_all_task_jobs(
+                ['cycle', 'name', 'submit_num', 'user_at_host']):
+            cycle, name, submit_num, user_at_host = datum
+            try:
+                itasks[(cycle, name)].summary['job_hosts'][int(submit_num)] = (
+                    user_at_host)
+            except (KeyError, ValueError):
+                pass
 
         # Poll all submitted and running task jobs
         self.pool.poll_task_jobs()
