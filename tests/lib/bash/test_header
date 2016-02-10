@@ -408,7 +408,6 @@ function create_test_globalrc() {
         exit 1
     fi
     # Tidy in case of previous use of this function.
-    unset CYLC_CONF_PATH
     rm -rf conf
     mkdir conf
     # Suite host self-identification method.

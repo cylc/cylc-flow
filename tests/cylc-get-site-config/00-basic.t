@@ -18,12 +18,13 @@
 # Test cylc-get-site-config
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 9
+set_test_number 10
 create_test_globalrc
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-get-config
 run_ok $TEST_NAME.validate cylc get-site-config
-run_ok $TEST_NAME.print cylc get-site-config --print
+run_ok $TEST_NAME.print-run-dir cylc get-site-config --print-run-dir
+run_ok $TEST_NAME.print-site-dir cylc get-site-config --print-site-dir
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-get-items
 run_ok $TEST_NAME.doc-section cylc get-site-config --item='[documentation]'
