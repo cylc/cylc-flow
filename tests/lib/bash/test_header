@@ -78,9 +78,7 @@
 #     create_test_globalrc [PRE [POST]]
 #         Create a new global config file $PWD/conf from site global-tests.rc
 #         with PRE and POST pre- and ap-pended (PRE for top level items with no
-#         section heading). For multi-line strings in bash, use:
-#           $"the quick
-#           brown fox"
+#         section heading).
 #-------------------------------------------------------------------------------
 set -eu
 

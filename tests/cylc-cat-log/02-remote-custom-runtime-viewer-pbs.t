@@ -35,7 +35,7 @@ set_test_number 2
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-create_test_globalrc '' $"
+create_test_globalrc "" "
 [hosts]
     [[${CYLC_TEST_HOST}]]
         [[[batch systems]]]

@@ -24,7 +24,7 @@ if [[ -z "${HOST}" ]]; then
 fi
 set_test_number 3
 
-create_test_globalrc '' $"
+create_test_globalrc "" "
 [hosts]
     [[${HOST}]]
         retrieve job logs = True

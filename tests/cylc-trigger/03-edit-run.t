@@ -25,7 +25,7 @@ TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 # Configure a fake editor and run a suite with a task that does an edit run.
-create_test_globalrc '' $'
+create_test_globalrc '' '
 [editors]
     terminal = my-edit'
 TEST_NAME="${TEST_NAME_BASE}-run"

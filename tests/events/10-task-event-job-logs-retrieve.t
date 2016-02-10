@@ -25,7 +25,7 @@ fi
 set_test_number 5
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_globalrc '' $"
+    create_test_globalrc "" "
 [hosts]
     [[${HOST}]]
         retrieve job logs = True

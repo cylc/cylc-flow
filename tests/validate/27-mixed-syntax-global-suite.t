@@ -21,7 +21,7 @@
 set_test_number 1
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-create_test_globalrc $'submission polling intervals = 1, 5, 15'
+create_test_globalrc 'submission polling intervals = 1, 5, 15'
 run_ok "${TEST_NAME_BASE}" cylc validate "${SUITE_NAME}"
 
 purge_suite "${SUITE_NAME}"

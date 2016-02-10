@@ -34,7 +34,7 @@ $SSH -n "${CYLC_TEST_HOST}" "mkdir -p .cylc/$SUITE_NAME/bin"
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-create_test_globalrc '' $"
+create_test_globalrc "" "
 [hosts]
    [[$CYLC_TEST_HOST]]
         remote tail command template = \$HOME/.cylc/$SUITE_NAME/bin/my-tailer.sh %(filename)s"

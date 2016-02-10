@@ -22,10 +22,10 @@ set_test_number 7
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-create_test_globalrc \
-   $'execution polling intervals = PT0.2M, PT0.1M
-submission polling intervals = PT0.2M, PT0.1M' \
-   $'[task messaging]
+create_test_globalrc '
+execution polling intervals = PT0.2M, PT0.1M
+submission polling intervals = PT0.2M, PT0.1M' '
+[task messaging]
    connection timeout = PT20S
    retry interval = PT9S
 [hosts]

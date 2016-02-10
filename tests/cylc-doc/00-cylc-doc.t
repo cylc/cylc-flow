@@ -20,7 +20,7 @@
 #-------------------------------------------------------------------------------
 set_test_number 2
 #-------------------------------------------------------------------------------
-create_test_globalrc '' $'
+create_test_globalrc "" "
 [documentation]
    [[files]]
       pdf user guide = ${PWD}/doc/pdf/cug-pdf.pdf
@@ -29,7 +29,7 @@ create_test_globalrc '' $'
       single-page html user guide = /home/bob/cylc/cylc.git/doc/html/single/cug-html.html
    [[urls]]
       internet homepage = http://cylc.github.com/cylc/
-      local index = http://localhost/cylc/index.html'
+      local index = http://localhost/cylc/index.html"
 #-------------------------------------------------------------------------------
 mkdir -p doc/pdf
 touch doc/pdf/cug-pdf.pdf
