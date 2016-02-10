@@ -561,12 +561,14 @@ class TaskPool(object):
                 cmd.append("--debug")
             host, owner = auth
             remote_mode = False
+            kwargs = {}
             for key, value, test_func in [
                     ('host', host, is_remote_host),
                     ('user', owner, is_remote_user)]:
                 if test_func(value):
                     cmd.append('--%s=%s' % (key, value))
                     remote_mode = True
+                    kwargs[key] = value
             if remote_mode:
                 cmd.append('--remote-mode')
             cmd.append("--")
@@ -587,6 +589,7 @@ class TaskPool(object):
                     cmd,
                     stdin_file_paths=stdin_file_paths,
                     job_log_dirs=job_log_dirs,
+                    **kwargs
                 ),
                 self.submit_task_jobs_callback)
 
@@ -594,10 +597,10 @@ class TaskPool(object):
         """Callback when submit task jobs command exits."""
         self._manip_task_jobs_callback(
             ctx,
-            lambda itask, line: itask.job_submit_callback(line),
+            lambda itask, ctx, line: itask.job_submit_callback(ctx, line),
             {
                 BATCH_SYS_MANAGER.OUT_PREFIX_COMMAND:
-                lambda itask, line: itask.job_cmd_out_callback(line),
+                lambda itask, ctx, line: itask.job_cmd_out_callback(ctx, line),
             },
         )
 
@@ -843,10 +846,11 @@ class TaskPool(object):
         """Callback when poll tasks command exits."""
         self._manip_task_jobs_callback(
             ctx,
-            lambda itask, line: itask.job_poll_callback(line),
+            lambda itask, ctx, line: itask.job_poll_callback(ctx, line),
             {
                 BATCH_SYS_MANAGER.OUT_PREFIX_MESSAGE:
-                lambda itask, line: itask.job_poll_message_callback(line),
+                lambda itask, ctx, line: itask.job_poll_message_callback(
+                    ctx, line),
             },
         )
 
@@ -894,16 +898,16 @@ class TaskPool(object):
         """Callback when kill tasks command exits."""
         self._manip_task_jobs_callback(
             ctx,
-            lambda itask, line: itask.job_kill_callback(line),
+            lambda itask, ctx, line: itask.job_kill_callback(ctx, line),
             {
                 BATCH_SYS_MANAGER.OUT_PREFIX_COMMAND:
-                lambda itask, line: itask.job_cmd_out_callback(line),
+                lambda itask, ctx, line: itask.job_cmd_out_callback(ctx, line),
             },
         )
 
     def _manip_task_jobs_callback(
             self, ctx, summary_callback, more_callbacks=None):
-        """Callback when poll/kill tasks command exits."""
+        """Callback when submit/poll/kill tasks command exits."""
         if ctx.ret_code:
             self.log.error(ctx)
         else:
@@ -921,18 +925,16 @@ class TaskPool(object):
         if more_callbacks:
             for prefix, callback in more_callbacks.items():
                 handlers.append((prefix, callback))
-        if not ctx.out:
+        out = ctx.out
+        if not out:
             # Something is very wrong here
             # Fallback to use "job_log_dirs" list to report the problem
             job_log_dirs = ctx.cmd_kwargs.get("job_log_dirs", [])
             for job_log_dir in job_log_dirs:
                 point, name, submit_num = job_log_dir.split(os.sep, 2)
                 itask = tasks[(point, name, submit_num)]
-                for prefix, callback in handlers:
-                    callback(
-                        itask, "|".join([ctx.timestamp, job_log_dir, "1"]))
-            return
-        for line in ctx.out.splitlines(True):
+                out += "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n"
+        for line in out.splitlines(True):
             for prefix, callback in handlers:
                 if line.startswith(prefix):
                     line = line[len(prefix):].strip()
@@ -940,7 +942,7 @@ class TaskPool(object):
                         path = line.split("|", 2)[1]  # timestamp, path, status
                         point, name, submit_num = path.split(os.sep, 2)
                         itask = tasks[(point, name, submit_num)]
-                        callback(itask, line)
+                        callback(itask, ctx, line)
                     except (KeyError, ValueError):
                         if cylc.flags.debug:
                             self.log.warning(
@@ -1684,6 +1686,7 @@ class TaskPool(object):
                     ('user', owner, is_remote_user)]:
                 if test_func(value):
                     cmd.append('--%s=%s' % (key, value))
+                    kwargs[key] = value
             cmd.append("--")
             cmd.append(GLOBAL_CFG.get_derived_host_item(
                 self.suite_name, 'suite job log directory', host, owner))
