@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.8.1">6.8.1</a>
     <li><a href="#6.8.0">6.8.0</a>
     <li><a href="#6.7.4">6.7.4</a>
     <li><a href="#6.7.3">6.7.3</a>
@@ -67,6 +68,31 @@
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
 
+<a name="6.8.1"/>
+    <h2>6.8.1</h2>
+
+    <ul>
+        <li> ensure that suite run database ops are executed in the
+        correct order even on retry after locking events
+        <li> <code>gcylc</code>:
+        <ul>
+            <li> remember previous job logs after suite restart
+            <li> right-click menu is now task-state dependent
+            <li> reset port on suite stop, in case the suite gets restarted on
+            another port
+        </ul>
+        <li> improved job submission to the <code>at</code> scheduler:
+        <ul>
+            <li> better detection of <code>atd</code> not running
+            <li> if a job appears to have exited <code>atq</code>, check
+            the PID too (on some systems <code>atq</code> only shows queued,
+            not running, jobs).
+        </ul>
+        <li> <code>cylc ping</code> - use "scan hash" global config to avoid
+        spurious "connection denied" warnings in older suite daemons.
+    </ul>
+
+ 
 <a name="6.8.0"/>
     <h2>6.8.0</h2>
 
