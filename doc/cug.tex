@@ -1055,7 +1055,7 @@ Alternatively, start gcylc on the suite,
 \begin{lstlisting}
 shell$ gcylc tut.oneoff.basic &
 \end{lstlisting}
-and choose {\em Suite } $\rightarrow$ {\em Edit} from the menu.
+and choose {\em Suite } \textrightarrow {\em Edit} from the menu.
 
 The editor will be invoked from within the suite definition directory for easy
 access to other suite files (in this case there are none).  There are syntax
@@ -1153,7 +1153,7 @@ are already running:
 shell$ cylc gui tut.oneoff.basic &
 \end{lstlisting}
 Use the tool bar {\em Play} button, or the {\em Control}
-$\rightarrow$ {\em Run} menu item, to run the suite again.
+\textrightarrow {\em Run} menu item, to run the suite again.
 You may want to alter the suite definition slightly to make the task
 take longer to run. Try right-clicking on the \lstinline=hello= task
 to view its output logs. The relative merits of the three {\em suite
@@ -5702,12 +5702,12 @@ Access to the cylc executable for different hosts can be configured using
 the site and user global configuration files.
 If the environment for running the cylc executable is only set up correctly in
 a login shell for a given host, you can set the
-\lstinline=[hosts] $\rightarrow$ HOST $\rightarrow$ cylc executable=
+\lstinline=[hosts] \textrightarrow HOST \textrightarrow cylc executable=
 setting for the relevant host to \lstinline=True=.
 (This is the default behaviour.)
 If the environment is already correct without the login shell, but the cylc
 executable is not in \lstinline=$PATH=, then the
-\lstinline=[hosts] $\rightarrow$ HOST $\rightarrow$ cylc executable=
+\lstinline=[hosts] \textrightarrow HOST \textrightarrow cylc executable=
 setting can be used to specify the path to the cylc executable.
 
 The site/user global config item \lstinline=global init-script= can also be
@@ -6010,7 +6010,7 @@ the retry delay period when it is resubmitted.
 
 {\em Note that event handlers are called by cylc itself, not by the
 running tasks} so if you wish to pass them additional information via
-the environment you must use [cylc] $\rightarrow$ [[environment]],
+the environment you must use [cylc] \textrightarrow [[environment]],
 not task runtime environments.
 
 The following 2 \lstinline=suite.rc= snippets are examples on how to specify
@@ -7134,7 +7134,6 @@ testing of the script during development or debugging.
 \appendix
 
 \input{suiterc.tex}
-
 \pagebreak
 
 \input{siterc.tex}

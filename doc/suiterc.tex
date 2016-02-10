@@ -52,7 +52,7 @@ task URLs (\ref{TaskURL}).
 
 This section is for configuration that is not specifically task-related.
 
-\subsubsection[required run mode]{ [cylc] $\rightarrow$ required run mode}
+\subsubsection[required run mode]{ [cylc] \textrightarrow required run mode}
 
 If this item is set cylc will abort if the suite is not started in the
 specified mode. This can be used for demo suites that have to be
@@ -65,7 +65,7 @@ expensive real tasks during suite development.
     \item {\em default:} None
 \end{myitemize}
 
-\subsubsection[UTC mode]{ [cylc] $\rightarrow$ UTC mode}
+\subsubsection[UTC mode]{ [cylc] \textrightarrow UTC mode}
 \label{UTC-mode}
 
 Cylc runs off the suite host's system clock by default. This item allows
@@ -80,7 +80,7 @@ this can be set at the site level (see ~\ref{SiteUTCMode}).
     \item {\em default:} False, unless overridden at site level.
 \end{myitemize}
 
-\subsubsection[cycle point format]{ [cylc] $\rightarrow$ cycle point format}
+\subsubsection[cycle point format]{ [cylc] \textrightarrow cycle point format}
 \label{cycle-point-format}
 
 To just alter the timezone used in the date/time cycle point format, see
@@ -122,7 +122,7 @@ task output files ("/" is a reserved character in POSIX file and directory
 naming). Using ":" is also not allowed, as it is likely to interfere with
 usage of commands like "rsync" when applied to task output files.
 
-\subsubsection[cycle point num expanded year digits]{ [cylc] $\rightarrow$
+\subsubsection[cycle point num expanded year digits]{ [cylc] \textrightarrow
 cycle point num expanded year digits}
 \label{cycle-point-num-expanded-year-digits}
 
@@ -137,7 +137,7 @@ be written as \lstinline=+00019850504T0600Z=.
 
 This number defaults to 0 (no sign or extra digits used).
 
-\subsubsection[cycle point time zone]{ [cylc] $\rightarrow$
+\subsubsection[cycle point time zone]{ [cylc] \textrightarrow
 cycle point time zone}
 \label{cycle-point-time-zone}
 
@@ -161,7 +161,7 @@ Note that the ISO standard also allows writing the hour and minute separated
 by a ":" (e.g. \lstinline=+13:00=) - however, this is not recommended, given
 that the time zone is used as part of task output filenames.
 
-\subsubsection[abort if any task fails]{[cylc] $\rightarrow$ abort if any task fails}
+\subsubsection[abort if any task fails]{[cylc] \textrightarrow abort if any task fails}
 
 Cylc does not normally abort if tasks fail, but if this item is turned
 on it will abort with exit status 1 if any task fails.
@@ -171,7 +171,7 @@ on it will abort with exit status 1 if any task fails.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[disable automatic shutdown]{[cylc] $\rightarrow$ disable automatic shutdown}
+\subsubsection[disable automatic shutdown]{[cylc] \textrightarrow disable automatic shutdown}
 
 This has the same effect as the \lstinline{--no-auto-shutdown} flag for
 the suite run commands: it prevents the suite daemon from shutting down
@@ -185,7 +185,7 @@ during suite development and debugging.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[log resolved dependencies]{[cylc] $\rightarrow$ log resolved dependencies}
+\subsubsection[log resolved dependencies]{[cylc] \textrightarrow log resolved dependencies}
 
 If this is turned on cylc will write the resolved dependencies of each
 task to the suite log as it becomes ready to run (a list of the IDs of
@@ -197,7 +197,7 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}event hooks{]]}]{[cylc] $\rightarrow$ [[event hooks]]}
+\subsubsection[{[[}event hooks{]]}]{[cylc] \textrightarrow [[event hooks]]}
 \label{SuiteEventHandling}
 
 Cylc has internal ``hooks'' to which you can attach handlers that are
@@ -224,9 +224,9 @@ where,
 \end{myitemize}
 
 Additional information can be passed to event handlers via
-[cylc] $\rightarrow$ [[environment]].
+[cylc] \textrightarrow [[environment]].
 
-\paragraph[EVENT handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ EVENT handler}
+\paragraph[EVENT handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow EVENT handler}
 
 A comma-separated list of one or more event handlers to call when one of the
 following EVENTs occurs:
@@ -246,7 +246,7 @@ Item details:
     \item {\em example:} \lstinline@startup handler = my-handler.sh@
 \end{myitemize}
 
-\paragraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
+\paragraph[timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow timeout}
 
 If a timeout is set and the timeout event is handled, the timeout event
 handler(s) will be called if the suite times out before it finishes.
@@ -259,7 +259,7 @@ for this at the site level (see ~\ref{SiteCylcHooks}).
     \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
 
-\paragraph[reset timer]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ reset timer}
+\paragraph[reset timer]{[cylc] \textrightarrow [[event hooks]] \textrightarrow reset timer}
 
 If \lstinline=True= (the default) the suite timer will continually reset
 after any task changes state, so you can time out after some interval
@@ -271,7 +271,7 @@ time.
     \item {\em default:} True
 \end{myitemize}
 
-\paragraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
+\paragraph[abort on timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
 error status if the suite times out while still running. It is possible to set 
@@ -282,7 +282,7 @@ a default for this at the site level (see ~\ref{SiteCylcHooks}).
     \item {\em default:} False, unless set at the site level.
 \end{myitemize}
 
-\paragraph[abort if startup handler fails]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort if EVENT handler fails}
+\paragraph[abort if startup handler fails]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort if EVENT handler fails}
 
 Cylc does not normally care whether an event handler succeeds or fails,
 but if this is turned on the EVENT handler will be executed in the
@@ -294,7 +294,7 @@ suite will abort if the handler fails.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}environment{]]} ]{[cylc] $\rightarrow$ [[environment]]}
+\subsubsection[{[[}environment{]]} ]{[cylc] \textrightarrow [[environment]]}
 
 Environment variables defined in this section are passed to suite and
 task event handlers.
@@ -321,7 +321,7 @@ task event handlers.
         so shell variable expansion expressions cannot be used here.
 \end{myitemize}
 
-\paragraph[\_\_VARIABLE\_\_ ]{[cylc] $\rightarrow$ [[environment]] $\rightarrow$ \_\_VARIABLE\_\_}
+\paragraph[\_\_VARIABLE\_\_ ]{[cylc] \textrightarrow [[environment]] \textrightarrow \_\_VARIABLE\_\_}
 
 Replace \_\_VARIABLE\_\_ with any number of environment variable
 assignment expressions.
@@ -343,7 +343,7 @@ parser is concerned these are just suite configuration items).
 \end{myitemize}
 
 
-\subsubsection[{[[}reference test{]]}]{[cylc] $\rightarrow$ [[reference test]] }
+\subsubsection[{[[}reference test{]]}]{[cylc] \textrightarrow [[reference test]] }
 \label{ReferenceTestConfig}
 
 Reference tests are finite-duration suite runs that abort with non-zero
@@ -351,7 +351,7 @@ exit status if cylc fails, if any task fails, if the suite times
 out, or if a shutdown event handler that (by default) compares the test
 run with a reference run reports failure. See~\ref{AutoRefTests}.
 
-\paragraph[suite shutdown event handler]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ suite shutdown event handler}
+\paragraph[suite shutdown event handler]{[cylc] \textrightarrow [[reference test]] \textrightarrow suite shutdown event handler}
 
 A shutdown event handler that should compare the test run with the
 reference run, exiting with zero exit status only if the test run
@@ -364,7 +364,7 @@ verifies.
 As for any event handler, the full path can be ommited if the script is
 located somewhere in \lstinline=$PATH= or in the suite bin directory.
 
-\paragraph[required run mode]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ required run mode}
+\paragraph[required run mode]{[cylc] \textrightarrow [[reference test]] \textrightarrow required run mode}
 
 If your reference test is only valid for a particular run mode, this
 setting will cause cylc to abort if a reference test is attempted
@@ -376,7 +376,7 @@ in another run mode.
     \item {\em default:} None
 \end{myitemize}
 
-\paragraph[allow task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ allow task failures}
+\paragraph[allow task failures]{[cylc] \textrightarrow [[reference test]] \textrightarrow allow task failures}
 
 A reference test run will abort immediately if any task fails, unless
 this item is set, or a list of {\em expected task failures} is provided
@@ -387,7 +387,7 @@ this item is set, or a list of {\em expected task failures} is provided
     \item {\em default:} False
 \end{myitemize}
 
-\paragraph[expected task failures]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ expected task failures}
+\paragraph[expected task failures]{[cylc] \textrightarrow [[reference test]] \textrightarrow expected task failures}
 
 A reference test run will abort immediately if any task fails, unless
 {\em allow task failures} is set (above) or the failed task is found
@@ -399,7 +399,7 @@ in a list IDs of tasks that are expected to fail.
     \item {\em example:} \lstinline=foo.20120808, bar.20120908=
 \end{myitemize}
 
-\paragraph[live mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ live mode suite timeout}
+\paragraph[live mode suite timeout]{[cylc] \textrightarrow [[reference test]] \textrightarrow live mode suite timeout}
 
 The timeout value, expressed as an ISO 8601 duration/interval, after which the
 test run should be aborted if it has not finished, in live mode. Test runs
@@ -407,13 +407,13 @@ cannot be done in live mode unless you define a value for this item, because
 it is not possible to arrive at a sensible default for all suites.
 
 \begin{myitemize}
-    \item {\em type:} ISO 8601 duration/interval representation (e.g.
- \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
- months, so remember the \lstinline=T=!)).
+    \item {\em type:} ISO 8601 duration/interval representation, e.g.
+        \lstinline=PT5M= is 5 minutes (note: by contrast \lstinline=P5M= means 5
+         months, so remember the \lstinline=T=!).
     \item {\em default:} PT1M (1 minute)
 \end{myitemize}
 
-\paragraph[simulation mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ simulation mode suite timeout}
+\paragraph[simulation mode suite timeout]{[cylc] \textrightarrow [[reference test]] \textrightarrow simulation mode suite timeout}
 
 The timeout value in minutes after which the test run should be aborted
 if it has not finished, in simulation mode. Test runs cannot be done in
@@ -427,7 +427,7 @@ not possible to arrive at a sensible default for all suites.
     \item {\em default:} PT1M (1 minute)
 \end{myitemize}
 
-\paragraph[dummy mode suite timeout]{[cylc] $\rightarrow$ [[reference test]] $\rightarrow$ dummy mode suite timeout}
+\paragraph[dummy mode suite timeout]{[cylc] \textrightarrow [[reference test]] \textrightarrow dummy mode suite timeout}
 
 The timeout value, expressed as an ISO 8601 duration/interval, after which the
 test run should be aborted if it has not finished, in dummy mode.  Test runs
@@ -444,11 +444,11 @@ it is not possible to arrive at a sensible default for all suites.
 \subsection{[authentication]}
 \label{SuiteAuth}
 
-Authentication of client programs with suite daemons can be configured in the
-global site/user files (\ref{GlobalAuth}) and overridden here if necessary.
+Authentication of client programs with suite daemons can be set in the
+global site/user config files and overridden here if necessary.
 See~\ref{GlobalAuth} for more information.
 
-\subsubsection{[authentication] $\rightarrow$ public}
+\subsubsection{[authentication] \textrightarrow public}
 
 The client privilege level granted for public access - i.e.\ no suite passphrase
 required.  See~\ref{GlobalAuth} for legal values.
@@ -457,7 +457,7 @@ required.  See~\ref{GlobalAuth} for legal values.
 
 This section allows cylc to determine when tasks are ready to run.
 
-\subsubsection[cycling]{ [scheduling] $\rightarrow$ cycling mode }
+\subsubsection[cycling]{ [scheduling] \textrightarrow cycling mode }
 \label{cycling-mode}
 
 Cylc runs using the proleptic Gregorian calendar by default. This item allows
@@ -471,7 +471,7 @@ in a year) or using integer cycling.
     
 \end{myitemize}
 
-\subsubsection[initial cycle point]{[scheduling] $\rightarrow$ initial cycle point}
+\subsubsection[initial cycle point]{[scheduling] \textrightarrow initial cycle point}
 \label{initial cycle point}
 
 In a cold start each cycling task (unless specifically excluded under
@@ -496,7 +496,7 @@ to UTC if the suite is in UTC mode but the host is not) to minute resolution.
 Minutes (or hours, etc.) may be ignored depending on your cycle point format
 (\ref{cycle-point-format}).
 
-\subsubsection[final cycle point]{[scheduling] $\rightarrow$ final cycle point}
+\subsubsection[final cycle point]{[scheduling] \textrightarrow final cycle point}
 
 Cycling tasks are held once they pass the final cycle point, if one is
 specified. Once all tasks have achieved this state the suite will shut
@@ -514,7 +514,7 @@ the \ref{cycle-point-time-zone} if that is set.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[initial cycle point constraints]{[scheduling] $\rightarrow$ initial cycle point constraints}
+\subsubsection[initial cycle point constraints]{[scheduling] \textrightarrow initial cycle point constraints}
 \label{initial cycle point constraints}
 
 In a cycling suite it is possible to restrict the initial cycle point by
@@ -527,7 +527,7 @@ constraints.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[final cycle point constraints]{[scheduling] $\rightarrow$ final cycle point constraints}
+\subsubsection[final cycle point constraints]{[scheduling] \textrightarrow final cycle point constraints}
 \label{final cycle point constraints}
 
 In a cycling suite it is possible to restrict the final cycle point by
@@ -540,14 +540,14 @@ constraints.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[hold after point]{[scheduling] $\rightarrow$ hold after point}
+\subsubsection[hold after point]{[scheduling] \textrightarrow hold after point}
 
 Cycling tasks are held once they pass the hold after cycle point, if one is
 specified. Unlike the final cycle point suite will not shut down once all tasks
 have passed this point. If this item is provided you can override it on the 
 command line or in the gcylc suite start panel.
 
-\subsubsection[runahead limit]{[scheduling] $\rightarrow$ runahead limit}
+\subsubsection[runahead limit]{[scheduling] \textrightarrow runahead limit}
 \label{runahead limit}
 
 Runahead limiting prevents the fastest tasks in a suite from getting too far
@@ -563,7 +563,7 @@ limiting by \lstinline=max active cycle points= (\ref{max active cycle points}).
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[max active cycle points]{[scheduling] $\rightarrow$
+\subsubsection[max active cycle points]{[scheduling] \textrightarrow
  max active cycle points}
 \label{max active cycle points}
 
@@ -581,7 +581,7 @@ any future triggering.
 \end{myitemize}
 
 
-\subsubsection[{[[}queues{]]}]{[scheduling] $\rightarrow$ [[queues]]}
+\subsubsection[{[[}queues{]]}]{[scheduling] \textrightarrow [[queues]]}
 
 Configuration of internal queues, by which the number of simultaneously
 active tasks (submitted or running) can be limited, per queue. By
@@ -590,7 +590,7 @@ assigned to it and no limit. To use a single queue for the whole suite
 just set the limit on the {\em default} queue as required.
 See also~\ref{InternalQueues}.
 
-\paragraph[{[[[}\_\_QUEUE\_\_{]]]}]{[scheduling] $\rightarrow$ [[queues]] $\rightarrow$ [[[\_\_QUEUE\_\_]]]}
+\paragraph[{[[[}\_\_QUEUE\_\_{]]]}]{[scheduling] \textrightarrow [[queues]] \textrightarrow [[[\_\_QUEUE\_\_]]]}
 
 Section heading for configuration of a single queue. Replace
 \_\_QUEUE\_\_ with a queue name, and repeat the section as required.
@@ -600,7 +600,7 @@ Section heading for configuration of a single queue. Replace
 \item {\em default:} ``default''
 \end{myitemize}
 
-\paragraph[limit]{[scheduling] $\rightarrow$ [[queues]] $\rightarrow$ [[[\_\_QUEUE\_\_]]] $\rightarrow$ limit}
+\paragraph[limit]{[scheduling] \textrightarrow [[queues]] \textrightarrow [[[\_\_QUEUE\_\_]]] \textrightarrow limit}
 
 The maximum number of active tasks allowed at any one time, for this queue.
 \begin{myitemize}
@@ -608,7 +608,7 @@ The maximum number of active tasks allowed at any one time, for this queue.
 \item {\em default:} 0 (i.e.\ no limit)
 \end{myitemize}
 
-\paragraph[members]{[scheduling] $\rightarrow$ [[queues]] $\rightarrow$ [[[\_\_QUEUE\_\_]]] $\rightarrow$ members}
+\paragraph[members]{[scheduling] \textrightarrow [[queues]] \textrightarrow [[[\_\_QUEUE\_\_]]] \textrightarrow members}
 
 A list of member tasks, or task family names, to assign to this queue
 (assigned tasks will automatically be removed from the default queue).
@@ -617,12 +617,12 @@ A list of member tasks, or task family names, to assign to this queue
 \item {\em default:} none for user-defined queues; all tasks for the ``default'' queue
 \end{myitemize}
 
-\subsubsection[{[[}special tasks{]]}]{[scheduling] $\rightarrow$ [[special tasks]]}
+\subsubsection[{[[}special tasks{]]}]{[scheduling] \textrightarrow [[special tasks]]}
 
 This section is used to identify tasks with special behaviour. Family names can
 be used in special task lists as shorthand for listing all member tasks.
 
-\paragraph[clock-trigger]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-trigger}
+\paragraph[clock-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow clock-trigger}
 
 Clock-trigger tasks (see~\ref{ClockTriggerTasks}) wait on a wall clock time
 specified as an offset from their own cycle point.
@@ -639,7 +639,7 @@ specified as an offset from their own cycle point.
 \end{lstlisting}
 \end{myitemize}
 
-\paragraph[clock-expire]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ clock-expire}
+\paragraph[clock-expire]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow clock-expire}
 \label{ClockExpireRef}
 
 Clock-expire tasks enter the {\em expired} state and skip job submission if too
@@ -659,7 +659,7 @@ see~\ref{ClockExpireTasks}.
 \end{lstlisting}
 \end{myitemize}
 
-\paragraph[external-trigger]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ external-trigger}
+\paragraph[external-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow external-trigger}
 
 Externally triggered tasks (see~\ref{ExternalTriggers}) wait on external events
 reported via the \lstinline=cylc ext-trigger= command.
@@ -676,7 +676,7 @@ reported via the \lstinline=cylc ext-trigger= command.
 \end{myitemize}
 
 
-\paragraph[sequential]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ sequential}
+\paragraph[sequential]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow sequential}
 
 Sequential tasks are automatically given dependence on their own
 predecessor. This is equivalent to use of explicit inter-cycle triggers
@@ -690,7 +690,7 @@ and~\ref{LimitPID}.
     \item {\em example:} \lstinline@sequential = foo, bar@
 \end{myitemize}
 
-\paragraph[cold-start]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ cold-start}
+\paragraph[cold-start]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow cold-start}
 
 A cold-start task is one-off task used to satisfy the dependence of an
 associated task with the same cycle point, on outputs from a previous
@@ -712,7 +712,7 @@ expressions to avoid holding up the suite.
     \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[one-off]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ one-off}
+\paragraph[one-off]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow one-off}
 
 Synchronous one-off tasks have an associated cycle point but do not spawn
 a successor. Synchronous {\em start-up} and {\em cold-start} tasks are
@@ -724,7 +724,7 @@ Dependence on one-off tasks is not restricted to the first cycle.
 \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[exclude at start-up]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ exclude at start-up}
+\paragraph[exclude at start-up]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow exclude at start-up}
 \label{EASU}
 
 Any task listed here will be excluded from the initial task pool (this
@@ -740,7 +740,7 @@ triggering, or insertion of excluded tasks, may be required.
     \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[include at start-up]{[scheduling] $\rightarrow$ [[special tasks]] $\rightarrow$ include at start-up}
+\paragraph[include at start-up]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow include at start-up}
 \label{IASU}
 
 If this list is not empty, any task {\em not} listed in it will be
@@ -757,14 +757,14 @@ tasks, may be required.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[{[[}dependencies{]]}]{[scheduling] $\rightarrow$ [[dependencies]]}
+\subsubsection[{[[}dependencies{]]}]{[scheduling] \textrightarrow [[dependencies]]}
 
 The suite dependency graph is defined under this section.  You can plot
 the dependency graph as you work on it, with \lstinline=cylc graph= or
 by right clicking on the suite in the db viewer.  See
 also~\ref{ConfiguringScheduling}.
 
-\paragraph[graph]{ [scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ graph }
+\paragraph[graph]{ [scheduling] \textrightarrow [[dependencies]] \textrightarrow graph }
 
 The dependency graph for a completely non-cycling suites can go here.
 See also~\ref{GraphDescrip} below and~\ref{ConfiguringScheduling}, for graph
@@ -774,7 +774,7 @@ string syntax.
     \item {\em example:} (see~\ref{GraphDescrip} below)
 \end{myitemize}
 
-\paragraph[{[[[}\_\_RECURRENCE\_\_{]]]}]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_RECURRENCE\_\_]]]}
+\paragraph[{[[[}\_\_RECURRENCE\_\_{]]]}]{[scheduling] \textrightarrow [[dependencies]] \textrightarrow [[[\_\_RECURRENCE\_\_]]]}
 
 \_\_RECURRENCE\_\_ section headings define the sequence of cycle points for
 which the subsequent graph section is valid. These should be specified in
@@ -793,7 +793,7 @@ our ISO 8601 derived sequence syntax, or similar for integer cycling:
 See~\ref{GraphTypes} for more on recurrence expressions, and how multiple graph
 sections combine.
 
-\subparagraph[graph]{[scheduling] $\rightarrow$ [[dependencies]] $\rightarrow$ [[[\_\_RECURRENCE\_\_]]] $\rightarrow$ graph }
+\subparagraph[graph]{[scheduling] \textrightarrow [[dependencies]] \textrightarrow [[[\_\_RECURRENCE\_\_]]] \textrightarrow graph }
 \label{GraphDescrip}
 
 The dependency graph for a given recurrence section goes here. Syntax examples
@@ -833,7 +833,7 @@ precedence is determined by the C3 linearization algorithm as used to
 find the {\em method resolution order} in Python language class
 hiearchies. For details and examples see~\ref{NIORP}.
 
-\subsubsection[{[[}\_\_NAME\_\_{]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]]}
+\subsubsection[{[[}\_\_NAME\_\_{]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]]}
 
 Replace \_\_NAME\_\_ with a namespace name, or a comma-separated list of
 names, and repeat as needed to define all tasks in the suite. Names may
@@ -860,7 +860,7 @@ All namespaces inherit initially from {\em root}, which can be
 explicitly configured to provide or override default settings
 for all tasks in the suite.
 
-\paragraph[inherit]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ inherit}
+\paragraph[inherit]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow inherit}
 
 A list of the immediate parent(s) this namespace inherits from. If no
 parents are listed \lstinline=root= is assumed.
@@ -870,7 +870,7 @@ parents are listed \lstinline=root= is assumed.
 \item {\em default:} \lstinline=root=
 \end{myitemize}
 
-\paragraph[title]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ title}
+\paragraph[title]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow title}
 
 A single line description of this namespace. It is displayed by the
 \lstinline=cylc list= command and can be retrieved from running tasks
@@ -881,7 +881,7 @@ with the \lstinline=cylc show= command.
 \item {\em root default:} (none)
 \end{myitemize}
 
-\paragraph[description]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ description}
+\paragraph[description]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow description}
 
 A multi-line description of this namespace, retrievable from running tasks with the
 \lstinline=cylc show= command.
@@ -891,7 +891,7 @@ A multi-line description of this namespace, retrievable from running tasks with 
 \item {\em root default:} (none)
 \end{myitemize}
 
-\paragraph[URL]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ URL}
+\paragraph[URL]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow URL}
 \label{TaskURL}
 
 A web URL to task documentation for this suite.  If present it can be browsed
@@ -916,7 +916,7 @@ suite URLs (\ref{SuiteURL}).
 (Note that URLs containing the suite comment delimiter
 \lstinline=#= must be protected by quotes).
 
-\paragraph[init-script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ init-script}
+\paragraph[init-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow init-script}
 
 This is written to the top of the task job script before the task execution
 environment is configured, so it does not have access to any suite or task
@@ -933,7 +933,7 @@ longer be necessary (see~\ref{HowTasksGetAccessToCylc}). See also
 \item {\em example:} \lstinline@init-script = "echo Hello World"@
 \end{myitemize}
 
-\paragraph[env-script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ env-script}
+\paragraph[env-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow env-script}
 
 This is written to the task job script between the cylc-defined environment
 (suite and task identity, etc.) and the user-defined task runtime environment -
@@ -948,7 +948,7 @@ multiple lines of scripting.  See also \lstinline=init-script=,
 \item {\em example:} \lstinline@env-script = "echo Hello World"@
 \end{myitemize}
 
-\paragraph[pre-script]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ pre-script}
+\paragraph[pre-script]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow pre-script}
 
 This is written to the task job script immediately before the \lstinline=script=
 item (just below). It can be a single command or multiple lines of scripting.
@@ -966,7 +966,7 @@ See also \lstinline=init-script=, \lstinline=env-script=, \lstinline=script=, an
  \end{lstlisting}
 \end{myitemize}
 
-\paragraph[script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ script}
+\paragraph[script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow script}
 \label{ScriptItem}
 
 The is the main user-defined scripting to run when the task is ready. It can be a
@@ -978,7 +978,7 @@ single command or multiple lines of scripting. See also \lstinline=init-script=,
 \item {\em root default:} \lstinline=echo "Dummy task"; $(cylc rnd 1 16)=
 \end{myitemize}
 
-\paragraph[post-script]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ post-script}
+\paragraph[post-script]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow post-script}
 
 This is written to the task job script immediately after the \lstinline=script=
 item (just above).  It can be a single command or multiple lines of scripting.  See also
@@ -990,7 +990,7 @@ item (just above).  It can be a single command or multiple lines of scripting.  
 \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ retry delays}
+\paragraph[retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow retry delays}
 \label{RefRetries}
 
 A list of ISO 8601 time duration/intervals after which to resubmit the task
@@ -1007,7 +1007,7 @@ first try - this can be used to vary task behavior by try number.
     \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[submission polling intervals]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ submission polling intervals}
+\paragraph[submission polling intervals]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow submission polling intervals}
 \label{SubmissionPollingIntervals}
 
 A list of intervals, expressed as ISO 8601 duration/intervals, with optional
@@ -1036,7 +1036,7 @@ see~\ref{DetachingTasks}.}
 \end{myitemize}
 A single interval value is probably appropriate for submission polling.
 
-\paragraph[execution polling intervals]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ execution polling intervals}
+\paragraph[execution polling intervals]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow execution polling intervals}
 \label{ExecutionPollingIntervals}
 
 A list of intervals, expressed as ISO 8601 duration/intervals, with optional
@@ -1064,7 +1064,7 @@ see~\ref{DetachingTasks}.}
     \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[manual completion]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ manual completion}
+\paragraph[manual completion]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow manual completion}
 
 If a task's initiating process detaches and exits before task processing
 is finished then cylc cannot arrange for the task to automatically
@@ -1078,7 +1078,7 @@ appropriate places in the task implementation (see~\ref{DetachingTasks}).
 \item {\em default:} False
 \end{myitemize}
 
-\paragraph[work sub-directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ work sub-directory}
+\paragraph[work sub-directory]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow work sub-directory}
 \label{worksubdirectory}
 
 Task job scripts are executed from within {\em work directories} created
@@ -1103,7 +1103,7 @@ Note that if you omit cycle point from the work sub-directory path successive
 instances of the task will share the same workspace.  Consider the effect on
 cycle point offset housekeeping of work directories before doing this.
 
-\paragraph[enable resurrection]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ enable resurrection}
+\paragraph[enable resurrection]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow enable resurrection}
 
 If a message is received from a failed task cylc will normally treat
 this as an error condition, issue a warning, and leave the task in the
@@ -1120,11 +1120,11 @@ for a job with higher immediate priority. See also~\ref{PreemptionHPC}
 \end{myitemize}
 
 
-\paragraph[{[[[}dummy mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]]}
+\paragraph[{[[[}dummy mode{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]]}
 
 Dummy mode configuration.
 
-\subparagraph[script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ script}
+\subparagraph[script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]] \textrightarrow script}
 
 The main \lstinline=script= item for tasks in {\em dummy mode}.
 See~\ref{ScriptItem} for documentation.
@@ -1134,7 +1134,7 @@ See~\ref{ScriptItem} for documentation.
 \item {\em root default:} \lstinline=echo "Dummy task"; sleep $(cylc rnd 1 16)=
 \end{myitemize}
 
-\subparagraph[disable pre-script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ disable pre-script}
+\subparagraph[disable pre-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]] \textrightarrow disable pre-script}
 
 This disables the task pre-script in dummy mode.
 
@@ -1143,7 +1143,7 @@ This disables the task pre-script in dummy mode.
 \item {\em root default:} True
 \end{myitemize}
 
-\subparagraph[disable post-script]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[dummy mode]]] $\rightarrow$ disable post-script}
+\subparagraph[disable post-script]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[dummy mode]]] \textrightarrow disable post-script}
 
 This disables the task post-script in dummy mode.
 
@@ -1152,11 +1152,11 @@ This disables the task post-script in dummy mode.
 \item {\em root default:} True
 \end{myitemize}
 
-\paragraph[{[[[}simulation mode{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[simulation mode]]]}
+\paragraph[{[[[}simulation mode{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation mode]]]}
 
 Simulation mode configuration.
 
-\paragraph[run time range]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[simulation mode]]] $\rightarrow$ run time range}
+\paragraph[run time range]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[simulation mode]]] \textrightarrow run time range}
 
 This defines a minimum and a maximum duration (expressed as ISO 8601
 duration/intervals) which define a range from which the simulation mode task
@@ -1170,11 +1170,11 @@ run length will be randomly chosen.
     \item {\em default:} (1, 16)
 \end{myitemize}
 
-\paragraph[{[[[}job submission{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]]}
+\paragraph[{[[[}job submission{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]]}
 
 This section configures the means by which cylc submits task job scripts to run.
 
-\subparagraph[method]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ method}
+\subparagraph[method]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow method}
 \label{RuntimeJobSubMethods}
 
 See~\ref{TaskJobSubmission} for how job submission works, and how to define
@@ -1195,7 +1195,7 @@ new methods.  Cylc has a number of built in job submission methods:
 \item {\em default:} \lstinline=background=
 \end{myitemize}
 
-\subparagraph[command template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ command template}
+\subparagraph[command template]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow command template}
 
 This allows you to override the actual command used by the chosen job
 submission method. The template's \%(job)s will be substituted by the
@@ -1207,7 +1207,7 @@ job file path.
 \item {\em example:} \lstinline@llsubmit \%(job)s@
 \end{myitemize}
 
-\subparagraph[shell]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ shell}
+\subparagraph[shell]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow shell}
 \label{JobSubShell}
 
 This is the shell used to interpret the job script submitted by the suite
@@ -1224,7 +1224,7 @@ to be modified slightly to allow use of the C shell.
 \item {\em root default:} \lstinline=/bin/bash=
 \end{myitemize}
 
-\subparagraph[retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[job submission]]] $\rightarrow$ retry delays}
+\subparagraph[retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow retry delays}
 \label{JobSubRefRetries}
 
 A list of duration (in ISO 8601 syntax), after which to resubmit if job
@@ -1239,7 +1239,7 @@ submission fails.
 \end{myitemize}
 
 
-\paragraph[{[[[}remote{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]]}
+\paragraph[{[[[}remote{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]]}
 
 Configure host and username, for tasks that do not run on the suite host
 account. Passwordless ssh is used to submit the task by the configured
@@ -1248,7 +1248,7 @@ this. Cylc must be installed on remote task hosts, but of the external
 software dependencies only Pyro is required there (not even that if {\em
 ssh messaging} is used; see below).
 
-\subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ host}
+\subparagraph[host]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow host}
 \label{DynamicHostSelection}
 
 The remote host for this namespace. This can be a static hostname, an
@@ -1276,12 +1276,12 @@ of cylc on the remote machine; if not, the corresponding local settings
 \end{myitemize}
 
 
-\subparagraph[owner]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ owner}
+\subparagraph[owner]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow owner}
 
 The username of the task host account. This is (only) used in the
 passwordless ssh command invoked by the suite daemon to submit the remote task
 (consequently it may be defined using local environment variables
-(i.e.\ the shell in which cylc runs, and [cylc] $\rightarrow$ [[environment]]).
+(i.e.\ the shell in which cylc runs, and [cylc] \textrightarrow [[environment]]).
 
 If you use dynamic host selection and have different usernames on
 the different selectable hosts, you can configure your
@@ -1292,7 +1292,7 @@ the different selectable hosts, you can configure your
 \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[retrieve job logs]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs}
+\subparagraph[retrieve job logs]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow retrieve job logs}
 \label{runtime-remote-retrieve-job-logs}
 
 Remote task job logs are saved to the suite run directory on the task host, not
@@ -1308,7 +1308,7 @@ time a task job completes. E.g. if the job file is
 \item {\em default:} False
 \end{myitemize}
 
-\subparagraph[retrieve job logs max size]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs max size}
+\subparagraph[retrieve job logs max size]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow retrieve job logs max size}
 \label{runtime-remote-retrieve-job-logs-max-size}
 
 If the disk space of the suite host is limited, you may want to set the maximum
@@ -1321,7 +1321,7 @@ command.
 \item {\em default:} None
 \end{myitemize}
 
-\subparagraph[retrieve job logs retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$ retrieve job logs retry delays}
+\subparagraph[retrieve job logs retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow retrieve job logs retry delays}
 \label{runtime-remote-retrieve-job-logs-retry-delays}
 
 Some batch systems have considerable delays between the time when the job
@@ -1336,7 +1336,7 @@ delay.
     \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
 \end{myitemize}
 
-\subparagraph[suite definition directory]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[remote]]] $\rightarrow$  suite definition directory}
+\subparagraph[suite definition directory]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow  suite definition directory}
 
 The path to the suite definition directory on the remote host, needed if
 remote tasks require access to files stored there (via
@@ -1353,7 +1353,7 @@ interpretation on the remote host.
 \end{myitemize}
 
 
-\paragraph[{[[[}event hooks{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]]}
+\paragraph[{[[[}event hooks{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]]}
 \label{TaskEventHandling}
 
 Cylc can call nominated event handlers when certain task events occur. This
@@ -1391,10 +1391,10 @@ in the Python documentation:
 \url{https://docs.python.org/2/library/stdtypes.html#string-formatting}.
 
 Additional information can be passed to event handlers via the
-[cylc] $\rightarrow$ [[environment]] (but not via task
+[cylc] \textrightarrow [[environment]] (but not via task
 runtime environments - event handlers are not called by tasks).
 
-\subparagraph[EVENT handler]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ EVENT handler}
+\subparagraph[EVENT handler]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow EVENT handler}
 
 A list of one or more event handlers to call when one of the following EVENTs occurs:
 \begin{myitemize}
@@ -1421,7 +1421,7 @@ Item details:
     \item {\em example:} \lstinline@failed handler = my-failed-handler.sh@
 \end{myitemize}
 
-\subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ submission timeout}
+\subparagraph[submission timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow submission timeout}
 \label{runtime-event-hooks-submission-timeout}
 
 If a task has not started after the specified ISO 8601 duration/interval, the
@@ -1432,7 +1432,7 @@ If a task has not started after the specified ISO 8601 duration/interval, the
     \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ execution timeout}
+\subparagraph[execution timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow execution timeout}
 \label{runtime-event-hooks-execution-timeout}
 
 If a task has not finished after the specified ISO 8601 duration/interval, the
@@ -1443,7 +1443,7 @@ If a task has not finished after the specified ISO 8601 duration/interval, the
     \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[reset timer]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[event hooks]]] $\rightarrow$ reset timer}
+\subparagraph[reset timer]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow reset timer}
 \label{runtime-event-hooks-reset-timer}
 
 If you set an execution timeout the timer can be reset to zero every
@@ -1456,7 +1456,7 @@ finish in the alotted time regardless of incoming messages.
 \item {\em default:} False
 \end{myitemize}
 
-\paragraph[{[[[}events{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]]}
+\paragraph[{[[[}events{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]]}
 \label{TaskEventHandling2}
 
 Cylc can call nominated event handlers when certain task events occur. This
@@ -1490,7 +1490,7 @@ arguments:
 <task-event-handler> %(event)s %(suite)s %(id)s %(message)s
 \end{lstlisting}
 
-\subparagraph[handlers]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handlers}
+\subparagraph[handlers]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow handlers}
 
 Specify a list of command lines or command line templates as task event handlers.
 
@@ -1500,7 +1500,7 @@ Specify a list of command lines or command line templates as task event handlers
     \item {\em example:} \lstinline@handler = my-handler.sh@
 \end{myitemize}
 
-\subparagraph[handler events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler events}
+\subparagraph[handler events]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow handler events}
 
 Specify the events for which the general task event handlers should be invoked.
 
@@ -1510,7 +1510,7 @@ Specify the events for which the general task event handlers should be invoked.
     \item {\em example:} \lstinline@handler = submission failed, failed@
 \end{myitemize}
 
-\subparagraph[handler retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ handler retry delays}
+\subparagraph[handler retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow handler retry delays}
 \label{runtime-events-handler-retry-delays}
 
 Specify an initial delay before running an event handler command and any retry
@@ -1523,7 +1523,7 @@ run an event handler command once without any delay.
     \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
 \end{myitemize}
 
-\subparagraph[mail events]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail events}
+\subparagraph[mail events]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail events}
 
 Specify the events for which notification emails should be sent.
 
@@ -1533,7 +1533,7 @@ Specify the events for which notification emails should be sent.
     \item {\em example:} \lstinline@handler = submission failed, failed@
 \end{myitemize}
 
-\subparagraph[mail from]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail from}
+\subparagraph[mail from]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail from}
 
 Specify an alternate \lstinline=from:= email address for event notifications.
 
@@ -1543,7 +1543,7 @@ Specify an alternate \lstinline=from:= email address for event notifications.
     \item {\em example:} \lstinline@mail from = no-reply\@your-org@
 \end{myitemize}
 
-\subparagraph[mail retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail retry delays}
+\subparagraph[mail retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail retry delays}
 
 Specify an initial delay before running the mail notification command and any
 retry delays in case the command returns a non-zero code. The default behaviour
@@ -1555,7 +1555,7 @@ is to run the mail notification command once without any delay.
     \item {\em example:} \lstinline@handler = PT10S, PT1M, PT5M@
 \end{myitemize}
 
-\subparagraph[mail smtp]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail smtp}
+\subparagraph[mail smtp]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail smtp}
 
 Specify the SMTP server for sending email notifications.
 
@@ -1565,7 +1565,7 @@ Specify the SMTP server for sending email notifications.
     \item {\em example:} \lstinline@mail smtp = smtp.yourorg@
 \end{myitemize}
 
-\subparagraph[mail to]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ mail to}
+\subparagraph[mail to]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow mail to}
 
 A list of email addresses to send task event notifications. The list can be
 anything accepted by the \lstinline=mail= command.
@@ -1576,15 +1576,15 @@ anything accepted by the \lstinline=mail= command.
     \item {\em example:} \lstinline@mail to = your.colleague@
 \end{myitemize}
 
-\subparagraph[submission timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ submission timeout}
+\subparagraph[submission timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow submission timeout}
 
 Equivalent to~\ref{runtime-event-hooks-submission-timeout}.
 
-\subparagraph[execution timeout]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ execution timeout}
+\subparagraph[execution timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow execution timeout}
 
 Equivalent to~\ref{runtime-event-hooks-execution-timeout}.
 
-\subparagraph[register job logs retry delays]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ register job logs retry delays}
+\subparagraph[register job logs retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow register job logs retry delays}
 
 Some batch systems have considerable delays between the time when the job
 completes and when it writes the job logs in its normal location. Consequently,
@@ -1601,11 +1601,11 @@ once without any delay.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[reset timer]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[events]]] $\rightarrow$ reset timer}
+\subparagraph[reset timer]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow reset timer}
 
 Equivalent to~\ref{runtime-event-hooks-reset-timer}.
 
-\paragraph[{[[[}environment{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]]}
+\paragraph[{[[[}environment{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[environment]]]}
 
 The user defined task execution environment. Variables defined here can
 refer to cylc suite and task identity variables, which are exported
@@ -1613,7 +1613,7 @@ earlier in the task job script, and variable assignment expressions can
 use cylc utility commands because access to cylc is also configured
 earlier in the script.  See also~\ref{TaskExecutionEnvironment}.
 
-\subparagraph[\_\_VARIABLE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment]]] $\rightarrow$ \_\_VARIABLE\_\_}
+\subparagraph[\_\_VARIABLE\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[environment]]] \textrightarrow \_\_VARIABLE\_\_}
 \label{AppendixTaskExecutionEnvironment}
 
 Replace \_\_VARIABLE\_\_ with any number of environment variable
@@ -1642,7 +1642,7 @@ parser is concerned these are just normal configuration items).
    \end{myitemize}
 \end{myitemize}
 
-\paragraph[{[[[}environment filter{]]]}]{ [runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]]}
+\paragraph[{[[[}environment filter{]]]}]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[environment filter]]]}
 \label{EnvironmentFilter}
 
 This section contains environment variable inclusion and exclusion
@@ -1659,7 +1659,7 @@ Note that environment filtering is done after inheritance is completely
 worked out, not at each level on the way, so filter lists in higher-level
 namespaces only have an effect if they are not overridden by descendants.
 
-\subparagraph[include]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]] $\rightarrow$ include}
+\subparagraph[include]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[environment filter]]] \textrightarrow include}
 
 If given, only variables named in this list will be included from the
 inherited environment, others will be filtered out. Variables may also
@@ -1670,7 +1670,7 @@ be explicitly excluded by an \lstinline=exclude= list.
 \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[exclude]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[environment filter]]] $\rightarrow$ exclude}
+\subparagraph[exclude]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[environment filter]]] \textrightarrow exclude}
 
 Variables named in this list will be filtered out of the inherited
 environment.  Variables may also be implicitly excluded by
@@ -1681,7 +1681,7 @@ omission from an \lstinline=include= list.
 \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[{[[[}directives{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]]}
+\paragraph[{[[[}directives{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[directives]]]}
 
 Batch queue scheduler directives.  Whether or not these are used depends
 on the job submission method. For the built-in methods that support directives
@@ -1691,7 +1691,7 @@ task job script in the correct format for the method. Specifying directives
 individually like this allows use of default directives that can be
 individually overridden at lower levels of the runtime namespace hierarchy.
 
-\subparagraph[\_\_DIRECTIVE\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[directives]]] $\rightarrow$ \_\_DIRECTIVE\_\_}
+\subparagraph[\_\_DIRECTIVE\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[directives]]] \textrightarrow \_\_DIRECTIVE\_\_}
 
 Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.
 \lstinline@class = parallel@
@@ -1704,14 +1704,14 @@ Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.
 Example directives for the built-in job submission methods are shown
 in~\ref{AvailableMethods}.
 
-\paragraph[{[[[}outputs{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]]}
+\paragraph[{[[[}outputs{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[outputs]]]}
 
 This section is for registering custom message outputs that other tasks can
 trigger off instead of the standard triggers. The task implementation must send
 corresponding messages using the \lstinline=cylc task message= command at the
 appropriate time. See~\ref{MessageTriggers} for more information.
 
-\subparagraph[\_\_OUTPUT\_\_ ]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[outputs]]] $\rightarrow$ \_\_OUTPUT\_\_}
+\subparagraph[\_\_OUTPUT\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[outputs]]] \textrightarrow \_\_OUTPUT\_\_}
 
 Replace \_\_OUTPUT\_\_ with one or more labelled output messages, and use the
 labels in graph trigger notation.  Messages should contain a placeholder for
@@ -1727,7 +1727,7 @@ bar = "nwp restart files ready for [-PT6H]"
 \end{lstlisting}
 See~\ref{MessageTriggers} for more information.
 
-\paragraph[{[[[}suite state polling{]]]}]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]]}
+\paragraph[{[[[}suite state polling{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]]}
 
 \lstset{language=transcript}
 Configure automatic suite polling tasks as described
@@ -1737,7 +1737,7 @@ items in this section reflect the options and defaults of the
 \lstinline=--task=, \lstinline=--cycle=, and \lstinline=--status= options are
 taken from the graph notation.
 
-\subparagraph[run-dir]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ run-dir}
+\subparagraph[run-dir]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow run-dir}
 
 For your own suites the run database location is determined by your
 site/user config. For other suites, e.g. those owned by others, or
@@ -1750,7 +1750,7 @@ suite-name sub-directory of this location).
     \item {\em default:} as configured by site/user config (for your own suites)
 \end{myitemize}
 
-\subparagraph[template]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ template}
+\subparagraph[template]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow template}
 
 Cycle point template of the target suite, if different from that of the polling suite.
 
@@ -1760,7 +1760,7 @@ Cycle point template of the target suite, if different from that of the polling 
     \item {\em example:} \lstinline=\%Y-\%m-\%dT\%H=
 \end{myitemize}
 
-\subparagraph[interval]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ interval}
+\subparagraph[interval]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow interval}
 
 Polling interval expressed as an ISO 8601 duration/interval.
 \begin{myitemize}
@@ -1769,7 +1769,7 @@ Polling interval expressed as an ISO 8601 duration/interval.
     \item {\em default:} PT1M
 \end{myitemize}
 
-\subparagraph[max-polls]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ max-polls}
+\subparagraph[max-polls]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow max-polls}
 
 The maximum number of polls before timing out and entering the `failed' state.
 
@@ -1778,7 +1778,7 @@ The maximum number of polls before timing out and entering the `failed' state.
     \item {\em default:} 10
 \end{myitemize}
 
-\subparagraph[user]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ user}
+\subparagraph[user]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow user}
 
 Username of an account on the suite host to which you have access. The
 polling \lstinline=cylc suite-state= command will be invoked
@@ -1789,7 +1789,7 @@ on the remote account.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[host]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ host}
+\subparagraph[host]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow host}
 
 The hostname of the target suite. The polling \lstinline=cylc suite-state= command
 will be invoked on the remote account.
@@ -1799,7 +1799,7 @@ will be invoked on the remote account.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[verbose]{[runtime] $\rightarrow$ [[\_\_NAME\_\_]] $\rightarrow$ [[[suite state polling]]] $\rightarrow$ verbose}
+\subparagraph[verbose]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]] \textrightarrow verbose}
 
 Run the polling \lstinline=cylc suite-state= command in verbose output mode.
 
@@ -1815,7 +1815,7 @@ extent, styling, and initial family-collapsed state) and the gcylc graph view
 (initial family-collapsed state). Graphviz documentation of node shapes
 and so on can be found at http://www.graphviz.org/Documentation.php.
 
-\subsubsection[initial cycle point]{[visualization] $\rightarrow$ initial cycle point}
+\subsubsection[initial cycle point]{[visualization] \textrightarrow initial cycle point}
 
 The initial cycle point for graph plotting.
 \begin{myitemize}
@@ -1825,7 +1825,7 @@ The initial cycle point for graph plotting.
 The visualization initial cycle point gets adjusted up if necessary to the
 suite initial cycling point.
 
-\subsubsection[final cycle point]{[visualization] $\rightarrow$ final cycle point}
+\subsubsection[final cycle point]{[visualization] \textrightarrow final cycle point}
 
 An explicit final cycle point for graph plotting. If used, this overrides the
 preferred {\em number of cycle points} (below).
@@ -1836,7 +1836,7 @@ preferred {\em number of cycle points} (below).
 The visualization final cycle point gets adjusted down if necessary to the
 suite final cycle point.
 
-\subsubsection[number of cycle points]{[visualization] $\rightarrow$ number of cycle points}
+\subsubsection[number of cycle points]{[visualization] \textrightarrow number of cycle points}
 
 The number of cycle points to graph starting from the visualization initial
 cycle point. This is the preferred way of defining the graph end point, but
@@ -1846,7 +1846,7 @@ it can be overridden by an explicit {\em final cycle point} (above).
     \item {\em default:} 3
 \end{myitemize}
 
-\subsubsection[collapsed families]{[visualization] $\rightarrow$ collapsed families}
+\subsubsection[collapsed families]{[visualization] \textrightarrow collapsed families}
 
 A list of family (namespace) names to be shown in the collapsed state
 (i.e.\ the family members will be replaced by a single family node) when
@@ -1860,7 +1860,7 @@ nodes at will.
     \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection[use node color for edges]{[visualization] $\rightarrow$ use node color for edges}
+\subsubsection[use node color for edges]{[visualization] \textrightarrow use node color for edges}
 
 Graph edges (dependency arrows) can be plotted in the same color
 as the upstream node (task or family) to make paths through a complex
@@ -1871,7 +1871,7 @@ graph easier to follow.
     \item {\em default:} True
 \end{myitemize}
 
-\subsubsection[use node color for labels]{[visualization] $\rightarrow$ use node color for labels}
+\subsubsection[use node color for labels]{[visualization] \textrightarrow use node color for labels}
 
 Graph node labels can be printed in the same color as the node outline.
 
@@ -1881,7 +1881,7 @@ Graph node labels can be printed in the same color as the node outline.
 \end{myitemize}
 
 
-\subsubsection[default node attributes]{[visualization] $\rightarrow$ default node attributes}
+\subsubsection[default node attributes]{[visualization] \textrightarrow default node attributes}
 
 Set the default attributes (color and style etc.) of graph nodes (tasks and families).
 Attribute pairs must be quoted to hide the internal \lstinline@=@ character.
@@ -1892,7 +1892,7 @@ Attribute pairs must be quoted to hide the internal \lstinline@=@ character.
     \item {\em default:} \lstinline@'style=filled', 'fillcolor=yellow', 'shape=box'@
 \end{myitemize}
 
-\subsubsection[default edge attributes]{[visualization] $\rightarrow$ default edge attributes}
+\subsubsection[default edge attributes]{[visualization] \textrightarrow default edge attributes}
 
 Set the default attributes (color and style etc.) of graph edges
 (dependency arrows).  Attribute pairs must be quoted to hide the
@@ -1903,14 +1903,14 @@ internal \lstinline@=@ character.
     \item {\em default:} \lstinline@'color=black'@
 \end{myitemize}
 
-\subsubsection[{[[}node groups{]]}]{[visualization] $\rightarrow$ [[node groups]]}
+\subsubsection[{[[}node groups{]]}]{[visualization] \textrightarrow [[node groups]]}
 
 Define named groups of graph nodes (tasks and families) which can styled
-en masse, by name, in [visualization] $\rightarrow$ [[node attributes]].
+en masse, by name, in [visualization] \textrightarrow [[node attributes]].
 Node groups are automatically defined for all task families, including
 root, so you can style family and member nodes at once by family name.
 
-\paragraph[\_\_GROUP\_\_]{[visualization] $\rightarrow$ [[node groups]] $\rightarrow$ \_\_GROUP\_\_}
+\paragraph[\_\_GROUP\_\_]{[visualization] \textrightarrow [[node groups]] \textrightarrow \_\_GROUP\_\_}
 
 Replace \_\_GROUP\_\_ with each named group of tasks or families.
 
@@ -1924,10 +1924,10 @@ Replace \_\_GROUP\_\_ with each named group of tasks or families.
 \end{lstlisting}
 \end{myitemize}
 
-\subsubsection[{[[}node attributes{]]}]{[visualization] $\rightarrow$ [[node attributes]]}
+\subsubsection[{[[}node attributes{]]}]{[visualization] \textrightarrow [[node attributes]]}
 
 Here you can assign graph node attributes to specific nodes, or to all
-members of named groups defined in [visualization] $\rightarrow$ [[node
+members of named groups defined in [visualization] \textrightarrow [[node
 groups]]. Task families are automatically node groups. Styling of a
 family node applies to all member nodes (tasks and sub-families), but
 precedence is determined by ordering in the suite definition.  For
@@ -1936,7 +1936,7 @@ cylc will plot a red family with one green member; but if you style one
 member green and then the family red, the red family styling will
 override the earlier green styling of the member.
 
-\paragraph[\_\_NAME\_\_]{[visualization] $\rightarrow$ [[node attributes]] $\rightarrow$ \_\_NAME\_\_}
+\paragraph[\_\_NAME\_\_]{[visualization] \textrightarrow [[node attributes]] \textrightarrow \_\_NAME\_\_}
 
 Replace \_\_NAME\_\_ with each node or node group for style attribute
 assignment.

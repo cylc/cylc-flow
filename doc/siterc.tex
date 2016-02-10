@@ -146,7 +146,7 @@ sets a timeout for such a command to ensure that the suite can continue.
 This section contains configuration items that affect task-to-suite
 communications.
 
-\subsubsection[retry interval]{[task messaging] $\rightarrow$ retry interval}
+\subsubsection[retry interval]{[task messaging] \textrightarrow retry interval}
 
 If a send fails, the messaging code will retry after a configured
 delay interval.
@@ -157,7 +157,7 @@ delay interval.
 \item {\em default:} PT5S
 \end{myitemize}
 
-\subsubsection[maximum number of tries]{[task messaging] $\rightarrow$ maximum number of tries}
+\subsubsection[maximum number of tries]{[task messaging] \textrightarrow maximum number of tries}
 
 If successive sends fail, the messaging code will give up after a
 configured number of tries.
@@ -168,7 +168,7 @@ configured number of tries.
 \item {\em default:} 7
 \end{myitemize}
 
-\subsubsection[connection timeout]{[task messaging] $\rightarrow$ connection timeout}
+\subsubsection[connection timeout]{[task messaging] \textrightarrow connection timeout}
 
 This is the same as the \lstinline=--pyro-timeout= option in cylc
 commands. Without a timeout Pyro connections to unresponsive
@@ -186,7 +186,7 @@ The suite event log, held under the suite run directory, is maintained
 as a rolling archive. Logs are rolled over (backed up and started anew)
 when they reach a configurable limit size.
 
-\subsubsection[roll over at start-up]{[suite logging] $\rightarrow$ roll over at start-up}
+\subsubsection[roll over at start-up]{[suite logging] \textrightarrow roll over at start-up}
 
 If true, a new suite log will be started for a new suite run.
 
@@ -195,7 +195,7 @@ If true, a new suite log will be started for a new suite run.
 \item {\em default:} True
 \end{myitemize}
 
-\subsubsection[rolling archive length]{[suite logging] $\rightarrow$ rolling archive length}
+\subsubsection[rolling archive length]{[suite logging] \textrightarrow rolling archive length}
 
 How many rolled logs to retain in the archive.
 
@@ -205,7 +205,7 @@ How many rolled logs to retain in the archive.
 \item {\em default:} 5
 \end{myitemize}
 
-\subsubsection[maximum size in bytes]{[suite logging] $\rightarrow$ maximum size in bytes}
+\subsubsection[maximum size in bytes]{[suite logging] \textrightarrow maximum size in bytes}
 
 Suite event logs are rolled over when they reach this file size.
 
@@ -219,11 +219,11 @@ Suite event logs are rolled over when they reach this file size.
 Documentation locations for the \lstinline=cylc doc= command and gcylc
 Help menus.
 
-\subsubsection[{[[}files{]]}]{[documentation] $\rightarrow$ [[files]]}
+\subsubsection[{[[}files{]]}]{[documentation] \textrightarrow [[files]]}
 
 File locations of documentation held locally on the cylc host server.
 
-\paragraph[html index]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ html index }
+\paragraph[html index]{[documentation] \textrightarrow [[files]] \textrightarrow html index }
 
 File location of the main cylc documentation index.
 \begin{myitemize}
@@ -231,7 +231,7 @@ File location of the main cylc documentation index.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/index.html=
 \end{myitemize}
 
-\paragraph[pdf user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ pdf user guide }
+\paragraph[pdf user guide]{[documentation] \textrightarrow [[files]] \textrightarrow pdf user guide }
 
 File location of the cylc User Guide, PDF version.
 \begin{myitemize}
@@ -239,7 +239,7 @@ File location of the cylc User Guide, PDF version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/cug-pdf.pdf=
 \end{myitemize}
 
-\paragraph[multi-page html user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ multi-page html user guide }
+\paragraph[multi-page html user guide]{[documentation] \textrightarrow [[files]] \textrightarrow multi-page html user guide }
 
 File location of the cylc User Guide, multi-page HTML version.
 \begin{myitemize}
@@ -247,7 +247,7 @@ File location of the cylc User Guide, multi-page HTML version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/html/multi/cug-html.html=
 \end{myitemize}
 
-\paragraph[single-page html user guide]{[documentation] $\rightarrow$ [[files]] $\rightarrow$ single-page html user guide }
+\paragraph[single-page html user guide]{[documentation] \textrightarrow [[files]] \textrightarrow single-page html user guide }
 
 File location of the cylc User Guide, single-page HTML version.
 \begin{myitemize}
@@ -255,11 +255,11 @@ File location of the cylc User Guide, single-page HTML version.
 \item {\em default:} \lstinline=$CYLC_DIR/doc/html/single/cug-html.html=
 \end{myitemize}
 
-\subsubsection[{[[}urls{]]}]{[documentation] $\rightarrow$ [[urls]]}
+\subsubsection[{[[}urls{]]}]{[documentation] \textrightarrow [[urls]]}
 
 Online documentation URLs.
 
-\paragraph[internet homepage]{[documentation] $\rightarrow$ [[urls]] $\rightarrow$ internet homepage }
+\paragraph[internet homepage]{[documentation] \textrightarrow [[urls]] \textrightarrow internet homepage }
 
 URL of the cylc internet homepage, with links to documentation for the
 latest official release.
@@ -269,7 +269,7 @@ latest official release.
 \item {\em default:} http://cylc.github.com/cylc/
 \end{myitemize}
 
-\paragraph[local index]{[documentation] $\rightarrow$ [[urls]] $\rightarrow$ local index}
+\paragraph[local index]{[documentation] \textrightarrow [[urls]] \textrightarrow local index}
 
 Local intranet URL of the main cylc documentation index.
 
@@ -282,7 +282,7 @@ Local intranet URL of the main cylc documentation index.
 
 PDF and HTML viewers can be launched by cylc to view the documentation.
 
-\subsubsection[pdf]{[document viewers] $\rightarrow$ pdf}
+\subsubsection[pdf]{[document viewers] \textrightarrow pdf}
 
 Your preferred PDF viewer program.
 
@@ -291,7 +291,7 @@ Your preferred PDF viewer program.
 \item {\em default:} evince
 \end{myitemize}
 
-\subsubsection[html]{[document viewers] $\rightarrow$ html}
+\subsubsection[html]{[document viewers] \textrightarrow html}
 
 Your preferred web browser.
 
@@ -304,7 +304,7 @@ Your preferred web browser.
 
 Choose your favourite text editor for editing suite definitions.
 
-\subsubsection[terminal]{[editors] $\rightarrow$ terminal}
+\subsubsection[terminal]{[editors] \textrightarrow terminal}
 
 The editor to be invoked by the cylc command line interface.
 
@@ -319,7 +319,7 @@ The editor to be invoked by the cylc command line interface.
     \end{myitemize}
 \end{myitemize}
 
-\subsubsection[gui]{[editors] $\rightarrow$ gui}
+\subsubsection[gui]{[editors] \textrightarrow gui}
 
 The editor to be invoked by the cylc GUI.
 
@@ -341,7 +341,7 @@ clients (suite-connecting commands and guis) servers (running suites).
 Each suite listens on a dedicated network port, binding on the first
 available starting at the configured base port.
 
-\subsubsection[base port]{[pyro] $\rightarrow$ base port }
+\subsubsection[base port]{[pyro] \textrightarrow base port }
 
 The first port that cylc is allowed to use.
 
@@ -350,7 +350,7 @@ The first port that cylc is allowed to use.
 \item {\em default:} 7766
 \end{myitemize}
 
-\subsubsection[maximum number of ports]{[pyro] $\rightarrow$ maximum number of ports}
+\subsubsection[maximum number of ports]{[pyro] \textrightarrow maximum number of ports}
 
 This determines the maximum number of suites that can run at once on the
 suite host.
@@ -360,7 +360,7 @@ suite host.
 \item {\em default:} 100
 \end{myitemize}
 
-\subsubsection[ports directory]{[pyro] $\rightarrow$ ports directory}
+\subsubsection[ports directory]{[pyro] \textrightarrow ports directory}
 
 Each suite stores its port number, by suite name, under this directory.
 
@@ -373,7 +373,7 @@ Each suite stores its port number, by suite name, under this directory.
 
 Configurable settings for the command line \lstinline=cylc monitor= tool.
 
-\subsubsection[monitor]{[monitor] $\rightarrow$ sort order}
+\subsubsection[monitor]{[monitor] \textrightarrow sort order}
 
 The sort order for tasks in the monitor view.
 \begin{myitemize}
@@ -397,7 +397,7 @@ are not listed here, in which case local settings will be assumed,
 with the local home directory path, if present, replaced by
 \lstinline=$HOME= in items that configure directory locations.
 
-\subsubsection[{[[}HOST{]]}]{[hosts] $\rightarrow$ [[HOST]]}
+\subsubsection[{[[}HOST{]]}]{[hosts] \textrightarrow [[HOST]]}
 
 The default task host is the suite host, {\bf localhost}, with default
 values as listed below. Use an explicit \lstinline=[hosts][[localhost]]=
@@ -432,7 +432,7 @@ file.
 \end{myitemize}
 \end{myitemize}
 
-\paragraph[run directory]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ run directory }
+\paragraph[run directory]{[hosts] \textrightarrow [[HOST]] \textrightarrow run directory }
 
 The top level of the directory tree that holds suite-specific output logs,
 state dump files, run database, etc.
@@ -442,7 +442,7 @@ state dump files, run database, etc.
 \item {\em default:} \lstinline=$HOME/cylc-run=
 \end{myitemize}
 
-\paragraph[work directory]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ work directory }
+\paragraph[work directory]{[hosts] \textrightarrow [[HOST]] \textrightarrow work directory }
 \label{workdirectory}
 
 The top level for suite work and share directories.
@@ -453,7 +453,7 @@ The top level for suite work and share directories.
 \end{myitemize}
 
 
-\paragraph[task communication method]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ task communication method }
+\paragraph[task communication method]{[hosts] \textrightarrow [[HOST]] \textrightarrow task communication method }
 \label{task_comms_method}
 
 The means by which task progress messages are reported back to the running suite.
@@ -470,7 +470,7 @@ See above for default polling intervals for the poll method.
 \item {\em localhost default:} pyro
 \end{myitemize}
 
-\paragraph[remote copy template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ remote copy template }
+\paragraph[remote copy template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote copy template }
 
 A string for the command used to copy files to a remote host. This is not used
 on the suite host unless you run local tasks under another user account.
@@ -480,7 +480,7 @@ on the suite host unless you run local tasks under another user account.
 \item {\em localhost default:} \lstinline@scp -oBatchMode=yes -oConnectTimeout=10@
 \end{myitemize}
 
-\paragraph[remote shell template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ remote shell template }
+\paragraph[remote shell template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote shell template }
 
 A string for the command used to invoke commands on this host.
 This is not used on the suite host unless you run local tasks under
@@ -493,7 +493,7 @@ being a placeholder for the name of the host. This is no longer the case. Any
 \item {\em localhost default:} \lstinline@ssh -oBatchMode=yes -oConnectTimeout=10@
 \end{myitemize}
 
-\paragraph[use login shell]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ use login shell }
+\paragraph[use login shell]{[hosts] \textrightarrow [[HOST]] \textrightarrow use login shell }
 
 Whether to use a login shell or not for remote command invocation. By
 default cylc runs remote ssh commands using a login shell,
@@ -516,7 +516,7 @@ environment.
 \item {\em localhost default:} true
 \end{myitemize}
 
-\paragraph[cylc executable]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ cylc executable }
+\paragraph[cylc executable]{[hosts] \textrightarrow [[HOST]] \textrightarrow cylc executable }
 
 The \lstinline=cylc= executable on a remote host. Note this should point to the 
 cylc multi-version wrapper (see~\ref{CUI}) on the host, not
@@ -529,7 +529,7 @@ invoked via \lstinline=ssh= on this host.
 \item {\em localhost default:} \lstinline@cylc@
 \end{myitemize}
 
-\paragraph[global init-script]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ global init-script }
+\paragraph[global init-script]{[hosts] \textrightarrow [[HOST]] \textrightarrow global init-script }
 \label{GlobalInitScript}
 
 If specified, the value of this setting will be inserted to just before the
@@ -541,7 +541,7 @@ submitted to the specified remote host.
 \item {\em localhost default:} \lstinline@""@
 \end{myitemize}
 
-\paragraph[copyable environment variables]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ copyable environment variables }
+\paragraph[copyable environment variables]{[hosts] \textrightarrow [[HOST]] \textrightarrow copyable environment variables }
 
 A list containing the names of the environment variables that can and/or need
 to be copied from the suite daemon to a job.
@@ -551,12 +551,12 @@ to be copied from the suite daemon to a job.
 \item {\em localhost default:} \lstinline@[]@
 \end{myitemize}
 
-\paragraph[retrieve job logs]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs}
+\paragraph[retrieve job logs]{[hosts] \textrightarrow [[HOST]] \textrightarrow retrieve job logs}
 
 Global default for the~\ref{runtime-remote-retrieve-job-logs} setting for the
 specified host.
 
-\paragraph[retrieve job logs command]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs command}
+\paragraph[retrieve job logs command]{[hosts] \textrightarrow [[HOST]] \textrightarrow retrieve job logs command}
 
 If \lstinline@rsync -a@ is unavailable or insufficient to retrieve job logs
 from a remote host, you can use this setting to specify a suitable command.
@@ -566,22 +566,22 @@ from a remote host, you can use this setting to specify a suitable command.
 \item {\em default:} rsync -a
 \end{myitemize}
 
-\paragraph[retrieve job logs max size]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs max size}
+\paragraph[retrieve job logs max size]{[hosts] \textrightarrow [[HOST]] \textrightarrow retrieve job logs max size}
 
 Global default for the~\ref{runtime-remote-retrieve-job-logs-max-size} setting for the
 specified host.
 
-\paragraph[retrieve job logs retry delays]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ retrieve job logs retry delays}
+\paragraph[retrieve job logs retry delays]{[hosts] \textrightarrow [[HOST]] \textrightarrow retrieve job logs retry delays}
 
 Global default for the~\ref{runtime-remote-retrieve-job-logs-retry-delays}
 setting for the specified host.
 
-\paragraph[task event handler retry delays]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ task event handler retry delays}
+\paragraph[task event handler retry delays]{[hosts] \textrightarrow [[HOST]] \textrightarrow task event handler retry delays}
 
 Host specific default for the~\ref{runtime-events-handler-retry-delays}
 setting.
 
-\paragraph[local tail command template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ local tail command template}
+\paragraph[local tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow local tail command template}
 \label{local-tail-template}
 
 A template (with \lstinline=%(filename)s= substitution) for the command used to
@@ -593,7 +593,7 @@ tail-follow local job logs, used by the gcylc log viewer and
 \item {\em default:} \lstinline@tail -n +1 -F %(filename)s@ 
 \end{myitemize}
 
-\paragraph[remote tail command template]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ remote tail command template}
+\paragraph[remote tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote tail command template}
 \label{remote-tail-template}
 
 A template (with \lstinline=%(filename)s= substitution) for the command used
@@ -610,13 +610,13 @@ not equivalent to the Gnu Linux versions.
     \lstinline@/gnu/tail --pid=$(ps -o ppid= -p $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@
 \end{myitemize}
 
-\paragraph[{[[[}batch systems{]]]}]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]]}
+\paragraph[{[[[}batch systems{]]]}]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]]}
 
 Settings for particular batch systems on HOST. In the subsections below, SYSTEM
 should be replaced with the cylc job submission method name that represents the
 batch system (see~\ref{RuntimeJobSubMethods}).
 
-\subparagraph[{[[[[}SYSTEM{]]]]}err tailer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ err tailer}
+\subparagraph[{[[[[}SYSTEM{]]]]}err tailer]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]] \textrightarrow [[[[SYSTEM]]]] \textrightarrow err tailer}
 \label{err-tailer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
@@ -640,7 +640,7 @@ overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
     \end{lstlisting}
 \end{myitemize}
 
-\subparagraph[{[[[[}SYSTEM{]]]]}out tailer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ out tailer}
+\subparagraph[{[[[[}SYSTEM{]]]]}out tailer]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]] \textrightarrow [[[[SYSTEM]]]] \textrightarrow out tailer}
 \label{out-tailer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
@@ -654,7 +654,7 @@ overrides~\ref{local-tail-template} and~\ref{remote-tail-template} above.
 \item {\em example:} see~\ref{err-tailer}
 \end{myitemize}
 
-\subparagraph[{[[[[}SYSTEM{]]]]}err viewer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ err viewer}
+\subparagraph[{[[[[}SYSTEM{]]]]}err viewer]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]] \textrightarrow [[[[SYSTEM]]]] \textrightarrow err viewer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to view the stderr stream of a running job if SYSTEM does
@@ -666,7 +666,7 @@ not use the normal log file location while the job is running.
 \item {\em example:} see~\ref{err-tailer}
 \end{myitemize}
 
-\subparagraph[{[[[[}SYSTEM{]]]]}out viewer]{[hosts] $\rightarrow$ [[HOST]] $\rightarrow$ [[[batch systems]]] $\rightarrow$ [[[[SYSTEM]]]] $\rightarrow$ out viewer}
+\subparagraph[{[[[[}SYSTEM{]]]]}out viewer]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]] \textrightarrow [[[[SYSTEM]]]] \textrightarrow out viewer}
 
 A command template (with \lstinline=%(job_id)s= substitution) that can be used
 to view the stdout stream of a running job if SYSTEM does
@@ -688,7 +688,7 @@ can target the right suite on the right host.
 %site might see the suite host differently? If so we would need to be
 %able to override the target in suite definitions.)
 
-\subsubsection[method]{[suite host self-identification] $\rightarrow$ method }
+\subsubsection[method]{[suite host self-identification] \textrightarrow method }
 
 This item determines how cylc finds the identity of the suite host. For
 the default {\em name} method cylc asks the suite host for its host
@@ -712,7 +712,7 @@ and manually specify the host name or IP address of the suite host.
 \item {\em default:} name
 \end{myitemize}
 
-\subsubsection[target]{[suite host self-identification] $\rightarrow$ target }
+\subsubsection[target]{[suite host self-identification] \textrightarrow target }
 
 This item is required for the {\em address} self-identification method.
 If your suite host sees the internet, a common address such as
@@ -724,7 +724,7 @@ intranet.
 \end{myitemize}
 
 
-\subsubsection[host]{[suite host self-identification] $\rightarrow$ host }
+\subsubsection[host]{[suite host self-identification] \textrightarrow host }
 
 Use this item to explicitly set the name or IP address of the suite host
 if you have to use the {\em hardwired} self-identification method.
@@ -738,7 +738,7 @@ if you have to use the {\em hardwired} self-identification method.
 Utilities such as \lstinline=cylc gsummary= need to scan hosts for
 running suites.
 
-\subsubsection[hosts]{[suite host scanning] $\rightarrow$ hosts }
+\subsubsection[hosts]{[suite host scanning] \textrightarrow hosts }
 
 A list of hosts to scan for running suites.
 \begin{myitemize}
@@ -754,45 +754,45 @@ Global site/user defaults for~\ref{TaskEventHandling2}.
 
 Settings for the automated development tests.
 
-\subsubsection[remote host with shared fs]{[test battery] $\rightarrow$ remote host with shared fs}
+\subsubsection[remote host with shared fs]{[test battery] \textrightarrow remote host with shared fs}
 
 The name of a remote host with shared HOME file system as the host running the
 test battery.
 
-\subsubsection[remote host with shared fs]{[test battery] $\rightarrow$ remote host}
+\subsubsection[remote host with shared fs]{[test battery] \textrightarrow remote host}
 
 The name of a remote host without shared HOME file system as the host running
 the test battery.
 
-\subsubsection[{[[}batch systems{]]}]{[test battery] $\rightarrow$ [[batch systems]]}
+\subsubsection[{[[}batch systems{]]}]{[test battery] \textrightarrow [[batch systems]]}
 
 Settings for testing supported batch systems (job submission methods). The
 tests for a batch system are only performed if the batch system is available on
 the test host or a remote host accessible via SSH from the test host.
 
-\paragraph[{[[[}SYSTEM{]]]}]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]]}
+\paragraph[{[[[}SYSTEM{]]]}]{[test battery] \textrightarrow [[batch systems]] \textrightarrow [[[SYSTEM]]]}
 
 SYSTEM is the name of a supported batch system with automated tests.
 This can currently be "loadleveler", "lsf", "pbs", "sge" and/or "slurm".
 
-\subparagraph[host]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ host}
+\subparagraph[host]{[test battery] \textrightarrow [[batch systems]] \textrightarrow [[[SYSTEM]]] \textrightarrow host}
 
 The name of a host where commands for this batch system is available. Use
 "localhost" if the batch system is available on the host running the test
 battery. Any specified remote host should be accessible via SSH from the host
 running the test battery.
 
-\subparagraph[err viewer]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ err viewer}
+\subparagraph[err viewer]{[test battery] \textrightarrow [[batch systems]] \textrightarrow [[[SYSTEM]]] \textrightarrow err viewer}
 
 The command template (with \lstinline=\%(job_id)s= substitution) for testing
 the run time stderr viewer functionality for this batch system.
 
-\subparagraph[out viewer]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ out viewer}
+\subparagraph[out viewer]{[test battery] \textrightarrow [[batch systems]] \textrightarrow [[[SYSTEM]]] \textrightarrow out viewer}
 
 The command template (with \lstinline=\%(job_id)s= substitution) for testing
 the run time stdout viewer functionality for this batch system.
 
-\subparagraph[{[[[[}directives{]]]]}]{[test battery] $\rightarrow$ [[batch systems]] $\rightarrow$ [[[SYSTEM]]] $\rightarrow$ [[[[directives]]]]}
+\subparagraph[{[[[[}directives{]]]]}]{[test battery] \textrightarrow [[batch systems]] \textrightarrow [[[SYSTEM]]] \textrightarrow [[[[directives]]]]}
 
 The minimum set of directives that must be supplied to the batch system on the
 site to initiate jobs for the tests.
@@ -801,27 +801,27 @@ site to initiate jobs for the tests.
 
 Default values for entries in the suite.rc [cylc] section.
 
-\subsubsection[UTC mode]{[cylc] $\rightarrow$ UTC mode}
+\subsubsection[UTC mode]{[cylc] \textrightarrow UTC mode}
 \label{SiteUTCMode}
 
 Allows you to set a default value for UTC mode in a suite at the site level.
 See ~\ref{UTC-mode} for details.
 
-\subsubsection[{[}event hooks{]}]{[cylc] $\rightarrow$ [[event hooks]]}
+\subsubsection[{[}event hooks{]}]{[cylc] \textrightarrow [[event hooks]]}
 \label{SiteCylcHooks}
 
 You can define site defaults for each of the following options, details 
 of which can be found under ~\ref{SuiteEventHandling}:
 
-\subparagraph[startup handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ startup handler}
+\subparagraph[startup handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow startup handler}
 
-\subparagraph[shutdown handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ shutdown handler}
+\subparagraph[shutdown handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow shutdown handler}
 
-\subparagraph[timeout handler]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout handler}
+\subparagraph[timeout handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow timeout handler}
 
-\subparagraph[timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ timeout}
+\subparagraph[timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow timeout}
 
-\subparagraph[abort on timeout]{[cylc] $\rightarrow$ [[event hooks]] $\rightarrow$ abort on timeout}
+\subparagraph[abort on timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on timeout}
 
 \subsection{[authentication]}
 \label{GlobalAuth}
@@ -835,7 +835,7 @@ and~\ref{ConnectionAuthentication}). In the future we plan to move to a more
 traditional user account model so that each authorized user can have their own
 password.
 
-\subsubsection[public]{[authentication] $\rightarrow$ public}
+\subsubsection[public]{[authentication] \textrightarrow public}
 
 This sets the client privilege level for public access - i.e.\ no suite passphrase
 required.
@@ -854,7 +854,7 @@ required.
 \item {\em default:} state-totals
 \end{myitemize}
 
-\subsubsection{[authentication] $\rightarrow$ hashes}
+\subsubsection{[authentication] \textrightarrow hashes}
 
 This sets the hash algorithms used for Pyro HMAC, which are used to
 authenticate a client (e.g. gcylc) to the suite daemon. The first item is used
@@ -874,7 +874,7 @@ HMAC use than in the general case.
 
 Clients will attempt to establish a connection using the algorithms from first
 to last. The exceptions are scanning and pinging, which will use the algorithm
-configured in the [authentication] $\rightarrow$ scan hash setting below. If
+configured in the [authentication] \textrightarrow scan hash setting below. If
 you have lots of suites running with e.g. MD5 hashes, you will want to include
 'md5' in your list of hashes and set it as the default scan hash.
 
@@ -897,12 +897,12 @@ algorithms.
 \end{myitemize}
 
 
-\subsubsection{[authentication] $\rightarrow$ scan hash}
+\subsubsection{[authentication] \textrightarrow scan hash}
 
-See [authentication] $\rightarrow$ hashes.
+See [authentication] \textrightarrow hashes.
 
 Configure which of the specified hash algorithms in [authentication]
-$\rightarrow$ hashes is used for scanning and pinging (cylc scan, cylc ping).
+\textrightarrow hashes is used for scanning and pinging (cylc scan, cylc ping).
 
 The default hash algorithm for scans is MD5, for backwards compatibility
 reasons. You can override it by specifying a different value for this setting
