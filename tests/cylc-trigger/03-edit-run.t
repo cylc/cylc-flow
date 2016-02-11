@@ -24,11 +24,12 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
-# Configure a fake editor $PWD/bin/my-edit via $PWD/conf and run a suite
-# containing a task that does an edit run.
+# Configure a fake editor and run a suite with a task that does an edit run.
+create_test_globalrc '' '
+[editors]
+    terminal = my-edit'
 TEST_NAME="${TEST_NAME_BASE}-run"
-CYLC_CONF_PATH=$PWD/conf \
-    run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME}" cylc run --no-detach "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-diff"
 DIFF_LOG=$(cylc cat-log -dl $SUITE_NAME broken-task.1)

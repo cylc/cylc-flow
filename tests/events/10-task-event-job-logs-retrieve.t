@@ -25,17 +25,14 @@ fi
 set_test_number 5
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    mkdir 'conf'
-    cat >'conf/global.rc' <<__GLOBALCFG__
+    create_test_globalrc "" "
 [hosts]
     [[${HOST}]]
         retrieve job logs = True
-        retrieve job logs retry delays = PT5S
-__GLOBALCFG__
-    export CYLC_CONF_PATH="${PWD}/conf"
+        retrieve job logs retry delays = PT5S"
     OPT_SET='-s GLOBALCFG=True'
 else
-    export CYLC_CONF_PATH=
+    create_test_globalrc
 fi
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

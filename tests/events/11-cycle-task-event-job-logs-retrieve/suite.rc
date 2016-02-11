@@ -27,3 +27,6 @@ title=Task Event Job Log Retrieve
             retrieve job logs = True
     [[t2]]
         inherit = T
+        [[[remote]]]
+            retrieve job logs = False
+

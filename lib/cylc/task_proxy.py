@@ -447,7 +447,7 @@ class TaskProxy(object):
 
     def _get_host_conf(self, key, default=None):
         """Return a host setting from suite then global configuration."""
-        if self.tdef.rtconfig["remote"].get(key):
+        if self.tdef.rtconfig["remote"].get(key) is not None:
             return self.tdef.rtconfig["remote"][key]
         else:
             try:

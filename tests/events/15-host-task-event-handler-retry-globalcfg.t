@@ -23,17 +23,14 @@ if [[ -z "${HOST}" ]]; then
 fi
 set_test_number 4
 
-mkdir 'conf'
-cat >'conf/global.rc' <<__GLOBALCFG__
+create_test_globalrc "" "
 [hosts]
     [[${HOST}]]
         task event handler retry delays=3*PT1S
 [task events]
     handlers=hello-event-handler '%(name)s' '%(event)s'
-    handler events=succeeded, failed
-__GLOBALCFG__
+    handler events=succeeded, failed"
 
-export CYLC_CONF_PATH="${PWD}/conf"
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \

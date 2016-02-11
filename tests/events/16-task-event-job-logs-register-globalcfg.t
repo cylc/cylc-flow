@@ -20,12 +20,9 @@
 . "$(dirname "$0")/test_header"
 set_test_number 5
 
-mkdir 'conf'
-cat >'conf/global.rc' <<__GLOBALCFG__
+create_test_globalrc '' '
 [task events]
-    register job logs retry delays = PT0S, PT15S
-__GLOBALCFG__
-export CYLC_CONF_PATH="${PWD}/conf"
+    register job logs retry delays = PT0S, PT15S'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 

@@ -20,19 +20,17 @@
 #-------------------------------------------------------------------------------
 set_test_number 4
 #-------------------------------------------------------------------------------
-cat >global.rc <<'__CONF__'
+create_test_globalrc '' '
 [authentication]
-    hashes = sha1048576
-__CONF__
-export CYLC_CONF_PATH=$PWD
+    hashes = sha1048576'
+
 TEST_NAME="$TEST_NAME_BASE-hashes-get-global-config"
 run_fail $TEST_NAME cylc get-global-config
 grep_ok "\[authentication\]hashes = sha1048576" "$TEST_NAME.stderr"
 #-------------------------------------------------------------------------------
-cat >global.rc <<'__CONF__'
+create_test_globalrc '' '
 [authentication]
-    scan hash = sha1048576
-__CONF__
+    scan hash = sha1048576'
 TEST_NAME="$TEST_NAME_BASE-scan-hash-get-global-config"
 run_fail $TEST_NAME cylc get-global-config
 grep_ok "\[authentication\]scan hash = sha1048576" "$TEST_NAME.stderr"

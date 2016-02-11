@@ -21,14 +21,11 @@ set_test_number 3
 
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    mkdir 'conf'
-cat >'conf/global.rc' <<'__GLOBALCFG__'
+    create_test_globalrc "" "
 [task events]
     handlers=hello-event-handler '%(name)s' '%(event)s'
     handler events=succeeded, failed
-    handler retry delays=PT0S, 2*PT1S
-__GLOBALCFG__
-    export CYLC_CONF_PATH="${PWD}/conf"
+    handler retry delays=PT0S, 2*PT1S"
     OPT_SET='-s GLOBALCFG=True'
 fi
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

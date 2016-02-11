@@ -55,6 +55,11 @@ def main():
         action="store_true", default=False, dest="run_dir")
 
     parser.add_option(
+        "--print-site-dir",
+        help="Print the cylc site configuration directory location.",
+        action="store_true", default=False, dest="site_dir")
+
+    parser.add_option(
         "-v", "--verbose", help="Print extra information.",
         action="store_true", default=False, dest="verbose")
 
@@ -74,6 +79,8 @@ def main():
     from cylc.cfgspec.globalcfg import GLOBAL_CFG
     if options.run_dir:
         print GLOBAL_CFG.get_host_item('run directory')
+    elif options.site_dir:
+        print GLOBAL_CFG.SITE_CONF_DIR
     else:
         GLOBAL_CFG.idump(
             options.item, sparse=options.sparse, pnative=options.pnative)

@@ -22,7 +22,11 @@ set_test_number 5
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-FOO='foo foo' BAR='bar bar' BAZ='baz baz' CYLC_CONF_PATH="${PWD}/conf" \
+create_test_globalrc '' '
+[hosts]
+    [[localhost]]
+        copyable environment variables = FOO, BAR, BAZ'
+FOO='foo foo' BAR='bar bar' BAZ='baz baz' \
     suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug "${SUITE_NAME}"
 #-------------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 title = """Job script: 
-suite to environment test execution and submission polling intervals, task communication method, connection timeout and retry interval the in global.rc"""
+suite to environment test execution and submission polling intervals, task
+communication method, connection timeout and retry interval the in global.rc"""
 
 [cylc]
     [[reference test]]

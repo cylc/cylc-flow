@@ -34,17 +34,14 @@ $SSH -n "${CYLC_TEST_HOST}" "mkdir -p .cylc/$SUITE_NAME/bin"
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
-# Run detached.
-suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
-#-------------------------------------------------------------------------------
-mkdir 'conf'
-export CYLC_CONF_PATH="${PWD}/conf"
-cat > "$PWD/conf/global.rc" <<__GLOBAL_RC__
+create_test_globalrc "" "
 [hosts]
    [[$CYLC_TEST_HOST]]
-        remote tail command template = \$HOME/.cylc/$SUITE_NAME/bin/my-tailer.sh %(filename)s
-__GLOBAL_RC__
+        remote tail command template = \$HOME/.cylc/$SUITE_NAME/bin/my-tailer.sh %(filename)s"
 $SCP $PWD/bin/my-tailer.sh ${CYLC_TEST_HOST}:.cylc/$SUITE_NAME/bin/my-tailer.sh
+#-------------------------------------------------------------------------------
+# Run detached.
+suite_run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 #-------------------------------------------------------------------------------
 sleep 10
 TEST_NAME=$TEST_NAME_BASE-cat-log

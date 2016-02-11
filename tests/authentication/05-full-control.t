@@ -27,11 +27,11 @@ run_ok "${TEST_NAME}" cylc validate "${SUITE_NAME}"
 
 # Run the suite.
 # Set public auth low to test that passphrase gives full control
-cat > global.rc << __END__
+create_test_globalrc '' '
 [authentication]
-    public = identity
-__END__
-CYLC_CONF_PATH="${PWD}" cylc run "${SUITE_NAME}"
+    public = identity'
+cylc run "${SUITE_NAME}"
+unset CYLC_CONF_PATH
 
 # Wait for first task 'foo' to fail.
 cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --cycle=1 \

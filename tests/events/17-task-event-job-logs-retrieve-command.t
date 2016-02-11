@@ -24,14 +24,11 @@ if [[ -z "${HOST}" ]]; then
 fi
 set_test_number 3
 
-mkdir 'conf'
-cat >'conf/global.rc' <<__GLOBALCFG__
+create_test_globalrc "" "
 [hosts]
     [[${HOST}]]
         retrieve job logs = True
-        retrieve job logs command = my-rsync
-__GLOBALCFG__
-export CYLC_CONF_PATH="${PWD}/conf"
+        retrieve job logs command = my-rsync"
 OPT_SET='-s GLOBALCFG=True'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

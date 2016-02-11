@@ -26,13 +26,10 @@ if [[ -z "${CYLC_TEST_HOST}" ]]; then
 fi
 set_test_number 3
 
-mkdir 'conf'
-cat >>'conf/global.rc' <<__GLOBAL_RC__
+create_test_globalrc '' '
 [hosts]
     [[${CYLC_TEST_HOST}]]
-        task communication method = ssh
-__GLOBAL_RC__
-export CYLC_CONF_PATH="${PWD}/conf"
+        task communication method = ssh'
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 # Note: Don't install passphrase on remote host. Message should only return via

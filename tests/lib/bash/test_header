@@ -75,6 +75,10 @@
 #         echo "1..0 # SKIP SKIP_REASON" and exit.
 #     ssh_install_cylc HOST
 #         Install cylc on a remote host.
+#     create_test_globalrc [PRE [POST]]
+#         Create a new global config file $PWD/conf from site global-tests.rc
+#         with PRE and POST pre- and ap-pended (PRE for top level items with no
+#         section heading).
 #-------------------------------------------------------------------------------
 set -eu
 
@@ -386,6 +390,30 @@ function mock_smtpd_kill() {  # Logic borrowed from Rose
         wait "${TEST_SMTPD_PID}" 2>/dev/null || true
         unset TEST_SMTPD_HOST TEST_SMTPD_LOG TEST_SMTPD_PID
     fi
+}
+
+function create_test_globalrc() {
+    # (Documentated in file header).
+    PRE=""
+    POST=""
+    if (( $# == 1 )); then
+        PRE=$1
+    elif (( $# == 2 )); then
+        PRE=$1
+        POST=$2
+    elif (( $# > 2 )); then
+        >&2 echo "ERROR, create_test_globalrc: too many args"
+        exit 1
+    fi
+    # Tidy in case of previous use of this function.
+    rm -rf conf
+    mkdir conf
+    # Suite host self-identification method.
+    echo "$PRE" > conf/global.rc
+    TESTS_CONF_FILE="$(cylc get-global --print-site-dir)/global-tests.rc"
+    [[ -f "$TESTS_CONF_FILE" ]] && cat "$TESTS_CONF_FILE" >> conf/global.rc
+    echo "$POST" >> conf/global.rc
+    export CYLC_CONF_PATH=$PWD/conf
 }
 
 CYLC_DIR=${CYLC_DIR:-$(cd $(dirname $BASH_SOURCE)/../../.. && pwd)}

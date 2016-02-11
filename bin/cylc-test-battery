@@ -40,6 +40,10 @@ Options and arguments are appended to the "prove -j \$NPROC -s -r \${@:-tests}"
 command, where NPROC is the number of child processes that can be used to run
 the test files.
 
+Some tests use a clean global config file. If some items from your site config
+file are needed in this, e.g. to get remote test hosts working, add them to
+$CYLC_DIR/conf/global-tests.rc.
+
 The command normally uses the "process pool size" setting (default=4) in the
 site/user global configuration file to determine the number of tests to run in
 parallel. You can also change the amount of concurrency with the "-j N" option.
