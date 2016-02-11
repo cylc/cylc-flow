@@ -45,6 +45,8 @@ from itertools import groupby
 from cylc.task_state import TaskState
 
 PYRO_TIMEOUT = 2
+KEY_STATES = "states"
+KEY_UPDATE_TIME = "update-time"
 
 
 def parse_cylc_scan_raw(text):
@@ -65,13 +67,13 @@ def parse_cylc_scan_raw(text):
         except ValueError:
             continue
         host_suite_properties.setdefault(host, {}).setdefault(suite, {})
-        if prop.startswith("states"):
+        if prop.startswith(KEY_STATES):
             new_value = {}
             for item in value.split():
                 state, num = item.rsplit(":", 1)
                 new_value[state] = int(num)
             value = new_value
-        if prop == "update-time":
+        if prop == KEY_UPDATE_TIME:
             value = int(float(value))
         host_suite_properties[host][suite][prop] = value
     return host_suite_properties
@@ -150,7 +152,7 @@ def get_unscannable_suite_info(host, suite, owner=None):
             continue
         task, state = task_result.groups()
         task_name, task_point = task.split(".")
-        for states_point in ("states", "states:" + task_point):
+        for states_point in (KEY_STATES, KEY_STATES + ":" + task_point):
             suite_info.setdefault(states_point, {})
             suite_info[states_point].setdefault(state, 0)
             suite_info[states_point][state] += 1
@@ -160,7 +162,7 @@ def get_unscannable_suite_info(host, suite, owner=None):
         suite_update_time = int(time.time())
     else:
         suite_update_time = int(suite_update_time_match.group(1))
-    suite_info['update-time'] = suite_update_time
+    suite_info[KEY_UPDATE_TIME] = suite_update_time
     return suite_info
 
 
@@ -1007,21 +1009,21 @@ class ScanAppUpdater(BaseScanUpdater):
                 suite_info = stop_info[host][suite]
                 is_stopped = True
             suite_updated_time = suite_info.get(
-                "update-time", int(time.time())
+                KEY_UPDATE_TIME, int(time.time())
             )
             title = suite_info.get("title")
 
             for key in sorted(suite_info):
-                if key.startswith("states"):
+                if key.startswith(KEY_STATES):
                     # Set up the columns, including the cycle point column.
-                    if key == "states":
+                    if key == KEY_STATES:
                         model_data = [
                             host, suite, is_stopped, title, suite_updated_time]
                         model_data.append(None)
                     else:
                         model_data = [
                             None, None, is_stopped, title, suite_updated_time]
-                        model_data.append(key.replace("states:", "", 1))
+                        model_data.append(key.replace(KEY_STATES + ":", "", 1))
 
                     # Add the state count column (e.g. 'failed 1 succeeded 2').
                     states_text = ""
@@ -1034,7 +1036,7 @@ class ScanAppUpdater(BaseScanUpdater):
                         # Purely runahead cycle.
                         continue
                     model_data.append(states_text.rstrip())
-                    if key == "states":
+                    if key == KEY_STATES:
                         parent_iter = self.suite_treemodel.append(
                             None, model_data)
                     else:
@@ -1059,7 +1061,8 @@ def update_hosts_suites_info(hosts, owner, prev_stopped_hosts_suites_info=None,
     current_hosts_suites = []
     for host, suites in hosts_suites_info.items():
         for suite, suite_info in suites.items():
-            if 'state' not in suite_info or 'update-time' not in suite_info:
+            if (KEY_STATES not in suite_info or
+                    KEY_UPDATE_TIME not in suite_info):
                 continue
             if (host in stopped_hosts_suites_info and
                     suite in stopped_hosts_suites_info[host]):
@@ -1078,7 +1081,7 @@ def update_hosts_suites_info(hosts, owner, prev_stopped_hosts_suites_info=None,
     for host in stopped_hosts_suites_info:
         remove_suites = []
         for suite, suite_info in stopped_hosts_suites_info[host].items():
-            update_time = suite_info.get('update-time', 0)
+            update_time = suite_info.get(KEY_UPDATE_TIME, 0)
             if (update_time + stop_suite_clear_time < current_time):
                 remove_suites.append(suite)
         for suite in remove_suites:
