@@ -47,15 +47,10 @@ if "--use-ssh" in sys.argv[1:]:
         sys.exit(0)
 
 import re
-from multiprocessing import cpu_count, Pool
-from time import sleep
-import traceback
 
-import cylc.flags
-from cylc.network.port_scan import scan
+from cylc.network.port_scan import scan_all
 from cylc.CylcOptionParsers import cop
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.suite_host import is_remote_host
 from cylc.task_state import TaskState
 from cylc.owner import user
 
@@ -342,45 +337,6 @@ def get_point_state_count_lines(state_count_totals, state_count_cycles,
                 line += '%s:%d ' % (st, tot)
         yield (point_string, line.strip())
 
-
-def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
-    """Scan all hosts."""
-    if not hosts:
-        hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
-    # Ensure that it does "localhost" only once
-    hosts = set(hosts)
-    for host in list(hosts):
-        if not is_remote_host(host):
-            hosts.remove(host)
-            hosts.add("localhost")
-    proc_pool_size = GLOBAL_CFG.get(["process pool size"])
-    if proc_pool_size is None:
-        proc_pool_size = cpu_count()
-    if proc_pool_size > len(hosts):
-        proc_pool_size = len(hosts)
-    proc_pool = Pool(proc_pool_size)
-    async_results = {}
-    for host in hosts:
-        async_results[host] = proc_pool.apply_async(
-            scan, [host, reg_db_path, pyro_timeout])
-    proc_pool.close()
-    scan_results = []
-    hosts = []
-    while async_results:
-        sleep(0.05)
-        for host, async_result in async_results.items():
-            if async_result.ready():
-                async_results.pop(host)
-                try:
-                    res = async_result.get()
-                except:
-                    if cylc.flags.debug:
-                        traceback.print_exc()
-                else:
-                    scan_results.extend(res)
-                    hosts.extend([host] * len(res))
-    proc_pool.join()
-    return zip(hosts, scan_results)
 
 if __name__ == "__main__":
     main()

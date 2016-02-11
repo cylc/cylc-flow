@@ -19,7 +19,6 @@
 import copy
 import os
 import re
-import shlex
 import signal
 from subprocess import Popen, PIPE, STDOUT
 import sys
@@ -34,83 +33,46 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
-from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
+from cylc.network.port_scan import scan_all
 from cylc.owner import user
-from cylc.registration import localdb
 from cylc.version import CYLC_VERSION
-from operator import itemgetter
-from itertools import groupby
 from cylc.task_state import TaskState
 
 PYRO_TIMEOUT = 2
+KEY_NAME = "name"
 KEY_STATES = "states"
 KEY_UPDATE_TIME = "update-time"
-
-
-def parse_cylc_scan_raw(text):
-    """Parse cylc scan --raw formatted output.
-
-    Return a nested host->suite->prop->value dictionary,
-    where the properties are as named in the 4th column of
-    cylc scan --raw output.
-
-    For the states properties, translate the state lines into
-    key-value pairs (e.g. failed:1 => {failed: 1}).
-
-    """
-    host_suite_properties = {}
-    for line in text.splitlines():
-        try:
-            suite, owner, host, prop, value = line.strip().split("|")
-        except ValueError:
-            continue
-        host_suite_properties.setdefault(host, {}).setdefault(suite, {})
-        if prop.startswith(KEY_STATES):
-            new_value = {}
-            for item in value.split():
-                state, num = item.rsplit(":", 1)
-                new_value[state] = int(num)
-            value = new_value
-        if prop == KEY_UPDATE_TIME:
-            value = int(float(value))
-        host_suite_properties[host][suite][prop] = value
-    return host_suite_properties
 
 
 def get_hosts_suites_info(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
-    if timeout is None:
-        timeout = PYRO_TIMEOUT
-    command = ["cylc", "scan", "--raw", "--pyro-timeout=%s" % timeout]
-    if owner:
-        command.append("--owner=%s" % owner)
-    if hosts:
-        command += hosts
-    if cylc.flags.debug:
-        stderr = sys.stderr
-        command.append("--debug")
-    else:
-        stderr = PIPE
-    env = os.environ.copy()
-    env["PATH"] = ":".join(sys.path) + ":" + env["PATH"]
-    proc = Popen(
-        command, stdout=PIPE, stderr=stderr, env=env, preexec_fn=os.setpgrp)
-    try:
-        out, err = proc.communicate()
-        if proc.wait():
-            if cylc.flags.debug:
-                sys.stderr.write(err)
-        else:
-            host_suites_map = parse_cylc_scan_raw(out)
-    finally:
-        if proc.poll() is None:
-            try:
-                os.killpg(proc.pid, signal.SIGTERM)
-            except OSError:
-                pass
+    for host, port_results in scan_all(
+            hosts=hosts, pyro_timeout=timeout, owner=owner):
+        if host not in host_suites_map:
+            host_suites_map[host] = {}
+        port, result = port_results
+        try:
+            host_suites_map[host][result[KEY_NAME]] = {}
+            props = host_suites_map[host][result[KEY_NAME]]
+            props["port"] = port
+            for key, value in result.items():
+                if key == KEY_NAME:
+                    continue
+                elif key == KEY_STATES:
+                    # Overall states
+                    props[KEY_STATES] = value[0]
+                    for cycle, cycle_states in value[1].items():
+                        name = "%s:%s" % (KEY_STATES, cycle)
+                        props[name] = cycle_states
+                elif key == KEY_UPDATE_TIME:
+                    props[key] = int(float(value))
+                else:
+                    props[key] = value
+        except (AttributeError, IndexError, KeyError):
+            pass
     for host, suites_map in host_suites_map.items():
         for suite, suite_info in suites_map.items():
             if suite_info.keys() == ["port"]:
@@ -151,13 +113,13 @@ def get_unscannable_suite_info(host, suite, owner=None):
         if not task_result:
             continue
         task, state = task_result.groups()
-        task_name, task_point = task.split(".")
+        task_point = task.split(".")[1]
         for states_point in (KEY_STATES, KEY_STATES + ":" + task_point):
             suite_info.setdefault(states_point, {})
             suite_info[states_point].setdefault(state, 0)
             suite_info[states_point][state] += 1
     suite_update_time_match = re.search(
-        "^time : [^ ]+ \(([0-9]+)\)$", out, re.M)
+        r"^time : [^ ]+ \(([0-9]+)\)$", out, re.M)
     if suite_update_time_match is None:
         suite_update_time = int(time.time())
     else:
@@ -411,8 +373,8 @@ def launch_hosts_dialog(existing_hosts, change_hosts_func):
     dialog.set_icon(get_icon())
     dialog.vbox.set_border_width(5)
     dialog.set_title("Configure suite hosts")
-    cancel_button = dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-    ok_button = dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+    dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+    dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
     label = gtk.Label("Enter a comma-delimited list of suite hosts to scan")
     label.show()
     label_hbox = gtk.HBox()
@@ -683,7 +645,7 @@ class ScanApp(object):
         if state_text is None:
             tooltip.set_text(None)
             return False
-        info = re.findall('\D+\d+', state_text)
+        info = re.findall(r'\D+\d+', state_text)
         for status_number in info:
             status, number = status_number.rsplit(" ", 1)
             state_texts.append(number + " " + status.strip())
@@ -702,9 +664,9 @@ class ScanApp(object):
         state_info = model.get_value(iter_, status_column_info)
         if state_info is not None:
             is_stopped = model.get_value(iter_, 2)
-            info = re.findall('\D+\d+', state_info)
+            info = re.findall(r'\D+\d+', state_info)
             if index < len(info):
-                state, num_tasks = info[index].rsplit(" ", 1)
+                state = info[index].rsplit(" ", 1)[0]
                 icon = self.dots.get_icon(state.strip(), is_stopped=is_stopped)
                 cell.set_property("visible", True)
             else:
@@ -802,7 +764,6 @@ class BaseScanUpdater(threading.Thread):
 
     def run(self):
         """Execute the main loop of the thread."""
-        prev_suites = []
         while not self.quit:
             time_for_update = (
                 self.last_update_time is None or
@@ -1082,7 +1043,7 @@ def update_hosts_suites_info(hosts, owner, prev_stopped_hosts_suites_info=None,
         remove_suites = []
         for suite, suite_info in stopped_hosts_suites_info[host].items():
             update_time = suite_info.get(KEY_UPDATE_TIME, 0)
-            if (update_time + stop_suite_clear_time < current_time):
+            if update_time + stop_suite_clear_time < current_time:
                 remove_suites.append(suite)
         for suite in remove_suites:
             stopped_hosts_suites_info[host].pop(suite)
