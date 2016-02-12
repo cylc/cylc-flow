@@ -29,6 +29,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.network import PYRO_SUITEID_OBJ_NAME, NO_PASSPHRASE
 from cylc.network.connection_validator import ConnValidator, SCAN_HASH
+from cylc.network.suite_state import SuiteStillInitialisingError
 from cylc.owner import user
 from cylc.passphrase import passphrase, get_passphrase, PassphraseError
 from cylc.registration import localdb
@@ -81,7 +82,7 @@ def get_proxy(host, port, pyro_timeout):
     return proxy
 
 
-def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=None):
+def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
     """Scan ports, return a list of suites found: [(port, suite.identify())].
 
     Note that we could easily scan for a given suite+owner and return its
@@ -93,8 +94,6 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=None):
         pyro_timeout = float(pyro_timeout)
     else:
         pyro_timeout = None
-    if not owner:
-        owner = user
 
     results = []
     for port in range(base_port, last_port):
@@ -105,6 +104,8 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=None):
             proxy._setNewConnectionValidator(conn_val)
             proxy._setIdentification((user, NO_PASSPHRASE))
             result = (port, proxy.identify())
+            if owner and result[1].get('owner') != owner:
+                continue
         except Pyro.errors.ConnectionDeniedError as exc:
             if cylc.flags.debug:
                 print '%s:%s (connection denied)' % (host, port)
@@ -128,6 +129,8 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=None):
             else:
                 if cylc.flags.verbose:
                     print >> sys.stderr, msg, "- connected with passphrase"
+                if owner and result[1]['owner'] != owner:
+                    continue
         except (Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # No suite at this port.
             if cylc.flags.debug:
@@ -141,23 +144,27 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=None):
             print >> sys.stderr, (
                 'suite? owner?@%s:%s - connection timed out (%s)' % (
                     host, port, exc))
+            continue
+        except SuiteStillInitialisingError:
+            continue
         except Exception as exc:
             if cylc.flags.debug:
-                print str(exc)
-                break
-            else:
-                print >> sys.stderr, str(exc)
+                traceback.print_exc()
+            raise
         else:
+            suite_owner = result[1].get('owner')
+            if owner and suite_owner != owner:
+                continue
             name = result[1].get('name')
-            owner = result[1].get('owner')
             states = result[1].get('states', None)
             if cylc.flags.debug:
-                print '   suite:', name, owner
+                print '   suite:', name, suite_owner
             if states is None:
                 # This suite keeps its state info private.
                 # Try again with the passphrase if I have it.
                 try:
-                    pphrase = get_passphrase(name, owner, host, localdb(db))
+                    pphrase = get_passphrase(
+                        name, suite_owner, host, localdb(db))
                 except PassphraseError:
                     if cylc.flags.debug:
                         print '    (no passphrase)'
@@ -180,7 +187,7 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=None):
     return results
 
 
-def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None, owner=None):
+def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None, owner=user):
     """Scan all hosts."""
     if not hosts:
         hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])

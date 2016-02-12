@@ -46,7 +46,7 @@ KEY_STATES = "states"
 KEY_UPDATE_TIME = "update-time"
 
 
-def get_hosts_suites_info(hosts, timeout=None, owner=None):
+def get_hosts_suites_info(hosts, timeout=None, owner=user):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
     for host, port_results in scan_all(
