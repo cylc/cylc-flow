@@ -25,7 +25,6 @@ from pipes import quote
 import Queue
 from random import randrange
 import re
-import socket
 import shlex
 from shutil import rmtree
 import time
@@ -1481,7 +1480,7 @@ class TaskProxy(object):
         logfiles.append(local_jobfile_path)
 
         if not self.job_conf['host']:
-            self.job_conf['host'] = socket.gethostname()
+            self.job_conf['host'] = 'localhost'
 
         if (is_remote_host(self.job_conf['host']) or
                 is_remote_user(self.job_conf['owner'])):
