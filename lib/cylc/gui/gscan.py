@@ -767,7 +767,7 @@ class BaseScanUpdater(threading.Thread):
         while not self.quit:
             time_for_update = (
                 self.last_update_time is None or
-                time.time() < self.last_update_time + self.poll_interval
+                time.time() >= self.last_update_time + self.poll_interval
             )
             if not self._should_force_update and not time_for_update:
                 time.sleep(1)
