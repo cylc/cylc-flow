@@ -1246,9 +1246,6 @@ been defined for this suite""").inform()
             view_item.set_submenu(view_menu)
             items.append(view_item)
 
-            view_item.set_sensitive(
-                t_state in self.STATES_VIEW_LOGS or submit_num > 0)
-
             # NOTE: we have to respond to 'button-press-event' rather than
             # 'activate' in order for sub-menus to work in the graph-view.
 
@@ -1265,6 +1262,8 @@ been defined for this suite""").inform()
                 item.connect(
                     'button-press-event', self.view_task_info, task_id,
                     filename)
+                item.set_sensitive(
+                    t_state in self.STATES_VIEW_LOGS or submit_num > 0)
 
             info_item = gtk.ImageMenuItem('prereq\'s & outputs')
             img = gtk.image_new_from_stock(
