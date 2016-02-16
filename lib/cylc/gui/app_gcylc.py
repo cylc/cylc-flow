@@ -1260,7 +1260,7 @@ been defined for this suite""").inform()
                     gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
                 view_menu.append(item)
                 item.connect(
-                    'button-press-event', self.view_task_info, task_id,
+                    'button-release-event', self.view_task_info, task_id,
                     filename)
                 item.set_sensitive(
                     t_state in self.STATES_VIEW_LOGS or submit_num > 0)
@@ -1271,7 +1271,7 @@ been defined for this suite""").inform()
             info_item.set_image(img)
             view_menu.append(info_item)
             info_item.connect(
-                'button-press-event', self.popup_requisites, task_id)
+                'button-release-event', self.popup_requisites, task_id)
 
             js0_item = gtk.ImageMenuItem('run "cylc show"')
             img = gtk.image_new_from_stock(
@@ -1279,7 +1279,7 @@ been defined for this suite""").inform()
             js0_item.set_image(img)
             view_menu.append(js0_item)
             js0_item.connect(
-                'button-press-event', self.view_task_descr, task_id)
+                'button-release-event', self.view_task_descr, task_id)
 
             items.append(gtk.SeparatorMenuItem())
 
@@ -1335,7 +1335,7 @@ been defined for this suite""").inform()
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_ready_item.set_image(reset_img)
         reset_menu.append(reset_ready_item)
-        reset_ready_item.connect('button-press-event', self.reset_task_state,
+        reset_ready_item.connect('button-release-event', self.reset_task_state,
                                  task_id, 'ready', task_is_family)
 
         reset_waiting_item = gtk.ImageMenuItem('"waiting"')
@@ -1343,15 +1343,16 @@ been defined for this suite""").inform()
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_waiting_item.set_image(reset_img)
         reset_menu.append(reset_waiting_item)
-        reset_waiting_item.connect('button-press-event', self.reset_task_state,
-                                   task_id, 'waiting', task_is_family)
+        reset_waiting_item.connect('button-release-event',
+                                   self.reset_task_state, task_id, 'waiting',
+                                   task_is_family)
 
         reset_succeeded_item = gtk.ImageMenuItem('"succeeded"')
         reset_img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
                                              gtk.ICON_SIZE_MENU)
         reset_succeeded_item.set_image(reset_img)
         reset_menu.append(reset_succeeded_item)
-        reset_succeeded_item.connect('button-press-event',
+        reset_succeeded_item.connect('button-release-event',
                                      self.reset_task_state, task_id,
                                      'succeeded', task_is_family)
 
@@ -1360,14 +1361,15 @@ been defined for this suite""").inform()
                                              gtk.ICON_SIZE_MENU)
         reset_failed_item.set_image(reset_img)
         reset_menu.append(reset_failed_item)
-        reset_failed_item.connect('button-press-event', self.reset_task_state,
-                                  task_id, 'failed', task_is_family)
+        reset_failed_item.connect('button-release-event',
+                                  self.reset_task_state, task_id, 'failed',
+                                  task_is_family)
 
         spawn_item = gtk.ImageMenuItem('Force spawn')
         img = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)
         spawn_item.set_image(img)
         items.append(spawn_item)
-        spawn_item.connect('button-press-event', self.reset_task_state,
+        spawn_item.connect('button-release-event', self.reset_task_state,
                            task_id, 'spawn', task_is_family)
 
         items.append(gtk.SeparatorMenuItem())
