@@ -82,7 +82,7 @@ def get_proxy(host, port, pyro_timeout):
     return proxy
 
 
-def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
+def scan(host=get_hostname(), db=None, pyro_timeout=None):
     """Scan ports, return a list of suites found: [(port, suite.identify())].
 
     Note that we could easily scan for a given suite+owner and return its
@@ -104,8 +104,6 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
             proxy._setNewConnectionValidator(conn_val)
             proxy._setIdentification((user, NO_PASSPHRASE))
             result = (port, proxy.identify())
-            if owner and result[1].get('owner') != owner:
-                continue
         except Pyro.errors.ConnectionDeniedError as exc:
             if cylc.flags.debug:
                 print '%s:%s (connection denied)' % (host, port)
@@ -129,8 +127,6 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
             else:
                 if cylc.flags.verbose:
                     print >> sys.stderr, msg, "- connected with passphrase"
-                if owner and result[1]['owner'] != owner:
-                    continue
         except (Pyro.errors.ProtocolError, Pyro.errors.NamingError) as exc:
             # No suite at this port.
             if cylc.flags.debug:
@@ -152,19 +148,16 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
                 traceback.print_exc()
             raise
         else:
-            suite_owner = result[1].get('owner')
-            if owner and suite_owner != owner:
-                continue
+            owner = result[1].get('owner')
             name = result[1].get('name')
             states = result[1].get('states', None)
             if cylc.flags.debug:
-                print '   suite:', name, suite_owner
+                print '   suite:', name, owner
             if states is None:
                 # This suite keeps its state info private.
                 # Try again with the passphrase if I have it.
                 try:
-                    pphrase = get_passphrase(
-                        name, suite_owner, host, localdb(db))
+                    pphrase = get_passphrase(name, owner, host, localdb(db))
                 except PassphraseError:
                     if cylc.flags.debug:
                         print '    (no passphrase)'
@@ -187,7 +180,7 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
     return results
 
 
-def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None, owner=user):
+def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
     """Scan all hosts."""
     if not hosts:
         hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
@@ -206,7 +199,7 @@ def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None, owner=user):
     async_results = {}
     for host in hosts:
         async_results[host] = proc_pool.apply_async(
-            scan, [host, reg_db_path, pyro_timeout, owner])
+            scan, [host, reg_db_path, pyro_timeout])
     proc_pool.close()
     scan_results = []
     hosts = []

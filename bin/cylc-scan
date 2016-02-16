@@ -91,7 +91,7 @@ def main():
         action="append", dest="patterns_name", default=[])
 
     parser.add_option(
-        "-o", "--owner",
+        "-o", "--suite-owner",
         metavar="PATTERN",
         help="List suites with owner matching PATTERN (regular expression). "
              "Defaults to just your own suites. Can be used multiple times.",

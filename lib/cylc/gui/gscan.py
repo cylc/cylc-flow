@@ -42,18 +42,21 @@ from cylc.task_state import TaskState
 
 PYRO_TIMEOUT = 2
 KEY_NAME = "name"
+KEY_OWNER = "owner"
 KEY_STATES = "states"
 KEY_UPDATE_TIME = "update-time"
 
 
-def get_hosts_suites_info(hosts, timeout=None, owner=user):
+def get_hosts_suites_info(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
     for host, port_results in scan_all(
-            hosts=hosts, pyro_timeout=timeout, owner=owner):
+            hosts=hosts, pyro_timeout=timeout):
+        port, result = port_results
+        if owner and owner != result.get(KEY_OWNER):
+            continue
         if host not in host_suites_map:
             host_suites_map[host] = {}
-        port, result = port_results
         try:
             host_suites_map[host][result[KEY_NAME]] = {}
             props = host_suites_map[host][result[KEY_NAME]]
