@@ -31,9 +31,10 @@ Some notes:
 
 import fileinput
 import logging
+import multiprocessing
 from pipes import quote
 from subprocess import Popen, PIPE
-import multiprocessing
+import sys
 from tempfile import TemporaryFile
 import time
 import traceback
@@ -49,12 +50,13 @@ def _run_command(ctx):
 
     if cylc.flags.debug:
         if ctx.cmd_kwargs.get('shell'):
-            print ctx.cmd
+            sys.stdout.write("%s\n" % ctx.cmd)
         else:
-            print ' '.join([quote(cmd_str) for cmd_str in ctx.cmd])
+            sys.stdout.write(
+                "%s\n" % ' '.join([quote(cmd_str) for cmd_str in ctx.cmd]))
 
     if (SuiteProcPool.STOP_JOB_SUBMISSION.value and
-            ctx.cmd_key == SuiteProcPool.JOB_SUBMIT):
+            ctx.cmd_key == SuiteProcPool.JOBS_SUBMIT):
         ctx.err = "job submission skipped (suite stopping)"
         ctx.ret_code = SuiteProcPool.JOB_SKIPPED_FLAG
         ctx.timestamp = get_current_time_string()
@@ -145,7 +147,7 @@ class SuiteProcContext(object):
 class SuiteProcPool(object):
     """Use a process pool to execute shell commands."""
 
-    JOB_SUBMIT = "job-submit"
+    JOBS_SUBMIT = "jobs-submit"
     JOB_SKIPPED_FLAG = 999
     # Shared memory flag.
     STOP_JOB_SUBMISSION = multiprocessing.Value('i', 0)
@@ -177,17 +179,11 @@ class SuiteProcPool(object):
         self.pool = multiprocessing.Pool(processes=self.pool_size)
         self.results = {}
 
-    def put_command(self, ctx, callback):
-        """Queue a new shell command to execute."""
-        try:
-            result = self.pool.apply_async(_run_command, [ctx])
-        except AssertionError as exc:
-            self.log.warning("%s\n  %s\n %s" % (
-                str(exc),
-                "Rejecting command (pool closed)",
-                ctx.cmd))
-        else:
-            self.results[id(result)] = (result, callback)
+    def close(self):
+        """Close the pool to new commands."""
+        if not (self.is_dead() or self.is_closed()):
+            self.log.debug("Closing process pool")
+            self.pool.close()
 
     def handle_results_async(self):
         """Pass any available results to their associated callback."""
@@ -198,28 +194,6 @@ class SuiteProcPool(object):
                 value = result.get()
                 if callable(callback):
                     callback(value)
-
-    @classmethod
-    def stop_job_submission(cls):
-        """Set STOP_JOB_SUBMISSION flag."""
-        cls.STOP_JOB_SUBMISSION.value = 1
-
-    def close(self):
-        """Close the pool to new commands."""
-        if not (self.is_dead() or self.is_closed()):
-            self.log.debug("Closing process pool")
-            self.pool.close()
-
-    def terminate(self):
-        """Kill all worker processes immediately."""
-        if not self.is_dead():
-            self.log.debug("Terminating process pool")
-            self.pool.terminate()
-
-    def join(self):
-        """Join after workers have exited. Close or terminate first."""
-        self.log.debug("Joining process pool")
-        self.pool.join()
 
     def is_closed(self):
         """Is the pool closed?"""
@@ -233,6 +207,39 @@ class SuiteProcPool(object):
             if pool.is_alive():
                 return False
         return True
+
+    def join(self):
+        """Join after workers have exited. Close or terminate first."""
+        self.log.debug("Joining process pool")
+        self.pool.join()
+
+    def put_command(self, ctx, callback):
+        """Queue a new shell command to execute."""
+        try:
+            result = self.pool.apply_async(_run_command, [ctx])
+        except AssertionError as exc:
+            self.log.warning("%s\n  %s\n %s" % (
+                str(exc),
+                "Rejecting command (pool closed)",
+                ctx.cmd))
+        else:
+            self.results[id(result)] = (result, callback)
+
+    @staticmethod
+    def run_command(ctx):
+        """Execute a shell command and capture its output and exit status."""
+        return _run_command(ctx)
+
+    @classmethod
+    def stop_job_submission(cls):
+        """Set STOP_JOB_SUBMISSION flag."""
+        cls.STOP_JOB_SUBMISSION.value = 1
+
+    def terminate(self):
+        """Kill all worker processes immediately."""
+        if not self.is_dead():
+            self.log.debug("Terminating process pool")
+            self.pool.terminate()
 
 
 def main():
@@ -256,7 +263,7 @@ def main():
 
     for i in range(3):
         com = "sleep 5 && echo Hello from JOB " + str(i)
-        pool.put_command(SuiteProcPool.JOB_SUBMIT, com, print_result)
+        pool.put_command(SuiteProcPool.JOBS_SUBMIT, com, print_result)
         com = "sleep 5 && echo Hello from POLL " + str(i)
         pool.put_command("poll", com, print_result)
         com = "sleep 5 && echo Hello from HANDLER " + str(i)
@@ -279,5 +286,4 @@ def main():
 
 
 if __name__ == '__main__':
-    import sys
     main()

@@ -69,7 +69,7 @@ class TaskPool(object):
     ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
     JOBS_KILL = "jobs-kill"
     JOBS_POLL = "jobs-poll"
-    JOBS_SUBMIT = "jobs-submit"
+    JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
 
     def __init__(self, suite, pri_dao, pub_dao, stop_point, pyro, log,
                  run_mode, update_state_summary_callback):
