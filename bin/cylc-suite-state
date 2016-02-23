@@ -51,7 +51,7 @@ import os
 import sys
 from time import sleep, time
 from cylc.remote import remrun
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 
 if remrun().execute():
     sys.exit(0)
@@ -164,8 +164,8 @@ def main():
              "' and '" + sorted(
                  CylcSuiteDBChecker.STATE_ALIASES.keys())[-1] + "'. ")
     states = ("Valid states to check for include: '" +
-              ("', '").join(sorted(task_state.legal)[:-1]) + "' and '" +
-              sorted(task_state.legal)[-1] + "'.")
+              ("', '").join(sorted(TaskState.legal)[:-1]) + "' and '" +
+              sorted(TaskState.legal)[-1] + "'.")
 
     parser.add_option(
         "-S", "--status",
@@ -245,7 +245,7 @@ def main():
         sys.exit("ERROR: cannot connect to the suite DB")
 
     if options.status:
-        if (options.status in task_state.legal or options.status in
+        if (options.status in TaskState.legal or options.status in
                 CylcSuiteDBChecker.STATE_ALIASES):
             pass
         else:

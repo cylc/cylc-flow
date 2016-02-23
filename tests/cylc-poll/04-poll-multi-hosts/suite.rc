@@ -47,6 +47,6 @@ exit
             host={{CYLC_TEST_HOST}}
     [[poller]]
         script="""
-cylc poll -m "${CYLC_SUITE_NAME}" POLLABLE 1
+cylc poll "${CYLC_SUITE_NAME}" 'POLLABLE'
 cylc stop "${CYLC_SUITE_NAME}"
 """

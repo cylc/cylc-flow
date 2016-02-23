@@ -8,18 +8,18 @@ suicide via a :fail trigger, and the suite to shut down successfully."""
    [[reference test]]
        required run mode = live
        live mode suite timeout = 0.5 # minutes
-       expected task failures = A.1
+       expected task failures = a.1
 
 [scheduling]
     [[dependencies]]
         graph = """
-    A:start => B
-    A:fail => !A"""
+    a:start => b
+    a:fail => !a"""
 
 [runtime]
-    [[A]]
+    [[a]]
         script = """
 trap '' EXIT # die silently
 exit 0"""
-    [[B]]
-        script = cylc poll $CYLC_SUITE_NAME A 1
+    [[b]]
+        script = cylc poll "$CYLC_SUITE_NAME" 'a'

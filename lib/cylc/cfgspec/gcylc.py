@@ -27,7 +27,7 @@ from parsec.validate import validator as vdr
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
 
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 
 "gcylc config file format."
 
@@ -152,7 +152,7 @@ class gconfig(config):
                 if item in ['inherit', 'defaults']:
                     continue
                 state = item
-                if state not in task_state.legal:
+                if state not in TaskState.legal:
                     print >> sys.stderr, (
                         "WARNING, ignoring illegal task state '" + state +
                         "' in theme", theme)

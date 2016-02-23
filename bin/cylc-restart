@@ -41,9 +41,9 @@ from datetime import datetime
 import cylc.flags
 from cylc.config import SuiteConfig, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
-from cylc.scheduler import scheduler
+from cylc.scheduler import Scheduler
 from cylc.suite_state_dumping import SuiteStateDumper
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 from cylc.run import main
 from cylc.get_task_proxy import get_task_proxy
 from cylc.registration import localdb
@@ -53,7 +53,7 @@ from cylc.wallclock import get_current_time_string
 from cylc.network.suite_broadcast import BroadcastServer
 
 
-class restart(scheduler):
+class restart(Scheduler):
     def __init__(self):
 
         self.parser = cop(
@@ -96,7 +96,7 @@ class restart(scheduler):
                  "specified in the suite definition it will be used, however.",
             action="store_true", default=False, dest="ignore_start_point")
 
-        scheduler.__init__(self, is_restart=True)
+        Scheduler.__init__(self, is_restart=True)
 
     def parse_commandline(self):
         (self.options, self.args) = self.parser.parse_args()
@@ -111,7 +111,7 @@ class restart(scheduler):
         if len(self.args) == 2:
             self.restart_from = self.args[1]
 
-        scheduler.parse_commandline(self)
+        Scheduler.parse_commandline(self)
 
     def get_state_initial_point_string(self):
         """Return the initial point string from the state file, if any."""
@@ -149,7 +149,7 @@ class restart(scheduler):
         <task_id> : <state>
         <task_id> : <state>
           ...
-        task <state> format is defined by task_state.dump()
+        task <state> format is defined by TaskState.dump()
 
         """
         file_name = self.get_state_file_path()
@@ -357,7 +357,7 @@ class restart(scheduler):
                 state = state.replace(
                     'status=runahead,', 'status=waiting,', 1)
             try:
-                task_state(state)
+                TaskState(state)
             except Exception as e:
                 print >> sys.stderr, "ERROR: ", type(e).__name__, e
                 raise Exception("ERROR: corrupted state dump")

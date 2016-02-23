@@ -34,7 +34,7 @@ from time import sleep
 
 from parsec.OrderedDict import OrderedDict
 from cylc.CylcOptionParsers import cop
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 from cylc.registration import localdb
 from cylc.network.suite_state import (
     StateSummaryClient, SuiteStillInitialisingError)
@@ -99,11 +99,11 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
             client_name += " -r"
 
         legend = ''
-        for state in task_state.legal:
+        for state in TaskState.legal:
             legend += "%s%s%s" % (
-                task_state.ctrl[state], state, task_state.ctrl_end)
+                TaskState.ctrl[state], state, TaskState.ctrl_end)
         legend = legend.rstrip()
-        len_header = sum(len(s) for s in task_state.legal)
+        len_header = sum(len(s) for s in TaskState.legal)
 
         self.pclient = StateSummaryClient(
             suite, options.owner, options.host, options.pyro_timeout,
@@ -117,7 +117,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                 print str(exc)
             except Exception as exc:
                 print >> sys.stderr, "\033[1;37;41mERROR%s" % (
-                    task_state.ctrl_end), str(exc)
+                    TaskState.ctrl_end), str(exc)
                 self.pclient.reset()
             else:
                 states = [t["state"] for t in task_summaries.values() if (
@@ -127,7 +127,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     task_summaries = dict(
                         (i, j) for i, j in task_summaries.items() if (
                             j['state'] in
-                            task_state.legal_for_restricted_monitoring))
+                            TaskState.legal_for_restricted_monitoring))
                 if not options.display_runahead:
                     task_summaries = dict(
                         (i, j) for i, j in task_summaries.items() if (
@@ -157,7 +157,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     if point_string not in task_info:
                         task_info[point_string] = {}
                     task_info[point_string][name] = "%s%s%s" % (
-                        task_state.ctrl[state], name, task_state.ctrl_end)
+                        TaskState.ctrl[state], name, TaskState.ctrl_end)
 
                 # Sort the tasks in each cycle point.
                 if options.sort_order == "alphanumeric":
@@ -184,12 +184,12 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                 title_str = ' ' * len_header
                 title_str = prefix + title_str[len(prefix):]
                 title_str = '\033[1;37;44m%s%s%s' % (
-                    title_str[:-len(suffix)], suffix, task_state.ctrl_end)
+                    title_str[:-len(suffix)], suffix, TaskState.ctrl_end)
                 blit.append(title_str)
                 blit.append(legend)
 
                 updated_str = "updated: %s%s%s" % (
-                    '\033[1;38m', updated_at, task_state.ctrl_end)
+                    '\033[1;38m', updated_at, TaskState.ctrl_end)
                 blit.append(updated_str)
 
                 summary = 'state summary:'
@@ -203,7 +203,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                         state_totals[state] += 1
                 for state, tot in state_totals.items():
                     summary += '%s %d %s' % (
-                        task_state.ctrl[state], tot, task_state.ctrl_end)
+                        TaskState.ctrl[state], tot, TaskState.ctrl_end)
                 blit.append(summary)
 
                 if stopping:
@@ -218,14 +218,14 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     suffix = 'R_U_N_N_I_N_G'
                 divider_str = '_' * len_header
                 divider_str = "\033[1;31m%s%s%s" % (
-                    divider_str[:-len(suffix)], suffix, task_state.ctrl_end)
+                    divider_str[:-len(suffix)], suffix, TaskState.ctrl_end)
                 blit.append(divider_str)
 
                 blitlines = {}
                 for point_str, val in sorted_task_info.items():
                     indx = point_str
                     line = "%s%s%s" % (
-                        '\033[1;34m', point_str, task_state.ctrl_end)
+                        '\033[1;34m', point_str, TaskState.ctrl_end)
                     for name, info in val.items():
                         if info is not None:
                             line += " %s" % info

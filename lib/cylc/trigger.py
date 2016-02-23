@@ -21,8 +21,7 @@ import re
 from cylc.task_id import TaskID
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point_relative)
-from cylc.task_state import task_state
-from cylc.task_state import TaskStateError
+from cylc.task_state import TaskState, TaskStateError
 
 
 BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
@@ -71,7 +70,7 @@ Task triggers, used to generate prerequisite messages.
 
         # Built-in trigger?
         try:
-            self.builtin = task_state.get_legal_trigger_state(qualifier)
+            self.builtin = TaskState.get_legal_trigger_state(qualifier)
         except TaskStateError:
             pass
         else:

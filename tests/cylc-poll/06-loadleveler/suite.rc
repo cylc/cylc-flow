@@ -27,4 +27,4 @@
 {% endif %}
 
     [[b]]
-        script = cylc poll $CYLC_SUITE_REG_NAME a 1
+        script = cylc poll "$CYLC_SUITE_REG_NAME" 'a'

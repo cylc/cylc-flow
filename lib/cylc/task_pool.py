@@ -34,12 +34,13 @@ as such, on restart, into the runahead pool.
 
 """
 
+from fnmatch import fnmatchcase
 from logging import ERROR, DEBUG, INFO, WARNING
 import os
 from Pyro.errors import NamingError
+import re
 import shlex
 import sys
-from tempfile import NamedTemporaryFile
 from time import time
 import traceback
 
@@ -48,8 +49,8 @@ from cylc.broker import broker
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
 from cylc.cycling.loader import (
-    get_interval, get_interval_cls, ISO8601_CYCLING_TYPE)
-from cylc.CylcError import SchedulerError, TaskNotFoundError
+    get_interval, get_interval_cls, get_point, ISO8601_CYCLING_TYPE,
+    standardise_point_string)
 import cylc.flags
 from cylc.get_task_proxy import get_task_proxy
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
@@ -57,13 +58,15 @@ from cylc.network.ext_trigger import ExtTriggerServer
 from cylc.network.suite_broadcast import BroadcastServer
 from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
+from cylc.task_id import TaskID
 from cylc.task_proxy import TaskProxy
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 
 
 class TaskPool(object):
     """Task pool of a suite."""
 
+    ERR_PREFIX_TASKID_MATCH = "No matching tasks found: "
     JOBS_KILL = "jobs-kill"
     JOBS_POLL = "jobs-poll"
     JOBS_SUBMIT = "jobs-submit"
@@ -117,6 +120,74 @@ class TaskPool(object):
         for queue in qconfig:
             for taskname in qconfig[queue]['members']:
                 self.myq[taskname] = queue
+
+    def insert_tasks(self, items, stop_point_str, compat=None):
+        """Insert tasks."""
+        n_warnings = 0
+        if isinstance(items, str) or compat is not None:
+            items = [items + "." + compat]
+        config = SuiteConfig.get_inst()
+        names = config.get_task_name_list()
+        fams = config.runtime['first-parent descendants']
+        task_ids = []
+        for item in items:
+            point_str, name_str, _ = self._parse_task_item(item)
+            try:
+                point_str = standardise_point_string(point_str)
+            except ValueError as exc:
+                self.log.warning(
+                    self.ERR_PREFIX_TASKID_MATCH + ("%s (%s)" % (item, exc)))
+                n_warnings += 1
+                continue
+            i_names = []
+            if name_str in names:
+                i_names.append(name_str)
+            elif name_str in fams:
+                for name in fams[name_str]:
+                    if name in names:
+                        i_names.append(name)
+            else:
+                for name in names:
+                    if fnmatchcase(name, name_str):
+                        i_names.append(name)
+                for fam, fam_names in fams.items():
+                    if not fnmatchcase(fam, name_str):
+                        continue
+                    for name in fam_names:
+                        if name in names:
+                            i_names.append(name)
+            if i_names:
+                for name in i_names:
+                    task_ids.append((name, point_str))
+            else:
+                self.log.warning(self.ERR_PREFIX_TASKID_MATCH + item)
+                n_warnings += 1
+                continue
+        if stop_point_str is None:
+            stop_point = None
+        else:
+            try:
+                stop_point = get_point(
+                    standardise_point_string(stop_point_str))
+            except ValueError as exc:
+                self.log.warning("Invalid stop point: %s (%s)" % (
+                    stop_point_str, exc))
+                n_warnings += 1
+                return n_warnings
+        task_states_data = self.pri_dao.select_task_states_by_task_ids(
+            ["submit_num"], task_ids)
+        for name_str, point_str in task_ids:
+            # TODO - insertion of start-up tasks? (startup=False assumed here)
+            submit_num = None
+            if (name_str, point_str) in task_states_data:
+                submit_num = task_states_data[(name_str, point_str)].get(
+                    "submit_num")
+            new_task = get_task_proxy(
+                name_str, get_point(point_str), 'waiting', stop_point,
+                submit_num=submit_num)
+            if new_task:
+                self.add_to_runahead_pool(new_task)
+        return n_warnings
 
     def add_to_runahead_pool(self, itask):
         """Add a new task to the runahead pool if possible.
@@ -632,8 +703,6 @@ class TaskPool(object):
         """Reload task definitions."""
         found = False
 
-        config = SuiteConfig.get_inst()
-
         for itask in self.get_all_tasks():
             if itask.state.is_currently('ready', 'submitted', 'running'):
                 # do not reload active tasks as it would be possible to
@@ -737,18 +806,17 @@ class TaskPool(object):
                     return False
         return True
 
-    def poll_task_jobs(self, ids=None):
+    def poll_task_jobs(self, items=None, compat=None):
         """Poll jobs of active tasks.
 
-        If ids is specified, poll active tasks matching given IDs.
+        If items is specified, poll active tasks matching given IDs.
 
         """
         if self.run_mode == 'simulation':
             return
-        itasks = []
-        for itask in self.get_all_tasks():
-            if ids and itask.identity not in ids:
-                continue
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        active_itasks = []
+        for itask in itasks:
             if itask.is_active():
                 if itask.job_conf is None:
                     try:
@@ -762,14 +830,14 @@ class TaskPool(object):
                             itask.JOB_POLL, '(prepare job poll)', err=exc,
                             ret_code=1))
                         continue
-                itasks.append(itask)
-            elif ids and itask.identity in ids:  # and not is_active
+                active_itasks.append(itask)
+            elif items:  # and not is_active
                 self.log.warning(
                     '%s: skip poll, state not ["submitted", "running"]' % (
                         itask.identity))
-        if not itasks:
-            return
-        self._run_job_cmd(self.JOBS_POLL, itasks, self.poll_task_jobs_callback)
+        self._run_job_cmd(
+            self.JOBS_POLL, active_itasks, self.poll_task_jobs_callback)
+        return n_warnings
 
     def poll_task_jobs_callback(self, ctx):
         """Callback when poll tasks command exits."""
@@ -782,16 +850,15 @@ class TaskPool(object):
             },
         )
 
-    def kill_task_jobs(self, ids=None):
+    def kill_task_jobs(self, items=None, compat=None):
         """Kill jobs of active tasks.
 
-        If ids is specified, kill active tasks matching given IDs.
+        If items is specified, kill active tasks matching given IDs.
 
         """
-        itasks = []
-        for itask in self.get_all_tasks():
-            if ids and itask.identity not in ids:
-                continue
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        active_itasks = []
+        for itask in itasks:
             is_active = itask.is_active()
             if is_active and self.run_mode == 'simulation':
                 itask.reset_state_failed()
@@ -814,14 +881,14 @@ class TaskPool(object):
                             ret_code=1))
                         continue
                 itask.reset_state_held()
-                itasks.append(itask)
-            elif ids and itask.identity in ids:  # and not is_active
+                active_itasks.append(itask)
+            elif items:  # and not is_active
                 self.log.warning(
                     '%s: skip kill, state not ["submitted", "running"]' % (
                         itask.identity))
-        if not itasks:
-            return
-        self._run_job_cmd(self.JOBS_KILL, itasks, self.kill_task_jobs_callback)
+        self._run_job_cmd(
+            self.JOBS_KILL, active_itasks, self.kill_task_jobs_callback)
+        return n_warnings
 
     def kill_task_jobs_callback(self, ctx):
         """Callback when kill tasks command exits."""
@@ -861,7 +928,9 @@ class TaskPool(object):
             for job_log_dir in job_log_dirs:
                 point, name, submit_num = job_log_dir.split(os.sep, 2)
                 itask = tasks[(point, name, submit_num)]
-                callback(itask, "|".join([ctx.timestamp, job_log_dir, "1"]))
+                for prefix, callback in handlers:
+                    callback(
+                        itask, "|".join([ctx.timestamp, job_log_dir, "1"]))
             return
         for line in ctx.out.splitlines(True):
             for prefix, callback in handlers:
@@ -872,7 +941,7 @@ class TaskPool(object):
                         point, name, submit_num = path.split(os.sep, 2)
                         itask = tasks[(point, name, submit_num)]
                         callback(itask, line)
-                    except (KeyError, ValueError) as exc:
+                    except (KeyError, ValueError):
                         if cylc.flags.debug:
                             self.log.warning(
                                 'Unhandled %s output: %s' % (
@@ -891,17 +960,19 @@ class TaskPool(object):
                 if itask.point > point:
                     itask.reset_state_held()
 
-    def hold_tasks(self, ids):
+    def hold_tasks(self, items, compat=None):
         """Hold tasks with IDs matching any item in "ids"."""
-        for itask in self.get_all_tasks():
-            if itask.identity in ids:
-                itask.reset_state_held()
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        for itask in itasks:
+            itask.reset_state_held()
+        return n_warnings
 
-    def release_tasks(self, ids):
+    def release_tasks(self, items, compat=None):
         """Release held tasks with IDs matching any item in "ids"."""
-        for itask in self.get_all_tasks():
-            if itask.identity in ids:
-                itask.reset_state_unheld()
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        for itask in itasks:
+            itask.reset_state_unheld()
+        return n_warnings
 
     def hold_all_tasks(self):
         """Hold all tasks."""
@@ -1276,21 +1347,15 @@ class TaskPool(object):
         for itask in spent:
             self.remove(itask)
 
-    def reset_task_states(self, ids, state):
+    def reset_task_states(self, items, state, compat):
         """Reset task states.
 
         We only allow resetting to a subset of available task states
 
         """
-        if state not in task_state.legal_for_reset:
-            raise SchedulerError('Illegal reset state: ' + state)
-
-        tasks = []
-        for itask in self.get_tasks():
-            if itask.identity in ids:
-                tasks.append(itask)
-
-        for itask in tasks:
+        TaskState.check_legal_for_reset(state)
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        for itask in itasks:
             if itask.state.is_currently('ready'):
                 # Currently can't reset a 'ready' task in the job submission
                 # thread!
@@ -1309,35 +1374,47 @@ class TaskPool(object):
                 itask.reset_state_held()
             elif state == 'spawn':
                 self.force_spawn(itask)
+        return n_warnings
 
-    def remove_entire_cycle(self, point, spawn):
-        for itask in self.get_tasks():
-            if itask.point == point:
-                if spawn:
-                    self.force_spawn(itask)
-                self.remove(itask, 'by request')
+    def remove_tasks(self, items, spawn=False, compat=None):
+        """Remove tasks from pool."""
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        for itask in itasks:
+            if spawn:
+                self.force_spawn(itask)
+            self.remove(itask, 'by request')
+        return n_warnings
 
-    def remove_tasks(self, ids, spawn):
-        for itask in self.get_tasks():
-            if itask.identity in ids:
-                if spawn:
-                    self.force_spawn(itask)
-                self.remove(itask, 'by request')
+    def trigger_tasks(self, items, compat=None):
+        """Trigger tasks."""
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        for itask in itasks:
+            if itask.is_active():
+                self.log.warning(
+                    '%s: skip trigger, already %s' % (
+                        itask.identity, itask.state.get_status()))
+                n_warnings += 1
+                continue
+            itask.manual_trigger = True
+            if not itask.state.is_currently('queued'):
+                itask.reset_state_ready()
+        return n_warnings
 
-    def trigger_tasks(self, ids):
-        for itask in self.get_tasks():
-            if itask.identity in ids:
-                itask.manual_trigger = True
-                if not itask.state.is_currently('queued'):
-                    itask.reset_state_ready()
-
-    def dry_run_task(self, id_):
+    def dry_run_task(self, items, compat=None):
         """Create job file for "cylc trigger --edit"."""
-        bcast = BroadcastServer.get_inst()
-        for itask in self.get_tasks():
-            if itask.identity == id_:
-                itask.prep_submit(
-                    overrides=bcast.get(itask.identity), dry_run=True)
+        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        if len(itasks) > 1:
+            if isinstance(items, str) and compat is not None:
+                items = items + "." + compat
+            elif compat is not None:
+                items = "*." + compat
+            self.log.warning("Unique task match not found: %s" % items)
+            n_warnings += 1
+        else:
+            itasks[0].prep_submit(
+                overrides=BroadcastServer.get_inst().get(itasks[0].identity),
+                dry_run=True)
+        return n_warnings
 
     def check_task_timers(self):
         """Check submission and execution timeout timers for current tasks.
@@ -1452,11 +1529,7 @@ class TaskPool(object):
                     return False, "task not running"
 
     def get_task_jobfile_path(self, id_):
-        """Return a task job log dir, sans submit number.
-
-        TODO - this method name (and same in scheduler.py) should be changed.
-
-        """
+        """Return a task job log dir, sans submit number."""
         found = False
         for itask in self.get_tasks():
             if itask.identity == id_:
@@ -1503,6 +1576,89 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.external_triggers:
                 ets.retrieve(itask)
+
+    def _filter_task_proxies(self, items, compat=None):
+        """Return task proxies that match names, points, states in items.
+
+        In the new form, the arguments should look like:
+        items -- a list of strings for matching task proxies, each with
+                 the general form name[.point][:state] or [point/]name[:state]
+                 where name is a glob-like pattern for matching a task name or
+                 a family name.
+        compat -- not used
+
+        In the old form, "items" is a string containing a regular expression
+        for matching task/family names, and "compat" is a string containing a
+        point string.
+
+        """
+        itasks = []
+        n_warnings = 0
+        if not items and compat is None:
+            itasks += self.get_all_tasks()
+        elif isinstance(items, str) or compat is not None:
+            try:
+                point_str = standardise_point_string(compat)
+            except ValueError as exc:
+                self.log.warning(
+                    self.ERR_PREFIX_TASKID_MATCH +
+                    ("%s.%s: %s" % (items, compat, exc)))
+                n_warnings += 1
+            else:
+                name_rec = re.compile(items)
+                for itask in self.get_all_tasks():
+                    nss = itask.tdef.namespace_hierarchy
+                    if (
+                            (point_str is None or
+                             str(itask.point) == point_str) and
+                            (name_rec.match(itask.tdef.name) or
+                             any([name_rec.match(ns) for ns in nss]))
+                    ):
+                        itasks.append(itask)
+                if not itasks:
+                    self.log.warning(
+                        self.ERR_PREFIX_TASKID_MATCH +
+                        ("%s.%s" % (items, compat)))
+                    n_warnings += 1
+        else:
+            for item in items:
+                point_str, name_str, state = self._parse_task_item(item)
+                if point_str is None:
+                    point_str = "*"
+                else:
+                    try:
+                        point_str = standardise_point_string(point_str)
+                    except ValueError:
+                        # point_str may be a glob
+                        pass
+                tasks_found = False
+                for itask in self.get_all_tasks():
+                    nss = itask.tdef.namespace_hierarchy
+                    if (fnmatchcase(str(itask.point), point_str) and
+                            (not state or itask.state.is_currently(state)) and
+                            (fnmatchcase(itask.tdef.name, name_str) or
+                             any([fnmatchcase(ns, name_str) for ns in nss]))):
+                        itasks.append(itask)
+                        tasks_found = True
+                if not tasks_found:
+                    self.log.warning(self.ERR_PREFIX_TASKID_MATCH + item)
+                    n_warnings += 1
+        return itasks, n_warnings
+
+    @classmethod
+    def _parse_task_item(cls, item):
+        """Parse point/name:state or name.point:state syntax."""
+        if ":" in item:
+            head, state_str = item.rsplit(":", 1)
+        else:
+            head, state_str = (item, None)
+        if "/" in head:
+            point_str, name_str = head.split("/", 1)
+        elif "." in head:
+            name_str, point_str = head.split(".", 1)
+        else:
+            name_str, point_str = (head, None)
+        return (point_str, name_str, state_str)
 
     def _run_job_cmd(self, cmd_key, itasks, callback, **kwargs):
         """Run job commands, e.g. poll, kill, etc.

@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Common options for all cylc commands."""
 
 from optparse import OptionParser, OptionConflictError
 import os
@@ -23,15 +24,6 @@ import cylc.flags
 from cylc.owner import user
 from cylc.registration import localdb, RegistrationError
 from cylc.regpath import IllegalRegPathError
-
-"""Common options for all cylc commands."""
-
-multitask_usage = """
-To match multiple tasks or families at once, MATCH is interpreted as a
-Python-style regular expression, not a simple shell glob.
-
-To match family rather than task names, use the -m/--family option. This is
-required because MATCH could potentially match task or family names."""
 
 
 class db_optparse(object):
@@ -62,6 +54,29 @@ class db_optparse(object):
 
 class cop(OptionParser):
 
+    """Common options for all cylc CLI commands."""
+
+    MULTITASK_USAGE = """
+A TASKID is an identifier for matching individual task proxies and/or families
+of them. It can be written in these syntaxes:
+* [CYCLE-POINT-GLOB/]TASK-NAME-GLOB[:TASK-STATE]
+* [CYCLE-POINT-GLOB/]FAMILY-NAME-GLOB[:TASK-STATE]
+* TASK-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
+* FAMILY-NAME-GLOB[.CYCLE-POINT-GLOB][:TASK-STATE]
+
+For example, to match:
+* all tasks in a cycle: '20200202T0000Z/*' or '*.20200202T0000Z'
+* all tasks in the submitted status: ':submitted'
+* retrying 'foo*' tasks in 0000Z cycles: 'foo*.*0000Z:retrying' or
+  '*0000Z/foo*:retrying'
+* retrying tasks in 'BAR' family: '*/BAR:retrying' or 'BAR.*:retrying'
+* retrying tasks in 'BAR' or 'BAZ' families: '*/BA[RZ]:retrying' or
+  'BA[RZ].*:retrying'
+
+The old 'MATCH POINT' syntax will be automatically detected and supported. To
+avoid this, use the '--no-multitask-compat' option, or use the new syntax
+(with a '/' or a '.') when specifying 2 TASKID arguments."""
+
     def __init__(self, usage, argdoc=None, pyro=False, noforce=False,
                  jset=False, multitask=False, prep=False, twosuites=False,
                  auto_add=True):
@@ -76,6 +91,8 @@ class cop(OptionParser):
         # noforce=True is for commands that don't use interactive prompts at
         # all
 
+        if multitask:
+            usage += self.MULTITASK_USAGE
         usage += """
 
 Arguments:"""
@@ -290,12 +307,26 @@ Arguments:"""
             try:
                 self.add_option(
                     "-m", "--family",
-                    help="Match members of named families rather than tasks.",
+                    help=(
+                        "(Obsolete) This option is now ignored "
+                        "and is retained for backward compatibility only. "
+                        "TASKID in the argument list can be used to match "
+                        "task and family names regardless of this option."),
                     action="store_true", default=False, dest="is_family")
             except OptionConflictError:
                 pass
 
+            try:
+                self.add_option(
+                    "--no-multitask-compat",
+                    help="Disallow backward compatible multitask interface.",
+                    action="store_false", default=True,
+                    dest="multitask_compat")
+            except OptionConflictError:
+                pass
+
     def get_suite(self, index=0):
+        """Return suite name."""
         return self.suite_info[index]
 
     def _getdef(self, arg, options):
@@ -321,6 +352,7 @@ Arguments:"""
         return name, path
 
     def parse_args(self, remove_opts=[]):
+        """Parse options and arguments, overrides OptionParser.parse_args."""
         if self.auto_add:
             # Add common options after command-specific options.
             self.add_std_options()
@@ -367,3 +399,27 @@ Arguments:"""
         cylc.flags.debug = options.debug
 
         return (options, args)
+
+    @classmethod
+    def parse_multitask_compat(cls, options, mtask_args):
+        """Parse argument items for multitask backward compatibility.
+
+        If options.multitask_compat is False, return (mtask_args, None).
+
+        If options.multitask_compat is True, it checks if mtask_args is a
+        2-element array and if the 1st and 2nd arguments look like the old
+        "MATCH" "POINT" CLI arguments.
+        If so, it returns (mtask_args[0], mtask_args[1]).
+        Otherwise, it return (mtask_args, None).
+
+        """
+        if (options.multitask_compat and len(mtask_args) == 2 and
+                all(["/" not in mtask_arg for mtask_arg in mtask_args]) and
+                "." not in mtask_args[1]):
+            # For backward compat, argument list should have 2 elements.
+            # Element 1 may be a regular expression, so it may contain "." but
+            # should not contain a "/".
+            # All other elements should contain no "." and "/".
+            return (mtask_args[0], mtask_args[1])
+        else:
+            return (mtask_args, None)

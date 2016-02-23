@@ -30,4 +30,4 @@
         inherit = LLSETTINGS
         script = "sleep 30"
     [[killer]]
-        script = cylc kill $CYLC_SUITE_NAME rem2 1 -f; sleep 10
+        script = cylc kill -f "$CYLC_SUITE_NAME" 'rem2'; sleep 10

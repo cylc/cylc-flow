@@ -15,76 +15,76 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Cylc scheduler server."""
 
-import os
-import re
-import signal
-import sys
-import time
-from tempfile import mkstemp
-import traceback
-import datetime
+from copy import copy, deepcopy
 import logging
-import threading
-import subprocess
-from copy import deepcopy
-from Queue import Queue, Empty
+import os
+from Queue import Empty
 from shutil import copy as copyfile, copytree, rmtree
+import signal
+import subprocess
+import sys
+from tempfile import mkstemp
+import threading
+import time
+import traceback
 
-from parsec.util import printcfg
 import isodatetime.data
 import isodatetime.parsers
-
-import cylc.flags
-from cylc.rundb import CylcSuiteDAO
-from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
-from cylc.task_proxy import TaskProxy
-from cylc.job_file import JOB_FILE
-from cylc.suite_host import get_suite_host
-from cylc.owner import user
-from cylc.version import CYLC_VERSION
-from cylc.config import SuiteConfig
-from cylc.passphrase import passphrase
-from cylc.get_task_proxy import get_task_proxy
 from parsec.util import printcfg
-from copy import copy, deepcopy
-import time
-import datetime
-import logging
-import re
-import os
-import sys
-import traceback
+
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.regpath import RegPath
-from cylc.CylcError import TaskNotFoundError, SchedulerError
-from cylc.RunEventHandler import RunHandler
-from cylc.LogDiagnosis import LogSpec
-from cylc.suite_state_dumping import SuiteStateDumper
-from cylc.suite_logging import suite_log
-from cylc.task_id import TaskID
-from cylc.task_pool import TaskPool
-from cylc.mp_pool import SuiteProcPool
-from cylc.exceptions import SchedulerStop, SchedulerError
-from cylc.wallclock import (
-    get_current_time_string, get_seconds_as_interval_string)
+from cylc.config import SuiteConfig
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import get_point, standardise_point_string
+from cylc.exceptions import CylcError
+import cylc.flags
+from cylc.job_file import JOB_FILE
+from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
+from cylc.LogDiagnosis import LogSpec
+from cylc.mp_pool import SuiteProcPool
 from cylc.network import (
     PYRO_SUITEID_OBJ_NAME, PYRO_STATE_OBJ_NAME,
     PYRO_CMD_OBJ_NAME, PYRO_BCAST_OBJ_NAME, PYRO_EXT_TRIG_OBJ_NAME,
     PYRO_INFO_OBJ_NAME, PYRO_LOG_OBJ_NAME)
-from cylc.network.pyro_daemon import PyroDaemon
-from cylc.network.suite_state import StateSummaryServer
-from cylc.network.suite_command import SuiteCommandServer
-from cylc.network.suite_broadcast import BroadcastServer
 from cylc.network.ext_trigger import ExtTriggerServer
+from cylc.network.pyro_daemon import PyroDaemon
+from cylc.network.suite_broadcast import BroadcastServer
+from cylc.network.suite_command import SuiteCommandServer
+from cylc.network.suite_identifier import SuiteIdServer
 from cylc.network.suite_info import SuiteInfoServer
 from cylc.network.suite_log import SuiteLogServer
-from cylc.network.suite_identifier import SuiteIdServer
+from cylc.network.suite_state import StateSummaryServer
+from cylc.owner import user
+from cylc.passphrase import passphrase
+from cylc.regpath import RegPath
+from cylc.rundb import CylcSuiteDAO
+from cylc.RunEventHandler import RunHandler
+from cylc.suite_host import get_suite_host
+from cylc.suite_logging import suite_log
+from cylc.suite_state_dumping import SuiteStateDumper
+from cylc.task_id import TaskID
+from cylc.task_pool import TaskPool
+from cylc.task_proxy import TaskProxy
+from cylc.version import CYLC_VERSION
+from cylc.wallclock import (
+    get_current_time_string, get_seconds_as_interval_string)
 
 
-class request_handler(threading.Thread):
+class SchedulerError(CylcError):
+    """Scheduler error."""
+    pass
+
+
+class SchedulerStop(CylcError):
+    """Scheduler has stopped."""
+    pass
+
+
+class PyroRequestHandler(threading.Thread):
+    """Pyro request handler."""
+
     def __init__(self, pyro):
         threading.Thread.__init__(self)
         self.pyro = pyro
@@ -100,7 +100,8 @@ class request_handler(threading.Thread):
         self.log.debug("request handling thread exiting")
 
 
-class scheduler(object):
+class Scheduler(object):
+    """Cylc scheduler server."""
 
     FS_CHECK_PERIOD = 600.0  # 600 seconds
 
@@ -240,7 +241,7 @@ class scheduler(object):
             self.suite, self.pri_dao, self.pub_dao, self.final_point,
             self.pyro, self.log, self.run_mode)
         self.state_dumper.pool = self.pool
-        self.request_handler = request_handler(self.pyro)
+        self.request_handler = PyroRequestHandler(self.pyro)
         self.request_handler.start()
 
         self.old_user_at_host_set = set()
@@ -307,7 +308,7 @@ class scheduler(object):
             print '  +', name
             cmdstr = name + '(' + ','.join([str(a) for a in args]) + ')'
             try:
-                getattr(self, "command_%s" % name)(*args)
+                n_warnings = getattr(self, "command_%s" % name)(*args)
             except SchedulerStop:
                 self.log.info('Command succeeded: ' + cmdstr)
                 raise
@@ -317,7 +318,12 @@ class scheduler(object):
                 self.log.warning(str(x))
                 self.log.warning('Command failed: ' + cmdstr)
             else:
-                self.log.info('Command succeeded: ' + cmdstr)
+                if n_warnings:
+                    self.log.info(
+                        'Command succeeded with %s warning(s): %s' %
+                        (n_warnings, cmdstr))
+                else:
+                    self.log.info('Command succeeded: ' + cmdstr)
                 self.do_update_state_summary = True
                 if name in self.proc_cmds:
                     self.do_process_tasks = True
@@ -346,19 +352,19 @@ class scheduler(object):
             point_string = standardise_point_string(point_string)
         except PointParsingError as exc:
             # (This is only needed to raise a clearer error message).
-            raise Exception("Invalid cycle point: %s" % point_string)
+            raise ValueError(
+                "Invalid cycle point: %s (%s)" % (point_string, exc))
         return point_string
 
     def get_standardised_point(self, point_string):
         """Return a standardised point."""
-        point_string = self.get_standardised_point_string(point_string)
-        return get_point(point_string)
+        return get_point(self.get_standardised_point_string(point_string))
 
     def get_standardised_taskid(self, task_id):
         """Return task ID with standardised cycle point."""
         name, point_string = TaskID.split(task_id)
-        point_string = self.get_standardised_point_string(point_string)
-        return TaskID.get(name, point_string)
+        return TaskID.get(
+            name, self.get_standardised_point_string(point_string))
 
     def info_ping_task(self, task_id, exists_only=False):
         task_id = self.get_standardised_taskid(task_id)
@@ -408,9 +414,8 @@ class scheduler(object):
             self.config.feet)
 
     def info_get_task_requisites(self, name, point_string):
-        point_string = self.get_standardised_point_string(point_string)
         return self.pool.get_task_requisites(
-            TaskID.get(name, point_string))
+            TaskID.get(name, self.get_standardised_point_string(point_string)))
 
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
@@ -429,8 +434,7 @@ class scheduler(object):
         raise SchedulerStop("Stopping NOW")
 
     def command_set_stop_after_point(self, point_string):
-        point_string = self.get_standardised_point_string(point_string)
-        self.set_stop_point(point_string)
+        self.set_stop_point(self.get_standardised_point_string(point_string))
 
     def command_set_stop_after_clock_time(self, arg):
         # format: ISO 8601 compatible or YYYY/MM/DD-HH:mm (backwards comp.)
@@ -451,112 +455,74 @@ class scheduler(object):
         if TaskID.is_valid_id(task_id):
             self.set_stop_task(task_id)
 
-    def command_release_task(self, name, point_string, is_family):
-        point_string = self.get_standardised_point_string(point_string)
-        matches = self.get_matching_task_names(name, is_family)
-        if not matches:
-            raise TaskNotFoundError("No matching tasks found: %s" % name)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.release_tasks(task_ids)
+    def command_release_task(self, items, compat=None, _=None):
+        """Release tasks."""
+        return self.pool.release_tasks(items, compat)
 
-    def command_poll_tasks(self, name, point_string, is_family):
+    def command_poll_tasks(self, items, compat=None, _=None):
         """Poll all tasks or a task/family if options are provided."""
-        if name and point_string:
-            matches = self.get_matching_task_names(name, is_family)
-            if not matches:
-                raise TaskNotFoundError("No matching tasks found: %s" % name)
-            point_string = self.get_standardised_point_string(point_string)
-            task_ids = [TaskID.get(i, point_string) for i in matches]
-            self.pool.poll_task_jobs(task_ids)
-        else:
-            self.pool.poll_task_jobs()
+        return self.pool.poll_task_jobs(items, compat)
 
-    def command_kill_tasks(self, name, point_string, is_family):
+    def command_kill_tasks(self, items, compat=None, _=False):
         """Kill all tasks or a task/family if options are provided."""
-        if name and point_string:
-            matches = self.get_matching_task_names(name, is_family)
-            if not matches:
-                raise TaskNotFoundError("No matching tasks found: %s" % name)
-            point_string = self.get_standardised_point_string(point_string)
-            task_ids = [TaskID.get(i, point_string) for i in matches]
-            self.pool.kill_task_jobs(task_ids)
-        else:
-            self.pool.kill_task_jobs()
+        return self.pool.kill_task_jobs(items, compat)
 
     def command_release_suite(self):
+        """Release all task proxies in the suite."""
         self.release_suite()
 
-    def command_hold_task(self, name, point_string, is_family):
-        matches = self.get_matching_task_names(name, is_family)
-        if not matches:
-            raise TaskNotFoundError("No matching tasks found: %s" % name)
-        point_string = self.get_standardised_point_string(point_string)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.hold_tasks(task_ids)
+    def command_hold_task(self, items, compat=None, _=False):
+        """Hold selected task proxies in the suite."""
+        return self.pool.hold_tasks(items, compat)
 
     def command_hold_suite(self):
+        """Hold all task proxies in the suite."""
         self.hold_suite()
 
     def command_hold_after_point_string(self, point_string):
         """Hold tasks AFTER this point (itask.point > point)."""
-        point_string = self.get_standardised_point_string(point_string)
         point = self.get_standardised_point(point_string)
         self.hold_suite(point)
         self.log.info(
-            "The suite will pause when all tasks have passed " + point_string)
+            "The suite will pause when all tasks have passed %s" % point)
 
     def command_set_verbosity(self, lvl):
-        # (lvl legality checked by CLI)
+        """Remove suite verbosity."""
         self.log.setLevel(lvl)
         cylc.flags.debug = (lvl == logging.DEBUG)
         return True, 'OK'
 
-    def command_remove_cycle(self, point_string, spawn):
-        point = self.get_standardised_point(point_string)
-        self.pool.remove_entire_cycle(point, spawn)
+    def command_remove_cycle(self, point_string, spawn=False):
+        """Remove tasks in a cycle."""
+        return self.pool.remove_tasks(point_string + "/*", spawn)
 
-    def command_remove_task(self, name, point_string, is_family, spawn):
-        matches = self.get_matching_task_names(name, is_family)
-        if not matches:
-            raise TaskNotFoundError("No matching tasks found: %s" % name)
-        point_string = self.get_standardised_point_string(point_string)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.remove_tasks(task_ids, spawn)
+    def command_remove_task(self, items, compat=None, _=None, spawn=False):
+        """Remove tasks."""
+        return self.pool.remove_tasks(items, spawn, compat)
 
-    def command_insert_task(self, name, point_string, is_family,
-                            stop_point_string):
-        matches = self.get_matching_task_names(name, is_family)
-        if not matches:
-            raise TaskNotFoundError("No matching tasks found: %s" % name)
-        point_string = self.get_standardised_point_string(point_string)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        point = get_point(point_string)
-        if stop_point_string is None:
-            stop_point = None
-        else:
-            stop_point_string = self.get_standardised_point_string(
-                stop_point_string)
-            stop_point = get_point(stop_point_string)
-        task_states_data = self.pri_dao.select_task_states_by_task_ids(
-            ["submit_num"], [TaskID.split(task_id) for task_id in task_ids])
-        for task_id in task_ids:
-            task_name, task_point = TaskID.split(task_id)
-            # TODO - insertion of start-up tasks? (startup=False assumed here)
-            submit_num = None
-            if (task_name, task_point) in task_states_data:
-                submit_num = task_states_data[(task_name, task_point)].get(
-                    "submit_num")
-            new_task = get_task_proxy(
-                task_name, point, 'waiting', stop_point, submit_num=submit_num)
-            if new_task:
-                self.pool.add_to_runahead_pool(new_task)
+    def command_insert_task(
+            self, items, compat=None, _=None, stop_point_string=None):
+        """Insert tasks."""
+        return self.pool.insert_tasks(items, stop_point_string, compat)
 
     def command_nudge(self):
-        # just to cause the task processing loop to be invoked
+        """Cause the task processing loop to be invoked"""
         pass
 
     def command_reload_suite(self):
-        self.reconfigure()
+        """Reload suite configuration."""
+        print "RELOADING the suite definition"
+        self.configure_suite(reconfigure=True)
+
+        self.pool.reconfigure(self.final_point)
+
+        self.configure_suite_environment()
+
+        if self.gen_reference_log or self.reference_test_mode:
+            self.configure_reftest(recon=True)
+
+        # update state SuiteStateDumper state
+        self.state_dumper.set_cts(self.initial_point, self.final_point)
 
     def command_set_runahead(self, *args):
         self.pool.set_runahead(*args)
@@ -571,20 +537,6 @@ class scheduler(object):
                     self.config.cfg['cylc']['event hooks']['timeout']),
                 get_current_time_string()
             )
-
-    def reconfigure(self):
-        print "RELOADING the suite definition"
-        self.configure_suite(reconfigure=True)
-
-        self.pool.reconfigure(self.final_point)
-
-        self.configure_suite_environment()
-
-        if self.gen_reference_log or self.reference_test_mode:
-            self.configure_reftest(recon=True)
-
-        # update state SuiteStateDumper state
-        self.state_dumper.set_cts(self.initial_point, self.final_point)
 
     def parse_commandline(self):
         if self.options.run_mode not in [
@@ -1338,58 +1290,17 @@ To see if a suite of the same name is still running, try:
     def will_pause_at(self):
         return self.pool.get_hold_point()
 
-    def command_trigger_task(self, name, point_string, is_family):
-        matches = self.get_matching_task_names(name, is_family)
-        if not matches:
-            raise TaskNotFoundError("No matching tasks found: %s" % name)
-        point_string = self.get_standardised_point_string(point_string)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.trigger_tasks(task_ids)
+    def command_trigger_task(self, items, compat=None, _=None):
+        """Trigger tasks."""
+        return self.pool.trigger_tasks(items, compat)
 
-    def command_dry_run_task(self, name, point_string):
-        matches = self.get_matching_task_names(name)
-        if not matches:
-            raise TaskNotFoundError("Task not found: %s" % name)
-        if len(matches) > 1:
-            raise TaskNotFoundError("Unique task match not found: %s" % name)
-        point_string = self.get_standardised_point_string(point_string)
-        task_id = TaskID.get(matches[0], point_string)
-        self.pool.dry_run_task(task_id)
+    def command_dry_run_task(self, items, compat=None):
+        """Dry-run a task, e.g. edit run."""
+        return self.pool.dry_run_task(items, compat)
 
-    def get_matching_task_names(self, pattern, is_family=False):
-        """Return task names that match pattern (by task or family name)."""
-
-        matching_tasks = []
-        all_tasks = self.config.get_task_name_list()
-        if is_family:
-            fp_desc = self.config.runtime['first-parent descendants']
-            matching_mems = []
-            try:
-                # Exact family match.
-                matching_mems = fp_desc[pattern]
-            except KeyError:
-                # Regex family match
-                for fam, mems in fp_desc.items():
-                    if re.match(pattern, fam):
-                        matching_mems += mems
-            # Keep family members that are tasks (not sub-families).
-            matching_tasks = [m for m in matching_mems if m in all_tasks]
-        else:
-            if pattern in all_tasks:
-                # Exact task match.
-                matching_tasks = [pattern]
-            else:
-                # Regex task match.
-                matching_tasks = [t for t in all_tasks if re.match(pattern, t)]
-        return matching_tasks
-
-    def command_reset_task_state(self, name, point_string, state, is_family):
-        matches = self.get_matching_task_names(name, is_family)
-        if not matches:
-            raise TaskNotFoundError("No matching tasks found: %s" % name)
-        point_string = self.get_standardised_point_string(point_string)
-        task_ids = [TaskID.get(i, point_string) for i in matches]
-        self.pool.reset_task_states(task_ids, state)
+    def command_reset_task_state(self, items, compat=None, state=None, _=None):
+        """Reset the state of tasks."""
+        return self.pool.reset_task_states(items, state, compat)
 
     def filter_initial_task_list(self, inlist):
         included_by_rc = self.config.cfg[

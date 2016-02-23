@@ -42,7 +42,7 @@ from cylc.registration import localdb
 from cylc.version import CYLC_VERSION
 from operator import itemgetter
 from itertools import groupby
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 
 PYRO_TIMEOUT = 2
 
@@ -517,7 +517,7 @@ class ScanApp(object):
         status_column.set_cell_data_func(
             cell_text_cycle, self._set_cell_text_cycle, cycle_column_info)
         self.suite_treeview.append_column(status_column)
-        distinct_states = len(task_state.legal)
+        distinct_states = len(TaskState.legal)
         for i in range(distinct_states):
             cell_pixbuf_state = gtk.CellRendererPixbuf()
             status_column.pack_start(cell_pixbuf_state, expand=False)

@@ -22,7 +22,7 @@ point of the suite."""
     [[holdrelease]]
         script = """
 sleep 5
-cylc hold $CYLC_SUITE_NAME {{ HOLD_MATCH }} 20141009T0000Z
+cylc hold "$CYLC_SUITE_NAME" '{{HOLD_MATCH}}.20141009T0000Z'
 sleep 5
 """
     [[foo]]

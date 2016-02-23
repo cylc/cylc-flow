@@ -43,39 +43,47 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop, multitask_usage
+from cylc.CylcOptionParsers import cop
 
 
 def main():
     parser = cop(
-        __doc__ + multitask_usage,
-        pyro=True, multitask=True,
+        __doc__, pyro=True, multitask=True,
         argdoc=[
             ("REG", "Suite name"),
-            ('MATCH', 'Task or family name matching regular expression'),
-            ('CYCLE_POINT', 'Cycle point (e.g. date-time or integer)'),
-            ('[STOP_POINT]', 'Optional stop cycle point for inserted task.')])
+            ('TASKID [...]', 'Task identifier')])
 
-    (options, args) = parser.parse_args()
-    suite = args[0]
+    parser.add_option(
+        "--stop-point", "--remove-point",
+        help="Optional hold/stop cycle point for inserted task.",
+        metavar="POINT", action="store", dest="stop_point_string")
 
-    name = args[1]
-    point_string = args[2]
-    if len(args) == 4:
-        stop_point_string = args[3]
+    options, args = parser.parse_args()
+    suite = args.pop(0)
+
+    # See "cop.parse_multitask_compat" for back compat discussion
+    # "cop.parse_multitask_compat" cannot be used here because argument 3
+    # (after suite argument) used to be "options.stop_point_string".
+    if (options.multitask_compat and len(args) in [2, 3] and
+            all(["/" not in arg for arg in args]) and
+            all(["." not in arg for arg in args[1:]])):
+        items, compat = (args[0], args[1])
+        if len(args) == 3:
+            options.stop_point_string = args[2]
+        prompt(
+            'Insert %s at %s in %s' % (items, compat, suite),
+            options.force)
     else:
-        stop_point_string = None
-
-    prompt('Insert %s at %s in %s' % (name, point_string, suite),
-           options.force)
+        items, compat = (args, None)
+        prompt('Insert %s in %s' % (items, suite), options.force)
 
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
-    pclient.put_command('insert_task', name, point_string, options.is_family,
-                        stop_point_string)
+    pclient.put_command(
+        'insert_task', items, compat, None, options.stop_point_string)
 
 
 if __name__ == "__main__":

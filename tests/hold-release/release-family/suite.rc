@@ -25,7 +25,7 @@ sleep 5
 cylc hold $CYLC_SUITE_NAME
 sleep 5
 # Release a family in the first cycle point.
-cylc release --family $CYLC_SUITE_NAME {{ RELEASE_MATCH }} 20141009T0000Z
+cylc release "$CYLC_SUITE_NAME" '{{RELEASE_MATCH}}.20141009T0000Z'
 """
     [[STUFF]]
     [[UNRELATED]]

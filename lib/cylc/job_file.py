@@ -291,7 +291,7 @@ unset S""" % args)
         handle.write("\nexport CYLC_TASK_WORK_DIR=" + task_work_dir)
         # DEPRECATED
         handle.write("\nexport CYLC_TASK_WORK_PATH=$CYLC_TASK_WORK_DIR")
-        handle.write("\nexport CYLC_JOB_PID=$$")
+        handle.write("\nexport %s=$$" % (TaskMessage.CYLC_JOB_PID))
 
     @classmethod
     def _write_env_script(cls, handle, job_conf):

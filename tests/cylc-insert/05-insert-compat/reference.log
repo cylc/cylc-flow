@@ -1,0 +1,13 @@
+2014/02/01 23:49:29 INFO - Run mode: live
+2014/02/01 23:49:29 INFO - Initial point: 2014010100
+2014/02/01 23:49:29 INFO - Final point: 2014010300
+2014/02/01 23:49:29 INFO - Cold Start 2014010100
+2014/02/01 23:49:29 INFO - [prep.2014010100] -triggered off []
+2014/02/01 23:49:33 INFO - [foo.2014010100] -triggered off ['prep.2014010100']
+2014/02/01 23:49:33 INFO - [bar.2014010100] -triggered off ['prep.2014010100']
+2014/02/01 23:49:33 INFO - [baz.2014010100] -triggered off ['prep.2014010100']
+2014/02/01 23:49:36 INFO - [foo.2014010200] -triggered off []
+2014/02/01 23:49:36 INFO - [bar.2014010200] -triggered off []
+2014/02/01 23:49:36 INFO - [baz.2014010200] -triggered off []
+2014/02/01 23:49:39 INFO - [foo.2014010300] -triggered off []
+2014/02/01 23:49:40 INFO - [bar.2014010300] -triggered off []

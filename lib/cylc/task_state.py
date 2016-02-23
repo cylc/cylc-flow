@@ -15,20 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import re
-import sys
-
-"""
-Task states, plus dump and reload from the suite state dump file.
-
-Note that 'runahead' is a task state used only in the state summary for suite
-monitoring. It indicates a task in the runahead pool - which is technically
-'waiting' but inactive.
-"""
+"""Task states related logic."""
 
 
-class TaskStateError(Exception):
+class TaskStateError(ValueError):
+    """Illegal task state."""
+
     def __init__(self, msg):
         self.msg = msg
 
@@ -36,7 +28,13 @@ class TaskStateError(Exception):
         return repr(self.msg)
 
 
-class task_state(object):
+class TaskState(object):
+    """Task states, plus dump and reload from the suite state dump file.
+
+    Note that 'runahead' is a task state used only in the state summary for
+    suite monitoring. It indicates a task in the runahead pool - which is
+    technically 'waiting' but inactive.
+    """
 
     legal = [
         'waiting',
@@ -83,17 +81,23 @@ class task_state(object):
     ]
 
     @classmethod
+    def check_legal_for_reset(cls, state):
+        """Raise TaskStateError if state is not legal for reset."""
+        if state not in cls.legal_for_reset:
+            raise TaskStateError('Illegal reset state: %s' % state)
+
+    @classmethod
     def is_legal(cls, state):
         return state in cls.legal
 
     @classmethod
-    def get_legal_trigger_state(cls, str):
-        if str in cls.legal_for_trigger.values():
-            return str
-        elif str in cls.legal_for_trigger.keys():
-            return cls.legal_for_trigger[str]
+    def get_legal_trigger_state(cls, state):
+        if state in cls.legal_for_trigger.values():
+            return state
+        elif state in cls.legal_for_trigger.keys():
+            return cls.legal_for_trigger[state]
         else:
-            raise TaskStateError("Illegal trigger state: %s" % str)
+            raise TaskStateError("Illegal trigger state: %s" % state)
 
     # GUI button labels
     labels = {

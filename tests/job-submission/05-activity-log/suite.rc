@@ -25,8 +25,8 @@ T1_PID=$(awk -F= '$1 == "CYLC_JOB_PID" {print $2}' "${T1_ST_FILE}")
 while ps "$T1_PID" 1>/dev/null 2>&1; do
     sleep 1
 done
-cylc kill "${CYLC_SUITE_NAME}" t1 1
+cylc kill "${CYLC_SUITE_NAME}" 't1'
 sleep 1
-cylc poll "${CYLC_SUITE_NAME}" t1 1
+cylc poll "${CYLC_SUITE_NAME}" 't1'
 cylc shutdown "${CYLC_SUITE_NAME}"
 """

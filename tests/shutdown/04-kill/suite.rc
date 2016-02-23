@@ -15,5 +15,5 @@
         script = """
 cylc shutdown "${CYLC_SUITE_NAME}"
 sleep 1
-cylc kill "${CYLC_SUITE_NAME}" t1 1
+cylc kill "${CYLC_SUITE_NAME}" 't1'
 """

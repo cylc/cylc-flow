@@ -29,7 +29,7 @@ except ImportError, x:
     raise SystemExit("ERROR: Pyro is not installed")
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.CylcError import PortFileError
+from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.network.client_reporter import PyroClientReporter
 from cylc.network.connection_validator import ConnValidator

@@ -32,7 +32,7 @@ cylc run $SUITE_NAME
 cylc suite-state $SUITE_NAME --task=foo --cycle=1 \
     --status=failed --max-polls=10 --interval=2
 # Remove it.
-cylc remove $SUITE_NAME foo 1
+cylc remove "$SUITE_NAME" 'foo.1'
 # (wait till foo is removed)
 sleep 5
 # Record the state dump.

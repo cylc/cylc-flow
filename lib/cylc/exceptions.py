@@ -15,9 +15,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Common and shared exceptions in cylc."""
 
 
-class SchedulerStop(Exception):
+class CylcError(Exception):
+    """
+    Attributes:
+        message - what the problem is.
+    """
     def __init__(self, msg):
         self.msg = msg
 
@@ -25,9 +30,6 @@ class SchedulerStop(Exception):
         return repr(self.msg)
 
 
-class SchedulerError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
+class PortFileError(CylcError):
+    """Error reading a port file."""
+    pass

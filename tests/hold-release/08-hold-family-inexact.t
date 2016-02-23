@@ -23,10 +23,10 @@ set_test_number 2
 install_suite $TEST_NAME_BASE hold-family
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
-run_ok $TEST_NAME cylc validate --set=HOLD_MATCH="'.*FF'" $SUITE_NAME
+run_ok $TEST_NAME cylc validate --set=HOLD_MATCH="'*FF'" $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
-suite_run_ok $TEST_NAME cylc run --set=HOLD_MATCH="'.*FF'" --reference-test \
+suite_run_ok $TEST_NAME cylc run --set=HOLD_MATCH="'*FF'" --reference-test \
     --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

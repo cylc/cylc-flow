@@ -24,7 +24,6 @@ from updater_graph import GraphUpdater
 from warning_dialog import warning_dialog, info_dialog
 
 from cylc.cylc_xdot import xdot_widgets
-from cylc.task_state import task_state
 from cylc.task_id import TaskID
 from gcapture import gcapture_tmpfile
 

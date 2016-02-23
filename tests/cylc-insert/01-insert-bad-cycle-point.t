@@ -18,15 +18,16 @@
 # Test cylc insert command with an invalid cycle point
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 3
+set_test_number 4
 #-------------------------------------------------------------------------------
-install_suite $TEST_NAME_BASE insert-bad-cycle-point
+install_suite "$TEST_NAME_BASE" "$TEST_NAME_BASE"
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_fail $TEST_NAME cylc run -v -v --reference-test --debug $SUITE_NAME
-grep_ok "Invalid cycle point" $TEST_NAME.stderr
+grep_ok "No matching tasks found: foo.teatime" $TEST_NAME.stderr
+grep_ok "Invalid ISO 8601 date representation: teatime" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

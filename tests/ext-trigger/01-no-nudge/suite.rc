@@ -21,7 +21,7 @@ will time out."""
     [[foo]]
         # If triggered, remove the long-running bar task
         # to allow the suite to shut down quickly.
-        script = cylc kill $CYLC_SUITE_NAME bar 1
+        script = cylc kill "$CYLC_SUITE_NAME" 'bar'
     [[bar]]
         script = """
 sleep 5

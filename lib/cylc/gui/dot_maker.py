@@ -18,7 +18,7 @@
 
 import gtk
 from copy import deepcopy
-from cylc.task_state import task_state
+from cylc.task_state import TaskState
 
 
 empty = {}
@@ -314,7 +314,7 @@ class DotMaker(object):
 
     def get_dots(self):
         dots = {'task': {}, 'family': {}}
-        for state in task_state.legal:
+        for state in TaskState.legal:
             dots['task'][state] = self.get_icon(state)
             dots['family'][state] = self.get_icon(state, is_family=True)
         dots['task']['empty'] = self.get_icon()

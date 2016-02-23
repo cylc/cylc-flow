@@ -42,4 +42,4 @@ sleep 30
     [[finisher]]
         script=true
     [[poller]]
-        script=cylc poll "${CYLC_SUITE_NAME}" 'speaker[12]' '1'
+        script=cylc poll "${CYLC_SUITE_NAME}" 'speaker[12]'

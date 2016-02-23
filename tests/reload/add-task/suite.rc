@@ -17,6 +17,6 @@ title = "Test insertion of a task added by a reload."
       script = """
 sed -i "s/\(graph = reloader\)\s*$/\1 => add_me/" $CYLC_SUITE_DEF_PATH/suite.rc
 cylc reload $CYLC_SUITE_NAME
-cylc insert $CYLC_SUITE_NAME add_me 1
+cylc insert $CYLC_SUITE_NAME add_me.1
 sleep 10
         """
