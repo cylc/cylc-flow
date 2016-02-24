@@ -174,6 +174,10 @@ class ControlTree(object):
 
         is_fam = (name in self.t.descendants)
 
+        # incase stopped
+        if task_id not in self.t.fam_state_summary:
+            return False
+
         if is_fam:
             task_state = self.t.fam_state_summary[task_id]['state']
             submit_num = None
