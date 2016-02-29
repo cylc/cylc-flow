@@ -742,12 +742,11 @@ class TaskProxy(object):
         else:
             self.job_submission_failed()
 
-    def job_poll_callback(self, line):
+    def job_poll_callback(self, cmd_ctx, line):
         """Callback on job poll."""
         ctx = SuiteProcContext(self.JOB_POLL, None)
         ctx.out = line
         ctx.ret_code = 0
-        self.command_log(ctx)
 
         items = line.split("|")
         # See cylc.batch_sys_manager.JobPollContext
@@ -758,7 +757,10 @@ class TaskProxy(object):
         except IndexError:
             self.summary['latest_message'] = 'poll failed'
             flags.iflag = True
+            ctx.cmd = cmd_ctx.cmd  # print original command on failure
             return
+        finally:
+            self.command_log(ctx)
         if run_status == "1" and run_signal in ["ERR", "EXIT"]:
             # Failed normally
             self._process_poll_message(INFO, TaskMessage.FAILED)
@@ -794,7 +796,7 @@ class TaskProxy(object):
             (priority, "%s %s" % (self.identity, message)),
             msg_was_polled=True)
 
-    def job_poll_message_callback(self, line):
+    def job_poll_message_callback(self, cmd_ctx, line):
         """Callback on job poll message."""
         ctx = SuiteProcContext(self.JOB_POLL, None)
         ctx.out = line
@@ -802,13 +804,14 @@ class TaskProxy(object):
             priority, message = line.split("|")[3:5]
         except ValueError:
             ctx.ret_code = 1
+            ctx.cmd = cmd_ctx.cmd  # print original command on failure
         else:
             ctx.ret_code = 0
             self.process_incoming_message(
                 (priority, message), msg_was_polled=True)
         self.command_log(ctx)
 
-    def job_kill_callback(self, line):
+    def job_kill_callback(self, cmd_ctx, line):
         """Callback on job kill."""
         ctx = SuiteProcContext(self.JOB_KILL, None)
         ctx.out = line
@@ -816,8 +819,11 @@ class TaskProxy(object):
             ctx.timestamp, _, ctx.ret_code = line.split("|", 2)
         except ValueError:
             ctx.ret_code = 1
+            ctx.cmd = cmd_ctx.cmd  # print original command on failure
         else:
             ctx.ret_code = int(ctx.ret_code)
+            if ctx.ret_code:
+                ctx.cmd = cmd_ctx.cmd  # print original command on failure
         self.command_log(ctx)
         log_lvl = INFO
         log_msg = 'killed'
@@ -838,7 +844,7 @@ class TaskProxy(object):
         self.log(log_lvl, "job(%02d) %s" % (self.submit_num, log_msg))
         flags.iflag = True
 
-    def job_submit_callback(self, line):
+    def job_submit_callback(self, cmd_ctx, line):
         """Callback on job submit."""
         ctx = SuiteProcContext(self.JOB_SUBMIT, None)
         ctx.out = line
@@ -847,8 +853,11 @@ class TaskProxy(object):
             ctx.timestamp, _, ctx.ret_code = items[0:3]
         except ValueError:
             ctx.ret_code = 1
+            ctx.cmd = cmd_ctx.cmd  # print original command on failure
         else:
             ctx.ret_code = int(ctx.ret_code)
+            if ctx.ret_code:
+                ctx.cmd = cmd_ctx.cmd  # print original command on failure
         self.command_log(ctx)
 
         if ctx.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
@@ -864,16 +873,30 @@ class TaskProxy(object):
         else:
             self.job_submission_failed()
 
-    def job_cmd_out_callback(self, line):
+    def job_cmd_out_callback(self, cmd_ctx, line):
         """Callback on job command STDOUT/STDERR."""
         job_log_dir = self.get_job_log_dir(
             self.tdef.name, self.point, "NN", self.suite_name)
         job_activity_log = os.path.join(job_log_dir, "job-activity.log")
+        if cmd_ctx.cmd_kwargs.get("host") and cmd_ctx.cmd_kwargs.get("user"):
+            user_at_host = "(%(user)s@%(host)s) " % cmd_ctx.cmd_kwargs
+        elif cmd_ctx.cmd_kwargs.get("host"):
+            user_at_host = "(%(host)s) " % cmd_ctx.cmd_kwargs
+        elif cmd_ctx.cmd_kwargs.get("user"):
+            user_at_host = "(%(user)s@localhost) " % cmd_ctx.cmd_kwargs
+        else:
+            user_at_host = ""
+        try:
+            timestamp, _, content = line.split("|")
+        except ValueError:
+            pass
+        else:
+            line = "%s %s" % (timestamp, content)
         try:
             with open(job_activity_log, "ab") as handle:
                 if not line.endswith("\n"):
                     line += "\n"
-                handle.write(line)
+                handle.write(user_at_host + line)
         except IOError as exc:
             self.log(WARNING, "%s: write failed\n%s" % (job_activity_log, exc))
 
