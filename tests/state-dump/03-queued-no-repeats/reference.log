@@ -1,0 +1,17 @@
+2016-03-01T11:45:10Z INFO - Run mode: live
+2016-03-01T11:45:10Z INFO - Initial point: 1
+2016-03-01T11:45:10Z INFO - Final point: 1
+2016-03-01T11:45:10Z INFO - Cold Start 1
+2016-03-01T11:45:10Z INFO - [person_a.1] -triggered off []
+2016-03-01T11:45:12Z INFO - [person_a.1] -submit_method_id=2150
+2016-03-01T11:45:12Z INFO - [person_a.1] -submission succeeded
+2016-03-01T11:45:12Z INFO - [person_a.1] -(current:submitted)> person_a.1 started at 2016-03-01T11:45:11Z
+2016-03-01T11:45:22Z INFO - [person_a.1] -(current:running)> person_a.1 succeeded at 2016-03-01T11:45:21Z
+2016-03-01T11:45:22Z INFO - [person_a.1] -('job-logs-register', 1) will run after P0Y (after 2016-03-01T11:45:22Z)
+2016-03-01T11:45:23Z INFO - [person_b.1] -triggered off []
+2016-03-01T11:45:24Z INFO - [person_b.1] -submit_method_id=2256
+2016-03-01T11:45:24Z INFO - [person_b.1] -submission succeeded
+2016-03-01T11:45:24Z INFO - [person_b.1] -(current:submitted)> person_b.1 started at 2016-03-01T11:45:23Z
+2016-03-01T11:45:34Z INFO - [person_b.1] -(current:running)> person_b.1 succeeded at 2016-03-01T11:45:33Z
+2016-03-01T11:45:34Z INFO - [person_b.1] -('job-logs-register', 1) will run after P0Y (after 2016-03-01T11:45:34Z)
+2016-03-01T11:45:35Z INFO - Suite shutting down at 2016-03-01T11:45:35Z
