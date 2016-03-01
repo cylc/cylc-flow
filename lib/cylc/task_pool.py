@@ -476,6 +476,8 @@ class TaskPool(object):
         its queue limit has been reached. The flag is immediately unset
         after use so that two manual trigger ops are required to submit
         an initially unqueued task that is queue-limited.
+
+        Return the number of tasks that are dequeued.
         """
 
         # 1) queue unqueued tasks that are ready to run or manually forced
@@ -520,6 +522,7 @@ class TaskPool(object):
         self.log.debug('%d task(s) de-queued' % len(ready_tasks))
 
         self.submit_task_jobs(ready_tasks)
+        return len(ready_tasks)
 
     def submit_task_jobs(self, ready_tasks):
         """Prepare and submit task jobs."""
@@ -1282,13 +1285,23 @@ class TaskPool(object):
             return None
 
     def spawn_tasks(self):
-        """Spawn successors of tasks in pool."""
+        """Spawn successors of tasks in pool.
+
+        Return the number of spawned tasks.
+        """
+        spawned_tasks = 0
         for itask in self.get_tasks():
             if itask.ready_to_spawn():
                 self.force_spawn(itask)
+                spawned_tasks += 1
+        return spawned_tasks
 
     def remove_suiciding_tasks(self):
-        """Remove any tasks that have suicide-triggered."""
+        """Remove any tasks that have suicide-triggered.
+
+        Return the number of removed tasks.
+        """
+        num_removed = 0
         for itask in self.get_tasks():
             if itask.suicide_prerequisites:
                 if itask.suicide_prerequisites_are_all_satisfied():
@@ -1299,6 +1312,8 @@ class TaskPool(object):
                         itask.log(INFO, 'suiciding')
                     self.force_spawn(itask)
                     self.remove(itask, 'suicide')
+                    num_removed += 1
+        return num_removed
 
     def _get_earliest_unsatisfied_point(self):
         """Get earliest unsatisfied cycle point."""
@@ -1329,14 +1344,16 @@ class TaskPool(object):
         downstream dependents - if we used specific IDs instead spent
         tasks could be identified and removed even earlier).
 
+        Return the number of removed tasks.
         """
+        spent = []
+
         # first find the cycle point of the earliest unsatisfied task
         cutoff = self._get_earliest_unsatisfied_point()
         if not cutoff:
-            return
+            return len(spent)
 
         # now check each succeeded task against the cutoff
-        spent = []
         for itask in self.get_tasks():
             if (itask.state.is_currently('succeeded', 'expired') and
                     itask.state.has_spawned() and
@@ -1346,6 +1363,7 @@ class TaskPool(object):
                 spent.append(itask)
         for itask in spent:
             self.remove(itask)
+        return len(spent)
 
     def reset_task_states(self, items, state, compat):
         """Reset task states.

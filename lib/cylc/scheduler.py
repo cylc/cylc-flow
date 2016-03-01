@@ -966,14 +966,16 @@ To see if a suite of the same name is still running, try:
                     self.log.debug("BEGIN TASK PROCESSING")
                     main_loop_start_time = time.time()
 
+                changes = 0
                 self.pool.match_dependencies()
                 if not self.shut_down_cleanly:
-                    self.pool.submit_tasks()
-                self.pool.spawn_tasks()
-                self.pool.remove_spent_tasks()
-                self.pool.remove_suiciding_tasks()
+                    changes += self.pool.submit_tasks()
+                changes += self.pool.spawn_tasks()
+                changes += self.pool.remove_spent_tasks()
+                changes += self.pool.remove_suiciding_tasks()
 
-                self.do_update_state_summary = True
+                if changes:
+                    self.do_update_state_summary = True
 
                 BroadcastServer.get_inst().expire(self.pool.get_min_point())
 
