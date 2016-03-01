@@ -15,10 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Retrieve information about the running or stopped suite for cylc gui."""
 
 import re
 import sys
-import gtk
 import Pyro
 import atexit
 import gobject
@@ -34,7 +34,6 @@ from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
 from cylc.task_state import TaskState
-from cylc.gui.dot_maker import DotMaker
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
@@ -44,7 +43,11 @@ from cylc.gui.warning_dialog import warning_dialog
 class PollSchd(object):
     """Keep information on whether the updater should poll or not."""
 
-    DELAYS = {(None, 5): 1, (5, 60): 5, (60, 300): 60, (300, None): 300}
+    DELAYS = {
+        (None, 5.0): 1.0,
+        (5.0, 60.0): 5.0,
+        (60.0, 300.0): 60.0,
+        (300.0, None): 300.0}
 
     def __init__(self, start=False):
         """Return a new instance.
@@ -62,13 +65,6 @@ class PollSchd(object):
             self.start()
 
     def ready(self):
-        is_ready = self._ready()
-        if cylc.flags.debug:
-            if not is_ready:
-                print >> sys.stderr, "  PollSchd not ready"
-        return is_ready
-
-    def _ready(self):
         """Return True if a poll is ready."""
         if self.t_init is None:
             return True
@@ -77,29 +73,34 @@ class PollSchd(object):
             return True
         dt_init = time() - self.t_init
         dt_prev = time() - self.t_prev
-        for k, v in self.DELAYS.items():
-            lower, upper = k
+        for key, delay in self.DELAYS.items():
+            lower, upper = key
             if ((lower is None or dt_init >= lower) and
                     (upper is None or dt_init < upper)):
-                if dt_prev > v:
+                if dt_prev > delay:
                     self.t_prev = time()
                     return True
                 else:
+                    if cylc.flags.debug:
+                        print >> sys.stderr, (
+                            '  PollSchd not ready, next poll in PT%sS' %
+                            round(delay - dt_prev, 2))
                     return False
         return True
 
     def start(self):
         """Start keeping track of latest poll, if not already started."""
-        if cylc.flags.debug:
-            print >> sys.stderr, '  PollSchd start'
         if self.t_init is None:
+            if cylc.flags.debug:
+                print >> sys.stderr, '  PollSchd start'
             self.t_init = time()
             self.t_prev = None
 
     def stop(self):
         """Stop keeping track of latest poll."""
-        if cylc.flags.debug:
-            print >> sys.stderr, '  PollSchd stop'
+        if self.t_init is not None or self.t_prev is not None:
+            if cylc.flags.debug:
+                print >> sys.stderr, '  PollSchd stop'
         self.t_init = None
         self.t_prev = None
 
@@ -145,7 +146,7 @@ class Updater(threading.Thread):
         self.connected = False
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
-        self._flag_new_update()
+        self.last_update_time = time()
         self.ns_defn_order = []
         self.dict_ns_defn_order = {}
         self.restricted_display = app.restricted_display
@@ -166,9 +167,6 @@ class Updater(threading.Thread):
         self.suite_command_client = SuiteCommandClient(*client_args)
         # Report sign-out on exit.
         atexit.register(self.state_summary_client.signout)
-
-    def _flag_new_update(self):
-        self.last_update_time = time()
 
     def reconnect(self):
         """Try to reconnect to the suite daemon."""
@@ -195,7 +193,7 @@ class Updater(threading.Thread):
             if self.stop_summary is None:
                 self.stop_summary = get_stop_state_summary(
                     self.cfg.suite, self.cfg.owner, self.cfg.host)
-                self._flag_new_update()
+                self.last_update_time = time()
             if self.stop_summary is not None and any(self.stop_summary):
                 gobject.idle_add(
                     self.info_bar.set_stop_summary, self.stop_summary)
@@ -242,9 +240,10 @@ class Updater(threading.Thread):
         self.stop_summary = None
         self.err_log_lines = []
         self.err_log_size = 0
-        self._flag_new_update()
+        self.last_update_time = time()
 
     def set_update(self, should_update):
+        """Set update flag."""
         if should_update:
             self._no_update_event.clear()
         else:
@@ -280,13 +279,14 @@ class Updater(threading.Thread):
                     summary_update_time != self._summary_update_time):
                 self._summary_update_time = summary_update_time
                 do_update = True
-        except AttributeError as e:
+        except AttributeError:
             # TODO: post-backwards compatibility concerns, remove this handling
             # Force an update for daemons using the old API
             do_update = True
         return do_update
 
     def retrieve_state_summaries(self):
+        """Retrieve suite summary."""
         glbl, states, fam_states = (
             self.state_summary_client.get_suite_state_summary())
         self.ancestors = self.suite_info_client.get_info(
@@ -366,6 +366,7 @@ class Updater(threading.Thread):
                 client.port = None
 
     def set_status(self, status):
+        """Update status bar."""
         self.status = status
         self.info_bar.set_status(self.status)
 
@@ -375,11 +376,14 @@ class Updater(threading.Thread):
         return False
 
     def update(self):
+        """Try and connect and do an update."""
         if cylc.flags.debug:
             print >> sys.stderr, "UPDATE", ctime().split()[3],
         if not self.connected:
             # Only reconnect via self.reconnect().
             self.reconnect()
+        if not self.connected:
+            self.set_stopped()
             if cylc.flags.debug:
                 print >> sys.stderr, "(not connected)"
             return False
@@ -455,12 +459,14 @@ class Updater(threading.Thread):
                 return False
 
     def filter_by_name(self, states):
+        """Filter by name string."""
         return dict(
             (i, j) for i, j in states.items() if
             self.filter_name_string in j['name'] or
             re.search(self.filter_name_string, j['name']))
 
     def filter_by_state(self, states):
+        """Filter by state key."""
         return dict(
             (i, j) for i, j in states.items() if
             j['state'] not in self.filter_states_excl)
@@ -481,7 +487,9 @@ class Updater(threading.Thread):
                 fam_states[fam_id] = summary
         return fam_states
 
-    def filter_for_restricted_display(self, states):
+    @classmethod
+    def filter_for_restricted_display(cls, states):
+        """Filter for legal restricted states."""
         return dict(
             (i, j) for i, j in states.items() if j['state'] in
             TaskState.legal_for_restricted_monitoring)
@@ -495,7 +503,6 @@ class Updater(threading.Thread):
                 states = self.filter_by_name(states)
             if self.filter_states_excl:
                 states = self.filter_by_state(states)
-            filtered_tasks = set(states.keys())
             self.state_summary = states
             fam_states = self.full_fam_state_summary
             self.fam_state_summary = self.filter_families(fam_states)
@@ -511,6 +518,7 @@ class Updater(threading.Thread):
         self.task_list.sort()
 
     def update_globals(self):
+        """Update common widgets."""
         self.info_bar.set_state(self.global_summary.get("states", []))
         self.info_bar.set_mode(self.mode)
         self.info_bar.set_time(self.dt)
@@ -520,14 +528,14 @@ class Updater(threading.Thread):
         return False
 
     def stop(self):
+        """Tell self.run to exit."""
         self.quit = True
 
     def run(self):
+        """Start the thread."""
         while not self.quit:
             if (not self._no_update_event.is_set() and
                     self.poll_schd.ready() and self.update()):
-                self._flag_new_update()
+                self.last_update_time = time()
                 gobject.idle_add(self.update_globals)
             sleep(1)
-        else:
-            pass

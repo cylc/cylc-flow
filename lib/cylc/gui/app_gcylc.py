@@ -2830,7 +2830,7 @@ This is what my suite does:..."""
     def reset_connection_polling(self, bt):
         # Force the polling schedule to go back to short intervals so
         # that the GUI can immediately connect to the started suite.
-        self.updater.poll_schd.t_init = None
+        self.updater.poll_schd.stop()
 
     def construct_command_menu(self, menu):
         cat_menu = gtk.Menu()
