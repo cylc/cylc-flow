@@ -96,6 +96,11 @@ batch_sys.REC_ID_FROM_SUBMIT_OUT
     * A regular expression (compiled) to extract the job "id" from the standard
       output or standard error of the job submission command.
 
+batch_sys.SUBMIT_CMD_ENV
+    * A Python dict (or an iterable that can be used to update a dict)
+      containing extra environment variables for getting the batch system
+      command to submit a job file.
+
 batch_sys.SUBMIT_CMD_TMPL
     * A Python string template for getting the batch system command to submit a
       job file. The command is formed using the logic:
@@ -695,6 +700,10 @@ class BatchSysManager(object):
             # batch_sys.submit should handle OSError, if relevant.
             ret_code, out, err = batch_sys.submit(job_file_path)
         else:
+            env = None
+            if hasattr(batch_sys, "SUBMIT_CMD_ENV"):
+                env = dict(os.environ)
+                env.update(batch_sys.SUBMIT_CMD_ENV)
             if batch_submit_cmd_tmpl:
                 # No need to catch OSError when using shell. It is unlikely
                 # that we do not have a shell, and still manage to get as far
@@ -702,14 +711,16 @@ class BatchSysManager(object):
                 batch_sys_cmd = batch_submit_cmd_tmpl % {"job": job_file_path}
                 proc = Popen(
                     batch_sys_cmd,
-                    stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE, shell=True)
+                    stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
+                    shell=True, env=env)
             else:
                 command = shlex.split(
                     batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path})
                 try:
                     proc = Popen(
-                        command, stdin=proc_stdin_arg,
-                        stdout=PIPE, stderr=PIPE)
+                        command,
+                        stdin=proc_stdin_arg, stdout=PIPE, stderr=PIPE,
+                        env=env)
                 except OSError as exc:
                     # subprocess.Popen has a bad habit of not setting the
                     # filename of the executable when it raises an OSError.
