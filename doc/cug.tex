@@ -1405,7 +1405,7 @@ ssh -oBatchMode=yes -oConnectTimeout=10 wrh-1.niwa.co.nz\
 ' "/opt/cylc/bin/cylc" '"'"'job-submit'"'"\
 ' --remote-mode "/home/oliverh/cylc-run/tut.oneoff.remote/log/job/1/hello/01/job"'
 \end{lstlisting}
-(Don't be intimated by this - it is really quite straightforward and would
+(Don't be intimidated by this - it is really quite straightforward and would
 appear much simpler if the job log path was shorter!). Remote task job logs are
 saved to the suite run directory on the task host, not on the suite host,
 although they can be retrieved by right-clicking on the task in the GUI. If you
@@ -1460,6 +1460,20 @@ be anything that is accepted by the \lstinline@--max-size=SIZE@ option of the
             # Don't get anything bigger than 10MB
             retrieve job logs max size = 10M
 \end{lstlisting}
+
+It is worth noting that cylc uses the existence of a job's \lstinline=job.out=
+or \lstinline=job.err= in the local file system to indicate a successful job
+log retrieval. If \lstinline=retrieve job logs max size=SIZE= is set and both
+\lstinline=job.out= and \lstinline=job.err= are bigger than \lstinline=SIZE=
+then cylc will consider the retrieval as failed. If retry delays are specified,
+this will trigger some useless (but harmless) retries. If this occurs
+regularly, you should try the following:
+
+\begin{myitemize}
+\item Reduce the verbosity of STDOUT or STDERR from the task.
+\item Redirect the verbosity from STDOUT or STDERR to an alternate log file.
+\item Adjust the size limit with tolerance to the expected size of STDOUT or STDERR.
+\end{myitemize}
 
 \begin{myitemize}
 \item For more on remote tasks see~\ref{RunningTasksOnARemoteHost}
