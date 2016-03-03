@@ -50,9 +50,12 @@ class AtCommandHandler(object):
     REC_ERR_FILTERS = [
         re.compile("warning: commands will be executed using /bin/sh")]
     REC_ID_FROM_SUBMIT_ERR = re.compile(r"\Ajob\s(?P<id>\S+)\sat")
+    # Note: The SUBMIT_CMD_STDIN_TMPL below requires "sh" compatible shell. The
+    # safest way, therefore, is to force the command to run under "/bin/sh" by
+    # exporting "SHELL=/bin/sh" for the "at" command.
     SUBMIT_CMD_ENV = {"SHELL": "/bin/sh"}
     SUBMIT_CMD_TMPL = "at now"
-    # N.B. The perl command ensures that the job script is executed in its own
+    # Note: The perl command ensures that the job script is executed in its own
     # process group, which allows the job script and its child processes to be
     # killed correctly.
     SUBMIT_CMD_STDIN_TMPL = (

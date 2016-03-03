@@ -23,6 +23,8 @@ install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
+# By setting "SHELL=/bin/tcsh", "at" would run its command under "/bin/tcsh",
+# which would cause a failure of this test without the fix in #1749.
 suite_run_ok "${TEST_NAME_BASE}-run" \
     env 'SHELL=/bin/tcsh' cylc run --reference-test --debug "${SUITE_NAME}"
 
