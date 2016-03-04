@@ -184,7 +184,6 @@ Dependency graph suite control interface.
         menu.append(ungroup_rec_item)
 
         if type == 'live task':
-
             is_fam = (name in self.t.descendants)
             if is_fam:
                 if task_id not in self.t.fam_state_summary:
