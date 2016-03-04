@@ -108,7 +108,7 @@ class JobFile(object):
     @classmethod
     def _write_prelude(cls, handle, job_conf):
         """Job script prelude."""
-        if cylc.flags.verbose and cylc.flags.debug:
+        if cylc.flags.verbose or cylc.flags.debug:
             if 'bash' in job_conf['job script shell']:
                 handle.write("\n\nPS4='[\D{%Y%m%dT%H%M%S%z}]\u@\h+ '")
             handle.write('\n\nset -x')
