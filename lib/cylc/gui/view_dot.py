@@ -103,9 +103,13 @@ LED suite control interface.
         is_fam = (name in self.t.descendants)
 
         if is_fam:
+            if task_id not in self.t.fam_state_summary:
+                return False
             task_state = self.t.fam_state_summary[task_id]['state']
             submit_num = None
         else:
+            if task_id not in self.t.state_summary:
+                return False
             task_state = self.t.state_summary[task_id]['state']
             submit_num = self.t.state_summary[task_id]['submit_num']
 
