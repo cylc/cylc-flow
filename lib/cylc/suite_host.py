@@ -15,18 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Host name utilities
 
-import re
-import sys
-import socket
-
-hostname = None
-suite_host = None
-host_ip_address = None
-
-
-def get_local_ip_address(target):
-    """
 ATTRIBUTION:
 http://www.linux-support.com/cms/get-local-ip-address-with-python/
 
@@ -39,7 +29,7 @@ network devices to exchange data with external systems.
 However, if properly configured, your operating system knows what device
 has to be utilized. Querying results depend on target addresses and
 routing information. In our solution we are utilizing the features of
-the local operating system to determine the correct network device. I
+the local operating system to determine the correct network device. It is
 the same step we will get the associated network address.
 
 To reach this goal we will utilize the UDP protocol. Unlike TCP/IP, UDP
@@ -53,88 +43,141 @@ subnet.
 
 The following function is temporarily opening a UDP server socket. It is
 returning the IP address associated with this socket.
-    """
 
-    # This finds the external address of the particular network adapter
-    # responsible for connecting to the target?
+"""
 
-    # Note that although no connection is made to the target, the target
-    # must be reachable on the network (or just recorded in the DNS?) or
-    # the function will hang and time out after a few seconds.
+import sys
+import socket
 
-    ipaddr = ''
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect((target, 8000))
-        ipaddr = s.getsockname()[0]
-        s.close()
-    except:
-        pass
-    return ipaddr
+
+class SuiteHostUtil(object):
+    """(Suite) host utility."""
+
+    _instance = None
+
+    @classmethod
+    def get_inst(cls, new=False):
+        """Return the singleton instance of this class.
+
+        If "new" is True, create a new singleton instance.
+
+        """
+        if cls._instance is None or new:
+            cls._instance = cls()
+        return cls._instance
+
+    def __init__(self):
+        self._host_name = None
+        self._host_ip_address = None
+        self._host_name_pref = None
+        self._remote_hosts = {}  # host: is_remote, ...
+
+    @staticmethod
+    def get_local_ip_address(target):
+        """Return IP address of target.
+
+        This finds the external address of the particular network adapter
+        responsible for connecting to the target?
+
+        Note that although no connection is made to the target, the target
+        must be reachable on the network (or just recorded in the DNS?) or
+        the function will hang and time out after a few seconds.
+
+        """
+
+        ipaddr = ""
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.connect((target, 8000))
+            ipaddr = sock.getsockname()[0]
+            sock.close()
+        except IOError:
+            pass
+        return ipaddr
+
+    def get_hostname(self):
+        """Return the fully qualified domain name for current host."""
+        if self._host_name is None:
+            self._host_name = socket.getfqdn()
+        return self._host_name
+
+    def _get_host_ip_address(self):
+        """Return the external IP address for the current host."""
+        if self._host_ip_address is None:
+            self._host_ip_address = self.get_local_ip_address(
+                self._get_identification_cfg('target'))
+        return self._host_ip_address
+
+    @staticmethod
+    def _get_identification_cfg(key):
+        """Return the [suite host self-identification]key global conf."""
+        from cylc.cfgspec.globalcfg import GLOBAL_CFG
+        return GLOBAL_CFG.get(['suite host self-identification', key])
+
+    def get_suite_host(self):
+        """Return the preferred identifier for the suite (or current) host.
+
+        As specified by the "suite host self-identification" settings in the
+        site/user global.rc files. This is mainly used for suite host
+        identification by task jobs.
+
+        """
+        if self._host_name_pref is None:
+            hardwired = self._get_identification_cfg('host')
+            method = self._get_identification_cfg('method')
+            if method == 'address':
+                self._host_name_pref = self._get_host_ip_address()
+            elif method == 'hardwired' and hardwired:
+                self._host_name_pref = hardwired
+            else:  # if method == 'name':
+                self._host_name_pref = self.get_hostname()
+        return self._host_name_pref
+
+    def is_remote_host(self, name):
+        """Return True if name has different IP address than the current host.
+
+        Return False if name is None.
+        Raise IOError if host is unknown.
+
+        """
+        if name not in self._remote_hosts:
+            if not name or name.split(".")[0].startswith("localhost"):
+                # e.g. localhost.localdomain
+                self._remote_hosts[name] = False
+            else:
+                try:
+                    ipa = socket.gethostbyname(name)
+                except IOError as exc:
+                    if exc.filename is None:
+                        exc.filename = str(name)
+                    raise
+                host_ip_address = self._get_host_ip_address()
+                # local IP address of the suite host (e.g. 127.0.0.1)
+                local_ip_address = socket.gethostbyname(self.get_hostname())
+                self._remote_hosts[name] = (
+                    ipa not in [host_ip_address, local_ip_address])
+        return self._remote_hosts[name]
 
 
 def get_hostname():
-    global hostname
-    if hostname is None:
-        hostname = socket.getfqdn()
-    return hostname
+    """Shorthand for SuiteHostUtil.get_inst().get_hostname()."""
+    return SuiteHostUtil.get_inst().get_hostname()
 
 
-def get_host_ip_address():
-    from cylc.cfgspec.globalcfg import GLOBAL_CFG
-    global host_ip_address
-    if host_ip_address is None:
-        target = GLOBAL_CFG.get(['suite host self-identification', 'target'])
-        # external IP address of the suite host:
-        host_ip_address = get_local_ip_address(target)
-    return host_ip_address
+def get_local_ip_address(target):
+    """Shorthand for SuiteHostUtil.get_inst().get_local_ip_address(target)."""
+    return SuiteHostUtil.get_inst().get_local_ip_address(target)
 
 
 def get_suite_host():
-    from cylc.cfgspec.globalcfg import GLOBAL_CFG, GlobalConfigError
-    global suite_host
-    if suite_host is None:
-        hardwired = GLOBAL_CFG.get(['suite host self-identification', 'host'])
-        method = GLOBAL_CFG.get(['suite host self-identification', 'method'])
-        # the following is for suite host self-identfication in task job
-        # scripts:
-        if method == 'name':
-            suite_host = hostname
-        elif method == 'address':
-            suite_host = get_host_ip_address()
-        elif method == 'hardwired':
-            if not hardwired:
-                raise GlobalConfigError(
-                    'ERROR, no hardwired hostname is configured (%s)' %
-                    ['suite host self-identification', 'host']
-                )
-            suite_host = hardwired
-        else:
-            raise GlobalConfigError(
-                'ERROR, unknown host method (%s): %s' % (
-                    ['suite host self-identification', 'method'], method)
-            )
-    return suite_host
+    """Shorthand for SuiteHostUtil.get_inst().get_suite_host()."""
+    return SuiteHostUtil.get_inst().get_suite_host()
 
 
 def is_remote_host(name):
-    """Return True if name has different IP address than the current host.
-    Return False if name is None.  Abort if host is unknown.
-    """
-    if name is None or name.startswith("localhost"):
-        # e.g. localhost.localdomain
-        return False
-    try:
-        ipa = socket.gethostbyname(name)
-    except Exception, e:
-        print >> sys.stderr, str(e)
-        raise Exception('ERROR, host not found: ' + name)
-    host_ip_address = get_host_ip_address()
-    # local IP address of the suite host (may be 127.0.0.1, for e.g.)
-    local_ip_address = socket.gethostbyname(get_hostname())
-    return name and ipa != host_ip_address and ipa != local_ip_address
+    """Shorthand for SuiteHostUtil.get_inst().is_remote_host(name)."""
+    return SuiteHostUtil.get_inst().is_remote_host(name)
 
 
 if __name__ == "__main__":
-    target = sys.argv[1]
-    print get_local_ip_address(target)
+    sys.stdout.write("%s\n" % get_local_ip_address(sys.argv[1]))

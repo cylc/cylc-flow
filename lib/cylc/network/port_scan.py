@@ -16,20 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from multiprocessing import cpu_count, Pool
 import os
 import sys
+from time import sleep
+import traceback
+
 import Pyro.errors
 import Pyro.core
 
-import cylc.flags
-from cylc.owner import user
-from cylc.suite_host import get_hostname
-from cylc.registration import localdb
-from cylc.passphrase import passphrase, get_passphrase, PassphraseError
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
+import cylc.flags
 from cylc.network import PYRO_SUITEID_OBJ_NAME, NO_PASSPHRASE
-from cylc.network.connection_validator import (
-    ConnValidator, OK_HASHES, SCAN_HASH)
+from cylc.network.connection_validator import ConnValidator, SCAN_HASH
+from cylc.network.suite_state import SuiteStillInitialisingError
+from cylc.owner import user
+from cylc.passphrase import passphrase, get_passphrase, PassphraseError
+from cylc.registration import localdb
+from cylc.suite_host import get_hostname, is_remote_host
 
 passphrases = []
 
@@ -78,7 +82,7 @@ def get_proxy(host, port, pyro_timeout):
     return proxy
 
 
-def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
+def scan(host=get_hostname(), db=None, pyro_timeout=None):
     """Scan ports, return a list of suites found: [(port, suite.identify())].
 
     Note that we could easily scan for a given suite+owner and return its
@@ -136,15 +140,16 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
             print >> sys.stderr, (
                 'suite? owner?@%s:%s - connection timed out (%s)' % (
                     host, port, exc))
+            continue
+        except SuiteStillInitialisingError:
+            continue
         except Exception as exc:
             if cylc.flags.debug:
-                print str(exc)
-                break
-            else:
-                print >> sys.stderr, str(exc)
+                traceback.print_exc()
+            raise
         else:
-            name = result[1].get('name')
             owner = result[1].get('owner')
+            name = result[1].get('name')
             states = result[1].get('states', None)
             if cylc.flags.debug:
                 print '   suite:', name, owner
@@ -173,3 +178,43 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None, owner=user):
                             print '    (got states with passphrase)'
         results.append(result)
     return results
+
+
+def scan_all(hosts=None, reg_db_path=None, pyro_timeout=None):
+    """Scan all hosts."""
+    if not hosts:
+        hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
+    # Ensure that it does "localhost" only once
+    hosts = set(hosts)
+    for host in list(hosts):
+        if not is_remote_host(host):
+            hosts.remove(host)
+            hosts.add("localhost")
+    proc_pool_size = GLOBAL_CFG.get(["process pool size"])
+    if proc_pool_size is None:
+        proc_pool_size = cpu_count()
+    if proc_pool_size > len(hosts):
+        proc_pool_size = len(hosts)
+    proc_pool = Pool(proc_pool_size)
+    async_results = {}
+    for host in hosts:
+        async_results[host] = proc_pool.apply_async(
+            scan, [host, reg_db_path, pyro_timeout])
+    proc_pool.close()
+    scan_results = []
+    hosts = []
+    while async_results:
+        sleep(0.05)
+        for host, async_result in async_results.items():
+            if async_result.ready():
+                async_results.pop(host)
+                try:
+                    res = async_result.get()
+                except:
+                    if cylc.flags.debug:
+                        traceback.print_exc()
+                else:
+                    scan_results.extend(res)
+                    hosts.extend([host] * len(res))
+    proc_pool.join()
+    return zip(hosts, scan_results)
