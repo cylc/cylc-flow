@@ -35,6 +35,7 @@ generated reference version.
     [[prep]]
         pre-script = "rm -f $BCASTLOG"
         script = """
+set +x
 {
     # broadcast to all cycles and namespaces:
         cylc broadcast -s "[environment]BCAST = ROOT" $CYLC_SUITE_REG_NAME
@@ -74,6 +75,7 @@ generated reference version.
     # list the result to prep task stdout:
         cylc bcast --display $CYLC_SUITE_REG_NAME
 } 1>prep.out 2>prep.err
+set -x
 diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.out" 'prep.out'
 diff -u "${CYLC_SUITE_DEF_PATH}/expected-prep.err" 'prep.err'
                             """

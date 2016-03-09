@@ -53,11 +53,19 @@ def main():
     if not args:
         parser.error("No task message supplied")
 
+    task_message = TaskMessage(priority=options.priority)
+    if (task_message.env_map.get('CYLC_VERBOSE') in ["True", "true"] or
+            options.verbose):
+        cylc.flags.verbose = True
+
+    if task_message.env_map.get('CYLC_DEBUG') in ["True", "true"]:
+        cylc.flags.debug = True
+
     try:
-        TaskMessage(priority=options.priority).send(args)
+        task_message.send(args)
     except Exception, exc:
         print >> sys.stderr, 'ERROR: task messaging failure.'
-        if os.getenv("CYLC_DEBUG") in ["True", "true"]:
+        if cylc.flags.debug:
             import traceback
             traceback.print_exc(exc)
         raise SystemExit(exc)
