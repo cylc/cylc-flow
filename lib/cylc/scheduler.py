@@ -121,7 +121,7 @@ class Scheduler(object):
         self.suite_contact_env = {}
 
         self.do_process_tasks = False
-        self.do_update_state_summary = False
+        self.do_update_state_summary = True
 
         # initialize some items in case of early shutdown
         # (required in the shutdown() method)
