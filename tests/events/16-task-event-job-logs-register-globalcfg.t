@@ -38,6 +38,7 @@ cmp_ok 'select-task-job-logs.out' <<'__OUT__'
 1|t1|1|job|1/t1/01/job
 1|t1|1|job-activity.log|1/t1/01/job-activity.log
 1|t1|1|job.err|1/t1/01/job.err
+1|t1|1|job.err.keep|1/t1/01/job.err.keep
 1|t1|1|job.out|1/t1/01/job.out
 1|t1|1|job.out.keep|1/t1/01/job.out.keep
 1|t1|1|job.status|1/t1/01/job.status

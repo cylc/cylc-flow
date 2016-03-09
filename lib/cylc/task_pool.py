@@ -1150,7 +1150,7 @@ class TaskPool(object):
                 itask = tasks[(point, name)]
                 try_states = itask.event_handler_try_states
                 filenames = itask.register_job_logs(submit_num)
-                if "job.out" in filenames and "job.err" in filenames:
+                if "job.out" in filenames or "job.err" in filenames:
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     itask.command_log(log_ctx)
@@ -1211,7 +1211,7 @@ class TaskPool(object):
                 filenames = []
                 if ctx.ret_code == 0:
                     filenames = itask.register_job_logs(submit_num)
-                if "job.out" in filenames and "job.err" in filenames:
+                if "job.out" in filenames or "job.err" in filenames:
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     itask.command_log(log_ctx)
