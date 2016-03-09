@@ -239,7 +239,8 @@ class Scheduler(object):
 
         self.pool = TaskPool(
             self.suite, self.pri_dao, self.pub_dao, self.final_point,
-            self.pyro, self.log, self.run_mode)
+            self.pyro, self.log, self.run_mode,
+            self._update_state_summary_callback)
         self.state_dumper.pool = self.pool
         self.request_handler = PyroRequestHandler(self.pyro)
         self.request_handler.start()
@@ -328,6 +329,9 @@ class Scheduler(object):
                 if name in self.proc_cmds:
                     self.do_process_tasks = True
             queue.task_done()
+
+    def _update_state_summary_callback(self):
+        self.do_update_state_summary = True
 
     def _task_type_exists(self, name_or_id):
         # does a task name or id match a known task type in this suite?

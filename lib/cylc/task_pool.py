@@ -72,7 +72,7 @@ class TaskPool(object):
     JOBS_SUBMIT = "jobs-submit"
 
     def __init__(self, suite, pri_dao, pub_dao, stop_point, pyro, log,
-                 run_mode):
+                 run_mode, update_state_summary_callback):
         self.suite_name = suite
         self.pyro = pyro
         self.run_mode = run_mode
@@ -81,6 +81,7 @@ class TaskPool(object):
         self.reconfiguring = False
         self.pri_dao = pri_dao
         self.pub_dao = pub_dao
+        self.update_state_summary_callback = update_state_summary_callback
 
         config = SuiteConfig.get_inst()
         self.custom_runahead_limit = config.get_custom_runahead_limit()
@@ -778,6 +779,8 @@ class TaskPool(object):
         else:
             self.log.info("Reload completed.")
             self.reload_warned = False
+            # The GUI detects end of a reload via the suite state summary.
+            self.update_state_summary_callback()
 
         self.reconfiguring = found
 
