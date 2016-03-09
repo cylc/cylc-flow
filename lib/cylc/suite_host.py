@@ -48,25 +48,34 @@ returning the IP address associated with this socket.
 
 import sys
 import socket
+from time import time
 
 
 class SuiteHostUtil(object):
     """(Suite) host utility."""
 
+    EXPIRE = 3600.0  # singleton expires in 1 hour by default
     _instance = None
 
     @classmethod
-    def get_inst(cls, new=False):
+    def get_inst(cls, new=False, expire=None):
         """Return the singleton instance of this class.
 
-        If "new" is True, create a new singleton instance.
+        "new": if True, create a new singleton instance.
+        "expire":
+            the expire duration in seconds. If None or not specified, the
+            singleton expires after 3600.0 seconds (1 hour). Once expired, the
+            next call to this method will create a new singleton.
 
         """
-        if cls._instance is None or new:
-            cls._instance = cls()
+        if expire is None:
+            expire = cls.EXPIRE
+        if cls._instance is None or new or time() > cls._instance.expire_time:
+            cls._instance = cls(expire)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, expire):
+        self.expire_time = time() + expire
         self._host_name = None
         self._host_ip_address = None
         self._host_name_pref = None

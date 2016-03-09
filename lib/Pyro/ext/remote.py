@@ -104,7 +104,7 @@ sys.exitfunc = unregister_objects
 
 def host_ipaddr(interface = None):
 	if sys.platform == "win32":
-		return HostUtil.inst().gethostbyname()
+		return HostUtil.get_inst().gethostbyname()
 
 	cmd = "/sbin/ifconfig"
 	if interface:
@@ -136,7 +136,7 @@ def host_ipaddr(interface = None):
 
 	fd.close()
 
-	return this_host or HostUtil.inst().gethostbyname()
+	return this_host or HostUtil.get_inst().gethostbyname()
 
 def find_nameserver(hostname = None, portnum = None):
 	if hostname and hostname.find('://') > 0:
@@ -152,7 +152,7 @@ def find_nameserver(hostname = None, portnum = None):
 			ns = locator.getNS(host = hostname, port = portnum)
 
 		except (Pyro.core.PyroError, socket.error), x:
-			localhost = HostUtil.inst().gethostbyname('localhost')
+			localhost = HostUtil.get_inst().gethostbyname('localhost')
 			if verbose:
 				print "Error:", x
 				print """

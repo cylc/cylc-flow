@@ -653,7 +653,7 @@ class wx_NSC(wx.Frame):
       Updates the display of current Name Server information.
       """
       try:
-         ns_name, t, ns_ip = HostUtil.inst().gethostbyaddr(self.nsHost)
+         ns_name, t, ns_ip = HostUtil.get_inst().gethostbyaddr(self.nsHost)
          ns_ip = ns_ip[0]
       except:
          ns_name, ns_ip = self.nsHost, ''

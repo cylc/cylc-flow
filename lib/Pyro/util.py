@@ -52,39 +52,48 @@ class BogusEvent(object):
 class HostUtil(object):
     """Wrap and memoize socket.gethost* results."""
 
-    _INST = None
+    EXPIRE = 3600.0  # singleton expires in 1 hour by default
+    _instance = None
 
     @classmethod
-    def inst(cls, reset=False):
-        """Return the singleton of this class."""
-        if cls._INST is None or reset:
-            cls._INST = cls()
-        return cls._INST
+    def get_inst(cls, new=False, expire=None):
+        """Return the singleton instance of this class.
 
-    def __init__(self):
-        self.hostname = None
-        self.hostbyname = {}
-        self.hostbyaddr = {}
+        If "new" is True, create a new singleton instance.
+
+        """
+        if expire is None:
+            expire = cls.EXPIRE
+        if (cls._instance is None or new or
+                time.time() > cls._instance.expire_time):
+            cls._instance = cls(expire)
+        return cls._instance
+
+    def __init__(self, expire):
+        self.expire_time = time.time() + expire
+        self._hostname = None
+        self._hostbyname = {}
+        self._hostbyaddr = {}
 
     def gethostbyaddr(self, addr):
         """Wrap and memoize socket.gethostbyaddr."""
-        if addr not in self.hostbyaddr:
-            self.hostbyaddr[addr] = socket.gethostbyaddr(addr)
-        return self.hostbyaddr[addr]
+        if addr not in self._hostbyaddr:
+            self._hostbyaddr[addr] = socket.gethostbyaddr(addr)
+        return self._hostbyaddr[addr]
 
     def gethostbyname(self, name=None):
         """Wrap and memoize socket.gethostbyname."""
         if name is None:
             name = self.gethostname()
-        if name not in self.hostbyname:
-            self.hostbyname[name] = socket.gethostbyname(name)
-        return self.hostbyname[name]
+        if name not in self._hostbyname:
+            self._hostbyname[name] = socket.gethostbyname(name)
+        return self._hostbyname[name]
 
     def gethostname(self):
         """Wrap and memoize socket.gethostname."""
-        if self.hostname is None:
-            self.hostname = socket.gethostname()
-        return self.hostname
+        if self._hostname is None:
+            self._hostname = socket.gethostname()
+        return self._hostname
 
 
 def getEventObject():
@@ -372,7 +381,7 @@ else:
 		# For A: should use the machine's MAC ethernet address, but there is no
 		# portable way to get it... use the IP address + 2 bytes process id.
 		try:
-			ip = HostUtil.inst().gethostbyname()
+			ip = HostUtil.get_inst().gethostbyname()
 			networkAddrStr=binascii.hexlify(socket.inet_aton(ip))+"%04x" % os.getpid()
 		except socket.error:
 			# can't get IP address... use another value, like our Python id() and PID

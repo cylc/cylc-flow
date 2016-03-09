@@ -120,7 +120,7 @@ class NameServerLocator(object):
 				raise Pyro.errors.PyroError(msg)
 			if bcaddr:
 				try:
-					HostUtil.inst().gethostbyname(bcaddr)
+					HostUtil.get_inst().gethostbyname(bcaddr)
 				except socket.error:
 					msg="invalid broadcast address '%s'" % bcaddr
 					if trace:

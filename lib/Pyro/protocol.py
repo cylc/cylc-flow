@@ -58,17 +58,17 @@ if hasattr(errno, "WSAEINPROGRESS"):
 def getHostname(ip=None):
 	try:
 		if ip:
-			hn,alias, ips = HostUtil.inst().gethostbyaddr(ip)
+			hn,alias, ips = HostUtil.get_inst().gethostbyaddr(ip)
 			return hn
 		else:
-			return HostUtil.inst().gethostname()
+			return HostUtil.get_inst().gethostname()
 	except socket.error:
 		return None
 
 #------ Get IP address (return None on error)
 def getIPAddress(host=None):
 	try:
-		return HostUtil.inst().gethostbyname(host or getHostname())
+		return HostUtil.get_inst().gethostbyname(host or getHostname())
 	except socket.error:
 		return None
 
@@ -1042,7 +1042,7 @@ class TCPServer(object):
 		self.connections = []  # connection threads
 		self.initTLS=lambda tls: None  # default do-nothing func
 		if host:
-			HostUtil.inst().gethostbyname(host)  # validate hostname
+			HostUtil.get_inst().gethostbyname(host)  # validate hostname
 		try:
 			if prtcol=='PYROSSL':
 				try:
