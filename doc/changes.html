@@ -17,6 +17,7 @@
 <h3 style="margin:10px">versions</h3>
 <ul>
     <li><a href="#">TOP</a>
+    <li><a href="#6.9.0">6.9.0</a>
     <li><a href="#6.8.1">6.8.1</a>
     <li><a href="#6.8.0">6.8.0</a>
     <li><a href="#6.7.4">6.7.4</a>
@@ -67,6 +68,51 @@
 
 <p>Selected enhancements and bug fixes.  Some changes may be omitted from this
 page; for the definitive record see the cylc repository change log.</p>
+
+<a name="6.9.0"/>
+    <h2>6.9.0</h2>
+
+    <h3>6.9.0 enhancements</h3>
+    <ul>
+        <li> <b>Command line targetting of multiple tasks by name, state, and
+            cycle point.</b>  For example, with a single command
+        we can now retrigger all failed tasks at once without touching other
+        tasks.
+        <li> Job log retrieval retries are now triggered only if neither 
+        <code>job.out</code> nor <code>job. err</code> are returned (they may
+        not be if a maximum log file size is configured).
+        <li> Force <code>SHELL=/bin/sh</code> for <code>at</code> jobs, to
+        support <code>at</code> under <code>tcsh</code> login shells.
+        <li> Improved user/host diagnostics for job submit, poll, and kill.
+        <li> In debug mode, use <code>set -x</code> and timestamp each line
+        in task job scripts.
+        <li> Much reduced DNS host lookups (and more to come in the next
+        release).
+    </ul>
+
+    <h3>6.9.0 fixes</h3>
+    <ul>
+        <li> Don't write state dump files unnecessarily when the task pool
+        contains queued tasks (this could cause high CPU usage in large
+        suites).
+        <li> <code>gcylc</code>
+        <ul>
+            <li> Reset the suite connection polling schedule properly if
+            started on a stopped suite (previously the GUI would continue to
+            poll every second in this situation).
+            <li> Fixed a bug that could a Python traceback on right-click 
+            during suite shutdown.
+            <li> Re-enable "View Prerequisites" for tasks that haven't run
+            yet (accidentally disabled in the 6.8.1 release).
+            <li> Right-click sub-menus now pop-up on mouse button release,
+            not mouse button down.
+        </ul>
+        <li> <code>cylc gscan</code> now correctly polls very minute by
+        default, unless the <code>--poll-interval</code> option is used 
+        (it was polling every second).
+        <li> Failure of the ssh process used to initiate remote job
+        submission is now detected and flagged as a job submission failure.
+    </ul>
 
 <a name="6.8.1"/>
     <h2>6.8.1</h2>
