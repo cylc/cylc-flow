@@ -21,6 +21,7 @@ import Pyro.errors
 import Pyro.naming
 import Pyro.core
 import Pyro.util
+from Pyro.util import HostUtil
 
 from Pyro.protocol import ProtocolError
 
@@ -103,7 +104,7 @@ sys.exitfunc = unregister_objects
 
 def host_ipaddr(interface = None):
 	if sys.platform == "win32":
-		return socket.gethostbyname(socket.gethostname())
+		return HostUtil.inst().gethostbyname()
 
 	cmd = "/sbin/ifconfig"
 	if interface:
@@ -135,7 +136,7 @@ def host_ipaddr(interface = None):
 
 	fd.close()
 
-	return this_host or socket.gethostbyname(socket.gethostname())
+	return this_host or HostUtil.inst().gethostbyname()
 
 def find_nameserver(hostname = None, portnum = None):
 	if hostname and hostname.find('://') > 0:
@@ -151,7 +152,7 @@ def find_nameserver(hostname = None, portnum = None):
 			ns = locator.getNS(host = hostname, port = portnum)
 
 		except (Pyro.core.PyroError, socket.error), x:
-			localhost = socket.gethostbyname('localhost')
+			localhost = HostUtil.inst().gethostbyname('localhost')
 			if verbose:
 				print "Error:", x
 				print """

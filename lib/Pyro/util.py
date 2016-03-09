@@ -48,6 +48,45 @@ class BogusEvent(object):
 	def wait(self,timeout=None):
 		raise RuntimeError("cannot wait in non-threaded environment")
 
+
+class HostUtil(object):
+    """Wrap and memoize socket.gethost* results."""
+
+    _INST = None
+
+    @classmethod
+    def inst(cls, reset=False):
+        """Return the singleton of this class."""
+        if cls._INST is None or reset:
+            cls._INST = cls()
+        return cls._INST
+
+    def __init__(self):
+        self.hostname = None
+        self.hostbyname = {}
+        self.hostbyaddr = {}
+
+    def gethostbyaddr(self, addr):
+        """Wrap and memoize socket.gethostbyaddr."""
+        if addr not in self.hostbyaddr:
+            self.hostbyaddr[addr] = socket.gethostbyaddr(addr)
+        return self.hostbyaddr[addr]
+
+    def gethostbyname(self, name=None):
+        """Wrap and memoize socket.gethostbyname."""
+        if name is None:
+            name = self.gethostname()
+        if name not in self.hostbyname:
+            self.hostbyname[name] = socket.gethostbyname(name)
+        return self.hostbyname[name]
+
+    def gethostname(self):
+        """Wrap and memoize socket.gethostname."""
+        if self.hostname is None:
+            self.hostname = socket.gethostname()
+        return self.hostname
+
+
 def getEventObject():
 	if supports_multithreading():
 		from threading import Event
@@ -333,7 +372,7 @@ else:
 		# For A: should use the machine's MAC ethernet address, but there is no
 		# portable way to get it... use the IP address + 2 bytes process id.
 		try:
-			ip=socket.gethostbyname(socket.gethostname())
+			ip = HostUtil.inst().gethostbyname()
 			networkAddrStr=binascii.hexlify(socket.inet_aton(ip))+"%04x" % os.getpid()
 		except socket.error:
 			# can't get IP address... use another value, like our Python id() and PID

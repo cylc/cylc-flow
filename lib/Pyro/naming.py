@@ -11,6 +11,7 @@ from __future__ import with_statement
 import sys, os, socket, time, traceback, errno
 import dircache, shutil, SocketServer
 import Pyro.constants, Pyro.core, Pyro.errors, Pyro.protocol, Pyro.util
+from Pyro.util import HostUtil
 if Pyro.util.supports_multithreading():
 	import threading
 
@@ -119,7 +120,7 @@ class NameServerLocator(object):
 				raise Pyro.errors.PyroError(msg)
 			if bcaddr:
 				try:
-					socket.gethostbyname(bcaddr)
+					HostUtil.inst().gethostbyname(bcaddr)
 				except socket.error:
 					msg="invalid broadcast address '%s'" % bcaddr
 					if trace:

@@ -17,6 +17,7 @@ except ImportError:
 	import md5
 	md5=md5.md5
 import Pyro.constants, Pyro.util
+from Pyro.util import HostUtil
 
 from Pyro.errors import *
 from Pyro.errors import _InternalNoModuleError
@@ -57,17 +58,17 @@ if hasattr(errno, "WSAEINPROGRESS"):
 def getHostname(ip=None):
 	try:
 		if ip:
-			(hn,alias,ips) = socket.gethostbyaddr(ip)
+			hn,alias, ips = HostUtil.inst().gethostbyaddr(ip)
 			return hn
 		else:
-			return socket.gethostname()
+			return HostUtil.inst().gethostname()
 	except socket.error:
 		return None
 
 #------ Get IP address (return None on error)
 def getIPAddress(host=None):
 	try:
-		return socket.gethostbyname(host or getHostname())
+		return HostUtil.inst().gethostbyname(host or getHostname())
 	except socket.error:
 		return None
 
@@ -1041,7 +1042,7 @@ class TCPServer(object):
 		self.connections = []  # connection threads
 		self.initTLS=lambda tls: None  # default do-nothing func
 		if host:
-			socket.gethostbyname(host)  # validate hostname
+			HostUtil.inst().gethostbyname(host)  # validate hostname
 		try:
 			if prtcol=='PYROSSL':
 				try:

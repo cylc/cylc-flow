@@ -27,7 +27,7 @@ __revision__ = "$Revision: 1.10.2.6 $"
 #
 # Standard modules
 #
-import os, sys, socket
+import os, sys
 import traceback, cStringIO
 
 #
@@ -42,6 +42,7 @@ from Pyro.naming import NameServerLocator
 from Pyro.errors import NamingError, ConnectionClosedError,\
                         ConnectionDeniedError
 import Pyro.core
+from Pyro.util import HostUtil
 
 #----------------------------------------------------------------------#
 # Module constants
@@ -652,7 +653,7 @@ class wx_NSC(wx.Frame):
       Updates the display of current Name Server information.
       """
       try:
-         ns_name, t, ns_ip = socket.gethostbyaddr(self.nsHost)
+         ns_name, t, ns_ip = HostUtil.inst().gethostbyaddr(self.nsHost)
          ns_ip = ns_ip[0]
       except:
          ns_name, ns_ip = self.nsHost, ''
