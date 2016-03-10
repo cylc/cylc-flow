@@ -27,7 +27,19 @@ SUITE_DIR=$(cylc get-global-config --print-run-dir)/$SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
-run_ok $TEST_NAME-n-dumps test $(find $SUITE_DIR/state -type f -name "state*" | wc -l) -eq 7
+#-------------------------------------------------------------------------------
+STATE_FILES=$(find $SUITE_DIR/state -name "state.*")
+for file in $STATE_FILES; do
+    sed -i "/^time :/d" $file
+done
+# Final file is often a duplicate of the penultimate file - mark it different.
+echo "it is OK to be different" >>$SUITE_DIR/state/state
+STATE_MD5SUMS=$(md5sum $STATE_FILES | cut -f1 -d " ")
+TEST_NAME=$TEST_NAME_BASE-no-ident-dumps
+run_ok $TEST_NAME test $(wc -l <<<"$STATE_MD5SUMS") -eq \
+                       $(uniq <<<"$STATE_MD5SUMS" | wc -l)
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-final-state
 grep 'person' $SUITE_DIR/state/state >$TEST_NAME.state
 cmp_ok $TEST_NAME.state <<'__STATE__'
 person_a.1 : status=succeeded, spawned=true
