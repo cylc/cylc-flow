@@ -32,6 +32,8 @@ cylc run --no-detach $SUITE_NAME > /dev/null 2>&1
 # immediately).
 cylc restart $SUITE_NAME
 sleep 5
+cylc reload $SUITE_NAME
+sleep 5
 cylc dump $SUITE_NAME > dump.out
 TEST_NAME=$TEST_NAME_BASE-grep
 # State summary should not say "reloading = True"
