@@ -386,15 +386,11 @@ previous section, emerges naturally at run time.
     \item {\bf OS: A Linux or Unix variant (including, reportedly, Apple OS X).}
     \item {\bf The Python Language, version 2.6 or later, but not 3.x yet}.
         \newline \url{https://python.org}
-    \item {\bf Pyro-3 (Python Remote Objects), version 3.10$+$, latest
-        tested 3.16}; not Pyro4 as yet. Pyro is used
-        for network communication between server processes (cylc suites)
-        and client programs (running tasks, the gcylc GUI, user commands).
-        \newline \url{https://pypi.python.org/pypi/Pyro/}
     \item {\bf sqlite (a server-less, zero-configuration, SQL database
-        engine}). This is likely included in your Linux distribution
-        already. Cylc generates an sqlite database for each suite as it
-        runs, to record task events and status.
+        engine}). The Python API to sqlite is part of the Python standard
+        library. The command line interface is likely included in your Linux
+        distribution already. Cylc generates an sqlite database for each suite
+        as it runs, to record task events and status.
         \newline \url{http://sqlite.org}
 \end{myitemize}
 
@@ -445,6 +441,12 @@ And for HTML versions of the User Guide:
     \item ImageMagick (for image scaling)
 \end{myitemize}
 
+Note: Older versions of cylc requires Pyro-3 (Python Remote Objects). Current
+version of cylc includes a modified version of Pyro 3.16 in its distribution.
+Pyro is used for network communication between server processes (cylc suites)
+and client programs (running tasks, the gcylc GUI, user commands). \newline
+\url{https://pypi.python.org/pypi/Pyro/}
+
 Finally, cylc makes heavy use of Python {\em ordered dictionary}
 data structures.  Significant speedup in parsing large suites can be had
 by installing the
@@ -462,46 +464,6 @@ the ordered dictionary structure.
 \subsection{Known Version Compatibility Issues}
 
 Cylc should run ``out of the box'' on recent Linux distributions.
-
-For distributed suites the Pyro versions installed on all suite or task
-hosts must be mutually compatible. Using identical Pyro versions
-guarantees compatibility but may not be strictly necessary because
-cylc uses Pyro rather minimally.
-
-\subsubsection{Pyro 3.9 and Earlier}
-
-Beware of Linux distributions that come packaged with old Pyro versions.
-Pyro 3.9 and earlier is not compatible with the new-style Python classes
-used in cylc. It has been reported that Ubuntu 10.04 (Lucid Lynx),
-released in September 2009, suffers from this problem. Surprisingly,
-so does Ubuntu 11.10 (Oneiric Ocelot), released in October 2011 - and
-therefore, presumably, all earlier Ubuntu releases.  Attempting to run
-a suite with Pyro 3.9 or earlier installed results in the following
-Python traceback:
-
-\lstset{language=transcript}
-\begin{lstlisting}
-Traceback (most recent call last):
- File "/home/hilary/cylc/bin/_run", line 232, in <module>
- server = start()
- File "/home/hilary/cylc/bin/_run", line 92, in __init__
- scheduler.__init__( self )
- File "/home/hilary/cylc/lib/cylc/scheduler.py", line 141, in
-__init__
- self.load_tasks()
- File "/home/hilary/cylc/bin/_run", line 141, in load_tasks_cold
- itask = self.config.get_task_proxy( name, tag, 'waiting',
-stopctime=None, startup=True )
- File "/home/hilary/cylc/lib/cylc/config.py", line 1252, in
-get_task_proxy
- return self.taskdefs[name].get_task_class()( ctime, state,
-stopctime, startup )
- File "/home/hilary/cylc/lib/cylc/taskdef.py", line 453, in
-tclass_init
- print '-', sself.__class__.__name__, sself.__class__.__bases_
-AttributeError: type object 'A' has no attribute '_taskdef__bases_'
-_run --debug testsuite.1322742021 2010010106 failed: 1
-\end{lstlisting}
 
 \subsubsection{Apple Mac OSX}
 
@@ -542,7 +504,7 @@ viewer (\url{https://github.com/jrfonseca/xdot.py}, LGPL license).
 
 \subsection{Install The External Dependencies}
 
-First install Pyro, graphviz, Pygraphviz, Jinja2, \TeX, and ImageMagick
+First install graphviz, Pygraphviz, Jinja2, \TeX, and ImageMagick
 using the package manager on your system if possible; otherwise download
 the packages manually and follow their native installation documentation.
 On a modern Linux system, this is very easy. For example, to install
@@ -584,7 +546,6 @@ Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
 Checking for Python packages:
- + Pyro-3 ... ok
  + Jinja2 ... ok
  + pygraphviz ... ok
  + pygtk ... ok
@@ -693,7 +654,6 @@ Checking for non-Python packages:
  + Graphviz ... ok
  + sqlite ... ok
 Checking for Python packages:
- + Pyro-3 ... ok
  + Jinja2 ... ok
  + pygraphviz ... ok
  + pygtk ... ok
@@ -1370,9 +1330,8 @@ the task host to the suite host, either by network ports (Pyro) or ssh,
 unless the last-resort one way {\em task polling} communication method
 is used.
 
-\item Cylc must be installed on the task host, and for the default task
-    communication method so must Pyro. Other software dependencies like
-    graphviz and Jinja2 are not required there.
+\item Cylc must be installed on the task host. Other software dependencies like
+graphviz and Jinja2 are not required there.
 
 \item The suite passphrase must be installed on the remote account,
 to allow remote tasks to authenticate with the suite.
@@ -4339,7 +4298,7 @@ evaluation on the task host.
 \label{RunningTasksOnARemoteHost}
 
 If a task declares an owner other than the suite owner and/or
-a host other than the suite host, cylc will use passwordless ssh to
+a host other than the suite host, cylc will use non-interactive ssh to
 execute the task on the \lstinline=owner@host= account by the configured
 job submission method,
 \lstset{language=suiterc}
@@ -4355,21 +4314,22 @@ job submission method,
 \lstset{language=transcript}
 For this to work,
 \begin{myitemize}
-    \item passwordless ssh must be configured between the suite and task
-    host accounts.
+    \item non-interactive ssh/scp is required from the suite host to the task
+    host accounts. Note: Your shell initialization (.profile, .bashrc, .cshrc,
+    etc) on the remote host must not produce any standard output as it may
+    confuse commands such as scp. See \url{http://www.openssh.com/faq.html#2.9}
+    for more information.
 
-    \item Your shell initialization (.profile, .bashrc, .cshrc, etc) on the
-    remote host must not produce any standard output as it may confuse commands
-    such as scp. See \url{http://www.openssh.com/faq.html#2.9} for more
-    information.
-
-    \item cylc must be installed on task hosts so that remote tasks can
-    use cylc messaging and poll or kill commands.
+    \item cylc must be installed on task hosts.
     \begin{myitemize}
-        \item Pyro and the suite passphrase are needed on tasks hosts,
-            unless the ssh or polling task communication methods are
-            used. Other cylc software dependencies such as graphviz and
+        \item Optional software dependencies such as graphviz and
         Jinja2 are not needed on task hosts.
+        \item If polling task communication is used, there is no other
+        requirement.
+        \item If SSH task communication is configured, non-interactive ssh is
+        required from the task host to the suite host.
+        \item If Pyro (default) task communication is configured, the task host
+        should have access to the Pyro port on the suite host.
     \end{myitemize}
     \item the suite definition directory, or some fraction of its
         content, can be installed on the task host, if needed.
@@ -5290,9 +5250,9 @@ the template's \%(job)s will be substituted by the job file path.
 
 For supported job submission methods, one-way polling can be used to determine
 actual job status: the suite daemon executes a process on the task host, by
-passwordless ssh, to interrogate the batch queueing system there, and to read a
-{\em status file} that is automatically generated by the task job script as it
-runs.
+non-interactive ssh, to interrogate the batch queueing system there, and to
+read a {\em status file} that is automatically generated by the task job script
+as it runs.
 
 Polling may be required to update the suite state correctly after unusual
 events such as a machine being rebooted with tasks running on it, or network
@@ -5328,8 +5288,8 @@ task status, and it should be used sparingly in large suites.
 \subsection{Job Killing}
 
 For supported job submission methods, the suite daemon can execute a process on
-the task host, by passwordless ssh, to kill a submitted or running job according
-to its job submission method.
+the task host, by non-interactive ssh, to kill a submitted or running job
+according to its job submission method.
 
 Tasks can be killed on demand by right-clicking on them in gcylc or using the
 \lstinline=cylc kill= command.
@@ -5511,13 +5471,13 @@ configured to work in two different ways:
         \item {\bf Pyro:} direct messaging via network sockets using
         Pyro (Python Remote Objects).
         \item {\bf ssh:} for tasks hosts that block access to the
-        network ports required by Pyro, cylc can use passwordless ssh to
+        network ports required by Pyro, cylc can use non-interactive ssh to
         re-invoke task messaging commands on the suite host (where
         ultimately Pyro is still used to connect to the server process).
     \end{myenumerate}
 \item {\bf polling:} for task hosts that do not allow return routing to
 the suite host for Pyro or ssh, cylc can poll tasks at configurable
-intervals, using passwordless ssh.
+intervals, using non-interactive ssh.
 \end{myenumerate}
 
 The Pyro communication method is the default because it is the most
@@ -5636,7 +5596,7 @@ tracking (see these with \lstinline=cylc get-site-config=):
 
 User-invoked commands that connect to running suites can also choose
 between direct communication across network sockets (Pyro) and
-re-invocation of commands on the suite host using passwordless ssh
+re-invocation of commands on the suite host using non-interactive ssh
 (there is a \lstinline=--use-ssh= command option for this purpose).
 
 The gcylc GUI requires direct Pyro connections to its target suite. If
@@ -5813,7 +5773,7 @@ provided by the suite (via the task job script).
 
 So, to connect to a suite running on another account you must install
 the suite passphrase (\ref{passphrases}), and configure
-passwordless ssh so that the port number can be retrieved from the
+non-interactive ssh so that the port number can be retrieved from the
 remote port file. Then use the \lstinline=--user= and
 \lstinline=--host= command options to connect:
 \lstset{language=transcript}

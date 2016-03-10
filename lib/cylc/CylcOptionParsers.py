@@ -192,7 +192,7 @@ Arguments:"""
                     help=(
                         "Suite port number on the suite host. "
                         "NOTE: this is retrieved automatically if "
-                        "passwordless ssh is configured to the suite host."
+                        "non-interactive ssh is configured to the suite host."
                     ),
                     metavar="INT", action="store", default=None, dest="port")
             except OptionConflictError:

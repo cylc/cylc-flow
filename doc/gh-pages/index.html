@@ -209,29 +209,35 @@
                 <h3><span>Requirements</span></h3>
 
                 <ul>
-                    <li> Operating System: Linux or Unix
+                    <li> Operating System: Linux or Unix</li>
 
-                    <li> Python 2.6 or later (but not 3.x as yet).
+                    <li> Python 2.6 or later (but not 3.x as yet).</li>
                     <!-- <sup><a href="#fn2" id="fnr2" title="click to see footnote">2</a></sup> -->
 
                     <li> <a href="http://www.pygtk.org">PyGTK</a>,
                     a Python wrapper for the GTK+ graphical user
                     interface toolkit, included in most Linux Distributions.
-
-                    <li> <a href="https://pypi.python.org/pypi/Pyro/">Pyro 3</a>
-                    (Python Remote Objects) - latest version 3.16.
+                    This requirement is for running the GUIs, and is optional
+                    if you don't use the GUIs.</li>
 
                     <li> The <a href="http://www.graphviz.org">graphviz</a> graph
-                    layout engine (latest version tested: 2.28.0).
-
-                    <li> <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>,
+                    layout engine (latest version tested: 2.28.0) and
+                    <a href="http://networkx.lanl.gov/pygraphviz">Pygraphviz</a>,
                     a python interface to graphviz (latest version tested: 1.1).
+                    This requirement is for running <code>cylc gui</code> in
+                    graph view and for commands such as <code>cylc
+                    validate</code> to do a full analysis of the dependency
+                    graph.</li>
 
-                    <li> <a href="http://jinja.pocoo.org">Jinja2</a>, a template processor for Python.
+                    <li> <a href="http://jinja.pocoo.org">Jinja2</a>,
+                    a template processor for Python. This requirement is for
+                    parsing suite configuration files with Jinja2, and is
+                    optional if you don't have such suites.</li>
 
-                    <li> <b>LaTeX</b> (for <code>pdflatex</code>) and <b>tex4ht</b>
-                    (for <code>htlatex</code>) - needed to generate PDF and HTML
-                    copies of the Cylc User Guide from the LaTeX source files.
+                    <li> <b>LaTeX</b> (for <code>pdflatex</code>) and
+                    <b>tex4ht</b> (for <code>htlatex</code>). This requirement
+                    is for generating PDF and HTML copies of the Cylc User Guide
+                    from the LaTeX source files.</li>
                 </ul>
 
                 <p class="p1"><span>

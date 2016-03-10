@@ -33,7 +33,7 @@ class remrun(object):
 
     If owner or host differ from username and localhost, strip the
     remote options from the commandline and reinvoke the command on the
-    remote host by passwordless ssh, then exit; else do nothing.
+    remote host by non-interactive ssh, then exit; else do nothing.
 
     To ensure that users are aware of remote re-invocation info is always
     printed, but to stderr so as not to interfere with results.

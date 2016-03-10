@@ -216,7 +216,7 @@ class TaskMessage(object):
 
         # The suite definition specified that this task should
         # communicate back to the suite by means of using
-        # passwordless ssh to re-invoke the messaging command on the
+        # non-interactive ssh to re-invoke the messaging command on the
         # suite host.
 
         # The remote_run() function expects command line options
