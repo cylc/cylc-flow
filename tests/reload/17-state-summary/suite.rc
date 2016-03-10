@@ -1,0 +1,9 @@
+[scheduling]
+    [[dependencies]]
+        graph = """foo
+            foo:fail => stopper"""
+[runtime]
+    [[foo]]
+        script = false
+    [[stopper]]
+        script = cylc stop $CYLC_SUITE_NAME
