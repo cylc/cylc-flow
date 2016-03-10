@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-03-09 21:09:00"> 
+<meta name="date" content="2016-03-11 10:04:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -107,14 +107,15 @@ class="pcrr7t-">}/</span><span
 class="pcrr7t-">index</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">html</span></span></li></ul>
-<!--l. 51--><p class="noindent" >
+<!--l. 51--><p class="noindent" ><span 
+class="cmbx-12">]</span>
 <!--l. 51--><p class="indent" >    <h4 id="A.2" class="subsectionHead"> <span class="titlemark"> <a href="#A.2"> A.2</a>  <a 
  id="x18-229000A.2"></a>[cylc] </span></h4>
 <!--l. 53--><p class="indent" >   This section is for configuration that is not specifically task-related.
 <!--l. 55--><p class="noindent" >
 <!--l. 55--><p class="indent" >    <h4 id="A.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.1"> A.2.1</a>  <a 
  id="x18-230000A.2.1"></a> [cylc] <span 
-class="tcrm-1000">&rarr;</span>required run mode </span></h4>
+class="tcrm-1000">&#x2192;</span>required run mode </span></h4>
 <!--l. 57--><p class="indent" >   If this item is set cylc will abort if the suite is not started in the specified mode. This can be used for demo
 suites that have to be run in simulation mode, for example, because they have been taken out of their
 normal operational context; or to prevent accidental submission of expensive real tasks during suite
@@ -131,7 +132,7 @@ class="cmti-10">default: </span>None</li></ul>
 <!--l. 68--><p class="noindent" >
 <!--l. 68--><p class="indent" >    <h4 id="A.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.2"> A.2.2</a>  <a 
  id="x18-231000A.2.2"></a> [cylc] <span 
-class="tcrm-1000">&rarr;</span>UTC mode </span></h4>
+class="tcrm-1000">&#x2192;</span>UTC mode </span></h4>
 <!--l. 71--><p class="indent" >   Cylc runs off the suite host&#8217;s system clock by default. This item allows you to run the suite in UTC
 even if the system clock is set to local time. Clock-trigger tasks will trigger when the current UTC
 time is equal to their cycle point date-time plus offset; other time values used, reported, or logged by
@@ -150,7 +151,7 @@ class="cmti-10">default: </span>False, unless overridden at site level.</li></ul
 <!--l. 83--><p class="noindent" >
 <!--l. 83--><p class="indent" >    <h4 id="A.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.3"> A.2.3</a>  <a 
  id="x18-232000A.2.3"></a> [cylc] <span 
-class="tcrm-1000">&rarr;</span>cycle point format </span></h4>
+class="tcrm-1000">&#x2192;</span>cycle point format </span></h4>
 <!--l. 86--><p class="indent" >   To just alter the timezone used in the date/time cycle point format, see <a 
 href="#x18-234000A.2.5">A.2.5<!--tex4ht:ref: cycle-point-time-zone --></a>. To just alter the number of
 expanded year digits (for years below 0 or above 9999), see <a 
@@ -235,7 +236,7 @@ commands like &#8221;rsync&#8221; when applied to task output files.
 <!--l. 126--><p class="noindent" >
 <!--l. 126--><p class="indent" >    <h4 id="A.2.4" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.4"> A.2.4</a>  <a 
  id="x18-233000A.2.4"></a> [cylc] <span 
-class="tcrm-1000">&rarr;</span>cycle point num expanded year digits </span></h4>
+class="tcrm-1000">&#x2192;</span>cycle point num expanded year digits </span></h4>
 <!--l. 129--><p class="indent" >   For years below 0 or above 9999, the ISO 8601 standard specifies that an extra number of year digits and a sign
 should be used. This extra number needs to be written down somewhere (here).
 <!--l. 133--><p class="indent" >   For example, if this extra number is set to 2, 00Z on the 1st of January in the year 10040 will be represented as
@@ -249,7 +250,7 @@ class="pcrr7t-">T0600Z</span></span>.
 <!--l. 141--><p class="noindent" >
 <!--l. 141--><p class="indent" >    <h4 id="A.2.5" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.5"> A.2.5</a>  <a 
  id="x18-234000A.2.5"></a> [cylc] <span 
-class="tcrm-1000">&rarr;</span>cycle point time zone </span></h4>
+class="tcrm-1000">&#x2192;</span>cycle point time zone </span></h4>
 <!--l. 144--><p class="indent" >   If you set UTC mode to True (<a 
 href="#x18-231000A.2.2">A.2.2<!--tex4ht:ref: UTC-mode --></a>) then this will default to <span class="lstinline"><span 
 class="pcrr7t-">Z</span></span>. If you use a custom cycle point format (<a 
@@ -277,7 +278,7 @@ this is not recommended, given that the time zone is used as part of task output
 <!--l. 164--><p class="noindent" >
 <!--l. 164--><p class="indent" >    <h4 id="A.2.6" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.6"> A.2.6</a>  <a 
  id="x18-235000A.2.6"></a>[cylc] <span 
-class="tcrm-1000">&rarr;</span>abort if any task fails </span></h4>
+class="tcrm-1000">&#x2192;</span>abort if any task fails </span></h4>
 <!--l. 166--><p class="indent" >   Cylc does not normally abort if tasks fail, but if this item is turned on it will abort with exit status 1 if any task
 fails.
      <ul class="itemize1">
@@ -289,7 +290,7 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 174--><p class="noindent" >
 <!--l. 174--><p class="indent" >    <h4 id="A.2.7" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.7"> A.2.7</a>  <a 
  id="x18-236000A.2.7"></a>[cylc] <span 
-class="tcrm-1000">&rarr;</span>disable automatic shutdown </span></h4>
+class="tcrm-1000">&#x2192;</span>disable automatic shutdown </span></h4>
 <!--l. 176--><p class="indent" >   This has the same effect as the <span class="lstinline"><span 
 class="pcrr7t-">--</span><span 
 class="pcrr7t-">no</span><span 
@@ -309,7 +310,7 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 188--><p class="noindent" >
 <!--l. 188--><p class="indent" >    <h4 id="A.2.8" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.8"> A.2.8</a>  <a 
  id="x18-237000A.2.8"></a>[cylc] <span 
-class="tcrm-1000">&rarr;</span>log resolved dependencies </span></h4>
+class="tcrm-1000">&#x2192;</span>log resolved dependencies </span></h4>
 <!--l. 190--><p class="indent" >   If this is turned on cylc will write the resolved dependencies of each task to the suite log as it becomes ready to
 run (a list of the IDs of the tasks that actually satisfied its prerequisites at run time). Mainly used for cylc testing
 and development.
@@ -322,7 +323,7 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 200--><p class="noindent" >
 <!--l. 200--><p class="indent" >    <h4 id="A.2.9" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.9"> A.2.9</a>  <a 
  id="x18-238000A.2.9"></a>[cylc] <span 
-class="tcrm-1000">&rarr;</span>[[event hooks]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[event hooks]] </span></h4>
 <!--l. 203--><p class="indent" >   Cylc has internal &#8220;hooks&#8221; to which you can attach handlers that are called by the suite daemon
 whenever certain events occur. This section configures suite event hooks; see&#x00A0;<a 
 href="#x18-317000A.5.1.21">A.5.1.21<!--tex4ht:ref: TaskEventHandling --></a> for task event
@@ -371,14 +372,14 @@ class="pcrr7t-">MESSAGE</span>
      </li>
      <li class="itemize">MESSAGE - describes what has happened.</li></ul>
 <!--l. 226--><p class="indent" >   Additional information can be passed to event handlers via [cylc] <span 
-class="tcrm-1000">&rarr;</span>[[environment]].
+class="tcrm-1000">&#x2192;</span>[[environment]].
 <!--l. 229--><p class="noindent" >
 <!--l. 229--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-239000A.2.9.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[event hooks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">EVENT handler</span></span>
    A comma-separated list of one or more event handlers to call when one of the following EVENTs
 occurs:
@@ -418,9 +419,9 @@ class="pcrr7t-">sh</span></span></li></ul>
 <!--l. 249--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-240000A.2.9.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[event hooks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">timeout</span></span>
    If a timeout is set and the timeout event is handled, the timeout event handler(s) will be called if the suite times
 out before it finishes. The timer is set initially at suite start up. It is possible to set a default for this at the site level
@@ -442,9 +443,9 @@ class="cmti-10">default: </span>(none), unless set at the site level.</li></ul>
 <!--l. 262--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-241000A.2.9.3"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[event hooks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">reset timer</span></span>
    If <span class="lstinline"><span 
 class="pcrr7t-">True</span></span> (the default) the suite timer will continually reset after any task changes state, so you can
@@ -460,9 +461,9 @@ class="cmti-10">default: </span>True</li></ul>
 <!--l. 274--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-242000A.2.9.4"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[event hooks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">abort on timeout</span></span>
    If a suite timer is set (above) this will cause the suite to abort with error status if the suite times out while still
 running. It is possible to set a default for this at the site level (see &#x00A0;<a 
@@ -477,9 +478,9 @@ class="cmti-10">default: </span>False, unless set at the site level.</li></ul>
 <!--l. 285--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-243000A.2.9.5"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[event hooks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">abort if EVENT handler fails</span></span>
    Cylc does not normally care whether an event handler succeeds or fails, but if this is turned on the EVENT
 handler will be executed in the foreground (which will block the suite while it is running) and the suite will abort if
@@ -493,7 +494,7 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 297--><p class="noindent" >
 <!--l. 297--><p class="indent" >    <h4 id="A.2.10" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.10"> A.2.10</a>  <a 
  id="x18-244000A.2.10"></a>[cylc] <span 
-class="tcrm-1000">&rarr;</span>[[environment]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[environment]] </span></h4>
 <!--l. 299--><p class="indent" >   Environment variables defined in this section are passed to suite and task event handlers.
      <ul class="itemize1">
      <li class="itemize">These variables are not passed to tasks - use task runtime variables for that. Similarly, task runtime
@@ -548,9 +549,9 @@ class="pcrr7t-">CYLC_SUITE_RUN_DIR</span>
 <!--l. 324--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-245000A.2.10.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[environment]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_VARIABLE</span><span 
 class="cmbx-10">_</span><span 
@@ -584,7 +585,7 @@ class="pcrr7t-">foo</span></span></li></ul>
 <!--l. 346--><p class="noindent" >
 <!--l. 346--><p class="indent" >    <h4 id="A.2.11" class="subsubsectionHead"><span class="titlemark"> <a href="#A.2.11"> A.2.11</a>  <a 
  id="x18-246000A.2.11"></a>[cylc] <span 
-class="tcrm-1000">&rarr;</span>[[reference test]]  </span></h4>
+class="tcrm-1000">&#x2192;</span>[[reference test]]  </span></h4>
 <!--l. 349--><p class="indent" >   Reference tests are finite-duration suite runs that abort with non-zero exit status if cylc fails, if any task fails, if
 the suite times out, or if a shutdown event handler that (by default) compares the test run with a reference run
 reports failure. See&#x00A0;<a 
@@ -593,9 +594,9 @@ href="cug-htmlse12.html#x13-19100012.22">12.22<!--tex4ht:ref: AutoRefTests --></
 <!--l. 354--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-247000A.2.11.1"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[reference test]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">suite shutdown event handler</span></span>
    A shutdown event handler that should compare the test run with the reference run, exiting with zero exit status
 only if the test run verifies.
@@ -623,9 +624,9 @@ directory.
 <!--l. 367--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-248000A.2.11.2"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[reference test]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">required run mode</span></span>
    If your reference test is only valid for a particular run mode, this setting will cause cylc to abort if a reference
 test is attempted in another run mode.
@@ -642,9 +643,9 @@ class="cmti-10">default: </span>None</li></ul>
 <!--l. 379--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-249000A.2.11.3"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[reference test]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">allow task failures</span></span>
    A reference test run will abort immediately if any task fails, unless this item is set, or a list of <span 
 class="cmti-10">expected task</span>
@@ -660,9 +661,9 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 390--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-250000A.2.11.4"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[reference test]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">expected task failures</span></span>
    A reference test run will abort immediately if any task fails, unless <span 
 class="cmti-10">allow task failures </span>is set (above) or the failed
@@ -688,9 +689,9 @@ class="pcrr7t-">.20120908</span></span></li></ul>
 <!--l. 402--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-251000A.2.11.5"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[reference test]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">live mode suite timeout</span></span>
    The timeout value, expressed as an ISO 8601 duration/interval, after which the test run should be aborted if it
 has not finished, in live mode. Test runs cannot be done in live mode unless you define a value for this item, because
@@ -712,9 +713,9 @@ class="cmti-10">default: </span>PT1M (1 minute)</li></ul>
 <!--l. 416--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-252000A.2.11.6"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[reference test]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">simulation mode suite timeout</span></span>
    The timeout value in minutes after which the test run should be aborted if it has not finished, in simulation
 mode. Test runs cannot be done in simulation mode unless you define a value for this item, because it is not possible
@@ -733,9 +734,9 @@ class="cmti-10">default: </span>PT1M (1 minute)</li></ul>
 <!--l. 430--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-253000A.2.11.7"></a><span 
 class="cmbx-10">[cylc] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[reference test]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">dummy mode suite timeout</span></span>
    The timeout value, expressed as an ISO 8601 duration/interval, after which the test run should be aborted if it
 has not finished, in dummy mode. Test runs cannot be done in dummy mode unless you define a value for this item,
@@ -750,20 +751,24 @@ class="pcrr7t-">T</span></span>!)).
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>PT1M (1 minute)</li></ul>
-<!--l. 444--><p class="noindent" >
+<!--l. 444--><p class="noindent" ><span 
+class="cmbx-12">]</span>
 <!--l. 444--><p class="indent" >    <h4 id="A.3" class="subsectionHead"> <span class="titlemark"> <a href="#A.3"> A.3</a>  <a 
  id="x18-254000A.3"></a>[authentication] </span></h4>
 <!--l. 447--><p class="indent" >   Authentication of client programs with suite daemons can be set in the global site/user config files and
 overridden here if necessary. See&#x00A0;<a 
 href="cug-htmlse18.html#x19-452000B.15">B.15<!--tex4ht:ref: GlobalAuth --></a> for more information.
-<!--l. 451--><p class="noindent" >
+<!--l. 451--><p class="noindent" ><span 
+class="tcbx-1000">&#x2192;</span>
+public]
 <!--l. 451--><p class="indent" >    <h4 id="A.3.1" class="subsubsectionHead"><span class="titlemark"> <a href="#A.3.1"> A.3.1</a>  <a 
  id="x18-255000A.3.1"></a>[authentication] <span 
-class="tcrm-1000">&rarr;</span>public </span></h4>
+class="tcrm-1000">&#x2192;</span>public </span></h4>
 <!--l. 453--><p class="indent" >   The client privilege level granted for public access - i.e.&#x00A0;no suite passphrase required. See&#x00A0;<a 
 href="cug-htmlse18.html#x19-452000B.15">B.15<!--tex4ht:ref: GlobalAuth --></a> for legal
 values.
-<!--l. 456--><p class="noindent" >
+   <span 
+class="cmbx-12">]</span>
 <!--l. 456--><p class="indent" >    <h4 id="A.4" class="subsectionHead"> <span class="titlemark"> <a href="#A.4"> A.4</a>  <a 
  id="x18-256000A.4"></a>[scheduling] </span></h4>
 <!--l. 458--><p class="indent" >   This section allows cylc to determine when tasks are ready to run.
@@ -773,7 +778,7 @@ values.
 <!--l. 460--><p class="noindent" >
 <!--l. 460--><p class="indent" >    <h4 id="A.4.1" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.1"> A.4.1</a>  <a 
  id="x18-257000A.4.1"></a> [scheduling] <span 
-class="tcrm-1000">&rarr;</span>cycling mode  </span></h4>
+class="tcrm-1000">&#x2192;</span>cycling mode  </span></h4>
 <!--l. 463--><p class="indent" >   Cylc runs using the proleptic Gregorian calendar by default. This item allows you to either run the suite using
 the 360 day calendar (12 months of 30 days in a year) or using integer cycling.
      <ul class="itemize1">
@@ -789,7 +794,7 @@ class="cmti-10">default: </span>gregorian
 <!--l. 474--><p class="noindent" >
 <!--l. 474--><p class="indent" >    <h4 id="A.4.2" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.2"> A.4.2</a>  <a 
  id="x18-258000A.4.2"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>initial cycle point </span></h4>
+class="tcrm-1000">&#x2192;</span>initial cycle point </span></h4>
 <!--l. 477--><p class="indent" >   In a cold start each cycling task (unless specifically excluded under [special tasks]) will be loaded into the suite
 with this cycle point, or with the closest subsequent valid cycle point for the task. Note that special <span 
 class="cmti-10">cold-start tasks</span>
@@ -813,7 +818,7 @@ href="#x18-232000A.2.3">A.2.3<!--tex4ht:ref: cycle-point-format --></a>).
 <!--l. 499--><p class="noindent" >
 <!--l. 499--><p class="indent" >    <h4 id="A.4.3" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.3"> A.4.3</a>  <a 
  id="x18-259000A.4.3"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>final cycle point </span></h4>
+class="tcrm-1000">&#x2192;</span>final cycle point </span></h4>
 <!--l. 501--><p class="indent" >   Cycling tasks are held once they pass the final cycle point, if one is specified. Once all tasks have achieved this
 state the suite will shut down. If this item is provided you can override it on the command line or in the gcylc suite
 start panel.
@@ -835,7 +840,7 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 517--><p class="noindent" >
 <!--l. 517--><p class="indent" >    <h4 id="A.4.4" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.4"> A.4.4</a>  <a 
  id="x18-260000A.4.4"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>initial cycle point constraints </span></h4>
+class="tcrm-1000">&#x2192;</span>initial cycle point constraints </span></h4>
 <!--l. 520--><p class="indent" >   In a cycling suite it is possible to restrict the initial cycle point by defining a list of truncated time points under
 the initial cycle point constraints.
      <ul class="itemize1">
@@ -847,7 +852,7 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 530--><p class="noindent" >
 <!--l. 530--><p class="indent" >    <h4 id="A.4.5" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.5"> A.4.5</a>  <a 
  id="x18-261000A.4.5"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>final cycle point constraints </span></h4>
+class="tcrm-1000">&#x2192;</span>final cycle point constraints </span></h4>
 <!--l. 533--><p class="indent" >   In a cycling suite it is possible to restrict the final cycle point by defining a list of truncated time points under
 the final cycle point constraints.
      <ul class="itemize1">
@@ -859,14 +864,14 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 543--><p class="noindent" >
 <!--l. 543--><p class="indent" >    <h4 id="A.4.6" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.6"> A.4.6</a>  <a 
  id="x18-262000A.4.6"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>hold after point </span></h4>
+class="tcrm-1000">&#x2192;</span>hold after point </span></h4>
 <!--l. 545--><p class="indent" >   Cycling tasks are held once they pass the hold after cycle point, if one is specified. Unlike the final cycle point
 suite will not shut down once all tasks have passed this point. If this item is provided you can override it on the
 command line or in the gcylc suite start panel.
 <!--l. 550--><p class="noindent" >
 <!--l. 550--><p class="indent" >    <h4 id="A.4.7" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.7"> A.4.7</a>  <a 
  id="x18-263000A.4.7"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>runahead limit </span></h4>
+class="tcrm-1000">&#x2192;</span>runahead limit </span></h4>
 <!--l. 553--><p class="indent" >   Runahead limiting prevents the fastest tasks in a suite from getting too far ahead of the slowest ones, as
 documented in&#x00A0;<a 
 href="cug-htmlse12.html#x13-17900012.12">12.12<!--tex4ht:ref: RunaheadLimit --></a>.
@@ -890,7 +895,7 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 567--><p class="noindent" >
 <!--l. 567--><p class="indent" >    <h4 id="A.4.8" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.8"> A.4.8</a>  <a 
  id="x18-264000A.4.8"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>max active cycle points </span></h4>
+class="tcrm-1000">&#x2192;</span>max active cycle points </span></h4>
 <!--l. 570--><p class="indent" >   Runahead limiting prevents the fastest tasks in a suite from getting too far ahead of the slowest ones, as
 documented in&#x00A0;<a 
 href="cug-htmlse12.html#x13-17900012.12">12.12<!--tex4ht:ref: RunaheadLimit --></a>.
@@ -914,7 +919,7 @@ class="cmti-10">default: </span>3</li></ul>
 <!--l. 584--><p class="noindent" >
 <!--l. 584--><p class="indent" >    <h4 id="A.4.9" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.9"> A.4.9</a>  <a 
  id="x18-265000A.4.9"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>[[queues]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[queues]] </span></h4>
 <!--l. 586--><p class="indent" >   Configuration of internal queues, by which the number of simultaneously active tasks (submitted or running) can
 be limited, per queue. By default a single queue called <span 
 class="cmti-10">default </span>is defined, with all tasks assigned to it and no
@@ -926,9 +931,9 @@ href="cug-htmlse12.html#x13-18000012.13">12.13<!--tex4ht:ref: InternalQueues -->
 <!--l. 593--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-266000A.4.9.1"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[queues]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_QUEUE</span><span 
@@ -946,15 +951,15 @@ class="cmti-10">default: </span>&#8220;default&#8221;</li></ul>
 <!--l. 603--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-267000A.4.9.2"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[queues]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_QUEUE</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">limit</span></span>
    The maximum number of active tasks allowed at any one time, for this queue.
      <ul class="itemize1">
@@ -967,15 +972,15 @@ class="cmti-10">default: </span>0 (i.e.&#x00A0;no limit)</li></ul>
 <!--l. 611--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-268000A.4.9.3"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[queues]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_QUEUE</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">members</span></span>
    A list of member tasks, or task family names, to assign to this queue (assigned tasks will automatically be
 removed from the default queue).
@@ -991,16 +996,16 @@ class="cmti-10">default: </span>none for user-defined queues; all tasks for the 
 <!--l. 620--><p class="noindent" >
 <!--l. 620--><p class="indent" >    <h4 id="A.4.10" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.10"> A.4.10</a>  <a 
  id="x18-269000A.4.10"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>[[special tasks]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[special tasks]] </span></h4>
 <!--l. 622--><p class="indent" >   This section is used to identify tasks with special behaviour. Family names can be used in special task lists as
 shorthand for listing all member tasks.
 <!--l. 625--><p class="noindent" >
 <!--l. 625--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-270000A.4.10.1"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">clock-trigger</span></span>
    Clock-trigger tasks (see&#x00A0;<a 
 href="cug-htmlse9.html#x10-1010009.3.4.14">9.3.4.14<!--tex4ht:ref: ClockTriggerTasks --></a>) wait on a wall clock time specified as an offset from their own cycle
@@ -1049,9 +1054,9 @@ class="pcrr7t-">baz</span>
 <!--l. 642--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-271000A.4.10.2"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">clock-expire</span></span>
    Clock-expire tasks enter the <span 
 class="cmti-10">expired </span>state and skip job submission if too far behind the wall clock when they
@@ -1096,9 +1101,9 @@ class="pcrr7t-">)</span>
 <!--l. 662--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-272000A.4.10.3"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">external-trigger</span></span>
    Externally triggered tasks (see&#x00A0;<a 
 href="cug-htmlse9.html#x10-1030009.3.4.16">9.3.4.16<!--tex4ht:ref: ExternalTriggers --></a>) wait on external events reported via the <span class="lstinline"><span 
@@ -1197,9 +1202,9 @@ class="pcrr7t-">)</span>
 <!--l. 679--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-273000A.4.10.4"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">sequential</span></span>
    Sequential tasks are automatically given dependence on their own predecessor. This is equivalent to use of
 explicit inter-cycle triggers in the graph, except that the automatic version does not show in suite graph
@@ -1227,9 +1232,9 @@ class="pcrr7t-">bar</span></span></li></ul>
 <!--l. 693--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-274000A.4.10.5"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">cold-start</span></span>
    A cold-start task is one-off task used to satisfy the dependence of an associated task with the same cycle
 point, on outputs from a previous cycle - when those outputs are not available. The primary use for
@@ -1255,9 +1260,9 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 715--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-275000A.4.10.6"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">one-off</span></span>
    Synchronous one-off tasks have an associated cycle point but do not spawn a successor. Synchronous <span 
 class="cmti-10">start-up </span>and
@@ -1274,9 +1279,9 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 727--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-276000A.4.10.7"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">exclude at start-up</span></span>
    Any task listed here will be excluded from the initial task pool (this goes for suite restarts too). If an <span 
 class="cmti-10">inclusion</span>
@@ -1294,9 +1299,9 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 743--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-277000A.4.10.8"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[special tasks]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">include at start-up</span></span>
    If this list is not empty, any task <span 
 class="cmti-10">not </span>listed in it will be excluded from the initial task pool (this goes for suite
@@ -1314,7 +1319,7 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 760--><p class="noindent" >
 <!--l. 760--><p class="indent" >    <h4 id="A.4.11" class="subsubsectionHead"><span class="titlemark"> <a href="#A.4.11"> A.4.11</a>  <a 
  id="x18-278000A.4.11"></a>[scheduling] <span 
-class="tcrm-1000">&rarr;</span>[[dependencies]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[dependencies]] </span></h4>
 <!--l. 762--><p class="indent" >   The suite dependency graph is defined under this section. You can plot the dependency graph as you work on it,
 with <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -1328,9 +1333,9 @@ href="cug-htmlse9.html#x10-760009.3">9.3<!--tex4ht:ref: ConfiguringScheduling --
 <!--l. 767--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-279000A.4.11.1"></a> <span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[dependencies]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">graph </span></span>
    The dependency graph for a completely non-cycling suites can go here. See also&#x00A0;<a 
 href="#x18-281000A.4.11.2.1">A.4.11.2.1<!--tex4ht:ref: GraphDescrip --></a> below and&#x00A0;<a 
@@ -1347,9 +1352,9 @@ href="#x18-281000A.4.11.2.1">A.4.11.2.1<!--tex4ht:ref: GraphDescrip --></a> belo
 <!--l. 777--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-280000A.4.11.2"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[dependencies]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_RECURRENCE</span><span 
@@ -1389,15 +1394,15 @@ href="cug-htmlse9.html#x10-800009.3.3">9.3.3<!--tex4ht:ref: GraphTypes --></a> f
 <!--l. 796--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-281000A.4.11.2.1"></a><span 
 class="cmbx-10">[scheduling] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[dependencies]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_RECURRENCE</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">graph </span></span>
    The dependency graph for a given recurrence section goes here. Syntax examples follow; see also&#x00A0;<a 
 href="cug-htmlse9.html#x10-760009.3">9.3<!--tex4ht:ref: ConfiguringScheduling --></a>
@@ -1940,7 +1945,8 @@ class="pcrr7t-">"</span>
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>(none)</li></ul>
-<!--l. 826--><p class="noindent" >
+<!--l. 826--><p class="noindent" ><span 
+class="cmbx-12">]</span>
 <!--l. 826--><p class="indent" >    <h4 id="A.5" class="subsectionHead"> <span class="titlemark"> <a href="#A.5"> A.5</a>  <a 
  id="x18-282000A.5"></a>[runtime] </span></h4>
                                                                                          
@@ -1956,7 +1962,7 @@ href="cug-htmlse9.html#x10-1050009.4">9.4<!--tex4ht:ref: NIORP --></a>.
 <!--l. 836--><p class="noindent" >
 <!--l. 836--><p class="indent" >    <h4 id="A.5.1" class="subsubsectionHead"><span class="titlemark"> <a href="#A.5.1"> A.5.1</a>  <a 
  id="x18-283000A.5.1"></a>[runtime] <span 
-class="tcrm-1000">&rarr;</span>[[__NAME__]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[__NAME__]] </span></h4>
 <!--l. 838--><p class="indent" >   Replace __NAME__ with a namespace name, or a comma-separated list of names, and repeat as needed to
 define all tasks in the suite. Names may contain letters, digits, underscores, and hyphens. A namespace
 represents a group or family of tasks if other namespaces inherit from it, or a task if no others inherit from
@@ -1989,13 +1995,13 @@ settings for all tasks in the suite.
 <!--l. 863--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-284000A.5.1.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">inherit</span></span>
    A list of the immediate parent(s) this namespace inherits from. If no parents are listed <span class="lstinline"><span 
 class="pcrr7t-">root</span></span> is
@@ -2011,13 +2017,13 @@ class="pcrr7t-">root</span></span></li></ul>
 <!--l. 873--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-285000A.5.1.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">title</span></span>
    A single line description of this namespace. It is displayed by the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -2040,13 +2046,13 @@ class="cmti-10">root default: </span>(none)</li></ul>
 <!--l. 884--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-286000A.5.1.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">description</span></span>
    A multi-line description of this namespace, retrievable from running tasks with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -2063,13 +2069,13 @@ class="cmti-10">root default: </span>(none)</li></ul>
 <!--l. 894--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-287000A.5.1.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">URL</span></span>
    A web URL to task documentation for this suite. If present it can be browsed with the <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -2147,13 +2153,13 @@ class="pcrro7t-">#</span></span> must be protected by quotes).
 <!--l. 919--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-288000A.5.1.5"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">init-script</span></span>
    This is written to the top of the task job script before the task execution environment is configured, so it does
 not have access to any suite or task environment variables. It can be a single command or multiple lines of scripting.
@@ -2200,13 +2206,13 @@ class="pcrr7t-">"</span></span></li></ul>
 <!--l. 936--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-289000A.5.1.6"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">env-script</span></span>
    This is written to the task job script between the cylc-defined environment (suite and task identity, etc.) and the
 user-defined task runtime environment - i.e.&#x00A0;it has access to the cylc environment, and the task environment has
@@ -2248,13 +2254,13 @@ class="pcrr7t-">"</span></span></li></ul>
 <!--l. 951--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-290000A.5.1.7"></a> <span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">pre-script</span></span>
    This is written to the task job script immediately before the <span class="lstinline"><span 
 class="pcrr7t-">script</span></span> item (just below). It can be a
@@ -2338,13 +2344,13 @@ class="pcrr7t-">"</span>
 <!--l. 969--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-291000A.5.1.8"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">script</span></span>
    The is the main user-defined scripting to run when the task is ready. It can be a single command or multiple
 lines of scripting. See also <span class="lstinline"><span 
@@ -2391,13 +2397,13 @@ class="pcrr7t-">16)</span></span></li></ul>
 <!--l. 981--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-292000A.5.1.9"></a> <span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">post-script</span></span>
    This is written to the task job script immediately after the <span class="lstinline"><span 
 class="pcrr7t-">script</span></span> item (just above). It can be a single
@@ -2423,13 +2429,13 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 993--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-293000A.5.1.10"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">retry delays</span></span>
    A list of ISO 8601 time duration/intervals after which to resubmit the task if it fails. The variable
 <span class="lstinline"><span 
@@ -2469,13 +2475,13 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1010--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-294000A.5.1.11"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">submission polling intervals</span></span>
    A list of intervals, expressed as ISO 8601 duration/intervals, with optional multipliers, after which cylc will poll
 for status while the task is in the submitted state.
@@ -2529,13 +2535,13 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1039--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-295000A.5.1.12"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">execution polling intervals</span></span>
    A list of intervals, expressed as ISO 8601 duration/intervals, with optional multipliers, after which cylc will poll
 for status while the task is in the running state.
@@ -2585,13 +2591,13 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1067--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-296000A.5.1.13"></a> <span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">manual completion</span></span>
    If a task&#8217;s initiating process detaches and exits before task processing is finished then cylc cannot arrange for the
 task to automatically signal when it has succeeded or failed. In such cases you must use this configuration item to
@@ -2608,13 +2614,13 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 1081--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-297000A.5.1.14"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">work sub-directory</span></span>
    Task job scripts are executed from within <span 
 class="cmti-10">work directories </span>created automatically under the suite run directory. A
@@ -2660,13 +2666,13 @@ this.
 <!--l. 1106--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-298000A.5.1.15"></a> <span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">enable resurrection</span></span>
    If a message is received from a failed task cylc will normally treat this as an error condition, issue a warning, and
 leave the task in the &#8220;failed&#8221; state. But if &#8220;enable resurrection&#8221; is switched on failed tasks can come back from the
@@ -2685,28 +2691,28 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 1123--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-299000A.5.1.16"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[dummy mode]]]</span></span>
    Dummy mode configuration.
 <!--l. 1127--><p class="noindent" >
 <!--l. 1127--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-300000A.5.1.16.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[dummy mode]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">script</span></span>
    The main <span class="lstinline"><span 
 class="pcrr7t-">script</span></span> item for tasks in <span 
@@ -2742,15 +2748,15 @@ class="pcrr7t-">16)</span></span></li></ul>
 <!--l. 1137--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-301000A.5.1.16.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[dummy mode]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">disable pre-script</span></span>
    This disables the task pre-script in dummy mode.
      <ul class="itemize1">
@@ -2766,15 +2772,15 @@ class="cmti-10">root default: </span>True</li></ul>
 <!--l. 1146--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-302000A.5.1.16.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[dummy mode]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">disable post-script</span></span>
    This disables the task post-script in dummy mode.
      <ul class="itemize1">
@@ -2787,28 +2793,28 @@ class="cmti-10">root default: </span>True</li></ul>
 <!--l. 1155--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-303000A.5.1.17"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[simulation mode]]]</span></span>
    Simulation mode configuration.
 <!--l. 1159--><p class="noindent" >
 <!--l. 1159--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-304000A.5.1.18"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[simulation mode]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">run time range</span></span>
    This defines a minimum and a maximum duration (expressed as ISO 8601 duration/intervals) which define a
 range from which the simulation mode task run length will be randomly chosen.
@@ -2828,28 +2834,28 @@ class="cmti-10">default: </span>(1, 16)</li></ul>
 <!--l. 1173--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-305000A.5.1.19"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[job submission]]]</span></span>
    This section configures the means by which cylc submits task job scripts to run.
 <!--l. 1177--><p class="noindent" >
 <!--l. 1177--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-306000A.5.1.19.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[job submission]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">method</span></span>
    See&#x00A0;<a 
 href="cug-htmlse11.html#x12-14100011">11<!--tex4ht:ref: TaskJobSubmission --></a> for how job submission works, and how to define new methods. Cylc has a number of built in job
@@ -2903,15 +2909,15 @@ class="pcrr7t-">background</span></span></li></ul>
 <!--l. 1198--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-307000A.5.1.19.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[job submission]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">command template</span></span>
    This allows you to override the actual command used by the chosen job submission method. The template&#8217;s
 %(job)s will be substituted by the job file path.
@@ -2934,15 +2940,15 @@ class="pcrr7t-">s</span></span></li></ul>
 <!--l. 1210--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-308000A.5.1.19.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[job submission]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">shell</span></span>
    This is the shell used to interpret the job script submitted by the suite daemon when a task is ready to run. <span 
 class="cmti-10">It</span>
@@ -2971,15 +2977,15 @@ class="pcrr7t-">bash</span></span></li></ul>
 <!--l. 1227--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-309000A.5.1.19.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[job submission]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">retry delays</span></span>
    A list of duration (in ISO 8601 syntax), after which to resubmit if job submission fails.
      <ul class="itemize1">
@@ -3020,13 +3026,13 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1242--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-310000A.5.1.20"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[remote]]]</span></span>
    Configure host and username, for tasks that do not run on the suite host account. Passwordless ssh is used to
 submit the task by the configured job submission method, so you must distribute your ssh key to allow this. Cylc
@@ -3037,15 +3043,15 @@ class="cmti-10">ssh messaging </span>is used; see below).
 <!--l. 1251--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-311000A.5.1.20.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[remote]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">host</span></span>
    The remote host for this namespace. This can be a static hostname, an environment variable that holds a
 hostname, or a command that prints a hostname to stdout. Host selection commands are executed just prior to job
@@ -3122,15 +3128,15 @@ class="pcrr7t-">MY_HOST</span></span></li></ul>
 <!--l. 1279--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-312000A.5.1.20.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[remote]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">owner</span></span>
    The username of the task host account. This is (only) used in the passwordless ssh command invoked by the
 suite daemon to submit the remote task (consequently it may be defined using local environment variables (i.e.&#x00A0;the
@@ -3138,7 +3144,7 @@ suite daemon to submit the remote task (consequently it may be defined using loc
 
                                                                                          
 shell in which cylc runs, and [cylc] <span 
-class="tcrm-1000">&rarr;</span>[[environment]]).
+class="tcrm-1000">&#x2192;</span>[[environment]]).
 <!--l. 1286--><p class="indent" >   If you use dynamic host selection and have different usernames on the different selectable hosts, you can
 configure your <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
@@ -3157,15 +3163,15 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1295--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-313000A.5.1.20.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[remote]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">retrieve job logs</span></span>
    Remote task job logs are saved to the suite run directory on the task host, not on the suite host. If you want the
 job logs pulled back to the suite host automatically, you can set this item to <span class="lstinline"><span 
@@ -3219,15 +3225,15 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 1311--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-314000A.5.1.20.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[remote]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">retrieve job logs max size</span></span>
    If the disk space of the suite host is limited, you may want to set the maximum sizes of the job log files to
 retrieve. The value can be anything that is accepted by the <span class="lstinline"><span 
@@ -3249,15 +3255,15 @@ class="cmti-10">default: </span>None</li></ul>
 <!--l. 1324--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-315000A.5.1.20.5"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[remote]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">retrieve job logs retry delays</span></span>
    Some batch systems have considerable delays between the time when the job completes and when it writes
 the job logs in its normal location. If this is the case, you can configure an initial delay and some
@@ -3292,15 +3298,15 @@ class="pcrr7t-">PT5M</span></span></li></ul>
 <!--l. 1339--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-316000A.5.1.20.6"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[remote]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">suite definition directory</span></span>
    The path to the suite definition directory on the remote host, needed if remote tasks require access to files stored
 there (via <span class="lstinline"><span 
@@ -3326,13 +3332,13 @@ class="pcrr7t-">HOME</span></span> replaced)</li></ul>
 <!--l. 1356--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-317000A.5.1.21"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[event hooks]]]</span></span>
    Cylc can call nominated event handlers when certain task events occur. This section configures specific
 task event handlers; see&#x00A0;<a 
@@ -3401,23 +3407,23 @@ class="pcrr7t-">s</span>
 <!--l. 1389--><p class="indent" >   For an explanation of the substitution syntax, see String Formatting Operations in the Python documentation:
 <a 
 href="https://docs.python.org/2/library/stdtypes.html#string-formatting" class="url" ><span 
-class="pcrr7t-">https://docs.python.org/2/library/stdtypes.html#string-_formatting</span></a>.
+class="pcrr7t-">https://docs.python.org/2/library/stdtypes.html#string-formatting</span></a>.
 <!--l. 1393--><p class="indent" >   Additional information can be passed to event handlers via the [cylc] <span 
-class="tcrm-1000">&rarr;</span>[[environment]] (but not via task runtime
+class="tcrm-1000">&#x2192;</span>[[environment]] (but not via task runtime
 environments - event handlers are not called by tasks).
 <!--l. 1397--><p class="noindent" >
 <!--l. 1397--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-318000A.5.1.21.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[event hooks]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">EVENT handler</span></span>
    A list of one or more event handlers to call when one of the following EVENTs occurs:
      <ul class="itemize1">
@@ -3478,15 +3484,15 @@ class="pcrr7t-">sh</span></span></li></ul>
 <!--l. 1424--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-319000A.5.1.21.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[event hooks]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">submission timeout</span></span>
    If a task has not started after the specified ISO 8601 duration/interval, the <span 
 class="cmti-10">submission timeout </span>event handler(s)
@@ -3506,15 +3512,15 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1435--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-320000A.5.1.21.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[event hooks]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">execution timeout</span></span>
    If a task has not finished after the specified ISO 8601 duration/interval, the <span 
 class="cmti-10">execution timeout </span>event handler(s)
@@ -3531,15 +3537,15 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1446--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-321000A.5.1.21.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[event hooks]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">reset timer</span></span>
    If you set an execution timeout the timer can be reset to zero every time a message is received from the running
 task (which indicates the task is still alive). Otherwise, the task will timeout if it does not finish in the alotted time
@@ -3554,13 +3560,13 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 1459--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-322000A.5.1.22"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]]</span></span>
    Cylc can call nominated event handlers when certain task events occur. This section configures general
 and built-in task event handlers; see&#x00A0;<a 
@@ -3630,15 +3636,15 @@ class="pcrr7t-">s</span>
 <!--l. 1493--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-323000A.5.1.22.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">handlers</span></span>
    Specify a list of command lines or command line templates as task event handlers.
      <ul class="itemize1">
@@ -3663,15 +3669,15 @@ class="pcrr7t-">sh</span></span></li></ul>
 <!--l. 1503--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-324000A.5.1.22.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">handler events</span></span>
    Specify the events for which the general task event handlers should be invoked.
      <ul class="itemize1">
@@ -3697,15 +3703,15 @@ class="pcrr7t-">failed</span></span></li></ul>
 <!--l. 1513--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-325000A.5.1.22.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">handler retry delays</span></span>
    Specify an initial delay before running an event handler command and any retry delays in case the command
 returns a non-zero code. The default behaviour is to run an event handler command once without any
@@ -3739,15 +3745,15 @@ class="pcrr7t-">PT5M</span></span></li></ul>
 <!--l. 1526--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-326000A.5.1.22.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">mail events</span></span>
    Specify the events for which notification emails should be sent.
      <ul class="itemize1">
@@ -3773,15 +3779,15 @@ class="pcrr7t-">failed</span></span></li></ul>
 <!--l. 1536--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-327000A.5.1.22.5"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">mail from</span></span>
    Specify an alternate <span class="lstinline"><span 
 class="pcrr7t-">from</span><span 
@@ -3809,15 +3815,15 @@ class="pcrr7t-">\</span></span>your-org@</li></ul>
 <!--l. 1546--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-328000A.5.1.22.6"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">mail retry delays</span></span>
    Specify an initial delay before running the mail notification command and any retry delays in case the command
 returns a non-zero code. The default behaviour is to run the mail notification command once without any
@@ -3848,15 +3854,15 @@ class="pcrr7t-">PT5M</span></span></li></ul>
 <!--l. 1558--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-329000A.5.1.22.7"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">mail smtp</span></span>
    Specify the SMTP server for sending email notifications.
      <ul class="itemize1">
@@ -3884,15 +3890,15 @@ class="pcrr7t-">yourorg</span></span></li></ul>
 <!--l. 1568--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-330000A.5.1.22.8"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">mail to</span></span>
    A list of email addresses to send task event notifications. The list can be anything accepted by the <span class="lstinline"><span 
 class="pcrr7t-">mail</span></span>
@@ -3919,15 +3925,15 @@ class="pcrr7t-">colleague</span></span></li></ul>
 <!--l. 1579--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-331000A.5.1.22.9"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">submission timeout</span></span>
    Equivalent to&#x00A0;<a 
 href="#x18-319000A.5.1.21.2">A.5.1.21.2<!--tex4ht:ref: runtime-event-hooks-submission-timeout --></a>.
@@ -3935,15 +3941,15 @@ href="#x18-319000A.5.1.21.2">A.5.1.21.2<!--tex4ht:ref: runtime-event-hooks-submi
 <!--l. 1583--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-332000A.5.1.22.10"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">execution timeout</span></span>
    Equivalent to&#x00A0;<a 
 href="#x18-320000A.5.1.21.3">A.5.1.21.3<!--tex4ht:ref: runtime-event-hooks-execution-timeout --></a>.
@@ -3951,15 +3957,15 @@ href="#x18-320000A.5.1.21.3">A.5.1.21.3<!--tex4ht:ref: runtime-event-hooks-execu
 <!--l. 1587--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-333000A.5.1.22.11"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">register job logs retry delays</span></span>
    Some batch systems have considerable delays between the time when the job completes and when it writes the
 job logs in its normal location. Consequently, the suite may be unable to register the existence of some job log files
@@ -3988,15 +3994,15 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1604--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-334000A.5.1.22.12"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[events]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">reset timer</span></span>
    Equivalent to&#x00A0;<a 
 href="#x18-321000A.5.1.21.4">A.5.1.21.4<!--tex4ht:ref: runtime-event-hooks-reset-timer --></a>.
@@ -4007,13 +4013,13 @@ href="#x18-321000A.5.1.21.4">A.5.1.21.4<!--tex4ht:ref: runtime-event-hooks-reset
 <!--l. 1608--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-335000A.5.1.23"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[environment]]]</span></span>
    The user defined task execution environment. Variables defined here can refer to cylc suite and task identity
 variables, which are exported earlier in the task job script, and variable assignment expressions can use cylc utility
@@ -4023,15 +4029,15 @@ href="cug-htmlse9.html#x10-1130009.4.7">9.4.7<!--tex4ht:ref: TaskExecutionEnviro
 <!--l. 1616--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-336000A.5.1.23.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[environment]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_VARIABLE</span><span 
 class="cmbx-10">_</span><span 
@@ -4184,13 +4190,13 @@ class="pcrro7t-">character</span></span></li></ul>
 <!--l. 1645--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-337000A.5.1.24"></a> <span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[environment filter]]]</span></span>
    This section contains environment variable inclusion and exclusion lists that can be used to filter the
 inherited environment. <span 
@@ -4211,15 +4217,15 @@ descendants.
 <!--l. 1662--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-338000A.5.1.24.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[environment filter]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">include</span></span>
    If given, only variables named in this list will be included from the inherited environment, others will be filtered
 out. Variables may also be explicitly excluded by an <span class="lstinline"><span 
@@ -4234,15 +4240,15 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1673--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-339000A.5.1.24.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[environment filter]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">exclude</span></span>
    Variables named in this list will be filtered out of the inherited environment. Variables may also be implicitly
 excluded by omission from an <span class="lstinline"><span 
@@ -4257,13 +4263,13 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1684--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-340000A.5.1.25"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[directives]]]</span></span>
    Batch queue scheduler directives. Whether or not these are used depends on the job submission method. For the
 built-in methods that support directives (<span class="lstinline"><span 
@@ -4280,15 +4286,15 @@ hierarchy.
 <!--l. 1694--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-341000A.5.1.25.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[directives]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_DIRECTIVE</span><span 
 class="cmbx-10">_</span><span 
@@ -4314,13 +4320,13 @@ href="cug-htmlse11.html#x12-14300011.2">11.2<!--tex4ht:ref: AvailableMethods -->
 <!--l. 1707--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-342000A.5.1.26"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[outputs]]]</span></span>
    This section is for registering custom message outputs that other tasks can trigger off instead of the standard
 triggers. The task implementation must send corresponding messages using the <span class="lstinline"><span 
@@ -4335,15 +4341,15 @@ href="cug-htmlse9.html#x10-920009.3.4.5">9.3.4.5<!--tex4ht:ref: MessageTriggers 
 <!--l. 1714--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-343000A.5.1.26.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[outputs]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_OUTPUT</span><span 
 class="cmbx-10">_</span><span 
@@ -4413,13 +4419,13 @@ href="cug-htmlse9.html#x10-920009.3.4.5">9.3.4.5<!--tex4ht:ref: MessageTriggers 
 <!--l. 1730--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-344000A.5.1.27"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]]</span></span>
    Configure automatic suite polling tasks as described in&#x00A0;<a 
 href="cug-htmlse12.html#x13-19300012.23">12.23<!--tex4ht:ref: SuiteStatePolling --></a>. The items in this section reflect the options and
@@ -4440,15 +4446,15 @@ class="pcrr7t-">status</span></span> options are taken from the graph notation.
 <!--l. 1740--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-345000A.5.1.27.1"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">run-dir</span></span>
    For your own suites the run database location is determined by your site/user config. For other suites, e.g. those
 owned by others, or mirrored suite databases, use this item to specify the location of the top level cylc run directory
@@ -4463,15 +4469,15 @@ class="cmti-10">default: </span>as configured by site/user config (for your own 
 <!--l. 1753--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-346000A.5.1.27.2"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">template</span></span>
    Cycle point template of the target suite, if different from that of the polling suite.
                                                                                          
@@ -4499,15 +4505,15 @@ class="pcrr7t-">H</span></span></li></ul>
 <!--l. 1763--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-347000A.5.1.27.3"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">interval</span></span>
    Polling interval expressed as an ISO 8601 duration/interval.
      <ul class="itemize1">
@@ -4522,15 +4528,15 @@ class="cmti-10">default: </span>PT1M</li></ul>
 <!--l. 1772--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-348000A.5.1.27.4"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">max-polls</span></span>
    The maximum number of polls before timing out and entering the &#8216;failed&#8217; state.
      <ul class="itemize1">
@@ -4543,15 +4549,15 @@ class="cmti-10">default: </span>10</li></ul>
 <!--l. 1781--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-349000A.5.1.27.5"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">user</span></span>
    Username of an account on the suite host to which you have access. The polling <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -4570,15 +4576,15 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1792--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-350000A.5.1.27.6"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">host</span></span>
    The hostname of the target suite. The polling <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -4600,15 +4606,15 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1802--><p class="indent" >   <span class="subparagraphHead"> <a 
  id="x18-351000A.5.1.27.7"></a><span 
 class="cmbx-10">[runtime] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[[suite state polling]]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">verbose</span></span>
    Run the polling <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
@@ -4622,7 +4628,8 @@ class="cmti-10">type: </span>boolean
      </li>
      <li class="itemize"><span 
 class="cmti-10">default: </span>False</li></ul>
-<!--l. 1811--><p class="noindent" >
+<!--l. 1811--><p class="noindent" ><span 
+class="cmbx-12">]</span>
 <!--l. 1811--><p class="indent" >    <h4 id="A.6" class="subsectionHead"> <span class="titlemark"> <a href="#A.6"> A.6</a>  <a 
  id="x18-352000A.6"></a>[visualization] </span></h4>
 <!--l. 1813--><p class="indent" >   Configuration of suite graphing for the <span class="lstinline"><span 
@@ -4634,7 +4641,7 @@ shapes and so on can be found at http://www.graphviz.org/Documentation.php.
 <!--l. 1818--><p class="noindent" >
 <!--l. 1818--><p class="indent" >    <h4 id="A.6.1" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.1"> A.6.1</a>  <a 
  id="x18-353000A.6.1"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>initial cycle point </span></h4>
+class="tcrm-1000">&#x2192;</span>initial cycle point </span></h4>
 <!--l. 1820--><p class="indent" >   The initial cycle point for graph plotting.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -4646,7 +4653,7 @@ class="cmti-10">default: </span>the suite initial cycle point</li></ul>
 <!--l. 1828--><p class="noindent" >
 <!--l. 1828--><p class="indent" >    <h4 id="A.6.2" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.2"> A.6.2</a>  <a 
  id="x18-354000A.6.2"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>final cycle point </span></h4>
+class="tcrm-1000">&#x2192;</span>final cycle point </span></h4>
 <!--l. 1830--><p class="indent" >   An explicit final cycle point for graph plotting. If used, this overrides the preferred <span 
 class="cmti-10">number of cycle points</span>
 (below).
@@ -4660,7 +4667,7 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1839--><p class="noindent" >
 <!--l. 1839--><p class="indent" >    <h4 id="A.6.3" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.3"> A.6.3</a>  <a 
  id="x18-355000A.6.3"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>number of cycle points </span></h4>
+class="tcrm-1000">&#x2192;</span>number of cycle points </span></h4>
 <!--l. 1841--><p class="indent" >   The number of cycle points to graph starting from the visualization initial cycle point. This is the
 preferred way of defining the graph end point, but it can be overridden by an explicit <span 
 class="cmti-10">final cycle point</span>
@@ -4677,7 +4684,7 @@ class="cmti-10">default: </span>3</li></ul>
 <!--l. 1849--><p class="noindent" >
 <!--l. 1849--><p class="indent" >    <h4 id="A.6.4" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.4"> A.6.4</a>  <a 
  id="x18-356000A.6.4"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>collapsed families </span></h4>
+class="tcrm-1000">&#x2192;</span>collapsed families </span></h4>
 <!--l. 1851--><p class="indent" >   A list of family (namespace) names to be shown in the collapsed state (i.e.&#x00A0;the family members will be replaced
 by a single family node) when the suite is first plotted in the graph viewer or the gcylc graph view. If this item is
 not set, the default is to collapse all families at first. Interactive GUI controls can then be used to group and
@@ -4691,7 +4698,7 @@ class="cmti-10">default: </span>(none)</li></ul>
 <!--l. 1863--><p class="noindent" >
 <!--l. 1863--><p class="indent" >    <h4 id="A.6.5" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.5"> A.6.5</a>  <a 
  id="x18-357000A.6.5"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>use node color for edges </span></h4>
+class="tcrm-1000">&#x2192;</span>use node color for edges </span></h4>
 <!--l. 1865--><p class="indent" >   Graph edges (dependency arrows) can be plotted in the same color as the upstream node (task or family) to
 make paths through a complex graph easier to follow.
      <ul class="itemize1">
@@ -4703,7 +4710,7 @@ class="cmti-10">default: </span>True</li></ul>
 <!--l. 1874--><p class="noindent" >
 <!--l. 1874--><p class="indent" >    <h4 id="A.6.6" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.6"> A.6.6</a>  <a 
  id="x18-358000A.6.6"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>use node color for labels </span></h4>
+class="tcrm-1000">&#x2192;</span>use node color for labels </span></h4>
 <!--l. 1876--><p class="indent" >   Graph node labels can be printed in the same color as the node outline.
      <ul class="itemize1">
      <li class="itemize"><span 
@@ -4714,7 +4721,7 @@ class="cmti-10">default: </span>False</li></ul>
 <!--l. 1884--><p class="noindent" >
 <!--l. 1884--><p class="indent" >    <h4 id="A.6.7" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.7"> A.6.7</a>  <a 
  id="x18-359000A.6.7"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>default node attributes </span></h4>
+class="tcrm-1000">&#x2192;</span>default node attributes </span></h4>
 <!--l. 1886--><p class="indent" >   Set the default attributes (color and style etc.) of graph nodes (tasks and families). Attribute pairs must be
 quoted to hide the internal <span class="lstinline"><span 
 class="pcrr7t-">=</span></span> character.
@@ -4755,7 +4762,7 @@ class="pcrr7t-">'</span></span></li></ul>
 <!--l. 1895--><p class="noindent" >
 <!--l. 1895--><p class="indent" >    <h4 id="A.6.8" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.8"> A.6.8</a>  <a 
  id="x18-360000A.6.8"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>default edge attributes </span></h4>
+class="tcrm-1000">&#x2192;</span>default edge attributes </span></h4>
 <!--l. 1897--><p class="indent" >   Set the default attributes (color and style etc.) of graph edges (dependency arrows). Attribute pairs must be
 quoted to hide the internal <span class="lstinline"><span 
 class="pcrr7t-">=</span></span> character.
@@ -4781,18 +4788,18 @@ class="pcrr7t-">'</span></span></li></ul>
 <!--l. 1906--><p class="noindent" >
 <!--l. 1906--><p class="indent" >    <h4 id="A.6.9" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.9"> A.6.9</a>  <a 
  id="x18-361000A.6.9"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>[[node groups]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[node groups]] </span></h4>
 <!--l. 1908--><p class="indent" >   Define named groups of graph nodes (tasks and families) which can styled en masse, by name, in [visualization]
 <span 
-class="tcrm-1000">&rarr;</span>[[node attributes]]. Node groups are automatically defined for all task families, including root, so you can style
+class="tcrm-1000">&#x2192;</span>[[node attributes]]. Node groups are automatically defined for all task families, including root, so you can style
 family and member nodes at once by family name.
 <!--l. 1913--><p class="noindent" >
 <!--l. 1913--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-362000A.6.9.1"></a><span 
 class="cmbx-10">[visualization] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[node groups]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_GROUP</span><span 
 class="cmbx-10">_</span><span 
@@ -4839,10 +4846,10 @@ class="pcrr7t-">waz</span>
 <!--l. 1927--><p class="noindent" >
 <!--l. 1927--><p class="indent" >    <h4 id="A.6.10" class="subsubsectionHead"><span class="titlemark"> <a href="#A.6.10"> A.6.10</a>  <a 
  id="x18-363000A.6.10"></a>[visualization] <span 
-class="tcrm-1000">&rarr;</span>[[node attributes]] </span></h4>
+class="tcrm-1000">&#x2192;</span>[[node attributes]] </span></h4>
 <!--l. 1929--><p class="indent" >   Here you can assign graph node attributes to specific nodes, or to all members of named groups defined in
 [visualization] <span 
-class="tcrm-1000">&rarr;</span>[[node groups]]. Task families are automatically node groups. Styling of a family node applies to all
+class="tcrm-1000">&#x2192;</span>[[node groups]]. Task families are automatically node groups. Styling of a family node applies to all
 member nodes (tasks and sub-families), but precedence is determined by ordering in the suite definition. For
 example, if you style a family red and then one of its members green, cylc will plot a red family with one green
 member; but if you style one member green and then the family red, the red family styling will override the earlier
@@ -4854,9 +4861,9 @@ green styling of the member.
 <!--l. 1939--><p class="noindent" ><span class="paragraphHead"><a 
  id="x18-364000A.6.10.1"></a><span 
 class="cmbx-10">[visualization] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">[[node attributes]] </span><span 
-class="tcbx-1000">&rarr;</span><span 
+class="tcbx-1000">&#x2192;</span><span 
 class="cmbx-10">_</span><span 
 class="cmbx-10">_NAME</span><span 
 class="cmbx-10">_</span><span 
