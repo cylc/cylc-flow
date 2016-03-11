@@ -63,33 +63,39 @@ class db_updater(threading.Thread):
         # self.update()
 
     def construct_newtree(self):
-        # construct self.newtree[one][two]...[nnn] = [state, descr, dir ]
-        self.running_choices_changed()
+        # construct self.newtree[one][two]...[nnn] = [auth, descr, dir ]
+        #self.running_choices_changed()
         auths = {}
-        for suite in self.running_choices:
-            reg, port = suite
-            auths[reg] = port
+        for suite, auth in self.running_choices:
+            auths[suite] = auth
 
         self.newtree = {}
-        for reg in self.regd_choices:
-            suite, suite_dir, descr = reg
+        for suite, suite_dir, descr in self.regd_choices:
             suite_dir = re.sub('^' + os.environ['HOME'], '~', suite_dir)
             if suite in auths:
-                state = str(auths[suite])
+                auth = str(auths[suite])
+                del auths[suite]
             else:
-                state = '-'
+                auth = '-'
             nest2 = self.newtree
             regp = suite.split(RegPath.delimiter)
             for key in regp[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
                 nest2 = nest2[key]
-            nest2[regp[-1]] = [state, descr, suite_dir]
+            nest2[regp[-1]] = [auth, descr, suite_dir]
+
+        for suite, auth in auths.items():
+            nest2 = self.newtree
+            regp = suite.split(RegPath.delimiter)
+            for key in regp[:-1]:
+                if key not in nest2:
+                    nest2[key] = {}
+                nest2 = nest2[key]
+            nest2[regp[-1]] = [auth, '-', '-']
 
     def build_treestore(self, data, piter=None):
-        items = data.keys()
-        items.sort()
-        for item in items:
+        for item, value in sorted(data.items()):
             value = data[item]
             if isinstance(value, dict):
                 # final three items are colours
@@ -289,7 +295,7 @@ class dbchooser(object):
         else:
             self.pyro_timeout = None
 
-        self.regname = None
+        self.chosen = None
 
         self.updater = None
         self.tmpdir = tmpdir
@@ -510,7 +516,7 @@ class dbchooser(object):
 
         model, iter = selection.get_selected()
 
-        item, state, descr, suite_dir = model.get(iter, 0, 1, 2, 3)
+        item, auth, descr, suite_dir = model.get(iter, 0, 1, 2, 3)
         if not suite_dir:
             group_clicked = True
         else:
@@ -527,10 +533,10 @@ class dbchooser(object):
 
         reg = get_reg(item, iter)
         if not group_clicked:
-            self.regname = reg
+            self.chosen = (reg, auth)
             self.selected_label.set_text(reg)
         else:
-            self.regname = None
+            self.chosen = None
             self.selected_label.set_text(self.selected_label_text)
 
         if event.type == gtk.gdk._2BUTTON_PRESS:

@@ -211,7 +211,7 @@ class Updater(threading.Thread):
                     gobject.idle_add(self.warn, str(exc))
             return
 
-        self.app_window.set_title("%s - %s:%d" % (
+        self.app_window.set_title("%s - %s:%s" % (
             self.cfg.suite,
             self.suite_info_client.host,
             self.suite_info_client.port))
