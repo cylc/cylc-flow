@@ -18,7 +18,7 @@
 
 import re
 from cycling.loader import get_interval, get_interval_cls
-from trigger import BACK_COMPAT_MSG_RE, MSG_RE
+from trigger import get_message_offset
 
 
 class output(object):
@@ -33,27 +33,8 @@ class output(object):
     """
 
     def __init__(self, msg, base_interval=None):
-        self.msg_offset = None
         self.msg = msg
-        m = re.match(BACK_COMPAT_MSG_RE, self.msg)
-        if m:
-            # Old-style offset
-            prefix, signed_offset, sign, offset, suffix = m.groups()
-            if signed_offset is not None:
-                self.msg_offset = base_interval.get_inferred_child(
-                    signed_offset)
-        else:
-            n = re.match(MSG_RE, msg)
-            if n:
-                # New-style offset
-                prefix, signed_offset, sign, offset, suffix = n.groups()
-                if offset:
-                    self.msg_offset = get_interval(signed_offset)
-                else:
-                    self.msg_offset = get_interval_cls().get_null()
-            else:
-                # Plain message, no offset.
-                pass
+        self.msg_offset = get_message_offset(msg, base_interval)
 
     def get(self, point):
         new_point = point

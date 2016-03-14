@@ -1699,15 +1699,6 @@ class SuiteConfig(object):
                 # Record message outputs.
                 for lbl, msg in self.cfg['runtime'][name]['outputs'].items():
                     outp = output(msg, base_interval)
-                    # Check for a cycle offset placeholder.
-                    # TODO - DEPRECATE OUTPUT OFFSET PLACEHOLDERS
-                    if not re.search(r'\[[^\]]*\]', msg):
-                        print >> sys.stderr, (
-                            "Message outputs require an "
-                            "offset placeholder (e.g. '[]' or '[-P2M]'):")
-                        print >> sys.stderr, "  %s = %s" % (lbl, msg)
-                        raise SuiteConfigError(
-                            'ERROR: bad message output string')
                     if outp not in self.taskdefs[name].outputs:
                         self.taskdefs[name].outputs.append(outp)
 

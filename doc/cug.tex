@@ -3348,23 +3348,12 @@ one way or the other:
 \paragraph{Message Triggers}
 \label{MessageTriggers}
 
-Message triggers allow triggering off custom messages emitted by a task as it
-runs. {\em Message outputs} must be registered for the task in the suite
-definition, and matching messages sent back to the suite daemon by the
-task at the appropriate time. {\em Note that polling does not yet detect custom
-message output completion.} Custom output messages should normally contain the
-cycle point in order to
-distinguish between the outputs of different instances of the same task. 
-The task implementation can use \lstinline=$CYLC_TASK_CYCLE_POINT= for
-this, or \lstinline@cylc cycle-point --offset=P2M@ for an offset value.
-The matching message string registered in the suite definition, however, does
-not get interpreted by the shell, so a cycle point placeholder is used instead:
-\lstinline=[]= for the current cycle point, or for an offset \lstinline=[-P2M]=.
-
-The \lstinline=$CYLC_DIR/examples/message-triggers/= suite is a self-contained
-example that illustrates message triggering. Note that the graph trigger
-notation uses a label that selects the message registered under the task
-\lstinline=[runtime]= section.
+Tasks can also trigger off custom output messages. These must be registered in
+the \lstinline=[runtime]= section of the emitting task, and reported using the
+\lstinline=cylc message= command in task scripting. The graph trigger notation
+refers to the item name of the registered output message.
+The example suite \lstinline=$CYLC_DIR/examples/message-triggers= illustrates
+message triggering.
 
 \lstset{language=suiterc}
 \lstinputlisting{../examples/message-triggers/suite.rc}

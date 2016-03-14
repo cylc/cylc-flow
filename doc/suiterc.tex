@@ -1706,26 +1706,23 @@ in~\ref{AvailableMethods}.
 
 \paragraph[{[[[}outputs{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[outputs]]]}
 
-This section is for registering custom message outputs that other tasks can
-trigger off instead of the standard triggers. The task implementation must send
-corresponding messages using the \lstinline=cylc task message= command at the
-appropriate time. See~\ref{MessageTriggers} for more information.
+Register custom task outputs for use in message triggering in this section
+(\ref{MessageTriggers}) 
 
 \subparagraph[\_\_OUTPUT\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[outputs]]] \textrightarrow \_\_OUTPUT\_\_}
 
-Replace \_\_OUTPUT\_\_ with one or more labelled output messages, and use the
-labels in graph trigger notation.  Messages should contain a placeholder for
-the current cycle point (\lstinline=[]=) or some offset from it (e.g.\ \lstinline=[-P2M]=).
+Replace \_\_OUTPUT\_\_ with one or more custom task output messages
+(\ref{MessageTriggers}).  The item name is used to select the custom output
+message in graph trigger notation.
 \begin{myitemize}
     \item {\em type:} string
     \item {\em default:} (none)
     \item{ \em examples:}
 \end{myitemize}
 \begin{lstlisting}
-foo = "sea state products ready for []"
-bar = "nwp restart files ready for [-PT6H]"
+out1 = "sea state products ready"
+out2 = "NWP restart files completed"
 \end{lstlisting}
-See~\ref{MessageTriggers} for more information.
 
 \paragraph[{[[[}suite state polling{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[suite state polling]]]}
 

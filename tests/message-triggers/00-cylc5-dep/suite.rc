@@ -1,4 +1,4 @@
-title = "test suite for pre cylc-6 message triggers"
+title = "test suite for deprecated cylc-5 message triggers"
 
 [cylc]
     [[reference test]]

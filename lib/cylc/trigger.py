@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import sys
 
 from cylc.task_id import TaskID
 from cylc.cycling.loader import (
@@ -24,8 +25,43 @@ from cylc.cycling.loader import (
 from cylc.task_state import TaskState, TaskStateError
 
 
-BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
-MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+warned = False
+
+
+def get_message_offset(msg, base_interval=None):
+    """Return back-compat message offset, or None."""
+
+    BACK_COMPAT_MSG_RE_OLD = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
+    BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+    DEPRECATION_TEMPLATE = "WARNING: message trigger offsets are deprecated\n  %s"
+
+    offset = None
+    global warned
+
+    # cylc-5 [T+n] message offset - DEPRECATED
+    m = re.match(BACK_COMPAT_MSG_RE_OLD, msg)
+    if m:
+        if not warned:
+            print >> sys.stderr, DEPRECATION_TEMPLATE % msg
+            warned = True
+        prefix, signed_offset, sign, offset, suffix = m.groups()
+        if signed_offset is not None:
+            offset = base_interval.get_inferred_child(
+                signed_offset)
+    else:
+        # cylc-6 [<interval>] message offset - DEPRECATED
+        n = re.match(BACK_COMPAT_MSG_RE, msg)
+        if n:
+            if not warned:
+                print >> sys.stderr, DEPRECATION_TEMPLATE % msg
+                warned = True
+            prefix, signed_offset, sign, offset, suffix = n.groups()
+            if offset:
+                offset = get_interval(signed_offset)
+            else:
+                offset = get_interval_cls().get_null()
+        # else: Plain message, no offset.
+    return offset
 
 
 class TriggerError(Exception):
@@ -50,9 +86,9 @@ Task triggers, used to generate prerequisite messages.
 [runtime]
    [[foo]]
       [[[outputs]]]
-         x = "file X uploaded for [P1D]"
-         y = "file Y uploaded for []"
-    """
+         x = "file X uploaded"
+         y = "file Y finished"
+    """ 
 
     def __init__(
             self, task_name, qualifier=None, graph_offset_string=None,
@@ -78,39 +114,14 @@ Task triggers, used to generate prerequisite messages.
 
         # Message trigger?
         try:
-            msg = outputs[qualifier]
+            self.message = outputs[qualifier]
         except KeyError:
             raise TriggerError(
                 "ERROR: undefined trigger qualifier: %s:%s" % (
                     task_name, qualifier))
         else:
-            # Back compat for [T+n] in message string.
-            m = re.match(BACK_COMPAT_MSG_RE, msg)
-            msg_offset = None
-            if m:
-                prefix, signed_offset, sign, offset, suffix = m.groups()
-                if offset:
-                    msg_offset = base_interval.get_inferred_child(
-                        signed_offset)
-                else:
-                    msg_offset = get_interval_cls().get_null()
-            else:
-                n = re.match(MSG_RE, msg)
-                if n:
-                    prefix, signed_offset, sign, offset, suffix = n.groups()
-                    if offset:
-                        msg_offset = get_interval(signed_offset)
-                    else:
-                        msg_offset = get_interval_cls().get_null()
-                else:
-                    raise TriggerError(
-                        "ERROR: undefined trigger qualifier: %s:%s" % (
-                            task_name, qualifier))
-            self.message = msg
-            self.message_offset = msg_offset
-
-    def is_standard(self):
-        return self.builtin is not None
+            self.message_offset = get_message_offset(self.message,
+                                                     base_interval)
 
     def get_prereq(self, point):
         """Return a prerequisite string."""

@@ -1,4 +1,4 @@
-title = test suite for cylc-6 message triggers
+title = test suite for deprecated cylc-6 message triggers
 [cylc]
     UTC mode = True
     [[reference test]]
