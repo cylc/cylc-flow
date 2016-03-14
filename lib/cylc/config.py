@@ -1700,6 +1700,7 @@ class SuiteConfig(object):
                 for lbl, msg in self.cfg['runtime'][name]['outputs'].items():
                     outp = output(msg, base_interval)
                     # Check for a cycle offset placeholder.
+                    # TODO - DEPRECATE OUTPUT OFFSET PLACEHOLDERS
                     if not re.search(r'\[[^\]]*\]', msg):
                         print >> sys.stderr, (
                             "Message outputs require an "
@@ -1707,7 +1708,8 @@ class SuiteConfig(object):
                         print >> sys.stderr, "  %s = %s" % (lbl, msg)
                         raise SuiteConfigError(
                             'ERROR: bad message output string')
-                    self.taskdefs[name].outputs.append(outp)
+                    if outp not in self.taskdefs[name].outputs:
+                        self.taskdefs[name].outputs.append(outp)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq, suicide):
         if not right or not left_nodes:

@@ -249,13 +249,11 @@ class TaskProxy(object):
         self._add_prerequisites(self.point)
         self.point_as_seconds = None
 
-        # outputs
+        # Task outputs.
         self.outputs = outputs(self.identity)
         for outp in self.tdef.outputs:
-            msg = outp.get(self.point)
-            if not self.outputs.exists(msg):
-                self.outputs.add(msg)
-        self.outputs.register()
+            self.outputs.add(outp.get(self.point))
+        self.outputs.add_standard()
 
         self.external_triggers = {}
         for ext in self.tdef.external_triggers:
@@ -390,10 +388,10 @@ class TaskProxy(object):
                                      self.tdef.max_future_prereq_offset)):
                                 self.tdef.max_future_prereq_offset = (
                                     prereq_offset)
-                        cpre.add(trig.get_prereq(point)[0], label,
+                        cpre.add(trig.get_prereq(point), label,
                                  prereq_offset_point < self.tdef.start_point)
                     else:
-                        cpre.add(trig.get_prereq(point)[0], label)
+                        cpre.add(trig.get_prereq(point), label)
                 cpre.set_condition(exp)
                 if ctrig[key].suicide:
                     self.suicide_prerequisites.append(cpre)
@@ -584,9 +582,7 @@ class TaskProxy(object):
         """
         self.hold_on_retry = False
         self.kill_failed = False
-        for state in ["failed", "submit-failed", "expired"]:
-            msg = "%s %s" % (self.identity, state)
-            if self.outputs.exists(msg):
+        for msg in ["failed", "submit-failed", "expired"]:
                 self.outputs.remove(msg)
 
     def turn_off_timeouts(self):
@@ -644,7 +640,7 @@ class TaskProxy(object):
         self.unset_outputs()
         self.turn_off_timeouts()
         self.outputs.set_all_incomplete()
-        self.outputs.add(self.identity + ' expired', completed=True)
+        self.outputs.add('expired', completed=True)
 
     def reset_state_waiting(self):
         """Reset state to "waiting".
@@ -686,7 +682,7 @@ class TaskProxy(object):
         self.outputs.set_all_incomplete()
         # set a new failed output just as if a failure message came in
         self.turn_off_timeouts()
-        self.outputs.add(self.identity + ' failed', completed=True)
+        self.outputs.add('failed', completed=True)
 
     def reset_state_held(self):
         """Reset state to "held"."""
@@ -791,9 +787,7 @@ class TaskProxy(object):
 
     def _process_poll_message(self, priority, message):
         """Wraps self.process_incoming_message for poll messages."""
-        self.process_incoming_message(
-            (priority, "%s %s" % (self.identity, message)),
-            msg_was_polled=True)
+        self.process_incoming_message((priority, message), msg_was_polled=True)
 
     def job_poll_message_callback(self, cmd_ctx, line):
         """Callback on job poll message."""
@@ -1029,10 +1023,11 @@ class TaskProxy(object):
         if self.sub_try_state.next() is None:
             # No submission retry lined up: definitive failure.
             flags.pflag = True
-            outp = self.identity + " submit-failed"  # hack: see github #476
-            self.outputs.add(outp)
-            self.outputs.set_completed(outp)
-            self.set_status('submit-failed')
+            # See github #476.
+            status = 'submit-failed'
+            self.outputs.add(status)
+            self.outputs.set_completed(status)
+            self.set_status(status)
             self.setup_event_handlers(
                 'submission failed', 'job submission failed')
         else:
@@ -1085,11 +1080,11 @@ class TaskProxy(object):
                 self.summary['started_time'] = self.started_time
                 self.summary['started_time_string'] = (
                     get_time_string_from_unix_time(self.started_time))
-                self.outputs.set_completed(self.identity + " started")
+                self.outputs.set_completed("started")
                 self.set_status('running')
             return
 
-        outp = self.identity + ' submitted'
+        outp = 'submitted'
         if not self.outputs.is_completed(outp):
             self.outputs.set_completed(outp)
             # Allow submitted tasks to spawn even if nothing else is happening.
@@ -1142,10 +1137,10 @@ class TaskProxy(object):
             # No retry lined up: definitive failure.
             # Note the 'failed' output is only added if needed.
             flags.pflag = True
-            msg = self.identity + ' failed'
-            self.outputs.add(msg)
-            self.outputs.set_completed(msg)
-            self.set_status('failed')
+            status = 'failed'
+            self.outputs.add(status)
+            self.outputs.set_completed(status)
+            self.set_status(status)
             self.setup_event_handlers('failed', 'job failed')
 
         else:
@@ -1540,11 +1535,11 @@ class TaskProxy(object):
         timeout = self.started_time + self.sim_mode_run_length
         if time.time() > timeout:
             if self.tdef.rtconfig['simulation mode']['simulate failure']:
-                self.message_queue.put('NORMAL', self.identity + ' submitted')
-                self.message_queue.put('CRITICAL', self.identity + ' failed')
+                self.message_queue.put('NORMAL', 'submitted')
+                self.message_queue.put('CRITICAL', 'failed')
             else:
-                self.message_queue.put('NORMAL', self.identity + ' submitted')
-                self.message_queue.put('NORMAL', self.identity + ' succeeded')
+                self.message_queue.put('NORMAL', 'submitted')
+                self.message_queue.put('NORMAL', 'succeeded')
             return True
         else:
             return False
@@ -1584,48 +1579,49 @@ class TaskProxy(object):
             queue.task_done()
 
     def process_incoming_message(
-            self, (priority, message), msg_was_polled=False):
+            self, (priority, msg_in), msg_was_polled=False):
         """Parse an incoming task message and update task state.
+
+        Incoming is e.g. "succeeded at <TIME>".
 
         Correctly handle late (out of order) message which would otherwise set
         the state backward in the natural order of events.
 
         """
-        # TODO - formalize state ordering, for: 'if new_state < old_state'
+        # TODO - formalise state ordering, for: 'if new_state < old_state'
 
         # Log incoming messages with '>' to distinguish non-message log entries
         self.log(
             self.LOGGING_LVL_OF.get(priority, INFO),
-            '(current:' + self.state.get_status() + ')> ' + message)
+            '(current:' + self.state.get_status() + ')> ' + msg_in)
+
+        # Now strip the "at TIME" suffix.
+        msg = self.MESSAGE_SUFFIX_RE.sub('', msg_in)
+
         # always update the suite state summary for latest message
-        self.summary['latest_message'] = message.replace(
-            self.identity, "", 1).strip()
+        self.summary['latest_message'] = msg
         if msg_was_polled:
             self.summary['latest_message'] += " (polled)"
         flags.iflag = True
 
-        if self.reject_if_failed(message):
+        if self.reject_if_failed(msg):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
-        # Remove the prepended task ID.
-        message = self.MESSAGE_SUFFIX_RE.sub('', message)
-        content = message.replace(self.identity + ' ', '')
-
-        # If the message matches a registered output, record it as completed.
-        if self.outputs.exists(message):
-            if not self.outputs.is_completed(message):
+        # If this is a registered output, record it as completed.
+        if self.outputs.exists(msg):
+            if not self.outputs.is_completed(msg):
                 flags.pflag = True
-                self.outputs.set_completed(message)
+                self.outputs.set_completed(msg)
                 self._db_events_insert(
-                    event="output completed", message=content)
+                    event="output completed", message=msg)
             elif not msg_was_polled:
                 # This output has already been reported complete. Not an error
                 # condition - maybe the network was down for a bit. Ok for
                 # polling as multiple polls *should* produce the same result.
                 self.log(
                     WARNING,
-                    "Unexpected output (already completed):\n  " + message)
+                    "Unexpected output (already completed):\n  " + msg)
 
         if msg_was_polled and not self.is_active():
             # Polling can take a few seconds or more, so it is
@@ -1638,7 +1634,7 @@ class TaskProxy(object):
             return
 
         if priority == TaskMessage.WARNING:
-            self.setup_event_handlers('warning', content, db_update=False)
+            self.setup_event_handlers('warning', msg, db_update=False)
 
         if self._get_events_conf('reset timer'):
             # Reset execution timer on incoming messages
@@ -1648,12 +1644,12 @@ class TaskProxy(object):
                     time.time() + execution_timeout
                 )
 
-        elif (content == TaskMessage.STARTED and
+        elif (msg == TaskMessage.STARTED and
                 self.state.is_currently(
                     'ready', 'submitted', 'submit-failed')):
             if self.job_vacated:
                 self.job_vacated = False
-                self.log(WARNING, "Vacated job restarted: " + message)
+                self.log(WARNING, "Vacated job restarted: " + msg)
             # Received a 'task started' message
             flags.pflag = True
             self.set_status('running')
@@ -1676,7 +1672,7 @@ class TaskProxy(object):
             self.setup_event_handlers('started', 'job started')
             self.execution_poll_timer.set_timer()
 
-        elif (content == TaskMessage.SUCCEEDED and
+        elif (msg == TaskMessage.SUCCEEDED and
                 self.state.is_currently(
                     'ready', 'submitted', 'submit-failed', 'running',
                     'failed')):
@@ -1699,10 +1695,10 @@ class TaskProxy(object):
             self.set_status('succeeded')
             self.setup_event_handlers("succeeded", "job succeeded")
             if not self.outputs.all_completed():
-                msg = "Succeeded with unreported outputs:"
+                err = "Succeeded with unreported outputs:"
                 for key in self.outputs.not_completed:
-                    msg += "\n  " + key
-                self.log(WARNING, msg)
+                    err += "\n  " + key
+                self.log(WARNING, err)
                 if msg_was_polled:
                     # Assume all outputs complete (e.g. poll at restart).
                     # TODO - just poll for outputs in the job status file.
@@ -1711,30 +1707,30 @@ class TaskProxy(object):
                 else:
                     # A succeeded task MUST have submitted and started.
                     # TODO - just poll for outputs in the job status file?
-                    for output in [self.identity + ' submitted',
-                                   self.identity + ' started']:
+                    for output in ['submitted', 'started']:
                         if not self.outputs.is_completed(output):
-                            msg = "Assuming output completed:  \n %s" % output
-                            self.log(WARNING, msg)
+                            self.log(
+                                WARNING,
+                                "Assuming output completed:  \n %s" % output)
                             self.outputs.set_completed(output)
 
-        elif (content == TaskMessage.FAILED and
+        elif (msg == TaskMessage.FAILED and
                 self.state.is_currently(
                     'ready', 'submitted', 'submit-failed', 'running')):
             # (submit- states in case of very fast submission and execution).
             self.job_execution_failed()
 
-        elif content.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
+        elif msg.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
             # capture and record signals sent to task proxy
-            self._db_events_insert(event="signaled", message=content)
-            signal = content.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
+            self._db_events_insert(event="signaled", message=msg)
+            signal = msg.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
             self.db_updates_map[self.TABLE_TASK_JOBS].append(
                 {"run_signal": signal})
 
-        elif content.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
+        elif msg.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             flags.pflag = True
             self.set_status('submitted')
-            self._db_events_insert(event="vacated", message=content)
+            self._db_events_insert(event="vacated", message=msg)
             self.execution_timer_timeout = None
             # TODO - check summary item value compat with GUI:
             self.summary['started_time'] = None
@@ -1742,9 +1738,9 @@ class TaskProxy(object):
             self.sub_try_state.num = 0
             self.job_vacated = True
 
-        elif content == "submission failed":
+        elif msg == "submission failed":
             # This can arrive via a poll.
-            outp = self.identity + ' submitted'
+            outp = 'submitted'
             if self.outputs.is_completed(outp):
                 self.outputs.remove(outp)
             self.submission_timer_timeout = None
@@ -1756,7 +1752,7 @@ class TaskProxy(object):
             #  * poll messages that repeat previous results
             # Note that all messages are logged already at the top.
             self.log(DEBUG, '(current: %s) unhandled: %s' % (
-                self.state.get_status(), content))
+                self.state.get_status(), msg))
 
     def set_status(self, status):
         """Set, log and record task status."""

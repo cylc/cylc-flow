@@ -32,7 +32,6 @@ class TaskMessage(object):
     FAILED = "failed"
     STARTED = "started"
     SUCCEEDED = "succeeded"
-    STATUSES = (STARTED, SUCCEEDED, FAILED)
 
     CYLC_JOB_PID = "CYLC_JOB_PID"
     CYLC_JOB_INIT_TIME = "CYLC_JOB_INIT_TIME"
@@ -115,7 +114,6 @@ class TaskMessage(object):
     def send(self, messages):
         """Send messages back to the suite."""
         self._update_job_status_file(messages)
-
         if self.mode != 'scheduler' or self.polling:
             # no suite to communicate with, just print to stdout.
             self._print_messages(messages)
@@ -310,8 +308,6 @@ class TaskMessage(object):
                     job_status_file.write("%s=%s|%s|%s\n" % (
                         self.CYLC_MESSAGE, self.true_event_time, self.priority,
                         message))
-            if message in self.STATUSES:
-                messages[i] = "%s %s" % (self.task_id, message)
             messages[i] += ' at ' + self.true_event_time
         if job_status_file:
             try:

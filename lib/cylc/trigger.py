@@ -113,18 +113,24 @@ Task triggers, used to generate prerequisite messages.
         return self.builtin is not None
 
     def get_prereq(self, point):
-        """Return a prerequisite string and the relevant point."""
+        """Return a prerequisite string."""
         if self.message:
             # Message trigger
             preq = self.message
+            msg_point = point
             if self.cycle_point:
                 point = self.cycle_point
+                msg_point = self.cycle_point
             else:
                 if self.message_offset:
-                    point += self.message_offset
+                    msg_point = point + self.message_offset
                 if self.graph_offset_string:
+                    msg_point = get_point_relative(
+                        self.graph_offset_string, msg_point)
                     point = get_point_relative(self.graph_offset_string, point)
-            preq = re.sub('\[.*\]', str(point), preq)
+            preq = "%s %s" % (
+                TaskID.get(self.task_name, point),
+                re.sub('\[.*\]', str(msg_point), preq))
         else:
             # Built-in trigger
             if self.cycle_point:
@@ -133,4 +139,4 @@ Task triggers, used to generate prerequisite messages.
                 point = get_point_relative(
                     self.graph_offset_string, point)
             preq = TaskID.get(self.task_name, point) + ' ' + self.builtin
-        return preq, point
+        return preq

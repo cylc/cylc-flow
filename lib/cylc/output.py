@@ -60,3 +60,6 @@ class output(object):
         if self.msg_offset:
             new_point = point + self.msg_offset
         return re.sub('\[.*\]', str(new_point), self.msg)
+
+    def __eq__(self, other):
+        return self.msg == other.msg and self.msg_offset == other.msg_offset
