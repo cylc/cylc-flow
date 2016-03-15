@@ -635,7 +635,10 @@ class BatchSysManager(object):
             if hasattr(batch_sys, "filter_poll_many_output"):
                 # Allow custom filter
                 for id_ in batch_sys.filter_poll_many_output(out):
-                    bad_ids.remove(id_)
+                    try:
+                        bad_ids.remove(id_)
+                    except ValueError:
+                        pass
             else:
                 # Just about all poll commands return a table, with column 1
                 # being the job ID. The logic here should be sufficient to
@@ -646,7 +649,10 @@ class BatchSysManager(object):
                     except IndexError:
                         continue
                     if head in exp_ids:
-                        bad_ids.remove(head)
+                        try:
+                            bad_ids.remove(head)
+                        except ValueError:
+                            pass
 
         for ctx in my_ctx_list:
             ctx.batch_sys_exit_polled = int(
