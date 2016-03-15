@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """Provide a class to represent a task proxy in a running suite."""
 
 from collections import namedtuple
@@ -50,7 +51,7 @@ from cylc.host_select import get_task_host
 from cylc.job_file import JOB_FILE
 from cylc.job_host import RemoteJobHostManager
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
-from cylc.outputs import outputs
+from cylc.task_outputs import TaskOutputs
 from cylc.owner import is_remote_user, user
 from cylc.poll_timer import PollTimer
 from cylc.prerequisite import Prerequisite
@@ -250,9 +251,11 @@ class TaskProxy(object):
         self.point_as_seconds = None
 
         # Task outputs.
-        self.outputs = outputs(self.identity)
+        self.outputs = TaskOutputs(self.identity)
+        # Message outputs.
         for outp in self.tdef.outputs:
-            self.outputs.add(outp.get(self.point))
+            self.outputs.add(outp.get_string(self.point))
+        # Standard outputs.
         self.outputs.add_standard()
 
         self.external_triggers = {}

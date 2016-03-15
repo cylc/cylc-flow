@@ -26,23 +26,29 @@ from cylc.task_state import TaskState, TaskStateError
 
 
 warned = False
-
+BCOMPAT_MSG_RE_C5 = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
+BCOMPAT_MSG_RE_C6 = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+DEPRECN_WARN_TMPL = "WARNING: message trigger offsets are deprecated\n  %s"
 
 def get_message_offset(msg, base_interval=None):
-    """Return back-compat message offset, or None."""
+    """Return deprecated message offset, or None.
+    
+    TODO - this function can be deleted once the deprecated cycle point offset
+    placeholders are removed from cylc (see GitHub #1761).
 
-    BACK_COMPAT_MSG_RE_OLD = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
-    BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
-    DEPRECATION_TEMPLATE = "WARNING: message trigger offsets are deprecated\n  %s"
+    """
 
     offset = None
     global warned
+    global BCOMPAT_MSG_RE_C5
+    global BCOMPAT_MSG_RE_C6
+    global DEPRECN_WARN_TMPL
 
     # cylc-5 [T+n] message offset - DEPRECATED
-    m = re.match(BACK_COMPAT_MSG_RE_OLD, msg)
+    m = re.match(BCOMPAT_MSG_RE_C5, msg)
     if m:
         if not warned:
-            print >> sys.stderr, DEPRECATION_TEMPLATE % msg
+            print >> sys.stderr, DEPRECN_WARN_TMPL % msg
             warned = True
         prefix, signed_offset, sign, offset, suffix = m.groups()
         if signed_offset is not None:
@@ -50,10 +56,10 @@ def get_message_offset(msg, base_interval=None):
                 signed_offset)
     else:
         # cylc-6 [<interval>] message offset - DEPRECATED
-        n = re.match(BACK_COMPAT_MSG_RE, msg)
+        n = re.match(BCOMPAT_MSG_RE_C6, msg)
         if n:
             if not warned:
-                print >> sys.stderr, DEPRECATION_TEMPLATE % msg
+                print >> sys.stderr, DEPRECN_WARN_TMPL % msg
                 warned = True
             prefix, signed_offset, sign, offset, suffix = n.groups()
             if offset:
@@ -72,23 +78,12 @@ class TriggerError(Exception):
         return repr(self.msg)
 
 
-class trigger(object):
+class TaskTrigger(object):
     """
-Task triggers, used to generate prerequisite messages.
+A task trigger is a prerequisite in the abstract, defined by the suite graph.
 
-#(a) graph offsets:
-  # trigger bar if foo at -P1D succeeded:
-    graph = foo[-P1D] => bar
-  # trigger bar if foo at -P1D reported message output:
-    graph = foo[-P1D]:x => bar
-
-#(b) output message offsets:
-[runtime]
-   [[foo]]
-      [[[outputs]]]
-         x = "file X uploaded"
-         y = "file Y finished"
-    """ 
+It generates a concrete prerequisite string given a task's cycle point value.
+    """
 
     def __init__(
             self, task_name, qualifier=None, graph_offset_string=None,

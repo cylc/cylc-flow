@@ -22,7 +22,7 @@ import sys
 # A collection of messages representing the outputs of ONE TASK.
 
 
-class outputs(object):
+class TaskOutputs(object):
     def __init__(self, owner_id):
 
         self.owner_id = owner_id

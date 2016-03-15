@@ -32,12 +32,12 @@ from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from output import output
+from message_output import MessageOutput
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
 from cylc.prerequisite import TriggerExpressionError
 from regpath import RegPath
-from trigger import trigger
+from task_trigger import TaskTrigger
 from parsec.util import replicate
 from cylc.task_id import TaskID
 from C3MRO import C3
@@ -1698,7 +1698,7 @@ class SuiteConfig(object):
             if self.run_mode == 'live':
                 # Record message outputs.
                 for lbl, msg in self.cfg['runtime'][name]['outputs'].items():
-                    outp = output(msg, base_interval)
+                    outp = MessageOutput(msg, base_interval)
                     if outp not in self.taskdefs[name].outputs:
                         self.taskdefs[name].outputs.append(outp)
 
@@ -1736,7 +1736,7 @@ class SuiteConfig(object):
                     offset_tuple = (lnode.offset_string, None)
                 ltaskdef.intercycle_offsets.append(offset_tuple)
 
-            trig = trigger(
+            trig = TaskTrigger(
                 lnode.name, lnode.output, lnode.offset_string, cycle_point,
                 suicide, self.cfg['runtime'][lnode.name]['outputs'],
                 base_interval)
