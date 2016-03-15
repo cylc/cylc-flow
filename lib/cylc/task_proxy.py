@@ -586,7 +586,7 @@ class TaskProxy(object):
         self.hold_on_retry = False
         self.kill_failed = False
         for msg in ["failed", "submit-failed", "expired"]:
-                self.outputs.remove(msg)
+            self.outputs.remove(msg)
 
     def turn_off_timeouts(self):
         """Turn off submission and execution timeouts."""

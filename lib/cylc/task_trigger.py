@@ -30,9 +30,10 @@ BCOMPAT_MSG_RE_C5 = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
 BCOMPAT_MSG_RE_C6 = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 DEPRECN_WARN_TMPL = "WARNING: message trigger offsets are deprecated\n  %s"
 
+
 def get_message_offset(msg, base_interval=None):
     """Return deprecated message offset, or None.
-    
+
     TODO - this function can be deleted once the deprecated cycle point offset
     placeholders are removed from cylc (see GitHub #1761).
 

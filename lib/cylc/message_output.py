@@ -25,8 +25,8 @@ class MessageOutput(object):
     """
     A task message output.
 
-    Used to generate an output strings.for a message triggers at cycle point.
-    
+    Used to generate an output string for a message trigger at a cycle point.
+
     TODO - these can be plain strings once the deprecated cycle point offset
     placeholders are removed from cylc (see GitHub #1761).
 
@@ -38,7 +38,7 @@ class MessageOutput(object):
 
     def get_string(self, point):
         """Return the message string for this cycle point.
-        
+
         Placeholders are replaced with the actual cycle point offset.
 
         """
