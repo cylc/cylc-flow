@@ -43,7 +43,7 @@ def get_message_offset(msg, base_interval=None):
     global warned
 
     # cylc-5 [T+n] message offset - DEPRECATED
-    m = re.match(BCOMPAT_MSG_RE_C5, msg)
+    m = BCOMPAT_MSG_RE_C5.match(msg)
     if m:
         if not warned:
             print >> sys.stderr, DEPRECN_WARN_TMPL % msg
@@ -54,7 +54,7 @@ def get_message_offset(msg, base_interval=None):
                 signed_offset)
     else:
         # cylc-6 [<interval>] message offset - DEPRECATED
-        n = re.match(BCOMPAT_MSG_RE_C6, msg)
+        n = BCOMPAT_MSG_RE_C6.match(msg)
         if n:
             if not warned:
                 print >> sys.stderr, DEPRECN_WARN_TMPL % msg
