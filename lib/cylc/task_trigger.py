@@ -41,9 +41,6 @@ def get_message_offset(msg, base_interval=None):
 
     offset = None
     global warned
-    global BCOMPAT_MSG_RE_C5
-    global BCOMPAT_MSG_RE_C6
-    global DEPRECN_WARN_TMPL
 
     # cylc-5 [T+n] message offset - DEPRECATED
     m = re.match(BCOMPAT_MSG_RE_C5, msg)
