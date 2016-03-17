@@ -26,12 +26,12 @@ run_fail "$TEST_NAME" cylc validate suite.rc
 cmp_ok "$TEST_NAME.stderr" <<'__ERROR__'
 Jinja2Error:
   File "<template>", line 5, in top-level template code
-TypeError: unsupported operand type(s) for /: 'int' and 'str'
+UndefinedError: 'UNDEFINED_WHATEVER' is undefined
 Context lines:
 [scheduling]
     [[dependencies]]
         graph = foo
-{{ 1 / 'foo' }}	<-- Jinja2Error
+    [[[{{ UNDEFINED_WHATEVER }}]]]	<-- Jinja2Error
 __ERROR__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
