@@ -22,6 +22,7 @@ from jinja2 import (
         Environment,
         FileSystemLoader,
         TemplateError,
+        UndefinedError,
         StrictUndefined)
 import cylc.flags
 

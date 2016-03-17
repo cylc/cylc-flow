@@ -45,7 +45,7 @@ parsec config file parsing:
 """
 
 try:
-    from Jinja2Support import Jinja2Process, TemplateError
+    from Jinja2Support import Jinja2Process, TemplateError, UndefinedError
 except ImportError:
     jinja2_disabled = True
 else:
@@ -271,7 +271,7 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
             try:
                 flines = Jinja2Process(
                         flines, fdir, template_vars, template_vars_file)
-            except (TemplateError, TypeError) as exc:
+            except (TemplateError, TypeError, UndefinedError) as exc:
                 # Extract diagnostic info from the end of the Jinja2 traceback.
                 exc_lines = traceback.format_exc().splitlines()
                 suffix = []
@@ -281,10 +281,17 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
                         break
                 msg = '\n'.join(reversed(suffix))
                 lines = None
-                if (hasattr(exc, 'lineno') and
-                        getattr(exc, 'filename', None) is None):
+                lineno = None
+                if hasattr(exc, 'lineno'):
+                    lineno = exc.lineno
+                elif (isinstance(exc, TypeError) or
+                          isinstance(exc, UndefinedError)):
+                    match = re.search(r'File "<template>", line (\d+)', msg)
+                    if match:
+                        lineno = int(match.groups()[0])
+                if (lineno and getattr(exc, 'filename', None) is None):
                     # Jinja2 omits the line if it isn't from an external file.
-                    line_index = exc.lineno - 1
+                    line_index = lineno - 1
                     if getattr(exc, 'source', None) is None:
                         # Jinja2Support strips the shebang line.
                         lines = flines[1:]
