@@ -1,0 +1,20 @@
+#!Jinja2
+[cylc]
+    UTC mode = True
+    [[reference test]]
+        required run mode = live
+        live mode suite timeout = PT3M
+
+[scheduling]
+    initial cycle point=1999
+    final cycle point=1999
+    [[dependencies]]
+        [[[P1Y]]]
+            graph="""t1 => t2"""
+[runtime]
+    [[t1]]
+        script = cylc broadcast "${CYLC_SUITE_NAME}" -n t2 -s 'script=true'
+        [[[remote]]]
+            host = {{environ["CYLC_TEST_HOST"]}}
+    [[t2]]
+        script = false
