@@ -34,6 +34,7 @@ class broker(object):
     def __init__(self):
         self.log = logging.getLogger('main')
         self.all_outputs = {}   # all_outputs[ message ] = taskid
+        self.all_output_msgs = set()
 
     def register(self, tasks):
 
@@ -42,10 +43,12 @@ class broker(object):
             # TODO - SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
             # (note that successive tasks of the same type can register
             # identical outputs if they write staggered restart files).
+        self.all_output_msgs = set(self.all_outputs)
 
     def reset(self):
         # throw away all messages
         self.all_outputs = {}
+        self.all_output_msgs = set()
 
     def dump(self):
         # for debugging
@@ -55,4 +58,4 @@ class broker(object):
 
     def negotiate(self, task):
         # can my outputs satisfy any of task's prerequisites
-        task.satisfy_me(self.all_outputs)
+        task.satisfy_me(self.all_output_msgs, self.all_outputs)

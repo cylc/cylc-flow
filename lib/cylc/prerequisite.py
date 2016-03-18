@@ -46,6 +46,7 @@ class Prerequisite(object):
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
+        self.messages_set = set()  # = set(self.messages.values())
         self.satisfied = {}    # satisfied[ label ] = True/False
         self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
         self.target_point_strings = []   # list of target cycle points
@@ -57,6 +58,7 @@ class Prerequisite(object):
     def add(self, message, label, pre_initial=False):
         # Add a new prerequisite message in an UNSATISFIED state.
         self.messages[label] = message
+        self.messages_set.add(message)
         self.labels[message] = label
         self.satisfied[label] = False
         m = re.match(self.__class__.CYCLE_POINT_RE, message)
@@ -101,6 +103,7 @@ class Prerequisite(object):
             if self.messages.get(label):
                 msg = self.messages[label]
                 self.messages.pop(label)
+                self.messages_set.remove(msg)
                 self.satisfied.pop(label)
                 self.labels.pop(msg)
 
@@ -137,10 +140,11 @@ class Prerequisite(object):
                     '"' + self.raw_conditional_expression + '"')
             return res
 
-    def satisfy_me(self, outputs):
+    def satisfy_me(self, output_msgs, outputs):
         # Can any completed outputs satisfy any of my prequisites?
-        for label in self.satisfied:
-            for msg in outputs:
+        relevant_msgs = output_msgs & self.messages_set
+        for msg in relevant_msgs:
+            for label in self.satisfied:
                 if self.messages[label] == msg:
                     self.satisfied[label] = True
                     self.satisfied_by[label] = outputs[msg]  # owner_id

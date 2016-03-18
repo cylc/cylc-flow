@@ -1824,11 +1824,11 @@ class TaskProxy(object):
         return (not self.prerequisites_are_all_satisfied() or
                 not self.suicide_prerequisites_are_all_satisfied())
 
-    def satisfy_me(self, task_outputs):
+    def satisfy_me(self, task_output_msgs, task_outputs):
         """Attempt to get my prerequisites satisfied."""
         for preqs in [self.prerequisites, self.suicide_prerequisites]:
             for preq in preqs:
-                preq.satisfy_me(task_outputs)
+                preq.satisfy_me(task_output_msgs, task_outputs)
 
     def next_point(self):
         """Return the next cycle point."""
