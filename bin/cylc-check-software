@@ -77,8 +77,7 @@ fi
 
 # Python packages
 # sqlite3 is part of the standard library since Python 2.5
-PKGS="Pyro-3:Pyro.core \
-Jinja2:jinja2 \
+PKGS="Jinja2:jinja2 \
 pygraphviz:pygraphviz \
 pygtk:pygtk"
 
