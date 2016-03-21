@@ -50,6 +50,8 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
     fi
     echo "${HOST}:${HOST_WORK_DIR}" >>'host-work-dirs.list'
 done
+# Wait a bit before scanning, to ensure suites have initialized.
+sleep 5
 run_ok "${TEST_NAME_BASE}" cylc scan
 for ITEM in $(<'host-work-dirs.list'); do
     HOST="${ITEM%%:*}"
