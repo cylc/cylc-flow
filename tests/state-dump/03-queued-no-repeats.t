@@ -42,8 +42,8 @@ run_ok $TEST_NAME test $(wc -l <<<"$STATE_MD5SUMS") -eq \
 TEST_NAME=$TEST_NAME_BASE-final-state
 grep 'person' $SUITE_DIR/state/state >$TEST_NAME.state
 cmp_ok $TEST_NAME.state <<'__STATE__'
-person_a.1 : status=succeeded, spawned=true
-person_b.1 : status=succeeded, spawned=true
+person_a.1 : status=succeeded, spawned=True
+person_b.1 : status=succeeded, spawned=True
 __STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

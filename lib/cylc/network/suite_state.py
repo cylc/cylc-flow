@@ -27,6 +27,12 @@ from cylc.config import SuiteConfig
 from cylc.network import PYRO_STATE_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network import check_access_priv
+from cylc.task_state import (
+    TASK_STATUS_RUNAHEAD, TASK_STATUS_HELD, TASK_STATUS_WAITING,
+    TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED, TASK_STATUS_READY,
+    TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
 
 
 # Suite status strings.
@@ -224,11 +230,11 @@ class StateSummaryServer(PyroServer):
 
         for task in tasks_rh:
             ts = task.get_state_summary()
-            ts['state'] = 'runahead'
+            ts['state'] = TASK_STATUS_RUNAHEAD
             task_summary[task.identity] = ts
             name, point_string = TaskID.split(task.identity)
             task_states.setdefault(point_string, {})
-            task_states[point_string][name] = 'runahead'
+            task_states[point_string][name] = TASK_STATUS_RUNAHEAD
 
         return task_summary, task_states.items()
 
@@ -274,13 +280,21 @@ class StateSummaryClient(PyroClient):
 def extract_group_state(child_states, is_stopped=False):
     """Summarise child states as a group."""
 
-    ordered_states = ['submit-failed', 'failed', 'expired', 'submit-retrying',
-                      'retrying', 'running', 'submitted', 'ready', 'queued',
-                      'waiting', 'held', 'succeeded', 'runahead']
+    ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
+                      TASK_STATUS_EXPIRED, TASK_STATUS_SUBMIT_RETRYING,
+                      TASK_STATUS_RETRYING, TASK_STATUS_RUNNING,
+                      TASK_STATUS_SUBMITTED, TASK_STATUS_READY,
+                      TASK_STATUS_QUEUED, TASK_STATUS_WAITING,
+                      TASK_STATUS_HELD, TASK_STATUS_SUCCEEDED,
+                      TASK_STATUS_RUNAHEAD]
     if is_stopped:
-        ordered_states = ['submit-failed', 'failed', 'running', 'submitted',
-                          'expired', 'ready', 'submit-retrying', 'retrying',
-                          'succeeded', 'queued', 'waiting', 'held', 'runahead']
+        ordered_states = [TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_FAILED,
+                          TASK_STATUS_RUNNING, TASK_STATUS_SUBMITTED,
+                          TASK_STATUS_EXPIRED, TASK_STATUS_READY,
+                          TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
+                          TASK_STATUS_SUCCEEDED, TASK_STATUS_QUEUED,
+                          TASK_STATUS_WAITING, TASK_STATUS_HELD,
+                          TASK_STATUS_RUNAHEAD]
     for state in ordered_states:
         if state in child_states:
             return state

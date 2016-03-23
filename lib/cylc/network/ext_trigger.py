@@ -60,7 +60,7 @@ class ExtTriggerServer(PyroServer):
 
         if self.queue.empty():
             return
-        if len(itask.external_triggers) == 0:
+        if len(itask.state.external_triggers) == 0:
             return
         bcast = BroadcastServer.get_inst()
         queued = []
@@ -70,7 +70,7 @@ class ExtTriggerServer(PyroServer):
             except Empty:
                 break
         used = []
-        for trig, satisfied in itask.external_triggers.items():
+        for trig, satisfied in itask.state.external_triggers.items():
             if satisfied:
                 continue
             for qmsg, qid in queued:
@@ -78,7 +78,7 @@ class ExtTriggerServer(PyroServer):
                     # Matched.
                     name, point_string = TaskID.split(itask.identity)
                     # Set trigger satisfied.
-                    itask.external_triggers[trig] = True
+                    itask.state.external_triggers[trig] = True
                     cylc.flags.pflag = True
                     # Broadcast the event ID to the cycle point.
                     if qid is not None:

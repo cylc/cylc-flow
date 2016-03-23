@@ -38,7 +38,8 @@ from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network.port_scan import scan_all
 from cylc.owner import USER
 from cylc.version import CYLC_VERSION
-from cylc.task_state import TaskState
+from cylc.task_state import TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD
+
 
 PYRO_TIMEOUT = 2
 KEY_NAME = "name"
@@ -485,8 +486,7 @@ class ScanApp(object):
         status_column.set_cell_data_func(
             cell_text_cycle, self._set_cell_text_cycle, cycle_column_info)
         self.suite_treeview.append_column(status_column)
-        distinct_states = len(TaskState.legal)
-        for i in range(distinct_states):
+        for i in range(len(TASK_STATUSES_ORDERED)):
             cell_pixbuf_state = gtk.CellRendererPixbuf()
             status_column.pack_start(cell_pixbuf_state, expand=False)
             status_column.set_cell_data_func(
@@ -987,7 +987,7 @@ class ScanAppUpdater(BaseScanUpdater):
                     states_text = ""
                     for state, number in sorted(
                             suite_info[key].items(), key=lambda _: _[1]):
-                        if state != "runahead":
+                        if state != TASK_STATUS_RUNAHEAD:
                             # 'runahead' states are usually hidden.
                             states_text += '%s %d ' % (state, number)
                     if not states_text:

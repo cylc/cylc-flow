@@ -31,9 +31,9 @@ one-off cold-start tasks (see below).
 
 A "warm start" (-w/--warm) starts from a given cycle point that is later than
 the initial cycle point (specified in the suite.rc), and loads any cold-start
-tasks in the 'succeeded' state just to satisfy initial dependence on them.
-The original suite initial cycle point is preserved, but all tasks and
-dependencies before the given start cycle point are ignored.
+tasks as succeeded just to satisfy initial dependence on them.  The original
+suite initial cycle point is preserved, but all tasks and dependencies before
+the given start cycle point are ignored.
 
 Aside from the starting cycle point there is no difference between cold and
 warm start unless you use special cold-start tasks. See "Suite Start-up" and
@@ -53,6 +53,7 @@ from cylc.scheduler import Scheduler
 from cylc.run import main
 from cylc.registration import RegistrationDB
 from cylc.task_proxy import TaskProxySequenceBoundsError
+from cylc.task_state import TASK_STATUS_SUCCEEDED
 from cylc.get_task_proxy import get_task_proxy
 
 
@@ -135,15 +136,15 @@ class start(Scheduler):
                 continue
             try:
                 itask = get_task_proxy(
-                    name, self.start_point, 'waiting', is_startup=True,
+                    name, self.start_point, is_startup=True,
                     message_queue=self.pool.message_queue)
             except TaskProxySequenceBoundsError as exc:
                 self.log.debug(str(exc))
                 continue
             if name in coldstart_tasks and self.options.warm:
-                itask.state.set_status('succeeded')
-                itask.set_prerequisites_all_satisfied()
-                itask.outputs.set_all_completed()
+                itask.state.set_state(TASK_STATUS_SUCCEEDED)
+                itask.state.set_prerequisites_all_satisfied()
+                itask.state.outputs.set_all_completed()
             # Load task.
             self.pool.add_to_runahead_pool(itask)
 

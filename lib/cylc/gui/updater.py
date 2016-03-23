@@ -36,11 +36,11 @@ from cylc.network.suite_state import (
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.task_state import TaskState
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
 from cylc.gui.warning_dialog import warning_dialog
+from cylc.task_state import TASK_STATUSES_RESTRICTED
 
 
 class PollSchd(object):
@@ -499,9 +499,8 @@ class Updater(threading.Thread):
     @classmethod
     def filter_for_restricted_display(cls, states):
         """Filter for legal restricted states."""
-        return dict(
-            (i, j) for i, j in states.items() if j['state'] in
-            TaskState.legal_for_restricted_monitoring)
+        return dict((i, j) for i, j in states.items() if
+                    j['state'] in TASK_STATUSES_RESTRICTED)
 
     def refilter(self):
         """filter from the full state summary"""

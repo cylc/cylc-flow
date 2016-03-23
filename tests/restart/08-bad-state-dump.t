@@ -97,7 +97,7 @@ while [[ -e $HOME/.cylc/ports/$SUITE_NAME ]]; do
 done
 __SCRIPT__
 grep_ok 'Suite shutting down.*ERROR' "$SUITE_RUN_DIR/log/suite/log"
-grep_ok 'ERROR: corrupted state dump' "$SUITE_RUN_DIR/log/suite/err"
+grep_ok 'ERROR: unknown task state for' "$SUITE_RUN_DIR/log/suite/err"
 #-------------------------------------------------------------------------------
 sed "s/\(status=\).*/\1/g" state.orig >$STATE_FILE
 TEST_NAME=$TEST_NAME_BASE-bad-state-status-gone

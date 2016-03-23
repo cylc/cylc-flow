@@ -211,6 +211,7 @@ class Scheduler(object):
             'kill_tasks',
             'set_runahead',
             'reset_task_state',
+            'spawn_tasks',
             'trigger_task',
             'nudge',
             'insert_task',
@@ -1037,7 +1038,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 self.pool.match_dependencies()
                 if not self.shut_down_cleanly:
                     changes += self.pool.submit_tasks()
-                changes += self.pool.spawn_tasks()
+                changes += self.pool.spawn_all_tasks()
                 changes += self.pool.remove_spent_tasks()
                 changes += self.pool.remove_suiciding_tasks()
 
@@ -1365,6 +1366,10 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
     def command_reset_task_state(self, items, compat=None, state=None, _=None):
         """Reset the state of tasks."""
         return self.pool.reset_task_states(items, state, compat)
+
+    def command_spawn_tasks(self, items, compat=None, _=None):
+        """Force spawn task successors."""
+        return self.pool.spawn_tasks(items, compat)
 
     def filter_initial_task_list(self, inlist):
         included_by_rc = self.config.cfg[

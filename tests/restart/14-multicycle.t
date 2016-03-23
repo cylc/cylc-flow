@@ -47,12 +47,12 @@ final cycle : 20130926T0000Z
 (dp1
 .
 Begin task states
-bar.20130924T0000Z : status=succeeded, spawned=true
-bar.20130924T1200Z : status=succeeded, spawned=true
-bar.20130925T0000Z : status=waiting, spawned=false
-foo.20130924T1200Z : status=succeeded, spawned=true
-foo.20130925T0000Z : status=waiting, spawned=false
-output_states.20130925T0000Z : status=waiting, spawned=false
+bar.20130924T0000Z : status=succeeded, spawned=True
+bar.20130924T1200Z : status=succeeded, spawned=True
+bar.20130925T0000Z : status=waiting, spawned=False
+foo.20130924T1200Z : status=succeeded, spawned=True
+foo.20130925T0000Z : status=waiting, spawned=False
+output_states.20130925T0000Z : status=waiting, spawned=False
 __STATE__
 cmp_ok $TEST_DIR/pre-restart-db <<'__DB_DUMP__'
 bar|20130923T0000Z|1|1|succeeded
@@ -111,11 +111,11 @@ final cycle : 20130926T0000Z
 (dp1
 .
 Begin task states
-bar.20130925T1200Z : status=succeeded, spawned=true
-bar.20130926T0000Z : status=succeeded, spawned=true
-bar.20130926T1200Z : status=held, spawned=false
-foo.20130926T0000Z : status=succeeded, spawned=true
-foo.20130926T1200Z : status=held, spawned=false
+bar.20130925T1200Z : status=succeeded, spawned=True
+bar.20130926T0000Z : status=succeeded, spawned=True
+bar.20130926T1200Z : status=held, spawned=False
+foo.20130926T0000Z : status=succeeded, spawned=True
+foo.20130926T1200Z : status=held, spawned=False
 __STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

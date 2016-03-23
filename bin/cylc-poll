@@ -18,9 +18,7 @@
 
 """cylc [control] poll [OPTIONS] ARGS
 
-Poll jobs of active tasks (those in the 'submitted' or 'running' states) to
-verify or update their statuses - even if they have suffered an external hard
-kill.
+Poll jobs of active tasks to verify or update their statuses.
 
 To poll one or more tasks, "cylc poll REG TASKID"; to poll all active
 tasks: "cylc poll REG".

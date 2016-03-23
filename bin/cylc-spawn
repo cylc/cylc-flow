@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2016 NIWA
+# Copyright (C) 2008-2015 NIWA
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] kill [OPTIONS] ARGS
+"""cylc [control] spawn [OPTIONS] ARGS
 
-Kill jobs of active tasks and update their statuses accordingly.
-
-To kill one or more tasks, "cylc kill REG TASKID ..."; to kill all active
-tasks: "cylc kill REG".
+Force one or more task proxies to spawn successors at the next cycle point
+in their sequences.  This is useful if you need to run successive instances
+of a task out of order.
 """
 
 import sys
@@ -47,16 +46,14 @@ def main():
     options, args = parser.parse_args()
 
     suite = args.pop(0)
-    if args:
-        prompt('Kill task %s in %s' % (args, suite), options.force)
-    else:
-        prompt('Kill ALL tasks in %s' % (suite), options.force)
+
+    prompt('Reset task(s) %s in %s' % (args, suite), options.force)
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     items, compat = parser.parse_multitask_compat(options, args)
-    pclient.put_command('kill_tasks', items, compat)
+    pclient.put_command('spawn_tasks', items, compat)
 
 
 if __name__ == "__main__":
@@ -65,4 +62,4 @@ if __name__ == "__main__":
     except Exception as exc:
         if cylc.flags.debug:
             raise
-        sys.exit(str(exc))
+        sys.exit(exc)

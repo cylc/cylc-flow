@@ -1351,18 +1351,6 @@ class SuiteConfig(object):
 
         base_interval = seq.get_interval()
 
-        # SYNONYMS FOR TRIGGER-TYPES, e.g. 'fail' = 'failure' = 'failed'
-        # (NOT USED)
-        # we can replace synonyms here with the standard type designator:
-        # line = re.sub(r':succe(ss|ed|eded){0,1}\b', '', line)
-        # line = re.sub(r':fail(ed|ure){0,1}\b', ':fail', line)
-        # line = re.sub(r':start(ed){0,1}\b', ':start', line)
-        # Replace "foo:finish(ed)" or "foo:complete(ed)"
-        # with "(foo | foo:fail)"
-        # line = re.sub(
-        #     r'\b(\w+(\[.*?]){0,1}):(complete(d){0,1}|finish(ed){0,1})\b',
-        #     r'(\1 | \1:fail)', line)
-
         # Find any dependence on other suites, record the polling target
         # info and replace with just the local task name, e.g.:
         # "foo<SUITE::TASK:fail> => bar"  becomes "foo => bar"
