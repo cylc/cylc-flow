@@ -39,7 +39,7 @@ class CylcSuiteEnv(object):
     suite_owner: the owner user ID of the suite
     suite_cylc_version: version of cylc for running the suite
 
-    Constansts:
+    Constants:
 
     BASE_NAME: the default base name of the suite contact file
     ATTRS: map instance attributes to text keys in the suite contact file
