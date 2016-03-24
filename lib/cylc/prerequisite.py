@@ -141,7 +141,16 @@ class Prerequisite(object):
             return res
 
     def satisfy_me(self, output_msgs, outputs):
-        # Can any completed outputs satisfy any of my prequisites?
+        """Can any completed outputs satisfy any of my prequisites?
+
+        This needs to be fast as it's called for all unsatisfied tasks
+        whenever there's a change.
+
+        At the moment, this uses set intersections to filter out
+        irrelevant outputs - using for loops and if matching is very
+        slow.
+
+        """
         relevant_msgs = output_msgs & self.messages_set
         for msg in relevant_msgs:
             for label in self.satisfied:
