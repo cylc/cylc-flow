@@ -35,7 +35,7 @@ else:
     PyroInstalled = True
     from cylc.network.port_scan import scan
 
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 from cylc.regpath import RegPath
 from warning_dialog import warning_dialog, info_dialog, question_dialog
 from util import get_icon
@@ -421,7 +421,7 @@ class dbchooser(object):
         self.start_updater()
 
     def start_updater(self, filtr=None):
-        db = localdb(self.db)
+        db = RegistrationDB(self.db)
         # self.db_button.set_label("_Local/Central DB")
         if self.updater:
             self.updater.quit = True  # does this take effect?

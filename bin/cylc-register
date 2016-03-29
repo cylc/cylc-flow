@@ -56,7 +56,7 @@ if remrun().execute():
 import os
 
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 import cylc.flags
 
 
@@ -76,7 +76,7 @@ def main():
         rdir = args[1]
         suiterc = os.path.join(rdir, 'suite.rc')
 
-    db = localdb(file=options.db)
+    db = RegistrationDB(options.db)
     db.register(suite, rdir)
 
 

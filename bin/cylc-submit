@@ -44,7 +44,7 @@ from cylc.execute import execute
 from cylc.job_file import JOB_FILE
 from cylc.config import SuiteConfig
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 from cylc.task_id import TaskID
 from cylc.get_task_proxy import get_task_proxy
 from cylc.cycling.loader import get_point
@@ -79,7 +79,7 @@ def main():
     if options.debug:
         cylc.flags.debug = True
     suite = args[0]
-    suiterc = localdb(options.db).get_suiterc(suite)
+    suiterc = RegistrationDB(options.db).get_suiterc(suite)
 
     owner = options.owner
     host = options.host

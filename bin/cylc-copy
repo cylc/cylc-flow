@@ -77,7 +77,7 @@ import shutil
 import cylc.flags
 from cylc.CylcOptionParsers import cop
 from cylc.mkdir_p import mkdir_p
-from cylc.registration import localdb, RegistrationError
+from cylc.registration import RegistrationDB, RegistrationError
 from cylc.regpath import RegPath
 
 
@@ -98,10 +98,10 @@ def main():
     arg_dir = args[2]
 
     if options.dbfrom:
-        dbfrom = localdb(file=options.dbfrom)
+        dbfrom = RegistrationDB(options.dbfrom)
     else:
-        dbfrom = localdb(file=options.db)
-    db = localdb(file=options.db)
+        dbfrom = RegistrationDB(options.db)
+    db = RegistrationDB(options.db)
 
     flist = dbfrom.get_list('^' + arg_from + r'\b')
     if len(flist) == 0:

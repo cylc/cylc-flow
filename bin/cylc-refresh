@@ -31,7 +31,7 @@ if remrun().execute():
 
 import cylc.flags
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb, RegistrationError
+from cylc.registration import RegistrationDB, RegistrationError
 from cylc.config import SuiteConfigError
 from cylc.regpath import RegPath
 
@@ -47,7 +47,7 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    db = localdb(file=options.db)
+    db = RegistrationDB(options.db)
 
     if len(args) == 0:
         pattern = '.*'

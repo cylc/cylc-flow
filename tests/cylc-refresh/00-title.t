@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2015 NIWA
 #
@@ -15,37 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#-------------------------------------------------------------------------------
+# Test "cylc refresh" on a running suite, with a title change to "suite.rc".
+. "$(dirname "$0")/test_header"
 
-"""cylc [db] get-directory REG
+set_test_number 3
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-Retrieve and print the directory location of suite REG.
-Here's an easy way to move to a suite directory:
-  $ cd $(cylc get-dir REG)."""
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}" cylc run --reference-test --debug "${SUITE_NAME}"
 
-import sys
-from cylc.CylcOptionParsers import cop
-from cylc.registration import RegistrationDB
-import cylc.flags
+cmp_ok "${HOME}/.cylc/REGDB/${SUITE_NAME}" <<__REG__
+path=${TEST_DIR}/${SUITE_NAME}
+title=Modified Title
+__REG__
 
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-
-def main():
-    parser = cop(__doc__)
-
-    (options, args) = parser.parse_args()
-
-    reg = args[0]
-    db = RegistrationDB(options.db)
-    print db.get_suitedir(reg)
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(exc)
+purge_suite "${SUITE_NAME}"
+exit

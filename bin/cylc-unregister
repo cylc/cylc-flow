@@ -33,7 +33,7 @@ if remrun().execute():
 import os
 from shutil import rmtree
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 import cylc.flags
 
 
@@ -54,7 +54,7 @@ def main():
 
     (options, args) = parser.parse_args()
 
-    db = localdb(file=options.db)
+    db = RegistrationDB(options.db)
 
     dirs = db.unregister(args[0])
 

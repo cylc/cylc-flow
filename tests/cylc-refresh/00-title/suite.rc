@@ -1,0 +1,18 @@
+title = Original Title
+[cylc]
+   UTC mode = True
+   [[reference test]]
+       live mode suite timeout = PT30S
+       required run mode = live
+[scheduling]
+    [[dependencies]]
+        graph = """refresher => whatever"""
+[runtime]
+    [[refresher]]
+        script = """
+sed -i 's/^\(title = \).*$/\1Modified Title/' "${CYLC_SUITE_DEF_PATH}/suite.rc"
+cylc refresh "${CYLC_SUITE_NAME}"
+sleep 5
+"""
+    [[whatever]]
+        script = true
