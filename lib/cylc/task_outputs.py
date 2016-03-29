@@ -22,7 +22,7 @@ import sys
 # A collection of messages representing the outputs of ONE TASK.
 
 
-class outputs(object):
+class TaskOutputs(object):
     def __init__(self, owner_id):
 
         self.owner_id = owner_id
@@ -52,29 +52,26 @@ class outputs(object):
         return res
 
     def all_completed(self):
-        if len(self.not_completed) == 0:
-            return True
-        else:
-            return False
+        return len(self.not_completed) == 0
 
-    def is_completed(self, message):
-        if message in self.completed:
-            return True
-        else:
-            return False
+    def is_completed(self, msg):
+        return self._qualify(msg) in self.completed
 
-    def set_completed(self, message):
+    def _qualify(self, msg):
+        # Prefix a message string with task ID.
+        return "%s %s" % (self.owner_id, msg)
+
+    def set_completed(self, msg):
+        message = self._qualify(msg)
         try:
             del self.not_completed[message]
         except:
             pass
         self.completed[message] = self.owner_id
 
-    def exists(self, message):
-        if message in self.completed or message in self.not_completed:
-            return True
-        else:
-            return False
+    def exists(self, msg):
+        message = self._qualify(msg)
+        return message in self.completed or message in self.not_completed
 
     def set_all_incomplete(self):
         for message in self.completed.keys():
@@ -86,8 +83,9 @@ class outputs(object):
             del self.not_completed[message]
             self.completed[message] = self.owner_id
 
-    def add(self, message, completed=False):
-        # Add a new output message
+    def add(self, msg, completed=False):
+        # Add a new output message, prepend my task ID.
+        message = self._qualify(msg)
         if message in self.completed or message in self.not_completed:
             # duplicate output messages are an error.
             print >> sys.stderr, (
@@ -97,17 +95,17 @@ class outputs(object):
         else:
             self.completed[message] = self.owner_id
 
-    def remove(self, message, fail_silently=False):
-        if message in self.completed:
+    def remove(self, msg, fail_silently=False):
+        message = self._qualify(msg)
+        try:
             del self.completed[message]
-        elif message in self.not_completed:
-            del self.not_completed[message]
-        elif not fail_silently:
-            print >> sys.stderr, 'WARNING: no such output to delete:'
-            print >> sys.stderr, ' => ', message
+        except:
+            try:
+                del self.not_completed[message]
+            except:
+                pass
 
-    def register(self):
-        # automatically define special outputs common to all tasks
-        self.add(self.owner_id + ' submitted')
-        self.add(self.owner_id + ' started')
-        self.add(self.owner_id + ' succeeded')
+    def add_standard(self):
+        # Add standard outputs common to all tasks.
+        for state in ['submitted', 'started', 'succeeded']:
+            self.add(state)

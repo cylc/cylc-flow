@@ -1,5 +1,8 @@
 title = "test suite for cylc-6 message triggers"
 
+[cylc]
+    UTC mode = True
+
 [scheduling]
     initial cycle point = 20140801T00
     final cycle point = 20141201T00
@@ -10,13 +13,13 @@ title = "test suite for cylc-6 message triggers"
 [runtime]
     [[foo]]
         script = """
-sleep 5
+sleep 2
 cylc message "file 1 done"
-sleep 10
+sleep 2
 cylc message "file 2 done"
-sleep 10"""
+sleep 2"""
         [[[outputs]]]
             out1 = "file 1 done"
             out2 = "file 2 done"
     [[bar, baz]]
-        script = sleep 10
+        script = /bin/true

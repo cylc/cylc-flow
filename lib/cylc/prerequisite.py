@@ -20,6 +20,7 @@ import re
 import sys
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
+from cylc.task_id import TaskID
 
 
 """A task prerequisite.
@@ -90,10 +91,12 @@ class Prerequisite(object):
             if k in drop_these:
                 continue
             if self.start_point:
-                task = re.search(r'(.*).(.*) ', self.messages[k])
-                if task.group:
+                m = re.search(
+                    r'(' + TaskID.NAME_RE + ')\.(' +
+                    TaskID.POINT_RE + ') ', self.messages[k])
+                if m:
                     try:
-                        foo = task.group().split(".")[1].rstrip()
+                        foo = m.group().split(".")[1].rstrip()
                         if get_point(foo) < self.start_point:
                             drop_these.append(k)
                     except IndexError:

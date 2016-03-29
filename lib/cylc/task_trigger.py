@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import sys
 
 from cylc.task_id import TaskID
 from cylc.cycling.loader import (
@@ -24,8 +25,47 @@ from cylc.cycling.loader import (
 from cylc.task_state import TaskState, TaskStateError
 
 
-BACK_COMPAT_MSG_RE = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
-MSG_RE = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+warned = False
+BCOMPAT_MSG_RE_C5 = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
+BCOMPAT_MSG_RE_C6 = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
+DEPRECN_WARN_TMPL = "WARNING: message trigger offsets are deprecated\n  %s"
+
+
+def get_message_offset(msg, base_interval=None):
+    """Return deprecated message offset, or None.
+
+    TODO - this function can be deleted once the deprecated cycle point offset
+    placeholders are removed from cylc (see GitHub #1761).
+
+    """
+
+    offset = None
+    global warned
+
+    # cylc-5 [T+n] message offset - DEPRECATED
+    m = BCOMPAT_MSG_RE_C5.match(msg)
+    if m:
+        if not warned:
+            print >> sys.stderr, DEPRECN_WARN_TMPL % msg
+            warned = True
+        prefix, signed_offset, sign, offset, suffix = m.groups()
+        if signed_offset is not None:
+            offset = base_interval.get_inferred_child(
+                signed_offset)
+    else:
+        # cylc-6 [<interval>] message offset - DEPRECATED
+        n = BCOMPAT_MSG_RE_C6.match(msg)
+        if n:
+            if not warned:
+                print >> sys.stderr, DEPRECN_WARN_TMPL % msg
+                warned = True
+            prefix, signed_offset, sign, offset, suffix = n.groups()
+            if offset:
+                offset = get_interval(signed_offset)
+            else:
+                offset = get_interval_cls().get_null()
+        # else: Plain message, no offset.
+    return offset
 
 
 class TriggerError(Exception):
@@ -36,22 +76,11 @@ class TriggerError(Exception):
         return repr(self.msg)
 
 
-class trigger(object):
+class TaskTrigger(object):
     """
-Task triggers, used to generate prerequisite messages.
+A task trigger is a prerequisite in the abstract, defined by the suite graph.
 
-#(a) graph offsets:
-  # trigger bar if foo at -P1D succeeded:
-    graph = foo[-P1D] => bar
-  # trigger bar if foo at -P1D reported message output:
-    graph = foo[-P1D]:x => bar
-
-#(b) output message offsets:
-[runtime]
-   [[foo]]
-      [[[outputs]]]
-         x = "file X uploaded for [P1D]"
-         y = "file Y uploaded for []"
+It generates a concrete prerequisite string given a task's cycle point value.
     """
 
     def __init__(
@@ -78,53 +107,34 @@ Task triggers, used to generate prerequisite messages.
 
         # Message trigger?
         try:
-            msg = outputs[qualifier]
+            self.message = outputs[qualifier]
         except KeyError:
             raise TriggerError(
                 "ERROR: undefined trigger qualifier: %s:%s" % (
                     task_name, qualifier))
         else:
-            # Back compat for [T+n] in message string.
-            m = re.match(BACK_COMPAT_MSG_RE, msg)
-            msg_offset = None
-            if m:
-                prefix, signed_offset, sign, offset, suffix = m.groups()
-                if offset:
-                    msg_offset = base_interval.get_inferred_child(
-                        signed_offset)
-                else:
-                    msg_offset = get_interval_cls().get_null()
-            else:
-                n = re.match(MSG_RE, msg)
-                if n:
-                    prefix, signed_offset, sign, offset, suffix = n.groups()
-                    if offset:
-                        msg_offset = get_interval(signed_offset)
-                    else:
-                        msg_offset = get_interval_cls().get_null()
-                else:
-                    raise TriggerError(
-                        "ERROR: undefined trigger qualifier: %s:%s" % (
-                            task_name, qualifier))
-            self.message = msg
-            self.message_offset = msg_offset
-
-    def is_standard(self):
-        return self.builtin is not None
+            self.message_offset = get_message_offset(self.message,
+                                                     base_interval)
 
     def get_prereq(self, point):
-        """Return a prerequisite string and the relevant point."""
+        """Return a prerequisite string."""
         if self.message:
             # Message trigger
             preq = self.message
+            msg_point = point
             if self.cycle_point:
                 point = self.cycle_point
+                msg_point = self.cycle_point
             else:
                 if self.message_offset:
-                    point += self.message_offset
+                    msg_point = point + self.message_offset
                 if self.graph_offset_string:
+                    msg_point = get_point_relative(
+                        self.graph_offset_string, msg_point)
                     point = get_point_relative(self.graph_offset_string, point)
-            preq = re.sub('\[.*\]', str(point), preq)
+            preq = "%s %s" % (
+                TaskID.get(self.task_name, point),
+                re.sub('\[.*\]', str(msg_point), preq))
         else:
             # Built-in trigger
             if self.cycle_point:
@@ -133,4 +143,4 @@ Task triggers, used to generate prerequisite messages.
                 point = get_point_relative(
                     self.graph_offset_string, point)
             preq = TaskID.get(self.task_name, point) + ' ' + self.builtin
-        return preq, point
+        return preq

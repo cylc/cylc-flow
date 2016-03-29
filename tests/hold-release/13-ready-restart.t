@@ -30,7 +30,7 @@ run_ok "${TEST_NAME_BASE}-restart" \
     timeout 1m my-file-poll "${CYLC_SUITE_LOG_DIR}/log.1"
 # foo-1 should run when the suite is released
 run_ok "${TEST_NAME_BASE}-foo-1" \
-    timeout 1m my-log-grepper 'foo-1.1 succeeded'
+    timeout 1m my-log-grepper 'foo-1\.1.*succeeded'
 timeout 1m my-log-grepper 'Suite shutting down'
 purge_suite "${SUITE_NAME}"
 exit

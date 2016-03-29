@@ -32,12 +32,12 @@ from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar
 from envvar import check_varnames, expandvars
 from copy import deepcopy, copy
-from output import output
+from message_output import MessageOutput
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
 from cylc.prerequisite import TriggerExpressionError
 from regpath import RegPath
-from trigger import trigger
+from task_trigger import TaskTrigger
 from parsec.util import replicate
 from cylc.task_id import TaskID
 from C3MRO import C3
@@ -1698,16 +1698,9 @@ class SuiteConfig(object):
             if self.run_mode == 'live':
                 # Record message outputs.
                 for lbl, msg in self.cfg['runtime'][name]['outputs'].items():
-                    outp = output(msg, base_interval)
-                    # Check for a cycle offset placeholder.
-                    if not re.search(r'\[[^\]]*\]', msg):
-                        print >> sys.stderr, (
-                            "Message outputs require an "
-                            "offset placeholder (e.g. '[]' or '[-P2M]'):")
-                        print >> sys.stderr, "  %s = %s" % (lbl, msg)
-                        raise SuiteConfigError(
-                            'ERROR: bad message output string')
-                    self.taskdefs[name].outputs.append(outp)
+                    outp = MessageOutput(msg, base_interval)
+                    if outp not in self.taskdefs[name].outputs:
+                        self.taskdefs[name].outputs.append(outp)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq, suicide):
         if not right or not left_nodes:
@@ -1743,7 +1736,7 @@ class SuiteConfig(object):
                     offset_tuple = (lnode.offset_string, None)
                 ltaskdef.intercycle_offsets.append(offset_tuple)
 
-            trig = trigger(
+            trig = TaskTrigger(
                 lnode.name, lnode.output, lnode.offset_string, cycle_point,
                 suicide, self.cfg['runtime'][lnode.name]['outputs'],
                 base_interval)

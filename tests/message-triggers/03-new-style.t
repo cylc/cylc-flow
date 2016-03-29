@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation fails message outputs with no cycle offset placeholder.
+# Test new-style simplified message triggers (see GitHub #1761)
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -23,7 +23,9 @@ set_test_number 2
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_fail $TEST_NAME cylc validate $SUITE_NAME
-grep_ok 'ERROR: bad message output string' $TEST_NAME.stderr
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-run
+suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
