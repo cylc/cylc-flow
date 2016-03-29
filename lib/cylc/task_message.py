@@ -20,7 +20,9 @@
 import os
 import sys
 from time import sleep
+import traceback
 from cylc.remote import remrun
+from cylc.suite_env import CylcSuiteEnv, CylcSuiteEnvLoadError
 from cylc.wallclock import get_current_time_string
 import cylc.flags
 
@@ -93,8 +95,7 @@ class TaskMessage(object):
         # 'scheduler' or 'submit', (or 'raw' if job script run manually)
         self.mode = self.env_map.get('CYLC_MODE', 'raw')
 
-        suite_run_dir = self.env_map.get('CYLC_SUITE_RUN_DIR', '.')
-        self.env_file_path = os.path.join(suite_run_dir, 'cylc-suite-env')
+        self.suite_run_dir = self.env_map.get('CYLC_SUITE_RUN_DIR', '.')
 
         self.utc = self.env_map.get('CYLC_UTC') == 'True'
         # Record the time the messaging system was called and append it
@@ -137,10 +138,14 @@ class TaskMessage(object):
         In case the suite was stopped and then restarted on another port.
 
         """
-        if os.access(self.env_file_path, os.F_OK | os.R_OK):
-            for line in open(self.env_file_path):
-                key, value = line.strip().split('=', 1)
-                self.env_map[key] = value
+        try:
+            suite_env = CylcSuiteEnv.load(self.suite, self.suite_run_dir)
+        except CylcSuiteEnvLoadError:
+            if cylc.flags.debug:
+                traceback.print_exc()
+        else:
+            for key, attr_key in suite_env.ATTRS.items():
+                self.env_map[key] = getattr(suite_env, attr_key)
         # set some instance variables
         for attr, key, default in (
                 ('task_id', 'CYLC_TASK_ID', '(CYLC_TASK_ID)'),

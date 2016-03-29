@@ -25,6 +25,7 @@ import shlex
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import user
+from cylc.suite_env import CylcSuiteEnv
 
 
 class RemoteJobHostInitError(Exception):
@@ -82,7 +83,7 @@ class RemoteJobHostManager(object):
 
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             suite_name, 'suite run directory')
-        sources = [os.path.join(suite_run_dir, 'cylc-suite-env')]
+        sources = [os.path.join(suite_run_dir, CylcSuiteEnv.BASE_NAME)]
         if 'CYLC_SUITE_DEF_PATH' in os.environ:
             sources.append(
                 os.path.join(os.getenv('CYLC_SUITE_DEF_PATH'), 'passphrase'))

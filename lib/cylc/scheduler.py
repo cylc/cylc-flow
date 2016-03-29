@@ -61,6 +61,7 @@ from cylc.passphrase import passphrase
 from cylc.regpath import RegPath
 from cylc.rundb import CylcSuiteDAO
 from cylc.RunEventHandler import RunHandler
+from cylc.suite_env import CylcSuiteEnv
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import suite_log
 from cylc.suite_state_dumping import SuiteStateDumper
@@ -118,7 +119,7 @@ class Scheduler(object):
 
         self.suite_env = {}
         self.suite_task_env = {}
-        self.suite_contact_env = {}
+        self.suite_env_dumper = None
 
         self.do_process_tasks = False
         self.do_update_state_summary = True
@@ -253,16 +254,12 @@ class Scheduler(object):
         self.state_dumper.set_cts(self.initial_point, self.final_point)
         self.configure_suite_environment()
 
-        # Write suite contact environment variables and link suite python
-        # 1) local file (os.path.expandvars is called automatically for local)
+        # Write suite contact environment file
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')
-        env_file_path = os.path.join(suite_run_dir, "cylc-suite-env")
-        with open(env_file_path, 'wb') as handle:
-            for key, value in self.suite_contact_env.items():
-                handle.write("%s=%s\n" % (key, value))
+        self.suite_env_dumper.dump(suite_run_dir)
 
-        # Copy local python modules from source to run directory.
+        # Copy local python modules from source to run directory
         for sub_dir in ["python", os.path.join("lib", "python")]:
             # TODO - eventually drop the deprecated "python" sub-dir.
             suite_py = os.path.join(self.suite_dir, sub_dir)
@@ -787,13 +784,8 @@ To see if a suite of the same name is still running, try:
 
         # Contact details for remote tasks, written to file on task
         # hosts because the details can change on restarting a suite.
-        self.suite_contact_env = {
-            'CYLC_SUITE_NAME': self.suite_env['CYLC_SUITE_NAME'],
-            'CYLC_SUITE_HOST': self.suite_env['CYLC_SUITE_HOST'],
-            'CYLC_SUITE_OWNER': self.suite_env['CYLC_SUITE_OWNER'],
-            'CYLC_SUITE_PORT': self.suite_env['CYLC_SUITE_PORT'],
-            'CYLC_VERSION': CYLC_VERSION
-        }
+        self.suite_env_dumper = CylcSuiteEnv(self.suite_env)
+        self.suite_env_dumper.suite_cylc_version = CYLC_VERSION
 
         # Set local values of variables that are potenitally task-specific
         # due to different directory paths on different task hosts. These

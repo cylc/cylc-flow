@@ -20,6 +20,7 @@ import os
 import shlex
 from subprocess import Popen, PIPE
 import sys
+import traceback
 from uuid import uuid4
 
 try:
@@ -38,6 +39,7 @@ from cylc.passphrase import get_passphrase, PassphraseError
 from cylc.registration import localdb
 from cylc.suite_host import is_remote_host
 from cylc.network.connection_validator import ConnValidator, OK_HASHES
+from cylc.suite_env import CylcSuiteEnv, CylcSuiteEnvLoadError
 
 
 class PyroServer(Pyro.core.ObjBase):
@@ -124,9 +126,28 @@ class PyroClient(object):
             "suite": self.suite,
             "owner": self.owner,
             "target": self.target_server_object}
-        port_file_path = os.path.join(
-            GLOBAL_CFG.get(['pyro', 'ports directory']), self.suite)
+
+        if ((self.host is None or self.port is None) and
+                'CYLC_SUITE_RUN_DIR' in os.environ):
+            # Looks like we are in a running task job, so we should be able to
+            # use "cylc-suite-env" file under the suite running directory
+            try:
+                suite_env = CylcSuiteEnv.load(
+                    self.suite, os.environ['CYLC_SUITE_RUN_DIR'])
+            except CylcSuiteEnvLoadError:
+                if cylc.flags.debug:
+                    traceback.print_exc()
+            else:
+                self.host = suite_env.suite_host
+                self.port = suite_env.suite_port
+                self.owner = suite_env.suite_owner
+                uri_data['host'] = suite_env.suite_host
+                uri_data['port'] = suite_env.suite_port
+                uri_data['owner'] = suite_env.suite_owner
+
         if self.host is None or self.port is None:
+            port_file_path = os.path.join(
+                GLOBAL_CFG.get(['pyro', 'ports directory']), self.suite)
             if is_remote_host(self.host) or is_remote_user(self.owner):
                 ssh_tmpl = str(GLOBAL_CFG.get_host_item(
                     'remote shell template', self.host, self.owner))
@@ -169,6 +190,7 @@ class PyroClient(object):
                 else:
                     uri_data["host"] = "localhost"
                 self.host = uri_data["host"]
+
         # Qualify the obj name with user and suite name (unnecessary but
         # can't change it until we break back-compat with older daemons).
         self.uri = (
