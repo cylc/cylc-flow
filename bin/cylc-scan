@@ -52,7 +52,7 @@ from cylc.network.port_scan import scan_all
 from cylc.CylcOptionParsers import cop
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_state import TaskState
-from cylc.owner import user
+from cylc.owner import USER
 
 
 NO_BOLD = False
@@ -192,7 +192,7 @@ def main():
                 patterns_owner = ['.*']
             else:
                 # Just the user's suites.
-                patterns_owner = [user]
+                patterns_owner = [USER]
     pattern_name = "(" + ")|(".join(patterns_name) + ")"
     pattern_owner = "(" + ")|(".join(patterns_owner) + ")"
 

@@ -52,7 +52,7 @@ from cylc.job_file import JOB_FILE
 from cylc.job_host import RemoteJobHostManager
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.task_outputs import TaskOutputs
-from cylc.owner import is_remote_user, user
+from cylc.owner import is_remote_user, USER
 from cylc.poll_timer import PollTimer
 from cylc.prerequisite import Prerequisite
 from cylc.suite_host import is_remote_host, get_suite_host
@@ -921,7 +921,7 @@ class TaskProxy(object):
         """Set up remote job logs retrieval."""
         if event not in ["failed", "retry", "succeeded"]:
             return
-        if (self.user_at_host in [user + '@localhost', 'localhost'] or
+        if (self.user_at_host in [USER + '@localhost', 'localhost'] or
                 not self._get_host_conf("retrieve job logs")):
             key2 = (self.JOB_LOGS_REGISTER, self.submit_num)
             if key2 in self.event_handler_try_states:
@@ -964,7 +964,7 @@ class TaskProxy(object):
                     "mail from",
                     "notifications@" + get_suite_host(),
                 ),
-                self._get_events_conf("mail to", user),  # mail_to
+                self._get_events_conf("mail to", USER),  # mail_to
                 self._get_events_conf("mail smtp"),  # mail_smtp
             ),
             self._get_events_conf("mail retry delays", []))

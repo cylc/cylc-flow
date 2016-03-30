@@ -21,7 +21,7 @@ from optparse import OptionParser, OptionConflictError
 import os
 import re
 import cylc.flags
-from cylc.owner import user
+from cylc.owner import USER
 from cylc.registration import RegistrationDB, RegistrationError
 from cylc.regpath import IllegalRegPathError
 
@@ -29,7 +29,7 @@ from cylc.regpath import IllegalRegPathError
 class db_optparse(object):
     def __init__(self, dbopt):
         # input is DB option spec from the cylc command line
-        self.owner = user
+        self.owner = USER
         self.location = None
         if dbopt:
             self.parse(dbopt)
@@ -141,7 +141,7 @@ Arguments:"""
                     "Other user account name. This results in "
                     "command reinvocation on the remote account."
                 ),
-                metavar="USER", default=user,
+                metavar="USER", default=USER,
                 action="store", dest="owner")
         except OptionConflictError:
             pass

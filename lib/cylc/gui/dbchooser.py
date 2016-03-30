@@ -31,6 +31,7 @@ from cylc.owner import is_remote_user
 from cylc.registration import RegistrationDB
 from cylc.regpath import RegPath
 from cylc.run_get_stdout import run_get_stdout
+from cylc.suite_host import is_remote_host
 
 
 class db_updater(threading.Thread):
@@ -52,7 +53,7 @@ class db_updater(threading.Thread):
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
 
-        self.running_choices = []
+        self.running_choices = None
         self.newtree = {}
 
         self.regd_choices = self.db.get_list(filtr)
@@ -63,49 +64,54 @@ class db_updater(threading.Thread):
         # self.update()
 
     def construct_newtree(self):
-        # construct self.newtree[one][two]...[nnn] = [auth, descr, dir ]
-        #self.running_choices_changed()
-        auths = {}
-        for suite, auth in self.running_choices:
-            auths[suite] = auth
+        """construct self.newtree[one][two]...[nnn] = [auth, descr, dir ]"""
+        regd_choices = {}
+        for suite, suite_dir, descr in sorted(self.regd_choices):
+            regd_choices[suite] = (suite, suite_dir, descr)
 
         self.newtree = {}
-        for suite, suite_dir, descr in self.regd_choices:
-            suite_dir = re.sub('^' + os.environ['HOME'], '~', suite_dir)
-            if suite in auths:
-                auth = str(auths[suite])
-                del auths[suite]
-            else:
-                auth = '-'
-            nest2 = self.newtree
-            regp = suite.split(RegPath.delimiter)
-            for key in regp[:-1]:
-                if key not in nest2:
-                    nest2[key] = {}
-                nest2 = nest2[key]
-            nest2[regp[-1]] = [auth, descr, suite_dir]
 
-        for suite, auth in auths.items():
+        for suite, auth in self.running_choices:
+            if suite in regd_choices:
+                if is_remote_host(auth.split(':', 1)[0]):
+                    descr, suite_dir = (None, None)
+                else:
+                    # local suite
+                    _, suite_dir, descr = regd_choices[suite]
+                    del regd_choices[suite]
             nest2 = self.newtree
             regp = suite.split(RegPath.delimiter)
             for key in regp[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
                 nest2 = nest2[key]
-            nest2[regp[-1]] = [auth, '-', '-']
+            nest2[(regp[-1], suite, auth)] = [auth, descr, suite_dir]
+
+        for suite, suite_dir, descr in regd_choices.values():
+            suite_dir = re.sub('^' + os.environ['HOME'], '~', suite_dir)
+            nest2 = self.newtree
+            regp = suite.split(RegPath.delimiter)
+            for key in regp[:-1]:
+                if key not in nest2:
+                    nest2[key] = {}
+                nest2 = nest2[key]
+            nest2[(regp[-1], suite, '-')] = ['-', descr, suite_dir]
 
     def build_treestore(self, data, piter=None):
-        for item, value in sorted(data.items()):
-            value = data[item]
+        for key, value in sorted(data.items()):
+            if isinstance(key, tuple):
+                item = key[0]
+            else:
+                item = key
             if isinstance(value, dict):
                 # final three items are colours
-                iter = self.regd_treestore.append(
+                iter_ = self.regd_treestore.append(
                     piter, [item, None, None, None, None, None, None])
-                self.build_treestore(value, iter)
+                self.build_treestore(value, iter_)
             else:
-                state, descr, dir = value
-                iter = self.regd_treestore.append(
-                    piter, [item, state, descr, dir, None, None, None])
+                state, descr, suite_dir = value
+                self.regd_treestore.append(
+                    piter, [item, state, descr, suite_dir, None, None, None])
 
     def update(self):
         # print "Updating list of available suites"
@@ -197,26 +203,30 @@ class db_updater(threading.Thread):
             iter = None
 
         # add new items at this level
-        for item in new_items:
+        for key in sorted(new_items):
+            if isinstance(key, tuple):
+                item = key[0]
+            else:
+                item = key
             if item not in old_items:
                 # new data wasn't in old - add it
-                if isinstance(new[item], dict):
+                if isinstance(new[key], dict):
                     xiter = ts.append(
                         piter, [item] + [None, None, None, None, None, None])
-                    self.build_treestore(new[item], xiter)
+                    self.build_treestore(new[key], xiter)
                 else:
-                    state, descr, dir = new[item]
+                    state, descr, dir = new[key]
                     yiter = ts.append(
-                        piter, [item] + new[item] + list(self.statecol(state)))
+                        piter, [item] + new[key] + list(self.statecol(state)))
             else:
                 # new data was already in old
-                if isinstance(new[item], dict):
+                if isinstance(new[key], dict):
                     # check lower levels
-                    niter = my_get_iter(item)
+                    niter = my_get_iter(key)
                     if niter:
                         chiter = ts.iter_children(niter)
                         if chiter:
-                            self.update_treestore(new[item], chiter)
+                            self.update_treestore(new[key], chiter)
 
     def run(self):
         if cylc.flags.debug:
@@ -242,9 +252,9 @@ class db_updater(threading.Thread):
             else:
                 name = suite_identity['name']
                 owner = suite_identity['owner']
-            auth = "%s:%d" % (host, port)
             if is_remote_user(owner):
-                auth = "%s@%s" % (owner, auth)
+                continue  # current user only
+            auth = "%s:%d" % (host, port)
             choices.append((name, auth))
         choices.sort()
         if choices != self.running_choices:

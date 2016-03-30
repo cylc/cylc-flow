@@ -36,7 +36,7 @@ from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network.port_scan import scan_all
-from cylc.owner import user
+from cylc.owner import USER
 from cylc.version import CYLC_VERSION
 from cylc.task_state import TaskState
 
@@ -89,7 +89,7 @@ def get_hosts_suites_info(hosts, timeout=None, owner=None):
 def get_unscannable_suite_info(host, suite, owner=None):
     """Return a map like cylc scan --raw for states and last update time."""
     if owner is None:
-        owner = user
+        owner = USER
     command = ["cylc", "cat-state", "--host=" + host, "--user=" + owner]
     if cylc.flags.debug:
         stderr = sys.stderr
@@ -314,7 +314,7 @@ def launch_about_dialog(program_name, hosts):
 def launch_gcylc(host, suite, owner=None):
     """Launch gcylc for a given suite and host."""
     if owner is None:
-        owner = user
+        owner = USER
     args = ["--host=" + host, "--user=" + owner, suite]
 
     # Get version of suite
@@ -414,7 +414,7 @@ class ScanApp(object):
             hosts = GLOBAL_CFG.get(["suite host scanning", "hosts"])
         self.hosts = hosts
         if owner is None:
-            owner = user
+            owner = USER
         self.owner = owner
         self.window = gtk.Window()
         self.window.set_title("cylc gscan")
@@ -745,7 +745,7 @@ class BaseScanUpdater(threading.Thread):
     def __init__(self, hosts, owner=None, poll_interval=None):
         self.hosts = hosts
         if owner is None:
-            owner = user
+            owner = USER
         if poll_interval is None:
             poll_interval = self.POLL_INTERVAL
         self.poll_interval = poll_interval
@@ -826,7 +826,7 @@ class BaseScanTimeoutUpdater(object):
     def __init__(self, hosts, owner=None, poll_interval=None):
         self.hosts = hosts
         if owner is None:
-            owner = user
+            owner = USER
         if poll_interval is None:
             poll_interval = self.POLL_INTERVAL
         self.poll_interval = poll_interval

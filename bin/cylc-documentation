@@ -48,7 +48,7 @@ import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.run_get_stdout import run_get_stdout
 from cylc.suite_host import get_hostname
-from cylc.owner import user
+from cylc.owner import USER
 
 
 def main():
@@ -74,7 +74,7 @@ def main():
         "--user",
         help="Other user account name. This results in "
              "command reinvocation on the remote account.",
-        metavar="USER", default=user, action="store", dest="owner")
+        metavar="USER", default=USER, action="store", dest="owner")
 
     parser.add_option(
         "--host",

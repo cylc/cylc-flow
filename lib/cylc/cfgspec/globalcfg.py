@@ -33,7 +33,7 @@ from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
 from isodatetime.data import Calendar
-from cylc.owner import user
+from cylc.owner import USER
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
@@ -448,7 +448,7 @@ class GlobalConfig(config):
             # if no host is given the caller is asking about localhost
             host = 'localhost'
         if not owner:
-            owner = user
+            owner = USER
 
         # is there a matching host section?
         host_key = None
@@ -473,7 +473,7 @@ class GlobalConfig(config):
             modify_dirs = True
 
         if value and ('directory' in item) and (
-                modify_dirs or owner != user or replace):
+                modify_dirs or owner != USER or replace):
             # replace local home dir with $HOME for evaluation on other host
             value = value.replace(os.environ['HOME'], '$HOME')
 
