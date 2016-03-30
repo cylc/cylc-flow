@@ -15,7 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc refresh" on a running suite, with a title change to "suite.rc".
+# Test "cylc refresh" on a running suite, with "title" changed in "suite.rc".
+# It used to nuke the passphrase before https://github.com/cylc/cylc/pull/1774
+# which would cause all subsequent clients (that require authentication) to
+# fail. This test ensures that the problem will not happen again.
 . "$(dirname "$0")/test_header"
 
 set_test_number 3

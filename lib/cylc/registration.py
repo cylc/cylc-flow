@@ -63,7 +63,7 @@ class RegistrationDB(object):
         return suites
 
     def register(self, name, path):
-        """Register a suite, its source patha nd its title."""
+        """Register a suite, its source path and its title."""
         name = RegPath(name).get()
         for suite in self.list_all_suites():
             if name == suite:
