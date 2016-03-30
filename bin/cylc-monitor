@@ -35,7 +35,6 @@ from time import sleep
 from parsec.OrderedDict import OrderedDict
 from cylc.CylcOptionParsers import cop
 from cylc.task_state import TaskState
-from cylc.registration import localdb
 from cylc.network.suite_state import (
     StateSummaryClient, SuiteStillInitialisingError)
 from cylc.wallclock import get_time_string_from_unix_time

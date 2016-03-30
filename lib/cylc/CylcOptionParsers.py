@@ -22,7 +22,7 @@ import os
 import re
 import cylc.flags
 from cylc.owner import user
-from cylc.registration import localdb, RegistrationError
+from cylc.registration import RegistrationDB, RegistrationError
 from cylc.regpath import IllegalRegPathError
 
 
@@ -337,7 +337,7 @@ Arguments:"""
         If arg is a file, suite name is the name of its container directory.
 
         """
-        reg_db = localdb(options.db)
+        reg_db = RegistrationDB(options.db)
         try:
             path = reg_db.get_suiterc(arg)
             name = arg

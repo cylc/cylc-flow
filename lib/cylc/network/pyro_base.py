@@ -36,7 +36,7 @@ from cylc.network.client_reporter import PyroClientReporter
 from cylc.network.connection_validator import ConnValidator
 from cylc.owner import is_remote_user, user, host, user_at_host
 from cylc.passphrase import get_passphrase, PassphraseError
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 from cylc.suite_host import is_remote_host
 from cylc.network.connection_validator import ConnValidator, OK_HASHES
 from cylc.suite_env import CylcSuiteEnv, CylcSuiteEnvLoadError
@@ -75,7 +75,8 @@ class PyroClient(object):
         if print_uuid:
             print >> sys.stderr, '%s' % self.my_uuid
         try:
-            self.pphrase = get_passphrase(suite, owner, host, localdb(db))
+            self.pphrase = get_passphrase(
+                suite, owner, host, RegistrationDB(db))
         except PassphraseError:
             # No passphrase: public access client.
             self.pphrase = None

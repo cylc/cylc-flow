@@ -28,7 +28,7 @@ if remrun().execute():
     sys.exit(0)
 
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 import cylc.flags
 
 
@@ -39,7 +39,7 @@ def main():
     arg_from = args[0]
     arg_to = args[1]
 
-    db = localdb(file=options.db)
+    db = RegistrationDB(options.db)
     db.reregister(arg_from, arg_to)
 
 

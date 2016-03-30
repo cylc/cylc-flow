@@ -32,7 +32,7 @@ from cylc.network.connection_validator import ConnValidator, SCAN_HASH
 from cylc.network.suite_state import SuiteStillInitialisingError
 from cylc.owner import user
 from cylc.passphrase import passphrase, get_passphrase, PassphraseError
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 from cylc.suite_host import get_hostname, is_remote_host
 
 passphrases = []
@@ -45,7 +45,7 @@ def load_passphrases(db):
         return passphrases
 
     # Find passphrases in all registered suite directories.
-    reg = localdb(db)
+    reg = RegistrationDB(db)
     reg_suites = reg.get_list()
     for item in reg_suites:
         rg = item[0]
@@ -157,7 +157,8 @@ def scan(host=get_hostname(), db=None, pyro_timeout=None):
                 # This suite keeps its state info private.
                 # Try again with the passphrase if I have it.
                 try:
-                    pphrase = get_passphrase(name, owner, host, localdb(db))
+                    pphrase = get_passphrase(
+                        name, owner, host, RegistrationDB(db))
                 except PassphraseError:
                     if cylc.flags.debug:
                         print '    (no passphrase)'

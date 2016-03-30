@@ -37,7 +37,7 @@ from optparse import OptionParser
 import pickle
 
 import cylc.flags
-from cylc.registration import localdb, RegistrationError
+from cylc.registration import RegistrationDB, RegistrationError
 
 
 def main():
@@ -65,7 +65,7 @@ def main():
     olditems = pickle.load(open(oldpath, 'r'))
 
     # new db
-    db = localdb(file=newpath)
+    db = RegistrationDB(newpath)
     for suite, (dir, title) in olditems.items():
         try:
             db.register(suite, dir)

@@ -51,7 +51,7 @@ import cylc.flags
 from cylc.CylcOptionParsers import cop
 from cylc.scheduler import Scheduler
 from cylc.run import main
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 from cylc.task_proxy import TaskProxySequenceBoundsError
 from cylc.get_task_proxy import get_task_proxy
 
@@ -101,7 +101,7 @@ class start(Scheduler):
     def parse_commandline(self):
         (self.options, self.args) = self.parser.parse_args()
         self.suite = self.args[0]
-        self.suiterc = localdb(self.options.db).get_suiterc(self.suite)
+        self.suiterc = RegistrationDB(self.options.db).get_suiterc(self.suite)
         self.suite_dir = os.path.dirname(self.suiterc)
 
         # For user-defined job submission methods:

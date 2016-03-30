@@ -37,7 +37,7 @@ import re
 
 import cylc.flags
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 from cylc.print_tree import print_tree
 from cylc.regpath import RegPath
 
@@ -94,7 +94,7 @@ def main():
     else:
         parser.error("Wrong number of arguments.")
 
-    db = localdb(file=options.db)
+    db = RegistrationDB(options.db)
     allsuites = db.get_list(regfilter)
     if options.fail and len(allsuites) == 0:
         raise SystemExit('ERROR: no suites matched.')

@@ -24,7 +24,7 @@ Here's an easy way to move to a suite directory:
 
 import sys
 from cylc.CylcOptionParsers import cop
-from cylc.registration import localdb
+from cylc.registration import RegistrationDB
 import cylc.flags
 
 from cylc.remote import remrun
@@ -38,7 +38,7 @@ def main():
     (options, args) = parser.parse_args()
 
     reg = args[0]
-    db = localdb(file=options.db)
+    db = RegistrationDB(options.db)
     print db.get_suitedir(reg)
 
 
