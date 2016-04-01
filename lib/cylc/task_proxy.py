@@ -175,7 +175,7 @@ class TaskProxy(object):
     JOB_LOGS_REGISTER = "job-logs-register"
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     JOB_POLL = "job-poll"
-    JOB_SUBMIT = SuiteProcPool.JOB_SUBMIT
+    JOB_SUBMIT = "job-submit"
     MANAGE_JOB_LOGS_TRY_DELAYS = (0, 30, 180)  # PT0S, PT30S, PT3M
     MESSAGE_SUFFIX_RE = re.compile(
         ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
@@ -976,9 +976,7 @@ class TaskProxy(object):
             'handler retry delays',
             self._get_host_conf("task event handler retry delays", []))
         for i, handler in enumerate(handlers):
-            key1 = (
-                "%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i),
-                event)
+            key1 = ("%s-%02d" % (self.CUSTOM_EVENT_HANDLER, i), event)
             if (key1, self.submit_num) in self.event_handler_try_states or (
                     only_list and i not in only_list):
                 continue

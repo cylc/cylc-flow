@@ -78,6 +78,12 @@ SPEC = {
     'cylc': {
         'UTC mode': vdr(vtype='boolean', default=False),
         'event hooks': {
+            'handlers': vdr(vtype='string_list', default=[]),
+            'handler events': vdr(vtype='string_list', default=[]),
+            'mail events': vdr(vtype='string_list', default=[]),
+            'mail from': vdr(vtype='string'),
+            'mail smtp': vdr(vtype='string'),
+            'mail to': vdr(vtype='string'),
             'startup handler': vdr(vtype='string_list', default=[]),
             'timeout handler': vdr(vtype='string_list', default=[]),
             'shutdown handler': vdr(vtype='string_list', default=[]),

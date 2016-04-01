@@ -200,32 +200,24 @@ SPEC = {
             '__MANY__': vdr(vtype='string'),
         },
         'event hooks': {
-            'startup handler': vdr(
-                vtype='string_list',
-                default=GLOBAL_CFG.get([
-                    'cylc', 'event hooks', 'startup handler'])),
-            'timeout handler': vdr(
-                vtype='string_list',
-                default=GLOBAL_CFG.get([
-                    'cylc', 'event hooks', 'timeout handler'])),
-            'shutdown handler': vdr(
-                vtype='string_list',
-                default=GLOBAL_CFG.get([
-                    'cylc', 'event hooks', 'shutdown handler'])),
-            'timeout': vdr(
-                vtype='interval_minutes',
-                default=GLOBAL_CFG.get(['cylc', 'event hooks', 'timeout'])),
-            'reset timer': vdr(vtype='boolean', default=True),
+            'handlers': vdr(vtype='string_list'),
+            'handler events': vdr(vtype='string_list'),
+            'startup handler': vdr(vtype='string_list'),
+            'timeout handler': vdr(vtype='string_list'),
+            'shutdown handler': vdr(vtype='string_list'),
+            'timeout': vdr(vtype='interval_minutes'),
+            'reset timer': vdr(vtype='boolean'),
             'abort if startup handler fails': vdr(
                 vtype='boolean', default=False),
             'abort if shutdown handler fails': vdr(
                 vtype='boolean', default=False),
             'abort if timeout handler fails': vdr(
                 vtype='boolean', default=False),
-            'abort on timeout': vdr(
-                vtype='boolean',
-                default=GLOBAL_CFG.get([
-                    'cylc', 'event hooks', 'abort on timeout'])),
+            'abort on timeout': vdr(vtype='boolean'),
+            'mail events': vdr(vtype='string_list'),
+            'mail from': vdr(vtype='string'),
+            'mail smtp': vdr(vtype='string'),
+            'mail to': vdr(vtype='string'),
         },
         'simulation mode': {
             'disable suite event hooks': vdr(vtype='boolean', default=True),

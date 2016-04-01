@@ -20,6 +20,7 @@
 from copy import copy, deepcopy
 import logging
 import os
+from pipes import quote
 from Queue import Empty
 from shutil import copy as copyfile, copytree, rmtree
 import signal
@@ -43,7 +44,7 @@ import cylc.flags
 from cylc.job_file import JOB_FILE
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.LogDiagnosis import LogSpec
-from cylc.mp_pool import SuiteProcPool
+from cylc.mp_pool import SuiteProcContext, SuiteProcPool
 from cylc.network import (
     PYRO_SUITEID_OBJ_NAME, PYRO_STATE_OBJ_NAME,
     PYRO_CMD_OBJ_NAME, PYRO_BCAST_OBJ_NAME, PYRO_EXT_TRIG_OBJ_NAME,
@@ -60,7 +61,6 @@ from cylc.owner import user
 from cylc.passphrase import passphrase
 from cylc.regpath import RegPath
 from cylc.rundb import CylcSuiteDAO
-from cylc.RunEventHandler import RunHandler
 from cylc.suite_env import CylcSuiteEnv
 from cylc.suite_host import get_suite_host
 from cylc.suite_logging import suite_log
@@ -104,10 +104,16 @@ class PyroRequestHandler(threading.Thread):
 class Scheduler(object):
     """Cylc scheduler server."""
 
+    EVENT_STARTUP = 'startup'
+    EVENT_SHUTDOWN = 'shutdown'
+    EVENT_TIMEOUT = 'timeout'
+    SUITE_EVENT_HANDLER = 'suite-event-handler'
+    SUITE_EVENT_MAIL = 'suite-event-mail'
     FS_CHECK_PERIOD = 600.0  # 600 seconds
 
     def __init__(self, is_restart=False):
 
+        self.suite = None
         self.owner = user
         self.host = get_suite_host()
         self.port = None
@@ -223,7 +229,6 @@ class Scheduler(object):
                 raise SchedulerError(
                     'ERROR: this suite requires the %s run mode' % reqmode)
 
-        # TODO - self.config.fdir can be used instead of self.suite_dir
         self.reflogfile = os.path.join(self.config.fdir, 'reference.log')
 
         if self.gen_reference_log or self.reference_test_mode:
@@ -282,7 +287,7 @@ class Scheduler(object):
                 self.log.error(str(exc))
 
         self.already_timed_out = False
-        if self.config.cfg['cylc']['event hooks']['timeout']:
+        if self._get_events_conf(self.EVENT_TIMEOUT):
             self.set_suite_timer()
 
         self.nudge_timer_start = None
@@ -529,15 +534,15 @@ class Scheduler(object):
         self.pool.set_runahead(*args)
 
     def set_suite_timer(self, reset=False):
+        """Set suite's timeout timer."""
         self.suite_timer_timeout = time.time() + (
-            self.config.cfg['cylc']['event hooks']['timeout']
+            self._get_events_conf(self.EVENT_TIMEOUT)
         )
         if cylc.flags.verbose:
             print "%s suite timer starts NOW: %s" % (
                 get_seconds_as_interval_string(
-                    self.config.cfg['cylc']['event hooks']['timeout']),
-                get_current_time_string()
-            )
+                    self._get_events_conf(self.EVENT_TIMEOUT)),
+                get_current_time_string())
 
     def parse_commandline(self):
         if self.options.run_mode not in [
@@ -576,7 +581,8 @@ class Scheduler(object):
                 (
                     r"""
 Is suite already running on '%(host)s:%(port)s'?
-(If not, kill off any left over processes and delete the port file.)
+If not, kill off any left over processes and delete the port file at:
+ * %(port_file)s
 
 To see if a suite of the same name is still running, try:
  * cylc scan, or
@@ -633,7 +639,7 @@ To see if a suite of the same name is still running, try:
         try:
             handle = open(file_name, "wb")
         except IOError as exc:
-            print str(exc)
+            sys.stderr.write(str(exc) + "\n")
             raise SchedulerError("Unable to log the loaded suite definition")
         handle.write("# cylc-version: %s\n" % CYLC_VERSION)
         printcfg(self.config.cfg, handle=handle)
@@ -663,9 +669,9 @@ To see if a suite of the same name is still running, try:
             self.final_point.standardise()
 
         if (not self.initial_point and not self.is_restart):
-            print >> sys.stderr, (
+            sys.stderr.write(
                 'WARNING: No initial cycle point provided ' +
-                ' - no cycling tasks will be loaded.')
+                ' - no cycling tasks will be loaded.\n')
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
@@ -697,7 +703,7 @@ To see if a suite of the same name is still running, try:
                 else:
                     try:
                         os.unlink(pri_db_path)
-                    except:
+                    except OSError:
                         pass
             # Ensure that:
             # * public database is in sync with private database
@@ -827,6 +833,7 @@ To see if a suite of the same name is still running, try:
             os.environ[var] = val
 
     def configure_reftest(self, recon=False):
+        """Configure the reference test."""
         if self.gen_reference_log:
             self.config.cfg['cylc']['log resolved dependencies'] = True
 
@@ -836,11 +843,10 @@ To see if a suite of the same name is still running, try:
             if req and req != self.run_mode:
                 raise SchedulerError(
                     'ERROR: suite allows only ' + req + ' reference tests')
-            handlers = self.config.cfg[
-                'cylc']['event hooks']['shutdown handler']
+            handlers = self._get_events_conf('shutdown handler')
             if handlers:
-                print >> sys.stderr, (
-                    'WARNING: replacing shutdown handlers for reference test')
+                sys.stderr.write(
+                    'WARNING: shutdown handlers replaced by reference test\n')
             self.config.cfg['cylc']['event hooks']['shutdown handler'] = [
                 rtc['suite shutdown event handler']]
             self.config.cfg['cylc']['log resolved dependencies'] = True
@@ -862,37 +868,108 @@ To see if a suite of the same name is still running, try:
                 raise SchedulerError(
                     'ERROR: timeout not defined for %s reference tests' % (
                         self.run_mode))
-            self.config.cfg['cylc']['event hooks']['timeout'] = timeout
+            self.config.cfg['cylc']['event hooks'][self.EVENT_TIMEOUT] = (
+                timeout)
             self.config.cfg['cylc']['event hooks']['reset timer'] = False
 
-    def run_event_handlers(self, name, fg, msg):
-        if (self.run_mode != 'live' or
-            (self.run_mode == 'simulation' and
-                self.config.cfg[
-                    'cylc']['simulation mode']['disable suite event hooks']) or
-            (self.run_mode == 'dummy' and
-                self.config.cfg[
-                    'cylc']['dummy mode']['disable suite event hooks'])):
+    def run_event_handlers(self, event, message):
+        """Run a suite event handler."""
+        # Run suite event hooks in simulation and dummy mode ONLY if enabled
+        for mode_name in ['simulation', 'dummy']:
+            key = mode_name + ' mode'
+            if (self.run_mode == mode_name and
+                    self.config.cfg['cylc'][key]['disable suite event hooks']):
+                return
+
+        # Email notification
+        if event in self._get_events_conf('mail events', []):
+            # SMTP server
+            env = dict(os.environ)
+            mail_smtp = self._get_events_conf('mail smtp')
+            if mail_smtp:
+                env['smtp'] = mail_smtp
+            subject = '[suite %(event)s] %(suite)s' % {
+                'suite': self.suite, 'event': event}
+            ctx = SuiteProcContext(
+                (self.SUITE_EVENT_HANDLER, event),
+                [
+                    'mail',
+                    '-s', subject,
+                    '-r', self._get_events_conf(
+                        'mail from', 'notifications@' + get_suite_host()),
+                    self._get_events_conf('mail to', user),
+                ],
+                env=env,
+                stdin_str=subject + '\n')
+            if SuiteProcPool.get_inst().is_closed():
+                # Run command in foreground if process pool is closed
+                SuiteProcPool.get_inst().run_command(ctx)
+                self._run_event_handlers_callback(ctx)
+            else:
+                # Run command using process pool otherwise
+                SuiteProcPool.get_inst().put_command(
+                    ctx, self._run_event_mail_callback)
+
+        # Look for event handlers
+        # 1. Handlers for specific event
+        # 2. General handlers
+        handlers = self._get_events_conf('%s handler' % event)
+        if (not handlers and
+                event in self._get_events_conf('handler events', [])):
+            handlers = self._get_events_conf('handlers')
+        if not handlers:
             return
 
-        handlers = self.config.cfg['cylc']['event hooks'][name + ' handler']
-        if handlers:
-            for handler in handlers:
-                try:
-                    RunHandler(name, handler, self.suite, msg=msg, fg=fg)
-                except Exception, x:
-                    # Note: test suites depends on this message:
-                    sys.stderr.write(
-                        'ERROR: %s EVENT HANDLER FAILED\n' % name)
-                    if name == 'shutdown' and self.reference_test_mode:
-                        sys.stderr.write(
-                            'ERROR: SUITE REFERENCE TEST FAILED\n')
-                    raise SchedulerError(x)
-                else:
-                    if name == 'shutdown' and self.reference_test_mode:
-                        # TODO - this isn't true, it just means the
-                        # shutdown handler run successfully:
-                        print 'SUITE REFERENCE TEST PASSED'
+        for i, handler in enumerate(handlers):
+            cmd_key = ('%s-%02d' % (self.SUITE_EVENT_HANDLER, i), event)
+            # Handler command may be a string for substitution
+            cmd = handler % {
+                'event': quote(event),
+                'suite': quote(self.suite),
+                'message': quote(message),
+            }
+            if cmd == handler:
+                # Nothing substituted, assume classic interface
+                cmd = "%s '%s' '%s' '%s'" % (
+                    handler, event, self.suite, message)
+            ctx = SuiteProcContext(
+                cmd_key, cmd, env=dict(os.environ), shell=True)
+            abort_on_error = self._get_events_conf(
+                'abort if %s handler fails' % event)
+            if abort_on_error or SuiteProcPool.get_inst().is_closed():
+                # Run command in foreground if abort on failure is set or if
+                # process pool is closed
+                SuiteProcPool.get_inst().run_command(ctx)
+                self._run_event_handlers_callback(
+                    ctx, abort_on_error=abort_on_error)
+            else:
+                # Run command using process pool otherwise
+                SuiteProcPool.get_inst().put_command(
+                    ctx, self._run_event_handlers_callback)
+
+    def _run_event_handlers_callback(self, ctx, abort_on_error=False):
+        """Callback on completion of a suite event handler."""
+        if ctx.ret_code:
+            self.log.warning(str(ctx))
+            sys.stderr.write(
+                'ERROR: %s EVENT HANDLER FAILED\n' % ctx.cmd_key[1])
+            if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
+                    self.reference_test_mode):
+                sys.stderr.write('ERROR: SUITE REFERENCE TEST FAILED\n')
+            if abort_on_error:
+                raise SchedulerError(ctx.err)
+        else:
+            self.log.info(str(ctx))
+            if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
+                    self.reference_test_mode):
+                sys.stdout.write('SUITE REFERENCE TEST PASSED\n')
+
+    def _run_event_mail_callback(self, ctx):
+        """Callback the mail command for notification of a suite event."""
+        if ctx.ret_code:
+            self.log.warning(str(ctx))
+        else:
+            self.log.info(str(ctx))
 
     def run(self):
 
@@ -903,9 +980,7 @@ To see if a suite of the same name is still running, try:
             self.log.info("Held on start-up (no tasks will be submitted)")
             self.hold_suite()
 
-        abort = self.config.cfg[
-            'cylc']['event hooks']['abort if startup handler fails']
-        self.run_event_handlers('startup', abort, 'suite starting')
+        self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
 
         self.log_memory("scheduler.py: begin run while loop")
         proc_pool = SuiteProcPool.get_inst()
@@ -994,7 +1069,7 @@ To see if a suite of the same name is still running, try:
                     self._copy_pri_db_to_pub_db()
                 except (IOError, OSError) as exc:
                     # Something has to be very wrong here, so stop the suite
-                    self.shutdown(str(err))
+                    self.shutdown(str(exc))
                     raise
                 else:
                     # No longer stuck
@@ -1012,7 +1087,7 @@ To see if a suite of the same name is still running, try:
                 self.update_state_summary()
                 self.state_dumper.dump()
 
-            if self.config.cfg['cylc']['event hooks']['timeout']:
+            if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.check_suite_timer()
 
             if self.config.cfg['cylc']['abort if any task fails']:
@@ -1026,7 +1101,7 @@ To see if a suite of the same name is still running, try:
                     for itask in self.pool.get_failed_tasks():
                         if (itask.identity not in
                                 self.ref_test_allowed_failures):
-                            print >>sys.stderr, itask.identity
+                            sys.stderr.write(str(itask.identity) + "\n")
                             raise SchedulerError(
                                 'Failed task is not in allowed failures list')
 
@@ -1092,13 +1167,11 @@ To see if a suite of the same name is still running, try:
             self.already_timed_out = True
             message = 'suite timed out after %s' % (
                 get_seconds_as_interval_string(
-                    self.config.cfg['cylc']['event hooks']['timeout'])
+                    self._get_events_conf(self.EVENT_TIMEOUT))
             )
             self.log.warning(message)
-            abort = self.config.cfg[
-                'cylc']['event hooks']['abort if timeout handler fails']
-            self.run_event_handlers('timeout', abort, message)
-            if self.config.cfg['cylc']['event hooks']['abort on timeout']:
+            self.run_event_handlers(self.EVENT_TIMEOUT, message)
+            if self._get_events_conf('abort on timeout'):
                 raise SchedulerError('Abort on suite timeout is set')
 
     def process_tasks(self):
@@ -1114,8 +1187,8 @@ To see if a suite of the same name is still running, try:
             process = True
             cylc.flags.pflag = False  # reset
             # New suite activity, so reset the suite timer.
-            if (self.config.cfg['cylc']['event hooks']['timeout'] and
-                    self.config.cfg['cylc']['event hooks']['reset timer']):
+            if (self._get_events_conf(self.EVENT_TIMEOUT) and
+                    self._get_events_conf('reset timer')):
                 self.set_suite_timer()
 
         if self.pool.waiting_tasks_ready():
@@ -1181,7 +1254,6 @@ To see if a suite of the same name is still running, try:
                     # (see comments in the state dumping module)
                     # ignore errors here in order to shut down cleanly
                     self.log.warning('Final state dump failed: ' + str(exc))
-                    pass
 
         if self.request_handler:
             self.request_handler.quit = True
@@ -1213,9 +1285,7 @@ To see if a suite of the same name is still running, try:
 
         if getattr(self, "config", None) is not None:
             # run shutdown handlers
-            abort = self.config.cfg[
-                'cylc']['event hooks']['abort if shutdown handler fails']
-            self.run_event_handlers('shutdown', abort, reason)
+            self.run_event_handlers(self.EVENT_SHUTDOWN, reason)
 
         print "DONE"  # main thread exit
 
@@ -1243,10 +1313,10 @@ To see if a suite of the same name is still running, try:
 
     def stop_task_done(self):
         """Return True if stop task has succeeded."""
-        id = self.stop_task
-        if (id is None or not self.pool.task_succeeded(id)):
+        id_ = self.stop_task
+        if (id_ is None or not self.pool.task_succeeded(id_)):
             return False
-        self.log.info("Stop task " + id + " finished")
+        self.log.info("Stop task " + id_ + " finished")
         return True
 
     def hold_suite(self, point=None):
@@ -1349,7 +1419,7 @@ To see if a suite of the same name is still running, try:
                 self.pri_dao.db_file_name, temp_pub_db_file_name)
             os.rename(temp_pub_db_file_name, self.pub_dao.db_file_name)
             os.chmod(self.pub_dao.db_file_name, st_mode)
-        except (IOError, OSError) as exc:
+        except (IOError, OSError):
             if temp_pub_db_file_name:
                 os.unlink(temp_pub_db_file_name)
             raise
@@ -1399,3 +1469,17 @@ To see if a suite of the same name is still running, try:
             self.log.warning("Cannot get CPU % statistics: %s" % e)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
+
+    def _get_events_conf(self, key, default=None):
+        """Return a named event hooks configuration."""
+        for getter in [
+                self.config.cfg['cylc']['event hooks'],
+                GLOBAL_CFG.get(['cylc', 'event hooks'])]:
+            try:
+                value = getter[key]
+            except KeyError:
+                pass
+            else:
+                if value is not None:
+                    return value
+        return default

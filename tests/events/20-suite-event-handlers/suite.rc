@@ -1,0 +1,20 @@
+#!jinja2
+
+title=Suite Event Mail
+
+[cylc]
+    [[event hooks]]
+{% if GLOBALCFG is not defined %}
+        handlers = echo 'Your %(suite)s suite has a %(event)s event.'
+        handler events = startup
+{% endif %}{# not GLOBALCFG is not defined #}
+    [[reference test]]
+        live mode suite timeout=PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph=t1
+
+[runtime]
+    [[t1]]
+        script=true
