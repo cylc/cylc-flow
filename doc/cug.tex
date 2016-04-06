@@ -876,10 +876,14 @@ and~\ref{SuiteStorageEtc}).
 
 A suite-specific passphrase file is automatically generated in the suite
 definition directory at registration time. It is loaded by the suite daemon at
-start-up and used to authenticate all client connections.  Clients on the suite
+start-up and used to authenticate all client connections. Clients on the suite
 host account automatically load the passphrase from the suite definition
-directory, but on other accounts, including task host accounts, it has to be
-installed manually.
+directory. The passphrase is also installed automatically on the suite run
+directory on hosts for running task jobs. On other accounts that do not share
+the same HOME directory with the suite host account and does not have
+non-interactive SSH access to the suite host account, it is possible to install
+the passphrase manually. (A client will attempt to install the passphrase
+automatically via non-interactive SSH.)
 
 Possession of a suite passphrase gives full control and full read-access to the
 suite.  Without it, client access is determined by the suite's public access
@@ -1332,9 +1336,6 @@ is used.
 
 \item Cylc must be installed on the task host. Other software dependencies like
 graphviz and Jinja2 are not required there.
-
-\item The suite passphrase must be installed on the remote account,
-to allow remote tasks to authenticate with the suite.
 
 \item Any files needed by a remote task must be installed on the task
 host. In this example there is nothing to install because the
@@ -2095,7 +2096,7 @@ progress without full shell access to their account. To do this, you
 will need to copy their suite passphrase to
 \lstset{language=transcript}
 \begin{lstlisting}
-    $HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase
+    $HOME/.cylc/SUITE_OWNER@SUITE_HOST/SUITE_NAME/passphrase
 \end{lstlisting}
 (use of the host and owner names is optional here - see~\ref{passphrases}) 
 {\em and} also retrieve the port number of the running suite from,
@@ -5662,14 +5663,21 @@ authenticate client connections. Suite passphrases are used in an encrypted
 challenge-response scheme; they are never sent raw over the network.
 
 Clients on the suite host account automatically pick up the passphrase from the
-suite definition directory. On other accounts the passphrase has to be
-installed manually. This includes task host accounts unless the suite uses ssh
-messaging on that host (see~\ref{TaskComms}).  Allowed passphrase locations are:
+suite definition directory. On submission of the first task job on a host, the
+suite host will attempt to install the passphrase to the run directory to
+enable task jobs to connect to the suite. On other accounts that do not share
+the same HOME directory with the suite host account and does not have
+non-interactive SSH access to the suite host account, it is possible to install
+the passphrase manually. Allowed passphrase locations are:
 \begin{myenumerate}
+    \item \lstinline=$HOME/.cylc/SUITE_OWNER@SUITE_HOST/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_HOST/SUITE_NAME/passphrase=
     \item \lstinline=$HOME/.cylc/SUITE_NAME/passphrase=
 \end{myenumerate}
+
+Note: A client will attempt to install the passphrase automatically via
+non-interactive SSH to the first location listed above.
 
 \subsubsection{Public Access - No Passphrase}
 \label{PublicAccess}
