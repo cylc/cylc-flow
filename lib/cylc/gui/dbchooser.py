@@ -362,7 +362,7 @@ class dbchooser(object):
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn(
-            'Server', cr, text=1, foreground=4, background=5)
+            'Host:Port', cr, text=1, foreground=4, background=5)
         tvc.set_resizable(True)
         # not sure how this sorting works
         # tvc.set_sort_column_id(1)
