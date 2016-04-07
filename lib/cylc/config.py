@@ -737,11 +737,9 @@ class SuiteConfig(object):
                 graph.acyclic()
                 # Look for reversed edges (note this does not detect
                 # self-edges).
-                n_edges = graph.edges()
-                back_edges = []
-                for e in o_edges:
-                    if e not in n_edges:
-                        back_edges.append(e)
+                n_edges = set(graph.edges())
+
+                back_edges = [x for x in o_edges if x not in n_edges]
                 if len(back_edges) > 0:
                     print >> sys.stderr, "Back-edges:"
                     for e in back_edges:
