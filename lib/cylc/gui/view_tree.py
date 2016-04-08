@@ -257,6 +257,7 @@ class ControlTree(object):
 
     def refresh(self):
         self.t.update_gui()
+        self.t.action_required = True
 
     def get_menuitems(self):
         """Return the menu items specific to this view."""
