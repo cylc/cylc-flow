@@ -160,7 +160,10 @@ Class to hold initialisation data.
 
     def reset(self, suite, auth=None):
         self.suite = suite
-        if auth:
+        if auth == '-':  # stopped suite from dbchooser
+            self.host = None
+            self.port = None
+        elif auth:
             if '@' in auth:
                 self.owner, host_port = auth.split('@', 1)
             else:
@@ -168,6 +171,9 @@ Class to hold initialisation data.
             if ':' in host_port:
                 self.host, self.port = host_port.split(':', 1)
                 self.port = int(self.port)
+            else:
+                self.host = auth
+                self.port = None
         self.logdir = suite_log(suite).get_dir()
 
 

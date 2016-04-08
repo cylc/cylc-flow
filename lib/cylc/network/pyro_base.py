@@ -92,7 +92,6 @@ class PyroClient(object):
             items.append(
                 {"reset": True, "cache_ok": False, "hash_name": hash_name})
         for i, proxy_kwargs in enumerate(items):
-            self._get_proxy(**proxy_kwargs)
             func = getattr(self._get_proxy(**proxy_kwargs), fname)
             try:
                 ret = func(*fargs)
@@ -200,6 +199,8 @@ class PyroClient(object):
                 self.pyro_proxy._setIdentification(self.pphrase)
             else:
                 conn_val = ConnValidator()
+                if hash_name is None:
+                    hash_name = getattr(self, "_hash_name", None)
                 if hash_name is not None and hash_name in OK_HASHES:
                     conn_val.set_default_hash(hash_name)
                 self.pyro_proxy._setNewConnectionValidator(conn_val)
