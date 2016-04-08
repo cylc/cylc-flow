@@ -25,7 +25,8 @@ class TaskID(object):
     """Task ID utilities."""
 
     DELIM = '.'
-    NAME_RE = r"\w[\w\-+%@]*"
+    NAME_CHAR_RE = r"[\w\-+%@]"
+    NAME_RE = r"\w" + NAME_CHAR_RE + r"*"
     NAME_REC = re.compile(r"\A" + NAME_RE + r"\Z")
     POINT_RE = r"\S+"
     POINT_REC = re.compile(r"\A" + POINT_RE + r"\Z")
