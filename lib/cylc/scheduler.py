@@ -579,15 +579,15 @@ class Scheduler(object):
         else:
             sys.stderr.write(
                 (
-                    r"""
-Is suite already running on '%(host)s:%(port)s'?
-If not, kill off any left over processes and delete the port file at:
- * %(port_file)s
+                    r"""ERROR: port file exists: %(port_file)s
+ 
+If %(suite)s is not running, delete the port file and try again.  If it is
+running but not responsive, kill any left over suite processes too.
 
-To see if a suite of the same name is still running, try:
- * cylc scan, or
- * cylc ping -v %(suite)s, or
- * ssh %(host)s pgrep -fu $USER 'cylc-r .* \<%(suite)s\>'
+To see if %(suite)s is running on '%(host)s:%(port)s':
+ * cylc scan -n '\b%(suite)s\b' %(host)s
+ * cylc ping -v --host=%(host)s %(suite)s
+ * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
 
 """
                 ) % {
