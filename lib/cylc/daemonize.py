@@ -32,12 +32,9 @@ Suite Info:
  + Logs: %(logd)s/{log,out,err}
 
 To see if this suite is still running:
- * cylc scan
- * cylc ping -v %(suite)s
- * ssh %(host)s pgrep -fu $USER 'cylc-r .* \<%(suite)s\>'
-
-To run in non-daemon mode use --no-detach or --debug.
-For more information see 'cylc --help' and the User Guide.
+ * cylc scan -n '\b%(suite)s\b' %(host)s
+ * cylc ping -v --host=%(host)s %(suite)s
+ * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
 
 """
 
