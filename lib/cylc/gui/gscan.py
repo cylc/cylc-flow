@@ -176,7 +176,8 @@ def get_scan_menu(suite_host_tuples,
 
     # Construct gcylc launcher items for each relevant suite.
     for suite, host in suite_host_tuples:
-        gcylc_item = gtk.ImageMenuItem("Launch gcylc: %s - %s" % (suite, host))
+        gcylc_item = gtk.ImageMenuItem("Launch gcylc: %s - %s" % (
+            suite.replace('_', '__'), host))
         img = gtk.image_new_from_stock("gcylc", gtk.ICON_SIZE_MENU)
         gcylc_item.set_image(img)
         gcylc_item._connect_args = (suite, host)
