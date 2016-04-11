@@ -580,7 +580,7 @@ class Scheduler(object):
             sys.stderr.write(
                 (
                     r"""ERROR: port file exists: %(port_file)s
- 
+
 If %(suite)s is not running, delete the port file and try again.  If it is
 running but not responsive, kill any left over suite processes too.
 
