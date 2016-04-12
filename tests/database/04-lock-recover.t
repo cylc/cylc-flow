@@ -17,12 +17,28 @@
 #-------------------------------------------------------------------------------
 # Suite database content, "task_jobs" table after a task retries.
 . "$(dirname "$0")/test_header"
-set_test_number 3
+set_test_number 4
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --debug --reference-test "${SUITE_NAME}"
+
+# Ensure that DB statement and its args are printed to STDERR
+grep -A 3 -F 'WARNING: cannot execute database statement:' \
+    "${TEST_NAME_BASE}-run.stderr" > "${TEST_NAME_BASE}-run.stderr.grep"
+# The following "sed" turns the value for "time_submit_exit" to "?"
+sed -i "s/=\\['[^ ]*Z',/=['?',/" \
+    "${TEST_NAME_BASE}-run.stderr.grep"
+SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+JOB_PID="$(awk -F'=' '$1 == "CYLC_JOB_PID" {print $2}' \
+    "${SUITE_RUN_DIR}/log/job/1/locker/01/job.status")" >&2
+cmp_ok "${TEST_NAME_BASE}-run.stderr.grep" <<__ERR__
+WARNING: cannot execute database statement:
+	file=${SUITE_RUN_DIR}/cylc-suite.db:
+	stmt=UPDATE task_jobs SET time_submit_exit=?, submit_status=?, batch_sys_job_id=? WHERE cycle==? AND name==? AND submit_num==?
+	stmt_args[0]=['?', 0, '${JOB_PID}', '1', 'locker', 1]
+__ERR__
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
 

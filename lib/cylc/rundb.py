@@ -320,37 +320,43 @@ class CylcSuiteDAO(object):
                 # DELETE statements may have varying number of WHERE args so we
                 # can only executemany for each identical template statement.
                 for stmt, stmt_args_list in table.delete_queues.items():
-                    self._execute_stmt(table, stmt, stmt_args_list)
-                    table.delete_queues.pop(stmt)
+                    self._execute_stmt(stmt, stmt_args_list)
                 # INSERT statements are uniform for each table, so all INSERT
                 # statements can be executed using a single "executemany" call.
                 if table.insert_queue:
                     self._execute_stmt(
-                        table, table.get_insert_stmt(), table.insert_queue)
-                    table.insert_queue = []
+                        table.get_insert_stmt(), table.insert_queue)
                 # UPDATE statements can have varying number of SET and WHERE
                 # args so we can only executemany for each identical template
                 # statement.
                 for stmt, stmt_args_list in table.update_queues.items():
-                    self._execute_stmt(table, stmt, stmt_args_list)
-                    table.update_queues.pop(stmt)
-            if self.conn is not None:
-                self.conn.commit()
+                    self._execute_stmt(stmt, stmt_args_list)
+            # Connection should only be opened if we have executed something.
+            if self.conn is None:
+                return
+            self.conn.commit()
         except sqlite3.Error:
             if not self.is_public:
                 raise
-            self.conn.rollback()
-            if cylc.flags.debug:
-                traceback.print_exc()
-                sys.stderr.write(
-                    "WARNING: %s: db write failed\n" % self.db_file_name)
             self.n_tries += 1
             logger = getLogger("main")
             logger.log(
                 WARNING,
                 "%(file)s: write attempt (%(attempt)d) did not complete\n" % {
                     "file": self.db_file_name, "attempt": self.n_tries})
+            if self.conn is not None:
+                try:
+                    self.conn.rollback()
+                except sqlite3.Error:
+                    pass
+            return
         else:
+            # Clear the queues
+            for table in self.tables.values():
+                table.delete_queues.clear()
+                del table.insert_queue[:]  # list.clear avail from Python 3.3
+                table.update_queues.clear()
+            # Report public database retry recovery if necessary
             if self.n_tries:
                 logger = getLogger("main")
                 logger.log(
@@ -358,21 +364,21 @@ class CylcSuiteDAO(object):
                     "%(file)s: recovered after (%(attempt)d) attempt(s)\n" % {
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
+        finally:
+            # Note: This is not strictly necessary. However, if the suite run
+            # directory is removed, a forced reconnection to the private
+            # database will ensure that the suite dies.
+            self.close()
 
-        # N.B. This is not strictly necessary. However, if the suite run
-        # directory is removed, a forced reconnection to the private database
-        # will ensure that the suite dies.
-        self.close()
-
-    def _execute_stmt(self, table, stmt, stmt_args_list):
+    def _execute_stmt(self, stmt, stmt_args_list):
         """Helper for "self.execute_queued_items".
 
         Execute a statement. If this is the public database, return True on
         success and False on failure. If this is the private database, return
         True on success, and raise on failure.
         """
-        self.connect()
         try:
+            self.connect()
             self.conn.executemany(stmt, stmt_args_list)
         except sqlite3.Error:
             if not self.is_public:
@@ -380,13 +386,13 @@ class CylcSuiteDAO(object):
             if cylc.flags.debug:
                 traceback.print_exc()
             sys.stderr.write(
-                "WARNING: %(file)s: %(table)s: %(stmt)s\n" % {
-                    "file": self.db_file_name,
-                    "table": table.name,
-                    "stmt": stmt})
-            for stmt_args in stmt_args_list:
-                sys.stderr.write("\t%(stmt_args)s\n" % {
-                    "stmt_args": stmt_args})
+                (
+                    "WARNING: cannot execute database statement:\n" +
+                    "\tfile=%(file)s:\n\tstmt=%(stmt)s\n"
+                ) % {"file": self.db_file_name, "stmt": stmt})
+            for i, stmt_args in enumerate(stmt_args_list):
+                sys.stderr.write("\tstmt_args[%(i)d]=%(stmt_args)s\n" % {
+                    "i": i, "stmt_args": stmt_args})
             raise
 
     def select_all_task_jobs(self, keys):
