@@ -498,10 +498,13 @@ class TaskProxy(object):
                 self.sub_try_state.is_delay_done(now))
 
     def ready_to_run(self):
-        """Is this task ready to run?"""
+        """Am I in a pre-run state but ready to run?
+
+        Queued tasks are not counted as they've already been deemed ready.
+
+        """
         ready = (
             (
-                self.state.is_currently('queued') or
                 (
                     self.state.is_currently('waiting') and
                     self.prerequisites_are_all_satisfied() and
