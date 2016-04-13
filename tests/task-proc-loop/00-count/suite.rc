@@ -4,13 +4,10 @@
         abort on timeout = True
 [scheduling]
     [[queues]]
-        [[[q1]]]
-            members = FAM
+        [[[default]]]
             limit = 1
     [[dependencies]]
-        graph = FAM
+        graph = m1 & m2
 [runtime]
-    [[FAM]]
-        script = sleep 10
     [[m1, m2]]
-        inherit = FAM
+        script = sleep 10
