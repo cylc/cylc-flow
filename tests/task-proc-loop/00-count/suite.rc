@@ -1,0 +1,16 @@
+[cylc]
+    [[event hooks]]
+        timeout = PT1M
+        abort on timeout = True
+[scheduling]
+    [[queues]]
+        [[[q1]]]
+            members = FAM
+            limit = 1
+    [[dependencies]]
+        graph = FAM
+[runtime]
+    [[FAM]]
+        script = sleep 10
+    [[m1, m2]]
+        inherit = FAM
