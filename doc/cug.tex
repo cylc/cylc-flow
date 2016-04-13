@@ -3558,6 +3558,50 @@ failed):
                 """
 \end{lstlisting}
 
+\paragraph{Writing Efficient Inter-Family Triggering}
+\label{EfficientInterFamilyTriggering}
+
+While cylc allows writing dependencies between two families such as this:
+
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = """
+    FAM1:start-any => FAM2
+                """
+\end{lstlisting}
+
+it is important to consider the number of dependencies this will generate. In
+the above example, each member of \lstinline=FAM2= has dependencies pointing at
+all the members of \lstinline=FAM1=. Expanding this out, you generate
+\lstinline=N * M= dependencies, where \lstinline=N= is the number of members of
+\lstinline=FAM1= and \lstinline=M= is the number of members of
+\lstinline=FAM2=. As a result, the suite can have an increasingly large memory
+footprint as the number of members of these families grows.
+
+You can greatly reduce the number of dependencies generated in these situations
+by putting dummy tasks in our graphing to represent the state of the family we
+want to trigger off. For example, if \lstinline=FAM2= should trigger off any
+member of \lstinline=FAM1= succeeding you can create a dummy task
+\lstinline=FAM1_succeed_any_marker= to place our dependency on as follows:
+
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = """
+    FAM1:start-any => FAM1_succeed_any_marker => FAM2
+                """
+[runtime]
+...
+    [[FAM1_succeed_any_marker]]
+        script = true
+...
+\end{lstlisting}
+
+As a result of this only \lstinline=N + M= dependencies are generated,
+resulting in a smaller suite footprint in terms of both memory for storing all
+the dependencies and a reduction in cpu loading for not having to evaluate as
+many of them.
 
 \paragraph{Inter-Cycle Triggers}
 \label{InterCyclePointTriggers}
