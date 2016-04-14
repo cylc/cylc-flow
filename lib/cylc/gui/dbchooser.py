@@ -18,7 +18,7 @@
 
 import gobject
 import gtk
-import time
+from time import time, sleep
 import os
 import re
 import threading
@@ -36,15 +36,11 @@ from cylc.suite_host import is_remote_host
 
 class db_updater(threading.Thread):
 
-    count = 0
+    SCAN_INTERVAL = 60.0
 
     def __init__(self, regd_treestore, db, filtr=None, pyro_timeout=None):
-        self.__class__.count += 1
-        self.me = self.__class__.count
-        self.filtr = filtr
         self.db = db
         self.quit = False
-        self.reload = False
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -53,15 +49,11 @@ class db_updater(threading.Thread):
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
 
+        self.next_scan_time = None
         self.running_choices = None
         self.newtree = {}
 
         self.regd_choices = self.db.get_list(filtr)
-
-        # not needed:
-        # self.build_treestore(self.newtree)
-        # self.construct_newtree()
-        # self.update()
 
     def construct_newtree(self):
         """construct self.newtree[one][two]...[nnn] = [auth, descr, dir ]"""
@@ -114,15 +106,35 @@ class db_updater(threading.Thread):
                     piter, [item, state, descr, suite_dir, None, None, None])
 
     def update(self):
-        # print "Updating list of available suites"
+        """Update tree, if necessary."""
+        if self.next_scan_time is not None and self.next_scan_time > time():
+            return
+
+        # Scan for running suites
+        choices = []
+        for host, scan_result in scan_all(pyro_timeout=self.pyro_timeout):
+            try:
+                port, suite_identity = scan_result
+            except ValueError:
+                # Back-compat (<= 6.5.0 no title or state totals).
+                port, name, owner = scan_result
+            else:
+                name = suite_identity['name']
+                owner = suite_identity['owner']
+            if is_remote_user(owner):
+                continue  # current user only
+            auth = "%s:%d" % (host, port)
+            choices.append((name, auth))
+        choices.sort()
+        self.next_scan_time = time() + self.SCAN_INTERVAL
+        if choices == self.running_choices:
+            return
+
+        # Update tree if running suites changed
+        self.running_choices = choices
         self.construct_newtree()
-        if self.reload:
-            self.regd_treestore.clear()
-            self.build_treestore(self.newtree)
-            self.reload = False
-        else:
-            self.update_treestore(
-                self.newtree, self.regd_treestore.get_iter_first())
+        self.update_treestore(
+            self.newtree, self.regd_treestore.get_iter_first())
 
     def update_treestore(self, new, iter):
         # iter is None for an empty treestore (no suites registered)
@@ -229,39 +241,10 @@ class db_updater(threading.Thread):
                             self.update_treestore(new[key], chiter)
 
     def run(self):
-        if cylc.flags.debug:
-            print '* thread', self.me, 'starting'
+        """Main loop."""
         while not self.quit:
-            if self.running_choices_changed() or self.reload:
-                gobject.idle_add(self.update)
-            time.sleep(1)
-        else:
-            if cylc.flags.debug:
-                print '* thread', self.me, 'quitting'
-            self.__class__.count -= 1
-
-    def running_choices_changed(self):
-        """Scan running choices. Return True if changed."""
-        choices = []
-        for host, scan_result in scan_all(pyro_timeout=self.pyro_timeout):
-            try:
-                port, suite_identity = scan_result
-            except ValueError:
-                # Back-compat (<= 6.5.0 no title or state totals).
-                port, name, owner = scan_result
-            else:
-                name = suite_identity['name']
-                owner = suite_identity['owner']
-            if is_remote_user(owner):
-                continue  # current user only
-            auth = "%s:%d" % (host, port)
-            choices.append((name, auth))
-        choices.sort()
-        if choices != self.running_choices:
-            self.running_choices = choices
-            return True
-        else:
-            return False
+            gobject.idle_add(self.update)
+            sleep(0.1)
 
     def statecol(self, state):
         bg = '#19ae0a'
@@ -514,7 +497,6 @@ class dbchooser(object):
             # right click):
             x = int(event.x)
             y = int(event.y)
-            time = event.time
             pth = treeview.get_path_at_pos(x, y)
             if pth is None:
                 return False
@@ -542,9 +524,9 @@ class dbchooser(object):
             return reg
 
         reg = get_reg(item, iter)
-        if not group_clicked:
+        if reg and auth:
             self.chosen = (reg, auth)
-            self.selected_label.set_text(reg)
+            self.selected_label.set_text("%s @ %s" % (reg, auth))
         else:
             self.chosen = None
             self.selected_label.set_text(self.selected_label_text)
