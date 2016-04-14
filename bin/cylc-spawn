@@ -47,7 +47,7 @@ def main():
 
     suite = args.pop(0)
 
-    prompt('Reset task(s) %s in %s' % (args, suite), options.force)
+    prompt('Spawn task(s) %s in %s' % (args, suite), options.force)
     pclient = SuiteCommandClient(
         suite, options.owner, options.host, options.pyro_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
