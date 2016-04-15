@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2015 NIWA
+# Copyright (C) 2008-2016 NIWA
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ def print_blurb():
     )
     license = """
 The Cylc Suite Engine [%s]
-Copyright (C) 2008-2015 NIWA
+Copyright (C) 2008-2016 NIWA
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 This program comes with ABSOLUTELY NO WARRANTY;
 see `cylc warranty`.  It is free software, you

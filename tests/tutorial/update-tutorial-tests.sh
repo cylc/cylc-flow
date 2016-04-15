@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2015 NIWA
+# Copyright (C) 2008-2016 NIWA
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ for GROUP in oneoff cycling; do
         cat > ${I}-${NAME}.t <<EOF
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
-# Copyright (C) 2008-2015 NIWA
+# Copyright (C) 2008-2016 NIWA
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
