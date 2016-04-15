@@ -28,7 +28,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 grep -A 3 -F 'WARNING: cannot execute database statement:' \
     "${TEST_NAME_BASE}-run.stderr" > "${TEST_NAME_BASE}-run.stderr.grep"
 # The following "sed" turns the value for "time_submit_exit" to "?"
-sed -i "s/=\\['[^ ]*Z',/=['?',/" \
+sed -i "s/, '[^T']*T[^Z']*Z',/, '?',/" \
     "${TEST_NAME_BASE}-run.stderr.grep"
 SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 JOB_PID="$(awk -F'=' '$1 == "CYLC_JOB_PID" {print $2}' \
@@ -36,8 +36,8 @@ JOB_PID="$(awk -F'=' '$1 == "CYLC_JOB_PID" {print $2}' \
 cmp_ok "${TEST_NAME_BASE}-run.stderr.grep" <<__ERR__
 WARNING: cannot execute database statement:
 	file=${SUITE_RUN_DIR}/cylc-suite.db:
-	stmt=UPDATE task_jobs SET time_submit_exit=?, submit_status=?, batch_sys_job_id=? WHERE cycle==? AND name==? AND submit_num==?
-	stmt_args[0]=['?', 0, '${JOB_PID}', '1', 'locker', 1]
+	stmt=INSERT OR REPLACE INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)
+	stmt_args[0]=['locker', '1', '?', 1, 'output completed', '1 I have locked the public database file', 'localhost']
 __ERR__
 
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
