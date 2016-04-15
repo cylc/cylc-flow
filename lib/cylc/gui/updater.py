@@ -365,12 +365,18 @@ class Updater(threading.Thread):
         self.all_families = {}
         self.triggering_families = {}
         self.global_summary = {}
+        self.cfg.port = None
         for client in [self.state_summary_client, self.suite_info_client,
                        self.suite_log_client, self.suite_command_client]:
             if self.cfg.host is None:
                 client.host = None
-            if self.cfg.port is None:
-                client.port = None
+            client.port = None
+
+        if self.cfg.host:
+            self.app_window.set_title(
+                "%s - %s" % (self.cfg.suite, self.cfg.host))
+        else:
+            self.app_window.set_title(str(self.cfg.suite))
 
     def set_status(self, status):
         """Update status bar."""
