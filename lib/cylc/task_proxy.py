@@ -1292,8 +1292,13 @@ class TaskProxy(object):
         self.log(DEBUG, "incrementing submit number")
         self.submit_num += 1
         self.summary['submit_num'] = self.submit_num
-        self._db_events_insert(event="incrementing submit number")
         self.job_file_written = False
+        self._db_events_insert(event="incrementing submit number")
+        self.db_inserts_map[self.TABLE_TASK_JOBS].append({
+            "is_manual_submit": self.is_manual_submit,
+            "try_num": self.run_try_state.num + 1,
+            "time_submit": get_current_time_string(),
+        })
 
         local_job_log_dir, common_job_log_path = self._create_job_log_path(
             new_mode=True)
@@ -1391,10 +1396,7 @@ class TaskProxy(object):
                 'post-script': postcommand,
             }.items()
         )
-        self.db_inserts_map[self.TABLE_TASK_JOBS].append({
-            "is_manual_submit": self.is_manual_submit,
-            "try_num": self.run_try_state.num + 1,
-            "time_submit": get_current_time_string(),
+        self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "user_at_host": self.user_at_host,
             "batch_sys_name": self.batch_sys_name,
         })
