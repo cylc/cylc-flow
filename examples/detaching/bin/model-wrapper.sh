@@ -22,7 +22,7 @@ if [[ $? != 0 ]]; then
    cylc task message -p CRITICAL "ERROR: model executable failed"
    exit 1
 else
-   cylc task succeeded
+   cylc task message "succeeded"
    exit 0
 fi'
 # Insert error detection and cylc messaging in $TDIR/model.sh:

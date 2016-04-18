@@ -7,23 +7,24 @@ if necessary. See also family failure cleanup task example number 2, and
 the AutoRecover examples for recovery tasks that only run if needed."""
 
 [scheduling]
-    initial cycle point = 2011010106
-    final cycle point = 2011010200
+    initial cycle point = 20110101T06
+    final cycle point = 20110102T00
     [[dependencies]]
-        [[[0,6,12,18]]]
-            graph =  """A => fam
-        A[T-6] => A # (just to slow the suite down)
-    fam:finish-all & fam:succeed-any => B
-   fam:finish-all & fam:succeed-any => fam_cleanup"""
+        [[[T00, T06, T12, T18]]]
+            graph =  """
+                a => FAM
+                a[-PT6H] => a
+                FAM:finish-all & FAM:succeed-any => b
+                FAM:finish-all & FAM:succeed-any => fam_cleanup"""
 [runtime]
-    [[fam]]
-
+    [[a]]
+    [[b]]
+    [[FAM]]
     [[m_foo]]
-        inherit = fam
-        script = sleep 8 
-
+        inherit = FAM
+        script = sleep 8
     [[m_bar]]
-        inherit = fam
+        inherit = FAM
         script = """
 # Fail at 6,18, succeed at 0,12:
 HH=$( cylc cycle-point --print-hour )
@@ -34,11 +35,9 @@ else
 fi
 sleep 5
 $COMMAND"""
-
     [[m_baz]]
-        inherit = fam
+        inherit = FAM
         script = sleep 10
-
     [[fam_cleanup]]
         description = "this is a family failed task cleanup task"
         script = fam_cleanup.sh

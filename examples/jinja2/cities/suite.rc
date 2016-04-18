@@ -13,7 +13,7 @@ generation of groups of related dependencies and runtime properties."""
 {% set CLEANUP = True %}
 
 [scheduling]
-    initial cycle point = 2020-01-01  # Equivalent to 20200101.
+    initial cycle point = 2011-08-08T12
     [[ dependencies ]]
 {% if CLEANUP %}
         [[[T23]]]

@@ -1599,6 +1599,9 @@ hierarchy shown:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/tutorial/oneoff/ftrigger1/suite.rc}
 
+(Note that we recommend given ALL-CAPS names to task families to help
+distinguish them from task names. However, this is just a convention).
+
 Verbose validation shows the family member substitution done
 when the suite definition is parsed:
 \lstset{language=transcript}
@@ -3507,11 +3510,11 @@ To trigger an entire task family at once:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        graph = "foo => fam"
+        graph = "foo => FAM"
 [runtime]
-    [[fam]]    # a family (because others inherit from it)
-    [[m1,m2]]  # family members (inherit from namespace fam)
-        inherit = fam
+    [[FAM]]    # a family (because others inherit from it)
+    [[m1,m2]]  # family members (inherit from namespace FAM)
+        inherit = FAM
 \end{lstlisting}
 This is equivalent to:
 \begin{lstlisting}
@@ -3519,9 +3522,9 @@ This is equivalent to:
     [[dependencies]]
         graph = "foo => m1 & m2"
 [runtime]
-    [[fam]]
+    [[FAM]]
     [[m1,m2]]
-        inherit = fam
+        inherit = FAM
 \end{lstlisting}
 
 To trigger other tasks off families we have to specify whether
@@ -3534,15 +3537,15 @@ triggers are thus:
     [[dependencies]]
         graph = """
       # all-member triggers:
-    fam:start-all => one
-    fam:succeed-all => one
-    fam:fail-all => one
-    fam:finish-all => one
+    FAM:start-all => one
+    FAM:succeed-all => one
+    FAM:fail-all => one
+    FAM:finish-all => one
       # any-member triggers:
-    fam:start-any => one
-    fam:succeed-any => one
-    fam:fail-any => one
-    fam:finish-any => one
+    FAM:start-any => one
+    FAM:succeed-any => one
+    FAM:fail-any => one
+    FAM:finish-any => one
                 """
 \end{lstlisting}
 
@@ -3554,7 +3557,7 @@ failed):
 [scheduling]
     [[dependencies]]
         graph = """
-    fam:finish-all & fam:succeed-any => foo
+    FAM:finish-all & FAM:succeed-any => foo
                 """
 \end{lstlisting}
 
@@ -4075,10 +4078,10 @@ argument that identifies the calling task name:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
-    [[ensemble]]
+    [[ENSEMBLE]]
         script = "run-model.sh $CYLC_TASK_NAME"
     [[m1, m2, m3]]
-        inherit = ensemble
+        inherit = ENSEMBLE
 \end{lstlisting}
 
 For large ensembles Jinja2 template processing can be used to
@@ -4139,11 +4142,11 @@ you want, you can demote the first parent for visualization purposes,
 without affecting the order of inheritance of runtime properties:
 \begin{lstlisting}
 [runtime]
-    [[bar]]
+    [[BAR]]
         # ...
     [[foo]]
-        # inherit properties from bar, but stay under root for visualization:
-        inherit = None, bar
+        # inherit properties from BAR, but stay under root for visualization:
+        inherit = None, BAR
 \end{lstlisting}
 
 
@@ -4214,25 +4217,25 @@ executes the associated task. Consequently, if you override an
 environment variable you cannot also access the original parent value:
 \begin{lstlisting}
 [runtime]
-    [[foo]]
+    [[FOO]]
         [[[environment]]]
             COLOR = red
     [[bar]]
-        inherit = foo
+        inherit = FOO
         [[[environment]]]
             tmp = $COLOR        # !! ERROR: $COLOR is undefined here
-            COLOR = dark-$tmp   # !! as this overrides COLOR in foo.
+            COLOR = dark-$tmp   # !! as this overrides COLOR in FOO.
 \end{lstlisting}
 The compressed variant of this, \lstinline@COLOR = dark-$COLOR@, is
 also in error for the same reason.  To achieve the desired result you
 must use a different name for the parent variable:
 \begin{lstlisting}
 [runtime]
-    [[foo]]
+    [[FOO]]
         [[[environment]]]
             FOO_COLOR = red
     [[bar]]
-        inherit = foo
+        inherit = FOO
         [[[environment]]]
             COLOR = dark-$FOO_COLOR  # OK
 \end{lstlisting}
@@ -4632,14 +4635,14 @@ Here's an example, from \\*
 
 [scheduling]
     [[dependencies]]
-        graph = "obs"
+        graph = OBS
 [runtime]
-    [[obs]]
+    [[OBS]]
         [[[job submission]]]
             method = pbs
     {% for i in obs_types %}
     [[ {{i}} ]]
-        inherit = obs
+        inherit = OBS
         [[[directives]]]
              -I = {{ resource[i] }}
      {% endfor %}
@@ -4680,13 +4683,13 @@ N_MEMBERS can be set similarly, but if not they have default values."""
     final cycle point   = 20100816T00
     [[dependencies]]
         [[[0]]]
-            graph = """{{ FIRST_TASK }} => ens
-                 ens:succeed-all => {{ LAST_TASK }}"""
+            graph = """{{ FIRST_TASK }} => ENS
+                 ENS:succeed-all => {{ LAST_TASK }}"""
 [runtime]
-    [[ens]]
+    [[ENS]]
 {% for I in range( 0, N_MEMBERS ) %}
     [[ mem_{{ I }} ]]
-        inherit = ens
+        inherit = ENS
 {% endfor %}
 \end{lstlisting}
 
@@ -4808,8 +4811,8 @@ as the task {\em script} items can be multi-line strings.
 
 Tasks should abort with non-zero exit status if a fatal error occurs
 (this is just good coding practice anyway). This allows cylc's task
-job scripts to automatically trap errors and send a
-\lstinline=cylc task failed= message back to the suite. The shell
+job scripts to automatically trap errors and send 
+\lstinline=cylc task message "failed"= back to the suite. The shell
 \lstinline=set -e= option can be used in lieu of explicit error
 checks for every command:
 \lstset{language=bash}
@@ -4894,16 +4897,16 @@ completion messaging:
         manual completion = True # this is a detaching task
 \end{lstlisting}
 
-The cylc messaging commands are called like this:
+The cylc messaging commands should be called like this:
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
 # ...
 if $SUCCESS; then
-    cylc task succeeded
+    cylc task message "succeeded"
     exit 0
 else
-    cylc task failed "Input file X not found"
+    cylc task message "failed"
     exit 1
 fi
 \end{lstlisting}
@@ -6098,10 +6101,10 @@ start coming in again after a failure:
 \begin{lstlisting}
 # ...
 [runtime]
-    [[on_HPC]]
+    [[HPC]]
         enable resurrection = True
     [[TaskFoo]]
-        inherit = on_HPC
+        inherit = HPC
 # ...
 \end{lstlisting}
 

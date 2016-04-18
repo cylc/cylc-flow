@@ -7,14 +7,14 @@
 
 [scheduling]
     [[dependencies]]
-        graph = "obs"
+        graph = OBS
 [runtime]
-    [[obs]]
+    [[OBS]]
         [[[job submission]]]
             method = pbs
     {% for i in obs_types %}
     [[ {{i}} ]]
-        inherit = obs
+        inherit = OBS
         [[[directives]]]
              -I = {{ resource[i] }}
      {% endfor %}

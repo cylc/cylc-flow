@@ -6,14 +6,14 @@ To see the result, use 'cylc get-config' or examine task job scripts
 generated with 'cylc jobscript'."""
 
 [scheduling]
-    initial cycle point = 2011010100
-    final cycle point = 2011010300
+    initial cycle point = 20110101T00
+    final cycle point = 20110103T00
     [[dependencies]]
-        [[[0]]]
+        [[[T00]]]
             graph = """
                 foo => OPS
                 OPS:finish-all & OPS:succeed-any => VAR
-                VAR:succeed-all => baz
+                VAR:succeed-all => BAZ
                 atovs => atovs_post
                 """
 [runtime]
@@ -56,10 +56,10 @@ generated with 'cylc jobscript'."""
         script = "echo run-VAR.sh --apf; sleep 10"
         [[[environment]]]
             VAR_PROG = AnalysePF
-    [[baz]]
+    [[BAZ]]
     [[bar1,bar2]]
-        inherit = baz
-        description = "member of baz"
+        inherit = BAZ
+        description = "member of BAZ"
     [[atovs_post]]
         inherit = OPS
         description = "OPS ATOVS postprocessing"
@@ -68,4 +68,4 @@ generated with 'cylc jobscript'."""
         description = "obs preprocessing"
 
 [visualization]
-    collapsed families = OPS, VAR, baz
+    collapsed families = OPS, VAR, BAZ

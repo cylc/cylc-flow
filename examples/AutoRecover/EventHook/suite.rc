@@ -4,24 +4,27 @@ description = """
 Illustrates use of a task event hook script to clean up failed tasks."""
 
 [scheduling]
-    initial cycle point = 2011010106
-    final cycle point = 2011010200
+    initial cycle point = 20110101T06
+    final cycle point = 20110102T00
     [[dependencies]]
-        [[[0,6,12,18]]]
-            graph =  """A => fam
-        A[T-6] => A # ( just to slow the suite down)
-    fam:finish-all & fam:succeed-any => B"""
+        [[[T00, T06, T12, T18]]]
+            graph =  """
+                a => FAM
+                a[-PT6H] => a
+                FAM:finish-all & FAM:succeed-any => b"""
 [runtime]
-    [[fam]]
+    [[a]]
+    [[b]]
+    [[FAM]]
         [[[event hooks]]]
             failed handler = failhook.sh
     [[m_foo]]
-        inherit = fam
-        script = sleep 8 
+        inherit = FAM
+        script = sleep 8
     [[m_bar]]
-        inherit = fam
+        inherit = FAM
         # This family member always fails
         script = "sleep 5; /bin/false"
     [[m_baz]]
-        inherit = fam
+        inherit = FAM
         script = sleep 10
