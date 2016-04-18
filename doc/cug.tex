@@ -4811,8 +4811,8 @@ as the task {\em script} items can be multi-line strings.
 
 Tasks should abort with non-zero exit status if a fatal error occurs
 (this is just good coding practice anyway). This allows cylc's task
-job scripts to automatically trap errors and send a
-\lstinline=cylc task failed= message back to the suite. The shell
+job scripts to automatically trap errors and send 
+\lstinline=cylc task message "failed"= back to the suite. The shell
 \lstinline=set -e= option can be used in lieu of explicit error
 checks for every command:
 \lstset{language=bash}
@@ -4897,16 +4897,16 @@ completion messaging:
         manual completion = True # this is a detaching task
 \end{lstlisting}
 
-The cylc messaging commands are called like this:
+The cylc messaging commands should be called like this:
 \lstset{language=bash}
 \begin{lstlisting}
 #!/bin/bash
 # ...
 if $SUCCESS; then
-    cylc task succeeded
+    cylc task message "succeeded"
     exit 0
 else
-    cylc task failed "Input file X not found"
+    cylc task message "failed"
     exit 1
 fi
 \end{lstlisting}
