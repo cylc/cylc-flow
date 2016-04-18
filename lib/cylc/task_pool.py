@@ -826,7 +826,11 @@ class TaskPool(object):
         itasks, n_warnings = self._filter_task_proxies(items, compat)
         active_itasks = []
         for itask in itasks:
-            if itask.is_active():
+            if itask.tdef.rtconfig['manual completion']:
+                self.log.warning(
+                    "%s: skip poll, detaching task (job ID unknown)" % (
+                        itask.identity))
+            elif itask.is_active():
                 if itask.job_conf is None:
                     try:
                         itask.prep_manip()
