@@ -92,4 +92,4 @@ if __name__ == "__main__":
     except Exception as exc:
         if cylc.flags.debug:
             raise
-        sys.exit(exc)
+        sys.exit(str(exc))
