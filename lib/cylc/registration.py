@@ -18,6 +18,7 @@
 """Simple suite name registration database."""
 
 import os
+import subprocess
 import sys
 import re
 import cylc.flags
@@ -28,6 +29,8 @@ from cylc.suite_host import get_hostname
 from cylc.owner import user
 
 REGDB_PATH = os.path.join(os.environ['HOME'], '.cylc', 'REGDB')
+
+SUITE_RUNNING_FEEDBACK = 'Suite "%s" is running, try `cylc shutdown suite`.'
 
 
 class RegistrationError(Exception):
@@ -151,8 +154,23 @@ class RegistrationDB(object):
     def unregister(self, exp):
         """Un-register a suite."""
         suitedirs = []
+
+        # get list of running suites
+        try:
+            ret = subprocess.Popen(['cylc', 'scan'], stdout=subprocess.PIPE)
+            rows = ret.communicate()[0].split('\n')
+            running = [suite for suite in [row.split(' ')[0] for row in rows]
+                       if suite != '']
+        except subprocess.CalledProcessError:
+            # something went wrong with the cylc scan call
+            print >> sys.stderr, 'Error calling `cylc scan`.'
+            sys.exit(1)
+
         for key in self.list_all_suites():
             if re.search(exp + '$', key):
+                if key in running:
+                    print SUITE_RUNNING_FEEDBACK % (key,)
+                    continue
                 try:
                     data = self.get_suite_data(key)
                 except RegistrationError:
