@@ -873,8 +873,7 @@ class TaskPool(object):
             if is_active and self.run_mode == 'simulation':
                 itask.reset_state_failed()
             elif is_active and itask.tdef.rtconfig['manual completion']:
-                self.log(
-                    WARNING,
+                self.log.warning(
                     "%s: skip kill, detaching task (job ID unknown)" % (
                         itask.identity))
             elif is_active:
