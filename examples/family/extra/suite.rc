@@ -3,19 +3,19 @@ title = "A complex task family example"
 description = "Task families with family and extra-family dependencies."
 
 [scheduling]
-    initial cycle point = 2011010112
-    final cycle point = 2011010312
+    initial cycle point = 20110101T12
+    final cycle point = 20110103T12
     [[special tasks]]
-        sequential = A  # (just to slow the suite down a bit)
+        sequential = a  # (just to slow the suite down a bit)
     [[dependencies]]
-        [[[12]]]
+        [[[T12]]]
             graph = """
 # full family triggers:
-A => FAMx
-FAMx:succeed-all => B => FAMy
-FAMy:succeed-all => C
+a => FAMX
+FAMX:succeed-all => B => FAMY
+FAMY:succeed-all => C
 # internal dependence among family members:
-x1 => x2 
+x1 => x2
 # member of one family to member of another:
 x2 => y2
 # extra-family dependence:
@@ -25,15 +25,15 @@ x1 | x2 => G
 y1 | H => I"""
 
 [runtime]
-    [[FAMx,FAMy]]
+    [[FAMX, FAMY]]
     [[x1,x2]]
-        inherit = FAMx
+        inherit = FAMX
     [[y1,y2]]
-        inherit = FAMy
+        inherit = FAMY
 
 [visualization]
-    collapsed families = FAMx, FAMy
+    collapsed families = FAMX, FAMY
     use node color for edges = False
     [[node attributes]]
         FAMx = 'color=red', 'shape=ellipse'
-        FAMy = 'color=blue', 'shape=ellipse'
+        FAMY = 'color=blue', 'shape=ellipse'

@@ -9,15 +9,15 @@ The template variable N_MEMBERS can be set on the command line with
 {% set N_MEMBERS = N_MEMBERS | default( 3 ) | int %}
 
 [scheduling]
-    initial cycle point = 2010080800
-    final cycle time   = 2010081600
+    initial cycle point = 20100808T00
+    final cycle time   = 20100816T00
     [[dependencies]]
-        [[[0]]]
-            graph = """foo => ens
-                 ens:succeed-all => bar"""
+        [[[T00]]]
+            graph = """foo => ENS
+                 ENS:succeed-all => bar"""
 [runtime]
-    [[ens]]
+    [[ENS]]
 {% for I in range( 0, N_MEMBERS ) %}
     [[ mem_{{ I }} ]]
-        inherit = ens
+        inherit = ENS
 {% endfor %}

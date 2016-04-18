@@ -15,10 +15,10 @@ and use normal task retries.
 #   foo | bar => !baz
 
 [scheduling]
-    initial cycle point = 2010080800
-    final cycle point = 2010080900
+    initial cycle point = 20100808T00
+    final cycle point = 20100809T00
     [[dependencies]]
-        [[[0]]]
+        [[[T00]]]
             graph = """
 # first VAR and check:
 VAR1 => check1

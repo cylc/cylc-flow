@@ -10,14 +10,14 @@ to show what they look like live in gcylc."""
         # Use internal queues to see tasks in the "queued" state
         [[[fam_queue]]]
             limit = 2
-            members = family
+            members = FAMILY
     [[special tasks]]
         cold-start = cfoo
     [[dependencies]]
         [[[T00]]]
             graph =  """
-    cfoo | foo[-P1D] => foo => family
-    family:finish-all => bar
+    cfoo | foo[-P1D] => foo => FAMILY
+    FAMILY:finish-all => bar
     foo => bad & bad2 & bad_good
     bar => !bad & !bad2
                      """
@@ -26,11 +26,11 @@ to show what they look like live in gcylc."""
     [[root]]
         # delay all tasks slightly in the 'submitted' state
         init-script = "sleep 5"
-   [[family]]
+    [[FAMILY]]
     [[m1,m2,m3]]
-        inherit = family
+        inherit = FAMILY
     [[m_x]]
-        inherit = family
+        inherit = FAMILY
         title = "this task succeeds on the second try "
         retry delays = PT18S
         script = """
@@ -63,4 +63,4 @@ submission method for the retry."""
 [visualization]
     use node color for labels = True
     [[node attributes]]
-        family = "style=filled", "color=#0000aa", "fillcolor=yellow"
+        FAMILY = "style=filled", "color=#0000aa", "fillcolor=yellow"

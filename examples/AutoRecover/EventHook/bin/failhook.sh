@@ -13,9 +13,9 @@ echo "(HOOK SCRIPT: waiting 10 seconds)"
 sleep 10 # (time to observe failed task in the suite monitor).
 
 # check that the task has in fact failed
-NAME=${TASK%\%*}
-TIME=${TASK#*%}
-RES=$( cylc dump $SUITE | grep $NAME | grep $TIME )
+TASK_NAME=${TASK%.*}
+CYCLE_POINT=${TASK#*.}
+RES=$( cylc dump $SUITE | grep $TASK_NAME | grep $CYCLE_POINT )
 STATE=$( echo $RES | awk '{print $3}' | sed -e 's/,//' )
 if [[ $STATE != failed ]]; then
     echo "HOOK SCRIPT: ERROR: $TASK is not failed: $STATE"
@@ -25,4 +25,4 @@ else
 fi
 
 echo "REMOVING FAILED TASK: $TASK"
-cylc control remove --force $CYLC_SUITE_REG_NAME $TASK
+cylc control remove --force $CYLC_SUITE_NAME $TASK

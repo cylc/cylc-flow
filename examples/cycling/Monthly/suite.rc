@@ -1,6 +1,6 @@
 title = "climate model run"
 description = """
-    A climate model run with an monthly restart cycle, archiving every 6 month and 
+    A climate model run with an monthly restart cycle, archiving every 6 month and
     post-processing every 12 months.
               """
 [scheduling]
