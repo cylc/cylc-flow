@@ -66,11 +66,11 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_state import (
-    TaskState, TASK_STATUSES_RESTRICTED, TASK_STATUSES_WITH_JOB_SCRIPT,
-    TASK_STATUSES_WITH_JOB_LOGS, TASK_STATUSES_TRIGGERABLE,
-    TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE, TASK_STATUS_RUNAHEAD,
-    TASK_STATUS_WAITING, TASK_STATUS_READY, TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
+    TaskState, TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
+    TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
+    TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
+    TASK_STATUS_RUNAHEAD, TASK_STATUS_WAITING, TASK_STATUS_READY,
+    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 
 
 def run_get_stdout(command, filter=False):
@@ -591,7 +591,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start(self.views_parent, True)
 
         if self.restricted_display:
-            self.legal_task_states = TASK_STATUSES_RESTRICTED
+            self.legal_task_states = list(TASK_STATUSES_RESTRICTED)
+        else:
+            self.legal_task_states = list(TASK_STATUSES_ALL)
 
         self.filter_states_excl = [TASK_STATUS_RUNAHEAD]
         self.filter_name_string = None
