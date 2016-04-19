@@ -194,6 +194,8 @@ class TaskProxy(object):
     TABLE_TASK_EVENTS = CylcSuiteDAO.TABLE_TASK_EVENTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
 
+    POLLED_INDICATOR = "(polled)"
+
     event_handler_env = {}
     stop_sim_mode_job_submission = False
 
@@ -1591,20 +1593,20 @@ class TaskProxy(object):
         the state backward in the natural order of events.
 
         """
-        # TODO - formalise state ordering, for: 'if new_state < old_state'
 
         # Log incoming messages with '>' to distinguish non-message log entries
-        self.log(
-            self.LOGGING_LVL_OF.get(priority, INFO),
-            '(current:' + self.state.get_status() + ')> ' + msg_in)
+        log_msg = '(current:%s)> %s' % (self.state.get_status(), msg_in)
+        if msg_was_polled:
+            log_msg += ' %s' % self.POLLED_INDICATOR
+        self.log(self.LOGGING_LVL_OF.get(priority, INFO), log_msg)
 
-        # Now strip the "at TIME" suffix.
+        # Strip the "at TIME" suffix.
         msg = self.MESSAGE_SUFFIX_RE.sub('', msg_in)
 
         # always update the suite state summary for latest message
         self.summary['latest_message'] = msg
         if msg_was_polled:
-            self.summary['latest_message'] += " (polled)"
+            self.summary['latest_message'] += " %s" % self.POLLED_INDICATOR
         flags.iflag = True
 
         if self.reject_if_failed(msg):
