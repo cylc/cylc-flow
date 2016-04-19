@@ -83,10 +83,10 @@ def main():
             print_uuid=options.print_uuid)
         # get state summary, task names, cycle points
         glbl, states, fam_states = pclient.get_suite_state_summary()
-    except Exception, x:
+    except Exception as exc:
         if cylc.flags.debug:
             raise
-        sys.exit(x)
+        sys.exit(str(exc))
 
     if display_global:
         for item in glbl:
@@ -102,4 +102,4 @@ if __name__ == "__main__":
     except Exception as exc:
         if cylc.flags.debug:
             raise
-        sys.exit(exc)
+        sys.exit(str(exc))

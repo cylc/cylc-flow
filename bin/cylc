@@ -40,7 +40,7 @@ except OSError as exc:
     # immediately below. We cannot just chdir to $HOME as gcylc does
     # because that would break relative directory path command arguments
     # (cylc reg SUITE PATH).
-    sys.exit(exc)
+    sys.exit(str(exc))
 
 # Import cylc to initialise CYLC_DIR and the path for python (__init__.py).
 import cylc
