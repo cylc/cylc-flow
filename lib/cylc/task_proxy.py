@@ -1310,15 +1310,15 @@ class TaskProxy(object):
         timeout = self.started_time + self.sim_mode_run_length
         if time.time() > timeout:
             if self.tdef.rtconfig['simulation mode']['simulate failure']:
-                self.message_queue.put(self.identity,
-                                       'NORMAL', TASK_STATUS_SUBMITTED)
-                self.message_queue.put(self.identity,
-                                       'CRITICAL', TASK_STATUS_FAILED)
+                self.message_queue.put(
+                    self.identity, 'NORMAL', TASK_STATUS_SUBMITTED)
+                self.message_queue.put(
+                    self.identity, 'CRITICAL', TASK_STATUS_FAILED)
             else:
-                self.message_queue.put(self.identity,
-                                       'NORMAL', TASK_STATUS_SUBMITTED)
-                self.message_queue.put(self.identity,
-                                       'NORMAL', TASK_STATUS_SUCCEEDED)
+                self.message_queue.put(
+                    self.identity, 'NORMAL', TASK_STATUS_SUBMITTED)
+                self.message_queue.put(
+                    self.identity, 'NORMAL', TASK_STATUS_SUCCEEDED)
             return True
         else:
             return False
@@ -1491,8 +1491,9 @@ class TaskProxy(object):
         self.has_spawned = True
         next_point = self.next_point()
         if next_point:
-            return TaskProxy(self.tdef, next_point, state, self.stop_point,
-                             message_queue=self.message_queue)
+            return TaskProxy(
+                self.tdef, next_point, state, False, self.stop_point,
+                message_queue=self.message_queue)
         else:
             # next_point instance is out of the sequence bounds
             return None
