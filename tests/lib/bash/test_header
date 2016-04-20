@@ -242,7 +242,7 @@ function count_ok() {
     local FILE=$2
     local COUNT=$3
     local TEST_NAME=$(basename "$FILE")-count-ok
-    NEW_COUNT=$(grep -e "$BRE" "$FILE" | wc -l)
+    NEW_COUNT=$(grep -c "$BRE" "$FILE")
     if (( NEW_COUNT == COUNT )); then
         ok $TEST_NAME
         return
