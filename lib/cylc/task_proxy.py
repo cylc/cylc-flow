@@ -1499,6 +1499,11 @@ class TaskProxy(object):
         if not self.job_conf['host']:
             self.job_conf['host'] = 'localhost'
 
+        try:
+            self.job_conf['batch system conf'] = self._get_host_conf(
+                'batch systems')[self.job_conf['batch system name']]
+        except (TypeError, KeyError):
+            self.job_conf['batch system conf'] = self.job_conf.__class__()
         if (is_remote_host(self.job_conf['host']) or
                 is_remote_user(self.job_conf['owner'])):
             remote_job_log_dir = GLOBAL_CFG.get_derived_host_item(

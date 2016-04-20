@@ -5126,6 +5126,12 @@ For job submission methods that use job file directives (PBS,
 Loadlevler, etc.) default directives are provided to set the job name
 and stdout and stderr file paths.
 
+PBS fails a job submit if the job name in \lstinline=-N name= is too long.
+For version 12 or below, this is 15 characters. For version 13, this is 236
+characters. You should modify the constant \lstinline=JOB_NAME_LEN_MAX= in the
+\lstinline=PBSHandler= class in \lstinline=lib/cylc/batch_sys_handlers/pbs.py=
+in the cylc source tree to suit the PBS version at your site.
+
 \subsubsection{Cylc Quirks (PBS, SGE, ...) }
 
 As shown in the example above, to get a naked option flag such as
