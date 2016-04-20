@@ -52,6 +52,8 @@
 #         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE
 #         Run "grep -q PATTERN FILE".
+#     count_ok PATTERN FILE COUNT
+#         Test that PATTERN occurs in exactly COUNT lines of FILE.
 #     exists_ok FILE
 #         Test that FILE exists
 #     exists_fail FILE
@@ -230,6 +232,22 @@ function grep_ok() {
         return
     fi
     echo "Can't find $BRE in $FILE" > $TEST_NAME.stderr
+    mkdir -p $TEST_LOG_DIR
+    cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+    fail $TEST_NAME
+}
+
+function count_ok() {
+    local BRE=$1
+    local FILE=$2
+    local COUNT=$3
+    local TEST_NAME=$(basename "$FILE")-count-ok
+    NEW_COUNT=$(grep -c "$BRE" "$FILE")
+    if (( NEW_COUNT == COUNT )); then
+        ok $TEST_NAME
+        return
+    fi
+    echo "Found $NEW_COUNT (not $COUNT) of $BRE in $FILE" > $TEST_NAME.stderr
     mkdir -p $TEST_LOG_DIR
     cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
