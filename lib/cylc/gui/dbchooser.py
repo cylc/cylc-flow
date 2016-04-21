@@ -116,7 +116,7 @@ class db_updater(threading.Thread):
             try:
                 port, suite_identity = scan_result
             except ValueError:
-                # Back-compat (<= 6.5.0 no title or state totals).
+                # Back-compat <= 6.5.0
                 port, name, owner = scan_result
             else:
                 name = suite_identity['name']
@@ -136,14 +136,14 @@ class db_updater(threading.Thread):
         self.update_treestore(
             self.newtree, self.regd_treestore.get_iter_first())
 
-    def update_treestore(self, new, iter):
-        # iter is None for an empty treestore (no suites registered)
+    def update_treestore(self, new, iter_):
+        # iter_ is None for an empty treestore (no suites registered)
         ts = self.regd_treestore
-        if iter:
-            opath = ts.get_path(iter)
-            # get parent iter before pruning in case we prune last item at this
-            # level
-            piter = ts.iter_parent(iter)
+        if iter_:
+            opath = ts.get_path(iter_)
+            # get parent iter_ before pruning in case we prune last item at
+            # this level
+            piter = ts.iter_parent(iter_)
         else:
             opath = None
             piter = None
@@ -152,12 +152,12 @@ class db_updater(threading.Thread):
             # find the TreeIter pointing at item at this level
             if not opath:
                 return None
-            iter = ts.get_iter(opath)
-            while iter:
-                val, = ts.get(iter, 0)
+            iter_ = ts.get_iter(opath)
+            while iter_:
+                val, = ts.get(iter_, 0)
                 if val == item:
-                    return iter
-                iter = ts.iter_next(iter)
+                    return iter_
+                iter_ = ts.iter_next(iter_)
             return None
 
         # new items at this level
@@ -165,25 +165,25 @@ class db_updater(threading.Thread):
         old_items = []
         prune = []
 
-        while iter:
+        while iter_:
             # iterate through old items at this level
-            item, state, descr, dir = ts.get(iter, 0, 1, 2, 3)
+            item, state, descr, dir = ts.get(iter_, 0, 1, 2, 3)
             if item not in new_items:
                 # old item is not in new - prune it
-                res = ts.remove(iter)
+                res = ts.remove(iter_)
                 if not res:  # Nec?
-                    iter = None
+                    iter_ = None
             else:
                 # old item is in new - update it in case it changed
                 old_items.append(item)
                 # update old items that do appear in new
-                chiter = ts.iter_children(iter)
+                chiter = ts.iter_children(iter_)
                 if not isinstance(new[item], dict):
                     # new item is not a group - update title etc.
                     state, descr, dir = new[item]
                     sc = self.statecol(state)
                     ni = new[item]
-                    ts.set(iter, 0, item, 1, ni[0], 2, ni[1], 3, ni[2],
+                    ts.set(iter_, 0, item, 1, ni[0], 2, ni[1], 3, ni[2],
                            4, sc[0], 5, sc[1], 6, sc[2])
                     if chiter:
                         # old item was a group - kill its children
@@ -196,23 +196,23 @@ class db_updater(threading.Thread):
                     if not chiter:
                         # old item was not a group
                         ts.set(
-                            iter, 0, item, 1, None, 2, None, 3, None, 4,
+                            iter_, 0, item, 1, None, 2, None, 3, None, 4,
                             None, 5, None, 6, None)
-                        self.build_treestore(new[item], iter)
+                        self.build_treestore(new[item], iter_)
 
                 # continue
-                iter = ts.iter_next(iter)
+                iter_ = ts.iter_next(iter_)
 
-        # return to original iter
+        # return to original iter_
         if opath:
             try:
-                iter = ts.get_iter(opath)
+                iter_ = ts.get_iter(opath)
             except ValueError:
                 # removed the item pointed to
                 # TODO - NEED TO WORRY ABOUT OTHERS AT THIS LEVEL?
-                iter = None
+                iter_ = None
         else:
-            iter = None
+            iter_ = None
 
         # add new items at this level
         for key in sorted(new_items):
@@ -254,27 +254,27 @@ class db_updater(threading.Thread):
         else:
             return (fg, bg, bg)
 
-    def search_level(self, model, iter, func, data):
-        while iter:
-            if func(model, iter, data):
-                return iter
-            iter = model.iter_next(iter)
+    def search_level(self, model, iter_, func, data):
+        while iter_:
+            if func(model, iter_, data):
+                return iter_
+            iter_ = model.iter_next(iter_)
         return None
 
-    def search_treemodel(self, model, iter, func, data):
-        while iter:
-            if func(model, iter, data):
-                return iter
+    def search_treemodel(self, model, iter_, func, data):
+        while iter_:
+            if func(model, iter_, data):
+                return iter_
             result = self.search_treemodel(
-                model, model.iter_children(iter), func, data)
+                model, model.iter_children(iter_), func, data)
             if result:
                 return result
-            iter = model.iter_next(iter)
+            iter_ = model.iter_next(iter_)
         return None
 
-    def match_func(self, model, iter, data):
+    def match_func(self, model, iter_, data):
         column, key = data
-        value = model.get_value(iter, column)
+        value = model.get_value(iter_, column)
         return value == key
 
 
@@ -481,8 +481,8 @@ class dbchooser(object):
                     return False
                 if not treeview.row_expanded(path):
                     # row not expanded or not expandable
-                    iter = self.regd_treestore.get_iter(path)
-                    if self.regd_treestore.iter_children(iter):
+                    iter_ = self.regd_treestore.get_iter(path)
+                    if self.regd_treestore.iter_children(iter_):
                         # has children so is expandable
                         treeview.expand_row(path, False)
                         return False
@@ -506,24 +506,24 @@ class dbchooser(object):
 
         selection = treeview.get_selection()
 
-        model, iter = selection.get_selected()
+        model, iter_ = selection.get_selected()
 
-        item, auth, descr, suite_dir = model.get(iter, 0, 1, 2, 3)
+        item, auth, descr, suite_dir = model.get(iter_, 0, 1, 2, 3)
         if not suite_dir:
             group_clicked = True
         else:
             group_clicked = False
 
-        def get_reg(item, iter):
+        def get_reg(item, iter_):
             reg = item
-            if iter:
-                par = model.iter_parent(iter)
+            if iter_:
+                par = model.iter_parent(iter_)
                 if par:
                     val, = model.get(par, 0)
                     reg = get_reg(val, par) + RegPath.delimiter + reg
             return reg
 
-        reg = get_reg(item, iter)
+        reg = get_reg(item, iter_)
         if reg and auth:
             self.chosen = (reg, auth)
             self.selected_label.set_text("%s @ %s" % (reg, auth))
