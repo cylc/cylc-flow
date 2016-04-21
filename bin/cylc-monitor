@@ -29,19 +29,19 @@ if '--use-ssh' in sys.argv[1:]:
     sys.exit("No '--use-ssh': this command requires a local terminal.")
 
 import os
-import re
 from time import sleep
 
 from parsec.OrderedDict import OrderedDict
 from cylc.CylcOptionParsers import cop
 from cylc.task_state import TaskState
 from cylc.network.suite_state import (
-    StateSummaryClient, SuiteStillInitialisingError)
+    SUITE_STATUS_SPLIT_REC, StateSummaryClient, SuiteStillInitialisingError)
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
 class SuiteMonitor(object):
+
     def __init__(self):
         self.parser = cop(
             """cylc [info] monitor [OPTIONS] ARGS
@@ -139,11 +139,8 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                     updated_at = glbl['last_updated'].isoformat()
 
                 run_mode = glbl['run_mode']
-                paused = glbl['paused']
-                stopping = glbl['stopping']
-                will_pause_at = glbl['will_pause_at']
-                will_stop_at = glbl['will_stop_at']
                 ns_defn_order = glbl['namespace definition order']
+                status_string = glbl['status_string']
 
                 task_info = {}
                 name_list = set()
@@ -205,16 +202,14 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
                         TaskState.ctrl[state], tot, TaskState.ctrl_end)
                 blit.append(summary)
 
-                if stopping:
-                    suffix = 'S_T_O_P_P_I_N_G'
-                elif paused:
-                    suffix = 'P_A_U_S_E_D'
-                elif will_pause_at:
-                    suffix = 'P_A_U_S_I_N_G__A_T__' + will_pause_at
-                elif will_stop_at:
-                    suffix = 'S_T_O_P_P_I_N_G__A_T__' + will_stop_at
-                else:
-                    suffix = 'R_U_N_N_I_N_G'
+                # Print a divider line containing the suite status string.
+                try:
+                    status1, status2 = (
+                        SUITE_STATUS_SPLIT_REC.match(status_string)).groups()
+                except AttributeError:
+                    status1 = status_string
+                    status2 = ''
+                suffix = '_'.join(list(status1.replace(' ', '_'))) + status2
                 divider_str = '_' * len_header
                 divider_str = "\033[1;31m%s%s%s" % (
                     divider_str[:-len(suffix)], suffix, TaskState.ctrl_end)

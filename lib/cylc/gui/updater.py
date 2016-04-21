@@ -29,7 +29,9 @@ from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.network.suite_state import (
-    StateSummaryClient, SuiteStillInitialisingError)
+    StateSummaryClient, SuiteStillInitialisingError,
+    SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
+    SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING)
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.network.suite_log import SuiteLogClient
 from cylc.network.suite_command import SuiteCommandClient
@@ -142,7 +144,7 @@ class Updater(threading.Thread):
         self.mode = "waiting..."
         self.dt = "waiting..."
         self.dt_date = None
-        self.status = None
+        self.status = SUITE_STATUS_NOT_CONNECTED
         self.is_reloading =False
         self.connected = False
         self._no_update_event = threading.Event()
@@ -220,7 +222,8 @@ class Updater(threading.Thread):
             print >> sys.stderr, "succeeded"
         # Connected.
         self.connected = True
-        self.set_status("connected")
+        # This status will be very transient:
+        self.set_status(SUITE_STATUS_CONNECTED)
         self.connect_fail_warned = False
 
         self.poll_schd.stop()
@@ -322,19 +325,7 @@ class Updater(threading.Thread):
         self.full_fam_state_summary = fam_states
         self.refilter()
 
-        # Prioritise which suite state string to display.
-        # 1. Are we stopping, or some variant of 'running'?
-        if glbl['stopping']:
-            self.status = 'stopping'
-        elif glbl['will_pause_at']:
-            self.status = 'running to hold at ' + glbl['will_pause_at']
-        elif glbl['will_stop_at']:
-            self.status = 'running to ' + glbl['will_stop_at']
-        else:
-            self.status = 'running'
-        # 2. Override with temporary held status.
-        if glbl['paused']:
-            self.status = 'held'
+        self.status = glbl['status_string']
 
         try:
             self.is_reloading = glbl['reloading']
@@ -345,7 +336,7 @@ class Updater(threading.Thread):
     def set_stopped(self):
         """Reset data and clients when suite is stopped."""
         self.connected = False
-        self.set_status("stopped")
+        self.set_status(SUITE_STATUS_STOPPED)
         self.poll_schd.start()
         self._summary_update_time = None
         self.state_summary = {}
@@ -362,9 +353,10 @@ class Updater(threading.Thread):
             if self.cfg.port is None:
                 client.port = None
 
-    def set_status(self, status):
+    def set_status(self, status=None):
         """Update status bar."""
-        self.status = status
+        if status is not None:
+            self.status = status
         self.info_bar.set_status(self.status)
 
     def warn(self, msg):
@@ -395,10 +387,10 @@ class Updater(threading.Thread):
             # Connection achieved but state summary data not available yet.
             if cylc.flags.debug:
                 print >> sys.stderr, "  connected, suite initializing ..."
-            self.set_status("initialising")
+            self.set_status(SUITE_STATUS_INITIALISING)
             if self.info_bar.prog_bar_can_start():
                 gobject.idle_add(
-                    self.info_bar.prog_bar_start, "suite initialising...")
+                    self.info_bar.prog_bar_start, SUITE_STATUS_INITIALISING)
                 self.info_bar.set_state([])
             return False
         except Pyro.errors.NamingError as exc:
@@ -408,10 +400,10 @@ class Updater(threading.Thread):
                 if cylc.flags.debug:
                     print >> sys.stderr, (
                         "  daemon <= 6.4.0, suite initializing ...")
-                self.set_status("initialising")
+                self.set_status(SUITE_STATUS_INITIALISING)
                 if self.info_bar.prog_bar_can_start():
                     gobject.idle_add(
-                        self.info_bar.prog_bar_start, "suite initialising...")
+                        self.info_bar.prog_bar_start, SUITE_STATUS_INITIALISING)
                     self.info_bar.set_state([])
                 # Reconnect till we get the suite state object.
                 self.reconnect()
@@ -425,7 +417,7 @@ class Updater(threading.Thread):
                 self.reconnect()
                 return False
         except Exception as exc:
-            if self.status == "stopping":
+            if self.status == SUITE_STATUS_STOPPING:
                 # Expected stop: prevent the reconnection warning dialog.
                 self.connect_fail_warned = True
             if cylc.flags.debug:
@@ -438,17 +430,18 @@ class Updater(threading.Thread):
         else:
             # Got suite data.
             self.version_mismatch_warned = False
-            if (self.status == "stopping" and
+            if (self.status == SUITE_STATUS_STOPPING and
                     self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
-                    self.info_bar.prog_bar_start, "suite stopping...")
+                    self.info_bar.prog_bar_start, self.status)
             if (self.is_reloading and
                     self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
-                    self.info_bar.prog_bar_start, "suite reloading...")
+                    self.info_bar.prog_bar_start, "reloading")
             if (self.info_bar.prog_bar_active() and
                     not self.is_reloading and
-                    self.status not in ["stopping", "initialising"]):
+                    self.status not in [SUITE_STATUS_STOPPING,
+                                        SUITE_STATUS_INITIALISING]):
                 gobject.idle_add(self.info_bar.prog_bar_stop)
             if summaries_changed or err_log_changed:
                 return True
