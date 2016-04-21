@@ -12,4 +12,4 @@
             graph=t1
 [runtime]
     [[t1]]
-        script=printenv FOO
+        script=printenv CYLC_TEST_VAR_FOO

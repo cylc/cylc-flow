@@ -50,7 +50,7 @@ poll '!' grep -q 't1.19700101T0000Z.*failed' 'err'
 
 run_ok "${TEST_NAME_BASE}-broadcast" \
     cylc broadcast --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" \
-    -n 't1' -p '1970' -s '[environment]FOO=foo'
+    -n 't1' -p '1970' -s '[environment]CYLC_TEST_VAR_FOO=foo'
 
 run_ok "${TEST_NAME_BASE}-trigger" \
     cylc trigger --host="${CYLC_TEST_HOST}" "${SUITE_NAME}" '*:failed'
