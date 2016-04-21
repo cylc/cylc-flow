@@ -56,50 +56,28 @@ def main():
 
     db = RegistrationDB(options.db)
 
-    dirs = db.unregister(args[0])
+    unregistered_set, skipped_set = db.unregister(args[0])
 
-    n = len(dirs)
-    if n == 0:
-        print 'No suites unregistered.'
-        sys.exit(0)
+    print '%d suite(s) unregistered.' % len(unregistered_set)
+    if not unregistered_set or not options.obliterate:
+        sys.exit(bool(skipped_set))
 
-    print len(dirs), 'suites unregistered.'
-
-    if options.obliterate and len(dirs) > 0:
-        for dir in dirs:
-            print 'DELETE ', dir
-
-        really_obliterate = False
-        if options.force:
-            really_obliterate = True
-        else:
-            if len(dirs) == 1:
-                words = "THIS SUITE DEFINITION"
-            else:
-                words = "THESE SUITE DEFINITIONS"
-            response = raw_input(
-                "DO YOU REALLY WANT TO DELETE " + words + "? (y/n) ")
-            if response == 'y':
-                really_obliterate = True
-        if really_obliterate and len(dirs) > 0:
-            for dir in dirs:
-                try:
-                    rmtree(dir)
-                except OSError as exc:
-                    print >> sys.stderr, (
-                        "ERROR, could not remove directory: " + dir)
-                    print >> sys.stderr, str(exc)
-                    continue
-                # recursively remove empty superdirs
-                tmp = dir
-                while True:
-                    tmp = os.path.split(tmp)[0]
-                    try:
-                        os.rmdir(tmp)
-                    except OSError:
-                        break
-                    else:
-                        print 'Removed empty directory:', tmp
+    for _, path in sorted(unregistered_set):
+        if not options.force:
+            response = raw_input('REALLY DELETE "%s"? (y/n/a) ' % (path))
+            if response == 'a':
+                options.force = True
+            elif response != 'y':
+                continue
+        print 'DELETE "%s"' % (path)
+        try:
+            rmtree(path)
+        except OSError as exc:
+            print >> sys.stderr, (
+                "ERROR, could not remove directory: " + path)
+            print >> sys.stderr, str(exc)
+            continue
+    sys.exit(bool(skipped_set))
 
 if __name__ == "__main__":
     try:

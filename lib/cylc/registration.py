@@ -20,6 +20,8 @@
 import os
 import sys
 import re
+
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
 from cylc.regpath import RegPath
@@ -150,26 +152,30 @@ class RegistrationDB(object):
 
     def unregister(self, exp):
         """Un-register a suite."""
-        suitedirs = []
-        for key in self.list_all_suites():
-            if re.search(exp + '$', key):
+        unregistered_set = set()
+        skipped_set = set()
+        ports_d = GLOBAL_CFG.get(['pyro', 'ports directory'])
+        for name in sorted(self.list_all_suites()):
+            if not re.match(exp + r'\Z', name):
+                continue
+            try:
+                data = self.get_suite_data(name)
+            except RegistrationError:
+                continue
+            if os.path.exists(os.path.join(ports_d, name)):
+                skipped_set.add((name, data['path']))
+                print >> sys.stderr, (
+                    'SKIP UNREGISTER %s: port file exists' % (name))
+                continue
+            for base_name in ['passphrase', 'suite.rc.processed']:
                 try:
-                    data = self.get_suite_data(key)
-                except RegistrationError:
+                    os.unlink(os.path.join(data['path'], base_name))
+                except OSError:
                     pass
-                else:
-                    path = data['path']
-                    for base_name in ['passphrase', 'suite.rc.processed']:
-                        try:
-                            os.unlink(os.path.join(path, base_name))
-                        except OSError:
-                            pass
-                    if path not in suitedirs:
-                        # (could be multiple registrations of the same suite).
-                        suitedirs.append(path)
-                print 'UNREGISTER', key
-                os.unlink(os.path.join(self.dbpath, key))
-        return suitedirs
+            unregistered_set.add((name, data['path']))
+            print 'UNREGISTER %s:%s' % (name, data['path'])
+            os.unlink(os.path.join(self.dbpath, name))
+        return unregistered_set, skipped_set
 
     def reregister(self, srce, targ):
         """Rename a source."""
