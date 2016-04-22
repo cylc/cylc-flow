@@ -3095,7 +3095,6 @@ For more Stop options use the Control menu.""")
          * running to 2015-08-08T01:00:00+12:00
          * running to hold at 20150601T0000Z
          * held
-         * reloading
          * stopping
          * stopped
          * stopped with 'succeeded'
@@ -3108,7 +3107,6 @@ For more Stop options use the Control menu.""")
         run_ok = "stopped" in new_status
         # Pause: avoid "stopped with 'running'".
         pause_ok = (
-            new_status == "reloading" or
             "running" in new_status and "stopped" not in new_status)
         unpause_ok = "held" == new_status
         stop_ok = ("stopped" not in new_status and

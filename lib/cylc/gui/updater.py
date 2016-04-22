@@ -144,6 +144,7 @@ class Updater(threading.Thread):
         self.dt = "waiting..."
         self.dt_date = None
         self.status = None
+        self.is_reloading = False
         self.connected = False
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
@@ -338,19 +339,15 @@ class Updater(threading.Thread):
             self.status = 'running to ' + glbl['will_stop_at']
         else:
             self.status = 'running'
-
         # 2. Override with temporary held status.
         if glbl['paused']:
             self.status = 'held'
 
-        # 3. Override running or held with reloading.
-        if not self.status == 'stopping':
-            try:
-                if glbl['reloading']:
-                    self.status = 'reloading'
-            except KeyError:
-                # Back compat.
-                pass
+        try:
+            self.is_reloading = glbl['reloading']
+        except KeyError:
+            # Back compat.
+            pass
 
     def set_stopped(self):
         """Reset data and clients when suite is stopped."""
@@ -458,13 +455,13 @@ class Updater(threading.Thread):
                     self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
                     self.info_bar.prog_bar_start, "suite stopping...")
-            if (self.status == "reloading" and
+            if (self.is_reloading and
                     self.info_bar.prog_bar_can_start()):
                 gobject.idle_add(
                     self.info_bar.prog_bar_start, "suite reloading...")
             if (self.info_bar.prog_bar_active() and
-                    self.status not in
-                    ["stopping", "initialising", "reloading"]):
+                    not self.is_reloading and
+                    self.status not in ["stopping", "initialising"]):
                 gobject.idle_add(self.info_bar.prog_bar_stop)
             if summaries_changed or err_log_changed:
                 return True
