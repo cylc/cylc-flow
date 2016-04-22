@@ -1091,9 +1091,6 @@ regular check on the health of submitted tasks.
 Each list value is used in turn until the last, which is used repeatedly
 until finished.
 
-{\em Detaching tasks cannot be polled or killed by the suite daemon -
-see~\ref{DetachingTasks}.}
-
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval
         representations, optionally {\em preceded} by multipliers.
@@ -1120,9 +1117,6 @@ regular check on the health of submitted tasks.
 Each list value is used in turn until the last, which is used repeatedly
 until finished.
 
-{\em Detaching tasks cannot be polled or killed by the suite daemon -
-see~\ref{DetachingTasks}.}
-
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval
         representations, optionally {\em preceded} by multipliers.
@@ -1130,20 +1124,6 @@ see~\ref{DetachingTasks}.}
     \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
     hour, 1 minute.
     \item {\em default:} (none)
-\end{myitemize}
-
-\paragraph[manual completion]{ [runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow manual completion}
-
-If a task's initiating process detaches and exits before task processing
-is finished then cylc cannot arrange for the task to automatically
-signal when it has succeeded or failed. In such cases you must use this
-configuration item to tell cylc not to arrange for automatic completion
-messaging, and insert some minimal completion messaging yourself in
-appropriate places in the task implementation (see~\ref{DetachingTasks}).
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em default:} False
 \end{myitemize}
 
 \paragraph[work sub-directory]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow work sub-directory}

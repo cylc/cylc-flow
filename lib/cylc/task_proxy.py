@@ -1324,10 +1324,8 @@ class TaskProxy(object):
         self.summary['batch_sys_name'] = self.batch_sys_name
 
         command = rtconfig['script']
-        use_manual = rtconfig['manual completion']
         if self.tdef.run_mode == 'dummy':
             # (dummy tasks don't detach)
-            use_manual = False
             command = rtconfig['dummy mode']['script']
             if rtconfig['dummy mode']['disable pre-script']:
                 precommand = None
@@ -1395,7 +1393,6 @@ class TaskProxy(object):
             rtconfig, local_jobfile_path, common_job_log_path)
         self.job_conf.update(
             {
-                'use manual completion': use_manual,
                 'pre-script': precommand,
                 'script': command,
                 'post-script': postcommand,
@@ -1458,7 +1455,6 @@ class TaskProxy(object):
             'batch submit command template': (
                 rtconfig['job submission']['command template']),
             'work sub-directory': rtconfig['work sub-directory'],
-            'use manual completion': False,
             'pre-script': '',
             'script': '',
             'post-script': '',

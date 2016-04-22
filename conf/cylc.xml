@@ -57,7 +57,6 @@
         <RegExpr attribute='Keyword' String=' members '/>
         <RegExpr attribute='Keyword' String=' max-polls '/>
         <RegExpr attribute='Keyword' String=' max active cycle points '/>
-        <RegExpr attribute='Keyword' String=' manual completion '/>
         <RegExpr attribute='Keyword' String=' log resolved dependencies '/>
         <RegExpr attribute='Keyword' String=' live mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' limit '/>

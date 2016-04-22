@@ -4796,11 +4796,9 @@ tasks are detected.
 \label{TaskImplementation}
 
 Existing scripts or executables can be used as cylc tasks without any
-modification, unless:
-\begin{myitemize}
-    \item they do not return error status on failure
-    \item they detach early after spawning other internal processes
-\end{myitemize}
+modification so long as they return standard exit status on success or
+failure, and do not internally spawn detaching processes
+(see~\ref{DetachingJobs}).
 
 \subsection{Inlined Tasks}
 
@@ -4872,114 +4870,38 @@ If critical errors are not reported in this way task failures will still
 be detected and logged by the suite daemon, but you may have to examine task
 logs to determine what the problem was.
 
-\subsection{Detaching Tasks}
-\label{DetachingTasks}
+\subsection{Avoid Detaching Processes}
+\label{DetachingJobs}
 
-If a task spawns another job internally and then detaches and exits
-without seeing the spawned process through, you must arrange for the
-detached process to send its own completion messages, because the
-cylc-generated job script cannot know when it is finished.
-
-First check that you can't ``reconnect'' the detaching process. If
-it is a background shell process, for instance, just run it in the
-foreground instead. For loadleveler jobs the \lstinline=-s= option
-prevents \lstinline=llsubmit= from returning until the job has
-completed. For Sun Grid Engine, \lstinline=qsub -sync yes= has the same
-effect.  For how to override the job submission command template 
-see~\ref{CommandTemplate}.
-
-If the detaching process cannot be reconnected, disable cylc's automatic
-completion messaging:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[runtime]
-    [[foo]]
-        manual completion = True # this is a detaching task
-\end{lstlisting}
-
-The cylc messaging commands should be called like this:
-\lstset{language=bash}
-\begin{lstlisting}
-#!/bin/bash
-# ...
-if $SUCCESS; then
-    cylc task message "succeeded"
-    exit 0
-else
-    cylc task message "failed"
-    exit 1
-fi
-\end{lstlisting}
-They read environment variables that identify the calling task and the
-target suite, so the task execution environment must be propagated to
-the detached process.
-
-One way to handle this is to write a {\em task wrapper} that modifies a
-copy of the detaching native job scripts, on the fly, to insert
-completion messaging in the appropriate places. An advantage of this
-method is that you don't need to permanently modify the model or its
-associated native scripting for cylc. Another is that you can configure
-the native job setup for a single test case (running it without cylc)
-and then have your custom wrapper modify the standalone test case on the
-fly with suite, task, and cycle-specific parameters as required.
-
-To make this easier, for tasks that declare manual completion
-messaging cylc makes non user-defined environment scripting
-available in a variable \lstinline=$CYLC_SUITE_ENVIRONMENT=,
-the value of which can be inserted at the appropriate point in the
-task scripts (just prior to calling the cylc messaging
-commands as above).\footnote{Note that \lstinline=$CYLC_SUITE_ENVIRONMENT= is
-a string containing embedded newline characters and it has
-to be handled accordingly. In the bash shell, for instance, it should
-be echoed in quotes to avoid concatenation to a single line.}
-
-\subsubsection{Detaching Tasks And Polling}
-
-Another reason to avoid detaching tasks if possible is that they cannot
-be polled or killed because there is no way for cylc to determine the
-job ID of the detached process. Attempted polling of a detaching task
-will just result in cylc logging a warning message.
-
-\subsubsection{A Custom Detaching Task Wrapper Example}
-
-The {\em detaching} example suite contains a script
-\lstinline=model.sh= that runs a pseudo model as follows:
-\lstset{language=bash}
-\lstinputlisting{../examples/detaching/native/model.sh}
-this is in turn executed by a script \lstinline=run-model.sh= that
-detaches immediately after job submission (i.e.\ it exits before the
-model executable actually runs):
-\lstinputlisting{../examples/detaching/native/run-model.sh}
-{\em Note that your {\bf at} scheduler daemon must be up
-if you want to test this suite.}
-
-Here's a cylc suite to run this unruly model:
-\lstset{language=suiterc}
-\lstinputlisting{../examples/detaching/suite.rc}
-\lstset{language=bash}
-The suite invokes the task by means of the custom wrapper
-\lstinline=model-wrapper.sh= which modifies, on the fly,
-a temporary copy of the model's native job scripts as described above:
-\lstinputlisting{../examples/detaching/bin/model-wrapper.sh}
 \lstset{language=transcript}
-If you run this suite, or submit the model task alone with
-\lstinline=cylc submit=, you'll find that the usual job submission
-log files for task stdout and stderr end before the task is finished.
-To see the ``model'' output and the final task completion message
-(success or failure), examine the log files generated by the
-job submitted internally to the {\em at} scheduler (their
-location is determined by the \lstinline=$PREFIX= variable in the
-suite.rc file).
+If a task script starts background sub-processes and does not wait on them, or
+internally submits jobs to a batch scheduler and then exits immediately, the
+detached processes will not be visible to cylc and the task will appear to
+finish when the top-level script finishes.  You will need to modify scripts
+like this to make them execute all sub-processes in the foreground (or use the
+shell \lstinline=wait= command to wait on them before exiting) and to prevent 
+job submission commands from returning before the job completes (e.g.\
+\lstinline=llsubmit -s= for Loadleveler,
+\lstinline=qsub -sync yes= for Sun Grid Engine, and
+\lstinline@qsub -W block=true@ for PBS).
 
-It should not be difficult to adapt this example to real tasks
-with detaching internal job submission.  You will probably also need to
-replace other parameters, such as model input and output filenames, with
-suite- and cycle-appropriate values, but exactly the same technique can
-be used: identify which job script needs to be modified and use text
-processing tools (such as the single line {\em perl} search-and-replace
-expressions above) to do the job.
-
-%\pagebreak
+If this is not possible - perhaps you don't have control over the script
+or can't work out how to fix it - one alternative approach is to use another
+task to repeatedly poll for the results of the detached processes:
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = "model => checker => post-proc"
+[runtime]
+    [[model]]
+        # Uh-oh, this script does an internal job submission to run model.exe:
+        script = run-model.sh  
+    [[checker]]
+        # Fail and retry every minute (for 10 tries at the most) if the model's
+        # job.done indicator file does not exist yet.
+        retry delays = 10 * PT1M
+        script = "[[ ! -f $RUN_DIR/job.done ]] && exit 1"
+\end{lstlisting}
 
 \section{Task Job Submission}
 \label{TaskJobSubmission}
