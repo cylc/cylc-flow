@@ -143,7 +143,7 @@ class Updater(threading.Thread):
         self.dt = "waiting..."
         self.dt_date = None
         self.status = None
-        self.is_reloading =False
+        self.is_reloading = False
         self.connected = False
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
