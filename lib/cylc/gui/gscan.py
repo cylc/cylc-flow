@@ -978,34 +978,37 @@ class ScanAppUpdater(BaseScanUpdater):
             )
             title = suite_info.get("title")
 
-            for key in sorted(suite_info):
-                if key.startswith(KEY_STATES):
-                    # Set up the columns, including the cycle point column.
-                    if key == KEY_STATES:
-                        model_data = [
-                            host, suite, is_stopped, title, suite_updated_time]
-                        model_data.append(None)
-                    else:
-                        model_data = [
-                            None, None, is_stopped, title, suite_updated_time]
-                        model_data.append(key.replace(KEY_STATES + ":", "", 1))
+            if KEY_STATES in suite_info:
+                for key in sorted(suite_info):
+                    if not key.startswith(KEY_STATES):
+                        continue
 
                     # Add the state count column (e.g. 'failed 1 succeeded 2').
                     states_text = ""
-                    for state, number in sorted(suite_info[key].items(),
-                                                key=lambda _: _[1]):
+                    for state, number in sorted(
+                            suite_info[key].items(), key=lambda _: _[1]):
                         if state != "runahead":
                             # 'runahead' states are usually hidden.
                             states_text += '%s %d ' % (state, number)
                     if not states_text:
                         # Purely runahead cycle.
                         continue
-                    model_data.append(states_text.rstrip())
+                    states_text = states_text.rstrip()
+
+                    # Set up the columns, including the cycle point column.
                     if key == KEY_STATES:
-                        parent_iter = self.suite_treemodel.append(
-                            None, model_data)
+                        parent_iter = self.suite_treemodel.append(None, [
+                            host, suite, is_stopped, title, suite_updated_time,
+                            None, states_text])
                     else:
-                        self.suite_treemodel.append(parent_iter, model_data)
+                        self.suite_treemodel.append(parent_iter, [
+                            None, None, is_stopped, title, suite_updated_time,
+                            key.replace(KEY_STATES + ":", "", 1), states_text])
+            else:
+                # No states in suite_info
+                self.suite_treemodel.append(None, [
+                    host, suite, is_stopped, title, suite_updated_time, None,
+                    None])
         self.suite_treemodel.foreach(self._expand_row, row_ids)
         return False
 
