@@ -57,8 +57,7 @@ from cylc.network.suite_identifier import SuiteIdServer
 from cylc.network.suite_info import SuiteInfoServer
 from cylc.network.suite_log import SuiteLogServer
 from cylc.network.suite_state import StateSummaryServer
-from cylc.owner import user
-from cylc.passphrase import passphrase
+from cylc.owner import USER
 from cylc.regpath import RegPath
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_env import CylcSuiteEnv
@@ -95,7 +94,7 @@ class PyroRequestHandler(threading.Thread):
 
     def run(self):
         while True:
-            self.pyro.handleRequests(timeout=1)
+            self.pyro.handle_requests(timeout=1)
             if self.quit:
                 break
         self.log.debug("request handling thread exiting")
@@ -112,9 +111,8 @@ class Scheduler(object):
     FS_CHECK_PERIOD = 600.0  # 600 seconds
 
     def __init__(self, is_restart=False):
-
         self.suite = None
-        self.owner = user
+        self.owner = USER
         self.host = get_suite_host()
         self.port = None
         self.port_file = None
@@ -563,10 +561,8 @@ class Scheduler(object):
             self.gen_reference_log = self.options.genref
 
     def configure_pyro(self):
-        self.pyro = PyroDaemon(self.suite)
-        pphrase = passphrase(self.suite, user, self.host).get(
-            suitedir=self.suite_dir)
-        self.pyro.set_auth(pphrase)
+        """Create and configure Pyro daemon."""
+        self.pyro = PyroDaemon(self.suite, self.suite_dir)
         self.port = self.pyro.get_port()
         self.port_file = os.path.join(
             GLOBAL_CFG.get(['pyro', 'ports directory']), self.suite)
@@ -897,7 +893,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     '-s', subject,
                     '-r', self._get_events_conf(
                         'mail from', 'notifications@' + get_suite_host()),
-                    self._get_events_conf('mail to', user),
+                    self._get_events_conf('mail to', USER),
                 ],
                 env=env,
                 stdin_str=subject + '\n')

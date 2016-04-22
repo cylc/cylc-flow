@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from Queue import Queue
-from cylc.owner import user
+from cylc.owner import USER
 from cylc.suite_host import get_hostname
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network import check_access_priv
@@ -43,7 +43,7 @@ class TaskMessageServer(PyroServer):
 class TaskMessageClient(PyroClient):
     """Client-side task messaging interface"""
 
-    def __init__(self, suite, task_id, owner=user,
+    def __init__(self, suite, task_id, owner=USER,
                  host=get_hostname(), pyro_timeout=None, port=None):
         self.target_server_object = task_id
         super(TaskMessageClient, self).__init__(

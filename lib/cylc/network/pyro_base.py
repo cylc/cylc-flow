@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Base classes for Pyro servers and clients."""
 
 import os
 import shlex
@@ -23,22 +24,17 @@ import sys
 import traceback
 from uuid import uuid4
 
-try:
-    import Pyro.core
-    import Pyro.errors
-except ImportError, x:
-    raise SystemExit("ERROR: Pyro is not installed")
+import Pyro.core
+import Pyro.errors
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.network.client_reporter import PyroClientReporter
-from cylc.network.connection_validator import ConnValidator
-from cylc.owner import is_remote_user, user, host, user_at_host
-from cylc.passphrase import get_passphrase, PassphraseError
-from cylc.registration import RegistrationDB
-from cylc.suite_host import is_remote_host
 from cylc.network.connection_validator import ConnValidator, OK_HASHES
+from cylc.owner import is_remote_user, USER
+from cylc.registration import RegistrationDB
+from cylc.suite_host import get_hostname, is_remote_host
 from cylc.suite_env import CylcSuiteEnv, CylcSuiteEnvLoadError
 
 
@@ -50,9 +46,11 @@ class PyroServer(Pyro.core.ObjBase):
         self.client_reporter = PyroClientReporter.get_inst()
 
     def signout(self):
+        """Wrap client_reporter.signout."""
         self.client_reporter.signout(self)
 
     def report(self, command):
+        """Wrap client_reporter.report."""
         self.client_reporter.report(command, self)
 
 
@@ -61,7 +59,7 @@ class PyroClient(object):
 
     target_server_object = None
 
-    def __init__(self, suite, owner=user, host=host, pyro_timeout=None,
+    def __init__(self, suite, owner=USER, host=None, pyro_timeout=None,
                  port=None, db=None, my_uuid=None, print_uuid=False):
         self.suite = suite
         self.host = host
@@ -72,14 +70,11 @@ class PyroClient(object):
         self.port = port
         self.pyro_proxy = None
         self.my_uuid = my_uuid or uuid4()
+        self.uri = None
         if print_uuid:
             print >> sys.stderr, '%s' % self.my_uuid
-        try:
-            self.pphrase = get_passphrase(
-                suite, owner, host, RegistrationDB(db))
-        except PassphraseError:
-            # No passphrase: public access client.
-            self.pphrase = None
+        self.reg_db = RegistrationDB(db)
+        self.pphrase = None
 
     def call_server_func(self, fname, *fargs):
         """Call server_object.fname(*fargs)
@@ -88,31 +83,25 @@ class PyroClient(object):
         and handle back compat retry for older daemons.
 
         """
-        self._get_proxy()
-        func = getattr(self.pyro_proxy, fname)
-        try:
-            return func(*fargs)
-        except Pyro.errors.ConnectionDeniedError:
-            # Back compat for daemons <= 6.4.1: passphrase-only auth.
-            if cylc.flags.debug:
-                print >> sys.stderr, "Old daemon? - trying passphrases."
-            self.pyro_proxy = None
-            self._get_proxy_old()
-            func = getattr(self.pyro_proxy, fname)
+        items = [
+            {},
+            {"reset": True, "cache_ok": False},
+            {"reset": True, "cache_ok": False, "old": True},
+        ]
+        for hash_name in OK_HASHES[1:]:
+            items.append(
+                {"reset": True, "cache_ok": False, "hash_name": hash_name})
+        for i, proxy_kwargs in enumerate(items):
+            func = getattr(self._get_proxy(**proxy_kwargs), fname)
             try:
-                return func(*fargs)
-            except Pyro.errors.ConnectionClosedError:
-                # Back compat for daemons <= 6.7.1.
-                # Try alternate hashes.
-                for alt_hash_name in OK_HASHES[1:]:
-                    self.pyro_proxy = None
-                    self._get_proxy(hash_name=alt_hash_name)
-                    func = getattr(self.pyro_proxy, fname)
-                    try:
-                        return func(*fargs)
-                    except Pyro.errors.ConnectionClosedError:
-                        continue
-                raise
+                ret = func(*fargs)
+                break
+            except Pyro.errors.ProtocolError:
+                if i + 1 == len(items):  # final attempt
+                    raise
+        self.reg_db.cache_passphrase(
+            self.suite, self.owner, self.host, self.pphrase)
+        return ret
 
     def _set_uri(self):
         """Set Pyro URI.
@@ -121,13 +110,6 @@ class PyroClient(object):
         specified.
 
         """
-        uri_data = {
-            "host": self.host,
-            "port": self.port,
-            "suite": self.suite,
-            "owner": self.owner,
-            "target": self.target_server_object}
-
         if ((self.host is None or self.port is None) and
                 'CYLC_SUITE_RUN_DIR' in os.environ):
             # Looks like we are in a running task job, so we should be able to
@@ -142,9 +124,6 @@ class PyroClient(object):
                 self.host = suite_env.suite_host
                 self.port = suite_env.suite_port
                 self.owner = suite_env.suite_owner
-                uri_data['host'] = suite_env.suite_host
-                uri_data['port'] = suite_env.suite_port
-                uri_data['owner'] = suite_env.suite_owner
 
         if self.host is None or self.port is None:
             port_file_path = os.path.join(
@@ -166,70 +145,77 @@ class PyroClient(object):
                     user_at_host, 'cat', r_port_file_path]
                 proc = Popen(command, stdout=PIPE, stderr=PIPE)
                 out, err = proc.communicate()
-                if proc.wait():
+                ret_code = proc.wait()
+                if ret_code:
+                    if cylc.flags.debug:
+                        print >> sys.stderr, {
+                            "code": ret_code,
+                            "command": command,
+                            "stdout": out,
+                            "stderr": err}
                     raise PortFileError(
                         "Port file '%s:%s' not found - suite not running?." %
                         (user_at_host, r_port_file_path))
             else:
                 try:
                     out = open(port_file_path).read()
-                except IOError as exc:
+                except IOError:
                     raise PortFileError(
                         "Port file '%s' not found - suite not running?." %
                         (port_file_path))
             lines = out.splitlines()
             try:
-                if uri_data["port"] is None:
-                    uri_data["port"] = int(lines[0])
-                    self.port = uri_data["port"]
+                if self.port is None:
+                    self.port = int(lines[0])
             except (IndexError, ValueError):
                 raise PortFileError(
                     "ERROR, bad content in port file: %s" % port_file_path)
-            if uri_data["host"] is None:
+            if self.host is None:
                 if len(lines) >= 2:
-                    uri_data["host"] = lines[1].strip()
+                    self.host = lines[1].strip()
                 else:
-                    uri_data["host"] = "localhost"
-                self.host = uri_data["host"]
+                    self.host = get_hostname()
 
         # Qualify the obj name with user and suite name (unnecessary but
         # can't change it until we break back-compat with older daemons).
         self.uri = (
-            'PYROLOC://%(host)s:%(port)s/%(owner)s.%(suite)s.%(target)s' %
-            uri_data)
+            'PYROLOC://%(host)s:%(port)s/%(owner)s.%(suite)s.%(target)s' % {
+                "host": self.host,
+                "port": self.port,
+                "suite": self.suite,
+                "owner": self.owner,
+                "target": self.target_server_object})
 
-    def _get_proxy_common(self):
-        if self.pyro_proxy is None:
+    def _get_proxy(self, reset=True, hash_name=None, cache_ok=True, old=False):
+        """Get a Pyro proxy."""
+        if reset or self.pyro_proxy is None:
             self._set_uri()
+            self.pphrase = self.reg_db.load_passphrase(
+                self.suite, self.owner, self.host, cache_ok)
             # Fails only for unknown hosts (no connection till RPC call).
             self.pyro_proxy = Pyro.core.getProxyForURI(self.uri)
             self.pyro_proxy._setTimeout(self.pyro_timeout)
-
-    def _get_proxy(self, hash_name=None):
-        self._get_proxy_common()
-        conn_val = ConnValidator()
-        if hash_name is not None and hash_name in OK_HASHES:
-            conn_val.set_default_hash(hash_name)
-        self.pyro_proxy._setNewConnectionValidator(conn_val)
-        self.pyro_proxy._setIdentification((self.my_uuid, self.pphrase))
-
-    def _get_proxy_old(self):
-        """Back compat: passphrase-only daemons (<= 6.4.1)."""
-        self._get_proxy_common()
-        self.pyro_proxy._setIdentification(self.pphrase)
+            if old:
+                self.pyro_proxy._setIdentification(self.pphrase)
+            else:
+                conn_val = ConnValidator()
+                if hash_name is None:
+                    hash_name = getattr(self, "_hash_name", None)
+                if hash_name is not None and hash_name in OK_HASHES:
+                    conn_val.set_default_hash(hash_name)
+                self.pyro_proxy._setNewConnectionValidator(conn_val)
+                self.pyro_proxy._setIdentification(
+                    (self.my_uuid, self.pphrase))
+        return self.pyro_proxy
 
     def reset(self):
+        """Reset pyro_proxy."""
         self.pyro_proxy = None
 
     def signout(self):
         """Multi-connect clients should call this on exit."""
         try:
-            self._get_proxy()
-            try:
-                self.pyro_proxy.signout()
-            except AttributeError:
-                # Back-compat for pre client reporting daemons <= 6.4.1.
-                pass
+            self._get_proxy().signout()
         except Exception:
             # Suite may have stopped before the client exits.
             pass

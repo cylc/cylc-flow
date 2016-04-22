@@ -24,7 +24,7 @@ from logging import getLogger, INFO
 import shlex
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.owner import user
+from cylc.owner import USER
 from cylc.suite_env import CylcSuiteEnv
 
 
@@ -76,7 +76,7 @@ class RemoteJobHostManager(object):
             owner, host = user_at_host.split('@', 1)
         else:
             owner, host = None, user_at_host
-        if ((owner, host) in [(None, 'localhost'), (user, 'localhost')] or
+        if ((owner, host) in [(None, 'localhost'), (USER, 'localhost')] or
                 host in self.initialised_hosts or
                 self.single_task_mode):
             return

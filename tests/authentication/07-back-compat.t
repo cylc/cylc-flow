@@ -164,6 +164,7 @@ run_ok "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
 
 # Double check shutdown.
 TEST_NAME="${TEST_NAME_BASE}-stop-md5"
+sleep 2
 run_fail "${TEST_NAME}" cylc stop --max-polls=10 --interval=1 "${SUITE_NAME}"
 
 # Purge.

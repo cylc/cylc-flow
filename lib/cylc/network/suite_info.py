@@ -79,8 +79,3 @@ class SuiteInfoClient(PyroClient):
     def set_use_scan_hash(self):
         """Use the configured scan hash for backwards compatibility."""
         self._hash_name = SCAN_HASH
-
-    def _get_proxy(self, hash_name=None):
-        if hash_name is None and hasattr(self, "_hash_name"):
-            hash_name = self._hash_name
-        return super(SuiteInfoClient, self)._get_proxy(hash_name=hash_name)

@@ -16,10 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import Pyro.core
-except ImportError, x:
-    raise SystemExit("ERROR: Pyro is not installed")
+import Pyro.core
 import hashlib
 import logging
 import os
@@ -33,8 +30,8 @@ import hmac
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import NO_PASSPHRASE, PRIVILEGE_LEVELS
 from cylc.config import SuiteConfig
-from cylc.suite_host import is_remote_host
-from cylc.owner import user, host
+from cylc.suite_host import get_hostname, is_remote_host
+from cylc.owner import USER
 
 
 # Access for users without the suite passphrase: encrypting the "no passphrase"
@@ -161,7 +158,8 @@ class ConnValidator(DefaultConnValidator):
         prog_name = os.path.basename(sys.argv[0])
         if passphrase is None:
             passphrase = NO_PASSPHRASE
-        return (user, host, str(uuid), prog_name, hash_(passphrase).digest())
+        return (USER, get_hostname(), str(uuid), prog_name,
+                hash_(passphrase).digest())
 
     def _compare_hmacs(self, hmac1, hmac2):
         """Compare hmacs as securely as possible."""

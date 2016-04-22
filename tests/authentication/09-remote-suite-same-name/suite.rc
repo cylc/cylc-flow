@@ -2,7 +2,6 @@
 [cylc]
     UTC mode=True
     [[reference test]]
-        expected task failures = t1.19700101T0000Z
         live mode suite timeout = PT1M
 [scheduling]
     initial cycle point=1970
@@ -12,4 +11,6 @@
             graph=t1
 [runtime]
     [[t1]]
-        script=printenv CYLC_TEST_VAR_FOO
+        script=true
+        [[[remote]]]
+            host = $CYLC_TEST_HOST

@@ -24,6 +24,7 @@ import atexit
 import gobject
 import threading
 from time import sleep, time, ctime
+import traceback
 
 from cylc.exceptions import PortFileError
 import cylc.flags
@@ -185,6 +186,8 @@ class Updater(threading.Thread):
             if cylc.flags.debug:
                 print >> sys.stderr, "succeeded (old daemon)"
         except PortFileError as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
             # Failed to (re)connect.
             # Probably normal shutdown; get a stop summary if available.
             if not self.connect_fail_warned:
@@ -198,9 +201,13 @@ class Updater(threading.Thread):
                 gobject.idle_add(
                     self.info_bar.set_stop_summary, self.stop_summary)
             return
+        except Pyro.errors.NamingError as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            return
         except Exception as exc:
             if cylc.flags.debug:
-                print >> sys.stderr, "failed: %s" % str(exc)
+                traceback.print_exc()
             if not self.connect_fail_warned:
                 self.connect_fail_warned = True
                 if isinstance(exc, Pyro.errors.ConnectionDeniedError):
@@ -211,7 +218,7 @@ class Updater(threading.Thread):
                     gobject.idle_add(self.warn, str(exc))
             return
 
-        self.app_window.set_title("%s - %s:%d" % (
+        self.app_window.set_title("%s - %s:%s" % (
             self.cfg.suite,
             self.suite_info_client.host,
             self.suite_info_client.port))
@@ -358,12 +365,18 @@ class Updater(threading.Thread):
         self.all_families = {}
         self.triggering_families = {}
         self.global_summary = {}
+        self.cfg.port = None
         for client in [self.state_summary_client, self.suite_info_client,
                        self.suite_log_client, self.suite_command_client]:
             if self.cfg.host is None:
                 client.host = None
-            if self.cfg.port is None:
-                client.port = None
+            client.port = None
+
+        if self.cfg.host:
+            self.app_window.set_title(
+                "%s - %s" % (self.cfg.suite, self.cfg.host))
+        else:
+            self.app_window.set_title(str(self.cfg.suite))
 
     def set_status(self, status):
         """Update status bar."""

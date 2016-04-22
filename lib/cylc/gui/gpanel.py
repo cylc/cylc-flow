@@ -38,7 +38,7 @@ from cylc.gui.gscan import (get_scan_menu, launch_gscan,
 from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
-from cylc.owner import user
+from cylc.owner import USER
 from cylc.network.suite_state import extract_group_state
 
 
@@ -59,7 +59,7 @@ class ScanPanelApplet(object):
         self.is_compact = is_compact
         self.hosts = hosts
         if owner is None:
-            owner = user
+            owner = USER
         self.owner = owner
         dot_hbox = gtk.HBox()
         dot_hbox.show()

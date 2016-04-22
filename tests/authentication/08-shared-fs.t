@@ -48,7 +48,7 @@ poll '!' test -e "${SUITE_LOG}"
 poll '!' grep -q -F 't1.19700101T0000Z failed' "${SUITE_LOG}" 2>'/dev/null'
 
 run_ok "${TEST_NAME_BASE}-broadcast" \
-    cylc broadcast -n 't1' -s '[environment]FOO=foo' "${SUITE_NAME}"
+    cylc broadcast -n 't1' -s '[environment]CYLC_TEST_VAR_FOO=foo' "${SUITE_NAME}"
 
 run_ok "${TEST_NAME_BASE}-trigger" \
     cylc trigger "${SUITE_NAME}" 't1' '19700101T0000Z'

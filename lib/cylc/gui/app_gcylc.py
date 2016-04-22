@@ -158,9 +158,22 @@ Class to hold initialisation data.
         self.imagedir = get_image_dir()
         self.my_uuid = uuid4()
 
-    def reset(self, suite):
+    def reset(self, suite, auth=None):
         self.suite = suite
-        self.logdir = suite_log(suite).get_dir()
+        if auth == '-':  # stopped suite from dbchooser
+            self.host = None
+            self.port = None
+        elif auth:
+            if '@' in auth:
+                self.owner, host_port = auth.split('@', 1)
+            else:
+                host_port = auth
+            if ':' in host_port:
+                self.host, self.port = host_port.split(':', 1)
+                self.port = int(self.port)
+            else:
+                self.host = auth
+                self.port = None
         self.logdir = suite_log(suite).get_dir()
 
 
@@ -634,8 +647,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         if suite:
             self.reset(suite)
 
-    def reset(self, suite):
-        self.cfg.reset(suite)
+    def reset(self, suite, auth=None):
+        self.cfg.reset(suite, auth)
 
         win_title = suite
         if (self.cfg.host is not None and self.cfg.port is not None and
@@ -957,12 +970,12 @@ Main Control GUI that displays one or more views or interfaces to the suite.
     def click_open(self, foo=None):
         app = dbchooser(self.window, self.cfg.db, self.cfg.owner,
                         self.cfg.cylc_tmpdir, self.cfg.pyro_timeout)
-        chosen = None
+        reg, auth = None, None
         while True:
             response = app.window.run()
             if response == gtk.RESPONSE_OK:
-                if app.regname:
-                    chosen = app.regname
+                if app.chosen:
+                    reg, auth = app.chosen
                     break
                 else:
                     warning_dialog("Choose a suite or cancel!",
@@ -971,8 +984,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 break
         app.updater.quit = True
         app.window.destroy()
-        if chosen:
-            self.reset(chosen)
+        if reg:
+            self.reset(reg, auth)
 
     def pause_suite(self, bt):
         self.put_pyro_command('hold_suite')

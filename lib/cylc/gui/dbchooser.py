@@ -18,43 +18,29 @@
 
 import gobject
 import gtk
-import time
+from time import time, sleep
 import os
 import re
-import sys
 import threading
-from util import EntryTempText, EntryDialog
-from cylc.run_get_stdout import run_get_stdout
 
-try:
-    import Pyro.core
-except BaseException, x:  # this catches SystemExit
-    PyroInstalled = False
-    print >> sys.stderr, "WARNING: Pyro is not installed."
-else:
-    PyroInstalled = True
-    from cylc.network.port_scan import scan
-
+import cylc.flags
+from cylc.gui.warning_dialog import warning_dialog, info_dialog
+from cylc.gui.util import get_icon, EntryTempText, EntryDialog
+from cylc.network.port_scan import scan_all
+from cylc.owner import is_remote_user
 from cylc.registration import RegistrationDB
 from cylc.regpath import RegPath
-from warning_dialog import warning_dialog, info_dialog, question_dialog
-from util import get_icon
-from gcapture import gcapture, gcapture_tmpfile
-
-debug = False
+from cylc.run_get_stdout import run_get_stdout
+from cylc.suite_host import is_remote_host
 
 
 class db_updater(threading.Thread):
 
-    count = 0
+    SCAN_INTERVAL = 60.0
 
     def __init__(self, regd_treestore, db, filtr=None, pyro_timeout=None):
-        self.__class__.count += 1
-        self.me = self.__class__.count
-        self.filtr = filtr
         self.db = db
         self.quit = False
-        self.reload = False
         if pyro_timeout:
             self.pyro_timeout = float(pyro_timeout)
         else:
@@ -63,74 +49,101 @@ class db_updater(threading.Thread):
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
 
-        self.running_choices = []
+        self.next_scan_time = None
+        self.running_choices = None
         self.newtree = {}
 
         self.regd_choices = self.db.get_list(filtr)
 
-        # not needed:
-        # self.build_treestore(self.newtree)
-        self.construct_newtree()
-        self.update()
-
     def construct_newtree(self):
-        # construct self.newtree[one][two]...[nnn] = [state, descr, dir ]
-        self.running_choices_changed()
-        ports = {}
-        for suite in self.running_choices:
-            reg, port = suite
-            ports[reg] = port
+        """construct self.newtree[one][two]...[nnn] = [auth, descr, dir ]"""
+        regd_choices = {}
+        for suite, suite_dir, descr in sorted(self.regd_choices):
+            regd_choices[suite] = (suite, suite_dir, descr)
 
         self.newtree = {}
-        for reg in self.regd_choices:
-            suite, suite_dir, descr = reg
-            suite_dir = re.sub('^' + os.environ['HOME'], '~', suite_dir)
-            if suite in ports:
-                state = str(ports[suite])
-            else:
-                state = '-'
+
+        for suite, auth in self.running_choices:
+            if suite in regd_choices:
+                if is_remote_host(auth.split(':', 1)[0]):
+                    descr, suite_dir = (None, None)
+                else:
+                    # local suite
+                    _, suite_dir, descr = regd_choices[suite]
+                    del regd_choices[suite]
             nest2 = self.newtree
             regp = suite.split(RegPath.delimiter)
             for key in regp[:-1]:
                 if key not in nest2:
                     nest2[key] = {}
                 nest2 = nest2[key]
-            nest2[regp[-1]] = [state, descr, suite_dir]
+            nest2[(regp[-1], suite, auth)] = [auth, descr, suite_dir]
+
+        for suite, suite_dir, descr in regd_choices.values():
+            suite_dir = re.sub('^' + os.environ['HOME'], '~', suite_dir)
+            nest2 = self.newtree
+            regp = suite.split(RegPath.delimiter)
+            for key in regp[:-1]:
+                if key not in nest2:
+                    nest2[key] = {}
+                nest2 = nest2[key]
+            nest2[(regp[-1], suite, '-')] = ['-', descr, suite_dir]
 
     def build_treestore(self, data, piter=None):
-        items = data.keys()
-        items.sort()
-        for item in items:
-            value = data[item]
+        for key, value in sorted(data.items()):
+            if isinstance(key, tuple):
+                item = key[0]
+            else:
+                item = key
             if isinstance(value, dict):
                 # final three items are colours
-                iter = self.regd_treestore.append(
+                iter_ = self.regd_treestore.append(
                     piter, [item, None, None, None, None, None, None])
-                self.build_treestore(value, iter)
+                self.build_treestore(value, iter_)
             else:
-                state, descr, dir = value
-                iter = self.regd_treestore.append(
-                    piter, [item, state, descr, dir, None, None, None])
+                state, descr, suite_dir = value
+                self.regd_treestore.append(
+                    piter, [item, state, descr, suite_dir, None, None, None])
 
     def update(self):
-        # print "Updating list of available suites"
-        self.construct_newtree()
-        if self.reload:
-            self.regd_treestore.clear()
-            self.build_treestore(self.newtree)
-            self.reload = False
-        else:
-            self.update_treestore(
-                self.newtree, self.regd_treestore.get_iter_first())
+        """Update tree, if necessary."""
+        if self.next_scan_time is not None and self.next_scan_time > time():
+            return
 
-    def update_treestore(self, new, iter):
-        # iter is None for an empty treestore (no suites registered)
+        # Scan for running suites
+        choices = []
+        for host, scan_result in scan_all(pyro_timeout=self.pyro_timeout):
+            try:
+                port, suite_identity = scan_result
+            except ValueError:
+                # Back-compat <= 6.5.0
+                port, name, owner = scan_result
+            else:
+                name = suite_identity['name']
+                owner = suite_identity['owner']
+            if is_remote_user(owner):
+                continue  # current user only
+            auth = "%s:%d" % (host, port)
+            choices.append((name, auth))
+        choices.sort()
+        self.next_scan_time = time() + self.SCAN_INTERVAL
+        if choices == self.running_choices:
+            return
+
+        # Update tree if running suites changed
+        self.running_choices = choices
+        self.construct_newtree()
+        self.update_treestore(
+            self.newtree, self.regd_treestore.get_iter_first())
+
+    def update_treestore(self, new, iter_):
+        # iter_ is None for an empty treestore (no suites registered)
         ts = self.regd_treestore
-        if iter:
-            opath = ts.get_path(iter)
-            # get parent iter before pruning in case we prune last item at this
-            # level
-            piter = ts.iter_parent(iter)
+        if iter_:
+            opath = ts.get_path(iter_)
+            # get parent iter_ before pruning in case we prune last item at
+            # this level
+            piter = ts.iter_parent(iter_)
         else:
             opath = None
             piter = None
@@ -139,12 +152,12 @@ class db_updater(threading.Thread):
             # find the TreeIter pointing at item at this level
             if not opath:
                 return None
-            iter = ts.get_iter(opath)
-            while iter:
-                val, = ts.get(iter, 0)
+            iter_ = ts.get_iter(opath)
+            while iter_:
+                val, = ts.get(iter_, 0)
                 if val == item:
-                    return iter
-                iter = ts.iter_next(iter)
+                    return iter_
+                iter_ = ts.iter_next(iter_)
             return None
 
         # new items at this level
@@ -152,25 +165,25 @@ class db_updater(threading.Thread):
         old_items = []
         prune = []
 
-        while iter:
+        while iter_:
             # iterate through old items at this level
-            item, state, descr, dir = ts.get(iter, 0, 1, 2, 3)
+            item, state, descr, dir = ts.get(iter_, 0, 1, 2, 3)
             if item not in new_items:
                 # old item is not in new - prune it
-                res = ts.remove(iter)
+                res = ts.remove(iter_)
                 if not res:  # Nec?
-                    iter = None
+                    iter_ = None
             else:
                 # old item is in new - update it in case it changed
                 old_items.append(item)
                 # update old items that do appear in new
-                chiter = ts.iter_children(iter)
+                chiter = ts.iter_children(iter_)
                 if not isinstance(new[item], dict):
                     # new item is not a group - update title etc.
                     state, descr, dir = new[item]
                     sc = self.statecol(state)
                     ni = new[item]
-                    ts.set(iter, 0, item, 1, ni[0], 2, ni[1], 3, ni[2],
+                    ts.set(iter_, 0, item, 1, ni[0], 2, ni[1], 3, ni[2],
                            4, sc[0], 5, sc[1], 6, sc[2])
                     if chiter:
                         # old item was a group - kill its children
@@ -183,71 +196,55 @@ class db_updater(threading.Thread):
                     if not chiter:
                         # old item was not a group
                         ts.set(
-                            iter, 0, item, 1, None, 2, None, 3, None, 4,
+                            iter_, 0, item, 1, None, 2, None, 3, None, 4,
                             None, 5, None, 6, None)
-                        self.build_treestore(new[item], iter)
+                        self.build_treestore(new[item], iter_)
 
                 # continue
-                iter = ts.iter_next(iter)
+                iter_ = ts.iter_next(iter_)
 
-        # return to original iter
+        # return to original iter_
         if opath:
             try:
-                iter = ts.get_iter(opath)
+                iter_ = ts.get_iter(opath)
             except ValueError:
                 # removed the item pointed to
                 # TODO - NEED TO WORRY ABOUT OTHERS AT THIS LEVEL?
-                iter = None
+                iter_ = None
         else:
-            iter = None
+            iter_ = None
 
         # add new items at this level
-        for item in new_items:
+        for key in sorted(new_items):
+            if isinstance(key, tuple):
+                item = key[0]
+            else:
+                item = key
             if item not in old_items:
                 # new data wasn't in old - add it
-                if isinstance(new[item], dict):
+                if isinstance(new[key], dict):
                     xiter = ts.append(
                         piter, [item] + [None, None, None, None, None, None])
-                    self.build_treestore(new[item], xiter)
+                    self.build_treestore(new[key], xiter)
                 else:
-                    state, descr, dir = new[item]
+                    state, descr, dir = new[key]
                     yiter = ts.append(
-                        piter, [item] + new[item] + list(self.statecol(state)))
+                        piter, [item] + new[key] + list(self.statecol(state)))
             else:
                 # new data was already in old
-                if isinstance(new[item], dict):
+                if isinstance(new[key], dict):
                     # check lower levels
-                    niter = my_get_iter(item)
+                    niter = my_get_iter(key)
                     if niter:
                         chiter = ts.iter_children(niter)
                         if chiter:
-                            self.update_treestore(new[item], chiter)
+                            self.update_treestore(new[key], chiter)
 
     def run(self):
-        global debug
-        if debug:
-            print '* thread', self.me, 'starting'
+        """Main loop."""
         while not self.quit:
-            if self.running_choices_changed() or self.reload:
-                gobject.idle_add(self.update)
-            time.sleep(1)
-        else:
-            if debug:
-                print '* thread', self.me, 'quitting'
-            self.__class__.count -= 1
-
-    def running_choices_changed(self):
-        if not PyroInstalled:
-            return
-        # [(name, owner, host, port)]
-        results = scan(pyro_timeout=self.pyro_timeout)
-        choices = [(result[1]['name'], result[0]) for result in results]
-        choices.sort()
-        if choices != self.running_choices:
-            self.running_choices = choices
-            return True
-        else:
-            return False
+            gobject.idle_add(self.update)
+            sleep(0.1)
 
     def statecol(self, state):
         bg = '#19ae0a'
@@ -257,27 +254,27 @@ class db_updater(threading.Thread):
         else:
             return (fg, bg, bg)
 
-    def search_level(self, model, iter, func, data):
-        while iter:
-            if func(model, iter, data):
-                return iter
-            iter = model.iter_next(iter)
+    def search_level(self, model, iter_, func, data):
+        while iter_:
+            if func(model, iter_, data):
+                return iter_
+            iter_ = model.iter_next(iter_)
         return None
 
-    def search_treemodel(self, model, iter, func, data):
-        while iter:
-            if func(model, iter, data):
-                return iter
+    def search_treemodel(self, model, iter_, func, data):
+        while iter_:
+            if func(model, iter_, data):
+                return iter_
             result = self.search_treemodel(
-                model, model.iter_children(iter), func, data)
+                model, model.iter_children(iter_), func, data)
             if result:
                 return result
-            iter = model.iter_next(iter)
+            iter_ = model.iter_next(iter_)
         return None
 
-    def match_func(self, model, iter, data):
+    def match_func(self, model, iter_, data):
         column, key = data
-        value = model.get_value(iter, column)
+        value = model.get_value(iter_, column)
         return value == key
 
 
@@ -291,7 +288,7 @@ class dbchooser(object):
         else:
             self.pyro_timeout = None
 
-        self.regname = None
+        self.chosen = None
 
         self.updater = None
         self.tmpdir = tmpdir
@@ -348,7 +345,7 @@ class dbchooser(object):
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn(
-            'Port', cr, text=1, foreground=4, background=5)
+            'Host:Port', cr, text=1, foreground=4, background=5)
         tvc.set_resizable(True)
         # not sure how this sorting works
         # tvc.set_sort_column_id(1)
@@ -484,8 +481,8 @@ class dbchooser(object):
                     return False
                 if not treeview.row_expanded(path):
                     # row not expanded or not expandable
-                    iter = self.regd_treestore.get_iter(path)
-                    if self.regd_treestore.iter_children(iter):
+                    iter_ = self.regd_treestore.get_iter(path)
+                    if self.regd_treestore.iter_children(iter_):
                         # has children so is expandable
                         treeview.expand_row(path, False)
                         return False
@@ -500,7 +497,6 @@ class dbchooser(object):
             # right click):
             x = int(event.x)
             y = int(event.y)
-            time = event.time
             pth = treeview.get_path_at_pos(x, y)
             if pth is None:
                 return False
@@ -510,29 +506,29 @@ class dbchooser(object):
 
         selection = treeview.get_selection()
 
-        model, iter = selection.get_selected()
+        model, iter_ = selection.get_selected()
 
-        item, state, descr, suite_dir = model.get(iter, 0, 1, 2, 3)
+        item, auth, descr, suite_dir = model.get(iter_, 0, 1, 2, 3)
         if not suite_dir:
             group_clicked = True
         else:
             group_clicked = False
 
-        def get_reg(item, iter):
+        def get_reg(item, iter_):
             reg = item
-            if iter:
-                par = model.iter_parent(iter)
+            if iter_:
+                par = model.iter_parent(iter_)
                 if par:
                     val, = model.get(par, 0)
                     reg = get_reg(val, par) + RegPath.delimiter + reg
             return reg
 
-        reg = get_reg(item, iter)
-        if not group_clicked:
-            self.regname = reg
-            self.selected_label.set_text(reg)
+        reg = get_reg(item, iter_)
+        if reg and auth:
+            self.chosen = (reg, auth)
+            self.selected_label.set_text("%s @ %s" % (reg, auth))
         else:
-            self.regname = None
+            self.chosen = None
             self.selected_label.set_text(self.selected_label_text)
 
         if event.type == gtk.gdk._2BUTTON_PRESS:

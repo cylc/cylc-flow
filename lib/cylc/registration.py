@@ -18,18 +18,30 @@
 """Simple suite name registration database."""
 
 import os
-import sys
+import random
 import re
+import shlex
+from string import ascii_letters, digits
+from subprocess import Popen, PIPE
+import sys
+from tempfile import NamedTemporaryFile
+import traceback
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.mkdir_p import mkdir_p
+from cylc.owner import USER, is_remote_user
 from cylc.regpath import RegPath
-from cylc.passphrase import passphrase
-from cylc.suite_host import get_hostname
-from cylc.owner import user
+from cylc.suite_host import get_hostname, is_remote_host
 
 REGDB_PATH = os.path.join(os.environ['HOME'], '.cylc', 'REGDB')
+
+
+class PassphraseError(ValueError):
+    """Raised on error if passphrase file does not contain a good value."""
+
+    def __str__(self):
+        return "ERROR: invalid content in passphrase file: %s" % self.args
 
 
 class RegistrationError(Exception):
@@ -40,7 +52,10 @@ class RegistrationError(Exception):
 class RegistrationDB(object):
     """Represents a simple suite name registration database."""
 
-    Error = RegistrationError
+    PASSPHRASES_DIR_BASE = 'passphrases'
+    PASSPHRASE_FILE_BASE = 'passphrase'
+    PASSPHRASE_CHARSET = ascii_letters + digits
+    PASSPHRASE_LEN = 20
 
     def __init__(self, dbpath=None):
         self.dbpath = dbpath or REGDB_PATH
@@ -50,6 +65,58 @@ class RegistrationDB(object):
                 mkdir_p(self.dbpath)
             except OSError as exc:
                 sys.exit(str(exc))
+        self.local_passphrases = set()
+        self.cached_passphrases = {}
+
+    def cache_passphrase(self, suite, owner, host, passphrase):
+        """Cache and dump passphrase for a remote suite in standard location.
+
+        Save passphrase to ~/.cylc/passphrases/owner@host/suite if possible.
+        This is normally called on a successful authentication, and will cache
+        the remote passphrase in memory as well.
+        """
+        if owner is None:
+            owner = USER
+        if host is None:
+            host = get_hostname()
+        path = os.path.expanduser(os.path.join(
+            '~', '.cylc', self.PASSPHRASES_DIR_BASE, owner + "@" + host, suite
+        ))
+        self.cached_passphrases[(suite, owner, host)] = passphrase
+        # Dump to a file only for remote suites
+        if is_remote_user(owner) or is_remote_host(host):
+            # Although not desirable, failing to dump the passphrase to a file
+            # is not disastrous.
+            try:
+                self._dump_passphrase_to_dir(path, passphrase)
+            except (IOError, OSError):
+                if cylc.flags.debug:
+                    traceback.print_exc()
+
+    def _dump_passphrase_to_dir(self, path, passphrase=None):
+        """Dump passphrase to "passphrase" file in "path".
+
+        1. File permission should already be user-read-write-only on
+           creation by mkstemp.
+        2. The combination of os.fsync and os.rename should guarentee
+           that we don't end up with an incomplete passphrase file.
+        3. Perhaps we should use uuid.uuid4() to generate the passphrase?
+        """
+        mkdir_p(path)
+        handle = NamedTemporaryFile(
+            prefix=self.PASSPHRASE_FILE_BASE, dir=path, delete=False)
+        # Note: Perhaps a UUID might be better here?
+        if passphrase is None:
+            passphrase = ''.join(
+                random.sample(self.PASSPHRASE_CHARSET, self.PASSPHRASE_LEN))
+        handle.write(passphrase)
+        os.fsync(handle.fileno())
+        handle.close()
+        passphrase_file_name = os.path.join(
+            path, self.PASSPHRASE_FILE_BASE)
+        os.rename(handle.name, passphrase_file_name)
+        if cylc.flags.verbose:
+            print 'Generated suite passphrase: %s' % passphrase_file_name
 
     def dump_suite_data(self, suite, data):
         """Dump suite path and title in text file."""
@@ -63,6 +130,216 @@ class RegistrationDB(object):
         except OSError as exc:
             sys.exit(str(exc))
         return suites
+
+    def load_all_passphrases(self):
+        """Load all of user's passphrases on ~/.cylc/.
+
+        (back-compat for <= 6.4.1).
+        """
+        if self.local_passphrases:
+            return self.local_passphrases
+
+        # Find passphrases in all registered suite directories.
+        for items in self.get_list():
+            # items = suite, path, title
+            try:
+                self.local_passphrases.add(
+                    self.load_passphrase_from_dir(items[1]))
+            except (IOError, PassphraseError):
+                if cylc.flags.debug:
+                    traceback.print_exc()
+
+        # Find all passphrases installed under ~/.cylc/
+        for items in os.walk(os.path.expanduser('~/.cylc')):
+            # items = dirpath, dirnames, filenames
+            try:
+                self.local_passphrases.add(
+                    self.load_passphrase_from_dir(items[0]))
+            except (IOError, PassphraseError):
+                if cylc.flags.debug:
+                    traceback.print_exc()
+
+        return self.local_passphrases
+
+    def load_passphrase(self, suite, owner, host, cache_ok=True):
+        """Search for passphrase file for suite, load and return content.
+
+        "passphrase" file is searched from these locations in order:
+
+        1/ For running task jobs:
+           a/ $CYLC_SUITE_RUN_DIR then $CYLC_SUITE_DEF_PATH for remote jobs.
+           b/ $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST for local jobs or remote jobs
+              with SSH messaging.
+
+        2/ For suite on local user@host. The suite definition directory, as
+           registered. (Note: Previously, this needs to be the 1st location,
+           else sub-suites load their parent suite's passphrase on start-up
+           because the "cylc run" command runs in a parent suite task execution
+           environment. This problem no longer exists becase on suite start up,
+           the "load_passphrase_from_dir" method is called directly instead of
+           through this method.)
+
+        3/ From memory cache, for passphrases of remote suites.
+           Don't use if cache_ok=False.
+
+        4/ Locations under $HOME/.cylc/ for remote suite control from accounts
+           that do not actually need the suite definition directory to be
+           installed (a/ is now preferred. b/ c/ d/ are for back compat):
+           a/ $HOME/.cylc/passphrases/SUITE_OWNER@SUITE_HOST/SUITE_NAME/
+           b/ $HOME/.cylc/SUITE_HOST/SUITE_OWNER/SUITE_NAME/
+           c/ $HOME/.cylc/SUITE_HOST/SUITE_NAME/
+           d/ $HOME/.cylc/SUITE_NAME/
+           Don't use if cache_ok=False.
+
+        5/ For remote suites, try locating the passphrase file from suite
+           definition directory on remote owner@host via SSH.
+
+        """
+        # (1 before 2 else sub-suites load their parent suite's
+        # passphrase on start-up because the "cylc run" command runs in
+        # a parent suite task execution environment).
+
+        # 1/ Running tasks: suite def dir from the task execution environment.
+        # Test for presence of task execution environment
+        suite_host = os.getenv('CYLC_SUITE_HOST')
+        suite_owner = os.getenv('CYLC_SUITE_OWNER')
+        env_keys = []
+        if is_remote_host(suite_host) or is_remote_user(suite_owner):
+            # 2(i)/ Task messaging call on a remote account.
+            # First look in the remote suite run directory than suite
+            # definition directory ($CYLC_SUITE_DEF_PATH is modified
+            # for remote tasks):
+            env_keys = ['CYLC_SUITE_RUN_DIR', 'CYLC_SUITE_DEF_PATH']
+        elif suite_host or suite_owner:
+            # 2(ii)/ Task messaging call on the suite host account.
+
+            # Could be a local task or a remote task with 'ssh
+            # messaging = True'. In either case use
+            # $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST which never
+            # changes, not $CYLC_SUITE_DEF_PATH which gets
+            # modified for remote tasks as described above.
+            env_keys = ['CYLC_SUITE_DEF_PATH_ON_SUITE_HOST']
+        for env_key in env_keys:
+            try:
+                return self.load_passphrase_from_dir(os.environ[env_key])
+            except (KeyError, IOError, PassphraseError):
+                pass
+
+        # 2/ Cylc commands with suite definition directory from local reg.
+        if owner is None:
+            owner = USER
+        if host is None:
+            host = get_hostname()
+
+        if not is_remote_user(owner) and not is_remote_host(host):
+            try:
+                return self.load_passphrase_from_dir(self.get_suitedir(suite))
+            except (IOError, PassphraseError, RegistrationError):
+                pass
+
+        # 3/ From memory cache
+        if cache_ok and (suite, owner, host) in self.cached_passphrases:
+            return self.cached_passphrases[(suite, owner, host)]
+
+        # 4/ Other allowed locations, as documented above.
+        # For remote control commands, host here will be fully
+        # qualified or not depending on what's given on the command line.
+        if cache_ok:
+            short_host = host.split('.', 1)[0]
+            prefix = os.path.expanduser(os.path.join('~', '.cylc'))
+            paths = []
+            for names in [
+                    (prefix, self.PASSPHRASES_DIR_BASE,
+                     owner + "@" + host, suite),
+                    (prefix, self.PASSPHRASES_DIR_BASE,
+                     owner + "@" + short_host, suite),
+                    (prefix, host, owner, suite),
+                    (prefix, short_host, owner, suite),
+                    (prefix, host, suite),
+                    (prefix, short_host, suite),
+                    (prefix, suite)]:
+                path = os.path.join(*names)
+                if path not in paths:
+                    try:
+                        return self.load_passphrase_from_dir(path)
+                    except (IOError, PassphraseError):
+                        pass
+                    paths.append(path)
+
+        # 5/ Try SSH to remote host
+        passphrase = self._load_passphrase_via_ssh(suite, owner, host)
+        if passphrase:
+            return passphrase
+
+        if passphrase is None and cylc.flags.debug:
+            print >> sys.stderr, (
+                'ERROR: passphrase for suite %s not found for %s@%s' % (
+                    suite, owner, host))
+
+    @classmethod
+    def load_passphrase_from_dir(cls, path):
+        """Load passphrase from "passphrase" file under "path".
+
+        Raise IOError if passphrase file does not exist.
+        Raise PassphraseError if file content is bad.
+
+        """
+        # Create a new passphrase for the suite if necessary
+        passphrase_file_name = os.path.join(path, cls.PASSPHRASE_FILE_BASE)
+        passphrase = None
+        for i, line in enumerate(open(passphrase_file_name)):
+            # Check that it has 1 line with the correct number of characters
+            if len(line) != cls.PASSPHRASE_LEN or i > 0:
+                raise PassphraseError(passphrase_file_name)
+            else:
+                passphrase = line
+        return passphrase
+
+    def _load_passphrase_via_ssh(self, suite, owner, host):
+        """Load passphrase from remote [owner@]host via SSH."""
+        if not is_remote_host(host) and not is_remote_user(owner):
+            return
+        # Prefix STDOUT to ensure returned content is relevant
+        prefix = r'[CYLC-PASSPHRASE] %(suite)s ' % {'suite': suite}
+        # Extract suite definition directory from remote ~/.cylc/REGDB/SUITE
+        # Attempt to cat passphrase file under suite definition directory
+        script = (
+            r'''echo -n '%(prefix)s'; '''
+            r'''sed -n 's/^path=//p' '.cylc/REGDB/%(suite)s' | '''
+            r'''xargs -I '{}' cat '{}/passphrase'; '''
+            r'''echo'''
+        ) % {'prefix': prefix, 'suite': suite}
+        ssh_tmpl = str(GLOBAL_CFG.get_host_item(
+            'remote shell template', host, owner))
+        ssh_tmpl = ssh_tmpl.replace(' %s', '')  # back compat
+        command = shlex.split(ssh_tmpl) + ['-n', owner + '@' + host, script]
+        try:
+            proc = Popen(command, stdout=PIPE, stderr=PIPE)
+        except OSError:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            return
+        out, err = proc.communicate()
+        ret_code = proc.wait()
+        # Extract passphrase from STDOUT
+        # It should live in the line with the correct prefix
+        passphrase = None
+        for line in out.splitlines():
+            if line.startswith(prefix):
+                passphrase = line.replace(prefix, '').strip()
+        if not passphrase or ret_code:
+            if cylc.flags.debug:
+                print >> sys.stderr, (
+                    'ERROR: %(command)s # code=%(ret_code)s\n%(err)s\n'
+                ) % {
+                    'command': command,
+                    # STDOUT may contain passphrase, so not safe to print
+                    # 'out': out,
+                    'err': err,
+                    'ret_code': ret_code,
+                }
+            return
+        return passphrase
 
     def register(self, name, path):
         """Register a suite, its source path and its title."""
@@ -90,8 +367,11 @@ class RegistrationDB(object):
         print 'REGISTER', name + ':', path
         self.dump_suite_data(name, {'path': path, 'title': title})
 
-        # create a new passphrase for the suite if necessary
-        passphrase(name, user, get_hostname()).generate(path)
+        # Create a new passphrase for the suite if necessary
+        try:
+            self.load_passphrase_from_dir(path)
+        except (IOError, PassphraseError):
+            self._dump_passphrase_to_dir(path)
 
     def get_suite_data(self, suite):
         """Return {"path": path, "title": title} a suite."""
