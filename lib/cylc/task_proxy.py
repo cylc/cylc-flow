@@ -218,13 +218,14 @@ class TaskProxy(object):
     def __init__(
             self, tdef, start_point, initial_state, stop_point=None,
             is_startup=False, validate_mode=False, submit_num=0,
-            is_reload=False):
+            is_reload=False, message_queue=None):
         self.tdef = tdef
         if submit_num is None:
             self.submit_num = 0
         else:
             self.submit_num = submit_num
         self.validate_mode = validate_mode
+        self.message_queue = message_queue
 
         if is_startup:
             # adjust up to the first on-sequence cycle point
@@ -309,7 +310,6 @@ class TaskProxy(object):
         self.sub_try_state = TryState()
         self.event_handler_try_states = {}
 
-        self.message_queue = TaskMessageServer()
         self.db_inserts_map = {
             self.TABLE_TASK_JOBS: [],
             self.TABLE_TASK_JOB_LOGS: [],
@@ -1539,11 +1539,11 @@ class TaskProxy(object):
         timeout = self.started_time + self.sim_mode_run_length
         if time.time() > timeout:
             if self.tdef.rtconfig['simulation mode']['simulate failure']:
-                self.message_queue.put('NORMAL', 'submitted')
-                self.message_queue.put('CRITICAL', 'failed')
+                self.message_queue.put(self.identity, 'NORMAL', 'submitted')
+                self.message_queue.put(self.identity, 'CRITICAL', 'failed')
             else:
-                self.message_queue.put('NORMAL', 'submitted')
-                self.message_queue.put('NORMAL', 'succeeded')
+                self.message_queue.put(self.identity, 'NORMAL', 'submitted')
+                self.message_queue.put(self.identity, 'NORMAL', 'succeeded')
             return True
         else:
             return False
@@ -1571,16 +1571,6 @@ class TaskProxy(object):
             return True
         else:
             return False
-
-    def process_incoming_messages(self):
-        """Handle incoming messages."""
-        queue = self.message_queue.get_queue()
-        while queue.qsize() > 0:
-            try:
-                self.process_incoming_message(queue.get(block=False))
-            except Queue.Empty:
-                break
-            queue.task_done()
 
     def process_incoming_message(
             self, (priority, msg_in), msg_was_polled=False):
@@ -1780,7 +1770,8 @@ class TaskProxy(object):
         self.state.set_spawned()
         next_point = self.next_point()
         if next_point:
-            return TaskProxy(self.tdef, next_point, state, self.stop_point)
+            return TaskProxy(self.tdef, next_point, state, self.stop_point,
+                             message_queue=self.message_queue)
         else:
             # next_point instance is out of the sequence bounds
             return None

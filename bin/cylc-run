@@ -135,7 +135,8 @@ class start(Scheduler):
                 continue
             try:
                 itask = get_task_proxy(
-                    name, self.start_point, 'waiting', is_startup=True)
+                    name, self.start_point, 'waiting', is_startup=True,
+                    message_queue=self.pool.message_queue)
             except TaskProxySequenceBoundsError as exc:
                 self.log.debug(str(exc))
                 continue
