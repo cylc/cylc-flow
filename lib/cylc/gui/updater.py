@@ -145,7 +145,7 @@ class Updater(threading.Thread):
         self.dt = "waiting..."
         self.dt_date = None
         self.status = SUITE_STATUS_NOT_CONNECTED
-        self.is_reloading =False
+        self.is_reloading = False
         self.connected = False
         self._no_update_event = threading.Event()
         self.poll_schd = PollSchd()
@@ -402,8 +402,8 @@ class Updater(threading.Thread):
                         "  daemon <= 6.4.0, suite initializing ...")
                 self.set_status(SUITE_STATUS_INITIALISING)
                 if self.info_bar.prog_bar_can_start():
-                    gobject.idle_add(
-                        self.info_bar.prog_bar_start, SUITE_STATUS_INITIALISING)
+                    gobject.idle_add(self.info_bar.prog_bar_start,
+                                     SUITE_STATUS_INITIALISING)
                     self.info_bar.set_state([])
                 # Reconnect till we get the suite state object.
                 self.reconnect()
