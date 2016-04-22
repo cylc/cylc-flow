@@ -194,7 +194,6 @@ class Scheduler(object):
 
     def configure(self):
         self.log_memory("scheduler.py: start configure")
-        SuiteProcPool.get_inst()
 
         self.info_commands = {}
         for attr_name in dir(self):
@@ -516,6 +515,7 @@ class Scheduler(object):
     def command_reload_suite(self):
         """Reload suite configuration."""
         print "RELOADING the suite definition"
+        self.load_suiterc(reconfigure=True)
         self.configure_suite(reconfigure=True)
 
         self.pool.reconfigure(self.final_point)
@@ -603,8 +603,14 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             raise SchedulerError(
                 'ERROR, cannot write port file: %s' % self.port_file)
 
-    def load_suiterc(self, reconfigure):
+    def load_suiterc(self, reconfigure=False):
         """Load and log the suite definition."""
+        self.log_memory("scheduler.py: before load_suiterc")
+
+        if self.is_restart:
+            self._cli_initial_point_string = (
+                self.get_state_initial_point_string())
+            self.do_process_tasks = True
 
         SuiteConfig._FORCE = True  # Reset the singleton!
         self.config = SuiteConfig.get_inst(
@@ -633,23 +639,16 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         base_name = "%s-%s.rc" % (time_str, load_type)
         file_name = os.path.join(cfg_logdir, base_name)
         try:
-            handle = open(file_name, "wb")
+            with open(file_name, "wb") as handle:
+                handle.write("# cylc-version: %s\n" % CYLC_VERSION)
+                printcfg(self.config.cfg, handle=handle)
         except IOError as exc:
             sys.stderr.write(str(exc) + "\n")
             raise SchedulerError("Unable to log the loaded suite definition")
-        handle.write("# cylc-version: %s\n" % CYLC_VERSION)
-        printcfg(self.config.cfg, handle=handle)
-        handle.close()
+        self.log_memory("scheduler.py: after load_suiterc")
 
     def configure_suite(self, reconfigure=False):
         """Load and process the suite definition."""
-
-        if self.is_restart:
-            self._cli_initial_point_string = (
-                self.get_state_initial_point_string())
-            self.do_process_tasks = True
-
-        self.load_suiterc(reconfigure)
 
         # Initial and final cycle times - command line takes precedence.
         # self.config already alters the 'initial cycle point' for CLI.
@@ -1235,11 +1234,13 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
         proc_pool = SuiteProcPool.get_inst()
         if proc_pool:
-            if not proc_pool.is_dead():
+            try:
                 # e.g. KeyboardInterrupt
                 proc_pool.terminate()
-            proc_pool.join()
-            proc_pool.handle_results_async()
+                proc_pool.join()
+                proc_pool.handle_results_async()
+            except:
+                pass
 
         if self.pool:
             self.pool.shutdown()
@@ -1283,7 +1284,8 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             # run shutdown handlers
             self.run_event_handlers(self.EVENT_SHUTDOWN, reason)
 
-        print "DONE"  # main thread exit
+        if not reason:
+            print "DONE"  # main thread exit
 
     def set_stop_point(self, stop_point_string):
         stop_point = get_point(stop_point_string)

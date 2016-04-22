@@ -32,7 +32,7 @@ export SUITE_NAME SUITE_TIMEOUT
 #-------------------------------------------------------------------------------
 rm $STATE_FILE
 TEST_NAME=$TEST_NAME_BASE-bad-state-gone
-cylc restart $SUITE_NAME
+cylc restart $SUITE_NAME 2>'cylc-restart.err'
 START_TIME=$(date +%s)
 export START_TIME
 run_ok $TEST_NAME bash <<'__SCRIPT__'
@@ -45,11 +45,11 @@ while [[ -e $HOME/.cylc/ports/$SUITE_NAME ]]; do
     sleep 1
 done
 __SCRIPT__
-grep_ok 'state dump file not found:' "$SUITE_RUN_DIR/log/suite/err"
+grep_ok 'state dump file not found:' 'cylc-restart.err'
 #-------------------------------------------------------------------------------
 echo "" >$STATE_FILE
 TEST_NAME=$TEST_NAME_BASE-bad-state-empty
-cylc restart $SUITE_NAME
+cylc restart $SUITE_NAME 2>'cylc-restart.err'
 START_TIME=$(date +%s)
 export START_TIME
 run_ok $TEST_NAME bash <<'__SCRIPT__'
@@ -62,11 +62,11 @@ while [[ -e $HOME/.cylc/ports/$SUITE_NAME ]]; do
     sleep 1
 done
 __SCRIPT__
-grep_ok 'ERROR, incomplete suite state dump' "$SUITE_RUN_DIR/log/suite/err"
+grep_ok 'ERROR, incomplete suite state dump' 'cylc-restart.err'
 #-------------------------------------------------------------------------------
 head -2 state.orig >$STATE_FILE
 TEST_NAME=$TEST_NAME_BASE-bad-state-only-header
-cylc restart $SUITE_NAME
+cylc restart $SUITE_NAME 2>'cylc-restart.err'
 START_TIME=$(date +%s)
 export START_TIME
 run_ok $TEST_NAME bash <<'__SCRIPT__'
@@ -79,7 +79,7 @@ while [[ -e $HOME/.cylc/ports/$SUITE_NAME ]]; do
     sleep 1
 done
 __SCRIPT__
-grep_ok 'ERROR, incomplete suite state dump' "$SUITE_RUN_DIR/log/suite/err"
+grep_ok 'ERROR, incomplete suite state dump' 'cylc-restart.err'
 #-------------------------------------------------------------------------------
 sed "s/status=[^,][^,]*, /status=quo, /g" state.orig >$STATE_FILE
 TEST_NAME=$TEST_NAME_BASE-bad-state-status-wrong
