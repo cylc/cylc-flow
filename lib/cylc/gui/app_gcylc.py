@@ -53,7 +53,8 @@ from cylc.gui.updater import Updater
 from cylc.gui.util import (
     get_icon, get_image_dir, get_logo, EntryTempText,
     EntryDialog, setup_icons, set_exception_hook_dialog)
-from cylc.network.suite_state import extract_group_state
+from cylc.network.suite_state import (
+    extract_group_state, SUITE_STATUS_STOPPED_WITH)
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
 from cylc.gui.option_group import controlled_option_group
@@ -412,9 +413,6 @@ Class to create an information bar.
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
-        # new string format() introduced in Python 2.6
-        # o>summary = "stopped with '{0}'"
-        summary = "stopped with '%s'"
         glob, task, fam = summary_maps
         states = [t["state"] for t in task.values() if "state" in t]
 
@@ -422,14 +420,12 @@ Class to create an information bar.
         suite_state = "?"
         if states:
             suite_state = extract_group_state(states, is_stopped=True)
-        # o>summary = summary.format(suite_state)
-        summary = summary % suite_state
+        summary = SUITE_STATUS_STOPPED_WITH % suite_state
         num_failed = 0
         for task_id in task:
             if task[task_id].get("state") == "failed":
                 num_failed += 1
         if num_failed:
-            # o> summary += ": {0} failed tasks".format(num_failed)
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
         dt = glob["last_updated"]
@@ -3085,22 +3081,7 @@ For more Stop options use the Control menu.""")
         self.tool_bar_box.pack2(self.tool_bars[1], resize=True, shrink=True)
 
     def _alter_status_toolbar_menu(self, new_status):
-        """Handle changes in status for some toolbar/menuitems.
-
-       Example status strings:
-         * connected
-         * initialising
-         * running
-         * running to 20150601T0000Z
-         * running to 2015-08-08T01:00:00+12:00
-         * running to hold at 20150601T0000Z
-         * held
-         * reloading
-         * stopping
-         * stopped
-         * stopped with 'succeeded'
-         * stopped with 'running'
-        """
+        """Handle changes in suite status for some toolbar/menuitems."""
         if new_status == self._prev_status:
             return False
         self.info_bar.prog_bar_disabled = False
@@ -3108,7 +3089,6 @@ For more Stop options use the Control menu.""")
         run_ok = "stopped" in new_status
         # Pause: avoid "stopped with 'running'".
         pause_ok = (
-            new_status == "reloading" or
             "running" in new_status and "stopped" not in new_status)
         unpause_ok = "held" == new_status
         stop_ok = ("stopped" not in new_status and

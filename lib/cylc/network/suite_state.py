@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import time
 import datetime
 
@@ -26,6 +27,26 @@ from cylc.config import SuiteConfig
 from cylc.network import PYRO_STATE_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network import check_access_priv
+
+
+# Suite status strings.
+SUITE_STATUS_HELD = "held"
+SUITE_STATUS_RUNNING = "running"
+SUITE_STATUS_STOPPING = "stopping"
+SUITE_STATUS_RUNNING_TO_STOP = "running to stop at %s"
+SUITE_STATUS_RUNNING_TO_HOLD = "running to hold at %s"
+# Regex to extract the stop or hold point.
+SUITE_STATUS_SPLIT_REC = re.compile('^([a-z ]+ at )(.*)$')
+
+# Pseudo status strings for use by suite monitors.
+#   Use before attempting to determine status:
+SUITE_STATUS_NOT_CONNECTED = "not connected"
+#   Use prior to first status update:
+SUITE_STATUS_CONNECTED = "connected"
+SUITE_STATUS_INITIALISING = "initialising"
+#   Use when the suite is not running:
+SUITE_STATUS_STOPPED = "stopped"
+SUITE_STATUS_STOPPED_WITH = "stopped with '%s'"
 
 
 class SuiteStillInitialisingError(Exception):
@@ -152,14 +173,22 @@ class StateSummaryServer(PyroServer):
             global_summary['daemon time zone info'] = TIME_ZONE_LOCAL_INFO
         global_summary['last_updated'] = time.time()
         global_summary['run_mode'] = self.run_mode
-        global_summary['paused'] = paused
-        global_summary['stopping'] = stopping
-        global_summary['will_pause_at'] = self.str_or_None(will_pause_at)
-        global_summary['will_stop_at'] = self.str_or_None(will_stop_at)
         global_summary['states'] = all_states
         global_summary['namespace definition order'] = ns_defn_order
         global_summary['reloading'] = reloading
         global_summary['state totals'] = state_count_totals
+
+        if paused:
+            status = SUITE_STATUS_HELD
+        elif stopping:
+            status = SUITE_STATUS_STOPPING
+        elif will_pause_at:
+            status = SUITE_STATUS_RUNNING_TO_HOLD % will_pause_at
+        elif will_stop_at:
+            status = SUITE_STATUS_RUNNING_TO_STOP % will_stop_at
+        else:
+            status = SUITE_STATUS_RUNNING
+        global_summary['status_string'] = status
 
         self._summary_update_time = time.time()
 

@@ -21,6 +21,7 @@ import sys
 import subprocess
 import time
 from cylc.task_id import TaskID
+from cylc.network.suite_state import SUITE_STATUS_STOPPED
 
 
 def get_stop_state(suite, owner=None, host=None):
@@ -80,10 +81,10 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
             # back compat pre cylc-6
             global_summary["last_updated"] = time.time()
 
-    start = lines.pop(0).rstrip().rsplit(None, 1)[-1]
-    stop = lines.pop(0).rstrip().rsplit(None, 1)[-1]
-    if stop != "(none)":
-        global_summary["will_stop_at"] = stop
+    # Skip initial and final cycle points.
+    _ = lines.pop(0)
+    _ = lines.pop(0)
+    global_summary["status_string"] = SUITE_STATUS_STOPPED
     while lines:
         line = lines.pop(0)
         if line.startswith("class") or line.startswith("Begin task"):
@@ -107,8 +108,6 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
         task_summary[task_id].update({"state": state})
         task_summary[task_id].update({"spawned": items.get("spawned")})
     global_summary["run_mode"] = "dead"
-    for key in ["paused", "stopping", "will_pause_at", "will_stop_at"]:
-        global_summary.setdefault(key, "")
     return global_summary, task_summary, family_summary
 
 
