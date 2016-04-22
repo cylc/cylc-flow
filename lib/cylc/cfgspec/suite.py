@@ -303,7 +303,6 @@ SPEC = {
                 default='echo Dummy task; sleep $(cylc rnd 1 16)'),
             'post-script': vdr(vtype='string'),
             'retry delays': vdr(vtype='interval_minutes_list', default=[]),
-            'manual completion': vdr(vtype='boolean', default=False),
             'extra log files': vdr(vtype='string_list', default=[]),
             'enable resurrection': vdr(vtype='boolean', default=False),
             'work sub-directory': vdr(

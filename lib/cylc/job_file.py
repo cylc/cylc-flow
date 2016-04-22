@@ -68,7 +68,6 @@ class JobFile(object):
         self._write_suite_bin_access(handle, job_conf)
         self._write_environment_2(handle, job_conf)
         self._write_task_started(handle, job_conf)
-        self._write_manual_environment(handle, job_conf)
         self._write_identity_script(handle, job_conf)
         self._write_script(handle, job_conf)
         self._write_epilogue(handle, job_conf)
@@ -390,24 +389,6 @@ mkdir -p $(dirname $CYLC_TASK_WORK_DIR) || true
 mkdir -p $CYLC_TASK_WORK_DIR
 cd $CYLC_TASK_WORK_DIR""" % {"message": TaskMessage.STARTED})
 
-    def _write_manual_environment(self, handle, job_conf):
-        """Write a transferable environment for detaching tasks."""
-        if not job_conf['use manual completion']:
-            return
-        strio = StringIO.StringIO()
-        self._write_environment_1(strio, job_conf)
-        # now escape quotes in the environment string
-        value = strio.getvalue()
-        strio.close()
-        # set cylc version and source profiles in the detached job
-        value += '\n$(declare -f prelude)\nprelude\n'
-        value = re.sub('"', '\\"', value)
-        handle.write(
-            '\n\n# TRANSPLANTABLE SUITE ENVIRONMENT FOR CUSTOM TASK WRAPPERS:')
-        handle.write(
-            '\n# (contains embedded newlines, use may require "QUOTES")')
-        handle.write('\nexport CYLC_SUITE_ENVIRONMENT="' + value + '"')
-
     @classmethod
     def _write_identity_script(cls, handle, _):
         """Write script for suite and task identity."""
@@ -444,17 +425,7 @@ echo""")
     @classmethod
     def _write_epilogue(cls, handle, job_conf):
         """Write epilogue."""
-        if job_conf['use manual completion']:
-            handle.write(r"""
-
-# (detaching task: cannot safely remove the WORK DIRECTORY here)
-
-echo 'JOB SCRIPT EXITING: THIS TASK HANDLES ITS OWN COMPLETION MESSAGING'
-trap '' EXIT
-
-""")
-        else:
-            handle.write(r"""
+        handle.write(r"""
 
 # EMPTY WORK DIRECTORY REMOVE:
 cd

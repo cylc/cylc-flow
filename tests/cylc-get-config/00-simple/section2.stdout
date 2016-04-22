@@ -1,7 +1,6 @@
 [[var_p2]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -84,7 +83,6 @@
 [[OPS]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -166,7 +164,6 @@
 [[ops_s1]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -249,7 +246,6 @@
 [[ops_s2]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -332,7 +328,6 @@
 [[ops_p1]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -415,7 +410,6 @@
 [[ops_p2]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -498,7 +492,6 @@
 [[var_p1]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -581,7 +574,6 @@
 [[VAR]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -663,7 +655,6 @@
 [[var_s1]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -746,7 +737,6 @@
 [[SERIAL]]
    script = echo Dummy task; sleep $(cylc rnd 1 16)
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -829,7 +819,6 @@
 [[root]]
    script = echo Dummy task; sleep $(cylc rnd 1 16)
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -911,7 +900,6 @@
 [[PARALLEL]]
    script = echo Dummy task; sleep $(cylc rnd 1 16)
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
@@ -994,7 +982,6 @@
 [[var_s2]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   manual completion = False
    retry delays = 
    env-script = 
    execution polling intervals = 
