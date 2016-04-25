@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-
+#!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2016 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,16 +14,29 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-"""CLI of "cylc restart". See cylc.scheduler_cli for detail."""
-
-import sys
-from cylc.remote import remrun
-if remrun().execute():
-    sys.exit(0)
-
-from cylc.scheduler_cli import main
-
-
-if __name__ == '__main__':
-    main(is_restart=True)
+#-------------------------------------------------------------------------------
+set -eu
+CYLC_SUITE_RUN_DIR="$1"
+CYLC_TASK_NAME="${2:-}"
+sqlite3 "${CYLC_SUITE_RUN_DIR}/cylc-suite.db" "
+SELECT
+    task_states.name,
+    task_states.cycle,
+    task_states.submit_num,
+    task_jobs.try_num,
+    task_states.status
+FROM
+    task_states
+LEFT OUTER JOIN
+    task_jobs
+ON
+    task_states.name == task_jobs.name
+AND
+    task_states.cycle == task_jobs.cycle
+AND
+    task_states.submit_num == task_jobs.submit_num
+WHERE
+    task_states.name != '${CYLC_TASK_NAME}'
+ORDER BY
+    task_states.name, task_states.cycle
+;"

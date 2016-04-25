@@ -7,7 +7,7 @@ from subprocess import call
 
 def main():
     handle = open(
-        os.path.join(os.getenv("CYLC_SUITE_RUN_DIR"), "cylc-suite.db"))
+        os.path.join(os.getenv("CYLC_SUITE_RUN_DIR"), "cylc-suite-public.db"))
     lockf(handle, LOCK_SH)
     call([
         "cylc", "task", "message",

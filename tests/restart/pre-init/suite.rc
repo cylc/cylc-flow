@@ -10,13 +10,17 @@
     [[dependencies]]
         graph = "p1 => p2"
         [[[0]]]
-            graph = """p2 => foo  
+            graph = """p2 => foo
                 foo[T-24] => foo => bar"""
 [runtime]
     [[p1]]
-        script = cylc shutdown --now --max-polls=30 --interval=2 $CYLC_SUITE_NAME && \
-                            cylc restart $CYLC_SUITE_NAME && sleep 5
+        script = """
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}"
+sleep 1
+cylc shutdown --now --max-polls=30 --interval=2 $CYLC_SUITE_NAME
+cylc restart $CYLC_SUITE_NAME
+"""
     [[foo, p2]]
-        script = sleep 5
+        script = true
     [[bar]]
         script = touch {{ TEST_DIR }}/suite-stopping

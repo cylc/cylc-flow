@@ -46,56 +46,39 @@ Aside from the starting cycle point there is no difference between cold and
 warm start unless you use special cold-start tasks. See "Suite Start-up" and
 "Cold-Start Tasks" in the User Guide for more."""
 
-RUN_ARG1 = (
-    "[START_POINT]",
-    "Initial cycle point or 'now';\n" +
-    " " * 31 +  # 20 + len("START_POINT")
-    "overrides the suite definition.")
-
 RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
 
-Start a suite run from a previous state. To start from scratch (cold or warm
+Start a suite run from the previous state. To start from scratch (cold or warm
 start) see the 'cylc run' command.
 
 The scheduler runs in daemon mode unless you specify n/--no-detach or --debug.
 
-The most recent previous suite state is loaded by default, but earlier state
-files in the suite state directory can be specified on the command line.
-
 Tasks recorded as submitted or running are polled at start-up to determine what
 happened to them while the suite was down."""
 
-RESTART_ARG1 = (
-    "[FILE]",
-    "Optional state dump, assumed to reside in the\n" +
-    " " * 24 +  # 20 + len("FILE")
-    "suite state dump directory unless an absolute path\n" +
-    " " * 24 +  # 20 + len("FILE")
-    "is given. Defaults to the most recent suite state.")
+SUITE_NAME_ARG_DOC = ("REG", "Suite name")
+START_POINT_ARG_DOC = (
+    "[START_POINT]",
+    "Initial cycle point or 'now';\n" +
+    " " * 31 +  # 20 + len("START_POINT")
+    "overrides the suite definition.")
 
 
 def main(is_restart=False):
     """CLI main."""
     options, args = parse_commandline(is_restart)
     scheduler = Scheduler(is_restart, options, args)
-
-    try:
-        scheduler.start()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    scheduler.start()
 
 
 def parse_commandline(is_restart):
     """Parse CLI for "cylc run" or "cylc restart"."""
     if is_restart:
-        doc = RESTART_DOC
-        arg1 = RESTART_ARG1
+        parser = COP(RESTART_DOC, jset=True, argdoc=[SUITE_NAME_ARG_DOC])
     else:
-        doc = RUN_DOC
-        arg1 = RUN_ARG1
-    parser = COP(doc, jset=True, argdoc=[("REG", "Suite name"), arg1])
+        parser = COP(
+            RUN_DOC, jset=True,
+            argdoc=[SUITE_NAME_ARG_DOC, START_POINT_ARG_DOC])
 
     parser.add_option(
         "--non-daemon", help="(deprecated: use --no-detach)",
@@ -119,7 +102,7 @@ def parse_commandline(is_restart):
         parser.add_option(
             "--ignore-final-cycle-point",
             help=(
-                "Ignore the final cycle point in the state dump. " +
+                "Ignore the final cycle point in the suite run database. " +
                 "If one is specified in the suite definition it will " +
                 "be used, however."),
             action="store_true", default=False, dest="ignore_stop_point")
@@ -127,7 +110,7 @@ def parse_commandline(is_restart):
         parser.add_option(
             "--ignore-initial-cycle-point",
             help=(
-                "Ignore the initial cycle point in the state dump. " +
+                "Ignore the initial cycle point in the suite run database. " +
                 "If one is specified in the suite definition it will " +
                 "be used, however."),
             action="store_true", default=False, dest="ignore_start_point")

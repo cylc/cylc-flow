@@ -410,8 +410,8 @@ Use (Re-)connect button to reconnect immediately.""")
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
-        global_params, tasks, _ = summary_maps
-        states = [t["state"] for t in tasks.values() if "state" in t]
+        global_summary, task_summary = summary_maps
+        states = [t["state"] for t in task_summary.values() if "state" in t]
 
         self.set_state(states, is_suite_stopped=True)
         suite_state = "?"
@@ -419,14 +419,14 @@ Use (Re-)connect button to reconnect immediately.""")
             suite_state = extract_group_state(states, is_stopped=True)
         summary = SUITE_STATUS_STOPPED_WITH % suite_state
         num_failed = 0
-        for task in tasks.values():
-            if task.get("state") == TASK_STATUS_FAILED:
+        for item in task_summary.values():
+            if item.get("state") == TASK_STATUS_FAILED:
                 num_failed += 1
         if num_failed:
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
         self.set_update_time(
-            get_time_string_from_unix_time(global_params["last_updated"]),
+            get_time_string_from_unix_time(global_summary["last_updated"]),
             self.DISCONNECTED_TEXT)
         # (called on idle_add)
         return False

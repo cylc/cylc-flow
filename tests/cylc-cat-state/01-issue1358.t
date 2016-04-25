@@ -41,8 +41,8 @@ cylc cat-state -d $SUITE_NAME > state.out
 cylc stop $SUITE_NAME
 # Do the test.
 cmp_ok state.out << __DONE__
-bar, 1, waiting, spawned
-baz, 1, waiting, spawned
+bar, 1, waiting, unspawned
+baz, 1, waiting, unspawned
 __DONE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

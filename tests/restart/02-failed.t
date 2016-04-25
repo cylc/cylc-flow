@@ -20,7 +20,7 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 9
+set_test_number 7
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE failed
 cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/$SUITE_NAME/"
@@ -36,49 +36,21 @@ suite_run_ok $TEST_NAME cylc run --debug $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-restart-run
 suite_run_ok $TEST_NAME cylc restart --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
-state_dir=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/state/
-cp $state_dir/state $TEST_DIR/
-for state_file in $(ls $TEST_DIR/*state*); do
-    sed -i "/^time : /d" $state_file
-done
-cmp_ok $TEST_DIR/pre-restart-state <<'__STATE__'
-run mode : live
-initial cycle : 20130923T0000Z
-final cycle : 20130923T0000Z
-(dp1
-.
-Begin task states
-failed_task.20130923T0000Z : status=failed, spawned=True
-finish.20130923T0000Z : status=waiting, spawned=False
-output_states.20130923T0000Z : status=waiting, spawned=False
-__STATE__
 grep_ok "failed_task|20130923T0000Z|1|1|failed" \
     $TEST_DIR/pre-restart-db
 contains_ok $TEST_DIR/post-restart-db <<'__DB_DUMP__'
 failed_task|20130923T0000Z|1|1|failed
-finish|20130923T0000Z|0|1|waiting
+finish|20130923T0000Z|0||waiting
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
- "select name, cycle, submit_num, try_num, status
-  from task_states
-  order by name, cycle;" > $TEST_DIR/db
+SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+"${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
+    > "${TEST_DIR}/db"
 contains_ok $TEST_DIR/db <<'__DB_DUMP__'
 failed_task|20130923T0000Z|1|1|failed
 finish|20130923T0000Z|1|1|succeeded
 output_states|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-cmp_ok $TEST_DIR/state <<'__STATE__'
-run mode : live
-initial cycle : 20130923T0000Z
-final cycle : 20130923T0000Z
-(dp1
-.
-Begin task states
-finish.20130923T0000Z : status=succeeded, spawned=True
-output_states.20130923T0000Z : status=succeeded, spawned=True
-shutdown.20130923T0000Z : status=succeeded, spawned=True
-__STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

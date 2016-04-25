@@ -37,7 +37,7 @@ PORT=$(cylc ping -v "${SUITE_NAME}" | cut -d':' -f 2)
 
 # Simulate an old client with the wrong passphrase.
 ERR_PATH="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
-TEST_NAME="${TEST_NAME_BASE}-old-client-snapshot-err"
+TEST_NAME="${TEST_NAME_BASE}-old-client-checkpoint-err"
 run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
 TEST_NAME="${TEST_NAME_BASE}-old-client-simulate"
 run_fail "${TEST_NAME}" python -c "
@@ -58,7 +58,7 @@ run_fail "${TEST_NAME}" grep "WARNING - \[client-connect\] DENIED" \
 
 # Simulate an old client with the right passphrase.
 ERR_PATH="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/err"
-TEST_NAME="${TEST_NAME_BASE}-old-client-snapshot-ok"
+TEST_NAME="${TEST_NAME_BASE}-old-client-checkpoint-ok"
 run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
 TEST_NAME="${TEST_NAME_BASE}-old-client-simulate-ok"
 PASSPHRASE=$(cat $(cylc get-dir $SUITE_NAME)/passphrase)
@@ -73,7 +73,7 @@ info = proxy.get('get_suite_info')" "${PORT}"
 grep_ok "\[client-command\] get_suite_info (user)@(host):(OLD_CLIENT) (uuid)" "$(cylc cat-log -l $SUITE_NAME)"
 
 # Simulate a new, suspicious client.
-TEST_NAME="${TEST_NAME_BASE}-new-bad-client-snapshot-err"
+TEST_NAME="${TEST_NAME_BASE}-new-bad-client-checkpoint-err"
 run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
 TEST_NAME="${TEST_NAME_BASE}-new-bad-client-simulate"
 run_fail "${TEST_NAME}" python -c '
@@ -103,7 +103,7 @@ grep_ok "WARNING - \[client-connect\] DENIED colonel_mustard@drawing_room:myster
     "${TEST_NAME}-new-client-err-diff"
 
 # Simulate a client with the wrong hash.
-TEST_NAME="${TEST_NAME_BASE}-new-wrong-hash-client-snapshot-err"
+TEST_NAME="${TEST_NAME_BASE}-new-wrong-hash-client-checkpoint-err"
 run_ok "${TEST_NAME}" cp "${ERR_PATH}" err-before-scan
 create_test_globalrc '' '
 [authentication]

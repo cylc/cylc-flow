@@ -41,17 +41,7 @@ Number of process pool worker processes used to execute shell commands
 
 \subsubsection{state dump rolling archive length}
 
-A rolling archive of suite state dumps is maintained under the suite run
-directory, and is used for restarts; this item determines the number of
-previous states retained. The most recent saved state file is called
-\lstinline=state=. Sucessively older files have increasing integer
-values appended, starting from $1$.
-
-\begin{myitemize}
-\item {\em type:} integer
-\item {\em default:} 10
-\item {\em example:} \lstinline@state dump rolling archive length = 20@
-\end{myitemize}
+Obsolete. This setting is no longer used.
 
 \subsubsection{disable interactive command prompts}
 
@@ -435,7 +425,7 @@ file.
 \paragraph[run directory]{[hosts] \textrightarrow [[HOST]] \textrightarrow run directory }
 
 The top level of the directory tree that holds suite-specific output logs,
-state dump files, run database, etc.
+run database, etc.
 
 \begin{myitemize}
 \item {\em type:} string (directory path)

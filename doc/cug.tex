@@ -1236,35 +1236,31 @@ time-stamped suite log file, and task job scripts and job logs
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ tree $HOME/cylc-run/tut.oneoff.basic/
-|-- cylc-suite.db      # suite run database
-|-- cylc-suite-env     # suite environment file
-|-- share              # suite share directory (not used in this example) 
-|-- work               # task work space (sub-dirs are deleted if not used)
-|    `-- 1                # task cycle point directory (or 1)
-|        `-- hello           # task work directory (deleted if not used)
-|-- log                # suite log directory
-|   `-- suite             # suite daemon log directory
-|   |   |-- err              # suite daemon stderr log (daemon mode only)
-|   |   |-- out              # suite daemon stdout log (damon mode only)
-|   |   `-- log              # suite daemon event log (timestamped info)     
-|   `-- job               # task job log directory
-|       `-- 1                # task cycle point directory (or 1)
-|           `-- hello           # task name
-|               |-- 01             # task submission number
-|               |   |-- job           # task job script
+|-- cylc-suite-private.db # private suite run database
+|-- cylc-suite-public.db  # public suite run database
+|-- cylc-suite.db         # symbolic link to public suite run database
+|-- cylc-suite-env        # suite environment file
+|-- share                 # suite share directory (not used in this example) 
+|-- work                  # task work space (sub-dirs are deleted if not used)
+|    `-- 1                   # task cycle point directory (or 1)
+|        `-- hello              # task work directory (deleted if not used)
+|-- log                   # suite log directory
+|   `-- suite                # suite daemon log directory
+|   |   |-- err                 # suite daemon stderr log (daemon mode only)
+|   |   |-- out                 # suite daemon stdout log (damon mode only)
+|   |   `-- log                 # suite daemon event log (timestamped info)     
+|   `-- job                  # task job log directory
+|       `-- 1                   # task cycle point directory (or 1)
+|           `-- hello              # task name
+|               |-- 01                # task submission number
+|               |   |-- job              # task job script
 |               |   `-- job-activity.log # task job activity log
-|               |   |-- job.err       # task stderr log
-|               |   |-- job.out       # task stdout log
-|               |   `-- job.status    # task status file
-|               `-- NN -> 01       # symlink to latest submission number
-`--state                # suite state dump directory (used for restarts) 
-    |-- state -> state.20140814T022436.591110Z # latest state dump file
-    |-- state.20140814T022424.565162Z          # older state dump files..
-    |-- state.20140814T022425.570343Z
-    |-- state.20140814T022426.575306Z
-    `-- state.20140814T022436.591110Z
+|               |   |-- job.err          # task stderr log
+|               |   |-- job.out          # task stdout log
+|               |   `-- job.status       # task status file
+|               `-- NN -> 01          # symlink to latest submission number
 \end{lstlisting}
-The suite run database, suite environment file, suite state files,
+The suite run database files, suite environment file,
 and task status files are used internally by cylc. Tasks execute in
 private \lstinline=work/= directories that are deleted automatically
 if empty when the task finishes. The suite
@@ -5564,10 +5560,8 @@ running when the suite went down.
 shell$ cylc restart SUITE [STATE_FILE]
 \end{lstlisting}
 For a restart, the scheduler starts by loading each task in its recorded state.
-The most recent state is loaded by default, but earlier state files can be
-specified on the command line. Any tasks recorded as `submitted' or `running'
-will be polled automatically to determine what happened to them while the
-suite was down.
+Any tasks recorded as `submitted' or `running' will be polled automatically to
+determine what happened to them while the suite was down.
 
 \subsubsection{Warm Start}
 
@@ -5575,7 +5569,7 @@ A warm start runs a suite from scratch like a cold start, but from a given
 cycle point that is later than the suite's initial cycle point. All tasks from
 the given cycle point will run. It can be considered an inferior alternative
 to a restart because it may result in some tasks rerunning.  A warm start may
-be required if a restart is not possible because the suite state files were
+be required if a restart is not possible because the suite run databases were
 accidentally deleted (for instance). The warm start cycle point must be given
 on the command line:
 \lstset{language=transcript}
@@ -5838,9 +5832,9 @@ used if necessary (see~\ref{GlobalInitScript}).
 \subsection{Restarting Suites}
 \label{RestartingSuites}
 
-A restarted suite (see \lstinline=cylc restart --help=) is initialized
-from a previous recorded suite state dump so that it can carry on from
-wherever it got to before being shut down or killed.
+A restarted suite (see \lstinline=cylc restart --help=) is initialized from the
+previous recorded suite state so that it can carry on from wherever it got to
+before being shut down or killed.
 
 Tasks that were recorded in the submitted or running states are now
 automatically polled on restart, to see if they are still submitted
@@ -6279,8 +6273,8 @@ suite.rc file.
 In the case of a {\em cold start only} the initial cycle point is passed
 through to task execution environments as
 \lstinline=$CYLC_SUITE_INITIAL_CYCLE_POINT=. The value is then stored in
-suite state dumps and persists across restarts, but it does get wiped out (set
-to \lstinline=None=) after a warm start, because a warm start is really an
+suite database files and persists across restarts, but it does get wiped out
+(set to \lstinline=None=) after a warm start, because a warm start is really an
 implicit restart in which all state information is lost (except that the
 previous cycle is assumed to have completed).
 
@@ -6366,22 +6360,24 @@ to expose the default scripting.
 
 \subsubsection{Restarting Suites With A Different Run Mode?}
 
-The run mode is recorded in the suite state dump file. Cylc will not let
+The run mode is recorded in the suite run database files. Cylc will not let
 you {\em restart} a non-live mode suite in live mode, or vice versa -
 any attempt to do the former would certainly be a mistake (because the
 simulation mode dummy tasks do not generate any of the real outputs
 depended on by downstream live tasks), and the latter, while feasible,
-would corrupt the live state dump by turning it over to simulation mode.
-The easiest way to test a live suite in simulation mode, if you don't
-want to obliterate the current state dump by doing a cold or warm start
-(as opposed to a restart from the previous state) is to take a quick
-copy of the suite and run the copy in simulation mode. However, if you
-really want to run a live suite forward in simulation mode without
-copying it, do this:
+would corrupt the task pool by turning it over to simulation mode.
+The easiest way to test a live suite in simulation mode, if you don't want to
+obliterate the current suite run database files by doing a cold or warm start
+(as opposed to a restart from the previous state) is to take a quick copy of
+the suite and run the copy in simulation mode. However, if you really want to
+run a live suite forward in simulation mode without copying it, do this:
 \begin{myenumerate}
-    \item Back up the live mode suite state dump file.
-    \item Edit the mode line in the state dump and restart in simulation mode.
-    \item Later, restart the live suite from the restored live state dump back up.
+    \item Back up the live mode suite database files.
+    \item Using the \lstinline=sqlite3= command or otherwise,
+          update the value of \lstinline=run_mode= in the
+          \lstinline=suite_params= table in the
+          \lstinline=cylc-suite-private.db= file.
+    \item Later, restart the live suite from the restored back up.
 \end{myenumerate}
 
 %{\em Finally, it should be noted that cylc previously had the ability to
@@ -6652,10 +6648,6 @@ The following topics have yet to be documented in detail.
     \item Understanding suite evolution, particularly in delayed/catchup
         operation: the Tutorial helps here (\ref{Tutorial}),
         along with running the example suites.
-
-    \item Automatic state dump backups: these are used to restart a suite from
-        a previous state of operation. They are mentioned in the Tutorial
-        (\ref{Tutorial}).
 
     \item Task insertion (add a new task proxy instance to a running suite):
         see \lstinline=cylc insert --help=.

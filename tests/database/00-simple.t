@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Suite database content, a basic non-cycling suite of 3 tasks
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 9
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
@@ -26,16 +26,16 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
 
 NAME='schema.out'
-sqlite3 "${DB_FILE}" ".schema" | sort >"${NAME}"
+sqlite3 "${DB_FILE}" ".schema" | env LANG='C' sort >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
-NAME='select-task-states.out'
-sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name' \
+NAME='select-suite-params.out'
+sqlite3 "${DB_FILE}" 'SELECT key,value FROM suite_params ORDER BY key' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
 NAME='select-task-events.out'
-sqlite3 "${DB_FILE}" 'SELECT name, cycle, event, message, misc FROM task_events' \
+sqlite3 "${DB_FILE}" 'SELECT name, cycle, event, message FROM task_events' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 
@@ -51,6 +51,16 @@ sqlite3 "${DB_FILE}" \
     'SELECT cycle, name, submit_num, try_num, submit_status, run_status,
             user_at_host, batch_sys_name
      FROM task_jobs ORDER BY name' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-pool.out'
+sqlite3 "${DB_FILE}" 'SELECT name, cycle, spawned FROM task_pool ORDER BY name' \
+    >"${NAME}"
+cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+
+NAME='select-task-states.out'
+sqlite3 "${DB_FILE}" 'SELECT name, cycle, status FROM task_states ORDER BY name' \
     >"${NAME}"
 cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
 

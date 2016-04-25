@@ -15,50 +15,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Utility for "cylc cat-state" and "cylc dump"."""
 
-import re
-import sys
-import subprocess
 import time
 from cylc.task_id import TaskID
 from cylc.network.suite_state import SUITE_STATUS_STOPPED
 from cylc.task_state import TASK_STATUS_READY
 
 
-def get_stop_state(suite, owner=None, host=None):
-    """Return the contents of the last state file."""
-    if not suite:
-        # this occurs if we run gcylc with no suite argument
-        return None
-    command = "cylc cat-state"
-    if host:
-        command += " --host=" + host
-    if owner:
-        command += " --user=" + owner
-    command += " " + suite
-    try:
-        p = subprocess.Popen(
-            command, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-            shell=True)
-        stdout, stderr = p.communicate()
-    except:
-        return None
-    if stdout:
-        return stdout
-    else:
-        return None
-
-
-def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
-    """Load the contents of the last state file into summary maps."""
+def get_stop_state_summary(lines):
+    """Parse state dump content into summary maps."""
     global_summary = {}
     task_summary = {}
-    family_summary = {}
-    if not lines:
-        state_file_text = get_stop_state(suite, owner, hostname)
-        if state_file_text is None:
-            return global_summary, task_summary, family_summary
-        lines = state_file_text.splitlines()
     if len(lines) == 0 or len(lines) < 3:
         return None
     for line in list(lines):
@@ -94,9 +62,6 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
             name, point_string = TaskID.split(task_id)
         except ValueError:
             continue
-        except Exception as e:
-            sys.stderr.write(str(e) + "\n")
-            continue
         task_summary.setdefault(task_id, {"name": name, "point": point_string,
                                           "label": point_string})
         # reconstruct state from a dumped state string
@@ -108,33 +73,32 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
         task_summary[task_id].update({"state": state})
         task_summary[task_id].update({"spawned": items.get("spawned")})
     global_summary["run_mode"] = "dead"
-    return global_summary, task_summary, family_summary
+    return global_summary, task_summary
 
 
 def dump_to_stdout(states, sort_by_cycle=False):
+    """Print states in "cylc dump" format to STDOUT.
+
+    states = {
+        "task_id": {
+            "name": name,
+            "label": point,
+            "state": state,
+            "spawned": True|False},
+        # ...
+    }
+    """
     lines = []
-    # print 'TASK INFORMATION'
-    task_ids = states.keys()
-    # task_ids.sort()
-
-    for task_id in task_ids:
-        name = states[task_id]['name']
-        label = states[task_id]['label']
-        state = states[task_id]['state']
-
-        if states[task_id]['spawned']:
+    for item in states.values():
+        if item['spawned'] in [True, "True", "true"]:
             spawned = 'spawned'
         else:
             spawned = 'unspawned'
-
         if sort_by_cycle:
-            line = label + ', ' + name + ', '
+            values = [item['label'], item['name'], item['state'], spawned]
         else:
-            line = name + ', ' + label + ', '
-
-        line += state + ', ' + spawned
-
-        lines.append(line)
+            values = [item['name'], item['label'], item['state'], spawned]
+        lines.append(', '.join(values))
 
     lines.sort()
     for line in lines:

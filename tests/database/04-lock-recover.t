@@ -35,12 +35,12 @@ JOB_PID="$(awk -F'=' '$1 == "CYLC_JOB_PID" {print $2}' \
     "${SUITE_RUN_DIR}/log/job/1/locker/01/job.status")" >&2
 cmp_ok "${TEST_NAME_BASE}-run.stderr.grep" <<__ERR__
 WARNING: cannot execute database statement:
-	file=${SUITE_RUN_DIR}/cylc-suite.db:
-	stmt=INSERT OR REPLACE INTO task_events VALUES(?, ?, ?, ?, ?, ?, ?)
-	stmt_args[0]=['locker', '1', '?', 1, 'output completed', '1 I have locked the public database file', 'localhost']
+	file=${SUITE_RUN_DIR}/cylc-suite-public.db:
+	stmt=DELETE FROM task_pool
+	stmt_args[0]=[]
 __ERR__
 
-DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
+DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite-public.db"
 
 NAME='select-task-states.out'
 sqlite3 "${DB_FILE}" \

@@ -15,13 +15,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Wall clock related utilities."""
 
-import flags
 from datetime import datetime, timedelta
+
 from isodatetime.data import Duration
 from isodatetime.parsers import TimePointParser
 from isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone)
+
+import cylc.flags
 
 
 DATE_TIME_FORMAT_BASIC = "%Y%m%dT%H%M%S"
@@ -67,11 +70,11 @@ def now(override_use_utc=None):
     Keyword arguments:
     override_use_utc (default None) - a boolean (or None) that, if
     True, gives the date and time in UTC. If False, it gives the date
-    and time in the local time zone. If None, the flags.utc boolean is
+    and time in the local time zone. If None, the cylc.flags.utc boolean is
     used.
 
     """
-    if override_use_utc or (override_use_utc is None and flags.utc):
+    if override_use_utc or (override_use_utc is None and cylc.flags.utc):
         return datetime.utcnow(), False
     else:
         return datetime.now(), True
@@ -86,8 +89,8 @@ def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
     switches on microsecond reporting
     override_use_utc (default None) - a boolean (or None) that, if
     True, switches on utc time zone reporting. If False, it switches
-    off utc time zone reporting (even if flags.utc is True). If None,
-    the flags.utc boolean is used.
+    off utc time zone reporting (even if cylc.flags.utc is True). If None,
+    the cylc.flags.utc boolean is used.
     use_basic_format (default False) - a boolean that, if True,
     represents the date/time without "-" or ":" delimiters. This is
     most useful for filenames where ":" may cause problems.
@@ -113,8 +116,8 @@ def get_time_string(date_time, display_sub_seconds=False,
     switches on microsecond reporting
     override_use_utc (default None) - a boolean (or None) that, if
     True, switches on utc time zone reporting. If False, it switches
-    off utc time zone reporting (even if flags.utc is True). If None,
-    the flags.utc boolean is used.
+    off utc time zone reporting (even if cylc.flags.utc is True). If None,
+    the cylc.flags.utc boolean is used.
     use_basic_format (default False) - a boolean that, if True,
     represents the date/time without "-" or ":" delimiters. This is
     most useful for filenames where ":" may cause problems.
@@ -145,7 +148,7 @@ def get_time_string(date_time, display_sub_seconds=False,
         date_time = date_time + timedelta(
             hours=diff_hours, minutes=diff_minutes)
         time_zone_string = custom_string
-    elif override_use_utc or (override_use_utc is None and flags.utc):
+    elif override_use_utc or (override_use_utc is None and cylc.flags.utc):
         time_zone_string = TIME_ZONE_STRING_UTC
         if date_time_is_local:
             date_time = date_time - timedelta(
@@ -206,7 +209,7 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
 
 
 def get_unix_time_from_time_string(time_string):
-    """Convert a time string into a unix timestemp."""
+    """Convert a time string into a unix timestamp."""
     parser = TimePointParser()
     time_point = parser.parse(time_string)
     return time_point.get("seconds_since_unix_epoch")

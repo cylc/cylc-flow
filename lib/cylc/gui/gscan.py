@@ -19,7 +19,6 @@
 import copy
 import os
 import re
-import signal
 from subprocess import Popen, PIPE, STDOUT
 import sys
 import threading
@@ -31,7 +30,9 @@ from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
+from cylc.dump import get_stop_state_summary
 import cylc.flags
+from cylc.gui.cat_state import cat_state
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
@@ -88,46 +89,18 @@ def get_hosts_suites_info(hosts, timeout=None, owner=None):
 
 def get_unscannable_suite_info(host, suite, owner=None):
     """Return a map like cylc scan --raw for states and last update time."""
-    if owner is None:
-        owner = USER
-    command = ["cylc", "cat-state", "--host=" + host, "--user=" + owner]
-    if cylc.flags.debug:
-        stderr = sys.stderr
-        command.append("--debug")
-    else:
-        stderr = PIPE
-    proc = Popen(
-        command + [suite], stdout=PIPE, stderr=stderr, preexec_fn=os.setpgrp)
-    try:
-        out, err = proc.communicate()
-        if proc.wait():  # non-zero return code
-            if cylc.flags.debug:
-                sys.stderr.write(err)
-            return {}
-    finally:
-        if proc.poll() is None:
-            try:
-                os.killpg(proc.pid, signal.SIGTERM)
-            except OSError:
-                pass
+    summaries = get_stop_state_summary(cat_state(suite, host, owner))
     suite_info = {}
-    for line in out.rpartition("Begin task states")[2].splitlines():
-        task_result = re.match("([^ ]+) : status=([^,]+), spawned", line)
-        if not task_result:
-            continue
-        task, state = task_result.groups()
-        task_point = task.split(".")[1]
-        for states_point in (KEY_STATES, KEY_STATES + ":" + task_point):
+    if summaries is None:
+        return suite_info
+    global_summary, task_summary = summaries
+    for item in task_summary.values():
+        # Note: item['label'] equivalent to item['point']
+        for states_point in (KEY_STATES, KEY_STATES + ":" + item['label']):
             suite_info.setdefault(states_point, {})
-            suite_info[states_point].setdefault(state, 0)
-            suite_info[states_point][state] += 1
-    suite_update_time_match = re.search(
-        r"^time : [^ ]+ \(([0-9]+)\)$", out, re.M)
-    if suite_update_time_match is None:
-        suite_update_time = int(time.time())
-    else:
-        suite_update_time = int(suite_update_time_match.group(1))
-    suite_info[KEY_UPDATE_TIME] = suite_update_time
+            suite_info[states_point].setdefault(item['state'], 0)
+            suite_info[states_point][item['state']] += 1
+    suite_info[KEY_UPDATE_TIME] = global_summary["last_updated"]
     return suite_info
 
 

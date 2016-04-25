@@ -28,10 +28,14 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-run
 suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-check
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db "select try_num, submit_num from task_states" > submits
-cmp_ok submits <<'__DB_DUMP__'
+sqlite3 \
+    "$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/cylc-suite.db" \
+    'select try_num, submit_num from task_jobs' >'select.out'
+cmp_ok 'select.out' <<'__OUT__'
+1|1
+2|2
+3|3
 4|4
-__DB_DUMP__
+__OUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

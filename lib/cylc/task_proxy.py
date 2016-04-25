@@ -314,7 +314,6 @@ class TaskProxy(object):
             self.db_inserts_map[self.TABLE_TASK_STATES].append({
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
-                "try_num": self.run_try_state.num + 1,
                 "status": status})
 
         if not self.validate_mode and self.submit_num > 0:
@@ -422,8 +421,7 @@ class TaskProxy(object):
         self.db_inserts_map[self.TABLE_TASK_EVENTS].append({
             "time": get_current_time_string(),
             "event": event,
-            "message": message,
-            "misc": self.user_at_host})
+            "message": message})
 
     def db_update_status(self):
         """Update suite runtime DB task states table."""
@@ -844,9 +842,6 @@ class TaskProxy(object):
                 INFO, 'submit_method_id=' + self.summary['submit_method_id'])
         self.log(INFO, 'submission succeeded')
         now = get_current_time_string()
-        self.db_updates_map[self.TABLE_TASK_STATES].append({
-            "time_updated": now,
-            "submit_method_id": self.summary.get('submit_method_id')})
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "time_submit_exit": now,
             "submit_status": 0,
@@ -1142,12 +1137,6 @@ class TaskProxy(object):
 
         RemoteJobHostManager.get_inst().init_suite_run_dir(
             self.suite_name, self.user_at_host)
-
-        self.db_updates_map[self.TABLE_TASK_STATES].append({
-            "time_updated": get_current_time_string(),
-            "submit_method": self.summary['batch_sys_name'],
-            "host": self.user_at_host,
-            "submit_num": self.submit_num})
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "user_at_host": self.user_at_host,
             "batch_sys_name": self.summary['batch_sys_name'],

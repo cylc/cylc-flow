@@ -29,6 +29,7 @@ import traceback
 from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
+from cylc.gui.cat_state import cat_state
 from cylc.network.suite_state import (
     StateSummaryClient, SuiteStillInitialisingError, get_suite_status_string,
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
@@ -207,9 +208,9 @@ class Updater(threading.Thread):
             if not self.connect_fail_warned:
                 self.connect_fail_warned = True
                 gobject.idle_add(self.warn, str(exc))
-            if self.stop_summary is None:
+            if self.cfg.suite and self.stop_summary is None:
                 self.stop_summary = get_stop_state_summary(
-                    self.cfg.suite, self.cfg.owner, self.cfg.host)
+                    cat_state(self.cfg.suite, self.cfg.host, self.cfg.owner))
                 self.last_update_time = time()
             if self.stop_summary is not None and any(self.stop_summary):
                 gobject.idle_add(

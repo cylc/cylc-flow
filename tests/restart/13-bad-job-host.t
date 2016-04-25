@@ -23,20 +23,20 @@ export CYLC_TEST_HOST=$( \
 if [[ -z "${CYLC_TEST_HOST}" ]]; then
     skip_all '"[test battery]remote host": not defined'
 fi
-set_test_number 3
+set_test_number 4
 install_suite "${TEST_NAME_BASE}" bad-job-host
 #-------------------------------------------------------------------------------
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 # Modify DB with garbage host
 CYLC_SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
-for DB_NAME in 'cylc-suite.db' 'state/cylc-suite.db'; do
+for DB_NAME in 'cylc-suite.db' 'cylc-suite-private.db'; do
     sqlite3 "${CYLC_SUITE_RUN_DIR}/${DB_NAME}" \
-        'UPDATE task_states SET host="garbage" WHERE name=="t-remote";
-         UPDATE task_events SET misc="garbage"
-             WHERE name=="t-remote" AND event=="submission succeeded";'
+        'UPDATE task_jobs SET user_at_host="garbage" WHERE name=="t-remote";'
 done
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
+grep_ok 'ERROR - garbage: initialisation did not complete' \
+    "${CYLC_SUITE_RUN_DIR}/log/suite/err"
 #-------------------------------------------------------------------------------
 ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
     "rm -rf 'cylc-run/${SUITE_NAME}'"

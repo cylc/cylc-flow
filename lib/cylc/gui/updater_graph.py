@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc import dump, graphing
+from cylc.graphing import CGraphPlain
 from cylc.mkdir_p import mkdir_p
 from cylc.network.suite_state import get_id_summary
 from cylc.task_id import TaskID
@@ -99,7 +99,7 @@ class GraphUpdater(threading.Thread):
         self.prev_graph_id = ()
 
         # empty graphw object:
-        self.graphw = graphing.CGraphPlain(self.cfg.suite)
+        self.graphw = CGraphPlain(self.cfg.suite)
 
         # TODO - handle failure to get a remote proxy in reconnect()
 
@@ -139,7 +139,7 @@ class GraphUpdater(threading.Thread):
 
     def clear_graph(self):
         self.prev_graph_id = ()
-        self.graphw = graphing.CGraphPlain(self.cfg.suite)
+        self.graphw = CGraphPlain(self.cfg.suite)
         self.normal_fit = True
         self.update_xdot()
         # gtk idle functions must return false or will be called multiple times
@@ -339,7 +339,7 @@ class GraphUpdater(threading.Thread):
         needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
-            self.graphw = graphing.CGraphPlain(
+            self.graphw = CGraphPlain(
                 self.cfg.suite, suite_polling_tasks)
             self.graphw.add_edges(
                 gr_edges, ignore_suicide=self.ignore_suicide)
