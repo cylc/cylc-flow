@@ -1310,8 +1310,11 @@ class TaskProxy(object):
         local_jobfile_path = os.path.join(
             local_job_log_dir, common_job_log_path)
 
-        rtconfig = pdeepcopy(self.tdef.rtconfig)
-        poverride(rtconfig, overrides)
+        if overrides:
+            rtconfig = pdeepcopy(self.tdef.rtconfig)
+            poverride(rtconfig, overrides)
+        else:
+            rtconfig = self.tdef.rtconfig
 
         self.set_from_rtconfig(rtconfig)
 
