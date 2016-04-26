@@ -1224,6 +1224,9 @@ class TaskPool(object):
         """Handle queued db operations for each task proxy."""
         for itask in self.get_all_tasks():
             # (runahead pool tasks too, to get new state recorders).
+            if not (any(itask.db_inserts_map.values()) or
+                    any(itask.db_updates_map.values())):
+                continue
             for table_name, db_inserts in sorted(itask.db_inserts_map.items()):
                 while db_inserts:
                     db_insert = db_inserts.pop(0)
