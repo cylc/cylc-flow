@@ -133,6 +133,11 @@ class TaskPool(object):
         task_ids = []
         for item in items:
             point_str, name_str, _ = self._parse_task_item(item)
+            if point_str is None:
+                self.log.warning(
+                    "%s: task ID for insert must contain cycle point" % (item))
+                n_warnings += 1
+                continue
             try:
                 point_str = standardise_point_string(point_str)
             except ValueError as exc:

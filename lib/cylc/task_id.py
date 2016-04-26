@@ -25,6 +25,7 @@ class TaskID(object):
     """Task ID utilities."""
 
     DELIM = '.'
+    DELIM2 = '/'
     NAME_CHAR_RE = r"[\w\-+%@]"
     NAME_RE = r"\w" + NAME_CHAR_RE + r"*"
     NAME_REC = re.compile(r"\A" + NAME_RE + r"\Z")
@@ -50,10 +51,28 @@ class TaskID(object):
 
     @classmethod
     def is_valid_id(cls, id_str):
-        """Return whether a task id is valid."""
+        """Return whether a task id is valid "NAME.POINT" format."""
         if cls.DELIM not in id_str:
             return False
         name, point = cls.split(id_str)
         # N.B. only basic cycle point check
         return (name and cls.NAME_REC.match(name) and
                 point and cls.POINT_REC.match(point))
+
+    @classmethod
+    def is_valid_id_2(cls, id_str):
+        """Return whether a task id is valid.
+
+        Accept "NAME.POINT" or "POINT/NAME" format.
+        """
+        if cls.DELIM not in id_str and cls.DELIM2 not in id_str:
+            return False
+        try:
+            point, name = id_str.split(cls.DELIM2, 1)
+        except ValueError:
+            return cls.is_valid_id(id_str)
+        else:
+            return (
+                name and cls.NAME_REC.match(name) and
+                point and cls.POINT_REC.match(point)
+            )
