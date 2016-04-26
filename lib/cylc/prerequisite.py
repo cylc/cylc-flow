@@ -62,6 +62,8 @@ class Prerequisite(object):
         self.messages_set.add(message)
         self.labels[message] = label
         self.satisfied[label] = False
+        if hasattr(self, 'all_satisfied'):
+            self.all_satisfied = False
         m = re.match(self.__class__.CYCLE_POINT_RE, message)
         if m:
             self.target_point_strings.append(m.groups()[0])
@@ -81,6 +83,8 @@ class Prerequisite(object):
         # 'foo[T-6]:out1 | baz'
 
         drop_these = []
+        if hasattr(self, 'all_satisfied'):
+            delattr(self, 'all_satisfied')
 
         if self.pre_initial_messages:
             for k in self.pre_initial_messages:
@@ -123,25 +127,31 @@ class Prerequisite(object):
             self.conditional_expression = expr
 
     def is_satisfied(self):
-        if not self.satisfied:
-            # No prerequisites left after pre-initial simplification.
-            return True
-        elif not self.conditional_expression:
-            # Single trigger or several with '&' only; don't need eval.
-            return all(self.satisfied.values())
-        else:
-            # Trigger expression with at least one '|': use eval.
-            try:
-                res = eval(self.conditional_expression)
-            except Exception, x:
-                print >> sys.stderr, 'ERROR:', x
-                if str(x).find("unexpected EOF") != -1:
-                    print >> sys.stderr, (
-                        "(?could be unmatched parentheses in the graph" +
-                        " string?)")
-                raise TriggerExpressionError(
-                    '"' + self.raw_conditional_expression + '"')
-            return res
+        try:
+            return self.all_satisfied
+        except AttributeError:
+            # No cached value, or not possible to cache (conditional).
+            if not self.satisfied:
+                # No prerequisites left after pre-initial simplification.
+                return True
+            if self.conditional_expression:
+                # Trigger expression with at least one '|': use eval.
+                return self._conditional_is_satisfied()
+            self.all_satisfied = all(self.satisfied.values())
+            return self.all_satisfied
+
+    def _conditional_is_satisfied(self):
+        try:
+            res = eval(self.conditional_expression)
+        except Exception, x:
+            print >> sys.stderr, 'ERROR:', x
+            if str(x).find("unexpected EOF") != -1:
+                print >> sys.stderr, (
+                    "(?could be unmatched parentheses in the graph" +
+                    " string?)")
+            raise TriggerExpressionError(
+                '"' + self.raw_conditional_expression + '"')
+        return res
 
     def satisfy_me(self, output_msgs, outputs):
         """Can any completed outputs satisfy any of my prequisites?
@@ -160,6 +170,9 @@ class Prerequisite(object):
                 if self.messages[label] == msg:
                     self.satisfied[label] = True
                     self.satisfied_by[label] = outputs[msg]  # owner_id
+            if self.conditional_expression is None:
+                self.all_satisfied = all(self.satisfied.values())
+        return relevant_msgs
 
     def dump(self):
         # TODO - CHECK THIS WORKS NOW
@@ -180,10 +193,14 @@ class Prerequisite(object):
     def set_satisfied(self):
         for label in self.messages:
             self.satisfied[label] = True
+        if self.conditional_expression is None:
+            self.all_satisfied = True
 
     def set_not_satisfied(self):
         for label in self.messages:
             self.satisfied[label] = False
+        if self.conditional_expression is None:
+            self.all_satisfied = False
 
     def get_target_points(self):
         """Return a list of cycle points target by each prerequisite,
