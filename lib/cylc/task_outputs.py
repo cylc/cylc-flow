@@ -23,6 +23,10 @@ import sys
 
 
 class TaskOutputs(object):
+
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["owner_id", "completed", "not_completed"]
+
     def __init__(self, owner_id):
 
         self.owner_id = owner_id

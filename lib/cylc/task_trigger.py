@@ -83,6 +83,10 @@ A task trigger is a prerequisite in the abstract, defined by the suite graph.
 It generates a concrete prerequisite string given a task's cycle point value.
     """
 
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["task_name", "suicide", "graph_offset_string", "cycle_point",
+                 "message", "message_offset", "builtin"]
+
     def __init__(
             self, task_name, qualifier=None, graph_offset_string=None,
             cycle_point=None, suicide=False, outputs={}, base_interval=None):

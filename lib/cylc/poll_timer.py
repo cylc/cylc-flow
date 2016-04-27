@@ -19,7 +19,6 @@
 
 import time
 from copy import copy
-from collections import deque
 from logging import WARNING, INFO
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -28,9 +27,15 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 class PollTimer(object):
     """Timer for polling task job submission and execution."""
 
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["intervals", "default_intervals", "name", "log",
+                 "current_interval", "timeout"]
+
     def __init__(self, intervals, defaults, name, log):
-        self.intervals = copy(deque(intervals))
-        self.default_intervals = deque(defaults)
+        self.intervals = copy(intervals)
+        self.default_intervals = copy(defaults)
+        self.intervals.reverse()
+        self.default_intervals.reverse()
         self.name = name
         self.log = log
         self.current_interval = None
@@ -57,7 +62,7 @@ class PollTimer(object):
     def set_timer(self):
         """Set the timer."""
         try:
-            self.current_interval = self.intervals.popleft()  # seconds
+            self.current_interval = self.intervals.pop()  # seconds
         except IndexError:
             # no more intervals, keep the last one
             pass
