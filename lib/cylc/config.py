@@ -1398,12 +1398,7 @@ class SuiteConfig(object):
             # backslashed re markers like \b from being interpreted as
             # normal escapeded characters.
 
-            fam_in_line = re.search(
-                r"(?<!%(name_char_re)s)%(fam)s(?!%(name_char_re)s)" % {
-                    "name_char_re": TaskID.NAME_CHAR_RE, "fam": fam
-                },
-                line)
-            if not fam_in_line:
+            if fam not in re.findall(TaskID.NAME_RE, line):
                 continue
 
             # Replace family triggers with member triggers
