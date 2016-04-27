@@ -30,7 +30,7 @@ from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.network.suite_state import (
-    StateSummaryClient, SuiteStillInitialisingError,
+    StateSummaryClient, SuiteStillInitialisingError, get_suite_status_string,
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
     SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING)
 from cylc.network.suite_info import SuiteInfoClient
@@ -332,7 +332,13 @@ class Updater(threading.Thread):
         self.full_fam_state_summary = fam_states
         self.refilter()
 
-        self.status = glbl['status_string']
+        try:
+            self.status = glbl['status_string']
+        except KeyError:
+            # Back compat for suite daemons <= 6.9.1.
+            self.status = get_suite_status_string(
+                glbl['paused'], glbl['stopping'], glbl['will_pause_at'],
+                glbl['will_stop_at'])
 
         try:
             self.is_reloading = glbl['reloading']
