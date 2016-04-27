@@ -50,7 +50,7 @@ SUITE_STATUS_STOPPED_WITH = "stopped with '%s'"
 
 
 def get_suite_status_string(paused, stopping, will_pause_at, will_stop_at):
-    """Construct a suite status summary string for clients programs.
+    """Construct a suite status summary string for client programs.
 
     This is in a function for re-use in monitor and GUI back-compat code
     (clients at cylc version <= 6.9.1 construct their own status string).

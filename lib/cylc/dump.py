@@ -82,8 +82,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
             global_summary["last_updated"] = time.time()
 
     # Skip initial and final cycle points.
-    _ = lines.pop(0)
-    _ = lines.pop(0)
+    lines[0:2] = []
     global_summary["status_string"] = SUITE_STATUS_STOPPED
     while lines:
         line = lines.pop(0)
