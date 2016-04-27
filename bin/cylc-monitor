@@ -35,7 +35,8 @@ from parsec.OrderedDict import OrderedDict
 from cylc.CylcOptionParsers import cop
 from cylc.task_state import TaskState
 from cylc.network.suite_state import (
-    SUITE_STATUS_SPLIT_REC, StateSummaryClient, SuiteStillInitialisingError)
+    SUITE_STATUS_SPLIT_REC, get_suite_status_string, StateSummaryClient,
+    SuiteStillInitialisingError)
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
@@ -140,7 +141,13 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
 
                 run_mode = glbl['run_mode']
                 ns_defn_order = glbl['namespace definition order']
-                status_string = glbl['status_string']
+                try:
+                    status_string = glbl['status_string']
+                except KeyError:
+                    # Back compat for suite daemons <= 6.9.1.
+                    status_string = get_suite_status_string(
+                        glbl['paused'], glbl['stopping'],
+                        glbl['will_pause_at'], glbl['will_stop_at'])
 
                 task_info = {}
                 name_list = set()

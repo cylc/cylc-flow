@@ -49,6 +49,19 @@ SUITE_STATUS_STOPPED = "stopped"
 SUITE_STATUS_STOPPED_WITH = "stopped with '%s'"
 
 
+def get_suite_status_string(paused, stopping, will_pause_at, will_stop_at):
+    if paused:
+        return SUITE_STATUS_HELD
+    elif stopping:
+        return SUITE_STATUS_STOPPING
+    elif will_pause_at:
+        return SUITE_STATUS_RUNNING_TO_HOLD % will_pause_at
+    elif will_stop_at:
+        return SUITE_STATUS_RUNNING_TO_STOP % will_stop_at
+    else:
+        return SUITE_STATUS_RUNNING
+
+
 class SuiteStillInitialisingError(Exception):
     """Exception raised if a summary is requested before the first update.
 
@@ -177,18 +190,8 @@ class StateSummaryServer(PyroServer):
         global_summary['namespace definition order'] = ns_defn_order
         global_summary['reloading'] = reloading
         global_summary['state totals'] = state_count_totals
-
-        if paused:
-            status = SUITE_STATUS_HELD
-        elif stopping:
-            status = SUITE_STATUS_STOPPING
-        elif will_pause_at:
-            status = SUITE_STATUS_RUNNING_TO_HOLD % will_pause_at
-        elif will_stop_at:
-            status = SUITE_STATUS_RUNNING_TO_STOP % will_stop_at
-        else:
-            status = SUITE_STATUS_RUNNING
-        global_summary['status_string'] = status
+        global_summary['status_string'] = get_suite_status_string(
+            paused, stopping, will_pause_at, will_stop_at)
 
         self._summary_update_time = time.time()
 
