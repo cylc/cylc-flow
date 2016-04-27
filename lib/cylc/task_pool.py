@@ -1223,29 +1223,35 @@ class TaskPool(object):
         """Handle queued db operations for each task proxy."""
         for itask in self.get_all_tasks():
             # (runahead pool tasks too, to get new state recorders).
-            for table_name, db_inserts in sorted(itask.db_inserts_map.items()):
-                while db_inserts:
-                    db_insert = db_inserts.pop(0)
-                    db_insert.update({
-                        "name": itask.tdef.name,
-                        "cycle": str(itask.point),
-                    })
-                    if "submit_num" not in db_insert:
-                        db_insert["submit_num"] = itask.submit_num
-                    self.pri_dao.add_insert_item(table_name, db_insert)
-                    self.pub_dao.add_insert_item(table_name, db_insert)
+            if any(itask.db_inserts_map.values()):
+                for table_name, db_inserts in sorted(
+                        itask.db_inserts_map.items()):
+                    while db_inserts:
+                        db_insert = db_inserts.pop(0)
+                        db_insert.update({
+                            "name": itask.tdef.name,
+                            "cycle": str(itask.point),
+                        })
+                        if "submit_num" not in db_insert:
+                            db_insert["submit_num"] = itask.submit_num
+                        self.pri_dao.add_insert_item(table_name, db_insert)
+                        self.pub_dao.add_insert_item(table_name, db_insert)
 
-            for table_name, db_updates in sorted(itask.db_updates_map.items()):
-                while db_updates:
-                    set_args = db_updates.pop(0)
-                    where_args = {
-                        "cycle": str(itask.point), "name": itask.tdef.name}
-                    if "submit_num" not in set_args:
-                        where_args["submit_num"] = itask.submit_num
-                    self.pri_dao.add_update_item(
-                        table_name, set_args, where_args)
-                    self.pub_dao.add_update_item(
-                        table_name, set_args, where_args)
+            if any(itask.db_updates_map.values()):
+                for table_name, db_updates in sorted(
+                        itask.db_updates_map.items()):
+                    while db_updates:
+                        set_args = db_updates.pop(0)
+                        where_args = {
+                            "cycle": str(itask.point),
+                            "name": itask.tdef.name
+                        }
+                        if "submit_num" not in set_args:
+                            where_args["submit_num"] = itask.submit_num
+                        self.pri_dao.add_update_item(
+                            table_name, set_args, where_args)
+                        self.pub_dao.add_update_item(
+                            table_name, set_args, where_args)
 
         # record any broadcast settings to be dumped out
         bcast = BroadcastServer.get_inst()
