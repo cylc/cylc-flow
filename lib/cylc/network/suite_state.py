@@ -200,7 +200,6 @@ class StateSummaryServer(PyroServer):
             ts = task.get_state_summary()
             task_summary[task.identity] = ts
             name, point_string = TaskID.split(task.identity)
-            point_string = str(point_string)
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = ts['state']
 
@@ -209,7 +208,6 @@ class StateSummaryServer(PyroServer):
             ts['state'] = 'runahead'
             task_summary[task.identity] = ts
             name, point_string = TaskID.split(task.identity)
-            point_string = str(point_string)
             task_states.setdefault(point_string, {})
             task_states[point_string][name] = 'runahead'
 
