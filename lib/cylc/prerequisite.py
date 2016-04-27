@@ -136,8 +136,9 @@ class Prerequisite(object):
                 return True
             if self.conditional_expression:
                 # Trigger expression with at least one '|': use eval.
-                return self._conditional_is_satisfied()
-            self.all_satisfied = all(self.satisfied.values())
+                self.all_satisfied = self._conditional_is_satisfied()
+            else:
+                self.all_satisfied = all(self.satisfied.values())
             return self.all_satisfied
 
     def _conditional_is_satisfied(self):
@@ -172,6 +173,8 @@ class Prerequisite(object):
                     self.satisfied_by[label] = outputs[msg]  # owner_id
             if self.conditional_expression is None:
                 self.all_satisfied = all(self.satisfied.values())
+            else:
+                self.all_satisfied = self._conditional_is_satisfied()
         return relevant_msgs
 
     def dump(self):
@@ -195,12 +198,16 @@ class Prerequisite(object):
             self.satisfied[label] = True
         if self.conditional_expression is None:
             self.all_satisfied = True
+        else:
+            self.all_satisfied = self._conditional_is_satisfied()
 
     def set_not_satisfied(self):
         for label in self.messages:
             self.satisfied[label] = False
         if self.conditional_expression is None:
             self.all_satisfied = False
+        else:
+            self.all_satisfied = self._conditional_is_satisfied()
 
     def get_target_points(self):
         """Return a list of cycle points target by each prerequisite,
