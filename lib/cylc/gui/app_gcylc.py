@@ -2020,7 +2020,7 @@ shown here in the state they were in at the time of triggering.''')
         vbox.pack_start(label, True)
 
         hbox = gtk.HBox()
-        label = gtk.Label('TASK-ID ... (NAME.POINT ...)')
+        label = gtk.Label('TASK-NAME.CYCLE-POINT [...]')
         hbox.pack_start(label, True)
         entry_task_ids = gtk.Entry()
         hbox.pack_start(entry_task_ids, True)
@@ -2061,8 +2061,14 @@ shown here in the state they were in at the time of triggering.''')
         """Insert a task, callback for "insert_task_popup"."""
         task_ids = shlex.split(entry_task_ids.get_text())
         if not task_ids:
-            warning_dialog("Enter task/family IDs", self.window).warn()
+            warning_dialog('Enter valid task/family IDs', self.window).warn()
             return
+        for i, task_id in enumerate(task_ids):
+            if not TaskID.is_valid_id_2(task_id):
+                warning_dialog(
+                    '"%s": invalid task ID (argument %d)' % (task_id, i + 1),
+                    self.window).warn()
+                return
         window.destroy()
         stop_point_str = entry_stop_point.get_text()
         if not stop_point_str.strip():
