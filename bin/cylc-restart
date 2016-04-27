@@ -415,7 +415,8 @@ class restart(Scheduler):
                     get_point(point_string),
                     state,
                     submit_num=submit_num,
-                    is_reload=True
+                    is_reload=True,
+                    message_queue=self.pool.message_queue
                 )
             except TaskNotDefinedError, x:
                 print >> sys.stderr, str(x)

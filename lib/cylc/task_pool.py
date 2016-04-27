@@ -44,6 +44,7 @@ import sys
 from time import time
 import traceback
 
+from cylc.network.task_msgqueue import TaskMessageServer
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.broker import broker
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -92,6 +93,9 @@ class TaskPool(object):
         self._prev_runahead_base_point = None
         self._prev_runahead_sequence_points = None
         self.reload_warned = False
+        self.message_queue = TaskMessageServer()
+
+        self.pyro.connect(self.message_queue, "task_pool")
 
         self.pool = {}
         self.runahead_pool = {}
@@ -185,7 +189,7 @@ class TaskPool(object):
                     "submit_num")
             new_task = get_task_proxy(
                 name_str, get_point(point_str), 'waiting', stop_point,
-                submit_num=submit_num)
+                submit_num=submit_num, message_queue=self.message_queue)
             if new_task:
                 self.add_to_runahead_pool(new_task)
         return n_warnings
@@ -350,16 +354,6 @@ class TaskPool(object):
         if not self.runahead_pool[itask.point]:
             del self.runahead_pool[itask.point]
         self.rhpool_changed = True
-        try:
-            self.pyro.connect(itask.message_queue, itask.identity)
-        except Exception, exc:
-            if cylc.flags.debug:
-                raise
-            print >> sys.stderr, exc
-            self.log.warning(
-                '%s cannot be added (use --debug and see stderr)' %
-                itask.identity)
-            return False
         if itask.tdef.max_future_prereq_offset is not None:
             self.set_max_future_offset()
 
@@ -375,18 +369,6 @@ class TaskPool(object):
             self.rhpool_changed = True
             return
 
-        try:
-            self.pyro.disconnect(itask.message_queue)
-        except NamingError, exc:
-            print >> sys.stderr, exc
-            self.log.critical(
-                itask.identity + ' cannot be removed (task not found)')
-            return
-        except Exception, exc:
-            print >> sys.stderr, exc
-            self.log.critical(
-                itask.identity + ' cannot be removed (unknown error)')
-            return
         # remove from queue
         if itask.tdef.name in self.myq:  # A reload can remove a task
             del self.queues[self.myq[itask.tdef.name]][itask.identity]
@@ -1022,8 +1004,20 @@ class TaskPool(object):
 
     def process_queued_task_messages(self):
         """Handle incoming task messages for each task proxy."""
+        queue = self.message_queue.get_queue()
+        task_id_messages = {}
+        while queue.qsize():
+            try:
+                task_id, priority, message = queue.get(block=False)
+            except Queue.Empty:
+                break
+            queue.task_done()
+            task_id_messages.setdefault(task_id, [])
+            task_id_messages[task_id].append((priority, message))
         for itask in self.get_tasks():
-            itask.process_incoming_messages()
+            if itask.identity in task_id_messages:
+                for priority, message in task_id_messages[itask.identity]:
+                    itask.process_incoming_message((priority, message))
 
     def process_queued_task_event_handlers(self):
         """Process task event handlers."""
@@ -1498,12 +1492,7 @@ class TaskPool(object):
     def shutdown(self):
         if not self.no_active_tasks():
             self.log.warning("some active tasks will be orphaned")
-        for itask in self.get_tasks():
-            try:
-                self.pyro.disconnect(itask.message_queue)
-            except KeyError:
-                # Wasn't connected yet.
-                pass
+        self.pyro.disconnect(self.message_queue)
 
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.

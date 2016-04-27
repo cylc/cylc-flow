@@ -30,10 +30,10 @@ class TaskMessageServer(PyroServer):
         super(TaskMessageServer, self).__init__()
         self.queue = Queue()
 
-    def put(self, priority, message):
+    def put(self, task_id, priority, message):
         check_access_priv(self, 'full-control')
         self.report('task_message')
-        self.queue.put((priority, message))
+        self.queue.put((task_id, priority, message))
         return (True, 'Message queued')
 
     def get_queue(self):
@@ -45,9 +45,11 @@ class TaskMessageClient(PyroClient):
 
     def __init__(self, suite, task_id, owner=USER,
                  host=get_hostname(), pyro_timeout=None, port=None):
-        self.target_server_object = task_id
+        self.target_server_object = "task_pool"
+        self.task_id = task_id
         super(TaskMessageClient, self).__init__(
             suite, owner, host, pyro_timeout, port)
 
     def put(self, *args):
+        args = [self.task_id] + list(args)
         self.call_server_func('put', *args)

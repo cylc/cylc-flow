@@ -81,10 +81,12 @@ def main(name, start):
 
     try:
         server.configure()
+        if server.options.profile_mode:
+            import cProfile
+            import pstats
+            prof = cProfile.Profile()
+            prof.enable()
         server.run()
-        # For profiling (see Python docs for how to display the stats).
-        # import cProfile
-        # cProfile.runctx('server.run()', globals(), locals(), 'stats')
     except SchedulerStop, x:
         # deliberate stop
         print str(x)
@@ -124,3 +126,12 @@ def main(name, start):
     else:
         # main loop ends (not used?)
         server.shutdown()
+
+    if server.options.profile_mode:
+        prof.disable()
+        import StringIO
+        string_stream = StringIO.StringIO()
+        stats = pstats.Stats(prof, stream=string_stream)
+        stats.sort_stats('cumulative')
+        stats.print_stats()
+        print string_stream.getvalue()
