@@ -130,7 +130,7 @@ class Prerequisite(object):
         try:
             return self.all_satisfied
         except AttributeError:
-            # No cached value, or not possible to cache (conditional).
+            # No cached value.
             if not self.satisfied:
                 # No prerequisites left after pre-initial simplification.
                 return True
