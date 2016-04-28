@@ -50,6 +50,12 @@ SUITE_STATUS_STOPPED_WITH = "stopped with '%s'"
 
 
 def get_suite_status_string(paused, stopping, will_pause_at, will_stop_at):
+    """Construct a suite status summary string for client programs.
+
+    This is in a function for re-use in monitor and GUI back-compat code
+    (clients at cylc version <= 6.9.1 construct their own status string).
+
+    """
     if paused:
         return SUITE_STATUS_HELD
     elif stopping:
@@ -180,8 +186,18 @@ class StateSummaryServer(PyroServer):
         global_summary['namespace definition order'] = ns_defn_order
         global_summary['reloading'] = reloading
         global_summary['state totals'] = state_count_totals
+
+        # Construct a suite status string for use by monitoring clients.
         global_summary['status_string'] = get_suite_status_string(
             paused, stopping, will_pause_at, will_stop_at)
+
+        # TODO - delete this block post back-compat concerns (<= 6.9.1):
+        #  Report separate status string components for older clients that
+        # construct their own suite status strings.
+        global_summary['paused'] = paused
+        global_summary['stopping'] = stopping
+        global_summary['will_pause_at'] = will_pause_at
+        global_summary['will_stop_at'] = will_stop_at
 
         self._summary_update_time = time.time()
 
