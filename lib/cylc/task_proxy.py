@@ -248,6 +248,9 @@ class TaskProxy(object):
                 self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
+        self._recalc_satisfied = True
+        self._is_satisfied = False
+        self._suicide_is_satisfied = False
         self.prerequisites = []
         self.suicide_prerequisites = []
         self._add_prerequisites(self.point)
@@ -371,6 +374,7 @@ class TaskProxy(object):
         # self.triggers[sequence] = [triggers for sequence]
         # Triggers for sequence_i only used if my cycle point is a
         # valid member of sequence_i's sequence of cycle points.
+        self._recalc_satisfied = True
 
         for sequence, exps in self.tdef.triggers.items():
             for ctrig, exp in exps:
@@ -618,18 +622,26 @@ class TaskProxy(object):
                 preq.is_satisfied()
 
     def prerequisites_are_all_satisfied(self):
-        return all(preq.is_satisfied() for preq in self.prerequisites)
+        if self._recalc_satisfied:
+            self._is_satisfied = all(
+                preq.is_satisfied() for preq in self.prerequisites)
+        return self._is_satisfied
 
     def suicide_prerequisites_are_all_satisfied(self):
-        return all(preq.is_satisfied() for preq in self.suicide_prerequisites)
+        if self._recalc_satisfied:
+            self._suicide_is_satisfied = all(
+                preq.is_satisfied() for preq in self.suicide_prerequisites)
+        return self._suicide_is_satisfied
 
     def set_prerequisites_all_satisfied(self):
         for prereq in self.prerequisites:
             prereq.set_satisfied()
+        self._recalc_satisfied = True
 
     def set_prerequisites_not_satisfied(self):
         for prereq in self.prerequisites:
             prereq.set_not_satisfied()
+        self._recalc_satisfied = True
 
     def reset_state_ready(self):
         """Reset state to "ready"."""
@@ -1815,14 +1827,18 @@ class TaskProxy(object):
 
     def not_fully_satisfied(self):
         """Return True if prerequisites are not fully satisfied."""
-        return (not self.prerequisites_are_all_satisfied() or
-                not self.suicide_prerequisites_are_all_satisfied())
+        if self._recalc_satisfied:
+            return (not self.prerequisites_are_all_satisfied() or
+                    not self.suicide_prerequisites_are_all_satisfied())
+        return (not self._is_satisfied or not self._suicide_is_satisfied)
 
     def satisfy_me(self, task_output_msgs, task_outputs):
         """Attempt to get my prerequisites satisfied."""
+        self._recalc_satisfied = False
         for preqs in [self.prerequisites, self.suicide_prerequisites]:
             for preq in preqs:
-                preq.satisfy_me(task_output_msgs, task_outputs)
+                if preq.satisfy_me(task_output_msgs, task_outputs):
+                    self._recalc_satisfied = True
 
     def next_point(self):
         """Return the next cycle point."""
