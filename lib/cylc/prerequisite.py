@@ -42,7 +42,7 @@ class Prerequisite(object):
 
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["CYCLE_POINT_RE", "owner_id", "labels", "messages",
-                 "messages_set", "satisfied", "satisfied_by",
+                 "messages_set", "satisfied", "all_satisfied", "satisfied_by",
                  "target_point_strings", "start_point",
                  "pre_initial_messages", "conditional_expression",
                  "raw_conditional_expression"]
