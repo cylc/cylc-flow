@@ -1005,10 +1005,10 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 while not proc_pool.is_dead():
                     proc_pool.handle_results_async()
                     if not warned:
-                        print ("Waiting for the command process " +
-                               "pool to empty for shutdown")
-                        print ("(you can \"stop now\" to shut " +
-                               "down immediately if you like).")
+                        print("Waiting for the command process " +
+                              "pool to empty for shutdown")
+                        print("(you can \"stop now\" to shut " +
+                              "down immediately if you like).")
                         warned = True
                     self.process_command_queue()
                     time.sleep(0.5)

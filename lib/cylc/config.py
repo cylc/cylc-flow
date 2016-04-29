@@ -2146,8 +2146,8 @@ class SuiteConfig(object):
             total_graph_text = "\n".join(
                 back_comp_initial_section_graphs[section])
             if self.validation:
-                print ("# REPLACING START-UP/ASYNC DEPENDENCIES " +
-                       "WITH AN R1* SECTION")
+                print("# REPLACING START-UP/ASYNC DEPENDENCIES " +
+                      "WITH AN R1* SECTION")
                 print "# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)"
                 print "        [[[" + section + "]]]"
                 print "            " + 'graph = """'

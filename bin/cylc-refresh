@@ -81,16 +81,16 @@ def main():
             print >> sys.stderr, x
             readerror.append(suite)
     if len(invalid) > 0:
-        print ("ERROR, %d invalid registrations "
-               "(no suite.rc file):" % len(invalid))
+        print("ERROR, %d invalid registrations "
+              "(no suite.rc file):" % len(invalid))
         for i in invalid:
             if options.unregister:
                 db.unregister(i)
             else:
                 print ' -', i
     if len(readerror) > 0:
-        print ("ERROR, %d title parse failures "
-               "(bad suite.rc file):" % len(readerror))
+        print("ERROR, %d title parse failures "
+              "(bad suite.rc file):" % len(readerror))
         for i in readerror:
             print ' -', i
 
