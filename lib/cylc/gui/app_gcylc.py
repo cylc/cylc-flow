@@ -2069,8 +2069,8 @@ shown here in the state they were in at the time of triggering.''')
                     '"%s": invalid task ID (argument %d)' % (task_id, i + 1),
                     self.window).warn()
                 return
-        window.destroy()
         stop_point_str = entry_stop_point.get_text()
+        window.destroy()
         if not stop_point_str.strip():
             stop_point_str = None
         self.put_pyro_command(
