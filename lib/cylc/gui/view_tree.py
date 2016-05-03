@@ -167,8 +167,7 @@ class ControlTree(object):
         point_string = treemodel.get_value(iter, 0)
         name = treemodel.get_value(iter, 1)
         if point_string == name:
-            # must have clicked on the top level point_string
-            return
+            name = "root"
 
         task_id = TaskID.get(name, point_string)
 
