@@ -36,6 +36,16 @@ class TaskDefError(Exception):
 class TaskDef(object):
     """Task definition."""
 
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["run_mode", "rtconfig", "start_point", "sequences",
+                 "implicit_sequences", "used_in_offset_trigger",
+                 "max_future_prereq_offset", "intercycle_offsets",
+                 "sequential", "is_coldstart", "suite_polling_cfg",
+                 "clocktrigger_offset", "expiration_offset",
+                 "namespace_hierarchy", "triggers", "outputs",
+                 "external_triggers", "name", "elapsed_times",
+                 "mean_total_elapsed_time"]
+
     def __init__(self, name, rtcfg, run_mode, start_point):
         if not TaskID.is_valid_name(name):
             raise TaskDefError("Illegal task name: %s" % name)

@@ -89,6 +89,9 @@ TaskJobLogsRetrieveContext = namedtuple(
 class TryState(object):
     """Represent the current state of a (re)try."""
 
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["ctx", "delays", "num", "delay", "timeout", "is_waiting"]
+
     def __init__(self, ctx=None, delays=None):
         self.ctx = ctx
         if delays:

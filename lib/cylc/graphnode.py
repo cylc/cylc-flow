@@ -91,6 +91,11 @@ class GraphNodeError(Exception):
 class graphnode(object):
     """A node in the cycle suite.rc dependency graph."""
 
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["offset_is_from_ict", "offset_is_irregular",
+                 "is_absolute", "special_output", "output",
+                 "name", "intercycle", "offset_string"]
+
     def __init__(self, node, base_interval=None):
         node_in = node
         # Get task name and properties from a graph node name.
