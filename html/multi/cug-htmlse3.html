@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-03-11 10:04:00"> 
+<meta name="date" content="2016-05-04 18:42:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -22,11 +22,11 @@ href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
    &#x00A0;<span class="subsectionToc" >3.1 <a 
 href="#x4-100003.1">Known Version Compatibility Issues</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >3.2 <a 
-href="#x4-130003.2">Other Software Used Internally By Cylc</a></span>
+href="#x4-120003.2">Other Software Used Internally By Cylc</a></span>
    </div>
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">Cylc</span>, the version associated with this document is: 6.9.1 . <br 
+class="cmbx-10">Cylc</span>, the version associated with this document is: 6.10.0 . <br 
 class="newline" />Cylc can be downloaded from from GitHub: <a 
 href="https://cylc.github.com/cylc" class="url" ><span 
 class="pcrr7t-">https://cylc.github.com/cylc</span></a>
@@ -41,22 +41,14 @@ href="https://python.org" class="url" ><span
 class="pcrr7t-">https://python.org</span></a>
      </li>
      <li class="itemize"><span 
-class="cmbx-10">Pyro-3 (Python Remote Objects), version 3.10</span>+<span 
-class="cmbx-10">, latest tested 3.16</span>; not Pyro4 as yet. Pyro
-     is used for network communication between server processes (cylc suites) and client programs (running
-     tasks, the gcylc GUI, user commands). <br 
-class="newline" /><a 
-href="https://pypi.python.org/pypi/Pyro/" class="url" ><span 
-class="pcrr7t-">https://pypi.python.org/pypi/Pyro/</span></a>
-     </li>
-     <li class="itemize"><span 
-class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</span>). This is likely included in your
-     Linux distribution already. Cylc generates an sqlite database for each suite as it runs, to record task
-     events and status. <br 
+class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</span>). The Python API to sqlite
+     is part of the Python standard library. The command line interface is likely included in your Linux
+     distribution already. Cylc generates an sqlite database for each suite as it runs, to record task events
+     and status. <br 
 class="newline" /><a 
 href="http://sqlite.org" class="url" ><span 
 class="pcrr7t-">http://sqlite.org</span></a></li></ul>
-<!--l. 401--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
+<!--l. 397--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
 graphing, the gcylc GUI, or template processing <span 
 class="cmti-10">but this is not recommended, and without Jinja2 you will not be able</span>
 <span 
@@ -86,17 +78,17 @@ class="cmbx-10">Jinja2</span>, a template processor for Python (latest tested: 2
 class="newline" /><a 
 href="http://jinja.pocoo.org/docs" class="url" ><span 
 class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></li></ul>
-                                                                                         
-
-                                                                                         
-<!--l. 422--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
+<!--l. 418--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
 class="cmti-10">devel </span>packages for the
 pygraphviz build:
      <ul class="itemize1">
      <li class="itemize">python-devel
+                                                                                         
+
+                                                                                         
      </li>
      <li class="itemize">graphviz-devel</li></ul>
-<!--l. 430--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+<!--l. 426--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
 class="E">E</span>X</span></span>source by running <span class="lstinline"><span 
 class="pcrr7t-">make</span></span> in the top level cylc directory after
 download. The following <span class="TEX">T<span 
@@ -110,12 +102,19 @@ OS or distribution-dependent):
      <li class="itemize">texlive-framed
      </li>
      <li class="itemize">texlive-preprint (for fullpage.sty, formerly in tetex)</li></ul>
-<!--l. 441--><p class="noindent" >And for HTML versions of the User Guide:
+<!--l. 437--><p class="noindent" >And for HTML versions of the User Guide:
      <ul class="itemize1">
      <li class="itemize">texlive-tex4ht
      </li>
      <li class="itemize">ImageMagick (for image scaling)</li></ul>
-<!--l. 448--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
+<!--l. 444--><p class="indent" >   Note: Older versions of cylc require Pyro-3 (Python Remote Objects). Current version of cylc includes a
+modified version of Pyro 3.16 in its distribution. Pyro is used for network communication between
+server processes (cylc suites) and client programs (running tasks, the gcylc GUI, user commands).
+<br 
+class="newline" /><a 
+href="https://pypi.python.org/pypi/Pyro/" class="url" ><span 
+class="pcrr7t-">https://pypi.python.org/pypi/Pyro/</span></a>
+<!--l. 450--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
 class="cmti-10">ordered dictionary </span>data structures. Significant speedup in
 parsing large suites can be had by installing the fast C-coded <span class="lstinline"><span 
 class="pcrr7t-">ordereddict</span></span> module by Anthon van der
@@ -126,7 +125,7 @@ class="cmbx-10">ordereddict </span>(latest tested 0.4.5) <br
 class="newline" /><a 
 href="https://anthon.home.xs4all.nl/Python/ordereddict/" class="url" ><span 
 class="pcrr7t-">https://anthon.home.xs4all.nl/Python/ordereddict/</span></a></li></ul>
-<!--l. 456--><p class="noindent" ><span 
+<!--l. 458--><p class="noindent" ><span 
 class="cmti-10">This module is currently included with cylc </span>under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -134,365 +133,19 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">ext</span></span>, and is built by the top level cylc Makefile. If you
 install the resulting library appropriately cylc will automatically use it in place of a slower Python implementation
 of the ordered dictionary structure.
-<!--l. 462--><p class="noindent" >
-<!--l. 462--><p class="indent" >    <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
+<!--l. 464--><p class="noindent" >
+<!--l. 464--><p class="indent" >    <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
  id="x4-100003.1"></a>Known Version Compatibility Issues </span></h4>
-<!--l. 464--><p class="indent" >   Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
-<!--l. 466--><p class="indent" >   For distributed suites the Pyro versions installed on all suite or task hosts must be mutually compatible. Using
-identical Pyro versions guarantees compatibility but may not be strictly necessary because cylc uses Pyro rather
-minimally.
+<!--l. 466--><p class="indent" >   Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
+<!--l. 468--><p class="noindent" >
+<!--l. 468--><p class="indent" >    <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
+ id="x4-110003.1.1"></a>Apple Mac OSX </span></h4>
+<!--l. 470--><p class="indent" >   It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
+constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
+to solve the problem:
                                                                                          
 
                                                                                          
-<!--l. 471--><p class="noindent" >
-<!--l. 471--><p class="indent" >    <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
- id="x4-110003.1.1"></a>Pyro 3.9 and Earlier </span></h4>
-<!--l. 473--><p class="indent" >   Beware of Linux distributions that come packaged with old Pyro versions. Pyro 3.9 and earlier is not compatible
-with the new-style Python classes used in cylc. It has been reported that Ubuntu 10.04 (Lucid Lynx), released in
-September 2009, suffers from this problem. Surprisingly, so does Ubuntu 11.10 (Oneiric Ocelot), released in October
-2011 - and therefore, presumably, all earlier Ubuntu releases. Attempting to run a suite with Pyro 3.9 or earlier
-installed results in the following Python traceback:
-   <!--l. 483-->
-   <div class="lstlisting" id="listing-1"><span class="label"><a 
- id="x4-11001r1"></a></span><span 
-class="pcrr7t-">Traceback</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">(</span><span 
-class="pcrr7t-">most</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">recent</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">call</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">last</span><span 
-class="pcrr7t-">):</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11002r2"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">File</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hilary</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">bin</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">_run</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">line</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">232,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">in</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">&#x003C;</span><span 
-class="pcrr7t-">module</span><span 
-class="pcrr7t-">&#x003E;</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11003r3"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">server</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">start</span><span 
-class="pcrr7t-">()</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11004r4"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">File</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hilary</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">bin</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">_run</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">line</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">92,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">in</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">__init__</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11005r5"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">scheduler</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">__init__</span><span 
-class="pcrr7t-">(</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">self</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">)</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11006r6"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">File</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hilary</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">lib</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">scheduler</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">py</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">line</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">141,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">in</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11007r7"></a></span><span 
-class="pcrr7t-">__init__</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11008r8"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">self</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">load_tasks</span><span 
-class="pcrr7t-">()</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11009r9"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">File</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hilary</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">bin</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">_run</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">line</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">141,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">in</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">load_tasks_cold</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11010r10"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">itask</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">self</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">config</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">get_task_proxy</span><span 
-class="pcrr7t-">(</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">name</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">tag</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">waiting</span><span 
-class="pcrr7t-">',</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11011r11"></a></span><span 
-class="pcrr7t-">stopctime</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">None</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">startup</span><span 
-class="pcrr7t-">=</span><span 
-class="pcrr7t-">True</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">)</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11012r12"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">File</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hilary</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">lib</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">config</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">py</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">line</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1252,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">in</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11013r13"></a></span><span 
-class="pcrr7t-">get_task_proxy</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11014r14"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">return</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">self</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">taskdefs</span><span 
-class="pcrr7t-">[</span><span 
-class="pcrr7t-">name</span><span 
-class="pcrr7t-">].</span><span 
-class="pcrr7t-">get_task_class</span><span 
-class="pcrr7t-">()(</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">ctime</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">state</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11015r15"></a></span><span 
-class="pcrr7t-">stopctime</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">startup</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">)</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11016r16"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">File</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">home</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">hilary</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">lib</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">cylc</span><span 
-class="pcrr7t-">/</span><span 
-class="pcrr7t-">taskdef</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">py</span><span 
-class="pcrr7t-">"</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">line</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">453,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">in</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11017r17"></a></span><span 
-class="pcrr7t-">tclass_init</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11018r18"></a></span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">print</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'-',</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">sself</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">__class__</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">__name__</span><span 
-class="pcrr7t-">,</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">sself</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">__class__</span><span 
-class="pcrr7t-">.</span><span 
-class="pcrr7t-">__bases_</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11019r19"></a></span><span 
-class="pcrr7t-">AttributeError</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">type</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">object</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">A</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">has</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">no</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">attribute</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">_taskdef__bases_</span><span 
-class="pcrr7t-">'</span><span 
-class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-11020r20"></a></span><span 
-class="pcrr7t-">_run</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">--</span><span 
-class="pcrr7t-">debug</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">testsuite</span><span 
-class="pcrr7t-">.1322742021</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">2010010106</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">failed</span><span 
-class="pcrr7t-">:</span><span 
-class="pcrr7t-">&#x00A0;</span><span 
-class="pcrr7t-">1</span>
-   
-   </div>
-<!--l. 506--><p class="noindent" >
-<!--l. 506--><p class="indent" >    <h4 id="3.1.2" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.2"> 3.1.2</a>  <a 
- id="x4-120003.1.2"></a>Apple Mac OSX </span></h4>
-<!--l. 508--><p class="indent" >   It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
-constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
-to solve the problem:
      <ul class="itemize1">
      <li class="itemize">Edit <span class="lstinline"><span 
 class="pcrr7t-">/</span><span 
@@ -516,9 +169,9 @@ class="pcrr7t-">&#x003E;-</span><span
 class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
 class="pcrr7t-">&#x003C;/</span><span 
 class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 516-->
-     <div class="lstlisting" id="listing-2"><span class="label"><a 
- id="x4-12001r1"></a></span><span 
+class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 478-->
+     <div class="lstlisting" id="listing-1"><span class="label"><a 
+ id="x4-11001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">key</span><span 
 class="pcrr7t-">&#x003E;</span><span 
@@ -527,14 +180,14 @@ class="pcrr7t-">&#x003C;/</span><span
 class="pcrr7t-">key</span><span 
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12002r2"></a></span><span 
+ id="x4-11002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x003C;</span><span 
 class="pcrr7t-">array</span><span 
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12003r3"></a></span><span 
+ id="x4-11003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -551,7 +204,7 @@ class="pcrr7t-">&#x003C;/</span><span
 class="pcrr7t-">string</span><span 
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12004r4"></a></span><span 
+ id="x4-11004r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -564,7 +217,7 @@ class="pcrr7t-">&#x003C;/</span><span
 class="pcrr7t-">string</span><span 
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12005r5"></a></span><span 
+ id="x4-11005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -581,7 +234,7 @@ class="pcrr7t-">&#x003C;/</span><span
 class="pcrr7t-">string</span><span 
 class="pcrr7t-">&#x003E;</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12006r6"></a></span><span 
+ id="x4-11006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x003C;/</span><span 
@@ -590,9 +243,9 @@ class="pcrr7t-">&#x003E;</span>
      
      </div>
      </li>
-     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 525-->
-     <div class="lstlisting" id="listing-3"><span class="label"><a 
- id="x4-12007r1"></a></span><span 
+     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 487-->
+     <div class="lstlisting" id="listing-2"><span class="label"><a 
+ id="x4-11007r1"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">sudo</span><span 
@@ -604,7 +257,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">w</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12008r2"></a></span><span 
+ id="x4-11008r2"></a></span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">System</span><span 
 class="pcrr7t-">/</span><span 
@@ -620,7 +273,7 @@ class="pcrr7t-">mDNSResponder</span><span
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">plist</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12009r3"></a></span><span 
+ id="x4-11009r3"></a></span><span 
 class="pcrr7t-">%</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">sudo</span><span 
@@ -632,7 +285,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">w</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x4-12010r4"></a></span><span 
+ id="x4-11010r4"></a></span><span 
 class="pcrr7t-">/</span><span 
 class="pcrr7t-">System</span><span 
 class="pcrr7t-">/</span><span 
@@ -650,10 +303,10 @@ class="pcrr7t-">plist</span>
      
      </div>
      </li></ul>
-<!--l. 534--><p class="noindent" >
-<!--l. 534--><p class="indent" >    <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
- id="x4-130003.2"></a>Other Software Used Internally By Cylc </span></h4>
-<!--l. 536--><p class="indent" >   Cylc has incorporated a custom-modified version the <span 
+<!--l. 496--><p class="noindent" >
+<!--l. 496--><p class="indent" >    <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
+ id="x4-120003.2"></a>Other Software Used Internally By Cylc </span></h4>
+<!--l. 498--><p class="indent" >   Cylc has incorporated a custom-modified version the <span 
 class="cmti-10">xdot </span>graph viewer (<a 
 href="https://github.com/jrfonseca/xdot.py" class="url" ><span 
 class="pcrr7t-">https://github.com/jrfonseca/xdot.py</span></a>,
@@ -661,12 +314,12 @@ LGPL license).
                                                                                          
 
                                                                                          
-   <!--l. 540--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 502--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 540--><p class="indent" >   <a 
+<!--l. 502--><p class="indent" >   <a 
  id="tailcug-htmlse3.html"></a>   
 </body></html> 
