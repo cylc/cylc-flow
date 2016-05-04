@@ -15,10 +15,10 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 [#1811](https://github.com/cylc/cylc/pull/1811),
 [#1812](https://github.com/cylc/cylc/pull/1812),
 [#1813](https://github.com/cylc/cylc/pull/1813),
-[#1819](https://github.com/cylc/cylc/pull/1819): Big efficiency
-and memory footprint improvements.
+[#1819](https://github.com/cylc/cylc/pull/1819): Suite daemon efficiency
+and memory footprint - significant improvements!
 
-[#1777](https://github.com/cylc/cylc/pull/1777): Much faster validation of
+[#1777](https://github.com/cylc/cylc/pull/1777): Faster validation of
 suites with large inter-dependent families.  See also
 [#1791](https://github.com/cylc/cylc/pull/1791).
 
