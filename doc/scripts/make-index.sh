@@ -67,7 +67,7 @@ cylc COMMAND --help
 </pre>
 <h3 style="margin:10px">Misc</h3>
 <ul>
-<li><a href="changes.html">Change Log</a></li>
+<li><a href="https://github.com/cylc/cylc/CHANGES.md">changes</a></li>
 </ul>
 </div>
 
