@@ -65,7 +65,7 @@ cp $TMPD/html/single/*.{css,html} html/single/
 cp $TMPD/html/multi/*.{css,html} html/multi/
 cp $TMPD/graphics/png/scaled/* graphics/png/scaled/
 # substitute latest version number in the homepage
-perl -pi -e "s@(Latest Release:).*(<a)@\1 <a href=\"#download\">$LATESTTAG</a> ($( date +%F )) \2@" index.html
+perl -pi -e "s@(Latest Release:).*@\1 <a href=\"#download\">$LATESTTAG</a>@" index.html
 
 # in case new files were added:
 git add graphics/png/scaled/
