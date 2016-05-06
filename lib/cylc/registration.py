@@ -67,6 +67,7 @@ class RegistrationDB(object):
                 sys.exit(str(exc))
         self.local_passphrases = set()
         self.cached_passphrases = {}
+        self.can_disk_cache_passphrases = {}
 
     def cache_passphrase(self, suite, owner, host, passphrase):
         """Cache and dump passphrase for a remote suite in standard location.
@@ -83,8 +84,8 @@ class RegistrationDB(object):
             '~', '.cylc', self.PASSPHRASES_DIR_BASE, owner + "@" + host, suite
         ))
         self.cached_passphrases[(suite, owner, host)] = passphrase
-        # Dump to a file only for remote suites
-        if is_remote_user(owner) or is_remote_host(host):
+        # Dump to a file only for remote suites loaded via SSH.
+        if self.can_disk_cache_passphrases.get((suite, owner, host)):
             # Although not desirable, failing to dump the passphrase to a file
             # is not disastrous.
             try:
@@ -171,16 +172,16 @@ class RegistrationDB(object):
            b/ $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST for local jobs or remote jobs
               with SSH messaging.
 
-        2/ For suite on local user@host. The suite definition directory, as
+        2/ From memory cache, for passphrases of remote suites.
+           Don't use if cache_ok=False.
+
+        3/ For suite on local user@host. The suite definition directory, as
            registered. (Note: Previously, this needs to be the 1st location,
            else sub-suites load their parent suite's passphrase on start-up
            because the "cylc run" command runs in a parent suite task execution
            environment. This problem no longer exists becase on suite start up,
            the "load_passphrase_from_dir" method is called directly instead of
            through this method.)
-
-        3/ From memory cache, for passphrases of remote suites.
-           Don't use if cache_ok=False.
 
         4/ Locations under $HOME/.cylc/ for remote suite control from accounts
            that do not actually need the suite definition directory to be
@@ -195,6 +196,7 @@ class RegistrationDB(object):
            definition directory on remote owner@host via SSH.
 
         """
+        self.can_disk_cache_passphrases[(suite, owner, host)] = False
         # (1 before 2 else sub-suites load their parent suite's
         # passphrase on start-up because the "cylc run" command runs in
         # a parent suite task execution environment).
@@ -225,21 +227,24 @@ class RegistrationDB(object):
             except (KeyError, IOError, PassphraseError):
                 pass
 
-        # 2/ Cylc commands with suite definition directory from local reg.
+        # 2/ From memory cache
         if owner is None:
             owner = USER
         if host is None:
             host = get_hostname()
 
-        if not is_remote_user(owner) and not is_remote_host(host):
+        if cache_ok:
+            try:
+                return self.cached_passphrases[(suite, owner, host)]
+            except KeyError:
+                pass
+
+        # 3/ Cylc commands with suite definition directory from local reg.
+        if cache_ok or not is_remote_user(owner) and not is_remote_host(host):
             try:
                 return self.load_passphrase_from_dir(self.get_suitedir(suite))
             except (IOError, PassphraseError, RegistrationError):
                 pass
-
-        # 3/ From memory cache
-        if cache_ok and (suite, owner, host) in self.cached_passphrases:
-            return self.cached_passphrases[(suite, owner, host)]
 
         # 4/ Other allowed locations, as documented above.
         # For remote control commands, host here will be fully
@@ -269,6 +274,7 @@ class RegistrationDB(object):
         # 5/ Try SSH to remote host
         passphrase = self._load_passphrase_via_ssh(suite, owner, host)
         if passphrase:
+            self.can_disk_cache_passphrases[(suite, owner, host)] = True
             return passphrase
 
         if passphrase is None and cylc.flags.debug:
