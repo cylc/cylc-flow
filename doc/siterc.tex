@@ -679,10 +679,13 @@ not use the normal log file location while the job is running.
 \end{myitemize}
 
 \subparagraph[{[[[[}SYSTEM{]]]]}job name length maximum]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]] \textrightarrow [[[[SYSTEM]]]] \textrightarrow job name length maximum}
+\label{JobNameLengthMaximum}
 
 The maximum length for job name acceptable by a batch system on a given host.
-For example, PBS 12 or older will fail a job submit if the job name has more than
-15 characters.
+Currently, this setting is only meaningful for PBS jobs. For example, PBS 12
+or older will fail a job submit if the job name has more than 15 characters,
+which is the default setting. If you have PBS 13 or above, you may want to
+modify this setting to a larger value.
 
 \begin{myitemize}
 \item {\em type:} integer
