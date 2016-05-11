@@ -106,6 +106,7 @@ class Scheduler(object):
     EVENT_STARTUP = 'startup'
     EVENT_SHUTDOWN = 'shutdown'
     EVENT_TIMEOUT = 'timeout'
+    EVENT_STALLED = 'stalled'
     SUITE_EVENT_HANDLER = 'suite-event-handler'
     SUITE_EVENT_MAIL = 'suite-event-mail'
     FS_CHECK_PERIOD = 600.0  # 600 seconds
@@ -118,6 +119,8 @@ class Scheduler(object):
         self.port_file = None
 
         self.is_restart = is_restart
+        self.is_stalled = False
+        self.stalled_last = False
 
         self.graph_warned = {}
 
@@ -1134,6 +1137,10 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     # Only get this every minute.
                     self.log_memory("scheduler.py: loop: " +
                                     get_current_time_string())
+
+            if not (self.shut_down_cleanly or auto_stop):
+                self.check_suite_stalled()
+
             time.sleep(1)
 
         self.log_memory("scheduler.py: end main loop")
@@ -1161,6 +1168,23 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             if self._get_events_conf('abort on timeout'):
                 raise SchedulerError('Abort on suite timeout is set')
 
+    def check_suite_stalled(self):
+        if self.is_stalled:
+            return
+        # Suite should only be considered stalled if two consecutive
+        # scheduler loops meet the criteria. This caters for pauses between
+        # tasks succeeding and those triggering off them moving to ready
+        # e.g. foo[-P1D] => foo
+        if self.stalled_last and self.pool.pool_is_stalled():
+            self.is_stalled = True
+            message = 'suite stalled'
+            self.log.warning(message)
+            self.run_event_handlers(self.EVENT_STALLED, message)
+            if self._get_events_conf('abort on stalled'):
+                raise SchedulerError('Abort on suite stalled is set')
+        else:
+            self.stalled_last = self.pool.pool_is_stalled()
+
     def process_tasks(self):
         # do we need to do a pass through the main task processing loop?
         process = False
@@ -1177,6 +1201,10 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             if (self._get_events_conf(self.EVENT_TIMEOUT) and
                     self._get_events_conf('reset timer')):
                 self.set_suite_timer()
+
+            # New suite activity, so reset the stalled flag.
+            self.stalled_last = False
+            self.is_stalled = False
 
         if self.pool.waiting_tasks_ready():
             process = True
