@@ -626,7 +626,16 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         else:
             self.legal_task_states = TaskState.legal
 
-        self.filter_states_excl = ["runahead"]
+        filter_excl = gcfg.get(['task filter exclude'])
+
+        for filter_state in filter_excl:
+            if not filter_state in TaskState.legal:
+                print >> sys.stderr, ("WARNING: bad gcylc.rc 'task filter "
+                                      "exclude' value (ignoring): %s" %
+                                      filter_state)
+                filter_excl.remove(filter_state)
+
+        self.filter_states_excl = filter_excl
         self.filter_name_string = None
         self.create_info_bar()
 
