@@ -528,6 +528,8 @@ class Scheduler(object):
         # update state SuiteStateDumper state
         self.state_dumper.set_cts(self.initial_point, self.final_point)
 
+        self.do_update_state_summary = True
+
     def command_set_runahead(self, *args):
         self.pool.set_runahead(*args)
 
