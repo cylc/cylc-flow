@@ -338,7 +338,7 @@ class restart(Scheduler):
             # instance variables
             try:
                 (id_, state_string) = line.split(' : ')
-                # state_string e.g. 'status=running, spawned=false'
+                # state_string e.g. 'status=running, spawned=False'
                 name, point_string = TaskID.split(id_)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
