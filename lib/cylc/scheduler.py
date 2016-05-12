@@ -244,8 +244,7 @@ class Scheduler(object):
 
         self.pool = TaskPool(
             self.suite, self.pri_dao, self.pub_dao, self.final_point,
-            self.pyro, self.log, self.run_mode,
-            self._update_state_summary_callback)
+            self.pyro, self.log, self.run_mode)
         self.state_dumper.pool = self.pool
         self.request_handler = PyroRequestHandler(self.pyro)
         self.request_handler.start()
@@ -330,9 +329,6 @@ class Scheduler(object):
                 if name in self.proc_cmds:
                     self.do_process_tasks = True
             queue.task_done()
-
-    def _update_state_summary_callback(self):
-        self.do_update_state_summary = True
 
     def _task_type_exists(self, name_or_id):
         # does a task name or id match a known task type in this suite?
@@ -516,19 +512,14 @@ class Scheduler(object):
 
     def command_reload_suite(self):
         """Reload suite configuration."""
-        print "RELOADING the suite definition"
+        self.log.info("Reloading the suite definition.")
         self.configure_suite(reconfigure=True)
-
         self.pool.reconfigure(self.final_point)
-
         self.configure_suite_environment()
-
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
-
-        # update state SuiteStateDumper state
+        # update SuiteStateDumper state
         self.state_dumper.set_cts(self.initial_point, self.final_point)
-
         self.do_update_state_summary = True
 
     def command_set_runahead(self, *args):
@@ -657,9 +648,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         # Initial and final cycle times - command line takes precedence.
         # self.config already alters the 'initial cycle point' for CLI.
         self.initial_point = self.config.initial_point
-
         self.start_point = self.config.start_point
-
         self.final_point = get_point(
             self.options.final_point_string or
             self.config.cfg['scheduling']['final cycle point']
@@ -1019,12 +1008,11 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
             t0 = time.time()
 
-            if self.pool.reconfiguring:
-                # suite definition reload still in progress
+            if self.pool.do_reload:
                 self.pool.reload_taskdefs()
+                self.do_update_state_summary = True
 
             self.pool.release_runahead_tasks()
-
             proc_pool.handle_results_async()
 
             # External triggers must be matched now. If any are matched pflag
@@ -1157,7 +1145,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             self.pool.get_min_point(), self.pool.get_max_point(),
             self.pool.get_max_point_runahead(), self.paused(),
             self.will_pause_at(), self.shut_down_cleanly, self.will_stop_at(),
-            self.config.ns_defn_order, self.pool.reconfiguring)
+            self.config.ns_defn_order, self.pool.do_reload)
 
     def check_suite_timer(self):
         if self.already_timed_out:

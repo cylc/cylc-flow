@@ -59,11 +59,12 @@ from cylc.suite_host import is_remote_host
 from cylc.task_id import TaskID
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUS_HELD, TASK_STATUS_WAITING,
-    TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED, TASK_STATUS_READY,
-    TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
+    TASK_STATUSES_ACTIVE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
+    TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
+    TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+    TASK_STATUS_RETRYING)
 
 
 class TaskPool(object):
@@ -75,16 +76,15 @@ class TaskPool(object):
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
 
     def __init__(self, suite, pri_dao, pub_dao, stop_point, pyro, log,
-                 run_mode, update_state_summary_callback):
+                 run_mode):
         self.suite_name = suite
         self.pyro = pyro
         self.run_mode = run_mode
         self.log = log
         self.stop_point = stop_point
-        self.reconfiguring = False
+        self.do_reload = False
         self.pri_dao = pri_dao
         self.pub_dao = pub_dao
-        self.update_state_summary_callback = update_state_summary_callback
 
         config = SuiteConfig.get_inst()
         self.custom_runahead_limit = config.get_custom_runahead_limit()
@@ -94,7 +94,6 @@ class TaskPool(object):
             config.get_max_num_active_cycle_points())
         self._prev_runahead_base_point = None
         self._prev_runahead_sequence_points = None
-        self.reload_warned = False
         self.message_queue = TaskMessageServer()
 
         self.pyro.connect(self.message_queue, "task_pool")
@@ -665,7 +664,7 @@ class TaskPool(object):
 
     def reconfigure(self, stop_point):
         """Set the task pool to reload mode."""
-        self.reconfiguring = True
+        self.do_reload = True
 
         config = SuiteConfig.get_inst()
         self.custom_runahead_limit = config.get_custom_runahead_limit()
@@ -687,9 +686,6 @@ class TaskPool(object):
                 new_queues[key][id_] = itask
         self.queues = new_queues
 
-        for itask in self.get_all_tasks():
-            itask.reconfigure_me = True
-
         # find any old tasks that have been removed from the suite
         old_task_name_list = self.task_name_list
         self.task_name_list = config.get_task_name_list()
@@ -704,82 +700,27 @@ class TaskPool(object):
 
     def reload_taskdefs(self):
         """Reload task definitions."""
-        found = False
-
+        self.log.info("Reloading task definitions.")
         for itask in self.get_all_tasks():
-            if itask.state.status in [TASK_STATUS_READY,
-                                      TASK_STATUS_SUBMITTED,
-                                      TASK_STATUS_RUNNING]:
-                # do not reload active tasks as it would be possible to
-                # get a task proxy incompatible with the running task
-                if itask.reconfigure_me:
-                    found = True
-                continue
-            if itask.reconfigure_me:
-                itask.reconfigure_me = False
-                if itask.tdef.name in self.orphans:
-                    # orphaned task
-                    if itask.state.status in [TASK_STATUS_WAITING,
-                                              TASK_STATUS_QUEUED,
-                                              TASK_STATUS_SUBMIT_RETRYING,
-                                              TASK_STATUS_RETRYING]:
-                        # if not started running yet, remove it.
-                        self.remove(itask, '(task orphaned by suite reload)')
-                    else:
-                        # set spawned so itask won't carry on into the future
-                        itask.has_spawned = True
-                        self.log.warning(
-                            'orphaned task will not continue: ' +
-                            itask.identity)
+            if itask.tdef.name in self.orphans:
+                if itask.state.status in [
+                        TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
+                        TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
+                    # Remove orphaned task if it hasn't started running yet.
+                    self.remove(itask, '(task orphaned by suite reload)')
                 else:
-                    self.log.info(
-                        'RELOADING TASK DEFINITION FOR ' + itask.identity)
-                    new_task = get_task_proxy(
-                        itask.tdef.name,
-                        itask.point,
-                        itask.state.status,
-                        itask.has_spawned,
-                        stop_point=itask.stop_point,
-                        submit_num=itask.submit_num,
-                        is_reload=True
-                    )
-                    # set reloaded task's spawn status
-                    new_task.has_spawned = itask.has_spawned
-
-                    # succeeded tasks need their outputs set completed:
-                    if itask.state.status == TASK_STATUS_SUCCEEDED:
-                        new_task.state.reset_state(TASK_STATUS_SUCCEEDED)
-
-                    # carry some task proxy state over to the new instance
-                    new_task.summary = itask.summary
-                    new_task.started_time = itask.started_time
-                    new_task.submitted_time = itask.submitted_time
-                    new_task.finished_time = itask.finished_time
-
-                    # if currently retrying, retain the old retry delay
-                    # list, to avoid extra retries (the next instance
-                    # of the task will still be as newly configured)
-                    new_task.run_try_state = itask.run_try_state
-                    new_task.sub_try_state = itask.sub_try_state
-                    new_task.submit_num = itask.submit_num
-                    new_task.db_inserts_map = itask.db_inserts_map
-                    new_task.db_updates_map = itask.db_updates_map
-
-                    self.remove(itask, '(suite definition reload)')
-                    self.add_to_runahead_pool(new_task)
-
-        if found:
-            if not self.reload_warned:
-                self.log.warning(
-                    "Reload will complete once active tasks have finished.")
-                self.reload_warned = True
-        else:
-            self.log.info("Reload completed.")
-            self.reload_warned = False
-            # The GUI detects end of a reload via the suite state summary.
-            self.update_state_summary_callback()
-
-        self.reconfiguring = found
+                    # Keep active orphaned task, but stop it from spawning.
+                    itask.has_spawned = True
+                    itask.log(WARNING, "last instance (orphaned by reload)")
+            else:
+                new_task = get_task_proxy(
+                    itask.tdef.name, itask.point, itask.state.status,
+                    stop_point=itask.stop_point, submit_num=itask.submit_num,
+                    is_reload_or_restart=True, pre_reload_inst=itask)
+                self.remove(itask, '(suite definition reload)')
+                self.add_to_runahead_pool(new_task)
+        self.log.info("Reload completed.")
+        self.do_reload = False
 
     def set_stop_point(self, stop_point):
         """Set the global suite stop point."""
@@ -826,7 +767,7 @@ class TaskPool(object):
         itasks, n_warnings = self._filter_task_proxies(items, compat)
         active_itasks = []
         for itask in itasks:
-            if itask.state.status in TASK_STATUSES_ACTIVE:
+            if itask.state.status in TASK_STATUSES_POLLABLE:
                 if itask.job_conf is None:
                     try:
                         itask.prep_manip()
@@ -842,7 +783,7 @@ class TaskPool(object):
                 active_itasks.append(itask)
             elif items:  # and not active
                 self.log.warning(
-                    '%s: skip poll, task not active' % itask.identity)
+                    '%s: skip poll, task not pollable' % itask.identity)
         self._run_job_cmd(
             self.JOBS_POLL, active_itasks, self.poll_task_jobs_callback)
         return n_warnings
@@ -868,7 +809,7 @@ class TaskPool(object):
         itasks, n_warnings = self._filter_task_proxies(items, compat)
         active_itasks = []
         for itask in itasks:
-            is_active = itask.state.status in TASK_STATUSES_ACTIVE
+            is_active = itask.state.status in TASK_STATUSES_KILLABLE
             if is_active and self.run_mode == 'simulation':
                 itask.state.reset_state(TASK_STATUS_FAILED)
             elif is_active:
@@ -888,7 +829,7 @@ class TaskPool(object):
                 active_itasks.append(itask)
             elif items:  # and not active
                 self.log.warning(
-                    '%s: skip kill, task not active' % itask.identity)
+                    '%s: skip kill, task not killable' % itask.identity)
         self._run_job_cmd(
             self.JOBS_KILL, active_itasks, self.kill_task_jobs_callback)
         return n_warnings

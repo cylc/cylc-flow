@@ -426,7 +426,7 @@ class restart(Scheduler):
                     state,
                     has_spawned,
                     submit_num=submit_num,
-                    is_reload=True,
+                    is_reload_or_restart=True,
                     message_queue=self.pool.message_queue
                 )
             except TaskNotDefinedError, x:
