@@ -46,7 +46,9 @@ SPEC = {
     'sort by definition order': vdr(vtype='boolean', default=True),
     'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
     'initial side-by-side views': vdr(vtype='boolean', default=False),
-    'task filter exclude': vdr(vtype='string_list', default=["runahead"]),
+    'task states to filter out': vdr(
+        vtype='string_list',
+        default=["runahead"]),
     'themes': {
         '__MANY__': {
             'inherit': vdr(vtype='string', default="default"),

@@ -626,12 +626,13 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         else:
             self.legal_task_states = TaskState.legal
 
-        filter_excl = gcfg.get(['task filter exclude'])
+        filter_excl = gcfg.get(['task states to filter out'])
+        filter_excl = list(set(filter_excl))
 
         for filter_state in filter_excl:
-            if not filter_state in TaskState.legal:
-                print >> sys.stderr, ("WARNING: bad gcylc.rc 'task filter "
-                                      "exclude' value (ignoring): %s" %
+            if filter_state not in TaskState.legal:
+                print >> sys.stderr, ("WARNING: bad gcylc.rc 'task states to "
+                                      "filter out' value (ignoring): %s" %
                                       filter_state)
                 filter_excl.remove(filter_state)
 
