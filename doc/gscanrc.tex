@@ -1,0 +1,43 @@
+
+\section{Cylc Gscan Config File Reference}
+\label{GscanRCReference}
+
+\lstset{language=bash}
+
+This section defines all legal items and values for the gscan config
+file which should be located in
+\lstinline=$HOME/.cylc/gscan.rc=.
+
+\subsection{Top Level Items}
+
+
+\subsubsection{activate on startup}
+Set whether
+\lstinline=cylc gpanel=
+will activate automatically when the gui is loaded or not.
+
+\begin{myitemize}
+    \item {\em type:} boolean (True or False)
+\item {\em legal values:} ``True'', ``False''
+\item {\em default:} ``False''
+\item {\em example:} \lstinline@activate on startup = True@
+\end{myitemize}
+
+
+\subsubsection{columns}
+Set the data fields displayed initially when the
+\lstinline=cylc gscan=
+GUI starts. This
+can be changed later using the right click context menu.
+\newline
+Note that the order in
+which the fields are specified does not affect the order in which they are
+displayed.
+
+\begin{myitemize}
+\item {\em type:} string (a list of one or more view names)
+\item {\em legal values:} ``host'', ``status'', ``suite'',  ``title'',
+        ``updated''
+\item {\em default:} ``status'', ``suite''
+\item {\em example:} \lstinline@columns = suite, title, status@
+\end{myitemize}
