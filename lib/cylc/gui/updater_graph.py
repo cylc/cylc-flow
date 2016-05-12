@@ -29,6 +29,7 @@ import re
 import sys
 import threading
 from time import sleep
+from cylc.task_state import TASK_STATUS_RUNAHEAD
 
 
 def compare_dict_of_dict(one, two):
@@ -276,7 +277,7 @@ class GraphUpdater(threading.Thread):
                 self.global_summary['oldest cycle point string'])
             self.newest_point_string = (
                 self.global_summary['newest cycle point string'])
-            if 'runahead' not in self.updater.filter_states_excl:
+            if TASK_STATUS_RUNAHEAD not in self.updater.filter_states_excl:
                 # Get a graph out to the max runahead point.
                 try:
                     self.newest_point_string = (

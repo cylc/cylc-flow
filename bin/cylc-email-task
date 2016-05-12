@@ -49,9 +49,9 @@ if [[ $# < 4 ]]; then
     exit 1
 fi
 
-EVENT=$1      # e.g. "failed"
-SUITE=$2      # suite name
-TASKID=$3     # task ID
+EVENT=$1
+SUITE=$2
+TASKID=$3
 MESSAGE=$4
 
 MAIL_SUBJECT="!!cylc alert!! suite $SUITE task $TASKID $EVENT"

@@ -19,13 +19,16 @@
 """cylc [control] reset [OPTIONS] ARGS
 
 Force one or more task proxies in a running suite to change state and modify
-their prerequisites and outputs accordingly.  For example, the 'waiting' state
-means "prerequisites not satisfied, outputs not completed"; 'ready' means
-"prerequisites satisfied, outputs not completed". Setting a task to 'ready'
-generally has the same effect as using the "cylc trigger" command.
+their prerequisites and outputs accordingly.  For example, --state=waiting
+means "prerequisites not satisfied, outputs not completed"; --state=ready means
+"prerequisites satisfied, outputs not completed" (this generally has the same
+effect as using the "cylc trigger" command).
+
+"cylc reset --state=spawn" is deprecated: use "cylc spawn" instead.
 
 See the documentation for the -s/--state option for legal reset states."""
 
+import os
 import sys
 if '--use-ssh' in sys.argv[1:]:
     sys.argv.remove('--use-ssh')
@@ -37,7 +40,7 @@ import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
 from cylc.CylcOptionParsers import cop
-from cylc.task_state import TaskState
+from cylc.task_state import TASK_STATUSES_CAN_RESET_TO
 
 
 def main():
@@ -49,15 +52,27 @@ def main():
 
     parser.add_option(
         "-s", "--state", metavar="STATE",
-        help="Reset task state to STATE to on of %s" % (
-            ', '.join(TaskState.legal_for_reset)),
+        help="Reset task state to STATE, can be %s" % (
+            ', '.join(TASK_STATUSES_CAN_RESET_TO)),
         action="store", default=None, dest="state")
 
     options, args = parser.parse_args()
 
     suite = args.pop(0)
 
-    if options.state not in TaskState.legal_for_reset:
+    if options.state == "spawn":
+        # Back compat.
+        sys.stderr.write(
+            "'cylc reset -s spawn' is deprecated; calling 'cylc spawn'\n")
+        cmd = sys.argv[0].replace('reset', 'spawn')
+        try:
+            os.execvp(cmd, [cmd] + args)
+        except OSError, exc:
+            if exc.filename is None:
+                exc.filename = cmd
+            raise SystemExit(exc)
+
+    if options.state not in TASK_STATUSES_CAN_RESET_TO:
         parser.error("Illegal STATE value: " + options.state)
 
     prompt('Reset task(s) %s in %s' % (args, suite), options.force)

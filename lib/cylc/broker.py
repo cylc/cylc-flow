@@ -39,7 +39,7 @@ class broker(object):
     def register(self, tasks):
 
         for task in tasks:
-            self.all_outputs.update(task.outputs.completed)
+            self.all_outputs.update(task.state.outputs.completed)
             # TODO - SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
             # (note that successive tasks of the same type can register
             # identical outputs if they write staggered restart files).
@@ -58,4 +58,4 @@ class broker(object):
 
     def negotiate(self, task):
         # can my outputs satisfy any of task's prerequisites
-        task.satisfy_me(self.all_output_msgs, self.all_outputs)
+        task.state.satisfy_me(self.all_output_msgs, self.all_outputs)

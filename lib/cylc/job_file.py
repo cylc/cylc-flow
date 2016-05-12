@@ -26,6 +26,8 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
 from cylc.task_id import TaskID
 from cylc.task_message import TaskMessage
+from cylc.task_outputs import (
+    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
 
 
 class JobFile(object):
@@ -148,7 +150,7 @@ prelude''')
             "signals_str": " ".join(
                 BATCH_SYS_MANAGER.get_fail_signals(job_conf)),
             "priority": TaskMessage.CRITICAL,
-            "message1": TaskMessage.FAILED,
+            "message1": TASK_OUTPUT_FAILED,
             "message2": TaskMessage.FAIL_MESSAGE_PREFIX}
         handle.write(r"""
 
@@ -387,7 +389,7 @@ mkdir -p $CYLC_SUITE_SHARE_DIR || true
 # WORK DIRECTORY CREATE:
 mkdir -p $(dirname $CYLC_TASK_WORK_DIR) || true
 mkdir -p $CYLC_TASK_WORK_DIR
-cd $CYLC_TASK_WORK_DIR""" % {"message": TaskMessage.STARTED})
+cd $CYLC_TASK_WORK_DIR""" % {"message": TASK_OUTPUT_STARTED})
 
     @classmethod
     def _write_identity_script(cls, handle, _):
@@ -438,7 +440,7 @@ cylc task message '%(message)s'
 echo 'JOB SCRIPT EXITING (TASK SUCCEEDED)'
 trap '' EXIT
 
-""" % {"message": TaskMessage.SUCCEEDED})
+""" % {"message": TASK_OUTPUT_SUCCEEDED})
 
         task_name, point_string = TaskID.split(job_conf['task id'])
         job_conf['absolute submit number']

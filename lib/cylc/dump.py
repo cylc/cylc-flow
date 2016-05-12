@@ -22,10 +22,11 @@ import subprocess
 import time
 from cylc.task_id import TaskID
 from cylc.network.suite_state import SUITE_STATUS_STOPPED
+from cylc.task_state import TASK_STATUS_READY
 
 
 def get_stop_state(suite, owner=None, host=None):
-    """Return the contents of the last 'state' file."""
+    """Return the contents of the last state file."""
     if not suite:
         # this occurs if we run gcylc with no suite argument
         return None
@@ -49,7 +50,7 @@ def get_stop_state(suite, owner=None, host=None):
 
 
 def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
-    """Load the contents of the last 'state' file into summary maps."""
+    """Load the contents of the last state file into summary maps."""
     global_summary = {}
     task_summary = {}
     family_summary = {}
@@ -103,7 +104,7 @@ def get_stop_state_summary(suite, owner=None, hostname=None, lines=None):
         state = items.get("status")
         if state == 'submitting':
             # backward compabitility for state dumps generated prior to #787
-            state = 'ready'
+            state = TASK_STATUS_READY
         task_summary[task_id].update({"state": state})
         task_summary[task_id].update({"spawned": items.get("spawned")})
     global_summary["run_mode"] = "dead"

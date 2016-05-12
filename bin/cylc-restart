@@ -26,8 +26,8 @@ The scheduler runs in daemon mode unless you specify n/--no-detach or --debug.
 The most recent previous suite state is loaded by default, but earlier state
 files in the suite state directory can be specified on the command line.
 
-Tasks recorded as 'submitted' or 'running' will be polled at start-up to
-determine what happened to them while the suite was down."""
+Tasks recorded as submitted or running are polled at start-up to determine what
+happened to them while the suite was down."""
 
 import sys
 from cylc.remote import remrun
@@ -43,7 +43,6 @@ from cylc.config import SuiteConfig, TaskNotDefinedError
 from cylc.CylcOptionParsers import cop
 from cylc.scheduler import Scheduler
 from cylc.suite_state_dumping import SuiteStateDumper
-from cylc.task_state import TaskState
 from cylc.run import main
 from cylc.get_task_proxy import get_task_proxy
 from cylc.registration import RegistrationDB
@@ -51,6 +50,12 @@ from cylc.task_id import TaskID
 from cylc.cycling.loader import get_point, DefaultCycler, ISO8601_CYCLING_TYPE
 from cylc.wallclock import get_current_time_string
 from cylc.network.suite_broadcast import BroadcastServer
+from cylc.task_state import (
+    TASK_STATUS_HELD, TASK_STATUS_WAITING,
+    TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+    TASK_STATUS_RETRYING)
 
 
 class restart(Scheduler):
@@ -149,7 +154,6 @@ class restart(Scheduler):
         <task_id> : <state>
         <task_id> : <state>
           ...
-        task <state> format is defined by TaskState.dump()
 
         """
         file_name = self.get_state_file_path()
@@ -333,7 +337,8 @@ class restart(Scheduler):
         for line in task_lines:
             # instance variables
             try:
-                (id_, state) = line.split(' : ')
+                (id_, state_string) = line.split(' : ')
+                # state_string e.g. 'status=running, spawned=False'
                 name, point_string = TaskID.split(id_)
             except:
                 print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
@@ -348,20 +353,15 @@ class restart(Scheduler):
                     "WARNING: converting %s to %s" % (id_, new_id))
                 id_ = new_id
             tasknames[name] = True
-            if 'status=submitting,' in state:
+            if 'status=submitting,' in state_string:
                 # back compat for state dumps generated prior to #787
-                state = state.replace('status=submitting,',
-                                      'status=ready,', 1)
-            if 'status=runahead,' in state:
+                state_string = state_string.replace('status=submitting,',
+                                                    'status=ready,', 1)
+            if 'status=runahead,' in state_string:
                 # backward compatibility for pre-cylc-6 state dumps.
-                state = state.replace(
+                state_string = state_string.replace(
                     'status=runahead,', 'status=waiting,', 1)
-            try:
-                TaskState(state)
-            except Exception as e:
-                print >> sys.stderr, "ERROR: ", type(e).__name__, e
-                raise Exception("ERROR: corrupted state dump")
-            taskstates[id_] = (name, point_string, state)
+            taskstates[id_] = (name, point_string, state_string)
             task_point_strings.append(point_string)
 
         task_point_strings = list(set(task_point_strings))
@@ -373,25 +373,23 @@ class restart(Scheduler):
         # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
         #
         # The state of task prerequisites (satisfied or not) and outputs
-        # (completed or not) is determined by the recorded task state:
+        # (completed or not) is determined by the recorded TASK_STATUS:
         #
-        # 'waiting'    - prerequisites and outputs unsatisified (default)
-        # 'held'       - ditto (only waiting tasks can be held)
+        # TASK_STATUS_WAITING    - prerequisites and outputs unsatisified
+        # TASK_STATUS_HELD       - ditto (only waiting tasks can be held)
         #
-        # 'queued'     - prerequisites satisfied, outputs not completed
+        # TASK_STATUS_QUEUED     - prereqs satisfied, outputs not completed
         #                 (only tasks ready to run can get queued)
-        # 'ready'      - ditto
-        # 'submitted'  - ditto (but see *)
-        # 'submit-retrying' - ditto
-        # 'running'    - ditto (but see *)
-        # 'failed'     - ditto (tasks must run in order to fail)
-        # 'retrying'   - ditto (tasks must fail in order to retry)
-        # 'succeeded'  - prerequisites satisfied, outputs completed
+        # TASK_STATUS_READY      - ditto
+        # TASK_STATUS_SUBMITTED  - ditto (but see *)
+        # TASK_STATUS_SUBMIT_RETRYING - ditto
+        # TASK_STATUS_RUNNING    - ditto (but see *)
+        # TASK_STATUS_FAILED     - ditto (tasks must run in order to fail)
+        # TASK_STATUS_RETRYING   - ditto (tasks must fail in order to retry)
+        # TASK_STATUS_SUCCEEDED  - prerequisites satisfied, outputs completed
         #
-        # The two 'retrying' states are held states akin to 'queued'.
-        #
-        # (*) but tasks reloaded with 'submitted' or 'running' are
-        # polled to determine what their current true status is.
+        # (*) tasks reloaded with TASK_STATUS_SUBMITTED or TASK_STATUS_RUNNING
+        # are polled to determine what their true status is.
 
         initial_task_list = tasknames.keys()
         task_list = self.filter_initial_task_list(initial_task_list)
@@ -401,10 +399,22 @@ class restart(Scheduler):
         config = SuiteConfig.get_inst()
         itasks = {}
         for id_ in taskstates:
-            name, point_string, state = taskstates[id_]
+            name, point_string, state_string = taskstates[id_]
             if name not in task_list:
                 continue
 
+            try:
+                status, spawned = state_string.split(', ')
+            except ValueError:
+                print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
+                print >> sys.stderr, " ", line
+                raise Exception("ERROR: corrupted state dump")
+            state = status.replace('status=', '')
+            # Back-compat <= 6.9.1: spawned string is lowercase 'true'.
+            spawned_status = spawned.replace('spawned=', '')
+            if spawned_status not in ['True', 'true', 'False', 'false']:
+                raise Exception("ERROR: bad state dump (%s)" % spawned)
+            has_spawned = spawned_status in ['True', 'true']
             print " +", id_
             task_states_datum = task_states_data.get((name, point_string))
             try:
@@ -414,6 +424,7 @@ class restart(Scheduler):
                     name,
                     get_point(point_string),
                     state,
+                    has_spawned,
                     submit_num=submit_num,
                     is_reload=True,
                     message_queue=self.pool.message_queue
@@ -438,23 +449,19 @@ class restart(Scheduler):
 
             # see comments above on resurrecting tasks
 
-            # TODO - we should probably use the task.reset_state()
-            # methods here, to update the rundb too...
-
-            print "  ", itask.state.get_status()
-
-            if itask.state.is_currently('waiting'):
+            if itask.state.status == TASK_STATUS_WAITING:
                 pass
 
-            elif itask.state.is_currently('held'):
+            elif itask.state.status == TASK_STATUS_HELD:
                 # Only waiting tasks get held. These need to be released
                 # on restart to avoid the automatic shutdown criterion:
                 # if all tasks are succeeded or held (e.g. because they
                 # passed the final cycle point) shut down automatically.
-                itask.state.set_status('waiting')
+                itask.state.set_state(TASK_STATUS_WAITING)
 
-            elif itask.state.is_currently('submitted', 'running'):
-                itask.set_prerequisites_all_satisfied()
+            elif itask.state.status in [TASK_STATUS_SUBMITTED,
+                                        TASK_STATUS_RUNNING]:
+                itask.state.set_prerequisites_all_satisfied()
                 # update the task proxy with submit ID etc.
                 itask.try_number = task_states_datum.get("try_num")
                 itask.user_at_host = task_states_datum.get("host")
@@ -469,18 +476,20 @@ class restart(Scheduler):
                 itask.submission_poll_timer.set_host(host, set_timer=True)
                 itask.execution_poll_timer.set_host(host, set_timer=True)
 
-            elif itask.state.is_currently('queued', 'ready', 'submit-retrying',
-                                          'submit-failed', 'retrying',
-                                          'failed'):
-                itask.set_prerequisites_all_satisfied()
-                if not itask.state.is_currently('failed', 'submit-failed'):
+            elif itask.state.status in [
+                    TASK_STATUS_QUEUED, TASK_STATUS_READY,
+                    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_SUBMIT_FAILED,
+                    TASK_STATUS_RETRYING, TASK_STATUS_FAILED]:
+                itask.state.set_prerequisites_all_satisfied()
+                if itask.state.status not in [
+                        TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
                     # reset to waiting as these had not been submitted yet.
-                    itask.state.set_status('waiting')
+                    itask.state.set_state(TASK_STATUS_WAITING)
 
-            elif itask.state.is_currently('succeeded'):
-                itask.set_prerequisites_all_satisfied()
+            elif itask.state.status == TASK_STATUS_SUCCEEDED:
+                itask.state.set_prerequisites_all_satisfied()
                 # TODO - just poll for outputs in the job status file.
-                itask.outputs.set_all_completed()
+                itask.state.outputs.set_all_completed()
 
             else:
                 raise Exception(

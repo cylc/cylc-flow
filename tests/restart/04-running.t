@@ -49,9 +49,9 @@ final cycle : 20130923T0000Z
 (dp1
 .
 Begin task states
-finish.20130923T0000Z : status=waiting, spawned=false
-output_states.20130923T0000Z : status=waiting, spawned=false
-running_task.20130923T0000Z : status=running, spawned=true
+finish.20130923T0000Z : status=waiting, spawned=False
+output_states.20130923T0000Z : status=waiting, spawned=False
+running_task.20130923T0000Z : status=running, spawned=True
 __STATE__
 grep_ok "running_task|20130923T0000Z|1|1|running" \
     $TEST_DIR/pre-restart-db
@@ -77,10 +77,10 @@ final cycle : 20130923T0000Z
 (dp1
 .
 Begin task states
-finish.20130923T0000Z : status=succeeded, spawned=true
-output_states.20130923T0000Z : status=succeeded, spawned=true
-running_task.20130923T0000Z : status=succeeded, spawned=true
-shutdown.20130923T0000Z : status=succeeded, spawned=true
+finish.20130923T0000Z : status=succeeded, spawned=True
+output_states.20130923T0000Z : status=succeeded, spawned=True
+running_task.20130923T0000Z : status=succeeded, spawned=True
+shutdown.20130923T0000Z : status=succeeded, spawned=True
 __STATE__
 #-------------------------------------------------------------------------------
 purge_suite "$SUITE_NAME"

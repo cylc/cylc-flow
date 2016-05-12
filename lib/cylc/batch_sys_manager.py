@@ -131,6 +131,7 @@ import traceback
 from cylc.mkdir_p import mkdir_p
 from cylc.task_id import TaskID
 from cylc.task_message import TaskMessage
+from cylc.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.wallclock import get_current_time_string
 
 
@@ -591,7 +592,7 @@ class BatchSysManager(object):
             elif key == TaskMessage.CYLC_JOB_EXIT_TIME:
                 ctx.time_run_exit = value
             elif key == TaskMessage.CYLC_JOB_EXIT:
-                if value == TaskMessage.SUCCEEDED.upper():
+                if value == TASK_OUTPUT_SUCCEEDED.upper():
                     ctx.run_status = 0
                 else:
                     ctx.run_status = 1

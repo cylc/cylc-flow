@@ -26,14 +26,13 @@ from cylc.suite_env import CylcSuiteEnv, CylcSuiteEnvLoadError
 from cylc.wallclock import get_current_time_string
 import cylc.flags
 
+from cylc.task_outputs import (
+    TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
+
 
 class TaskMessage(object):
 
-    """Send task (job) messages."""
-
-    FAILED = "failed"
-    STARTED = "started"
-    SUCCEEDED = "succeeded"
+    """Send task (job) output messages."""
 
     CYLC_JOB_PID = "CYLC_JOB_PID"
     CYLC_JOB_INIT_TIME = "CYLC_JOB_INIT_TIME"
@@ -276,19 +275,19 @@ class TaskMessage(object):
                     print >>sys.stderr, exc
         for i, message in enumerate(messages):
             if job_status_file:
-                if message == self.STARTED:
+                if message == TASK_OUTPUT_STARTED:
                     job_status_file.write(
                         ("%s=%s\n" % (
                             self.CYLC_JOB_PID, os.getenv(self.CYLC_JOB_PID))) +
                         ("%s=%s\n" % (
                             self.CYLC_JOB_INIT_TIME, self.true_event_time)))
-                elif message == self.SUCCEEDED:
+                elif message == TASK_OUTPUT_SUCCEEDED:
                     job_status_file.write(
-                        ("%s=%s\n" % (
-                            self.CYLC_JOB_EXIT, self.SUCCEEDED.upper())) +
+                        ("%s=%s\n" % (self.CYLC_JOB_EXIT,
+                                      TASK_OUTPUT_SUCCEEDED.upper())) +
                         ("%s=%s\n" % (
                             self.CYLC_JOB_EXIT_TIME, self.true_event_time)))
-                elif message == self.FAILED:
+                elif message == TASK_OUTPUT_FAILED:
                     job_status_file.write("%s=%s\n" % (
                         self.CYLC_JOB_EXIT_TIME, self.true_event_time))
                 elif message.startswith(self.FAIL_MESSAGE_PREFIX):

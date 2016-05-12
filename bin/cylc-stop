@@ -20,8 +20,7 @@
 
 Tell a running suite daemon to shut down. In order to prevent failures going
 unnoticed, suites only shut down automatically at a final cycle point if no
-failed tasks are present. There are several shutdown methods (note that an
-'active' task is either 'submitted' or 'running'):
+failed tasks are present. There are several shutdown methods:
 
   1. (default) stop after current active tasks finish
   2. (--now) stop immediately, orphaning current active tasks
@@ -31,10 +30,10 @@ failed tasks are present. There are several shutdown methods (note that an
   6. (--wall-clock=T) stop after time T (an ISO 8601 date-time format e.g.
      CCYYMMDDThh:mm, CCYY-MM-DDThh, etc).
 
-Tasks that become 'ready' after the shutdown is ordered will remain that way
-until the shutdown; they will submit if the suite is restarted.  Remaining task
-event handlers and job poll and kill commands, however, will be executed prior
-to shutdown, unless --now is used.
+Tasks that become ready after the shutdown is ordered will be submitted
+immediately if the suite is restarted.  Remaining task event handlers and job
+poll and kill commands, however, will be executed prior to shutdown, unless
+--now is used.
 
 This command exits immediately unless --max-polls is greater than zero, in
 which case it polls to wait for suite shutdown."""

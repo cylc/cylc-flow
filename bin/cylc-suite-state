@@ -50,18 +50,19 @@ to poll. This is useful when you want to use cylc suite-state in a cylc task.
 import os
 import sys
 from time import sleep, time
+
 from cylc.remote import remrun
-from cylc.task_state import TaskState
 
 if remrun().execute():
     sys.exit(0)
 
+import cylc.flags
 from cylc.CylcOptionParsers import cop
 from cylc.dbstatecheck import (
     CylcSuiteDBChecker, DBNotFoundError, DBOperationError)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.command_polling import poller
-import cylc.flags
+from cylc.task_state import TASK_STATUSES_ORDERED
 
 from isodatetime.parsers import TimePointParser, DurationParser
 
@@ -164,8 +165,8 @@ def main():
              "' and '" + sorted(
                  CylcSuiteDBChecker.STATE_ALIASES.keys())[-1] + "'. ")
     states = ("Valid states to check for include: '" +
-              ("', '").join(sorted(TaskState.legal)[:-1]) + "' and '" +
-              sorted(TaskState.legal)[-1] + "'.")
+              ("', '").join(TASK_STATUSES_ORDERED[:-1]) +
+              "' and '" + TASK_STATUSES_ORDERED[-1] + "'.")
 
     parser.add_option(
         "-S", "--status",
@@ -245,8 +246,8 @@ def main():
         sys.exit("ERROR: cannot connect to the suite DB")
 
     if options.status:
-        if (options.status in TaskState.legal or options.status in
-                CylcSuiteDBChecker.STATE_ALIASES):
+        if (options.status in TASK_STATUSES_ORDERED or
+                options.status in CylcSuiteDBChecker.STATE_ALIASES):
             pass
         else:
             sys.exit("ERROR: invalid status '" + options.status + "'")

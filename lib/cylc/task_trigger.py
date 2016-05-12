@@ -22,13 +22,40 @@ import sys
 from cylc.task_id import TaskID
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point_relative)
-from cylc.task_state import TaskState, TaskStateError
 
 
 warned = False
 BCOMPAT_MSG_RE_C5 = re.compile('^(.*)\[\s*T\s*(([+-])\s*(\d+))?\s*\](.*)$')
 BCOMPAT_MSG_RE_C6 = re.compile('^(.*)\[\s*(([+-])?\s*(.*))?\s*\](.*)$')
 DEPRECN_WARN_TMPL = "WARNING: message trigger offsets are deprecated\n  %s"
+
+# Task trigger names (e.g. foo:fail => bar).
+TASK_TRIGGER_EXPIRED = "expired"
+TASK_TRIGGER_SUBMITTED = "submitted"
+TASK_TRIGGER_SUBMIT_FAILED = "submit-failed"
+TASK_TRIGGER_STARTED = "started"
+TASK_TRIGGER_SUCCEEDED = "succeeded"
+TASK_TRIGGER_FAILED = "failed"
+
+# Can use "foo:fail => bar" or "foo:failed => bar", etc.
+_ALT_TRIGGER_NAMES = {
+    TASK_TRIGGER_EXPIRED: ["expire"],
+    TASK_TRIGGER_SUBMITTED: ["submit"],
+    TASK_TRIGGER_SUBMIT_FAILED: ["submit-fail"],
+    TASK_TRIGGER_STARTED: ["start"],
+    TASK_TRIGGER_SUCCEEDED: ["succeed"],
+    TASK_TRIGGER_FAILED: ["fail"],
+}
+
+
+class TaskTriggerError(ValueError):
+    """Illegal task trigger name."""
+
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return repr(self.msg)
 
 
 def get_message_offset(msg, base_interval=None):
@@ -68,14 +95,6 @@ def get_message_offset(msg, base_interval=None):
     return offset
 
 
-class TriggerError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
-
-
 class TaskTrigger(object):
     """
 A task trigger is a prerequisite in the abstract, defined by the suite graph.
@@ -86,6 +105,14 @@ It generates a concrete prerequisite string given a task's cycle point value.
     # Memory optimization - constrain possible attributes to this list.
     __slots__ = ["task_name", "suicide", "graph_offset_string", "cycle_point",
                  "message", "message_offset", "builtin"]
+
+    @staticmethod
+    def get_trigger_name(trigger_name):
+        """Standardise trigger qualifiers: 'foo:fail' to 'foo:failed' etc."""
+        for standard_name, alt_names in _ALT_TRIGGER_NAMES.items():
+            if trigger_name == standard_name or trigger_name in alt_names:
+                return standard_name
+        raise TaskTriggerError("Illegal task trigger name: %s" % trigger_name)
 
     def __init__(
             self, task_name, qualifier=None, graph_offset_string=None,
@@ -99,23 +126,14 @@ It generates a concrete prerequisite string given a task's cycle point value.
         self.message = None
         self.message_offset = None
         self.builtin = None
-        qualifier = qualifier or "succeeded"
+        qualifier = qualifier or TASK_TRIGGER_SUCCEEDED
 
-        # Built-in trigger?
         try:
-            self.builtin = TaskState.get_legal_trigger_state(qualifier)
-        except TaskStateError:
-            pass
-        else:
-            return
-
-        # Message trigger?
-        try:
+            # Message trigger?
             self.message = outputs[qualifier]
         except KeyError:
-            raise TriggerError(
-                "ERROR: undefined trigger qualifier: %s:%s" % (
-                    task_name, qualifier))
+            # Built-in trigger? (raises TaskStateError if not)
+            self.builtin = self.__class__.get_trigger_name(qualifier)
         else:
             self.message_offset = get_message_offset(self.message,
                                                      base_interval)
