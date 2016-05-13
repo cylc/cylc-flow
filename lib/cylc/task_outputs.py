@@ -16,10 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Task output messages and associated logic."""
+
+
 import sys
 
-# OUTPUTS:
-# A collection of messages representing the outputs of ONE TASK.
+# Standard task output strings, used for triggering.
+TASK_OUTPUT_EXPIRED = "expired"
+TASK_OUTPUT_SUBMITTED = "submitted"
+TASK_OUTPUT_SUBMIT_FAILED = "submit-failed"
+TASK_OUTPUT_STARTED = "started"
+TASK_OUTPUT_SUCCEEDED = "succeeded"
+TASK_OUTPUT_FAILED = "failed"
 
 
 class TaskOutputs(object):
@@ -99,7 +107,8 @@ class TaskOutputs(object):
         else:
             self.completed[message] = self.owner_id
 
-    def remove(self, msg, fail_silently=False):
+    def remove(self, msg):
+        """Remove an output, if it exists."""
         message = self._qualify(msg)
         try:
             del self.completed[message]
@@ -108,8 +117,3 @@ class TaskOutputs(object):
                 del self.not_completed[message]
             except:
                 pass
-
-    def add_standard(self):
-        # Add standard outputs common to all tasks.
-        for state in ['submitted', 'started', 'succeeded']:
-            self.add(state)

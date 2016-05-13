@@ -19,6 +19,11 @@
 import os
 import sqlite3
 import sys
+from cylc.task_state import (
+    TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
+    TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
 
 
 class DBOperationError(Exception):
@@ -41,13 +46,15 @@ class CylcSuiteDBChecker(object):
     """Object for querying a suite database"""
     DB_FILE_BASE_NAME = "cylc-suite.db"
     STATE_ALIASES = {}
-    STATE_ALIASES['finish'] = ['failed', 'succeeded']
-    STATE_ALIASES['start'] = ['running', 'succeeded', 'failed', 'retrying']
-    STATE_ALIASES['submit'] = [
-        'submitted', 'submit-retrying', 'running', 'succeeded', 'failed',
-        'retrying']
-    STATE_ALIASES['fail'] = ['failed']
-    STATE_ALIASES['succeed'] = ['succeeded']
+    STATE_ALIASES['finish'] = [TASK_STATUS_FAILED, TASK_STATUS_SUCCEEDED]
+    STATE_ALIASES['start'] = [TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
+                              TASK_STATUS_FAILED, TASK_STATUS_RETRYING]
+    STATE_ALIASES['submit'] = [TASK_STATUS_SUBMITTED,
+                               TASK_STATUS_SUBMIT_RETRYING,
+                               TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
+                               TASK_STATUS_FAILED, TASK_STATUS_RETRYING]
+    STATE_ALIASES['fail'] = [TASK_STATUS_FAILED]
+    STATE_ALIASES['succeed'] = [TASK_STATUS_SUCCEEDED]
 
     def __init__(self, suite_dir, suite, dbname=None):
         # possible to set suite_dir to system default cylc-run dir?

@@ -61,10 +61,10 @@ S'something'
 p9
 ssss.
 Begin task states
-broadcast_task.20130923T0000Z : status=waiting, spawned=false
-finish.20130923T0000Z : status=waiting, spawned=false
-output_states.20130923T0000Z : status=waiting, spawned=false
-send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=true
+broadcast_task.20130923T0000Z : status=waiting, spawned=False
+finish.20130923T0000Z : status=waiting, spawned=False
+output_states.20130923T0000Z : status=waiting, spawned=False
+send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=True
 __STATE__
 grep_ok "broadcast_task|20130923T0000Z|0|1|waiting" \
     $TEST_DIR/pre-restart-db
@@ -107,11 +107,11 @@ S'something'
 p9
 ssss.
 Begin task states
-broadcast_task.20130923T0000Z : status=succeeded, spawned=true
-finish.20130923T0000Z : status=succeeded, spawned=true
-output_states.20130923T0000Z : status=succeeded, spawned=true
-send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=true
-shutdown.20130923T0000Z : status=succeeded, spawned=true
+broadcast_task.20130923T0000Z : status=succeeded, spawned=True
+finish.20130923T0000Z : status=succeeded, spawned=True
+output_states.20130923T0000Z : status=succeeded, spawned=True
+send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=True
+shutdown.20130923T0000Z : status=succeeded, spawned=True
 __STATE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

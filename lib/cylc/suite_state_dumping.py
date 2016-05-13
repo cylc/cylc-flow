@@ -83,7 +83,9 @@ class SuiteStateDumper(object):
                     tasks = self.pool.get_all_tasks()
                 if tasks is not None:
                     for itask in sorted(tasks, key=lambda t: t.identity):
-                        itask.dump_state(handle)
+                        handle.write("%s : status=%s, spawned=%s\n" % (
+                            itask.identity, itask.state.status,
+                            itask.has_spawned))
 
                 # To generate "OSError [Errno 9] bad file descriptor",
                 # close the file with os.close() before calling fsync():

@@ -25,6 +25,16 @@ class PBSHandler(object):
     "PBS batch system job submission and manipulation."
 
     DIRECTIVE_PREFIX = "#PBS "
+    # PBS fails a job submit if job "name" in "-N name" is too long.
+    # For version 12 or below, this is 15 characters.
+    # You can modify this in the site/user `global.cfg` like this
+    # [hosts]
+    #     [[the-name-of-my-pbs-host]]
+    #         [[[batch systems]]]
+    #             [[[[pbs]]]]
+    #                # E.g.: PBS 13
+    #                job name length maximum = 236
+    JOB_NAME_LEN_MAX = 15
     KILL_CMD_TMPL = "qdel '%(job_id)s'"
     # N.B. The "qstat JOB_ID" command returns 1 if JOB_ID is no longer in the
     # system, so there is no need to filter its output.
@@ -38,11 +48,11 @@ class PBSHandler(object):
         job_file_path = job_conf["job file path"].replace(r"$HOME/", "")
         directives = job_conf["directives"].__class__()  # an ordereddict
 
-        # Old versions of PBS (< 11) requires jobs names <= 15 characters.
-        # Version 12 appears to truncate the job name to 15 characters if it is
-        # longer.
-        directives["-N"] = (
-            job_conf["task id"] + "." + job_conf["suite name"])[0:15]
+        directives["-N"] = job_conf["task id"] + "." + job_conf["suite name"]
+        job_name_len_max = job_conf['batch system conf'].get(
+            "job name length maximum", self.JOB_NAME_LEN_MAX)
+        if job_name_len_max:
+            directives["-N"] = directives["-N"][0:job_name_len_max]
 
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"

@@ -61,11 +61,16 @@ from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import rotator
 from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
-from cylc.task_state import TaskState
 from cylc.suite_logging import suite_log
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import get_time_string_from_unix_time
+from cylc.task_state import (
+    TaskState, TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
+    TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
+    TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
+    TASK_STATUS_RUNAHEAD, TASK_STATUS_WAITING, TASK_STATUS_READY,
+    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 
 
 def run_get_stdout(command, filter=False):
@@ -232,8 +237,6 @@ Class to create an information bar.
         self._set_tooltip(self.mode_widget, "mode")
 
         self._runahead = ""
-        # self.runahead_widget = gtk.Label()
-        # self._set_tooltip(self.runahead_widget, "runahead limit")
 
         self._time = "time..."
         self.time_widget = gtk.Label()
@@ -276,10 +279,6 @@ Class to create an information bar.
         eb = gtk.EventBox()
         eb.add(self.time_widget)
         hbox.pack_end(eb, False)
-
-        # eb = gtk.EventBox()
-        # eb.add(self.runahead_widget)
-        # hbox.pack_end(eb, False)
 
         eb = gtk.EventBox()
         eb.add(self.state_widget)
@@ -329,7 +328,6 @@ Class to create an information bar.
         text = "runahead:" + str(runahead) + "h  "
         if runahead is None:
             text = ""
-        # gobject.idle_add(self.runahead_widget.set_text, text)
 
     def set_state(self, suite_states, is_suite_stopped=None):
         """Set state text."""
@@ -423,7 +421,7 @@ Class to create an information bar.
         summary = SUITE_STATUS_STOPPED_WITH % suite_state
         num_failed = 0
         for task_id in task:
-            if task[task_id].get("state") == "failed":
+            if task[task_id].get("state") == TASK_STATUS_FAILED:
                 num_failed += 1
         if num_failed:
             summary += ": %s failed tasks" % num_failed
@@ -519,35 +517,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS["graph"] = ControlGraph
         VIEWS_ORDERED.append("graph")
 
-    STATES_TRIGGERABLE = [
-        'waiting',
-        'held',
-        'queued',
-        'ready',
-        'expired',
-        'submit-failed',
-        'succeeded',
-        'failed',
-        'runahead'
-    ]
-
-    STATES_KILLABLE = [
-        'submitted',
-        'running'
-    ]
-
-    STATES_POLLABLE = [
-        'submitted',
-        'running'
-    ]
-
-    STATES_VIEW_LOGS = [
-        'running',
-        'succeeded',
-        'failed',
-        'retrying'
-    ]
-
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
                  template_vars, template_vars_file, restricted_display):
 
@@ -622,9 +591,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         bigbox.pack_start(self.views_parent, True)
 
         if self.restricted_display:
-            self.legal_task_states = TaskState.legal_for_restricted_monitoring
+            self.legal_task_states = list(TASK_STATUSES_RESTRICTED)
         else:
-            self.legal_task_states = TaskState.legal
+            self.legal_task_states = list(TASK_STATUSES_ALL)
 
         filter_excl = gcfg.get(['task states to filter out'])
         filter_excl = list(set(filter_excl))
@@ -1179,7 +1148,6 @@ been defined for this suite""").inform()
                 about.set_program_name("cylc")
         about.set_version(CYLC_VERSION)
         about.set_copyright("Copyright (C) 2008-2016 NIWA")
-
         about.set_comments(
             "The Cylc Suite Engine.\n\nclient UUID:\n%s" % self.cfg.my_uuid)
         about.set_logo(get_logo())
@@ -1202,18 +1170,11 @@ been defined for this suite""").inform()
         except KeyError:
             warning_dialog(task_id + ' is not live', self.window).warn()
             return False
-
-        warnings = []
         if (not task_state_summary['logfiles'] and
                 not task_state_summary.get('job_hosts')):
-            warnings.append(task_id + ' has no associated log files')
-        if task_state_summary['state'] in ['waiting', 'ready', 'queued']:
-            warnings.append(task_id + ' has not been submitted yet')
-        if warnings:
-            warning_dialog('\n'.join(warnings), self.window).warn()
+            warning_dialog('%s has no log files' % task_id, self.window).warn()
         else:
             self._popup_logview(task_id, task_state_summary, choice)
-
         return False
 
     def get_right_click_menu(
@@ -1272,18 +1233,27 @@ been defined for this suite""").inform()
             for key, filename in [
                     ('job script', 'job'),
                     ('job activity log', 'job-activity.log'),
-                    ('job stdout', 'job.out'),
-                    ('job stderr', 'job.err'),
                     ('job status file', 'job.status')]:
                 item = gtk.ImageMenuItem(key)
                 item.set_image(gtk.image_new_from_stock(
                     gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
                 view_menu.append(item)
-                item.connect(
-                    'button-release-event', self.view_task_info, task_id,
-                    filename)
+                item.connect('button-release-event', self.view_task_info,
+                             task_id, filename)
                 item.set_sensitive(
-                    t_state in self.STATES_VIEW_LOGS or submit_num > 0)
+                    t_state in TASK_STATUSES_WITH_JOB_SCRIPT)
+
+            for key, filename in [
+                    ('job stdout', 'job.out'),
+                    ('job stderr', 'job.err')]:
+                item = gtk.ImageMenuItem(key)
+                item.set_image(gtk.image_new_from_stock(
+                    gtk.STOCK_DND, gtk.ICON_SIZE_MENU))
+                view_menu.append(item)
+                item.connect('button-release-event', self.view_task_info,
+                             task_id, filename)
+                item.set_sensitive(
+                    t_state in TASK_STATUSES_WITH_JOB_LOGS)
 
             info_item = gtk.ImageMenuItem('prereq\'s & outputs')
             img = gtk.image_new_from_stock(
@@ -1310,7 +1280,8 @@ been defined for this suite""").inform()
         items.append(trigger_now_item)
         trigger_now_item.connect(
             'activate', self.trigger_task_now, task_id, task_is_family)
-        trigger_now_item.set_sensitive(t_state in self.STATES_TRIGGERABLE)
+        trigger_now_item.set_sensitive(
+            t_state in TASK_STATUSES_TRIGGERABLE)
 
         if not task_is_family:
             trigger_edit_item = gtk.ImageMenuItem('Trigger (edit run)')
@@ -1320,7 +1291,8 @@ been defined for this suite""").inform()
             items.append(trigger_edit_item)
             trigger_edit_item.connect(
                 'activate', self.trigger_task_edit_run, task_id)
-            trigger_edit_item.set_sensitive(t_state in self.STATES_TRIGGERABLE)
+            trigger_edit_item.set_sensitive(
+                t_state in TASK_STATUSES_TRIGGERABLE)
         items.append(gtk.SeparatorMenuItem())
 
         # TODO - grey out poll and kill if the task is not active.
@@ -1329,7 +1301,7 @@ been defined for this suite""").inform()
         poll_item.set_image(img)
         items.append(poll_item)
         poll_item.connect('activate', self.poll_task, task_id, task_is_family)
-        poll_item.set_sensitive(t_state in self.STATES_POLLABLE)
+        poll_item.set_sensitive(t_state in TASK_STATUSES_POLLABLE)
 
         items.append(gtk.SeparatorMenuItem())
 
@@ -1338,7 +1310,7 @@ been defined for this suite""").inform()
         kill_item.set_image(img)
         items.append(kill_item)
         kill_item.connect('activate', self.kill_task, task_id, task_is_family)
-        kill_item.set_sensitive(t_state in self.STATES_KILLABLE)
+        kill_item.set_sensitive(t_state in TASK_STATUSES_KILLABLE)
 
         items.append(gtk.SeparatorMenuItem())
 
@@ -1350,47 +1322,48 @@ been defined for this suite""").inform()
         reset_item.set_submenu(reset_menu)
         items.append(reset_item)
 
-        reset_ready_item = gtk.ImageMenuItem('"ready"')
+        reset_ready_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_READY)
         reset_img = gtk.image_new_from_stock(
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_ready_item.set_image(reset_img)
         reset_menu.append(reset_ready_item)
         reset_ready_item.connect('button-release-event', self.reset_task_state,
-                                 task_id, 'ready', task_is_family)
+                                 task_id, TASK_STATUS_READY, task_is_family)
 
-        reset_waiting_item = gtk.ImageMenuItem('"waiting"')
+        reset_waiting_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_WAITING)
         reset_img = gtk.image_new_from_stock(
             gtk.STOCK_CONVERT, gtk.ICON_SIZE_MENU)
         reset_waiting_item.set_image(reset_img)
         reset_menu.append(reset_waiting_item)
         reset_waiting_item.connect('button-release-event',
-                                   self.reset_task_state, task_id, 'waiting',
-                                   task_is_family)
+                                   self.reset_task_state, task_id,
+                                   TASK_STATUS_WAITING, task_is_family)
 
-        reset_succeeded_item = gtk.ImageMenuItem('"succeeded"')
+        reset_succeeded_item = gtk.ImageMenuItem(
+            '"%s"' % TASK_STATUS_SUCCEEDED)
         reset_img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
                                              gtk.ICON_SIZE_MENU)
         reset_succeeded_item.set_image(reset_img)
         reset_menu.append(reset_succeeded_item)
         reset_succeeded_item.connect('button-release-event',
                                      self.reset_task_state, task_id,
-                                     'succeeded', task_is_family)
+                                     TASK_STATUS_SUCCEEDED, task_is_family)
 
-        reset_failed_item = gtk.ImageMenuItem('"failed"')
+        reset_failed_item = gtk.ImageMenuItem('"%s"' % TASK_STATUS_FAILED)
         reset_img = gtk.image_new_from_stock(gtk.STOCK_CONVERT,
                                              gtk.ICON_SIZE_MENU)
         reset_failed_item.set_image(reset_img)
         reset_menu.append(reset_failed_item)
         reset_failed_item.connect('button-release-event',
-                                  self.reset_task_state, task_id, 'failed',
-                                  task_is_family)
+                                  self.reset_task_state, task_id,
+                                  TASK_STATUS_FAILED, task_is_family)
 
         spawn_item = gtk.ImageMenuItem('Force spawn')
         img = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU)
         spawn_item.set_image(img)
         items.append(spawn_item)
-        spawn_item.connect('button-release-event', self.reset_task_state,
-                           task_id, 'spawn', task_is_family)
+        spawn_item.connect('button-release-event', self.spawn_task,
+                           task_id, task_is_family)
 
         items.append(gtk.SeparatorMenuItem())
 
@@ -1644,6 +1617,14 @@ shown here in the state they were in at the time of triggering.''')
         if not self.get_confirmation("Kill %s?" % task_id, force_prompt=True):
             return
         self.put_pyro_command('kill_tasks', [task_id])
+
+    def spawn_task(self, b, e, task_id, is_family=False):
+        """For tasks to spawn their successors."""
+        if hasattr(e, "button") and e.button != 1:
+            return False
+        if not self.get_confirmation("Force spawn %s?" % task_id):
+            return
+        self.put_pyro_command('spawn_tasks', [task_id], None)
 
     def reset_task_state(self, b, e, task_id, state, is_family=False):
         """Reset the state of a task/family."""
@@ -2293,7 +2274,7 @@ to reduce network traffic.""")
 
         key_item = gtk.ImageMenuItem("State Icon _Key")
         dots = DotMaker(self.theme, size='small')
-        img = dots.get_image("running")
+        img = dots.get_image(TASK_STATUS_RUNNING)
         key_item.set_image(img)
         self._set_tooltip(
             key_item, "Describe what task states the colors represent")
@@ -2972,7 +2953,8 @@ This is what my suite does:..."""
                     pass
                 else:
                     icon = dotm.get_image(st)
-                    cb = gtk.CheckButton(TaskState.labels[st])
+                    cb = gtk.CheckButton(
+                        TaskState.get_status_prop(st, 'gtk_label'))
                     cb.set_active(st not in self.filter_states_excl)
                     cb.connect('toggled', self.check_task_filter_buttons)
                     tooltip = gtk.Tooltips()
@@ -3103,7 +3085,7 @@ For more Stop options use the Control menu.""")
         self.info_bar.prog_bar_disabled = False
         self._prev_status = new_status
         run_ok = "stopped" in new_status
-        # Pause: avoid "stopped with 'running'".
+        # Pause: avoid "stopped with TASK_STATUS_RUNNING".
         pause_ok = (
             "running" in new_status and "stopped" not in new_status)
         unpause_ok = "held" == new_status

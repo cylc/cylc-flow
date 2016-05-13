@@ -5,12 +5,12 @@ final cycle : None
 (dp1
 .
 Begin task states
-async_install.1 : status=succeeded, spawned=true
-bar.2014050206 : status=waiting, spawned=false
-baz.2014050200 : status=succeeded, spawned=true
-baz.2014050206 : status=waiting, spawned=false
-foo.2014050200 : status=succeeded, spawned=true
-foo.2014050206 : status=waiting, spawned=false
-qux.2014050206 : status=running, spawned=true
-qux.2014050212 : status=runahead, spawned=false
-wibble.2014050206 : status=waiting, spawned=false
+async_install.1 : status=succeeded, spawned=True
+bar.2014050206 : status=waiting, spawned=False
+baz.2014050200 : status=succeeded, spawned=True
+baz.2014050206 : status=waiting, spawned=False
+foo.2014050200 : status=succeeded, spawned=True
+foo.2014050206 : status=waiting, spawned=False
+qux.2014050206 : status=running, spawned=True
+qux.2014050212 : status=runahead, spawned=False
+wibble.2014050206 : status=waiting, spawned=False

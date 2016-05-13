@@ -5126,6 +5126,23 @@ For job submission methods that use job file directives (PBS,
 Loadlevler, etc.) default directives are provided to set the job name
 and stdout and stderr file paths.
 
+Cylc constructs the job name string using a combination of the task ID and the
+suite name. PBS fails a job submit if the job name in \lstinline=-N name= is
+too long. For version 12 or below, this is 15 characters. For version 13, this
+is 236 characters. The default setting will truncate the job name string to 15
+characters. If you have PBS 13 at your site, you should modify your site's
+global configuration file to allow the job name to be longer. (See also
+Section~\ref{JobNameLengthMaximum}.) For example:
+
+\begin{lstlisting}
+[hosts]
+    [[myhpc*]]
+        [[[batch systems]]]
+            [[[[pbs]]]]
+                # PBS 13
+                job name length maximum = 236
+\end{lstlisting}
+
 \subsubsection{Cylc Quirks (PBS, SGE, ...) }
 
 As shown in the example above, to get a naked option flag such as

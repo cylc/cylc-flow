@@ -50,7 +50,8 @@ back_compat = {
     'reload_suite': 'reload suite',
     'add_prerequisite': 'add prerequisite',
     'poll_tasks': 'poll tasks',
-    'kill_tasks': 'kill tasks'
+    'kill_tasks': 'kill tasks',
+    'spawn_tasks': 'reset_task_state -s spawn'
 }
 
 

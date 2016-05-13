@@ -26,8 +26,13 @@ from parsec.config import config, ItemNotFoundError, itemstr
 from parsec.validate import validator as vdr
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
+from cylc.task_state import (
+    TASK_STATUSES_ALL, TASK_STATUS_RUNAHEAD, TASK_STATUS_HELD,
+    TASK_STATUS_WAITING, TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED,
+    TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED, TASK_STATUS_RETRYING)
 
-from cylc.task_state import TaskState
 
 "gcylc config file format."
 
@@ -48,24 +53,24 @@ SPEC = {
     'initial side-by-side views': vdr(vtype='boolean', default=False),
     'task states to filter out': vdr(
         vtype='string_list',
-        default=["runahead"]),
+        default=[TASK_STATUS_RUNAHEAD]),
     'themes': {
         '__MANY__': {
             'inherit': vdr(vtype='string', default="default"),
             'defaults': vdr(vtype='string_list'),
-            'waiting': vdr(vtype='string_list'),
-            'held': vdr(vtype='string_list'),
-            'queued': vdr(vtype='string_list'),
-            'ready': vdr(vtype='string_list'),
-            'expired': vdr(vtype='string_list'),
-            'submitted': vdr(vtype='string_list'),
-            'submit-failed': vdr(vtype='string_list'),
-            'running': vdr(vtype='string_list'),
-            'succeeded': vdr(vtype='string_list'),
-            'failed': vdr(vtype='string_list'),
-            'retrying': vdr(vtype='string_list'),
-            'submit-retrying': vdr(vtype='string_list'),
-            'runahead': vdr(vtype='string_list'),
+            TASK_STATUS_WAITING: vdr(vtype='string_list'),
+            TASK_STATUS_HELD: vdr(vtype='string_list'),
+            TASK_STATUS_QUEUED: vdr(vtype='string_list'),
+            TASK_STATUS_READY: vdr(vtype='string_list'),
+            TASK_STATUS_EXPIRED: vdr(vtype='string_list'),
+            TASK_STATUS_SUBMITTED: vdr(vtype='string_list'),
+            TASK_STATUS_SUBMIT_FAILED: vdr(vtype='string_list'),
+            TASK_STATUS_RUNNING: vdr(vtype='string_list'),
+            TASK_STATUS_SUCCEEDED: vdr(vtype='string_list'),
+            TASK_STATUS_FAILED: vdr(vtype='string_list'),
+            TASK_STATUS_RETRYING: vdr(vtype='string_list'),
+            TASK_STATUS_SUBMIT_RETRYING: vdr(vtype='string_list'),
+            TASK_STATUS_RUNAHEAD: vdr(vtype='string_list'),
         },
     },
 }
@@ -155,7 +160,7 @@ class gconfig(config):
                 if item in ['inherit', 'defaults']:
                     continue
                 state = item
-                if state not in TaskState.legal:
+                if state not in TASK_STATUSES_ALL:
                     print >> sys.stderr, (
                         "WARNING, ignoring illegal task state '" + state +
                         "' in theme", theme)
