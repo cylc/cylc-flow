@@ -304,6 +304,7 @@ class DotUpdater(threading.Thread):
         return True
 
     def update_gui(self):
+        self.action_required = False
         new_data = {}
         state_summary = {}
         state_summary.update(self.state_summary)
@@ -377,7 +378,6 @@ class DotUpdater(threading.Thread):
         while not self.quit:
             if self.update() or self.action_required:
                 gobject.idle_add(self.update_gui)
-                self.action_required = False
             sleep(0.2)
         else:
             pass
