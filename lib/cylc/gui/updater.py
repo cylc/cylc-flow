@@ -221,9 +221,9 @@ class Updater(threading.Thread):
                     gobject.idle_add(self.warn, str(exc))
             return
 
-        self.app_window.set_title("%s - %s:%s" % (
-            self.cfg.suite,
-            self.suite_info_client.host,
+        gobject.idle_add(
+            self.app_window.set_title, "%s - %s:%s" % (
+            self.cfg.suite, self.suite_info_client.host,
             self.suite_info_client.port))
         if cylc.flags.debug:
             print >> sys.stderr, "succeeded"
@@ -367,10 +367,12 @@ class Updater(threading.Thread):
             client.port = None
 
         if self.cfg.host:
-            self.app_window.set_title(
-                "%s - %s" % (self.cfg.suite, self.cfg.host))
+            gobject.idle_add(
+                self.app_window.set_title, "%s - %s" % (
+                    self.cfg.suite, self.cfg.host))
         else:
-            self.app_window.set_title(str(self.cfg.suite))
+            gobject.idle_add(
+                self.app_window.set_title, str(self.cfg.suite))
 
     def set_status(self, status=None):
         """Update status bar."""
