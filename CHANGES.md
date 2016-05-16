@@ -16,7 +16,7 @@ locked-up blank GUI window at start-up (since 6.8.0, Jan 2016).
 excessive CPU load when displaying large suites (since 6.10.0).
 
 [#1838](https://github.com/cylc/cylc/pull/1838): Fix for the suite timeout
-event time not resetting on task activity (since 6.10.0).
+event timer not resetting on task activity (since 6.10.0).
 
 ### Other Changes
 
@@ -33,7 +33,7 @@ the suite) then re-inserted after another.
 
 [#1804](https://github.com/cylc/cylc/pull/1804): PBS job name length - truncate
 to 15 characters by default, but can now be configured in `global.rc` for PBS
-13+, which support longer names.
+13+, which supports longer names.
 
 -------------------------------------------------------------------------------
 
