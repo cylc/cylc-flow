@@ -595,7 +595,18 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         else:
             self.legal_task_states = list(TASK_STATUSES_ALL)
 
-        self.filter_states_excl = [TASK_STATUS_RUNAHEAD]
+        filter_excl = gcfg.get(['task states to filter out'])
+        filter_excl = list(set(filter_excl))
+
+        for filter_state in filter_excl:
+            if filter_state not in TASK_STATUSES_ALL:
+                print >> sys.stderr, ("WARNING: bad gcylc.rc 'task states to "
+                                      "filter out' value (ignoring): %s" %
+                                      filter_state)
+                filter_excl.remove(filter_state)
+
+        self.filter_states_excl = filter_excl
+
         self.filter_name_string = None
         self.create_info_bar()
 
