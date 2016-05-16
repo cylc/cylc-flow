@@ -223,8 +223,8 @@ class Updater(threading.Thread):
 
         gobject.idle_add(
             self.app_window.set_title, "%s - %s:%s" % (
-            self.cfg.suite, self.suite_info_client.host,
-            self.suite_info_client.port))
+                self.cfg.suite, self.suite_info_client.host,
+                self.suite_info_client.port))
         if cylc.flags.debug:
             print >> sys.stderr, "succeeded"
         # Connected.
