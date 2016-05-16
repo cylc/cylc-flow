@@ -272,6 +272,8 @@ class GraphUpdater(threading.Thread):
     def update_graph(self):
         # TODO - check edges against resolved ones
         # (adding new ones, and nodes, if necessary)
+
+        self.action_required = False
         try:
             self.oldest_point_string = (
                 self.global_summary['oldest cycle point string'])
@@ -443,7 +445,6 @@ class GraphUpdater(threading.Thread):
             self.set_live_node_attr(node, id)
 
         self.graphw.graph_attr['rankdir'] = self.orientation
-        self.action_required = False
 
         if self.write_dot_frames:
             arg = os.path.join(

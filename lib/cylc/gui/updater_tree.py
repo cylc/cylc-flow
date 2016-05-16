@@ -184,6 +184,8 @@ class TreeUpdater(threading.Thread):
         and expand those as well.
 
         """
+        self.action_required = False
+
         # We've a view -> sort model -> filter model -> base model hierarchy.
         model = self.ttreeview.get_model()
 
