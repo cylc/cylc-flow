@@ -206,7 +206,7 @@ SPEC = {
             'timeout handler': vdr(vtype='string_list'),
             'shutdown handler': vdr(vtype='string_list'),
             'timeout': vdr(vtype='interval_minutes'),
-            'reset timer': vdr(vtype='boolean'),
+            'reset timer': vdr(vtype='boolean', default=True),
             'abort if startup handler fails': vdr(
                 vtype='boolean', default=False),
             'abort if shutdown handler fails': vdr(
