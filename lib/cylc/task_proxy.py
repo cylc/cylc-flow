@@ -223,8 +223,8 @@ class TaskProxy(object):
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
             has_spawned=False, stop_point=None, is_startup=False,
-            validate_mode=False, submit_num=0, is_reload=False,
-            message_queue=None):
+            validate_mode=False, submit_num=0, is_reload_or_restart=False,
+            pre_reload_inst=None, message_queue=None):
         self.tdef = tdef
         if submit_num is None:
             self.submit_num = 0
@@ -328,7 +328,8 @@ class TaskProxy(object):
 
         # An initial db state entry is created at task proxy init. On reloading
         # or restarting the suite, the task proxies already have this db entry.
-        if not self.validate_mode and not is_reload and self.submit_num == 0:
+        if (not self.validate_mode and not is_reload_or_restart and
+                self.submit_num == 0):
             self.db_inserts_map[self.TABLE_TASK_STATES].append({
                 "time_created": get_current_time_string(),
                 "time_updated": get_current_time_string(),
@@ -340,7 +341,6 @@ class TaskProxy(object):
                 "time_updated": get_current_time_string(),
                 "status": status})
 
-        self.reconfigure_me = False
         self.event_hooks = None
         self.sim_mode_run_length = None
         self.set_from_rtconfig()
@@ -367,6 +367,29 @@ class TaskProxy(object):
                 if (self.cleanup_cutoff is not None and
                         self.cleanup_cutoff < p_next):
                     self.cleanup_cutoff = p_next
+
+        if is_reload_or_restart and pre_reload_inst is not None:
+            self.log(INFO, 'reloaded task definition')
+            if pre_reload_inst.state.status in TASK_STATUSES_ACTIVE:
+                self.log(WARNING, "job is active with pre-reload settings")
+            # Retain some state from my pre suite-reload predecessor.
+            self.has_spawned = pre_reload_inst.has_spawned
+            self.summary = pre_reload_inst.summary
+            self.started_time = pre_reload_inst.started_time
+            self.submitted_time = pre_reload_inst.submitted_time
+            self.finished_time = pre_reload_inst.finished_time
+            self.run_try_state = pre_reload_inst.run_try_state
+            self.sub_try_state = pre_reload_inst.sub_try_state
+            self.submit_num = pre_reload_inst.submit_num
+            self.db_inserts_map = pre_reload_inst.db_inserts_map
+            self.db_updates_map = pre_reload_inst.db_updates_map
+            # Retain status of outputs.
+            for msg, oid in pre_reload_inst.state.outputs.completed.items():
+                self.state.outputs.completed[msg] = oid
+                try:
+                    del self.state.outputs.not_completed[msg]
+                except:
+                    pass
 
     def _get_events_conf(self, key, default=None):
         """Return an events setting from suite then global configuration."""
@@ -821,7 +844,6 @@ class TaskProxy(object):
             msg = "submission failed, %s (after %s)" % (delay_msg, timeout_str)
             self.log(INFO, "job(%02d) " % self.submit_num + msg)
             self.summary['latest_message'] = msg
-            self.summary['waiting for reload'] = self.reconfigure_me
             self.db_events_insert(
                 event="submission failed", message=delay_msg)
             # TODO - is this insert redundant with setup_event_handlers?

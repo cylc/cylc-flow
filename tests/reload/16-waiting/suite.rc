@@ -26,7 +26,7 @@ done
     [[reloader]]
         script = """
 cylc reload "${CYLC_SUITE_NAME}"
-while ! grep -q 'RELOADING TASK DEFINITION FOR waiter\.1' \
+while ! grep -q '\[waiter\.1\] -reloaded task definition' \
     "${CYLC_SUITE_LOG_DIR}/log"
 do
     sleep 1
