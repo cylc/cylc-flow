@@ -5,6 +5,38 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
 
+## __cylc-6.10.1 (2016-05-17)__
+
+### Highlighted Changes
+
+[#1839](https://github.com/cylc/cylc/pull/1839): `gcylc` - fix for occasional
+locked-up blank GUI window at start-up (since 6.8.0, Jan 2016).
+
+[#1841](https://github.com/cylc/cylc/pull/1841): `gcylc` tree view - fix for
+excessive CPU load when displaying large suites (since 6.10.0).
+
+[#1838](https://github.com/cylc/cylc/pull/1838): Fix for the suite timeout
+event time not resetting on task activity (since 6.10.0).
+
+### Other Changes
+
+[#1835](https://github.com/cylc/cylc/pull/1835): Suite reload - reload all
+tasks at once (previously, current active tasks were reloaded only when they
+finished, which could result in reloads appearing to take a long time).
+
+[#1833](https://github.com/cylc/cylc/pull/1833): `gcylc` - initial task state
+filtering configurable via the  `gcylc.rc` config file.
+
+[#1826](https://github.com/cylc/cylc/pull/1826): Prevent tasks becoming immune
+to change by suite reload after being orphaned by one reload (i.e. removed from
+the suite) then re-inserted after another.
+
+[#1804](https://github.com/cylc/cylc/pull/1804): PBS job name length - truncate
+to 15 characters by default, but can now be configured in `global.rc` for PBS
+13+, which support longer names.
+
+-------------------------------------------------------------------------------
+
 ## __cylc-6.10.0 (2016-05-04)__
 
 ### Highlighted Changes
@@ -86,4 +118,4 @@ family names after a hyphen.
 
 -------------------------------------------------------------------------------
 
-For highlighted changes prior to cylc-6.10.0 see doc/changes.html.
+#### For changes prior to cylc-6.10.0 see doc/changes.html in the cylc source tree.
