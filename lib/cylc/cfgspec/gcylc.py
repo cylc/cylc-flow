@@ -50,6 +50,7 @@ SPEC = {
         options=["small", "medium", "large", "extra large"]),
     'sort by definition order': vdr(vtype='boolean', default=True),
     'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
+    'window size': vdr(vtype='integer_list', default=[800, 500]),
     'initial side-by-side views': vdr(vtype='boolean', default=False),
     'task states to filter out': vdr(
         vtype='string_list',
@@ -173,8 +174,24 @@ class gconfig(config):
         cfg['themes'] = cfg_themes
 
     def check(self):
-        # check initial view config
         cfg = self.get(sparse=True)
+
+        # check window size config
+        if 'window size' in cfg:
+            fail = False
+            if len(cfg['window size']) != 2:
+                print >> sys.stderr, ("WARNING: window size requires two "
+                                      "values (x, y). Using default.")
+                fail = True
+            elif cfg['window size'][0] < 0 or cfg['window size'][1] < 0:
+                print >> sys.stderr, ("WARNING: window size values must be "
+                                      "positive. Using default.")
+                fail = True
+            # TODO: check for daft window sizes? (10, 5), (80000, 5000) ?
+            if fail:
+                cfg['window size'] = [800, 500]
+
+        # check initial view config
         if 'initial views' not in cfg:
             return
         views = copy(cfg['initial views'])
