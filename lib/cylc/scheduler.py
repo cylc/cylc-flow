@@ -36,11 +36,14 @@ import isodatetime.parsers
 from parsec.util import printcfg
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.config import SuiteConfig
+from cylc.config import SuiteConfig, TaskNotDefinedError
 from cylc.cycling import PointParsingError
-from cylc.cycling.loader import get_point, standardise_point_string
+from cylc.cycling.loader import (
+    get_point, standardise_point_string, DefaultCycler, ISO8601_CYCLING_TYPE)
+from cylc.daemonize import daemonize
 from cylc.exceptions import CylcError
 import cylc.flags
+from cylc.get_task_proxy import get_task_proxy
 from cylc.job_file import JOB_FILE
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.LogDiagnosis import LogSpec
@@ -58,6 +61,7 @@ from cylc.network.suite_info import SuiteInfoServer
 from cylc.network.suite_log import SuiteLogServer
 from cylc.network.suite_state import StateSummaryServer
 from cylc.owner import USER
+from cylc.registration import RegistrationDB
 from cylc.regpath import RegPath
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_env import CylcSuiteEnv
@@ -66,7 +70,13 @@ from cylc.suite_logging import suite_log
 from cylc.suite_state_dumping import SuiteStateDumper
 from cylc.task_id import TaskID
 from cylc.task_pool import TaskPool
-from cylc.task_proxy import TaskProxy
+from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
+from cylc.task_state import (
+    TASK_STATUS_HELD, TASK_STATUS_WAITING,
+    TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+    TASK_STATUS_RETRYING)
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
@@ -111,14 +121,50 @@ class Scheduler(object):
     SUITE_EVENT_MAIL = 'suite-event-mail'
     FS_CHECK_PERIOD = 600.0  # 600 seconds
 
-    def __init__(self, is_restart=False):
-        self.suite = None
+    def __init__(self, is_restart, options, args):
+
+        self.options = options
+        self.suite = args[0]
+        self.suiterc = RegistrationDB(self.options.db).get_suiterc(self.suite)
+        self.suite_dir = os.path.dirname(self.suiterc)
+        # For user-defined job submission methods:
+        sys.path.append(os.path.join(self.suite_dir, 'python'))
+
+        self.is_restart = is_restart
+        self.restart_from = None
+        self._cli_initial_point_string = None
+        self._cli_start_point_string = None
+        if self.is_restart:
+            try:
+                self.restart_from = args[1]
+            except IndexError:
+                pass
+        else:
+            try:
+                start_point_str = args[1]
+            except IndexError:
+                start_point_str = None
+            if self.options.warm:
+                self._cli_start_point_string = start_point_str
+            else:
+                self._cli_initial_point_string = start_point_str
+
+        self.run_mode = self.options.run_mode
+
+        if cylc.flags.debug:
+            self.logging_level = logging.DEBUG
+        else:
+            self.logging_level = logging.INFO
+
+        # For persistence of reference test settings across reloads:
+        self.reference_test_mode = self.options.reftest
+        self.gen_reference_log = self.options.genref
+
         self.owner = USER
         self.host = get_suite_host()
         self.port = None
         self.port_file = None
 
-        self.is_restart = is_restart
         self.is_stalled = False
         self.stalled_last = False
 
@@ -143,10 +189,6 @@ class Scheduler(object):
         self._profile_amounts = {}
         self._profile_update_times = {}
 
-        # For persistence of reference test settings across reloads:
-        self.reference_test_mode = False
-        self.gen_reference_log = False
-
         self.shut_down_cleanly = False
         self.shut_down_now = False
 
@@ -158,42 +200,114 @@ class Scheduler(object):
 
         self.initial_point = None
         self.start_point = None
-        self._cli_initial_point_string = None
-        self._cli_start_point_string = None
 
-        self.parser.add_option(
-            "--until",
-            help=("Shut down after all tasks have PASSED " +
-                  "this cycle point."),
-            metavar="CYCLE_POINT", action="store",
-            dest="final_point_string")
+    def start(self):
+        """Start the server."""
+        self._print_blurb()
+        try:
+            GLOBAL_CFG.create_cylc_run_tree(self.suite)
+            if self.is_restart:
+                run_dir = GLOBAL_CFG.get_derived_host_item(
+                    self.suite, 'suite run directory')
+                pri_db_path = os.path.join(
+                    run_dir, 'state', CylcSuiteDAO.DB_FILE_BASE_NAME)
+                if os.path.exists(pri_db_path):
+                    pri_dao = CylcSuiteDAO(pri_db_path)
+                    sys.stdout.write("Vacuuming the suite db ...")
+                    pri_dao.vacuum()
+                    sys.stdout.write(" done\n")
+                    pri_dao.close()
+        except Exception as exc:
+            if cylc.flags.debug:
+                raise
+            else:
+                sys.exit(exc)
 
-        self.parser.add_option(
-            "--hold",
-            help="Hold (don't run tasks) immediately on starting.",
-            action="store_true", default=False, dest="start_held")
+        try:
+            self.configure_pyro()
+            if not self.options.no_detach and not cylc.flags.debug:
+                daemonize(self)
+            self.configure()
+            if self.options.profile_mode:
+                import cProfile
+                import pstats
+                prof = cProfile.Profile()
+                prof.enable()
+            self.run()
+        except SchedulerStop, x:
+            # deliberate stop
+            print str(x)
+            self.shutdown()
 
-        self.parser.add_option(
-            "--hold-after",
-            help="Hold (don't run tasks) AFTER this cycle point.",
-            metavar="CYCLE_POINT", action="store", dest="hold_point_string")
+        except SchedulerError, x:
+            print >> sys.stderr, str(x)
+            self.shutdown()
+            sys.exit(1)
 
-        self.parser.add_option(
-            "-m", "--mode",
-            help="Run mode: live, simulation, or dummy; default is live.",
-            metavar="STRING", action="store", default='live', dest="run_mode")
+        except KeyboardInterrupt as x:
+            try:
+                self.shutdown(str(x))
+            except Exception as y:
+                # In case of exceptions in the shutdown method itself.
+                traceback.print_exc(y)
+                sys.exit(1)
 
-        self.parser.add_option(
-            "--reference-log",
-            help="Generate a reference log for use in reference tests.",
-            action="store_true", default=False, dest="genref")
+        except Exception as x:
+            traceback.print_exc(x)
+            print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
+            try:
+                self.shutdown('ERROR: ' + str(x))
+            except Exception, y:
+                # In case of exceptions in the shutdown method itself
+                traceback.print_exc(y)
+            if cylc.flags.debug:
+                raise
+            else:
+                sys.exit(1)
 
-        self.parser.add_option(
-            "--reference-test",
-            help="Do a test run against a previously generated reference log.",
-            action="store_true", default=False, dest="reftest")
+        else:
+            # main loop ends (not used?)
+            self.shutdown()
 
-        self.parse_commandline()
+        if self.options.profile_mode:
+            prof.disable()
+            import StringIO
+            string_stream = StringIO.StringIO()
+            stats = pstats.Stats(prof, stream=string_stream)
+            stats.sort_stats('cumulative')
+            stats.print_stats()
+            print string_stream.getvalue()
+
+    @staticmethod
+    def _print_blurb():
+        """Print copyright and license information."""
+        logo = (
+            "            ,_,       \n"
+            "            | |       \n"
+            ",_____,_, ,_| |_____, \n"
+            "| ,___| | | | | ,___| \n"
+            "| |___| |_| | | |___, \n"
+            "\_____\___, |_\_____| \n"
+            "      ,___| |         \n"
+            "      \_____|         \n"
+        )
+        license = """
+The Cylc Suite Engine [%s]
+Copyright (C) 2008-2016 NIWA
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+This program comes with ABSOLUTELY NO WARRANTY;
+see `cylc warranty`.  It is free software, you
+are welcome to redistribute it under certain
+conditions; see `cylc conditions`.
+
+  """ % CYLC_VERSION
+
+        logo_lines = logo.splitlines()
+        license_lines = license.splitlines()
+        lmax = max(len(line) for line in license_lines)
+        for i in range(len(logo_lines)):
+            print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
+        print
 
     def configure(self):
         self.log_memory("scheduler.py: start configure")
@@ -254,7 +368,10 @@ class Scheduler(object):
 
         self.old_user_at_host_set = set()
         self.log_memory("scheduler.py: before load_tasks")
-        self.load_tasks()
+        if self.is_restart:
+            self.load_tasks_for_restart()
+        else:
+            self.load_tasks_for_run()
         self.log_memory("scheduler.py: after load_tasks")
 
         self.state_dumper.set_cts(self.initial_point, self.final_point)
@@ -295,6 +412,427 @@ class Scheduler(object):
         self.nudge_timer_on = False
         self.auto_nudge_interval = 5  # seconds
         self.log_memory("scheduler.py: end configure")
+
+    def load_tasks_for_run(self):
+        """Load tasks for a new run."""
+        if self.start_point is not None:
+            if self.options.warm:
+                self.log.info('Warm Start %s' % self.start_point)
+            else:
+                self.log.info('Cold Start %s' % self.start_point)
+
+        task_list = self.filter_initial_task_list(
+            self.config.get_task_name_list())
+        coldstart_tasks = self.config.get_coldstart_task_list()
+
+        for name in task_list:
+            if self.start_point is None:
+                # No start cycle point at which to load cycling tasks.
+                continue
+            try:
+                itask = get_task_proxy(
+                    name, self.start_point, is_startup=True,
+                    message_queue=self.pool.message_queue)
+            except TaskProxySequenceBoundsError as exc:
+                self.log.debug(str(exc))
+                continue
+            if name in coldstart_tasks and self.options.warm:
+                itask.state.set_state(TASK_STATUS_SUCCEEDED)
+                itask.state.set_prerequisites_all_satisfied()
+                itask.state.outputs.set_all_completed()
+            # Load task.
+            self.pool.add_to_runahead_pool(itask)
+
+    def get_state_file_path(self):
+        """Return the state file path that we are restarting from."""
+        my_dumper = self.state_dumper
+        if my_dumper is None:
+            my_dumper = SuiteStateDumper(self.suite)
+        base_name = my_dumper.BASE_NAME
+        file_name = base_name
+        dir_name = my_dumper.dir_name
+        if self.restart_from and os.path.isabs(self.restart_from):
+            file_name = self.restart_from
+        elif self.restart_from:
+            file_name = os.path.join(dir_name, self.restart_from)
+        else:
+            file_name = os.path.join(dir_name, file_name)
+        if not os.path.isfile(file_name):
+            raise Exception("state dump file not found: " + file_name)
+        return os.path.realpath(file_name)
+
+    def get_state_file_info(self):
+        """Return the state file start & stop strings, broadcast, tasks.
+
+        The state dump file format is:
+        run mode : <mode>
+        time : <time> (<unix time>)
+        initial cycle : 2014050100
+        final cycle : None
+        (dp1   # (Broadcast pickle string)
+        .      # (Broadcast pickle string)
+        Begin task states
+        <task_id> : <state>
+        <task_id> : <state>
+          ...
+
+        """
+        file_name = self.get_state_file_path()
+        try:
+            FILE = open(file_name, 'r')
+        except IOError as exc:
+            print >> sys.stderr, str(exc)
+            raise Exception(
+                "ERROR, cannot open suite state dump: %s" % file_name)
+        lines = FILE.readlines()
+        FILE.close()
+
+        nlines = len(lines)
+        if nlines == 0:
+            raise Exception("ERROR, empty suite state dump: %s" % file_name)
+        elif nlines < 3:
+            print >> sys.stderr, (
+                "ERROR, The suite state dump contains only %d lines" % nlines)
+            for l in lines:
+                print ' ', l.rstrip()
+            raise Exception(
+                "ERROR, incomplete suite state dump: %s" % file_name)
+
+        index = 0
+        # run mode : <mode>
+        line0 = lines[index].rstrip()
+        if line0.startswith('suite time'):
+            # backward compatibility for pre-5.4.11 state dumps
+            old_run_mode = 'live'
+        elif line0.startswith('simulation time'):
+            # backward compatibility for pre-5.4.11 state dumps
+            old_run_mode = 'simulation'
+        else:
+            # current state dumps
+            old_run_mode = line0.split(' : ')[1]
+            index += 1
+            # time : <time> (not used here)
+
+        if self.run_mode == 'live' and old_run_mode != 'live':
+            raise Exception(
+                "ERROR: cannot RESTART in %s from a %s state dump" % (
+                    self.run_mode, old_run_mode))
+
+        state_start_string = None
+        index += 1
+        line2 = lines[index]
+        line2 = line2.rstrip()
+        try:
+            label, oldstartcycle = line2.split(' : ')
+        except ValueError, x:
+            print >> sys.stderr, (
+                'ERROR, Illegal state dump line 2 (initial cycle):')
+            print >> sys.stderr, ' ', line2
+            raise Exception("ERROR: corrupted state dump")
+        if oldstartcycle != 'None':
+            state_start_string = oldstartcycle
+
+        state_stop_string = None
+        index += 1
+        line3 = lines[index]
+        line3 = line3.rstrip()
+        try:
+            label, oldstopcycle = line3.split(' : ')
+        except ValueError, x:
+            print >> sys.stderr, (
+                'ERROR, Illegal state dump line 3 (final cycle):')
+            print >> sys.stderr, ' ', line3
+            raise Exception("ERROR: corrupted state dump")
+
+        if oldstopcycle != 'None':
+            state_stop_string = oldstopcycle
+
+        # broadcast variables (universal):
+        index += 1
+
+        pickled_broadcast = ""
+        while True:
+            pickled_broadcast += lines[index]
+            if pickled_broadcast.endswith(".\n"):
+                # every pickle stream ends with a period
+                break
+            index += 1
+
+        index += 1
+        line = lines[index].rstrip()
+        if line != 'Begin task states':
+            raise Exception(
+                "ERROR, illegal state dump line " +
+                "(expected 'Begin task states'): %s" % line
+            )
+
+        index += 1
+
+        task_lines = []
+        for line in lines[index:]:
+            # strip trailing newlines
+            task_lines.append(line.rstrip('\n'))
+        return (state_start_string, state_stop_string,
+                pickled_broadcast, task_lines)
+
+    def load_tasks_for_restart(self):
+        """Load tasks for restart."""
+
+        # FIND THE INITIAL STATE DUMP FILE
+        base_name = self.state_dumper.BASE_NAME
+        dir_name = self.state_dumper.dir_name
+        file_name = self.get_state_file_path()
+
+        self.log.info('Restart ' + file_name)
+        src_name = file_name
+        if os.path.realpath(dir_name) == os.path.dirname(file_name):
+            src_name = os.path.basename(file_name)
+        now_str = get_current_time_string(use_basic_format=True)
+        lnk_name = os.path.join(dir_name, base_name + "-restart." + now_str)
+        os.symlink(src_name, lnk_name)
+
+        state_start_string, state_stop_string, broadcast, task_lines = (
+            self.get_state_file_info())
+
+        if state_start_string is not None:
+            # the state dump prescribes a start cycle
+            # (else we take whatever the suite.rc file gives us)
+            state_start_point = get_point(state_start_string)
+            if self.options.ignore_start_point:
+                # ignore it and take whatever the suite.rc file gives us
+                if self.start_point is not None:
+                    print >> sys.stderr, (
+                        "WARNING: I'm ignoring the old initial cycle point"
+                        " as requested,\n"
+                        "but I can't ignore the one set in"
+                        " the suite definition.")
+            elif self.start_point is not None:
+                # a start cycle was given in the suite.rc file
+                if self.start_point != state_start_point:
+                    # the state dump doesn't lie about start cycles
+                    if self.options.ignore_startcycle:
+                        print >> sys.stderr, (
+                            "WARNING: ignoring old initial cycle point" +
+                            "%s; using suite.rc %s" % (
+                                state_start_point, self.start_point)
+                        )
+                    else:
+                        print >> sys.stderr, (
+                            "WARNING: old initial cycle point" +
+                            "%s, overriding suite.rc %s" % (
+                                state_start_point, self.start_point)
+                        )
+                        self.start_point = state_start_point
+            else:
+                # reinstate the former start cycle
+                self.start_point = state_start_point
+
+        if state_stop_string is not None:
+            # the state dump prescribes a stop cycle
+            # (else take whatever the command line or suite.rc file gives us)
+            state_stop_point = get_point(state_stop_string)
+            if self.options.ignore_stop_point:
+                # take whatever the command line or suite.rc file gives us
+                if self.stop_point is not None:
+                    print >> sys.stderr, (
+                        "WARNING: I'm ignoring the old final cycle point"
+                        " as requested,\n"
+                        "but I can't ignore the one set on"
+                        " the command line or in the suite definition.")
+            elif self.stop_point is not None:
+                # a stop cycle was given on the command line or suite.rc file
+                if self.stop_point != state_stop_point:
+                    print >> sys.stderr, (
+                        "WARNING: overriding the old stop cycle point "
+                        "%s with %s" % (state_stop_point, self.stop_point)
+                    )
+            else:
+                # reinstate the old stop cycle
+                self.stop_point = state_stop_point
+
+        BroadcastServer.get_inst().load(broadcast)
+
+        # parse each task line and create the task it represents
+        tasknames = {}
+        taskstates = {}
+        task_point_strings = []
+        for line in task_lines:
+            # instance variables
+            try:
+                (id_, state_string) = line.split(' : ')
+                # state_string e.g. 'status=running, spawned=False'
+                name, point_string = TaskID.split(id_)
+            except:
+                print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
+                print >> sys.stderr, " ", line
+                raise Exception("ERROR: corrupted state dump")
+            if (point_string == "1" and
+                    DefaultCycler.TYPE == ISO8601_CYCLING_TYPE):
+                # A state file from a pre-cylc-6 with mixed-async graphing.
+                point_string = str(self.start_point)
+                new_id = TaskID.get(name, point_string)
+                print >> sys.stderr, (
+                    "WARNING: converting %s to %s" % (id_, new_id))
+                id_ = new_id
+            tasknames[name] = True
+            if 'status=submitting,' in state_string:
+                # back compat for state dumps generated prior to #787
+                state_string = state_string.replace('status=submitting,',
+                                                    'status=ready,', 1)
+            if 'status=runahead,' in state_string:
+                # backward compatibility for pre-cylc-6 state dumps.
+                state_string = state_string.replace(
+                    'status=runahead,', 'status=waiting,', 1)
+            taskstates[id_] = (name, point_string, state_string)
+            task_point_strings.append(point_string)
+
+        task_point_strings = list(set(task_point_strings))
+
+        print "LOADING data from suite db"
+
+        task_states_data = self.pri_dao.select_task_states_by_cycles(
+            ["submit_num", "try_num", "host"], task_point_strings)
+        # RESURRECTING TASKS FROM A SUITE STATE DUMP FILE
+        #
+        # The state of task prerequisites (satisfied or not) and outputs
+        # (completed or not) is determined by the recorded TASK_STATUS:
+        #
+        # TASK_STATUS_WAITING    - prerequisites and outputs unsatisified
+        # TASK_STATUS_HELD       - ditto (only waiting tasks can be held)
+        #
+        # TASK_STATUS_QUEUED     - prereqs satisfied, outputs not completed
+        #                 (only tasks ready to run can get queued)
+        # TASK_STATUS_READY      - ditto
+        # TASK_STATUS_SUBMITTED  - ditto (but see *)
+        # TASK_STATUS_SUBMIT_RETRYING - ditto
+        # TASK_STATUS_RUNNING    - ditto (but see *)
+        # TASK_STATUS_FAILED     - ditto (tasks must run in order to fail)
+        # TASK_STATUS_RETRYING   - ditto (tasks must fail in order to retry)
+        # TASK_STATUS_SUCCEEDED  - prerequisites satisfied, outputs completed
+        #
+        # (*) tasks reloaded with TASK_STATUS_SUBMITTED or TASK_STATUS_RUNNING
+        # are polled to determine what their true status is.
+
+        initial_task_list = tasknames.keys()
+        task_list = self.filter_initial_task_list(initial_task_list)
+
+        print "RELOADING task proxies"
+
+        config = SuiteConfig.get_inst()
+        itasks = {}
+        for id_ in taskstates:
+            name, point_string, state_string = taskstates[id_]
+            if name not in task_list:
+                continue
+
+            try:
+                status, spawned = state_string.split(', ')
+            except ValueError:
+                print >> sys.stderr, "ERROR, Illegal line in suite state dump:"
+                print >> sys.stderr, " ", line
+                raise Exception("ERROR: corrupted state dump")
+            state = status.replace('status=', '')
+            # Back-compat <= 6.9.1: spawned string is lowercase 'true'.
+            spawned_status = spawned.replace('spawned=', '')
+            if spawned_status not in ['True', 'true', 'False', 'false']:
+                raise Exception("ERROR: bad state dump (%s)" % spawned)
+            has_spawned = spawned_status in ['True', 'true']
+            print " +", id_
+            task_states_datum = task_states_data.get((name, point_string))
+            try:
+                submit_num = task_states_datum.get("submit_num", 0)
+                # startup is True only for a cold start
+                itask = get_task_proxy(
+                    name,
+                    get_point(point_string),
+                    state,
+                    has_spawned,
+                    submit_num=submit_num,
+                    is_reload_or_restart=True,
+                    message_queue=self.pool.message_queue
+                )
+            except TaskNotDefinedError, x:
+                print >> sys.stderr, str(x)
+                print >> sys.stderr, (
+                    "WARNING: ignoring task %s " % name +
+                    "from the suite state dump file")
+                print >> sys.stderr, (
+                    "(the task definition has probably been "
+                    "deleted from the suite).")
+                continue
+            except Exception, x:
+                print >> sys.stderr, str(x)
+                print >> sys.stderr, (
+                    "ERROR: could not load task %s " % name +
+                    "from the suite state dump file"
+                )
+                # TODO: Is it safe to have "raise x" here?
+                continue
+
+            # see comments above on resurrecting tasks
+
+            if itask.state.status == TASK_STATUS_WAITING:
+                pass
+
+            elif itask.state.status == TASK_STATUS_HELD:
+                # Only waiting tasks get held. These need to be released
+                # on restart to avoid the automatic shutdown criterion:
+                # if all tasks are succeeded or held (e.g. because they
+                # passed the final cycle point) shut down automatically.
+                itask.state.set_state(TASK_STATUS_WAITING)
+
+            elif itask.state.status in [TASK_STATUS_SUBMITTED,
+                                        TASK_STATUS_RUNNING]:
+                itask.state.set_prerequisites_all_satisfied()
+                # update the task proxy with submit ID etc.
+                itask.try_number = task_states_datum.get("try_num")
+                itask.user_at_host = task_states_datum.get("host")
+                self.old_user_at_host_set.add(itask.user_at_host)
+                if itask.user_at_host is None:
+                    itask.user_at_host = "localhost"
+                # update timers in case regular polling is configured for itask
+                if '@' in itask.user_at_host:
+                    host = itask.user_at_host.split('@', 1)[1]
+                else:
+                    host = itask.user_at_host
+                itask.submission_poll_timer.set_host(host, set_timer=True)
+                itask.execution_poll_timer.set_host(host, set_timer=True)
+
+            elif itask.state.status in [
+                    TASK_STATUS_QUEUED, TASK_STATUS_READY,
+                    TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_SUBMIT_FAILED,
+                    TASK_STATUS_RETRYING, TASK_STATUS_FAILED]:
+                itask.state.set_prerequisites_all_satisfied()
+                if itask.state.status not in [
+                        TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
+                    # reset to waiting as these had not been submitted yet.
+                    itask.state.set_state(TASK_STATUS_WAITING)
+
+            elif itask.state.status == TASK_STATUS_SUCCEEDED:
+                itask.state.set_prerequisites_all_satisfied()
+                # TODO - just poll for outputs in the job status file.
+                itask.state.outputs.set_all_completed()
+
+            else:
+                raise Exception(
+                    'ERROR: unknown task state for %s' % itask.identity)
+
+            itasks[(point_string, name)] = itask
+            self.pool.add_to_runahead_pool(itask)
+
+        # Re-populate summary, a job host for each submit
+        # for display of logs in GUI
+        for datum in self.pri_dao.select_all_task_jobs(
+                ['cycle', 'name', 'submit_num', 'user_at_host']):
+            cycle, name, submit_num, user_at_host = datum
+            try:
+                itasks[(cycle, name)].summary['job_hosts'][int(submit_num)] = (
+                    user_at_host)
+            except (KeyError, ValueError):
+                pass
+
+        # Poll all submitted and running task jobs
+        self.pool.poll_task_jobs()
 
     def process_command_queue(self):
         queue = self.command_queue.get_queue()
@@ -539,24 +1077,6 @@ class Scheduler(object):
                     self._get_events_conf(self.EVENT_TIMEOUT)),
                 get_current_time_string())
 
-    def parse_commandline(self):
-        if self.options.run_mode not in [
-                'live', 'dummy', 'simulation']:
-            self.parser.error(
-                'Illegal run mode: %s\n' % self.options.run_mode)
-        self.run_mode = self.options.run_mode
-
-        if cylc.flags.debug:
-            self.logging_level = logging.DEBUG
-        else:
-            self.logging_level = logging.INFO
-
-        if self.options.reftest:
-            self.reference_test_mode = self.options.reftest
-
-        if self.options.genref:
-            self.gen_reference_log = self.options.genref
-
     def configure_pyro(self):
         """Create and configure Pyro daemon."""
         self.pyro = PyroDaemon(self.suite, self.suite_dir)
@@ -642,8 +1162,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         """Load and process the suite definition."""
 
         if self.is_restart:
-            self._cli_initial_point_string = (
-                self.get_state_initial_point_string())
+            self._cli_initial_point_string = self.get_state_file_info()[0]
             self.do_process_tasks = True
 
         self.load_suiterc(reconfigure)
@@ -701,10 +1220,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             # * private database file is private
             self.pri_dao = CylcSuiteDAO(pri_db_path)
             os.chmod(pri_db_path, 0600)
-            if self.is_restart:
-                sys.stdout.write("Rebuilding the suite db ...")
-                self.pri_dao.vacuum()
-                sys.stdout.write(" done\n")
             self.pub_dao = CylcSuiteDAO(pub_db_path, is_public=True)
             self._copy_pri_db_to_pub_db()
 
