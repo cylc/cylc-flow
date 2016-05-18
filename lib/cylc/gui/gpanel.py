@@ -40,6 +40,7 @@ from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
 from cylc.owner import USER
 from cylc.network.suite_state import extract_group_state
+from cylc.cfgspec.gscan import gsfg
 
 
 class ScanPanelApplet(object):
@@ -81,6 +82,8 @@ class ScanPanelApplet(object):
                                               owner=owner,
                                               poll_interval=poll_interval)
         self.top_hbox.connect("destroy", self.stop)
+        if gsfg.get(["activate on startup"]):
+            self.updater.start()
 
     def get_widget(self):
         """Return the topmost widget for embedding in the panel."""
