@@ -125,6 +125,33 @@ Sets the size of the cylc gui at startup.
 \item {\em example:} \lstinline@window size = 1000, 700@
 \end{myitemize}
 
+\subsubsection{sort column}
+
+If ``text'' is in \lstinline@initial views@ then \lstinline@sort column@ sets
+the column that will be sorted initially when the gui launches. Sorting can be
+changed later by clicking on the column headers.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal values:} ``task'', ``state'', ``host'', ``job system'',
+        ``job ID'', ``T-submit'', ``T-start'', ``T-finish'', ``dT-mean'',
+        ``latest message'', ``none''
+    \item {\em default:} ``none''
+    \item {\em example:} \lstinline@sort column = T-start@
+\end{myitemize}
+
+\subsubsection{sort column ascending}
+
+For use in combination with \lstinline@sort column@, sets weather the column will
+be sorted using ascending or descending order.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em legal values:} ``True'' (ascending), ``False'' (descending)
+    \item {\em default:} ``True''
+    \item {\em example:} \lstinline@sort column ascending = False@
+\end{myitemize}
+
 \subsection{[themes]}
 
 This section may contain task state color theme definitions.

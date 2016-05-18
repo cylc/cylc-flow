@@ -26,6 +26,7 @@ from parsec.config import config, ItemNotFoundError, itemstr
 from parsec.validate import validator as vdr
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
+from cylc.gui.view_tree import ControlTree
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUS_RUNAHEAD, TASK_STATUS_HELD,
     TASK_STATUS_WAITING, TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED,
@@ -51,6 +52,12 @@ SPEC = {
     'sort by definition order': vdr(vtype='boolean', default=True),
     'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
     'window size': vdr(vtype='integer_list', default=[800, 500]),
+    'sort column': vdr(
+        vtype='string',
+        default='none',
+        options=[heading for heading in ControlTree.headings if heading is not
+                 None] + ['none']),
+    'sort column ascending': vdr(vtype='boolean', default=True),
     'initial side-by-side views': vdr(vtype='boolean', default=False),
     'task states to filter out': vdr(
         vtype='string_list',

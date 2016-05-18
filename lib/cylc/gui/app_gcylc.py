@@ -669,6 +669,11 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             elif i == 1:
                 self._set_menu_view1(view)
                 self._set_tool_bar_view1(view)
+            if gcfg.get(['sort column']) != 'none' and view == 'text':
+                self.current_views[i].sort_by_column(
+                    gcfg.get(['sort column']),
+                    ascending=gcfg.get(['sort column ascending'])
+                )
 
     def change_view_layout(self, horizontal=False):
         """Switch between horizontal or vertical positioning of views."""
