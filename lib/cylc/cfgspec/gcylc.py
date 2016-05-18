@@ -42,25 +42,20 @@ SITE_FILE = os.path.join(
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gcylc.rc')
 
 SPEC = {
-    'initial views': vdr(vtype='string_list', default=["text"]),
-    'ungrouped views': vdr(vtype='string_list', default=[]),
-    'use theme': vdr(vtype='string', default="default"),
     'dot icon size': vdr(
         vtype='string',
         default="medium",
         options=["small", "medium", "large", "extra large"]),
+    'initial side-by-side views': vdr(vtype='boolean', default=False),
+    'initial views': vdr(vtype='string_list', default=["text"]),
     'sort by definition order': vdr(vtype='boolean', default=True),
-    'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
-    'window size': vdr(vtype='integer_list', default=[800, 500]),
-    'transpose graph': vdr(vtype='boolean', default=False),
-    'transpose dot': vdr(vtype='boolean', default=False),
     'sort column': vdr(
         vtype='string',
         default='none',
         options=[heading for heading in ControlTree.headings if heading is not
                  None] + ['none']),
     'sort column ascending': vdr(vtype='boolean', default=True),
-    'initial side-by-side views': vdr(vtype='boolean', default=False),
+    'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
     'task states to filter out': vdr(
         vtype='string_list',
         default=[TASK_STATUS_RUNAHEAD]),
@@ -83,6 +78,11 @@ SPEC = {
             TASK_STATUS_RUNAHEAD: vdr(vtype='string_list'),
         },
     },
+    'transpose dot': vdr(vtype='boolean', default=False),
+    'transpose graph': vdr(vtype='boolean', default=False),
+    'ungrouped views': vdr(vtype='string_list', default=[]),
+    'use theme': vdr(vtype='string', default="default"),
+    'window size': vdr(vtype='integer_list', default=[800, 500]),
 }
 
 
