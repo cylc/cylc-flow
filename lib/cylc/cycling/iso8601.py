@@ -446,12 +446,12 @@ class ISO8601Sequence(SequenceBase):
     def _check_and_cache_next_point(self, point, next_point):
         """Verify and cache the get_next_point return info."""
         # Verify next_point != point.
-
         if next_point == point:
             raise SequenceDegenerateError(
                 self.recurrence, SuiteSpecifics.DUMP_FORMAT,
                 next_point, point
             )
+
         # Cache the answer for point -> next_point.
         if (len(self._cached_next_point_values) >
                 self._MAX_CACHED_POINTS):
