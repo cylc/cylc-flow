@@ -201,31 +201,32 @@ class RegistrationDB(object):
         # passphrase on start-up because the "cylc run" command runs in
         # a parent suite task execution environment).
 
-        # 1/ Running tasks: suite def dir from the task execution environment.
-        # Test for presence of task execution environment
-        suite_host = os.getenv('CYLC_SUITE_HOST')
-        suite_owner = os.getenv('CYLC_SUITE_OWNER')
-        env_keys = []
-        if is_remote_host(suite_host) or is_remote_user(suite_owner):
-            # 2(i)/ Task messaging call on a remote account.
-            # First look in the remote suite run directory than suite
-            # definition directory ($CYLC_SUITE_DEF_PATH is modified
-            # for remote tasks):
-            env_keys = ['CYLC_SUITE_RUN_DIR', 'CYLC_SUITE_DEF_PATH']
-        elif suite_host or suite_owner:
-            # 2(ii)/ Task messaging call on the suite host account.
+        # 1/ Running tasks: suite run/def dir from the task job environment.
+        # Test for presence of task execution environment of requested suite.
+        if suite == os.getenv('CYLC_SUITE_NAME'):
+            suite_host = os.getenv('CYLC_SUITE_HOST')
+            suite_owner = os.getenv('CYLC_SUITE_OWNER')
+            env_keys = []
+            if is_remote_host(suite_host) or is_remote_user(suite_owner):
+                # 2(i)/ Task messaging call on a remote account.
+                # First look in the remote suite run directory than suite
+                # definition directory ($CYLC_SUITE_DEF_PATH is modified
+                # for remote tasks):
+                env_keys = ['CYLC_SUITE_RUN_DIR', 'CYLC_SUITE_DEF_PATH']
+            elif suite_host or suite_owner:
+                # 2(ii)/ Task messaging call on the suite host account.
 
-            # Could be a local task or a remote task with 'ssh
-            # messaging = True'. In either case use
-            # $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST which never
-            # changes, not $CYLC_SUITE_DEF_PATH which gets
-            # modified for remote tasks as described above.
-            env_keys = ['CYLC_SUITE_DEF_PATH_ON_SUITE_HOST']
-        for env_key in env_keys:
-            try:
-                return self.load_passphrase_from_dir(os.environ[env_key])
-            except (KeyError, IOError, PassphraseError):
-                pass
+                # Could be a local task or a remote task with 'ssh
+                # messaging = True'. In either case use
+                # $CYLC_SUITE_DEF_PATH_ON_SUITE_HOST which never
+                # changes, not $CYLC_SUITE_DEF_PATH which gets
+                # modified for remote tasks as described above.
+                env_keys = ['CYLC_SUITE_DEF_PATH_ON_SUITE_HOST']
+            for env_key in env_keys:
+                try:
+                    return self.load_passphrase_from_dir(os.environ[env_key])
+                except (KeyError, IOError, PassphraseError):
+                    pass
 
         # 2/ From memory cache
         if owner is None:
