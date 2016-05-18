@@ -669,11 +669,6 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             elif i == 1:
                 self._set_menu_view1(view)
                 self._set_tool_bar_view1(view)
-            if gcfg.get(['sort column']) != 'none' and view == 'text':
-                self.current_views[i].sort_by_column(
-                    gcfg.get(['sort column']),
-                    ascending=gcfg.get(['sort column ascending'])
-                )
 
     def change_view_layout(self, horizontal=False):
         """Switch between horizontal or vertical positioning of views."""
@@ -884,6 +879,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             view_widgets.set_size_request(1, 1)
         container.pack_start(view_widgets,
                              expand=True, fill=True)
+
+        # Set user default values for this view
+        self.set_view_defaults(viewname, view_num)
+
         # Handle menu
         menu = self.views_option_menus[view_num]
         for item in menu.get_children():
@@ -904,6 +903,23 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.tool_bars[view_num].insert(toolitem, index + 1)
         self.current_view_toolitems[view_num] = new_toolitems
         self.window_show_all()
+
+    def set_view_defaults(self, viewname, view_num):
+        """Apply user settings defined in gcylc.rc on a new view.
+        Run this method before handling menus or toolbars."""
+        # Sort text view by column ('sort column')
+        if gcfg.get(['sort column']) != 'none' and viewname == 'text':
+            self.current_views[view_num].sort_by_column(
+                gcfg.get(['sort column']),
+                ascending=gcfg.get(['sort column ascending'])
+            )
+        # Transpose graph view ('transpose graph')
+        elif gcfg.get(['transpose graph']) and viewname == 'graph':
+            self.current_views[view_num].toggle_left_to_right_mode(None)
+        # Transpose dot view ('transpose dot')
+        elif gcfg.get(['transpose dot']) and viewname == 'dot':
+            view = self.current_views[view_num]
+            view.t.should_transpose_view = True
 
     def remove_view(self, view_num):
         """Remove a view instance."""

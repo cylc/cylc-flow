@@ -52,6 +52,8 @@ SPEC = {
     'sort by definition order': vdr(vtype='boolean', default=True),
     'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
     'window size': vdr(vtype='integer_list', default=[800, 500]),
+    'transpose graph': vdr(vtype='boolean', default=False),
+    'transpose dot': vdr(vtype='boolean', default=False),
     'sort column': vdr(
         vtype='string',
         default='none',
