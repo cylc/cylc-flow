@@ -39,7 +39,6 @@ function get_real_job_id() {
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 #SBATCH --time=02:00
-#SBATCH --tasks=1
 __SBATCH__
     while read; do
         if [[ -z $REPLY ]]; then
