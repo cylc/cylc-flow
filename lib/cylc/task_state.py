@@ -397,6 +397,10 @@ class TaskState(object):
             self.set_prerequisites_not_satisfied()
             self.unset_special_outputs()
             self.outputs.set_all_incomplete()
+        elif status == TASK_STATUS_READY:
+            self.set_prerequisites_all_satisfied()
+            self.unset_special_outputs()
+            self.outputs.set_all_incomplete()
         elif status == TASK_STATUS_SUCCEEDED:
             self.set_prerequisites_all_satisfied()
             self.unset_special_outputs()
