@@ -87,7 +87,7 @@ SPEC = {
             'startup handler': vdr(vtype='string_list', default=[]),
             'timeout handler': vdr(vtype='string_list', default=[]),
             'shutdown handler': vdr(vtype='string_list', default=[]),
-            'stalled handler' : vdr(vtype='string_list', default=[]),
+            'stalled handler': vdr(vtype='string_list', default=[]),
             'timeout': vdr(vtype='interval_minutes'),
             'abort on timeout': vdr(vtype='boolean', default=False),
             'abort on stalled': vdr(vtype='boolean', default=False),
