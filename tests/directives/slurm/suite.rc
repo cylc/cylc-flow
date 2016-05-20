@@ -17,9 +17,6 @@
             method = slurm
         [[[directives]]]
             --time = 02:00
-            --nodes = 1
-            --tasks-per-node = 1
-            --cpus-per-task = 1
             {{SITE_DIRECTIVES}}
         [[[remote]]]
             host = {{ HOST }}

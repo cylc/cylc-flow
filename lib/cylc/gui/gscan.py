@@ -39,7 +39,7 @@ from cylc.network.port_scan import scan_all
 from cylc.owner import USER
 from cylc.version import CYLC_VERSION
 from cylc.task_state import TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD
-
+from cylc.cfgspec.gscan import gsfg
 
 PYRO_TIMEOUT = 2
 KEY_NAME = "name"
@@ -438,7 +438,7 @@ class ScanApp(object):
         host_name_column.set_cell_data_func(
             cell_text_host, self._set_cell_text_host)
         host_name_column.set_sort_column_id(0)
-        host_name_column.set_visible(False)
+        host_name_column.set_visible("host" in gsfg.get(["columns"]))
         host_name_column.set_resizable(True)
 
         # Construct the suite name column.
@@ -448,6 +448,7 @@ class ScanApp(object):
         suite_name_column.set_cell_data_func(
             cell_text_name, self._set_cell_text_name)
         suite_name_column.set_sort_column_id(1)
+        suite_name_column.set_visible("suite" in gsfg.get(["columns"]))
         suite_name_column.set_resizable(True)
 
         # Construct the suite title column.
@@ -457,7 +458,8 @@ class ScanApp(object):
         suite_title_column.set_cell_data_func(
             cell_text_title, self._set_cell_text_title)
         suite_title_column.set_sort_column_id(3)
-        suite_title_column.set_visible(False)
+        suite_title_column.set_visible("title" in gsfg.get(
+            ["columns"]))
         suite_title_column.set_resizable(True)
 
         # Construct the update time column.
@@ -467,7 +469,7 @@ class ScanApp(object):
         time_column.set_cell_data_func(
             cell_text_time, self._set_cell_text_time)
         time_column.set_sort_column_id(4)
-        time_column.set_visible(False)
+        time_column.set_visible("updated" in gsfg.get(["columns"]))
         time_column.set_resizable(True)
 
         self.suite_treeview.append_column(host_name_column)
@@ -478,6 +480,7 @@ class ScanApp(object):
         # Construct the status column.
         status_column = gtk.TreeViewColumn("Status")
         status_column.set_sort_column_id(5)
+        status_column.set_visible("status" in gsfg.get(["columns"]))
         status_column.set_resizable(True)
         status_column_info = 6
         cycle_column_info = 5
