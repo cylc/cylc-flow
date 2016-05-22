@@ -1,0 +1,13 @@
+<div class="container">
+    <div class="column" style="float:left; width:70%">
+        <h3>{{include.title}}</h3>
+        {{include.desc}}
+    </div>
+    <div class="column" style="float:right; width:30%">
+        {% if include.url %}
+            <a href="{{include.url}}">
+                <img style="width:100%" src="{{include.url}}">
+            </a>
+        {% endif %}
+    </div>
+</div>

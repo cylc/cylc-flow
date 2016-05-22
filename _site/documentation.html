@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cylc - documentation</title>
+		<link rel="stylesheet" type="text/css" href="css/main.css">
+	</head>
+	<body>
+        <div id="header">
+            <div class="page">
+                <div class="container">
+                    <div class="column">
+                        <a href="index.html" id="logo_top">
+                            <span style="color:#ff5966">c</span>
+                            <span style="color:#eebb00">y</span>
+                            <span style="color:#00c798">l</span>
+                            <span style="color:#00b4fd">c</span>
+                        </a>
+                    </div>  <!--column-->
+                    <div class="column">
+                        <div id="nav">
+                            <a href="features.html">Features</a>
+                            <a href="screenshots.html">Screenshots</a>
+                            <a href="documentation.html">Documentation</a>
+                            <a href="support.html">Support</a>
+                        </div>  <!--nav-->
+                    </div>  <!--column-->
+                </div>  <!--container-->
+            </div>  <!--page-->
+        </div>  <!--header-->
+
+		<div id="wrapper">
+			<div class="page">
+				<h1 class="no_toc" id="table-of-contents">Table of Contents</h1>
+
+<ul id="markdown-toc">
+  <li><a href="#documentation-links" id="markdown-toc-documentation-links">Documentation Links</a>    <ul>
+      <li><a href="#frequently-asked-questions" id="markdown-toc-frequently-asked-questions">Frequently Asked Questions</a></li>
+      <li><a href="#the-cylc-user-guide" id="markdown-toc-the-cylc-user-guide">The Cylc User Guide</a></li>
+    </ul>
+  </li>
+  <li><a href="#a-cycling-workflow-example" id="markdown-toc-a-cycling-workflow-example">A Cycling Workflow Example</a>    <ul>
+      <li><a href="#create-a-new-suite" id="markdown-toc-create-a-new-suite">Create A New Suite</a></li>
+      <li><a href="#register-it" id="markdown-toc-register-it">Register It</a></li>
+      <li><a href="#validate-it" id="markdown-toc-validate-it">Validate It</a></li>
+      <li><a href="#visualize-it" id="markdown-toc-visualize-it">Visualize It</a></li>
+      <li><a href="#run-it" id="markdown-toc-run-it">Run It</a></li>
+      <li><a href="#view-task-job-output" id="markdown-toc-view-task-job-output">View Task Job Output</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="documentation-links">Documentation Links</h2>
+
+<h3 id="frequently-asked-questions">Frequently Asked Questions</h3>
+<p>See <a href="./faq.html">FAQ</a>.</p>
+
+<h3 id="the-cylc-user-guide">The Cylc User Guide</h3>
+
+<p>If you have access to cylc, type <code class="highlighter-rouge">cylc doc</code> or use the GUI “Help” menu to view
+an online copy is available here:
+<a href="doc/cylc-user-guide-6p10p1.pdf">Cylc User Guide 6.10.0</a> (PDF, ~3.3MB)</p>
+
+<hr />
+
+<h2 id="a-cycling-workflow-example">A Cycling Workflow Example</h2>
+
+<p>The following example is intended to convey something of cylc’s basic
+functionality.  However, it barely scratches the surface; to understand more,
+read the User Guide!</p>
+
+<h3 id="create-a-new-suite">Create A New Suite</h3>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ mkdir -p /home/bob/suites/test/
+$ vim /home/bob/suites/test/suite.rc
+
+[cylc]
+    cycle point format = %Y
+
+[scheduling]
+   initial cycle point = 2021
+   final cycle point = 2023
+   [[dependencies]]
+      [[[R1]]]  # Initial cycle point.
+         graph = prep =&gt; model
+      [[[R//P1Y]]]  # Yearly cycling.
+         graph = model[-P1D] =&gt; model =&gt; post
+      [[[R1/P0Y]]]  # Final cycle point.
+         graph = post =&gt; stop
+
+[runtime]
+   [[root]]  # Inherited by all tasks.
+      script = sleep 10
+   [[model]]
+      script = echo "my FOOD is $FOOD"; sleep 10
+      [[[environment]]]
+         FOOD = icecream
+
+[visualization]
+    default node attributes = "style=filled", "shape=ellipse"
+    [[node attributes]]
+        prep = "fillcolor=#00c798"
+        stop = "fillcolor=#ffcc00"
+        model = "fillcolor=#00b4fd"
+        post = "fillcolor=#ff5966"
+</code></pre>
+</div>
+
+<h3 id="register-it">Register It</h3>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ cylc register my.suite /home/bob/suites/test
+REGISTER my.suite: /home/bob/suites/test
+
+$ cylc db print my.suite
+my.suite | No title provided | ~/suites/test
+
+$ cylc edit my.suite  # Open the suite in your editor again.
+
+$ cylc help  # See other commands!
+</code></pre>
+</div>
+
+<h3 id="validate-it">Validate It</h3>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ cylc validate my.suite
+Valid for cylc-6.10.1
+</code></pre>
+</div>
+
+<h3 id="visualize-it">Visualize It</h3>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ cylc graph my.suite &amp;
+</code></pre>
+</div>
+
+<p><img src="img/cylc-graph.png" alt="img/cylc-graph.png" /></p>
+
+<h3 id="run-it">Run It</h3>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ cylc run my.suite
+    # OR
+$ gcylc my.suite &amp;  # (and run it from the GUI)
+</code></pre>
+</div>
+
+<p><img src="img/gcylc-example.png" alt="img/gcylc-example.png" /></p>
+
+<h3 id="view-task-job-output">View Task Job Output</h3>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ cylc log -o my.suite model.2021
+
+JOB SCRIPT STARTING
+cylc Suite and Task Identity:
+Suite Name  : my.suite
+Suite Host  : niwa-34403.niwa.local
+Suite Port  : 7766
+Suite Owner : oliverh
+Task ID     : model.2021
+Task Host   : niwa-34403.niwa.local
+Task Owner  : oliverh
+Task Submit No.: 1
+Task Try No.: 1
+
+my FOOD is icecream
+
+cylc (scheduler - 2016-05-18T17:25:18+12): started at 2016-05-18T17:25:18+12
+cylc (scheduler - 2016-05-18T17:25:28+12): succeeded at 2016-05-18T17:25:28+12
+JOB SCRIPT EXITING (TASK SUCCEEDED)
+</code></pre>
+</div>
+
+            </div> <!--page-->
+        </div> <!--wrapper-->
+        <div id="footer">
+            <div class="page">
+                <div class="container">
+                    <div class="column" style="width:25%">
+                        <h4>Support</h4>
+                        <ul>
+                            <li><a href="https://groups.google.com/d/forum/cylc">Forum</a></li>
+                            <li><a href="https://github.com/cylc/cylc/issues">Issues</a></li>
+                        </ul>
+                    </div>  <!--column-->
+                    <div class="column" style="width:25%">
+                        <h4>About</h4>
+                        <ul>
+                            <li><a href="users.html">Users</a></li>
+                            <li><a href="license.html">License</a></li>
+                        </ul>
+                    </div>  <!--column-->
+                    <div class="column" style="width:25%">
+                        <h4>Development</h4>
+                        <ul>
+                            <li><a href="https://github.com/cylc/cylc">Repository</a></li>
+                            <li> <a href="https://github.com/cylc/cylc/blob/master/CHANGES.md">Changes</a>
+ 
+                        </ul>
+                    </div>  <!--column-->
+                    <div class="column" style="width:25%">
+                        <a href="index.html" id="logo_bot">
+                            <span style="color:#ff5966">c</span>
+                            <span style="color:#eebb00">y</span>
+                            <span style="color:#00c798">l</span>
+                            <span style="color:#00b4fd">c</span>
+                        </a>
+                    </div>  <!--column-->
+                </div>  <!--container-->
+            </div>  <!--page-->
+        </div>  <!--footer-->
+
+	</body>
+</html>

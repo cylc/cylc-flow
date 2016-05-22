@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cylc - {{ page.title }}</title>
+		<link rel="stylesheet" type="text/css" href="css/main.css">
+        {% include progress.html %}
+	</head>
+	<body>
+{% include header.html %}
+        <div id="wrapper">
+            <div class="page">
+                <div class="container">
+                    <div class="column" id="main-content">{{content}}</div>
+                    <div class="column" style="width:300px;" >{% include repository.html %} </div>
+                </div>  <!--container-->
+            </div>  <!--page-->
+        </div>  <!--wrapper-->
+{% include footer.html %}
+	</body>
+</html>

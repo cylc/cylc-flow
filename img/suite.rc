@@ -1,0 +1,30 @@
+[cylc]
+    cycle point format = %Y
+[scheduling]
+   initial cycle point = 2021
+   final cycle point = 2022
+   [[dependencies]]
+      [[[R1]]]
+         graph = prep => mode
+      [[[R//P1Y]]]
+         graph = mode[-P1D] => mode => post
+      [[[R1/P0Y]]]
+         graph = mode => stop
+
+[runtime]
+   [[root]] # Inherited by all tasks.
+      [[[remote]]]
+         host = hpcf.niwa.co.nz
+   [[mode]]
+      script = run_model.sh
+      [[[environment]]]
+         TIMESTEP = PT1M
+[visualization]
+    default node attributes = "style=filled", "shape=circle", "fontcolor=#888888", "color=#aaaaaa", "penwidth=5px"
+    use node color for edges = False
+    default edge attributes = "color=#aaaaaa"
+    [[node attributes]]
+        prep = "fillcolor=#aaaaaa"
+        stop = "fillcolor=#aaaaaa"
+        mode = "fillcolor=#cccccc"
+        post = "fillcolor=#dddddd"

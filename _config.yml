@@ -1,0 +1,2 @@
+repository: cylc/cylc
+gems: ['jekyll-github-metadata']
