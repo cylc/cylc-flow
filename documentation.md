@@ -16,9 +16,10 @@ See [FAQ](./faq.html).
 
 ### The Cylc User Guide
 
-If you have access to cylc, type `cylc doc` or use the GUI "Help" menu to view
-an online copy is available here:
-[Cylc User Guide 6.10.0](doc/cylc-user-guide-6p10p1.pdf) (PDF, ~3.3MB)
+If you have access to cylc already, type `cylc doc` or use the GUI "Help" menu
+to view the User Guide.  An online copy is available here:
+
+* [Cylc User Guide 6.10.1](doc/cylc-user-guide-6p10p1.pdf) (PDF, ~3.3MB)
 
 ---
 
