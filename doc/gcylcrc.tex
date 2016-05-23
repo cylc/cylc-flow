@@ -19,7 +19,8 @@ views.
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em legal values:} ``small'' (10px), ``medium'' (14px), ``large'' (20px)
+\item {\em legal values:} ``small'' (10px), ``medium'' (14px), ``large'' (20px),
+        ``extra large (30px)''
 \item {\em default:} ``medium''
 \end{myitemize}
 
@@ -27,12 +28,11 @@ views.
 \subsubsection{initial side-by-side views}
 
 Set the suite view panels initial orientation when the GUI starts.
-This can be changed later using the "View" menu "Toggle views side-by-side"
+This can be changed later using the ``View'' menu ``Toggle views side-by-side''
  option.
 
 \begin{myitemize}
 \item {\em type:} boolean (False or True)
-\item {\em legal values:} ``False'', ``True''.
 \item {\em default:} ``False''
 \end{myitemize}
 
@@ -67,7 +67,7 @@ definition order is not available at all.
 \subsubsection{sort column}
 
 If ``text'' is in \lstinline@initial views@ then \lstinline@sort column@ sets
-the column that will be sorted initially when the gui launches. Sorting can be
+the column that will be sorted initially when the GUI launches. Sorting can be
 changed later by clicking on the column headers.
 
 \begin{myitemize}
@@ -82,12 +82,11 @@ changed later by clicking on the column headers.
 
 \subsubsection{sort column ascending}
 
-For use in combination with \lstinline@sort column@, sets weather the column will
+For use in combination with \lstinline@sort column@, sets whether the column will
 be sorted using ascending or descending order.
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em legal values:} ``True'' (ascending), ``False'' (descending)
     \item {\em default:} ``True''
     \item {\em example:} \lstinline@sort column ascending = False@
 \end{myitemize}
@@ -123,11 +122,10 @@ submit-failed, submit-retrying, running, succeeded, failed, retrying, runahead
 
 Transposes the content in dot view so that it displays from left to right rather
 than from top to bottom. Can be changed later using the options submenu
-avaliable via the view menu.
+available via the view menu.
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em legal values:} ``True'' (left-to-right), ``False'' (top-to-bottom)
     \item {\em default:} ``False''
     \item {\em example:} \lstinline@transpose dot = True@
 \end{myitemize}
@@ -137,11 +135,10 @@ avaliable via the view menu.
 
 Transposes the content in graph view so that it displays from left to right
 rather than from top to bottom. Can be changed later using the options submenu
-avaliable via the view menu.
+via the view menu.
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em legal values:} ``True'' (left-to-right), ``False'' (top-to-bottom)
     \item {\em default:} ``False''
     \item {\em example:} \lstinline@transpose graph = True@
 \end{myitemize}
@@ -180,13 +177,13 @@ to list your available themes.
 
 \subsubsection{window size}
 
-Sets the size of the cylc gui at startup.
+Sets the size (in pixels) of the cylc GUI at startup.
 
 \begin{myitemize}
     \item {\em type:} integer list (x, y)
-\item {\em legal values:} positive integers
-\item {\em default:} 800, 500
-\item {\em example:} \lstinline@window size = 1000, 700@
+    \item {\em legal values:} positive integers
+    \item {\em default:} 800, 500
+    \item {\em example:} \lstinline@window size = 1000, 700@
 \end{myitemize}
 
 
