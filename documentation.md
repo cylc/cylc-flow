@@ -19,7 +19,9 @@ See [FAQ](./faq.html).
 If you have access to cylc already, type `cylc doc` or use the GUI "Help" menu
 to view the User Guide.  Otherwise, an online copy is available here:
 
-* [Cylc User Guide](doc/cylc-user-guide.pdf) (PDF, ~3.3MB)
+* [Cylc User Guide - PDF ~3MB](doc/cylc-user-guide.pdf)
+* [Cylc User Guide - HTML single page](html/single/cug-html.html)
+* [Cylc User Guide - HTML multi page](html/multi/cug-html.html)
 
 ---
 
