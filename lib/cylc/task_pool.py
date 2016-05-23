@@ -761,7 +761,7 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if (itask.state.status in [TASK_STATUS_QUEUED,
                                        TASK_STATUS_READY] or
-               itask.state.status in TASK_STATUSES_ACTIVE):
+                    itask.state.status in TASK_STATUSES_ACTIVE):
                 return False
             if (not itask.start_time_reached() and
                 itask.state.status not in [TASK_STATUS_SUCCEEDED,

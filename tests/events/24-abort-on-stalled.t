@@ -15,15 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test suite event handler, flexible interface with stalled handler
+# Test suite event handler, abort on stalled setting
 . "$(dirname "$0")/test_header"
-set_test_number 2
+set_test_number 3
 
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 run_ok "${TEST_NAME_BASE}-validate" \
     cylc validate "${SUITE_NAME}"
-suite_run_ok "${TEST_NAME_BASE}-run" \
+suite_run_fail "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug "${SUITE_NAME}"
+grep_ok "Abort on suite stalled is set" "${TEST_NAME_BASE}-run.stderr"
 
 purge_suite "${SUITE_NAME}"
 exit
