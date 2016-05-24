@@ -1012,6 +1012,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 self.pool.reload_taskdefs()
                 self.do_update_state_summary = True
 
+            self.process_command_queue()
             self.pool.release_runahead_tasks()
             proc_pool.handle_results_async()
 
@@ -1065,8 +1066,6 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                             "pub_db_name": self.pub_dao.db_file_name,
                             "pri_db_name": self.pri_dao.db_file_name})
                     self.pub_dao.n_tries = 0
-
-            self.process_command_queue()
 
             if cylc.flags.iflag or self.do_update_state_summary:
                 cylc.flags.iflag = False
