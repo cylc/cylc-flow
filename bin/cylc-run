@@ -16,142 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""cylc [control] run|start [OPTIONS] ARGS
-
-Start a suite run from scratch, wiping out any previous suite state. To
-restart from a previous state see 'cylc restart --help'.
-
-The scheduler runs in daemon mode unless you specify --no-detach or --debug.
-
-Any dependence on cycle points earlier than the start cycle point is ignored.
-
-A "cold start" (the default) starts from the suite's initial cycle point
-(specified in the suite.rc or on the command line), and loads any special
-one-off cold-start tasks (see below).
-
-A "warm start" (-w/--warm) starts from a given cycle point that is later than
-the initial cycle point (specified in the suite.rc), and loads any cold-start
-tasks as succeeded just to satisfy initial dependence on them.  The original
-suite initial cycle point is preserved, but all tasks and dependencies before
-the given start cycle point are ignored.
-
-Aside from the starting cycle point there is no difference between cold and
-warm start unless you use special cold-start tasks. See "Suite Start-up" and
-"Cold-Start Tasks" in the User Guide for more."""
+"""CLI of "cylc run". See cylc.scheduler_cli for detail."""
 
 import sys
 from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-import os
-import datetime
 
-import cylc.flags
-from cylc.CylcOptionParsers import cop
-from cylc.scheduler import Scheduler
-from cylc.run import main
-from cylc.registration import RegistrationDB
-from cylc.task_proxy import TaskProxySequenceBoundsError
-from cylc.task_state import TASK_STATUS_SUCCEEDED
-from cylc.get_task_proxy import get_task_proxy
+from cylc.scheduler_cli import main
 
-
-class start(Scheduler):
-    def __init__(self):
-        self.parser = cop(
-            __doc__, jset=True,
-            argdoc=[("REG", "Suite name"),
-                    ("[START_POINT]",
-                     # 31 spaces, initial ident on 2nd line
-                     "Initial cycle point or 'now';\n" +
-                     " " * 31 + "overrides the suite definition.")])
-
-        self.parser.add_option(
-            "--non-daemon", help="(deprecated: use --no-detach)",
-            action="store_true", default=False, dest="no_detach")
-
-        self.parser.add_option(
-            "-n", "--no-detach", help="Do not daemonize the suite",
-            action="store_true", default=False, dest="no_detach")
-
-        self.parser.add_option(
-            "-a", "--no-auto-shutdown", help="Do not shut down"
-            " the suite automatically when all tasks have finished."
-            " This flag overrides the corresponding suite config item.",
-            action="store_true", default=False, dest="no_auto_shutdown")
-
-        self.parser.add_option(
-            "--profile", help="Output profiling (performance) information",
-            action="store_true", default=False, dest="profile_mode")
-
-        self.parser.add_option(
-            "-w", "--warm",
-            help="Warm start the suite. "
-                 "The default is to cold start.",
-            action="store_true", default=False, dest="warm")
-
-        self.parser.add_option(
-            "--ict",
-            help="Set $CYLC_SUITE_INITIAL_CYCLE_POINT to the initial "
-                 "cycle point even in a warm start (as for cold starts).",
-            action="store_true", default=False, dest="set_ict")
-
-        Scheduler.__init__(self)
-
-    def parse_commandline(self):
-        (self.options, self.args) = self.parser.parse_args()
-        self.suite = self.args[0]
-        self.suiterc = RegistrationDB(self.options.db).get_suiterc(self.suite)
-        self.suite_dir = os.path.dirname(self.suiterc)
-
-        # For user-defined job submission methods:
-        sys.path.append(os.path.join(self.suite_dir, 'python'))
-
-        if len(self.args) == 2:
-            if self.options.warm:
-                self._cli_start_point_string = self.args[1]
-            else:
-                self._cli_initial_point_string = self.args[1]
-        elif self.options.warm:
-            # No warm-start cycle point supplied.
-            sys.exit(self.parser.get_usage())
-
-        Scheduler.parse_commandline(self)
-
-    def load_tasks(self):
-        if self.start_point is not None:
-            if self.options.warm:
-                self.log.info('Warm Start %s' % self.start_point)
-            else:
-                self.log.info('Cold Start %s' % self.start_point)
-
-        task_list = self.filter_initial_task_list(
-            self.config.get_task_name_list())
-        coldstart_tasks = self.config.get_coldstart_task_list()
-
-        for name in task_list:
-            if self.start_point is None:
-                # No start cycle point at which to load cycling tasks.
-                continue
-            try:
-                itask = get_task_proxy(
-                    name, self.start_point, is_startup=True,
-                    message_queue=self.pool.message_queue)
-            except TaskProxySequenceBoundsError as exc:
-                self.log.debug(str(exc))
-                continue
-            if name in coldstart_tasks and self.options.warm:
-                itask.state.set_state(TASK_STATUS_SUCCEEDED)
-                itask.state.set_prerequisites_all_satisfied()
-                itask.state.outputs.set_all_completed()
-            # Load task.
-            self.pool.add_to_runahead_pool(itask)
 
 if __name__ == '__main__':
-    try:
-        main("run", start)
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main(is_restart=False)
