@@ -2078,7 +2078,7 @@ shown here in the state they were in at the time of triggering.''')
             warning_dialog('Enter valid task/family IDs', self.window).warn()
             return
         for i, task_id in enumerate(task_ids):
-            if not TaskID.is_valid_id_2(task_id):
+            if not TaskID.is_valid_id_for_insert(task_id):
                 warning_dialog(
                     '"%s": invalid task ID (argument %d)' % (task_id, i + 1),
                     self.window).warn()

@@ -59,19 +59,10 @@ class TaskID(object):
                 point and cls.POINT_REC.match(point))
 
     @classmethod
-    def is_valid_id_2(cls, id_str):
-        """Return whether a task id is valid.
+    def is_valid_id_for_insert(cls, id_str):
+        """Return whether id_str is good as an insert client argument.
 
-        Accept "NAME.POINT" or "POINT/NAME" format.
+        Return True if "." or "/" appears once in the string. Cannot really
+        do more as the string may have wildcards.
         """
-        if cls.DELIM not in id_str and cls.DELIM2 not in id_str:
-            return False
-        try:
-            point, name = id_str.split(cls.DELIM2, 1)
-        except ValueError:
-            return cls.is_valid_id(id_str)
-        else:
-            return (
-                name and cls.NAME_REC.match(name) and
-                point and cls.POINT_REC.match(point)
-            )
+        return id_str.count(cls.DELIM) == 1 or id_str.count(cls.DELIM2) == 1
