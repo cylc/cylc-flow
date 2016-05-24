@@ -205,6 +205,7 @@ SPEC = {
             'startup handler': vdr(vtype='string_list'),
             'timeout handler': vdr(vtype='string_list'),
             'shutdown handler': vdr(vtype='string_list'),
+            'stalled handler': vdr(vtype='string_list'),
             'timeout': vdr(vtype='interval_minutes'),
             'reset timer': vdr(vtype='boolean', default=True),
             'abort if startup handler fails': vdr(
@@ -213,6 +214,9 @@ SPEC = {
                 vtype='boolean', default=False),
             'abort if timeout handler fails': vdr(
                 vtype='boolean', default=False),
+            'abort if stalled handler fails': vdr(
+                vtype='boolean', default=False),
+            'abort on stalled': vdr(vtype='boolean'),
             'abort on timeout': vdr(vtype='boolean'),
             'mail events': vdr(vtype='string_list'),
             'mail from': vdr(vtype='string'),

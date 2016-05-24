@@ -756,6 +756,20 @@ class TaskPool(object):
                     return False
         return True
 
+    def pool_is_stalled(self):
+        """Return True if no active, queued or clock trigger awaiting tasks"""
+        for itask in self.get_tasks():
+            if (itask.state.status in [TASK_STATUS_QUEUED,
+                                       TASK_STATUS_READY] or
+                    itask.state.status in TASK_STATUSES_ACTIVE):
+                return False
+            if (not itask.start_time_reached() and
+                itask.state.status not in [TASK_STATUS_SUCCEEDED,
+                                           TASK_STATUS_FAILED,
+                                           TASK_STATUS_SUBMIT_FAILED]):
+                return False
+        return True
+
     def poll_task_jobs(self, items=None, compat=None):
         """Poll jobs of active tasks.
 

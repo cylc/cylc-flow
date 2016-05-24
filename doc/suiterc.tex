@@ -240,6 +240,7 @@ following EVENTs occurs:
     \item {\bf startup}  - the suite has started running
     \item {\bf shutdown} - the suite is shutting down
     \item {\bf timeout}  - the suite has timed out
+    \item {\bf stalled} - the suite has stalled
 \end{myitemize}
 
 Default values for these can be set at the site level via the siterc file
@@ -337,6 +338,19 @@ time.
 \begin{myitemize}
     \item {\em type:} boolean
     \item {\em default:} True
+\end{myitemize}
+
+\paragraph[abort on stalled]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on stalled}
+
+If this is set to True it will cause the suite to abort with error status
+if it stalls. A suite is considered "stalled" if there are no active,
+queued or submitting tasks or tasks waiting for clock triggers to be met. It is
+possible to set a default for this at the site level
+(see ~\ref{SiteCylcHooks}).
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False, unless set at the site level.
 \end{myitemize}
 
 \paragraph[abort on timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on timeout}
