@@ -21,7 +21,11 @@ sleep 60
     [[killable-1, killable-2, killable-3]]
         inherit=KILLABLE
     [[killer]]
-        script=cylc kill -m "${CYLC_SUITE_NAME}" '*:submitted'
+        script="""
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+sleep 5
+cylc kill -m "${CYLC_SUITE_NAME}" '*:submitted'
+"""
     [[sleeper]]
         script=sleep 20
     [[stopper]]
