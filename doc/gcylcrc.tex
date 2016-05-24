@@ -12,6 +12,31 @@ command.
 
 \subsection{Top Level Items}
 
+\subsubsection{dot icon size}
+
+Set the size of the task state dot icons displayed in the text and dot
+views.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em legal values:} ``small'' (10px), ``medium'' (14px), ``large'' (20px),
+        ``extra large (30px)''
+\item {\em default:} ``medium''
+\end{myitemize}
+
+
+\subsubsection{initial side-by-side views}
+
+Set the suite view panels initial orientation when the GUI starts.
+This can be changed later using the ``View'' menu ``Toggle views side-by-side''
+ option.
+
+\begin{myitemize}
+\item {\em type:} boolean (False or True)
+\item {\em default:} ``False''
+\end{myitemize}
+
+
 \subsubsection{initial views}
 
 Set the suite view panel(s) displayed initially, when the GUI starts.
@@ -23,6 +48,101 @@ This can be changed later using the tool bar.
 \item {\em default:} ``text''
 \item {\em example:} \lstinline@initial views = graph, dot@
 \end{myitemize}
+
+\subsubsection{sort by definition order}
+
+If this is not turned off the default sort order for task names and
+families in the dot and text views will the order they appear in the
+suite definition. Clicking on the task name column in the treeview will
+toggle to alphanumeric sort, and a View menu item does the same for the
+dot view.  If turned off, the default sort order is alphanumeric and
+definition order is not available at all.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em default:} True
+\end{myitemize}
+
+
+\subsubsection{sort column}
+
+If ``text'' is in \lstinline@initial views@ then \lstinline@sort column@ sets
+the column that will be sorted initially when the GUI launches. Sorting can be
+changed later by clicking on the column headers.
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em legal values:} ``task'', ``state'', ``host'', ``job system'',
+        ``job ID'', ``T-submit'', ``T-start'', ``T-finish'', ``dT-mean'',
+        ``latest message'', ``none''
+    \item {\em default:} ``none''
+    \item {\em example:} \lstinline@sort column = T-start@
+\end{myitemize}
+
+
+\subsubsection{sort column ascending}
+
+For use in combination with \lstinline@sort column@, sets whether the column will
+be sorted using ascending or descending order.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} ``True''
+    \item {\em example:} \lstinline@sort column ascending = False@
+\end{myitemize}
+
+
+\subsubsection{task filter highlight color}
+
+The color used to highlight active task filters in gcylc. It must be a name
+from the X11 rgb.txt file, e.g.\ \lstinline=SteelBlue=; or a
+{\em quoted} hexadecimal color code, e.g.\ \lstinline="#ff0000"= for red (quotes
+are required to prevent the hex code being interpreted as a comment).
+
+\begin{myitemize}
+    \item {\em type:} string
+    \item {\em default:} \lstinline=PowderBlue=
+\end{myitemize}
+
+
+\subsubsection{task states to filter out}
+
+Set the initial filtering options when the GUI starts. Later this can be
+changed by using the "View" menu "Task Filtering" option.
+
+\begin{myitemize}
+\item {\em type:} string list
+\item {\em legal values:} waiting, held, queued, ready, expired, submitted,
+submit-failed, submit-retrying, running, succeeded, failed, retrying, runahead
+\item {\em default:} runahead
+\end{myitemize}
+
+
+\subsubsection{transpose dot}
+
+Transposes the content in dot view so that it displays from left to right rather
+than from top to bottom. Can be changed later using the options submenu
+available via the view menu.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} ``False''
+    \item {\em example:} \lstinline@transpose dot = True@
+\end{myitemize}
+
+
+\subsubsection{transpose graph}
+
+Transposes the content in graph view so that it displays from left to right
+rather than from top to bottom. Can be changed later using the options submenu
+via the view menu.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} ``False''
+    \item {\em example:} \lstinline@transpose graph = True@
+\end{myitemize}
+
 
 \subsubsection{ungrouped views}
 
@@ -36,6 +156,7 @@ using the tool bar.
 \item {\em default:} (none)
 \item {\em example:} \lstinline@ungrouped views = text, dot@
 \end{myitemize}
+
 
 \subsubsection{use theme}
 
@@ -53,66 +174,18 @@ to list your available themes.
 \item {\em default:} ``default''
 \end{myitemize}
 
-\subsubsection{initial side-by-side views}
 
-Set the suite view panels initial orientation when the GUI starts.
-This can be changed later using the "View" menu "Toggle views side-by-side"
- option.
+\subsubsection{window size}
 
-\begin{myitemize}
-\item {\em type:} boolean (False or True)
-\item {\em legal values:} ``False'', ``True''.
-\item {\em default:} ``False''
-\end{myitemize}
-
-\subsubsection{task states to filter out}
-
-Set the initial filtering options when the GUI starts. Later this can be
-changed by using the "View" menu "Task Filtering" option.
+Sets the size (in pixels) of the cylc GUI at startup.
 
 \begin{myitemize}
-\item {\em type:} string list
-\item {\em legal values:} waiting, held, queued, ready, expired, submitted,
-submit-failed, submit-retrying, running, succeeded, failed, retrying, runahead
-\item {\em default:} runahead
+    \item {\em type:} integer list (x, y)
+    \item {\em legal values:} positive integers
+    \item {\em default:} 800, 500
+    \item {\em example:} \lstinline@window size = 1000, 700@
 \end{myitemize}
 
-\subsubsection{dot icon size}
-
-Set the size of the task state dot icons displayed in the text and dot
-views.
-
-\begin{myitemize}
-\item {\em type:} string
-\item {\em legal values:} ``small'' (10px), ``medium'' (14px), ``large'' (20px)
-\item {\em default:} ``medium''
-\end{myitemize}
-
-\subsubsection{sort by definition order}
-
-If this is not turned off the default sort order for task names and
-families in the dot and text views will the order they appear in the
-suite definition. Clicking on the task name column in the treeview will
-toggle to alphanumeric sort, and a View menu item does the same for the
-dot view.  If turned off, the default sort order is alphanumeric and
-definition order is not available at all.
-
-\begin{myitemize}
-\item {\em type:} boolean
-\item {\em default:} True
-\end{myitemize}
-
-\subsubsection{task filter highlight color}
-
-The color used to highlight active task filters in gcylc. It must be a name
-from the X11 rgb.txt file, e.g.\ \lstinline=SteelBlue=; or a
-{\em quoted} hexadecimal color code, e.g.\ \lstinline="#ff0000"= for red (quotes
-are required to prevent the hex code being interpreted as a comment).
-
-\begin{myitemize}
-    \item {\em type:} string
-    \item {\em default:} \lstinline=PowderBlue=
-\end{myitemize}
 
 \subsection{[themes]}
 

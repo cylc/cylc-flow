@@ -26,6 +26,7 @@ from parsec.config import config, ItemNotFoundError, itemstr
 from parsec.validate import validator as vdr
 from parsec.upgrade import upgrader
 from parsec.util import printcfg
+from cylc.gui.view_tree import ControlTree
 from cylc.task_state import (
     TASK_STATUSES_ALL, TASK_STATUS_RUNAHEAD, TASK_STATUS_HELD,
     TASK_STATUS_WAITING, TASK_STATUS_EXPIRED, TASK_STATUS_QUEUED,
@@ -41,16 +42,20 @@ SITE_FILE = os.path.join(
 USER_FILE = os.path.join(os.environ['HOME'], '.cylc', 'gcylc.rc')
 
 SPEC = {
-    'initial views': vdr(vtype='string_list', default=["text"]),
-    'ungrouped views': vdr(vtype='string_list', default=[]),
-    'use theme': vdr(vtype='string', default="default"),
     'dot icon size': vdr(
         vtype='string',
         default="medium",
         options=["small", "medium", "large", "extra large"]),
-    'sort by definition order': vdr(vtype='boolean', default=True),
-    'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
     'initial side-by-side views': vdr(vtype='boolean', default=False),
+    'initial views': vdr(vtype='string_list', default=["text"]),
+    'sort by definition order': vdr(vtype='boolean', default=True),
+    'sort column': vdr(
+        vtype='string',
+        default='none',
+        options=[heading for heading in ControlTree.headings if heading is not
+                 None] + ['none']),
+    'sort column ascending': vdr(vtype='boolean', default=True),
+    'task filter highlight color': vdr(vtype='string', default='PowderBlue'),
     'task states to filter out': vdr(
         vtype='string_list',
         default=[TASK_STATUS_RUNAHEAD]),
@@ -73,6 +78,11 @@ SPEC = {
             TASK_STATUS_RUNAHEAD: vdr(vtype='string_list'),
         },
     },
+    'transpose dot': vdr(vtype='boolean', default=False),
+    'transpose graph': vdr(vtype='boolean', default=False),
+    'ungrouped views': vdr(vtype='string_list', default=[]),
+    'use theme': vdr(vtype='string', default="default"),
+    'window size': vdr(vtype='integer_list', default=[800, 500]),
 }
 
 
@@ -173,8 +183,24 @@ class gconfig(config):
         cfg['themes'] = cfg_themes
 
     def check(self):
-        # check initial view config
         cfg = self.get(sparse=True)
+
+        # check window size config
+        if 'window size' in cfg:
+            fail = False
+            if len(cfg['window size']) != 2:
+                print >> sys.stderr, ("WARNING: window size requires two "
+                                      "values (x, y). Using default.")
+                fail = True
+            elif cfg['window size'][0] < 0 or cfg['window size'][1] < 0:
+                print >> sys.stderr, ("WARNING: window size values must be "
+                                      "positive. Using default.")
+                fail = True
+            # TODO: check for daft window sizes? (10, 5), (80000, 5000) ?
+            if fail:
+                cfg['window size'] = [800, 500]
+
+        # check initial view config
         if 'initial views' not in cfg:
             return
         views = copy(cfg['initial views'])
