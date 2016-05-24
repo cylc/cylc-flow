@@ -1,0 +1,25 @@
+title = Test cylc hold/release remembers satisfied dependencies
+[cylc]
+    UTC mode = True
+    [[event hooks]]
+        abort on stalled = True
+    [[reference test]]
+        live mode suite timeout = PT30S
+        required run mode = live
+[scheduling]
+    initial cycle time = 2016
+    final cycle time = 2016
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = """
+holder => t1
+holder => releaser
+t1[-P1Y] => t1
+"""
+[runtime]
+    [[t1]]
+        script = true
+    [[holder]]
+        script = cylc hold "${CYLC_SUITE_NAME}" 't1.2016'
+    [[releaser]]
+        script = sleep 1; cylc release "${CYLC_SUITE_NAME}" 't1.2016'
