@@ -760,7 +760,8 @@ class TaskPool(object):
         """Return True if no active, queued or clock trigger awaiting tasks"""
         for itask in self.get_tasks():
             if (itask.state.status in [TASK_STATUS_QUEUED,
-                                       TASK_STATUS_READY] or
+                                       TASK_STATUS_READY,
+                                       TASK_STATUS_HELD] or
                     itask.state.status in TASK_STATUSES_ACTIVE):
                 return False
             if (not itask.start_time_reached() and
