@@ -32,7 +32,6 @@ from parsec import ParsecError
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.fileparse import parse
-from isodatetime.data import Calendar
 from cylc.owner import USER
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p

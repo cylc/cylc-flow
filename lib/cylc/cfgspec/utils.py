@@ -24,6 +24,9 @@ def coerce_interval(value, keys, args, back_comp_unit_factor=1,
                     check_syntax_version=True):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote(keys, value)
+    if value == '':
+        # Allow explicit empty values.
+        return None
     try:
         backwards_compat_value = float(value) * back_comp_unit_factor
     except (TypeError, ValueError):
