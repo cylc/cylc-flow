@@ -143,7 +143,7 @@ class StateSummaryServer(PyroServer):
                     count[state] = 1
 
                 all_states.append(state)
-                for parent in ancestors_dict[key]:
+                for parent in ancestors_dict.get(key, []):
                     if parent == key:
                         continue
                     c_fam_task_states.setdefault(parent, set([]))

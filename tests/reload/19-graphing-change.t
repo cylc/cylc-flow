@@ -80,5 +80,7 @@ grep_ok "\[bol.*\].*orphaned" $LOG_FILE
 # shutdown suite
 TEST_NAME=$TEST_NAME_BASE-shutdown
 run_ok $TEST_NAME cylc shutdown $SUITE_NAME
+
+# tidy up
 purge_suite $SUITE_NAME
 #-------------------------------------------------------------------------------
