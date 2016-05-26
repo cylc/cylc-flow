@@ -19,7 +19,7 @@
 """Task state related logic."""
 
 
-from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import WARNING, INFO, DEBUG
 
 import cylc.flags as flags
 from cylc.task_outputs import TaskOutputs
@@ -146,15 +146,11 @@ TASK_STATUSES_AUTO_EXPAND = set([
 
 class TaskStateError(ValueError):
     """Illegal task state."""
-
-    def __init__(self, msg):
-        self.msg = msg
-
-    def __str__(self):
-        return repr(self.msg)
+    pass
 
 
 class TaskState(object):
+    """Task status and utilities."""
 
     # Associate status names with other properties.
     _STATUS_MAP = {
@@ -292,6 +288,7 @@ class TaskState(object):
         return (not self._is_satisfied or not self._suicide_is_satisfied)
 
     def suicide_prerequisites_are_all_satisfied(self):
+        """Return True if all suicide prerequisites are satisfied."""
         if self._recalc_satisfied:
             self._suicide_is_satisfied = all(
                 preq.is_satisfied() for preq in self.suicide_prerequisites)
@@ -305,22 +302,26 @@ class TaskState(object):
         return points
 
     def prerequisites_eval_all(self):
+        """Set all prerequisites to satisfied."""
         # (Validation: will abort on illegal trigger expressions.)
         for preqs in [self.prerequisites, self.suicide_prerequisites]:
             for preq in preqs:
                 preq.is_satisfied()
 
     def set_prerequisites_all_satisfied(self):
+        """Set prerequisites to all satisfied."""
         for prereq in self.prerequisites:
             prereq.set_satisfied()
         self._recalc_satisfied = True
 
     def set_prerequisites_not_satisfied(self):
+        """Reset prerequisites."""
         for prereq in self.prerequisites:
             prereq.set_not_satisfied()
         self._recalc_satisfied = True
 
     def prerequisites_dump(self):
+        """Dump prerequisites."""
         res = []
         for preq in self.prerequisites:
             res += preq.dump()
@@ -360,7 +361,11 @@ class TaskState(object):
         old_status = self._state_pre_hold
         self._state_pre_hold = None
         self.log(INFO, 'held => %s' % (old_status))
-        self.reset_state(old_status)
+
+        # Turn off submission and execution timeouts.
+        self.submission_timer_timeout = None
+        self.execution_timer_timeout = None
+        self.set_state(old_status)
 
     def set_state(self, status):
         """Set, log and record task status (normal change, not forced - don't
@@ -372,6 +377,7 @@ class TaskState(object):
             self.db_update_status()
 
     def reset_state(self, status):
+        """Reset status of task."""
         if status == TASK_STATUS_HELD:
             if self.status in TASK_STATUSES_ACTIVE:
                 self.hold_on_retry = True
@@ -415,6 +421,7 @@ class TaskState(object):
         # TODO - handle other state resets here too, such as retrying...?
 
     def is_ready_to_run(self, retry_delay_done, start_time_reached):
+        """With current status, is the task ready to run?"""
         return (
             (
                 (
@@ -459,6 +466,7 @@ class TaskState(object):
             self.reset_state(TASK_STATUS_HELD)
 
     def set_submit_succeeded(self):
+        """Set status to submitted."""
         if not self.outputs.is_completed(TASK_OUTPUT_SUBMITTED):
             self.outputs.set_completed(TASK_OUTPUT_SUBMITTED)
             # Allow submitted tasks to spawn even if nothing else is happening.
@@ -513,6 +521,7 @@ class TaskState(object):
             self.reset_state(TASK_STATUS_HELD)
 
     def record_output(self, msg, msg_was_polled):
+        """Record a completed output."""
         if self.outputs.exists(msg):
             if not self.outputs.is_completed(msg):
                 flags.pflag = True

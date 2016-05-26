@@ -211,7 +211,9 @@ class Prerequisite(object):
     def set_not_satisfied(self):
         for label in self.messages:
             self.satisfied[label] = False
-        if self.conditional_expression is None:
+        if not self.satisfied:
+            self.all_satisfied = True
+        elif self.conditional_expression is None:
             self.all_satisfied = False
         else:
             self.all_satisfied = self._conditional_is_satisfied()
