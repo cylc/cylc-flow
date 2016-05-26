@@ -2822,8 +2822,12 @@ For example, all these are valid in cylc:
             graph = "delayed_cold_corge => corge"
 
         # Repeat once at the final cycle point
-        [[[ R1/P0Y ]]]
+        [[[ R1/$ ]]]
             graph = "end_garply"
+
+        # Repeat once three days before the final cycle point
+        [[[ R1/$-P3D ]]]
+            graph = "before_end_garply"
 
         # Repeat 3 times, every day at 08:30 after the initial cycle point
         [[[ R3/T0830 ]]]
@@ -2937,6 +2941,29 @@ So, for example, you can write:
         # Repeat every 1 day ending at 00:00 following the final cycle point
         [[[ R//T00 ]]]
             graph = "bidiurnal_wobble => bidiurnal_wubble"
+\end{lstlisting}
+\lstset{language=transcript}
+
+For convenience the caret and dollar symbols may be used as shorthand for the
+initial and final cycle points. Using this shorthand you can write:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        # Repeat once 12 hours after the initial cycle point
+        # Equivalent to [[[ R1/T12 ]]]
+        [[[ R1/^+PT12H ]]]
+            graph = "foo_check"
+
+        # Repeat once at the final cycle point
+        # Equivalent to [[[ R1//+P0D ]]]
+        [[[ R1/$ ]]]
+            graph = "foo => end"
+
+        # Repeat 3 hourly starting two days before the final cycle point
+        [[[ $-P2D/PT3H ]]]
+            graph = "foo => bar"
 \end{lstlisting}
 \lstset{language=transcript}
 
