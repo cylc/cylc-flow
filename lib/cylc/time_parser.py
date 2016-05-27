@@ -104,7 +104,8 @@ class CylcTimeParser(object):
                          "-": [re.compile("^\d\d\dT"),
                                re.compile("\dW\d\dT"),
                                re.compile("W\d\d\d?T"),
-                               re.compile("W-\dT")]}
+                               re.compile("W-\dT"),
+                               re.compile("W-\d")]}
 
     def __init__(self, context_start_point,
                  context_end_point, num_expanded_year_digits=0,
