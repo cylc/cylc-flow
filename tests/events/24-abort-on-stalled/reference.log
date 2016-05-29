@@ -1,4 +1,3 @@
-2016-05-23T12:58:33Z INFO - Suite starting on eld170.desktop.frd.metoffice.com:7766
 2016-05-23T12:58:33Z INFO - Run mode: live
 2016-05-23T12:58:33Z INFO - Initial point: 1
 2016-05-23T12:58:33Z INFO - Final point: 1
@@ -14,9 +13,6 @@
 2016-05-23T12:58:33Z DEBUG - [foo.1] -incrementing submit number
 2016-05-23T12:58:33Z DEBUG - [foo.1] -(setting: ready)
 2016-05-23T12:58:33Z DEBUG - END TASK PROCESSING (took 0.0159630775452 sec)
-2016-05-23T12:58:34Z DEBUG - [client-connect] aclark@eld170.desktop.frd.metoffice.com:cylc-message privilege='full-control' b90eef6f-1dc1-482e-8321-ca7970d982e1
-2016-05-23T12:58:34Z INFO - [client-command] task_message aclark@eld170.desktop.frd.metoffice.com:cylc-message b90eef6f-1dc1-482e-8321-ca7970d982e1
-2016-05-23T12:58:34Z DEBUG - 2016-05-23T13:58:33+01 [jobs-submit cmd] cylc jobs-submit --debug -- /home/h06/aclark/cylc-run/test/log/job 1/foo/01
 2016-05-23T13:58:33+01 [jobs-submit ret_code] 0
 2016-05-23T13:58:33+01 [jobs-submit out]
 
@@ -33,8 +29,6 @@
 2016-05-23T12:58:34Z DEBUG - END TASK PROCESSING (took 0.00137901306152 sec)
 2016-05-23T12:58:34Z INFO - [foo.1] -(current:submitted)> started at 2016-05-23T12:58:34Z
 2016-05-23T12:58:34Z DEBUG - [foo.1] -(setting: running)
-2016-05-23T12:58:34Z DEBUG - [client-connect] aclark@eld170.desktop.frd.metoffice.com:cylc-message privilege='full-control' 91c26233-0e25-4826-ab0d-aec75b3fe56d
-2016-05-23T12:58:34Z INFO - [client-command] task_message aclark@eld170.desktop.frd.metoffice.com:cylc-message 91c26233-0e25-4826-ab0d-aec75b3fe56d
 2016-05-23T12:58:35Z DEBUG - BEGIN TASK PROCESSING
 2016-05-23T12:58:35Z DEBUG - 0 task(s) de-queued
 2016-05-23T12:58:35Z DEBUG - END TASK PROCESSING (took 0.000829935073853 sec)
@@ -48,9 +42,6 @@
 2016-05-23T12:58:36Z DEBUG - [bar.1] -incrementing submit number
 2016-05-23T12:58:36Z DEBUG - [bar.1] -(setting: ready)
 2016-05-23T12:58:36Z DEBUG - END TASK PROCESSING (took 0.0199220180511 sec)
-2016-05-23T12:58:37Z DEBUG - [client-connect] aclark@eld170.desktop.frd.metoffice.com:cylc-message privilege='full-control' 8135b32c-4801-4efa-8782-ec993b2034cc
-2016-05-23T12:58:37Z INFO - [client-command] task_message aclark@eld170.desktop.frd.metoffice.com:cylc-message 8135b32c-4801-4efa-8782-ec993b2034cc
-2016-05-23T12:58:37Z DEBUG - 2016-05-23T13:58:36+01 [jobs-submit cmd] cylc jobs-submit --debug -- /home/h06/aclark/cylc-run/test/log/job 1/bar/01
 2016-05-23T13:58:36+01 [jobs-submit ret_code] 0
 2016-05-23T13:58:36+01 [jobs-submit out]
 
@@ -67,10 +58,6 @@
 2016-05-23T12:58:37Z DEBUG - END TASK PROCESSING (took 0.00132513046265 sec)
 2016-05-23T12:58:37Z INFO - [bar.1] -(current:submitted)> started at 2016-05-23T12:58:37Z
 2016-05-23T12:58:37Z DEBUG - [bar.1] -(setting: running)
-2016-05-23T12:58:37Z DEBUG - [client-connect] aclark@eld170.desktop.frd.metoffice.com:cylc-message privilege='full-control' 1dde2401-18bb-4606-afb0-9c26b541b7c9
-2016-05-23T12:58:37Z INFO - [client-command] task_message aclark@eld170.desktop.frd.metoffice.com:cylc-message 1dde2401-18bb-4606-afb0-9c26b541b7c9
-2016-05-23T12:58:37Z DEBUG - [client-connect] aclark@eld170.desktop.frd.metoffice.com:cylc-message privilege='full-control' 1dde2401-18bb-4606-afb0-9c26b541b7c9
-2016-05-23T12:58:37Z INFO - [client-command] task_message aclark@eld170.desktop.frd.metoffice.com:cylc-message 1dde2401-18bb-4606-afb0-9c26b541b7c9
 2016-05-23T12:58:38Z DEBUG - BEGIN TASK PROCESSING
 2016-05-23T12:58:38Z DEBUG - 0 task(s) de-queued
 2016-05-23T12:58:38Z DEBUG - END TASK PROCESSING (took 0.00465202331543 sec)
