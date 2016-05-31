@@ -370,6 +370,19 @@ class ISO8601Sequence(SequenceBase):
 
     def is_on_sequence(self, point):
         """Return True if point is on-sequence."""
+        # Iterate starting at recent valid points, for speed.
+        for valid_point in reversed(self._cached_recent_valid_points):
+            if valid_point == point:
+                return True
+            if valid_point > point:
+                continue
+            next_point = valid_point
+            while next_point is not None and next_point < point:
+                next_point = self.get_next_point_on_sequence(next_point)
+            if next_point is None:
+                continue
+            if next_point == point:
+                return True
         return self.recurrence.get_is_valid(point_parse(point.value))
 
     def is_valid(self, point):
