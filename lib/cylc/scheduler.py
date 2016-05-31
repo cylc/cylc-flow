@@ -40,7 +40,7 @@ from cylc.config import SuiteConfig, TaskNotDefinedError
 from cylc.cycling import PointParsingError
 from cylc.cycling.loader import (
     get_point, standardise_point_string, DefaultCycler, ISO8601_CYCLING_TYPE)
-from cylc.daemonize import daemonize
+from cylc.daemonize import daemonize, SUITE_SCAN_INFO_TMPL
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.get_task_proxy import get_task_proxy
@@ -203,28 +203,25 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
+        self._check_port_file_does_not_exist(self.suite)
         self._print_blurb()
-        try:
-            GLOBAL_CFG.create_cylc_run_tree(self.suite)
-            if self.is_restart:
-                run_dir = GLOBAL_CFG.get_derived_host_item(
-                    self.suite, 'suite run directory')
-                pri_db_path = os.path.join(
-                    run_dir, 'state', CylcSuiteDAO.DB_FILE_BASE_NAME)
-                if os.path.exists(pri_db_path):
-                    pri_dao = CylcSuiteDAO(pri_db_path)
-                    sys.stdout.write("Vacuuming the suite db ...")
-                    pri_dao.vacuum()
-                    sys.stdout.write(" done\n")
-                    pri_dao.close()
-        except Exception as exc:
-            if cylc.flags.debug:
-                raise
-            else:
-                sys.exit(exc)
+
+        GLOBAL_CFG.create_cylc_run_tree(self.suite)
+
+        if self.is_restart:
+            run_dir = GLOBAL_CFG.get_derived_host_item(
+                self.suite, 'suite run directory')
+            pri_db_path = os.path.join(
+                run_dir, 'state', CylcSuiteDAO.DB_FILE_BASE_NAME)
+            if os.path.exists(pri_db_path):
+                pri_dao = CylcSuiteDAO(pri_db_path)
+                sys.stdout.write("Vacuuming the suite db ...")
+                pri_dao.vacuum()
+                sys.stdout.write(" done\n")
+                pri_dao.close()
 
         try:
-            self.configure_pyro()
+            self._configure_pyro()
             if not self.options.no_detach and not cylc.flags.debug:
                 daemonize(self)
             self.configure()
@@ -277,6 +274,36 @@ class Scheduler(object):
             stats.sort_stats('cumulative')
             stats.print_stats()
             print string_stream.getvalue()
+        print
+
+    @staticmethod
+    def _check_port_file_does_not_exist(suite):
+        """Fail if port file exists. Return port file path otherwise."""
+        port_file_path = os.path.join(
+            GLOBAL_CFG.get(['pyro', 'ports directory']), suite)
+        try:
+            port, host = open(port_file_path).read().splitlines()
+        except (IOError, ValueError):
+            # Suite is not likely to be running if port file does not exist
+            # or if port file does not contain good values of port and host.
+            return port_file_path
+        else:
+            sys.stderr.write(
+                (
+                    r"""ERROR: port file exists: %(port_file_path)s
+
+If %(suite)s is not running, delete the port file and try again.  If it is
+running but not responsive, kill any left over suite processes too.""" +
+                    SUITE_SCAN_INFO_TMPL
+                ) % {
+                    "host": host,
+                    "port": port,
+                    "port_file_path": port_file_path,
+                    "suite": suite,
+                }
+            )
+            raise SchedulerError(
+                "ERROR, port file exists: %s" % port_file_path)
 
     @staticmethod
     def _print_blurb():
@@ -308,6 +335,21 @@ conditions; see `cylc conditions`.
         for i in range(len(logo_lines)):
             print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
         print
+
+    def _configure_pyro(self):
+        """Create and configure Pyro daemon."""
+        self.pyro = PyroDaemon(self.suite, self.suite_dir)
+        self.port = self.pyro.get_port()
+        port_file_path = self._check_port_file_does_not_exist(self.suite)
+        try:
+            with open(port_file_path, 'w') as handle:
+                handle.write("%d\n%s\n" % (self.port, self.host))
+        except IOError as exc:
+            sys.stderr.write(str(exc) + "\n")
+            raise SchedulerError(
+                'ERROR, cannot write port file: %s' % port_file_path)
+        else:
+            self.port_file = port_file_path
 
     def configure(self):
         self.log_memory("scheduler.py: start configure")
@@ -1076,49 +1118,6 @@ conditions; see `cylc conditions`.
                 get_seconds_as_interval_string(
                     self._get_events_conf(self.EVENT_TIMEOUT)),
                 get_current_time_string())
-
-    def configure_pyro(self):
-        """Create and configure Pyro daemon."""
-        self.pyro = PyroDaemon(self.suite, self.suite_dir)
-        self.port = self.pyro.get_port()
-        self.port_file = os.path.join(
-            GLOBAL_CFG.get(['pyro', 'ports directory']), self.suite)
-        try:
-            port, host = open(self.port_file).read().splitlines()
-        except (IOError, ValueError):
-            # Suite is not likely to be running if port file does not exist
-            # or if port file does not contain good values of port and host.
-            pass
-        else:
-            sys.stderr.write(
-                (
-                    r"""ERROR: port file exists: %(port_file)s
-
-If %(suite)s is not running, delete the port file and try again.  If it is
-running but not responsive, kill any left over suite processes too.
-
-To see if %(suite)s is running on '%(host)s:%(port)s':
- * cylc scan -n '\b%(suite)s\b' %(host)s
- * cylc ping -v --host=%(host)s %(suite)s
- * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
-
-"""
-                ) % {
-                    "host": host,
-                    "port": port,
-                    "port_file": self.port_file,
-                    "suite": self.suite,
-                }
-            )
-            raise SchedulerError(
-                "ERROR, port file exists: %s" % self.port_file)
-        try:
-            with open(self.port_file, 'w') as handle:
-                handle.write("%d\n%s\n" % (self.port, self.host))
-        except IOError as exc:
-            sys.stderr.write(str(exc) + "\n")
-            raise SchedulerError(
-                'ERROR, cannot write port file: %s' % self.port_file)
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""

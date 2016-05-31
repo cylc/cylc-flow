@@ -23,20 +23,23 @@ import sys
 from cylc.suite_output import suite_output
 
 
+SUITE_SCAN_INFO_TMPL = r"""
+
+To see if '%(suite)s' is running on '%(host)s:%(port)s':
+ * cylc scan -n '\b%(suite)s\b' %(host)s
+ * cylc ping -v --host=%(host)s %(suite)s
+ * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
+
+"""
+
+
 _INFO_TMPL = r"""
 Suite Info:
  + Name: %(suite)s
  + PID: %(pid)s
  + Host: %(host)s
  + Port: %(port)s
- + Logs: %(logd)s/{log,out,err}
-
-To see if this suite is still running:
- * cylc scan -n '\b%(suite)s\b' %(host)s
- * cylc ping -v --host=%(host)s %(suite)s
- * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
-
-"""
+ + Logs: %(logd)s/{log,out,err}""" + SUITE_SCAN_INFO_TMPL
 
 
 def daemonize(server):
