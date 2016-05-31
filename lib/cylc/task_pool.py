@@ -32,7 +32,7 @@ tasks against the new stop cycle.
 """
 
 from fnmatch import fnmatchcase
-from logging import ERROR, DEBUG, INFO, WARNING
+from logging import ERROR, DEBUG, INFO, WARNING, getLogger
 import os
 from Pyro.errors import NamingError
 import re
@@ -701,13 +701,19 @@ class TaskPool(object):
     def reload_taskdefs(self):
         """Reload task definitions."""
         self.log.info("Reloading task definitions.")
+        # Log tasks orphaned by a reload that were not in the task pool.
+        for task in self.orphans:
+            if task not in [tsk.tdef.name for tsk in self.get_all_tasks()]:
+                getLogger("main").log(WARNING, "Removed task: '%s'" % (task,))
         for itask in self.get_all_tasks():
             if itask.tdef.name in self.orphans:
                 if itask.state.status in [
                         TASK_STATUS_WAITING, TASK_STATUS_QUEUED,
-                        TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING]:
+                        TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING,
+                        TASK_STATUS_HELD]:
                     # Remove orphaned task if it hasn't started running yet.
-                    self.remove(itask, '(task orphaned by suite reload)')
+                    itask.log(WARNING, "(task orphaned by suite reload)")
+                    self.remove(itask)
                 else:
                     # Keep active orphaned task, but stop it from spawning.
                     itask.has_spawned = True

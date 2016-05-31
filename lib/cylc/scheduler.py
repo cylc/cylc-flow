@@ -1096,8 +1096,17 @@ conditions; see `cylc conditions`.
     def command_reload_suite(self):
         """Reload suite configuration."""
         self.log.info("Reloading the suite definition.")
+        old_tasks = set(self.config.get_task_name_list())
         self.configure_suite(reconfigure=True)
         self.pool.reconfigure(self.final_point)
+
+        # Log tasks that have been added by the reload, removed tasks are
+        # logged by the TaskPool.
+        add = set(self.config.get_task_name_list()) - old_tasks
+        for task in add:
+            logging.getLogger("main").log(
+                logging.WARNING, "Added task: '%s'" % (task,))
+
         self.configure_suite_environment()
         if self.gen_reference_log or self.reference_test_mode:
             self.configure_reftest(recon=True)
