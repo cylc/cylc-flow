@@ -2822,6 +2822,10 @@ For example, all these are valid in cylc:
             graph = "delayed_cold_corge => corge"
 
         # Repeat once at the final cycle point
+        [[[ R1/P0Y ]]]
+            graph = "end_garply"
+
+        # Repeat once at the final cycle point (alternative form)
         [[[ R1/$ ]]]
             graph = "end_garply"
 
@@ -2952,18 +2956,29 @@ initial and final cycle points. Using this shorthand you can write:
 [scheduling]
     [[dependencies]]
         # Repeat once 12 hours after the initial cycle point
-        # Equivalent to [[[ R1/T12 ]]]
-        [[[ R1/^+PT12H ]]]
+        # Equivalent to [[[ R1/+PT12H ]]]
+        [[[ R1/^+PT12H ]]]  # R[limit]/[date-time]
             graph = "foo_check"
 
         # Repeat once at the final cycle point
         # Equivalent to [[[ R1//+P0D ]]]
-        [[[ R1/$ ]]]
+        [[[ R1/$ ]]]  # R[limit]/[date-time]
             graph = "foo => end"
 
         # Repeat 3 hourly starting two days before the final cycle point
-        [[[ $-P2D/PT3H ]]]
+        [[[ $-P2D/PT3H ]]]  # [date-time]/[interval]
             graph = "foo => bar"
+\end{lstlisting}
+\lstset{language=transcript}
+
+Note that there can be multiple ways to write the same headings, for instance
+the following all repeat once at the final cycle point:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ R1/P0Y ]]]    # R[limit]/[interval]
+[[[ R1/P0Y/$ ]]]  # R[limit]/[interval]/[date-time]
+[[[ R1/$ ]]]      # R[limit]/[date-time]
 \end{lstlisting}
 \lstset{language=transcript}
 
