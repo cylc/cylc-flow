@@ -5,6 +5,62 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
 
+
+## __cylc-6.10.2 (2016-06-02)__
+
+### Highlighted Changes
+
+[#1848](https://github.com/cylc/cylc/pull/1848): Automatic stalled-suite
+detection, a "stalled" event hook, and an option to abort (shutdown) if stalled.
+
+[#1850](https://github.com/cylc/cylc/pull/1850): Much reduced CPU loading in
+cycling suites that have progressed far beyond their initial cycle point (cache
+recent points to avoid continually iterating from the start).
+
+[#1836](https://github.com/cylc/cylc/pull/1836): New `gscan.rc` file to
+configure the initial state of `cylc gpanel` and `cylc gscan` (e.g. which
+columns to display).
+
+[#1849](https://github.com/cylc/cylc/pull/1849): New configuration options for
+the `gcylc` GUI, e.g. to set the initial window size.
+
+
+### Other Changes
+
+[#1863](https://github.com/cylc/cylc/pull/1863): Report tasks added or removed
+by a suite reload.
+
+[#1844](https://github.com/cylc/cylc/pull/1844): Allow client commands from
+another suite's task (these would previously load the passphrase for the parent
+suite rather than the target suite).
+
+[#1866](https://github.com/cylc/cylc/pull/1866): Allow explicitly unset
+intervals in cylc config files, e.g. `execution timeout = # (nothing)`.
+
+[#1863](https://github.com/cylc/cylc/pull/1863): Fixed a recent bug (since in
+6.10.0) causing shutdown on reload of a suite after removing a task and its
+runtime definition.
+
+[#1864](https://github.com/cylc/cylc/pull/): Stronger checks to prevent users 
+starting a second instance of a suite that is already running.
+
+[#1869](https://github.com/cylc/cylc/pull/1869): Fixed day-of-week cycling.
+
+[#1858](https://github.com/cylc/cylc/pull/1858): Fixed a recent bug (since
+6.10.1) that could prevent a task at suite start-up from submitting even though
+its prerequisites were satisfied.
+
+[#1855](https://github.com/cylc/cylc/pull/1855): Allow inserted tasks to be
+released to the `waiting` immediately, even if the suite is currently quiet.
+
+[#1854](https://github.com/cylc/cylc/pull/): Restore wildcards to allow 
+insertion of multiple tasks at once (inadvertently disallowed at 6.10.0). 
+
+[#1853](https://github.com/cylc/cylc/pull/1853): Fixed a recent bug (since
+6.10.1): reset task outputs to incomplete on manually retriggering or resetting
+to a pre-run state.
+
+
 ## __cylc-6.10.1 (2016-05-17)__
 
 ### Highlighted Changes
