@@ -331,6 +331,7 @@ class ISO8601Sequence(SequenceBase):
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
+        self._cached_recent_valid_points = []
 
         self.spec = recurrence_syntax
         self.custom_point_parse_function = None
@@ -364,10 +365,24 @@ class ISO8601Sequence(SequenceBase):
         self._cached_first_point_values = {}
         self._cached_next_point_values = {}
         self._cached_valid_point_booleans = {}
+        self._cached_recent_valid_points = []
         self.value = str(self.recurrence)
 
     def is_on_sequence(self, point):
         """Return True if point is on-sequence."""
+        # Iterate starting at recent valid points, for speed.
+        for valid_point in reversed(self._cached_recent_valid_points):
+            if valid_point == point:
+                return True
+            if valid_point > point:
+                continue
+            next_point = valid_point
+            while next_point is not None and next_point < point:
+                next_point = self.get_next_point_on_sequence(next_point)
+            if next_point is None:
+                continue
+            if next_point == point:
+                return True
         return self.recurrence.get_is_valid(point_parse(point.value))
 
     def is_valid(self, point):
@@ -422,22 +437,45 @@ class ISO8601Sequence(SequenceBase):
             return ISO8601Point(self._cached_next_point_values[point.value])
         except KeyError:
             pass
+        # Iterate starting at recent valid points, for speed.
+        for valid_point in reversed(self._cached_recent_valid_points):
+            if valid_point >= point:
+                continue
+            next_point = valid_point
+            while next_point is not None and next_point <= point:
+                next_point = self.get_next_point_on_sequence(next_point)
+            if next_point is not None:
+                self._check_and_cache_next_point(point, next_point)
+                return next_point
+        # Iterate starting at the beginning.
         p_iso_point = point_parse(point.value)
         for recurrence_iso_point in self.recurrence:
             if recurrence_iso_point > p_iso_point:
-                next_point_value = str(recurrence_iso_point)
-                if (len(self._cached_next_point_values) >
-                        self._MAX_CACHED_POINTS):
-                    self._cached_next_point_values.popitem()
-                self._cached_next_point_values[point.value] = next_point_value
-                next_point = ISO8601Point(next_point_value)
-                if next_point == point:
-                    raise SequenceDegenerateError(
-                        self.recurrence, SuiteSpecifics.DUMP_FORMAT,
-                        nearest_point, point
-                    )
+                next_point = ISO8601Point(str(recurrence_iso_point))
+                self._check_and_cache_next_point(point, next_point)
                 return next_point
         return None
+
+    def _check_and_cache_next_point(self, point, next_point):
+        """Verify and cache the get_next_point return info."""
+        # Verify next_point != point.
+        if next_point == point:
+            raise SequenceDegenerateError(
+                self.recurrence, SuiteSpecifics.DUMP_FORMAT,
+                next_point, point
+            )
+
+        # Cache the answer for point -> next_point.
+        if (len(self._cached_next_point_values) >
+                self._MAX_CACHED_POINTS):
+            self._cached_next_point_values.popitem()
+        self._cached_next_point_values[point.value] = next_point.value
+
+        # Cache next_point as a valid starting point for this recurrence.
+        if (len(self._cached_next_point_values) >
+                self._MAX_CACHED_POINTS):
+            self._cached_recent_valid_points.pop(0)
+        self._cached_recent_valid_points.append(next_point)
 
     def get_next_point_on_sequence(self, point):
         """Return the on-sequence point > point assuming that point is
