@@ -30,7 +30,6 @@ from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_state import TASK_STATUSES_AUTO_EXPAND
 
 
-
 def _time_trim(time_value):
     if time_value is not None:
         return time_value.rsplit(".", 1)[0]

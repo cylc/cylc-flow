@@ -22,6 +22,8 @@ from updater_tree import TreeUpdater
 from cylc.task_id import TaskID
 from isodatetime.parsers import DurationParser
 
+from collections import defaultdict
+
 
 class ControlTree(object):
     """Text Treeview suite control interface."""
@@ -101,8 +103,10 @@ class ControlTree(object):
         self.tmodelsort = gtk.TreeModelSort(self.tmodelfilter)
         self.ttreeview.set_model(self.tmodelsort)
 
+        # multiple selection
         ts = self.ttreeview.get_selection()
-        ts.set_mode(gtk.SELECTION_SINGLE)
+        self.ttreeview.set_rubber_banding(True)
+        ts.set_mode(gtk.SELECTION_MULTIPLE)
 
         self.ttreeview.connect(
             'button_press_event', self.on_treeview_button_pressed)
@@ -144,46 +148,49 @@ class ControlTree(object):
         if event.button != 3:
             return False
 
-        # the following sets selection to the position at which the
-        # right click was done (otherwise selection lags behind the
-        # right click):
+        # If clicking on a task that is not selected, set the selection to be
+        # that task.
         x = int(event.x)
         y = int(event.y)
-        time = event.time
         pth = treeview.get_path_at_pos(x, y)
 
         if pth is None:
             return False
 
         treeview.grab_focus()
-        path, col, cellx, celly = pth
-        treeview.set_cursor(path, col, 0)
+        path, col, _, _ = pth
+        tvte = TreeViewTaskExtractor(treeview)
+        selected_paths = [row[0] for row in tvte.get_selected_rows()]
+        if path not in selected_paths:
+            treeview.set_cursor(path, col, 0)
 
-        selection = treeview.get_selection()
-        treemodel, iter = selection.get_selected()
-        point_string = treemodel.get_value(iter, 0)
-        name = treemodel.get_value(iter, 1)
-        if point_string == name:
-            name = "root"
+        # Populate lists of task info from the selected tasks.
+        task_ids = []
+        t_states = []
+        task_is_family = []  # List of boolean values.
+        for task in tvte.get_selected_tasks():
+            # get_selected_tasks() does not return tasks if their parent node
+            # is also returned, i.e. no duplicates.
+            point_string, name = task
 
-        task_id = TaskID.get(name, point_string)
+            if point_string == name:
+                name = 'root'
 
-        is_fam = (name in self.t.descendants)
+            task_id = TaskID.get(name, point_string)
+            task_ids.append(task_id)
+            is_fam = (name in self.t.descendants)
+            task_is_family.append(is_fam)
+            if is_fam:
+                if task_id not in self.t.fam_state_summary:
+                    return False
+                t_states.append(self.t.fam_state_summary[task_id]['state'])
+            else:
+                if task_id not in self.t.state_summary:
+                    return False
+                t_states.append(self.t.state_summary[task_id]['state'])
 
-        if is_fam:
-            if task_id not in self.t.fam_state_summary:
-                return False
-            task_state = self.t.fam_state_summary[task_id]['state']
-            submit_num = None
-        else:
-            if task_id not in self.t.state_summary:
-                return False
-            task_state = self.t.state_summary[task_id]['state']
-            submit_num = self.t.state_summary[task_id]['submit_num']
-
-        menu = self.get_right_click_menu(
-            task_id, t_state=task_state,
-            task_is_family=is_fam, submit_num=submit_num)
+        menu = self.get_right_click_menu(task_ids, t_states,
+                                         task_is_family=task_is_family)
 
         sep = gtk.SeparatorMenuItem()
         sep.show()
@@ -373,3 +380,67 @@ class StandaloneControlTreeApp(ControlTree):
         self.quit_gcapture()
         ControlTree.click_exit(self, foo)
         gtk.main_quit()
+
+
+class TreeViewTaskExtractor(object):
+    """Extracts information from the rows currently selected in the provided
+    treeview."""
+
+    def __init__(self, treeview):
+        self.treeview = treeview
+
+    def get_selected_tasks(self):
+        rows = self.get_selected_rows()
+        tree = self._make_tree_from_rows(rows)
+        tree = self._prune_tree(tree)
+        return self._flatten_list(tree)
+
+    def get_selected_rows(self):
+        """Returns a list of rows that are currently selected in the provided
+        treeview. Rows are returned in the form (path, col1, col2)"""
+        model, rows = self.treeview.get_selection().get_selected_rows()
+        rows.sort()
+        ret = []
+        for row in rows:
+            _iter = model.get_iter(row)
+            path = model.get_path(_iter)
+            ret.append((
+                path, model.get_value(_iter, 0), model.get_value(_iter, 1)))
+        return ret
+
+    def _make_tree_from_rows(self, rows):
+        """Convert list of rows to a tree.
+        Rows are denoted with the entry 'node' which holds the value
+        (row1, row2)."""
+        tree = {}
+        for task in rows:
+            path, row1, row2 = task
+            temp = tree
+            for index, key in enumerate(path):
+                if index == len(path) - 1:
+                    temp[key] = {'node': (row1, row2)}
+                if key not in temp:
+                    temp[key] = {}
+                temp = temp[key]
+        return tree
+
+    def _prune_tree(self, tree_dict):
+        """Returns a list of nodes which have no parent node above them."""
+        if 'node' in tree_dict:
+            return tree_dict['node']
+        else:
+            ret = []
+            for key in tree_dict:
+                ret.append(self._prune_tree(tree_dict[key]))
+            return ret
+
+    def _flatten_list(self, tree_list):
+        """Reduces irregular, multi-dimensional lists to a list containing all
+        its items."""
+        ret = []
+        for item in tree_list:
+            if type(item) is list:
+                ret.extend(self._flatten_list(item))
+            else:
+                ret.append(item)
+        return ret

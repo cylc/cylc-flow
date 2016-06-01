@@ -194,7 +194,7 @@ Dependency graph suite control interface.
                     return False
                 t_state = self.t.state_summary[task_id]['state']
             default_menu = self.get_right_click_menu(
-                task_id, t_state, task_is_family=is_fam)
+                [task_id], [t_state], task_is_family=[is_fam])
             dm_kids = default_menu.get_children()
             for item in reversed(dm_kids[:2]):
                 # Put task name and URL at the top.
