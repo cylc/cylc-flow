@@ -17,12 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gtk
-import os
-import re
 import gobject
 from updater_tree import TreeUpdater
-from gcapture import gcapture_tmpfile
-from warning_dialog import warning_dialog, info_dialog
 from cylc.task_id import TaskID
 from isodatetime.parsers import DurationParser
 
