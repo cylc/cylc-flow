@@ -136,12 +136,17 @@
         <DetectChar attribute='String' char='"'/>
         <DetectChar attribute='String' char="'"/>
         <DetectChar attribute="Assignment" char="\" />
-        <RegExpr attribute='Comment' String="\{#.*#\}"/>
         <RegExpr attribute='Jinja2' String="\{%.*%\}"/>
         <RegExpr attribute='Jinja2' String="\{\{.*\}\}"/>
         <RegExpr attribute="Comment" String="#.*$" />
         <RegExpr attribute="Environment" String="\$\w+" />
         <RegExpr attribute="Environment" String="\$\{\w+\}" />
+        <Detect2Chars attribute="Comment" context="MultiLineJinja2"
+        char="{" char1="#" beginRegion="Comment2" />
+      </context>
+      <context attribute="Comment" lineEndContext="#stay" name="MultiLineJinja2">
+        <Detect2Chars attribute="Comment" context="#pop" char="#" char1="}"
+        endRegion="Comment2" />
       </context>
     </contexts>
 
@@ -159,6 +164,7 @@
   
   <general>
     <comments>
+      <comment name="multiLine" start="{#" end="#}"/>
       <comment name="singleLine" start="#"/>
     </comments>
   </general>
