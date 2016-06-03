@@ -15,6 +15,8 @@
 
 (setq cylc-font-lock-keywords
       '(("{%[[:alnum:], _=\\(\\)]*%}" . font-lock-constant-face) 
+        ("{#[^\}]+#}" . font-lock-comment-face)
+        ("#.*" . font-lock-comment-face)
 	("{{[[:alnum:] ]*}}" . font-lock-constant-face) 
         ("\\[\\[\\[[[:alnum:], _]+\\]\\]\\]" . font-lock-type-face)
         ("\\[\\[\\[[[:alnum:], _]+" . font-lock-type-face)
@@ -27,7 +29,7 @@
 	))
 
 ;; define the mode
-(define-derived-mode cylc-mode shell-script-mode
+(define-derived-mode cylc-mode fundamental-mode
   "cylc mode"
   "Major mode for editing CYLC .cylc files"
 
