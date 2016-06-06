@@ -294,8 +294,8 @@ class ControlTree(object):
     def _set_cell_text_time(self, column, cell, model, iter_, n):
         """Remove the date part if it matches the last update date."""
         date_time_string = model.get_value(iter_, n)
-        if "T" in self.updater.dt:
-            last_update_date = self.updater.dt.split("T")[0]
+        if "T" in self.updater.update_time_str:
+            last_update_date = self.updater.update_time_str.split("T")[0]
             date_time_string = date_time_string.replace(
                 last_update_date + "T", "", 1)
         if n == 8:
