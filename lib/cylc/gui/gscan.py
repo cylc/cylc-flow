@@ -31,11 +31,13 @@ from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
+from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network.port_scan import scan_all
+from cylc.network.suite_state import StateSummaryClient
 from cylc.owner import USER
 from cylc.version import CYLC_VERSION
 from cylc.task_state import TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD
@@ -646,6 +648,29 @@ class ScanApp(object):
         if column.get_title() != "Status":
             tooltip.set_text(None)
             return False
+
+        # If hovering over a status indicator set tooltip to show most recent
+        # tasks.
+        dot_offset, dot_width = tuple(column.cell_get_position(
+            column.get_cell_renderers()[1]))
+        cell_index = (cell_x - dot_offset) // dot_width
+        if cell_index >= 0:
+            # NOTE: TreeViewColumn.get_cell_renderers() does not allways return
+            # cell renderers for the correct row.
+            info = re.findall(r'\D+\d+', model.get(iter_, 6)[0])
+            if cell_index >= len(info):
+                return False
+            state = info[cell_index].strip().split(' ')[0]
+            point_string = model.get(iter_, 5)[0]
+            tasks = self.updater.get_last_n_tasks(
+                suite, host, state, point_string, 5)  # Last 5 tasks.
+            tooltip.set_markup('<b>{state}</b>\n{tasks}'.format(
+                state=state,
+                tasks='\n'.join(tasks))
+            )
+            return True
+
+        # Set the tooltip to a generic status for this suite.
         state_texts = []
         status_column_info = 6
         state_text = model.get_value(iter_, status_column_info)
@@ -673,7 +698,7 @@ class ScanApp(object):
             is_stopped = model.get_value(iter_, 2)
             info = re.findall(r'\D+\d+', state_info)
             if index < len(info):
-                state = info[index].rsplit(" ", 1)[0]
+                state = info[index].rsplit(" ", 1)[0].strip()
                 icon = self.dots.get_icon(state.strip(), is_stopped=is_stopped)
                 cell.set_property("visible", True)
             else:
@@ -918,10 +943,14 @@ class ScanAppUpdater(BaseScanUpdater):
 
     """Update the scan app."""
 
+    TIME_STRINGS = ['submitted_time_string', 'started_time_string',
+                    'finished_time_string']
+
     def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
+        self.active_tasks = {}
         super(ScanAppUpdater, self).__init__(hosts, owner=owner,
                                              poll_interval=poll_interval)
 
@@ -955,6 +984,46 @@ class ScanAppUpdater(BaseScanUpdater):
         self.stopped_hosts_suites_info.clear()
         gobject.idle_add(self.update)
 
+    def get_last_n_tasks(self, suite, host, task_state, point_string, n):
+        """Returns a list of the last 'n' tasks with the provided state for
+        the provided suite."""
+        # TODO: safety check
+
+        # Get task state summary information.
+        if suite + host not in self.active_tasks:
+            return ['<i>Could not get info, try refreshing the scanner.</i>']
+        tasks = self.active_tasks[suite + host]
+        if tasks is False:
+            return ['<i>Cannot connect to suite.</i>']
+
+        # If point_string specified, remove entries at other point_strings.
+        to_remove = []
+        if point_string:
+            for task in tasks:
+                _, task_point_string = task.rsplit('.', 1)
+                if task_point_string != point_string:
+                    to_remove.append(task)
+        for task in to_remove:
+            del tasks[task]
+
+        # Get list of tasks that match the provided state.
+        ret = []
+        for task in tasks:
+            if tasks[task]['state'] == task_state:
+                time_strings = ['1970-01-01T00:00:00Z']
+                for time_string in self.TIME_STRINGS:
+                    if time_string in tasks[task] and tasks[task][time_string]:
+                        time_strings.append(tasks[task][time_string])
+                ret.append((max(time_strings), task))
+
+        # return only the n youngest items
+        ret.sort(reverse=True)
+        if len(ret) - n == 1:
+            n += 1
+        suffix = [] if len(ret) <= n else [
+            '<i>And %d more</i>' % (len(ret) - n,)]
+        return [task[1] for task in ret[0:n]] + suffix
+
     def update(self):
         """Update the Applet."""
         row_ids = self._get_user_expanded_row_ids()
@@ -969,7 +1038,15 @@ class ScanAppUpdater(BaseScanUpdater):
                 if (suite, host) not in suite_host_tuples:
                     suite_host_tuples.append((suite, host))
         suite_host_tuples.sort()
+        self.active_tasks = {}
         for suite, host in suite_host_tuples:
+
+            try:
+                self.active_tasks[suite + host] = StateSummaryClient(
+                    suite, host=host).get_suite_state_summary()[1]
+            except PortFileError:
+                self.active_tasks[suite + host] = False
+
             if suite in info.get(host, {}):
                 suite_info = info[host][suite]
                 is_stopped = False
