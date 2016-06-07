@@ -18,8 +18,6 @@
 
 import gobject
 import gtk
-import re
-import string
 import threading
 from time import sleep
 
@@ -30,6 +28,10 @@ from copy import deepcopy
 
 
 class DotUpdater(threading.Thread):
+
+    RIGHT_ARROW = u'\u25b7'  # Unicode enpty triangle facing right.
+    DOWN_ARROW = u'\u25bd'  # Unicode enpty triangle facing down.
+    INDENT = 5  # Number of spaces to indent nested items in transpose view.
 
     def __init__(self, cfg, updater, treeview, info_bar, theme, dot_size):
 
@@ -49,7 +51,6 @@ class DotUpdater(threading.Thread):
         self.updater = updater
         self.theme = theme
         self.info_bar = info_bar
-        imagedir = self.cfg.imagedir
         self.last_update_time = None
         self.state_summary = {}
         self.fam_state_summary = {}
@@ -59,7 +60,7 @@ class DotUpdater(threading.Thread):
 
         self.led_headings = []
         self.led_treeview = treeview
-        self.led_liststore = treeview.get_model()
+        self.led_treestore = treeview.get_model()
         self._prev_tooltip_task_id = None
         if hasattr(self.led_treeview, "set_has_tooltip"):
             self.led_treeview.set_has_tooltip(True)
@@ -71,6 +72,8 @@ class DotUpdater(threading.Thread):
                 pass
 
         self.task_list = []
+        self.family_tree = {}
+        self.expanded_rows = []
 
         # generate task state icons
         dotm = DotMaker(theme, size=dot_size)
@@ -82,7 +85,7 @@ class DotUpdater(threading.Thread):
         tip.set_tip(widget, tip_text)
 
     def clear_list(self):
-        self.led_liststore.clear()
+        self.led_treestore.clear()
         # gtk idle functions must return false or will be called multiple times
         return False
 
@@ -120,25 +123,44 @@ class DotUpdater(threading.Thread):
             # iso cycle points
             self.point_strings.sort()
 
-        if not self.should_group_families:
-            # Display the full task list.
-            self.task_list = deepcopy(self.updater.task_list)
-        else:
-            # Replace tasks with their top level family name.
-            self.task_list = []
-            for task_id in self.state_summary:
-                name, point_string = TaskID.split(task_id)
-                # Family name below root, or task name.
-                item = self.ancestors_pruned[name][-2]
-                if item not in self.task_list:
-                    self.task_list.append(item)
-
         if (self.cfg.use_defn_order and self.updater.ns_defn_order and
                 self.defn_order_on):
             self.task_list = [
                 i for i in self.updater.ns_defn_order if i in self.task_list]
         else:
             self.task_list.sort()
+
+        if not self.should_group_families:
+            # Display the full task list.
+            self.task_list = deepcopy(self.updater.task_list)
+        else:
+            self.family_tree = {}
+            self.task_list = deepcopy(self.updater.task_list)
+
+            for task_id in self.state_summary:
+                # Generate dict of families and their associated tasks.
+                name, point_string = TaskID.split(task_id)
+                item = self.ancestors_pruned[name][-2]
+                if item not in self.task_list:
+                    if item not in self.family_tree:
+                        self.family_tree[item] = []
+                    self.family_tree[item].append(name)
+
+            for heading, tasks in self.family_tree.iteritems():
+                # Place associated tasks after headers.
+                ind = min([self.task_list.index(task) for task in tasks])
+                for task in tasks:
+                    if task in self.task_list:
+                        self.task_list.remove(task)
+                self.task_list = (self.task_list[:ind - 1] + [heading] +
+                                  tasks + self.task_list[ind - 1:])
+
+            # Remove duplicates but maintain order.
+            tasks = []
+            for i, task in enumerate(self.task_list):
+                if task not in tasks:
+                    tasks.append(task)
+            self.task_list = tasks
 
         return True
 
@@ -150,8 +172,22 @@ class DotUpdater(threading.Thread):
         if new_headings == self.led_headings:
             return False
         self.led_headings = new_headings
+
+        # Get a list of tasks belonging to families.
+        if len(self.family_tree) > 0:
+            all_sub_tasks = reduce(
+                lambda x, y: x + y,
+                [self.family_tree[key] for key in self.family_tree]
+            )
+        else:
+            all_sub_tasks = []
+
+        if self.should_transpose_view:
+            self.led_treeview.set_headers_clickable(True)
+
         tvcs = self.led_treeview.get_columns()
         labels = []
+        families = []
         for n in range(1, len(self.led_headings)):
             text = self.led_headings[n]
             tip = self.led_headings[n]
@@ -163,10 +199,34 @@ class DotUpdater(threading.Thread):
             label.show()
             labels.append(label)
             label_box = gtk.VBox()
+
+            # Functionality for collapsed families in transpose view.
+            if self.should_transpose_view:
+                if self.should_group_families and (text in self.family_tree or
+                                                   text in all_sub_tasks):
+                    if text in self.family_tree:
+                        # Heading is a family.
+                        label.set_text(self.RIGHT_ARROW + " " + text)
+                        tvcs[n].gcylc_parent_to = self.family_tree[text]
+                        tvcs[n].gcylc_task = text
+                        tvcs[n].gcylc_folded = text in self.expanded_rows
+                        tvcs[n].gcylc_heading_label = label
+                    elif text in all_sub_tasks:
+                        # Heading is the child of a family.
+                        tvcs[n].gcylc_represents_task = text
+                        label.set_text(' ' * self.INDENT + text)
+                else:
+                    if hasattr(tvcs[n], 'gcylc_represents_task'):
+                        tvcs[n].set_visible(True)
+
             label_box.pack_start(label, expand=False, fill=False)
             label_box.show()
             self._set_tooltip(label_box, tip)
             tvcs[n].set_widget(label_box)
+
+            if self.should_transpose_view and text in self.family_tree:
+                families.append(n)
+
         max_pixel_length = -1
         for label in labels:
             x, y = label.get_layout().get_size()
@@ -176,46 +236,103 @@ class DotUpdater(threading.Thread):
             while label.get_layout().get_size()[0] < max_pixel_length:
                 label.set_text(label.get_text() + ' ')
 
+        # Pre-collapse all families.
+        for family in families:
+            self.transposed_label_click(None, family)
+
+    def transposed_label_click(self, widget, heading):
+        """Click handler for column headings in transposed mode.
+        Responsible for folding / unfolding family sections."""
+        column = self.led_treeview.get_column(heading)
+        if not hasattr(column, 'gcylc_folded'):
+            # Column is not foldable.
+            return False
+
+        column.gcylc_folded = not column.gcylc_folded
+        if hasattr(column, 'gcylc_parent_to'):
+            # Column is for a family.
+            for col in self.led_treeview.get_columns():
+                if hasattr(col, 'gcylc_represents_task'):
+                    if col.gcylc_represents_task in column.gcylc_parent_to:
+                        col.set_visible(not column.gcylc_folded)
+
+        # Toggle folding arrows.
+        if column.gcylc_folded:
+            if hasattr(column, 'gcylc_heading_label'):
+                column.gcylc_heading_label.set_text(
+                    self.RIGHT_ARROW +
+                    column.gcylc_heading_label.get_text()[3:]
+                )
+        else:
+            if hasattr(column, 'gcylc_heading_label'):
+                column.gcylc_heading_label.set_text(
+                    self.DOWN_ARROW +
+                    column.gcylc_heading_label.get_text()[3:]
+                )
+
+    def _get_expanded_rows(self):
+        """Updates list of currently expanded rows (or columns in transpose
+        mode."""
+        self.expanded_rows = []
+        if self.is_transposed:
+            for column in self.led_treeview.get_columns():
+                if hasattr(column, 'gcylc_folded'):
+                    if not column.gcylc_folded:
+                        self.expanded_rows.append(column.gcylc_task)
+        else:
+            rows = []
+            self.led_treeview.map_expanded_rows(
+                lambda treeview, path, data: rows.append(path),
+                None
+            )
+            for row in rows:
+                self.expanded_rows.append(self.led_treestore.get_value(
+                    self.led_treestore.get_iter(row), 0))
+
     def ledview_widgets(self):
+        # Make note of expanded rows.
+        self._get_expanded_rows()
+
         if not self.should_transpose_view:
             types = [str] + [gtk.gdk.Pixbuf] * len(self.point_strings)
             num_new_columns = len(types)
         else:
             types = [str] + [gtk.gdk.Pixbuf] * len(self.task_list) + [str]
             num_new_columns = 1 + len(self.task_list)
-        new_led_liststore = gtk.ListStore(*types)
+        new_led_treestore = gtk.TreeStore(*types)
         old_types = []
-        for i in range(self.led_liststore.get_n_columns()):
-            old_types.append(self.led_liststore.get_column_type(i))
+        for i in range(self.led_treestore.get_n_columns()):
+            old_types.append(self.led_treestore.get_column_type(i))
         new_types = []
-        for i in range(new_led_liststore.get_n_columns()):
-            new_types.append(new_led_liststore.get_column_type(i))
+        for i in range(new_led_treestore.get_n_columns()):
+            new_types.append(new_led_treestore.get_column_type(i))
         treeview_has_content = bool(len(self.led_treeview.get_columns()))
 
         if treeview_has_content and old_types == new_types:
             self.set_led_headings()
-            self.led_liststore.clear()
+            self.led_treestore.clear()
             self.is_transposed = self.should_transpose_view
             return False
 
-        self.led_liststore = new_led_liststore
+        self.led_treestore = new_led_treestore
 
         if (treeview_has_content and
                 self.is_transposed == self.should_transpose_view):
-
             tvcs_for_removal = self.led_treeview.get_columns()[
                 num_new_columns:]
 
             for tvc in tvcs_for_removal:
                 self.led_treeview.remove_column(tvc)
 
-            self.led_treeview.set_model(self.led_liststore)
+            self.led_treeview.set_model(self.led_treestore)
             num_columns = len(self.led_treeview.get_columns())
             for model_col_num in range(num_columns, num_new_columns):
                 # Add newly-needed columns.
                 cr = gtk.CellRendererPixbuf()
                 cr.set_property('xalign', 0)
                 tvc = gtk.TreeViewColumn("")
+                tvc.connect(
+                    'clicked', self.transposed_label_click, model_col_num)
                 tvc.pack_end(cr, True)
                 tvc.set_attributes(cr, pixbuf=model_col_num)
                 self.led_treeview.append_column(tvc)
@@ -226,7 +343,7 @@ class DotUpdater(threading.Thread):
         for tvc in tvcs:
             self.led_treeview.remove_column(tvc)
 
-        self.led_treeview.set_model(self.led_liststore)
+        self.led_treeview.set_model(self.led_treestore)
 
         if not self.should_transpose_view:
             tvc = gtk.TreeViewColumn('Name')
@@ -251,7 +368,8 @@ class DotUpdater(threading.Thread):
             tvc.pack_end(cr, True)
             tvc.set_attributes(cr, pixbuf=n)
             self.led_treeview.append_column(tvc)
-
+            if self.should_transpose_view:
+                tvc.connect('clicked', self.transposed_label_click, n)
         self.set_led_headings()
         self.is_transposed = self.should_transpose_view
 
@@ -305,7 +423,6 @@ class DotUpdater(threading.Thread):
 
     def update_gui(self):
         self.action_required = False
-        new_data = {}
         state_summary = {}
         state_summary.update(self.state_summary)
         state_summary.update(self.fam_state_summary)
@@ -320,61 +437,100 @@ class DotUpdater(threading.Thread):
             tasks_by_name.setdefault(name, [])
             tasks_by_name[name].append(point_string)
 
-        # flat (a liststore would do)
         names = tasks_by_name.keys()
         names.sort()
-        tvcs = self.led_treeview.get_columns()
 
         if not self.is_transposed:
-            for name in self.task_list:
-                point_strings_for_tasks = tasks_by_name.get(name, [])
-                if not point_strings_for_tasks:
-                    continue
-                state_list = []
-                for point_string in self.point_strings:
-                    if point_string in point_strings_for_tasks:
-                        task_id = TaskID.get(name, point_string)
-                        state = state_summary[task_id]['state']
-                        if task_id in self.fam_state_summary:
-                            dot_type = 'family'
-                        else:
-                            dot_type = 'task'
-                        state_list.append(self.dots[dot_type][state])
-                    else:
-                        state_list.append(self.dots['task']['empty'])
-                try:
-                    self.led_liststore.append([name] + state_list)
-                except ValueError:
-                    # A very laggy store can change the columns and raise this.
-                    return False
+            self._update_gui_regular(tasks_by_name, state_summary)
         else:
-            for point_string in self.point_strings:
-                tasks_at_point_string = tasks_by_point_string[point_string]
-                state_list = []
-                for name in self.task_list:
-                    task_id = TaskID.get(name, point_string)
-                    if task_id in self.fam_state_summary:
-                        dot_type = 'family'
-                    else:
-                        dot_type = 'task'
-                    if name in tasks_at_point_string:
-                        state = state_summary[task_id]['state']
-                        state_list.append(self.dots[dot_type][state])
-                    else:
-                        state_list.append(self.dots[dot_type]['empty'])
-                try:
-                    self.led_liststore.append(
-                        [point_string] + state_list + [point_string])
-                except ValueError:
-                    # A very laggy store can change the columns and raise this.
-                    return False
+            self._update_gui_transpose(tasks_by_point_string, state_summary)
 
         self.led_treeview.columns_autosize()
         return False
 
+    def _update_gui_transpose(self, tasks_by_point_string, state_summary):
+        """Logic for updating the gui in transpose mode."""
+        for point_string in self.point_strings:
+            tasks_at_point_string = tasks_by_point_string[point_string]
+            state_list = []
+            for name in self.task_list:
+                task_id = TaskID.get(name, point_string)
+                if task_id in self.fam_state_summary:
+                    dot_type = 'family'
+                else:
+                    dot_type = 'task'
+                if name in tasks_at_point_string:
+                    state = state_summary[task_id]['state']
+                    state_list.append(self.dots[dot_type][state])
+                else:
+                    state_list.append(self.dots[dot_type]['empty'])
+            try:
+                self.led_treestore.append(
+                    None, row=[point_string] + state_list + [point_string])
+            except ValueError:
+                # A very laggy store can change the columns and raise this.
+                return False
+
+    def _update_gui_regular(self, tasks_by_name, state_summary):
+        """Logic for updating the gui in regular mode."""
+        children = []
+        to_unfold = []
+        parent_iter = None
+        for name in self.task_list:
+            point_strings_for_tasks = tasks_by_name.get(name, [])
+            if not point_strings_for_tasks:
+                continue
+            state_list = []
+            for point_string in self.point_strings:
+                if point_string in point_strings_for_tasks:
+                    task_id = TaskID.get(name, point_string)
+                    state = state_summary[task_id]['state']
+                    if task_id in self.fam_state_summary:
+                        dot_type = 'family'
+                    else:
+                        dot_type = 'task'
+                    state_list.append(self.dots[dot_type][state])
+                else:
+                    state_list.append(self.dots['task']['empty'])
+            try:
+                if name in self.family_tree:
+                    # Task is a family.
+                    self.led_treestore.append(
+                        None, row=[name] + state_list)
+                    children = self.family_tree[name]
+
+                    # Get iter for this family's entry.
+                    iter_ = self.led_treestore.get_iter_first()
+                    temp = self.led_treestore.get_value(
+                        iter_, 0)
+                    while temp != name:
+                        iter_ = self.led_treestore.iter_next(iter_)
+                        temp = self.led_treestore.get_value(iter_, 0)
+                    parent_iter = iter_
+
+                    # Unfold if family was folded before update
+                    if name in self.expanded_rows:
+                        to_unfold.append(
+                            self.led_treestore.get_path(iter_))
+
+                elif name in children:
+                    # Task belongs to a family.
+                    self.led_treestore.append(
+                        parent_iter, row=[name] + state_list)
+
+                else:
+                    # Task does not belong to a family.
+                    self.led_treestore.append(
+                        None, row=[name] + state_list)
+            except ValueError:
+                # A very laggy store can change the columns and raise this.
+                return False
+
+        # Unfold any rows that were unfolded before the update.
+        for path in to_unfold:
+            self.led_treeview.expand_row(path, True)
+
     def run(self):
-        glbl = None
-        states = {}
         while not self.quit:
             if self.update() or self.action_required:
                 gobject.idle_add(self.update_gui)
