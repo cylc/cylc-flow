@@ -194,6 +194,7 @@ class BatchSysManager(object):
     CYLC_BATCH_SYS_JOB_ID = "CYLC_BATCH_SYS_JOB_ID"
     CYLC_BATCH_SYS_JOB_SUBMIT_TIME = "CYLC_BATCH_SYS_JOB_SUBMIT_TIME"
     CYLC_BATCH_SYS_EXIT_POLLED = "CYLC_BATCH_SYS_EXIT_POLLED"
+    JOB_FILE_BASE = "job"
     LINE_PREFIX_CYLC_DIR = "    export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
@@ -351,7 +352,8 @@ class BatchSysManager(object):
             items = self._jobs_submit_prep_by_args(job_log_root, job_log_dirs)
         now = get_current_time_string()
         for job_log_dir, batch_sys_name, batch_submit_cmd_tmpl in items:
-            job_file_path = os.path.join(job_log_root, job_log_dir, "job")
+            job_file_path = os.path.join(
+                job_log_root, job_log_dir, self.JOB_FILE_BASE)
             if not batch_sys_name:
                 sys.stdout.write("%s%s|%s|1|\n" % (
                     self.OUT_PREFIX_SUMMARY, now, job_log_dir))

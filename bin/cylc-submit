@@ -41,7 +41,7 @@ from time import sleep
 import cylc.flags
 from parsec.OrderedDict import OrderedDict
 from cylc.execute import execute
-from cylc.job_file import JOB_FILE
+from cylc.job_file import JobFile
 from cylc.config import SuiteConfig
 from cylc.CylcOptionParsers import cop
 from cylc.registration import RegistrationDB
@@ -164,31 +164,31 @@ def main():
     }
     # (GLOBAL_CFG automatically expands environment variables in local paths)
 
-    JOB_FILE.set_suite_env(suite_env)
+    JobFile.get_inst().set_suite_env(suite_env)
 
     point = get_point(point_string).standardise()
     # Try to get a graphed task of the given name.
-    task_proxy = get_task_proxy(
-        task_name, point.standardise(), is_startup=True)
+    itask = get_task_proxy(task_name, point.standardise(), is_startup=True)
 
     if not options.dry_run:
         proc_pool = SuiteProcPool.get_inst(pool_size=1)
 
     if options.dry_run:
-        task_proxy.prep_submit(dry_run=True)
-        print "JOB SCRIPT=%s" % task_proxy.job_conf['job file path']
+        itask.prep_submit(dry_run=True)
+        print "JOB SCRIPT=%s" % itask.get_job_log_path(
+            itask.HEAD_MODE_LOCAL, tail=itask.JOB_FILE_BASE)
     else:
-        if task_proxy.prep_submit() is None:
+        if itask.prep_submit() is None:
             sys.exit(1)
-        task_proxy.submit()
+        itask.submit()
         while proc_pool.results:
             proc_pool.handle_results_async()
         proc_pool.close()
         proc_pool.join()
-        if task_proxy.submit_method_id is not None:
-            print 'Job ID:', task_proxy.submit_method_id
+        if itask.summary['submit_method_id'] is not None:
+            print 'Job ID:', itask.summary['submit_method_id']
 
-    sys.exit(task_proxy.state.status == TASK_STATUS_SUBMIT_FAILED)
+    sys.exit(itask.state.status == TASK_STATUS_SUBMIT_FAILED)
 
 
 if __name__ == "__main__":
