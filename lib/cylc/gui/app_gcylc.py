@@ -65,12 +65,12 @@ from cylc.suite_logging import suite_log
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import (
-    get_seconds_as_interval_string, get_time_string_from_unix_time)
+    get_current_time_string, get_time_string_from_unix_time)
 from cylc.task_state import (
     TaskState, TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
     TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
-    TASK_STATUS_RUNAHEAD, TASK_STATUS_WAITING, TASK_STATUS_READY,
+    TASK_STATUS_WAITING, TASK_STATUS_READY,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 
 
@@ -410,8 +410,8 @@ Use (Re-)connect button to reconnect immediately.""")
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
-        glob, task, fam = summary_maps
-        states = [t["state"] for t in task.values() if "state" in t]
+        global_params, tasks, _ = summary_maps
+        states = [t["state"] for t in tasks.values() if "state" in t]
 
         self.set_state(states, is_suite_stopped=True)
         suite_state = "?"
@@ -419,21 +419,23 @@ Use (Re-)connect button to reconnect immediately.""")
             suite_state = extract_group_state(states, is_stopped=True)
         summary = SUITE_STATUS_STOPPED_WITH % suite_state
         num_failed = 0
-        for task_id in task:
-            if task[task_id].get("state") == TASK_STATUS_FAILED:
+        for task in tasks.values():
+            if task.get("state") == TASK_STATUS_FAILED:
                 num_failed += 1
         if num_failed:
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
         self.set_update_time(
-            get_time_string_from_unix_time(glob["last_updated"]),
+            get_time_string_from_unix_time(global_params["last_updated"]),
             self.DISCONNECTED_TEXT)
         # (called on idle_add)
         return False
 
     def set_update_time(self, update_time_str, next_update_dt_str=None):
         """Set last update text."""
-        if update_time_str != self.update_time_str:
+        if self.update_time_str is None and update_time_str is None:
+            update_time_str = get_current_time_string() 
+        if update_time_str and update_time_str != self.update_time_str:
             self.update_time_str = update_time_str
             gobject.idle_add(
                 self.time_widget.set_text, " %s " % update_time_str)
@@ -739,7 +741,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.info_bar._set_filter_state_widget()
 
     def _cb_change_view0_menu(self, item):
-        # This is the view menu callback for the primary view.
+        """This is the view menu callback for the primary view."""
+        self.reset_connect()
         if not item.get_active():
             return False
         if self.current_views[0].name == item._viewname:
@@ -749,7 +752,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_tool_bar_view0(self, viewname):
-        # Set the tool bar state for the primary view.
+        """Set the tool bar state for the primary view."""
         model = self.tool_bar_view0.get_model()
         c_iter = model.get_iter_first()
         while c_iter is not None:
@@ -760,7 +763,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             c_iter = model.iter_next(c_iter)
 
     def _cb_change_view0_tool(self, widget):
-        # This is the tool bar callback for the primary view.
+        """This is the tool bar callback for the primary view."""
+        self.reset_connect()
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
         if self.current_views[0].name == viewname:
             return False
@@ -769,14 +773,15 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_menu_view0(self, viewname):
-        # Set the view menu state for the primary view.
+        """Set the view menu state for the primary view."""
         for view_item in self.view_menu_views0:
             if (view_item._viewname == viewname and
                     not view_item.get_active()):
                 return view_item.set_active(True)
 
     def _cb_change_view1_menu(self, item):
-        # This is the view menu callback for the secondary view.
+        """This is the view menu callback for the secondary view."""
+        self.reset_connect()
         if not item.get_active():
             return False
         if self.current_views[1] is None:
@@ -789,7 +794,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_tool_bar_view1(self, viewname):
-        # Set the tool bar state for the secondary view.
+        """Set the tool bar state for the secondary view."""
         model = self.tool_bar_view1.get_model()
         c_iter = model.get_iter_first()
         while c_iter is not None:
@@ -802,7 +807,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.tool_bar_view1.set_active(0)
 
     def _cb_change_view1_tool(self, widget):
-        # This is the tool bar callback for the secondary view.
+        """This is the tool bar callback for the secondary view"""
+        self.reset_connect()
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
         if self.current_views[1] is None:
             if viewname not in self.VIEWS:
@@ -814,7 +820,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_menu_view1(self, viewname):
-        # Set the view menu state for the secondary view.
+        """Set the view menu state for the secondary view."""
         for view_item in self.view_menu_views1:
             if (view_item._viewname == viewname and
                     not view_item.get_active()):
@@ -826,7 +832,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _cb_change_view_align(self, widget):
-        # This is the view menu callback to toggle side-by-side layout.
+        """This is the view menu callback to toggle side-by-side layout."""
         horizontal = widget.get_active()
         if self.view_layout_horizontal == horizontal:
             return False
@@ -2865,7 +2871,7 @@ This is what my suite does:..."""
             if res:
                 self.reset(suite)
 
-    def reset_connect(self, bt):
+    def reset_connect(self, _=None):
         """Force the polling schedule to go back to short intervals.
 
         This is so that the GUI can immediately connect to the started suite.

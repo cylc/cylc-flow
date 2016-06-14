@@ -216,7 +216,7 @@ class Updater(threading.Thread):
                     self.info_bar.set_stop_summary, self.stop_summary)
             else:
                 self.info_bar.set_update_time(
-                    get_current_time_string(), self.info_bar.DISCONNECTED_TEXT)
+                    None, self.info_bar.DISCONNECTED_TEXT)
             return
         except Pyro.errors.NamingError as exc:
             if cylc.flags.debug:
@@ -406,7 +406,7 @@ class Updater(threading.Thread):
             return False
         if not self.connect_schd.ready():
             self.info_bar.set_update_time(
-                get_time_string_from_unix_time(self.connect_schd.t_prev),
+                None,
                 get_seconds_as_interval_string(
                     round(self.connect_schd.dt_next)))
             return False
