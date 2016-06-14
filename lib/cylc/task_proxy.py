@@ -985,11 +985,11 @@ class TaskProxy(object):
 
         """
         data = []
-        job_log_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL, submit_num)
+        job_file_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL, submit_num)
         try:
-            for filename in os.listdir(job_log_dir):
+            for filename in os.listdir(job_file_dir):
                 try:
-                    stat = os.stat(os.path.join(job_log_dir, filename))
+                    stat = os.stat(os.path.join(job_file_dir, filename))
                 except OSError:
                     continue
                 else:
@@ -997,12 +997,12 @@ class TaskProxy(object):
         except OSError:
             pass
 
-        rel_job_log_dir = self.get_job_log_path(submit_num=submit_num)
+        rel_job_file_dir = self.get_job_log_path(submit_num=submit_num)
         for mtime, size, filename in data:
             self.db_inserts_map[self.TABLE_TASK_JOB_LOGS].append({
                 "submit_num": submit_num,
                 "filename": filename,
-                "location": os.path.join(rel_job_log_dir, filename),
+                "location": os.path.join(rel_job_file_dir, filename),
                 "mtime": mtime,
                 "size": size})
 
@@ -1217,23 +1217,36 @@ class TaskProxy(object):
         """Create job log directory, etc.
 
         Create local job directory, and NN symbolic link.
+        If NN => 01, remove numbered directories with submit numbers greater
+        than 01.
         Return a string in the form "POINT/NAME/SUBMIT_NUM".
 
         """
-        local_job_log_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL)
+        job_file_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL)
+        task_log_dir = os.path.dirname(job_file_dir)
         try:
-            rmtree(local_job_log_dir)
+            if self.submit_num == 1:
+                for name in os.listdir(task_log_dir):
+                    if name != "01":
+                        rmtree(os.path.join(task_log_dir, name))
+            else:
+                rmtree(job_file_dir)
         except OSError:
             pass
 
-        mkdir_p(local_job_log_dir)
-        target = self.get_job_log_path(self.HEAD_MODE_LOCAL, self.NN)
+        mkdir_p(job_file_dir)
+        target = os.path.join(task_log_dir, self.NN)
+        source = os.path.basename(job_file_dir)
         try:
-            os.unlink(target)
+            prev_source = os.readlink(target)
         except OSError:
-            pass
+            prev_source = None
+        if prev_source == source:
+            return
         try:
-            os.symlink(os.path.basename(local_job_log_dir), target)
+            if prev_source:
+                os.unlink(target)
+            os.symlink(source, target)
         except OSError as exc:
             if not exc.filename:
                 exc.filename = target
