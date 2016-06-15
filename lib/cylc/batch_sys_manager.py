@@ -123,6 +123,7 @@ batch_sys.SUBMIT_CMD_STDIN_IS_JOB_FILE
 
 import os
 import shlex
+from shutil import rmtree
 from signal import SIGKILL
 import stat
 from subprocess import Popen, PIPE
@@ -522,12 +523,15 @@ class BatchSysManager(object):
     def _create_nn(cls, job_file_path):
         """Create NN symbolic link, if necessary.
 
+        If NN => 01, remove numbered directories with submit numbers greater
+        than 01.
         Helper for "self.submit".
 
         """
         job_file_dir = os.path.dirname(job_file_path)
         source = os.path.basename(job_file_dir)
-        nn_path = os.path.join(os.path.dirname(job_file_dir), "NN")
+        task_log_dir = os.path.dirname(job_file_dir)
+        nn_path = os.path.join(task_log_dir, "NN")
         try:
             old_source = os.readlink(nn_path)
         except OSError:
@@ -537,6 +541,13 @@ class BatchSysManager(object):
             old_source = None
         if old_source is None:
             os.symlink(source, nn_path)
+        # On submit 1, remove any left over digit directories from prev runs
+        if source == "01":
+            for name in os.listdir(task_log_dir):
+                if name != source and name.isdigit():
+                    # Ignore errors, not disastrous if rmtree fails
+                    rmtree(
+                        os.path.join(task_log_dir, name), ignore_errors=True)
 
     def _filter_submit_output(self, st_file_path, batch_sys, out, err):
         """Filter submit command output, if relevant."""
