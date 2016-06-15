@@ -20,7 +20,8 @@
 
 from collections import namedtuple
 from copy import copy
-from logging import getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG
+from logging import (
+    getLevelName, getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG)
 import os
 from pipes import quote
 import Queue
@@ -1512,6 +1513,10 @@ class TaskProxy(object):
             # Note that all messages are logged already at the top.
             self.log(DEBUG, '(current: %s) unhandled: %s' % (
                 self.state.status, msg))
+            if priority in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
+                priority = getLevelName(priority)
+            self.db_events_insert(
+                event=("message %s" % str(priority).lower()), message=msg)
 
     def spawn(self, state):
         """Spawn the successor of this task proxy."""
