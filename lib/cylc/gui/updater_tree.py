@@ -201,8 +201,8 @@ class TreeUpdater(threading.Thread):
 
         self.ttree_paths.clear()
 
-        if "T" in self.updater.dt:
-            last_update_date = self.updater.dt.split("T")[0]
+        if "T" in self.updater.update_time_str:
+            last_update_date = self.updater.update_time_str.split("T")[0]
         else:
             last_update_date = None
 

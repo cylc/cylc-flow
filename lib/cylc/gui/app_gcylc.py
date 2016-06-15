@@ -64,12 +64,13 @@ from cylc.gui.gcapture import gcapture_tmpfile
 from cylc.suite_logging import suite_log
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
-from cylc.wallclock import get_time_string_from_unix_time
+from cylc.wallclock import (
+    get_current_time_string, get_time_string_from_unix_time)
 from cylc.task_state import (
     TaskState, TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
     TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
     TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
-    TASK_STATUS_RUNAHEAD, TASK_STATUS_WAITING, TASK_STATUS_READY,
+    TASK_STATUS_WAITING, TASK_STATUS_READY,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 
 
@@ -184,9 +185,9 @@ Class to hold initialisation data.
 
 
 class InfoBar(gtk.VBox):
-    """
-Class to create an information bar.
-    """
+    """Class to create an information bar."""
+
+    DISCONNECTED_TEXT = "(not connected)"
 
     def __init__(self, host, theme, dot_size, filter_states_excl,
                  filter_launcher,
@@ -238,9 +239,16 @@ Class to create an information bar.
 
         self._runahead = ""
 
-        self._time = "time..."
+        self.update_time_str = "time..."
         self.time_widget = gtk.Label()
         self._set_tooltip(self.time_widget, "last update time")
+
+        self.reconnect_duration_widget = gtk.Label()
+        self._set_tooltip(
+            self.reconnect_duration_widget,
+            r"""Duration to next reconnect attempt
+
+Use (Re-)connect button to reconnect immediately.""")
 
         hbox = gtk.HBox(spacing=0)
         self.pack_start(hbox, False, False)
@@ -254,35 +262,26 @@ Class to create an information bar.
         vbox.pack_end(self.prog_bar, False, True)
         # Add some text to get full height.
         self.prog_bar.set_text("...")
+
         eb = gtk.EventBox()
         eb.add(vbox)
         eb.connect('button-press-event', self.prog_bar_disable)
         hbox.pack_start(eb, False)
 
-        eb = gtk.EventBox()
-        eb.add(self.status_widget)
-        hbox.pack_start(eb, False)
-
-        eb = gtk.EventBox()
-        eb.add(self.filter_state_widget)
-        hbox.pack_start(eb, False)
-
-        eb = gtk.EventBox()
-        eb.add(self.mode_widget)
-        hbox.pack_start(eb, False)
+        for widget in [
+                self.status_widget, self.state_widget,
+                self.filter_state_widget, self.mode_widget]:
+            eb = gtk.EventBox()
+            eb.add(widget)
+            hbox.pack_start(eb, False)
 
         # From the right.
-        eb = gtk.EventBox()
-        eb.add(self.log_widget)
-        hbox.pack_end(eb, False)
-
-        eb = gtk.EventBox()
-        eb.add(self.time_widget)
-        hbox.pack_end(eb, False)
-
-        eb = gtk.EventBox()
-        eb.add(self.state_widget)
-        hbox.pack_end(eb, False)
+        for widget in [
+                self.log_widget, self.time_widget,
+                self.reconnect_duration_widget]:
+            eb = gtk.EventBox()
+            eb.add(widget)
+            hbox.pack_end(eb, False)
 
     def set_theme(self, theme, dot_size):
         self.dots = DotMaker(theme, size=dot_size)
@@ -411,8 +410,8 @@ Class to create an information bar.
 
     def set_stop_summary(self, summary_maps):
         """Set various summary info."""
-        glob, task, fam = summary_maps
-        states = [t["state"] for t in task.values() if "state" in t]
+        global_params, tasks, _ = summary_maps
+        states = [t["state"] for t in tasks.values() if "state" in t]
 
         self.set_state(states, is_suite_stopped=True)
         suite_state = "?"
@@ -420,24 +419,35 @@ Class to create an information bar.
             suite_state = extract_group_state(states, is_stopped=True)
         summary = SUITE_STATUS_STOPPED_WITH % suite_state
         num_failed = 0
-        for task_id in task:
-            if task[task_id].get("state") == TASK_STATUS_FAILED:
+        for task in tasks.values():
+            if task.get("state") == TASK_STATUS_FAILED:
                 num_failed += 1
         if num_failed:
             summary += ": %s failed tasks" % num_failed
         self.set_status(summary)
-        dt = glob["last_updated"]
-        self.set_time(get_time_string_from_unix_time(dt))
+        self.set_update_time(
+            get_time_string_from_unix_time(global_params["last_updated"]),
+            self.DISCONNECTED_TEXT)
         # (called on idle_add)
         return False
 
-    def set_time(self, time):
+    def set_update_time(self, update_time_str, next_update_dt_str=None):
         """Set last update text."""
-        if time == self._time:
-            return False
-        self._time = time
-        time_for_display = time.strip().rsplit(".", 1)[0]
-        gobject.idle_add(self.time_widget.set_text, " %s " % time_for_display)
+        if self.update_time_str is None and update_time_str is None:
+            update_time_str = get_current_time_string() 
+        if update_time_str and update_time_str != self.update_time_str:
+            self.update_time_str = update_time_str
+            gobject.idle_add(
+                self.time_widget.set_text, " %s " % update_time_str)
+        if next_update_dt_str is None:
+            gobject.idle_add(self.reconnect_duration_widget.set_text, "")
+        elif next_update_dt_str == self.DISCONNECTED_TEXT:
+            gobject.idle_add(
+                self.reconnect_duration_widget.set_text, next_update_dt_str)
+        else:
+            gobject.idle_add(
+                self.reconnect_duration_widget.set_text,
+                " (reconnect in %s) " % next_update_dt_str)
 
     def _set_tooltip(self, widget, text):
         tooltip = gtk.Tooltips()
@@ -731,7 +741,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.info_bar._set_filter_state_widget()
 
     def _cb_change_view0_menu(self, item):
-        # This is the view menu callback for the primary view.
+        """This is the view menu callback for the primary view."""
+        self.reset_connect()
         if not item.get_active():
             return False
         if self.current_views[0].name == item._viewname:
@@ -741,7 +752,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_tool_bar_view0(self, viewname):
-        # Set the tool bar state for the primary view.
+        """Set the tool bar state for the primary view."""
         model = self.tool_bar_view0.get_model()
         c_iter = model.get_iter_first()
         while c_iter is not None:
@@ -752,7 +763,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             c_iter = model.iter_next(c_iter)
 
     def _cb_change_view0_tool(self, widget):
-        # This is the tool bar callback for the primary view.
+        """This is the tool bar callback for the primary view."""
+        self.reset_connect()
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
         if self.current_views[0].name == viewname:
             return False
@@ -761,14 +773,15 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_menu_view0(self, viewname):
-        # Set the view menu state for the primary view.
+        """Set the view menu state for the primary view."""
         for view_item in self.view_menu_views0:
             if (view_item._viewname == viewname and
                     not view_item.get_active()):
                 return view_item.set_active(True)
 
     def _cb_change_view1_menu(self, item):
-        # This is the view menu callback for the secondary view.
+        """This is the view menu callback for the secondary view."""
+        self.reset_connect()
         if not item.get_active():
             return False
         if self.current_views[1] is None:
@@ -781,7 +794,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_tool_bar_view1(self, viewname):
-        # Set the tool bar state for the secondary view.
+        """Set the tool bar state for the secondary view."""
         model = self.tool_bar_view1.get_model()
         c_iter = model.get_iter_first()
         while c_iter is not None:
@@ -794,7 +807,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.tool_bar_view1.set_active(0)
 
     def _cb_change_view1_tool(self, widget):
-        # This is the tool bar callback for the secondary view.
+        """This is the tool bar callback for the secondary view"""
+        self.reset_connect()
         viewname = widget.get_model().get_value(widget.get_active_iter(), 1)
         if self.current_views[1] is None:
             if viewname not in self.VIEWS:
@@ -806,7 +820,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _set_menu_view1(self, viewname):
-        # Set the view menu state for the secondary view.
+        """Set the view menu state for the secondary view."""
         for view_item in self.view_menu_views1:
             if (view_item._viewname == viewname and
                     not view_item.get_active()):
@@ -818,7 +832,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         return False
 
     def _cb_change_view_align(self, widget):
-        # This is the view menu callback to toggle side-by-side layout.
+        """This is the view menu callback to toggle side-by-side layout."""
         horizontal = widget.get_active()
         if self.view_layout_horizontal == horizontal:
             return False
@@ -1161,7 +1175,7 @@ been defined for this suite""").inform()
                            self.window).warn()
             success = False
 
-        self.reset_connection_polling(None)
+        self.reset_connect(None)
 
     def about(self, bt):
         about = gtk.AboutDialog()
@@ -2272,16 +2286,18 @@ shown here in the state they were in at the time of triggering.''')
 
         self.view_menu.append(gtk.SeparatorMenuItem())
 
-        poll_item = gtk.ImageMenuItem("Reset Connection _Polling")
+        self.reset_connect_menuitem = gtk.ImageMenuItem("(_Re-)connect")
         img = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
-        poll_item.set_image(img)
+        self.reset_connect_menuitem.set_image(img)
         self._set_tooltip(
-            poll_item,
-            """If gcylc is not connected to a running suite
+            self.reset_connect_menuitem,
+            """(Re-)connect to suite immediately.
+
+If gcylc is not connected to a running suite
 it tries to reconnect after increasingly long delays,
 to reduce network traffic.""")
-        self.view_menu.append(poll_item)
-        poll_item.connect('activate', self.reset_connection_polling)
+        self.view_menu.append(self.reset_connect_menuitem)
+        self.reset_connect_menuitem.connect('activate', self.reset_connect)
 
         self.view_menu.append(gtk.SeparatorMenuItem())
         filter_item = gtk.ImageMenuItem("Task _Filtering")
@@ -2855,10 +2871,12 @@ This is what my suite does:..."""
             if res:
                 self.reset(suite)
 
-    def reset_connection_polling(self, bt):
-        # Force the polling schedule to go back to short intervals so
-        # that the GUI can immediately connect to the started suite.
-        self.updater.poll_schd.stop()
+    def reset_connect(self, _=None):
+        """Force the polling schedule to go back to short intervals.
+
+        This is so that the GUI can immediately connect to the started suite.
+        """
+        self.updater.connect_schd.stop()
 
     def construct_command_menu(self, menu):
         cat_menu = gtk.Menu()
@@ -3075,6 +3093,24 @@ This is what my suite does:..."""
         self.tool_bars[0].insert(self.view_toolitems[0], 0)
         self.tool_bars[0].insert(view0_label_item, 0)
         self.tool_bars[0].insert(gtk.SeparatorToolItem(), 0)
+
+        self.reset_connect_toolbutton = gtk.ToolButton(
+            icon_widget=gtk.image_new_from_stock(
+                gtk.STOCK_REFRESH, gtk.ICON_SIZE_SMALL_TOOLBAR))
+        self.reset_connect_toolbutton.set_label("(Re-)connect")
+        tooltip = gtk.Tooltips()
+        tooltip.enable()
+        tooltip.set_tip(
+            self.reset_connect_toolbutton,
+            """(Re-)connect to suite immediately.
+
+If gcylc is not connected to a running suite
+it tries to reconnect after increasingly long delays,
+to reduce network traffic.""")
+        self.reset_connect_toolbutton.connect("clicked", self.reset_connect)
+        self.tool_bars[0].insert(self.reset_connect_toolbutton, 0)
+
+        self.tool_bars[0].insert(gtk.SeparatorToolItem(), 0)
         stop_icon = gtk.image_new_from_stock(gtk.STOCK_MEDIA_STOP,
                                              gtk.ICON_SIZE_SMALL_TOOLBAR)
         self.stop_toolbutton = gtk.ToolButton(icon_widget=stop_icon)
@@ -3121,6 +3157,8 @@ For more Stop options use the Control menu.""")
         self.stop_menuitem.set_sensitive(stop_ok)
         self.stop_toolbutton.set_sensitive(stop_ok and
                                            "stopping" not in new_status)
+        self.reset_connect_menuitem.set_sensitive(run_ok)
+        self.reset_connect_toolbutton.set_sensitive(run_ok)
         if pause_ok:
             icon = gtk.STOCK_MEDIA_PAUSE
             tip_text = "Hold Suite (pause)"

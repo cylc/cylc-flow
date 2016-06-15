@@ -94,7 +94,7 @@ class GraphUpdater(threading.Thread):
 
         self.god = None
         self.mode = "waiting..."
-        self.dt = "waiting..."
+        self.update_time_str = "waiting..."
 
         self.prev_graph_id = ()
 
