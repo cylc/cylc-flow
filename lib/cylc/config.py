@@ -2051,12 +2051,26 @@ class SuiteConfig(object):
                 continue
             items.append((item, value, back_comp_initial_tasks))
 
+        icp = self.cfg['scheduling']['initial cycle point']
+        fcp = self.cfg['scheduling']['final cycle point']
+
         back_comp_initial_dep_points = {}
-        initial_point = get_point(
-            self.cfg['scheduling']['initial cycle point'])
+        initial_point = get_point(icp)
         back_comp_initial_tasks_graphed = []
         while items:
             item, value, tasks_to_prune = items.pop(0)
+
+            # substitute initial and final cycle points
+            if icp:
+                item = item.replace("^", icp)
+            elif "^" in item:
+                raise SuiteConfigError("ERROR: Initial cycle point referenced"
+                                       " (^) but not defined.")
+            if fcp:
+                item = item.replace("$", fcp)
+            elif "$" in item:
+                raise SuiteConfigError("ERROR: Final cycle point referenced"
+                                       " ($) but not defined.")
 
             # If the section consists of more than one sequence, split it up.
             if re.search("(?![^(]+\)),", item):
@@ -2078,11 +2092,7 @@ class SuiteConfig(object):
                 tasks_to_prune=tasks_to_prune
             )
             if special_dependencies and tasks_to_prune:
-                section_seq = get_sequence(
-                    section,
-                    self.cfg['scheduling']['initial cycle point'],
-                    self.cfg['scheduling']['final cycle point']
-                )
+                section_seq = get_sequence(section, icp, fcp)
                 first_point = section_seq.get_first_point(initial_point)
                 for dep in special_dependencies:
                     # Set e.g. (foo, fail, bar) => foo, foo[^]:fail => bar.
