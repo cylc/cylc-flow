@@ -793,7 +793,7 @@ class TaskPool(object):
 
         # prune tree to ignore items that are elsewhere in it
         clean_keys = []
-        for item in prereq_tree.keys():
+        for item in prereq_tree:
             if item in clean_keys:
                 continue
             for unsatisfied in prereq_tree[item]['prereqs']:
@@ -804,7 +804,7 @@ class TaskPool(object):
                     break
 
         for key in clean_keys:
-            prereq_tree.pop(key)
+            del prereq_tree[key]
 
         for item in prereq_tree.keys():
             self.log.warning("Unmet prerequisites for %s:" % item)
