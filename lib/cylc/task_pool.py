@@ -799,16 +799,16 @@ class TaskPool(object):
             for unsatisfied in prereq_tree[item]['prereqs']:
                 unsatisfied_id = unsatisfied.split()[0]
                 # Clear out tasks with dependencies on other waiting tasks
-                if unsatisfied_id in prereq_tree.keys():
+                if unsatisfied_id in prereq_tree:
                     clean_keys.append(item)
                     break
 
         for key in clean_keys:
             del prereq_tree[key]
 
-        for item in prereq_tree.keys():
+        for item, prereqs in prereq_tree.items():
             self.log.warning("Unmet prerequisites for %s:" % item)
-            for unsatisfied in prereq_tree[item]['prereqs']:
+            for unsatisfied in prereqs['prereqs']:
                 self.log.warning(" * %s" % unsatisfied)
 
     def poll_task_jobs(self, items=None, compat=None):
