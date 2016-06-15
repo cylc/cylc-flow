@@ -808,6 +808,10 @@ class TaskProxy(object):
             "time_submit_exit": get_current_time_string(),
             "submit_status": 1,
         })
+        try:
+            del self.summary['submit_method_id']
+        except KeyError:
+            pass
         if self.sub_try_state.next() is None:
             # No submission retry lined up: definitive failure.
             flags.pflag = True
