@@ -777,6 +777,40 @@ class TaskPool(object):
                 return False
         return True
 
+    def report_stalled_task_deps(self):
+        """Return a set of unmet dependencies"""
+        identities = []
+        prereq_tree = {}
+        for itask in self.get_tasks():
+            identities.append(itask.identity)
+            if (itask.start_time_reached() and
+                    itask.state.status == TASK_STATUS_WAITING):
+                prereq_tree[itask.identity] = {'prereqs': []}
+                for prereq in itask.state.prerequisites_dump():
+                    if not prereq[1]:
+                        prereq_tree[itask.identity]['prereqs'].append(
+                            prereq[0])
+
+        # prune tree to ignore items that are elsewhere in it
+        clean_keys = []
+        for item in prereq_tree.keys():
+            if item in clean_keys:
+                continue
+            for unsatisfied in prereq_tree[item]['prereqs']:
+                unsatisfied_id = unsatisfied.split()[0]
+                # Clear out tasks with dependencies on other waiting tasks
+                if unsatisfied_id in prereq_tree.keys():
+                    clean_keys.append(item)
+                    break
+
+        for key in clean_keys:
+            prereq_tree.pop(key)
+
+        for item in prereq_tree.keys():
+            self.log.warning("Unmet prerequisites for %s:" % item)
+            for unsatisfied in prereq_tree[item]['prereqs']:
+                self.log.warning(" * %s" % unsatisfied)
+
     def poll_task_jobs(self, items=None, compat=None):
         """Poll jobs of active tasks.
 
