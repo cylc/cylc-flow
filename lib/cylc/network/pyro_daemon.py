@@ -64,6 +64,10 @@ class PyroDaemon(object):
         except socket.error:
             traceback.print_exc()
 
+        # Force all Pyro threads to stop now, to prevent them from raising any
+        # exceptions during Python interpreter shutdown - see GitHub #1890.
+        self.daemon.closedown()
+
     def connect(self, obj, name):
         """Connect obj and name to the daemon."""
         if not obj.__class__.__name__ == 'SuiteIdServer':
