@@ -1,31 +1,5 @@
-2016-05-20T10:22:52Z INFO - Suite starting
-2016-05-20T10:22:52Z INFO - Run mode: live
 2016-05-20T10:22:52Z INFO - Initial point: 1
 2016-05-20T10:22:52Z INFO - Final point: 1
-2016-05-20T10:22:52Z INFO - Cold Start 1
 2016-05-20T10:22:52Z INFO - [foo.1] -triggered off []
-2016-05-20T10:22:53Z INFO - [foo.1] -submit_method_id=1942
-2016-05-20T10:22:53Z INFO - [foo.1] -submission succeeded
-2016-05-20T10:22:53Z INFO - [foo.1] -(current:submitted)> started at 2016-05-20T10:22:53Z
-2016-05-20T10:22:54Z INFO - [foo.1] -(current:running)> succeeded at 2016-05-20T10:22:53Z
-2016-05-20T10:22:54Z INFO - [foo.1] -('job-logs-register', 1) will run after P0Y (after 2016-05-20T10:22:54Z)
 2016-05-20T10:22:55Z INFO - [bar.1] -triggered off ['foo.1']
-2016-05-20T10:22:56Z INFO - [bar.1] -submit_method_id=2039
-2016-05-20T10:22:56Z INFO - [bar.1] -submission succeeded
-2016-05-20T10:22:56Z INFO - [bar.1] -(current:submitted)> started at 2016-05-20T10:22:56Z
-2016-05-20T10:22:57Z CRITICAL - [bar.1] -(current:running)> Task job script received signal ERR at 2016-05-20T10:22:56Z
-2016-05-20T10:22:57Z CRITICAL - [bar.1] -(current:running)> failed at 2016-05-20T10:22:56Z
-2016-05-20T10:22:57Z INFO - [bar.1] -('job-logs-register', 1) will run after P0Y (after 2016-05-20T10:22:57Z)
-2016-05-20T10:22:59Z WARNING - suite stalled
-2016-05-20T10:23:00Z INFO - 2016-05-20T11:23:00+01 [('suite-event-handler-00', 'stalled') cmd] cylc reset test bar -s succeeded
-2016-05-20T11:23:00+01 [('suite-event-handler-00', 'stalled') ret_code] 0
-
-2016-05-20T10:23:00Z INFO - [bar.1] -resetting state to succeeded
-2016-05-20T10:23:00Z INFO - Command succeeded: reset_task_state(['bar'],None,succeeded)
 2016-05-20T10:23:01Z INFO - [baz.1] -triggered off ['bar.1']
-2016-05-20T10:23:02Z INFO - [baz.1] -submit_method_id=2148
-2016-05-20T10:23:02Z INFO - [baz.1] -submission succeeded
-2016-05-20T10:23:02Z INFO - [baz.1] -(current:submitted)> started at 2016-05-20T10:23:02Z
-2016-05-20T10:23:03Z INFO - [baz.1] -(current:running)> succeeded at 2016-05-20T10:23:02Z
-2016-05-20T10:23:03Z INFO - [baz.1] -('job-logs-register', 1) will run after P0Y (after 2016-05-20T10:23:03Z)
-2016-05-20T10:23:04Z INFO - Suite shutting down at 2016-05-20T10:23:04Z

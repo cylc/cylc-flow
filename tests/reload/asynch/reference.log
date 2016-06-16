@@ -1,105 +1,13 @@
-2014-04-25T14:50:56 INFO - Thread-2 start (Event Handlers)
-2014-04-25T14:50:56 INFO - Thread-3 start (Poll & Kill Commands)
-2014-04-25T14:50:56 INFO - port:7771
-2014-04-25T14:50:56 INFO - Suite starting at 2014-04-25T14:50:56.537588
-2014-04-25T14:50:56 INFO - Log event clock: real time
-2014-04-25T14:50:56 INFO - Run mode: live
 2014-04-25T14:50:56 INFO - Initial point: 2010010100
 2014-04-25T14:50:56 INFO - Final point: 2010010200
-2014-04-25T14:50:56 INFO - Thread-4 start (Job Submission)
-2014-04-25T14:50:56 INFO - Thread-5 start (Request Handling)
-2014-04-25T14:50:56 INFO - Cold Start 2010010100
 2014-04-25T14:50:56 INFO - [asynch.2010010100] -triggered off []
-2014-04-25T14:50:57 INFO - [asynch.2010010100] -(current:ready)> asynch.2010010100 submitting now
-2014-04-25T14:50:58 INFO - [asynch.2010010100] -(current:ready)> asynch.2010010100 submission succeeded
-2014-04-25T14:50:58 INFO - [asynch.2010010100] -(current:submitted)> asynch.2010010100 submit_method_id=13224
-2014-04-25T14:50:58 INFO - [asynch.2010010100] -(current:submitted)> asynch.2010010100 started at 2014-04-25T14:50:58
-2014-04-25T14:50:59 INFO - [asynch.2010010100] -(current:running)> asynch.2010010100 succeeded at 2014-04-25T14:50:58
 2014-04-25T14:51:00 INFO - [a.2010010100] -triggered off ['asynch.2010010100']
-2014-04-25T14:51:01 INFO - [a.2010010100] -(current:ready)> a.2010010100 submitting now
-2014-04-25T14:51:01 INFO - [a.2010010100] -(current:ready)> a.2010010100 submission succeeded
-2014-04-25T14:51:01 INFO - [a.2010010100] -(current:submitted)> a.2010010100 submit_method_id=13336
-2014-04-25T14:51:02 INFO - [a.2010010100] -(current:submitted)> a.2010010100 started at 2014-04-25T14:51:01
-2014-04-25T14:51:02 INFO - [a.2010010100] -(current:running)> a.2010010100 succeeded at 2014-04-25T14:51:02
 2014-04-25T14:51:03 INFO - [b.2010010100] -triggered off ['a.2010010100']
-2014-04-25T14:51:04 INFO - [b.2010010100] -(current:ready)> b.2010010100 submitting now
-2014-04-25T14:51:04 INFO - [b.2010010100] -(current:ready)> b.2010010100 submission succeeded
-2014-04-25T14:51:04 INFO - [b.2010010100] -(current:submitted)> b.2010010100 submit_method_id=13448
-2014-04-25T14:51:05 INFO - [b.2010010100] -(current:submitted)> b.2010010100 started at 2014-04-25T14:51:04
-2014-04-25T14:51:08 INFO - Command succeeded: reload suite()
-2014-04-25T14:51:09 INFO - RELOADING TASK DEFINITION FOR a.2010010100
-2014-04-25T14:51:09 INFO - RELOADING TASK DEFINITION FOR a.2010010106
-2014-04-25T14:51:09 INFO - RELOADING TASK DEFINITION FOR c.2010010100
-2014-04-25T14:51:09 INFO - RELOADING TASK DEFINITION FOR asynch.2010010100
-2014-04-25T14:51:09 INFO - RELOADING TASK DEFINITION FOR b.2010010106
-2014-04-25T14:51:11 INFO - [b.2010010100] -(current:running)> b.2010010100 succeeded at 2014-04-25T14:51:10
-2014-04-25T14:51:12 INFO - RELOADING TASK DEFINITION FOR b.2010010100
 2014-04-25T14:51:12 INFO - [c.2010010100] -triggered off ['b.2010010100']
-2014-04-25T14:51:13 INFO - [c.2010010100] -(current:ready)> c.2010010100 submitting now
-2014-04-25T14:51:13 INFO - [c.2010010100] -(current:ready)> c.2010010100 submission succeeded
-2014-04-25T14:51:13 INFO - [c.2010010100] -(current:submitted)> c.2010010100 submit_method_id=13582
-2014-04-25T14:51:14 INFO - [c.2010010100] -(current:submitted)> c.2010010100 started at 2014-04-25T14:51:13
-2014-04-25T14:51:14 INFO - [c.2010010100] -(current:running)> c.2010010100 succeeded at 2014-04-25T14:51:13
 2014-04-25T14:51:15 INFO - [a.2010010106] -triggered off ['c.2010010100']
-2014-04-25T14:51:16 INFO - [a.2010010106] -(current:ready)> a.2010010106 submitting now
-2014-04-25T14:51:16 INFO - [a.2010010106] -(current:ready)> a.2010010106 submission succeeded
-2014-04-25T14:51:16 INFO - [a.2010010106] -(current:submitted)> a.2010010106 submit_method_id=13771
-2014-04-25T14:51:17 INFO - [a.2010010106] -(current:submitted)> a.2010010106 started at 2014-04-25T14:51:16
-2014-04-25T14:51:17 INFO - [a.2010010106] -(current:running)> a.2010010106 succeeded at 2014-04-25T14:51:17
 2014-04-25T14:51:18 INFO - [b.2010010106] -triggered off ['a.2010010106']
-2014-04-25T14:51:19 INFO - [b.2010010106] -(current:ready)> b.2010010106 submitting now
-2014-04-25T14:51:20 INFO - [b.2010010106] -(current:ready)> b.2010010106 submission succeeded
-2014-04-25T14:51:20 INFO - [b.2010010106] -(current:submitted)> b.2010010106 submit_method_id=13883
-2014-04-25T14:51:20 INFO - [b.2010010106] -(current:submitted)> b.2010010106 started at 2014-04-25T14:51:19
-2014-04-25T14:51:22 INFO - Command succeeded: reload suite()
-2014-04-25T14:51:23 INFO - RELOADING TASK DEFINITION FOR b.2010010200
-2014-04-25T14:51:23 INFO - RELOADING TASK DEFINITION FOR a.2010010106
-2014-04-25T14:51:23 INFO - RELOADING TASK DEFINITION FOR c.2010010106
-2014-04-25T14:51:23 INFO - RELOADING TASK DEFINITION FOR a.2010010200
-2014-04-25T14:51:23 INFO - RELOADING TASK DEFINITION FOR c.2010010100
-2014-04-25T14:51:23 INFO - RELOADING TASK DEFINITION FOR asynch.2010010100
-2014-04-25T14:51:26 INFO - [b.2010010106] -(current:running)> b.2010010106 succeeded at 2014-04-25T14:51:26
-2014-04-25T14:51:27 INFO - RELOADING TASK DEFINITION FOR b.2010010106
 2014-04-25T14:51:27 INFO - [c.2010010106] -triggered off ['b.2010010106']
-2014-04-25T14:51:28 INFO - [c.2010010106] -(current:ready)> c.2010010106 submitting now
-2014-04-25T14:51:28 INFO - [c.2010010106] -(current:ready)> c.2010010106 submission succeeded
-2014-04-25T14:51:28 INFO - [c.2010010106] -(current:submitted)> c.2010010106 submit_method_id=14040
-2014-04-25T14:51:29 INFO - [c.2010010106] -(current:submitted)> c.2010010106 started at 2014-04-25T14:51:29
-2014-04-25T14:51:29 INFO - [c.2010010106] -(current:running)> c.2010010106 succeeded at 2014-04-25T14:51:29
 2014-04-25T14:51:30 INFO - [c.2010010118] -triggered off []
-2014-04-25T14:51:31 INFO - [c.2010010118] -(current:ready)> c.2010010118 submitting now
-2014-04-25T14:51:32 INFO - [c.2010010118] -(current:ready)> c.2010010118 submission succeeded
-2014-04-25T14:51:32 INFO - [c.2010010118] -(current:submitted)> c.2010010118 submit_method_id=14430
-2014-04-25T14:51:32 INFO - [c.2010010118] -(current:submitted)> c.2010010118 started at 2014-04-25T14:51:32
-2014-04-25T14:51:33 INFO - [c.2010010118] -(current:running)> c.2010010118 succeeded at 2014-04-25T14:51:32
 2014-04-25T14:51:34 INFO - [a.2010010200] -triggered off ['c.2010010118']
-2014-04-25T14:51:35 INFO - [a.2010010200] -(current:ready)> a.2010010200 submitting now
-2014-04-25T14:51:35 INFO - [a.2010010200] -(current:ready)> a.2010010200 submission succeeded
-2014-04-25T14:51:35 INFO - [a.2010010200] -(current:submitted)> a.2010010200 submit_method_id=14870
-2014-04-25T14:51:36 WARNING - [a.2010010206] -not adding (beyond suite stop cycle) 2010010200
-2014-04-25T14:51:36 INFO - [a.2010010200] -(current:submitted)> a.2010010200 started at 2014-04-25T14:51:35
-2014-04-25T14:51:36 INFO - [a.2010010200] -(current:running)> a.2010010200 succeeded at 2014-04-25T14:51:36
 2014-04-25T14:51:37 INFO - [b.2010010200] -triggered off ['a.2010010200']
-2014-04-25T14:51:39 INFO - [b.2010010200] -(current:ready)> b.2010010200 submitting now
-2014-04-25T14:51:39 INFO - [b.2010010200] -(current:ready)> b.2010010200 submission succeeded
-2014-04-25T14:51:39 INFO - [b.2010010200] -(current:submitted)> b.2010010200 submit_method_id=15279
-2014-04-25T14:51:40 WARNING - [b.2010010206] -not adding (beyond suite stop cycle) 2010010200
-2014-04-25T14:51:40 INFO - [b.2010010200] -(current:submitted)> b.2010010200 started at 2014-04-25T14:51:39
-2014-04-25T14:51:41 INFO - Command succeeded: reload suite()
-2014-04-25T14:51:42 INFO - RELOADING TASK DEFINITION FOR c.2010010118
-2014-04-25T14:51:42 INFO - RELOADING TASK DEFINITION FOR a.2010010200
-2014-04-25T14:51:42 INFO - RELOADING TASK DEFINITION FOR c.2010010200
-2014-04-25T14:51:45 INFO - [b.2010010200] -(current:running)> b.2010010200 succeeded at 2014-04-25T14:51:45
-2014-04-25T14:51:46 INFO - RELOADING TASK DEFINITION FOR b.2010010200
 2014-04-25T14:51:46 INFO - [c.2010010200] -triggered off ['b.2010010200']
-2014-04-25T14:51:47 INFO - [c.2010010200] -(current:ready)> c.2010010200 submitting now
-2014-04-25T14:51:47 INFO - [c.2010010200] -(current:ready)> c.2010010200 submission succeeded
-2014-04-25T14:51:47 INFO - [c.2010010200] -(current:submitted)> c.2010010200 submit_method_id=16318
-2014-04-25T14:51:48 WARNING - [c.2010010206] -not adding (beyond suite stop cycle) 2010010200
-2014-04-25T14:51:48 INFO - [c.2010010200] -(current:submitted)> c.2010010200 started at 2014-04-25T14:51:47
-2014-04-25T14:51:48 INFO - [c.2010010200] -(current:running)> c.2010010200 succeeded at 2014-04-25T14:51:48
-2014-04-25T14:51:48 INFO - Stopping: 
-  + all cycling tasks have spawned past the final cycle 2010010200
-2014-04-25T14:51:48 INFO - Thread-3 exit (Poll & Kill Commands)
-2014-04-25T14:51:49 INFO - Thread-4 exit (Job Submission)
-2014-04-25T14:51:49 INFO - Thread-2 exit (Event Handlers)

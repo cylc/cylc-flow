@@ -1,8 +1,5 @@
-2013/09/20 17:16:28 INFO - Log event clock: real time
-2013/09/20 17:16:28 INFO - Run mode: live
 2013/09/20 17:16:28 INFO - Initial point: 2010080800
 2013/09/20 17:16:28 INFO - Final point: 2010080900
-2013/09/20 17:16:28 INFO - Cold Start 2010080800
 2013/09/20 17:16:28 INFO - [prep.2010080800] -triggered off []
 2013/09/20 17:16:43 INFO - [foo.2010080800] -triggered off ['prep.2010080800']
 2013/09/20 17:16:45 INFO - [bar.2010080800] -triggered off ['foo.2010080800']
