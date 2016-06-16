@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from copy import deepcopy
-import datetime
 import time
 import gobject
 import itertools
@@ -27,12 +26,7 @@ from time import sleep
 from cylc.task_id import TaskID
 from cylc.gui.dot_maker import DotMaker
 from cylc.network.suite_state import get_id_summary
-from cylc.strftime import isoformat_strftime
-from cylc.wallclock import (
-    get_current_time_string,
-    get_time_string_from_unix_time,
-    TIME_ZONE_STRING_LOCAL_BASIC
-)
+from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_state import TASK_STATUSES_AUTO_EXPAND
 
 
