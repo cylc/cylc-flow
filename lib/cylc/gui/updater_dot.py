@@ -26,6 +26,10 @@ from cylc.gui.dot_maker import DotMaker
 from cylc.network.suite_state import get_id_summary
 from copy import deepcopy
 
+import warnings
+warnings.filterwarnings('ignore', '^.*was not found when attempting to ' +
+                        'remove it', Warning)
+
 
 class DotUpdater(threading.Thread):
 
