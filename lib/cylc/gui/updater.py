@@ -173,6 +173,7 @@ class Updater(threading.Thread):
 
         self.connect_fail_warned = False
         self.version_mismatch_warned = False
+        self.show_vis_tags = False
 
         client_args = (self.cfg.suite, self.cfg.owner, self.cfg.host,
                        self.cfg.port, self.cfg.comms_timeout, self.cfg.my_uuid)

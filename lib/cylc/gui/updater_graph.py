@@ -28,8 +28,10 @@ import os
 import re
 import sys
 import threading
+import tempfile
 from time import sleep
 from cylc.task_state import TASK_STATUS_RUNAHEAD
+from cylc.gui.dot_maker import get_visdot
 
 
 def compare_dict_of_dict(one, two):
@@ -90,6 +92,12 @@ class GraphUpdater(threading.Thread):
         self.fam_state_summary = {}
         self.global_summary = {}
         self.last_update_time = None
+        self.current_show_vis_tags = self.updater.show_vis_tags
+
+        # Temp dir of small png files of [visualization] color indicators (one
+        # for each task or family name).
+        self.vis_png_dir = tempfile.mkdtemp()
+        self.vis_png_map = {}
 
         self.god = None
         self.mode = "waiting..."
@@ -124,6 +132,24 @@ class GraphUpdater(threading.Thread):
         self.suite_share_dir = GLOBAL_CFG.get_derived_host_item(
             self.cfg.suite, 'suite share directory')
 
+    def regenerate_vis_png_map(self, state_summary):
+        """Get a [visualization] indicator icon for each task or family name.
+
+        Store as png files in a temporary directory, as Graphviz can only load
+        images from file.
+        """
+        if 'vis_conf' not in self.global_summary:
+            # Back compat <= 6.10.2.
+            return
+        for task_id in state_summary:
+            name, _ = TaskID.split(task_id)
+            if name in self.vis_png_map:
+                continue
+            pngpath = "%s/%s.png" % (self.vis_png_dir, name)
+            vdot = get_visdot(self.global_summary['vis_conf'][name])
+            vdot.save(pngpath, "png")
+            self.vis_png_map[name] = pngpath
+
     def toggle_write_dot_frames(self):
         self.write_dot_frames = not self.write_dot_frames
         if self.write_dot_frames:
@@ -156,11 +182,15 @@ class GraphUpdater(threading.Thread):
             return False
         self.cleared = False
 
-        if (self.last_update_time is not None and
-                self.last_update_time >= self.updater.last_update_time):
-            if self.action_required:
-                return True
-            return False
+        if self.updater.show_vis_tags != self.current_show_vis_tags:
+            self.current_show_vis_tags = self.updater.show_vis_tags
+            self.action_required = True
+        else:
+            if (self.last_update_time is not None and
+                    self.last_update_time >= self.updater.last_update_time):
+                if self.action_required:
+                    return True
+                return False
 
         self.updater.set_update(False)
         states_full = deepcopy(self.updater.state_summary)
@@ -330,6 +360,9 @@ class GraphUpdater(threading.Thread):
         needs_redraw = current_id != self.prev_graph_id
 
         if needs_redraw:
+            self.vis_png_map = {}
+            self.regenerate_vis_png_map(self.state_summary)
+            self.regenerate_vis_png_map(self.fam_state_summary)
             self.graphw = CGraphPlain(
                 self.cfg.suite, suite_polling_tasks)
             self.graphw.add_edges(
@@ -417,6 +450,24 @@ class GraphUpdater(threading.Thread):
             node.attr['color'] = '#888888'
             node.attr['fillcolor'] = 'white'
             node.attr['fontcolor'] = '#888888'
+            try:
+                name = node.attr['name']
+                point = node.attr['point']
+            except KeyError:
+                # Back compat <= 6.10.2
+                # These items were added for [visualisation] indicators.
+                pass
+            else:
+                label = ("<<TABLE BORDER='0' CELLBORDER='0' CELLSPACING='0'>"
+                         "<TR><TD>" + name + "<BR/>" + point + "</TD></TR>")
+                if self.updater.show_vis_tags:
+                    try:
+                        img = "<IMG SRC='" + self.vis_png_map[name] + "'/>"
+                        label += "<TR><TD>" + img + "</TD></TR>"
+                    except KeyError:
+                        pass
+                label += "</TABLE>>"
+                node.attr['label'] = label
 
         for id in self.state_summary:
             try:
@@ -457,5 +508,5 @@ class GraphUpdater(threading.Thread):
         # Return a key that maps to the essential structure of the graph.
         return (set(edges), self.crop, node_ids_in_state,
                 set(self.updater.filter_states_excl),
-                self.updater.filter_name_string,
+                self.updater.filter_name_string, self.updater.show_vis_tags,
                 self.orientation, self.ignore_suicide, self.subgraphs_on)

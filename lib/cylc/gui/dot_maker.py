@@ -20,17 +20,35 @@ import gtk
 from copy import deepcopy
 
 from cylc.task_state import TASK_STATUSES_ORDERED
-
+from cylc.config import SuiteConfig
+from cylc.task_id import TaskID
 
 empty = {}
-empty['small'] = ["11 11 1 1", ". c None"]
-empty['small'].extend(["..........."] * 11)
-empty['medium'] = ["17 17 1 1", ". c None"]
-empty['medium'].extend(["................."] * 17)
-empty['large'] = ["22 22 1 1", ". c None"]
-empty['large'].extend(["......................"] * 22)
-empty['extra large'] = ["32 32 1 1", ". c None"]
-empty['extra large'].extend(["................................"] * 32)
+empty['small'] = ["16 16 1 1", ". c None"]
+empty['small'].extend(["................"] * 16)
+empty['medium'] = ["22 22 1 1", ". c None"]
+empty['medium'].extend(["......................"] * 22)
+empty['large'] = ["27 27 1 1", ". c None"]
+empty['large'].extend(["..........................."] * 27)
+empty['extra large'] = ["37 37 1 1", ". c None"]
+empty['extra large'].extend(["....................................."] * 37)
+
+# A small square for [visualization] color indicators.
+visdot = [
+    "10 10 2 1",
+    "o c <BRDR>",
+    ". c <VISC>",
+    "oooooooooo",
+    "o........o",
+    "o........o",
+    "o........o",
+    "o........o",
+    "o........o",
+    "o........o",
+    "o........o",
+    "o........o",
+    "oooooooooo",
+]
 
 stopped = {
     'small': [
@@ -135,112 +153,154 @@ stopped = {
 
 live = {
     'small': [
-        "11 11 3 1",
-        ".	c <FILL>",
-        "*	c <BRDR>",
-        "w  c <FAMILY>",
-        "***********",
-        "***********",
-        "**.......**",
-        "**.wwww..**",
-        "**.w.....**",
-        "**.www...**",
-        "**.w.....**",
-        "**.w.....**",
-        "**.......**",
-        "***********",
-        "***********"
+        "16 16 4 1",
+        ". c <FILL>",
+        "* c <BRDR>",
+        "w c <FAMILY>",
+        "x c None",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxx",
+        "xxxxx***********",
+        "xxxxx***********",
+        "xxxxx**.......**",
+        "xxxxx**.wwww..**",
+        "xxxxx**.w.....**",
+        "xxxxx**.www...**",
+        "xxxxx**.w.....**",
+        "xxxxx**.w.....**",
+        "xxxxx**.......**",
+        "xxxxx***********",
+        "xxxxx***********"
     ],
     'medium': [
-        "17 17 3 1",
-        ".	c <FILL>",
-        "*	c <BRDR>",
-        "w  c <FAMILY>",
-        "*****************",
-        "*****************",
-        "*****************",
-        "***...........***",
-        "***..wwwwww...***",
-        "***..wwwwww...***",
-        "***..ww.......***",
-        "***..wwww.....***",
-        "***..wwww.....***",
-        "***..ww.......***",
-        "***..ww.......***",
-        "***..ww.......***",
-        "***...........***",
-        "***...........***",
-        "*****************",
-        "*****************",
-        "*****************"
+        "22 22 4 1",
+        ". c <FILL>",
+        "* c <BRDR>",
+        "w c <FAMILY>",
+        "x c None",
+        "xxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxx*****************",
+        "xxxxx*****************",
+        "xxxxx*****************",
+        "xxxxx***...........***",
+        "xxxxx***..wwwwww...***",
+        "xxxxx***..wwwwww...***",
+        "xxxxx***..ww.......***",
+        "xxxxx***..wwww.....***",
+        "xxxxx***..wwww.....***",
+        "xxxxx***..ww.......***",
+        "xxxxx***..ww.......***",
+        "xxxxx***..ww.......***",
+        "xxxxx***...........***",
+        "xxxxx***...........***",
+        "xxxxx*****************",
+        "xxxxx*****************",
+        "xxxxx*****************"
     ],
     'large': [
-        "22 22 3 1",
-        ".	c <FILL>",
-        "*	c <BRDR>",
-        "w  c <FAMILY>",
-        "**********************",
-        "**********************",
-        "**********************",
-        "**********************",
-        "****..............****",
-        "****..............****",
-        "****...wwwwwww....****",
-        "****...wwwwwww....****",
-        "****...ww.........****",
-        "****...ww.........****",
-        "****...wwwww......****",
-        "****...wwwww......****",
-        "****...ww.........****",
-        "****...ww.........****",
-        "****...ww.........****",
-        "****...ww.........****",
-        "****..............****",
-        "****..............****",
-        "**********************",
-        "**********************",
-        "**********************",
-        "**********************"
+        "27 27 4 1",
+        ". c <FILL>",
+        "* c <BRDR>",
+        "w c <FAMILY>",
+        "x c None",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxx**********************",
+        "xxxxx**********************",
+        "xxxxx**********************",
+        "xxxxx**********************",
+        "xxxxx****..............****",
+        "xxxxx****..............****",
+        "xxxxx****...wwwwwww....****",
+        "xxxxx****...wwwwwww....****",
+        "xxxxx****...ww.........****",
+        "xxxxx****...ww.........****",
+        "xxxxx****...wwwww......****",
+        "xxxxx****...wwwww......****",
+        "xxxxx****...ww.........****",
+        "xxxxx****...ww.........****",
+        "xxxxx****...ww.........****",
+        "xxxxx****...ww.........****",
+        "xxxxx****..............****",
+        "xxxxx****..............****",
+        "xxxxx**********************",
+        "xxxxx**********************",
+        "xxxxx**********************",
+        "xxxxx**********************"
     ],
     'extra large': [
-        "32 32 3 1",
-        ".	c <FILL>",
-        "*	c <BRDR>",
-        "w  c <FAMILY>",
-        "********************************",
-        "********************************",
-        "********************************",
-        "********************************",
-        "********************************",
-        "******....................******",
-        "******....................******",
-        "******....................******",
-        "******.....wwwwwwwww......******",
-        "******.....wwwwwwwww......******",
-        "******.....wwwwwwwww......******",
-        "******.....www............******",
-        "******.....www............******",
-        "******.....www............******",
-        "******.....wwwwwww........******",
-        "******.....wwwwwww........******",
-        "******.....wwwwwww........******",
-        "******.....www............******",
-        "******.....www............******",
-        "******.....www............******",
-        "******.....www............******",
-        "******.....www............******",
-        "******.....www............******",
-        "******....................******",
-        "******....................******",
-        "******....................******",
-        "******....................******",
-        "********************************",
-        "********************************",
-        "********************************",
-        "********************************",
-        "********************************"
+        "37 37 4 1",
+        ". c <FILL>",
+        "* c <BRDR>",
+        "w c <FAMILY>",
+        "x c None",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "xxxxx********************************",
+        "xxxxx********************************",
+        "xxxxx********************************",
+        "xxxxx********************************",
+        "xxxxx********************************",
+        "xxxxx******....................******",
+        "xxxxx******....................******",
+        "xxxxx******....................******",
+        "xxxxx******.....wwwwwwwww......******",
+        "xxxxx******.....wwwwwwwww......******",
+        "xxxxx******.....wwwwwwwww......******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....wwwwwww........******",
+        "xxxxx******.....wwwwwww........******",
+        "xxxxx******.....wwwwwww........******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....www............******",
+        "xxxxx******.....www............******",
+        "xxxxx******....................******",
+        "xxxxx******....................******",
+        "xxxxx******....................******",
+        "xxxxx******....................******",
+        "xxxxx********************************",
+        "xxxxx********************************",
+        "xxxxx********************************",
+        "xxxxx********************************",
+        "xxxxx********************************"
     ]
 }
+
+
+def get_visdot(vis_colors):
+    """Return a vis indicator pixbuf for vis_colors [border, fill]."""
+    vdot = deepcopy(visdot)
+    vdot[1] = vdot[1].replace('<BRDR>', vis_colors[0])
+    vdot[2] = vdot[2].replace('<VISC>', vis_colors[1])
+    return gtk.gdk.pixbuf_new_from_xpm_data(data=vdot)
+
+
+def get_compdot(sdot, vdot):
+    """Return a composite of state icon and vis indicator."""
+    comp = sdot.copy()
+    sdot.composite(comp, 0, 0, sdot.props.width, sdot.props.height,
+                   0, 0, 1.0, 1.0, gtk.gdk.INTERP_HYPER, 255)
+    vdot.composite(comp, 0, 0, vdot.props.width, vdot.props.height,
+                   0, 0, 1.0, 1.0, gtk.gdk.INTERP_HYPER, 155)
+    return comp
 
 
 class DotMaker(object):
@@ -251,6 +311,18 @@ class DotMaker(object):
     def __init__(self, theme, size='medium'):
         self.theme = theme
         self.size = size
+
+        # Generate static state dots (only depend on theme).
+        self.state_dots = {}
+        self.state_dots['task'] = {}
+        self.state_dots['family'] = {}
+        for state in TASK_STATUSES_ORDERED:
+            self.state_dots['task'][state] = self.get_icon(state)
+            self.state_dots['family'][state] = self.get_icon(state,
+                                                             is_family=True)
+        self.empty = self.get_icon()
+
+        self.icons = {}
 
     def get_icon(self, state=None, is_stopped=False, is_family=False,
                  is_filtered=False):
@@ -313,11 +385,24 @@ class DotMaker(object):
                 state, is_stopped=is_stopped, is_filtered=is_filtered))
         return img
 
-    def get_dots(self):
-        dots = {'task': {}, 'family': {}}
-        for state in TASK_STATUSES_ORDERED:
-            dots['task'][state] = self.get_icon(state)
-            dots['family'][state] = self.get_icon(state, is_family=True)
-        dots['task']['empty'] = self.get_icon()
-        dots['family']['empty'] = self.get_icon()
-        return dots
+    def _regen_task_icons_helper(self, states, dot_type, show_vis, gl_summary):
+        """Helper for regenerate_task_icons()."""
+        for id_, summary in states.items():
+            name, _ = TaskID.split(id_)
+            state = summary['state']
+            icon = self.state_dots[dot_type][state]
+            if show_vis:
+                try:
+                    vdot = get_visdot(gl_summary['vis_conf'][name])
+                except KeyError:
+                    # Back compat <= 6.10.2 (gcylc [visualisation] indicators)
+                    pass
+                else:
+                    icon = get_compdot(icon, vdot)
+            self.icons[id_] = icon
+
+    def regenerate_task_icons(self, states, fam_states, show_vis, gl_sumry):
+        """Generate dot icons for all tasks and families."""
+        self.icons = {}
+        self._regen_task_icons_helper(states, 'task', show_vis, gl_sumry)
+        self._regen_task_icons_helper(fam_states, 'family', show_vis, gl_sumry)

@@ -929,6 +929,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             view = self.current_views[view_num]
             view.t.should_transpose_view = True
 
+    def toggle_vis_tags(self, _=None):
+        self.updater.show_vis_tags = not self.updater.show_vis_tags
+
     def remove_view(self, view_num):
         """Remove a view instance."""
         self.current_views[view_num].stop()
@@ -2353,6 +2356,12 @@ shown here in the state they were in at the time of triggering.''')
         self.view1_align_item.connect(
             'toggled', self._cb_change_view_align)
         self.view_menu.append(self.view1_align_item)
+
+        vistag_item = gtk.CheckMenuItem("Toggle visualisation tags")
+        self._set_tooltip(
+            vistag_item, "Show indicators of suite [visualisation] colors.")
+        self.view_menu.append(vistag_item)
+        vistag_item.connect('activate', self.toggle_vis_tags)
 
         self.view_menu.append(gtk.SeparatorMenuItem())
 

@@ -132,6 +132,18 @@ class SuiteConfig(object):
                 vis_start_string, vis_stop_string, mem_log_func)
         return cls._INSTANCE
 
+    @staticmethod
+    def get_cols_from_graphviz_attrs(attrs, defaults):
+        """Return ['color', 'fillcolor'] from vis node attributes."""
+        result = copy(defaults)
+        for attr in attrs:
+            key, val = attr.split('=')
+            if key == 'color':
+                result[0] = val
+            elif key == 'fillcolor':
+                result[1] = val
+        return result
+
     def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
@@ -164,6 +176,7 @@ class SuiteConfig(object):
         self.suite_polling_tasks = {}
         self.vis_start_point_string = vis_start_string
         self.vis_stop_point_string = vis_stop_string
+        self.vis_node_colors = {}
         self._last_graph_raw_id = None
         self._last_graph_raw_edges = []
 
@@ -648,14 +661,6 @@ class SuiteConfig(object):
             raise SuiteConfigError("Node attributes must be of the form "
                                    "'key1=value1', 'key2=value2', etc.")
 
-        # (Note that we're retaining 'default node attributes' even
-        # though this could now be achieved by styling the root family,
-        # because putting default attributes for root in the suite.rc spec
-        # results in root appearing last in the ordered dict of node
-        # names, so it overrides the styling for lesser groups and
-        # nodes, whereas the reverse is needed - fixing this would
-        # require reordering task_attr in lib/cylc/graphing.py).
-
         self.leaves = self.get_task_name_list()
         for ns, ancestors in self.runtime['first-parent ancestors'].items():
             try:
@@ -705,6 +710,22 @@ class SuiteConfig(object):
             if vfcp > final_point:
                 self.cfg['visualization']['final cycle point'] = str(
                     final_point)
+
+        # Record border and fill colors for visualization indicators in gcylc.
+        default_cols = self.get_cols_from_graphviz_attrs(
+            self.cfg['visualization']['default node attributes'],
+            ["black", "white"])
+        # Set default color for all nodes.
+        for node in self.cfg['visualization']['node groups']['root']:
+            self.vis_node_colors[node] = default_cols
+        # If a node is explicitly styled, override the defaults.
+        for node, attr in self.cfg['visualization']['node attributes'].items():
+            node_cols = self.get_cols_from_graphviz_attrs(attr, default_cols)
+            if node in self.cfg['visualization']['node groups']:
+                for mem in self.cfg['visualization']['node groups'][node]:
+                    self.vis_node_colors[mem] = node_cols
+            else:
+                self.vis_node_colors[node] = node_cols
 
         # Replace suite name in suite  URL.
         url = self.cfg['URL']

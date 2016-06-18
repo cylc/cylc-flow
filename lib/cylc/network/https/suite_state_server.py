@@ -60,7 +60,7 @@ class StateSummaryServer(BaseCommsServer):
 
     def update(self, tasks, tasks_rh, min_point, max_point, max_point_rh,
                paused, will_pause_at, stopping, will_stop_at, ns_defn_order,
-               reloading):
+               reloading, vis_conf):
         global_summary = {}
         family_summary = {}
 
@@ -146,7 +146,7 @@ class StateSummaryServer(BaseCommsServer):
         # Construct a suite status string for use by monitoring clients.
         global_summary['status_string'] = get_suite_status_string(
             paused, stopping, will_pause_at, will_stop_at)
-
+        global_summary['vis_conf'] = vis_conf
         self._summary_update_time = time.time()
 
         # Replace the originals (atomic update, for access from other threads).
