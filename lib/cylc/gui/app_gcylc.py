@@ -434,7 +434,7 @@ Use (Re-)connect button to reconnect immediately.""")
     def set_update_time(self, update_time_str, next_update_dt_str=None):
         """Set last update text."""
         if self.update_time_str is None and update_time_str is None:
-            update_time_str = get_current_time_string() 
+            update_time_str = get_current_time_string()
         if update_time_str and update_time_str != self.update_time_str:
             self.update_time_str = update_time_str
             gobject.idle_add(
