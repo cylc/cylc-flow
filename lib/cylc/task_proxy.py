@@ -1229,15 +1229,19 @@ class TaskProxy(object):
         """
         job_file_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL)
         task_log_dir = os.path.dirname(job_file_dir)
-        try:
-            if self.submit_num == 1:
-                for name in os.listdir(task_log_dir):
-                    if name != "01":
-                        rmtree(os.path.join(task_log_dir, name))
+        if self.submit_num == 1:
+            try:
+                names = os.listdir(task_log_dir)
+            except OSError:
+                pass
             else:
-                rmtree(job_file_dir)
-        except OSError:
-            pass
+                for name in names:
+                    if name not in ["01", self.NN]:
+                        rmtree(
+                            os.path.join(task_log_dir, name),
+                            ignore_errors=True)
+        else:
+            rmtree(job_file_dir, ignore_errors=True)
 
         mkdir_p(job_file_dir)
         target = os.path.join(task_log_dir, self.NN)
