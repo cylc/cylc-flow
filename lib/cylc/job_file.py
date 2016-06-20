@@ -20,7 +20,6 @@
 import os
 import re
 import stat
-import StringIO
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
@@ -34,6 +33,15 @@ class JobFile(object):
 
     """Write task job files."""
 
+    _INSTANCE = None
+
+    @classmethod
+    def get_inst(cls):
+        """Return a unique instance of this class."""
+        if cls._INSTANCE is None:
+            cls._INSTANCE = cls()
+        return cls._INSTANCE
+
     def __init__(self):
         self.suite_env = {}
 
@@ -42,7 +50,7 @@ class JobFile(object):
         self.suite_env.clear()
         self.suite_env.update(suite_env)
 
-    def write(self, job_conf):
+    def write(self, local_job_file_path, job_conf):
         """Write each job script section in turn."""
 
         # ########### !!!!!!!! WARNING !!!!!!!!!!! #####################
@@ -56,7 +64,7 @@ class JobFile(object):
         # that cylc commands can be used in defining user environment
         # variables: NEXT_CYCLE=$( cylc cycle-point --offset-hours=6 )
 
-        handle = open(job_conf['local job file path'], 'wb')
+        handle = open(local_job_file_path, 'wb')
         self._write_header(handle, job_conf)
         self._write_directives(handle, job_conf)
         self._write_prelude(handle, job_conf)
@@ -76,9 +84,9 @@ class JobFile(object):
         handle.close()
         # make it executable
         mode = (
-            os.stat(job_conf['local job file path']).st_mode |
+            os.stat(local_job_file_path).st_mode |
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-        os.chmod(job_conf['local job file path'], mode)
+        os.chmod(local_job_file_path, mode)
 
     @classmethod
     def _write_header(cls, handle, job_conf):
@@ -89,7 +97,7 @@ class JobFile(object):
                 ("# Suite: ", job_conf['suite name']),
                 ("# Task: ", job_conf['task id']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_JOB_LOG_DIR,
-                 os.path.dirname(job_conf['common job log path'])),
+                 job_conf['job log dir']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SYS_NAME,
                  job_conf['batch system name']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
@@ -289,8 +297,7 @@ unset S""" % args)
         handle.write(
             "\nexport CYLC_TASK_SSH_LOGIN_SHELL=" + str(use_login_shell))
         handle.write(
-            "\nexport CYLC_TASK_SUBMIT_NUMBER=" +
-            str(job_conf['absolute submit number']))
+            "\nexport CYLC_TASK_SUBMIT_NUMBER=" + str(job_conf['submit num']))
         handle.write(
             "\nexport CYLC_TASK_TRY_NUMBER=" +
             str(job_conf['try number']))
@@ -442,11 +449,5 @@ trap '' EXIT
 
 """ % {"message": TASK_OUTPUT_SUCCEEDED})
 
-        task_name, point_string = TaskID.split(job_conf['task id'])
-        job_conf['absolute submit number']
         handle.write("%s%s\n" % (
-            BATCH_SYS_MANAGER.LINE_PREFIX_EOF,
-            os.path.dirname(job_conf['common job log path'])))
-
-
-JOB_FILE = JobFile()
+            BATCH_SYS_MANAGER.LINE_PREFIX_EOF, job_conf['job log dir']))

@@ -24,10 +24,8 @@ from logging import (
     getLevelName, getLogger, CRITICAL, ERROR, WARNING, INFO, DEBUG)
 import os
 from pipes import quote
-import Queue
 from random import randrange
 import re
-import shlex
 from shutil import rmtree
 import time
 import traceback
@@ -45,15 +43,13 @@ from cylc.wallclock import (
     get_seconds_as_interval_string,
     RE_DATE_TIME_FORMAT_EXTENDED
 )
-from cylc.network.task_msgqueue import TaskMessageServer
 from cylc.host_select import get_task_host
-from cylc.job_file import JOB_FILE
+from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.owner import is_remote_user, USER
 from cylc.poll_timer import PollTimer
 from cylc.suite_host import is_remote_host, get_suite_host
-from parsec.util import pdeepcopy, poverride
 from parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
 from cylc.rundb import CylcSuiteDAO
@@ -62,7 +58,7 @@ from cylc.task_message import TaskMessage
 from parsec.util import pdeepcopy, poverride
 from parsec.config import ItemNotFoundError
 from cylc.task_state import (
-    TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
+    TaskState, TASK_STATUSES_ACTIVE, TASK_STATUS_WAITING,
     TASK_STATUS_READY, TASK_STATUS_SUBMITTED, TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 from cylc.task_outputs import (
@@ -177,6 +173,9 @@ class TaskProxy(object):
 
     CUSTOM_EVENT_HANDLER = "event-handler"
     EVENT_MAIL = "event-mail"
+    HEAD_MODE_LOCAL = "local"
+    HEAD_MODE_REMOTE = "remote"
+    JOB_FILE_BASE = BATCH_SYS_MANAGER.JOB_FILE_BASE
     JOB_KILL = "job-kill"
     JOB_LOGS_REGISTER = "job-logs-register"
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
@@ -185,6 +184,7 @@ class TaskProxy(object):
     MANAGE_JOB_LOGS_TRY_DELAYS = (0, 30, 180)  # PT0S, PT30S, PT3M
     MESSAGE_SUFFIX_RE = re.compile(
         ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
+    NN = "NN"
 
     LOGGING_LVL_OF = {
         "INFO": INFO,
@@ -204,22 +204,6 @@ class TaskProxy(object):
 
     event_handler_env = {}
     stop_sim_mode_job_submission = False
-
-    @classmethod
-    def get_job_log_dir(
-            cls, task_name, task_point, submit_num="NN", suite=None):
-        """Return the latest job log path on the suite host."""
-        try:
-            submit_num = "%02d" % submit_num
-        except TypeError:
-            pass
-        if suite:
-            return os.path.join(
-                GLOBAL_CFG.get_derived_host_item(
-                    suite, "suite job log directory"),
-                str(task_point), task_name, submit_num)
-        else:
-            return os.path.join(str(task_point), task_name, submit_num)
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
@@ -261,7 +245,6 @@ class TaskProxy(object):
         # Manually inserted tasks may have a final cycle point set.
         self.stop_point = stop_point
 
-        self.job_conf = None
         self.manual_trigger = False
         self.is_manual_submit = False
 
@@ -288,7 +271,7 @@ class TaskProxy(object):
         for lfile in self.tdef.rtconfig['extra log files']:
             self.summary['logfiles'].append(expandvars(lfile))
 
-        self.job_file_written = False
+        self.local_job_file_path = None
 
         self.retries_configured = False
 
@@ -318,8 +301,6 @@ class TaskProxy(object):
         self.task_owner = None
         self.user_at_host = self.task_host
 
-        self.submit_method_id = None
-        self.batch_sys_name = None
         self.job_vacated = False
 
         self.submission_poll_timer = None
@@ -389,7 +370,7 @@ class TaskProxy(object):
                 self.state.outputs.completed[msg] = oid
                 try:
                     del self.state.outputs.not_completed[msg]
-                except:
+                except KeyError:
                     pass
 
     def _get_events_conf(self, key, default=None):
@@ -428,12 +409,11 @@ class TaskProxy(object):
         ctx_str = str(ctx)
         if not ctx_str:
             return
-        submit_num = "NN"
+        submit_num = self.NN
         if isinstance(ctx.cmd_key, tuple):  # An event handler
             submit_num = ctx.cmd_key[-1]
-        job_log_dir = self.get_job_log_dir(
-            self.tdef.name, self.point, submit_num, self.suite_name)
-        job_activity_log = os.path.join(job_log_dir, "job-activity.log")
+        job_activity_log = self.get_job_log_path(
+            self.HEAD_MODE_LOCAL, submit_num, "job-activity.log")
         try:
             with open(job_activity_log, "ab") as handle:
                 handle.write(ctx_str)
@@ -453,6 +433,7 @@ class TaskProxy(object):
             "misc": self.user_at_host})
 
     def db_update_status(self):
+        """Update suite runtime DB task states table."""
         self.db_updates_map[self.TABLE_TASK_STATES].append({
             "time_updated": get_current_time_string(),
             "submit_num": self.submit_num,
@@ -495,7 +476,8 @@ class TaskProxy(object):
                 self.point_as_seconds += utc_offset_in_seconds
         return self.point_as_seconds
 
-    def get_offset_as_seconds(self, offset):
+    @staticmethod
+    def get_offset_as_seconds(offset):
         """Return an ISO interval as seconds."""
         iso_offset = cylc.cycling.iso8601.interval_parse(str(offset))
         return int(iso_offset.get_seconds())
@@ -531,7 +513,7 @@ class TaskProxy(object):
             for line in result.out.splitlines(True):
                 if line.startswith(
                         BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "="):
-                    self.submit_method_id = line.strip().replace(
+                    self.summary['submit_method_id'] = line.strip().replace(
                         BATCH_SYS_MANAGER.CYLC_BATCH_SYS_JOB_ID + "=", "")
                 else:
                     out += line
@@ -541,7 +523,7 @@ class TaskProxy(object):
         if result.ret_code == SuiteProcPool.JOB_SKIPPED_FLAG:
             return
 
-        if self.submit_method_id and result.ret_code == 0:
+        if self.summary['submit_method_id'] and result.ret_code == 0:
             self.job_submission_succeeded()
         else:
             self.job_submission_failed()
@@ -667,20 +649,19 @@ class TaskProxy(object):
             return
 
         try:
-            self.submit_method_id = items[3]
+            self.summary['submit_method_id'] = items[3]
         except IndexError:
-            self.submit_method_id = None
+            self.summary['submit_method_id'] = None
         self.register_job_logs(self.submit_num)
-        if self.submit_method_id and ctx.ret_code == 0:
+        if self.summary['submit_method_id'] and ctx.ret_code == 0:
             self.job_submission_succeeded()
         else:
             self.job_submission_failed()
 
     def job_cmd_out_callback(self, cmd_ctx, line):
         """Callback on job command STDOUT/STDERR."""
-        job_log_dir = self.get_job_log_dir(
-            self.tdef.name, self.point, "NN", self.suite_name)
-        job_activity_log = os.path.join(job_log_dir, "job-activity.log")
+        job_activity_log = self.get_job_log_path(
+            self.HEAD_MODE_LOCAL, self.NN, "job-activity.log")
         if cmd_ctx.cmd_kwargs.get("host") and cmd_ctx.cmd_kwargs.get("user"):
             user_at_host = "(%(user)s@%(host)s) " % cmd_ctx.cmd_kwargs
         elif cmd_ctx.cmd_kwargs.get("host"):
@@ -751,7 +732,7 @@ class TaskProxy(object):
                 ),
                 self._get_host_conf("retrieve job logs retry delays", []))
 
-    def setup_event_mail(self, event, message):
+    def setup_event_mail(self, event, _):
         """Event notification, by email."""
         key1 = (self.EVENT_MAIL, event)
         if ((key1, self.submit_num) in self.event_handler_try_states or
@@ -828,7 +809,10 @@ class TaskProxy(object):
             "time_submit_exit": get_current_time_string(),
             "submit_status": 1,
         })
-        self.submit_method_id = None
+        try:
+            del self.summary['submit_method_id']
+        except KeyError:
+            pass
         if self.sub_try_state.next() is None:
             # No submission retry lined up: definitive failure.
             flags.pflag = True
@@ -857,17 +841,18 @@ class TaskProxy(object):
 
     def job_submission_succeeded(self):
         """Handle job submission succeeded."""
-        if self.submit_method_id is not None:
-            self.log(INFO, 'submit_method_id=' + self.submit_method_id)
+        if self.summary.get('submit_method_id') is not None:
+            self.log(
+                INFO, 'submit_method_id=' + self.summary['submit_method_id'])
         self.log(INFO, 'submission succeeded')
         now = get_current_time_string()
         self.db_updates_map[self.TABLE_TASK_STATES].append({
             "time_updated": now,
-            "submit_method_id": self.submit_method_id})
+            "submit_method_id": self.summary.get('submit_method_id')})
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "time_submit_exit": now,
             "submit_status": 0,
-            "batch_sys_job_id": self.submit_method_id})
+            "batch_sys_job_id": self.summary.get('submit_method_id')})
 
         if self.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
@@ -893,7 +878,6 @@ class TaskProxy(object):
         self.summary['submitted_time'] = self.submitted_time
         self.summary['submitted_time_string'] = (
             get_time_string_from_unix_time(self.submitted_time))
-        self.summary['submit_method_id'] = self.submit_method_id
         self.summary['latest_message'] = TASK_STATUS_SUBMITTED
         self.setup_event_handlers("submitted", 'job submitted',
                                   db_event='submission succeeded')
@@ -1006,12 +990,11 @@ class TaskProxy(object):
 
         """
         data = []
-        job_log_dir = self.get_job_log_dir(
-            self.tdef.name, self.point, submit_num, self.suite_name)
+        job_file_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL, submit_num)
         try:
-            for filename in os.listdir(job_log_dir):
+            for filename in os.listdir(job_file_dir):
                 try:
-                    stat = os.stat(os.path.join(job_log_dir, filename))
+                    stat = os.stat(os.path.join(job_file_dir, filename))
                 except OSError:
                     continue
                 else:
@@ -1019,176 +1002,30 @@ class TaskProxy(object):
         except OSError:
             pass
 
-        rel_job_log_dir = self.get_job_log_dir(
-            self.tdef.name, self.point, submit_num)
+        rel_job_file_dir = self.get_job_log_path(submit_num=submit_num)
         for mtime, size, filename in data:
             self.db_inserts_map[self.TABLE_TASK_JOB_LOGS].append({
                 "submit_num": submit_num,
                 "filename": filename,
-                "location": os.path.join(rel_job_log_dir, filename),
+                "location": os.path.join(rel_job_file_dir, filename),
                 "mtime": mtime,
                 "size": size})
 
         return [datum[2] for datum in data]
 
-    def prep_submit(self, dry_run=False, overrides=None):
-        """Prepare job submission.
-
-        Return self on a good preparation.
-
-        """
-        if self.tdef.run_mode == 'simulation' or (
-                self.job_file_written and not dry_run):
-            return self
-
-        try:
-            self._prep_submit_impl(overrides=overrides)
-            JOB_FILE.write(self.job_conf)
-            self.job_file_written = True
-        except Exception, exc:
-            # Could be a bad command template.
-            if flags.debug:
-                traceback.print_exc()
-            self.command_log(SuiteProcContext(
-                self.JOB_SUBMIT, '(prepare job file)', err=exc,
-                ret_code=1))
-            self.job_submission_failed()
-            return
-
-        if dry_run:
-            # This will be shown next to submit num in gcylc:
-            self.summary['latest_message'] = 'job file written for edit-run'
-            self.log(WARNING, self.summary['latest_message'])
-
-        # Return value used by "cylc submit" and "cylc jobscript":
-        return self
-
-    def _prep_submit_impl(self, overrides=None):
-        """Helper for self.prep_submit."""
-        self.log(DEBUG, "incrementing submit number")
-        self.submit_num += 1
-        self.summary['submit_num'] = self.submit_num
-        self.job_file_written = False
-        self.db_events_insert(event="incrementing submit number")
-        self.db_inserts_map[self.TABLE_TASK_JOBS].append({
-            "is_manual_submit": self.is_manual_submit,
-            "try_num": self.run_try_state.num + 1,
-            "time_submit": get_current_time_string(),
-        })
-
-        local_job_log_dir, common_job_log_path = self._create_job_log_path(
-            new_mode=True)
-        local_jobfile_path = os.path.join(
-            local_job_log_dir, common_job_log_path)
-
-        if overrides:
-            rtconfig = pdeepcopy(self.tdef.rtconfig)
-            poverride(rtconfig, overrides)
-        else:
-            rtconfig = self.tdef.rtconfig
-
-        self.set_from_rtconfig(rtconfig)
-
-        # construct the job_sub_method here so that a new one is used if
-        # the task is re-triggered by the suite operator - so it will
-        # get new stdout/stderr logfiles and not overwrite the old ones.
-
-        # dynamic instantiation - don't know job sub method till run time.
-        self.batch_sys_name = rtconfig['job submission']['method']
-        self.summary['batch_sys_name'] = self.batch_sys_name
-
-        command = rtconfig['script']
-        if self.tdef.run_mode == 'dummy':
-            # (dummy tasks don't detach)
-            command = rtconfig['dummy mode']['script']
-            if rtconfig['dummy mode']['disable pre-script']:
-                precommand = None
-            if rtconfig['dummy mode']['disable post-script']:
-                postcommand = None
-        else:
-            precommand = rtconfig['pre-script']
-            postcommand = rtconfig['post-script']
-
-        if self.tdef.suite_polling_cfg:
-            # generate automatic suite state polling script
-            comstr = "cylc suite-state " + \
-                     " --task=" + self.tdef.suite_polling_cfg['task'] + \
-                     " --point=" + str(self.point) + \
-                     " --status=" + self.tdef.suite_polling_cfg['status']
-            if rtconfig['suite state polling']['user']:
-                comstr += " --user=" + rtconfig['suite state polling']['user']
-            if rtconfig['suite state polling']['host']:
-                comstr += " --host=" + rtconfig['suite state polling']['host']
-            if rtconfig['suite state polling']['interval']:
-                comstr += " --interval=" + str(int(
-                    rtconfig['suite state polling']['interval']))
-            if rtconfig['suite state polling']['max-polls']:
-                comstr += (
-                    " --max-polls=" +
-                    str(rtconfig['suite state polling']['max-polls']))
-            if rtconfig['suite state polling']['run-dir']:
-                comstr += (
-                    " --run-dir=" +
-                    str(rtconfig['suite state polling']['run-dir']))
-            if rtconfig['suite state polling']['template']:
-                comstr += (
-                    " --template=" +
-                    str(rtconfig['suite state polling']['template']))
-            comstr += " " + self.tdef.suite_polling_cfg['suite']
-            command = "echo " + comstr + "\n" + comstr
-
-        # Determine task host settings now, just before job submission,
-        # because dynamic host selection may be used.
-
-        # host may be None (= run task on suite host)
-        self.task_host = get_task_host(rtconfig['remote']['host'])
-        if self.task_host != "localhost":
-            self.log(INFO, "Task host: " + self.task_host)
-
-        self.task_owner = rtconfig['remote']['owner']
-
-        if self.task_owner:
-            self.user_at_host = self.task_owner + "@" + self.task_host
-        else:
-            self.user_at_host = self.task_host
-        self.summary['host'] = self.user_at_host
-        self.submission_poll_timer.set_host(self.task_host)
-        self.execution_poll_timer.set_host(self.task_host)
-
-        RemoteJobHostManager.get_inst().init_suite_run_dir(
-            self.suite_name, self.user_at_host)
-
-        self.db_updates_map[self.TABLE_TASK_STATES].append({
-            "time_updated": get_current_time_string(),
-            "submit_method": self.batch_sys_name,
-            "host": self.user_at_host,
-            "submit_num": self.submit_num})
-        self._populate_job_conf(
-            rtconfig, local_jobfile_path, common_job_log_path)
-        self.job_conf.update(
-            {
-                'pre-script': precommand,
-                'script': command,
-                'post-script': postcommand,
-            }.items()
-        )
-        self.db_updates_map[self.TABLE_TASK_JOBS].append({
-            "user_at_host": self.user_at_host,
-            "batch_sys_name": self.batch_sys_name,
-        })
-        self.is_manual_submit = False
-
     def submit(self):
-        """Queue my job to the multiprocessing pool."""
+        """For "cylc submit". See also "TaskPool.submit_task_jobs"."""
 
         self.state.set_ready_to_submit()
 
         # Reset flag so any re-triggering will generate a new job file.
-        self.job_file_written = False
+        self.local_job_file_path = None
 
         cmd_key = self.JOB_SUBMIT
-        args = [self.job_conf['job file path']]
-        stdin_file_paths = [self.job_conf['local job file path']]
+        args = [self.get_job_log_path(
+            self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE)]
+        stdin_file_paths = [self.get_job_log_path(
+            self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)]
 
         cmd = ["cylc", cmd_key]
         if cylc.flags.debug:
@@ -1211,106 +1048,214 @@ class TaskProxy(object):
         return SuiteProcPool.get_inst().put_command(
             ctx, self.job_submission_callback)
 
-    def prep_manip(self):
-        """A cut down version of prepare_submit().
+    def prep_submit(self, dry_run=False, overrides=None):
+        """Prepare job submission.
 
-        This provides access to job poll commands before the task is submitted,
-        for polling in the submitted state or on suite restart.
+        Return self on a good preparation.
 
         """
-        if self.user_at_host:
-            if "@" in self.user_at_host:
-                self.task_owner, self.task_host = (
-                    self.user_at_host.split('@', 1))
-            else:
-                self.task_host = self.user_at_host
-        local_job_log_dir, common_job_log_path = self._create_job_log_path()
-        local_jobfile_path = os.path.join(
-            local_job_log_dir, common_job_log_path)
-        rtconfig = pdeepcopy(self.tdef.rtconfig)
-        self._populate_job_conf(
-            rtconfig, local_jobfile_path, common_job_log_path)
-
-    def _populate_job_conf(
-            self, rtconfig, local_jobfile_path, common_job_log_path):
-        """Populate the configuration for submitting or manipulating a job."""
-        self.batch_sys_name = rtconfig['job submission']['method']
-        self.job_conf = OrderedDictWithDefaults({
-            'suite name': self.suite_name,
-            'task id': self.identity,
-            'batch system name': rtconfig['job submission']['method'],
-            'directives': rtconfig['directives'],
-            'init-script': rtconfig['init-script'],
-            'env-script': rtconfig['env-script'],
-            'runtime environment': rtconfig['environment'],
-            'remote suite path': (
-                rtconfig['remote']['suite definition directory']),
-            'job script shell': rtconfig['job submission']['shell'],
-            'batch submit command template': (
-                rtconfig['job submission']['command template']),
-            'work sub-directory': rtconfig['work sub-directory'],
-            'pre-script': '',
-            'script': '',
-            'post-script': '',
-            'namespace hierarchy': self.tdef.namespace_hierarchy,
-            'submission try number': self.sub_try_state.num + 1,
-            'try number': self.run_try_state.num + 1,
-            'absolute submit number': self.submit_num,
-            'is cold-start': self.tdef.is_coldstart,
-            'owner': self.task_owner,
-            'host': self.task_host,
-            'common job log path': common_job_log_path,
-            'local job file path': local_jobfile_path,
-            'job file path': local_jobfile_path,
-        }.items())
-
-        # Locations of logfiles for gcylc
-        # Locations can now be derived from self.summary['job_hosts']
-        # This should reduce the number of unique strings that need to be
-        # stored in memory.
-        # self.summary['logfiles'] retained for backward compat
-        logfiles = self.summary['logfiles']
-        logfiles.append(local_jobfile_path)
-
-        if not self.job_conf['host']:
-            self.job_conf['host'] = 'localhost'
+        if self.tdef.run_mode == 'simulation' or (
+                self.local_job_file_path and not dry_run):
+            return self
 
         try:
-            self.job_conf['batch system conf'] = self._get_host_conf(
-                'batch systems')[self.job_conf['batch system name']]
-        except (TypeError, KeyError):
-            self.job_conf['batch system conf'] = self.job_conf.__class__()
-        if (is_remote_host(self.job_conf['host']) or
-                is_remote_user(self.job_conf['owner'])):
-            remote_job_log_dir = GLOBAL_CFG.get_derived_host_item(
-                self.suite_name,
-                'suite job log directory',
-                self.task_host,
-                self.task_owner)
+            job_conf = self._prep_submit_impl(overrides)
+            local_job_file_path = self.get_job_log_path(
+                self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)
+            JobFile.get_inst().write(local_job_file_path, job_conf)
+        except Exception, exc:
+            # Could be a bad command template.
+            if flags.debug:
+                traceback.print_exc()
+            self.command_log(SuiteProcContext(
+                self.JOB_SUBMIT, '(prepare job file)', err=exc,
+                ret_code=1))
+            self.job_submission_failed()
+            return
+        self.local_job_file_path = local_job_file_path
 
-            remote_path = os.path.join(
-                remote_job_log_dir, self.job_conf['common job log path'])
+        if dry_run:
+            # This will be shown next to submit num in gcylc:
+            self.summary['latest_message'] = 'job file written for edit-run'
+            self.log(WARNING, self.summary['latest_message'])
 
-            # Used in command construction:
-            self.job_conf['job file path'] = remote_path
+        # Return value used by "cylc submit" and "cylc jobscript":
+        return self
 
-            # Record paths of remote log files for access by gui
-            # N.B. Need to consider remote log files in shared file system
-            #      accessible from the suite daemon, mounted under the same
-            #      path or otherwise.
-            prefix = self.job_conf['host'] + ':' + remote_path
-            self.summary['job_hosts'][self.submit_num] = self.job_conf['host']
-            if self.job_conf['owner']:
-                prefix = self.job_conf['owner'] + "@" + prefix
-                self.summary['job_hosts'][self.submit_num] = (
-                    self.job_conf['owner'] + "@" + self.job_conf['host'])
-            logfiles.append(prefix + '.out')
-            logfiles.append(prefix + '.err')
+    def _prep_submit_impl(self, overrides=None):
+        """Helper for self.prep_submit."""
+        self.log(DEBUG, "incrementing submit number")
+        self.submit_num += 1
+        self.summary['submit_num'] = self.submit_num
+        self.local_job_file_path = None
+        self.db_events_insert(event="incrementing submit number")
+        self.db_inserts_map[self.TABLE_TASK_JOBS].append({
+            "is_manual_submit": self.is_manual_submit,
+            "try_num": self.run_try_state.num + 1,
+            "time_submit": get_current_time_string(),
+        })
+        if overrides:
+            rtconfig = pdeepcopy(self.tdef.rtconfig)
+            poverride(rtconfig, overrides)
         else:
-            # Record paths of local logfiles for access by gui
-            logfiles.append(self.job_conf['job file path'] + '.out')
-            logfiles.append(self.job_conf['job file path'] + '.err')
-            self.summary['job_hosts'][self.submit_num] = 'localhost'
+            rtconfig = self.tdef.rtconfig
+
+        self.set_from_rtconfig(rtconfig)
+
+        # construct the job_sub_method here so that a new one is used if
+        # the task is re-triggered by the suite operator - so it will
+        # get new stdout/stderr logfiles and not overwrite the old ones.
+
+        # dynamic instantiation - don't know job sub method till run time.
+        self.summary['batch_sys_name'] = rtconfig['job submission']['method']
+
+        # Determine task host settings now, just before job submission,
+        # because dynamic host selection may be used.
+
+        # host may be None (= run task on suite host)
+        self.task_host = get_task_host(rtconfig['remote']['host'])
+        if not self.task_host:
+            self.task_host = 'localhost'
+        elif self.task_host != "localhost":
+            self.log(INFO, "Task host: " + self.task_host)
+
+        self.task_owner = rtconfig['remote']['owner']
+
+        if self.task_owner:
+            self.user_at_host = self.task_owner + "@" + self.task_host
+        else:
+            self.user_at_host = self.task_host
+        self.summary['host'] = self.user_at_host
+        self.summary['job_hosts'][self.submit_num] = self.user_at_host
+        self.submission_poll_timer.set_host(self.task_host)
+        self.execution_poll_timer.set_host(self.task_host)
+
+        RemoteJobHostManager.get_inst().init_suite_run_dir(
+            self.suite_name, self.user_at_host)
+
+        self.db_updates_map[self.TABLE_TASK_STATES].append({
+            "time_updated": get_current_time_string(),
+            "submit_method": self.summary['batch_sys_name'],
+            "host": self.user_at_host,
+            "submit_num": self.submit_num})
+        self.db_updates_map[self.TABLE_TASK_JOBS].append({
+            "user_at_host": self.user_at_host,
+            "batch_sys_name": self.summary['batch_sys_name'],
+        })
+        self.is_manual_submit = False
+
+        script, pre_script, post_script = self._get_job_scripts(rtconfig)
+
+        try:
+            batch_sys_conf = self._get_host_conf(
+                'batch systems')[rtconfig['job submission']['method']]
+        except (TypeError, KeyError):
+            batch_sys_conf = OrderedDictWithDefaults()
+
+        # Location of job file, etc
+        self._create_job_log_path()
+
+        return OrderedDictWithDefaults([
+            ('batch system name', rtconfig['job submission']['method']),
+            ('batch submit command template', (
+                rtconfig['job submission']['command template'])),
+            ('batch system conf', batch_sys_conf),
+            ('directives', rtconfig['directives']),
+            ('env-script', rtconfig['env-script']),
+            ('host', self.task_host),
+            ('init-script', rtconfig['init-script']),
+            ('is cold-start', self.tdef.is_coldstart),
+            ('job file path', self.get_job_log_path(
+                self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE)),
+            ('job log dir', self.get_job_log_path()),
+            ('job script shell', rtconfig['job submission']['shell']),
+            ('local job file path', self.get_job_log_path(
+                self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)),
+            ('namespace hierarchy', self.tdef.namespace_hierarchy),
+            ('owner', self.task_owner),
+            ('post-script', post_script),
+            ('pre-script', pre_script),
+            ('remote suite path', (
+                rtconfig['remote']['suite definition directory'])),
+            ('runtime environment', rtconfig['environment']),
+            ('script', script),
+            ('submission try number', self.sub_try_state.num + 1),
+            ('submit num', self.submit_num),
+            ('suite name', self.suite_name),
+            ('task id', self.identity),
+            ('try number', self.run_try_state.num + 1),
+            ('work sub-directory', rtconfig['work sub-directory']),
+        ])
+
+    def _get_job_scripts(self, rtconfig):
+        """Return script, pre-script, post-script for a job."""
+        script = rtconfig['script']
+        pre_script = rtconfig['pre-script']
+        post_script = rtconfig['post-script']
+        if self.tdef.run_mode == 'dummy':
+            # Dummy mode command
+            script = rtconfig['dummy mode']['script']
+            if rtconfig['dummy mode']['disable pre-script']:
+                pre_script = None
+            if rtconfig['dummy mode']['disable post-script']:
+                post_script = None
+        elif self.tdef.suite_polling_cfg:
+            # Automatic suite state polling script
+            comstr = "cylc suite-state " + \
+                     " --task=" + self.tdef.suite_polling_cfg['task'] + \
+                     " --point=" + str(self.point) + \
+                     " --status=" + self.tdef.suite_polling_cfg['status']
+            for key, fmt in [
+                    ('user', ' --%s=%s'),
+                    ('host', ' --%s=%s'),
+                    ('interval', ' --%s=%d'),
+                    ('max-polls', ' --%s=%s'),
+                    ('run-dir', ' --%s=%s'),
+                    ('template', ' --%s=%s')]:
+                if rtconfig['suite state polling'][key]:
+                    comstr += fmt % (key, rtconfig['suite state polling'][key])
+            comstr += " " + self.tdef.suite_polling_cfg['suite']
+            script = "echo " + comstr + "\n" + comstr
+        return script, pre_script, post_script
+
+    def _create_job_log_path(self):
+        """Create job log directory, etc.
+
+        Create local job directory, and NN symbolic link.
+        If NN => 01, remove numbered directories with submit numbers greater
+        than 01.
+        Return a string in the form "POINT/NAME/SUBMIT_NUM".
+
+        """
+        job_file_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL)
+        task_log_dir = os.path.dirname(job_file_dir)
+        try:
+            if self.submit_num == 1:
+                for name in os.listdir(task_log_dir):
+                    if name != "01":
+                        rmtree(os.path.join(task_log_dir, name))
+            else:
+                rmtree(job_file_dir)
+        except OSError:
+            pass
+
+        mkdir_p(job_file_dir)
+        target = os.path.join(task_log_dir, self.NN)
+        source = os.path.basename(job_file_dir)
+        try:
+            prev_source = os.readlink(target)
+        except OSError:
+            prev_source = None
+        if prev_source == source:
+            return
+        try:
+            if prev_source:
+                os.unlink(target)
+            os.symlink(source, target)
+        except OSError as exc:
+            if not exc.filename:
+                exc.filename = target
+            raise exc
 
     def handle_submission_timeout(self):
         """Handle submission timeout, only called if TASK_STATUS_SUBMITTED."""
@@ -1564,44 +1509,24 @@ class TaskProxy(object):
             p_next = min(adjusted)
         return p_next
 
-    def _create_job_log_path(self, new_mode=False):
-        """Return a new job log path on the suite host, in two parts.
-
-        /part1/part2
-
-        * part1: the top level job log directory on the suite host.
-        * part2: the rest, which is also used on remote task hosts.
-
-        The full local job log directory is created if necessary, and its
-        parent symlinked to NN (submit number).
-
-        """
-
-        suite_job_log_dir = GLOBAL_CFG.get_derived_host_item(
-            self.suite_name, "suite job log directory")
-
-        the_rest_dir = os.path.join(
-            str(self.point), self.tdef.name, "%02d" % int(self.submit_num))
-        the_rest = os.path.join(the_rest_dir, "job")
-
-        local_log_dir = os.path.join(suite_job_log_dir, the_rest_dir)
-
-        if new_mode:
-            try:
-                rmtree(local_log_dir)
-            except OSError:
-                pass
-
-        mkdir_p(local_log_dir)
-        target = os.path.join(os.path.dirname(local_log_dir), "NN")
+    def get_job_log_path(self, head_mode=None, submit_num=None, tail=None):
+        """Return the job log path."""
+        args = [str(self.point), self.tdef.name]
+        if submit_num is None:
+            submit_num = self.submit_num
         try:
-            os.unlink(target)
-        except OSError:
+            submit_num = "%02d" % submit_num
+        except TypeError:
             pass
-        try:
-            os.symlink(os.path.basename(local_log_dir), target)
-        except OSError as exc:
-            if not exc.filename:
-                exc.filename = target
-            raise exc
-        return suite_job_log_dir, the_rest
+        if submit_num:
+            args.append(submit_num)
+        if head_mode == self.HEAD_MODE_LOCAL:
+            args.insert(0, GLOBAL_CFG.get_derived_host_item(
+                self.suite_name, "suite job log directory"))
+        elif head_mode == self.HEAD_MODE_REMOTE:
+            args.insert(0, GLOBAL_CFG.get_derived_host_item(
+                self.suite_name, 'suite job log directory',
+                self.task_host, self.task_owner))
+        if tail:
+            args.append(tail)
+        return os.path.join(*args)

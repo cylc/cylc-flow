@@ -34,10 +34,9 @@ tasks against the new stop cycle.
 from fnmatch import fnmatchcase
 from logging import ERROR, DEBUG, INFO, WARNING, getLogger
 import os
-from Pyro.errors import NamingError
+import Queue
 import re
 import shlex
-import sys
 from time import time
 import traceback
 
@@ -56,7 +55,6 @@ from cylc.network.ext_trigger import ExtTriggerServer
 from cylc.network.suite_broadcast import BroadcastServer
 from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
-from cylc.task_id import TaskID
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
     TASK_STATUSES_ACTIVE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
@@ -528,7 +526,7 @@ class TaskPool(object):
         prepared_tasks = []
         for itask in ready_tasks:
             if (config.cfg['cylc']['log resolved dependencies'] and
-                    not itask.job_file_written):
+                    not itask.local_job_file_path):
                 itask.log(INFO,
                           'triggered off %s' % (
                               itask.state.get_resolved_dependencies()))
@@ -546,7 +544,7 @@ class TaskPool(object):
         for itask in prepared_tasks:
             # The job file is now (about to be) used: reset the file write flag
             # so that subsequent manual retrigger will generate a new job file.
-            itask.job_file_written = False
+            itask.local_job_file_path = None
             itask.state.set_state(TASK_STATUS_READY)
             if (itask.task_host, itask.task_owner) not in auth_itasks:
                 auth_itasks[(itask.task_host, itask.task_owner)] = []
@@ -574,10 +572,9 @@ class TaskPool(object):
             job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
                 if remote_mode:
-                    stdin_file_paths.append(
-                        itask.job_conf['local job file path'])
-                job_log_dirs.append(itask.get_job_log_dir(
-                    itask.tdef.name, itask.point, itask.submit_num))
+                    stdin_file_paths.append(itask.get_job_log_path(
+                        itask.HEAD_MODE_LOCAL, tail=itask.JOB_FILE_BASE))
+                job_log_dirs.append(itask.get_job_log_path())
             cmd += job_log_dirs
             SuiteProcPool.get_inst().put_command(
                 SuiteProcContext(
@@ -789,18 +786,6 @@ class TaskPool(object):
         active_itasks = []
         for itask in itasks:
             if itask.state.status in TASK_STATUSES_POLLABLE:
-                if itask.job_conf is None:
-                    try:
-                        itask.prep_manip()
-                    except Exception as exc:
-                        # Note: Exception is most likely some kind of IOError
-                        # or OSError. Need to catch Exception here because it
-                        # can also be an Exception raised by
-                        # cylc.suite_host.is_remote_host
-                        itask.command_log(SuiteProcContext(
-                            itask.JOB_POLL, '(prepare job poll)', err=exc,
-                            ret_code=1))
-                        continue
                 active_itasks.append(itask)
             elif items:  # and not active
                 self.log.warning(
@@ -834,18 +819,6 @@ class TaskPool(object):
             if is_active and self.run_mode == 'simulation':
                 itask.state.reset_state(TASK_STATUS_FAILED)
             elif is_active:
-                if itask.job_conf is None:
-                    try:
-                        itask.prep_manip()
-                    except Exception as exc:
-                        # Note: Exception is most likely some kind of IOError
-                        # or OSError. Need to catch Exception here because it
-                        # can also be an Exception raised by
-                        # cylc.suite_host.is_remote_host
-                        itask.command_log(SuiteProcContext(
-                            itask.JOB_KILL, '(prepare job kill)', err=exc,
-                            ret_code=1))
-                        continue
                 itask.state.reset_state(TASK_STATUS_HELD)
                 active_itasks.append(itask)
             elif items:  # and not active
@@ -1107,7 +1080,7 @@ class TaskPool(object):
                 if cylc.flags.debug:
                     traceback.print_exc()
 
-    def _process_task_job_logs_register(self, ctx, id_keys):
+    def _process_task_job_logs_register(self, _, id_keys):
         """Register task job logs."""
         tasks = {}
         for itask in self.get_tasks():
@@ -1520,17 +1493,14 @@ class TaskPool(object):
 
     def get_task_jobfile_path(self, id_):
         """Return a task job log dir, sans submit number."""
-        found = False
         for itask in self.get_tasks():
             if itask.identity == id_:
-                found = True
-                job_parent_dir = os.path.dirname(itask.get_job_log_dir(
-                    itask.tdef.name, itask.point, suite=self.suite_name))
-                break
-        if not found:
-            return False, "task not found"
-        else:
-            return True, job_parent_dir
+                path = itask.get_job_log_path(
+                    head_mode=itask.HEAD_MODE_LOCAL, submit_num=itask.NN,
+                    tail=itask.JOB_FILE_BASE)
+                # Note: 2nd value for back compat
+                return path, os.path.dirname(os.path.dirname(path))
+        return False, "task not found"
 
     def get_task_requisites(self, taskid):
         info = {}
@@ -1680,8 +1650,7 @@ class TaskPool(object):
                 self.suite_name, 'suite job log directory', host, owner))
             job_log_dirs = []
             for itask in sorted(itasks, key=lambda itask: itask.identity):
-                job_log_dirs.append(itask.get_job_log_dir(
-                    itask.tdef.name, itask.point, itask.submit_num))
+                job_log_dirs.append(itask.get_job_log_path())
             cmd += job_log_dirs
             kwargs["job_log_dirs"] = job_log_dirs
             SuiteProcPool.get_inst().put_command(

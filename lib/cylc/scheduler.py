@@ -44,7 +44,7 @@ from cylc.daemonize import daemonize, SUITE_SCAN_INFO_TMPL
 from cylc.exceptions import CylcError
 import cylc.flags
 from cylc.get_task_proxy import get_task_proxy
-from cylc.job_file import JOB_FILE
+from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.LogDiagnosis import LogSpec
 from cylc.mp_pool import SuiteProcContext, SuiteProcPool
@@ -1324,7 +1324,7 @@ conditions; see `cylc conditions`.
         # (global config auto expands environment variables in local paths)
 
         # Pass these to the job script generation code.
-        JOB_FILE.set_suite_env(self.suite_env)
+        JobFile.get_inst().set_suite_env(self.suite_env)
         # And pass contact env to the task module
 
         # make suite vars available to [cylc][environment]:

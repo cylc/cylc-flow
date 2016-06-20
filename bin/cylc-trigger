@@ -104,13 +104,13 @@ def main():
 
         # Get the job filename from the suite daemon - the task cycle point may
         # need standardising to the suite cycle point format.
-        success, job_dir = info_client.get_info(
+        jobfile_path, compat = info_client.get_info(
             'get_task_jobfile_path', task_id)
-        if not success:
-            sys.exit('ERROR: %s' % job_dir)
+        if not jobfile_path:
+            sys.exit('ERROR: task not found')
 
-        # Add the 'NN' symlink for latest job file regardless of submit number.
-        jobfile_path = os.path.join(job_dir, 'NN', 'job')
+        if isinstance(jobfile_path, bool):
+            jobfile_path = compat
 
         # Note: localhost time and file system time may be out of sync,
         #       so the safe way to detect whether a new file is modified
