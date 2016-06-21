@@ -797,7 +797,13 @@ class TaskPool(object):
             if item in clean_keys:
                 continue
             for unsatisfied in prereq_tree[item]['prereqs']:
-                unsatisfied_id = unsatisfied.split()[0]
+                splt_unsatisfied = unsatisfied.split()
+                if splt_unsatisfied[0] == "LABEL:":
+                    unsatisfied_id = splt_unsatisfied[3]
+                elif splt_unsatisfied[0] == "CONDITION:":
+                    continue
+                else:
+                    unsatisfied_id = splt_unsatisfied[0]
                 # Clear out tasks with dependencies on other waiting tasks
                 if unsatisfied_id in prereq_tree:
                     clean_keys.append(item)
