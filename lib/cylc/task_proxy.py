@@ -1193,7 +1193,7 @@ class TaskProxy(object):
         pre_script = rtconfig['pre-script']
         post_script = rtconfig['post-script']
         if self.tdef.run_mode == 'dummy':
-            # Dummy mode command
+            # Use dummy script items in dummy mode.
             script = rtconfig['dummy mode']['script']
             if rtconfig['dummy mode']['disable pre-script']:
                 pre_script = None
