@@ -1,237 +1,39 @@
-2014-09-02T15:03:29+01 INFO - port:7766
-2014-09-02T15:03:29+01 INFO - Suite starting at 2014-09-02T15:03:29+01
-2014-09-02T15:03:29+01 INFO - Log event clock: real time
-2014-09-02T15:03:29+01 INFO - Run mode: live
 2014-09-02T15:03:29+01 INFO - Initial point: 1
 2014-09-02T15:03:29+01 INFO - Final point: 16
-2014-09-02T15:03:29+01 INFO - Cold Start 1
 2014-09-02T15:03:29+01 INFO - [woo.2] -triggered off []
 2014-09-02T15:03:29+01 INFO - [wibble.1] -triggered off []
 2014-09-02T15:03:29+01 INFO - [seq.1] -triggered off []
 2014-09-02T15:03:29+01 INFO - [on_toast.1] -triggered off []
-2014-09-02T15:03:30+01 INFO - 18552
-2014-09-02T15:03:30+01 INFO - [woo.2] -submit_method_id=18552
-2014-09-02T15:03:30+01 INFO - [woo.2] -submission succeeded
-2014-09-02T15:03:30+01 INFO - 18557
-2014-09-02T15:03:30+01 INFO - [wibble.1] -submit_method_id=18557
-2014-09-02T15:03:30+01 INFO - [wibble.1] -submission succeeded
-2014-09-02T15:03:30+01 INFO - 18564
-2014-09-02T15:03:30+01 INFO - [seq.1] -submit_method_id=18564
-2014-09-02T15:03:30+01 INFO - [seq.1] -submission succeeded
-2014-09-02T15:03:30+01 INFO - 18575
-2014-09-02T15:03:30+01 INFO - [on_toast.1] -submit_method_id=18575
-2014-09-02T15:03:30+01 INFO - [on_toast.1] -submission succeeded
-2014-09-02T15:03:30+01 INFO - [woo.2] -(current:submitted)> woo.2 started at 2014-09-02T15:03:30+01
-2014-09-02T15:03:30+01 INFO - [wibble.1] -(current:submitted)> wibble.1 started at 2014-09-02T15:03:30+01
-2014-09-02T15:03:30+01 INFO - [seq.1] -(current:submitted)> seq.1 started at 2014-09-02T15:03:30+01
-2014-09-02T15:03:30+01 INFO - [on_toast.1] -(current:submitted)> on_toast.1 started at 2014-09-02T15:03:30+01
 2014-09-02T15:03:31+01 INFO - [woo.3] -triggered off []
-2014-09-02T15:03:32+01 INFO - 18963
-2014-09-02T15:03:32+01 INFO - [woo.3] -submit_method_id=18963
-2014-09-02T15:03:32+01 INFO - [woo.3] -submission succeeded
-2014-09-02T15:03:32+01 INFO - [woo.3] -(current:submitted)> woo.3 started at 2014-09-02T15:03:32+01
 2014-09-02T15:03:34+01 INFO - [woo.5] -triggered off []
-2014-09-02T15:03:34+01 INFO - [woo.2] -(current:running)> woo.2 succeeded at 2014-09-02T15:03:33+01
-2014-09-02T15:03:34+01 INFO - [seq.1] -(current:running)> seq.1 succeeded at 2014-09-02T15:03:32+01
-2014-09-02T15:03:35+01 INFO - 19084
-2014-09-02T15:03:35+01 INFO - [woo.5] -submit_method_id=19084
-2014-09-02T15:03:35+01 INFO - [woo.5] -submission succeeded
 2014-09-02T15:03:35+01 INFO - [foo.1] -triggered off ['seq.1', 'woo.2']
 2014-09-02T15:03:35+01 INFO - [seq.4] -triggered off ['seq.1']
-2014-09-02T15:03:35+01 INFO - [woo.5] -(current:submitted)> woo.5 started at 2014-09-02T15:03:34+01
-2014-09-02T15:03:35+01 INFO - [wibble.1] -(current:running)> wibble.1 succeeded at 2014-09-02T15:03:34+01
-2014-09-02T15:03:36+01 INFO - 19196
-2014-09-02T15:03:36+01 INFO - [foo.1] -submit_method_id=19196
-2014-09-02T15:03:36+01 INFO - [foo.1] -submission succeeded
-2014-09-02T15:03:36+01 INFO - 19211
-2014-09-02T15:03:36+01 INFO - [seq.4] -submit_method_id=19211
-2014-09-02T15:03:36+01 INFO - [seq.4] -submission succeeded
 2014-09-02T15:03:36+01 INFO - [woo.6] -triggered off []
 2014-09-02T15:03:36+01 INFO - [wobble.7] -triggered off ['wibble.1']
-2014-09-02T15:03:36+01 INFO - [foo.1] -(current:submitted)> foo.1 started at 2014-09-02T15:03:35+01
-2014-09-02T15:03:36+01 INFO - [seq.4] -(current:submitted)> seq.4 started at 2014-09-02T15:03:35+01
-2014-09-02T15:03:37+01 INFO - 19392
-2014-09-02T15:03:37+01 INFO - [woo.6] -submit_method_id=19392
-2014-09-02T15:03:37+01 INFO - [woo.6] -submission succeeded
-2014-09-02T15:03:37+01 INFO - 19418
-2014-09-02T15:03:37+01 INFO - [wobble.7] -submit_method_id=19418
-2014-09-02T15:03:37+01 INFO - [wobble.7] -submission succeeded
-2014-09-02T15:03:37+01 INFO - [woo.6] -(current:submitted)> woo.6 started at 2014-09-02T15:03:36+01
-2014-09-02T15:03:37+01 INFO - [wobble.7] -(current:submitted)> wobble.7 started at 2014-09-02T15:03:36+01
 2014-09-02T15:03:38+01 INFO - [woo.8] -triggered off []
-2014-09-02T15:03:38+01 INFO - [on_toast.1] -(current:running)> on_toast.1 succeeded at 2014-09-02T15:03:37+01
-2014-09-02T15:03:39+01 INFO - 19608
-2014-09-02T15:03:39+01 INFO - [woo.8] -submit_method_id=19608
-2014-09-02T15:03:39+01 INFO - [woo.8] -submission succeeded
-2014-09-02T15:03:39+01 INFO - [woo.8] -(current:submitted)> woo.8 started at 2014-09-02T15:03:39+01
 2014-09-02T15:03:40+01 INFO - [woo.9] -triggered off []
-2014-09-02T15:03:40+01 INFO - [woo.5] -(current:running)> woo.5 succeeded at 2014-09-02T15:03:40+01
-2014-09-02T15:03:41+01 INFO - 19722
-2014-09-02T15:03:41+01 INFO - [woo.9] -submit_method_id=19722
-2014-09-02T15:03:41+01 INFO - [woo.9] -submission succeeded
-2014-09-02T15:03:42+01 INFO - [woo.6] -(current:running)> woo.6 succeeded at 2014-09-02T15:03:41+01
-2014-09-02T15:03:42+01 INFO - [woo.9] -(current:submitted)> woo.9 started at 2014-09-02T15:03:41+01
 2014-09-02T15:03:43+01 INFO - [woo.11] -triggered off []
-2014-09-02T15:03:43+01 INFO - [woo.3] -(current:running)> woo.3 succeeded at 2014-09-02T15:03:42+01
-2014-09-02T15:03:43+01 INFO - [foo.1] -(current:running)> the cheese is ready for 4 at 2014-09-02T15:03:41+01
-2014-09-02T15:03:44+01 INFO - 19856
-2014-09-02T15:03:44+01 INFO - [woo.11] -submit_method_id=19856
-2014-09-02T15:03:44+01 INFO - [woo.11] -submission succeeded
 2014-09-02T15:03:44+01 INFO - [on_toast.4] -triggered off ['foo.1']
-2014-09-02T15:03:44+01 INFO - [seq.4] -(current:running)> seq.4 succeeded at 2014-09-02T15:03:43+01
-2014-09-02T15:03:44+01 INFO - [woo.11] -(current:submitted)> woo.11 started at 2014-09-02T15:03:43+01
-2014-09-02T15:03:45+01 INFO - 19969
-2014-09-02T15:03:45+01 INFO - [on_toast.4] -submit_method_id=19969
-2014-09-02T15:03:45+01 INFO - [on_toast.4] -submission succeeded
 2014-09-02T15:03:45+01 INFO - [woo.12] -triggered off []
 2014-09-02T15:03:45+01 INFO - [seq.7] -triggered off ['seq.4']
-2014-09-02T15:03:45+01 INFO - [woo.9] -(current:running)> woo.9 succeeded at 2014-09-02T15:03:44+01
-2014-09-02T15:03:45+01 INFO - [wobble.7] -(current:running)> wobble.7 succeeded at 2014-09-02T15:03:45+01
-2014-09-02T15:03:45+01 INFO - [on_toast.4] -(current:submitted)> on_toast.4 started at 2014-09-02T15:03:44+01
-2014-09-02T15:03:46+01 INFO - 20093
-2014-09-02T15:03:46+01 INFO - [woo.12] -submit_method_id=20093
-2014-09-02T15:03:46+01 INFO - [woo.12] -submission succeeded
-2014-09-02T15:03:46+01 INFO - 20098
-2014-09-02T15:03:46+01 INFO - [seq.7] -submit_method_id=20098
-2014-09-02T15:03:46+01 INFO - [seq.7] -submission succeeded
-2014-09-02T15:03:46+01 INFO - [woo.12] -(current:submitted)> woo.12 started at 2014-09-02T15:03:45+01
-2014-09-02T15:03:46+01 INFO - [seq.7] -(current:submitted)> seq.7 started at 2014-09-02T15:03:45+01
-2014-09-02T15:03:46+01 INFO - [woo.11] -(current:running)> woo.11 succeeded at 2014-09-02T15:03:46+01
-2014-09-02T15:03:48+01 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2014-09-02T15:03:47+01
 2014-09-02T15:03:49+01 INFO - [foo.4] -triggered off ['foo.1', 'seq.4', 'woo.3', 'woo.5']
 2014-09-02T15:03:49+01 INFO - [bar.1] -triggered off ['foo.1', 'woo.2']
-2014-09-02T15:03:49+01 INFO - [woo.12] -(current:running)> woo.12 succeeded at 2014-09-02T15:03:49+01
-2014-09-02T15:03:50+01 INFO - 20331
-2014-09-02T15:03:50+01 INFO - [foo.4] -submit_method_id=20331
-2014-09-02T15:03:50+01 INFO - [foo.4] -submission succeeded
-2014-09-02T15:03:50+01 INFO - 20334
-2014-09-02T15:03:50+01 INFO - [bar.1] -submit_method_id=20334
-2014-09-02T15:03:50+01 INFO - [bar.1] -submission succeeded
-2014-09-02T15:03:50+01 INFO - [foo.4] -(current:submitted)> foo.4 started at 2014-09-02T15:03:49+01
-2014-09-02T15:03:50+01 INFO - [bar.1] -(current:submitted)> bar.1 started at 2014-09-02T15:03:49+01
-2014-09-02T15:03:50+01 INFO - [woo.8] -(current:running)> woo.8 succeeded at 2014-09-02T15:03:50+01
-2014-09-02T15:03:55+01 INFO - [foo.4] -(current:running)> the cheese is ready for 7 at 2014-09-02T15:03:55+01
 2014-09-02T15:03:56+01 INFO - [on_toast.7] -triggered off ['foo.4']
-2014-09-02T15:03:56+01 INFO - [seq.7] -(current:running)> seq.7 succeeded at 2014-09-02T15:03:56+01
-2014-09-02T15:03:57+01 INFO - 20559
-2014-09-02T15:03:57+01 INFO - [on_toast.7] -submit_method_id=20559
-2014-09-02T15:03:57+01 INFO - [on_toast.7] -submission succeeded
 2014-09-02T15:03:57+01 INFO - [seq.10] -triggered off ['seq.7']
-2014-09-02T15:03:57+01 INFO - [on_toast.7] -(current:submitted)> on_toast.7 started at 2014-09-02T15:03:56+01
-2014-09-02T15:03:58+01 INFO - 20661
-2014-09-02T15:03:58+01 INFO - [seq.10] -submit_method_id=20661
-2014-09-02T15:03:58+01 INFO - [seq.10] -submission succeeded
-2014-09-02T15:03:58+01 INFO - [seq.10] -(current:submitted)> seq.10 started at 2014-09-02T15:03:57+01
-2014-09-02T15:03:59+01 INFO - [on_toast.4] -(current:running)> on_toast.4 succeeded at 2014-09-02T15:03:58+01
-2014-09-02T15:04:00+01 INFO - [foo.4] -(current:running)> foo.4 succeeded at 2014-09-02T15:04:00+01
-2014-09-02T15:04:00+01 INFO - [on_toast.7] -(current:running)> on_toast.7 succeeded at 2014-09-02T15:04:00+01
 2014-09-02T15:04:01+01 INFO - [foo.7] -triggered off ['foo.4', 'seq.7', 'woo.6', 'woo.8']
 2014-09-02T15:04:01+01 INFO - [bar.4] -triggered off ['foo.4', 'woo.5']
 2014-09-02T15:04:01+01 INFO - [qux.7] -triggered off ['foo.4']
-2014-09-02T15:04:02+01 INFO - 20798
-2014-09-02T15:04:02+01 INFO - [foo.7] -submit_method_id=20798
-2014-09-02T15:04:02+01 INFO - [foo.7] -submission succeeded
-2014-09-02T15:04:02+01 INFO - 20803
-2014-09-02T15:04:02+01 INFO - [bar.4] -submit_method_id=20803
-2014-09-02T15:04:02+01 INFO - [bar.4] -submission succeeded
-2014-09-02T15:04:02+01 INFO - 20820
-2014-09-02T15:04:02+01 INFO - [qux.7] -submit_method_id=20820
-2014-09-02T15:04:02+01 INFO - [qux.7] -submission succeeded
-2014-09-02T15:04:02+01 INFO - [foo.7] -(current:submitted)> foo.7 started at 2014-09-02T15:04:01+01
-2014-09-02T15:04:02+01 INFO - [bar.4] -(current:submitted)> bar.4 started at 2014-09-02T15:04:01+01
-2014-09-02T15:04:02+01 INFO - [qux.7] -(current:submitted)> qux.7 started at 2014-09-02T15:04:01+01
-2014-09-02T15:04:03+01 INFO - [seq.10] -(current:running)> seq.10 succeeded at 2014-09-02T15:04:03+01
 2014-09-02T15:04:04+01 INFO - [seq.13] -triggered off ['seq.10']
-2014-09-02T15:04:05+01 INFO - 21108
-2014-09-02T15:04:05+01 INFO - [seq.13] -submit_method_id=21108
-2014-09-02T15:04:05+01 INFO - [seq.13] -submission succeeded
-2014-09-02T15:04:05+01 INFO - [seq.13] -(current:submitted)> seq.13 started at 2014-09-02T15:04:05+01
-2014-09-02T15:04:05+01 INFO - [bar.1] -(current:running)> bar.1 succeeded at 2014-09-02T15:04:05+01
 2014-09-02T15:04:06+01 INFO - [woo.14] -triggered off []
 2014-09-02T15:04:06+01 INFO - [wubble.16] -triggered off ['wobble.7']
-2014-09-02T15:04:07+01 INFO - 21223
-2014-09-02T15:04:07+01 INFO - [woo.14] -submit_method_id=21223
-2014-09-02T15:04:07+01 INFO - [woo.14] -submission succeeded
-2014-09-02T15:04:07+01 INFO - 21232
-2014-09-02T15:04:07+01 INFO - [wubble.16] -submit_method_id=21232
-2014-09-02T15:04:07+01 INFO - [wubble.16] -submission succeeded
-2014-09-02T15:04:07+01 INFO - [foo.7] -(current:running)> the cheese is ready for 10 at 2014-09-02T15:04:07+01
-2014-09-02T15:04:07+01 INFO - [woo.14] -(current:submitted)> woo.14 started at 2014-09-02T15:04:07+01
-2014-09-02T15:04:07+01 INFO - [wubble.16] -(current:submitted)> wubble.16 started at 2014-09-02T15:04:07+01
 2014-09-02T15:04:09+01 INFO - [woo.15] -triggered off []
 2014-09-02T15:04:09+01 INFO - [on_toast.10] -triggered off ['foo.7']
-2014-09-02T15:04:10+01 INFO - 21447
-2014-09-02T15:04:10+01 INFO - [woo.15] -submit_method_id=21447
-2014-09-02T15:04:10+01 INFO - [woo.15] -submission succeeded
-2014-09-02T15:04:10+01 INFO - 21452
-2014-09-02T15:04:10+01 INFO - [on_toast.10] -submit_method_id=21452
-2014-09-02T15:04:10+01 INFO - [on_toast.10] -submission succeeded
-2014-09-02T15:04:10+01 INFO - [woo.15] -(current:submitted)> woo.15 started at 2014-09-02T15:04:09+01
-2014-09-02T15:04:10+01 INFO - [on_toast.10] -(current:submitted)> on_toast.10 started at 2014-09-02T15:04:09+01
-2014-09-02T15:04:10+01 INFO - [qux.7] -(current:running)> qux.7 succeeded at 2014-09-02T15:04:09+01
-2014-09-02T15:04:13+01 INFO - [foo.7] -(current:running)> foo.7 succeeded at 2014-09-02T15:04:12+01
 2014-09-02T15:04:14+01 INFO - [foo.10] -triggered off ['foo.7', 'seq.10', 'woo.11', 'woo.9']
 2014-09-02T15:04:14+01 INFO - [bar.7] -triggered off ['foo.7', 'woo.8']
-2014-09-02T15:04:15+01 INFO - 21680
-2014-09-02T15:04:15+01 INFO - [foo.10] -submit_method_id=21680
-2014-09-02T15:04:15+01 INFO - [foo.10] -submission succeeded
-2014-09-02T15:04:15+01 INFO - 21685
-2014-09-02T15:04:15+01 INFO - [bar.7] -submit_method_id=21685
-2014-09-02T15:04:15+01 INFO - [bar.7] -submission succeeded
-2014-09-02T15:04:15+01 INFO - [foo.10] -(current:submitted)> foo.10 started at 2014-09-02T15:04:14+01
-2014-09-02T15:04:15+01 INFO - [bar.7] -(current:submitted)> bar.7 started at 2014-09-02T15:04:14+01
-2014-09-02T15:04:15+01 INFO - [wubble.16] -(current:running)> wubble.16 succeeded at 2014-09-02T15:04:14+01
-2014-09-02T15:04:16+01 INFO - [bar.4] -(current:running)> bar.4 succeeded at 2014-09-02T15:04:15+01
-2014-09-02T15:04:17+01 INFO - [woo.15] -(current:running)> woo.15 succeeded at 2014-09-02T15:04:16+01
-2014-09-02T15:04:18+01 INFO - [seq.13] -(current:running)> seq.13 succeeded at 2014-09-02T15:04:17+01
-2014-09-02T15:04:18+01 INFO - [woo.14] -(current:running)> woo.14 succeeded at 2014-09-02T15:04:17+01
 2014-09-02T15:04:19+01 INFO - [seq.16] -triggered off ['seq.13']
-2014-09-02T15:04:20+01 INFO - 21934
-2014-09-02T15:04:20+01 INFO - [seq.16] -submit_method_id=21934
-2014-09-02T15:04:20+01 INFO - [seq.16] -submission succeeded
-2014-09-02T15:04:20+01 INFO - [foo.10] -(current:running)> the cheese is ready for 13 at 2014-09-02T15:04:19+01
-2014-09-02T15:04:20+01 INFO - [seq.16] -(current:submitted)> seq.16 started at 2014-09-02T15:04:19+01
-2014-09-02T15:04:20+01 INFO - [on_toast.10] -(current:running)> on_toast.10 succeeded at 2014-09-02T15:04:19+01
 2014-09-02T15:04:21+01 INFO - [on_toast.13] -triggered off ['foo.10']
-2014-09-02T15:04:21+01 INFO - [seq.16] -(current:running)> seq.16 succeeded at 2014-09-02T15:04:20+01
-2014-09-02T15:04:22+01 INFO - 22068
-2014-09-02T15:04:22+01 INFO - [on_toast.13] -submit_method_id=22068
-2014-09-02T15:04:22+01 INFO - [on_toast.13] -submission succeeded
-2014-09-02T15:04:22+01 INFO - [on_toast.13] -(current:submitted)> on_toast.13 started at 2014-09-02T15:04:21+01
-2014-09-02T15:04:25+01 INFO - [foo.10] -(current:running)> foo.10 succeeded at 2014-09-02T15:04:25+01
 2014-09-02T15:04:26+01 INFO - [qux.13] -triggered off ['foo.10']
 2014-09-02T15:04:26+01 INFO - [bar.10] -triggered off ['foo.10', 'woo.11']
 2014-09-02T15:04:26+01 INFO - [foo.13] -triggered off ['foo.10', 'seq.13', 'woo.12', 'woo.14']
-2014-09-02T15:04:27+01 INFO - 22183
-2014-09-02T15:04:27+01 INFO - [qux.13] -submit_method_id=22183
-2014-09-02T15:04:27+01 INFO - [qux.13] -submission succeeded
-2014-09-02T15:04:27+01 INFO - 22188
-2014-09-02T15:04:27+01 INFO - [bar.10] -submit_method_id=22188
-2014-09-02T15:04:27+01 INFO - [bar.10] -submission succeeded
-2014-09-02T15:04:27+01 INFO - 22199
-2014-09-02T15:04:27+01 INFO - [foo.13] -submit_method_id=22199
-2014-09-02T15:04:27+01 INFO - [foo.13] -submission succeeded
-2014-09-02T15:04:27+01 INFO - [foo.16] -holding (future trigger beyond stop point)
-2014-09-02T15:04:27+01 INFO - [qux.13] -(current:submitted)> qux.13 started at 2014-09-02T15:04:26+01
-2014-09-02T15:04:27+01 INFO - [bar.10] -(current:submitted)> bar.10 started at 2014-09-02T15:04:26+01
-2014-09-02T15:04:27+01 INFO - [foo.13] -(current:submitted)> foo.13 started at 2014-09-02T15:04:26+01
-2014-09-02T15:04:29+01 INFO - [bar.7] -(current:running)> bar.7 succeeded at 2014-09-02T15:04:28+01
-2014-09-02T15:04:32+01 INFO - [foo.13] -(current:running)> the cheese is ready for 16 at 2014-09-02T15:04:31+01
 2014-09-02T15:04:33+01 INFO - [on_toast.16] -triggered off ['foo.13']
-2014-09-02T15:04:34+01 INFO - 22502
-2014-09-02T15:04:34+01 INFO - [on_toast.16] -submit_method_id=22502
-2014-09-02T15:04:34+01 INFO - [on_toast.16] -submission succeeded
-2014-09-02T15:04:34+01 INFO - [on_toast.16] -(current:submitted)> on_toast.16 started at 2014-09-02T15:04:33+01
-2014-09-02T15:04:36+01 INFO - [on_toast.13] -(current:running)> on_toast.13 succeeded at 2014-09-02T15:04:36+01
-2014-09-02T15:04:37+01 INFO - [qux.13] -(current:running)> qux.13 succeeded at 2014-09-02T15:04:37+01
-2014-09-02T15:04:37+01 INFO - [foo.13] -(current:running)> foo.13 succeeded at 2014-09-02T15:04:37+01
-2014-09-02T15:04:37+01 INFO - [on_toast.16] -(current:running)> on_toast.16 succeeded at 2014-09-02T15:04:37+01
 2014-09-02T15:04:38+01 INFO - [bar.13] -triggered off ['foo.13', 'woo.14']
-2014-09-02T15:04:39+01 INFO - 22649
-2014-09-02T15:04:39+01 INFO - [bar.13] -submit_method_id=22649
-2014-09-02T15:04:39+01 INFO - [bar.13] -submission succeeded
-2014-09-02T15:04:39+01 INFO - [bar.16] -holding (future trigger beyond stop point)
-2014-09-02T15:04:39+01 INFO - [bar.13] -(current:submitted)> bar.13 started at 2014-09-02T15:04:38+01
-2014-09-02T15:04:39+01 INFO - [bar.10] -(current:running)> bar.10 succeeded at 2014-09-02T15:04:39+01
-2014-09-02T15:04:50+01 INFO - [bar.13] -(current:running)> bar.13 succeeded at 2014-09-02T15:04:50+01
-2014-09-02T15:04:51+01 INFO - Suite shutting down at 2014-09-02T15:04:51+01

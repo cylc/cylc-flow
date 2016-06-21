@@ -1,30 +1,4 @@
-2016-05-03T09:57:39Z INFO - Suite starting on shire:7772
-2016-05-03T09:57:39Z INFO - Run mode: live
 2016-05-03T09:57:39Z INFO - Initial point: 1
 2016-05-03T09:57:39Z INFO - Final point: 1
-2016-05-03T09:57:39Z INFO - Cold Start 1
 2016-05-03T09:57:39Z INFO - [reloader.1] -triggered off []
-2016-05-03T09:57:40Z INFO - [reloader.1] -submit_method_id=13374
-2016-05-03T09:57:40Z INFO - [reloader.1] -submission succeeded
-2016-05-03T09:57:40Z INFO - [client-command] reload_suite baggins@shire:cylc-reload 637d8b64-d542-4283-b334-3fd6b64e117c
-2016-05-03T09:57:41Z INFO - [reloader.1] -(current:submitted)> started at 2016-05-03T09:57:40Z
-2016-05-03T09:57:41Z INFO - Command succeeded: reload_suite()
-2016-05-03T09:57:42Z WARNING - Reload will complete once active tasks have finished.
-2016-05-03T09:57:51Z INFO - [client-command] reload_suite baggins@shire:cylc-reload 23ccbafd-0fd1-445e-8327-dceef38437dd
-2016-05-03T09:57:51Z INFO - Command succeeded: reload_suite()
-2016-05-03T09:58:01Z INFO - [client-command] insert_task baggins@shire:cylc-insert 0d229903-9abc-4c28-9b16-2d19e6aaa960
-2016-05-03T09:58:02Z INFO - Command succeeded: insert_task(['remove_add_alter_me.1'],None,None,None)
-2016-05-03T09:58:12Z INFO - [client-command] reload_suite baggins@shire:cylc-reload 56ed5ddf-2453-4311-90f3-8bcb85c9e638
-2016-05-03T09:58:13Z INFO - Command succeeded: reload_suite()
-2016-05-03T09:58:14Z INFO - RELOADING TASK DEFINITION FOR remove_add_alter_me.1
-2016-05-03T09:58:23Z INFO - [reloader.1] -(current:running)> succeeded at 2016-05-03T09:58:22Z
-2016-05-03T09:58:23Z INFO - [reloader.1] -('job-logs-register', 1) will run after P0Y (after 2016-05-03T09:58:23Z)
-2016-05-03T09:58:24Z INFO - RELOADING TASK DEFINITION FOR reloader.1
-2016-05-03T09:58:24Z INFO - Reload completed.
 2016-05-03T09:58:24Z INFO - [remove_add_alter_me.1] -triggered off ['reloader.1']
-2016-05-03T09:58:25Z INFO - [remove_add_alter_me.1] -submit_method_id=29648
-2016-05-03T09:58:25Z INFO - [remove_add_alter_me.1] -submission succeeded
-2016-05-03T09:58:25Z INFO - [remove_add_alter_me.1] -(current:submitted)> started at 2016-05-03T09:58:25Z
-2016-05-03T09:58:26Z INFO - [remove_add_alter_me.1] -(current:running)> succeeded at 2016-05-03T09:58:25Z
-2016-05-03T09:58:26Z INFO - [remove_add_alter_me.1] -('job-logs-register', 1) will run after P0Y (after 2016-05-03T09:58:26Z)
-2016-05-03T09:58:27Z INFO - Suite shutting down at 2016-05-03T09:58:27Z

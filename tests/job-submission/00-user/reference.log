@@ -1,19 +1,4 @@
-2015-12-17T16:00:01+13 INFO - port:7766
-2015-12-17T16:00:01+13 INFO - Suite starting at 2015-12-17T16:00:01+13
-2015-12-17T16:00:01+13 INFO - Run mode: live
 2015-12-17T16:00:01+13 INFO - Initial point: 1
 2015-12-17T16:00:01+13 INFO - Final point: 1
-2015-12-17T16:00:01+13 INFO - Cold Start 1
 2015-12-17T16:00:01+13 INFO - [bar.1] -triggered off []
 2015-12-17T16:00:01+13 INFO - [foo.1] -triggered off []
-2015-12-17T16:00:02+13 INFO - [bar.1] -submit_method_id=17719
-2015-12-17T16:00:02+13 INFO - [bar.1] -submission succeeded
-2015-12-17T16:00:02+13 INFO - [foo.1] -submit_method_id=17720
-2015-12-17T16:00:02+13 INFO - [foo.1] -submission succeeded
-2015-12-17T16:00:02+13 INFO - [bar.1] -(current:submitted)> bar.1 started at 2015-12-17T16:00:01+13
-2015-12-17T16:00:02+13 INFO - [bar.1] -(current:running)> bar.1 succeeded at 2015-12-17T16:00:01+13
-2015-12-17T16:00:02+13 INFO - [foo.1] -(current:submitted)> foo.1 started at 2015-12-17T16:00:01+13
-2015-12-17T16:00:02+13 INFO - [foo.1] -(current:running)> foo.1 succeeded at 2015-12-17T16:00:01+13
-2015-12-17T16:00:02+13 INFO - [bar.1] -('job-logs-register', 1) will run after P0Y (after 2015-12-17T16:00:02+13)
-2015-12-17T16:00:02+13 INFO - [foo.1] -('job-logs-register', 1) will run after P0Y (after 2015-12-17T16:00:02+13)
-2015-12-17T16:00:04+13 INFO - Suite shutting down at 2015-12-17T16:00:04+13

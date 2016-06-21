@@ -1,40 +1,4 @@
-2013/11/01 14:15:48 INFO - Thread-2 start (Event Handler Submission)
-2013/11/01 14:15:48 INFO - Thread-3 start (Poll and Kill Command Submission)
-2013/11/01 14:15:48 INFO - port:7766
-2013/11/01 14:15:48 INFO - Suite starting at 2013-11-01 14:15:48.954578
-2013/11/01 14:15:48 INFO - Log event clock: real time
-2013/11/01 14:15:48 INFO - Run mode: live
 2013/11/01 14:15:49 INFO - Initial point: 2011010100
 2013/11/01 14:15:49 INFO - Final point: 2018010100
-2013/11/01 14:15:49 INFO - Thread-4 start (Job Submission)
-2013/11/01 14:15:49 INFO - Thread-5 start (Request Handling)
-2013/11/01 14:15:49 INFO - Cold Start 2011010100
-2013/11/01 14:15:49 INFO - [a.2013010100] -(setting:queued)
-2013/11/01 14:15:49 INFO - [a.2013010100] -(setting:submitting)
 2013/11/01 14:15:49 INFO - [a.2013010100] -triggered off []
-2013/11/01 14:15:50 INFO - [a.2013010100] -(current:submitting)> a.2013010100 submitting now
-2013/11/01 14:15:51 INFO - [a.2013010100] -(current:submitting)> a.2013010100 submission succeeded
-2013/11/01 14:15:51 INFO - [a.2013010100] -(setting:submitted)
-2013/11/01 14:15:51 INFO - [a.2013010100] -(current:submitted)> a.2013010100 submit_method_id=29850
-2013/11/01 14:15:51 INFO - [a.2013010100] -(current:submitted)> a.2013010100 started at 2013-11-01T14:15:51
-2013/11/01 14:15:51 INFO - [a.2013010100] -(setting:running)
-2013/11/01 14:15:52 INFO - [a.2016010100] -HOLDING (beyond runahead limit)
-2013/11/01 14:15:52 INFO - [a.2016010100] -(setting:runahead)
-2013/11/01 14:15:53 INFO - [a.2013010100] -(current:running)> a.2013010100 succeeded at 2013-11-01T14:15:52
-2013/11/01 14:15:53 INFO - [a.2013010100] -(setting:succeeded)
-2013/11/01 14:15:53 INFO - [a.2016010100] -(setting:waiting)
-2013/11/01 14:15:54 INFO - [a.2016010100] -(setting:queued)
-2013/11/01 14:15:54 INFO - [a.2016010100] -(setting:submitting)
 2013/11/01 14:15:54 INFO - [a.2016010100] -triggered off []
-2013/11/01 14:15:55 INFO - [a.2016010100] -(current:submitting)> a.2016010100 submitting now
-2013/11/01 14:15:55 INFO - [a.2016010100] -(current:submitting)> a.2016010100 submission succeeded
-2013/11/01 14:15:55 INFO - [a.2016010100] -(setting:submitted)
-2013/11/01 14:15:55 INFO - [a.2016010100] -(current:submitted)> a.2016010100 submit_method_id=29917
-2013/11/01 14:15:55 INFO - [a.2016010100] -(current:submitted)> a.2016010100 started at 2013-11-01T14:15:54
-2013/11/01 14:15:55 INFO - [a.2016010100] -(setting:running)
-2013/11/01 14:15:56 INFO - [a.2019010100] -HOLDING (beyond suite stop cycle) 2018010100
-2013/11/01 14:15:56 INFO - [a.2019010100] -(setting:held)
-2013/11/01 14:15:56 INFO - [a.2016010100] -(current:running)> a.2016010100 succeeded at 2013-11-01T14:15:56
-2013/11/01 14:15:56 INFO - [a.2016010100] -(setting:succeeded)
-2013/11/01 14:15:56 INFO - All normal cycling tasks have spawned past the final cycle 2018010100
-2013/11/01 14:15:56 INFO - Suite shutting down at 2013-11-01 14:15:56.534773
