@@ -1,0 +1,8 @@
+2016-06-21T00:17:00Z INFO - Suite starting on vagrant-ubuntu-trusty-64:7766
+2016-06-21T00:17:00Z INFO - Run mode: dummy
+2016-06-21T00:17:00Z INFO - Initial point: 1
+2016-06-21T00:17:00Z INFO - Final point: 1
+2016-06-21T00:17:00Z INFO - Cold Start 1
+2016-06-21T00:17:00Z INFO - [foo.1] -triggered off []
+2016-06-21T00:17:16Z INFO - [bar.1] -triggered off ['foo.1']
+2016-06-21T00:17:35Z INFO - Suite shutting down at 2016-06-21T00:17:35Z
