@@ -31,13 +31,11 @@ from isodatetime.data import get_timepoint_from_seconds_since_unix_epoch
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
-from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.gui.legend import ThemeLegendWindow
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network.port_scan import scan_all
-from cylc.network.suite_state import StateSummaryClient
 from cylc.owner import USER
 from cylc.version import CYLC_VERSION
 from cylc.task_state import TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD
@@ -53,9 +51,8 @@ KEY_UPDATE_TIME = "update-time"
 def get_hosts_suites_info(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
-    for host, port_results in scan_all(
+    for host, (port, result) in scan_all(
             hosts=hosts, pyro_timeout=timeout):
-        port, result = port_results
         if owner and owner != result.get(KEY_OWNER):
             continue
         if host not in host_suites_map:
@@ -950,7 +947,7 @@ class ScanAppUpdater(BaseScanUpdater):
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
-        self.active_tasks = {}
+        self.tasks_by_state = {}
         super(ScanAppUpdater, self).__init__(hosts, owner=owner,
                                              poll_interval=poll_interval)
 
@@ -987,36 +984,23 @@ class ScanAppUpdater(BaseScanUpdater):
     def get_last_n_tasks(self, suite, host, task_state, point_string, n):
         """Returns a list of the last 'n' tasks with the provided state for
         the provided suite."""
-        # TODO: safety check
-
-        # Get task state summary information.
-        if suite + host not in self.active_tasks:
-            return ['<i>Could not get info, try refreshing the scanner.</i>']
-        tasks = self.active_tasks[suite + host]
+        # Get list of tasks for the provided state or return an error msg.
+        if suite + host not in self.tasks_by_state:
+            return [('<i>Could not get info; suite running with older cylc '
+                     'version?</i>')]
+        tasks = self.tasks_by_state[suite + host][task_state]
         if tasks is False:
             return ['<i>Cannot connect to suite.</i>']
 
-        # If point_string specified, remove entries at other point_strings.
-        to_remove = []
+        # Filter by point string if provided.
         if point_string:
-            for task in tasks:
-                _, task_point_string = task.rsplit('.', 1)
-                if task_point_string != point_string:
-                    to_remove.append(task)
-        for task in to_remove:
-            del tasks[task]
+            ret = [(last_timestamp, task_name + '.' + p_string) for
+                   (last_timestamp, task_name, p_string) in tasks if
+                   p_string == point_string]
+        else:
+            ret = [(task[0], task[1] + '.' + task[2]) for task in tasks]
 
-        # Get list of tasks that match the provided state.
-        ret = []
-        for task in tasks:
-            if tasks[task]['state'] == task_state:
-                time_strings = ['1970-01-01T00:00:00Z']
-                for time_string in self.TIME_STRINGS:
-                    if time_string in tasks[task] and tasks[task][time_string]:
-                        time_strings.append(tasks[task][time_string])
-                ret.append((max(time_strings), task))
-
-        # return only the n youngest items
+        # Return only the n youngest items.
         ret.sort(reverse=True)
         if len(ret) - n == 1:
             n += 1
@@ -1038,15 +1022,7 @@ class ScanAppUpdater(BaseScanUpdater):
                 if (suite, host) not in suite_host_tuples:
                     suite_host_tuples.append((suite, host))
         suite_host_tuples.sort()
-        self.active_tasks = {}
         for suite, host in suite_host_tuples:
-
-            try:
-                self.active_tasks[suite + host] = StateSummaryClient(
-                    suite, host=host).get_suite_state_summary()[1]
-            except PortFileError:
-                self.active_tasks[suite + host] = False
-
             if suite in info.get(host, {}):
                 suite_info = info[host][suite]
                 is_stopped = False
@@ -1057,6 +1033,10 @@ class ScanAppUpdater(BaseScanUpdater):
                 KEY_UPDATE_TIME, int(time.time())
             )
             title = suite_info.get("title")
+
+            if 'tasks-by-state' in suite_info:
+                self.tasks_by_state[suite + host] = suite_info[
+                    'tasks-by-state']
 
             if KEY_STATES in suite_info:
                 for key in sorted(suite_info):

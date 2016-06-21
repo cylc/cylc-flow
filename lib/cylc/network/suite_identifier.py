@@ -62,6 +62,8 @@ class SuiteIdServer(PyroServer):
             result['states'] = StateSummaryServer.get_inst().get_state_totals()
             result['update-time'] = (
                 StateSummaryServer.get_inst().get_summary_update_time())
+            result['tasks-by-state'] = (
+                StateSummaryServer.get_inst().get_tasks_by_state())
         return result
 
     def id(self):
