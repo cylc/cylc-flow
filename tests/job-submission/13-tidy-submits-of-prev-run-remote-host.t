@@ -50,8 +50,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 run_ok "exists-rlogd1" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD1}"
 run_fail "not-exists-rlogd2" ${SSH} "${CYLC_TEST_HOST}" test -e "${RLOGD2}"
 exists_ok "${LOGD1}"
-skip 1 '02-file-exists-fail - will fix as part of cylc/cylc#1880'
-#exists_fail "${LOGD2}"
+exists_fail "${LOGD2}"
 #-------------------------------------------------------------------------------
 ssh -n -oBatchMode=yes -oConnectTimeout=5 "${CYLC_TEST_HOST}" \
     "rm -rf 'cylc-run/${SUITE_NAME}'"
