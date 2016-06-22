@@ -1702,6 +1702,7 @@ conditions; see `cylc conditions`.
             message = 'suite stalled'
             self.log.warning(message)
             self.run_event_handlers(self.EVENT_STALLED, message)
+            self.pool.report_stalled_task_deps()
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
         else:
