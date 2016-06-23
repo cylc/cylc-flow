@@ -119,7 +119,7 @@ class JobFile(object):
         """Job script prelude."""
         if cylc.flags.debug:
             if 'bash' in job_conf['job script shell']:
-                handle.write("\n\nPS4='[\D{%Y%m%dT%H%M%S%z}]\u@\h+ '")
+                handle.write("\n\nPS4='+[\D{%Y%m%dT%H%M%S%z}]\u@\h '")
             handle.write('\n\nset -x')
         handle.write('\n\necho "JOB SCRIPT STARTING"')
         # set cylc version and source profile scripts before turning on
@@ -211,6 +211,8 @@ for S in $VACATION_SIGNALS; do
     trap "TRAP_VACATION_SIGNAL $S" $S
 done
 unset S""" % args)
+        if 'bash' in job_conf['job script shell']:
+            handle.write("\nset -o pipefail")
 
     @classmethod
     def _write_init_script(cls, handle, job_conf):
