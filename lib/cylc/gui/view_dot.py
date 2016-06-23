@@ -274,7 +274,7 @@ LED suite control interface.
             "Dot View - Click to group tasks by families")
 
         self.transpose_toolbutton = gtk.ToggleToolButton()
-        self.transpose_toolbutton.set_active(False)
+        self.transpose_toolbutton.set_active(self.t.should_transpose_view)
         g_image = gtk.image_new_from_stock(
             'transpose', gtk.ICON_SIZE_SMALL_TOOLBAR)
         self.transpose_toolbutton.set_icon_widget(g_image)

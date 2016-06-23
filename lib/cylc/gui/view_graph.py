@@ -330,7 +330,8 @@ Dependency graph suite control interface.
         items.append(self.ungroup_toolbutton)
 
         self.transpose_toolbutton = gtk.ToggleToolButton()
-        self.transpose_toolbutton.set_active(False)
+        self.transpose_toolbutton.set_active(not self.t.orientation == "TB")
+
         g_image = gtk.image_new_from_stock('transpose',
                                            gtk.ICON_SIZE_SMALL_TOOLBAR)
         self.transpose_toolbutton.set_icon_widget(g_image)
