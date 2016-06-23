@@ -287,6 +287,28 @@ class SuiteConfig(object):
         if 'root' not in self.cfg['runtime']:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
+        # Expand [runtime][foo_<M>]
+        newruntime = OrderedDictWithDefaults()
+        for key, val in self.cfg['runtime'].items():
+            m = re.search('<(.+?)>', key)
+            if m:
+                arr_var = m.groups()[0]
+                arr_val = int(self.cfg['cylc']['task array sizes'][arr_var])
+                for i in range(0, arr_val):
+                    newkey = re.sub('<(.+?)>', str(i), key)
+                    if newkey not in newruntime:
+                        newruntime[newkey] = OrderedDictWithDefaults()
+                    replicate(newruntime[newkey], val)
+                    # (just replace <M> in script for now)
+                    script = newruntime[newkey]['script']
+                    newscript = re.sub('<(.+?)>', str(i), script)
+                    newruntime[newkey]['script'] = newscript
+            else:
+                if key not in newruntime:
+                    newruntime[key] = OrderedDictWithDefaults()
+                replicate(newruntime[key], val)
+        self.cfg['runtime'] = newruntime
+
         # Replace [runtime][name1,name2,...] with separate namespaces.
         if flags.verbose:
             print "Expanding [runtime] name lists"
@@ -2189,7 +2211,20 @@ class SuiteConfig(object):
 
         # split the graph string into successive lines
         special_dependencies = []
-        for xline in graph.splitlines():
+
+        # Expand task arrays.
+        new_lines = []
+        for line in graph.splitlines():
+            m = re.search('<(.+?)>', line)
+            if not m:
+                new_lines.append(line)
+                continue
+            arr_var = m.groups()[0]
+            arr_val = int(self.cfg['cylc']['task array sizes'][arr_var])
+            for i in range(0, arr_val):
+                new_lines.append(re.sub('<(.+?)>', str(i), line))
+
+        for xline in new_lines:
             # strip comments
             line = re.sub('#.*', '', xline).strip()
             # ignore blank lines

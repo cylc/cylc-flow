@@ -252,6 +252,9 @@ SPEC = {
                     :PRIVILEGE_LEVELS.index('shutdown') + 1],
                 default=GLOBAL_CFG.get(['authentication', 'public']))
         },
+        'task array sizes': {
+            '__MANY__': vdr(vtype='integer'),
+        },
     },
     'scheduling': {
         'initial cycle point': vdr(vtype='cycletime'),
