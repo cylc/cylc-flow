@@ -1155,37 +1155,36 @@ class TaskProxy(object):
         # Location of job file, etc
         self._create_job_log_path()
 
-        return OrderedDictWithDefaults([
-            ('batch system name', rtconfig['job submission']['method']),
-            ('batch submit command template', (
-                rtconfig['job submission']['command template'])),
-            ('batch system conf', batch_sys_conf),
-            ('directives', rtconfig['directives']),
-            ('env-script', rtconfig['env-script']),
-            ('host', self.task_host),
-            ('init-script', rtconfig['init-script']),
-            ('is cold-start', self.tdef.is_coldstart),
-            ('job file path', self.get_job_log_path(
-                self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE)),
-            ('job log dir', self.get_job_log_path()),
-            ('job script shell', rtconfig['job submission']['shell']),
-            ('local job file path', self.get_job_log_path(
-                self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE)),
-            ('namespace hierarchy', self.tdef.namespace_hierarchy),
-            ('owner', self.task_owner),
-            ('post-script', post_script),
-            ('pre-script', pre_script),
-            ('remote suite path', (
-                rtconfig['remote']['suite definition directory'])),
-            ('runtime environment', rtconfig['environment']),
-            ('script', script),
-            ('submission try number', self.sub_try_state.num + 1),
-            ('submit num', self.submit_num),
-            ('suite name', self.suite_name),
-            ('task id', self.identity),
-            ('try number', self.run_try_state.num + 1),
-            ('work sub-directory', rtconfig['work sub-directory']),
-        ])
+        return {
+            'batch system name': rtconfig['job submission']['method'],
+            'batch submit command template': (
+                rtconfig['job submission']['command template']),
+            'batch system conf': batch_sys_conf,
+            'directives': rtconfig['directives'],
+            'env-script': rtconfig['env-script'],
+            'host': self.task_host,
+            'init-script': rtconfig['init-script'],
+            'is cold-start': self.tdef.is_coldstart,
+            'job file path': self.get_job_log_path(
+                self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE),
+            'job log dir': self.get_job_log_path(),
+            'job script shell': rtconfig['job submission']['shell'],
+            'local job file path': self.get_job_log_path(
+                self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE),
+            'namespace hierarchy': self.tdef.namespace_hierarchy,
+            'owner': self.task_owner,
+            'post-script': post_script,
+            'pre-script': pre_script,
+            'remote suite path': (
+                rtconfig['remote']['suite definition directory']),
+            'runtime environment': rtconfig['environment'],
+            'script': script,
+            'submit num': self.submit_num,
+            'suite name': self.suite_name,
+            'task id': self.identity,
+            'try number': self.run_try_state.num + 1,
+            'work sub-directory': rtconfig['work sub-directory'],
+        }
 
     def _get_job_scripts(self, rtconfig):
         """Return script, pre-script, post-script for a job."""
