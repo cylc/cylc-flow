@@ -328,12 +328,12 @@ def get_point_state_count_lines(state_count_totals, state_count_cycles,
 
     for point_string in sorted(state_count_cycles.keys()):
         line = ""
-        for st, tot in sorted(state_count_cycles[point_string].items()):
+        for state, tot in sorted(state_count_cycles[point_string].items()):
             if use_color:
                 subst = " %d " % tot
                 line += TaskState.get_status_prop(state, 'ascii_ctrl', subst)
             else:
-                line += '%s:%d ' % (st, tot)
+                line += '%s:%d ' % (state, tot)
         yield (point_string, line.strip())
 
 
