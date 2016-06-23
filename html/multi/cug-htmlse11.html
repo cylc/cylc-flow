@@ -7,7 +7,7 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-05-23 12:28:00"> 
+<meta name="date" content="2016-06-23 08:28:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
@@ -1282,7 +1282,7 @@ class="pcrr7t-">name</span></span> is too long. For version 12 or below, this is
 236 characters. The default setting will truncate the job name string to 15 characters. If you have PBS 13 at your
 site, you should modify your site&#8217;s global configuration file to allow the job name to be longer. (See also
 Section&#x00A0;<a 
-href="cug-htmlse18.html#x19-431000B.9.1.17.5">B.9.1.17.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
+href="cug-htmlse18.html#x19-432000B.9.1.17.5">B.9.1.17.5<!--tex4ht:ref: JobNameLengthMaximum --></a>.) For example:
    <!--l. 5137-->
    <div class="lstlisting" id="listing-192"><span class="label"><a 
  id="x12-150001r1"></a></span><span 
@@ -1885,7 +1885,7 @@ class="pcrr7t-">cylc</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> command.
 <!--l. 5239--><p class="indent" >   Tasks are polled automatically, once, if they timeout during job submission or execution (see&#x00A0;<a 
-href="cug-htmlse17.html#x18-320000A.5.1.20">A.5.1.20<!--tex4ht:ref: TaskEventHandling --></a> for how to
+href="cug-htmlse17.html#x18-321000A.5.1.20">A.5.1.20<!--tex4ht:ref: TaskEventHandling --></a> for how to
 configure timeouts).
 <!--l. 5242--><p class="indent" >   Any tasks recorded in the <span 
 class="cmti-10">submitted </span>or <span 
@@ -1905,13 +1905,13 @@ class="pcrr7t-">=</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">poll</span></span> in cylc site and
 user global config (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-412000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
-href="cug-htmlse18.html#x19-377000B.1.8">B.1.8<!--tex4ht:ref: submission_polling --></a>
+href="cug-htmlse18.html#x19-413000B.9.1.3">B.9.1.3<!--tex4ht:ref: task_comms_method --></a>). The default polling intervals can be overridden for all suites there too (see&#x00A0;<a 
+href="cug-htmlse18.html#x19-378000B.1.8">B.1.8<!--tex4ht:ref: submission_polling --></a>
 and&#x00A0;<a 
-href="cug-htmlse18.html#x19-376000B.1.7">B.1.7<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
+href="cug-htmlse18.html#x19-377000B.1.7">B.1.7<!--tex4ht:ref: execution_polling --></a>), or in specific suite definitions (in which case polling will be done regardless of the task communication
 method configured for the host; see&#x00A0;<a 
-href="cug-htmlse17.html#x18-298000A.5.1.11">A.5.1.11<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
-href="cug-htmlse17.html#x18-299000A.5.1.12">A.5.1.12<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
+href="cug-htmlse17.html#x18-299000A.5.1.11">A.5.1.11<!--tex4ht:ref: SubmissionPollingIntervals --></a> and&#x00A0;<a 
+href="cug-htmlse17.html#x18-300000A.5.1.12">A.5.1.12<!--tex4ht:ref: ExecutionPollingIntervals --></a>).
 <!--l. 5260--><p class="indent" >   Note that regular polling is not as efficient as task messaging in updating task status, and it should be used
 sparingly in large suites.
 <!--l. 5263--><p class="noindent" >
@@ -1987,24 +1987,24 @@ class="pcrr7t-">PBSHandler</span><span
 class="pcrr7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-157007r7"></a></span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">"""</span><span 
-class="pcrro7t-">A</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">user</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">defined</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">batch</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">system</span><span 
-class="pcrro7t-">&#x00A0;</span><span 
-class="pcrro7t-">handler</span><span 
-class="pcrro7t-">.</span><span 
-class="pcrro7t-">"""</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"""</span><span 
+class="pcrr7t-">A</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">user</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">defined</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">batch</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">system</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">handler</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">"""</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
  id="x12-157008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
