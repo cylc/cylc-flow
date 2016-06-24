@@ -1821,13 +1821,14 @@ instants, intervals, and sequences.  Cycling graph sections can be specified
 using full ISO 8601 recurrence expressions, but these may be simplified
 by assuming context information from the suite - namely initial and final cycle
 points. One form of the recurrence syntax looks like
-\lstinline=Rn/start-date-time/period= (\lstinline=Rn= means repeat
+\lstinline=Rn/start-date-time/period= (\lstinline=Rn= means run
 \lstinline=n= times). In the example above, if the initial cycle point
 is always at 00 or 12 hours then \lstinline=[[[T00,T12]]]= could be
 written as \lstinline=[[[PT12H]]]=, which is short for
-\lstinline=[[[R/initial-cycle-point/PT12H/]]]= - i.e.\ repeat indefinitely every
-12 hours starting at the initial cycle point. It is possible to add constraints
-to the suite to only allow initial cycle points at 00 or 12 hours e.g.
+\lstinline=[[[R/initial-cycle-point/PT12H/]]]= - i.e.\ run every 12 hours
+indefinitely starting at the initial cycle point. It is possible to add
+constraints to the suite to only allow initial cycle points at 00 or 12 hours
+e.g.
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -1903,7 +1904,7 @@ This is an adaptation of part of the ISO 8601 date-time standard's recurrence
 syntax (\lstinline=Rn/date-time/period=) with some special context information
 supplied by cylc for the \lstinline=no-specified-*= data.
 
-The \lstinline=1= in the \lstinline=R1= means repeat once. As we've specified
+The \lstinline=1= in the \lstinline=R1= means run once. As we've specified
 no date-time, Cylc will use the initial cycle point date-time by default,
 which is what we want. We've also missed out specifying the period - this is
 set by cylc to a zero amount of time in this case (as it never
@@ -2785,7 +2786,7 @@ title = some cycling tasks
 The hour-based section heading examples shown above (\lstinline=T00=,
 \lstinline=T06=, etc) are just one small part of cylc's cycling syntax.
 
-\lstinline=T06= stands for "Repeat every 1 day starting at 06:00 after the
+\lstinline=T06= stands for "Run every day starting at 06:00 after the
 initial cycle point". Cylc allows you to start (or end) at any particular
 time, repeat at whatever frequency you like, and even optionally limit the
 number of repetitions.
@@ -2797,61 +2798,61 @@ For example, all these are valid in cylc:
     [[dependencies]]
         # Note: task names are meaningless.
 
-        # Repeat once at the initial cycle point
+        # Run once at the initial cycle point
         [[[ R1 ]]]
             graph = "cold_foo => foo"
 
-        # Repeat every 1 day starting at the initial cycle point
+        # Run every day starting at the initial cycle point
         [[[ P1D ]]]
             graph = "daily_bar => daily_baz"
 
-        # Repeat every 5 minutes starting at the initial cycle point
+        # Run every 5 minutes starting at the initial cycle point
         [[[ PT5M ]]]
             graph = "frequent_qux => frequent_wibble"
 
-        # Repeat every 2 weeks starting at 00:00 after the initial cycle point
+        # Run every 2 weeks starting at 00:00 after the initial cycle point
         [[[ T00/P2W ]]]
             graph = "bidiurnal_wobble => bidiurnal_wubble"
 
-        # Repeat every month, starting 5 days after the initial cycle point
+        # Run every month, starting 5 days after the initial cycle point
         [[[ +P5D/P1M ]]]
             graph = "monthly_offset_fred => monthly_offset_flob"
 
-        # Repeat once at 06:00 after the initial cycle point
+        # Run once at 06:00 after the initial cycle point
         [[[ R1/T06 ]]]
             graph = "delayed_cold_corge => corge"
 
-        # Repeat once at the final cycle point
+        # Run once at the final cycle point
         [[[ R1/P0Y ]]]
             graph = "end_garply"
 
-        # Repeat once at the final cycle point (alternative form)
+        # Run once at the final cycle point (alternative form)
         [[[ R1/$ ]]]
             graph = "end_garply"
 
-        # Repeat once three days before the final cycle point
+        # Run once three days before the final cycle point
         [[[ R1/$-P3D ]]]
             graph = "before_end_garply"
 
-        # Repeat 3 times, every day at 08:30 after the initial cycle point
+        # Run 3 times, every day at 08:30 after the initial cycle point
         [[[ R3/T0830 ]]]
             graph = "triple_grault => triple_garply"
 
-        # Repeat 3 times, every month at 00:00 on the first of the month
+        # Run 3 times, every month at 00:00 on the first of the month
         # after the initial cycle point
         [[[ R3/01T00 ]]]
             graph = "triple_waldo => triple_xyzzy"
 
-        # Repeat 5 times, every month starting on Monday following the
+        # Run 5 times, every month starting on Monday following the
         # initial cycle point
         [[[ R5/W-1/P1M ]]]
             graph = "monthly_spam => monthly_eggs"
 
-        # Repeat every 1 day starting at 20140201T06
+        # Run every day starting at 20140201T06
         [[[ 20140201T06/P1D ]]]
             graph = "absolute_daily_ham"
 
-        # Repeat once at the first instance of either T00, T06, T12 or T18
+        # Run once at the first instance of either T00, T06, T12 or T18
         # starting at the initial cycle point
         [[[ R1/min(T00,T06,T12,T18) ]]]
             graph = "cold_cycle_dependent_foo => foo"
@@ -2930,19 +2931,19 @@ So, for example, you can write:
     [[dependencies]]
         # Note: task names are meaningless.
 
-        # Repeat once at the final cycle point
+        # Run once at the final cycle point
         [[[ R1//+P0D ]]]
             graph = "cold_foo => foo"
 
-        # Repeat 5 times, every 1 day, ending at the final cycle point
+        # Run 5 times, every 1 day, ending at the final cycle point
         [[[ R5/P1D ]]]
             graph = "daily_bar => daily_baz"
 
-        # Repeat every 2 weeks ending at 00:00 following the final cycle point
+        # Run every 2 weeks ending at 00:00 following the final cycle point
         [[[ P2W/T00 ]]]
             graph = "frequent_qux => frequent_wibble"
 
-        # Repeat every 1 day ending at 00:00 following the final cycle point
+        # Run every 1 day ending at 00:00 following the final cycle point
         [[[ R//T00 ]]]
             graph = "bidiurnal_wobble => bidiurnal_wubble"
 \end{lstlisting}
@@ -2972,7 +2973,7 @@ initial and final cycle points. Using this shorthand you can write:
 \lstset{language=transcript}
 
 Note that there can be multiple ways to write the same headings, for instance
-the following all repeat once at the final cycle point:
+the following all run once at the final cycle point:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -3239,7 +3240,7 @@ where suite initial and final cycle points can be assumed.  Some examples:
         [[[ P5 ]]] # short for R/initial-point/P5
             graph = "foo => bar"
 
-        # Repeat twice with step 3 from the initial cycle point
+        # Run twice with step 3 from the initial cycle point
         [[[ R2//P2 ]]] # short for R2/initial-point/P2
             graph = "foo => bar"
 
@@ -3247,7 +3248,7 @@ where suite initial and final cycle points can be assumed.  Some examples:
         [[[ R/+P1/P2 ]]]
             graph = "foo => bar"
 
-        # Repeat twice with step 2, to the final cycle point
+        # Run twice with step 2, to the final cycle point
         [[[ R2/P2 ]]] # short for R2/P2/final-point
             graph = "bar => stopping"
 
@@ -7347,7 +7348,7 @@ Setting & Pre-Cylc-6 & Cylc-6+ \\
 \label{cylc-6-migration-cycling}
 
 {\em Start-up tasks} have been removed from cylc 6, and use of cold-start tasks
-is no longer recommended. Instead, you should use the initial/repeat-once
+is no longer recommended. Instead, you should use the initial/run-once
 notation as detailed in~\ref{initial-non-repeating-r1-tasks}
 and~\ref{AdvancedStartingUp}.
 

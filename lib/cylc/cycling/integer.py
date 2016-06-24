@@ -54,7 +54,7 @@ CYCLER_TYPE_SORT_KEY_INTEGER = "a"
 #     INTV: an integer interval such as 'P2'.
 #     n: an integer denoting the number of repetitions.
 #     format_num meanings:
-#         1: repeat n times between START and END
+#         1: run n times between START and END
 #         3: start at START, keep adding INTV (if n, only for n points)
 #         4: start at END, keep subtracting INTV (if n, only for n points)
 
@@ -100,10 +100,10 @@ RECURRENCE_FORMAT_RECS = [
         (r"^%(reps)s?/%(intv)s/?$", 4),
         # Rn//END (not supported)
         # (r"^%(reps_1)s//%(end)s$", 4),
-        # R1, repeat once at INITIAL
+        # R1, run once at INITIAL
         # e.g. R1, R1/
         (r"^%(reps_1)s/?(?P<start>$)", 3),
-        # R1//END, repeat once at END.
+        # R1//END, run once at END.
         # e.g. R1//-P2
         (r"^%(reps_1)s//%(end)s$", 4)
     ]
