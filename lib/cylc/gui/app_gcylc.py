@@ -69,7 +69,7 @@ from cylc.wallclock import (
 from cylc.task_state import (
     TaskState, TASK_STATUSES_ALL, TASK_STATUSES_RESTRICTED,
     TASK_STATUSES_WITH_JOB_SCRIPT, TASK_STATUSES_WITH_JOB_LOGS,
-    TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
+    TASK_STATUSES_TRIGGERABLE, TASK_STATUSES_POLLABLE, TASK_STATUSES_ACTIVE,
     TASK_STATUS_WAITING, TASK_STATUS_READY,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 
@@ -1367,7 +1367,7 @@ been defined for this suite""").inform()
         menu.append(kill_item)
         kill_item.connect('activate', self.kill_task, task_ids)
         kill_item.set_sensitive(
-            all([t_state in TASK_STATUSES_KILLABLE for t_state in t_states])
+            all([t_state in TASK_STATUSES_ACTIVE for t_state in t_states])
         )
 
         # Separator.

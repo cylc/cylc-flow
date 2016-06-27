@@ -57,7 +57,7 @@ from cylc.owner import is_remote_user
 from cylc.suite_host import is_remote_host
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
+    TASK_STATUSES_ACTIVE, TASK_STATUSES_POLLABLE,
     TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
@@ -738,26 +738,20 @@ class TaskPool(object):
                           str(self.stop_point))
                 itask.state.reset_state(TASK_STATUS_HELD)
 
-    def no_active_tasks(self):
-        """Return True if no more active tasks."""
+    def get_n_active_tasks(self):
+        """Return number of active tasks and active unkillable tasks.
+
+        Return (n_active_tasks, n_unkillable_active_tasks)
+        """
+        n_active_tasks = 0
+        n_unkillable_active_tasks = 0
         for itask in self.get_tasks():
             if (itask.state.status in TASK_STATUSES_ACTIVE or
                     itask.event_handler_try_states):
-                return False
-        return True
-
-    def has_unkillable_tasks_only(self):
-        """Used to identify if a task pool contains unkillable tasks.
-
-        Return True if all running and submitted tasks in the pool have had
-        kill operations fail, False otherwise.
-        """
-        for itask in self.get_tasks():
-            if itask.state.status in [TASK_STATUS_RUNNING,
-                                      TASK_STATUS_SUBMITTED]:
-                if not itask.state.kill_failed:
-                    return False
-        return True
+                n_active_tasks += 1
+                if itask.state.kill_failed:
+                    n_unkillable_active_tasks += 1
+        return (n_active_tasks, n_unkillable_active_tasks)
 
     def pool_is_stalled(self):
         """Return True if no active, queued or clock trigger awaiting tasks"""
@@ -855,7 +849,7 @@ class TaskPool(object):
         itasks, n_warnings = self._filter_task_proxies(items, compat)
         active_itasks = []
         for itask in itasks:
-            is_active = itask.state.status in TASK_STATUSES_KILLABLE
+            is_active = itask.state.status in TASK_STATUSES_ACTIVE
             if is_active and self.run_mode == 'simulation':
                 itask.state.reset_state(TASK_STATUS_FAILED)
             elif is_active:
@@ -1034,10 +1028,11 @@ class TaskPool(object):
                     else:
                         level = WARNING
                         tmpl = "%s failed, retrying in %s (after %s)"
-                    itask.log(level, tmpl % (
-                        str(key),
-                        try_state.delay_as_seconds(),
-                        try_state.timeout_as_str()))
+                    if try_state.delay or cylc.flags.debug:
+                        itask.log(level, tmpl % (
+                            str(key),
+                            try_state.delay_as_seconds(),
+                            try_state.timeout_as_str()))
                 # Ready to run?
                 if not try_state.is_delay_done():
                     continue
@@ -1483,11 +1478,6 @@ class TaskPool(object):
                 if itask.sim_time_check():
                     sim_task_succeeded = True
         return sim_task_succeeded
-
-    def shutdown(self):
-        if not self.no_active_tasks():
-            self.log.warning("some active tasks will be orphaned")
-        self.pyro.disconnect(self.message_queue)
 
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.

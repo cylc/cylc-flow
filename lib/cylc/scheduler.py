@@ -117,6 +117,9 @@ class Scheduler(object):
     EVENT_SHUTDOWN = 'shutdown'
     EVENT_TIMEOUT = 'timeout'
     EVENT_STALLED = 'stalled'
+    REF_LOG_LABELS = (
+        'triggered off', 'Initial point', 'Start point', 'Final point')
+    STOP_KILL_INTERVAL = 10.0  # seconds
     SUITE_EVENT_HANDLER = 'suite-event-handler'
     SUITE_EVENT_MAIL = 'suite-event-mail'
     FS_CHECK_PERIOD = 600.0  # 600 seconds
@@ -156,10 +159,6 @@ class Scheduler(object):
         else:
             self.logging_level = logging.INFO
 
-        # For persistence of reference test settings across reloads:
-        self.reference_test_mode = self.options.reftest
-        self.gen_reference_log = self.options.genref
-
         self.owner = USER
         self.host = get_suite_host()
         self.port = None
@@ -189,8 +188,13 @@ class Scheduler(object):
         self._profile_amounts = {}
         self._profile_update_times = {}
 
-        self.shut_down_cleanly = False
-        self.shut_down_now = False
+        # Boolean: Has received command to shutdown cleanly?
+        self.stop_cleanly = False
+        # Boolean: Has received command to shutdown + kill submitted/running
+        #          task jobs?
+        # Integer: Time (as seconds since epoch) at which (the next) kill can
+        #          be issued.
+        self.stop_kill_time = None
 
         # TODO - stop task should be held by the task pool.
         self.stop_task = None
@@ -200,6 +204,9 @@ class Scheduler(object):
 
         self.initial_point = None
         self.start_point = None
+
+        self.pri_dao = None
+        self.pub_dao = None
 
     def start(self):
         """Start the server."""
@@ -231,32 +238,32 @@ class Scheduler(object):
                 prof = cProfile.Profile()
                 prof.enable()
             self.run()
-        except SchedulerStop, x:
+        except SchedulerStop as exc:
             # deliberate stop
-            print str(x)
+            print str(exc)
             self.shutdown()
 
-        except SchedulerError, x:
-            print >> sys.stderr, str(x)
+        except SchedulerError, exc:
+            print >> sys.stderr, str(exc)
             self.shutdown()
             sys.exit(1)
 
-        except KeyboardInterrupt as x:
+        except KeyboardInterrupt as exc:
             try:
-                self.shutdown(str(x))
-            except Exception as y:
+                self.shutdown(str(exc))
+            except Exception:
                 # In case of exceptions in the shutdown method itself.
-                traceback.print_exc(y)
+                traceback.print_exc()
                 sys.exit(1)
 
-        except Exception as x:
-            traceback.print_exc(x)
+        except Exception as exc:
+            traceback.print_exc()
             print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
             try:
-                self.shutdown('ERROR: ' + str(x))
-            except Exception, y:
+                self.shutdown('ERROR: ' + str(exc))
+            except Exception:
                 # In case of exceptions in the shutdown method itself
-                traceback.print_exc(y)
+                traceback.print_exc()
             if cylc.flags.debug:
                 raise
             else:
@@ -318,7 +325,7 @@ running but not responsive, kill any left over suite processes too.""" +
             "      ,___| |         \n"
             "      \_____|         \n"
         )
-        license = """
+        license_str = """
 The Cylc Suite Engine [%s]
 Copyright (C) 2008-2016 NIWA
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -330,7 +337,7 @@ conditions; see `cylc conditions`.
   """ % CYLC_VERSION
 
         logo_lines = logo.splitlines()
-        license_lines = license.splitlines()
+        license_lines = license_str.splitlines()
         lmax = max(len(line) for line in license_lines)
         for i in range(len(logo_lines)):
             print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
@@ -352,6 +359,7 @@ conditions; see `cylc conditions`.
             self.port_file = port_file_path
 
     def configure(self):
+        """Configure scheduler."""
         self.log_memory("scheduler.py: start configure")
         SuiteProcPool.get_inst()
 
@@ -389,7 +397,7 @@ conditions; see `cylc conditions`.
 
         self.reflogfile = os.path.join(self.config.fdir, 'reference.log')
 
-        if self.gen_reference_log or self.reference_test_mode:
+        if self.options.genref or self.options.reftest:
             self.configure_reftest()
 
         self.log.info('Suite starting on %s:%s' % (self.host, self.port))
@@ -877,10 +885,11 @@ conditions; see `cylc conditions`.
         self.pool.poll_task_jobs()
 
     def process_command_queue(self):
+        """Process queued commands."""
         queue = self.command_queue.get_queue()
-        n = queue.qsize()
-        if n > 0:
-            print 'Processing ' + str(n) + ' queued command(s)'
+        size = queue.qsize()
+        if size > 0:
+            print 'Processing ' + str(size) + ' queued command(s)'
         else:
             return
 
@@ -896,10 +905,10 @@ conditions; see `cylc conditions`.
             except SchedulerStop:
                 self.log.info('Command succeeded: ' + cmdstr)
                 raise
-            except Exception, x:
+            except Exception as exc:
                 # Don't let a bad command bring the suite down.
                 self.log.warning(traceback.format_exc())
-                self.log.warning(str(x))
+                self.log.warning(str(exc))
                 self.log.warning('Command failed: ' + cmdstr)
             else:
                 if n_warnings:
@@ -1004,17 +1013,13 @@ conditions; see `cylc conditions`.
     def command_set_stop_cleanly(self, kill_active_tasks=False):
         """Stop job submission and set the flag for clean shutdown."""
         SuiteProcPool.get_inst().stop_job_submission()
-        TaskProxy.stop_sim_mode_job_submission = True
-        self.shut_down_cleanly = True
-        self.kill_on_shutdown = kill_active_tasks
-        self.next_kill_issue = time.time()
+        self.stop_cleanly = True
+        if kill_active_tasks:
+            self.stop_kill_time = time.time()
 
     def command_stop_now(self):
-        """Shutdown immediately."""
-        proc_pool = SuiteProcPool.get_inst()
-        proc_pool.stop_job_submission()
-        TaskProxy.stop_sim_mode_job_submission = True
-        proc_pool.terminate()
+        """Stop suite immediately."""
+        SuiteProcPool.get_inst().stop_job_submission()
         raise SchedulerStop("Stopping NOW")
 
     def command_set_stop_after_point(self, point_string):
@@ -1108,7 +1113,7 @@ conditions; see `cylc conditions`.
                 logging.WARNING, "Added task: '%s'" % (task,))
 
         self.configure_suite_environment()
-        if self.gen_reference_log or self.reference_test_mode:
+        if self.options.genref or self.options.reftest:
             self.configure_reftest(recon=True)
         # update SuiteStateDumper state
         self.state_dumper.set_cts(self.initial_point, self.final_point)
@@ -1117,7 +1122,7 @@ conditions; see `cylc conditions`.
     def command_set_runahead(self, *args):
         self.pool.set_runahead(*args)
 
-    def set_suite_timer(self, reset=False):
+    def set_suite_timer(self):
         """Set suite's timeout timer."""
         self.suite_timer_timeout = time.time() + (
             self._get_events_conf(self.EVENT_TIMEOUT)
@@ -1348,10 +1353,10 @@ conditions; see `cylc conditions`.
 
     def configure_reftest(self, recon=False):
         """Configure the reference test."""
-        if self.gen_reference_log:
+        if self.options.genref:
             self.config.cfg['cylc']['log resolved dependencies'] = True
 
-        elif self.reference_test_mode:
+        elif self.options.reftest:
             rtc = self.config.cfg['cylc']['reference test']
             req = rtc['required run mode']
             if req and req != self.run_mode:
@@ -1467,15 +1472,13 @@ conditions; see `cylc conditions`.
             self.log.warning(str(ctx))
             sys.stderr.write(
                 'ERROR: %s EVENT HANDLER FAILED\n' % ctx.cmd_key[1])
-            if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
-                    self.reference_test_mode):
+            if ctx.cmd_key[1] == self.EVENT_SHUTDOWN and self.options.reftest:
                 sys.stderr.write('ERROR: SUITE REFERENCE TEST FAILED\n')
             if abort_on_error:
                 raise SchedulerError(ctx.err)
         else:
             self.log.info(str(ctx))
-            if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
-                    self.reference_test_mode):
+            if ctx.cmd_key[1] == self.EVENT_SHUTDOWN and self.options.reftest:
                 sys.stdout.write('SUITE REFERENCE TEST PASSED\n')
 
     def _run_event_mail_callback(self, ctx):
@@ -1486,6 +1489,7 @@ conditions; see `cylc conditions`.
             self.log.info(str(ctx))
 
     def run(self):
+        """Main loop of scheduler."""
 
         if self._pool_hold_point is not None:
             self.hold_suite(self._pool_hold_point)
@@ -1497,183 +1501,208 @@ conditions; see `cylc conditions`.
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
 
         self.log_memory("scheduler.py: begin run while loop")
-        proc_pool = SuiteProcPool.get_inst()
 
         next_fs_check = time.time() + self.FS_CHECK_PERIOD
-
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')
 
+        can_auto_stop = (
+            not self.config.cfg['cylc']['disable automatic shutdown'] and
+            not self.options.no_auto_shutdown)
+        stop_exc = SchedulerStop("Finished")
+
         while True:  # MAIN LOOP
+            time0 = time.time()
+            self.process_command_queue()
+
+            # Update task pool
+            self._run_update_pool()
+
+            # Update state summary and persistent
+            self._run_update_storage()
+
+            # Shutdown checks
+
+            # Shut down check, unexpected failures occured in reference test
+            if self.options.reftest and self.ref_test_allowed_failures:
+                self._run_ref_test_fail_check()
+
+            # Shut down check, failed tasks
+            if (self.config.cfg['cylc']['abort if any task fails'] and
+                    self.pool.any_task_failed()):
+                stop_exc = SchedulerError(
+                    'Task(s) failed and "abort if any task fails" is set')
+                self.command_set_stop_cleanly(kill_active_tasks=True)
+
+            # Shutdown check, normal shutdown
+            if (self.stop_cleanly or
+                    self.stop_clock_done() or self.stop_task_done() or
+                    can_auto_stop and self.pool.check_auto_shutdown()):
+                self._run_try_clean_stop(stop_exc)
+
+            # Check whether suite is stalled or not
+            if not self.stop_cleanly:
+                self.check_suite_stalled()
 
             # Periodic check that the suite directory still exists
             # - designed to catch stalled suite daemons where the suite
             # directory has been deleted out from under itself
             if time.time() > next_fs_check:
-                if not os.path.exists(suite_run_dir):
-                    os.kill(os.getpid(), signal.SIGKILL)
-                else:
+                if os.path.exists(suite_run_dir):
                     next_fs_check = time.time() + self.FS_CHECK_PERIOD
-
-            # PROCESS ALL TASKS whenever something has changed that might
-            # require renegotiation of dependencies, etc.
-
-            if self.shut_down_now:
-                warned = False
-                while not proc_pool.is_dead():
-                    proc_pool.handle_results_async()
-                    if not warned:
-                        print("Waiting for the command process " +
-                              "pool to empty for shutdown")
-                        print("(you can \"stop now\" to shut " +
-                              "down immediately if you like).")
-                        warned = True
-                    self.process_command_queue()
-                    time.sleep(0.5)
-                raise SchedulerStop("Finished")
-
-            t0 = time.time()
-
-            if self.pool.do_reload:
-                self.pool.reload_taskdefs()
-                self.do_update_state_summary = True
-
-            self.process_command_queue()
-            self.pool.release_runahead_tasks()
-            proc_pool.handle_results_async()
-
-            # External triggers must be matched now. If any are matched pflag
-            # is set to tell process_tasks() that task processing is required.
-            self.pool.match_ext_triggers()
-
-            if self.process_tasks():
-                if cylc.flags.debug:
-                    self.log.debug("BEGIN TASK PROCESSING")
-                    main_loop_start_time = time.time()
-
-                changes = 0
-                self.pool.match_dependencies()
-                if not self.shut_down_cleanly:
-                    changes += self.pool.submit_tasks()
-                changes += self.pool.spawn_all_tasks()
-                changes += self.pool.remove_spent_tasks()
-                changes += self.pool.remove_suiciding_tasks()
-
-                if changes:
-                    self.do_update_state_summary = True
-
-                BroadcastServer.get_inst().expire(self.pool.get_min_point())
-
-                if cylc.flags.debug:
-                    seconds = time.time() - main_loop_start_time
-                    self.log.debug(
-                        "END TASK PROCESSING (took " + str(seconds) + " sec)")
-
-            self.pool.process_queued_task_messages()
-            self.pool.process_queued_task_event_handlers()
-            try:
-                self.pool.process_queued_db_ops()
-            except OSError as err:
-                self.shutdown(str(err))
-                raise
-            # If public database is stuck, blast it away by copying the content
-            # of the private database into it.
-            if self.pub_dao.n_tries >= self.pub_dao.MAX_TRIES:
-                try:
-                    self._copy_pri_db_to_pub_db()
-                except (IOError, OSError) as exc:
-                    # Something has to be very wrong here, so stop the suite
-                    self.shutdown(str(exc))
-                    raise
                 else:
-                    # No longer stuck
-                    self.log.warning(
-                        "%(pub_db_name)s: recovered from %(pri_db_name)s" % {
-                            "pub_db_name": self.pub_dao.db_file_name,
-                            "pri_db_name": self.pri_dao.db_file_name})
-                    self.pub_dao.n_tries = 0
-
-            if cylc.flags.iflag or self.do_update_state_summary:
-                cylc.flags.iflag = False
-                self.do_update_state_summary = False
-                self.update_state_summary()
-                self.state_dumper.dump()
-
-            if self._get_events_conf(self.EVENT_TIMEOUT):
-                self.check_suite_timer()
-
-            if self.config.cfg['cylc']['abort if any task fails']:
-                if self.pool.any_task_failed():
-                    raise SchedulerError(
-                        'Task(s) failed and "abort if any task fails" is set')
-
-            # the run is a reference test, and unexpected failures occured
-            if self.reference_test_mode:
-                if len(self.ref_test_allowed_failures) > 0:
-                    for itask in self.pool.get_failed_tasks():
-                        if (itask.identity not in
-                                self.ref_test_allowed_failures):
-                            sys.stderr.write(str(itask.identity) + "\n")
-                            raise SchedulerError(
-                                'Failed task is not in allowed failures list')
-
-            # check submission and execution timeout and polling timers
-            if self.run_mode != 'simulation':
-                self.pool.check_task_timers()
-
-            if (self.config.cfg['cylc']['disable automatic shutdown'] or
-                    self.options.no_auto_shutdown):
-                auto_stop = False
-            else:
-                auto_stop = self.pool.check_auto_shutdown()
-
-            if self.stop_clock_done() or self.stop_task_done() or auto_stop:
-                self.command_set_stop_cleanly()
-
-            if ((self.shut_down_cleanly or auto_stop) and
-                    self.pool.no_active_tasks()):
-                self.update_state_summary()
-                proc_pool.close()
-                self.shut_down_now = True
-
-            if (self.shut_down_cleanly and self.kill_on_shutdown):
-                if self.pool.has_unkillable_tasks_only():
-                    if not self.pool.no_active_tasks():
-                        self.log.warning(
-                            'some tasks were not killable at shutdown')
-                    self.update_state_summary()
-                    proc_pool.close()
-                    self.shut_down_now = True
-                else:
-                    if time.time() > self.next_kill_issue:
-                        self.pool.poll_task_jobs()
-                        self.pool.kill_task_jobs()
-                        self.next_kill_issue = time.time() + 10.0
+                    os.kill(os.getpid(), signal.SIGKILL)
 
             if self.options.profile_mode:
-                t1 = time.time()
-                self._update_profile_info("scheduler loop dt (s)", t1 - t0,
-                                          amount_format="%.3f")
-                self._update_cpu_usage()
-                if (int(t1) % 60 == 0):
-                    # Only get this every minute.
-                    self.log_memory("scheduler.py: loop: " +
-                                    get_current_time_string())
-
-            if not (self.shut_down_cleanly or auto_stop):
-                self.check_suite_stalled()
+                self._run_profile(time0)
 
             time.sleep(1)
 
         self.log_memory("scheduler.py: end main loop")
         # END MAIN LOOP
 
+    def _run_update_pool(self):
+        """Helper for "run". Update task pool."""
+        if self.pool.do_reload:
+            self.pool.reload_taskdefs()
+            self.do_update_state_summary = True
+
+        self.pool.release_runahead_tasks()
+        SuiteProcPool.get_inst().handle_results_async()
+
+        # External triggers must be matched now. If any are matched pflag
+        # is set to tell process_tasks() that task processing is required.
+        self.pool.match_ext_triggers()
+
+        # PROCESS ALL TASKS whenever something has changed that might
+        # require renegotiation of dependencies, etc.
+        if self.process_tasks():
+            if cylc.flags.debug:
+                self.log.debug("BEGIN TASK PROCESSING")
+                main_loop_start_time = time.time()
+
+            changes = 0
+            self.pool.match_dependencies()
+            if not self.stop_cleanly:
+                changes += self.pool.submit_tasks()
+            changes += self.pool.spawn_all_tasks()
+            changes += self.pool.remove_spent_tasks()
+            changes += self.pool.remove_suiciding_tasks()
+
+            if changes:
+                self.do_update_state_summary = True
+
+            BroadcastServer.get_inst().expire(self.pool.get_min_point())
+
+            if cylc.flags.debug:
+                self.log.debug(
+                    "END TASK PROCESSING (took %ds)" %
+                    (time.time() - main_loop_start_time))
+
+        if self._get_events_conf(self.EVENT_TIMEOUT):
+            self.check_suite_timer()
+
+        # check submission and execution timeout and polling timers
+        if self.run_mode != 'simulation':
+            self.pool.check_task_timers()
+
+        # Process task message, etc
+        self.pool.process_queued_task_messages()
+        self.pool.process_queued_task_event_handlers()
+
+    def _run_update_storage(self):
+        """Helper for "run". Update state summary and persistent."""
+        # Update state summary
+        if cylc.flags.iflag or self.do_update_state_summary:
+            cylc.flags.iflag = False
+            self.do_update_state_summary = False
+            self.update_state_summary()
+            self.state_dumper.dump()
+
+        # Update database
+        try:
+            self.pool.process_queued_db_ops()
+        except OSError as err:
+            self.shutdown(str(err))
+            raise
+        # If public database is stuck, blast it away by copying the content
+        # of the private database into it.
+        if self.pub_dao.n_tries >= self.pub_dao.MAX_TRIES:
+            try:
+                self._copy_pri_db_to_pub_db()
+            except (IOError, OSError) as exc:
+                # Something has to be very wrong here, so stop the suite
+                self.shutdown(str(exc))
+                raise
+            else:
+                # No longer stuck
+                self.log.warning(
+                    "%(pub_db_name)s: recovered from %(pri_db_name)s" % {
+                        "pub_db_name": self.pub_dao.db_file_name,
+                        "pri_db_name": self.pri_dao.db_file_name})
+                self.pub_dao.n_tries = 0
+
+    def _run_ref_test_fail_check(self):
+        """Helper for "run". Check failure for reference test."""
+        n_bad_tasks = 0
+        for itask in self.pool.get_failed_tasks():
+            if itask.identity not in self.ref_test_allowed_failures:
+                sys.stderr.write(str(itask.identity) + "\n")
+                n_bad_tasks += 1
+        if n_bad_tasks:
+            raise SchedulerError(
+                '%d failed task(s) not in allowed failures list' % n_bad_tasks)
+
+    def _run_try_clean_stop(self, stop_exc):
+        """Helper for "run". Attempt clean stop."""
+        self.command_set_stop_cleanly()
+        n_active_tasks, n_unkillable_active_tasks = (
+            self.pool.get_n_active_tasks())
+        # All tasks inactive or all active tasks unkillable
+        if n_active_tasks == n_unkillable_active_tasks:
+            if n_unkillable_active_tasks:
+                self.log.warning(
+                    '%d task(s) not killable at shutdown' %
+                    n_unkillable_active_tasks)
+            self.update_state_summary()
+            proc_pool = SuiteProcPool.get_inst()
+            proc_pool.close()
+            warned = False
+            while not proc_pool.is_dead():
+                self.process_command_queue()
+                proc_pool.handle_results_async()
+                if not warned:
+                    print("Waiting for the command process " +
+                          "pool to empty for shutdown")
+                    print("(you can \"stop now\" to shut " +
+                          "down immediately if you like).")
+                    warned = True
+                time.sleep(0.5)
+            raise stop_exc
+        elif self.stop_kill_time is not None:
+            now = time.time()
+            if now > self.stop_kill_time:
+                self.pool.poll_task_jobs()
+                self.pool.kill_task_jobs()
+                self.stop_kill_time = now + self.STOP_KILL_INTERVAL
+
+    def _run_profile(self, time0):
+        """Helper for "run". Run profiling stuffs."""
+        now = time.time()
+        self._update_profile_info(
+            "scheduler loop dt (s)", now - time0, amount_format="%.3f")
+        self._update_cpu_usage()
+        if int(now) % 60 == 0:
+            # Only get this every minute.
+            self.log_memory(
+                "scheduler.py: loop: " + get_current_time_string())
+
     def update_state_summary(self):
         self.suite_state.update(
             self.pool.get_tasks(), self.pool.get_rh_tasks(),
             self.pool.get_min_point(), self.pool.get_max_point(),
             self.pool.get_max_point_runahead(), self.paused(),
-            self.will_pause_at(), self.shut_down_cleanly, self.will_stop_at(),
+            self.will_pause_at(), self.stop_cleanly, self.will_stop_at(),
             self.config.ns_defn_order, self.pool.do_reload)
 
     def check_suite_timer(self):
@@ -1760,6 +1789,10 @@ conditions; see `cylc conditions`.
         return process
 
     def shutdown(self, reason=''):
+        """Shut down scheduler.
+
+        Disconnect process pool, communication server, database files, etc.
+        """
         msg = "Suite shutting down at " + get_current_time_string()
         if reason:
             msg += ' (' + reason + ')'
@@ -1768,12 +1801,17 @@ conditions; see `cylc conditions`.
         # The getattr() calls and if tests below are used in case the
         # suite is not fully configured before the shutdown is called.
 
-        if getattr(self, "log", None) is not None:
+        try:
             self.log.info(msg)
+        except AttributeError:
+            pass
 
-        if self.gen_reference_log:
+        if self.options.genref:
             print '\nCOPYING REFERENCE LOG to suite definition directory'
-            copyfile(self.logfile, self.reflogfile)
+            with open(self.reflogfile, 'w') as handle:
+                for line in open(self.logfile):
+                    if any([label in line for label in self.REF_LOG_LABELS]):
+                        handle.write(line)
 
         proc_pool = SuiteProcPool.get_inst()
         if proc_pool:
@@ -1784,7 +1822,9 @@ conditions; see `cylc conditions`.
             proc_pool.handle_results_async()
 
         if self.pool:
-            self.pool.shutdown()
+            if self.pool.get_n_active_tasks()[0]:
+                self.log.warning("some active tasks/handlers will be orphaned")
+            self.pyro.disconnect(self.pool.message_queue)
             if self.state_dumper:
                 try:
                     self.state_dumper.dump()
@@ -1816,31 +1856,33 @@ conditions; see `cylc conditions`.
                 "WARNING, failed to remove port file: %s\n%s\n" % (
                     self.port_file, exc))
 
-        # disconnect from suite-db, stop db queue
-        if getattr(self, "db", None) is not None:
-            self.pri_dao.close()
-            self.pub_dao.close()
+        # Disconnect from suite-db, stop db queue
+        for dao in [self.pri_dao, self.pub_dao]:
+            if dao is not None:
+                dao.close()
 
-        if getattr(self, "config", None) is not None:
-            # run shutdown handlers
-            self.run_event_handlers(self.EVENT_SHUTDOWN, reason)
+        # Run shutdown handlers
+        self.run_event_handlers(self.EVENT_SHUTDOWN, reason)
 
         print "DONE"  # main thread exit
 
     def set_stop_point(self, stop_point_string):
+        """Set cycle point of stop cycle."""
         stop_point = get_point(stop_point_string)
         self.stop_point = stop_point
         self.log.info("Setting stop cycle point: %s" % stop_point_string)
         self.pool.set_stop_point(self.stop_point)
 
     def set_stop_clock(self, unix_time, date_time_string):
+        """Set wall clock time to stop suite."""
         self.log.info("Setting stop clock time: %s (unix time: %s)" % (
                       date_time_string, unix_time))
         self.stop_clock_time = unix_time
         self.stop_clock_time_string = date_time_string
 
     def set_stop_task(self, task_id):
-        name, point_string = TaskID.split(task_id)
+        """Set task ID of stop task."""
+        name = TaskID.split(task_id)[0]
         if name in self.config.get_task_name_list():
             task_id = self.get_standardised_taskid(task_id)
             self.log.info("Setting stop task: " + task_id)
@@ -1976,7 +2018,7 @@ conditions; see `cylc conditions`.
         print "PROFILE: Memory: %d KiB: %s" % (memory, message)
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
-        # Update the 1, 5, 15 minute dt averages for a given category.
+        """Update the 1, 5, 15 minute dt averages for a given category."""
         tnow = time.time()
         self._profile_amounts.setdefault(category, [])
         amounts = self._profile_amounts[category]
@@ -2003,12 +2045,13 @@ conditions; see `cylc conditions`.
         self.log.info(output_text)
 
     def _update_cpu_usage(self):
-        p = subprocess.Popen(
+        """Update CPU usage."""
+        proc = subprocess.Popen(
             ["ps", "-o%cpu= ", str(os.getpid())], stdout=subprocess.PIPE)
         try:
-            cpu_frac = float(p.communicate()[0])
-        except (TypeError, OSError, IOError, ValueError) as e:
-            self.log.warning("Cannot get CPU % statistics: %s" % e)
+            cpu_frac = float(proc.communicate()[0])
+        except (TypeError, OSError, IOError, ValueError) as exc:
+            self.log.warning("Cannot get CPU % statistics: %s" % exc)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
 
@@ -2019,7 +2062,7 @@ conditions; see `cylc conditions`.
                 GLOBAL_CFG.get(['cylc', 'event hooks'])]:
             try:
                 value = getter[key]
-            except KeyError:
+            except (AttributeError, KeyError):
                 pass
             else:
                 if value is not None:
