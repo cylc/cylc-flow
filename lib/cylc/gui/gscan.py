@@ -660,7 +660,7 @@ class ScanApp(object):
             state = info[cell_index].strip().split(' ')[0]
             point_string = model.get(iter_, 5)[0]
             tasks = self.updater.get_last_n_tasks(
-                suite, host, state, point_string, 5)  # Last 5 tasks.
+                suite, host, state, point_string)
             tooltip.set_markup('<b>{state}</b>\n{tasks}'.format(
                 state=state,
                 tasks='\n'.join(tasks))
@@ -981,32 +981,34 @@ class ScanAppUpdater(BaseScanUpdater):
         self.stopped_hosts_suites_info.clear()
         gobject.idle_add(self.update)
 
-    def get_last_n_tasks(self, suite, host, task_state, point_string, n):
+    def get_last_n_tasks(self, suite, host, task_state, point_string):
         """Returns a list of the last 'n' tasks with the provided state for
         the provided suite."""
         # Get list of tasks for the provided state or return an error msg.
         if suite + host not in self.tasks_by_state:
             return [('<i>Could not get info; suite running with older cylc '
                      'version?</i>')]
-        tasks = self.tasks_by_state[suite + host][task_state]
+        tasks = list(self.tasks_by_state[suite + host][task_state])
         if tasks is False:
             return ['<i>Cannot connect to suite.</i>']
 
+        # Append "And x more" to list if required.
+        temp = [(dt, tn, ps) for (dt, tn, ps) in tasks if dt is None]
+        suffix = []
+        if temp:
+            tasks.remove(temp[0])
+            if not point_string:
+                suffix.append('<i>And %s more</i>' % (temp[0][1],))
+
         # Filter by point string if provided.
         if point_string:
-            ret = [(last_timestamp, task_name + '.' + p_string) for
-                   (last_timestamp, task_name, p_string) in tasks if
+            ret = [task_name + '.' + p_string for
+                   (_, task_name, p_string) in tasks if
                    p_string == point_string]
         else:
-            ret = [(task[0], task[1] + '.' + task[2]) for task in tasks]
+            ret = [task[1] + '.' + task[2] for task in tasks]
 
-        # Return only the n youngest items.
-        ret.sort(reverse=True)
-        if len(ret) - n == 1:
-            n += 1
-        suffix = [] if len(ret) <= n else [
-            '<i>And %d more</i>' % (len(ret) - n,)]
-        return [task[1] for task in ret[0:n]] + suffix
+        return ret + suffix
 
     def update(self):
         """Update the Applet."""

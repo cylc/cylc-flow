@@ -273,7 +273,14 @@ class StateSummaryServer(PyroServer):
                         self.task_summary[task][time_string]):
                     time_strings.append(self.task_summary[task][time_string])
             task_name, point_string = task.rsplit('.', 1)
-            ret[state].append((max(time_strings), task_name, point_string))
+            ret[state].append((max(time_strings), task_name, point_string,))
+        for state in ret:
+            ret[state].sort(reverse=True)
+            if len(ret[state]) < 7:
+                ret[state] = ret[state][0:6]
+            else:
+                ret[state] = ret[state][0:5] + [
+                    (None, len(ret[state]) - 5, None,)]
         return ret
 
     def get_summary_update_time(self):
