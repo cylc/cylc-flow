@@ -45,12 +45,13 @@ class Prerequisite(object):
                  "messages_set", "satisfied", "all_satisfied", "satisfied_by",
                  "target_point_strings", "start_point",
                  "pre_initial_messages", "conditional_expression",
-                 "raw_conditional_expression"]
+                 "raw_conditional_expression", "point"]
 
     # Extracts T from "foo.T succeeded" etc.
     CYCLE_POINT_RE = re.compile('^\w+\.(\S+) .*$')
 
-    def __init__(self, owner_id, start_point=None):
+    def __init__(self, owner_id, point, start_point=None):
+        self.point = point
         self.owner_id = owner_id
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message
@@ -109,7 +110,8 @@ class Prerequisite(object):
                     try:
                         foo = m.group().split(".")[1].rstrip()
                         if get_point(foo) < self.start_point:
-                            drop_these.append(k)
+                            if self.point >= self.start_point:
+                                drop_these.append(k)
                     except IndexError:
                         pass
 
