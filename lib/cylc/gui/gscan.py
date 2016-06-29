@@ -646,6 +646,22 @@ class ScanApp(object):
             tooltip.set_text(None)
             return False
 
+        # Generate text for the number of tasks in each state
+        state_texts = []
+        status_column_info = 6
+        state_text = model.get_value(iter_, status_column_info)
+        if state_text is None:
+            tooltip.set_text(None)
+            return False
+        info = re.findall(r'\D+\d+', state_text)
+        for status_number in info:
+            status, number = status_number.rsplit(" ", 1)
+            state_texts.append(number + " " + status.strip())
+        tooltip_prefix = (
+            "<span foreground=\"#777777\">Tasks: " + ", ".join(state_texts) +
+            "</span>"
+        )
+
         # If hovering over a status indicator set tooltip to show most recent
         # tasks.
         dot_offset, dot_width = tuple(column.cell_get_position(
@@ -661,25 +677,14 @@ class ScanApp(object):
             point_string = model.get(iter_, 5)[0]
             tasks = self.updater.get_last_n_tasks(
                 suite, host, state, point_string)
-            tooltip.set_markup('<b>{state}</b>\n{tasks}'.format(
-                state=state,
-                tasks='\n'.join(tasks))
-            )
+            tooltip.set_markup(
+                tooltip_prefix + ('\n<b>Recent {state} tasks</b>'
+                                  '\n{tasks}').format(state=state,
+                                                      tasks='\n'.join(tasks)))
             return True
 
         # Set the tooltip to a generic status for this suite.
-        state_texts = []
-        status_column_info = 6
-        state_text = model.get_value(iter_, status_column_info)
-        if state_text is None:
-            tooltip.set_text(None)
-            return False
-        info = re.findall(r'\D+\d+', state_text)
-        for status_number in info:
-            status, number = status_number.rsplit(" ", 1)
-            state_texts.append(number + " " + status.strip())
-        text = "Tasks: " + ", ".join(state_texts)
-        tooltip.set_text(text)
+        tooltip.set_markup(tooltip_prefix)
         return True
 
     def _on_toggle_column_visible(self, menu_item):
@@ -985,10 +990,10 @@ class ScanAppUpdater(BaseScanUpdater):
         """Returns a list of the last 'n' tasks with the provided state for
         the provided suite."""
         # Get list of tasks for the provided state or return an error msg.
-        if suite + host not in self.tasks_by_state:
+        if (suite, host) not in self.tasks_by_state:
             return [('<i>Could not get info; suite running with older cylc '
                      'version?</i>')]
-        tasks = list(self.tasks_by_state[suite + host][task_state])
+        tasks = list(self.tasks_by_state[(suite, host)][task_state])
         if tasks is False:
             return ['<i>Cannot connect to suite.</i>']
 
@@ -998,7 +1003,8 @@ class ScanAppUpdater(BaseScanUpdater):
         if temp:
             tasks.remove(temp[0])
             if not point_string:
-                suffix.append('<i>And %s more</i>' % (temp[0][1],))
+                suffix.append(('<span foreground="#777777">'
+                               '<i>And %s more</i></span>') % (temp[0][1],))
 
         # Filter by point string if provided.
         if point_string:
@@ -1007,6 +1013,9 @@ class ScanAppUpdater(BaseScanUpdater):
                    p_string == point_string]
         else:
             ret = [task[1] + '.' + task[2] for task in tasks]
+
+        if not ret:
+            return ['<span foreground="#777777"><i>None</i></span>']
 
         return ret + suffix
 
@@ -1037,7 +1046,7 @@ class ScanAppUpdater(BaseScanUpdater):
             title = suite_info.get("title")
 
             if 'tasks-by-state' in suite_info:
-                self.tasks_by_state[suite + host] = suite_info[
+                self.tasks_by_state[(suite, host)] = suite_info[
                     'tasks-by-state']
 
             if KEY_STATES in suite_info:
