@@ -836,8 +836,8 @@ class SuiteConfig(object):
                 if p not in self.cfg['runtime']:
                     raise SuiteConfigError(
                         "ERROR, undefined parent for " + name + ": " + p)
-            if pts[0] == "None":
-                if len(pts) == 1:
+            if not pts or pts[0] == "None":
+                if len(pts) < 2:
                     raise SuiteConfigError(
                         "ERROR: null parentage for " + name)
                 demoted[name] = pts[1]
