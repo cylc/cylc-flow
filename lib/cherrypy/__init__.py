@@ -56,6 +56,9 @@ with customized or extended components. The core API's are:
 These API's are described in the `CherryPy specification <https://bitbucket.org/cherrypy/cherrypy/wiki/CherryPySpec>`_.
 """
 
+import warnings
+
+warnings.filterwarnings('ignore', 'Module cherrypy was already imported')
 try:
     import pkg_resources
 except ImportError:
