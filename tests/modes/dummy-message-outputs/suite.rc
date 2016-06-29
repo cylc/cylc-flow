@@ -1,0 +1,18 @@
+title = A suite that should only succeed in dummy mode.
+[cylc]
+    [[event hooks]]
+        abort on timeout = true
+    [[reference test]]
+        required run mode = dummy
+        dummy mode suite timeout = PT30S
+    [[dummy mode]]
+        disable suite event hooks = False
+[scheduling]
+    [[dependencies]]
+        graph = foo:x => bar
+[runtime]
+    [[bar]]
+    [[foo]]
+        script = false
+        [[[outputs]]]
+            x = "the quick brown fox"

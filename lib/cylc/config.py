@@ -1681,12 +1681,15 @@ class SuiteConfig(object):
                 else:
                     self.taskdefs[name].add_sequence(seq)
 
-            if self.run_mode == 'live':
-                # Record message outputs.
-                for lbl, msg in self.cfg['runtime'][name]['outputs'].items():
-                    outp = MessageOutput(msg, base_interval)
-                    if outp not in self.taskdefs[name].outputs:
-                        self.taskdefs[name].outputs.append(outp)
+            # Record custom message outputs, and generate scripting to fake
+            # their completion in dummy mode.
+            dm_scrpt = self.taskdefs[name].rtconfig['dummy mode']['script']
+            for msg in self.cfg['runtime'][name]['outputs'].values():
+                outp = MessageOutput(msg, base_interval)
+                if outp not in self.taskdefs[name].outputs:
+                    self.taskdefs[name].outputs.append(outp)
+                    dm_scrpt += "\nsleep 2; cylc message '%s'" % msg
+                self.taskdefs[name].rtconfig['dummy mode']['script'] = dm_scrpt
 
     def generate_triggers(self, lexpression, left_nodes, right, seq, suicide):
         if not right or not left_nodes:
