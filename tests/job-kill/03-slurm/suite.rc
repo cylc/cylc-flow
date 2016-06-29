@@ -17,8 +17,6 @@
         [[[job submission]]]
             method=slurm
         [[[directives]]]
-            --output=slurm-%j.out
-            --error=slurm-%j.err
             --time=03:00
 {% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}
             {{environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"]}}
