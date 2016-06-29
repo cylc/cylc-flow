@@ -69,15 +69,11 @@ done"""
         inherit = WORKDIR
         title = grab one new dataset, waiting if necessary
         script = """
-while true; do
-    DATASET=$( ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1 )
-    if [[ -z $DATASET ]]; then
-        sleep 1
-        continue
-    fi
-    break
+while ! DATASET=$(ls {{DATA_IN_DIR}}/dataset-*.raw 2>/dev/null | head -n 1); do
+    sleep 1
 done
-mv $DATASET $PWD"""
+mv "$DATASET" "$PWD"
+"""
 
     [[proc1]]
         inherit = WORKDIR

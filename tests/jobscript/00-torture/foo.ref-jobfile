@@ -44,6 +44,7 @@ for S in $FAIL_SIGNALS; do
     trap "TRAP_FAIL_SIGNAL $S" $S
 done
 unset S
+set -o pipefail
 
 # INIT-SCRIPT:
 echo "HELLO FROM INIT-SCRIPT"
