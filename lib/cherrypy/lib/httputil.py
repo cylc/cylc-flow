@@ -9,7 +9,18 @@ to a public caning.
 
 from binascii import b2a_base64
 
-import six
+import sys
+
+IS_PY3 = sys.version_info[0] == 3
+try:
+    import six
+except ImportError:
+    if IS_PY3:
+        _unicode_type = str
+    else:
+        _unicode_type = unicode
+else:
+    _unicode_type = six.text_type
 
 from cherrypy._cpcompat import BaseHTTPRequestHandler, HTTPDate, ntob, ntou
 from cherrypy._cpcompat import basestring, iteritems
@@ -457,13 +468,13 @@ class HeaderMap(CaseInsensitiveDict):
         transmitting on the wire for HTTP.
         """
         for k, v in header_items:
-            if isinstance(k, six.text_type):
+            if isinstance(k, _unicode_type):
                 k = cls.encode(k)
 
             if not isinstance(v, basestring):
                 v = str(v)
 
-            if isinstance(v, six.text_type):
+            if isinstance(v, _unicode_type):
                 v = cls.encode(v)
 
             # See header_translate_* constants above.

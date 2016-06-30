@@ -95,7 +95,16 @@ import os
 import time
 import threading
 
-import six
+IS_PY3 = sys.version_info[0] == 3
+try:
+    import six
+except ImportError:
+    if IS_PY3:
+        _unicode_type = str
+    else:
+        _unicode_type = unicode
+else:
+    _unicode_type = six.text_type
 
 import cherrypy
 from cherrypy._cpcompat import copyitems, pickle, random20
@@ -622,7 +631,7 @@ class MemcachedSession(Session):
     def _set_id(self, value):
         # This encode() call is where we differ from the superclass.
         # Memcache keys MUST be byte strings, not unicode.
-        if isinstance(value, six.text_type):
+        if isinstance(value, _unicode_type):
             value = value.encode('utf-8')
 
         self._id = value

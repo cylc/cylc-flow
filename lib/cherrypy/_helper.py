@@ -2,7 +2,8 @@
 Helper functions for CP apps
 """
 
-import six
+import sys
+IS_PY3 = sys.version_info[0] == 3
 
 from cherrypy._cpcompat import urljoin as _urljoin, urlencode as _urlencode
 from cherrypy._cpcompat import basestring
@@ -27,7 +28,7 @@ def expose(func=None, alias=None):
     import sys
     import types
     decoratable_types = types.FunctionType, types.MethodType, type,
-    if six.PY2:
+    if not IS_PY3:
         # Old-style classes are type types.ClassType.
         decoratable_types += types.ClassType,
     if isinstance(func, decoratable_types):

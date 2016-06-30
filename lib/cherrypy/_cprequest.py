@@ -2,7 +2,16 @@ import sys
 import time
 import warnings
 
-import six
+IS_PY3 = sys.version_info[0] == 3
+try:
+    import six
+except ImportError:
+    if IS_PY3:
+        _unicode_type = str
+    else:
+        _unicode_type = unicode
+else:
+    _unicode_type = six.text_type
 
 import cherrypy
 from cherrypy._cpcompat import basestring, copykeys, ntob
@@ -701,9 +710,9 @@ class Request(object):
                 self.query_string_encoding)
 
         # Python 2 only: keyword arguments must be byte strings (type 'str').
-        if six.PY2:
+        if not IS_PY3:
             for key, value in p.items():
-                if isinstance(key, six.text_type):
+                if isinstance(key, _unicode_type):
                     del p[key]
                     p[key.encode(self.query_string_encoding)] = value
         self.params.update(p)
@@ -799,7 +808,7 @@ class ResponseBody(object):
 
     """The body of the HTTP response (the response entity)."""
 
-    if six.PY3:
+    if IS_PY3:
         unicode_err = ("Page handlers MUST return bytes. Use tools.encode "
                        "if you wish to return unicode.")
 
@@ -812,7 +821,7 @@ class ResponseBody(object):
 
     def __set__(self, obj, value):
         # Convert the given value to an iterable object.
-        if six.PY3 and isinstance(value, str):
+        if IS_PY3 and isinstance(value, str):
             raise ValueError(self.unicode_err)
 
         if isinstance(value, basestring):
@@ -824,7 +833,7 @@ class ResponseBody(object):
             else:
                 # [''] doesn't evaluate to False, so replace it with [].
                 value = []
-        elif six.PY3 and isinstance(value, list):
+        elif IS_PY3 and isinstance(value, list):
             # every item in a list must be bytes...
             for i, item in enumerate(value):
                 if isinstance(item, str):
@@ -906,7 +915,7 @@ class Response(object):
 
         newbody = []
         for chunk in self.body:
-            if six.PY3 and not isinstance(chunk, bytes):
+            if IS_PY3 and not isinstance(chunk, bytes):
                 raise TypeError("Chunk %s is not of type 'bytes'." %
                                 repr(chunk))
             newbody.append(chunk)
@@ -957,9 +966,9 @@ class Response(object):
                     # Python 2.4 emits cookies joined by LF but 2.5+ by CRLF.
                     line = line[:-1]
                 name, value = line.split(": ", 1)
-                if isinstance(name, six.text_type):
+                if isinstance(name, _unicode_type):
                     name = name.encode("ISO-8859-1")
-                if isinstance(value, six.text_type):
+                if isinstance(value, _unicode_type):
                     value = headers.encode(value)
                 h.append((name, value))
 

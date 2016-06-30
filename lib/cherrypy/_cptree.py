@@ -1,8 +1,9 @@
 """CherryPy Application and Tree objects."""
 
 import os
+import sys
 
-import six
+IS_PY3 = sys.version_info[0] == 3
 
 import cherrypy
 from cherrypy._cpcompat import ntou
@@ -263,7 +264,7 @@ class Tree(object):
         # to '' (some WSGI servers always set SCRIPT_NAME to '').
         # Try to look up the app using the full path.
         env1x = environ
-        if six.PY2 and environ.get(ntou('wsgi.version')) == (ntou('u'), 0):
+        if not IS_PY3 and environ.get(ntou('wsgi.version')) == (ntou('u'), 0):
             env1x = _cpwsgi.downgrade_wsgi_ux_to_1x(environ)
         path = httputil.urljoin(env1x.get('SCRIPT_NAME', ''),
                                 env1x.get('PATH_INFO', ''))
@@ -276,7 +277,7 @@ class Tree(object):
 
         # Correct the SCRIPT_NAME and PATH_INFO environ entries.
         environ = environ.copy()
-        if six.PY2 and environ.get(ntou('wsgi.version')) == (ntou('u'), 0):
+        if not IS_PY3 and environ.get(ntou('wsgi.version')) == (ntou('u'), 0):
             # Python 2/WSGI u.0: all strings MUST be of type unicode
             enc = environ[ntou('wsgi.url_encoding')]
             environ[ntou('SCRIPT_NAME')] = sn.decode(enc)

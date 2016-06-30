@@ -3,8 +3,18 @@
 import logging
 import re
 from hashlib import md5
+import sys
 
-import six
+IS_PY3 = sys.version_info[0] == 3
+try:
+    import six
+except ImportError:
+    if IS_PY3:
+        _unicode_type = str
+    else:
+        _unicode_type = unicode
+else:
+    _unicode_type = six.text_type
 
 import cherrypy
 from cherrypy._cpcompat import basestring
@@ -306,7 +316,7 @@ class SessionAuth(object):
 
     def login_screen(self, from_page='..', username='', error_msg='',
                      **kwargs):
-        return (six.text_type("""<html><body>
+        return (_unicode_type("""<html><body>
 Message: %(error_msg)s
 <form method="post" action="do_login">
     Login: <input type="text" name="username" value="%(username)s" size="10" />

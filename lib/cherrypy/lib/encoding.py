@@ -1,8 +1,18 @@
 import struct
+import sys
 import time
 import io
 
-import six
+IS_PY3 = sys.version_info[0] == 3
+try:
+    import six
+except ImportError:
+    if IS_PY3:
+        _unicode_type = str
+    else:
+        _unicode_type = unicode
+else:
+    _unicode_type = six.text_type
 
 import cherrypy
 from cherrypy._cpcompat import basestring, ntob
@@ -49,7 +59,7 @@ class UTF8StreamEncoder:
 
     def __next__(self):
         res = next(self._iterator)
-        if isinstance(res, six.text_type):
+        if isinstance(res, _unicode_type):
             res = res.encode('utf-8')
         return res
 
@@ -98,7 +108,7 @@ class ResponseEncoder:
 
         def encoder(body):
             for chunk in body:
-                if isinstance(chunk, six.text_type):
+                if isinstance(chunk, _unicode_type):
                     chunk = chunk.encode(encoding, self.errors)
                 yield chunk
         self.body = encoder(self.body)
@@ -111,7 +121,7 @@ class ResponseEncoder:
         self.attempted_charsets.add(encoding)
         body = []
         for chunk in self.body:
-            if isinstance(chunk, six.text_type):
+            if isinstance(chunk, _unicode_type):
                 try:
                     chunk = chunk.encode(encoding, self.errors)
                 except (LookupError, UnicodeError):

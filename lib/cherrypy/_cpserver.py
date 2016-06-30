@@ -1,6 +1,8 @@
 """Manage HTTP servers with CherryPy."""
 
-import six
+import sys
+
+IS_PY3 = sys.version_info[0] == 3
 
 import cherrypy
 from cherrypy.lib import attributes
@@ -113,7 +115,7 @@ class Server(ServerAdapter):
     ssl_private_key = None
     """The filename of the private key to use with SSL."""
 
-    if six.PY3:
+    if IS_PY3:
         ssl_module = 'builtin'
         """The name of a registered SSL adaptation module to use with
         the builtin WSGI server. Builtin options are: 'builtin' (to

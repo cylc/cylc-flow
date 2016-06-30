@@ -20,9 +20,21 @@ import re
 import sys
 import threading
 
-import six
+IS_PY3 = sys.version_info[0] == 3
 
-if six.PY3:
+try:
+    import six
+except ImportError:
+    if IS_PY3:
+        _unicode_type = str
+    else:
+        _unicode_type = unicode
+else:
+    _unicode_type = six.text_type
+    
+
+
+if IS_PY3:
     basestring = (bytes, str)
 
     def ntob(n, encoding='ISO-8859-1'):
@@ -104,12 +116,12 @@ except ImportError:
 
 def base64_decode(n, encoding='ISO-8859-1'):
     """Return the native string base64-decoded (as a native string)."""
-    if isinstance(n, six.text_type):
+    if isinstance(n, _unicode_type):
         b = n.encode(encoding)
     else:
         b = n
     b = _base64_decodebytes(b)
-    if str is six.text_type:
+    if str is _unicode_type:
         return b.decode(encoding)
     else:
         return b
@@ -203,7 +215,7 @@ except ImportError:
     from http.server import BaseHTTPRequestHandler
 
 # Some platforms don't expose HTTPSConnection, so handle it separately
-if six.PY3:
+if IS_PY3:
     try:
         from http.client import HTTPSConnection
     except ImportError:
@@ -282,7 +294,7 @@ except ImportError:
         def _json_encode(s):
             raise ValueError('No JSON library is available')
 finally:
-    if json and six.PY3:
+    if json and IS_PY3:
         # The two Python 3 implementations (simplejson/json)
         # outputs str. We need bytes.
         def json_encode(value):
