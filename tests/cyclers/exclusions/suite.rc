@@ -1,0 +1,30 @@
+[cylc]
+    UTC mode = True
+[scheduling]
+    initial cycle point = 20000101T00Z
+    final cycle point = 20000102T12Z
+    [[dependencies]]
+        [[[ R1 ]]]
+            graph = start => foo
+
+        # Don't run at the initial cycle point
+        [[[ T00!^ ]]]
+            graph = bar
+
+        # Don't run at the final cycle point
+        [[[ PT12H!$ ]]]
+            graph = baz
+
+        # Don't run at a speciffic datetime
+        [[[ PT12H!20000101T1200Z ]]]
+            graph = qux
+
+        # Don't run at a datetime with an offset
+        [[[ R/PT6H!20000101T05Z+PT1H ]]]
+            graph = nip
+[runtime]
+    [[root]]
+        script = echo success
+[visualization]
+    initial cycle point = 20000101T00Z
+    final cycle point = 20000101T03Z

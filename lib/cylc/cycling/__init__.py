@@ -19,6 +19,21 @@
 """This module provides base classes for cycling data objects."""
 
 
+def parse_exclusion(expr):
+    count = expr.count('!')
+    if count == 0:
+        return expr, None
+    elif count > 1:
+        raise Exception("'%s': only one exclusion per expression "
+                        "permitted" % expr)
+    else:
+        remainder, exclusion = expr.split('!')
+        if '/' in exclusion:
+            raise Exception("'%s': exclusion must be at the end of the "
+                            "expression" % expr)
+        return remainder, exclusion
+
+
 class CyclerTypeError(TypeError):
 
     """An error raised when incompatible cycling types are wrongly mixed."""
@@ -114,6 +129,8 @@ class PointBase(object):
 
     def __cmp__(self, other):
         # Compare to other point.
+        if not other:
+            return False
         if self.TYPE != other.TYPE:
             return cmp(self.TYPE_SORT_KEY, other.TYPE_SORT_KEY)
         if self.value == other.value:

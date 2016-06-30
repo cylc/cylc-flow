@@ -2776,87 +2776,26 @@ title = some cycling tasks
 \label{fig-test2}
 \end{figure}
 
-\subparagraph{Advanced Cycling}
-\label{AdvancedCycling}
+\subsubsection{Graph Headers}
 
-The hour-based section heading examples shown above (\lstinline=T00=,
-\lstinline=T06=, etc) are just one small part of cylc's cycling syntax.
+In the above examples graph headings are used to define recurring date-times
+when tasks are to run. For example in the following scenario,
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        [[[ T06 ]]]  # A graph heading
+            graph = foo => bar
+\end{lstlisting}
+\lstset{language=transcript}
 
 \lstinline=T06= stands for "Run every day starting at 06:00 after the
 initial cycle point". Cylc allows you to start (or end) at any particular
 time, repeat at whatever frequency you like, and even optionally limit the
 number of repetitions.
 
-For example, all these are valid in cylc:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [[dependencies]]
-        # Note: task names are meaningless.
-
-        # Run once at the initial cycle point
-        [[[ R1 ]]]
-            graph = "cold_foo => foo"
-
-        # Run every day starting at the initial cycle point
-        [[[ P1D ]]]
-            graph = "daily_bar => daily_baz"
-
-        # Run every 5 minutes starting at the initial cycle point
-        [[[ PT5M ]]]
-            graph = "frequent_qux => frequent_wibble"
-
-        # Run every 2 weeks starting at 00:00 after the initial cycle point
-        [[[ T00/P2W ]]]
-            graph = "bidiurnal_wobble => bidiurnal_wubble"
-
-        # Run every month, starting 5 days after the initial cycle point
-        [[[ +P5D/P1M ]]]
-            graph = "monthly_offset_fred => monthly_offset_flob"
-
-        # Run once at 06:00 after the initial cycle point
-        [[[ R1/T06 ]]]
-            graph = "delayed_cold_corge => corge"
-
-        # Run once at the final cycle point
-        [[[ R1/P0Y ]]]
-            graph = "end_garply"
-
-        # Run once at the final cycle point (alternative form)
-        [[[ R1/$ ]]]
-            graph = "end_garply"
-
-        # Run once three days before the final cycle point
-        [[[ R1/$-P3D ]]]
-            graph = "before_end_garply"
-
-        # Run 3 times, every day at 08:30 after the initial cycle point
-        [[[ R3/T0830 ]]]
-            graph = "triple_grault => triple_garply"
-
-        # Run 3 times, every month at 00:00 on the first of the month
-        # after the initial cycle point
-        [[[ R3/01T00 ]]]
-            graph = "triple_waldo => triple_xyzzy"
-
-        # Run 5 times, every month starting on Monday following the
-        # initial cycle point
-        [[[ R5/W-1/P1M ]]]
-            graph = "monthly_spam => monthly_eggs"
-
-        # Run every day starting at 20140201T06
-        [[[ 20140201T06/P1D ]]]
-            graph = "absolute_daily_ham"
-
-        # Run once at the first instance of either T00, T06, T12 or T18
-        # starting at the initial cycle point
-        [[[ R1/min(T00,T06,T12,T18) ]]]
-            graph = "cold_cycle_dependent_foo => foo"
-
-\end{lstlisting}
-\lstset{language=transcript}
-
-Here is a quick summary of the syntax rules:
+\paragraph{Syntax Rules}
 
 Date-time cycling information is made up of a starting {\em date-time}, an
 {\em interval}, and an optional {\em limit}.
@@ -2881,10 +2820,23 @@ R[limit?] # Special limit of 1 case
 [date-time]
 [interval]
 \end{lstlisting}
-For example, \lstinline=T00= is an example of \lstinline=[date-time]=, with an
+
+with example graph headings for each form being:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ R5/T00 ]]]           # Run 5 times at 00:00 every day
+[[[ R//PT1H ]]]          # Run every hour (Note the R// is redundant)
+[[[ 20000101T00Z/P1D ]]] # Run every day starting at 00:00 1st Jan 2000
+[[[ R1 ]]]               # Run once at the initial cycle point
+[[[ 20000101T00Z ]]]     # Run once at 00:00 1st Jan 2000
+[[[ P1Y ]]]              # Run every year
+\end{lstlisting}
+
+Note that \lstinline=T00= is an example of \lstinline=[date-time]=, with an
 inferred 1 day period and no limit.
 
-Where some or all {\em date-time } information is omitted, it is inferred to
+Where some or all {\em date-time} information is omitted, it is inferred to
 be relative to the initial date-time cycle point. For example, \lstinline=T00=
 by itself would mean the next occurrence of midnight that follows, or is, the
 initial cycle point. Entering \lstinline=+PT6H= would mean 6 hours after the
@@ -2923,48 +2875,33 @@ R[limit?]//[date-time]
 So, for example, you can write:
 \lstset{language=suiterc}
 \begin{lstlisting}
-[scheduling]
-    [[dependencies]]
-        # Note: task names are meaningless.
-
-        # Run once at the final cycle point
-        [[[ R1//+P0D ]]]
-            graph = "cold_foo => foo"
-
-        # Run 5 times, every 1 day, ending at the final cycle point
-        [[[ R5/P1D ]]]
-            graph = "daily_bar => daily_baz"
-
-        # Run every 2 weeks ending at 00:00 following the final cycle point
-        [[[ P2W/T00 ]]]
-            graph = "frequent_qux => frequent_wibble"
-
-        # Run every 1 day ending at 00:00 following the final cycle point
-        [[[ R//T00 ]]]
-            graph = "bidiurnal_wobble => bidiurnal_wubble"
+[[[ R1//+P0D ]]]  # Run once at the final cycle point
+[[[ R5/P1D ]]]    # Run 5 times, every 1 day, ending at the final
+                  # cycle point
+[[[ P2W/T00 ]]]   # Run every 2 weeks ending at 00:00 following
+                  # the final cycle point
+[[[ R//T00 ]]]    # Run every 1 day ending at 00:00 following the
+                  # final cycle point
 \end{lstlisting}
 \lstset{language=transcript}
+
+\paragraph{Referencing The Initial And Final Cycle Points}
+\label{referencing-the-initial-and-final-cycle-points}
 
 For convenience the caret and dollar symbols may be used as shorthand for the
 initial and final cycle points. Using this shorthand you can write:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-[scheduling]
-    [[dependencies]]
-        # Repeat once 12 hours after the initial cycle point
-        # Equivalent to [[[ R1/+PT12H ]]]
-        [[[ R1/^+PT12H ]]]  # R[limit]/[date-time]
-            graph = "foo_check"
-
-        # Repeat once at the final cycle point
-        # Equivalent to [[[ R1//+P0D ]]]
-        [[[ R1/$ ]]]  # R[limit]/[date-time]
-            graph = "foo => end"
-
-        # Repeat 3 hourly starting two days before the final cycle point
-        [[[ $-P2D/PT3H ]]]  # [date-time]/[interval]
-            graph = "foo => bar"
+[[[ R1/^+PT12H ]]]  # Repeat once 12 hours after the initial cycle point
+                    # R[limit]/[date-time]
+                    # Equivalent to [[[ R1/+PT12H ]]]
+[[[ R1/$ ]]]        # Repeat once at the final cycle point
+                    # R[limit]/[date-time]
+                    # Equivalent to [[[ R1//+P0D ]]]
+[[[ $-P2D/PT3H ]]]  # Repeat 3 hourly starting two days before the
+                    # [date-time]/[interval]
+                    # final cycle point
 \end{lstlisting}
 \lstset{language=transcript}
 
@@ -2973,15 +2910,42 @@ the following all run once at the final cycle point:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-[[[ R1/P0Y ]]]    # R[limit]/[interval]
-[[[ R1/P0Y/$ ]]]  # R[limit]/[interval]/[date-time]
-[[[ R1/$ ]]]      # R[limit]/[date-time]
+[[[ R1/P0Y ]]]      # R[limit]/[interval]
+[[[ R1/P0Y/$ ]]]    # R[limit]/[interval]/[date-time]
+[[[ R1/$ ]]]        # R[limit]/[date-time]
 \end{lstlisting}
 \lstset{language=transcript}
 
+\paragraph{Excluding Dates}
+\label{excluding-dates}
+\lstset{language=suiterc}
 
+It can be desirable to exclude a date from a recurrence, this can be achieved
+by appending the date to the recurrence prefixed with an exclamation mark.
+For example \lstinline=[[[ PT1D!20000101 ]]]= means run daily except on the
+first of January 2000.
 
-\subparagraph{How Multiple Graph Strings Combine}
+This syntax can only be used to exclude one datetime from a recurrence, note
+that the \lstinline=^= and \lstinline=$= symbols (shorthand for the initial
+and final cycle points) are both datetimes so \lstinline=[[[ T12!$-PT1D ]]]=
+is valid.
+
+If using a run limit in combination with an exclusion, the heading might not
+run the number of times specified in the limit. For example in the following
+suite \lstinline=foo= will only run once as what would be its second run has
+been excluded.
+
+\begin{lstlisting}
+[scheduling]
+    initial cycle point = 20000101T00Z
+    final cycle point = 20000105T00Z
+    [[dependencies]]
+        [[[ R2/P1D!20000102 ]]]
+            graph = foo
+\end{lstlisting}
+\lstset{language=transcript}
+
+\paragraph{How Multiple Graph Strings Combine}
 \label{HowMultipleGraphStringsCombine}
 
 For a cycling graph with multiple validity sections for different
@@ -3016,7 +2980,43 @@ the graph should be written like this:
 \end{lstlisting}
 \lstset{language=transcript}
 
-\subparagraph{Advanced Starting Up}
+\paragraph{Advanced Examples}
+\label{AdvancedCycling}
+
+The following examples cover the various ways of writing graph headers in cylc.
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ R1 ]]]         # Run once at the initial cycle point
+[[[ P1D ]]]        # Run every day starting at the initial cycle point
+[[[ PT5M ]]]       # Run every 5 minutes starting at the initial cycle
+                   # point
+[[[ T00/P2W ]]]    # Run every 2 weeks starting at 00:00 after the
+                   # initial cycle point
+[[[ +P5D/P1M ]]]   # Run every month, starting 5 days after the initial
+                   # cycle point
+[[[ R1/T06 ]]]     # Run once at 06:00 after the initial cycle point
+[[[ R1/P0Y ]]]     # Run once at the final cycle point
+[[[ R1/$ ]]]       # Run once at the final cycle point (alternative
+                   # form)
+[[[ R1/$-P3D ]]]   # Run once three days before the final cycle point
+[[[ R3/T0830 ]]]   # Run 3 times, every day at 08:30 after the initial
+                   # cycle point
+[[[ R3/01T00 ]]]   # Run 3 times, every month at 00:00 on the first
+                   # of the month after the initial cycle point
+[[[ R5/W-1/P1M ]]] # Run 5 times, every month starting on Monday
+                   # following the initial cycle point
+[[[ T00!^ ]]]      # Run at the first occurrence of T00 that isn't the
+                   # initial cycle point
+[[[ PT1D!20000101 ]]]  # Run every day days excluding 1st Jan 2000
+[[[ 20140201T06/P1D ]]]    # Run every day starting at 20140201T06
+[[[ R1/min(T00,T06,T12,T18) ]]]  # Run once at the first instance
+                                 # of either T00, T06, T12 or T18
+                                 # starting at the initial cycle
+                                 # point
+\end{lstlisting}
+\lstset{language=transcript}
+
+\paragraph{Advanced Starting Up}
 \label{AdvancedStartingUp}
 
 Dependencies that are only valid at the initial cycle point can be written
@@ -3198,7 +3198,7 @@ the first cycle points after the initial cycle point in the respective
 \lstinline=min( )= entries.
 
 
-\subparagraph{Integer Cycling}
+\paragraph{Integer Cycling}
 \label{IntegerCycling}
 
 In addition to non-repeating and date-time cycling workflows, cylc can do
@@ -3220,38 +3220,22 @@ where suite initial and final cycle points can be assumed.  Some examples:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-[scheduling]
-    [[dependencies]]
-        # Note: task names are meaningless.
-
-        # Run once at the initial cycle point
-        [[[ R1 ]]] # short for R1/initial-point/?
-            graph = "prep => foo"
-
-        # Repeat with step 1 from the initial cycle point
-        [[[ P1 ]]] # short for R/initial-point/P1
-            graph = "foo => bar"
-
-        # Repeat with step 5 from the initial cycle point
-        [[[ P5 ]]] # short for R/initial-point/P5
-            graph = "foo => bar"
-
-        # Run twice with step 3 from the initial cycle point
-        [[[ R2//P2 ]]] # short for R2/initial-point/P2
-            graph = "foo => bar"
-
-        # Repeat with step 2, from 1 after the initial cycle point
-        [[[ R/+P1/P2 ]]]
-            graph = "foo => bar"
-
-        # Run twice with step 2, to the final cycle point
-        [[[ R2/P2 ]]] # short for R2/P2/final-point
-            graph = "bar => stopping"
-
-        # Run once at the final cycle point
-        [[[ R1/P0 ]]] # short for R1/P0/final-point
-            graph = "bar => stop"
+[[[ R1 ]]]        # Run once at the initial cycle point
+                  # (short for R1/initial-point/?)
+[[[ P1 ]]]        # Repeat with step 1 from the initial cycle point
+                  # (short for R/initial-point/P1)
+[[[ P5 ]]]        # Repeat with step 5 from the initial cycle point
+                  # (short for R/initial-point/P5)
+[[[ R2//P2 ]]]    # Run twice with step 3 from the initial cycle point
+                  # (short for R2/initial-point/P2)
+[[[ R/+P1/P2 ]]]  # Repeat with step 2, from 1 after the initial cycle point
+[[[ R2/P2 ]]]     # Run twice with step 2, to the final cycle point
+                  # (short for R2/P2/final-point)
+[[[ R1/P0 ]]]     # Run once at the final cycle point
+                  # (short for R1/P0/final-point)
 \end{lstlisting}
+
+\subparagraph{Example}
 
 The tutorial illustrates integer cycling in~\ref{TutInteger}, and
 \lstinline=$CYLC_DIR/examples/satellite/= is a
@@ -3276,6 +3260,37 @@ shown in Figure~\ref{fig-satellite}.
     \caption{The \lstinline=examples/satellite= integer suite}
 \label{fig-satellite}
 \end{figure}
+
+\subparagraph{Advanced Integer Cycling Syntax}
+
+The same syntax used to reference the initial and final cycle points
+introduced in~\ref{referencing-the-initial-and-final-cycle-points}) for
+use with datetime cycling can also be used for integer cycling. For
+example you can write:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ R1/^ ]]]     # Run once at the initial cycle point
+[[[ R1/$ ]]]     # Run once at the final cycle point
+[[[ R3/^/P2 ]]]  # Run three times with step two starting at the
+                 # initial cycle point
+\end{lstlisting}
+\lstset{language=transcript}
+
+Likewise the syntax introduced in~\ref{excluding-dates} for excluding
+a particular point from a recurrence also works for integer cycling
+meaning you can write:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[[[ R/P4!8 ]]]       # Run with step four, to the final cycle point
+                     # but not at point 8
+[[[ R3/3/P2!5 ]]]    # Run with step two from point 3 but not at
+                     # point 5
+[[[ R/+P1/P6!14 ]]]  # Run with step six from one step after the
+                     # initial cycle point but not at point 14
+\end{lstlisting}
+\lstset{language=transcript}
 
 
 \subsubsection{Trigger Types}
