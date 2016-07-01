@@ -51,9 +51,8 @@ KEY_UPDATE_TIME = "update-time"
 def get_hosts_suites_info(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
-    for host, port_results in scan_all(
+    for host, (port, result) in scan_all(
             hosts=hosts, pyro_timeout=timeout):
-        port, result = port_results
         if owner and owner != result.get(KEY_OWNER):
             continue
         if host not in host_suites_map:
@@ -646,6 +645,8 @@ class ScanApp(object):
         if column.get_title() != "Status":
             tooltip.set_text(None)
             return False
+
+        # Generate text for the number of tasks in each state
         state_texts = []
         status_column_info = 6
         state_text = model.get_value(iter_, status_column_info)
@@ -656,8 +657,34 @@ class ScanApp(object):
         for status_number in info:
             status, number = status_number.rsplit(" ", 1)
             state_texts.append(number + " " + status.strip())
-        text = "Tasks: " + ", ".join(state_texts)
-        tooltip.set_text(text)
+        tooltip_prefix = (
+            "<span foreground=\"#777777\">Tasks: " + ", ".join(state_texts) +
+            "</span>"
+        )
+
+        # If hovering over a status indicator set tooltip to show most recent
+        # tasks.
+        dot_offset, dot_width = tuple(column.cell_get_position(
+            column.get_cell_renderers()[1]))
+        cell_index = (cell_x - dot_offset) // dot_width
+        if cell_index >= 0:
+            # NOTE: TreeViewColumn.get_cell_renderers() does not allways return
+            # cell renderers for the correct row.
+            info = re.findall(r'\D+\d+', model.get(iter_, 6)[0])
+            if cell_index >= len(info):
+                return False
+            state = info[cell_index].strip().split(' ')[0]
+            point_string = model.get(iter_, 5)[0]
+            tasks = self.updater.get_last_n_tasks(
+                suite, host, state, point_string)
+            tooltip.set_markup(
+                tooltip_prefix + ('\n<b>Recent {state} tasks</b>'
+                                  '\n{tasks}').format(state=state,
+                                                      tasks='\n'.join(tasks)))
+            return True
+
+        # Set the tooltip to a generic status for this suite.
+        tooltip.set_markup(tooltip_prefix)
         return True
 
     def _on_toggle_column_visible(self, menu_item):
@@ -673,7 +700,7 @@ class ScanApp(object):
             is_stopped = model.get_value(iter_, 2)
             info = re.findall(r'\D+\d+', state_info)
             if index < len(info):
-                state = info[index].rsplit(" ", 1)[0]
+                state = info[index].rsplit(" ", 1)[0].strip()
                 icon = self.dots.get_icon(state.strip(), is_stopped=is_stopped)
                 cell.set_property("visible", True)
             else:
@@ -918,10 +945,14 @@ class ScanAppUpdater(BaseScanUpdater):
 
     """Update the scan app."""
 
+    TIME_STRINGS = ['submitted_time_string', 'started_time_string',
+                    'finished_time_string']
+
     def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
+        self.tasks_by_state = {}
         super(ScanAppUpdater, self).__init__(hosts, owner=owner,
                                              poll_interval=poll_interval)
 
@@ -955,6 +986,39 @@ class ScanAppUpdater(BaseScanUpdater):
         self.stopped_hosts_suites_info.clear()
         gobject.idle_add(self.update)
 
+    def get_last_n_tasks(self, suite, host, task_state, point_string):
+        """Returns a list of the last 'n' tasks with the provided state for
+        the provided suite."""
+        # Get list of tasks for the provided state or return an error msg.
+        if (suite, host) not in self.tasks_by_state:
+            return [('<i>Could not get info; suite running with older cylc '
+                     'version?</i>')]
+        tasks = list(self.tasks_by_state[(suite, host)][task_state])
+        if tasks is False:
+            return ['<i>Cannot connect to suite.</i>']
+
+        # Append "And x more" to list if required.
+        temp = [(dt, tn, ps) for (dt, tn, ps) in tasks if dt is None]
+        suffix = []
+        if temp:
+            tasks.remove(temp[0])
+            if not point_string:
+                suffix.append(('<span foreground="#777777">'
+                               '<i>And %s more</i></span>') % (temp[0][1],))
+
+        # Filter by point string if provided.
+        if point_string:
+            ret = [task_name + '.' + p_string for
+                   (_, task_name, p_string) in tasks if
+                   p_string == point_string]
+        else:
+            ret = [task[1] + '.' + task[2] for task in tasks]
+
+        if not ret:
+            return ['<span foreground="#777777"><i>None</i></span>']
+
+        return ret + suffix
+
     def update(self):
         """Update the Applet."""
         row_ids = self._get_user_expanded_row_ids()
@@ -980,6 +1044,10 @@ class ScanAppUpdater(BaseScanUpdater):
                 KEY_UPDATE_TIME, int(time.time())
             )
             title = suite_info.get("title")
+
+            if 'tasks-by-state' in suite_info:
+                self.tasks_by_state[(suite, host)] = suite_info[
+                    'tasks-by-state']
 
             if KEY_STATES in suite_info:
                 for key in sorted(suite_info):
