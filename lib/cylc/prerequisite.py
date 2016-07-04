@@ -109,9 +109,9 @@ class Prerequisite(object):
                 if m:
                     try:
                         foo = m.group().split(".")[1].rstrip()
-                        if get_point(foo) < self.start_point:
-                            if self.point >= self.start_point:
-                                drop_these.append(k)
+                        if (get_point(foo) < self.start_point and
+                           self.point >= self.start_point):
+                            drop_these.append(k)
                     except IndexError:
                         pass
 
