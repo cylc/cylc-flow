@@ -39,9 +39,10 @@ from cylc.envvar import expandvars
 import cylc.flags as flags
 from cylc.wallclock import (
     get_current_time_string,
-    get_time_string_from_unix_time,
     get_seconds_as_interval_string,
-    RE_DATE_TIME_FORMAT_EXTENDED
+    get_time_string_from_unix_time,
+    get_unix_time_from_time_string,
+    RE_DATE_TIME_FORMAT_EXTENDED,
 )
 from cylc.host_select import get_task_host
 from cylc.job_file import JobFile
@@ -182,8 +183,6 @@ class TaskProxy(object):
     JOB_POLL = "job-poll"
     JOB_SUBMIT = "job-submit"
     MANAGE_JOB_LOGS_TRY_DELAYS = (0, 30, 180)  # PT0S, PT30S, PT3M
-    MESSAGE_SUFFIX_RE = re.compile(
-        ' at (' + RE_DATE_TIME_FORMAT_EXTENDED + '|unknown-time)$')
     NN = "NN"
 
     LOGGING_LVL_OF = {
@@ -194,6 +193,8 @@ class TaskProxy(object):
         "CRITICAL": CRITICAL,
         "DEBUG": DEBUG,
     }
+    RE_MESSAGE_TIME = re.compile(
+        '\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + ')\Z')
 
     TABLE_TASK_JOBS = CylcSuiteDAO.TABLE_TASK_JOBS
     TABLE_TASK_JOB_LOGS = CylcSuiteDAO.TABLE_TASK_JOB_LOGS
@@ -247,10 +248,6 @@ class TaskProxy(object):
 
         self.manual_trigger = False
         self.is_manual_submit = False
-
-        self.submitted_time = None
-        self.started_time = None
-        self.finished_time = None
 
         self.summary = {
             'latest_message': "",
@@ -357,9 +354,6 @@ class TaskProxy(object):
             # Retain some state from my pre suite-reload predecessor.
             self.has_spawned = pre_reload_inst.has_spawned
             self.summary = pre_reload_inst.summary
-            self.started_time = pre_reload_inst.started_time
-            self.submitted_time = pre_reload_inst.submitted_time
-            self.finished_time = pre_reload_inst.finished_time
             self.run_try_state = pre_reload_inst.run_try_state
             self.sub_try_state = pre_reload_inst.sub_try_state
             self.submit_num = pre_reload_inst.submit_num
@@ -538,8 +532,9 @@ class TaskProxy(object):
         # See cylc.batch_sys_manager.JobPollContext
         try:
             (
-                batch_sys_exit_polled, run_status, run_signal, _, time_run
-            ) = items[4:9]
+                batch_sys_exit_polled, run_status, run_signal,
+                time_submit_exit, time_run, time_run_exit
+            ) = items[4:10]
         except IndexError:
             self.summary['latest_message'] = 'poll failed'
             flags.iflag = True
@@ -549,50 +544,52 @@ class TaskProxy(object):
             self.command_log(ctx)
         if run_status == "1" and run_signal in ["ERR", "EXIT"]:
             # Failed normally
-            self._process_poll_message(INFO, TASK_OUTPUT_FAILED)
+            self.process_incoming_message(
+                INFO, TASK_OUTPUT_FAILED, time_run_exit)
         elif run_status == "1" and batch_sys_exit_polled == "1":
             # Failed by a signal, and no longer in batch system
-            self._process_poll_message(INFO, TASK_OUTPUT_FAILED)
-            self._process_poll_message(
-                INFO, TaskMessage.FAIL_MESSAGE_PREFIX + run_signal)
+            self.process_incoming_message(
+                INFO, TASK_OUTPUT_FAILED, time_run_exit)
+            self.process_incoming_message(
+                INFO, TaskMessage.FAIL_MESSAGE_PREFIX + run_signal,
+                time_run_exit)
         elif run_status == "1":
             # The job has terminated, but is still managed by batch system.
             # Some batch system may restart a job in this state, so don't
             # mark as failed yet.
-            self._process_poll_message(INFO, TASK_OUTPUT_STARTED)
+            self.process_incoming_message(INFO, TASK_OUTPUT_STARTED, time_run)
         elif run_status == "0":
             # The job succeeded
-            self._process_poll_message(INFO, TASK_OUTPUT_SUCCEEDED)
+            self.process_incoming_message(
+                INFO, TASK_OUTPUT_SUCCEEDED, time_run_exit)
         elif time_run and batch_sys_exit_polled == "1":
             # The job has terminated without executing the error trap
-            self._process_poll_message(INFO, TASK_OUTPUT_FAILED)
+            self.process_incoming_message(
+                INFO, TASK_OUTPUT_FAILED, "")
         elif time_run:
             # The job has started, and is still managed by batch system
-            self._process_poll_message(INFO, TASK_OUTPUT_STARTED)
+            self.process_incoming_message(INFO, TASK_OUTPUT_STARTED, time_run)
         elif batch_sys_exit_polled == "1":
             # The job never ran, and no longer in batch system
-            self._process_poll_message(INFO, "submission failed")
+            self.process_incoming_message(
+                INFO, "submission failed", time_submit_exit)
         else:
             # The job never ran, and is in batch system
-            self._process_poll_message(INFO, TASK_STATUS_SUBMITTED)
-
-    def _process_poll_message(self, priority, message):
-        """Wraps self.process_incoming_message for poll messages."""
-        self.process_incoming_message((priority, message), msg_was_polled=True)
+            self.process_incoming_message(
+                INFO, TASK_STATUS_SUBMITTED, time_submit_exit)
 
     def job_poll_message_callback(self, cmd_ctx, line):
         """Callback on job poll message."""
         ctx = SuiteProcContext(self.JOB_POLL, None)
         ctx.out = line
         try:
-            priority, message = line.split("|")[3:5]
+            event_time, priority, message = line.split("|")[2:5]
         except ValueError:
             ctx.ret_code = 1
             ctx.cmd = cmd_ctx.cmd  # print original command on failure
         else:
             ctx.ret_code = 0
-            self.process_incoming_message(
-                (priority, message), msg_was_polled=True)
+            self.process_incoming_message(priority, message, event_time)
         self.command_log(ctx)
 
     def job_kill_callback(self, cmd_ctx, line):
@@ -802,9 +799,11 @@ class TaskProxy(object):
         except KeyError:
             pass
 
-    def job_submission_failed(self):
+    def job_submission_failed(self, event_time=None):
         """Handle job submission failure."""
         self.log(ERROR, 'submission failed')
+        if event_time is None:
+            event_time = get_current_time_string()
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "time_submit_exit": get_current_time_string(),
             "submit_status": 1,
@@ -859,25 +858,20 @@ class TaskProxy(object):
             if self.__class__.stop_sim_mode_job_submission:
                 self.state.set_ready_to_submit()
             else:
-                self.started_time = time.time()
-                self.summary['started_time'] = self.started_time
-                self.summary['started_time_string'] = (
-                    get_time_string_from_unix_time(self.started_time))
+                self.summary['started_time'] = float(
+                    get_unix_time_from_time_string(now))
+                self.summary['started_time_string'] = now
                 self.state.set_executing()
             return
 
-        self.submitted_time = time.time()
-
         self.summary['started_time'] = None
         self.summary['started_time_string'] = None
-        self.started_time = None
         self.summary['finished_time'] = None
         self.summary['finished_time_string'] = None
-        self.finished_time = None
 
-        self.summary['submitted_time'] = self.submitted_time
-        self.summary['submitted_time_string'] = (
-            get_time_string_from_unix_time(self.submitted_time))
+        self.summary['submitted_time'] = float(
+            get_unix_time_from_time_string(now))
+        self.summary['submitted_time_string'] = now
         self.summary['latest_message'] = TASK_STATUS_SUBMITTED
         self.setup_event_handlers("submitted", 'job submitted',
                                   db_event='submission succeeded')
@@ -886,18 +880,21 @@ class TaskProxy(object):
             submit_timeout = self._get_events_conf('submission timeout')
             if submit_timeout:
                 self.state.submission_timer_timeout = (
-                    self.submitted_time + submit_timeout
-                )
+                    self.summary['submitted_time'] + submit_timeout)
             else:
                 self.state.submission_timer_timeout = None
             self.submission_poll_timer.set_timer()
 
-    def job_execution_failed(self):
+    def job_execution_failed(self, event_time=None):
         """Handle a job failure."""
-        self.finished_time = time.time()  # TODO: use time from message
-        self.summary['finished_time'] = self.finished_time
-        self.summary['finished_time_string'] = (
-            get_time_string_from_unix_time(self.finished_time))
+        if event_time is None:
+            self.summary['finished_time'] = time.time()
+            self.summary['finished_time_string'] = (
+                get_time_string_from_unix_time(self.summary['finished_time']))
+        else:
+            self.summary['finished_time'] = float(
+                get_unix_time_from_time_string(event_time))
+            self.summary['finished_time_string'] = event_time
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "run_status": 1,
             "time_run_exit": self.summary['finished_time_string'],
@@ -1271,19 +1268,15 @@ class TaskProxy(object):
 
     def handle_execution_timeout(self):
         """Handle execution timeout, only called if if TASK_STATUS_RUNNING."""
-        if self.event_hooks['reset timer']:
-            # the timer is being re-started by put messages
-            msg = 'last message %s ago, but job not finished'
-        else:
-            msg = 'job started %s ago, but has not finished'
-        msg = msg % get_seconds_as_interval_string(
-            self.event_hooks['execution timeout'])
+        msg = 'job started %s ago, but has not finished' % (
+            get_seconds_as_interval_string(
+                self.event_hooks['execution timeout']))
         self.log(WARNING, msg)
         self.setup_event_handlers('execution timeout', msg)
 
     def sim_time_check(self):
         """Check simulation time."""
-        timeout = self.started_time + self.sim_mode_run_length
+        timeout = self.summary['started_time'] + self.sim_mode_run_length
         if time.time() > timeout:
             if self.tdef.rtconfig['simulation mode']['simulate failure']:
                 self.message_queue.put(
@@ -1324,7 +1317,7 @@ class TaskProxy(object):
             return False
 
     def process_incoming_message(
-            self, (priority, msg_in), msg_was_polled=False):
+            self, priority, message, polled_event_time=None):
         """Parse an incoming task message and update task state.
 
         Incoming is e.g. "succeeded at <TIME>".
@@ -1333,65 +1326,62 @@ class TaskProxy(object):
         the state backward in the natural order of events.
 
         """
+        is_polled = polled_event_time is not None
 
         # Log incoming messages with '>' to distinguish non-message log entries
-        log_msg = '(current:%s)> %s' % (self.state.status, msg_in)
-        if msg_was_polled:
-            log_msg += ' %s' % self.POLLED_INDICATOR
-        self.log(self.LOGGING_LVL_OF.get(priority, INFO), log_msg)
+        log_message = '(current:%s)> %s' % (self.state.status, message)
+        if polled_event_time is not None:
+            log_message += ' %s' % self.POLLED_INDICATOR
+        self.log(self.LOGGING_LVL_OF.get(priority, INFO), log_message)
 
         # Strip the "at TIME" suffix.
-        msg = self.MESSAGE_SUFFIX_RE.sub('', msg_in)
+        event_time = polled_event_time
+        if not event_time:
+            match = self.RE_MESSAGE_TIME.match(message)
+            if match:
+                message, event_time = match.groups()
+        if not event_time:
+            event_time = get_current_time_string()
 
         # always update the suite state summary for latest message
-        self.summary['latest_message'] = msg
-        if msg_was_polled:
+        self.summary['latest_message'] = message
+        if is_polled:
             self.summary['latest_message'] += " %s" % self.POLLED_INDICATOR
         flags.iflag = True
 
-        if self.reject_if_failed(msg):
+        if self.reject_if_failed(message):
             # Failed tasks do not send messages unless declared resurrectable
             return
 
         # Check registered outputs.
-        self.state.record_output(msg, msg_was_polled)
+        self.state.record_output(message, is_polled)
 
-        if (msg_was_polled and
-                self.state.status not in TASK_STATUSES_ACTIVE):
+        if is_polled and self.state.status not in TASK_STATUSES_ACTIVE:
             # A poll result can come in after a task finishes.
             self.log(WARNING, "Ignoring late poll result: task is not active")
             return
 
         if priority == TaskMessage.WARNING:
-            self.setup_event_handlers('warning', msg, db_update=False)
+            self.setup_event_handlers('warning', message, db_update=False)
 
-        if self._get_events_conf('reset timer'):
-            # Reset execution timer on incoming messages
-            execution_timeout = self._get_events_conf('execution timeout')
-            if execution_timeout:
-                self.state.execution_timer_timeout = (
-                    time.time() + execution_timeout
-                )
-
-        elif (msg == TASK_OUTPUT_STARTED and
+        if (message == TASK_OUTPUT_STARTED and
                 self.state.status in [TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
                                       TASK_STATUS_SUBMIT_FAILED]):
             if self.job_vacated:
                 self.job_vacated = False
-                self.log(WARNING, "Vacated job restarted: " + msg)
+                self.log(WARNING, "Vacated job restarted: " + message)
             # Received a 'task started' message
             flags.pflag = True
             self.state.set_executing()
-            self.started_time = time.time()  # TODO: use time from message
-            self.summary['started_time'] = self.started_time
-            self.summary['started_time_string'] = (
-                get_time_string_from_unix_time(self.started_time))
+            self.summary['started_time'] = float(
+                get_unix_time_from_time_string(event_time))
+            self.summary['started_time_string'] = event_time
             self.db_updates_map[self.TABLE_TASK_JOBS].append({
                 "time_run": self.summary['started_time_string']})
             execution_timeout = self._get_events_conf('execution timeout')
             if execution_timeout:
                 self.state.execution_timer_timeout = (
-                    self.started_time + execution_timeout
+                    self.summary['started_time'] + execution_timeout
                 )
             else:
                 self.state.execution_timer_timeout = None
@@ -1401,7 +1391,7 @@ class TaskProxy(object):
             self.setup_event_handlers('started', 'job started')
             self.execution_poll_timer.set_timer()
 
-        elif (msg == TASK_OUTPUT_SUCCEEDED and
+        elif (message == TASK_OUTPUT_SUCCEEDED and
                 self.state.status in [
                     TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
                     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING,
@@ -1410,49 +1400,47 @@ class TaskProxy(object):
             self.state.execution_timer_timeout = None
             self.state.hold_on_retry = False
             flags.pflag = True
-            self.finished_time = time.time()
-            self.summary['finished_time'] = self.finished_time
-            self.summary['finished_time_string'] = (
-                get_time_string_from_unix_time(self.finished_time))
+            self.summary['finished_time'] = float(
+                get_unix_time_from_time_string(event_time))
+            self.summary['finished_time_string'] = event_time
             self.db_updates_map[self.TABLE_TASK_JOBS].append({
                 "run_status": 0,
                 "time_run_exit": self.summary['finished_time_string'],
             })
             # Update mean elapsed time only on task succeeded.
             self.tdef.update_mean_total_elapsed_time(
-                self.started_time, self.finished_time)
+                self.summary['started_time'], self.summary['finished_time'])
             self.setup_event_handlers("succeeded", "job succeeded")
-            self.state.set_execution_succeeded(msg_was_polled)
+            self.state.set_execution_succeeded(is_polled)
 
-        elif (msg == TASK_OUTPUT_FAILED and
+        elif (message == TASK_OUTPUT_FAILED and
                 self.state.status in [
                     TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
                     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_RUNNING]):
             # (submit- states in case of very fast submission and execution).
-            self.job_execution_failed()
+            self.job_execution_failed(event_time)
 
-        elif msg.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
+        elif message.startswith(TaskMessage.FAIL_MESSAGE_PREFIX):
             # capture and record signals sent to task proxy
-            self.db_events_insert(event="signaled", message=msg)
-            signal = msg.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
+            self.db_events_insert(event="signaled", message=message)
+            signal = message.replace(TaskMessage.FAIL_MESSAGE_PREFIX, "")
             self.db_updates_map[self.TABLE_TASK_JOBS].append(
                 {"run_signal": signal})
 
-        elif msg.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
+        elif message.startswith(TaskMessage.VACATION_MESSAGE_PREFIX):
             flags.pflag = True
             self.state.set_state(TASK_STATUS_SUBMITTED)
-            self.db_events_insert(event="vacated", message=msg)
+            self.db_events_insert(event="vacated", message=message)
             self.state.execution_timer_timeout = None
-            # TODO - check summary item value compat with GUI:
             self.summary['started_time'] = None
             self.summary['started_time_string'] = None
             self.sub_try_state.num = 0
             self.job_vacated = True
 
-        elif msg == "submission failed":
+        elif message == "submission failed":
             # This can arrive via a poll.
             self.state.submission_timer_timeout = None
-            self.job_submission_failed()
+            self.job_submission_failed(event_time)
 
         else:
             # Unhandled messages. These include:
@@ -1460,11 +1448,11 @@ class TaskProxy(object):
             #  * poll messages that repeat previous results
             # Note that all messages are logged already at the top.
             self.log(DEBUG, '(current: %s) unhandled: %s' % (
-                self.state.status, msg))
+                self.state.status, message))
             if priority in [CRITICAL, ERROR, WARNING, INFO, DEBUG]:
                 priority = getLevelName(priority)
             self.db_events_insert(
-                event=("message %s" % str(priority).lower()), message=msg)
+                event=("message %s" % str(priority).lower()), message=message)
 
     def spawn(self, state):
         """Spawn the successor of this task proxy."""
