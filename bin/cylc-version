@@ -28,6 +28,7 @@ For the cylc version of running a suite daemon see
   "cylc get-suite-version"."""
 
 import sys
+import os
 from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
@@ -40,8 +41,15 @@ from cylc.version import CYLC_VERSION
 
 def main():
     parser = cop(__doc__, argdoc=[])
+    parser.add_option(
+        "--long",
+        help="Print the path to the current cylc version",
+        action="store_true", dest="long_version", default=False)
     (options, args) = parser.parse_args()
-    print CYLC_VERSION
+    if options.long_version:
+        print "%s (%s)" % (CYLC_VERSION, os.environ["CYLC_DIR"])
+    else:
+        print CYLC_VERSION
 
 
 if __name__ == "__main__":
