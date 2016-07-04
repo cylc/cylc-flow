@@ -86,14 +86,11 @@ TASK_STATUSES_CAN_RESET_TO = set([
     TASK_STATUS_FAILED
 ])
 
-# Task statuses that are killable.
-TASK_STATUSES_KILLABLE = set([
+# Task statuses that are active (i.e. pollable and killable).
+TASK_STATUSES_ACTIVE = set([
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING
 ])
-
-# Task statuses that are externally active.
-TASK_STATUSES_ACTIVE = TASK_STATUSES_KILLABLE
 
 # Task statuses that are pollable.
 TASK_STATUSES_POLLABLE = set([

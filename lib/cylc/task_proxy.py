@@ -203,7 +203,6 @@ class TaskProxy(object):
     POLLED_INDICATOR = "(polled)"
 
     event_handler_env = {}
-    stop_sim_mode_job_submission = False
 
     def __init__(
             self, tdef, start_point, status=TASK_STATUS_WAITING,
@@ -856,14 +855,11 @@ class TaskProxy(object):
 
         if self.tdef.run_mode == 'simulation':
             # Simulate job execution at this point.
-            if self.__class__.stop_sim_mode_job_submission:
-                self.state.set_ready_to_submit()
-            else:
-                self.started_time = time.time()
-                self.summary['started_time'] = self.started_time
-                self.summary['started_time_string'] = (
-                    get_time_string_from_unix_time(self.started_time))
-                self.state.set_executing()
+            self.started_time = time.time()
+            self.summary['started_time'] = self.started_time
+            self.summary['started_time_string'] = (
+                get_time_string_from_unix_time(self.started_time))
+            self.state.set_executing()
             return
 
         self.submitted_time = time.time()
