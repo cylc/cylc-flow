@@ -51,6 +51,11 @@ class LoadlevelerHandler(object):
         # executed* (that is determined by the '#!' at the top of the task
         # job script).
         directives["shell"] = "/bin/ksh"
+        if (job_conf["execution time limit"] and
+                directives.get("wall_clock_limit") is None):
+            directives["wall_clock_limit"] = "%d,%d" % (
+                job_conf["execution time limit"] + 60,
+                job_conf["execution time limit"])
         for key, value in job_conf["directives"].items():
             directives[key] = value
         lines = []

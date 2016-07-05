@@ -29,7 +29,7 @@ SUITED_R="$(mktemp -d --tmpdir="${CYLC_RUND}" 'ctb-registration-03-RXXXXXXXX')"
 for SUITED in "${SUITED_1}" "${SUITED_2}" "${SUITED_R}"; do
     cat >"${SUITED}/suite.rc" <<'__SUITERC__'
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = PT1M
         abort on timeout = True
 [scheduling]

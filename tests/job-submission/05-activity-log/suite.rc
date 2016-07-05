@@ -16,7 +16,7 @@ trap '' SIGKILL
 kill -s SIGKILL "${$}"
 sleep 5 # Prevent the script to run to success before it is killed
 """
-        [[[event hooks]]]
+        [[[events]]]
             failed handler = echo
     [[t2]]
         script = """

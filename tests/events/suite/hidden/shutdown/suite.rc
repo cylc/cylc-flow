@@ -1,5 +1,5 @@
 [cylc]
-    [[event hooks]]
+    [[events]]
         shutdown handler = "/bin/false"
         abort if shutdown handler fails = True
 

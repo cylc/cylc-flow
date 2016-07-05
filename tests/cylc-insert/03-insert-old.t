@@ -30,9 +30,9 @@ suite_run_ok $TEST_NAME cylc run -v -v --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-suite-err
 RUN_DIR=$(cylc get-global-config --print-run-dir)
-cp $RUN_DIR/$SUITE_NAME/log/suite/err $TEST_NAME
-# Note: this will be sensitive to deprecation warnings, etc... but we need it
-# to catch the DatabaseIntegrityError and friends.
+# Note: Take out deprecation warnings
+sed '/WARNING: deprecated items were automatically upgraded/d; /^ \* (/d' \
+    "${RUN_DIR}/${SUITE_NAME}/log/suite/err" >"${TEST_NAME}"
 cmp_ok $TEST_NAME </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-db-end

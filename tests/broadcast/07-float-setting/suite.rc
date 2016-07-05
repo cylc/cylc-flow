@@ -18,10 +18,10 @@ title = "test suite for broadcast timeout functionality"
 [runtime]
     [[send_broadcast]]
         script = """
-            cylc broadcast -n timeout --point=20100808T0000Z --set='[event hooks]execution timeout=PT1S' $CYLC_SUITE_NAME
+            cylc broadcast -n timeout --point=20100808T0000Z --set='[events]execution timeout=PT1S' $CYLC_SUITE_NAME
             sleep 10
         """
     [[timeout]]
         script = sleep 10
-        [[[event hooks]]]
+        [[[events]]]
             execution timeout = PT1M

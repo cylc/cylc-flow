@@ -2,7 +2,7 @@
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
     UTC mode = True
-    [[event hooks]]
+    [[events]]
         timeout handler = shutdown_this_suite_hook
         timeout = PT3M
 [scheduling]

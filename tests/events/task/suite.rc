@@ -33,14 +33,15 @@ printf "%-20s %-8s %s\n" EVENT TASK MESSAGE > {{ EVNTLOG }}
                             """
     [[foo]]
         # timeout, retry, warning, succeeded 
-        retry delays = 0.05
         script = """
 if [[ $CYLC_TASK_TRY_NUMBER == 1 ]]; then
     false
 else
     sleep 10; cylc task message -p WARNING 'this is a user-defined warning message'
 fi"""
-        [[[event hooks]]]
+        [[[job]]]
+            execution retry delays = 0.05
+        [[[events]]]
             succeeded handler = {{ HANDLER }}
             warning handler = {{ HANDLER }}
             retry handler = {{ HANDLER }}
@@ -49,11 +50,11 @@ fi"""
 
     [[bar]]
         # submission retry and submission failed
-        [[[event hooks]]]
+        [[[events]]]
             submission failed handler = {{ HANDLER }}
             submission retry handler = {{ HANDLER }}
-        [[[job submission]]]
-            retry delays = 0.05
+        [[[job]]]
+            submission retry delays = 0.05
         [[[remote]]]
             host = NOHOST
 
@@ -61,7 +62,7 @@ fi"""
         # submitted, submission timeout, started, failed
         init-script = sleep 15
         script = false
-        [[[event hooks]]]
+        [[[events]]]
             submitted handler = {{ HANDLER }}
             started handler = {{ HANDLER }}
             failed handler = {{ HANDLER }}

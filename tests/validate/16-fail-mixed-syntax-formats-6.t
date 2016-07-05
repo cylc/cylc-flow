@@ -25,7 +25,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
 grep_ok "Conflicting syntax: post-cylc-6 syntax \
-(ISO 8601 interval: \[runtime\]\[root\]\[event hooks\]execution timeout = PT3M) \
+(ISO 8601 interval: \[runtime\]\[root\]\[events\]execution timeout = PT3M) \
 vs pre-cylc-6 syntax \
 (initial/final cycle point format: CCYYMMDDhh)" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------

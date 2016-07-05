@@ -5,5 +5,5 @@ title = "Hello World! by 'at' job submission"
 [runtime]
     [[hello]]
         script = "sleep 10; echo Hello World!"
-        [[[job submission]]]
-            method = at
+        [[[job]]]
+            batch system = at

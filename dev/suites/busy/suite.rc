@@ -26,10 +26,10 @@ description = A suite of 1000 tasks per cycle
             """
 [runtime]
     [[root]]
-        command scripting = sleep 1
-        [[[job submission]]]
-            method = at
-        [[[event hooks]]]
+        script = sleep 1
+        [[[job]]]
+            batch system = at
+        [[[events]]]
             succeeded handler = true
             failed handler = true
             retry handler = true

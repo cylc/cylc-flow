@@ -11,8 +11,8 @@
 [runtime]
     [[t1]]
         script = true
-        [[[job submission]]]
-            method = bad
+        [[[job]]]
+            batch system = bad
     [[t2]]
         script = """
 grep -q -F \

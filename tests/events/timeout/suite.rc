@@ -2,7 +2,7 @@
 description = This suite is supposed to time out
 
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = PT6S
         abort on timeout = True
 

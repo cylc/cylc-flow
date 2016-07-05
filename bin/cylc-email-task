@@ -30,7 +30,7 @@ usage() {
     echo "      MAIL_ADDRESS = foo@bar.baz.waz"
     echo "[runtime]"
     echo "   [[root]]"
-    echo "      [[[event hooks]]]"
+    echo "      [[[events]]]"
     echo "         failed handler = cylc email-task"
     echo ""
     echo "See the Suite.rc Reference (Cylc User Guide) for more information"

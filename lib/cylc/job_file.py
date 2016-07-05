@@ -101,9 +101,11 @@ class JobFile(object):
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SYS_NAME,
                  job_conf['batch system name']),
                 (BATCH_SYS_MANAGER.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL,
-                 job_conf['batch submit command template'])]:
+                 job_conf['batch submit command template']),
+                (BATCH_SYS_MANAGER.LINE_PREFIX_EXECUTION_TIME_LIMIT,
+                 job_conf['execution time limit'])]:
             if value:
-                handle.write("\n" + prefix + value)
+                handle.write("\n%s%s" % (prefix, value))
 
     @classmethod
     def _write_directives(cls, handle, job_conf):

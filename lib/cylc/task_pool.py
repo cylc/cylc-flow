@@ -1435,9 +1435,8 @@ class TaskPool(object):
             if itask.state.status == TASK_STATUS_SUBMITTED:
                 if (itask.state.submission_timer_timeout is not None and
                         now > itask.state.submission_timer_timeout):
-                    itask.handle_submission_timeout()
-                    itask.state.submission_timer_timeout = None
-                    poll_task_ids.add(itask.identity)
+                    if itask.handle_submission_timeout():
+                        poll_task_ids.add(itask.identity)
                 if (itask.submission_poll_timer and
                         itask.submission_poll_timer.get()):
                     itask.submission_poll_timer.set_timer()
@@ -1445,9 +1444,8 @@ class TaskPool(object):
             elif itask.state.status == TASK_STATUS_RUNNING:
                 if (itask.state.execution_timer_timeout is not None and
                         now > itask.state.execution_timer_timeout):
-                    itask.handle_execution_timeout()
-                    itask.state.execution_timer_timeout = None
-                    poll_task_ids.add(itask.identity)
+                    if itask.handle_execution_timeout():
+                        poll_task_ids.add(itask.identity)
                 if (itask.execution_poll_timer and
                         itask.execution_poll_timer.get()):
                     itask.execution_poll_timer.set_timer()

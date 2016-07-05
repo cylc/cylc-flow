@@ -24,6 +24,7 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok "$TEST_NAME" cylc validate $SUITE_NAME
+cat "$TEST_NAME.stderr" >&2
 sed -n '/REPLACING .* DEPENDENCIES/,/^"""/p' "$TEST_NAME.stdout" \
     >"$TEST_NAME.dep-replace"
 cmp_ok "$TEST_NAME.dep-replace" <<'__DEP_INFO__'
@@ -96,7 +97,7 @@ title = Simple start-up suite.
             interval = PT5S # UPGRADE CHANGE: ISO 8601 durations
         [[[job submission]]]
             shell = /bin/bash
-            command template = 
+            command template =
             method = background
             retry delays = PT5M # UPGRADE CHANGE: delays as ISO 8601 durations
 [visualization]

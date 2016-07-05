@@ -5,7 +5,7 @@ Skip a daily post-processing workflow if the 'copy' task has expired."""
 [cylc]
     cycle point format = %Y-%m-%dT%H
     abort if any task fails = True
-    [[event hooks]]
+    [[events]]
         abort on timeout = True
         timeout = PT1M
 [scheduling]

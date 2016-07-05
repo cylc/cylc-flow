@@ -27,7 +27,7 @@ cat >'suite.rc' <<'__SUITE_RC__'
         graph = foo
 [runtime]
     [[foo]]
-        [[[event hooks]]]
+        [[[events]]]
             execution timeout =
 __SUITE_RC__
 

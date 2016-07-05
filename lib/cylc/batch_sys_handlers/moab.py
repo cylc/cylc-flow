@@ -43,6 +43,9 @@ class MoabHandler(object):
 
         directives["-o"] = job_file_path + ".out"
         directives["-e"] = job_file_path + ".err"
+        if (job_conf["execution time limit"] and
+                directives.get("-l walltime") is None):
+            directives["-l walltime"] = "%d" % job_conf["execution time limit"]
         # restartable?
         directives.update(job_conf["directives"])
         lines = []

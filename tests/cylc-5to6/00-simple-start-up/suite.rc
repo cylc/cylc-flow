@@ -44,7 +44,7 @@ title = Simple start-up suite.
             interval = 5
         [[[job submission]]]
             shell = /bin/bash
-            command template = 
+            command template =
             method = background
             retry delays = 5
 [visualization]

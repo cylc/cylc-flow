@@ -199,7 +199,7 @@ SPEC = {
         'environment': {
             '__MANY__': vdr(vtype='string'),
         },
-        'event hooks': {
+        'events': {
             'handlers': vdr(vtype='string_list'),
             'handler events': vdr(vtype='string_list'),
             'startup handler': vdr(vtype='string_list'),
@@ -306,16 +306,11 @@ SPEC = {
                 vtype='string',
                 default='echo Dummy task; sleep $(cylc rnd 1 16)'),
             'post-script': vdr(vtype='string'),
-            'retry delays': vdr(vtype='interval_minutes_list', default=[]),
             'extra log files': vdr(vtype='string_list', default=[]),
             'enable resurrection': vdr(vtype='boolean', default=False),
             'work sub-directory': vdr(
                 vtype='string',
                 default='$CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME'),
-            'submission polling intervals': vdr(
-                vtype='interval_minutes_list', default=[]),
-            'execution polling intervals': vdr(
-                vtype='interval_minutes_list', default=[]),
             'environment filter': {
                 'include': vdr(vtype='string_list'),
                 'exclude': vdr(vtype='string_list'),
@@ -336,11 +331,19 @@ SPEC = {
                 'disable task event hooks': vdr(vtype='boolean', default=True),
                 'disable retries': vdr(vtype='boolean', default=True),
             },
-            'job submission': {
-                'method': vdr(vtype='string', default='background'),
-                'command template': vdr(vtype='string'),
+            'job': {
+                'batch system': vdr(vtype='string', default='background'),
+                'batch submit command template': vdr(vtype='string'),
+                'execution polling intervals': vdr(
+                    vtype='interval_minutes_list', default=[]),
+                'execution retry delays': vdr(
+                    vtype='interval_minutes_list', default=[]),
+                'execution time limit': vdr(vtype='interval_seconds'),
                 'shell': vdr(vtype='string', default='/bin/bash'),
-                'retry delays': vdr(vtype='interval_minutes_list', default=[]),
+                'submission polling intervals': vdr(
+                    vtype='interval_minutes_list', default=[]),
+                'submission retry delays': vdr(
+                    vtype='interval_minutes_list', default=[]),
             },
             'remote': {
                 'host': vdr(vtype='string'),
@@ -350,25 +353,6 @@ SPEC = {
                 'retrieve job logs max size': vdr(vtype='string'),
                 'retrieve job logs retry delays': vdr(
                     vtype='interval_minutes_list'),
-            },
-            'event hooks': {
-                'expired handler': vdr(vtype='string_list', default=[]),
-                'submitted handler': vdr(vtype='string_list', default=[]),
-                'started handler': vdr(vtype='string_list', default=[]),
-                'succeeded handler': vdr(vtype='string_list', default=[]),
-                'failed handler': vdr(vtype='string_list', default=[]),
-                'submission failed handler': vdr(
-                    vtype='string_list', default=[]),
-                'warning handler': vdr(vtype='string_list', default=[]),
-                'retry handler': vdr(vtype='string_list', default=[]),
-                'submission retry handler': vdr(
-                    vtype='string_list', default=[]),
-                'submission timeout handler': vdr(
-                    vtype='string_list', default=[]),
-                'submission timeout': vdr(vtype='interval_minutes'),
-                'execution timeout handler': vdr(vtype='string_list'),
-                'execution timeout': vdr(vtype='interval_minutes'),
-                'reset timer': vdr(vtype='boolean'),
             },
             'events': {
                 'execution timeout': vdr(vtype='interval_minutes'),
@@ -384,6 +368,22 @@ SPEC = {
                     vtype='interval_minutes_list'),
                 'reset timer': vdr(vtype='boolean'),
                 'submission timeout': vdr(vtype='interval_minutes'),
+
+                'expired handler': vdr(vtype='string_list', default=[]),
+                'submitted handler': vdr(vtype='string_list', default=[]),
+                'started handler': vdr(vtype='string_list', default=[]),
+                'succeeded handler': vdr(vtype='string_list', default=[]),
+                'failed handler': vdr(vtype='string_list', default=[]),
+                'submission failed handler': vdr(
+                    vtype='string_list', default=[]),
+                'warning handler': vdr(vtype='string_list', default=[]),
+                'retry handler': vdr(vtype='string_list', default=[]),
+                'submission retry handler': vdr(
+                    vtype='string_list', default=[]),
+                'execution timeout handler': vdr(
+                    vtype='string_list', default=[]),
+                'submission timeout handler': vdr(
+                    vtype='string_list', default=[]),
             },
             'suite state polling': {
                 'user': vdr(vtype='string'),
@@ -496,6 +496,51 @@ def upg(cfg, descr):
         ['scheduling', 'special tasks', 'external-triggered'],
         ['scheduling', 'special tasks', 'external-trigger'],
     )
+    u.deprecate('6.10.3', ['cylc', 'event hooks'], ['cylc', 'events'])
+    for key in SPEC['cylc']['events']:
+        u.deprecate(
+            '6.10.3', ['cylc', 'event hooks', key], ['cylc', 'events', key])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'event hooks'],
+        ['runtime', '__MANY__', 'events'])
+    for key in SPEC['runtime']['__MANY__']['events']:
+        u.deprecate(
+            '6.10.3',
+            ['runtime', '__MANY__', 'event hooks', key],
+            ['runtime', '__MANY__', 'events', key])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'job submission', 'method'],
+        ['runtime', '__MANY__', 'job', 'batch system'])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'job submission', 'command template'],
+        ['runtime', '__MANY__', 'job', 'batch submit command template'])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'job submission', 'shell'],
+        ['runtime', '__MANY__', 'job', 'shell'])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'job submission', 'retry delays'],
+        ['runtime', '__MANY__', 'job', 'submission retry delays'])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'job submission'],
+        ['runtime', '__MANY__', 'job'])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'retry delays'],
+        ['runtime', '__MANY__', 'job', 'execution retry delays'])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'submission polling intervals'],
+        ['runtime', '__MANY__', 'job', 'submission polling intervals'])
+    u.deprecate(
+        '6.10.3',
+        ['runtime', '__MANY__', 'execution polling intervals'],
+        ['runtime', '__MANY__', 'job', 'execution polling intervals'])
     u.upgrade()
 
     # Force pre cylc-6 "cycling = Yearly" type suites to the explicit

@@ -701,6 +701,29 @@ modify this setting to a larger value.
     \end{lstlisting}
 \end{myitemize}
 
+\subparagraph[{[[[[}SYSTEM{]]]]}execution time limit polling intervals]{[hosts] \textrightarrow [[HOST]] \textrightarrow [[[batch systems]]] \textrightarrow [[[[SYSTEM]]]] \textrightarrow execution time limit polling intervals}
+\label{ExecutionTimeLimitPollingIntervals}
+
+The intervals between polling after a task job (submitted to the relevant batch
+system on the relevant host) exceeds its execution time limit. The default
+setting is PT1M, PT2M, PT7M. The accumulated times (in minutes) for these
+intervals will be roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
+exceeds its execution time limit.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
+        representations, optionally {\em preceded} by multipliers.
+    \item {\em default:} PT1M, PT2M, PT7M
+    \item {\em example:}
+    \begin{lstlisting}
+[hosts]
+    [[myhpc*]]
+        [[[batch systems]]]
+            [[[[pbs]]]]
+                execution time limit polling intervals = 5*PT2M
+    \end{lstlisting}
+\end{myitemize}
+
 \subsection{[suite host self-identification] }
 
 The suite host's identity must be determined locally by cylc and passed
@@ -830,37 +853,37 @@ Default values for entries in the suite.rc [cylc] section.
 Allows you to set a default value for UTC mode in a suite at the site level.
 See ~\ref{UTC-mode} for details.
 
-\subsubsection[{[}event hooks{]}]{[cylc] \textrightarrow [[event hooks]]}
+\subsubsection[{[}events{]}]{[cylc] \textrightarrow [[events]]}
 \label{SiteCylcHooks}
 
 You can define site defaults for each of the following options, details 
 of which can be found under ~\ref{SuiteEventHandling}:
 
-\subparagraph[handlers]{[cylc] \textrightarrow [[event hooks]] \textrightarrow handlers}
+\subparagraph[handlers]{[cylc] \textrightarrow [[events]] \textrightarrow handlers}
 
-\subparagraph[handler events]{[cylc] \textrightarrow [[event hooks]] \textrightarrow handler events}
+\subparagraph[handler events]{[cylc] \textrightarrow [[events]] \textrightarrow handler events}
 
-\subparagraph[startup handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow startup handler}
+\subparagraph[startup handler]{[cylc] \textrightarrow [[events]] \textrightarrow startup handler}
 
-\subparagraph[shutdown handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow shutdown handler}
+\subparagraph[shutdown handler]{[cylc] \textrightarrow [[events]] \textrightarrow shutdown handler}
 
-\subparagraph[mail events]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail events}
+\subparagraph[mail events]{[cylc] \textrightarrow [[events]] \textrightarrow mail events}
 
-\subparagraph[mail from]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail from}
+\subparagraph[mail from]{[cylc] \textrightarrow [[events]] \textrightarrow mail from}
 
-\subparagraph[mail smtp]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail smtp}
+\subparagraph[mail smtp]{[cylc] \textrightarrow [[events]] \textrightarrow mail smtp}
 
-\subparagraph[mail to]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail to}
+\subparagraph[mail to]{[cylc] \textrightarrow [[events]] \textrightarrow mail to}
 
-\subparagraph[timeout handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow timeout handler}
+\subparagraph[timeout handler]{[cylc] \textrightarrow [[events]] \textrightarrow timeout handler}
 
-\subparagraph[timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow timeout}
+\subparagraph[timeout]{[cylc] \textrightarrow [[events]] \textrightarrow timeout}
 
-\subparagraph[abort on timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on timeout}
+\subparagraph[abort on timeout]{[cylc] \textrightarrow [[events]] \textrightarrow abort on timeout}
 
-\subparagraph[stalled handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow stalled handler}
+\subparagraph[stalled handler]{[cylc] \textrightarrow [[events]] \textrightarrow stalled handler}
 
-\subparagraph[abort on stalled]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on stalled}
+\subparagraph[abort on stalled]{[cylc] \textrightarrow [[events]] \textrightarrow abort on stalled}
 
 \subsection{[authentication]}
 \label{GlobalAuth}

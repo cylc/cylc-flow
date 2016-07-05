@@ -6,5 +6,5 @@ title = "Job script: test PBS job name maximum length"
         graph = abcdefghijklmnopqrstuvwxyz_0123456789
 [runtime]
     [[abcdefghijklmnopqrstuvwxyz_0123456789]]
-        [[[job submission]]]
-            method = pbs
+        [[[job]]]
+            batch system = pbs

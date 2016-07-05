@@ -38,7 +38,7 @@ class BgCommandHandler(object):
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"""\A(?P<id>\d+)\Z""")
 
     @classmethod
-    def submit(cls, job_file_path):
+    def submit(cls, job_file_path, submit_opts):
         """Submit "job_file_path"."""
         # Check access permission here because we are unable to check the
         # result of the nohup command.
@@ -52,6 +52,12 @@ class BgCommandHandler(object):
                 errno.EACCES, os.strerror(errno.EACCES), job_file_path_dir)
             return (1, None, str(exc))
         try:
+            # Run command with "timeout" if execution time limit set
+            execution_time_limit = submit_opts.get("execution_time_limit")
+            timeout_str = ""
+            if execution_time_limit:
+                timeout_str = (
+                    " timeout --signal=XCPU %d" % execution_time_limit)
             # This is essentially a double fork to ensure that the child
             # process can detach as a process group leader and not subjected to
             # SIGHUP from the current process.
@@ -60,7 +66,8 @@ class BgCommandHandler(object):
                     "nohup",
                     "bash",
                     "-c",
-                    r'''exec "$0" <'/dev/null' >"$0.out" 2>"$0.err"''',
+                    (r'''exec%s "$0" <'/dev/null' >"$0.out" 2>"$0.err"''' %
+                     timeout_str),
                     job_file_path,
                 ],
                 preexec_fn=os.setpgrp,

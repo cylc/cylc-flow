@@ -1,6 +1,6 @@
 [cylc]
     cycle point time zone = Z
-    [[event hooks]]
+    [[events]]
         timeout = PT0.3M
         abort on timeout = True
 [scheduling]

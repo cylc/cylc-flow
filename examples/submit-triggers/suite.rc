@@ -12,5 +12,5 @@ bar:submit => baz
     [[root]]
         script = "sleep 60"
     [[foo]]
-        [[[job submission]]]
-            method = "FAIL"
+        [[[job]]]
+            batch system = "FAIL"

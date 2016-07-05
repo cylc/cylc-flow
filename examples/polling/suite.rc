@@ -15,10 +15,10 @@ as the suite runs, filtering for the word 'poll'.
         #  "task communication method = poll"
     [[bar]]
         script = "sleep 60"
-        # configure submission and execution polling:
-        submission polling intervals = 0.1
-        execution polling intervals = 0.2, 2*0.3, 0.1
-        [[[job submission]]]
-            method = at
+        [[[job]]]
+            batch system = at
             # stay 'submitted' for up to a minute:
-            command template = at now + 1 minutes
+            batch submit command template = at now + 1 minutes
+            # configure submission and execution polling:
+            submission polling intervals = 0.1
+            execution polling intervals = 0.2, 2*0.3, 0.1

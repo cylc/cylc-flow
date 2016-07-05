@@ -2,7 +2,7 @@
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
     UTC mode = True
-    [[event hooks]]
+    [[events]]
         timeout handler = shutdown_this_suite_hook
         timeout = PT3M
 [scheduling]
@@ -24,7 +24,8 @@
             fi
         """
         description = "Retrying state task for restart"
-        retry delays = PT40S, PT1S
+        [[[job]]]
+            execution retry delays = PT40S, PT1S
 {% include 'suite-runtime-restart.rc' %}
     [[shutdown]]
         pre-script = sleep 5  # Extra sleep as trigger from retry task start.

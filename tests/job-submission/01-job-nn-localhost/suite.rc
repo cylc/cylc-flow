@@ -22,7 +22,8 @@ echo "$JOB_LOG_DIR/NN"
 # bash 4.2.0 bug: ((VAR == VAL)) does not trigger 'set -e':
 test "$CYLC_TASK_TRY_NUMBER" -eq "100"
 """
-        retry delays=99*PT0S
+        [[[job]]]
+            execution retry delays=99*PT0S
     [[bar]]
         script="""
 printf "%02d\n" {1..100} | cmp -s ../foo/what-is-nn.txt -

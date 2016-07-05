@@ -47,17 +47,17 @@ at the end of each cycle by a suicide trigger."""
         script = "sleep 10; exit 1"
     [[bad2]]
         title = "A task that fails to submit twice"
-        [[[job submission]]]
-            method = fail
-            retry delays = PT18S
+        [[[job]]]
+            batch system = fail
+            submission retry delays = PT18S
     [[bad_good]]
         title = "A task successfully submits on the second try "
         description = """Uses a retry event handler to broadcast a new job
 submission method for the retry."""
-        [[[job submission]]]
-            method = fail
-            retry delays = PT18S
-        [[[event hooks]]]
+        [[[job]]]
+            batch system = fail
+            submission retry delays = PT18S
+        [[[events]]]
             submission retry handler = change-my-job-sub-method.sh
  
 [visualization]

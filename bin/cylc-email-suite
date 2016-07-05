@@ -28,7 +28,7 @@ usage() {
     echo "[cylc]"
     echo "   [[environment]]"
     echo "      MAIL_ADDRESS = foo@bar.baz.waz"
-    echo "   [[event hooks]]"
+    echo "   [[events]]"
     echo "      shutdown handler = cylc email-suite"
     echo ""
     echo "See the Suite.rc Reference (Cylc User Guide) for more information"

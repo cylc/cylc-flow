@@ -11,7 +11,7 @@ while [[ ! -e file ]] && (($TIMEOUT > $(date +%s))); do
     sleep 1
 done
 """
-        [[[job submission]]]
-            method=background_vacation
+        [[[job]]]
+            batch system=background_vacation
     [[t2]]
         script=true

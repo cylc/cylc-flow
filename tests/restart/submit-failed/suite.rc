@@ -2,7 +2,7 @@
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
     UTC mode = True
-    [[event hooks]]
+    [[events]]
         timeout handler = shutdown_this_suite_hook
         timeout = PT3M
 [scheduling]
@@ -21,7 +21,7 @@
         script = """
             exit 1  # Should not submit, so this shouldn't run!
         """
-        [[[job submission]]]
-            method = at
-            command template = at oh-no
+        [[[job]]]
+            batch system = at
+            batch submit command template = at oh-no
 {% include 'suite-runtime-restart.rc' %}

@@ -21,7 +21,7 @@ set_test_number 2
 
 create_test_globalrc '' '
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = P1D'
 
 cat >'suite.rc' <<'__SUITE_RC__'
@@ -39,7 +39,7 @@ run_ok "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 
 create_test_globalrc '' '
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = 1440'
 
 cat >'suite.rc' <<'__SUITE_RC__'

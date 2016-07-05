@@ -13,8 +13,8 @@
                    """
 [runtime]
     [[PBS_SETTINGS]]
-        [[[job submission]]]
-            method = pbs
+        [[[job]]]
+            batch system = pbs
         [[[directives]]]
             -l walltime=00:60:00
             -l cput=00:02:00

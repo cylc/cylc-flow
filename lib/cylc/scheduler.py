@@ -1364,10 +1364,10 @@ conditions; see `cylc conditions`.
             if handlers:
                 sys.stderr.write(
                     'WARNING: shutdown handlers replaced by reference test\n')
-            self.config.cfg['cylc']['event hooks']['shutdown handler'] = [
+            self.config.cfg['cylc']['events']['shutdown handler'] = [
                 rtc['suite shutdown event handler']]
             self.config.cfg['cylc']['log resolved dependencies'] = True
-            self.config.cfg['cylc']['event hooks'][
+            self.config.cfg['cylc']['events'][
                 'abort if shutdown handler fails'] = True
             if not recon:
                 spec = LogSpec(self.reflogfile)
@@ -1379,15 +1379,15 @@ conditions; see `cylc conditions`.
             if (not rtc['allow task failures'] and
                     not self.ref_test_allowed_failures):
                 self.config.cfg['cylc']['abort if any task fails'] = True
-            self.config.cfg['cylc']['event hooks']['abort on timeout'] = True
+            self.config.cfg['cylc']['events']['abort on timeout'] = True
             timeout = rtc[self.run_mode + ' mode suite timeout']
             if not timeout:
                 raise SchedulerError(
                     'ERROR: timeout not defined for %s reference tests' % (
                         self.run_mode))
-            self.config.cfg['cylc']['event hooks'][self.EVENT_TIMEOUT] = (
+            self.config.cfg['cylc']['events'][self.EVENT_TIMEOUT] = (
                 timeout)
-            self.config.cfg['cylc']['event hooks']['reset timer'] = False
+            self.config.cfg['cylc']['events']['reset timer'] = False
 
     def run_event_handlers(self, event, message):
         """Run a suite event handler."""
@@ -2018,8 +2018,8 @@ conditions; see `cylc conditions`.
     def _get_events_conf(self, key, default=None):
         """Return a named event hooks configuration."""
         for getter in [
-                self.config.cfg['cylc']['event hooks'],
-                GLOBAL_CFG.get(['cylc', 'event hooks'])]:
+                self.config.cfg['cylc']['events'],
+                GLOBAL_CFG.get(['cylc', 'events'])]:
             try:
                 value = getter[key]
             except KeyError:

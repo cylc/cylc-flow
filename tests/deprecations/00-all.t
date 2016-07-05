@@ -26,7 +26,11 @@ TEST_NAME=$TEST_NAME_BASE-val
 run_ok $TEST_NAME cylc validate -v $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-cmp
-cylc validate -v $SUITE_NAME 2>&1 | egrep '^ \* ' > val.out
+cylc validate -v "${SUITE_NAME}" 2>&1 \
+    | sed \
+    -e "1,/WARNING: deprecated items were automatically upgraded in 'suite/d;" \
+    -e '/Expanding \[runtime\] name lists/,$d' \
+    > 'val.out'
 cmp_ok val.out <<__END__
  * (5.2.0) [cylc][event handler execution] -> [cylc][event handler submission] - value unchanged
  * (5.4.7) [scheduling][special tasks][explicit restart outputs] - DELETED (OBSOLETE)

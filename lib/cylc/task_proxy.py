@@ -264,6 +264,7 @@ class TaskProxy(object):
             'label': str(self.point),
             'logfiles': [],
             'job_hosts': {},
+            'execution_time_limit': None,
         }
         for lfile in self.tdef.rtconfig['extra log files']:
             self.summary['logfiles'].append(expandvars(lfile))
@@ -275,6 +276,7 @@ class TaskProxy(object):
         self.run_try_state = TryState()
         self.sub_try_state = TryState()
         self.event_handler_try_states = {}
+        self.execution_time_limit_poll_try_state = None
 
         self.db_inserts_map = {
             self.TABLE_TASK_JOBS: [],
@@ -369,10 +371,7 @@ class TaskProxy(object):
 
     def _get_events_conf(self, key, default=None):
         """Return an events setting from suite then global configuration."""
-        for getter in (
-                self.tdef.rtconfig["events"],
-                self.event_hooks,
-                GLOBAL_CFG.get()["task events"]):
+        for getter in [self.event_hooks, GLOBAL_CFG.get()["task events"]]:
             try:
                 value = getter.get(key)
                 if value is not None:
@@ -953,9 +952,10 @@ class TaskProxy(object):
                 # note that a *copy* of the retry delays list is needed
                 # so that all instances of the same task don't pop off
                 # the same deque (but copy of rtconfig above solves this).
-                self.run_try_state.delays = list(rtconfig['retry delays'])
+                self.run_try_state.delays = list(
+                    rtconfig['job']['execution retry delays'])
                 self.sub_try_state.delays = list(
-                    rtconfig['job submission']['retry delays'])
+                    rtconfig['job']['submission retry delays'])
 
         rrange = rtconfig['simulation mode']['run time range']
         if len(rrange) != 2:
@@ -968,15 +968,15 @@ class TaskProxy(object):
             raise Exception(
                 "ERROR: simulation mode task run time range must be [MIN,MAX)")
 
-        self.event_hooks = rtconfig['event hooks']
+        self.event_hooks = rtconfig['events']
 
         self.submission_poll_timer = PollTimer(
-            copy(rtconfig['submission polling intervals']),
+            copy(rtconfig['job']['submission polling intervals']),
             copy(GLOBAL_CFG.get(['submission polling intervals'])),
             'submission', self.log)
 
         self.execution_poll_timer = PollTimer(
-            copy(rtconfig['execution polling intervals']),
+            copy(rtconfig['job']['execution polling intervals']),
             copy(GLOBAL_CFG.get(['execution polling intervals'])),
             'execution', self.log)
 
@@ -1104,7 +1104,9 @@ class TaskProxy(object):
         # get new stdout/stderr logfiles and not overwrite the old ones.
 
         # dynamic instantiation - don't know job sub method till run time.
-        self.summary['batch_sys_name'] = rtconfig['job submission']['method']
+        self.summary['batch_sys_name'] = rtconfig['job']['batch system']
+        self.summary['execution_time_limit'] = (
+            rtconfig['job']['execution time limit'])
 
         # Determine task host settings now, just before job submission,
         # because dynamic host selection may be used.
@@ -1126,6 +1128,17 @@ class TaskProxy(object):
         self.summary['job_hosts'][self.submit_num] = self.user_at_host
         self.submission_poll_timer.set_host(self.task_host)
         self.execution_poll_timer.set_host(self.task_host)
+        try:
+            batch_sys_conf = self._get_host_conf('batch systems')[
+                rtconfig['job']['batch system']]
+        except (TypeError, KeyError):
+            batch_sys_conf = OrderedDictWithDefaults()
+        if self.summary['execution_time_limit']:
+            # Default = 1, 2 and 7 minutes intervals, roughly 1, 3 and 10
+            # minutes after time limit exceeded
+            self.execution_time_limit_poll_try_state = (
+                TryState(delays=batch_sys_conf.get(
+                    'execution time limit polling intervals', [60, 120, 420])))
 
         RemoteJobHostManager.get_inst().init_suite_run_dir(
             self.suite_name, self.user_at_host)
@@ -1143,21 +1156,16 @@ class TaskProxy(object):
 
         script, pre_script, post_script = self._get_job_scripts(rtconfig)
 
-        try:
-            batch_sys_conf = self._get_host_conf(
-                'batch systems')[rtconfig['job submission']['method']]
-        except (TypeError, KeyError):
-            batch_sys_conf = OrderedDictWithDefaults()
-
         # Location of job file, etc
         self._create_job_log_path()
 
         return {
-            'batch system name': rtconfig['job submission']['method'],
+            'batch system name': rtconfig['job']['batch system'],
             'batch submit command template': (
-                rtconfig['job submission']['command template']),
+                rtconfig['job']['batch submit command template']),
             'batch system conf': batch_sys_conf,
             'directives': rtconfig['directives'],
+            'execution time limit': rtconfig['job']['execution time limit'],
             'env-script': rtconfig['env-script'],
             'host': self.task_host,
             'init-script': rtconfig['init-script'],
@@ -1165,7 +1173,7 @@ class TaskProxy(object):
             'job file path': self.get_job_log_path(
                 self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE),
             'job log dir': self.get_job_log_path(),
-            'job script shell': rtconfig['job submission']['shell'],
+            'job script shell': rtconfig['job']['shell'],
             'local job file path': self.get_job_log_path(
                 self.HEAD_MODE_LOCAL, tail=self.JOB_FILE_BASE),
             'namespace hierarchy': self.tdef.namespace_hierarchy,
@@ -1259,20 +1267,40 @@ class TaskProxy(object):
 
     def handle_submission_timeout(self):
         """Handle submission timeout, only called if TASK_STATUS_SUBMITTED."""
+        # Extend timeout so the job can be polled again at next timeout
+        # just in case the job is still stuck in a queue
+        old_timeout = self.state.submission_timer_timeout
+        self.state.submission_timer_timeout = None
         msg = 'job submitted %s ago, but has not started' % (
             get_seconds_as_interval_string(
-                self.event_hooks['submission timeout'])
-        )
+                old_timeout - self.summary['submitted_time']))
         self.log(WARNING, msg)
         self.setup_event_handlers('submission timeout', msg)
+        return True
 
     def handle_execution_timeout(self):
-        """Handle execution timeout, only called if if TASK_STATUS_RUNNING."""
+        """Handle execution timeout, only called if TASK_STATUS_RUNNING."""
+        old_timeout = self.state.execution_timer_timeout
+        if self.summary['execution_time_limit']:
+            try_state = self.execution_time_limit_poll_try_state
+            if not try_state.is_timeout_set():
+                try_state.next()
+            if not try_state.is_delay_done():
+                # Don't poll
+                return False
+            if self.execution_time_limit_poll_try_state.next() is not None:
+                # Poll now, and more retries lined up
+                return True
+            # No more retry lined up, issue execution timeout event
+            self.state.execution_timer_timeout = None
+        else:
+            self.state.execution_timer_timeout = None
         msg = 'job started %s ago, but has not finished' % (
             get_seconds_as_interval_string(
-                self.event_hooks['execution timeout']))
+                old_timeout - self.summary['started_time']))
         self.log(WARNING, msg)
         self.setup_event_handlers('execution timeout', msg)
+        return True
 
     def sim_time_check(self):
         """Check simulation time."""
@@ -1378,11 +1406,13 @@ class TaskProxy(object):
             self.summary['started_time_string'] = event_time
             self.db_updates_map[self.TABLE_TASK_JOBS].append({
                 "time_run": self.summary['started_time_string']})
-            execution_timeout = self._get_events_conf('execution timeout')
+            if self.summary['execution_time_limit']:
+                execution_timeout = self.summary['execution_time_limit']
+            else:
+                execution_timeout = self._get_events_conf('execution timeout')
             if execution_timeout:
                 self.state.execution_timer_timeout = (
-                    self.summary['started_time'] + execution_timeout
-                )
+                    self.summary['started_time'] + execution_timeout)
             else:
                 self.state.execution_timer_timeout = None
 

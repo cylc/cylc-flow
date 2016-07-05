@@ -1,5 +1,5 @@
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = PT1M
         abort on timeout = True
 [scheduling]
@@ -8,4 +8,4 @@
 [runtime]
     [[bar, baz]]
     [[foo]]
-        command scripting = /bin/false
+        script = /bin/false

@@ -18,5 +18,5 @@ title = "Test list of task event handlers"
         script = false
     [[fixer]]
         script = true
-        [[[event hooks]]]
+        [[[events]]]
             started handler = trigger-bar.sh, remove-bar.sh

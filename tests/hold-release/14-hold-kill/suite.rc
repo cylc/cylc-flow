@@ -23,4 +23,5 @@ cylc release "${CYLC_SUITE_NAME}" "sleeper.${CYLC_TASK_CYCLE_POINT}"
 """
     [[sleeper]]
         script = test "${CYLC_TASK_TRY_NUMBER}" -gt 1 || sleep 60
-        retry delays = PT1S
+        [[[job]]]
+            execution retry delays = PT1S

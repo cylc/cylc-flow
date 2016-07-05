@@ -1,7 +1,7 @@
 #!jinja2
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
         timeout = 1
 [scheduling]

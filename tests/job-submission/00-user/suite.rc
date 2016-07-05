@@ -13,10 +13,10 @@
     [[root]]
         script = true # quick
     [[foo]]
-        [[[job submission]]]
+        [[[job]]]
             # python/my_background.py  (deprecated location)
-            method = my_background
+            batch system = my_background
     [[bar]]
-        [[[job submission]]]
+        [[[job]]]
             # lib/python/my_background2.py
-            method = my_background2
+            batch system = my_background2
