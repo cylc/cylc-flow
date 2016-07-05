@@ -39,7 +39,8 @@ from cylc.gui.util import get_icon, setup_icons, set_exception_hook_dialog
 from cylc.network.port_scan import scan_all
 from cylc.owner import USER
 from cylc.version import CYLC_VERSION
-from cylc.task_state import TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD
+from cylc.task_state import (TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD,
+                             TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED)
 from cylc.cfgspec.gscan import gsfg
 
 PYRO_TIMEOUT = 2
@@ -379,6 +380,15 @@ class ScanApp(object):
 
     """Summarize running suite statuses for a given set of hosts."""
 
+    WARNINGS_COLUMN = 7
+    STATUS_COLUMN = 6
+    CYCLE_COLUMN = 5
+    UPDATE_TIME_COLUMN = 4
+    TITLE_COLUMN = 3
+    STOPPED_COLUMN = 2
+    SUITE_COLUMN = 1
+    HOST_COLUMN = 0
+
     def __init__(self, hosts=None, owner=None, poll_interval=None):
         gobject.threads_init()
         set_exception_hook_dialog("cylc gscan")
@@ -395,11 +405,14 @@ class ScanApp(object):
         self.vbox = gtk.VBox()
         self.vbox.show()
 
+        self.warnings = {}
+
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
 
         self.dots = DotMaker(self.theme)
-        suite_treemodel = gtk.TreeStore(str, str, bool, str, int, str, str)
+        suite_treemodel = gtk.TreeStore(
+            str, str, bool, str, int, str, str, str)
         self._prev_tooltip_location_id = None
         self.suite_treeview = gtk.TreeView(suite_treemodel)
 
@@ -454,20 +467,32 @@ class ScanApp(object):
         status_column.set_sort_column_id(5)
         status_column.set_visible("status" in gsfg.get(["columns"]))
         status_column.set_resizable(True)
-        status_column_info = 6
-        cycle_column_info = 5
         cell_text_cycle = gtk.CellRendererText()
         status_column.pack_start(cell_text_cycle, expand=False)
         status_column.set_cell_data_func(
-            cell_text_cycle, self._set_cell_text_cycle, cycle_column_info)
+            cell_text_cycle, self._set_cell_text_cycle, self.CYCLE_COLUMN)
         self.suite_treeview.append_column(status_column)
+
+        # Warning icon.
+        warn_icon = gtk.CellRendererPixbuf()
+        image = gtk.Image()
+        pixbuf = image.render_icon(
+            gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_LARGE_TOOLBAR)
+        self.warn_icon_colour = pixbuf.scale_simple(
+            17, 17, gtk.gdk.INTERP_HYPER)  # colour warn icon pixbuf
+        self.warn_icon_grey = pixbuf.scale_simple(
+            17, 17, gtk.gdk.INTERP_HYPER)
+        self.warn_icon_colour.saturate_and_pixelate(
+            self.warn_icon_grey, 0, False)  # b&w warn icon pixbuf
+        status_column.pack_start(warn_icon, expand=False)
+        status_column.set_cell_data_func(warn_icon, self._set_error_icon_state)
+
+        # Task status icons.
         for i in range(len(TASK_STATUSES_ORDERED)):
             cell_pixbuf_state = gtk.CellRendererPixbuf()
             status_column.pack_start(cell_pixbuf_state, expand=False)
             status_column.set_cell_data_func(
-                cell_pixbuf_state, self._set_cell_pixbuf_state,
-                (status_column_info, i)
-            )
+                cell_pixbuf_state, self._set_cell_pixbuf_state, i)
 
         self.suite_treeview.show()
         if hasattr(self.suite_treeview, "set_has_tooltip"):
@@ -498,18 +523,34 @@ class ScanApp(object):
         self.window.show()
 
     def _on_button_press_event(self, treeview, event):
-        # DISPLAY MENU ONLY ON RIGHT CLICK ONLY
+        x = int(event.x)
+        y = int(event.y)
+        pth = treeview.get_path_at_pos(x, y)
+        treemodel = treeview.get_model()
 
+        # Dismiss warnings by clicking on a warning icon.
+        if (event.button == 1):
+            if not pth:
+                return False
+            path, column, cell_x, cell_y = (pth)
+            if column.get_title() == "Status":
+                dot_offset, dot_width = tuple(column.cell_get_position(
+                    column.get_cell_renderers()[1]))
+                cell_index = (cell_x - dot_offset) // dot_width
+                if cell_index == 0:
+
+                    iter_ = treemodel.get_iter(path)
+                    host, suite = treemodel.get(iter_, self.HOST_COLUMN,
+                                                self.SUITE_COLUMN)
+
+                    self.updater.clear_warnings(suite, host)
+                    treemodel.set(iter_, self.WARNINGS_COLUMN, '')
+                    return True
+
+        # Display menu on right click.
         if (event.type != gtk.gdk._2BUTTON_PRESS and
                 event.button != 3):
             return False
-
-        treemodel = treeview.get_model()
-
-        x = int(event.x)
-        y = int(event.y)
-        time = event.time
-        pth = treeview.get_path_at_pos(x, y)
 
         suite_host_tuples = []
 
@@ -518,10 +559,13 @@ class ScanApp(object):
             path, col, cellx, celly = pth
 
             iter_ = treemodel.get_iter(path)
-            host, suite = treemodel.get(iter_, 0, 1)
+            host, suite = treemodel.get(iter_, self.HOST_COLUMN,
+                                        self.SUITE_COLUMN)
             if suite is None:
                 # On an expanded cycle point row, so get from parent.
-                host, suite = treemodel.get(treemodel.iter_parent(iter_), 0, 1)
+                host, suite = treemodel.get(treemodel.iter_parent(iter_),
+                                            self.HOST_COLUMN,
+                                            self.SUITE_COLUMN)
             suite_host_tuples.append((suite, host))
 
         if event.type == gtk.gdk._2BUTTON_PRESS:
@@ -582,14 +626,14 @@ class ScanApp(object):
         iter_ = model.get_iter(path)
         parent_iter = model.iter_parent(iter_)
         if parent_iter is None:
-            host = model.get_value(iter_, 0)
-            suite = model.get_value(iter_, 1)
+            host = model.get_value(iter_, self.HOST_COLUMN)
+            suite = model.get_value(iter_, self.SUITE_COLUMN)
             child_row_number = None
         else:
-            host = model.get_value(parent_iter, 0)
-            suite = model.get_value(parent_iter, 1)
+            host = model.get_value(parent_iter, self.HOST_COLUMN)
+            suite = model.get_value(parent_iter, self.SUITE_COLUMN)
             child_row_number = path[-1]
-        suite_update_time = model.get_value(iter_, 4)
+        suite_update_time = model.get_value(iter_, self.UPDATE_TIME_COLUMN)
         location_id = (host, suite, suite_update_time, column.get_title(),
                        child_row_number)
 
@@ -621,8 +665,7 @@ class ScanApp(object):
 
         # Generate text for the number of tasks in each state
         state_texts = []
-        status_column_info = 6
-        state_text = model.get_value(iter_, status_column_info)
+        state_text = model.get_value(iter_, self.STATUS_COLUMN)
         if state_text is None:
             tooltip.set_text(None)
             return False
@@ -641,20 +684,36 @@ class ScanApp(object):
             column.get_cell_renderers()[1]))
         cell_index = (cell_x - dot_offset) // dot_width
         if cell_index >= 0:
-            # NOTE: TreeViewColumn.get_cell_renderers() does not allways return
+            # NOTE: TreeViewColumn.get_cell_renderers() does not always return
             # cell renderers for the correct row.
-            info = re.findall(r'\D+\d+', model.get(iter_, 6)[0])
-            if cell_index >= len(info):
-                return False
-            state = info[cell_index].strip().split(' ')[0]
-            point_string = model.get(iter_, 5)[0]
-            tasks = self.updater.get_last_n_tasks(
-                suite, host, state, point_string)
-            tooltip.set_markup(
-                tooltip_prefix + ('\n<b>Recent {state} tasks</b>'
-                                  '\n{tasks}').format(state=state,
-                                                      tasks='\n'.join(tasks)))
-            return True
+            if cell_index == 0:
+                # Hovering over the error symbol.
+                point_string = model.get(iter_, self.CYCLE_COLUMN)[0]
+                if point_string:
+                    return False
+                if (suite, host) not in self.warnings or not self.warnings[
+                        (suite, host)]:
+                    return False
+                tooltip.set_markup(tooltip_prefix +
+                                   '\n<b>New failures</b> (<i>last 5</i>)\n' +
+                                   self.warnings[(suite, host)])
+                return True
+            else:
+                # Hovering over a status indicator.
+                info = re.findall(r'\D+\d+', model.get(iter_,
+                                                       self.STATUS_COLUMN)[0])
+                if cell_index > len(info):
+                    return False
+                state = info[cell_index - 1].strip().split(' ')[0]
+                point_string = model.get(iter_, self.CYCLE_COLUMN)[0]
+                tasks = self.updater.get_last_n_tasks(
+                    suite, host, state, point_string)
+                tooltip.set_markup(
+                    tooltip_prefix + ('\n<b>Recent {state} tasks</b>'
+                                      '\n{tasks}').format(
+                                          state=state, tasks='\n'.join(tasks))
+                )
+                return True
 
         # Set the tooltip to a generic status for this suite.
         tooltip.set_markup(tooltip_prefix)
@@ -666,14 +725,13 @@ class ScanApp(object):
         column.set_visible(not is_visible)
         return False
 
-    def _set_cell_pixbuf_state(self, column, cell, model, iter_, index_tuple):
-        status_column_info, index = index_tuple
-        state_info = model.get_value(iter_, status_column_info)
+    def _set_cell_pixbuf_state(self, column, cell, model, iter_, index):
+        state_info = model.get_value(iter_, self.STATUS_COLUMN)
         if state_info is not None:
-            is_stopped = model.get_value(iter_, 2)
+            is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
             info = re.findall(r'\D+\d+', state_info)
             if index < len(info):
-                state = info[index].rsplit(" ", 1)[0].strip()
+                state = info[index].rsplit(" ", self.SUITE_COLUMN)[0].strip()
                 icon = self.dots.get_icon(state.strip(), is_stopped=is_stopped)
                 cell.set_property("visible", True)
             else:
@@ -684,26 +742,41 @@ class ScanApp(object):
             cell.set_property("visible", False)
         cell.set_property("pixbuf", icon)
 
+    def _set_error_icon_state(self, column, cell, model, iter_):
+        """Update the state of the warning icon."""
+        host, suite, warnings, point_string = model.get(
+            iter_, self.HOST_COLUMN, self.SUITE_COLUMN,
+            self.WARNINGS_COLUMN, self.CYCLE_COLUMN)
+        if point_string:
+            # Error icon only for first row.
+            cell.set_property('pixbuf', None)
+        elif warnings:
+            cell.set_property('pixbuf', self.warn_icon_colour)
+            self.warnings[(suite, host)] = warnings
+        else:
+            cell.set_property('pixbuf', self.warn_icon_grey)
+            self.warnings[(suite, host)] = None
+
     def _set_cell_text_host(self, column, cell, model, iter_):
-        host = model.get_value(iter_, 0)
-        is_stopped = model.get_value(iter_, 2)
+        host = model.get_value(iter_, self.HOST_COLUMN)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", host)
 
     def _set_cell_text_name(self, column, cell, model, iter_):
-        name = model.get_value(iter_, 1)
-        is_stopped = model.get_value(iter_, 2)
+        name = model.get_value(iter_, self.SUITE_COLUMN)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", name)
 
     def _set_cell_text_title(self, column, cell, model, iter_):
-        title = model.get_value(iter_, 3)
-        is_stopped = model.get_value(iter_, 2)
+        title = model.get_value(iter_, self.TITLE_COLUMN)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", title)
 
     def _set_cell_text_time(self, column, cell, model, iter_):
-        suite_update_time = model.get_value(iter_, 4)
+        suite_update_time = model.get_value(iter_, self.UPDATE_TIME_COLUMN)
         time_point = get_timepoint_from_seconds_since_unix_epoch(
             suite_update_time)
         time_point.set_time_zone_to_local()
@@ -714,13 +787,13 @@ class ScanApp(object):
             time_string = str(time_point).split("T")[1]
         else:
             time_string = str(time_point)
-        is_stopped = model.get_value(iter_, 2)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", time_string)
 
     def _set_cell_text_cycle(self, column, cell, model, iter_, active_cycle):
         cycle = model.get_value(iter_, active_cycle)
-        is_stopped = model.get_value(iter_, 2)
+        is_stopped = model.get_value(iter_, self.STOPPED_COLUMN)
         cell.set_property("sensitive", not is_stopped)
         cell.set_property("text", cycle)
 
@@ -918,14 +991,14 @@ class ScanAppUpdater(BaseScanUpdater):
 
     """Update the scan app."""
 
-    TIME_STRINGS = ['submitted_time_string', 'started_time_string',
-                    'finished_time_string']
+    WARNING_STATES = [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]
 
     def __init__(self, hosts, suite_treemodel, suite_treeview, owner=None,
                  poll_interval=None):
         self.suite_treemodel = suite_treemodel
         self.suite_treeview = suite_treeview
         self.tasks_by_state = {}
+        self.warning_times = {}
         super(ScanAppUpdater, self).__init__(hosts, owner=owner,
                                              poll_interval=poll_interval)
 
@@ -966,6 +1039,8 @@ class ScanAppUpdater(BaseScanUpdater):
         if (suite, host) not in self.tasks_by_state:
             return [('<i>Could not get info; suite running with older cylc '
                      'version?</i>')]
+        if task_state not in self.tasks_by_state[(suite, host)]:
+            return []
         tasks = list(self.tasks_by_state[(suite, host)][task_state])
         if tasks is False:
             return ['<i>Cannot connect to suite.</i>']
@@ -991,6 +1066,26 @@ class ScanAppUpdater(BaseScanUpdater):
             return ['<span foreground="#777777"><i>None</i></span>']
 
         return ret + suffix
+
+    def clear_warnings(self, suite, host):
+        """Marks all presently issued warnings for a suite as read."""
+        self.warning_times[(suite, host,)] = time.time()
+
+    def _get_warnings(self, suite, host):
+        """Updates the list of tasks to issue warning for. To be called
+        on update only."""
+        stp = (suite, host,)
+        if stp not in self.tasks_by_state:
+            return []
+        warn_time = 0
+        if stp in self.warning_times:
+            warn_time = self.warning_times[stp]
+        failed_tasks = []
+        for state in self.WARNING_STATES:
+            failed_tasks += self.tasks_by_state[stp].get(state, [])
+        warnings = [warn for warn in failed_tasks if warn[0] > warn_time]
+        warnings.sort()
+        return warnings[-5:]
 
     def update(self):
         """Update the Applet."""
@@ -1022,6 +1117,11 @@ class ScanAppUpdater(BaseScanUpdater):
                 self.tasks_by_state[(suite, host)] = suite_info[
                     'tasks-by-state']
 
+            warning_text = ''
+            tasks = sorted(self._get_warnings(suite, host), reverse=True)
+            warning_text = '\n'.join(
+                [warn[1] + '.' + warn[2] for warn in tasks[0:6]])
+
             if KEY_STATES in suite_info:
                 for key in sorted(suite_info):
                     if not key.startswith(KEY_STATES):
@@ -1043,16 +1143,18 @@ class ScanAppUpdater(BaseScanUpdater):
                     if key == KEY_STATES:
                         parent_iter = self.suite_treemodel.append(None, [
                             host, suite, is_stopped, title, suite_updated_time,
-                            None, states_text])
+                            None, states_text, warning_text])
                     else:
                         self.suite_treemodel.append(parent_iter, [
                             None, None, is_stopped, title, suite_updated_time,
-                            key.replace(KEY_STATES + ":", "", 1), states_text])
+                            key.replace(KEY_STATES + ":", "", 1), states_text,
+                            warning_text
+                        ])
             else:
                 # No states in suite_info
                 self.suite_treemodel.append(None, [
                     host, suite, is_stopped, title, suite_updated_time, None,
-                    None])
+                    None, warning_text])
         self.suite_treemodel.foreach(self._expand_row, row_ids)
         return False
 

@@ -88,8 +88,7 @@ class StateSummaryServer(PyroServer):
     """Server-side suite state summary interface."""
 
     _INSTANCE = None
-    TIME_STRINGS = ['submitted_time_string', 'started_time_string',
-                    'finished_time_string']
+    TIME_FIELDS = ['submitted_time', 'started_time', 'finished_time']
 
     @classmethod
     def get_inst(cls, run_mode=None):
@@ -262,18 +261,22 @@ class StateSummaryServer(PyroServer):
         """Returns a dictionary containing lists of tasks by state in the form:
         {state: [(most_recent_time_string, task_name, point_string), ...]}."""
         check_access_priv(self, 'state-totals')
+
+        # Get tasks.
         ret = {}
         for task in self.task_summary:
             state = self.task_summary[task]['state']
             if state not in ret:
                 ret[state] = []
-            time_strings = ['1970-01-01T00:00:00Z']  # Default time string.
-            for time_string in self.TIME_STRINGS:
-                if (time_string in self.task_summary[task] and
-                        self.task_summary[task][time_string]):
-                    time_strings.append(self.task_summary[task][time_string])
+            times = [0]
+            for time_field in self.TIME_FIELDS:
+                if (time_field in self.task_summary[task] and
+                        self.task_summary[task][time_field]):
+                    times.append(self.task_summary[task][time_field])
             task_name, point_string = task.rsplit('.', 1)
-            ret[state].append((max(time_strings), task_name, point_string,))
+            ret[state].append((max(times), task_name, point_string,))
+
+        # Trim down to no more than six tasks per state.
         for state in ret:
             ret[state].sort(reverse=True)
             if len(ret[state]) < 7:
@@ -281,6 +284,7 @@ class StateSummaryServer(PyroServer):
             else:
                 ret[state] = ret[state][0:5] + [
                     (None, len(ret[state]) - 5, None,)]
+
         return ret
 
     def get_summary_update_time(self):
