@@ -1,0 +1,24 @@
+[cylc]
+    UTC mode = true
+    [[event hooks]]
+        stalled handler = cylc reset %(suite)s foo -s ready
+    [[reference test]]
+        live mode suite timeout=PT1M
+
+[scheduling]
+    initial cycle point = 20100101T0000Z
+    final cycle point   = 20100102T0000Z
+    [[dependencies]]
+        [[[T00, T06, T12, T18]]]
+            graph = bar[-PT6H] => foo => bar
+        [[[T18]]]
+            graph = bar => inserter
+
+[runtime]
+    [[root]]
+        script = sleep 5
+    [[INSERT_FAM]]
+    [[foo,bar]]
+        inherit = INSERT_FAM
+    [[inserter]]
+        script = cylc insert $CYLC_SUITE_NAME INSERT_FAM.20100101T1200Z --stop-point=20100101T1200Z

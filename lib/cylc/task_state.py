@@ -549,7 +549,8 @@ class TaskState(object):
                     # just above)
                     continue
 
-                cpre = Prerequisite(identity, tdef.start_point)
+                cpre = Prerequisite(identity, point, tdef.start_point)
+
                 for label in ctrig:
                     trig = ctrig[label]
                     if trig.graph_offset_string is not None:
@@ -563,7 +564,8 @@ class TaskState(object):
                                 tdef.max_future_prereq_offset = (
                                     prereq_offset)
                         cpre.add(trig.get_prereq(point), label,
-                                 prereq_offset_point < tdef.start_point)
+                                 ((prereq_offset_point < tdef.start_point) &
+                                  (point >= tdef.start_point)))
                     else:
                         cpre.add(trig.get_prereq(point), label)
                 cpre.set_condition(exp)
@@ -583,7 +585,7 @@ class TaskState(object):
                     adjusted.append(prv)
             if adjusted:
                 p_prev = max(adjusted)
-                cpre = Prerequisite(identity, tdef.start_point)
+                cpre = Prerequisite(identity, point, tdef.start_point)
                 prereq = "%s %s" % (TaskID.get(tdef.name, p_prev),
                                     TASK_STATUS_SUCCEEDED)
                 label = tdef.name
