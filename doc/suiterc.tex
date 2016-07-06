@@ -744,7 +744,9 @@ see~\ref{ClockExpireTasks}.
 \paragraph[external-trigger]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow external-trigger}
 
 Externally triggered tasks (see~\ref{ExternalTriggers}) wait on external events
-reported via the \lstinline=cylc ext-trigger= command.
+reported via the \lstinline=cylc ext-trigger= command.  To constrain triggers
+to a specific cycle point, include \lstinline=$CYLC_TASK_CYCLE_POINT= in the
+trigger message string and pass the cycle point to the \lstinline=cylc ext-trigger= command.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of task names with associated
@@ -753,7 +755,7 @@ reported via the \lstinline=cylc ext-trigger= command.
     \item {\em example:} (note the comma and line-continuation character)
 \begin{lstlisting}
     external-trigger = get-satx("new sat-X data ready"), \
-                         get-saty("new sat-Y data ready")
+                         get-saty("new sat-Y data ready for $CYLC_TASK_CYCLE_POINT")
 \end{lstlisting}
 \end{myitemize}
 
