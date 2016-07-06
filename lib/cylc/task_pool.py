@@ -1007,7 +1007,7 @@ class TaskPool(object):
         for itask in self.get_tasks():
             if itask.identity in task_id_messages:
                 for priority, message in task_id_messages[itask.identity]:
-                    itask.process_incoming_message((priority, message))
+                    itask.process_incoming_message(priority, message)
 
     def process_queued_task_event_handlers(self):
         """Process task event handlers."""

@@ -420,69 +420,6 @@ class BatchSysManager(object):
                     return (proc.wait(), proc.communicate()[1])
         return (1, "Cannot determine batch job ID from 'job.status' file")
 
-    def job_poll(self, st_file_path):
-        """Poll status of the job specified in the "st_file_path".
-
-        Return a status string that can be recognised by the suite.
-
-        """
-        # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
-        st_file_path_strs = st_file_path.rsplit(os.sep, 6)
-        task_id = TaskID.get(st_file_path_strs[4], st_file_path_strs[3])
-        self.configure_suite_run_dir(st_file_path_strs[0])
-
-        statuses = {}
-        try:
-            for line in open(st_file_path):
-                key, value = line.strip().split("=", 1)
-                statuses[key] = value
-        except IOError:
-            return "polled %s submission failed\n" % (task_id)
-
-        if (statuses.get(TaskMessage.CYLC_JOB_EXIT_TIME) and
-                statuses.get(TaskMessage.CYLC_JOB_EXIT) == "SUCCEEDED"):
-            return "polled %s succeeded at %s\n" % (
-                task_id, statuses[TaskMessage.CYLC_JOB_EXIT_TIME])
-
-        if (statuses.get(TaskMessage.CYLC_JOB_EXIT_TIME) and
-                statuses.get(TaskMessage.CYLC_JOB_EXIT)):
-            return "polled %s failed at %s\n" % (
-                task_id, statuses[TaskMessage.CYLC_JOB_EXIT_TIME])
-
-        if (self.CYLC_BATCH_SYS_NAME not in statuses or
-                self.CYLC_BATCH_SYS_JOB_ID not in statuses):
-            return "polled %s submission failed\n" % (task_id)
-
-        # Ask batch system if job is still alive or not
-        batch_sys = self.get_inst(statuses[self.CYLC_BATCH_SYS_NAME])
-        job_id = statuses[self.CYLC_BATCH_SYS_JOB_ID]
-        command = shlex.split(batch_sys.POLL_CMD_TMPL % {"job_id": job_id})
-        try:
-            proc = Popen(command, stdout=PIPE)
-        except OSError as exc:
-            # subprocess.Popen has a bad habit of not setting the filename of
-            # the executable when it raises an OSError.
-            if not exc.filename:
-                exc.filename = command[0]
-            raise
-        is_in_batch_sys = (proc.wait() == 0)
-        if is_in_batch_sys and hasattr(batch_sys, "filter_poll_output"):
-            is_in_batch_sys = batch_sys.filter_poll_output(
-                proc.communicate()[0], job_id)
-
-        if is_in_batch_sys and TaskMessage.CYLC_JOB_INIT_TIME in statuses:
-            return "polled %s started at %s\n" % (
-                task_id, statuses[TaskMessage.CYLC_JOB_INIT_TIME])
-
-        if is_in_batch_sys:
-            return "polled %s submitted\n" % (task_id)
-
-        if TaskMessage.CYLC_JOB_INIT_TIME in statuses:
-            return "polled %s failed at unknown-time\n" % (task_id)
-
-        # Submitted but disappeared
-        return "polled %s submission failed\n" % (task_id)
-
     def job_submit(self, job_file_path, remote_mode):
         """Submit a job file.
 
