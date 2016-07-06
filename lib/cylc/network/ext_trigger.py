@@ -73,17 +73,8 @@ class ExtTriggerServer(PyroServer):
         for trig, satisfied in itask.state.external_triggers.items():
             if satisfied:
                 continue
-
-            # Substitute the cycle point for matching - allow the original
-            # trigger string to persist to avoid negative downstream impacts.
-            if '$CYLC_TASK_CYCLE_POINT' in trig:
-                # Substitute the cycle point for matching
-                tmsg = trig.replace('$CYLC_TASK_CYCLE_POINT', str(itask.point))
-            else:
-                tmsg = trig
-
             for qmsg, qid in queued:
-                if tmsg == qmsg:
+                if trig == qmsg:
                     # Matched.
                     name, point_string = TaskID.split(itask.identity)
                     # Set trigger satisfied.
