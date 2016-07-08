@@ -47,7 +47,7 @@ def main():
     parser.add_option(
         "--no-spawn",
         help="Do not spawn successors before removal.",
-        action="store_false", default=True, dest="spawn")
+        action="store_true", default=False, dest="no_spawn")
 
     options, args = parser.parse_args()
 
@@ -58,7 +58,8 @@ def main():
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     items, compat = parser.parse_multitask_compat(options, args)
-    pclient.put_command('remove_task', items, compat, options.spawn)
+    pclient.put_command('remove_task', items, compat,
+                        None, not options.no_spawn)
 
 
 if __name__ == "__main__":
