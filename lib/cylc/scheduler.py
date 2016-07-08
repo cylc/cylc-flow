@@ -1194,7 +1194,10 @@ conditions; see `cylc conditions`.
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
 
-        if not reconfigure:
+        if reconfigure:
+            BroadcastServer.get_inst().linearized_ancestors = (
+                self.config.get_linearized_ancestors())
+        else:
             # Things that can't change on suite reload.
 
             self.state_dumper = SuiteStateDumper(
