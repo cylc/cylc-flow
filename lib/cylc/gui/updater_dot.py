@@ -127,28 +127,35 @@ class DotUpdater(threading.Thread):
             # iso cycle points
             self.point_strings.sort()
 
-        if (self.cfg.use_defn_order and self.updater.ns_defn_order and
-                self.defn_order_on):
-            self.task_list = [
-                i for i in self.updater.ns_defn_order if i in self.task_list]
-        else:
-            self.task_list.sort()
+        use_def_order = (self.cfg.use_defn_order and self.updater.ns_defn_order
+                         and self.defn_order_on)
 
         if not self.should_group_families:
             # Display the full task list.
             self.task_list = deepcopy(self.updater.task_list)
+
+            if use_def_order:
+                self.task_list = [task for task in self.updater.ns_defn_order
+                                  if task in self.task_list]
+            else:
+                self.task_list.sort()
         else:
             self.family_tree = {}
             self.task_list = deepcopy(self.updater.task_list)
 
-            for task_id in self.state_summary:
+            if use_def_order:
+                self.task_list = [task for task in self.updater.ns_defn_order
+                                  if task in self.task_list]
+            else:
+                self.task_list.sort()
+
+            for task in self.task_list:
                 # Generate dict of families and their associated tasks.
-                name, point_string = TaskID.split(task_id)
-                item = self.ancestors_pruned[name][-2]
+                item = self.ancestors_pruned[task][-2]
                 if item not in self.task_list:
                     if item not in self.family_tree:
                         self.family_tree[item] = []
-                    self.family_tree[item].append(name)
+                    self.family_tree[item].append(task)
 
             for heading, tasks in self.family_tree.iteritems():
                 # Place associated tasks after headers.
@@ -156,16 +163,8 @@ class DotUpdater(threading.Thread):
                 for task in tasks:
                     if task in self.task_list:
                         self.task_list.remove(task)
-                self.task_list = (self.task_list[:ind - 1] + [heading] +
-                                  tasks + self.task_list[ind - 1:])
-
-            # Remove duplicates but maintain order.
-            tasks = []
-            for i, task in enumerate(self.task_list):
-                if task not in tasks:
-                    tasks.append(task)
-            self.task_list = tasks
-
+                self.task_list = (self.task_list[0:ind] + [heading] + tasks +
+                                  self.task_list[ind:])
         return True
 
     def set_led_headings(self):
@@ -206,22 +205,8 @@ class DotUpdater(threading.Thread):
 
             # Functionality for collapsed families in transpose view.
             if self.should_transpose_view:
-                if self.should_group_families and (text in self.family_tree or
-                                                   text in all_sub_tasks):
-                    if text in self.family_tree:
-                        # Heading is a family.
-                        label.set_text(self.RIGHT_ARROW + " " + text)
-                        tvcs[n].gcylc_parent_to = self.family_tree[text]
-                        tvcs[n].gcylc_task = text
-                        tvcs[n].gcylc_folded = text in self.expanded_rows
-                        tvcs[n].gcylc_heading_label = label
-                    elif text in all_sub_tasks:
-                        # Heading is the child of a family.
-                        tvcs[n].gcylc_represents_task = text
-                        label.set_text(' ' * self.INDENT + text)
-                else:
-                    if hasattr(tvcs[n], 'gcylc_represents_task'):
-                        tvcs[n].set_visible(True)
+                self._set_heading_attributes(tvcs[n], label, text,
+                                             all_sub_tasks)
 
             label_box.pack_start(label, expand=False, fill=False)
             label_box.show()
@@ -243,6 +228,30 @@ class DotUpdater(threading.Thread):
         # Pre-collapse all families.
         for family in families:
             self.transposed_label_click(None, family)
+
+    def _set_heading_attributes(self, col, label, text, all_sub_tasks):
+        """Sets the attributes required for folding columns."""
+        # Clear previously set attributes.
+        for attribute in ['gcylc_parent_to', 'gcylc_task', 'gcylc_folded',
+                          'gcylc_heading_label', 'gcylc_represents_task']:
+            if hasattr(col, attribute):
+                delattr(col, attribute)
+        col.set_visible(True)
+
+        # Set new attributes.
+        if self.should_group_families and (text in self.family_tree or
+                                           text in all_sub_tasks):
+            if text in self.family_tree:
+                # Heading is a family.
+                label.set_text(self.RIGHT_ARROW + " " + text)
+                col.gcylc_parent_to = self.family_tree[text]
+                col.gcylc_task = text
+                col.gcylc_folded = text in self.expanded_rows
+                col.gcylc_heading_label = label
+            elif text in all_sub_tasks:
+                # Heading is the child of a family.
+                col.gcylc_represents_task = text
+                label.set_text(' ' * self.INDENT + text)
 
     def transposed_label_click(self, widget, heading):
         """Click handler for column headings in transposed mode.
