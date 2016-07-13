@@ -18,7 +18,6 @@
 
 import re
 import sys
-import logging
 import cPickle as pickle
 import threading
 
@@ -31,6 +30,7 @@ from cylc.wallclock import get_current_time_string
 from cylc.network import PYRO_BCAST_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network import check_access_priv
+from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 from cylc.rundb import CylcSuiteDAO
 
@@ -63,7 +63,7 @@ class BroadcastServer(PyroServer):
 
     def __init__(self, linearized_ancestors):
         super(BroadcastServer, self).__init__()
-        self.log = logging.getLogger('main')
+        self.log = LOG
         self.settings = {}
         self.db_inserts_map = {
             self.TABLE_BROADCAST_EVENTS: [],

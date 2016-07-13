@@ -20,7 +20,7 @@
 
 import os
 import sys
-from cylc.suite_output import suite_output
+from cylc.suite_output import SuiteOutput
 
 
 SUITE_SCAN_INFO_TMPL = r"""
@@ -53,7 +53,7 @@ def daemonize(server):
 
     """
 
-    sout = suite_output(server.suite)
+    sout = SuiteOutput(server.suite)
 
     try:
         pid = os.fork()

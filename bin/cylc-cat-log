@@ -38,6 +38,7 @@ from cylc.option_parsers import CylcOptionParser as COP
 from cylc.owner import is_remote_user
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
+from cylc.suite_logging import get_logs
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.task_id import TaskID
 
@@ -127,6 +128,7 @@ def get_option_parser():
 
 def get_suite_log_path(options, suite):
     """Return file name of a suite log, given the options."""
+    log_dir = GLOBAL_CFG.get_derived_host_item(suite, "suite log directory")
     if options.list_mode:
         basename = "."
     else:
@@ -135,10 +137,12 @@ def get_suite_log_path(options, suite):
         else:
             basename = NAME_DEFAULT
         if options.rotation_num:
-            basename += "." + options.rotation_num
-    return os.path.normpath(os.path.join(
-        GLOBAL_CFG.get_derived_host_item(suite, "suite log directory"),
-        basename))
+            log_files = get_logs(log_dir, basename)
+            try:
+                return os.path.normpath(log_files[int(options.rotation_num)])
+            except IndexError:
+                return ''
+    return os.path.normpath(os.path.join(log_dir, basename))
 
 
 def get_task_job_log_path(

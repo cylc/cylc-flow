@@ -42,6 +42,7 @@ import traceback
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
+from cylc.suite_logging import LOG, OUT
 from cylc.wallclock import get_current_time_string
 
 
@@ -50,9 +51,9 @@ def _run_command(ctx):
 
     if cylc.flags.debug:
         if ctx.cmd_kwargs.get('shell'):
-            sys.stdout.write("%s\n" % ctx.cmd)
+            OUT.debug(ctx.cmd)
         else:
-            sys.stdout.write(
+            OUT.debug(
                 "%s\n" % ' '.join([quote(cmd_str) for cmd_str in ctx.cmd]))
 
     if (SuiteProcPool.STOP_JOB_SUBMISSION.value and
@@ -173,7 +174,7 @@ class SuiteProcPool(object):
             multiprocessing.cpu_count())
         # (The Pool class defaults to cpu_count anyway, but does not
         # expose the result via its public interface).
-        self.log = logging.getLogger("main")
+        self.log = LOG
         self.log.debug(
             "Initializing process pool, size %d" % self.pool_size)
         self.pool = multiprocessing.Pool(processes=self.pool_size)
@@ -245,19 +246,18 @@ class SuiteProcPool(object):
 def main():
     """Manual test playground."""
 
-    log = logging.getLogger("main")
-    log.setLevel(logging.INFO)  # or logging.DEBUG
+    LOG.setLevel(logging.INFO)  # or logging.DEBUG
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
-    log.addHandler(handler)
+    LOG.addHandler(handler)
 
     def print_result(result):
         """Print result"""
         if result['OUT']:
-            log.info('result> ' + result['OUT'].strip())
+            LOG.info('result> ' + result['OUT'].strip())
         if result['ERR']:
-            log.info('FAILED> ' + result['CMD'])
-            log.info(result['ERR'].strip())
+            LOG.info('FAILED> ' + result['CMD'])
+            LOG.info(result['ERR'].strip())
 
     pool = mp_pool(3)
 
@@ -271,15 +271,15 @@ def main():
         com = "sleep 5 && echo Hello from HANDLER && badcommand"
         pool.put_command("event-handler", com, print_result)
 
-    log.info('  sleeping')
+    LOG.info('  sleeping')
     time.sleep(3)
     pool.handle_results_async()
-    log.info('  sleeping')
+    LOG.info('  sleeping')
     time.sleep(3)
     pool.close()
     # pool.terminate()
     pool.handle_results_async()
-    log.info('  sleeping')
+    LOG.info('  sleeping')
     time.sleep(3)
     pool.join()
     pool.handle_results_async()

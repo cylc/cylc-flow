@@ -15,34 +15,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Redirect stdout and stderr to the suite logs."""
 
 import os
 import sys
-import logging
-import logging.handlers
+
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from rolling_archive import rolling_archive
-
-"""Configure suite stdout and stderr logs, as rolling archives, in a
-sub-directory of the suite running directory. Can also be used to simply
-get the configure log locations."""
+from cylc.suite_logging import OUT
 
 
-class suite_output(object):
+class SuiteOutput(object):
+    """Redirects stdout and stderr to the out, err files in the suite logging
+    directory."""
 
     def __init__(self, suite):
-
         sodir = GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory')
         self.opath = os.path.join(sodir, 'out')
         self.epath = os.path.join(sodir, 'err')
 
-        # use same archive length as logging (TODO: document this)
-        self.roll_at_startup = GLOBAL_CFG.get(
-            ['suite logging', 'roll over at start-up'])
-        self.arclen = GLOBAL_CFG.get(
-            ['suite logging', 'rolling archive length'])
-
     def get_path(self, err=False):
+        """Returns the path to the suite 'out' file or 'err' if err=True."""
         if err:
             return self.epath
         else:
@@ -50,9 +42,6 @@ class suite_output(object):
 
     def redirect(self):
         """redirect the standard file descriptors to suite log files."""
-
-        self.roll()
-
         # record current standard file descriptors
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
@@ -70,18 +59,11 @@ class suite_output(object):
         os.dup2(dvnl.fileno(), sys.stdin.fileno())
 
     def restore(self):
+        """Restores stdout, err to their normal output."""
         # (not used)
         sys.stdout.close()
         sys.stderr.close()
         sys.stdout = self.sys_stdout
         sys.stderr = self.sys_stderr
         sys.stdin = self.sys_stdin
-        print "\n Restored stdout and stderr to normal"
-
-    def roll(self):
-        # roll the stdout and stderr log files
-        oarchive = rolling_archive(self.opath, self.arclen, sep='.')
-        earchive = rolling_archive(self.epath, self.arclen, sep='.')
-        if self.roll_at_startup:
-            oarchive.roll()
-            earchive.roll()
+        OUT.info("Restored stdout and stderr to normal")

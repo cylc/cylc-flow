@@ -26,7 +26,7 @@ cylc unreg $REG"""
             DEF = $CYLC_SUITE_DEF_PATH/hidden/${CYLC_TASK_NAME}
             REG = ${CYLC_SUITE_REG_NAME}-${CYLC_TASK_NAME}
             LOG = ${CYLC_TASK_NAME}.log
-            GREP = "ERROR: ${CYLC_TASK_NAME} EVENT HANDLER FAILED"
+            GREP = "ERROR - ${CYLC_TASK_NAME} EVENT HANDLER FAILED"
         [[[remote]]]
             # divorce sub-suites from the task execution environments
             # that launch them

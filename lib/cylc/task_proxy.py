@@ -303,7 +303,7 @@ class TaskProxy(object):
         self.submission_poll_timer = None
         self.execution_poll_timer = None
 
-        self.logger = getLogger("main")
+        self.logger = getLogger("log")
 
         # An initial db state entry is created at task proxy init. On reloading
         # or restarting the suite, the task proxies already have this db entry.

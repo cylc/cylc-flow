@@ -68,7 +68,7 @@ from cylc.regpath import RegPath
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_env import CylcSuiteEnv
 from cylc.suite_host import get_suite_host
-from cylc.suite_logging import suite_log
+from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.task_id import TaskID
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
@@ -102,7 +102,7 @@ class PyroRequestHandler(threading.Thread):
         threading.Thread.__init__(self)
         self.pyro = pyro
         self.quit = False
-        self.log = logging.getLogger('main')
+        self.log = LOG
         self.log.debug("request handling thread starting")
 
     def run(self):
@@ -229,7 +229,7 @@ class Scheduler(object):
         self.pub_dao = None
 
         self.suite_log = None
-        self.log = None
+        self.log = LOG
 
         # FIXME: can this be a local variable?
         self.old_user_at_host_set = set()
@@ -274,15 +274,20 @@ class Scheduler(object):
                 pri_dao = CylcSuiteDAO(pri_db_path)
 
             # Vacuum the primary/private database file
-            sys.stdout.write("Vacuuming the suite db ...")
+            OUT.info("Vacuuming the suite db ...")
             pri_dao.vacuum()
-            sys.stdout.write(" done\n")
+            OUT.info("...done")
             pri_dao.close()
 
         try:
             self._configure_pyro()
             if not self.options.no_detach and not cylc.flags.debug:
                 daemonize(self)
+            slog = SuiteLog.get_inst(self.suite)
+            if cylc.flags.debug:
+                slog.pimp(logging.DEBUG)
+            else:
+                slog.pimp()
             self.configure()
             self.profiler.start()
             self.run()
@@ -304,7 +309,7 @@ class Scheduler(object):
 
         except Exception as exc:
             traceback.print_exc()
-            print >> sys.stderr, "ERROR CAUGHT: cleaning up before exit"
+            ERR.error("error caught: cleaning up before exit")
             try:
                 self.shutdown('ERROR: ' + str(exc))
             except Exception, exc1:
@@ -320,7 +325,6 @@ class Scheduler(object):
             self.shutdown()
 
         self.profiler.stop()
-        print
 
     @staticmethod
     def _check_port_file_does_not_exist(suite):
@@ -334,7 +338,7 @@ class Scheduler(object):
             # or if port file does not contain good values of port and host.
             return port_file_path
         else:
-            sys.stderr.write(
+            ERR.error(
                 (
                     r"""ERROR: port file exists: %(port_file_path)s
 
@@ -380,7 +384,6 @@ conditions; see `cylc conditions`.
         lmax = max(len(line) for line in license_lines)
         for i in range(len(logo_lines)):
             print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
-        print
 
     def _configure_pyro(self):
         """Create and configure Pyro daemon."""
@@ -391,7 +394,7 @@ conditions; see `cylc conditions`.
             with open(port_file_path, 'w') as handle:
                 handle.write("%d\n%s\n" % (self.port, self.host))
         except IOError as exc:
-            sys.stderr.write(str(exc) + "\n")
+            ERR.error(str(exc))
             raise SchedulerError(
                 'ERROR, cannot write port file: %s' % port_file_path)
         else:
@@ -549,23 +552,23 @@ conditions; see `cylc conditions`.
             if getattr(self.options, option_ignore_attr):
                 # ignore it and take whatever the suite.rc file gives us
                 if my_point is not None:
-                    print >> sys.stderr, (
-                        "WARNING: I'm ignoring the old " + key_str +
+                    ERR.warning(
+                        "I'm ignoring the old " + key_str +
                         " cycle point as requested,\n"
                         "but I can't ignore the one set"
                         " on the command line or in the suite definition.")
             elif my_point is not None:
                 # Given in the suite.rc file
                 if my_point != point:
-                    print >> sys.stderr, (
-                        "WARNING: old %s cycle point " +
+                    ERR.warning(
+                        "old %s cycle point " +
                         "%s, overriding suite.rc %s"
                     ) % (key_str, point, my_point)
                     setattr(self, self_attr, point)
             else:
                 # reinstate from old
                 setattr(self, self_attr, point)
-            print "+ %s cycle point = %s" % (key_str, value)
+            OUT.info("+ %s cycle point = %s" % (key_str, value))
 
     def _load_task_pool(self, row_idx, row):
         """Load a task from previous task pool.
@@ -589,7 +592,7 @@ conditions; see `cylc conditions`.
         are polled to determine what their true status is.
         """
         if row_idx == 0:
-            print "LOADING task proxies"
+            OUT.info("LOADING task proxies")
         cycle, name, spawned, status, submit_num, try_num, user_at_host = row
         try:
             itask = get_task_proxy(
@@ -604,17 +607,14 @@ conditions; see `cylc conditions`.
             if cylc.flags.debug:
                 traceback.print_exc()
             else:
-                print >> sys.stderr, str(exc)
-            print >> sys.stderr, (
-                "WARNING: ignoring task %s " % name +
-                "from the suite run database file")
-            print >> sys.stderr, (
-                "(the task definition has probably been "
-                "deleted from the suite).")
+                ERR.error(str(exc))
+            ERR.warning((
+                "ignoring task %s from the suite run database file\n"
+                "(the task definition has probably been deleted from the "
+                "suite).") % name)
         except Exception:
             traceback.print_exc()
-            print >> sys.stderr, (
-                "ERROR: could not load task %s " % name)
+            ERR.error("could not load task %s" % name)
         else:
             if status == TASK_STATUS_HELD:
                 # Only waiting tasks get held. These need to be released
@@ -657,7 +657,7 @@ conditions; see `cylc conditions`.
                 itask.state.outputs.set_all_completed()
 
             itask.summary['job_hosts'][int(submit_num)] = user_at_host
-            print "+ %s.%s %s" % (name, cycle, status)
+            OUT.info("\n+ %s.%s %s" % (name, cycle, status))
             self.pool.add_to_runahead_pool(itask)
 
     def process_command_queue(self):
@@ -665,7 +665,7 @@ conditions; see `cylc conditions`.
         queue = self.command_queue.get_queue()
         qsize = queue.qsize()
         if qsize > 0:
-            print 'Processing ' + str(qsize) + ' queued command(s)'
+            log_msg = 'Processing ' + str(qsize) + ' queued command(s)'
         else:
             return
 
@@ -674,7 +674,7 @@ conditions; see `cylc conditions`.
                 name, args = queue.get(False)
             except Empty:
                 break
-            print '  +', name
+            log_msg += '\n+\t' + name
             cmdstr = name + '(' + ','.join([str(a) for a in args]) + ')'
             try:
                 n_warnings = getattr(self, "command_%s" % name)(*args)
@@ -697,6 +697,7 @@ conditions; see `cylc conditions`.
                 if name in self.PROC_CMDS:
                     self.do_process_tasks = True
             queue.task_done()
+        OUT.info(log_msg)
 
     def _task_type_exists(self, name_or_id):
         """Does a task name or id match a known task type in this suite?"""
@@ -902,8 +903,7 @@ conditions; see `cylc conditions`.
         # logged by the TaskPool.
         add = set(self.config.get_task_name_list()) - old_tasks
         for task in add:
-            logging.getLogger("main").log(
-                logging.WARNING, "Added task: '%s'" % (task,))
+            LOG.warning("Added task: '%s'" % (task,))
 
         self.configure_suite_environment()
         if self.gen_reference_log or self.reference_test_mode:
@@ -922,9 +922,9 @@ conditions; see `cylc conditions`.
             return
         self.suite_timer_timeout = time() + timeout
         if cylc.flags.verbose:
-            print "%s suite timer starts NOW: %s" % (
+            OUT.info("%s suite timer starts NOW: %s" % (
                 get_seconds_as_interval_string(timeout),
-                get_current_time_string())
+                get_current_time_string()))
         self.suite_timer_active = True
 
     def set_suite_inactivity_timer(self, reset=False):
@@ -970,7 +970,7 @@ conditions; see `cylc conditions`.
                 handle.write("# cylc-version: %s\n" % CYLC_VERSION)
                 printcfg(self.config.cfg, none_str=None, handle=handle)
         except IOError as exc:
-            sys.stderr.write(str(exc) + "\n")
+            ERR.error(str(exc))
             raise SchedulerError("Unable to log the loaded suite definition")
 
     def _load_initial_cycle_point(self, _, row):
@@ -1026,9 +1026,8 @@ conditions; see `cylc conditions`.
             self.final_point.standardise()
 
         if (not self.initial_point and not self.is_restart):
-            sys.stderr.write(
-                'WARNING: No initial cycle point provided ' +
-                ' - no cycling tasks will be loaded.\n')
+            ERR.warning('No initial cycle point provided - no cycling tasks '
+                        'will be loaded.')
 
         if self.run_mode != self.config.run_mode:
             self.run_mode = self.config.run_mode
@@ -1081,7 +1080,7 @@ conditions; see `cylc conditions`.
                     self.options.hold_point_string)
 
             if self.pool_hold_point:
-                print "Suite will hold after " + str(self.pool_hold_point)
+                OUT.info("Suite will hold after " + str(self.pool_hold_point))
 
             suite_id = SuiteIdServer.get_inst(self.suite, self.owner)
             self.pyro.connect(suite_id, PYRO_SUITEID_OBJ_NAME)
@@ -1104,12 +1103,7 @@ conditions; see `cylc conditions`.
             self.pyro.connect(
                 SuiteInfoServer(info_commands), PYRO_INFO_OBJ_NAME)
 
-            self.suite_log = suite_log(self.suite)
-            self.log = self.suite_log.get_log()
-            if cylc.flags.debug:
-                self.suite_log.pimp(logging.DEBUG)
-            else:
-                self.suite_log.pimp(logging.INFO)
+            self.suite_log = SuiteLog.get_inst(self.suite)
             self.pyro.connect(
                 SuiteLogServer(self.suite_log), PYRO_LOG_OBJ_NAME)
 
@@ -1203,8 +1197,7 @@ conditions; see `cylc conditions`.
                     'ERROR: suite allows only ' + req + ' reference tests')
             handlers = self._get_events_conf('shutdown handler')
             if handlers:
-                sys.stderr.write(
-                    'WARNING: shutdown handlers replaced by reference test\n')
+                ERR.warning('shutdown handlers replaced by reference test')
             self.config.cfg['cylc']['events']['shutdown handler'] = [
                 rtc['suite shutdown event handler']]
             self.config.cfg['cylc']['log resolved dependencies'] = True
@@ -1309,18 +1302,17 @@ conditions; see `cylc conditions`.
         """Callback on completion of a suite event handler."""
         if ctx.ret_code:
             self.log.warning(str(ctx))
-            sys.stderr.write(
-                'ERROR: %s EVENT HANDLER FAILED\n' % ctx.cmd_key[1])
+            ERR.error('%s EVENT HANDLER FAILED' % ctx.cmd_key[1])
             if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
                     self.reference_test_mode):
-                sys.stderr.write('ERROR: SUITE REFERENCE TEST FAILED\n')
+                ERR.error('SUITE REFERENCE TEST FAILED')
             if abort_on_error:
                 raise SchedulerError(ctx.err)
         else:
             self.log.info(str(ctx))
             if (ctx.cmd_key[1] == self.EVENT_SHUTDOWN and
                     self.reference_test_mode):
-                sys.stdout.write('SUITE REFERENCE TEST PASSED\n')
+                OUT.info('SUITE REFERENCE TEST PASSED\n')
 
     def _run_event_mail_callback(self, ctx):
         """Callback the mail command for notification of a suite event."""
@@ -1645,7 +1637,8 @@ conditions; see `cylc conditions`.
             reason = reason.args[0]
         elif reason:
             msg += ' - %s' % reason
-        sys.stdout.write(msg + '\n')
+        OUT.info(msg)
+
         # The getattr() calls and if tests below are used in case the
         # suite is not fully configured before the shutdown is called.
         if getattr(self, "log", None) is not None:
@@ -1660,7 +1653,7 @@ conditions; see `cylc conditions`.
                         handle.write(line)
                 handle.close()
             except IOError as exc:
-                sys.stderr.write(str(exc) + '\n')
+                ERR.error(str(exc))
 
         if self.pool is not None:
             self.pool.warn_stop_orphans()
@@ -1694,9 +1687,8 @@ conditions; see `cylc conditions`.
             try:
                 os.unlink(self.port_file)
             except OSError as exc:
-                sys.stderr.write(
-                    "WARNING, failed to remove port file: %s\n%s\n" % (
-                        self.port_file, exc))
+                ERR.warning("failed to remove port file: %s\n%s\n" % (
+                    self.port_file, exc))
 
         # disconnect from suite-db, stop db queue
         if getattr(self, "db", None) is not None:
@@ -1707,7 +1699,7 @@ conditions; see `cylc conditions`.
             # run shutdown handlers
             self.run_event_handlers(self.EVENT_SHUTDOWN, str(reason))
 
-        print "DONE"  # main thread exit
+        OUT.info("DONE")  # main thread exit
 
     def set_stop_point(self, stop_point_string):
         """Set stop point."""

@@ -20,6 +20,7 @@ import os
 from cylc.network import PYRO_LOG_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network import check_access_priv
+from cylc.suite_logging import SuiteLog
 
 
 class SuiteLogServer(PyroServer):
@@ -28,7 +29,7 @@ class SuiteLogServer(PyroServer):
     def __init__(self, log):
         super(SuiteLogServer, self).__init__()
         self.log = log
-        self.err_file = log.get_err_path()
+        self.err_file = log.get_log_path(SuiteLog.ERR)
 
     def _get_err_has_changed(self, prev_err_size):
         """Return True if the file has changed size compared to prev_size."""

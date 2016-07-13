@@ -19,6 +19,8 @@
 import sys
 from time import sleep, time
 
+from cylc.suite_logging import OUT, ERR
+
 
 class poller(object):
     """Encapsulates polling activity for cylc commands. Derived classes
@@ -53,14 +55,14 @@ class poller(object):
         try:
             self.max_polls = int(max_polls)
         except:
-            sys.stderr.write("max_polls must be an int\n")
+            ERR.error("max_polls must be an int")
             sys.exit(1)
 
         """check interval is an int"""
         try:
             self.interval = int(interval)
         except:
-            sys.stderr.write("interval must be an integer\n")
+            ERR.error("interval must be an integer")
             sys.exit(1)
 
         self.n_polls = 0
@@ -74,10 +76,10 @@ class poller(object):
             # exit 1 as we can't know if the condition is satisfied
             sys.exit("WARNING: nothing to do (--max-polls=0)")
         elif self.max_polls == 1:
-            sys.stdout.write("checking ")
+            log_msg = "checking"
         else:
-            sys.stdout.write("polling ")
-        sys.stdout.write("for '" + self.condition + "'")
+            log_msg = "polling"
+        log_msg += " for '" + self.condition + "'"
 
         done = False
         while (not done and self.n_polls < self.max_polls):
@@ -86,16 +88,15 @@ class poller(object):
                 done = True
             else:
                 if self.max_polls > 1:
-                    sys.stdout.write('.')
+                    log_msg += '.'
                     sleep(self.interval)
         if done:
-            sys.stdout.write(": satisfied\n")
+            OUT.info(log_msg + ": satisfied")
             return True
         else:
-            print
-            print >> sys.stderr, " ERROR: condition not satisfied",
+            OUT.info(log_msg)
+            err_msg = "condition not satisfied",
             if self.max_polls > 1:
-                print >> sys.stderr, "after " + str(self.max_polls) + " polls"
-            else:
-                print >> sys.stderr, ""
+                err_msg += "\nafter " + str(self.max_polls) + " polls"
+            ERR.error(err_msg)
             return False

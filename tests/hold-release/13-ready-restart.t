@@ -26,8 +26,9 @@ run_ok "${TEST_NAME_BASE}-run" cylc run "${SUITE_NAME}"
 SUITE_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
 export CYLC_SUITE_LOG_DIR="${SUITE_DIR}/log/suite"
 export PATH="${TEST_DIR}/${SUITE_NAME}/bin:$PATH"
+LOG_FILES=($(ls ${CYLC_SUITE_LOG_DIR}))
 run_ok "${TEST_NAME_BASE}-restart" \
-    timeout 1m my-file-poll "${CYLC_SUITE_LOG_DIR}/log.1"
+    timeout 1m my-file-poll "${CYLC_SUITE_LOG_DIR}/${LOG_FILES[1]}"
 # foo-1 should run when the suite is released
 run_ok "${TEST_NAME_BASE}-foo-1" \
     timeout 1m my-log-grepper 'foo-1\.1.*succeeded'

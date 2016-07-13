@@ -32,7 +32,7 @@ tasks against the new stop cycle.
 """
 
 from fnmatch import fnmatchcase
-from logging import ERROR, DEBUG, INFO, WARNING, getLogger
+from logging import DEBUG, INFO, WARNING, getLogger
 import os
 import Queue
 import re
@@ -728,7 +728,7 @@ class TaskPool(object):
         # Log tasks orphaned by a reload that were not in the task pool.
         for task in self.orphans:
             if task not in [tsk.tdef.name for tsk in self.get_all_tasks()]:
-                getLogger("main").log(WARNING, "Removed task: '%s'" % (task,))
+                getLogger("log").log(WARNING, "Removed task: '%s'" % (task,))
         for itask in self.get_all_tasks():
             if itask.tdef.name in self.orphans:
                 if itask.state.status in [

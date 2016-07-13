@@ -20,7 +20,7 @@
 import os
 from pipes import quote
 from subprocess import Popen, PIPE
-from logging import getLogger, INFO
+from logging import getLogger
 import shlex
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -94,7 +94,7 @@ class RemoteJobHostManager(object):
             suite_name, 'suite run directory', host, owner)
         r_log_job_dir = GLOBAL_CFG.get_derived_host_item(
             suite_name, 'suite job log directory', host, owner)
-        getLogger('main').log(INFO, 'Initialising %s:%s' % (
+        getLogger('log').info('Initialising %s:%s' % (
             user_at_host, r_suite_run_dir))
 
         ssh_tmpl = GLOBAL_CFG.get_host_item(

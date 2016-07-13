@@ -18,7 +18,6 @@
 
 import Pyro.core
 import hashlib
-import logging
 import os
 import sys
 
@@ -31,6 +30,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import NO_PASSPHRASE, PRIVILEGE_LEVELS
 from cylc.config import SuiteConfig
 from cylc.suite_host import get_hostname, is_remote_host
+from cylc.suite_logging import LOG
 from cylc.owner import USER
 
 
@@ -70,7 +70,6 @@ class ConnValidator(DefaultConnValidator):
     def acceptIdentification(self, daemon, connection, token, challenge):
         """Authorize client login."""
 
-        logger = logging.getLogger('main')
         is_old_client = False
         # Processes the token returned by createAuthToken.
         try:
@@ -120,8 +119,7 @@ class ConnValidator(DefaultConnValidator):
             if not is_old_client:
                 # Avoid logging large numbers of denials from old scan clients
                 # that try all passphrases available to them.
-                logger.warn(CONNECT_DENIED_TMPL % (
-                    user, host, prog_name, uuid))
+                LOG.warn(CONNECT_DENIED_TMPL % (user, host, prog_name, uuid))
             return (0, Pyro.constants.DENIED_SECURITY)
 
         # Store client details for use in the connection thread.
@@ -130,8 +128,8 @@ class ConnValidator(DefaultConnValidator):
         connection.prog_name = prog_name
         connection.uuid = uuid
         connection.privilege_level = priv_level
-        logger.debug(CONNECT_ALLOWED_TMPL % (
-                     user, host, prog_name, priv_level, uuid))
+        LOG.debug(CONNECT_ALLOWED_TMPL % (
+                  user, host, prog_name, priv_level, uuid))
         return (1, 0)
 
     def createAuthToken(self, authid, challenge, peeraddr, URI, daemon):

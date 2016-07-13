@@ -61,7 +61,7 @@ from cylc.gui.option_group import controlled_option_group
 from cylc.gui.color_rotator import rotator
 from cylc.gui.cylc_logviewer import cylc_logviewer
 from cylc.gui.gcapture import gcapture_tmpfile
-from cylc.suite_logging import suite_log
+from cylc.suite_logging import SuiteLog
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.cfgspec.gcylc import gcfg
 from cylc.wallclock import (
@@ -177,7 +177,7 @@ Class to hold initialisation data.
             else:
                 self.host = auth
                 self.port = None
-        self.logdir = suite_log(suite).get_dir()
+        self.logdir = SuiteLog.get_inst(suite).get_dir()
 
 
 class InfoBar(gtk.VBox):

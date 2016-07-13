@@ -25,6 +25,7 @@ from cylc.network import PYRO_EXT_TRIG_OBJ_NAME
 from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network.suite_broadcast import BroadcastServer
 from cylc.network import check_access_priv
+from cylc.suite_logging import OUT, ERR
 from cylc.task_id import TaskID
 
 
@@ -128,31 +129,31 @@ class ExtTriggerClient(PyroClient):
             try:
                 self.put(event_message, event_id)
             except Pyro.errors.NamingError as exc:
-                print >> sys.stderr, exc
-                print self.__class__.MSG_SEND_FAILED % (
+                ERR.error(sys.stderr, exc)
+                OUT.info(self.__class__.MSG_SEND_FAILED % (
                     i_try,
                     max_n_tries,
-                )
+                ))
                 break
             except Exception as exc:
-                print >> sys.stderr, exc
-                print self.__class__.MSG_SEND_FAILED % (
+                ERR.error(sys.stderr, exc)
+                OUT.info(self.__class__.MSG_SEND_FAILED % (
                     i_try,
                     max_n_tries,
-                )
+                ))
                 if i_try >= max_n_tries:
                     break
-                print self.__class__.MSG_SEND_RETRY % (
+                OUT.info(self.__class__.MSG_SEND_RETRY % (
                     retry_intvl_secs,
                     self.pyro_timeout
-                )
+                ))
                 sleep(retry_intvl_secs)
             else:
                 if i_try > 1:
-                    print self.__class__.MSG_SEND_SUCCEEDED % (
+                    OUT.info(self.__class__.MSG_SEND_SUCCEEDED % (
                         i_try,
                         max_n_tries
-                    )
+                    ))
                 sent = True
                 break
         if not sent:
