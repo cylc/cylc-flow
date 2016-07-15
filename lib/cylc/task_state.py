@@ -461,7 +461,6 @@ class TaskState(object):
         self.outputs.remove(TASK_OUTPUT_SUBMITTED)
         self.set_state(TASK_STATUS_SUBMIT_RETRYING)
         self.set_prerequisites_all_satisfied()
-        self.outputs.set_all_incomplete()
         if self.hold_on_retry:
             self.reset_state(TASK_STATUS_HELD)
 
@@ -516,7 +515,6 @@ class TaskState(object):
         """Manipulate state for job execution retry."""
         self.set_state(TASK_STATUS_RETRYING)
         self.set_prerequisites_all_satisfied()
-        self.outputs.set_all_incomplete()
         if self.hold_on_retry:
             self.reset_state(TASK_STATUS_HELD)
 
