@@ -1,7 +1,0 @@
-[scheduling]
-    initial cycle point = 20100101T00
-    [[special tasks]]
-        start-up = cold_foo
-    [[dependencies]]
-        [[[T12]]]
-            graph = "cold_foo => foo"

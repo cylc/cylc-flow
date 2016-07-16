@@ -5,7 +5,9 @@
         allow task failures = True
 [scheduling]
     [[dependencies]]
-        graph = "a:fail => b:fail => c:fail => !a & !b & !c"
+        graph = """a:fail => b
+            b:fail => c
+            c:fail => !a & !b & !c"""
 [runtime]
     [[a, b, c]]
         [[[dummy mode]]]

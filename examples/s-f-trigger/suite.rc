@@ -9,7 +9,8 @@ A:finish => B: means B triggers after A finishes, by success or failure.
     [[dependencies]]
         [[[T00, T12]]]
            graph = """
-foo:finish => A:start => B
+        foo:finish => A
+        A:start => B
 # A triggers when foo finishes (success or failure)
 # B triggers when A starts running
                    """

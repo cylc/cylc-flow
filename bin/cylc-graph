@@ -51,7 +51,6 @@ GRAPH VIEWER CONTROLS:
     * "Best Fit" and "Normal Size" buttons.
     * Left-to-right graphing mode toggle button.
     * "Ignore suicide triggers" button.
-    * "Ignore cold-start tasks" button.
     * "Save" button: save an image of the view.
   Family (namespace) grouping controls:
     Toolbar:

@@ -1,7 +1,7 @@
-2014/01/07 16:58:20 INFO - Initial point: 2010010100
-2014/01/07 16:58:20 INFO - Final point: 2010010118
-2014/01/07 16:58:20 INFO - [monitor.2010010100] -triggered off []
-2014/01/07 16:58:24 INFO - [foo.2010010100] -triggered off ['monitor.2010010100']
-2014/01/07 16:58:37 INFO - [foo.2010010106] -triggered off ['foo.2010010100']
-2014/01/07 16:58:49 INFO - [foo.2010010112] -triggered off ['foo.2010010106']
-2014/01/07 16:59:01 INFO - [foo.2010010118] -triggered off ['foo.2010010112']
+2014/01/07 16:58:20 INFO - Initial point: 20100101T00
+2014/01/07 16:58:20 INFO - Final point: 20100101T18
+2014/01/07 16:58:20 INFO - [monitor.20100101T00] -triggered off []
+2014/01/07 16:58:24 INFO - [foo.20100101T00] -triggered off ['monitor.20100101T00']
+2014/01/07 16:58:37 INFO - [foo.20100101T06] -triggered off ['foo.20100101T00']
+2014/01/07 16:58:49 INFO - [foo.20100101T12] -triggered off ['foo.20100101T06']
+2014/01/07 16:59:01 INFO - [foo.20100101T18] -triggered off ['foo.20100101T12']

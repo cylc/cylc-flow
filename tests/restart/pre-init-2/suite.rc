@@ -3,24 +3,25 @@
 
 # INSTRUCTIONS:
 # 1) first run to set up the restart:
-#      cylc run --until=2010080800 SUITE 2010080800
+#      cylc run --until=20100808T00 SUITE 20100808T00
 # 2) the restart as reference test:
 #      cylc restart --debug --reference-test SUITE
 
 [cylc]
+    cycle point format = %Y%m%dT%H
     [[reference test]]
         required run mode = live
-        live mode suite timeout = 1.0
+        live mode suite timeout = PT1M
 
 [scheduling]
     # DO NOT PUT AN INITIAL CYCLE TIME HERE,
     # use the command line as described above
-    final cycle time = 2010081000
+    final cycle time = 20100810T00
     [[dependencies]]
-        [[[0]]]
+        [[[T00]]]
             graph = """
-                foo[T-24] => bar
-                # foo <- should not be implicit (deprecated feature)
+                foo[-P1D] => bar
+                foo
             """
 [runtime]
     [[root]]

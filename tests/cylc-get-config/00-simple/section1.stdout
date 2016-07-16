@@ -8,17 +8,16 @@ initial cycle point = 1
 initial cycle point constraints = 
 final cycle point = 1
 [[dependencies]]
-    graph = OPS:finish-all => VAR
+    [[[R1]]]
+        graph = OPS:finish-all => VAR
 [[queues]]
     [[[default]]]
         limit = 0
         members = ops_s1, ops_s2, ops_p1, ops_p2, var_p1, var_p2, var_s1, var_s2
 [[special tasks]]
-    clock-trigger = 
     external-trigger = 
+    include at start-up = 
+    clock-trigger = 
     sequential = 
     clock-expire = 
-    include at start-up = 
-    start-up = 
     exclude at start-up = 
-    cold-start = 

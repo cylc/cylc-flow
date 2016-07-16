@@ -1,7 +1,0 @@
-2014-11-21T10:40:43Z INFO - Initial point: 2014010100
-2014-11-21T10:40:43Z INFO - Final point: 2014010400
-2014-11-21T10:40:43Z INFO - [cold_foo.2014010100] -triggered off []
-2014-11-21T10:40:46Z INFO - [foo_midnight.2014010100] -triggered off ['cold_foo.2014010100']
-2014-11-21T10:40:49Z INFO - [foo_midnight.2014010200] -triggered off ['foo_midnight.2014010100']
-2014-11-21T10:40:52Z INFO - [foo_midnight.2014010300] -triggered off ['foo_midnight.2014010200']
-2014-11-21T10:40:55Z INFO - [foo_midnight.2014010400] -triggered off ['foo_midnight.2014010300']

@@ -1169,7 +1169,6 @@ class TaskProxy(object):
             'env-script': rtconfig['env-script'],
             'host': self.task_host,
             'init-script': rtconfig['init-script'],
-            'is cold-start': self.tdef.is_coldstart,
             'job file path': self.get_job_log_path(
                 self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE),
             'job log dir': self.get_job_log_path(),

@@ -40,7 +40,7 @@ class TaskDef(object):
     __slots__ = ["run_mode", "rtconfig", "start_point", "sequences",
                  "implicit_sequences", "used_in_offset_trigger",
                  "max_future_prereq_offset", "intercycle_offsets",
-                 "sequential", "is_coldstart", "suite_polling_cfg",
+                 "sequential", "suite_polling_cfg",
                  "clocktrigger_offset", "expiration_offset",
                  "namespace_hierarchy", "triggers", "outputs",
                  "external_triggers", "name", "elapsed_times",
@@ -63,7 +63,6 @@ class TaskDef(object):
         self.max_future_prereq_offset = None
         self.intercycle_offsets = []
         self.sequential = False
-        self.is_coldstart = False
         self.suite_polling_cfg = {}
 
         self.clocktrigger_offset = None

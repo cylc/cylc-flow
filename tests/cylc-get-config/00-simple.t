@@ -35,13 +35,14 @@ cmp_ok $TEST_NAME.stderr - </dev/null
 TEST_NAME=$TEST_NAME_BASE-section1-section
 run_ok $TEST_NAME cylc get-config --item=[scheduling][dependencies] $SUITE_NAME
 cmp_ok $TEST_NAME.stdout - <<__OUT__
-graph = OPS:finish-all => VAR
+[[[R1]]]
+    graph = OPS:finish-all => VAR
 __OUT__
 cmp_ok $TEST_NAME.stderr - </dev/null
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-section1-section-option
 run_ok $TEST_NAME \
-    cylc get-config --item=[scheduling][dependencies][graph] $SUITE_NAME
+    cylc get-config --item=[scheduling][dependencies][R1][graph] $SUITE_NAME
 cmp_ok $TEST_NAME.stdout - <<__OUT__
 OPS:finish-all => VAR
 __OUT__

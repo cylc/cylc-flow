@@ -201,6 +201,9 @@ SPEC = {
         'environment': {
             '__MANY__': vdr(vtype='string'),
         },
+        'parameters': {
+            '__MANY__': vdr(vtype='integer'),
+        },
         'events': {
             'handlers': vdr(vtype='string_list'),
             'handler events': vdr(vtype='string_list'),
@@ -291,8 +294,6 @@ SPEC = {
             'external-trigger': vdr(vtype='string_list', default=[]),
             'clock-expire': vdr(vtype='string_list', default=[]),
             'sequential': vdr(vtype='string_list', default=[]),
-            'start-up': vdr(vtype='string_list', default=[]),
-            'cold-start': vdr(vtype='string_list', default=[]),
             'exclude at start-up': vdr(vtype='string_list', default=[]),
             'include at start-up': vdr(vtype='string_list', default=[]),
         },
@@ -564,6 +565,8 @@ def upg(cfg, descr):
         '6.10.3',
         ['runtime', '__MANY__', 'execution polling intervals'],
         ['runtime', '__MANY__', 'job', 'execution polling intervals'])
+    u.obsolete('7.0.0', ['scheduling', 'special tasks', 'cold-start'])
+    u.obsolete('7.0.0', ['scheduling', 'special tasks', 'start-up'])
     u.upgrade()
     if 'cylc' in cfg and 'event hooks' in cfg['cylc']:
         del cfg['cylc']['event hooks']

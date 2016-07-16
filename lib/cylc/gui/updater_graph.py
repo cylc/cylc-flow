@@ -78,7 +78,6 @@ class GraphUpdater(threading.Thread):
 
         self.descendants = {}
         self.all_families = []
-        self.triggering_families = []
         self.write_dot_frames = False
 
         self.prev_graph_id = ()
@@ -169,7 +168,6 @@ class GraphUpdater(threading.Thread):
         self.ancestors = deepcopy(self.updater.ancestors)
         self.descendants = deepcopy(self.updater.descendants)
         self.all_families = deepcopy(self.updater.all_families)
-        self.triggering_families = deepcopy(self.updater.triggering_families)
         self.global_summary = deepcopy(self.updater.global_summary)
         self.updater.set_update(True)
 
@@ -415,10 +413,7 @@ class GraphUpdater(threading.Thread):
                     # Special node.
                     continue
                 if name in self.all_families:
-                    if name in self.triggering_families:
-                        node.attr['shape'] = 'doubleoctagon'
-                    else:
-                        node.attr['shape'] = 'tripleoctagon'
+                    node.attr['shape'] = 'doubleoctagon'
 
             if self.subgraphs_on:
                 self.graphw.add_cycle_point_subgraphs(gr_edges)

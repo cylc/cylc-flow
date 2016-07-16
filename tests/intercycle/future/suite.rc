@@ -1,16 +1,18 @@
 
 [cylc]
+    cycle point format = %Y%m%dT%H
     [[reference test]]
         required run mode = live
-        live mode suite timeout = 1.0
+        live mode suite timeout = PT1M
 
 [scheduling]
-    initial cycle time = 2012010100
-    final cycle time = 2012010118
+    initial cycle point = 20120101T00
+    final cycle point = 20120101T18
     [[dependencies]]
-        [[[0,6,12,18]]]
-            graph = "a[T+6] => b"
-
+        [[[PT6H]]]
+            graph = a[+PT6H] => b
+        [[[R/+PT6H/PT6H]]]
+            graph = a
 [runtime]
     [[a,b]]
         script = "/bin/true" # fast

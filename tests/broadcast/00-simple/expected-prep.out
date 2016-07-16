@@ -1,15 +1,15 @@
 Broadcast set:
 + [root.*] [environment]BCAST=ROOT
 Broadcast set:
-+ [foo.2010080800] [environment]BCAST=FOO
++ [foo.20100808T00] [environment]BCAST=FOO
 Broadcast set:
 + [bar.*] [environment]BCAST=BAR
 Broadcast set:
-+ [baz.2010080900] [environment]BCAST=BAZ
++ [baz.20100809T00] [environment]BCAST=BAZ
 Broadcast set:
-+ [qux.2010080900] [environment]BCAST=QUX
++ [qux.20100809T00] [environment]BCAST=QUX
 Broadcast cancelled:
-- [qux.2010080900] [environment]BCAST=QUX
+- [qux.20100809T00] [environment]BCAST=QUX
 Broadcast set:
 + [wibble.*] [environment]BCAST=WIBBLE
 Broadcast cancelled:
@@ -19,7 +19,7 @@ Broadcast set:
 Broadcast set:
 + [ENS1.*] [environment]BCAST=ENS1
 Broadcast set:
-+ [m2.2010080900] [environment]BCAST=M2
++ [m2.20100809T00] [environment]BCAST=M2
 Broadcast set:
 + [m7.*] [environment]BCAST=M7
 Broadcast set:
@@ -48,11 +48,11 @@ Broadcast set:
  `-root           
    `-environment  
      `-BCAST      ROOT
-2010080800        
+20100808T00       
  `-foo            
    `-environment  
      `-BCAST      FOO
-2010080900        
+20100809T00       
  |-baz            
  | `-environment  
  |   `-BCAST      BAZ

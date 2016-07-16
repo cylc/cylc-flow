@@ -29,7 +29,6 @@ __SUITE_RC__
 
 run_fail "${TEST_NAME_BASE}" cylc validate 'suite.rc'
 cmp_ok "${TEST_NAME_BASE}.stderr" <<'__ERR__'
-!dont-kill-me => no-problem
-'ERROR: suicide must be on the right of a trigger (!dont-kill-me)'
+ERROR, suicide markers must be on the right of a trigger: !dont-kill-me
 __ERR__
 exit

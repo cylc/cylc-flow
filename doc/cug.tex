@@ -924,10 +924,9 @@ shell$ cylc db pr --tree -x examples.tutorial
 examples
  `-tutorial
    `-cycling
-   | |-four       Inter-cycle dependence + a start-up task
    | | ...
-   | |-two        Two cycling tasks with inter-cycle dependence
-   | `-three      inter-cycle dependence + a cold-start task
+   | |-two        Two cycling tasks with inter-cycle dependence.
+   | | ...
    `-oneoff
      |-retry      A task with automatic retry on failure
      |-remote     Hello World! on a remote host
@@ -3714,17 +3713,6 @@ start-up.  They are illustrated in the Tutorial
             graph = "foo[-PT12H] => foo => bar"
 \end{lstlisting}
 
-    \item initial {\em cold-start tasks}
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [[special tasks]]
-        cold-start = cfoo
-    [[dependencies]]
-        [[[T00,T12]]]
-            graph = "cfoo | foo[-PT12H] => foo => bar"
-\end{lstlisting}
-
 \end{myitemize}
 \lstset{language=transcript}
 
@@ -3783,43 +3771,6 @@ depends on its previous (12 hours ago) instance.
 
 This is quite different to the non-preferred \lstinline=cold-start tasks=
 way of working.
-
-\paragraph{Special Cold-Start Tasks}
-\label{SpecialColdStartTasks}
-
-Special cold-start tasks are non-spawning tasks intended for use in general
-cycling sections, so they must be declared as special tasks. Dependence on them
-is retained throughout the suite run so they must be used in conditional
-triggers to avoid stalling the suite, like this:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    initial cycle point = 20140808T00
-    [[special tasks]]
-        cold-start = cold_model
-    [[dependencies]]
-        [[[T00]]]
-            graph = cold_model | model[-P1D] => model
-\end{lstlisting}
-Here, in the first cycle point \lstinline=model= will trigger off the
-cold-start task \lstinline=cold_model=.  In subsequent cycle points
-\lstinline=model= retains its dependence on \lstinline=cold_model=, but the
-conditional expression allows it to trigger off the previous instance of itself
-instead.  The reason for doing this is that it allows \lstinline=cold_model= to
-be inserted manually later in the suite run to cold-start \lstinline=model=
-again after problems that require skipping one or more cycles. If you do not
-need this mid-run cold start capability then it is simpler to start the suite
-with a normal task in an initial R1 recurrence, like this:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    initial cycle point = 20140808T00
-    [[dependencies]]
-        [[[R1]]]
-            graph = start_model => model
-        [[[T00]]]
-            graph = model[-P1D] => model
-\end{lstlisting}
 
 \paragraph{Special Sequential Tasks}
 \label{SequentialTasks}
@@ -4058,16 +4009,6 @@ not the first because of the cycle-point matching.
 Warm-cycled forecast models generate {\em restart files}, e.g.\ model
 background fields, to initialize the next forecast. This kind of
 dependence requires an inter-cycle trigger:
-\lstset{language=suiterc}
-\begin{lstlisting}
-[scheduling]
-    [[special tasks]]
-        cold-start = ColdA
-    [[dependencies]]
-        [[[T00,T06,T12,T18]]]
-            graph = "ColdA | A[T-6] => A"
-\end{lstlisting}
-Or if you don't need an explicit cold-start task, this will do:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -4335,7 +4276,6 @@ $CYLC_TASK_SUBMIT_NUMBER         # increments with every submit
 $CYLC_TASK_TRY_NUMBER            # increments with automatic retry-on-fail
 $CYLC_TASK_WORK_DIR              # task work directory (see below)
 $CYLC_SUITE_SHARE_DIR            # suite (or task!) shared directory (see below)
-$CYLC_TASK_IS_COLDSTART          # 'True' for cold-start tasks, else 'False'
 \end{lstlisting}
 And the suite identity variables are:
 \begin{lstlisting}
@@ -5542,12 +5482,8 @@ plenty of examples.
 
 There are three ways to start a suite running: {\em cold start} and {\em warm
 start}, which start from scratch; and {\em restart}, which loads a prior suite
-state.  If a suite does not contain any special cold-start tasks there is no
-difference between cold and warm start, except that a warm start should start
-from a point beyond the original initial cycle point of the suite. Special
-cold-start tasks are only needed if you want to be able to cold-start
-individual tasks again in the middle of a suite run - 
-see~\ref{SpecialColdStartTasks}.
+state.  There is no difference between cold and warm start, except that the
+latter starts from a point beyond the suite initial cycle point.
 
 Once a suite is up and running it is typically a restart that is needed most
 often (but see also \lstinline=cylc reload=). Be aware that cold and warm
@@ -5563,9 +5499,7 @@ shell$ cylc run SUITE [INITIAL_CYCLE_POINT]
 \end{lstlisting}
 The initial cycle point may be specified on the command line or in the suite.rc
 file. The scheduler starts by loading the first instance of each task at the
-suite initial cycle point, or at the next valid point for the task, including
-any special cold-start tasks (see the note on cold-start tasks at the beginning
-of this section).
+suite initial cycle point, or at the next valid point for the task.
 
 \subsubsection{Restart}
 
@@ -5598,13 +5532,10 @@ The original suite initial cycle point is preserved, but all tasks and
 dependencies before the given start cycle point are ignored.
 
 The scheduler starts by loading a first instance of each task at the warm
-start cycle point, or at the next valid point for the task. Special cold-start
-tasks are loaded in the `succeeded' state (this is merely a device to satisfy
-any initial dependence on the cold-start tasks, which are assumed not to be
-needed for a warm start; see the note on cold-start tasks at the beginning of
-this section). \lstinline=R1=-type tasks behave exactly the same as other
-tasks - if their cycle point is at or later than the given start cycle point,
-they will run; if not, they will be ignored.
+start cycle point, or at the next valid point for the task.
+\lstinline=R1=-type tasks behave exactly the same as other tasks - if their
+cycle point is at or later than the given start cycle point, they will run; if
+not, they will be ignored.
 
 \subsection{How Tasks Interact With Running Suites}
 \label{TaskComms}
@@ -7480,10 +7411,9 @@ Setting & Pre-Cylc-6 & Cylc-6+ \\
 \subsection{Cycling}
 \label{cylc-6-migration-cycling}
 
-{\em Start-up tasks} have been removed from cylc 6, and use of cold-start tasks
-is no longer recommended. Instead, you should use the initial/run-once
-notation as detailed in~\ref{initial-non-repeating-r1-tasks}
-and~\ref{AdvancedStartingUp}.
+Special {\em start-up} and {\em cold-start} tasks have been removed from cylc
+6. Instead, use the initial/run-once notation as detailed
+in~\ref{initial-non-repeating-r1-tasks} and~\ref{AdvancedStartingUp}.
 
 {\em Repeating asynchronous tasks} have also been removed because non date-time
 workflows can now be handled more easily with integer cycling. See for instance
