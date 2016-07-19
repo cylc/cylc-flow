@@ -1,0 +1,12 @@
+[scheduling]
+    initial cycle point = 2020010100
+    final cycle point = 2020010110
+    [[dependencies]]
+        [[[00,12]]]
+            graph = foo
+[runtime]
+    [[foo]]
+        script = """
+echo this
+echo that
+"""

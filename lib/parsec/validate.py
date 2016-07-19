@@ -15,35 +15,36 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Validate a nested dict parsed from a config file against a spec file.
 
-import sys, re
-from parsec import ParsecError
-from parsec.OrderedDict import OrderedDictWithDefaults
-from parsec.util import m_override, un_many, itemstr
-from copy import copy
-
-"""
-Validate a nested dict parsed from a config file against a spec file:
-    * check all items are legal
-    * check all values are legal (type; min, max, allowed options)
-    * coerce value type from string (to int, float, list, etc.)
+Check all items are legal.
+Check all values are legal (type; min, max, allowed options).
+Coerce value type from string (to int, float, list, etc.).
 Also provides default values from the spec as a nested dict.
 """
 
+import re
+import sys
+from parsec import ParsecError
+from parsec.OrderedDict import OrderedDictWithDefaults
+from parsec.util import m_override, un_many, itemstr
+
+
 # quoted value regex reference:
 #   http://stackoverflow.com/questions/5452655/
-#       python-regex-to-match-text-in-single-quotes-ignoring-escaped-quotes-and-tabs-n
+#   python-regex-to-match-text-in-single-quotes-
+#   ignoring-escaped-quotes-and-tabs-n
 
 # quoted list values not at end of line
-_SQ_L_VALUE = re.compile( r"'([^'\\]*(?:\\.[^'\\]*)*)'" )
-_DQ_L_VALUE = re.compile( r'"([^"\\]*(?:\\.[^"\\]*)*)"' )
+_SQ_L_VALUE = re.compile(r"'([^'\\]*(?:\\.[^'\\]*)*)'")
+_DQ_L_VALUE = re.compile(r'"([^"\\]*(?:\\.[^"\\]*)*)"')
 # quoted values with ignored trailing comments
-_SQ_VALUE = re.compile( r"'([^'\\]*(?:\\.[^'\\]*)*)'(?:\s*(?:\#.*)?)?$" )
-_DQ_VALUE = re.compile( r'"([^"\\]*(?:\\.[^"\\]*)*)"(?:\s*(?:\#.*)?)?$' )
+_SQ_VALUE = re.compile(r"'([^'\\]*(?:\\.[^'\\]*)*)'(?:\s*(?:\#.*)?)?$")
+_DQ_VALUE = re.compile(r'"([^"\\]*(?:\\.[^"\\]*)*)"(?:\s*(?:\#.*)?)?$')
 
 _UQLP = re.compile(r"""(['"]?)(.*?)\1(,|$)""")
-_SQV = re.compile( "((?:^[^']*(?:'[^']*')*[^']*)*)(#.*)$" )
-_DQV = re.compile( '((?:^[^"]*(?:"[^"]*")*[^"]*)*)(#.*)$' )
+_SQV = re.compile("((?:^[^']*(?:'[^']*')*[^']*)*)(#.*)$")
+_DQV = re.compile('((?:^[^"]*(?:"[^"]*")*[^"]*)*)(#.*)$')
 
 
 class ValidationError(ParsecError):
@@ -51,8 +52,10 @@ class ValidationError(ParsecError):
 
 
 class IllegalValueError(ValidationError):
-    def __init__(self, vtype, keys, value):
+    def __init__(self, vtype, keys, value, exc=None):
         self.msg = 'Illegal %s value: %s' % (vtype, itemstr(keys, value=value))
+        if exc:
+            self.msg += ": %s" % exc
 
 
 class IllegalItemError(ValidationError):
@@ -60,42 +63,43 @@ class IllegalItemError(ValidationError):
         self.msg = 'Illegal item: %s' % itemstr(keys, key)
 
 
-def validate( cfig, spec, keys=[] ):
+def validate(cfig, spec, keys=[]):
     """Validate and coerce a nested dict against a parsec spec."""
-    for key,val in cfig.items():
+    for key, val in cfig.items():
         if key not in spec:
             if '__MANY__' not in spec:
-                raise IllegalItemError( keys, key )
+                raise IllegalItemError(keys, key)
             else:
                 # only accept the item if it's value is of the same type
                 # as that of the __MANY__  item, i.e. dict or not-dict.
-                val_is_dict = isinstance( val, dict )
-                spc_is_dict = isinstance( spec['__MANY__'], dict )
-                if ( val_is_dict and spc_is_dict ) or \
-                        ( not val_is_dict and not spc_is_dict ):
+                val_is_dict = isinstance(val, dict)
+                spc_is_dict = isinstance(spec['__MANY__'], dict)
+                if (val_is_dict and spc_is_dict) or \
+                        (not val_is_dict and not spc_is_dict):
                     speckey = '__MANY__'
                 else:
-                    raise IllegalItemError( keys, key )
+                    raise IllegalItemError(keys, key)
         else:
             speckey = key
         specval = spec[speckey]
-        if isinstance( val, dict ) and isinstance( specval, dict):
-            validate( val, spec[speckey], keys+[key] )
-        elif val is not None and not isinstance( specval, dict):
+        if isinstance(val, dict) and isinstance(specval, dict):
+            validate(val, spec[speckey], keys + [key])
+        elif val is not None and not isinstance(specval, dict):
             # (if val is null we're only checking item validity)
-            cfig[key] = spec[speckey].check( val, keys+[key] )
+            cfig[key] = spec[speckey].check(val, keys + [key])
         else:
-            #raise IllegalItemError( keys, key )
+            # raise IllegalItemError(keys, key)
             # THIS IS OK: blank value
             # TODO - ANY OTHER POSSIBILITIES?
-            #print 'VAL:', val, '::', keys + [key]
+            # print 'VAL:', val, '::', keys + [key]
             pass
 
-def check_compulsory( cfig, spec, keys=[] ):
+
+def check_compulsory(cfig, spec, keys=[]):
     """Check compulsory items are defined in cfig."""
-    for key,val in spec.items():
-        if isinstance( val, dict ):
-            check_compulsory( cfig, spec[key], keys+[key] )
+    for key, val in spec.items():
+        if isinstance(val, dict):
+            check_compulsory(cfig, spec[key], keys + [key])
         else:
             if val.args['compulsory']:
                 cfg = cfig
@@ -104,73 +108,84 @@ def check_compulsory( cfig, spec, keys=[] ):
                         cfg = cfg[k]
                 except KeyError:
                     # TODO - raise an exception
-                    print >> sys.stderr, "COMPULSORY ITEM MISSING", keys + [key]
+                    print >> sys.stderr, (
+                        "COMPULSORY ITEM MISSING", keys + [key])
 
-def _populate_spec_defaults( defs, spec ):
+
+def _populate_spec_defaults(defs, spec):
     """Populate a nested dict with default values from a spec."""
-    for key,val in spec.items():
-        if isinstance( val, dict ):
+    for key, val in spec.items():
+        if isinstance(val, dict):
             if key not in defs:
                 defs[key] = OrderedDictWithDefaults()
-            _populate_spec_defaults( defs[key], spec[key] )
+            _populate_spec_defaults(defs[key], spec[key])
         else:
             defs[key] = spec[key].args['default']
 
-def get_defaults( spec ):
+
+def get_defaults(spec):
     """Return a nested dict of default values from a parsec spec."""
     defs = OrderedDictWithDefaults()
-    _populate_spec_defaults( defs, spec )
+    _populate_spec_defaults(defs, spec)
     return defs
 
-def expand( sparse, spec ):
+
+def expand(sparse, spec):
     # get dense defaults
     dense = get_defaults(spec)
     # override defaults with sparse values
-    m_override( dense, sparse )
-    un_many( dense )
+    m_override(dense, sparse)
+    un_many(dense)
     return dense
 
-_MULTI_LINE_SINGLE = re.compile(r"\A'''(.*?)'''\s*(?:#.*)?\Z", re.MULTILINE|re.DOTALL)
-_MULTI_LINE_DOUBLE = re.compile(r'\A"""(.*?)"""\s*(?:#.*)?\Z', re.MULTILINE|re.DOTALL)
 
-def _strip_and_unquote( keys, value ):
+_MULTI_LINE_SINGLE = re.compile(
+    r"\A'''(.*?)'''\s*(?:#.*)?\Z", re.MULTILINE | re.DOTALL)
+_MULTI_LINE_DOUBLE = re.compile(
+    r'\A"""(.*?)"""\s*(?:#.*)?\Z', re.MULTILINE | re.DOTALL)
+
+
+def _strip_and_unquote(keys, value):
     if value[:3] == "'''":
-        m = re.match( _MULTI_LINE_SINGLE, value )
+        m = re.match(_MULTI_LINE_SINGLE, value)
         if m:
             value = m.groups()[0]
         else:
-            raise IllegalValueError( "string", keys, value )
+            raise IllegalValueError("string", keys, value)
 
     elif value[:3] == '"""':
-        m = re.match( _MULTI_LINE_DOUBLE, value )
+        m = re.match(_MULTI_LINE_DOUBLE, value)
         if m:
             value = m.groups()[0]
         else:
-            raise IllegalValueError( "string", keys, value )
+            raise IllegalValueError("string", keys, value)
 
     elif value.startswith('"'):
-        m = re.match( _DQ_VALUE, value )
+        m = re.match(_DQ_VALUE, value)
         if m:
             value = m.groups()[0]
         else:
-            raise IllegalValueError( "string", keys, value )
+            raise IllegalValueError("string", keys, value)
 
     elif value.startswith("'"):
-        m = re.match( _SQ_VALUE, value )
+        m = re.match(_SQ_VALUE, value)
         if m:
             value = m.groups()[0]
         else:
-            raise IllegalValueError( "string", keys, value )
+            raise IllegalValueError("string", keys, value)
     else:
         # unquoted
-        value = re.sub( '\s*#.*$', '', value )
+        value = re.sub('\s*#.*$', '', value)
 
     # Note strip() removes leading and trailing whitespace, including
     # initial newlines on a multiline string:
     return value.strip()
 
-def _unquoted_list_parse( keys, value ):
-    # http://stackoverflow.com/questions/4982531/how-do-i-split-a-comma-delimited-string-in-python-except-for-the-commas-that-are
+
+def _unquoted_list_parse(keys, value):
+    # http://stackoverflow.com/questions/4982531/
+    # how-do-i-split-a-comma-delimited-string-in-python-except-
+    # for-the-commas-that-are
     pos = 0
     while True:
         m = _UQLP.search(value, pos)
@@ -181,81 +196,94 @@ def _unquoted_list_parse( keys, value ):
             break
         pos = m.end(0)
 
-def _strip_and_unquote_list( keys, value ):
+
+def _strip_and_unquote_list(keys, value):
     if value.startswith('"'):
         # double-quoted values
-        m = _DQV.match( value )
+        m = _DQV.match(value)
         if m:
             value = m.groups()[0]
-        values = re.findall( _DQ_L_VALUE, value )
+        values = re.findall(_DQ_L_VALUE, value)
     elif value.startswith("'"):
         # single-quoted values
-        m = _SQV.match( value )
+        m = _SQV.match(value)
         if m:
             value = m.groups()[0]
 
-        values = re.findall( _SQ_L_VALUE, value )
+        values = re.findall(_SQ_L_VALUE, value)
     else:
-        # unquoted values
-        # (may contain internal quoted strings with list delimiters inside 'em!)
-        m = _DQV.match( value )
+        # unquoted values (may contain internal quoted strings with list
+        # delimiters inside 'em!)
+        m = _DQV.match(value)
         if m:
             value = m.groups()[0]
         else:
-            n = _SQV.match( value )
+            n = _SQV.match(value)
             if n:
                 value = n.groups()[0]
 
-        values = list(_unquoted_list_parse( keys, value ))
+        values = list(_unquoted_list_parse(keys, value))
         # allow trailing commas
         if values[-1] == '':
             values = values[0:-1]
 
     return values
 
-def _coerce_str( value, keys, args ):
+
+def _coerce_str(value, keys, args):
     """Coerce value to a string."""
-    if isinstance( value, list ):
+    if isinstance(value, list):
         # handle graph string merging
         vraw = []
         for v in value:
-            vraw.append( _strip_and_unquote( keys, v ))
+            vraw.append(_strip_and_unquote(keys, v))
         value = '\n'.join(vraw)
     else:
-        value = _strip_and_unquote( keys, value )
+        value = _strip_and_unquote(keys, value)
     return value
 
-def _coerce_int( value, keys, args ):
+
+def _coerce_int(value, keys, args):
     """Coerce value to an integer."""
-    value = _strip_and_unquote( keys, value )
+    value = _strip_and_unquote(keys, value)
+    if value in ['', None]:
+        return None
     try:
-        return int( value )
+        return int(value)
     except ValueError:
-        raise IllegalValueError( 'int', keys, value )
+        raise IllegalValueError('int', keys, value)
 
-def _coerce_float( value, keys, args ):
+
+def _coerce_float(value, keys, args):
     """Coerce value to a float."""
-    value = _strip_and_unquote( keys, value )
+    value = _strip_and_unquote(keys, value)
+    if value in ['', None]:
+        return None
     try:
-        return float( value )
+        return float(value)
     except ValueError:
-        raise IllegalValueError( 'float', keys, value )
+        raise IllegalValueError('float', keys, value)
 
-def _coerce_boolean( value, keys, args ):
+
+def _coerce_boolean(value, keys, args):
     """Coerce value to a boolean."""
-    value = _strip_and_unquote( keys, value )
-    if value in ['True','true']:
+    value = _strip_and_unquote(keys, value)
+    if value in ['True', 'true']:
         return True
-    elif value in ['False','false']:
+    elif value in ['False', 'false']:
         return False
+    elif value in ['', None]:
+        return None
     else:
-        raise IllegalValueError( 'boolean', keys, value )
+        raise IllegalValueError('boolean', keys, value)
 
-def _coerce_str_list( value, keys, args ):
+
+def _coerce_str_list(value, keys, args):
     """Coerce value to a list of strings."""
-    return _strip_and_unquote_list( keys, value )
+    return _strip_and_unquote_list(keys, value)
 
-def _expand_list( values, keys, type, allow_zeroes ):
+
+def _expand_list(values, keys, type, allow_zeroes):
     lvalues = []
     for item in values:
         try:
@@ -264,67 +292,66 @@ def _expand_list( values, keys, type, allow_zeroes ):
             # too few values to unpack: no multiplier
             try:
                 lvalues.append(type(item))
-            except ValueError:
-                raise IllegalValueError( "list", keys, item )
+            except ValueError as exc:
+                raise IllegalValueError("list", keys, item, exc)
         else:
             # mult * val
             try:
                 lvalues += int(mult) * [type(val)]
-            except ValueError:
-                raise IllegalValueError( "list", keys, item )
+            except ValueError as exc:
+                raise IllegalValueError("list", keys, item, exc)
 
     if not allow_zeroes:
         if type(0.0) in lvalues:
-            raise IllegalValueError( "no-zero list", keys, values )
+            raise IllegalValueError("no-zero list", keys, values)
 
     return lvalues
 
-def _coerce_int_list( value, keys, args ):
+
+def _coerce_int_list(value, keys, args):
     "Coerce list values with optional multipliers to integer."
-    values = _strip_and_unquote_list( keys, value )
-    return _expand_list( values, keys, int, args['allow zeroes'] )
+    values = _strip_and_unquote_list(keys, value)
+    return _expand_list(values, keys, int, args['allow zeroes'])
 
-def _coerce_float_list( value, keys, args ):
+
+def _coerce_float_list(value, keys, args):
     "Coerce list values with optional multipliers to float."
-    values = _strip_and_unquote_list( keys, value )
-    return _expand_list( values, keys, float, args['allow zeroes'] )
+    values = _strip_and_unquote_list(keys, value)
+    return _expand_list(values, keys, float, args['allow zeroes'])
 
-    return lvalues
 
 coercers = {
-    'boolean'      : _coerce_boolean,
-    'string'       : _coerce_str,
-    'integer'      : _coerce_int,
-    'float'        : _coerce_float,
-    'string_list'  : _coerce_str_list,
-    'integer_list' : _coerce_int_list,
-    'float_list'   : _coerce_float_list,
-    }
+    'boolean': _coerce_boolean,
+    'string': _coerce_str,
+    'integer': _coerce_int,
+    'float': _coerce_float,
+    'string_list': _coerce_str_list,
+    'integer_list': _coerce_int_list,
+    'float_list': _coerce_float_list}
+
 
 class validator(object):
 
-    def __init__( self, vtype='string', default=None,
-            options=[], vmin=None, vmax=None,
-            allow_zeroes=True, compulsory=False ):
+    def __init__(self, vtype='string', default=None, options=[],
+                 vmin=None, vmax=None, allow_zeroes=True, compulsory=False):
         self.coercer = coercers[vtype]
         self.args = {
-                'options'      : options,
-                'vmin'         : vmin,
-                'vmax'         : vmax,
-                'default'      : default,
-                'allow zeroes' : allow_zeroes,
-                'compulsory'   : compulsory,
-                }
+            'options': options,
+            'vmin': vmin,
+            'vmax': vmax,
+            'default': default,
+            'allow zeroes': allow_zeroes,
+            'compulsory': compulsory}
 
-    def check( self, value, keys ):
-        value = self.coercer( value, keys, self.args )
+    def check(self, value, keys):
+        value = self.coercer(value, keys, self.args)
         # handle option lists centrally here
         if self.args['options']:
             if isinstance(value, list):
                 for val in value:
                     if val not in self.args['options']:
-                        raise IllegalValueError( 'option', keys, val )
+                        raise IllegalValueError('option', keys, val)
             else:
                 if value not in self.args['options']:
-                    raise IllegalValueError( 'option', keys, value )
+                    raise IllegalValueError('option', keys, value)
         return value

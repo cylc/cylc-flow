@@ -1,1024 +1,1024 @@
 [[var_p2]]
-   script = echo "RUN: run-var.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = VAR, PARALLEL
-   [[[events]]]
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = parallel
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-var.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = VAR, PARALLEL
+    [[[events]]]
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = parallel
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[OPS]]
-   script = echo "RUN: run-ops.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = 
-   [[[events]]]
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-   [[[environment]]]
-   [[[directives]]]
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-ops.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = 
+    [[[events]]]
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+    [[[environment]]]
+    [[[directives]]]
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[ops_s1]]
-   script = echo "RUN: run-ops.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = OPS, SERIAL
-   [[[events]]]
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = serial
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-ops.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = OPS, SERIAL
+    [[[events]]]
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = serial
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[ops_s2]]
-   script = echo "RUN: run-ops.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = OPS, SERIAL
-   [[[events]]]
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = serial
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-ops.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = OPS, SERIAL
+    [[[events]]]
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = serial
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[ops_p1]]
-   script = echo "RUN: run-ops.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = OPS, PARALLEL
-   [[[events]]]
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = parallel
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-ops.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = OPS, PARALLEL
+    [[[events]]]
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = parallel
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[ops_p2]]
-   script = echo "RUN: run-ops.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = OPS, PARALLEL
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = parallel
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-ops.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = OPS, PARALLEL
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = parallel
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[var_p1]]
-   script = echo "RUN: run-var.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = VAR, PARALLEL
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = parallel
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-var.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = VAR, PARALLEL
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = parallel
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[VAR]]
-   script = echo "RUN: run-var.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = 
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-var.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = 
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[var_s1]]
-   script = echo "RUN: run-var.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = VAR, SERIAL
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = serial
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-var.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = VAR, SERIAL
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = serial
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[SERIAL]]
-   script = echo Dummy task; sleep $(cylc rnd 1 16)
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = 
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = serial
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo Dummy task; sleep $(cylc rnd 1 16)
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = 
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = serial
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[root]]
-   script = echo Dummy task; sleep $(cylc rnd 1 16)
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = 
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo Dummy task; sleep $(cylc rnd 1 16)
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = 
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[PARALLEL]]
-   script = echo Dummy task; sleep $(cylc rnd 1 16)
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = 
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = parallel
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo Dummy task; sleep $(cylc rnd 1 16)
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = 
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = parallel
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 
 [[var_s2]]
-   script = echo "RUN: run-var.sh"
-   enable resurrection = False
-   env-script = 
-   title = 
-   URL = 
-   extra log files = 
-   work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   description = 
-   init-script = 
-   pre-script = 
-   post-script = 
-   inherit = VAR, SERIAL
-   [[[events]]]
-      handler events = 
-      mail smtp = 
-      handlers = 
-      mail events = 
-      mail retry delays = 
-      handler retry delays = 
-      mail to = 
-      mail from = 
-      execution timeout = 
-      submission timeout = 
-      register job logs retry delays = 
-      reset timer = 
-      submission timeout handler = 
-      submitted handler = 
-      started handler = 
-      execution timeout handler = 
-      expired handler = 
-      submission failed handler = 
-      submission retry handler = 
-      warning handler = 
-      succeeded handler = 
-      retry handler = 
-      failed handler = 
-   [[[environment]]]
-   [[[directives]]]
-      job_type = serial
-   [[[environment filter]]]
-      exclude = 
-      include = 
-   [[[dummy mode]]]
-      disable pre-script = True
-      disable post-script = True
-      disable retries = True
-      script = echo Dummy task; sleep $(cylc rnd 1 16)
-      disable task event hooks = True
-   [[[outputs]]]
-   [[[simulation mode]]]
-      run time range = 1, 16
-      simulate failure = False
-      disable retries = True
-      disable task event hooks = True
-   [[[suite state polling]]]
-      interval = 
-      host = 
-      max-polls = 
-      run-dir = 
-      user = 
-      template = 
-      verbose mode = 
-   [[[remote]]]
-      owner = 
-      suite definition directory = 
-      host = 
-      retrieve job logs = 
-      retrieve job logs max size = 
-      retrieve job logs retry delays = 
-   [[[job]]]
-      shell = /bin/bash
-      batch submit command template = 
-      batch system = background
-      submission retry delays = 
-      execution retry delays = 
-      submission polling intervals = 
-      execution polling intervals = 
-      execution time limit = 
+    script = echo "RUN: run-var.sh"
+    enable resurrection = False
+    env-script = 
+    title = 
+    URL = 
+    extra log files = 
+    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
+    description = 
+    init-script = 
+    pre-script = 
+    post-script = 
+    inherit = VAR, SERIAL
+    [[[events]]]
+        handler events = 
+        mail smtp = 
+        handlers = 
+        mail events = 
+        mail retry delays = 
+        handler retry delays = 
+        mail to = 
+        mail from = 
+        execution timeout = 
+        submission timeout = 
+        register job logs retry delays = 
+        reset timer = 
+        submission timeout handler = 
+        submitted handler = 
+        started handler = 
+        execution timeout handler = 
+        expired handler = 
+        submission failed handler = 
+        submission retry handler = 
+        warning handler = 
+        succeeded handler = 
+        retry handler = 
+        failed handler = 
+    [[[environment]]]
+    [[[directives]]]
+        job_type = serial
+    [[[environment filter]]]
+        exclude = 
+        include = 
+    [[[dummy mode]]]
+        disable pre-script = True
+        disable post-script = True
+        disable retries = True
+        script = echo Dummy task; sleep $(cylc rnd 1 16)
+        disable task event hooks = True
+    [[[outputs]]]
+    [[[simulation mode]]]
+        run time range = PT1S, PT16S
+        simulate failure = False
+        disable retries = True
+        disable task event hooks = True
+    [[[suite state polling]]]
+        interval = 
+        host = 
+        max-polls = 
+        run-dir = 
+        user = 
+        template = 
+        verbose mode = 
+    [[[remote]]]
+        owner = 
+        suite definition directory = 
+        host = 
+        retrieve job logs = 
+        retrieve job logs max size = 
+        retrieve job logs retry delays = 
+    [[[job]]]
+        shell = /bin/bash
+        batch submit command template = 
+        batch system = background
+        submission retry delays = 
+        execution retry delays = 
+        submission polling intervals = 
+        execution polling intervals = 
+        execution time limit = 

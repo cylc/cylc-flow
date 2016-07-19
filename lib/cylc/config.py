@@ -21,7 +21,7 @@ import os
 import sys
 import traceback
 from cylc.taskdef import TaskDef, TaskDefError
-from cylc.cfgspec.suite import get_suitecfg
+from cylc.cfgspec.suite import RawSuiteConfig
 from cylc.cycling.loader import (get_point, get_point_relative,
                                  get_interval, get_interval_cls,
                                  get_sequence, get_sequence_cls,
@@ -214,11 +214,11 @@ class SuiteConfig(object):
 
         # parse, upgrade, validate the suite, but don't expand with default
         # items
-        self.mem_log("config.py: before get_suitecfg")
-        self.pcfg = get_suitecfg(
+        self.mem_log("config.py: before RawSuiteConfig.get_inst")
+        self.pcfg = RawSuiteConfig.get_inst(
             fpath, force=is_reload, tvars=template_vars,
             tvars_file=template_vars_file, write_proc=write_proc)
-        self.mem_log("config.py: after get_suitecfg")
+        self.mem_log("config.py: after RawSuiteConfig.get_inst")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
         self.mem_log("config.py: after get(sparse=True)")
@@ -699,6 +699,8 @@ class SuiteConfig(object):
                 vfcp = get_point(
                     self.cfg['visualization']['final cycle point']
                 ).standardise()
+        else:
+            vfcp = None
 
         # A viz final point can't be beyond the suite final point.
         if vfcp is not None and final_point is not None:
@@ -828,6 +830,8 @@ class SuiteConfig(object):
                 continue
             # get declared parents, with implicit inheritance from root.
             pts = self.cfg['runtime'][name].get('inherit', ['root'])
+            if not pts:
+                pts = ['root']
             for p in pts:
                 if p == "None":
                     # see just below
@@ -835,7 +839,7 @@ class SuiteConfig(object):
                 if p not in self.cfg['runtime']:
                     raise SuiteConfigError(
                         "ERROR, undefined parent for " + name + ": " + p)
-            if not pts or pts[0] == "None":
+            if pts[0] == "None":
                 if len(pts) < 2:
                     raise SuiteConfigError(
                         "ERROR: null parentage for " + name)

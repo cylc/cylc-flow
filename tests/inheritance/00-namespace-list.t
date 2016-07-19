@@ -32,17 +32,17 @@ cmp_ok runtime.out <<'__DONE__'
 [[root]]
 [[FAMILY]]
 [[m1]]
-   inherit = FAMILY
-   [[[environment]]]
-      FOO = foo
+    inherit = FAMILY
+    [[[environment]]]
+        FOO = foo
 [[m2]]
-   inherit = FAMILY
-   [[[environment]]]
-      FOO = bar
+    inherit = FAMILY
+    [[[environment]]]
+        FOO = bar
 [[m3]]
-   inherit = FAMILY
-   [[[environment]]]
-      FOO = foo
+    inherit = FAMILY
+    [[[environment]]]
+        FOO = foo
 __DONE__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -16,15 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc get-config
-. $(dirname $0)/test_header
+. "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 14
+set_test_number 15
 #-------------------------------------------------------------------------------
-init_suite "$TEST_NAME_BASE" "$TEST_SOURCE_DIR/$TEST_NAME_BASE/suite.rc"
+init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc"
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-all
-run_ok $TEST_NAME cylc get-config $SUITE_NAME
-cmp_ok $TEST_NAME.stderr - </dev/null
+TEST_NAME="${TEST_NAME_BASE}-all"
+run_ok "${TEST_NAME}" cylc get-config "${SUITE_NAME}"
+run_ok "${TEST_NAME}-validate" cylc validate --strict "${TEST_NAME}.stdout"
+cmp_ok "${TEST_NAME}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-section1
 run_ok $TEST_NAME cylc get-config --item=[scheduling] $SUITE_NAME

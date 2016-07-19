@@ -1144,6 +1144,9 @@ class TaskProxy(object):
         self.is_manual_submit = False
 
         script, pre_script, post_script = self._get_job_scripts(rtconfig)
+        execution_time_limit = rtconfig['job']['execution time limit']
+        if execution_time_limit:
+            execution_time_limit = float(execution_time_limit)
 
         # Location of job file, etc
         self._create_job_log_path()
@@ -1154,7 +1157,7 @@ class TaskProxy(object):
                 rtconfig['job']['batch submit command template']),
             'batch system conf': batch_sys_conf,
             'directives': rtconfig['directives'],
-            'execution time limit': rtconfig['job']['execution time limit'],
+            'execution time limit': execution_time_limit,
             'env-script': rtconfig['env-script'],
             'host': self.task_host,
             'init-script': rtconfig['init-script'],

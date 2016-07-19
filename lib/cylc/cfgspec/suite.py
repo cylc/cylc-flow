@@ -15,36 +15,32 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"Define all legal items and values for cylc suite definition files."
 
 import re
 
 from parsec.validate import validator as vdr
-from parsec.validate import (
-    coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
-    IllegalValueError
-)
+from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
-from parsec.fileparse import parse
 from parsec.config import config
 from cylc.syntax_flags import (
-    set_syntax_version, VERSION_PREV, VERSION_NEW, SyntaxVersionError
-)
+    set_syntax_version, VERSION_PREV, VERSION_NEW, SyntaxVersionError)
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
 from cylc.cycling.integer import REC_INTERVAL as REC_INTEGER_INTERVAL
 
-from cylc.cfgspec.utils import coerce_interval
-from cylc.cfgspec.utils import coerce_interval_list
+from cylc.cfgspec.utils import (
+    coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PRIVILEGE_LEVELS
 
-"Define all legal items and values for cylc suite definition files."
 
-
-def _coerce_cycleinterval(value, keys, args):
+def _coerce_cycleinterval(value, keys, _):
     """Coerce value to a cycle interval."""
+    if not value:
+        return None
     value = _strip_and_unquote(keys, value)
     if value.isdigit():
         # Old runahead limit format.
@@ -69,8 +65,10 @@ def _coerce_cycleinterval(value, keys, args):
     return value
 
 
-def _coerce_cycletime(value, keys, args):
+def _coerce_cycletime(value, keys, _):
     """Coerce value to a cycle point."""
+    if not value:
+        return None
     if value == "now":
         # Handle this later in config.py when the suite UTC mode is known.
         return value
@@ -99,13 +97,15 @@ def _coerce_cycletime(value, keys, args):
     return value
 
 
-def _coerce_cycletime_format(value, keys, args):
+def _coerce_cycletime_format(value, keys, _):
     """Coerce value to a cycle point format (either CCYYMM... or %Y%m...)."""
     value = _strip_and_unquote(keys, value)
-    set_syntax_version(VERSION_NEW,
-                       "use of [cylc]cycle point format",
-                       exc_class=IllegalValueError,
-                       exc_args=("cycle point format", keys, value))
+    if not value:
+        return None
+    try:
+        set_syntax_version(VERSION_NEW, "use of [cylc]cycle point format")
+    except SyntaxVersionError:
+        raise IllegalValueError("cycle point format", keys, value)
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -134,13 +134,16 @@ def _coerce_cycletime_format(value, keys, args):
     return value
 
 
-def _coerce_cycletime_time_zone(value, keys, args):
+def _coerce_cycletime_time_zone(value, keys, _):
     """Coerce value to a cycle point time zone format - Z, +13, -0800..."""
     value = _strip_and_unquote(keys, value)
-    set_syntax_version(VERSION_NEW,
-                       "use of [cylc]cycle point time zone format",
-                       exc_class=IllegalValueError,
-                       exc_args=("cycle point time zone format", keys, value))
+    if not value:
+        return None
+    try:
+        set_syntax_version(
+            VERSION_NEW, "use of [cylc]cycle point time zone format")
+    except SyntaxVersionError:
+        raise IllegalValueError("cycle point time zone format", keys, value)
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -155,10 +158,9 @@ def _coerce_cycletime_time_zone(value, keys, args):
     return value
 
 
-def _coerce_final_cycletime(value, keys, args):
+def _coerce_final_cycletime(value, keys, _):
     """Coerce final cycle point."""
-    value = _strip_and_unquote(keys, value)
-    return value
+    return _strip_and_unquote(keys, value)
 
 
 coercers['cycletime'] = _coerce_cycletime
@@ -190,9 +192,9 @@ SPEC = {
         'cycle point time zone': vdr(
             vtype='cycletime_time_zone', default=None),
         'required run mode': vdr(
-            vtype='string', options=['live', 'dummy', 'simulation']),
+            vtype='string', options=['live', 'dummy', 'simulation', '']),
         'force run mode': vdr(
-            vtype='string', options=['live', 'dummy', 'simulation']),
+            vtype='string', options=['live', 'dummy', 'simulation', '']),
         'abort if any task fails': vdr(vtype='boolean', default=False),
         'log resolved dependencies': vdr(vtype='boolean', default=False),
         'disable automatic shutdown': vdr(vtype='boolean', default=False),
@@ -216,8 +218,8 @@ SPEC = {
                 vtype='boolean', default=False),
             'abort if stalled handler fails': vdr(
                 vtype='boolean', default=False),
-            'abort on stalled': vdr(vtype='boolean'),
-            'abort on timeout': vdr(vtype='boolean'),
+            'abort on stalled': vdr(vtype='boolean', default=None),
+            'abort on timeout': vdr(vtype='boolean', default=None),
             'mail events': vdr(vtype='string_list'),
             'mail from': vdr(vtype='string'),
             'mail smtp': vdr(vtype='string'),
@@ -233,15 +235,15 @@ SPEC = {
             'suite shutdown event handler': vdr(
                 vtype='string', default='cylc hook check-triggering'),
             'required run mode': vdr(
-                vtype='string', options=['live', 'simulation', 'dummy']),
+                vtype='string', options=['live', 'simulation', 'dummy', '']),
             'allow task failures': vdr(vtype='boolean', default=False),
             'expected task failures': vdr(vtype='string_list', default=[]),
             'live mode suite timeout': vdr(
-                vtype='interval_minutes', default=60),
+                vtype='interval_minutes', default=DurationFloat(60)),
             'dummy mode suite timeout': vdr(
-                vtype='interval_minutes', default=60),
+                vtype='interval_minutes', default=DurationFloat(60)),
             'simulation mode suite timeout': vdr(
-                vtype='interval_minutes', default=60),
+                vtype='interval_minutes', default=DurationFloat(60)),
         },
         'authentication': {
             # Allow owners to grant public shutdown rights at the most, not
@@ -269,6 +271,7 @@ SPEC = {
         'queues': {
             'default': {
                 'limit': vdr(vtype='integer', default=0),
+                'members': vdr(vtype='string_list', default=[]),
             },
             '__MANY__': {
                 'limit': vdr(vtype='integer', default=0),
@@ -317,7 +320,8 @@ SPEC = {
             },
             'simulation mode': {
                 'run time range': vdr(
-                    vtype='interval_seconds_list', default=[1, 16]),
+                    vtype='interval_seconds_list',
+                    default=[DurationFloat(1), DurationFloat(16)]),
                 'simulate failure': vdr(vtype='boolean', default=False),
                 'disable task event hooks': vdr(vtype='boolean', default=True),
                 'disable retries': vdr(vtype='boolean', default=True),
@@ -349,7 +353,7 @@ SPEC = {
                 'host': vdr(vtype='string'),
                 'owner': vdr(vtype='string'),
                 'suite definition directory': vdr(vtype='string'),
-                'retrieve job logs': vdr(vtype='boolean'),
+                'retrieve job logs': vdr(vtype='boolean', default=None),
                 'retrieve job logs max size': vdr(vtype='string'),
                 'retrieve job logs retry delays': vdr(
                     vtype='interval_minutes_list'),
@@ -366,7 +370,7 @@ SPEC = {
                 'mail to': vdr(vtype='string'),
                 'register job logs retry delays': vdr(
                     vtype='interval_minutes_list'),
-                'reset timer': vdr(vtype='boolean'),
+                'reset timer': vdr(vtype='boolean', default=None),
                 'submission timeout': vdr(vtype='interval_minutes'),
 
                 'expired handler': vdr(vtype='string_list', default=[]),
@@ -392,7 +396,7 @@ SPEC = {
                 'max-polls': vdr(vtype='integer'),
                 'run-dir': vdr(vtype='string'),
                 'template': vdr(vtype='string'),
-                'verbose mode': vdr(vtype='boolean'),
+                'verbose mode': vdr(vtype='boolean', default=None),
             },
             'environment': {
                 '__MANY__': vdr(vtype='string'),
@@ -428,6 +432,7 @@ SPEC = {
 
 
 def upg(cfg, descr):
+    """Upgrade old suite configuration."""
     u = upgrader(cfg, descr)
     u.deprecate(
         '5.2.0',
@@ -559,7 +564,7 @@ def upg(cfg, descr):
     # ___________________________
     try:
         old_cycling_mode = cfg['scheduling']['cycling']
-    except:
+    except KeyError:
         pass
     else:
         if old_cycling_mode in ['Yearly', 'Monthly', 'Daily']:
@@ -574,22 +579,22 @@ def upg(cfg, descr):
             pass
 
 
-class sconfig(config):
-    pass
+class RawSuiteConfig(config):
+    """Raw suite configuration."""
+    _SUITECFG = None
+    _CFPATH = None
 
-
-suitecfg = None
-cfpath = None
-
-
-def get_suitecfg(
-        fpath, force=False, tvars=[], tvars_file=None, write_proc=False):
-    global suitecfg, cfpath
-    if not suitecfg or fpath != cfpath or force:
-        cfpath = fpath
-        # TODO - write_proc should be in loadcfg
-        suitecfg = sconfig(
-            SPEC, upg, tvars=tvars, tvars_file=tvars_file,
-            write_proc=write_proc)
-        suitecfg.loadcfg(fpath, "suite definition")
-    return suitecfg
+    @classmethod
+    def get_inst(cls, fpath, force=False, tvars=None, tvars_file=None,
+                 write_proc=False):
+        """Return the default instance."""
+        if cls._SUITECFG is None or fpath != cls._CFPATH or force:
+            cls._CFPATH = fpath
+            if tvars is None:
+                tvars = []
+            # TODO - write_proc should be in loadcfg
+            cls._SUITECFG = cls(
+                SPEC, upg, tvars=tvars, tvars_file=tvars_file,
+                write_proc=write_proc)
+            cls._SUITECFG.loadcfg(fpath, "suite definition")
+        return cls._SUITECFG
