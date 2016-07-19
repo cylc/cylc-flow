@@ -48,7 +48,7 @@ Reference tests can use any run mode:
 import os
 import sys
 
-from cylc.LogDiagnosis import LogAnalyser
+from cylc.log_diagnosis import LogAnalyser
 
 if len(sys.argv) == 2 and sys.argv[1] == '--help':
     print __doc__

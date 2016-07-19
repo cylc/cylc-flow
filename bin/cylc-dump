@@ -41,12 +41,12 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.network.suite_state import StateSummaryClient
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.dump import dump_to_stdout
 
 
 def main():
-    parser = cop(__doc__, pyro=True, noforce=True)
+    parser = COP(__doc__, pyro=True, noforce=True)
 
     parser.add_option(
         "-g", "--global", help="Global information only.",

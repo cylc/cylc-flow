@@ -34,13 +34,13 @@ if remrun().execute():
     sys.exit(0)
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.version import CYLC_VERSION
 
 
 def main():
-    parser = cop(__doc__, argdoc=[])
+    parser = COP(__doc__, argdoc=[])
     parser.add_option(
         "--long",
         help="Print the path to the current cylc version",

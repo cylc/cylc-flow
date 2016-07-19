@@ -33,13 +33,13 @@ if remrun().execute():
     sys.exit(0)
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.config import SuiteConfig
 
 
 def main():
 
-    parser = cop(__doc__, jset=True, prep=True)
+    parser = COP(__doc__, jset=True, prep=True)
 
     parser.add_option(
         "-a", "--all-tasks",

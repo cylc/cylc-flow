@@ -32,13 +32,13 @@ if remrun().execute():
 
 import os
 from shutil import rmtree
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.registration import RegistrationDB
 import cylc.flags
 
 
 def main():
-    parser = cop(
+    parser = COP(
         __doc__,
         argdoc=[('REGEX', 'Regular expression to match suite names.')])
 

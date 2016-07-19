@@ -30,17 +30,16 @@ from cylc.cycling.loader import (get_point, get_point_relative,
 from cylc.cycling import IntervalParsingError
 from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar
-from envvar import check_varnames, expandvars
+from envvar import check_varnames
 from copy import deepcopy, copy
 from message_output import MessageOutput
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
-from cylc.prerequisite import TriggerExpressionError
 from regpath import RegPath
 from task_trigger import TaskTrigger
 from parsec.util import replicate
 from cylc.task_id import TaskID
-from C3MRO import C3
+from cylc.c3mro import C3
 from parsec.OrderedDict import OrderedDictWithDefaults
 import flags
 from syntax_flags import (

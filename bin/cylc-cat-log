@@ -34,7 +34,7 @@ import shlex
 from subprocess import Popen, PIPE
 import traceback
 
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.owner import is_remote_user
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
@@ -57,7 +57,7 @@ LIST_MODE_REMOTE = "remote"
 
 def get_option_parser():
     """Set up the CLI option parser."""
-    parser = cop(
+    parser = COP(
         __doc__, argdoc=[("REG", "Suite name"), ("[TASK-ID]", """Task ID""")])
 
     parser.add_option(

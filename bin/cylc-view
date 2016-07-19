@@ -43,12 +43,12 @@ import subprocess
 
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from parsec.fileparse import read_and_proc
 
 
 def main():
-    parser = cop(__doc__, jset=True, prep=True)
+    parser = COP(__doc__, jset=True, prep=True)
 
     parser.add_option(
         "--inline", "-i", help="Inline include-files.", action="store_true",

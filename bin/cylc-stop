@@ -50,7 +50,7 @@ from cylc.prompt import prompt
 from cylc.task_id import TaskID
 from cylc.network.suite_command import SuiteCommandClient
 from cylc.network.suite_info import SuiteInfoClient
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.command_polling import poller
 
 
@@ -75,7 +75,7 @@ class stop_poller(poller):
 
 
 def main():
-    parser = cop(
+    parser = COP(
         __doc__, pyro=True,
         argdoc=[("REG", "Suite name"),
                 ("[STOP]", """a/ task POINT (cycle point), or

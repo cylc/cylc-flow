@@ -19,7 +19,7 @@
 
 import sys
 
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 import cylc.flags
 from cylc.scheduler import Scheduler
 
@@ -95,7 +95,7 @@ def parse_commandline(is_restart):
     else:
         doc = RUN_DOC
         arg1 = RUN_ARG1
-    parser = cop(doc, jset=True, argdoc=[("REG", "Suite name"), arg1])
+    parser = COP(doc, jset=True, argdoc=[("REG", "Suite name"), arg1])
 
     parser.add_option(
         "--non-daemon", help="(deprecated: use --no-detach)",

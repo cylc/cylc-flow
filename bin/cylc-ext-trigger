@@ -39,12 +39,12 @@ import os
 import sys
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.ext_trigger import ExtTriggerClient
 
 
 def main():
-    parser = cop(
+    parser = COP(
         __doc__, pyro=True,
         argdoc=[("REG", "Suite name"),
                 ("MSG", "External trigger message"),

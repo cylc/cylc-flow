@@ -39,14 +39,14 @@ import subprocess
 
 import cylc.flags
 from cylc.remote import remrun
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.version import CYLC_VERSION
 from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.host_select import get_task_host
 
 
 def main():
-    parser = cop(__doc__, prep=True, jset=True)
+    parser = COP(__doc__, prep=True, jset=True)
 
     parser.add_option(
         "-e", "--error", help="Exit with error status "

@@ -27,13 +27,13 @@ from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.registration import RegistrationDB
 import cylc.flags
 
 
 def main():
-    parser = cop(__doc__, argdoc=[("REG1", "original name"),
+    parser = COP(__doc__, argdoc=[("REG1", "original name"),
                                   ("REG2", "new name")])
     (options, args) = parser.parse_args()
     arg_from = args[0]

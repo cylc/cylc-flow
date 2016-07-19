@@ -75,14 +75,14 @@ import re
 import shutil
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.mkdir_p import mkdir_p
 from cylc.registration import RegistrationDB, RegistrationError
 from cylc.regpath import RegPath
 
 
 def main():
-    parser = cop(__doc__,
+    parser = COP(__doc__,
                  argdoc=[("REG", "Source suite name"),
                          ("REG2", "Target suite name"),
                          ("TOPDIR", "Top level target directory.")])

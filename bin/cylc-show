@@ -31,12 +31,12 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.network.suite_info import SuiteInfoClient
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
 
 
 def main():
-    parser = cop(
+    parser = COP(
         __doc__, pyro=True, noforce=True,
         argdoc=[('REG', 'Suite name'),
                 ('[' + TaskID.SYNTAX_OPT_POINT + ']', 'Task name or ID')])

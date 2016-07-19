@@ -49,7 +49,7 @@ if "--use-ssh" in sys.argv[1:]:
 import re
 
 from cylc.network.port_scan import scan_all
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.owner import USER
 from cylc.task_state import TaskState, TASK_STATUSES_ORDERED
@@ -69,7 +69,7 @@ def bold(line):
 
 def main():
     """Implement "cylc scan"."""
-    parser = cop(
+    parser = COP(
         __doc__,
         pyro=True,
         noforce=True,

@@ -46,7 +46,7 @@ import cylc.flags
 from cylc.get_task_proxy import get_task_proxy
 from cylc.job_file import JobFile
 from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
-from cylc.LogDiagnosis import LogSpec
+from cylc.log_diagnosis import LogSpec
 from cylc.mp_pool import SuiteProcContext, SuiteProcPool
 from cylc.network import (
     PYRO_SUITEID_OBJ_NAME, PYRO_STATE_OBJ_NAME,

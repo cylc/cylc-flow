@@ -58,12 +58,12 @@ if remrun().execute():
 
 import re
 from cylc.config import SuiteConfig, SuiteConfigError
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 import cylc.flags
 
 
 def main():
-    parser = cop(__doc__, jset=True, prep=True)
+    parser = COP(__doc__, jset=True, prep=True)
 
     parser.add_option(
         "-i", "--item", metavar="[SEC...]ITEM",

@@ -32,7 +32,7 @@ import os
 from time import sleep
 
 from parsec.OrderedDict import OrderedDict
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.network.suite_state import (
     SUITE_STATUS_SPLIT_REC, get_suite_status_string, StateSummaryClient,
     SuiteStillInitialisingError)
@@ -46,7 +46,7 @@ from cylc.task_state import (
 class SuiteMonitor(object):
 
     def __init__(self):
-        self.parser = cop(
+        self.parser = COP(
             """cylc [info] monitor [OPTIONS] ARGS
 
 A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
