@@ -55,9 +55,9 @@ __LOG__
 
 grep 'event-handler-00.*will run after' "${SUITE_RUN_DIR}/log/suite/log" \
     | cut -d' ' -f 4-11 >'edited-log'
+# Note: P0Y delays are not displayed
 cmp_ok 'edited-log' <<'__LOG__'
 [t1.1] -(('event-handler-00', 'succeeded'), 1) will run after PT1S
-[t2.1] -(('event-handler-00', 'succeeded'), 1) will run after P0Y
 __LOG__
 
 ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
