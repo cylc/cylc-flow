@@ -4971,7 +4971,7 @@ task to repeatedly poll for the results of the detached processes:
         script = "[[ ! -f $RUN_DIR/job.done ]] && exit 1"
 \end{lstlisting}
 
-\section{Task Job Submission}
+\section{Task Job Submission and Management}
 \label{TaskJobSubmission}
 
 For the requirements a command, script, or program, must fulfill in order
@@ -5061,8 +5061,11 @@ trapping SIGUSR1, the job will inform the suite that it has been vacated by
 loadleveler. This will put it back to the submitted state, until it starts
 running again.
 
-If an execution time limit is specified, it is assumed to be the soft limit.
-The hard limit will be set by adding an extra minute to the soft limit.
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=wall_clock_limit= directive. The setting is assumed to be the soft
+limit. The hard limit will be set by adding an extra minute to the soft limit.
+Do not specify the \lstinline=wall_clock_limit= directive explicitly if
+\lstinline=execution time limit= is specified, or it will cause confusion.
 
 \subsubsection{lsf}
 
@@ -5087,6 +5090,11 @@ These are written to the top of the task job script like this:
 #BSUB -q = foo
 #BSUB -W = 10
 \end{lstlisting}
+
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-W= directive. Do not specify the \lstinline=-W= directive
+explicitly if \lstinline=execution time limit= is specified, or it will cause
+confusion.
 
 \subsubsection{pbs}
 
@@ -5114,6 +5122,11 @@ These are written to the top of the task job script like this:
 #PBS -l nodes=1
 #PBS -l walltime=60
 \end{lstlisting}
+
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-l walltime= directive. Do not specify the \lstinline=-l walltime=
+directive explicitly if \lstinline=execution time limit= is specified, or it
+will cause confusion.
 
 \subsubsection{moab}
 
@@ -5144,6 +5157,10 @@ These are written to the top of the task job script like this:
 \end{lstlisting}
 (Moab understands \lstinline=#PBS= directives).
 
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-l walltime= directive. Do not specify the \lstinline=-l walltime=
+directive explicitly if \lstinline=execution time limit= is specified, or it
+will cause confusion.
 
 \subsubsection{sge}
 
@@ -5173,6 +5190,11 @@ These are written to the top of the task job script like this:
 #$ -l h_rt=24:00:00
 \end{lstlisting}
 
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-l h_rt= directive. Do not specify the \lstinline=-l h_rt=
+directive explicitly if \lstinline=execution time limit= is specified, or it
+will cause confusion.
+
 \subsubsection{slurm}
 
 Submits tasks to Simple Linux Utility for Resource Management by the
@@ -5198,6 +5220,11 @@ These are written to the top of the task job script like this:
 #SBATCH --time=60:00
 #SBATCH --account=QXZ5W2
 \end{lstlisting}
+
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=--time= directive. Do not specify the \lstinline=--time=
+directive explicitly if \lstinline=execution time limit= is specified, or it
+will cause confusion.
 
 \subsubsection{Default Directives Provided}
 
@@ -5354,6 +5381,51 @@ according to its job submission method.
 
 Tasks can be killed on demand by right-clicking on them in gcylc or using the
 \lstinline=cylc kill= command.
+
+\subsection{Execution Time Limit}
+
+You can specify an \lstinline=execution time limit= for all supported job
+submission methods. E.g.:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[task-x]]
+        [[[job]]]
+            execution time limit = PT1H
+\end{lstlisting}
+
+For tasks running with \lstinline=background= or \lstinline=at=, their jobs
+will be wrapped using the \lstinline=timeout= command. For all other methods,
+the relevant time limit directive will be added to their job files.
+
+The \lstinline=execution time limit= setting will also inform the suite when a
+a task job should complete by. If a task job has not reported completing within
+the specified time, the suite will poll the task job. (The default
+setting is PT1M, PT2M, PT7M. The accumulated times (in minutes) for these
+intervals will be roughly 1, 1 + 2 = 3 and 1 + 2 + 7 = 10 after a task job
+exceeds its execution time limit.)
+
+\subsubsection{Execution Time Limit and Execution Timeout}
+
+If you specify an \lstinline=execution time limit= the
+\lstinline=execution timeout event handler= will only be called if the job has
+not completed after the final poll (by default, 10 min after the time limit).
+This should only happen if the submission method you are using is not enforcing
+wallclock limits (unlikely) or you are unable to contact the machine to confirm
+the job status.
+
+If you specify an \lstinline=execution timeout= and not an
+\lstinline=execution time limit= then the
+\lstinline=execution timeout event handler= will be called as soon as the
+specified time is reached. The job will also be polled to check its latest
+status (possibly resulting in an update in its status and the calling of the
+relevant event handler). This behaviour is deprecated, which users should avoid
+using.
+
+If you specify an \lstinline=execution timeout= and an
+\lstinline=execution time limit= then the execution timeout setting will be
+ignored.
 
 \subsection{Custom Job Submission Methods}
 \label{CustomJobSubmissionMethods}
