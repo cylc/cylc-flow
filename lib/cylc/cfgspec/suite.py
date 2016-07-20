@@ -204,20 +204,26 @@ SPEC = {
             'handler events': vdr(vtype='string_list'),
             'startup handler': vdr(vtype='string_list'),
             'timeout handler': vdr(vtype='string_list'),
+            'inactivity handler': vdr(vtype='string_list'),
             'shutdown handler': vdr(vtype='string_list'),
             'stalled handler': vdr(vtype='string_list'),
             'timeout': vdr(vtype='interval_minutes'),
+            'inactivity': vdr(vtype='interval_minutes'),
             'reset timer': vdr(vtype='boolean', default=True),
+            'reset inactivity timer': vdr(vtype='boolean', default=True),
             'abort if startup handler fails': vdr(
                 vtype='boolean', default=False),
             'abort if shutdown handler fails': vdr(
                 vtype='boolean', default=False),
             'abort if timeout handler fails': vdr(
                 vtype='boolean', default=False),
+            'abort if inactivity handler fails': vdr(
+                vtype='boolean', default=False),
             'abort if stalled handler fails': vdr(
                 vtype='boolean', default=False),
             'abort on stalled': vdr(vtype='boolean'),
             'abort on timeout': vdr(vtype='boolean'),
+            'abort on inactivity': vdr(vtype='boolean'),
             'mail events': vdr(vtype='string_list'),
             'mail from': vdr(vtype='string'),
             'mail smtp': vdr(vtype='string'),

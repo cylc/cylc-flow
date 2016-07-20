@@ -1,8 +1,8 @@
 [cylc]
     [[events]]
         abort on stalled = True
-        timeout handler = cylc release '%(suite)s'
-        timeout = PT5S
+        inactivity handler = cylc release '%(suite)s'
+        inactivity = PT5S
 [scheduling]
     [[dependencies]]
         graph = t1

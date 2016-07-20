@@ -117,6 +117,7 @@ class Scheduler(object):
     EVENT_STARTUP = 'startup'
     EVENT_SHUTDOWN = 'shutdown'
     EVENT_TIMEOUT = 'timeout'
+    EVENT_INACTIVITY_TIMEOUT = 'inactivity'
     EVENT_STALLED = 'stalled'
     SUITE_EVENT_HANDLER = 'suite-event-handler'
     SUITE_EVENT_MAIL = 'suite-event-mail'
@@ -474,6 +475,11 @@ conditions; see `cylc conditions`.
         # self.nudge_timer_start = None
         # self.nudge_timer_on = False
         # self.auto_nudge_interval = 5  # seconds
+
+        self.already_inactive = False
+        if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
+            self.set_suite_inactivity_timer()
+
         self.log_memory("scheduler.py: end configure")
 
     def load_tasks_for_run(self):
@@ -917,6 +923,18 @@ conditions; see `cylc conditions`.
             print "%s suite timer starts NOW: %s" % (
                 get_seconds_as_interval_string(
                     self._get_events_conf(self.EVENT_TIMEOUT)),
+                get_current_time_string())
+        self.suite_timer_active = True
+
+    def set_suite_inactivity_timer(self, reset=False):
+        """Set suite's inactivity timer."""
+        self.suite_inactivity_timeout = time.time() + (
+            self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
+        )
+        if cylc.flags.verbose:
+            print "%s suite inactivity timer starts NOW: %s" % (
+                get_seconds_as_interval_string(
+                    self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
                 get_current_time_string())
 
     def load_suiterc(self, reconfigure):
@@ -1422,6 +1440,9 @@ conditions; see `cylc conditions`.
             if self._get_events_conf(self.EVENT_TIMEOUT):
                 self.check_suite_timer()
 
+            if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
+                self.check_suite_inactive()
+
             if self.config.cfg['cylc']['abort if any task fails']:
                 if self.pool.any_task_failed():
                     raise SchedulerError(
@@ -1499,7 +1520,7 @@ conditions; see `cylc conditions`.
 
     def check_suite_timer(self):
         """Check if suite has timed out or not."""
-        if self.already_timed_out:
+        if self.already_timed_out or not self.is_stalled:
             return
         if time.time() > self.suite_timer_timeout:
             self.already_timed_out = True
@@ -1511,6 +1532,20 @@ conditions; see `cylc conditions`.
             self.run_event_handlers(self.EVENT_TIMEOUT, message)
             if self._get_events_conf('abort on timeout'):
                 raise SchedulerError('Abort on suite timeout is set')
+
+    def check_suite_inactive(self):
+        if self.already_inactive:
+            return
+        if time.time() > self.suite_inactivity_timeout:
+            self.already_inactive = True
+            message = 'suite timed out after inactivity for %s' % (
+                get_seconds_as_interval_string(
+                    self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT))
+            )
+            self.log.warning(message)
+            self.run_event_handlers(self.EVENT_INACTIVITY_TIMEOUT, message)
+            if self._get_events_conf('abort on inactivity'):
+                raise SchedulerError('Abort on suite inactivity is set')
 
     def check_suite_stalled(self):
         """Check if suite is stalled or not."""
@@ -1528,8 +1563,19 @@ conditions; see `cylc conditions`.
             self.pool.report_stalled_task_deps()
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
+            # start suite timer
+            self.set_suite_timer()
         else:
             self.stalled_last = self.pool.pool_is_stalled()
+
+        # De-activate suite timeout timer if not stalled
+        if self.suite_timer_active and not self.stalled_last:
+            self.suite_timer_active = False
+            if cylc.flags.verbose:
+                print "%s suite timer stopped NOW: %s" % (
+                    get_seconds_as_interval_string(
+                        self._get_events_conf(self.EVENT_TIMEOUT)),
+                    get_current_time_string())
 
     def process_tasks(self):
         """Return True if waiting tasks are ready."""
@@ -1544,10 +1590,10 @@ conditions; see `cylc conditions`.
         if cylc.flags.pflag:
             process = True
             cylc.flags.pflag = False  # reset
-            # New suite activity, so reset the suite timer.
-            if (self._get_events_conf(self.EVENT_TIMEOUT) and
-                    self._get_events_conf('reset timer')):
-                self.set_suite_timer()
+
+            if (self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT) and
+                    self._get_events_conf('reset inactivity timer')):
+                self.set_suite_inactivity_timer()
 
             # New suite activity, so reset the stalled flag.
             self.stalled_last = False

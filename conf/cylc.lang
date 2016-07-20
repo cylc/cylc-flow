@@ -103,6 +103,7 @@
         <keyword>submission timeout handler</keyword>
         <keyword>submission timeout</keyword>
         <keyword>submission retry handler</keyword>
+        <keyword>submission retry delays</keyword>
         <keyword>submission polling intervals</keyword>
         <keyword>submission failed handler</keyword>
         <keyword>startup handler</keyword>
@@ -120,11 +121,11 @@
         <keyword>run time range</keyword>
         <keyword>root</keyword>
         <keyword>retry handler</keyword>
-        <keyword>retry delays</keyword>
         <keyword>retrieve job logs retry delays</keyword>
         <keyword>retrieve job logs max size</keyword>
         <keyword>retrieve job logs</keyword>
         <keyword>reset timer</keyword>
+        <keyword>reset inactivity timer</keyword>
         <keyword>required run mode</keyword>
         <keyword>register job logs retry delays</keyword>
         <keyword>public</keyword>
@@ -132,7 +133,6 @@
         <keyword>post-script</keyword>
         <keyword>owner</keyword>
         <keyword>number of cycle points</keyword>
-        <keyword>method</keyword>
         <keyword>members</keyword>
         <keyword>max-polls</keyword>
         <keyword>max active cycle points</keyword>
@@ -151,6 +151,8 @@
         <keyword>inherit</keyword>
         <keyword>include at start-up</keyword>
         <keyword>include</keyword>
+        <keyword>inactivity handler</keyword>
+        <keyword>inactivity</keyword>
         <keyword>host</keyword>
         <keyword>hold after point</keyword>
         <keyword>handlers</keyword>
@@ -167,6 +169,8 @@
         <keyword>expected task failures</keyword>
         <keyword>execution timeout handler</keyword>
         <keyword>execution timeout</keyword>
+        <keyword>execution time limit</keyword>
+        <keyword>execution retry delays</keyword>
         <keyword>execution polling intervals</keyword>
         <keyword>exclude at start-up</keyword>
         <keyword>exclude</keyword>
@@ -186,18 +190,21 @@
         <keyword>cycle point time zone</keyword>
         <keyword>cycle point num expanded year digits</keyword>
         <keyword>cycle point format</keyword>
-        <keyword>command template</keyword>
         <keyword>collapsed families</keyword>
         <keyword>cold-start</keyword>
         <keyword>clock-trigger</keyword>
         <keyword>clock-expire</keyword>
+        <keyword>batch system</keyword>
+        <keyword>batch submit command template</keyword>
         <keyword>allow task failures</keyword>
         <keyword>abort on timeout</keyword>
         <keyword>abort on stalled</keyword>
+        <keyword>abort on inactivity</keyword>
         <keyword>abort if timeout handler fails</keyword>
         <keyword>abort if startup handler fails</keyword>
         <keyword>abort if stalled handler fails</keyword>
         <keyword>abort if shutdown handler fails</keyword>
+        <keyword>abort if inactivity handler fails</keyword>
         <keyword>abort if any task fails</keyword>
         <keyword>UTC mode</keyword>
         <keyword>URL</keyword>
