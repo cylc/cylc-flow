@@ -82,11 +82,7 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
 [t1.1] -('job-logs-retrieve', 3) will run after PT5S
 __LOG__
 else
-    cmp_ok 'edited-log' <<'__LOG__'
-[t1.1] -('job-logs-retrieve', 1) will run after P0Y
-[t1.1] -('job-logs-retrieve', 2) will run after P0Y
-[t1.1] -('job-logs-retrieve', 3) will run after P0Y
-__LOG__
+    cmp_ok 'edited-log' <'/dev/null'  # P0Y not displayed
 fi
 
 ssh -n -oBatchMode=yes -oConnectTimeout=5 "${HOST}" \
