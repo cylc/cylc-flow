@@ -279,7 +279,11 @@ class Bus(object):
             # Ctrl-C because a start listener got stuck. In this case,
             # we could get stuck in a loop where Ctrl-C never exits the
             # process, so we just call os.exit here.
-            os._exit(70)  # EX_SOFTWARE
+            # Cylc modification note: we want to be able to repeatedly try to
+            # launch and fail on a range of ports, so we can't afford to die
+            # here.
+            #os._exit(70)  # EX_SOFTWARE
+            pass
 
     def restart(self):
         """Restart the process (may close connections).
