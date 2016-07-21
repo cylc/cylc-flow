@@ -1590,9 +1590,7 @@ class SuiteConfig(object):
                     # (TODO - but not explicit null offsets like [-P0D]!)
                     if suicide:
                         # Self-suicide may be OK.
-                        print >> sys.stderr, (
-                            'WARNING: self-suicide is not recommended: '
-                            '%s => !%s.' % (left, right))
+                        continue
                     else:
                         # Self-edge.
                         if left != lexpression:
