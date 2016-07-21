@@ -160,8 +160,8 @@ configured number of tries.
 
 \subsubsection[connection timeout]{[task messaging] \textrightarrow connection timeout}
 
-This is the same as the \lstinline=--pyro-timeout= option in cylc
-commands. Without a timeout Pyro connections to unresponsive
+This is the same as the \lstinline=--comms-timeout= option in cylc
+commands. Without a timeout remote connections to unresponsive
 suites can hang indefinitely (suites suspended with Ctrl-Z for instance).
 
 \begin{myitemize}
@@ -324,23 +324,41 @@ The editor to be invoked by the cylc GUI.
 \end{myitemize}
 
 
-\subsection{[pyro]}
+\subsection{[communication]}
 
-Pyro is the RPC layer used for network communication between cylc
+This section covers options for network communication between cylc
 clients (suite-connecting commands and guis) servers (running suites).
 Each suite listens on a dedicated network port, binding on the first
 available starting at the configured base port.
 
-\subsubsection[base port]{[pyro] \textrightarrow base port }
+By default, the communication method is HTTPS secured with HTTP Digest
+Authentication. If the system does not support SSL, it will fall back
+to HTTP.
+
+\subsubsection[method]{[communication] \textrightarrow method }
+
+The choice of client-server communication method - currently only HTTPS
+is supported, although others could be developed and plugged in.
+
+\begin{myitemize}
+\item {\em type:} string
+\item {\em options:}
+    \begin{myitemize}
+    \item {\bf https}
+    \end{myitemize}
+\item {\em default:} https
+\end{myitemize}
+
+\subsubsection[base port]{[communication] \textrightarrow base port }
 
 The first port that cylc is allowed to use.
 
 \begin{myitemize}
 \item {\em type:} integer
-\item {\em default:} 7766
+\item {\em default:} 43001
 \end{myitemize}
 
-\subsubsection[maximum number of ports]{[pyro] \textrightarrow maximum number of ports}
+\subsubsection[maximum number of ports]{[communication] \textrightarrow maximum number of ports}
 
 This determines the maximum number of suites that can run at once on the
 suite host.
@@ -350,13 +368,40 @@ suite host.
 \item {\em default:} 100
 \end{myitemize}
 
-\subsubsection[ports directory]{[pyro] \textrightarrow ports directory}
+\subsubsection[ports directory]{[communication] \textrightarrow ports directory}
 
 Each suite stores its port number, by suite name, under this directory.
 
 \begin{myitemize}
 \item {\em type:} string (directory path)
 \item {\em default:} \lstinline@$HOME/.cylc/ports/@
+\end{myitemize}
+
+\subsubsection[proxies on]{[communication] \textrightarrow proxies on}
+
+Enable or disable proxy servers for HTTPS - disabled by default.
+
+\begin{myitemize}
+\item {\em type:} boolean
+\item {\em localhost default:} False
+\end{myitemize}
+
+\subsubsection[options]{[communication] \textrightarrow options}
+
+Option flags for the communication method. Currently only 'SHA1' is
+supported for HTTPS, which alters HTTP Digest Auth to use the SHA1 hash
+algorithm rather than the standard MD5. This is more secure but is also
+less well supported by third party web clients including web browsers.
+You may need to add the 'SHA1' option if you are running on platforms
+where MD5 is discouraged (e.g. under FIPS).
+
+\begin{myitemize}
+\item {\em type:} string\_list
+\item {\em default:} \lstinline@[]@
+\item {\em options:}
+    \begin{myitemize}
+        \item {\bf SHA1}
+    \end{myitemize}
 \end{myitemize}
 
 \subsection{[monitor]}
@@ -453,11 +498,11 @@ See above for default polling intervals for the poll method.
 \item {\em type:} string (must be one of the following three options)
 \item {\em options:}
     \begin{myitemize}
-    \item {\bf pyro} - direct client-server RPC via network ports
-    \item {\bf ssh} - use ssh to re-invoke the Pyro messaging commands on the suite server
+    \item {\bf default} - direct client-server communication via network ports
+    \item {\bf ssh} - use ssh to re-invoke the messaging commands on the suite server
     \item {\bf poll} - the suite polls for the status of tasks (no task messaging)
   \end{myitemize}
-\item {\em localhost default:} pyro
+\item {\em localhost default:} default
 \end{myitemize}
 
 \paragraph[remote copy template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote copy template }
@@ -911,74 +956,3 @@ required.
     \end{myitemize}
 \item {\em default:} state-totals
 \end{myitemize}
-
-\subsubsection{[authentication] \textrightarrow hashes}
-
-This sets the hash algorithms used for Pyro HMAC, which are used to
-authenticate a client (e.g. gcylc) to the suite daemon. The first item is used
-as the default hash. Subsequent items (if any) are used as fallback hashes
-(e.g. for backwards compatibility with older suite daemons that are still
-running with an alternative hash).
-
-The default hashes are SHA-256 followed by MD5. You may want to exclude MD5 for
-security reasons - e.g. for FIPS
-(\url{https://en.wikipedia.org/wiki/FIPS_140-2}) compliance. Older cylc
-versions use MD5.
-
-SHA-256 and SHA-512 are the most secure. MD5 is popularly used for HMAC, but is
-the least secure. SHA-1 is slightly better. Note that HMAC use is not as
-susceptible to hash collision weakness, so both algorithms are more secure for
-HMAC use than in the general case.
-
-Clients will attempt to establish a connection using the algorithms from first
-to last. The exceptions are scanning and pinging, which will use the algorithm
-configured in the [authentication] \textrightarrow scan hash setting below. If
-you have lots of suites running with e.g. MD5 hashes, you will want to include
-'md5' in your list of hashes and set it as the default scan hash.
-
-See \url{https://docs.python.org/2/library/hmac.html} and
-\url{https://docs.python.org/2/library/hashlib.html} for discussion of hash
-algorithms.
-
-\begin{myitemize}
-\item {\em type:} comma-separated list of hash names (must each be one of the
-    following options)
-\item {\em options:}
-    \begin{myitemize}
-        \item {\em sha256} - SHA-256 (recommended, default)
-        \item {\em sha512} - SHA-512 (most secure, but slowest)
-        \item {\em sha1} - SHA-1 (may be the best option on legacy systems)
-        \item {\em md5} - MD5 (old default, usually used for HMAC, but the
-            least secure)
-    \end{myitemize}
-\item {\em default:} sha256,md5
-\end{myitemize}
-
-
-\subsubsection{[authentication] \textrightarrow scan hash}
-
-See [authentication] \textrightarrow hashes.
-
-Configure which of the specified hash algorithms in [authentication]
-\textrightarrow hashes is used for scanning and pinging (cylc scan, cylc ping).
-
-The default hash algorithm for scans is MD5, for backwards compatibility
-reasons. You can override it by specifying a different value for this setting
-(e.g. for FIPS compliance).
-
-The default will become SHA-256 sometime in 2016, when it is unlikely that any
-old MD5 suites are still around.
-
-\begin{myitemize}
-\item {\em type:} hash name (must be one of the following options)
-\item {\em options:}
-    \begin{myitemize}
-        \item {\em sha256} - SHA-256 (recommended, future default)
-        \item {\em sha512} - SHA-512 (most secure, but slowest)
-        \item {\em sha1} - SHA-1 (may be the best option on legacy systems)
-        \item {\em md5} - MD5 (default, good for backwards compatibility, but
-            the least secure)
-    \end{myitemize}
-\item {\em default:} md5
-\end{myitemize}
-

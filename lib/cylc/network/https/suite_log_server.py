@@ -17,13 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from cylc.network import PYRO_LOG_OBJ_NAME
-from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network.https.base_server import BaseCommsServer
 from cylc.network import check_access_priv
 from cylc.suite_logging import SuiteLog
 
+import cherrypy
 
-class SuiteLogServer(PyroServer):
+
+class SuiteLogServer(BaseCommsServer):
     """Server-side suite log interface."""
 
     def __init__(self, log):
@@ -40,16 +41,19 @@ class SuiteLogServer(PyroServer):
 
         try:
             size = os.path.getsize(self.err_file)
-        except (IOError, OSError) as e:
-            self.log.warning("Could not read suite err log file: %s" % e)
+        except (IOError, OSError) as exc:
+            self.log.warn("Could not read suite err log file: %s" % exc)
             return 0
         return size
 
-    def get_err_content(self, prev_size=0, max_lines=100):
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def get_err_content(self, prev_size, max_lines):
         """Return the content and new size of the error file."""
-
         check_access_priv(self, 'full-read')
         self.report("get_err_content")
+        prev_size = int(prev_size)
+        max_lines = int(max_lines)
         if not self._get_err_has_changed(prev_size):
             return [], prev_size
         try:
@@ -63,12 +67,3 @@ class SuiteLogServer(PyroServer):
             return "", prev_size
         new_content_lines = new_content.splitlines()[-max_lines:]
         return "\n".join(new_content_lines), size
-
-
-class SuiteLogClient(PyroClient):
-    """Client-side suite log interface."""
-
-    target_server_object = PYRO_LOG_OBJ_NAME
-
-    def get_err_content(self, *args):
-        return self.call_server_func("get_err_content", *args)

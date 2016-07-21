@@ -17,39 +17,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from Queue import Queue
-from cylc.owner import USER
-from cylc.suite_host import get_hostname
-from cylc.network.pyro_base import PyroClient, PyroServer
 from cylc.network import check_access_priv
+from cylc.network.https.base_server import BaseCommsServer
+
+import cherrypy
 
 
-class TaskMessageServer(PyroServer):
+class TaskMessageServer(BaseCommsServer):
     """Server-side task messaging interface"""
 
-    def __init__(self):
-        super(TaskMessageServer, self).__init__()
+    def __init__(self, suite):
         self.queue = Queue()
+        super(TaskMessageServer, self).__init__()
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def put(self, task_id, priority, message):
         check_access_priv(self, 'full-control')
         self.report('task_message')
-        self.queue.put((task_id, priority, message))
-        return (True, 'Message queued')
+        self.queue.put((task_id, priority, str(message)))
+        return 'Message queued'
 
     def get_queue(self):
         return self.queue
-
-
-class TaskMessageClient(PyroClient):
-    """Client-side task messaging interface"""
-
-    def __init__(self, suite, task_id, owner=USER,
-                 host=get_hostname(), pyro_timeout=None, port=None):
-        self.target_server_object = "task_pool"
-        self.task_id = task_id
-        super(TaskMessageClient, self).__init__(
-            suite, owner, host, pyro_timeout, port)
-
-    def put(self, *args):
-        args = [self.task_id] + list(args)
-        self.call_server_func('put', *args)

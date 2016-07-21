@@ -40,7 +40,8 @@ import shlex
 from time import time
 import traceback
 
-from cylc.network.task_msgqueue import TaskMessageServer
+from cylc.network import COMMS_TASK_MESSAGE_OBJ_NAME
+from cylc.network.task_msg_server import TaskMessageServer
 from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.broker import broker
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -51,8 +52,8 @@ from cylc.cycling.loader import (
 import cylc.flags
 from cylc.get_task_proxy import get_task_proxy
 from cylc.mp_pool import SuiteProcPool, SuiteProcContext
-from cylc.network.ext_trigger import ExtTriggerServer
-from cylc.network.suite_broadcast import BroadcastServer
+from cylc.network.ext_trigger_server import ExtTriggerServer
+from cylc.network.suite_broadcast_server import BroadcastServer
 from cylc.owner import is_remote_user
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
@@ -87,10 +88,10 @@ class TaskPool(object):
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
 
-    def __init__(self, suite, pri_dao, pub_dao, stop_point, pyro, log,
+    def __init__(self, suite, pri_dao, pub_dao, stop_point, comms_daemon, log,
                  run_mode):
         self.suite_name = suite
-        self.pyro = pyro
+        self.comms_daemon = comms_daemon
         self.run_mode = run_mode
         self.log = log
         self.stop_point = stop_point
@@ -106,9 +107,10 @@ class TaskPool(object):
             config.get_max_num_active_cycle_points())
         self._prev_runahead_base_point = None
         self._prev_runahead_sequence_points = None
-        self.message_queue = TaskMessageServer()
+        self.message_queue = TaskMessageServer(self.suite_name)
 
-        self.pyro.connect(self.message_queue, "task_pool")
+        self.comms_daemon.connect(
+            self.message_queue, COMMS_TASK_MESSAGE_OBJ_NAME)
 
         self.pool = {}
         self.runahead_pool = {}
@@ -146,11 +148,9 @@ class TaskPool(object):
             for taskname in qconfig[queue]['members']:
                 self.myq[taskname] = queue
 
-    def insert_tasks(self, items, stop_point_str, compat=None):
+    def insert_tasks(self, items, stop_point_str):
         """Insert tasks."""
         n_warnings = 0
-        if isinstance(items, str) or compat is not None:
-            items = [items + "." + compat]
         config = SuiteConfig.get_inst()
         names = config.get_task_name_list()
         fams = config.runtime['first-parent descendants']
@@ -853,7 +853,7 @@ class TaskPool(object):
             for unsatisfied in prereqs['prereqs']:
                 self.log.warning(" * %s" % unsatisfied)
 
-    def poll_task_jobs(self, items=None, compat=None):
+    def poll_task_jobs(self, items=None):
         """Poll jobs of active tasks.
 
         If items is specified, poll active tasks matching given IDs.
@@ -861,7 +861,7 @@ class TaskPool(object):
         """
         if self.run_mode == 'simulation':
             return
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         active_itasks = []
         for itask in itasks:
             if itask.state.status in TASK_STATUSES_ACTIVE:
@@ -885,13 +885,13 @@ class TaskPool(object):
             },
         )
 
-    def kill_task_jobs(self, items=None, compat=None):
+    def kill_task_jobs(self, items=None):
         """Kill jobs of active tasks.
 
         If items is specified, kill active tasks matching given IDs.
 
         """
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         active_itasks = []
         for itask in itasks:
             is_active = itask.state.status in TASK_STATUSES_ACTIVE
@@ -977,16 +977,16 @@ class TaskPool(object):
                 if itask.point > point:
                     itask.state.reset_state(TASK_STATUS_HELD)
 
-    def hold_tasks(self, items, compat=None):
+    def hold_tasks(self, items):
         """Hold tasks with IDs matching any item in "ids"."""
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         for itask in itasks:
             itask.state.reset_state(TASK_STATUS_HELD)
         return n_warnings
 
-    def release_tasks(self, items, compat=None):
+    def release_tasks(self, items):
         """Release held tasks with IDs matching any item in "ids"."""
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         for itask in itasks:
             itask.state.release()
         return n_warnings
@@ -1381,20 +1381,20 @@ class TaskPool(object):
             self.remove(itask)
         return len(spent)
 
-    def spawn_tasks(self, items, compat):
+    def spawn_tasks(self, items):
         """Force tasks to spawn successors if they haven't already.
 
         """
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         for itask in itasks:
             if not itask.has_spawned:
                 itask.log(INFO, "forced spawning")
                 self.force_spawn(itask)
         return n_warnings
 
-    def reset_task_states(self, items, status, compat):
+    def reset_task_states(self, items, status):
         """Reset task states."""
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         for itask in itasks:
             itask.log(INFO, "resetting state to %s" % status)
             if status == TASK_STATUS_READY:
@@ -1413,18 +1413,18 @@ class TaskPool(object):
                 itask.state.reset_state(status)
         return n_warnings
 
-    def remove_tasks(self, items, spawn=False, compat=None):
+    def remove_tasks(self, items, spawn=False):
         """Remove tasks from pool."""
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         for itask in itasks:
             if spawn:
                 self.force_spawn(itask)
             self.remove(itask, 'by request')
         return n_warnings
 
-    def trigger_tasks(self, items, compat=None):
+    def trigger_tasks(self, items):
         """Trigger tasks."""
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         for itask in itasks:
             if itask.state.status in TASK_STATUSES_ACTIVE:
                 self.log.warning('%s: already triggered' % itask.identity)
@@ -1435,14 +1435,10 @@ class TaskPool(object):
                 itask.state.reset_state(TASK_STATUS_READY)
         return n_warnings
 
-    def dry_run_task(self, items, compat=None):
+    def dry_run_task(self, items):
         """Create job file for "cylc trigger --edit"."""
-        itasks, n_warnings = self._filter_task_proxies(items, compat)
+        itasks, n_warnings = self._filter_task_proxies(items)
         if len(itasks) > 1:
-            if isinstance(items, str) and compat is not None:
-                items = items + "." + compat
-            elif compat is not None:
-                items = "*." + compat
             self.log.warning("Unique task match not found: %s" % items)
             n_warnings += 1
         else:
@@ -1639,7 +1635,7 @@ class TaskPool(object):
             "time": get_current_time_string(),
             "event": CylcSuiteDAO.CHECKPOINT_LATEST_EVENT})
 
-    def _filter_task_proxies(self, items, compat=None):
+    def _filter_task_proxies(self, items):
         """Return task proxies that match names, points, states in items.
 
         In the new form, the arguments should look like:
@@ -1647,41 +1643,12 @@ class TaskPool(object):
                  the general form name[.point][:state] or [point/]name[:state]
                  where name is a glob-like pattern for matching a task name or
                  a family name.
-        compat -- not used
-
-        In the old form, "items" is a string containing a regular expression
-        for matching task/family names, and "compat" is a string containing a
-        point string.
 
         """
         itasks = []
         n_warnings = 0
-        if not items and compat is None:
+        if not items:
             itasks += self.get_all_tasks()
-        elif isinstance(items, str) or compat is not None:
-            try:
-                point_str = standardise_point_string(compat)
-            except ValueError as exc:
-                self.log.warning(
-                    self.ERR_PREFIX_TASKID_MATCH +
-                    ("%s.%s: %s" % (items, compat, exc)))
-                n_warnings += 1
-            else:
-                name_rec = re.compile(items)
-                for itask in self.get_all_tasks():
-                    nss = itask.tdef.namespace_hierarchy
-                    if (
-                            (point_str is None or
-                             str(itask.point) == point_str) and
-                            (name_rec.match(itask.tdef.name) or
-                             any([name_rec.match(ns) for ns in nss]))
-                    ):
-                        itasks.append(itask)
-                if not itasks:
-                    self.log.warning(
-                        self.ERR_PREFIX_TASKID_MATCH +
-                        ("%s.%s" % (items, compat)))
-                    n_warnings += 1
         else:
             for item in items:
                 point_str, name_str, status = self._parse_task_item(item)

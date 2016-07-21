@@ -37,7 +37,7 @@ Passphrases are still required to get identity information from older suites
 (cylc <= 6.5.0), otherwise you'll see "connection denied (security reasons)".
 
 WARNING: a suite suspended with Ctrl-Z will cause port scans to hang until the
-connection times out (see --pyro-timeout)."""
+connection times out (see --comms-timeout)."""
 
 import sys
 if "--use-ssh" in sys.argv[1:]:
@@ -71,7 +71,7 @@ def main():
     """Implement "cylc scan"."""
     parser = COP(
         __doc__,
-        pyro=True,
+        comms=True,
         noforce=True,
         argdoc=[(
             "[HOSTS ...]", "Hosts to scan instead of the configured hosts.")]
@@ -130,10 +130,10 @@ def main():
         action="store_true", default=False, dest="print_ports")
 
     parser.add_option(
-        "--pyro-timeout", metavar="SEC",
+        "--comms-timeout", "--pyro-timeout", metavar="SEC",
         help="Set a timeout for network connections "
              "to running suites. The default is 60 seconds.",
-        action="store", default=60, dest="pyro_timeout")
+        action="store", default=60, dest="comms_timeout")
 
     parser.add_option(
         "--old", "--old-format",
@@ -149,8 +149,9 @@ def main():
     options, args = parser.parse_args()
 
     if options.print_ports:
-        base = GLOBAL_CFG.get(["pyro", "base port"])
-        max_num_ports = GLOBAL_CFG.get(["pyro", "maximum number of ports"])
+        base = GLOBAL_CFG.get(["communication", "base port"])
+        max_num_ports = GLOBAL_CFG.get(
+            ["communication", "maximum number of ports"])
         print base, "<= port <=", base + max_num_ports
         sys.exit(0)
 
@@ -206,7 +207,7 @@ def main():
         state_legend = state_legend.rstrip()
 
     skip_one = True
-    for result in scan_all(args, options.db, options.pyro_timeout):
+    for result in scan_all(args, options.db, options.comms_timeout):
         host, scan_result = result
         try:
             port, suite_identity = scan_result

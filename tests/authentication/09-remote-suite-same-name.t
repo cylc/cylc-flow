@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test Pyro communication from a remote host (non-shared file system) when it
-# has a suite with the same name registered, but not running. (Obviously, it
-# will be very confused if it is running under its ~/cylc-run/SUITE as well.)
+# Test communication from a remote host (non-shared file system) when it has
+# a suite with the same name registered, but not running. (Obviously, it will
+# be very confused if it is running under its ~/cylc-run/SUITE as well.)
 CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 

@@ -20,7 +20,6 @@
 import os
 import sys
 from time import sleep
-import traceback
 from cylc.remote import remrun
 from cylc.suite_env import CylcSuiteEnv, CylcSuiteEnvLoadError
 from cylc.wallclock import get_current_time_string
@@ -122,11 +121,11 @@ class TaskMessage(object):
         if self.ssh_messaging and self._send_by_ssh():
             return
 
-        self._send_by_pyro(messages)
+        self._send_by_remote_port(messages)
 
     def _get_client(self):
-        """Return the Pyro client."""
-        from cylc.network.task_msgqueue import TaskMessageClient
+        """Return the communication client."""
+        from cylc.network.task_msg_client import TaskMessageClient
         return TaskMessageClient(
             self.suite, self.task_id, self.owner, self.host,
             self.try_timeout, self.port)
@@ -141,6 +140,7 @@ class TaskMessage(object):
             suite_env = CylcSuiteEnv.load(self.suite, self.suite_run_dir)
         except CylcSuiteEnvLoadError:
             if cylc.flags.debug:
+                import traceback
                 traceback.print_exc()
         else:
             for key, attr_key in suite_env.ATTRS.items():
@@ -164,10 +164,9 @@ class TaskMessage(object):
                 print >>sys.stderr, "%s%s %s" % (
                     prefix, self.priority, message)
 
-    def _send_by_pyro(self, messages):
-        """Send message by Pyro."""
+    def _send_by_remote_port(self, messages):
+        """Send message by talking to the daemon (remote?) port."""
         self._print_messages(messages)
-        from Pyro.errors import NamingError
         sent = False
         i_try = 0
         while not sent and i_try < self.max_tries:
@@ -178,16 +177,7 @@ class TaskMessage(object):
                 client = self._get_client()
                 for message in messages:
                     client.put(self.priority, message)
-            except NamingError, exc:
-                print >> sys.stderr, exc
-                print "Send message: try %s of %s failed: %s" % (
-                    i_try,
-                    self.max_tries,
-                    exc
-                )
-                print "Task proxy removed from suite daemon? Aborting."
-                break
-            except Exception, exc:
+            except Exception as exc:
                 print >> sys.stderr, exc
                 print "Send message: try %s of %s failed: %s" % (
                     i_try,
@@ -255,7 +245,7 @@ class TaskMessage(object):
         path = os.path.join(self.env_map['CYLC_DIR_ON_SUITE_HOST'], 'bin')
 
         # Return here if remote re-invocation occurred,
-        # otherwise drop through to local Pyro messaging.
+        # otherwise drop through to local messaging.
         # Note: do not sys.exit(0) here as the commands do, it
         # will cause messaging failures on the remote host.
         try:

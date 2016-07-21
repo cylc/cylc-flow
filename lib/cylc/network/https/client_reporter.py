@@ -23,8 +23,10 @@ import time
 import cylc.flags
 from cylc.suite_logging import LOG
 
+from cylc.network import get_client_info, get_client_connection_denied
 
-class PyroClientReporter(object):
+
+class CommsClientReporter(object):
     """For logging cylc client requests with identifying information."""
 
     _INSTANCE = None
@@ -35,6 +37,8 @@ class PyroClientReporter(object):
     LOG_IDENTIFY_TMPL = '[client-identify] %d id requests in PT%dS'
     LOG_SIGNOUT_TMPL = '[client-sign-out] %s@%s:%s %s'
     LOG_FORGET_TMPL = '[client-forget] %s'
+    LOG_CONNECT_DENIED_TMPL = "[client-connect] DENIED %s@%s:%s %s"
+    LOG_CONNECT_ALLOWED_TMPL = "[client-connect] %s@%s:%s privilege='%s' %s"
 
     @classmethod
     def get_inst(cls):
@@ -58,24 +62,27 @@ class PyroClientReporter(object):
         if threading.current_thread().__class__.__name__ == '_MainThread':
             # Server methods may be called internally as well as by clients.
             return
+        auth_user, prog_name, user, host, uuid, priv_level = get_client_info()
         name = server_obj.__class__.__name__
-        caller = server_obj.getLocalStorage().caller
         log_me = (
             cylc.flags.debug or
             name in ["SuiteCommandServer",
                      "ExtTriggerServer",
                      "BroadcastServer"] or
             (name not in ["SuiteIdServer", "TaskMessageServer"] and
-             caller.uuid not in self.clients))
+             uuid not in self.clients))
         if log_me:
+            LOG.debug(
+                self.__class__.LOG_CONNECT_ALLOWED_TMPL % (
+                    user, host, prog_name, priv_level, uuid)
+            )
             LOG.info(
                 self.__class__.LOG_COMMAND_TMPL % (
-                    request, caller.user, caller.host, caller.prog_name,
-                    caller.uuid))
+                    request, user, host, prog_name, uuid))
         if name == "SuiteIdServer":
             self._num_id_requests += 1
             self.report_id_requests()
-        self.clients[caller.uuid] = datetime.datetime.utcnow()
+        self.clients[uuid] = datetime.datetime.utcnow()
         self._housekeep()
 
     def report_id_requests(self):
@@ -96,6 +103,24 @@ class PyroClientReporter(object):
                 )
             self._id_start_time = current_time
             self._num_id_requests = 0
+
+    def report_connection_if_denied(self):
+        """Log an (un?)successful connection attempt."""
+        try:
+            (auth_user, prog_name, user, host, uuid,
+             priv_level) = get_client_info()
+        except Exception:
+            LOG.warn(
+                self.__class__.LOG_CONNECT_DENIED_TMPL % (
+                    "unknown", "unknown", "unknown", "unknown")
+            )
+            return
+        connection_denied = get_client_connection_denied()
+        if connection_denied:
+            LOG.warn(
+                self.__class__.LOG_CONNECT_DENIED_TMPL % (
+                    user, host, prog_name, uuid)
+            )
 
     def signout(self, server_obj):
         """Force forget this client (for use by GUI etc.)."""

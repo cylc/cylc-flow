@@ -4,7 +4,7 @@
     UTC mode = True
     [[events]]
         timeout handler = shutdown_this_suite_hook
-        timeout = PT3M
+        timeout = PT1M
 [scheduling]
     initial cycle time = 20130923T00
     final cycle time   = 20130923T00

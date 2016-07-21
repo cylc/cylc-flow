@@ -20,7 +20,6 @@
 from calendar import timegm
 from datetime import datetime, timedelta
 
-from isodatetime.data import Duration
 from isodatetime.parsers import TimePointParser
 from isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone)
@@ -243,4 +242,5 @@ def get_unix_time_from_time_string(datetime_string):
 
 def get_seconds_as_interval_string(seconds):
     """Convert a number of seconds into an ISO 8601 duration string."""
+    from isodatetime.data import Duration
     return str(Duration(seconds=seconds, standardize=True))

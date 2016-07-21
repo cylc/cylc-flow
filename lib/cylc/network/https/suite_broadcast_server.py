@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import re
 import sys
 import cPickle as pickle
@@ -27,15 +28,18 @@ from cylc.broadcast_report import (
     get_broadcast_bad_options_report)
 from cylc.cycling.loader import get_point, standardise_point_string
 from cylc.wallclock import get_current_time_string
-from cylc.network import PYRO_BCAST_OBJ_NAME
-from cylc.network.pyro_base import PyroClient, PyroServer
+from cylc.network import COMMS_BCAST_OBJ_NAME
+from cylc.network.https.base_server import BaseCommsServer
+from cylc.network.https.util import unicode_encode
 from cylc.network import check_access_priv
 from cylc.suite_logging import LOG
 from cylc.task_id import TaskID
 from cylc.rundb import CylcSuiteDAO
 
+import cherrypy
 
-class BroadcastServer(PyroServer):
+
+class BroadcastServer(BaseCommsServer):
     """Server-side suite broadcast interface.
 
     Examples:
@@ -110,7 +114,11 @@ class BroadcastServer(PyroServer):
             else:
                 target[key] = source[key]
 
-    def put(self, point_strings, namespaces, settings):
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def put(self, point_strings=None, namespaces=None, settings=None,
+            not_from_client=False):
         """Add new broadcast settings (server side interface).
 
         Return a tuple (modified_settings, bad_options) where:
@@ -120,6 +128,17 @@ class BroadcastServer(PyroServer):
         """
         check_access_priv(self, 'full-control')
         self.report('broadcast_put')
+        if not not_from_client:
+            point_strings = (
+                cherrypy.request.json.get("point_strings", point_strings))
+            namespaces = (
+                cherrypy.request.json.get("namespaces", namespaces))
+            settings = (
+                cherrypy.request.json.get("settings", settings))
+            point_strings = unicode_encode(point_strings)
+            namespaces = unicode_encode(namespaces)
+            settings = unicode_encode(settings)
+
         modified_settings = []
         bad_point_strings = []
         bad_namespaces = []
@@ -160,14 +179,21 @@ class BroadcastServer(PyroServer):
             bad_options["namespaces"] = bad_namespaces
         return modified_settings, bad_options
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def get(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID."""
         check_access_priv(self, 'full-read')
         self.report('broadcast_get')
+        if task_id == "None":
+            task_id = None
         if not task_id:
             # all broadcast settings requested
             return self.settings
-        name, point_string = TaskID.split(task_id)
+        try:
+            name, point_string = TaskID.split(task_id)
+        except ValueError:
+            raise Exception("Can't split task_id %s" % task_id)
 
         ret = {}
         # The order is:
@@ -181,7 +207,9 @@ class BroadcastServer(PyroServer):
                     self._addict(ret, self.settings[cycle][namespace])
         return ret
 
-    def expire(self, cutoff):
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def expire(self, cutoff=None):
         """Clear all settings targeting cycle points earlier than cutoff."""
         point_strings = []
         cutoff_point = None
@@ -197,6 +225,9 @@ class BroadcastServer(PyroServer):
             return (None, {"expire": [cutoff]})
         return self.clear(point_strings=point_strings)
 
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
     def clear(self, point_strings=None, namespaces=None, cancel_settings=None):
         """Clear settings globally, or for listed namespaces and/or points.
 
@@ -212,6 +243,17 @@ class BroadcastServer(PyroServer):
           * cancel: a list of tuples. Each tuple contains the keys of a bad
             setting.
         """
+
+        if hasattr(cherrypy.request, "json"):
+            point_strings = (
+                cherrypy.request.json.get("point_strings", point_strings))
+            namespaces = (
+                cherrypy.request.json.get("namespaces", namespaces))
+            cancel_settings = (
+                cherrypy.request.json.get("cancel_settings", cancel_settings))
+            point_strings = unicode_encode(point_strings)
+            namespaces = unicode_encode(namespaces)
+            cancel_settings = unicode_encode(cancel_settings)
         # If cancel_settings defined, only clear specific settings
         cancel_keys_list = self._settings_to_keys_list(cancel_settings)
 
@@ -368,12 +410,3 @@ class BroadcastServer(PyroServer):
                     "namespace": broadcast_change["namespace"],
                     "key": broadcast_change["key"],
                     "value": broadcast_change["value"]})
-
-
-class BroadcastClient(PyroClient):
-    """Client-side suite broadcast interface."""
-
-    target_server_object = PYRO_BCAST_OBJ_NAME
-
-    def broadcast(self, cmd, *args):
-        return self.call_server_func(cmd, *args)

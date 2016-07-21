@@ -39,7 +39,7 @@ from cylc.gui.app_gcylc import run_get_stdout
 from cylc.gui.dot_maker import DotMaker
 from cylc.gui.util import get_icon, setup_icons
 from cylc.owner import USER
-from cylc.network.suite_state import extract_group_state
+from cylc.network.suite_state_client import extract_group_state
 from cylc.cfgspec.gscan import gsfg
 
 

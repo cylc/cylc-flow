@@ -37,18 +37,18 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.network.suite_command import SuiteCommandClient
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.network.suite_command_client import SuiteCommandClient
 
 
 def main():
-    parser = COP(__doc__, pyro=True)
+    parser = COP(__doc__, comms=True)
 
     (options, args) = parser.parse_args()
     suite = args[0]
 
     pclient = SuiteCommandClient(
-        suite, options.owner, options.host, options.pyro_timeout,
+        suite, options.owner, options.host, options.comms_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 

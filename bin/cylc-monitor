@@ -33,7 +33,7 @@ from time import sleep
 
 from parsec.OrderedDict import OrderedDict
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.suite_state import (
+from cylc.network.suite_state_client import (
     SUITE_STATUS_SPLIT_REC, get_suite_status_string, StateSummaryClient,
     SuiteStillInitialisingError)
 from cylc.wallclock import get_time_string_from_unix_time
@@ -50,7 +50,7 @@ class SuiteMonitor(object):
             """cylc [info] monitor [OPTIONS] ARGS
 
 A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
-            pyro=True, noforce=True)
+            comms=True, noforce=True)
 
         self.parser.add_option(
             "-a", "--align",
@@ -107,7 +107,7 @@ A terminal-based live suite monitor.  Exit with 'Ctrl-C'.""",
         len_header = sum(len(s) for s in TASK_STATUSES_ORDERED)
 
         self.pclient = StateSummaryClient(
-            suite, options.owner, options.host, options.pyro_timeout,
+            suite, options.owner, options.host, options.comms_timeout,
             options.port, options.db)
 
         while True:

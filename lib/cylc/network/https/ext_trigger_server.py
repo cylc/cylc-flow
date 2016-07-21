@@ -16,20 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-from time import sleep
+import cherrypy
+
 from Queue import Queue, Empty
-import Pyro.errors
 import cylc.flags
-from cylc.network import PYRO_EXT_TRIG_OBJ_NAME
-from cylc.network.pyro_base import PyroClient, PyroServer
-from cylc.network.suite_broadcast import BroadcastServer
+from cylc.network.https.base_server import BaseCommsServer
+from cylc.network.https.suite_broadcast_server import BroadcastServer
 from cylc.network import check_access_priv
-from cylc.suite_logging import OUT, ERR
 from cylc.task_id import TaskID
 
 
-class ExtTriggerServer(PyroServer):
+class ExtTriggerServer(BaseCommsServer):
     """Server-side external trigger interface."""
 
     _INSTANCE = None
@@ -45,6 +42,8 @@ class ExtTriggerServer(PyroServer):
         super(ExtTriggerServer, self).__init__()
         self.queue = Queue()
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def put(self, event_message, event_id):
         """Server-side external event trigger interface."""
 
@@ -90,72 +89,11 @@ class ExtTriggerServer(PyroServer):
                                 'environment': {
                                     'CYLC_EXT_TRIGGER_ID': qid
                                 }
-                            }]
+                            }],
+                            not_from_client=True
                         )
                     used.append((qmsg, qid))
                     break
         for q in queued:
             if q not in used:
                 self.queue.put(q)
-
-
-class ExtTriggerClient(PyroClient):
-    """Client-side external trigger interface."""
-
-    target_server_object = PYRO_EXT_TRIG_OBJ_NAME
-
-    MAX_N_TRIES = 5
-    RETRY_INTVL_SECS = 10.0
-
-    MSG_SEND_FAILED = "Send message: try %s of %s failed"
-    MSG_SEND_RETRY = "Retrying in %s seconds, timeout is %s"
-    MSG_SEND_SUCCEED = "Send message: try %s of %s succeeded"
-
-    def put(self, *args):
-        return self.call_server_func("put", *args)
-
-    def send_retry(self, event_message, event_id,
-                   max_n_tries, retry_intvl_secs):
-        """CLI external trigger interface."""
-
-        max_n_tries = int(max_n_tries or self.__class__.MAX_N_TRIES)
-        retry_intvl_secs = float(
-            retry_intvl_secs or self.__class__.RETRY_INTVL_SECS)
-
-        sent = False
-        i_try = 0
-        while not sent and i_try < max_n_tries:
-            i_try += 1
-            try:
-                self.put(event_message, event_id)
-            except Pyro.errors.NamingError as exc:
-                ERR.error(sys.stderr, exc)
-                OUT.info(self.__class__.MSG_SEND_FAILED % (
-                    i_try,
-                    max_n_tries,
-                ))
-                break
-            except Exception as exc:
-                ERR.error(sys.stderr, exc)
-                OUT.info(self.__class__.MSG_SEND_FAILED % (
-                    i_try,
-                    max_n_tries,
-                ))
-                if i_try >= max_n_tries:
-                    break
-                OUT.info(self.__class__.MSG_SEND_RETRY % (
-                    retry_intvl_secs,
-                    self.pyro_timeout
-                ))
-                sleep(retry_intvl_secs)
-            else:
-                if i_try > 1:
-                    OUT.info(self.__class__.MSG_SEND_SUCCEEDED % (
-                        i_try,
-                        max_n_tries
-                    ))
-                sent = True
-                break
-        if not sent:
-            sys.exit('ERROR: send failed')
-        return sent

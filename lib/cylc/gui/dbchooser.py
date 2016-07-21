@@ -38,13 +38,13 @@ class db_updater(threading.Thread):
 
     SCAN_INTERVAL = 60.0
 
-    def __init__(self, regd_treestore, db, filtr=None, pyro_timeout=None):
+    def __init__(self, regd_treestore, db, filtr=None, timeout=None):
         self.db = db
         self.quit = False
-        if pyro_timeout:
-            self.pyro_timeout = float(pyro_timeout)
+        if timeout:
+            self.timeout = float(timeout)
         else:
-            self.pyro_timeout = None
+            self.timeout = None
 
         self.regd_treestore = regd_treestore
         super(db_updater, self).__init__()
@@ -112,7 +112,7 @@ class db_updater(threading.Thread):
 
         # Scan for running suites
         choices = []
-        for host, scan_result in scan_all(pyro_timeout=self.pyro_timeout):
+        for host, scan_result in scan_all(timeout=self.timeout):
             try:
                 port, suite_identity = scan_result
             except ValueError:
@@ -279,14 +279,14 @@ class db_updater(threading.Thread):
 
 
 class dbchooser(object):
-    def __init__(self, parent, db, db_owner, tmpdir, pyro_timeout):
+    def __init__(self, parent, db, db_owner, tmpdir, timeout):
 
         self.db = db
         self.db_owner = db_owner
-        if pyro_timeout:
-            self.pyro_timeout = float(pyro_timeout)
+        if timeout:
+            self.timeout = float(timeout)
         else:
-            self.pyro_timeout = None
+            self.timeout = None
 
         self.chosen = None
 
@@ -423,7 +423,7 @@ class dbchooser(object):
         if self.updater:
             self.updater.quit = True  # does this take effect?
         self.updater = db_updater(
-            self.regd_treestore, db, filtr, self.pyro_timeout)
+            self.regd_treestore, db, filtr, self.timeout)
         self.updater.start()
 
     # TODO: a button to do this?

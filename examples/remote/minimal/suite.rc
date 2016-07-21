@@ -1,10 +1,10 @@
 title = a minimal self-contained remote task suite
 
 description = """
-This runs one task on a remote host. To use it, install cylc (and Pyro
-OR ssh key for ssh-based remote messaging) on the remote host specified
-under [[[remote]]] below.  Remote cylc location, and ssh messaging, can
-be set in host-specific sections of the cylc site/user config file."""
+This runs one task on a remote host. To use it, install cylc on the
+remote host specified under [[[remote]]] below.  Remote cylc
+location, and ssh messaging, can be set in host-specific sections of
+the cylc site/user config file."""
 
 [scheduling]
     [[dependencies]]

@@ -19,7 +19,7 @@
 
 import time
 from cylc.task_id import TaskID
-from cylc.network.suite_state import SUITE_STATUS_STOPPED
+from cylc.network.suite_state_client import SUITE_STATUS_STOPPED
 from cylc.task_state import TASK_STATUS_READY
 
 

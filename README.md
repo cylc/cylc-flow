@@ -51,10 +51,6 @@ Licences for non-cylc work included in this distribution can be found in the
  * `lib/isodatetime/`:
     Unmodified external software library released under the LGPL license.
     See [metomi/isodatetime](https://github.com/metomi/isodatetime).
- * `lib/Pyro/`:
-    External software library released under the MIT license.
-    Minor modification based on version 3.16.
-    See [Pyro 3.16](https://pypi.python.org/pypi/Pyro).
  * `lib/xdot.py`:
     External software released under the LGPL license.
     Modifications based on version 0.6. See

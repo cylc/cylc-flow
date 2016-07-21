@@ -16,23 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# A minimal Pyro-connected object to allow client programs to identify
+# A minimal server/client pair to allow client programs to identify
 # what suite is running at a given cylc port - by suite name and owner.
 
-# All *other* suite objects should be connected to Pyro via qualified
-# names: owner.suite.object, to prevent accidental access to the wrong
-# suite. This object, however, should be connected unqualified so that
-# that same ID method can be called on any active cylc port.
-
 import cylc.flags
-from cylc.network.pyro_base import PyroServer
-from cylc.network.suite_state import StateSummaryServer
+from cylc.network.https.base_server import BaseCommsServer
+from cylc.network.https.suite_state_server import StateSummaryServer
 from cylc.network import access_priv_ok
 from cylc.config import SuiteConfig
 
+import cherrypy
 
-class SuiteIdServer(PyroServer):
-    """Server-side external trigger interface."""
+
+class SuiteIdServer(BaseCommsServer):
+    """Server-side identification interface."""
 
     _INSTANCE = None
 
@@ -48,6 +45,8 @@ class SuiteIdServer(PyroServer):
         self.name = name
         super(SuiteIdServer, self).__init__()
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def identify(self):
         self.report("identify")
         result = {}
@@ -65,8 +64,3 @@ class SuiteIdServer(PyroServer):
             result['tasks-by-state'] = (
                 StateSummaryServer.get_inst().get_tasks_by_state())
         return result
-
-    def id(self):
-        # Back-compat for older clients <=6.4.1.
-        # (Allows old scan to see new suites.)
-        return (self.name, self.owner)

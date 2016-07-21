@@ -46,6 +46,8 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
         mkdir -p "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}"
         ${SCP} -p "${HOST}:${HOST_WORK_DIR}/passphrase" \
             "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
+        ${SCP} -p "${HOST}:${HOST_WORK_DIR}/ssl.*" \
+            "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
         cylc run "--host=${HOST}" "${UUID}-${HOST}" 1>/dev/null 2>&1
         poll '!' ${SSH} -n "${HOST}" "test -e '.cylc/ports/${UUID}-${HOST}'"
     fi
