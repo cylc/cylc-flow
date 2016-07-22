@@ -148,7 +148,7 @@ class ServerAdapter(object):
         self.bus.unsubscribe('start', self.start)
         self.bus.unsubscribe('stop', self.stop)
 
-    def start(self):
+    def start(self, num_port_tries=5):
         """Start the HTTP server."""
         if self.bind_addr is None:
             on_what = "unknown interface (dynamic?)"
@@ -167,7 +167,7 @@ class ServerAdapter(object):
 
         # Start the httpserver in a new thread.
         if isinstance(self.bind_addr, tuple):
-            wait_for_free_port(*self.bind_addr)
+            wait_for_free_port(*self.bind_addr, num_tries=num_port_tries)
 
         import threading
         t = threading.Thread(target=self._start_http_thread)
@@ -418,14 +418,14 @@ free_port_timeout = 0.1
 occupied_port_timeout = 1.0
 
 
-def wait_for_free_port(host, port, timeout=None):
+def wait_for_free_port(host, port, timeout=None, num_tries=50):
     """Wait for the specified port to become free (drop requests)."""
     if not host:
         raise ValueError("Host values of '' or None are not allowed.")
     if timeout is None:
         timeout = free_port_timeout
 
-    for trial in range(50):
+    for trial in range(num_tries):
         try:
             # we are expecting a free port, so reduce the timeout
             check_port(host, port, timeout=timeout)
