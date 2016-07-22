@@ -1,0 +1,7 @@
+[scheduling]
+    [[dependencies]]
+        graph = """
+                    foo => bar => baz
+                    foo:fail => qux => baz
+                    foo:fail & baz => !foo
+                """
