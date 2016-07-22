@@ -69,14 +69,14 @@ from shutil import copy
 
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from parsec.include import inline, \
     split_file, backup, backups, newfiles, cleanup, modtimes
 from cylc.wallclock import get_current_time_string
 
 
 def main():
-    parser = cop(__doc__, prep=True)
+    parser = COP(__doc__, prep=True)
 
     parser.add_option(
         "--inline", "-i",

@@ -82,7 +82,7 @@ except ImportError as exc:
 if remrun().execute():
     sys.exit(0)
 
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 
 # DEVELOPER NOTE: family grouping controls via the viewer toolbar and
 # right-click menu have been rather hastily stuck on to the original
@@ -146,7 +146,7 @@ def grouping(w, name, window, un, recursive):
 
 
 def main():
-    parser = cop(
+    parser = COP(
         __doc__, jset=True, prep=True,
         argdoc=[
             ('[SUITE]', 'Suite name or path'),

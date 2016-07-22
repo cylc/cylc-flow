@@ -43,7 +43,7 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import os
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 import cylc.flags
 
 
@@ -54,7 +54,7 @@ def main():
     sys.path.append(
         os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../')
 
-    parser = cop(__doc__, pyro=True, noforce=True, jset=True,
+    parser = COP(__doc__, pyro=True, noforce=True, jset=True,
                  argdoc=[('[REG]', 'Suite name')])
 
     parser.add_option(

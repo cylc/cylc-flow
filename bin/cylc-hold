@@ -36,11 +36,11 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.prompt import prompt
 from cylc.network.suite_command import SuiteCommandClient
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 
 
 def main():
-    parser = cop(
+    parser = COP(
         __doc__, pyro=True, multitask=True,
         argdoc=[
             ("REG", "Suite name"),

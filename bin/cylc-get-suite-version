@@ -30,14 +30,14 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
 def main():
-    parser = cop(__doc__, pyro=True, argdoc=[('REG', 'Suite name')])
+    parser = COP(__doc__, pyro=True, argdoc=[('REG', 'Suite name')])
 
     (options, args) = parser.parse_args()
     suite = args[0]

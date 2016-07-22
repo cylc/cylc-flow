@@ -26,13 +26,13 @@ if remrun().execute():
     sys.exit(0)
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.dump import dump_to_stdout, get_stop_state_summary
 from cylc.suite_state_dumping import SuiteStateDumper
 
 
 def main():
-    parser = cop(__doc__)
+    parser = COP(__doc__)
 
     parser.add_option(
         "-d", "--dump",

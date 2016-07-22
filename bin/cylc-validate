@@ -31,7 +31,7 @@ if remrun().execute():
     sys.exit(0)
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.version import CYLC_VERSION
 from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.prerequisite import TriggerExpressionError
@@ -40,7 +40,7 @@ from cylc.task_proxy import TaskProxy
 
 def main():
 
-    parser = cop(__doc__, jset=True, prep=True)
+    parser = COP(__doc__, jset=True, prep=True)
 
     parser.add_option(
         "--ict",

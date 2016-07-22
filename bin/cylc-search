@@ -39,7 +39,7 @@ if remrun().execute():
 import os
 import re
 from collections import deque
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from parsec.include import inline
 
 
@@ -58,7 +58,7 @@ def section_level(heading):
 def print_heading(heading):
     print '>>>' + '->'.join(heading)
 
-parser = cop(
+parser = COP(
     __doc__, prep=True,
     argdoc=[('SUITE', 'Suite name or path'),
             ('PATTERN', 'Python-style regular expression'),

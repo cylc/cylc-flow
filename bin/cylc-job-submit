@@ -30,7 +30,7 @@ from cylc.remote import remrun
 
 def main():
     """CLI main."""
-    parser = cop(
+    parser = COP(
         __doc__,
         argdoc=[("JOB-FILE-PATH", "the path of the job file")])
     parser.add_option(
@@ -51,6 +51,6 @@ def main():
 
 
 if __name__ == "__main__" and not remrun().execute():
-    from cylc.CylcOptionParsers import cop
+    from cylc.option_parsers import CylcOptionParser as COP
     from cylc.batch_sys_manager import BATCH_SYS_MANAGER
     main()

@@ -26,7 +26,7 @@ from cylc.registration import RegistrationDB, RegistrationError
 from cylc.regpath import IllegalRegPathError
 
 
-class db_optparse(object):
+class DBOptParse(object):
     def __init__(self, dbopt):
         # input is DB option spec from the cylc command line
         self.owner = USER
@@ -52,7 +52,7 @@ class db_optparse(object):
         return self.location
 
 
-class cop(OptionParser):
+class CylcOptionParser(OptionParser):
 
     """Common options for all cylc CLI commands."""
 
@@ -372,7 +372,7 @@ Arguments:"""
                 len(args) > self.n_compulsory_args + self.n_optional_args:
             self.error("Wrong number of arguments (too many)")
 
-        foo = db_optparse(options.db)
+        foo = DBOptParse(options.db)
         options.db = foo.get_db_location()
         options.db_owner = foo.get_db_owner()
 

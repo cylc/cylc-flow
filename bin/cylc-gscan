@@ -24,9 +24,9 @@ hosts.
 To customize themes copy $CYLC_DIR/conf/gcylcrc/gcylc.rc.eg to
 $HOME/.cylc/gcylc.rc and follow the instructions in the file."""
 
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 
-parser = cop(__doc__, argdoc=[])
+parser = COP(__doc__, argdoc=[])
 
 parser.add_option("--host",
                   help="Host names to monitor (override site default).",

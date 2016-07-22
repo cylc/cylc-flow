@@ -23,7 +23,7 @@ Here's an easy way to move to a suite directory:
   $ cd $(cylc get-dir REG)."""
 
 import sys
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.registration import RegistrationDB
 import cylc.flags
 
@@ -33,7 +33,7 @@ if remrun().execute():
 
 
 def main():
-    parser = cop(__doc__)
+    parser = COP(__doc__)
 
     (options, args) = parser.parse_args()
 

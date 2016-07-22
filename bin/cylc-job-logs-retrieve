@@ -30,14 +30,14 @@ import sys
 import traceback
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.wallclock import get_time_string_from_unix_time
 
 
 def main():
     """CLI main."""
     # Options and arguments
-    opt_parser = cop(__doc__, argdoc=[
+    opt_parser = COP(__doc__, argdoc=[
         ("HOST:HOST-PATH", "Path to remote job logs directory"),
         ("LOCALHOST-PATH", "Path to local job logs directory"),
     ])

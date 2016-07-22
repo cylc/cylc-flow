@@ -57,7 +57,7 @@ if remrun().execute():
     sys.exit(0)
 
 import cylc.flags
-from cylc.CylcOptionParsers import cop
+from cylc.option_parsers import CylcOptionParser as COP
 from cylc.dbstatecheck import (
     CylcSuiteDBChecker, DBNotFoundError, DBOperationError)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
@@ -118,7 +118,7 @@ class suite_poller(poller):
 
 
 def main():
-    parser = cop(__doc__)
+    parser = COP(__doc__)
 
     parser.add_option(
         "-t", "--task", help="Specify a task to check the state of.",
