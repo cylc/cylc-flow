@@ -18,11 +18,26 @@
 # Test strict validation of suite for tasks with inherit = [blank]
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 1
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-val
 run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-graph-check
+run_ok $TEST_NAME cylc graph --reference $SUITE_NAME
+cmp_ok "$TEST_NAME.stdout" <<'__OUT__'
+edge "bar.1" "baz.1" solid
+edge "foo.1" "bar.1" solid
+edge "foo.1" "qux.1" solid
+edge "qux.1" "baz.1" solid
+graph
+node "bar.1" "bar\n1" unfilled box black
+node "baz.1" "baz\n1" unfilled box black
+node "foo.1" "foo\n1" unfilled box black
+node "qux.1" "qux\n1" unfilled box black
+stop
+__OUT__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
