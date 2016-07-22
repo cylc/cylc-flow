@@ -35,7 +35,6 @@ from copy import deepcopy, copy
 from message_output import MessageOutput
 from graphnode import graphnode, GraphNodeError
 from print_tree import print_tree
-from cylc.prerequisite import TriggerExpressionError
 from regpath import RegPath
 from task_trigger import TaskTrigger
 from parsec.util import replicate
@@ -1421,7 +1420,9 @@ class SuiteConfig(object):
 
         # Replace "foo:finish" with "(foo:succeed | foo:fail)"
         line = re.sub(
-            r'\b(\w+(\[.*?]){0,1}):finish\b', r'(\1:succeed | \1:fail)', line)
+            r'\b(' + TaskID.NAME_RE + r'(\[.*?\]){0,1}):finish\b',
+            r'(\1:succeed | \1:fail)',
+            line)
 
         if flags.verbose and line != orig_line:
             print 'Graph line substitutions occurred:'
