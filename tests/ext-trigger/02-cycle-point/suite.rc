@@ -1,0 +1,25 @@
+title = "Test for Github Issue 1893"
+description = """Cycle-point specific external triggering in a date-time
+cycling suite.  The suite will time out and abort if the ext trigger fails."""
+
+[cylc]
+    cycle point format = %Y
+    [[event hooks]]
+        abort on timeout = True
+        timeout = PT30S
+[scheduling]
+    initial cycle point = 2020
+    final cycle point = 2020
+    [[special tasks]]
+        external-trigger = ext("cheese on toast for $CYLC_TASK_CYCLE_POINT")
+    [[dependencies]]
+        [[[P1Y]]]
+            graph = ext & trig
+[runtime]
+    [[ext]]
+        # Externally triggered task.
+        script = echo $CYLC_EXT_TRIGGER_ID
+    [[trig]]
+        # Task to do the "external" triggering.
+        script = cylc ext-trigger $CYLC_SUITE_NAME \
+            "cheese on toast for $CYLC_TASK_CYCLE_POINT" "blarghh!"

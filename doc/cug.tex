@@ -3961,14 +3961,6 @@ Note that cylc does not currently support triggering off ``filesystem events''
 use filesystem events to detect triggering conditions, if that is appropriate,
 before notifying a suite with our general external event system.
 
-External triggers are not normally needed in date-time cycling suites driven
-by real time data that comes in at regular intervals.  In these cases a data
-retrieval task can be clock-triggered to submit at the expected data arrival
-time, so little time if any is wasted in polling.  But in non-cycling or
-integer cycling suites (which can be used for arbitrarily timed repeating
-workflows such as for satellite data processing) external triggers may be
-preferred.
-
 The external triggering process must call \lstinline=cylc ext-trigger= with the
 name of the target suite, the message that identifies this type of event to the
 suite, and an ID that distinguishes this particular event instance from others
@@ -4014,6 +4006,38 @@ of course.
 
 \lstinline=$CYLC_DIR/examples/satellite/ext-triggers/suite.rc= is a working
 example of a simulated satellite processing suite.
+
+External triggers are not normally needed in date-time cycling suites driven
+by real time data that comes in at regular intervals.  In these cases a data
+retrieval task can be clock-triggered (and have appropriate retry intervals
+supplied) to submit at the expected data arrival time, so little time if any
+is wasted in polling.  However, if the arrival time of the cycle-point-specific
+data is highly variable, external triggering may be used with the cycle point
+embedded in the message:
+\lstset{language=suiterc}
+\begin{lstlisting}
+# suite "data-proc"
+[scheduling]
+    initial cycle point = 20150125T00
+    final cycle point   = 20150126T00
+    [[special tasks]]
+        external-trigger = get-data("data arrived for $CYLC_TASK_CYCLE_POINT")
+    [[dependencies]]
+        [[[T00]]]
+            graph = init-process => get-data => post-process
+\end{lstlisting}
+
+Once the variable-length waiting is finished, an external detection system
+should notify the suite like this:
+\lstset{language=transcript}
+\begin{lstlisting}
+shell$ cylc ext-trigger data-proc "data arrived for 20150126T00" passX12334a
+\end{lstlisting}
+where ``data-proc'' is the suite name, the cycle point has replaced the
+variable in the trigger string, and ``passX12334a'' is the ID string for
+the new event.  The suite passphrase must be installed on the triggering
+account.  In this case, the event will trigger for the second cycle point but
+not the first because of the cycle-point matching.
 
 \subsubsection{Model Restart Dependencies}
 \label{ModelRestartDependencies}

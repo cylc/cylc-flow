@@ -242,6 +242,9 @@ class TaskState(object):
         # External Triggers.
         self.external_triggers = {}
         for ext in tdef.external_triggers:
+            # Allow cycle-point-specific external triggers - GitHub #1893.
+            if '$CYLC_TASK_CYCLE_POINT' in ext:
+                ext = ext.replace('$CYLC_TASK_CYCLE_POINT', str(point))
             # set unsatisfied
             self.external_triggers[ext] = False
 
