@@ -908,7 +908,8 @@ class TaskPool(object):
             for job_log_dir in job_log_dirs:
                 point, name, submit_num = job_log_dir.split(os.sep, 2)
                 itask = tasks[(point, name, submit_num)]
-                out += "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n"
+                out += (BATCH_SYS_MANAGER.OUT_PREFIX_SUMMARY +
+                        "|".join([ctx.timestamp, job_log_dir, "1"]) + "\n")
         for line in out.splitlines(True):
             for prefix, callback in handlers:
                 if line.startswith(prefix):

@@ -380,45 +380,49 @@ class BatchSysManager(object):
         """
         # SUITE_RUN_DIR/log/job/CYCLE/TASK/SUBMIT/job.status
         self.configure_suite_run_dir(st_file_path.rsplit(os.sep, 6)[0])
-        st_file = open(st_file_path)
-        for line in st_file:
-            if line.startswith(self.CYLC_BATCH_SYS_NAME + "="):
-                batch_sys = self.get_inst(line.strip().split("=", 1)[1])
-                break
-        else:
-            return (1, "Cannot determine batch system from 'job.status' file")
-        st_file.seek(0, 0)  # rewind
-        if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
+        try:
+            st_file = open(st_file_path)
             for line in st_file:
-                if line.startswith(TaskMessage.CYLC_JOB_PID + "="):
-                    pid = line.strip().split("=", 1)[1]
+                if line.startswith(self.CYLC_BATCH_SYS_NAME + "="):
+                    batch_sys = self.get_inst(line.strip().split("=", 1)[1])
+                    break
+            else:
+                return (
+                    1, "Cannot determine batch system from 'job.status' file")
+            st_file.seek(0, 0)  # rewind
+            if getattr(batch_sys, "SHOULD_KILL_PROC_GROUP", False):
+                for line in st_file:
+                    if line.startswith(TaskMessage.CYLC_JOB_PID + "="):
+                        pid = line.strip().split("=", 1)[1]
+                        try:
+                            os.killpg(int(pid), SIGKILL)
+                        except OSError as exc:
+                            traceback.print_exc()
+                            return (1, str(exc))
+                        else:
+                            return (0, "")
+            st_file.seek(0, 0)  # rewind
+            if hasattr(batch_sys, "KILL_CMD_TMPL"):
+                for line in st_file:
+                    if not line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
+                        continue
+                    job_id = line.strip().split("=", 1)[1]
+                    command = shlex.split(
+                        batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
                     try:
-                        os.killpg(int(pid), SIGKILL)
+                        proc = Popen(command, stderr=PIPE)
                     except OSError as exc:
+                        # subprocess.Popen has a bad habit of not setting the
+                        # filename of the executable when it raises an OSError.
+                        if not exc.filename:
+                            exc.filename = command[0]
                         traceback.print_exc()
                         return (1, str(exc))
                     else:
-                        return (0, "")
-        st_file.seek(0, 0)  # rewind
-        if hasattr(batch_sys, "KILL_CMD_TMPL"):
-            for line in st_file:
-                if not line.startswith(self.CYLC_BATCH_SYS_JOB_ID + "="):
-                    continue
-                job_id = line.strip().split("=", 1)[1]
-                command = shlex.split(
-                    batch_sys.KILL_CMD_TMPL % {"job_id": job_id})
-                try:
-                    proc = Popen(command, stderr=PIPE)
-                except OSError as exc:
-                    # subprocess.Popen has a bad habit of not setting the
-                    # filename of the executable when it raises an OSError.
-                    if not exc.filename:
-                        exc.filename = command[0]
-                    traceback.print_exc()
-                    return (1, str(exc))
-                else:
-                    return (proc.wait(), proc.communicate()[1])
-        return (1, "Cannot determine batch job ID from 'job.status' file")
+                        return (proc.wait(), proc.communicate()[1])
+            return (1, "Cannot determine batch job ID from 'job.status' file")
+        except IOError as exc:
+            return (1, str(exc))
 
     def job_submit(self, job_file_path, remote_mode):
         """Submit a job file.
