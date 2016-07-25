@@ -197,7 +197,7 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
-\subsubsection[{[[}event hooks{]]}]{[cylc] \textrightarrow [[event hooks]]}
+\subsubsection[{[[}events{]]}]{[cylc] \textrightarrow [[events]]}
 \label{SuiteEventHandling}
 
 Cylc has internal ``hooks'' to which you can attach handlers that are
@@ -232,7 +232,7 @@ arguments:
 Additional information can be passed to event handlers via
 [cylc] \textrightarrow [[environment]].
 
-\paragraph[EVENT handler]{[cylc] \textrightarrow [[event hooks]] \textrightarrow EVENT handler}
+\paragraph[EVENT handler]{[cylc] \textrightarrow [[events]] \textrightarrow EVENT handler}
 
 A comma-separated list of one or more event handlers to call when one of the
 following EVENTs occurs:
@@ -253,7 +253,7 @@ Item details:
     \item {\em example:} \lstinline@startup handler = my-handler.sh@
 \end{myitemize}
 
-\paragraph[handlers]{[cylc] \textrightarrow [[[event hooks]]] \textrightarrow handlers}
+\paragraph[handlers]{[cylc] \textrightarrow [[[events]]] \textrightarrow handlers}
 
 Specify the general event handlers as a list of command lines or command line
 templates.
@@ -264,7 +264,7 @@ templates.
     \item {\em example:} \lstinline@handlers = my-handler.sh@
 \end{myitemize}
 
-\paragraph[handler events]{[cylc] \textrightarrow [[event hooks]] \textrightarrow handler events}
+\paragraph[handler events]{[cylc] \textrightarrow [[events]] \textrightarrow handler events}
 
 Specify the events for which the general event handlers should be invoked.
 
@@ -274,7 +274,7 @@ Specify the events for which the general event handlers should be invoked.
     \item {\em example:} \lstinline@handler events = timeout, shutdown@
 \end{myitemize}
 
-\paragraph[mail events]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail events}
+\paragraph[mail events]{[cylc] \textrightarrow [[events]] \textrightarrow mail events}
 
 Specify the suite events for which notification emails should be sent.
 
@@ -284,7 +284,7 @@ Specify the suite events for which notification emails should be sent.
     \item {\em example:} \lstinline@handler = startup, shutdown, timeout@
 \end{myitemize}
 
-\paragraph[mail from]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail from}
+\paragraph[mail from]{[cylc] \textrightarrow [[events]] \textrightarrow mail from}
 
 Specify an alternate \lstinline=from:= email address for suite event notifications.
 
@@ -294,7 +294,7 @@ Specify an alternate \lstinline=from:= email address for suite event notificatio
     \item {\em example:} \lstinline|mail from = no-reply@your-org|
 \end{myitemize}
 
-\paragraph[mail smtp]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail smtp}
+\paragraph[mail smtp]{[cylc] \textrightarrow [[events]] \textrightarrow mail smtp}
 
 Specify the SMTP server for sending suite event email notifications.
 
@@ -304,7 +304,7 @@ Specify the SMTP server for sending suite event email notifications.
     \item {\em example:} \lstinline@mail smtp = smtp.yourorg@
 \end{myitemize}
 
-\paragraph[mail to]{[cylc] \textrightarrow [[event hooks]] \textrightarrow mail to}
+\paragraph[mail to]{[cylc] \textrightarrow [[events]] \textrightarrow mail to}
 
 A list of email addresses to send suite event notifications. The list can be
 anything accepted by the \lstinline=mail= command.
@@ -315,7 +315,7 @@ anything accepted by the \lstinline=mail= command.
     \item {\em example:} \lstinline@mail to = your.colleague@
 \end{myitemize}
 
-\paragraph[timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow timeout}
+\paragraph[timeout]{[cylc] \textrightarrow [[events]] \textrightarrow timeout}
 
 If a timeout is set and the timeout event is handled, the timeout event
 handler(s) will be called if the suite times out before it finishes.
@@ -328,7 +328,7 @@ for this at the site level (see ~\ref{SiteCylcHooks}).
     \item {\em default:} (none), unless set at the site level.
 \end{myitemize}
 
-\paragraph[reset timer]{[cylc] \textrightarrow [[event hooks]] \textrightarrow reset timer}
+\paragraph[reset timer]{[cylc] \textrightarrow [[events]] \textrightarrow reset timer}
 
 If \lstinline=True= (the default) the suite timer will continually reset
 after any task changes state, so you can time out after some interval
@@ -340,7 +340,7 @@ time.
     \item {\em default:} True
 \end{myitemize}
 
-\paragraph[abort on stalled]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on stalled}
+\paragraph[abort on stalled]{[cylc] \textrightarrow [[events]] \textrightarrow abort on stalled}
 
 If this is set to True it will cause the suite to abort with error status
 if it stalls. A suite is considered "stalled" if there are no active,
@@ -353,7 +353,7 @@ possible to set a default for this at the site level
     \item {\em default:} False, unless set at the site level.
 \end{myitemize}
 
-\paragraph[abort on timeout]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort on timeout}
+\paragraph[abort on timeout]{[cylc] \textrightarrow [[events]] \textrightarrow abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
 error status if the suite times out while still running. It is possible to set 
@@ -364,7 +364,7 @@ a default for this at the site level (see ~\ref{SiteCylcHooks}).
     \item {\em default:} False, unless set at the site level.
 \end{myitemize}
 
-\paragraph[abort if startup handler fails]{[cylc] \textrightarrow [[event hooks]] \textrightarrow abort if EVENT handler fails}
+\paragraph[abort if startup handler fails]{[cylc] \textrightarrow [[events]] \textrightarrow abort if EVENT handler fails}
 
 Cylc does not normally care whether an event handler succeeds or fails,
 but if this is turned on the EVENT handler will be executed in the
@@ -1074,74 +1074,6 @@ item (just above).  It can be a single command or multiple lines of scripting.  
 \item {\em default:} (none)
 \end{myitemize}
 
-\paragraph[retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow retry delays}
-\label{RefRetries}
-
-A list of ISO 8601 time duration/intervals after which to resubmit the task
-if it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
-execution environment is incremented each time, starting from 1 for the
-first try - this can be used to vary task behavior by try number.
-
-\begin{myitemize}
-    \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations,
-    optionally {\em preceded} by multipliers.
-    \item {\em example:} \lstinline=PT1.5M,3*PT10M= is equivalent to
-    \lstinline=PT1.5M, PT10M, PT10M, PT10M= - 1.5 minutes, 10 minutes,
-    10 minutes, 10 minutes.
-    \item {\em default:} (none)
-\end{myitemize}
-
-\paragraph[submission polling intervals]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow submission polling intervals}
-\label{SubmissionPollingIntervals}
-
-A list of intervals, expressed as ISO 8601 duration/intervals, with optional
-multipliers, after which cylc will poll for status while the task is in the
-submitted state.
-
-For the polling task communications method this overrides the default
-submission polling interval in the site/user config files
-(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
-polling is not done by default but it can still be configured here as a
-regular check on the health of submitted tasks.
-
-Each list value is used in turn until the last, which is used repeatedly
-until finished.
-
-\begin{myitemize}
-    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
-        representations, optionally {\em preceded} by multipliers.
-    \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
-    \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
-    hour, 1 minute.
-    \item {\em default:} (none)
-\end{myitemize}
-A single interval value is probably appropriate for submission polling.
-
-\paragraph[execution polling intervals]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow execution polling intervals}
-\label{ExecutionPollingIntervals}
-
-A list of intervals, expressed as ISO 8601 duration/intervals, with optional
-multipliers, after which cylc will poll for status while the task is in the
-running state.
-
-For the polling task communications method this overrides the default
-execution polling interval in the site/user config files
-(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
-polling is not done by default but it can still be configured here as a
-regular check on the health of submitted tasks.
-
-Each list value is used in turn until the last, which is used repeatedly
-until finished.
-
-\begin{myitemize}
-    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
-        representations, optionally {\em preceded} by multipliers.
-    \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
-    \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
-    hour, 1 minute.
-    \item {\em default:} (none)
-\end{myitemize}
-
 \paragraph[work sub-directory]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow work sub-directory}
 \label{worksubdirectory}
 
@@ -1234,20 +1166,20 @@ run length will be randomly chosen.
     \item {\em default:} (1, 16)
 \end{myitemize}
 
-\paragraph[{[[[}job submission{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]]}
+\paragraph[{[[[}job{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]]}
 
 This section configures the means by which cylc submits task job scripts to run.
 
-\subparagraph[method]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow method}
+\subparagraph[batch system]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow batch system}
 \label{RuntimeJobSubMethods}
 
 See~\ref{TaskJobSubmission} for how job submission works, and how to define
-new methods.  Cylc has a number of built in job submission methods:
+new handlers for different batch systems. Cylc has a number of built in batch system handlers:
 \begin{myitemize}
 \item {\em type:} string
 \item {\em legal values:}
    \begin{myitemize}
-       \item \lstinline=background= - direct background execution
+       \item \lstinline=background= - invoke a child process
        \item \lstinline=at= - the rudimentary Unix \lstinline=at= scheduler
        \item \lstinline=loadleveler= - IBM LoadLeveler \lstinline=llsubmit=, with directives defined in the suite.rc file
        \item \lstinline=lsf= - IBM Platform LSF \lstinline=bsub=, with directives defined in the suite.rc file
@@ -1259,10 +1191,22 @@ new methods.  Cylc has a number of built in job submission methods:
 \item {\em default:} \lstinline=background=
 \end{myitemize}
 
-\subparagraph[command template]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow command template}
+\subparagraph[execution time limit]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow execution time limit}
 
-This allows you to override the actual command used by the chosen job
-submission method. The template's \%(job)s will be substituted by the
+Specify the execution wall clock limit for a job of the task.
+For \lstinline=background= and \lstinline=at=, the job script will be invoked using the \lstinline=timeout= command.
+For other batch systems, the specified time will be automatically translated into the equivalent directive for wall clock limit.
+
+\begin{myitemize}
+    \item {\em type:} ISO 8601 duration/interval representation
+    \item {\em example:} \lstinline=PT5M=, 5 minutes, \lstinline=PT1H=, 1 hour
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[batch submit command template]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow batch submit command template}
+
+This allows you to override the actual command used by the chosen batch
+system. The template's \%(job)s will be substituted by the
 job file path.
 
 \begin{myitemize}
@@ -1271,7 +1215,7 @@ job file path.
 \item {\em example:} \lstinline@llsubmit \%(job)s@
 \end{myitemize}
 
-\subparagraph[shell]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow shell}
+\subparagraph[shell]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow shell}
 \label{JobSubShell}
 
 This is the shell used to interpret the job script submitted by the suite
@@ -1288,7 +1232,7 @@ to be modified slightly to allow use of the C shell.
 \item {\em root default:} \lstinline=/bin/bash=
 \end{myitemize}
 
-\subparagraph[retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job submission]]] \textrightarrow retry delays}
+\subparagraph[submission retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow submission retry delays}
 \label{JobSubRefRetries}
 
 A list of duration (in ISO 8601 syntax), after which to resubmit if job
@@ -1302,12 +1246,79 @@ submission fails.
     \item {\em default:} (none)
 \end{myitemize}
 
+\subparagraph[execution retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow execution retry delays}
+\label{RefRetries}
+
+A list of ISO 8601 time duration/intervals after which to resubmit the task
+if it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
+execution environment is incremented each time, starting from 1 for the
+first try - this can be used to vary task behaviour by try number.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations,
+    optionally {\em preceded} by multipliers.
+    \item {\em example:} \lstinline=PT1.5M,3*PT10M= is equivalent to
+    \lstinline=PT1.5M, PT10M, PT10M, PT10M= - 1.5 minutes, 10 minutes,
+    10 minutes, 10 minutes.
+    \item {\em default:} (none)
+\end{myitemize}
+
+\subparagraph[submission polling intervals]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow submission polling intervals}
+\label{SubmissionPollingIntervals}
+
+A list of intervals, expressed as ISO 8601 duration/intervals, with optional
+multipliers, after which cylc will poll for status while the task is in the
+submitted state.
+
+For the polling task communication method this overrides the default
+submission polling interval in the site/user config files
+(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications,
+polling is not done by default but it can still be configured here as a
+regular check on the health of submitted tasks.
+
+Each list value is used in turn until the last, which is used repeatedly
+until finished.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
+        representations, optionally {\em preceded} by multipliers.
+    \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
+    \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
+    hour, 1 minute.
+    \item {\em default:} (none)
+\end{myitemize}
+A single interval value is probably appropriate for submission polling.
+
+\subparagraph[execution polling intervals]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[job]]] \textrightarrow execution polling intervals}
+\label{ExecutionPollingIntervals}
+
+A list of intervals, expressed as ISO 8601 duration/intervals, with optional
+multipliers, after which cylc will poll for status while the task is in the
+running state.
+
+For the polling task communication method this overrides the default
+execution polling interval in the site/user config files
+(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications,
+polling is not done by default but it can still be configured here as a
+regular check on the health of submitted tasks.
+
+Each list value is used in turn until the last, which is used repeatedly
+until finished.
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
+        representations, optionally {\em preceded} by multipliers.
+    \item {\em example:} \lstinline=PT1M,3*PT1H, PT1M= is equivalent to
+    \lstinline=PT1M, PT1H, PT1H, PT1H, PT1M= - 1 minute, 1 hour, 1 hour, 1
+    hour, 1 minute.
+    \item {\em default:} (none)
+\end{myitemize}
 
 \paragraph[{[[[}remote{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]]}
 
 Configure host and username, for tasks that do not run on the suite host
-account. Passwordless ssh is used to submit the task by the configured
-job submission method, so you must distribute your ssh key to allow
+account. Non-interactive ssh is used to submit the task by the configured
+batch system, so you must distribute your ssh key to allow
 this. Cylc must be installed on remote task hosts, but of the external
 software dependencies only Pyro is required there (not even that if {\em
 ssh messaging} is used; see below).
@@ -1417,7 +1428,7 @@ interpretation on the remote host.
 \end{myitemize}
 
 
-\paragraph[{[[[}event hooks{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]]}
+\paragraph[{[[[}events{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]]}
 \label{TaskEventHandling}
 
 Cylc can call nominated event handlers when certain task events occur. This
@@ -1458,7 +1469,7 @@ Additional information can be passed to event handlers via the
 [cylc] \textrightarrow [[environment]] (but not via task
 runtime environments - event handlers are not called by tasks).
 
-\subparagraph[EVENT handler]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow EVENT handler}
+\subparagraph[EVENT handler]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow EVENT handler}
 
 A list of one or more event handlers to call when one of the following EVENTs occurs:
 \begin{myitemize}
@@ -1485,7 +1496,7 @@ Item details:
     \item {\em example:} \lstinline@failed handler = my-failed-handler.sh@
 \end{myitemize}
 
-\subparagraph[submission timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow submission timeout}
+\subparagraph[submission timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow submission timeout}
 \label{runtime-event-hooks-submission-timeout}
 
 If a task has not started after the specified ISO 8601 duration/interval, the
@@ -1496,7 +1507,7 @@ If a task has not started after the specified ISO 8601 duration/interval, the
     \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[execution timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow execution timeout}
+\subparagraph[execution timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow execution timeout}
 \label{runtime-event-hooks-execution-timeout}
 
 If a task has not finished after the specified ISO 8601 duration/interval, the
@@ -1507,7 +1518,7 @@ If a task has not finished after the specified ISO 8601 duration/interval, the
     \item {\em default:} (none)
 \end{myitemize}
 
-\subparagraph[reset timer]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[event hooks]]] \textrightarrow reset timer}
+\subparagraph[reset timer]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow reset timer}
 \label{runtime-event-hooks-reset-timer}
 
 If you set an execution timeout the timer can be reset to zero every
@@ -1519,40 +1530,6 @@ finish in the alotted time regardless of incoming messages.
 \item {\em type:} boolean
 \item {\em default:} False
 \end{myitemize}
-
-\paragraph[{[[[}events{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]]}
-\label{TaskEventHandling2}
-
-Cylc can call nominated event handlers when certain task events occur. This
-section configures general and built-in task event handlers;
-see~\ref{SuiteEventHandling} for suite event hooks. See
-~\ref{TaskEventHandling} for specific task event handlers.
-
-Event handler commands can be located in the suite \lstinline=bin/= directory,
-otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
-the shell in which cylc runs, on the suite host). The commands should require
-very little resource to run and should return quickly.
-
-Each task event handler can be specified as a list of command lines or command
-line templates.
-
-A command line template may have any or all of these patterns which will be
-substituted with actual values:
-\begin{myitemize}
-    \item \%(event)s: event name
-    \item \%(suite)s: suite name
-    \item \%(point)s: cycle point
-    \item \%(name)s: task name
-    \item \%(submit\_num)s: submit number
-    \item \%(id)s: task ID (i.e. \%(name)s.\%(point)s)
-    \item \%(message)s: event message, if any
-\end{myitemize}
-
-Otherwise, the command line will be called with the following command line
-arguments:
-\begin{lstlisting}
-<task-event-handler> %(event)s %(suite)s %(id)s %(message)s
-\end{lstlisting}
 
 \subparagraph[handlers]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow handlers}
 
@@ -1640,14 +1617,6 @@ anything accepted by the \lstinline=mail= command.
     \item {\em example:} \lstinline@mail to = your.colleague@
 \end{myitemize}
 
-\subparagraph[submission timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow submission timeout}
-
-Equivalent to~\ref{runtime-event-hooks-submission-timeout}.
-
-\subparagraph[execution timeout]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow execution timeout}
-
-Equivalent to~\ref{runtime-event-hooks-execution-timeout}.
-
 \subparagraph[register job logs retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow register job logs retry delays}
 
 Some batch systems have considerable delays between the time when the job
@@ -1664,10 +1633,6 @@ once without any delay.
     \item {\em example:} \lstinline@PT5S, PT1M, PT5M@
     \item {\em default:} (none)
 \end{myitemize}
-
-\subparagraph[reset timer]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow reset timer}
-
-Equivalent to~\ref{runtime-event-hooks-reset-timer}.
 
 \paragraph[{[[[}environment{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[environment]]]}
 
@@ -1748,7 +1713,7 @@ omission from an \lstinline=include= list.
 \paragraph[{[[[}directives{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[directives]]]}
 
 Batch queue scheduler directives.  Whether or not these are used depends
-on the job submission method. For the built-in methods that support directives
+on the batch system. For the built-in methods that support directives
 (\lstinline=loadleveler=, \lstinline=lsf=, \lstinline=pbs=, \lstinline=sge=,
 \lstinline=slurm=, \lstinline=moab=), directives are written to the top of the
 task job script in the correct format for the method. Specifying directives
@@ -1765,7 +1730,7 @@ Replace \_\_DIRECTIVE\_\_ with each directive assignment, e.g.
 \item {\em default:} (none)
 \end{myitemize}
 
-Example directives for the built-in job submission methods are shown
+Example directives for the built-in batch system handlers are shown
 in~\ref{AvailableMethods}.
 
 \paragraph[{[[[}outputs{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[outputs]]]}

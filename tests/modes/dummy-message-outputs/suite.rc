@@ -1,6 +1,6 @@
 title = A suite that should only succeed in dummy mode.
 [cylc]
-    [[event hooks]]
+    [[events]]
         abort on timeout = true
     [[reference test]]
         required run mode = dummy

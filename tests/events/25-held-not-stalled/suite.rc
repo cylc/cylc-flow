@@ -1,5 +1,5 @@
 [cylc]
-    [[event hooks]]
+    [[events]]
         abort on stalled = True
         timeout handler = cylc release '%(suite)s'
         timeout = PT5S

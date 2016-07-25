@@ -1,4 +1,5 @@
 [runtime]
-[[foo, bar]]
-script=true
-retry delays = 0.1
+    [[foo, bar]]
+        script=true
+        [[[job]]]
+            execution retry delays = 0.1

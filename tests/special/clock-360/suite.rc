@@ -1,7 +1,7 @@
 #!Jinja2
 [cylc]
     UTC mode = True
-    [[event hooks]]
+    [[events]]
         abort on timeout = True
         timeout = PT0.5M
 [scheduling]

@@ -2,7 +2,7 @@ title = Authentication test suite.
 description = """Stalls when the first task fails.
 Suite overrides global authentication settings."""
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = PT30S
         abort on timeout = True
     [[authentication]]

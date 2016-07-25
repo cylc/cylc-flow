@@ -7,6 +7,7 @@
         graph = "foo"
 [runtime]
     [[foo]]
-        retry delays = 3*0.1
         script = "((CYLC_TASK_TRY_NUMBER >= 4)) || exit 1"
         # ( '|| exit 1' required to trigger error trap in bash 4.2.0)
+        [[[job]]]
+            execution retry delays = 3*0.1

@@ -40,6 +40,12 @@ class SGEHandler(object):
         directives['-N'] = job_conf['suite name'] + '.' + job_conf['task id']
         directives['-o'] = job_file_path + ".out"
         directives['-e'] = job_file_path + ".err"
+        if (job_conf["execution time limit"] and
+                directives.get("-l h_rt") is None):
+            directives["-l h_rt"] = "%d:%02d:%02d" % (
+                job_conf["execution time limit"] / 3600,
+                (job_conf["execution time limit"] / 60) % 60,
+                job_conf["execution time limit"] % 60)
         for key, value in job_conf['directives'].items():
             directives[key] = value
         lines = []

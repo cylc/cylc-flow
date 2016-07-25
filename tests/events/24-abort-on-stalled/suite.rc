@@ -1,6 +1,6 @@
 [cylc]
     UTC mode = True # Ignore DST
-    [[event hooks]]
+    [[events]]
         abort on stalled = true
     [[reference test]]
         allow task failures = true

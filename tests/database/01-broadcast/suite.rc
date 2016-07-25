@@ -10,7 +10,8 @@ t1:submit => recover-t1
 [runtime]
     [[t1]]
         script=test -n "${HELLO}"
-        retry delays=PT1M
+        [[[job]]]
+            execution retry delays=PT1M
         [[[environment]]]
             HELLO=
     [[recover-t1]]

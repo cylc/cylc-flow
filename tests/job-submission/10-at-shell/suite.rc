@@ -10,5 +10,5 @@
 [runtime]
     [[foo]]
         script = true
-        [[[job submission]]]
-            method = at
+        [[[job]]]
+            batch system = at

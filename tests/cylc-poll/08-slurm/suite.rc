@@ -13,8 +13,8 @@
         [[[remote]]]
             host={{environ["CYLC_TEST_BATCH_TASK_HOST"]}}
 {% endif %}
-        [[[job submission]]]
-            method = slurm
+        [[[job]]]
+            batch system = slurm
         [[[directives]]]
 {% if "CYLC_TEST_BATCH_SITE_DIRECTIVES" in environ and
         environ["CYLC_TEST_BATCH_SITE_DIRECTIVES"] %}

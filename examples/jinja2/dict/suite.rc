@@ -10,8 +10,8 @@
         graph = OBS
 [runtime]
     [[OBS]]
-        [[[job submission]]]
-            method = pbs
+        [[[job]]]
+            batch system = pbs
     {% for i in obs_types %}
     [[ {{i}} ]]
         inherit = OBS

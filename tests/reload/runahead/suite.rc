@@ -1,6 +1,6 @@
 [cylc]
     UTC mode = True
-    [[event hooks]]
+    [[events]]
         timeout = PT0.2M
         abort on timeout = True
 [scheduling]

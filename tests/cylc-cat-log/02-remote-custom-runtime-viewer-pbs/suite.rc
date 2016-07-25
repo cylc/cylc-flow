@@ -16,8 +16,8 @@ sleep 60
 """
         [[[remote]]]
             host={{environ["CYLC_TEST_HOST"]}}
-        [[[job submission]]]
-            method=pbs
+        [[[job]]]
+            batch system=pbs
         [[[directives]]]
 {% if "CYLC_TEST_DIRECTIVES" in environ and environ["CYLC_TEST_DIRECTIVES"] %}
             {{environ["CYLC_TEST_DIRECTIVES"]}}

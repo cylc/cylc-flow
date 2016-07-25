@@ -5,5 +5,5 @@
             graph = "foo"
 [runtime]
     [[root]]
-        [[[event hooks]]]
+        [[[events]]]
             execution timeout = PT3M

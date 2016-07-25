@@ -29,7 +29,6 @@ class LSFHandler(object):
     POLL_CMD_TMPL = POLL_CMD + " -noheader '%(job_id)s'"
     REC_ID_FROM_SUBMIT_OUT = re.compile(r"^Job <(?P<id>\d+)>")
     SUBMIT_CMD_TMPL = "bsub"
-    SUBMIT_CMD_STDIN_IS_JOB_FILE = True
 
     @classmethod
     def filter_poll_output(cls, out, job_id):
@@ -38,26 +37,36 @@ class LSFHandler(object):
         return (len(entries) >= 3 and entries[0] == job_id and
                 entries[2] not in ["DONE", "EXIT"])
 
-    def format_directives(self, job_conf):
+    @classmethod
+    def format_directives(cls, job_conf):
         """Format the job directives for a job file."""
-        job_file_path = re.sub(r'\$HOME/', '', job_conf['job file path'])
-        directives = job_conf['directives'].__class__()
-        directives['-J'] = job_conf['suite name'] + '.' + job_conf['task id']
-        directives['-o'] = job_file_path + ".out"
-        directives['-e'] = job_file_path + ".err"
-        for key, value in job_conf['directives'].items():
+        job_file_path = re.sub(r"\$HOME/", "", job_conf["job file path"])
+        directives = job_conf["directives"].__class__()
+        directives["-J"] = job_conf["suite name"] + "." + job_conf["task id"]
+        directives["-o"] = job_file_path + ".out"
+        directives["-e"] = job_file_path + ".err"
+        if (job_conf["execution time limit"] and
+                directives.get("-W") is None):
+            directives["-W"] = "%d" % job_conf["execution time limit"] / 60
+        for key, value in job_conf["directives"].items():
             directives[key] = value
         lines = []
         for key, value in directives.items():
             if value:
-                lines.append("%s%s %s" % (self.DIRECTIVE_PREFIX, key, value))
+                lines.append("%s%s %s" % (cls.DIRECTIVE_PREFIX, key, value))
             else:
-                lines.append("%s%s" % (self.DIRECTIVE_PREFIX, key))
+                lines.append("%s%s" % (cls.DIRECTIVE_PREFIX, key))
         return lines
 
-    def get_fail_signals(self, job_conf):
+    @classmethod
+    def get_fail_signals(cls, job_conf):
         """Return a list of failure signal names to trap."""
         return ["EXIT", "ERR", "XCPU", "TERM", "INT", "SIGUSR2"]
+
+    @classmethod
+    def get_submit_stdin(cls, job_file_path, submit_opts):
+        """Return proc_stdin_arg, proc_stdin_value."""
+        return (open(job_file_path), None)
 
 
 BATCH_SYS_HANDLER = LSFHandler()

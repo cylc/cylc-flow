@@ -1,6 +1,6 @@
 [cylc]
     UTC mode = True # Ignore DST
-    [[event hooks]]
+    [[events]]
         stalled handler = cylc reset %(suite)s bar -s succeeded
     [[reference test]]
         allow task failures = true

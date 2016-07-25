@@ -53,10 +53,10 @@ exit 0"""
         script = """ 
             cylc poll $CYLC_SUITE_NAME
        """
-        [[[job submission]]]
-            method           = at
+        [[[job]]]
+            batch system = at
             
     [[submit_hold]]
-        [[[job submission]]]
-            method           = at
-            command template = at now + 2 minutes
+        [[[job]]]
+            batch system = at
+            batch submit command template = at now + 2 minutes

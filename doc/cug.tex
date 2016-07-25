@@ -1191,8 +1191,8 @@ as in \lstinline=tut.oneoff.jobsub=:
 [runtime]
     [[hello]]
         script = "sleep 10; echo Hello World!"
-        [[[job submission]]]
-            method = at
+        [[[job]]]
+            batch system = at
 \end{lstlisting}
 If you run the suite (first check that the {\em at daemon}
 \lstinline=atd= is running on the suite host) you'll see a slightly different
@@ -4411,8 +4411,8 @@ job submission method,
         [[[remote]]]
             host = orca.niwa.co.nz
             owner = bob
-        [[[job submission]]]
-            method = pbs
+        [[[job]]]
+            batch system = pbs
 \end{lstlisting}
 \lstset{language=transcript}
 For this to work,
@@ -4706,8 +4706,8 @@ Here's an example, from \\*
         graph = OBS
 [runtime]
     [[OBS]]
-        [[[job submission]]]
-            method = pbs
+        [[[job]]]
+            batch system = pbs
     {% for i in obs_types %}
     [[ {{i}} ]]
         inherit = OBS
@@ -4971,7 +4971,7 @@ task to repeatedly poll for the results of the detached processes:
         script = "[[ ! -f $RUN_DIR/job.done ]] && exit 1"
 \end{lstlisting}
 
-\section{Task Job Submission}
+\section{Task Job Submission and Management}
 \label{TaskJobSubmission}
 
 For the requirements a command, script, or program, must fulfill in order
@@ -4992,11 +4992,11 @@ method and override it for specific tasks or families:
 \begin{lstlisting}
 [runtime]
    [[root]] # suite defaults
-        [[[job submission]]]
-            method = loadleveler
+        [[[job]]]
+            batch system = loadleveler
    [[foo]] # just task foo
-        [[[job submission]]]
-            method = at
+        [[[job]]]
+            batch system = at
 \end{lstlisting}
 
 As shown in the Tutorial (\ref{RunningSuitesCLI}) job scripts are
@@ -5015,12 +5015,18 @@ submission methods.
 
 \subsubsection{background}
 
-Runs tasks directly in a background shell.
+Runs tasks as Unix background processes.
+
+If an execution time limit is specified for a task, its job will be wrapped
+by the \lstinline=timeout= command.
 
 \subsubsection{at}
 
 Submits tasks to the rudimentary Unix \lstinline=at= scheduler. The
 \lstinline=atd= daemon must be running.
+
+If an execution time limit is specified for a task, its job will be wrapped
+by the \lstinline=timeout= command.
 
 \subsubsection{loadleveler}
 
@@ -5031,8 +5037,9 @@ Loadleveler directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
-        [[[job submission]]]
-            method = loadleveler
+        [[[job]]]
+            batch system = loadleveler
+            execution time limit = PT10M
         [[[directives]]]
             foo = bar
             baz = qux
@@ -5044,6 +5051,7 @@ These are written to the top of the task job script like this:
 # DIRECTIVES
 # @ foo = bar
 # @ baz = qux
+# @ wall_clock_limit = 660,600
 # @ queue
 \end{lstlisting}
 
@@ -5052,6 +5060,14 @@ automatically trap SIGUSR1, which loadleveler may use to preempt the job. On
 trapping SIGUSR1, the job will inform the suite that it has been vacated by
 loadleveler. This will put it back to the submitted state, until it starts
 running again.
+
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=wall_clock_limit= directive. The setting is assumed to be the soft
+limit. The hard limit will be set by adding an extra minute to the soft limit.
+Do not specify the \lstinline=wall_clock_limit= directive explicitly if
+\lstinline=execution time limit= is specified. Otherwise, the execution time
+limit known by the suite may be out of sync with what is submitted to the batch
+system.
 
 \subsubsection{lsf}
 
@@ -5062,11 +5078,11 @@ LSF directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
-        [[[job submission]]]
-            method = lsf
+        [[[job]]]
+            batch system = lsf
+            execution time limit = PT10M
         [[[directives]]]
             -q = foo
-            -W = 10
 \end{lstlisting}
 These are written to the top of the task job script like this:
 \lstset{language=bash}
@@ -5077,6 +5093,12 @@ These are written to the top of the task job script like this:
 #BSUB -W = 10
 \end{lstlisting}
 
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-W= directive. Do not specify the \lstinline=-W= directive
+explicitly if \lstinline=execution time limit= is specified. Otherwise, the
+execution time limit known by the suite may be out of sync with what is
+submitted to the batch system.
+
 \subsubsection{pbs}
 
 Submits tasks to PBS (or Torque) by the \lstinline=qsub= command.  PBS
@@ -5085,13 +5107,13 @@ directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
-        [[[job submission]]]
-            method = pbs
+        [[[job]]]
+            batch system = pbs
+            execution time limit = PT1M
         [[[directives]]]
             -V =
             -q = foo
             -l nodes = 1
-            -l walltime = 00:01:00
 \end{lstlisting}
 These are written to the top of the task job script like this:
 \lstset{language=bash}
@@ -5101,8 +5123,14 @@ These are written to the top of the task job script like this:
 #PBS -V
 #PBS -q foo
 #PBS -l nodes=1
-#PBS -l walltime=00:01:00
+#PBS -l walltime=60
 \end{lstlisting}
+
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-l walltime= directive. Do not specify the \lstinline=-l walltime=
+directive explicitly if \lstinline=execution time limit= is specified.
+Otherwise, the execution time limit known by the suite may be out of sync with
+what is submitted to the batch system.
 
 \subsubsection{moab}
 
@@ -5113,13 +5141,13 @@ similar to PBS:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
-        [[[job submission]]]
-            method = moab
+        [[[job]]]
+            batch system = moab
+            execution time limit = PT1M
         [[[directives]]]
             -V =
             -q = foo
             -l nodes = 1
-            -l walltime = 00:01:00
 \end{lstlisting}
 These are written to the top of the task job script like this:
 \lstset{language=bash}
@@ -5129,10 +5157,15 @@ These are written to the top of the task job script like this:
 #PBS -V
 #PBS -q foo
 #PBS -l nodes=1
-#PBS -l walltime=00:01:00
+#PBS -l walltime=60
 \end{lstlisting}
 (Moab understands \lstinline=#PBS= directives).
 
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-l walltime= directive. Do not specify the \lstinline=-l walltime=
+directive explicitly if \lstinline=execution time limit= is specified.
+Otherwise, the execution time limit known by the suite may be out of sync with
+what is submitted to the batch system.
 
 \subsubsection{sge}
 
@@ -5142,8 +5175,9 @@ SGE directives can be provided in the suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[my_task]]
-        [[[job submission]]]
-            method = sge
+        [[[job]]]
+            batch system = sge
+            execution time limit = P1D
         [[[directives]]]
             -cwd =
             -q = foo
@@ -5161,6 +5195,12 @@ These are written to the top of the task job script like this:
 #$ -l h_rt=24:00:00
 \end{lstlisting}
 
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=-l h_rt= directive. Do not specify the \lstinline=-l h_rt=
+directive explicitly if \lstinline=execution time limit= is specified.
+Otherwise, the execution time limit known by the suite may be out of sync with
+what is submitted to the batch system.
+
 \subsubsection{slurm}
 
 Submits tasks to Simple Linux Utility for Resource Management by the
@@ -5171,11 +5211,11 @@ cylc requires the long form directives):
 \begin{lstlisting}
 [runtime]
     [[my_task]]
-        [[[job submission]]]
-            method = slurm
+        [[[job]]]
+            batch system = slurm
+            execution time limit = PT1H
         [[[directives]]]
             --nodes = 5
-            --time = 1:00:00
             --account = QXZ5W2
 \end{lstlisting}
 These are written to the top of the task job script like this:
@@ -5183,15 +5223,21 @@ These are written to the top of the task job script like this:
 \begin{lstlisting}
 #!/bin/bash
 #SBATCH --nodes=5
-#SBATCH --time=1:00:00
+#SBATCH --time=60:00
 #SBATCH --account=QXZ5W2
 \end{lstlisting}
 
+If \lstinline=execution time limit= is specified, it is used to generate the
+\lstinline=--time= directive. Do not specify the \lstinline=--time=
+directive explicitly if \lstinline=execution time limit= is specified.
+Otherwise, the execution time limit known by the suite may be out of sync with
+what is submitted to the batch system.
+
 \subsubsection{Default Directives Provided}
 
-For job submission methods that use job file directives (PBS,
-Loadlevler, etc.) default directives are provided to set the job name
-and stdout and stderr file paths.
+For job submission methods that use job file directives (PBS, Loadleveler,
+etc.) default directives are provided to set the job name, stdout and stderr
+file paths, and the execution time limit (if specified).
 
 Cylc constructs the job name string using a combination of the task ID and the
 suite name. PBS fails a job submit if the job name in \lstinline=-N name= is
@@ -5210,7 +5256,7 @@ Section~\ref{JobNameLengthMaximum}.) For example:
                 job name length maximum = 236
 \end{lstlisting}
 
-\subsubsection{Cylc Quirks (PBS, SGE, ...) }
+\subsubsection{Directives Section Quirks (PBS, SGE, ...) }
 
 As shown in the example above, to get a naked option flag such as
 \lstinline=-V= in PBS or \lstinline=-cwd= in SGE you must give a
@@ -5279,11 +5325,11 @@ your suite.rc file:
 \begin{lstlisting}
 [runtime]
     [[root]]
-        [[[job submission]]]
-            method = loadleveler
+        [[[job]]]
+            batch system = loadleveler
             # Use '-s' to stop llsubmit returning
             # until all job steps have completed:
-            command template = llsubmit -s %(job)s
+            batch submit command template = llsubmit -s %(job)s
 \end{lstlisting}
 As explained in~\ref{SuiteRCReference}
 the template's \%(job)s will be substituted by the job file path.
@@ -5303,8 +5349,15 @@ problems that prevent task messages from getting back to the suite host.
 Tasks can be polled on demand by right-clicking on them in gcylc or using the
 \lstinline=cylc poll= command.
 
-Tasks are polled automatically, once, if they timeout during job submission or
-execution (see~\ref{TaskEventHandling} for how to configure timeouts).
+Tasks are polled automatically, once, if they timeout while queueing in a
+batch scheduler and submission timeout is set. (See~\ref{TaskEventHandling} for
+how to configure timeouts).
+
+Tasks are polled multiple times, where necessary, when they exceed their
+execution time limits. These are normally set with some initial delays to allow
+the batch systems to kill the jobs.
+(See~\ref{ExecutionTimeLimitPollingIntervals} for how to configure the polling
+intervals).
 
 Any tasks recorded in the {\em submitted} or {\em running} states at suite
 restart are automatically polled to determine what happened to them while the
@@ -5335,6 +5388,51 @@ according to its job submission method.
 
 Tasks can be killed on demand by right-clicking on them in gcylc or using the
 \lstinline=cylc kill= command.
+
+\subsection{Execution Time Limit}
+
+You can specify an \lstinline=execution time limit= for all supported job
+submission methods. E.g.:
+
+\lstset{language=suiterc}
+\begin{lstlisting}
+[runtime]
+    [[task-x]]
+        [[[job]]]
+            execution time limit = PT1H
+\end{lstlisting}
+
+For tasks running with \lstinline=background= or \lstinline=at=, their jobs
+will be wrapped using the \lstinline=timeout= command. For all other methods,
+the relevant time limit directive will be added to their job files.
+
+The \lstinline=execution time limit= setting will also inform the suite when a
+a task job should complete by. If a task job has not reported completing within
+the specified time, the suite will poll the task job. (The default
+setting is PT1M, PT2M, PT7M. The accumulated times for these intervals will be
+roughly 1 minute, 1 + 2 = 3 minutes and 1 + 2 + 7 = 10 minutes after a task job
+exceeds its execution time limit.)
+
+\subsubsection{Execution Time Limit and Execution Timeout}
+
+If you specify an \lstinline=execution time limit= the
+\lstinline=execution timeout event handler= will only be called if the job has
+not completed after the final poll (by default, 10 min after the time limit).
+This should only happen if the submission method you are using is not enforcing
+wallclock limits (unlikely) or you are unable to contact the machine to confirm
+the job status.
+
+If you specify an \lstinline=execution timeout= and not an
+\lstinline=execution time limit= then the
+\lstinline=execution timeout event handler= will be called as soon as the
+specified time is reached. The job will also be polled to check its latest
+status (possibly resulting in an update in its status and the calling of the
+relevant event handler). This behaviour is deprecated, which users should avoid
+using.
+
+If you specify an \lstinline=execution timeout= and an
+\lstinline=execution time limit= then the execution timeout setting will be
+ignored.
 
 \subsection{Custom Job Submission Methods}
 \label{CustomJobSubmissionMethods}
@@ -5377,11 +5475,11 @@ use it in a suite definition:
         graph = "a"
 [runtime]
     [[root]]
-        [[[job submission]]]
-            method = qsub
+        [[[job]]]
+            batch system = qsub
+            execution time limit = PT1M
         [[[directives]]]
             -l nodes = 1
-            -l walltime = 00:01:00
             -q = long
             -V =
 \end{lstlisting}
@@ -5392,7 +5490,7 @@ shell$ cylc db reg test $HOME/test
 shell$ cylc jobscript test a.1 | grep QSUB
 #QSUB -e /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.err
 #QSUB -l nodes=1
-#QSUB -l walltime=00:01:00
+#QSUB -l walltime=60
 #QSUB -o /home/hilary/cylc-run/my.suite/log/job/1/a/01/job.out
 #QSUB -N a.1
 #QSUB -q long
@@ -5544,11 +5642,12 @@ until finished:
 \begin{lstlisting}
 [runtime]
     [[foo]]
-        # poll every minute in the 'submitted' state:
-        submission polling intervals = PT1M
-        # poll one minute after foo starts running, then every 10
-        # minutes for 50 minutes, then every minute until finished:
-        execution polling intervals = PT1M, 5*PT10M, PT1M
+        [[[job]]]
+            # poll every minute in the 'submitted' state:
+            submission polling intervals = PT1M
+            # poll one minute after foo starts running, then every 10
+            # minutes for 50 minutes, then every minute until finished:
+            execution polling intervals = PT1M, 5*PT10M, PT1M
 \end{lstlisting}
 A list of intervals with optional multipliers can be used for both
 submission and execution polling, although a single value is probably
@@ -5558,10 +5657,10 @@ task communication method; polling is not done by default under the
 other task communications methods (but it can still be used if you
 like).
 
-Polling is also done automatically once on job submission and execution
-timeouts, to see if the timed-out task has failed or not; and on suite
-restarts, to see what happened to any tasks that were orphaned when the
-suite went down.
+Polling is also done automatically once on job submission timeout, and multiple
+times on exceeding the execution time limit, to see if the timed-out task has
+failed or not; and on suite restarts, to see what happened to any tasks that
+were orphaned when the suite went down.
 
 \subsection{Alternatives To Polling When Routing Is Blocked}
 
@@ -5980,7 +6079,7 @@ process pool is saturated with long running event handlers, the suite will
 appear to hang.)
 
 Task event handlers can be specified using the
-\lstinline=[[[event hooks]]]<event> handler= settings, where
+\lstinline=[[[events]]]<event> handler= settings, where
 \lstinline=<event>= is one of:
 \begin{myitemize}
     \item `submitted' - the job submit command was successful
@@ -6045,7 +6144,7 @@ event handlers using the alternate methods:
     [[foo]]
         retry delays = PT0S, PT30S
         script = test "${CYLC_TASK_TRY_NUMBER}" -eq 2
-        [[[event hooks]]]
+        [[[events]]]
             retry handler = "echo '!!!!!EVENT!!!!!' "
             failed handler = "echo '!!!!!EVENT!!!!!' "
 \end{lstlisting}
@@ -6450,7 +6549,7 @@ you wish:
 \begin{lstlisting}
 [cylc]
     abort if any task fails = True
-    [[event hooks]]
+    [[events]]
         shutdown handler = cylc check-triggering
         timeout = PT5M
         abort if shutdown handler fails = True
@@ -7275,7 +7374,7 @@ some places, this is quite radically different from the earlier syntax.
 \subsection{Timeouts and Delays}
 \label{cylc-6-migration-timeout-delays}
 
-Timeouts and delays such as \lstinline=[cylc][[event hooks]]timeout= or
+Timeouts and delays such as \lstinline=[cylc][[events]]timeout= or
 \lstinline=[runtime][[my_task]]retry delays= were written in a purely
 numeric form before cylc 6, in seconds, minutes (most common), or hours,
 depending on the setting.
@@ -7300,7 +7399,7 @@ See Table \ref{cylc-6-migration-timeout-delays-table}.
 \begin{tabular}{ l c c }
 Setting & Pre-Cylc-6 & Cylc-6+ \\
 \hline
-\lstinline=[cylc][[event hooks]]timeout= & 180 & PT3H \\
+\lstinline=[cylc][[events]]timeout= & 180 & PT3H \\
 \lstinline=[runtime][[my_task]]retry delays= & 2*30, 360, & 2*PT30M, PT6H, \\
  & 1440 & P1D \\
 \lstinline=[runtime][[my_task]][[[suite state polling]]]interval= & 2 & PT2S \\

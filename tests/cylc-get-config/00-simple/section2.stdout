@@ -1,20 +1,17 @@
 [[var_p2]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
    post-script = 
    inherit = VAR, PARALLEL
-   [[[event hooks]]]
+   [[[events]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -25,11 +22,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
-   [[[events]]]
       handler events = 
       mail smtp = 
       handlers = 
@@ -75,28 +68,29 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[OPS]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
    post-script = 
    inherit = 
-   [[[event hooks]]]
+   [[[events]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -107,11 +101,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
-   [[[events]]]
       handler events = 
       mail smtp = 
       handlers = 
@@ -156,28 +146,29 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[ops_s1]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
    post-script = 
    inherit = OPS, SERIAL
-   [[[event hooks]]]
+   [[[events]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -188,11 +179,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
-   [[[events]]]
       handler events = 
       mail smtp = 
       handlers = 
@@ -238,28 +225,29 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[ops_s2]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
    post-script = 
    inherit = OPS, SERIAL
-   [[[event hooks]]]
+   [[[events]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -270,11 +258,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
-   [[[events]]]
       handler events = 
       mail smtp = 
       handlers = 
@@ -320,28 +304,29 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[ops_p1]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
    post-script = 
    inherit = OPS, PARALLEL
-   [[[event hooks]]]
+   [[[events]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -352,11 +337,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
-   [[[events]]]
       handler events = 
       mail smtp = 
       handlers = 
@@ -402,22 +383,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[ops_p2]]
    script = echo "RUN: run-ops.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -436,7 +418,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -447,10 +428,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
       job_type = parallel
@@ -484,22 +462,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[var_p1]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -518,7 +497,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -529,10 +507,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
       job_type = parallel
@@ -566,22 +541,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[VAR]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -600,7 +576,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -611,10 +586,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
    [[[environment filter]]]
@@ -647,22 +619,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[var_s1]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -681,7 +654,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -692,10 +664,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
       job_type = serial
@@ -729,22 +698,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[SERIAL]]
    script = echo Dummy task; sleep $(cylc rnd 1 16)
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -763,7 +733,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -774,10 +743,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
       job_type = serial
@@ -811,22 +777,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[root]]
    script = echo Dummy task; sleep $(cylc rnd 1 16)
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -845,7 +812,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -856,10 +822,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
    [[[environment filter]]]
@@ -892,22 +855,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[PARALLEL]]
    script = echo Dummy task; sleep $(cylc rnd 1 16)
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -926,7 +890,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -937,10 +900,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
       job_type = parallel
@@ -974,22 +934,23 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 
 [[var_s2]]
    script = echo "RUN: run-var.sh"
    enable resurrection = False
-   retry delays = 
    env-script = 
-   execution polling intervals = 
    title = 
    URL = 
    extra log files = 
    work sub-directory = $CYLC_TASK_CYCLE_POINT/$CYLC_TASK_NAME
-   submission polling intervals = 
    description = 
    init-script = 
    pre-script = 
@@ -1008,7 +969,6 @@
       submission timeout = 
       register job logs retry delays = 
       reset timer = 
-   [[[event hooks]]]
       submission timeout handler = 
       submitted handler = 
       started handler = 
@@ -1019,10 +979,7 @@
       warning handler = 
       succeeded handler = 
       retry handler = 
-      reset timer = 
-      execution timeout = 
       failed handler = 
-      submission timeout = 
    [[[environment]]]
    [[[directives]]]
       job_type = serial
@@ -1056,8 +1013,12 @@
       retrieve job logs = 
       retrieve job logs max size = 
       retrieve job logs retry delays = 
-   [[[job submission]]]
+   [[[job]]]
       shell = /bin/bash
-      command template = 
-      method = background
-      retry delays = 
+      batch submit command template = 
+      batch system = background
+      submission retry delays = 
+      execution retry delays = 
+      submission polling intervals = 
+      execution polling intervals = 
+      execution time limit = 

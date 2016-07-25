@@ -10,5 +10,5 @@ echo "${0}:resetting job submission method with cylc broadcast"
 NAME=${TASKID%.*}
 CYCLE=${TASKID#*.}
 
-echo cylc broadcast -n $NAME -t $CYCLE --set "[job submission]method=background" $SUITE
-cylc broadcast -n $NAME -t $CYCLE --set "[job submission]method=background" $SUITE
+echo cylc broadcast -n $NAME -t $CYCLE --set "[job]batch system=background" $SUITE
+cylc broadcast -n $NAME -t $CYCLE --set "[job]batch system=background" $SUITE

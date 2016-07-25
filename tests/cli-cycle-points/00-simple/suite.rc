@@ -1,6 +1,6 @@
 [cylc]
     UTC mode = true
-    [[event hooks]]
+    [[events]]
         abort on timeout = true
         timeout = PT20S
 [scheduling]
@@ -11,4 +11,4 @@
             graph = foo
 [runtime]
     [[foo]]
-        command scripting = /bin/true
+        script = /bin/true

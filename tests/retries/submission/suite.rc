@@ -10,7 +10,7 @@
 [runtime]
     [[foo]]
         script = true
-        [[[job submission]]]
-            retry delays = 3*0.1
+        [[[job]]]
+            submission retry delays = 3*0.1
         [[[remote]]]
             host = notahost

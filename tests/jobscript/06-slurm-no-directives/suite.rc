@@ -9,5 +9,5 @@ title = "Job script: no directives test for SLURM"
 [runtime]
     [[foo]]
         script = echo hello
-        [[[job submission]]]
-            method = slurm
+        [[[job]]]
+            batch system = slurm

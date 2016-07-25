@@ -13,8 +13,8 @@
                    """
 [runtime]
     [[SLURM_SETTINGS]]
-        [[[job submission]]]
-            method = slurm
+        [[[job]]]
+            batch system = slurm
         [[[directives]]]
             --time = 02:00
             {{SITE_DIRECTIVES}}

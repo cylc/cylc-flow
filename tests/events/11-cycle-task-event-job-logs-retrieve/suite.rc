@@ -18,7 +18,8 @@ title=Task Event Job Log Retrieve
 [runtime]
     [[T]]
         script=test "${CYLC_TASK_TRY_NUMBER}" -eq 3
-        retry delays=PT0S, 2*PT1S
+        [[[job]]]
+            execution retry delays=PT0S, 2*PT1S
         [[[remote]]]
             host = {{HOST}}
     [[t1]]

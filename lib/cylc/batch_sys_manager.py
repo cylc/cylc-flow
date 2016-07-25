@@ -43,8 +43,7 @@ batch_sys.filter_poll_many_output(out) => job_ids
 batch_sys.filter_submit_output(out, err) => new_out, new_err
     * Filter the standard output and standard error of the job submission
       command. This is useful if the job submission command returns information
-      that should just be ignored. See also "batch_sys.SUBMIT_CMD_TMPL" and
-      "batch_sys.SUBMIT_CMD_STDIN_TMPL".
+      that should just be ignored. See also "batch_sys.SUBMIT_CMD_TMPL".
 
 batch_sys.format_directives(job_conf) => lines
     * If relevant, this method formats the job directives for a job file, if
@@ -105,19 +104,7 @@ batch_sys.SUBMIT_CMD_TMPL
     * A Python string template for getting the batch system command to submit a
       job file. The command is formed using the logic:
           batch_sys.SUBMIT_CMD_TMPL % {"job": job_file_path}
-      See also "batch_sys.job_submit" and "batch_sys.SUBMIT_CMD_STDIN_TMPL".
-
-batch_sys.SUBMIT_CMD_STDIN_TMPL
-    * The template string for getting the STDIN for the batch system command to
-      submit a job file. The value to write to STDIN is formed using the logic:
-          batch_sys.SUBMIT_CMD_STDIN_TMPL % {"job": job_file_path}
-      See also "batch_sys.job_submit" and "batch_sys.SUBMIT_CMD".
-
-batch_sys.SUBMIT_CMD_STDIN_IS_JOB_FILE
-    * A boolean - iff True, use the contents of the job_file_path as stdin to
-      the submit command.
-      See also "batch_sys.job_submit", "batch_sys.SUBMIT_CMD", and
-      "batch_sys.SUBMIT_CMD_STDIN_TMPL".
+      See also "batch_sys.job_submit".
 
 """
 
@@ -199,6 +186,7 @@ class BatchSysManager(object):
     LINE_PREFIX_CYLC_DIR = "    export CYLC_DIR="
     LINE_PREFIX_BATCH_SYS_NAME = "# Job submit method: "
     LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL = "# Job submit command template: "
+    LINE_PREFIX_EXECUTION_TIME_LIMIT = "# Execution time limit: "
     LINE_PREFIX_EOF = "#EOF: "
     LINE_PREFIX_JOB_LOG_DIR = "# Job log directory: "
     LINE_UPDATE_CYLC_DIR = (
@@ -352,7 +340,7 @@ class BatchSysManager(object):
         else:
             items = self._jobs_submit_prep_by_args(job_log_root, job_log_dirs)
         now = get_current_time_string()
-        for job_log_dir, batch_sys_name, batch_submit_cmd_tmpl in items:
+        for job_log_dir, batch_sys_name, submit_opts in items:
             job_file_path = os.path.join(
                 job_log_root, job_log_dir, self.JOB_FILE_BASE)
             if not batch_sys_name:
@@ -360,7 +348,7 @@ class BatchSysManager(object):
                     self.OUT_PREFIX_SUMMARY, now, job_log_dir))
                 continue
             ret_code, out, err, job_id = self._job_submit_impl(
-                job_file_path, batch_sys_name, batch_submit_cmd_tmpl)
+                job_file_path, batch_sys_name, submit_opts)
             sys.stdout.write("%s%s|%s|%d|%s\n" % (
                 self.OUT_PREFIX_SUMMARY, now, job_log_dir, ret_code, job_id))
             for key, value in [("STDERR", err), ("STDOUT", out)]:
@@ -395,8 +383,8 @@ class BatchSysManager(object):
                     if line.startswith(TaskMessage.CYLC_JOB_PID + "="):
                         pid = line.strip().split("=", 1)[1]
                         try:
-                            os.killpg(int(pid), SIGKILL)
-                        except OSError as exc:
+                            os.killpg(os.getpgid(int(pid)), SIGKILL)
+                        except (OSError, ValueError) as exc:
                             traceback.print_exc()
                             return (1, str(exc))
                         else:
@@ -445,22 +433,25 @@ class BatchSysManager(object):
             job_file_path = os.path.expandvars(job_file_path)
         self.configure_suite_run_dir(job_file_path.rsplit(os.sep, 6)[0])
 
-        batch_sys_name = None
-        batch_submit_cmd_tmpl = None
         if remote_mode:
-            batch_sys_name, batch_submit_cmd_tmpl = (
+            batch_sys_name, submit_opts = (
                 self._job_submit_prepare_remote(job_file_path))
         else:  # local mode
+            batch_sys_name = None
+            submit_opts = {}
             for line in open(job_file_path):
                 if line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
                     batch_sys_name = line.replace(
                         self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
                 elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
-                    batch_submit_cmd_tmpl = line.replace(
+                    submit_opts["batch_submit_cmd_tmpl"] = line.replace(
                         self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
+                elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
+                    submit_opts["execution_time_limit"] = float(line.replace(
+                        self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())
 
         return self._job_submit_impl(
-            job_file_path, batch_sys_name, batch_submit_cmd_tmpl)
+            job_file_path, batch_sys_name, submit_opts)
 
     @classmethod
     def _create_nn(cls, job_file_path):
@@ -630,7 +621,7 @@ class BatchSysManager(object):
                     sys.stderr.write(str(exc) + "\n")
 
     def _job_submit_impl(
-            self, job_file_path, batch_sys_name, batch_submit_cmd_tmpl):
+            self, job_file_path, batch_sys_name, submit_opts):
         """Helper for self.jobs_submit() and self.job_submit()."""
 
         # Create NN symbolic link, if necessary
@@ -651,20 +642,18 @@ class BatchSysManager(object):
         batch_sys = self.get_inst(batch_sys_name)
         proc_stdin_arg = None
         proc_stdin_value = None
-        if getattr(batch_sys, "SUBMIT_CMD_STDIN_IS_JOB_FILE", False):
-            proc_stdin_arg = open(job_file_path)
-        elif hasattr(batch_sys, "SUBMIT_CMD_STDIN_TMPL"):
-            proc_stdin_value = batch_sys.SUBMIT_CMD_STDIN_TMPL % {
-                "job": job_file_path}
-            proc_stdin_arg = PIPE
+        if hasattr(batch_sys, "get_submit_stdin"):
+            proc_stdin_arg, proc_stdin_value = batch_sys.get_submit_stdin(
+                job_file_path, submit_opts)
         if hasattr(batch_sys, "submit"):
             # batch_sys.submit should handle OSError, if relevant.
-            ret_code, out, err = batch_sys.submit(job_file_path)
+            ret_code, out, err = batch_sys.submit(job_file_path, submit_opts)
         else:
             env = None
             if hasattr(batch_sys, "SUBMIT_CMD_ENV"):
                 env = dict(os.environ)
                 env.update(batch_sys.SUBMIT_CMD_ENV)
+            batch_submit_cmd_tmpl = submit_opts.get("batch_submit_cmd_tmpl")
             if batch_submit_cmd_tmpl:
                 # No need to catch OSError when using shell. It is unlikely
                 # that we do not have a shell, and still manage to get as far
@@ -712,22 +701,25 @@ class BatchSysManager(object):
         file.
 
         Return a list, where each element contains something like:
-        (job_log_dir, batch_sys_name, batch_submit_cmd_tmpl)
+        (job_log_dir, batch_sys_name, submit_opts)
 
         """
         items = []
         for job_log_dir in job_log_dirs:
             job_file_path = os.path.join(job_log_root, job_log_dir, "job")
             batch_sys_name = None
-            batch_submit_cmd_tmpl = None
+            submit_opts = {}
             for line in open(job_file_path):
                 if line.startswith(self.LINE_PREFIX_BATCH_SYS_NAME):
                     batch_sys_name = line.replace(
                         self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
                 elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
-                    batch_submit_cmd_tmpl = line.replace(
+                    submit_opts["batch_submit_cmd_tmpl"] = line.replace(
                         self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
-            items.append((job_log_dir, batch_sys_name, batch_submit_cmd_tmpl))
+                elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
+                    submit_opts["execution_time_limit"] = float(line.replace(
+                        self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())
+            items.append((job_log_dir, batch_sys_name, submit_opts))
         return items
 
     def _jobs_submit_prep_by_stdin(self, job_log_root, job_log_dirs):
@@ -738,16 +730,16 @@ class BatchSysManager(object):
         and job submission command templates from each job file.
 
         Return a list, where each element contains something like:
-        (job_log_dir, batch_sys_name, batch_submit_cmd_tmpl)
+        (job_log_dir, batch_sys_name, submit_opts)
 
         """
-        items = [[job_log_dir, None, None] for job_log_dir in job_log_dirs]
+        items = [[job_log_dir, None, {}] for job_log_dir in job_log_dirs]
         items_map = {}
         for item in items:
             items_map[item[0]] = item
         handle = None
         batch_sys_name = None
-        batch_submit_cmd_tmpl = None
+        submit_opts = {}
         job_log_dir = None
         lines = []
         # Get job files from STDIN.
@@ -772,8 +764,11 @@ class BatchSysManager(object):
                 batch_sys_name = cur_line.replace(
                     self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
             elif cur_line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
-                batch_submit_cmd_tmpl = cur_line.replace(
+                submit_opts["batch_submit_cmd_tmpl"] = cur_line.replace(
                     self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
+            elif cur_line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
+                submit_opts["execution_time_limit"] = float(cur_line.replace(
+                    self.LINE_PREFIX_EXECUTION_TIME_LIMIT, "").strip())
             elif cur_line.startswith(self.LINE_PREFIX_JOB_LOG_DIR):
                 job_log_dir = cur_line.replace(
                     self.LINE_PREFIX_JOB_LOG_DIR, "").strip()
@@ -797,13 +792,13 @@ class BatchSysManager(object):
                     os.rename(handle.name, handle.name[:-4])
                     try:
                         items_map[job_log_dir][1] = batch_sys_name
-                        items_map[job_log_dir][2] = batch_submit_cmd_tmpl
+                        items_map[job_log_dir][2] = submit_opts
                     except KeyError:
                         pass
                     handle = None
                     job_log_dir = None
                     batch_sys_name = None
-                    batch_submit_cmd_tmpl = None
+                    submit_opts = {}
         return items
 
     def _job_submit_prepare_remote(self, job_file_path):
@@ -817,7 +812,7 @@ class BatchSysManager(object):
 
         """
         batch_sys_name = None
-        batch_submit_cmd_tmpl = None
+        submit_opts = {}
         mkdir_p(os.path.dirname(job_file_path))
         job_file = open(job_file_path + ".tmp", "w")
         while True:  # Note: "for line in sys.stdin:" may hang
@@ -835,15 +830,18 @@ class BatchSysManager(object):
                 batch_sys_name = line.replace(
                     self.LINE_PREFIX_BATCH_SYS_NAME, "").strip()
             elif line.startswith(self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL):
-                batch_submit_cmd_tmpl = line.replace(
+                submit_opts["batch_submit_cmd_tmpl"] = line.replace(
                     self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip()
+            elif line.startswith(self.LINE_PREFIX_EXECUTION_TIME_LIMIT):
+                submit_opts["execution_time_limit"] = float(line.replace(
+                    self.LINE_PREFIX_BATCH_SUBMIT_CMD_TMPL, "").strip())
             job_file.write(line)
         job_file.close()
         os.rename(job_file_path + ".tmp", job_file_path)
         os.chmod(job_file_path, (
             os.stat(job_file_path).st_mode |
             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
-        return batch_sys_name, batch_submit_cmd_tmpl
+        return batch_sys_name, submit_opts
 
 
 BATCH_SYS_MANAGER = BatchSysManager()

@@ -10,8 +10,8 @@
                    """
 [runtime]
     [[ATSETTINGS]]
-        [[[job submission]]]
-            method = at
+        [[[job]]]
+            batch system = at
     [[rem1]]
         inherit = ATSETTINGS
         script = "sleep 10; true"

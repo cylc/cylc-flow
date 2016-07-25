@@ -1,6 +1,6 @@
 #!jinja2
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = PT2M
         abort on timeout = True
 [scheduling]

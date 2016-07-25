@@ -11,9 +11,9 @@
             
 [runtime]
     [[foo]]
-        [[[job submission]]] 
-            method = at
-            command template = at noon tomorrow
+        [[[job]]] 
+            batch system = at
+            batch submit command template = at noon tomorrow
     [[poll_foo]]
         script = sleep 5; cylc poll "$CYLC_SUITE_NAME" 'foo'
     [[stop]]

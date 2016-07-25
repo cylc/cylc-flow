@@ -4,7 +4,7 @@ This suite is supposed to time out and abort when the timeout handler
 deliberately fails."""
 
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = 0.083 # 5 seconds
         timeout handler = "/bin/false"
         abort if timeout handler fails = True

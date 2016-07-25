@@ -20,6 +20,7 @@
 import errno
 import os
 import re
+from subprocess import PIPE
 
 
 class AtCommandHandler(object):
@@ -32,9 +33,9 @@ class AtCommandHandler(object):
     How to make tasks stays in the queue until tea time:
     [runtime]
       [[MyTask]]
-        [[[job submission]]]
-           method = at
-           command template = at teatime
+        [[[job]]]
+           batch system = at
+           batch submit command template = at teatime
     """
 
     # List of known error strings when atd is not running
@@ -60,6 +61,10 @@ class AtCommandHandler(object):
     # killed correctly.
     SUBMIT_CMD_STDIN_TMPL = (
         r"exec perl -e 'setpgrp(0,0);exec(@ARGV)'" +
+        r" '%(job)s' 1>'%(job)s.out' 2>'%(job)s.err'")
+    SUBMIT_CMD_STDIN_TMPL_2 = (
+        r"exec perl -e 'setpgrp(0,0);exec(@ARGV)'" +
+        r" timeout --signal=XCPU %(execution_time_limit)d" +
         r" '%(job)s' 1>'%(job)s.out' 2>'%(job)s.err'")
 
     # atq properties:
@@ -106,6 +111,16 @@ class AtCommandHandler(object):
             if items and items[0] == job_id:
                 return True
         return False
+
+    @classmethod
+    def get_submit_stdin(cls, job_file_path, submit_opts):
+        """Return proc_stdin_arg, proc_stdin_value."""
+        try:
+            return (PIPE, cls.SUBMIT_CMD_STDIN_TMPL_2 % {
+                "job": job_file_path,
+                "execution_time_limit": submit_opts["execution_time_limit"]})
+        except KeyError:
+            return (PIPE, cls.SUBMIT_CMD_STDIN_TMPL % {"job": job_file_path})
 
 
 BATCH_SYS_HANDLER = AtCommandHandler()

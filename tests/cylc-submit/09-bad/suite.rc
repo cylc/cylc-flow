@@ -9,6 +9,6 @@
         [[[remote]]]
             host = $(no-such-command)
     [[foo]]
-        [[[job submission]]]
-            method = at
-            command template = no-such-command
+        [[[job]]]
+            batch system = at
+            batch submit command template = no-such-command

@@ -1,5 +1,5 @@
 [cylc]
-    [[event hooks]]
+    [[events]]
         timeout = 0.5
         timeout handler = cylc shutdown $CYLC_SUITE_REG_NAME --now
 [scheduling]

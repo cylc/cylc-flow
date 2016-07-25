@@ -26,7 +26,7 @@ OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
     create_test_globalrc "" "
 [cylc]
-    [[event hooks]]
+    [[events]]
         mail events = startup, shutdown
         mail smtp = ${TEST_SMTPD_HOST}"
     OPT_SET='-s GLOBALCFG=True'

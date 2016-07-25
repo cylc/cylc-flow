@@ -16,9 +16,9 @@
     [[root]]
     [[bad-submitter]]
         script = true
-        [[[job submission]]]
-            method = at
-            command template = at non
+        [[[job]]]
+            batch system = at
+            batch submit command template = at non
         [[[remote]]]
             host = {{CYLC_TEST_HOST}}
     [[grepper]]

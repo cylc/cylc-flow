@@ -76,7 +76,7 @@ SPEC = {
 
     'cylc': {
         'UTC mode': vdr(vtype='boolean', default=False),
-        'event hooks': {
+        'events': {
             'handlers': vdr(vtype='string_list', default=[]),
             'handler events': vdr(vtype='string_list', default=[]),
             'mail events': vdr(vtype='string_list', default=[]),
@@ -190,6 +190,8 @@ SPEC = {
                     'err viewer': vdr(vtype='string'),
                     'out viewer': vdr(vtype='string'),
                     'job name length maximum': vdr(vtype='integer'),
+                    'execution time limit polling intervals': vdr(
+                        vtype='interval_minutes_list', default=[]),
                 },
             },
         },
@@ -221,6 +223,8 @@ SPEC = {
                     'out viewer': vdr(vtype='string'),
                     'err viewer': vdr(vtype='string'),
                     'job name length maximum': vdr(vtype='integer'),
+                    'execution time limit polling intervals': vdr(
+                        vtype='interval_minutes_list'),
                 },
             },
         },
@@ -334,6 +338,10 @@ def upg(cfg, descr):
             ['test battery', 'directives', batch_sys_name + ' directives'],
             ['test battery', 'batch systems', batch_sys_name, 'directives'])
     u.obsolete('6.4.1', ['test battery', 'directives'])
+    u.deprecate('6.10.3', ['cylc', 'event hooks'], ['cylc', 'events'])
+    for key in SPEC['cylc']['events']:
+        u.deprecate(
+            '6.10.3', ['cylc', 'event hooks', key], ['cylc', 'events', key])
     u.upgrade()
 
 

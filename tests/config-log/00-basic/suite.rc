@@ -4,7 +4,7 @@ title = a suite that logs run, reload, and restart configs
 description = the weather is {{WEATHER | default("bad")}}
 
 [cylc]
-   [[event hooks]]
+   [[events]]
       abort on timeout = True
       timeout = PT30S
 
