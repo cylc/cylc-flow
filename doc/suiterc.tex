@@ -1252,7 +1252,7 @@ submission fails.
 A list of ISO 8601 time duration/intervals after which to resubmit the task
 if it fails. The variable \lstinline=$CYLC_TASK_TRY_NUMBER= in the task
 execution environment is incremented each time, starting from 1 for the
-first try - this can be used to vary task behavior by try number.
+first try - this can be used to vary task behaviour by try number.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of ISO 8601 duration/interval representations,
@@ -1270,9 +1270,9 @@ A list of intervals, expressed as ISO 8601 duration/intervals, with optional
 multipliers, after which cylc will poll for status while the task is in the
 submitted state.
 
-For the polling task communications method this overrides the default
+For the polling task communication method this overrides the default
 submission polling interval in the site/user config files
-(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
+(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications,
 polling is not done by default but it can still be configured here as a
 regular check on the health of submitted tasks.
 
@@ -1296,9 +1296,9 @@ A list of intervals, expressed as ISO 8601 duration/intervals, with optional
 multipliers, after which cylc will poll for status while the task is in the
 running state.
 
-For the polling task communications method this overrides the default
+For the polling task communication method this overrides the default
 execution polling interval in the site/user config files
-(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications
+(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications,
 polling is not done by default but it can still be configured here as a
 regular check on the health of submitted tasks.
 
