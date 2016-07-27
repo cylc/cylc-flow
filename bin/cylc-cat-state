@@ -18,50 +18,142 @@
 
 """cylc [info] cat-state [OPTIONS] REG
 
-Print the suite state dump file directly to stdout."""
+Print the suite state in the old state dump file format to stdout.
+This command is retained for backward compatibility.
+Please consider using the "cylc ls-checkpoints" command instead."""
 
 import sys
 from cylc.remote import remrun
 if remrun().execute():
     sys.exit(0)
 
+import os
+import pickle
+import re
+import sqlite3
+import traceback
+
+from cylc.cfgspec.globalcfg import GLOBAL_CFG
+from cylc.dump import dump_to_stdout, get_stop_state_summary
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.dump import dump_to_stdout, get_stop_state_summary
-from cylc.suite_state_dumping import SuiteStateDumper
+from cylc.rundb import CylcSuiteDAO
+from cylc.wallclock import get_unix_time_from_time_string
+
+
+REC_BROADCAST_KEY_SECTIONS = re.compile(r"\[([^\]]+)\]")
 
 
 def main():
-    parser = COP(__doc__)
+    parser = COP(__doc__, argdoc=[("REG", "Suite name")])
 
     parser.add_option(
         "-d", "--dump",
         help="Use the same display format as the 'cylc dump' command.",
         action="store_true", default=False, dest="dumpform")
 
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args()
     suite = args[0]
 
-    owner = options.db_owner
-    f = open(SuiteStateDumper(suite).file_name, 'rb')
-    lines = f.readlines()
-    f.close()
+    try:
+        lines = _get_state_lines(suite)
+    except sqlite3.Error as exc:
+        try:
+            lines = _get_state_lines_compat(suite)
+        except IOError:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            sys.exit("ERROR: cannot print suite state for %s" % suite)
 
-    lines = map(str.rstrip, lines)
-
-    if not options.dumpform:
+    if options.dumpform:
+        dump_to_stdout(get_stop_state_summary(lines)[1])
+    else:
         for line in lines:
             print line
-    else:
-        [glbl, states, fam_states] = get_stop_state_summary(
-            suite, options.owner, options.host, lines)
-        dump_to_stdout(states)
+
+
+def _get_state_lines(suite):
+    """Get state lines from suite runtime DB."""
+    dao = CylcSuiteDAO(
+        os.path.join(
+            GLOBAL_CFG.get_derived_host_item(suite, 'suite run directory'),
+            CylcSuiteDAO.DB_FILE_BASE_NAME),
+        is_public=True)
+    data = {
+        "run_mode": None,
+        "time_str": None,
+        "time_since_epoch": None,
+        "initial_point": None,
+        "final_point": None,
+        "broadcast_states": {},
+        "task_pool": []}
+    dao.select_checkpoint_id(
+        lambda row_idx, row: _callback_checkpoint_id(data, row),
+        dao.CHECKPOINT_LATEST_ID)
+    dao.select_suite_params(
+        lambda row_idx, row: _callback_suite_params(data, row))
+    dao.select_broadcast_states(
+        lambda row_idx, row: _callback_broadcast_states(data, row))
+    dao.select_task_pool(
+        lambda row_idx, row: _callback_task_pool(data, row))
+
+    lines = [
+        r"run mode : %(run_mode)s" % data,
+        r"time : %(time_str)s (%(time_since_epoch)s)" % data,
+        r"initial cycle : %(initial_point)s" % data,
+        r"final cycle : %(final_point)s" % data]
+    lines += pickle.dumps(data["broadcast_states"]).splitlines()
+    lines.append(r"Begin task states")
+    for item in data["task_pool"]:
+        lines.append(
+            r"%(name)s.%(cycle)s : status=%(status)s, spawned=%(spawned)s" %
+            item)
+    return lines
+
+
+def _callback_checkpoint_id(data, row):
+    """Callback for dao.select_checkpoint_id."""
+    data["time_str"] = row[1]
+    data["time_since_epoch"] = get_unix_time_from_time_string(row[1])
+
+
+def _callback_suite_params(data, row):
+    """Callback for dao.select_suite_params."""
+    key, value = row
+    data[key] = value
+
+
+def _callback_broadcast_states(data, row):
+    """Callback for dao.select_broadcast_states."""
+    point, namespace, key, value = [str(item) for item in row]
+    item = data["broadcast_states"]
+    for name in [point, namespace] + REC_BROADCAST_KEY_SECTIONS.findall(key):
+        if name not in item:
+            item[name] = {}
+        item = item[name]
+    item[key.rpartition("]")[2]] = value
+
+
+def _callback_task_pool(data, row):
+    """Callback for dao.select_task_pool."""
+    cycle, name, spawned, status = row
+    data["task_pool"].append({
+        "cycle": cycle,
+        "name": name,
+        "status": status,
+        "spawned": bool(spawned)})
+
+
+def _get_state_lines_compat(suite):
+    """Read old state file from normal location, for backward compat."""
+    state_file_path = os.path.join(
+        GLOBAL_CFG.get_derived_host_item(suite, 'suite run directory'),
+        "state", "state")
+    lines = []
+    for line in open(state_file_path, 'rb').readlines():
+        lines.append(line.rstrip())
+    return lines
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        if cylc.flags.debug:
-            raise
-        sys.exit(str(exc))
+    main()

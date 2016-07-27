@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import sys
 import logging
 import cPickle as pickle
@@ -44,6 +45,7 @@ class BroadcastServer(PyroServer):
 
     _INSTANCE = None
     ALL_CYCLE_POINTS_STRS = ["*", "all-cycle-points", "all-cycles"]
+    REC_SECTION = re.compile(r"\[([^\]]+)\]")
     TABLE_BROADCAST_EVENTS = CylcSuiteDAO.TABLE_BROADCAST_EVENTS
     TABLE_BROADCAST_STATES = CylcSuiteDAO.TABLE_BROADCAST_STATES
 
@@ -275,45 +277,20 @@ class BroadcastServer(PyroServer):
                             keys_list.append(keys + [key])
         return keys_list
 
-    def dump(self, file_):
-        """Write broadcast variables to the state dump file."""
+    def load_state(self, point, namespace, key, value):
+        """Load broadcast variables from runtime DB broadcast states row."""
+        sections = []
+        if "]" in key:
+            sections = self.REC_SECTION.findall(key)
+            key = key.rsplit(r"]", 1)[-1]
         with self.lock:
-            pickle.dump(self.settings, file_)
-            file_.write("\n")
-
-    def load(self, pickled_settings):
-        """Load broadcast variables from the state dump file."""
-        with self.lock:
-            self.settings = pickle.loads(pickled_settings)
-
-            # Ensure database table is in sync
-            modified_settings = []
-            for point_string, point_string_settings in self.settings.items():
-                for namespace, namespace_settings in (
-                        point_string_settings.items()):
-                    stuff_stack = [([], namespace_settings)]
-                    while stuff_stack:
-                        keys, stuff = stuff_stack.pop()
-                        for key, value in stuff.items():
-                            if isinstance(value, dict):
-                                stuff_stack.append((keys + [key], value))
-                            else:
-                                setting = {key: value}
-                                for rkey in reversed(keys):
-                                    setting = {rkey: setting}
-                                modified_settings.append(
-                                    (point_string, namespace, setting))
-        for broadcast_change in get_broadcast_change_iter(modified_settings):
-            self.db_inserts_map[self.TABLE_BROADCAST_STATES].append({
-                "point": broadcast_change["point"],
-                "namespace": broadcast_change["namespace"],
-                "key": broadcast_change["key"],
-                "value": broadcast_change["value"]})
-
-    def _get_dump(self):
-        """Return broadcast variables as written to the state dump file."""
-        with self.lock:
-            return pickle.dumps(self.settings) + "\n"
+            self.settings.setdefault(point, {})
+            self.settings[point].setdefault(namespace, {})
+            dict_ = self.settings[point][namespace]
+            for section in sections:
+                dict_.setdefault(section, {})
+                dict_ = dict_[section]
+            dict_[key] = value
 
     @classmethod
     def _get_bad_options(

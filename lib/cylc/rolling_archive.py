@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Implements a simple rolling archive based on a given base filename.
-# Used for cylc state dump files.
+# Used for cylc log/suite/{err,out} files.
 
 import os
 

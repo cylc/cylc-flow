@@ -433,9 +433,6 @@ class GlobalConfig(config):
         elif item == 'suite config log directory':
             value = os.path.join(srdir, 'log', 'suiterc')
 
-        elif item == 'suite state directory':
-            value = os.path.join(srdir, 'state')
-
         elif item == 'suite work directory':
             value = os.path.join(swdir, 'work')
 
@@ -537,7 +534,6 @@ class GlobalConfig(config):
                 'suite log directory',
                 'suite job log directory',
                 'suite config log directory',
-                'suite state directory',
                 'suite work directory',
                 'suite share directory']:
             if cylc.flags.verbose:

@@ -20,7 +20,7 @@ if [[ -z ${TEST_DIR:-} ]]; then
     . $(dirname $0)/test_header
 fi
 #-------------------------------------------------------------------------------
-set_test_number 10
+set_test_number 9
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE broadcast
 cp "$TEST_SOURCE_DIR/lib/suite-runtime-restart.rc" "$TEST_DIR/$SUITE_NAME/"
@@ -36,50 +36,19 @@ suite_run_ok $TEST_NAME cylc run --no-detach $SUITE_NAME
 TEST_NAME=$TEST_NAME_BASE-restart-run
 suite_run_ok $TEST_NAME cylc restart --no-detach $SUITE_NAME
 #-------------------------------------------------------------------------------
-state_dir=$(cylc get-global-config --print-run-dir)/$SUITE_NAME/state/
-cp $state_dir/state $TEST_DIR/
-for state_file in $(ls $TEST_DIR/*state*); do
-    sed -i "/^time : /d" $state_file
-done
-cmp_ok $TEST_DIR/pre-restart-state <<'__STATE__'
-run mode : live
-initial cycle : 20130923T0000Z
-final cycle : 20130923T0000Z
-(dp1
-S'20130923T0000Z'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_VALUE'
-p8
-S'something'
-p9
-ssss.
-Begin task states
-broadcast_task.20130923T0000Z : status=waiting, spawned=False
-finish.20130923T0000Z : status=waiting, spawned=False
-output_states.20130923T0000Z : status=waiting, spawned=False
-send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=True
-__STATE__
-grep_ok "broadcast_task|20130923T0000Z|0|1|waiting" \
+grep_ok "broadcast_task|20130923T0000Z|0||waiting" \
     $TEST_DIR/pre-restart-db
 grep_ok "send_a_broadcast_task|20130923T0000Z|1|1|succeeded" \
     $TEST_DIR/pre-restart-db
 contains_ok $TEST_DIR/post-restart-db <<'__DB_DUMP__'
-broadcast_task|20130923T0000Z|0|1|waiting
-finish|20130923T0000Z|0|1|waiting
+broadcast_task|20130923T0000Z|0||waiting
+finish|20130923T0000Z|0||waiting
 send_a_broadcast_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-sqlite3 $(cylc get-global-config --print-run-dir)/$SUITE_NAME/cylc-suite.db \
- "select name, cycle, submit_num, try_num, status
-  from task_states
-  order by name, cycle;" > $TEST_DIR/db
+SUITE_RUN_DIR="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}"
+"${TEST_SOURCE_DIR}/bin/ctb-select-task-states" "${SUITE_RUN_DIR}" \
+    > "${TEST_DIR}/db"
 contains_ok $TEST_DIR/db <<'__DB_DUMP__'
 broadcast_task|20130923T0000Z|1|1|succeeded
 finish|20130923T0000Z|1|1|succeeded
@@ -87,31 +56,14 @@ output_states|20130923T0000Z|1|1|succeeded
 send_a_broadcast_task|20130923T0000Z|1|1|succeeded
 shutdown|20130923T0000Z|1|1|succeeded
 __DB_DUMP__
-cmp_ok $TEST_DIR/state <<'__STATE__'
-run mode : live
-initial cycle : 20130923T0000Z
-final cycle : 20130923T0000Z
-(dp1
-S'20130923T0000Z'
-p2
-(dp3
-S'broadcast_task'
-p4
-(dp5
-S'environment'
-p6
-(dp7
-S'MY_VALUE'
-p8
-S'something'
-p9
-ssss.
-Begin task states
-broadcast_task.20130923T0000Z : status=succeeded, spawned=True
-finish.20130923T0000Z : status=succeeded, spawned=True
-output_states.20130923T0000Z : status=succeeded, spawned=True
-send_a_broadcast_task.20130923T0000Z : status=succeeded, spawned=True
-shutdown.20130923T0000Z : status=succeeded, spawned=True
-__STATE__
+sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" '
+    SELECT
+        point,namespace,key,value
+    FROM
+        broadcast_states
+    ORDER BY
+        point,namespace,key' >'select-broadcast-states.out'
+cmp_ok 'select-broadcast-states.out' \
+    <<<'20130923T0000Z|broadcast_task|[environment]MY_VALUE|something'
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

@@ -22,6 +22,7 @@ import sqlite3
 import sys
 import traceback
 import cylc.flags
+from cylc.wallclock import get_current_time_string
 
 
 class CylcSuiteDAOTableColumn(object):
@@ -162,12 +163,22 @@ class CylcSuiteDAO(object):
 
     CONN_TIMEOUT = 0.2
     DB_FILE_BASE_NAME = "cylc-suite.db"
+    PRI_DB_FILE_BASE_NAME = "cylc-suite-private.db"
+    PUB_DB_FILE_BASE_NAME = "cylc-suite-public.db"
     MAX_TRIES = 100
+    CHECKPOINT_LATEST_ID = 0
+    CHECKPOINT_LATEST_EVENT = "latest"
     TABLE_BROADCAST_EVENTS = "broadcast_events"
     TABLE_BROADCAST_STATES = "broadcast_states"
+    TABLE_BROADCAST_STATES_CHECKPOINTS = "broadcast_states_checkpoints"
+    TABLE_SUITE_PARAMS = "suite_params"
+    TABLE_SUITE_PARAMS_CHECKPOINTS = "suite_params_checkpoints"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_JOB_LOGS = "task_job_logs"
     TABLE_TASK_EVENTS = "task_events"
+    TABLE_CHECKPOINT_ID = "checkpoint_id"
+    TABLE_TASK_POOL = "task_pool"
+    TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
     TABLE_TASK_STATES = "task_states"
 
     TABLES_ATTRS = {
@@ -182,6 +193,27 @@ class CylcSuiteDAO(object):
         TABLE_BROADCAST_STATES: [
             ["point", {"is_primary_key": True}],
             ["namespace", {"is_primary_key": True}],
+            ["key", {"is_primary_key": True}],
+            ["value"],
+        ],
+        TABLE_BROADCAST_STATES_CHECKPOINTS: [
+            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["point", {"is_primary_key": True}],
+            ["namespace", {"is_primary_key": True}],
+            ["key", {"is_primary_key": True}],
+            ["value"],
+        ],
+        TABLE_CHECKPOINT_ID: [
+            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["time"],
+            ["event"],
+        ],
+        TABLE_SUITE_PARAMS: [
+            ["key", {"is_primary_key": True}],
+            ["value"],
+        ],
+        TABLE_SUITE_PARAMS_CHECKPOINTS: [
+            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
@@ -218,7 +250,19 @@ class CylcSuiteDAO(object):
             ["submit_num", {"datatype": "INTEGER"}],
             ["event"],
             ["message"],
-            ["misc"],
+        ],
+        TABLE_TASK_POOL: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["spawned", {"datatype": "INTEGER"}],
+            ["status"],
+        ],
+        TABLE_TASK_POOL_CHECKPOINTS: [
+            ["id", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["spawned", {"datatype": "INTEGER"}],
+            ["status"],
         ],
         TABLE_TASK_STATES: [
             ["name", {"is_primary_key": True}],
@@ -226,11 +270,6 @@ class CylcSuiteDAO(object):
             ["time_created"],
             ["time_updated"],
             ["submit_num", {"datatype": "INTEGER"}],
-            ["is_manual_submit", {"datatype": "INTEGER"}],
-            ["try_num", {"datatype": "INTEGER"}],
-            ["host"],
-            ["submit_method"],
-            ["submit_method_id"],
             ["status"],
         ],
     }
@@ -291,7 +330,7 @@ class CylcSuiteDAO(object):
         if self.conn is not None:
             try:
                 self.conn.close()
-            except sqlite3.Error as exc:
+            except sqlite3.Error:
                 pass
             self.conn = None
 
@@ -395,22 +434,64 @@ class CylcSuiteDAO(object):
                     "i": i, "stmt_args": stmt_args})
             raise
 
-    def select_all_task_jobs(self, keys):
-        """Select items from all task_jobs.
+    def select_broadcast_states(self, callback, id_key=None):
+        """Select from broadcast_states or broadcast_states_checkpoints.
 
-        Return a dict for mapping keys to the column values.
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [point, namespace, key, value]
 
+        If id_key is specified,
+        select from broadcast_states table if id_key == CHECKPOINT_LATEST_ID.
+        Otherwise select from broadcast_states_checkpoints where id == id_key.
         """
-        stmt = (r"SELECT %(keys_str)s FROM %(table)s") % {
-            "keys_str": ",".join(keys),
-            "table": self.TABLE_TASK_JOBS}
-        try:
-            data = []
-            for row in self.connect().execute(stmt):
-                data.append(row)
-            return data
-        except sqlite3.DatabaseError:
-            return None
+        form_stmt = r"SELECT point,namespace,key,value FROM %s"
+        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
+            stmt = form_stmt % self.TABLE_BROADCAST_STATES
+            stmt_args = []
+        else:
+            stmt = (form_stmt % self.TABLE_BROADCAST_STATES_CHECKPOINTS +
+                    r" WHERE id==?")
+            stmt_args = [id_key]
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def select_checkpoint_id(self, callback, id_key=None):
+        """Select from checkpoint_id.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [id, time, event]
+
+        If id_key is specified, add where id == id_key to select.
+        """
+        stmt = r"SELECT id,time,event FROM %s" % self.TABLE_CHECKPOINT_ID
+        stmt_args = []
+        if id_key is not None:
+            stmt += r" WHERE id==?"
+            stmt_args.append(id_key)
+        stmt += r"  ORDER BY time ASC"
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def select_suite_params(self, callback, id_key=None):
+        """Select from suite_params or suite_params_checkpoints.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [key,value]
+
+        If id_key is specified,
+        select from suite_params table if id_key == CHECKPOINT_LATEST_ID.
+        Otherwise select from suite_params_checkpoints where id == id_key.
+        """
+        form_stmt = r"SELECT key,value FROM %s"
+        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
+            stmt = form_stmt % self.TABLE_SUITE_PARAMS
+            stmt_args = []
+        else:
+            stmt = (form_stmt % self.TABLE_SUITE_PARAMS_CHECKPOINTS +
+                    r" WHERE id==?")
+            stmt_args = [id_key]
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
 
     def select_task_job(self, keys, cycle, name, submit_num=None):
         """Select items from task_jobs by (cycle, name, submit_num).
@@ -480,33 +561,224 @@ class CylcSuiteDAO(object):
                 ret[(name, cycle)][key] = value
         return ret
 
-    def select_task_states_by_cycles(self, keys, cycles=None):
-        """Select items from task_states by cycles.
+    def select_task_pool(self, callback, id_key=None):
+        """Select from task_pool or task_pool_checkpoints.
 
-        Return a data structure like this:
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [cycle, name, spawned, status]
 
-        {
-            (name1, point1): {key1: "value 1", ...},
-            ...,
-        }
-
-        cycles should be a list of relevant cycles.
-
+        If id_key is specified,
+        select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
+        Otherwise select from task_pool_checkpoints where id == id_key.
         """
-        stmt = r"SELECT name,cycle,%(keys_str)s FROM %(name)s" % {
-            "keys_str": ",".join(keys),
-            "name": self.TABLE_TASK_STATES}
-        stmt_args = []
-        if cycles:
-            stmt += " WHERE " + " OR ".join(["cycle==?"] * len(cycles))
-            stmt_args += [str(cycle) for cycle in cycles]
-        ret = {}
-        for row in self.connect().execute(stmt, stmt_args):
-            name, cycle = row[0:2]
-            ret[(name, cycle)] = {}
-            for key, value in zip(keys, row[2:]):
-                ret[(name, cycle)][key] = value
-        return ret
+        form_stmt = r"SELECT cycle,name,spawned,status FROM %s"
+        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
+            stmt = form_stmt % self.TABLE_TASK_POOL
+            stmt_args = []
+        else:
+            stmt = (
+                form_stmt % self.TABLE_TASK_POOL_CHECKPOINTS + r" WHERE id==?")
+            stmt_args = [id_key]
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def select_task_pool_for_restart(self, callback, id_key=None):
+        """Select from task_pool+task_states+task_jobs for restart.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [cycle, name, spawned, status, submit_num, try_num, user_at_host]
+
+        If id_key is specified,
+        select from task_pool table if id_key == CHECKPOINT_LATEST_ID.
+        Otherwise select from task_pool_checkpoints where id == id_key.
+        """
+        form_stmt = (
+            r"SELECT " +
+            r"    %(task_pool)s.cycle," +
+            r"    %(task_pool)s.name," +
+            r"    %(task_pool)s.spawned,"
+            r"    %(task_pool)s.status," +
+            r"    %(task_states)s.submit_num," +
+            r"    %(task_jobs)s.try_num," +
+            r"    %(task_jobs)s.user_at_host " +
+            r"FROM " +
+            r"    %(task_pool)s " +
+            r"JOIN " +
+            r"    %(task_states)s " +
+            r"ON  %(task_pool)s.cycle == %(task_states)s.cycle AND " +
+            r"    %(task_pool)s.name == %(task_states)s.name " +
+            r"LEFT OUTER JOIN " +
+            r"    %(task_jobs)s " +
+            r"ON  %(task_pool)s.cycle == %(task_jobs)s.cycle AND " +
+            r"    %(task_pool)s.name == %(task_jobs)s.name AND " +
+            r"    %(task_states)s.submit_num == %(task_jobs)s.submit_num")
+        form_data = {
+            "task_pool": self.TABLE_TASK_POOL,
+            "task_states": self.TABLE_TASK_STATES,
+            "task_jobs": self.TABLE_TASK_JOBS,
+        }
+        if id_key is None or id_key == self.CHECKPOINT_LATEST_ID:
+            stmt = form_stmt % form_data
+            stmt_args = []
+        else:
+            form_data["task_pool"] = self.TABLE_TASK_POOL_CHECKPOINTS
+            stmt = (form_stmt + r" WHERE %(task_pool)s.id==?") % form_data
+            stmt_args = [id_key]
+        for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def take_checkpoints(self, event, other_daos=None):
+        """Add insert items to *_checkpoints tables.
+
+        Select items in suite_params, broadcast_states and task_pool and
+        prepare them for insert into the relevant *_checkpoints tables, and
+        prepare an insert into the checkpoint_id table the event and the
+        current time.
+
+        If other_daos is a specified, it should a list of CylcSuiteDAO objects.
+        The logic will prepare insertion of the same items into the
+        *_checkpoints tables of these DAOs as well.
+        """
+        id_ = 1
+        for max_id, in self.connect().execute(
+                "SELECT MAX(id) FROM %(table)s" %
+                {"table": self.TABLE_CHECKPOINT_ID}):
+            if max_id >= id_:
+                id_ = max_id + 1
+        daos = [self]
+        if other_daos:
+            daos.extend(other_daos)
+        for dao in daos:
+            dao.tables[self.TABLE_CHECKPOINT_ID].add_insert_item([
+                id_, get_current_time_string(), event])
+        for table_name in [
+                self.TABLE_SUITE_PARAMS,
+                self.TABLE_BROADCAST_STATES,
+                self.TABLE_TASK_POOL]:
+            for row in self.connect().execute("SELECT * FROM %s" % table_name):
+                for dao in daos:
+                    dao.tables[table_name + "_checkpoints"].add_insert_item(
+                        [id_] + list(row))
+
+    def upgrade_with_state_file(self, state_file_path):
+        """Upgrade database on restart with an old state file.
+
+        Upgrade database from a state file generated by a suite that ran with
+        an old cylc version.
+        """
+        check_points = []
+        self.select_checkpoint_id(
+            lambda row_idx, row: check_points.append(row),
+            self.CHECKPOINT_LATEST_ID)
+        if check_points:
+            # No need to upgrade if latest check point already exists
+            return
+        sys.stdout.write("Upgrading suite db with %s ...\n" % state_file_path)
+        self._upgrade_with_state_file_states(state_file_path)
+        self._upgrade_with_state_file_extras()
+
+    def _upgrade_with_state_file_states(self, state_file_path):
+        """Helper for self.upgrade_with_state_file().
+
+        Populate the new database tables with information from state file.
+        """
+        location = None
+        sys.stdout.write("Populating %s table" % self.TABLE_SUITE_PARAMS)
+        for line in open(state_file_path):
+            line = line.strip()
+            if location is None:
+                # run mode, time stamp, initial cycle, final cycle
+                location = self._upgrade_with_state_file_header(line)
+            elif location == "broadcast":
+                # Ignore broadcast pickle in state file.
+                # The "broadcast_states" table should already be populated.
+                if line == "Begin task states":
+                    location = "task states"
+                    sys.stdout.write(
+                        "\nPopulating %s table" % self.TABLE_TASK_POOL)
+            else:
+                self._upgrade_with_state_file_tasks(line)
+        sys.stdout.write("\n")
+        self.execute_queued_items()
+
+    def _upgrade_with_state_file_header(self, line):
+        """Parse a header line in state file, add information to DB."""
+        head, tail = line.split(" : ", 1)
+        if head == "time":
+            self.add_insert_item(self.TABLE_CHECKPOINT_ID, {
+                "id": self.CHECKPOINT_LATEST_ID,
+                "time": tail.split(" ", 1)[0],
+                "event": self.CHECKPOINT_LATEST_EVENT})
+            return
+        for name, key in [
+                ("run mode", "run_mode"),
+                ("initial cycle", "initial_point"),
+                ("final cycle", "final_point")]:
+            if tail == "None":
+                tail = None
+            if head == name:
+                self.add_insert_item(self.TABLE_SUITE_PARAMS, {
+                    "key": key,
+                    "value": tail})
+                sys.stdout.write("\n + %s=%s" % (key, tail))
+                if name == "final cycle":
+                    return "broadcast"
+                else:
+                    return
+
+    def _upgrade_with_state_file_tasks(self, line):
+        """Parse a task state line in state file, add information to DB."""
+        head, tail = line.split(" : ", 1)
+        name, cycle = head.split(".")
+        status = None
+        spawned = None
+        for item in tail.split(", "):
+            key, value = item.split("=", 1)
+            if key == "status":
+                status = value
+            elif key == "spawned":
+                spawned = int(value in ["True", "true"])
+        self.add_insert_item(self.TABLE_TASK_POOL, {
+            "name": name,
+            "cycle": cycle,
+            "spawned": spawned,
+            "status": status})
+        sys.stdout.write("\n + %s" % head)
+
+    def _upgrade_with_state_file_extras(self):
+        """Upgrade the database tables after reading in state file."""
+        conn = self.connect()
+
+        # Rename old tables
+        for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            conn.execute(
+                r"ALTER TABLE " + t_name +
+                r" RENAME TO " + t_name + "_old")
+        conn.commit()
+
+        # Create tables with new columns
+        self.create_tables()
+
+        # Populate new tables using old column data
+        for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            sys.stdout.write(r"Upgrading %s table " % (t_name))
+            column_names = [col.name for col in self.tables[t_name].columns]
+            for i, row in enumerate(conn.execute(
+                    r"SELECT " + ",".join(column_names) +
+                    " FROM " + t_name + "_old")):
+                # These tables can be big, so we don't want to queue the items
+                # in memory.
+                conn.execute(self.tables[t_name].get_insert_stmt(), list(row))
+                if i:
+                    sys.stdout.write("\b" * len("%d rows" % (i)))
+                sys.stdout.write("%d rows" % (i + 1))
+            sys.stdout.write(" done\n")
+        conn.commit()
+
+        # Drop old tables
+        for t_name in [self.TABLE_TASK_STATES, self.TABLE_TASK_EVENTS]:
+            conn.execute(r"DROP TABLE " + t_name + "_old")
+        conn.commit()
 
     def vacuum(self):
         """Vacuum to the database."""
