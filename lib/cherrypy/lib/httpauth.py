@@ -62,7 +62,7 @@ __all__ = ("digestAuth", "basicAuth", "doAuth", "checkResponse",
 
 ##########################################################################
 import time
-from hashlib import md5
+import hashlib
 
 from cherrypy._cpcompat import base64_decode, ntob
 from cherrypy._cpcompat import parse_http_list, parse_keqv_list
@@ -79,8 +79,8 @@ SUPPORTED_QOP = (AUTH, AUTH_INT)
 # doAuth
 #
 DIGEST_AUTH_ENCODERS = {
-    MD5: lambda val: md5(ntob(val)).hexdigest(),
-    MD5_SESS: lambda val: md5(ntob(val)).hexdigest(),
+    MD5: lambda val: hashlib.md5(ntob(val)).hexdigest(),
+    MD5_SESS: lambda val: hashlib.md5(ntob(val)).hexdigest(),
     #    SHA: lambda val: sha.new(ntob(val)).hexdigest (),
 }
 

@@ -21,20 +21,35 @@ of plaintext passwords as the credentials store::
 __author__ = 'visteya'
 __date__ = 'April 2009'
 
-
+import hashlib
 import time
-from hashlib import md5
 from cherrypy._cpcompat import parse_http_list, parse_keqv_list
 
 import cherrypy
 from cherrypy._cpcompat import ntob
-md5_hex = lambda s: md5(ntob(s)).hexdigest()
 
 qop_auth = 'auth'
 qop_auth_int = 'auth-int'
 valid_qops = (qop_auth, qop_auth_int)
 
-valid_algorithms = ('MD5', 'MD5-sess')
+valid_algorithms = ('MD5', 'MD5-sess', 'SHA')
+
+
+def hexdigest(value, algorithm='MD5'):
+    """Provide the checksum hexdigest of value."""
+    if algorithm in ['MD5', 'MD5-sess']:
+        return md5_hex(value)
+    return sha1_hex(value)
+
+
+def md5_hex(value):
+    """Provide the MD5 hexdigest of value."""
+    return hashlib.md5(ntob(value)).hexdigest()
+
+
+def sha1_hex(value):
+    """Provide the SHA1 hexdigest of value."""
+    return hashlib.sha1(ntob(value)).hexdigest()
 
 
 def TRACE(msg):
@@ -44,7 +59,7 @@ def TRACE(msg):
 # of get_ha1() functions for three different kinds of credential stores.
 
 
-def get_ha1_dict_plain(user_password_dict):
+def get_ha1_dict_plain(user_password_dict, algorithm='MD5'):
     """Returns a get_ha1 function which obtains a plaintext password from a
     dictionary of the form: {username : password}.
 
@@ -55,7 +70,8 @@ def get_ha1_dict_plain(user_password_dict):
     def get_ha1(realm, username):
         password = user_password_dict.get(username)
         if password:
-            return md5_hex('%s:%s:%s' % (username, realm, password))
+            return hexdigest('%s:%s:%s' % (username, realm, password),
+                             algorithm=algorithm)
         return None
 
     return get_ha1
@@ -103,7 +119,7 @@ def get_ha1_file_htdigest(filename):
     return get_ha1
 
 
-def synthesize_nonce(s, key, timestamp=None):
+def synthesize_nonce(s, key, timestamp=None, algorithm='MD5'):
     """Synthesize a nonce value which resists spoofing and can be checked
     for staleness. Returns a string suitable as the value for 'nonce' in
     the www-authenticate header.
@@ -120,14 +136,14 @@ def synthesize_nonce(s, key, timestamp=None):
     """
     if timestamp is None:
         timestamp = int(time.time())
-    h = md5_hex('%s:%s:%s' % (timestamp, s, key))
+    h = hexdigest('%s:%s:%s' % (timestamp, s, key), algorithm=algorithm)
     nonce = '%s:%s' % (timestamp, h)
     return nonce
 
 
-def H(s):
+def H(s, algorithm='MD5'):
     """The hash function H"""
-    return md5_hex(s)
+    return hexdigest(s, algorithm=algorithm)
 
 
 class HttpDigestAuthorization (object):
@@ -217,7 +233,7 @@ class HttpDigestAuthorization (object):
         try:
             timestamp, hashpart = self.nonce.split(':', 1)
             s_timestamp, s_hashpart = synthesize_nonce(
-                s, key, timestamp).split(':', 1)
+                s, key, timestamp, algorithm=self.algorithm).split(':', 1)
             is_valid = s_hashpart == hashpart
             if self.debug:
                 TRACE('validate_nonce: %s' % is_valid)
@@ -254,12 +270,13 @@ class HttpDigestAuthorization (object):
         if self.qop is None or self.qop == "auth":
             a2 = '%s:%s' % (self.http_method, self.uri)
         elif self.qop == "auth-int":
-            a2 = "%s:%s:%s" % (self.http_method, self.uri, H(entity_body))
+            a2 = "%s:%s:%s" % (self.http_method, self.uri,
+                               H(entity_body, algorithm=self.algorithm))
         else:
             # in theory, this should never happen, since I validate qop in
             # __init__()
             raise ValueError(self.errmsg("Unrecognized value for qop!"))
-        return H(a2)
+        return H(a2, algorithm=self.algorithm)
 
     def request_digest(self, ha1, entity_body=''):
         """Calculates the Request-Digest. See :rfc:`2617` section 3.2.2.1.
@@ -296,9 +313,10 @@ class HttpDigestAuthorization (object):
         # A1 = H( unq(username-value) ":" unq(realm-value) ":" passwd )
         #         ":" unq(nonce-value) ":" unq(cnonce-value)
         if self.algorithm == 'MD5-sess':
-            ha1 = H('%s:%s:%s' % (ha1, self.nonce, self.cnonce))
+            ha1 = H('%s:%s:%s' % (ha1, self.nonce, self.cnonce),
+                    algorithm=self.algorithm)
 
-        digest = H('%s:%s' % (ha1, req))
+        digest = H('%s:%s' % (ha1, req), algorithm=self.algorithm)
         return digest
 
 
@@ -311,7 +329,7 @@ def www_authenticate(realm, key, algorithm='MD5', nonce=None, qop=qop_auth,
         raise ValueError("Unsupported value for algorithm: '%s'" % algorithm)
 
     if nonce is None:
-        nonce = synthesize_nonce(realm, key)
+        nonce = synthesize_nonce(realm, key, algorithm=algorithm)
     s = 'Digest realm="%s", nonce="%s", algorithm="%s", qop="%s"' % (
         realm, nonce, algorithm, qop)
     if stale:
@@ -319,7 +337,7 @@ def www_authenticate(realm, key, algorithm='MD5', nonce=None, qop=qop_auth,
     return s
 
 
-def digest_auth(realm, get_ha1, key, debug=False):
+def digest_auth(realm, get_ha1, key, algorithm='MD5', debug=False):
     """A CherryPy tool which hooks at before_handler to perform
     HTTP Digest Access Authentication, as specified in :rfc:`2617`.
 
@@ -383,7 +401,8 @@ def digest_auth(realm, get_ha1, key, debug=False):
                         return
 
     # Respond with 401 status and a WWW-Authenticate header
-    header = www_authenticate(realm, key, stale=nonce_is_stale)
+    header = www_authenticate(
+        realm, key, algorithm=algorithm, stale=nonce_is_stale)
     if debug:
         TRACE(header)
     cherrypy.serving.response.headers['WWW-Authenticate'] = header

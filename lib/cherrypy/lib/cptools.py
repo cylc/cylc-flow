@@ -1,8 +1,8 @@
 """Functions for builtin CherryPy tools."""
 
+import hashlib
 import logging
 import re
-from hashlib import md5
 import sys
 
 IS_PY3 = sys.version_info[0] == 3
@@ -62,7 +62,7 @@ def validate_etags(autotags=False, debug=False):
             cherrypy.log('Status not 200', 'TOOLS.ETAGS')
     else:
         etag = response.collapse_body()
-        etag = '"%s"' % md5(etag).hexdigest()
+        etag = '"%s"' % hashlib.md5(etag).hexdigest()
         if debug:
             cherrypy.log('Setting ETag: %s' % etag, 'TOOLS.ETAGS')
         response.headers['ETag'] = etag
