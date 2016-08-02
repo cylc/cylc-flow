@@ -1,6 +1,6 @@
 # Cylc Installation
 
-**See [The Cylc User Guide](https://cylc.github.io/cylc/#documentation) for
+**See [The Cylc User Guide](https://cylc.github.io/cylc/documentation.html) for
 detailed instructions.**
 
 Note: *to run distributed suites cylc must be installed on task hosts as well as suite
