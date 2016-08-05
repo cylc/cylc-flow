@@ -1589,12 +1589,7 @@ class SuiteConfig(object):
                 if left == right or left.startswith(right + ':'):
                     # (This passes inter-cycle offsets: left[-P1D] => left)
                     # (TODO - but not explicit null offsets like [-P0D]!)
-                    if suicide:
-                        # Self-suicide may be OK.
-                        print >> sys.stderr, (
-                            'WARNING: self-suicide is not recommended: '
-                            '%s => !%s.' % (left, right))
-                    else:
+                    if not suicide:
                         # Self-edge.
                         if left != lexpression:
                             print >> sys.stderr, (
