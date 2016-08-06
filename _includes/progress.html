@@ -7,16 +7,21 @@
 			if (this.status >= 200 && this.status < 400) {
 				var data = JSON.parse(this.response);
 
-				data.sort(function (a, b) {
-				return a.title - b.title;
-				});
+                var nr_data = data[1];
+                for (i = 0; i < data.length; i++ ) {
+                    if (data[i].title == "next%20release") {
+                        nr_data = data[i];
+                    }
+                }
 
-				var openIssues = data[0].open_issues;
-				var closedIssues = data[0].closed_issues;
+				var openIssues = nr_data.open_issues;
+				var closedIssues = nr_data.closed_issues;
 				var workProgress = closedIssues * 100 / (openIssues + closedIssues);
 
 				var milestoneVersion = document.getElementById("milestone-version");
-				milestoneVersion.innerHTML = data[0].title;
+				var milestoneURL = document.getElementById("milestone-url");
+				milestoneVersion.innerHTML = nr_data.title;
+				milestoneURL.setAttribute('href', nr_data.html_url.replace('s/next%20release', '/'+nr_data.number));
 
 				var progressBarInner = document.getElementById("progress-bar-inner");
 				progressBarInner.style.width = workProgress + "%";
