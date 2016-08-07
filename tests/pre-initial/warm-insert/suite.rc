@@ -3,7 +3,7 @@
     [[event hooks]]
         stalled handler = cylc reset %(suite)s foo -s ready
     [[reference test]]
-        live mode suite timeout=PT1M
+        live mode suite timeout=PT2M
 
 [scheduling]
     initial cycle point = 20100101T0000Z

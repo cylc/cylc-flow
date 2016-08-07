@@ -41,9 +41,11 @@ before_install:
     # Make sure Cylc is in PATH when running jobs
     - echo "export PATH=$PWD/bin:\$PATH" >> ~/.bashrc
 
+    # Custom diff command to ignore Xlib errors (xvfb has not RANDR extension).
+    - echo "export CYLC_TEST_DIFF_CMD='diff -I Xlib'" >> ~/.bashrc 
+
     # Load our new environment
     - source ~/.bashrc
-
 
 # These commands are run before the test
 install: 
@@ -54,20 +56,17 @@ install:
 
     # Install dependencies
     - sudo apt-get install build-essential
-    - sudo apt-get install at python-pip python-dev libgraphviz-dev # python-gtk2-dev
-    - pip install -r requirements.txt
+    - sudo apt-get install at python-pip python-dev graphviz libgraphviz-dev python-gtk2-dev
+      #- pip install -r requirements.txt
+    - pip install Jinja2
+    - pip install pygraphviz --install-option="--include-path=/usr/include/graphviz" --install-option="--library-path=/usr/lib/graphviz/"
+    - pip install pep8
 
 # Run tests
 script: 
-    # TESTS defines what tests to run
-    # The following failures appear to be artefacts of running on Travis
-    # lib/parsec/tests  - Cannot find 'validate' library in lib/parsec
-    # tests/cylcers     - Requires GTK for graphing
-    # tests/restart/04-running.t - Fails only in some runs (timeout?)
-    - TESTS=$(find . -name *.t -type f -not -path '*/cyclers/*' -not -path '*/parsec/*' -not -path '*/restart/04-running.t')
-    - cylc test-battery $TESTS -- -j 1
+    - xvfb-run -a cylc test-battery -j 5
 
 # Check output (more useful if you narrow down what tests get run)
 after_script:
-    - for file in $(find $HOME/cylc-run -type f); do echo; echo "== $file =="; cat $file; done
+    - for file in $(find $HOME/cylc-run/*/log/{job,suite}/*err -type f); do echo; echo "== $file =="; cat $file; done
     - for file in $(find /tmp/cylc-tests-$USER -type f); do echo; echo "== $file =="; cat $file; done
