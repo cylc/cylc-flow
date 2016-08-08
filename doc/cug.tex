@@ -2776,24 +2776,28 @@ title = some cycling tasks
 \label{fig-test2}
 \end{figure}
 
-\subsubsection{Graph Headers}
+\subsubsection{Graph Section Headings}
 
-In the above examples graph headings are used to define recurring date-times
-when tasks are to run. For example in the following scenario,
+Graph section headings define recurrence expressions, the graph within a graph
+section heading defines a workflow at each point of the recurrence. For
+example in the following scenario,
 
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
-        [[[ T06 ]]]  # A graph heading
+        [[[ T06 ]]]  # A graph section heading
             graph = foo => bar
 \end{lstlisting}
 \lstset{language=transcript}
 
-\lstinline=T06= stands for "Run every day starting at 06:00 after the
+\lstinline=T06= means "Run every day starting at 06:00 after the
 initial cycle point". Cylc allows you to start (or end) at any particular
 time, repeat at whatever frequency you like, and even optionally limit the
 number of repetitions.
+
+Graph section heading can also be used with integer cycling see
+\ref{IntegerCycling}.
 
 \paragraph{Syntax Rules}
 
@@ -2920,20 +2924,18 @@ the following all run once at the final cycle point:
 \label{excluding-dates}
 \lstset{language=suiterc}
 
-It can be desirable to exclude a date from a recurrence, this can be achieved
-by appending the date to the recurrence prefixed with an exclamation mark.
-For example \lstinline=[[[ PT1D!20000101 ]]]= means run daily except on the
+Datetimes can be excluded from a recurrence by an exclamation mark for example
+\lstinline=[[[ PT1D!20000101 ]]]= means run daily except on the
 first of January 2000.
 
-This syntax can only be used to exclude one datetime from a recurrence, note
+This syntax can only be used to exclude one datetime from a recurrence. Note
 that the \lstinline=^= and \lstinline=$= symbols (shorthand for the initial
 and final cycle points) are both datetimes so \lstinline=[[[ T12!$-PT1D ]]]=
 is valid.
 
 If using a run limit in combination with an exclusion, the heading might not
 run the number of times specified in the limit. For example in the following
-suite \lstinline=foo= will only run once as what would be its second run has
-been excluded.
+suite \lstinline=foo= will only run once as its second run has been excluded.
 
 \begin{lstlisting}
 [scheduling]
@@ -2983,7 +2985,7 @@ the graph should be written like this:
 \paragraph{Advanced Examples}
 \label{AdvancedCycling}
 
-The following examples cover the various ways of writing graph headers in cylc.
+The following examples show the various ways of writing graph headings in cylc.
 \lstset{language=suiterc}
 \begin{lstlisting}
 [[[ R1 ]]]         # Run once at the initial cycle point
@@ -3278,16 +3280,16 @@ example you can write:
 \lstset{language=transcript}
 
 Likewise the syntax introduced in~\ref{excluding-dates} for excluding
-a particular point from a recurrence also works for integer cycling
-meaning you can write:
+a particular point from a recurrence also works for integer cycling. For
+example:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
-[[[ R/P4!8 ]]]       # Run with step four, to the final cycle point
+[[[ R/P4!8 ]]]       # Run with step 4, to the final cycle point
                      # but not at point 8
-[[[ R3/3/P2!5 ]]]    # Run with step two from point 3 but not at
+[[[ R3/3/P2!5 ]]]    # Run with step 2 from point 3 but not at
                      # point 5
-[[[ R/+P1/P6!14 ]]]  # Run with step six from one step after the
+[[[ R/+P1/P6!14 ]]]  # Run with step 6 from 1 step after the
                      # initial cycle point but not at point 14
 \end{lstlisting}
 \lstset{language=transcript}
