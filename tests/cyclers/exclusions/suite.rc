@@ -8,14 +8,15 @@
             graph = start => foo
 
         # Don't run at the initial cycle point
-        [[[ T00!^ ]]]
+        # Also test whitespace tolerance
+        [[[ T00 ! ^ ]]]
             graph = bar
 
         # Don't run at the final cycle point
         [[[ PT12H!$ ]]]
             graph = baz
 
-        # Don't run at a speciffic datetime
+        # Don't run at a specific datetime
         [[[ PT12H!20000101T1200Z ]]]
             graph = qux
 

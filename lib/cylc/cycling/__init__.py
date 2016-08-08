@@ -31,7 +31,7 @@ def parse_exclusion(expr):
         if '/' in exclusion:
             raise Exception("'%s': exclusion must be at the end of the "
                             "expression" % expr)
-        return remainder, exclusion
+        return remainder.strip(), exclusion.strip()
 
 
 class CyclerTypeError(TypeError):
