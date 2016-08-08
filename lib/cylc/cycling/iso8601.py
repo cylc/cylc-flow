@@ -836,7 +836,7 @@ class TestISO8601Sequence(unittest.TestCase):
 
     def test_exclusions_simple(self):
         """Test the generation of points for sequences with exclusions."""
-        init()
+        init(time_zone='Z')
         sequence = ISO8601Sequence('PT1H!20000101T02Z', '20000101T00Z')
 
         output = []
@@ -847,12 +847,12 @@ class TestISO8601Sequence(unittest.TestCase):
             point = sequence.get_next_point(point)
             count += 1
         output = [str(out) for out in output]
-        self.assertEqual(output, ['20000101T0100+01', '20000101T0200+01',
-                                  '20000101T0400+01', '20000101T0500+01'])
+        self.assertEqual(output, ['20000101T0000Z', '20000101T0100Z',
+                                  '20000101T0300Z', '20000101T0400Z'])
 
     def test_exclusions_extensive(self):
         """Test ISO8601Sequence methods for sequences with exclusions"""
-        init()
+        init(time_zone='+05')
         sequence = ISO8601Sequence('PT1H!20000101T02Z', '20000101T00Z',
                                    '20000101T05Z')
 
