@@ -127,8 +127,9 @@ class DotUpdater(threading.Thread):
             # iso cycle points
             self.point_strings.sort()
 
-        use_def_order = (self.cfg.use_defn_order and self.updater.ns_defn_order
-                         and self.defn_order_on)
+        use_def_order = (
+            self.cfg.use_defn_order and self.updater.ns_defn_order and
+            self.defn_order_on)
 
         if not self.should_group_families:
             # Display the full task list.
