@@ -1,8 +1,5 @@
-2016-07-07T11:23:11+01 INFO - Suite starting on eld668.desktop.frd.metoffice.com:7767
-2016-07-07T11:23:11+01 INFO - Run mode: live
 2016-07-07T11:23:11+01 INFO - Initial point: 1
 2016-07-07T11:23:11+01 INFO - Final point: 16
-2016-07-07T11:23:11+01 INFO - Cold Start 1
 2016-07-07T11:23:11+01 INFO - [woo.2] -triggered off []
 2016-07-07T11:23:11+01 INFO - [nang.1] -triggered off []
 2016-07-07T11:23:11+01 INFO - [wibble.1] -triggered off []
@@ -10,270 +7,40 @@
 2016-07-07T11:23:11+01 INFO - [seq.1] -triggered off []
 2016-07-07T11:23:11+01 INFO - [on_toast.1] -triggered off []
 2016-07-07T11:23:11+01 INFO - [ning.4] -triggered off []
-2016-07-07T11:23:12+01 INFO - [nang.1] -submit_method_id=7996
-2016-07-07T11:23:12+01 INFO - [nang.1] -submission succeeded
-2016-07-07T11:23:12+01 INFO - [ning.4] -submit_method_id=7997
-2016-07-07T11:23:12+01 INFO - [ning.4] -submission succeeded
-2016-07-07T11:23:12+01 INFO - [nong.2] -submit_method_id=8010
-2016-07-07T11:23:12+01 INFO - [nong.2] -submission succeeded
-2016-07-07T11:23:12+01 INFO - [on_toast.1] -submit_method_id=8016
-2016-07-07T11:23:12+01 INFO - [on_toast.1] -submission succeeded
-2016-07-07T11:23:12+01 INFO - [seq.1] -submit_method_id=8024
-2016-07-07T11:23:12+01 INFO - [seq.1] -submission succeeded
-2016-07-07T11:23:12+01 INFO - [wibble.1] -submit_method_id=8062
-2016-07-07T11:23:12+01 INFO - [wibble.1] -submission succeeded
-2016-07-07T11:23:12+01 INFO - [woo.2] -submit_method_id=8078
-2016-07-07T11:23:12+01 INFO - [woo.2] -submission succeeded
-2016-07-07T11:23:12+01 INFO - [woo.2] -(current:submitted)> started at 2016-07-07T11:23:12+01
-2016-07-07T11:23:12+01 INFO - [nang.1] -(current:submitted)> started at 2016-07-07T11:23:12+01
-2016-07-07T11:23:12+01 INFO - [wibble.1] -(current:submitted)> started at 2016-07-07T11:23:12+01
-2016-07-07T11:23:12+01 INFO - [nong.2] -(current:submitted)> started at 2016-07-07T11:23:12+01
-2016-07-07T11:23:12+01 INFO - [seq.1] -(current:submitted)> started at 2016-07-07T11:23:12+01
-2016-07-07T11:23:12+01 INFO - [on_toast.1] -(current:submitted)> started at 2016-07-07T11:23:12+01
-2016-07-07T11:23:12+01 INFO - [ning.4] -(current:submitted)> started at 2016-07-07T11:23:12+01
 2016-07-07T11:23:13+01 INFO - [woo.3] -triggered off []
 2016-07-07T11:23:13+01 INFO - [nong.8] -triggered off []
 2016-07-07T11:23:13+01 INFO - [ning.12] -triggered off []
-2016-07-07T11:23:15+01 INFO - [ning.12] -submit_method_id=8662
-2016-07-07T11:23:15+01 INFO - [ning.12] -submission succeeded
-2016-07-07T11:23:15+01 INFO - [nong.8] -submit_method_id=8663
-2016-07-07T11:23:15+01 INFO - [nong.8] -submission succeeded
-2016-07-07T11:23:15+01 INFO - [woo.3] -submit_method_id=8669
-2016-07-07T11:23:15+01 INFO - [woo.3] -submission succeeded
-2016-07-07T11:23:15+01 INFO - [woo.3] -(current:submitted)> started at 2016-07-07T11:23:14+01
-2016-07-07T11:23:15+01 INFO - [seq.1] -(current:running)> succeeded at 2016-07-07T11:23:14+01
-2016-07-07T11:23:15+01 INFO - [nong.8] -(current:submitted)> started at 2016-07-07T11:23:14+01
-2016-07-07T11:23:15+01 INFO - [ning.12] -(current:submitted)> started at 2016-07-07T11:23:14+01
-2016-07-07T11:23:15+01 INFO - [seq.1] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:15+01)
 2016-07-07T11:23:16+01 INFO - [woo.5] -triggered off []
 2016-07-07T11:23:16+01 INFO - [seq.4] -triggered off ['seq.1']
-2016-07-07T11:23:16+01 INFO - [woo.3] -(current:running)> succeeded at 2016-07-07T11:23:15+01
-2016-07-07T11:23:16+01 INFO - [woo.3] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:16+01)
-2016-07-07T11:23:17+01 INFO - [seq.4] -submit_method_id=8973
-2016-07-07T11:23:17+01 INFO - [seq.4] -submission succeeded
-2016-07-07T11:23:17+01 INFO - [woo.5] -submit_method_id=8974
-2016-07-07T11:23:17+01 INFO - [woo.5] -submission succeeded
-2016-07-07T11:23:17+01 INFO - [woo.5] -(current:submitted)> started at 2016-07-07T11:23:16+01
-2016-07-07T11:23:17+01 INFO - [seq.4] -(current:submitted)> started at 2016-07-07T11:23:16+01
 2016-07-07T11:23:18+01 INFO - [woo.6] -triggered off []
-2016-07-07T11:23:19+01 INFO - [woo.6] -submit_method_id=9194
-2016-07-07T11:23:19+01 INFO - [woo.6] -submission succeeded
-2016-07-07T11:23:19+01 INFO - [woo.6] -(current:submitted)> started at 2016-07-07T11:23:18+01
-2016-07-07T11:23:19+01 INFO - [nang.1] -(current:running)> succeeded at 2016-07-07T11:23:19+01
-2016-07-07T11:23:19+01 INFO - [nang.1] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:19+01)
 2016-07-07T11:23:20+01 INFO - [woo.8] -triggered off []
-2016-07-07T11:23:20+01 INFO - [wibble.1] -(current:running)> succeeded at 2016-07-07T11:23:19+01
-2016-07-07T11:23:20+01 INFO - [wibble.1] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:20+01)
-2016-07-07T11:23:21+01 INFO - [woo.8] -submit_method_id=9334
-2016-07-07T11:23:21+01 INFO - [woo.8] -submission succeeded
 2016-07-07T11:23:21+01 INFO - [wobble.7] -triggered off ['wibble.1']
-2016-07-07T11:23:21+01 INFO - [woo.8] -(current:submitted)> started at 2016-07-07T11:23:21+01
-2016-07-07T11:23:21+01 INFO - [ning.4] -(current:running)> succeeded at 2016-07-07T11:23:20+01
-2016-07-07T11:23:21+01 INFO - [ning.4] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:21+01)
-2016-07-07T11:23:22+01 INFO - [wobble.7] -submit_method_id=9443
-2016-07-07T11:23:22+01 INFO - [wobble.7] -submission succeeded
 2016-07-07T11:23:22+01 INFO - [woo.9] -triggered off []
-2016-07-07T11:23:22+01 INFO - [wobble.7] -(current:submitted)> started at 2016-07-07T11:23:22+01
-2016-07-07T11:23:24+01 INFO - [woo.9] -submit_method_id=9551
-2016-07-07T11:23:24+01 INFO - [woo.9] -submission succeeded
-2016-07-07T11:23:24+01 INFO - [woo.9] -(current:submitted)> started at 2016-07-07T11:23:23+01
 2016-07-07T11:23:25+01 INFO - [woo.11] -triggered off []
-2016-07-07T11:23:25+01 INFO - [nong.2] -(current:running)> succeeded at 2016-07-07T11:23:24+01
-2016-07-07T11:23:25+01 INFO - [nong.8] -(current:running)> succeeded at 2016-07-07T11:23:24+01
-2016-07-07T11:23:25+01 INFO - [nong.2] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:25+01)
-2016-07-07T11:23:25+01 INFO - [nong.8] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:25+01)
-2016-07-07T11:23:26+01 INFO - [woo.11] -submit_method_id=9688
-2016-07-07T11:23:26+01 INFO - [woo.11] -submission succeeded
-2016-07-07T11:23:26+01 INFO - [woo.2] -(current:running)> succeeded at 2016-07-07T11:23:25+01
-2016-07-07T11:23:26+01 INFO - [woo.11] -(current:submitted)> started at 2016-07-07T11:23:25+01
-2016-07-07T11:23:26+01 INFO - [on_toast.1] -(current:running)> succeeded at 2016-07-07T11:23:25+01
-2016-07-07T11:23:26+01 INFO - [woo.2] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:26+01)
-2016-07-07T11:23:26+01 INFO - [on_toast.1] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:26+01)
 2016-07-07T11:23:27+01 INFO - [foo.1] -triggered off ['seq.1', 'woo.2']
 2016-07-07T11:23:27+01 INFO - [woo.12] -triggered off []
-2016-07-07T11:23:27+01 INFO - [woo.6] -(current:running)> succeeded at 2016-07-07T11:23:26+01
-2016-07-07T11:23:27+01 INFO - [woo.6] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:27+01)
-2016-07-07T11:23:28+01 INFO - [foo.1] -submit_method_id=9835
-2016-07-07T11:23:28+01 INFO - [foo.1] -submission succeeded
-2016-07-07T11:23:28+01 INFO - [woo.12] -submit_method_id=9836
-2016-07-07T11:23:28+01 INFO - [woo.12] -submission succeeded
-2016-07-07T11:23:28+01 INFO - [woo.5] -(current:running)> succeeded at 2016-07-07T11:23:27+01
-2016-07-07T11:23:28+01 INFO - [foo.1] -(current:submitted)> started at 2016-07-07T11:23:27+01
-2016-07-07T11:23:28+01 INFO - [woo.12] -(current:submitted)> started at 2016-07-07T11:23:27+01
-2016-07-07T11:23:28+01 INFO - [woo.5] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:28+01)
-2016-07-07T11:23:29+01 INFO - [woo.8] -(current:running)> succeeded at 2016-07-07T11:23:29+01
-2016-07-07T11:23:29+01 INFO - [woo.8] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:29+01)
-2016-07-07T11:23:30+01 INFO - [woo.9] -(current:running)> succeeded at 2016-07-07T11:23:29+01
-2016-07-07T11:23:30+01 INFO - [wobble.7] -(current:running)> succeeded at 2016-07-07T11:23:29+01
-2016-07-07T11:23:30+01 INFO - [ning.12] -(current:running)> succeeded at 2016-07-07T11:23:29+01
-2016-07-07T11:23:30+01 INFO - [woo.9] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:30+01)
-2016-07-07T11:23:30+01 INFO - [wobble.7] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:30+01)
-2016-07-07T11:23:30+01 INFO - [ning.12] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:30+01)
-2016-07-07T11:23:31+01 INFO - [seq.4] -(current:running)> succeeded at 2016-07-07T11:23:30+01
-2016-07-07T11:23:31+01 INFO - [seq.4] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:31+01)
 2016-07-07T11:23:32+01 INFO - [seq.7] -triggered off ['seq.4']
-2016-07-07T11:23:34+01 INFO - [seq.7] -submit_method_id=10135
-2016-07-07T11:23:34+01 INFO - [seq.7] -submission succeeded
-2016-07-07T11:23:34+01 INFO - [foo.1] -(current:running)> the cheese is ready at 2016-07-07T11:23:32+01
-2016-07-07T11:23:34+01 INFO - [seq.7] -(current:submitted)> started at 2016-07-07T11:23:33+01
 2016-07-07T11:23:35+01 INFO - [on_toast.4] -triggered off ['foo.1']
-2016-07-07T11:23:35+01 INFO - [woo.11] -(current:running)> succeeded at 2016-07-07T11:23:34+01
-2016-07-07T11:23:35+01 INFO - [woo.11] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:35+01)
-2016-07-07T11:23:36+01 INFO - [on_toast.4] -submit_method_id=10266
-2016-07-07T11:23:36+01 INFO - [on_toast.4] -submission succeeded
-2016-07-07T11:23:36+01 INFO - [woo.12] -(current:running)> succeeded at 2016-07-07T11:23:35+01
-2016-07-07T11:23:36+01 INFO - [on_toast.4] -(current:submitted)> started at 2016-07-07T11:23:35+01
-2016-07-07T11:23:36+01 INFO - [woo.12] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:36+01)
-2016-07-07T11:23:39+01 INFO - [foo.1] -(current:running)> succeeded at 2016-07-07T11:23:38+01
-2016-07-07T11:23:39+01 INFO - [foo.1] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:39+01)
 2016-07-07T11:23:40+01 INFO - [foo.4] -triggered off ['foo.1', 'seq.4', 'woo.3', 'woo.5']
 2016-07-07T11:23:40+01 INFO - [bar.1] -triggered off ['foo.1', 'woo.2']
-2016-07-07T11:23:41+01 INFO - [bar.1] -submit_method_id=10437
-2016-07-07T11:23:41+01 INFO - [bar.1] -submission succeeded
-2016-07-07T11:23:41+01 INFO - [foo.4] -submit_method_id=10438
-2016-07-07T11:23:41+01 INFO - [foo.4] -submission succeeded
-2016-07-07T11:23:41+01 INFO - [foo.4] -(current:submitted)> started at 2016-07-07T11:23:41+01
-2016-07-07T11:23:41+01 INFO - [seq.7] -(current:running)> succeeded at 2016-07-07T11:23:40+01
-2016-07-07T11:23:41+01 INFO - [bar.1] -(current:submitted)> started at 2016-07-07T11:23:41+01
-2016-07-07T11:23:41+01 INFO - [seq.7] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:41+01)
 2016-07-07T11:23:42+01 INFO - [seq.10] -triggered off ['seq.7']
-2016-07-07T11:23:44+01 INFO - [seq.10] -submit_method_id=10682
-2016-07-07T11:23:44+01 INFO - [seq.10] -submission succeeded
-2016-07-07T11:23:44+01 INFO - [seq.10] -(current:submitted)> started at 2016-07-07T11:23:43+01
-2016-07-07T11:23:47+01 INFO - [foo.4] -(current:running)> the cheese is ready at 2016-07-07T11:23:46+01
 2016-07-07T11:23:48+01 INFO - [on_toast.7] -triggered off ['foo.4']
-2016-07-07T11:23:49+01 INFO - [on_toast.7] -submit_method_id=10860
-2016-07-07T11:23:49+01 INFO - [on_toast.7] -submission succeeded
-2016-07-07T11:23:49+01 INFO - [on_toast.7] -(current:submitted)> started at 2016-07-07T11:23:48+01
-2016-07-07T11:23:50+01 INFO - [on_toast.4] -(current:running)> succeeded at 2016-07-07T11:23:49+01
-2016-07-07T11:23:50+01 INFO - [on_toast.4] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:50+01)
-2016-07-07T11:23:52+01 INFO - [foo.4] -(current:running)> succeeded at 2016-07-07T11:23:51+01
-2016-07-07T11:23:52+01 INFO - [on_toast.7] -(current:running)> succeeded at 2016-07-07T11:23:51+01
-2016-07-07T11:23:52+01 INFO - [foo.4] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:52+01)
-2016-07-07T11:23:52+01 INFO - [on_toast.7] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:52+01)
 2016-07-07T11:23:53+01 INFO - [foo.7] -triggered off ['foo.4', 'seq.7', 'woo.6', 'woo.8']
 2016-07-07T11:23:53+01 INFO - [bar.4] -triggered off ['foo.4', 'woo.5']
 2016-07-07T11:23:53+01 INFO - [qux.7] -triggered off ['foo.4']
-2016-07-07T11:23:53+01 INFO - [bar.1] -(current:running)> succeeded at 2016-07-07T11:23:52+01
-2016-07-07T11:23:53+01 INFO - [bar.1] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:53+01)
-2016-07-07T11:23:54+01 INFO - [bar.4] -submit_method_id=11056
-2016-07-07T11:23:54+01 INFO - [bar.4] -submission succeeded
-2016-07-07T11:23:54+01 INFO - [foo.7] -submit_method_id=11057
-2016-07-07T11:23:54+01 INFO - [foo.7] -submission succeeded
-2016-07-07T11:23:54+01 INFO - [qux.7] -submit_method_id=11060
-2016-07-07T11:23:54+01 INFO - [qux.7] -submission succeeded
 2016-07-07T11:23:54+01 INFO - [woo.14] -triggered off []
 2016-07-07T11:23:54+01 INFO - [baz.16] -triggered off []
 2016-07-07T11:23:54+01 INFO - [wubble.16] -triggered off ['wobble.7']
 2016-07-07T11:23:54+01 INFO - [ning.16] -triggered off []
-2016-07-07T11:23:54+01 INFO - [foo.7] -(current:submitted)> started at 2016-07-07T11:23:53+01
-2016-07-07T11:23:54+01 INFO - [bar.4] -(current:submitted)> started at 2016-07-07T11:23:53+01
-2016-07-07T11:23:54+01 INFO - [qux.7] -(current:submitted)> started at 2016-07-07T11:23:53+01
-2016-07-07T11:23:55+01 INFO - [baz.16] -submit_method_id=11339
-2016-07-07T11:23:55+01 INFO - [baz.16] -submission succeeded
-2016-07-07T11:23:55+01 INFO - [ning.16] -submit_method_id=11340
-2016-07-07T11:23:55+01 INFO - [ning.16] -submission succeeded
-2016-07-07T11:23:55+01 INFO - [woo.14] -submit_method_id=11344
-2016-07-07T11:23:55+01 INFO - [woo.14] -submission succeeded
-2016-07-07T11:23:55+01 INFO - [wubble.16] -submit_method_id=11352
-2016-07-07T11:23:55+01 INFO - [wubble.16] -submission succeeded
-2016-07-07T11:23:55+01 INFO - [woo.14] -(current:submitted)> started at 2016-07-07T11:23:55+01
-2016-07-07T11:23:55+01 INFO - [baz.16] -(current:submitted)> started at 2016-07-07T11:23:55+01
-2016-07-07T11:23:55+01 INFO - [wubble.16] -(current:submitted)> started at 2016-07-07T11:23:55+01
-2016-07-07T11:23:55+01 INFO - [ning.16] -(current:submitted)> started at 2016-07-07T11:23:55+01
 2016-07-07T11:23:56+01 INFO - [woo.15] -triggered off []
-2016-07-07T11:23:56+01 INFO - [seq.10] -(current:running)> succeeded at 2016-07-07T11:23:56+01
-2016-07-07T11:23:56+01 INFO - [qux.7] -(current:running)> succeeded at 2016-07-07T11:23:56+01
-2016-07-07T11:23:56+01 INFO - [ning.16] -(current:running)> succeeded at 2016-07-07T11:23:56+01
-2016-07-07T11:23:56+01 INFO - [seq.10] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:56+01)
-2016-07-07T11:23:56+01 INFO - [qux.7] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:56+01)
-2016-07-07T11:23:56+01 INFO - [ning.16] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:56+01)
-2016-07-07T11:23:57+01 INFO - [woo.15] -submit_method_id=11764
-2016-07-07T11:23:57+01 INFO - [woo.15] -submission succeeded
 2016-07-07T11:23:57+01 INFO - [seq.13] -triggered off ['seq.10']
-2016-07-07T11:23:57+01 INFO - [woo.15] -(current:submitted)> started at 2016-07-07T11:23:57+01
-2016-07-07T11:23:57+01 INFO - [woo.14] -(current:running)> succeeded at 2016-07-07T11:23:57+01
-2016-07-07T11:23:57+01 INFO - [woo.14] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:23:57+01)
-2016-07-07T11:23:59+01 INFO - [seq.13] -submit_method_id=11875
-2016-07-07T11:23:59+01 INFO - [seq.13] -submission succeeded
-2016-07-07T11:23:59+01 INFO - [seq.13] -(current:submitted)> started at 2016-07-07T11:23:58+01
-2016-07-07T11:24:00+01 INFO - [foo.7] -(current:running)> the cheese is ready at 2016-07-07T11:23:59+01
 2016-07-07T11:24:01+01 INFO - [on_toast.10] -triggered off ['foo.7']
-2016-07-07T11:24:02+01 INFO - [on_toast.10] -submit_method_id=12030
-2016-07-07T11:24:02+01 INFO - [on_toast.10] -submission succeeded
-2016-07-07T11:24:02+01 INFO - [seq.13] -(current:running)> succeeded at 2016-07-07T11:24:01+01
-2016-07-07T11:24:02+01 INFO - [on_toast.10] -(current:submitted)> started at 2016-07-07T11:24:01+01
-2016-07-07T11:24:02+01 INFO - [wubble.16] -(current:running)> succeeded at 2016-07-07T11:24:01+01
-2016-07-07T11:24:02+01 INFO - [seq.13] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:02+01)
-2016-07-07T11:24:02+01 INFO - [wubble.16] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:02+01)
 2016-07-07T11:24:03+01 INFO - [seq.16] -triggered off ['seq.13']
-2016-07-07T11:24:04+01 INFO - [seq.16] -submit_method_id=12153
-2016-07-07T11:24:04+01 INFO - [seq.16] -submission succeeded
-2016-07-07T11:24:04+01 INFO - [seq.16] -(current:submitted)> started at 2016-07-07T11:24:04+01
-2016-07-07T11:24:05+01 INFO - [foo.7] -(current:running)> succeeded at 2016-07-07T11:24:04+01
-2016-07-07T11:24:05+01 INFO - [foo.7] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:05+01)
 2016-07-07T11:24:06+01 INFO - [foo.10] -triggered off ['foo.7', 'seq.10', 'woo.11', 'woo.9']
 2016-07-07T11:24:06+01 INFO - [bar.7] -triggered off ['foo.7', 'woo.8']
-2016-07-07T11:24:07+01 INFO - [bar.7] -submit_method_id=12294
-2016-07-07T11:24:07+01 INFO - [bar.7] -submission succeeded
-2016-07-07T11:24:07+01 INFO - [foo.10] -submit_method_id=12295
-2016-07-07T11:24:07+01 INFO - [foo.10] -submission succeeded
-2016-07-07T11:24:07+01 INFO - [foo.10] -(current:submitted)> started at 2016-07-07T11:24:07+01
-2016-07-07T11:24:07+01 INFO - [bar.7] -(current:submitted)> started at 2016-07-07T11:24:07+01
-2016-07-07T11:24:08+01 INFO - [bar.4] -(current:running)> succeeded at 2016-07-07T11:24:08+01
-2016-07-07T11:24:08+01 INFO - [bar.7] -(current:running)> succeeded at 2016-07-07T11:24:08+01
-2016-07-07T11:24:08+01 INFO - [bar.4] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:08+01)
-2016-07-07T11:24:08+01 INFO - [bar.7] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:08+01)
-2016-07-07T11:24:09+01 INFO - [baz.16] -(current:running)> succeeded at 2016-07-07T11:24:09+01
-2016-07-07T11:24:09+01 INFO - [baz.16] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:09+01)
-2016-07-07T11:24:11+01 INFO - [seq.16] -(current:running)> succeeded at 2016-07-07T11:24:11+01
-2016-07-07T11:24:11+01 INFO - [seq.16] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:11+01)
-2016-07-07T11:24:13+01 INFO - [foo.10] -(current:running)> the cheese is ready at 2016-07-07T11:24:12+01
-2016-07-07T11:24:13+01 INFO - [woo.15] -(current:running)> succeeded at 2016-07-07T11:24:12+01
-2016-07-07T11:24:13+01 INFO - [woo.15] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:13+01)
 2016-07-07T11:24:14+01 INFO - [on_toast.13] -triggered off ['foo.10']
-2016-07-07T11:24:15+01 INFO - [on_toast.13] -submit_method_id=12621
-2016-07-07T11:24:15+01 INFO - [on_toast.13] -submission succeeded
-2016-07-07T11:24:15+01 INFO - [on_toast.13] -(current:submitted)> started at 2016-07-07T11:24:15+01
-2016-07-07T11:24:16+01 INFO - [on_toast.13] -(current:running)> succeeded at 2016-07-07T11:24:16+01
-2016-07-07T11:24:16+01 INFO - [on_toast.10] -(current:running)> succeeded at 2016-07-07T11:24:15+01
-2016-07-07T11:24:16+01 INFO - [on_toast.13] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:16+01)
-2016-07-07T11:24:16+01 INFO - [on_toast.10] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:16+01)
-2016-07-07T11:24:19+01 INFO - [foo.10] -(current:running)> succeeded at 2016-07-07T11:24:17+01
-2016-07-07T11:24:19+01 INFO - [foo.10] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:19+01)
 2016-07-07T11:24:20+01 INFO - [qux.13] -triggered off ['foo.10']
 2016-07-07T11:24:20+01 INFO - [bar.10] -triggered off ['foo.10', 'woo.11']
 2016-07-07T11:24:20+01 INFO - [foo.13] -triggered off ['foo.10', 'seq.13', 'woo.12', 'woo.14']
-2016-07-07T11:24:21+01 INFO - [bar.10] -submit_method_id=12816
-2016-07-07T11:24:21+01 INFO - [bar.10] -submission succeeded
-2016-07-07T11:24:21+01 INFO - [foo.13] -submit_method_id=12817
-2016-07-07T11:24:21+01 INFO - [foo.13] -submission succeeded
-2016-07-07T11:24:21+01 INFO - [qux.13] -submit_method_id=12824
-2016-07-07T11:24:21+01 INFO - [qux.13] -submission succeeded
-2016-07-07T11:24:21+01 INFO - [foo.16] -holding (future trigger beyond stop point)
-2016-07-07T11:24:21+01 INFO - [foo.16] -waiting => held
-2016-07-07T11:24:21+01 INFO - [qux.13] -(current:submitted)> started at 2016-07-07T11:24:20+01
-2016-07-07T11:24:21+01 INFO - [bar.10] -(current:submitted)> started at 2016-07-07T11:24:20+01
-2016-07-07T11:24:21+01 INFO - [foo.13] -(current:submitted)> started at 2016-07-07T11:24:20+01
-2016-07-07T11:24:25+01 INFO - [qux.13] -(current:running)> succeeded at 2016-07-07T11:24:24+01
-2016-07-07T11:24:25+01 INFO - [bar.10] -(current:running)> succeeded at 2016-07-07T11:24:24+01
-2016-07-07T11:24:25+01 INFO - [qux.13] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:25+01)
-2016-07-07T11:24:25+01 INFO - [bar.10] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:25+01)
-2016-07-07T11:24:26+01 INFO - [foo.13] -(current:running)> the cheese is ready at 2016-07-07T11:24:25+01
 2016-07-07T11:24:27+01 INFO - [on_toast.16] -triggered off ['foo.13']
-2016-07-07T11:24:28+01 INFO - [on_toast.16] -submit_method_id=13201
-2016-07-07T11:24:28+01 INFO - [on_toast.16] -submission succeeded
-2016-07-07T11:24:28+01 INFO - [on_toast.16] -(current:submitted)> started at 2016-07-07T11:24:28+01
-2016-07-07T11:24:31+01 INFO - [foo.13] -(current:running)> succeeded at 2016-07-07T11:24:31+01
-2016-07-07T11:24:31+01 INFO - [foo.13] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:31+01)
 2016-07-07T11:24:32+01 INFO - [bar.13] -triggered off ['foo.13', 'woo.14']
-2016-07-07T11:24:33+01 INFO - [bar.13] -submit_method_id=13376
-2016-07-07T11:24:33+01 INFO - [bar.13] -submission succeeded
-2016-07-07T11:24:33+01 INFO - [bar.16] -holding (future trigger beyond stop point)
-2016-07-07T11:24:33+01 INFO - [bar.16] -waiting => held
-2016-07-07T11:24:33+01 INFO - [bar.13] -(current:submitted)> started at 2016-07-07T11:24:33+01
-2016-07-07T11:24:40+01 INFO - [on_toast.16] -(current:running)> succeeded at 2016-07-07T11:24:40+01
-2016-07-07T11:24:40+01 INFO - [on_toast.16] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:40+01)
-2016-07-07T11:24:45+01 INFO - [bar.13] -(current:running)> succeeded at 2016-07-07T11:24:44+01
-2016-07-07T11:24:45+01 INFO - [bar.13] -('job-logs-register', 1) will run after P0Y (after 2016-07-07T11:24:45+01)
-2016-07-07T11:24:46+01 INFO - Suite shutting down at 2016-07-07T11:24:46+01

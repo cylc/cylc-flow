@@ -1,103 +1,17 @@
-2016-07-04T09:37:17Z INFO - Suite starting on eld668.desktop.frd.metoffice.com:7766
-2016-07-04T09:37:17Z INFO - Run mode: live
 2016-07-04T09:37:17Z INFO - Initial point: 20000101T0000Z
 2016-07-04T09:37:17Z INFO - Final point: 20000102T1200Z
-2016-07-04T09:37:17Z INFO - Cold Start 20000101T0000Z
 2016-07-04T09:37:17Z INFO - [qux.20000101T0000Z] -triggered off []
 2016-07-04T09:37:17Z INFO - [nip.20000101T0000Z] -triggered off []
 2016-07-04T09:37:17Z INFO - [baz.20000101T0000Z] -triggered off []
 2016-07-04T09:37:17Z INFO - [start.20000101T0000Z] -triggered off []
-2016-07-04T09:37:18Z INFO - [baz.20000101T0000Z] -submit_method_id=17213
-2016-07-04T09:37:18Z INFO - [baz.20000101T0000Z] -submission succeeded
-2016-07-04T09:37:18Z INFO - [nip.20000101T0000Z] -submit_method_id=17214
-2016-07-04T09:37:18Z INFO - [nip.20000101T0000Z] -submission succeeded
-2016-07-04T09:37:18Z INFO - [qux.20000101T0000Z] -submit_method_id=17217
-2016-07-04T09:37:18Z INFO - [qux.20000101T0000Z] -submission succeeded
-2016-07-04T09:37:18Z INFO - [start.20000101T0000Z] -submit_method_id=17224
-2016-07-04T09:37:18Z INFO - [start.20000101T0000Z] -submission succeeded
-2016-07-04T09:37:18Z INFO - [qux.20000101T0000Z] -(current:submitted)> started at 2016-07-04T09:37:18Z
-2016-07-04T09:37:18Z INFO - [nip.20000101T0000Z] -(current:submitted)> started at 2016-07-04T09:37:18Z
-2016-07-04T09:37:18Z INFO - [baz.20000101T0000Z] -(current:submitted)> started at 2016-07-04T09:37:18Z
-2016-07-04T09:37:18Z INFO - [start.20000101T0000Z] -(current:submitted)> started at 2016-07-04T09:37:18Z
 2016-07-04T09:37:19Z INFO - [baz.20000101T1200Z] -triggered off []
 2016-07-04T09:37:19Z INFO - [nip.20000101T1200Z] -triggered off []
-2016-07-04T09:37:19Z INFO - [start.20000101T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:18Z
-2016-07-04T09:37:19Z INFO - [baz.20000101T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:18Z
-2016-07-04T09:37:19Z INFO - [qux.20000101T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:18Z
-2016-07-04T09:37:19Z INFO - [nip.20000101T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:18Z
-2016-07-04T09:37:19Z INFO - [start.20000101T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:19Z)
-2016-07-04T09:37:19Z INFO - [baz.20000101T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:19Z)
-2016-07-04T09:37:19Z INFO - [qux.20000101T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:19Z)
-2016-07-04T09:37:19Z INFO - [nip.20000101T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:19Z)
-2016-07-04T09:37:21Z INFO - [baz.20000101T1200Z] -submit_method_id=17617
-2016-07-04T09:37:21Z INFO - [baz.20000101T1200Z] -submission succeeded
-2016-07-04T09:37:21Z INFO - [nip.20000101T1200Z] -submit_method_id=17618
-2016-07-04T09:37:21Z INFO - [nip.20000101T1200Z] -submission succeeded
 2016-07-04T09:37:21Z INFO - [foo.20000101T0000Z] -triggered off ['start.20000101T0000Z']
-2016-07-04T09:37:21Z INFO - [baz.20000101T1200Z] -(current:submitted)> started at 2016-07-04T09:37:20Z
-2016-07-04T09:37:21Z INFO - [nip.20000101T1200Z] -(current:submitted)> started at 2016-07-04T09:37:20Z
-2016-07-04T09:37:22Z INFO - [foo.20000101T0000Z] -submit_method_id=17811
-2016-07-04T09:37:22Z INFO - [foo.20000101T0000Z] -submission succeeded
 2016-07-04T09:37:22Z INFO - [nip.20000101T1800Z] -triggered off []
-2016-07-04T09:37:22Z INFO - [baz.20000101T1200Z] -(current:running)> succeeded at 2016-07-04T09:37:20Z
-2016-07-04T09:37:22Z INFO - [nip.20000101T1200Z] -(current:running)> succeeded at 2016-07-04T09:37:20Z
-2016-07-04T09:37:22Z INFO - [foo.20000101T0000Z] -(current:submitted)> started at 2016-07-04T09:37:21Z
-2016-07-04T09:37:22Z INFO - [baz.20000101T1200Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:22Z)
-2016-07-04T09:37:22Z INFO - [nip.20000101T1200Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:22Z)
-2016-07-04T09:37:23Z INFO - [nip.20000101T1800Z] -submit_method_id=17909
-2016-07-04T09:37:23Z INFO - [nip.20000101T1800Z] -submission succeeded
-2016-07-04T09:37:23Z INFO - [nip.20000101T1800Z] -(current:submitted)> started at 2016-07-04T09:37:22Z
-2016-07-04T09:37:23Z INFO - [foo.20000101T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:21Z
-2016-07-04T09:37:23Z INFO - [foo.20000101T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:23Z)
 2016-07-04T09:37:24Z INFO - [nip.20000102T0000Z] -triggered off []
 2016-07-04T09:37:24Z INFO - [qux.20000102T0000Z] -triggered off []
 2016-07-04T09:37:24Z INFO - [baz.20000102T0000Z] -triggered off []
 2016-07-04T09:37:24Z INFO - [bar.20000102T0000Z] -triggered off []
-2016-07-04T09:37:24Z INFO - [nip.20000101T1800Z] -(current:running)> succeeded at 2016-07-04T09:37:22Z
-2016-07-04T09:37:24Z INFO - [nip.20000101T1800Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:24Z)
-2016-07-04T09:37:25Z INFO - [bar.20000102T0000Z] -submit_method_id=18007
-2016-07-04T09:37:25Z INFO - [bar.20000102T0000Z] -submission succeeded
-2016-07-04T09:37:25Z INFO - [baz.20000102T0000Z] -submit_method_id=18008
-2016-07-04T09:37:25Z INFO - [baz.20000102T0000Z] -submission succeeded
-2016-07-04T09:37:25Z INFO - [nip.20000102T0000Z] -submit_method_id=18011
-2016-07-04T09:37:25Z INFO - [nip.20000102T0000Z] -submission succeeded
-2016-07-04T09:37:25Z INFO - [qux.20000102T0000Z] -submit_method_id=18016
-2016-07-04T09:37:25Z INFO - [qux.20000102T0000Z] -submission succeeded
-2016-07-04T09:37:25Z INFO - [baz.20000103T0000Z] -holding (beyond suite stop point) 20000102T1200Z
-2016-07-04T09:37:25Z INFO - [baz.20000103T0000Z] -waiting => held
-2016-07-04T09:37:25Z INFO - [bar.20000103T0000Z] -holding (beyond suite stop point) 20000102T1200Z
-2016-07-04T09:37:25Z INFO - [bar.20000103T0000Z] -waiting => held
-2016-07-04T09:37:25Z INFO - [nip.20000102T0000Z] -(current:submitted)> started at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [nip.20000102T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [qux.20000102T0000Z] -(current:submitted)> started at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [qux.20000102T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [baz.20000102T0000Z] -(current:submitted)> started at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [baz.20000102T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [bar.20000102T0000Z] -(current:submitted)> started at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [bar.20000102T0000Z] -(current:running)> succeeded at 2016-07-04T09:37:24Z
-2016-07-04T09:37:25Z INFO - [nip.20000102T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:25Z)
-2016-07-04T09:37:25Z INFO - [qux.20000102T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:25Z)
-2016-07-04T09:37:25Z INFO - [baz.20000102T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:25Z)
-2016-07-04T09:37:25Z INFO - [bar.20000102T0000Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:25Z)
 2016-07-04T09:37:26Z INFO - [nip.20000102T0600Z] -triggered off []
 2016-07-04T09:37:26Z INFO - [qux.20000102T1200Z] -triggered off []
-2016-07-04T09:37:27Z INFO - [nip.20000102T0600Z] -submit_method_id=18393
-2016-07-04T09:37:27Z INFO - [nip.20000102T0600Z] -submission succeeded
-2016-07-04T09:37:27Z INFO - [qux.20000102T1200Z] -submit_method_id=18394
-2016-07-04T09:37:27Z INFO - [qux.20000102T1200Z] -submission succeeded
-2016-07-04T09:37:27Z INFO - [qux.20000103T0000Z] -holding (beyond suite stop point) 20000102T1200Z
-2016-07-04T09:37:27Z INFO - [qux.20000103T0000Z] -waiting => held
-2016-07-04T09:37:27Z INFO - [nip.20000102T0600Z] -(current:submitted)> started at 2016-07-04T09:37:26Z
-2016-07-04T09:37:27Z INFO - [qux.20000102T1200Z] -(current:submitted)> started at 2016-07-04T09:37:26Z
 2016-07-04T09:37:28Z INFO - [nip.20000102T1200Z] -triggered off []
-2016-07-04T09:37:28Z INFO - [nip.20000102T0600Z] -(current:running)> succeeded at 2016-07-04T09:37:27Z
-2016-07-04T09:37:28Z INFO - [qux.20000102T1200Z] -(current:running)> succeeded at 2016-07-04T09:37:27Z
-2016-07-04T09:37:28Z INFO - [nip.20000102T0600Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:28Z)
-2016-07-04T09:37:28Z INFO - [qux.20000102T1200Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:28Z)
-2016-07-04T09:37:28Z INFO - [client-command] get_cylc_version osanders@eld668.desktop.frd.metoffice.com:cylc-gui 3385400d-7efc-449b-a6ac-a8698a23101d
-2016-07-04T09:37:29Z INFO - [nip.20000102T1200Z] -submit_method_id=18613
-2016-07-04T09:37:29Z INFO - [nip.20000102T1200Z] -submission succeeded
-2016-07-04T09:37:29Z INFO - [nip.20000102T1200Z] -(current:submitted)> started at 2016-07-04T09:37:28Z
-2016-07-04T09:37:29Z INFO - [nip.20000102T1200Z] -(current:running)> succeeded at 2016-07-04T09:37:29Z
-2016-07-04T09:37:29Z INFO - [nip.20000102T1200Z] -('job-logs-register', 1) will run after P0Y (after 2016-07-04T09:37:29Z)
-2016-07-04T09:37:30Z INFO - Suite shutting down at 2016-07-04T09:37:30Z
