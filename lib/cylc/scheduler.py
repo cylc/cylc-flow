@@ -207,6 +207,7 @@ class Scheduler(object):
         self.pool_hold_point = None
         self.hold_suite_now = False
         self.suite_timer_timeout = None
+        self.suite_timer_active = False
 
         self.next_kill_issue = None
         self.already_timed_out = False
