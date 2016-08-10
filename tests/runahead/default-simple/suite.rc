@@ -1,7 +1,7 @@
 [cylc]
     UTC mode = True
     [[events]]
-        timeout = PT0.1M
+        timeout = PT0.3M
         abort on timeout = True
 [scheduling]
     initial cycle point = 20100101T00
