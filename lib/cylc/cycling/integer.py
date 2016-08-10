@@ -20,10 +20,11 @@ Integer cycling by point, interval, and sequence classes.
 """
 
 import re
+import unittest
 
 from cylc.cycling import (
     PointBase, IntervalBase, SequenceBase, PointParsingError,
-    IntervalParsingError
+    IntervalParsingError, parse_exclusion
 )
 from cylc.time_parser import CylcMissingContextPointError
 
@@ -263,8 +264,10 @@ class IntegerSequence(SequenceBase):
 
         matched_recurrence = False
 
+        expression, exclusion = parse_exclusion(dep_section)
+
         for rec, format_num in RECURRENCE_FORMAT_RECS:
-            results = rec.match(dep_section)
+            results = rec.match(expression)
             if not results:
                 continue
             matched_recurrence = True
@@ -286,7 +289,7 @@ class IntegerSequence(SequenceBase):
 
         if not matched_recurrence:
             raise Exception(
-                "ERROR, bad integer cycling format: %s" % dep_section)
+                "ERROR, bad integer cycling format: %s" % expression)
 
         self.p_start = get_point_from_expression(
             start, self.p_context_start, is_required=start_required)
@@ -294,6 +297,11 @@ class IntegerSequence(SequenceBase):
             stop, self.p_context_stop, is_required=end_required)
         if intv:
             self.i_step = IntegerInterval(intv)
+        if exclusion:
+            self.exclusion = get_point_from_expression(exclusion, None,
+                                                       is_required=False)
+        else:
+            self.exclusion = None
 
         if format_num == 3:
             # REPEAT/START/PERIOD
@@ -409,6 +417,8 @@ class IntegerSequence(SequenceBase):
 
     def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
+        if self.exclusion and point == self.exclusion:
+            return False
         if self.i_step:
             return int(point - self.p_start) % int(self.i_step) == 0
         else:
@@ -441,7 +451,10 @@ class IntegerSequence(SequenceBase):
             prev_point = point - IntegerInterval.from_integer(i)
         else:
             prev_point = point - self.i_step
-        return self._get_point_in_bounds(prev_point)
+        ret = self._get_point_in_bounds(prev_point)
+        if self.exclusion and ret == self.exclusion:
+            return self.get_prev_point(ret)
+        return ret
 
     def get_nearest_prev_point(self, point):
         """Return the largest point < some arbitrary point."""
@@ -455,6 +468,8 @@ class IntegerSequence(SequenceBase):
                 break
             prev_point = sequence_point
             sequence_point = self.get_next_point(sequence_point)
+        if self.exclusion and prev_point == self.exclusion:
+            return self.get_nearest_prev_point(prev_point)
         return prev_point
 
     def get_next_point(self, point):
@@ -468,7 +483,10 @@ class IntegerSequence(SequenceBase):
                 return None
         i = int(point - self.p_start) % int(self.i_step)
         next_point = point + self.i_step - IntegerInterval.from_integer(i)
-        return self._get_point_in_bounds(next_point)
+        ret = self._get_point_in_bounds(next_point)
+        if self.exclusion and ret and ret == self.exclusion:
+            return self.get_next_point(ret)
+        return ret
 
     def get_next_point_on_sequence(self, point):
         """Return the next point > point assuming that point is on-sequence,
@@ -477,7 +495,10 @@ class IntegerSequence(SequenceBase):
         if not self.i_step:
             return None
         next_point = point + self.i_step
-        return self._get_point_in_bounds(next_point)
+        ret = self._get_point_in_bounds(next_point)
+        if self.exclusion and ret and ret == self.exclusion:
+            return self.get_next_point_on_sequence(ret)
+        return ret
 
     def get_first_point(self, point):
         """Return the first point >= to point, or None if out of bounds."""
@@ -488,14 +509,20 @@ class IntegerSequence(SequenceBase):
             point = self._get_point_in_bounds(point)
         else:
             point = self.get_next_point(point)
+        if self.exclusion and point == self.exclusion:
+            return self.get_next_point_on_sequence(point)
         return point
 
     def get_start_point(self):
         """Return the first point in this sequence, or None."""
+        if self.exclusion and self.p_start == self.exclusion:
+            return self.get_next_point_on_sequence(self.p_start)
         return self.p_start
 
     def get_stop_point(self):
         """Return the last point in this sequence, or None if unbounded."""
+        if self.exclusion and self.p_stop == self.exclusion:
+            return self.get_prev_point(self.p_stop)
         return self.p_stop
 
     def __eq__(self, other):
@@ -506,7 +533,8 @@ class IntegerSequence(SequenceBase):
         else:
             return self.i_step == other.i_step and \
                 self.p_start == other.p_start and \
-                self.p_stop == other.p_stop
+                self.p_stop == other.p_stop and \
+                self.exclusion == other.exclusion
 
 
 def init_from_cfg(cfg):
@@ -536,37 +564,79 @@ def get_point_from_expression(point_expr, context_point, is_required=False):
     return get_point_relative(point_expr, context_point)
 
 
-def test():
-    """Run some simple tests for integer cycling."""
-    sequence = IntegerSequence('R/1/P3', 1, 10)
-    # sequence = IntegerSequence('R/c2/P2', 1, 10)
-    # sequence = IntegerSequence('R2/c2/P2', 1, 10)
-    # sequence = IntegerSequence('R2/c4/c6', 1, 10)
-    # sequence = IntegerSequence('R2/P2/c6', 1, 10)
+class TestIntegerSequence(unittest.TestCase):
+    """Contains unit tests for the IntegerSequence class."""
 
-    sequence.set_offset(IntegerInterval('P4'))
+    def test_exclusions_simple(self):
+        """Test the generation of points for integer sequences with exclusions.
+        """
+        sequence = IntegerSequence('R/P1!3', 1, 5)
+        output = []
+        point = sequence.get_start_point()
+        while point:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [1, 2, 4, 5])
 
-    start = sequence.p_start
-    stop = sequence.p_stop
+    def test_exclusions_extensive(self):
+        """Test IntegerSequence methods for sequences with exclusions."""
+        point_0 = IntegerPoint(0)
+        point_1 = IntegerPoint(1)
+        point_2 = IntegerPoint(2)
+        point_3 = IntegerPoint(3)
+        point_4 = IntegerPoint(4)
 
-    point = start
-    while point and stop and point <= stop:
-        print ' + ' + str(point)
-        point = sequence.get_next_point(point)
-    print
+        sequence = IntegerSequence('R/P1!3', 1, 5)
+        self.assertFalse(sequence.is_on_sequence(point_3))
+        self.assertFalse(sequence.is_valid(point_3))
+        self.assertEqual(sequence.get_prev_point(point_3), point_2)
+        self.assertEqual(sequence.get_prev_point(point_4), point_2)
+        self.assertEqual(sequence.get_nearest_prev_point(point_3), point_2)
+        self.assertEqual(sequence.get_nearest_prev_point(point_3), point_2)
+        self.assertEqual(sequence.get_next_point(point_3), point_4)
+        self.assertEqual(sequence.get_next_point(point_2), point_4)
+        self.assertEqual(sequence.get_next_point_on_sequence(point_3), point_4)
+        self.assertEqual(sequence.get_next_point_on_sequence(point_2), point_4)
 
-    point = stop
-    while point and start and point >= start:
-        print ' + ' + str(point)
-        point = sequence.get_prev_point(point)
+        sequence = IntegerSequence('R/P1!1', 1, 5)
+        self.assertEqual(sequence.get_first_point(point_1), point_2)
+        self.assertEqual(sequence.get_first_point(point_0), point_2)
+        self.assertEqual(sequence.get_start_point(), point_2)
 
-    print
-    sequence1 = IntegerSequence('R/c1/P1', 1, 10)
-    sequence2 = IntegerSequence('R/c1/P1', 1, 10)
-    print sequence1 == sequence2
-    sequence2.set_offset(IntegerInterval('-P2'))
-    print sequence1 == sequence2
+        sequence = IntegerSequence('R/P1!5', 1, 5)
+        self.assertEqual(sequence.get_stop_point(), point_4)
+
+    def test_simple(self):
+        """Run some simple tests for integer cycling."""
+        sequence = IntegerSequence('R/1/P3', 1, 10)
+        start = sequence.p_start
+        stop = sequence.p_stop
+
+        # Test point generation forwards.
+        point = start
+        output = []
+        while point and stop and point <= stop:
+            output.append(point)
+            point = sequence.get_next_point(point)
+        self.assertEqual([int(out) for out in output], [1, 4, 7, 10])
+
+        # Test point generation backwards.
+        point = stop
+        output = []
+        while point and start and point >= start:
+            output.append(point)
+            point = sequence.get_prev_point(point)
+        self.assertEqual([int(out) for out in output], [10, 7, 4, 1])
+
+        # Test sequence comparison
+        sequence1 = IntegerSequence('R/1/P2', 1, 10)
+        sequence2 = IntegerSequence('R/1/P2', 1, 10)
+        self.assertEqual(sequence1, sequence2)
+        sequence2.set_offset(IntegerInterval('-P2'))
+        self.assertEqual(sequence1, sequence2)
+        sequence2.set_offset(IntegerInterval('-P1'))
+        self.assertNotEqual(sequence1, sequence2)
 
 
 if __name__ == '__main__':
-    test()
+    unittest.main()

@@ -1,0 +1,18 @@
+edge "start.20000101T0000Z" "foo.20000101T0000Z" solid
+graph
+node "bar.20000102T0000Z" "bar\n20000102T0000Z" unfilled box black
+node "baz.20000101T0000Z" "baz\n20000101T0000Z" unfilled box black
+node "baz.20000101T1200Z" "baz\n20000101T1200Z" unfilled box black
+node "baz.20000102T0000Z" "baz\n20000102T0000Z" unfilled box black
+node "foo.20000101T0000Z" "foo\n20000101T0000Z" unfilled box black
+node "nip.20000101T0000Z" "nip\n20000101T0000Z" unfilled box black
+node "nip.20000101T1200Z" "nip\n20000101T1200Z" unfilled box black
+node "nip.20000101T1800Z" "nip\n20000101T1800Z" unfilled box black
+node "nip.20000102T0000Z" "nip\n20000102T0000Z" unfilled box black
+node "nip.20000102T0600Z" "nip\n20000102T0600Z" unfilled box black
+node "nip.20000102T1200Z" "nip\n20000102T1200Z" unfilled box black
+node "qux.20000101T0000Z" "qux\n20000101T0000Z" unfilled box black
+node "qux.20000102T0000Z" "qux\n20000102T0000Z" unfilled box black
+node "qux.20000102T1200Z" "qux\n20000102T1200Z" unfilled box black
+node "start.20000101T0000Z" "start\n20000101T0000Z" unfilled box black
+stop
