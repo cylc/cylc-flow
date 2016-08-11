@@ -17,6 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test sending commands to a suite on a host with shared file system with
 # current host.
+CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
 export CYLC_TEST_HOST=$( \

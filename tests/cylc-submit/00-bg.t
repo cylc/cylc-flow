@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc submit" a background task.
+CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 
 CYLC_TEST_HOST='localhost'

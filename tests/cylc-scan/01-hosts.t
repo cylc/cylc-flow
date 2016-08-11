@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test cylc scan with multiple hosts
+CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 HOSTS="$( \
     cylc get-global-config '--item=[suite host scanning]hosts' 2>'/dev/null')"

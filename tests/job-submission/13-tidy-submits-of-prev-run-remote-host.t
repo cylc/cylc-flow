@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test tidy of submits of previous runs.
+CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
 CYLC_TEST_HOST=$( \

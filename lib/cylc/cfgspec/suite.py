@@ -238,6 +238,7 @@ SPEC = {
                 vtype='string', options=['live', 'simulation', 'dummy', '']),
             'allow task failures': vdr(vtype='boolean', default=False),
             'expected task failures': vdr(vtype='string_list', default=[]),
+            # TODO: interval_minutes defaults are in seconds? (tested):
             'live mode suite timeout': vdr(
                 vtype='interval_minutes', default=DurationFloat(60)),
             'dummy mode suite timeout': vdr(

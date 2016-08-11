@@ -17,6 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test restarting a suite when the host of a submitted or running job is not
 # available. https://github.com/cylc/cylc/issues/1327
+CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 export CYLC_TEST_HOST=$( \
     cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
