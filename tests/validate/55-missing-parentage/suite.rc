@@ -3,4 +3,4 @@
         graph = "foo"
 [runtime]
     [[foo]]
-        inherit =
+        inherit = None

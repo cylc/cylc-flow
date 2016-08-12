@@ -968,13 +968,12 @@ conditions; see `cylc conditions`.
         base_name = "%s-%s.rc" % (time_str, load_type)
         file_name = os.path.join(cfg_logdir, base_name)
         try:
-            handle = open(file_name, "wb")
+            with open(file_name, "wb") as handle:
+                handle.write("# cylc-version: %s\n" % CYLC_VERSION)
+                printcfg(self.config.cfg, none_str=None, handle=handle)
         except IOError as exc:
             sys.stderr.write(str(exc) + "\n")
             raise SchedulerError("Unable to log the loaded suite definition")
-        handle.write("# cylc-version: %s\n" % CYLC_VERSION)
-        printcfg(self.config.cfg, handle=handle)
-        handle.close()
 
     def _load_initial_cycle_point(self, _, row):
         """Load previous initial cycle point.

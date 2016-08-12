@@ -18,7 +18,7 @@
 # Test suite config logging.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 8
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
@@ -50,6 +50,8 @@ RUN_LOG=$(ls $LOG_DIR/*run.rc)
 REL_LOG=$(ls $LOG_DIR/*reload.rc)
 RES_LOG=$(ls $LOG_DIR/*restart.rc)
 cmp_ok $RUN_LOG $REL_LOG
+run_ok "${TEST_NAME_BASE}-validate-run-rc" cylc validate "${RUN_LOG}"
+run_ok "${TEST_NAME_BASE}-validate-restart-rc" cylc validate "${RES_LOG}"
 #-------------------------------------------------------------------------------
 # The run and restart logs should differ in the suite description.
 TEST_NAME=$TEST_NAME_BASE-comp1

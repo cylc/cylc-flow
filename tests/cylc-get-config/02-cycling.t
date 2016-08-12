@@ -15,18 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test cylc get-config with a suite with an explicitly empty final cycle point
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 2
-#-------------------------------------------------------------------------------
-init_suite "$TEST_NAME_BASE" "$TEST_SOURCE_DIR/$TEST_NAME_BASE/suite.rc"
-#-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE-all
-run_ok $TEST_NAME cylc get-config $SUITE_NAME --item='[scheduling]final cycle point'
-cmp_ok $TEST_NAME.stdout - << __OUT__
+# Test "cylc get-config" on a cycling suite, result should validate.
+. "$(dirname "$0")/test_header"
 
-__OUT__
-#-------------------------------------------------------------------------------
-purge_suite $SUITE_NAME
+set_test_number 2
+
+init_suite "${TEST_NAME_BASE}" "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/suite.rc"
+
+run_ok "${TEST_NAME_BASE}" cylc get-config "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate --strict "${TEST_NAME_BASE}.stdout"
+purge_suite "${SUITE_NAME}"
 exit

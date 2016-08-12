@@ -26,8 +26,11 @@ suite_run_ok "${TEST_NAME_BASE}-run" cylc run --debug "${SUITE_NAME}"
 DB_FILE="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}/cylc-suite.db"
 
 NAME='schema.out'
+ORIG="${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}"
+SORTED_ORIG="sorted-${NAME}"
 sqlite3 "${DB_FILE}" ".schema" | env LANG='C' sort >"${NAME}"
-cmp_ok "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/${NAME}" "${NAME}"
+env LANG='C' sort "${ORIG}" > "${SORTED_ORIG}"
+cmp_ok "${SORTED_ORIG}" "${NAME}"
 
 NAME='select-suite-params.out'
 sqlite3 "${DB_FILE}" 'SELECT key,value FROM suite_params ORDER BY key' \

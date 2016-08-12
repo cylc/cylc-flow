@@ -36,7 +36,7 @@ class LogSpec(object):
         if found:
             return point_string
         else:
-            raise LogAnalyserError("ERROR: logged start point not found")
+            raise LogAnalyserError("logged start point not found")
 
     def get_start_point_string(self):
         found = False

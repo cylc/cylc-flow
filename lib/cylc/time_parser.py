@@ -37,6 +37,7 @@ import unittest
 import isodatetime.data
 import isodatetime.parsers
 
+from cylc.cycling import parse_exclusion
 from cylc.exceptions import CylcError
 
 
@@ -185,6 +186,7 @@ class CylcTimeParser(object):
                          context_start_point=None,
                          context_end_point=None):
         """Parse an expression in abbrev. or full ISO recurrence format."""
+        expression, exclusion = parse_exclusion(expression)
         if context_start_point is None:
             context_start_point = self.context_start_point
         if context_end_point is None:
@@ -216,6 +218,13 @@ class CylcTimeParser(object):
                 raise CylcMissingFinalCyclePointError(
                     "This suite requires a final cycle point."
                 )
+            exclusion_point = None
+            if exclusion:
+                exclusion_point, excl_off = self._get_point_from_expression(
+                    exclusion, None, is_required=False, allow_truncated=False
+                )
+                if excl_off:
+                    exclusion_point += excl_off
             intv = result.groupdict().get("intv")
             intv_context_truncated_point = None
             if start_point is not None and start_point.truncated:
@@ -258,7 +267,7 @@ class CylcTimeParser(object):
                 start_point=start_point,
                 duration=interval,
                 end_point=end_point
-            )
+            ), exclusion_point
 
         raise CylcTimeSyntaxError("Could not parse %s" % expression)
 
@@ -422,7 +431,7 @@ class TestRecurrenceSuite(unittest.TestCase):
                 expression, num_expanded_year_digits, ctrl_data = test[:3]
                 ctrl_results = test[3]
             parser = self._parsers[num_expanded_year_digits]
-            recurrence = parser.parse_recurrence(expression)
+            recurrence, exclusion = parser.parse_recurrence(expression)
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:
@@ -474,7 +483,8 @@ class TestRecurrenceSuite(unittest.TestCase):
                 ctrl_results = None
             else:
                 expression, ctrl_data, ctrl_results = test
-            recurrence = self._parsers[0].parse_recurrence(expression)
+            recurrence, exclusion = self._parsers[0].parse_recurrence(
+                expression)
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:
@@ -510,7 +520,8 @@ class TestRecurrenceSuite(unittest.TestCase):
                 ctrl_results = None
             else:
                 expression, ctrl_data, ctrl_results = test
-            recurrence = self._parsers[0].parse_recurrence(expression)
+            recurrence, exclusion = self._parsers[0].parse_recurrence(
+                expression)
             test_data = str(recurrence)
             self.assertEqual(test_data, ctrl_data)
             if ctrl_results is None:

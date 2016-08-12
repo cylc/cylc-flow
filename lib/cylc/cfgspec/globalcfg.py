@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"Cylc site and user configuration file spec."
 
 import os
 import sys
@@ -24,24 +25,16 @@ import shutil
 from tempfile import mkdtemp
 from parsec.config import config
 from parsec.validate import validator as vdr
-from parsec.validate import (
-    coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
-    IllegalValueError
-)
+from parsec.validate import coercers
 from parsec import ParsecError
-from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
-from parsec.fileparse import parse
 from cylc.owner import USER
 from cylc.envvar import expandvars
 from cylc.mkdir_p import mkdir_p
 import cylc.flags
-from cylc.cfgspec.utils import coerce_interval
-from cylc.cfgspec.utils import coerce_interval_list
+from cylc.cfgspec.utils import (
+    coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.network import PRIVILEGE_LEVELS
-
-
-"Cylc site and user configuration file spec."
 
 coercers['interval_seconds'] = lambda *args: coerce_interval(
     *args, check_syntax_version=False)
@@ -66,11 +59,13 @@ SPEC = {
         vtype='interval_minutes_list', default=[]),
 
     'task host select command timeout': vdr(
-        vtype='interval_seconds', default=10),
+        vtype='interval_seconds', default=DurationFloat(10)),
     'task messaging': {
-        'retry interval': vdr(vtype='interval_seconds', default=5),
+        'retry interval': vdr(
+            vtype='interval_seconds', default=DurationFloat(5)),
         'maximum number of tries': vdr(vtype='integer', vmin=1, default=7),
-        'connection timeout': vdr(vtype='interval_seconds', default=30),
+        'connection timeout': vdr(
+            vtype='interval_seconds', default=DurationFloat(30)),
 
     },
 
@@ -205,12 +200,12 @@ SPEC = {
                 vtype='string', options=["pyro", "ssh", "poll"]),
             'remote copy template': vdr(vtype='string'),
             'remote shell template': vdr(vtype='string'),
-            'use login shell': vdr(vtype='boolean'),
+            'use login shell': vdr(vtype='boolean', default=None),
             'cylc executable': vdr(vtype='string'),
             'global init-script': vdr(vtype='string'),
             'copyable environment variables': vdr(
                 vtype='string_list', default=[]),
-            'retrieve job logs': vdr(vtype='boolean'),
+            'retrieve job logs': vdr(vtype='boolean', default=None),
             'retrieve job logs command': vdr(vtype='string'),
             'retrieve job logs max size': vdr(vtype='string'),
             'retrieve job logs retry delays': vdr(
@@ -295,6 +290,7 @@ SPEC = {
 
 
 def upg(cfg, descr):
+    """Upgrader."""
     add_bin_dir = converter(lambda x: x + '/bin', "Added + '/bin' to path")
     use_ssh = converter(lambda x: "ssh", "set to 'ssh'")
     u = upgrader(cfg, descr)
@@ -349,11 +345,10 @@ def upg(cfg, descr):
 
 
 class GlobalConfigError(Exception):
-    def __init__(self, msg):
-        self.msg = msg
+    """Error in global site/user configuration."""
 
     def __str__(self):
-        return repr(self.msg)
+        return repr(self.args[0])
 
 
 class GlobalConfig(config):
@@ -373,7 +368,7 @@ class GlobalConfig(config):
     OLD_USER_CONF_BASE = os.path.join("user.rc")
 
     @classmethod
-    def default(cls):
+    def get_inst(cls):
         """Return the singleton instance."""
         if not cls._DEFAULT:
             if cylc.flags.verbose:
@@ -469,9 +464,9 @@ class GlobalConfig(config):
                 host_key = host
             else:
                 # try for a pattern match
-                for h in cfg['hosts']:
-                    if re.match(h, host):
-                        host_key = h
+                for cfg_host in cfg['hosts']:
+                    if re.match(cfg_host, host):
+                        host_key = cfg_host
                         break
         modify_dirs = False
         if host_key:
@@ -510,10 +505,11 @@ class GlobalConfig(config):
         self.create_directory(d, name)
 
     def create_directory(self, d, name):
+        """Create directory. Raise GlobalConfigError on error."""
         try:
             mkdir_p(d)
-        except Exception, x:
-            print >> sys.stderr, str(x)
+        except Exception, exc:
+            print >> sys.stderr, str(exc)
             raise GlobalConfigError(
                 'Failed to create directory "' + name + '"')
 
@@ -577,7 +573,11 @@ class GlobalConfig(config):
         return tmpdir
 
     def transform(self):
-        # host item values of None default to modified localhost values
+        """Transform various settings.
+
+        Host item values of None default to modified localhost values.
+        Expand environment variables and ~ notations.
+        """
         cfg = self.get()
 
         for host in cfg['hosts']:
@@ -603,4 +603,4 @@ class GlobalConfig(config):
                 cfg['hosts']['localhost'][key] = expandvars(val)
 
 
-GLOBAL_CFG = GlobalConfig.default()
+GLOBAL_CFG = GlobalConfig.get_inst()

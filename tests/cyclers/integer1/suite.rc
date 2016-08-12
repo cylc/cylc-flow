@@ -34,6 +34,14 @@
             graph = """
          foo[-P3] => qux       # every second cycle
                     """
+        [[[ R1/$ ]]]
+            graph = baz
+        [[[ R/P4!8 ]]]
+            graph = ning
+        [[[ R1/^ ]]]
+            graph = nang
+        [[[ R/+P1/P6!14 ]]]
+            graph = nong
 [runtime]
     [[foo]]
         script = """
