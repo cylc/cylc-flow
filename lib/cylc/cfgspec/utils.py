@@ -1,30 +1,52 @@
-import re
+#!/usr/bin/env python
 
-from parsec.validate import validator as vdr
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2016 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Utilities for configuration settings that are time intervals."""
+
+from isodatetime.data import Calendar
+from isodatetime.parsers import DurationParser
+from parsec.util import itemstr
 from parsec.validate import (
-    coercers, _strip_and_unquote, _strip_and_unquote_list, _expand_list,
+    _strip_and_unquote, _strip_and_unquote_list, _expand_list,
     IllegalValueError
 )
-from parsec.util import itemstr
-from parsec.upgrade import upgrader, converter
-from parsec.fileparse import parse
-from parsec.config import config
 from cylc.syntax_flags import (
-    set_syntax_version, VERSION_PREV, VERSION_NEW, SyntaxVersionError
-)
-from isodatetime.dumpers import TimePointDumper
-from isodatetime.data import Calendar, TimePoint
-from isodatetime.parsers import TimePointParser, DurationParser
-from cylc.cycling.integer import REC_INTERVAL as REC_INTEGER_INTERVAL
+    set_syntax_version, SyntaxVersion, VERSION_PREV, VERSION_NEW)
+from cylc.wallclock import get_seconds_as_interval_string
 
-interval_parser = DurationParser()
+CALENDAR = Calendar.default()
+DURATION_PARSER = DurationParser()
 
 
-def coerce_interval(value, keys, args, back_comp_unit_factor=1,
+class DurationFloat(float):
+    """Duration in seconds."""
+
+    def __str__(self):
+        if SyntaxVersion.VERSION == VERSION_PREV:
+            return float.__str__(self)
+        else:
+            return get_seconds_as_interval_string(self)
+
+
+def coerce_interval(value, keys, _, back_comp_unit_factor=1,
                     check_syntax_version=True):
     """Coerce an ISO 8601 interval (or number: back-comp) into seconds."""
     value = _strip_and_unquote(keys, value)
-    if value == '':
+    if not value:
         # Allow explicit empty values.
         return None
     try:
@@ -33,36 +55,28 @@ def coerce_interval(value, keys, args, back_comp_unit_factor=1,
         pass
     else:
         if check_syntax_version:
-            set_syntax_version(VERSION_PREV,
-                               "integer interval: %s" % itemstr(
-                                   keys[:-1], keys[-1], value))
-        return backwards_compat_value
+            set_syntax_version(
+                VERSION_PREV,
+                "integer interval: %s" % itemstr(keys[:-1], keys[-1], value))
+        return DurationFloat(backwards_compat_value)
     try:
-        interval = interval_parser.parse(value)
+        interval = DURATION_PARSER.parse(value)
     except ValueError:
         raise IllegalValueError("ISO 8601 interval", keys, value)
     if check_syntax_version:
-        try:
-            set_syntax_version(VERSION_NEW,
-                               "ISO 8601 interval: %s" % itemstr(
-                                   keys[:-1], keys[-1], value))
-        except SyntaxVersionError as exc:
-            raise Exception(str(exc))
+        set_syntax_version(
+            VERSION_NEW,
+            "ISO 8601 interval: %s" % itemstr(keys[:-1], keys[-1], value))
     days, seconds = interval.get_days_and_seconds()
-    seconds += days * Calendar.default().SECONDS_IN_DAY
-    return seconds
+    return DurationFloat(days * CALENDAR.SECONDS_IN_DAY + seconds)
 
 
-def coerce_interval_list(value, keys, args, back_comp_unit_factor=1,
-                         check_syntax_version=True):
+def coerce_interval_list(
+        value, keys, args, back_comp_unit_factor=1, check_syntax_version=True):
     """Coerce a list of intervals (or numbers: back-comp) into seconds."""
-    values_list = _strip_and_unquote_list(keys, value)
-    type_converter = (
+    return _expand_list(
+        _strip_and_unquote_list(keys, value),
+        keys,
         lambda v: coerce_interval(
-            v, keys, args,
-            back_comp_unit_factor=back_comp_unit_factor,
-            check_syntax_version=check_syntax_version,
-        )
-    )
-    seconds_list = _expand_list(values_list, keys, type_converter, True)
-    return seconds_list
+            v, keys, args, back_comp_unit_factor, check_syntax_version),
+        True)

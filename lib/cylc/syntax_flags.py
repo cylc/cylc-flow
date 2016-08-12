@@ -43,26 +43,13 @@ class SyntaxVersionError(ValueError):
                 self.args[0], self.args[1]))
 
 
-def set_syntax_version(version, message, exc_class=None,
-                       exc_args=None, exc_kwargs=None):
+def set_syntax_version(version, message):
     """Attempt to define the syntax version.
 
-    If it's already defined differently, raise an exception.
-    The exception is exc_class if it is not None, raised
-    using *exc_args and **exc_kwargs (or using message as the
-    first argument if exc_args and exc_kwargs aren't set).
-    Otherwise, raise SyntaxVersionError.
-
+    If it's already defined differently, raise SyntaxVersionError.
     """
-    if exc_args is None:
-        exc_args = (message,)
-    if exc_kwargs is None:
-        exc_kwargs = {}
-    if exc_class is None:
-        exc_class = SyntaxVersionError
-        exc_args = (version, message)
     if SyntaxVersion.VERSION is None:
         SyntaxVersion.VERSION = version
         SyntaxVersion.VERSION_REASON = message
     elif SyntaxVersion.VERSION != version:
-        raise exc_class(*exc_args, **exc_kwargs)
+        raise SyntaxVersionError(version, message)
