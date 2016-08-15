@@ -1501,7 +1501,8 @@ conditions; see `cylc conditions`.
                     self.log_memory("scheduler.py: loop: " +
                                     get_current_time_string())
 
-            if not (self.shut_down_cleanly or auto_stop):
+            if (self._get_events_conf(self.EVENT_TIMEOUT) is not None and
+                    not (self.shut_down_cleanly or auto_stop)):
                 self.check_suite_stalled()
 
             time.sleep(1)
