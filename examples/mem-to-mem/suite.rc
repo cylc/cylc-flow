@@ -1,0 +1,13 @@
+title = "Example of family member-to-member dependence"
+[scheduling]
+    [[dependencies]]
+        graph = pre => GET_PETS => FEED_PETS => post
+[runtime]
+    [[pre]]
+    [[post]]
+    [[GET_PETS]]
+    [[FEED_PETS]]
+    [[get_cats, get_dogs, get_fish]]
+        inherit = GET_PETS
+    [[feed_cats, feed_dogs, feed_fish]]
+        inherit = FEED_PETS
