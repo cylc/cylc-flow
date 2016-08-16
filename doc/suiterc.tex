@@ -241,6 +241,7 @@ following EVENTs occurs:
     \item {\bf shutdown} - the suite is shutting down
     \item {\bf timeout}  - the suite has timed out
     \item {\bf stalled} - the suite has stalled
+    \item {\bf inactivity} - the suite is inactive
 \end{myitemize}
 
 Default values for these can be set at the site level via the siterc file
@@ -318,9 +319,22 @@ anything accepted by the \lstinline=mail= command.
 \paragraph[timeout]{[cylc] \textrightarrow [[events]] \textrightarrow timeout}
 
 If a timeout is set and the timeout event is handled, the timeout event
-handler(s) will be called if the suite times out before it finishes.
-The timer is set initially at suite start up. It is possible to set a default
-for this at the site level (see ~\ref{SiteCylcHooks}).
+handler(s) will be called if the suite stays in a stalled state for some period
+of time. The timer is set initially at suite start up. It is possible to set a
+default for this at the site level (see ~\ref{SiteCylcHooks}).
+
+\begin{myitemize}
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT5S=, 5 seconds, \lstinline=PT1S=, 1 second) - minimum 0 seconds.
+    \item {\em default:} (none), unless set at the site level.
+\end{myitemize}
+
+\paragraph[inactivity]{[cylc] \textrightarrow [[events]] \textrightarrow inactivity}
+
+If inactivity is set and the inactivity event is handled, the inactivity event
+handler(s) will be called if there is no activity in the suite for some period
+of time. The timer is set initially at suite start up. It is possible to set a
+default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
     \item {\em type:} ISO 8601 duration/interval representation (e.g.
@@ -358,6 +372,18 @@ possible to set a default for this at the site level
 If a suite timer is set (above) this will cause the suite to abort with
 error status if the suite times out while still running. It is possible to set 
 a default for this at the site level (see ~\ref{SiteCylcHooks}).
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False, unless set at the site level.
+\end{myitemize}
+
+\paragraph[abort on inactivity]{[cylc] \textrightarrow [[events]] \textrightarrow abort on inactivity}
+
+If a suite inactivity timer is set (above) this will cause the suite to abort
+with error status if the suite is inactive for some period while still running.
+It is possible to set a default for this at the site level
+(see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
     \item {\em type:} boolean
