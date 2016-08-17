@@ -71,7 +71,7 @@ _HEADING = re.compile(
 _KEY_VALUE = re.compile(
     r'''^
     (\s*)                   # indentation
-    ([\.\-\w \,]+?)         # key
+    ([\.\-\w \,]+?(\s*<.*?>)?)         # key with optional parameter list e.g. foo<m,n>
     \s*=\s*                 # =
     (.*)                    # value (quoted any style + comment)
     $   # line end
@@ -378,7 +378,7 @@ def parse(fpath, write_proc=False, template_vars=None):
             m = re.match(_KEY_VALUE, line)
             if m:
                 # matched a key=value item
-                indent, key, val = m.groups()
+                indent, key, _, val = m.groups()
                 if val.startswith('"""') or val.startswith("'''"):
                     # triple quoted - may be a multiline value
                     val, index = multiline(flines, val, index, maxline)
