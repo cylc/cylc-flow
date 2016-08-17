@@ -10,7 +10,7 @@
     [[special tasks]]
         clock-triggered = clock{% if OFFSET is defined %}({{OFFSET}}){% endif %}
     [[dependencies]]
-        [[[{{HOUR}}]]]
+        [[[T{{HOUR}}]]]
             graph = "clock"
 [runtime]
     [[clock]]

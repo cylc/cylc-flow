@@ -20,5 +20,5 @@ as the suite runs, filtering for the word 'poll'.
             # stay 'submitted' for up to a minute:
             batch submit command template = at now + 1 minutes
             # configure submission and execution polling:
-            submission polling intervals = 0.1
-            execution polling intervals = 0.2, 2*0.3, 0.1
+            submission polling intervals = PT6S
+            execution polling intervals = PT12S, 2*PT18S, PT6S

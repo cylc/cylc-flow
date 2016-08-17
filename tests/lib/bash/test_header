@@ -284,7 +284,7 @@ function graph_suite() {
     local SUITE_NAME="${1}"
     local OUTPUT_FILE="${2}"
     shift 2
-    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}"
+    cylc graph --reference "${SUITE_NAME}" "$@" >"${OUTPUT_FILE}" 2>/dev/null
 }
 
 function init_suite() {

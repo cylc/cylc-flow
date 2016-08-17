@@ -23,25 +23,25 @@ set_test_number 4
 install_suite $TEST_NAME_BASE clock
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME -s START=$(date +%Y%m%d%H) \
-    -s HOUR=$(date +%H) -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=0.2
+run_ok $TEST_NAME cylc validate $SUITE_NAME -s START=$(date +%Y%m%dT%H) \
+    -s HOUR=$(date +%H) -s UTC_MODE=False -s OFFSET=PT0S -s TIMEOUT=PT12S
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-now
-run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$(date +%Y%m%d%H) \
-    -s HOUR=$(date +%H) -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=0.2
+run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$(date +%Y%m%dT%H) \
+    -s HOUR=$(date +%H) -s UTC_MODE=False -s OFFSET=PT0S -s TIMEOUT=PT12S
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-past
-NOW=$(date +%Y%m%d%H)
+NOW=$(date +%Y%m%dT%H)
 START=$(cylc cycle-point $NOW --offset-hour=-10)
-HOUR=$(cylc cycle-point $NOW --offset-hour=-10 --print-hour)
+HOUR="$(cylc cycle-point $NOW --offset-hour=-10 --print-hour)"
 run_ok $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START -s HOUR=$HOUR \
-    -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=1
+    -s UTC_MODE=False -s OFFSET=PT0S -s TIMEOUT=PT1M
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-run-later
-NOW=$(date +%Y%m%d%H)
+NOW=$(date +%Y%m%dT%H)
 START=$(cylc cycle-point $NOW --offset-hour=10)
 HOUR=$(cylc cycle-point $NOW --offset-hour=10 --print-hour)
 run_fail $TEST_NAME cylc run --debug $SUITE_NAME -s START=$START \
-    -s HOUR=$HOUR -s UTC_MODE=False -s OFFSET=0 -s TIMEOUT=0.2
+    -s HOUR=$HOUR -s UTC_MODE=False -s OFFSET=PT0S -s TIMEOUT=PT12S
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
