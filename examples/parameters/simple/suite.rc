@@ -1,0 +1,30 @@
+title = "Task parameterisation example, two parameters."
+[cylc]
+    [[parameters]]
+        r = 3
+        n = 2
+[scheduling]
+    [[dependencies]]
+        graph = """
+prep => init<r> => sim<r,n> => post<r,n> => comb<r> => stop
+    post<r=2,n=1> => boo  # a special case"""
+[runtime]
+    [[root]]
+        script = """
+[[ -n ${r:-} ]] && echo "parameter r is $r"
+[[ -n ${n:-} ]] && echo "parameter n is $n"
+sleep 10"""
+    [[ENDS]]
+    [[prep, stop]]
+        inherit = None, ENDS
+    [[RUN<r>]]
+    [[init<r>, comb<r>, sim<r,n>, post<r,n>]]
+        inherit = RUN<r>
+[visualization]
+    [[node attributes]]
+        RUN<r=0> = "color=red"
+        RUN<r=1> = "color=blue"
+        RUN<r=2> = "color=limegreen"
+        comb<r> = "color=orange"
+        ENDS = "style=filled", "fillcolor=gray"
+        boo = "style=filled", "fillcolor=red"

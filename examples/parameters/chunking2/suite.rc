@@ -1,0 +1,48 @@
+#!Jinja2
+title = "Parameterized task example: static model chunking."
+description = "Same as chunking1 but without any redundant dependencies."
+# NOTE: dynamic date-time cycling would normally be used for cycling a model.
+{% set MODEL_START_DATE = '2001-01' %}
+{% set MODEL_CHUNK_MONTHS = 4 %}
+[cylc]
+    [[parameters]]
+        r = 3  # number of runs
+        n = 2  # number of members per run
+        c = 3  # number of model chunks, per member, per run
+[scheduling]
+    [[dependencies]]
+        graph = """
+prep => init<r> => start<r,n> => sim<r,n,c=0>
+   sim<r,n,c-1> => sim<r,n,c>
+      post<r,n,c-1> => post<r,n,c>
+        post<r,n,c=2> => stop<r,n>
+           sim<r,n,c> => post<r,n,c>
+              stop<r,n> => comb<r> => end"""
+[runtime]
+    [[root]]
+        script = """
+[[ -n ${r:-} ]] && echo "run.....$r"
+[[ -n ${n:-} ]] && echo "member..$n"
+if [[ -n ${c:-} ]]; then
+    echo "chunk...$c"
+    OFFSET=P$((c*{{MODEL_CHUNK_MONTHS}}))M
+    echo "model start date: \
+        $(cylc cyclepoint --offset=$OFFSET {{MODEL_START_DATE}})"
+fi
+sleep 10"""
+    [[ENDS]]
+    [[prep, end]]
+        inherit = None, ENDS
+    [[RUN<r>]]
+    [[init<r>, comb<r>, sim<r,n,c>, post<r,n,c>, start<r,n>, stop<r,n>]]
+        inherit = RUN<r>
+[visualization]
+    [[node attributes]]
+        RUN<r=0> = "color=red"
+        RUN<r=1> = "color=blue"
+        RUN<r=2> = "color=limegreen"
+        sim<r,n,c=0> = "style=filled", "fillcolor=yellow2"
+        sim<r,n,c=1> = "style=filled", "fillcolor=yellow3"
+        sim<r,n,c=2> = "style=filled", "fillcolor=yellow4"
+        ENDS = "style=filled", "fillcolor=gray"
+        boo = "style=filled", "fillcolor=red"
