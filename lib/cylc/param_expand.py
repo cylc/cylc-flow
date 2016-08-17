@@ -64,6 +64,20 @@ with input already expressed as a string template) the method looks like this:
 #------------------------------------------------------------------------------
 """
 
+# TODO - ALLOW WHITESPACE INSIDE PARAMETER NOTATION.
+# TODO - BETTER ERROR MESSAGE FOR undefined or possibly bare parameter.
+# TODO - TEST FOR MIXED STRING INT PARAMETER GROUPS <cat,j>.
+
+# Extract name and optional offset or specific value e.g. 'm-1'.
+REC_P_OFFS = re.compile(r'(\w+)(?:\s*([-+=]\s*[\w]+))?')
+# To split heading name lists.
+REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
+# Extract 'name' and '<parameters>' from 'name<parameters>'.
+REC_P_NAME = re.compile(r"(%s)(<.*?>)?" % TaskID.NAME_RE)
+# Extract parameter list 'm,n,o' from '<m,n,o>'.
+REC_P_GROUP = re.compile(r"<(.*?)>")
+
+
 
 class ParamExpandError(Exception):
     """For parameter expansion errors."""
@@ -73,17 +87,10 @@ class ParamExpandError(Exception):
 class NameExpander(object):
     """Handle parameter expansion in runtime namespace headings."""
 
-    # To split heading name lists.
-    REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
-    # Extract 'name' and '<parameters>' from 'name<parameters>'.
-    REC_P_NAME = re.compile(r"(%s)(<.*?>)?" % TaskID.NAME_RE)
-    # As for offset, but only match specific values e.g. 'm=1'.
-    REC_P_SPEC = re.compile(r'(\w+)(?:\s*=\s*([\d]+))?')
-
-    @classmethod
-    def replace_params(cls, name, parameters):
+    @staticmethod
+    def replace_params(name, parameters):
         """Replace <m,n,..> in name<m,n,...> with given values."""
-        name, p_tmpl = cls.REC_P_NAME.match(name).groups()
+        name, p_tmpl = REC_P_NAME.match(name).groups()
         if not p_tmpl:
             # Name is not parameterized.
             return name
@@ -97,6 +104,10 @@ class NameExpander(object):
     def __init__(self, suite_parameter_map):
         """Store the suite parameter map."""
         self.suite_parameter_map = suite_parameter_map
+        if self.suite_parameter_map:
+            self.all_p_vals = [i for sublist in self.suite_parameter_map.values() for i in sublist]
+        else:
+            self.all_p_vals = []
 
     def expand(self, runtime_heading):
         """Expand runtime namespace names for a subset of suite parameters.
@@ -109,59 +120,57 @@ class NameExpander(object):
 
         Returns a list of tuples, each with an expanded name and its parameter
         values (to be passed to the corresponding tasks), e.g.:
-            [(foo_i0_j0, {i:0, j:0}),
-             (foo_i0_j1, {i:0, j:1}),
-             (foo_i1_j0, {i:1, j:0}),
-             (foo_i1_j1, {i:1, j:1})]
+            [('foo_i0_j0', {i:'0', j:'0'}),
+             ('foo_i0_j1', {i:'0', j:'1'}),
+             ('foo_i1_j0', {i:'1', j:'0'}),
+             ('foo_i1_j1', {i:'1', j:'1'})]
         """
         # Create a string template and values to pass to the expansion method.
         expanded = []
-        for namespace in self.__class__.REC_NAMES.findall(runtime_heading):
+        for namespace in REC_NAMES.findall(runtime_heading):
             template = namespace.strip()
-            name, p_tmpl = self.__class__.REC_P_NAME.match(template).groups()
+            name, p_tmpl = REC_P_NAME.match(template).groups()
             if not p_tmpl:
                 # Not parameterized.
                 expanded.append((name, {}))
                 continue
+            tmpl = name
             # Get the subset of parameters used in this case.
             used_param_names = []
             spec_vals = {}
             for item in p_tmpl[1:-1].split(','):
-                pname, sval = self.__class__.REC_P_SPEC.match(
-                    item.strip()).groups()
-                # Check for bare values like foo<0,j> instead of foo<i=0,j>.
-                try:
-                    int(pname)
-                except ValueError:
-                    pass
-                else:
-                    raise ParamExpandError(
-                        "ERROR, write specific parameter values as"
-                        " 'foo<i=0,j>' not 'foo<0,j>': %s" % template)
-                # Check for use of undefined parameters.
+                pname, sval = REC_P_OFFS.match(item.strip()).groups()
                 if pname not in self.suite_parameter_map:
-                    raise ParamExpandError("ERROR, parameter %s is not"
-                                           " defined: %s" % (pname, template))
-                # Check for specific parameter values that are too big.
-                if sval:
-                    i_sval = int(sval)
-                    max_val = self.suite_parameter_map[pname]
-                    if i_sval > max_val:
+                    if pname in self.all_p_vals:
                         raise ParamExpandError(
-                            "ERROR, max value of parameter %s is"
-                            " %d: %s" % (pname, max_val, template))
-                    spec_vals[pname] = i_sval
+                            "ERROR, write parameter name with specific values, e.g. <param=%s>: %s" % (pname, p_tmpl))
+                    else: 
+                        raise ParamExpandError(
+                            "ERROR, parameter %s is not defined: %s" % (pname, p_tmpl))
+                if sval:
+                    if sval.startswith('+') or sval.startswith('-'):
+                        raise ParamExpandError(
+                            "ERROR, parameter index offsets are not"
+                            " supported in name expansion: %s%s" % (pname, sval))
+                    elif sval.startswith('='):
+                        # Check that specific parameter values exist.
+                        if sval[1:] not in self.suite_parameter_map[pname]:
+                            raise ParamExpandError(
+                                "ERROR, parameter %s out of range: %s" % (pname, p_tmpl))
+                    spec_vals[pname] = sval[1:]
                 else:
                     used_param_names.append(pname)
-            used_parameters = [
+                try:
+                    int(self.suite_parameter_map[pname][0])
+                except:
+                    # Don't prefix string values with the parameter name.
+                    tmpl += "_%(" + pname + ")s"
+                else:
+                    # Do prefix integer values with the parameter name.
+                    tmpl += "_" + pname + "%(" + pname + ")s"
+            used_params = [
                 (p, self.suite_parameter_map[p]) for p in used_param_names]
-            # Creat the string template.  This can be done now because name
-            # expansion - unlike graph expansion - doesn't support offsets.
-            tmpl = name
-            for item in p_tmpl[1:-1].split(','):
-                p, _ = self.__class__.REC_P_SPEC.match(item.strip()).groups()
-                tmpl += "_" + p + "%(" + p + ")s"
-            self._expand_name(tmpl, used_parameters, expanded, spec_vals)
+            self._expand_name(tmpl, used_params, expanded, spec_vals)
         return expanded
 
     def _expand_name(self, str_tmpl, param_list, results, spec_vals=None):
@@ -187,7 +196,7 @@ class NameExpander(object):
             current_values = copy(spec_vals)
             results.append((str_tmpl % current_values, current_values))
         else:
-            for param_val in range(param_list[0][1]):
+            for param_val in param_list[0][1]:
                 spec_vals[param_list[0][0]] = param_val
                 self._expand_name(str_tmpl, param_list[1:], results, spec_vals)
 
@@ -195,14 +204,13 @@ class NameExpander(object):
 class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
 
-    # Extract parameter list 'm,n,o' from '<m,n,o>'.
-    REC_P_GROUP = re.compile(r"<(.*?)>")
-    # Extract name and optional offset or specific value e.g. 'm-1'.
-    REC_P_OFFS = re.compile(r'(\w+)(?:\s*([-+=]\s*[\d]+))?')
-
     def __init__(self, suite_parameter_map):
         """Store the suite parameter map."""
         self.suite_parameter_map = suite_parameter_map
+        if self.suite_parameter_map:
+            self.all_p_vals = [i for sublist in self.suite_parameter_map.values() for i in sublist]
+        else:
+            self.all_p_vals = []
 
     def expand(self, line):
         """Expand a graph line for subset of suite parameters.
@@ -231,73 +239,70 @@ class GraphExpander(object):
         """
         line_set = set()
         used_pnames = set()
-        for p_group in set(self.__class__.REC_P_GROUP.findall(line)):
+        for p_group in set(REC_P_GROUP.findall(line)):
             for item in p_group.split(','):
-                pname, offs = self.__class__.REC_P_OFFS.match(
-                    item.strip()).groups()
-                # Check for bare values like foo<0,j> for foo<i=0,j>.
-                try:
-                    int(pname)
-                except ValueError:
-                    pass
-                else:
-                    raise ParamExpandError(
-                        "ERROR, write specific parameter values as"
-                        " 'foo<i=0,j>' not 'foo<0,j>': %s" % p_group)
-                # Check for use of undefined parameters.
+                pname, offs = REC_P_OFFS.match(item.strip()).groups()
                 if pname not in self.suite_parameter_map:
-                    raise ParamExpandError(
-                        "ERROR, parameter %s is not defined: %s" % (
-                            pname, p_group))
+                    if pname in self.all_p_vals:
+                        raise ParamExpandError(
+                            "ERROR, write parameter name with specific values, e.g. <name=%s>: %s" % (pname, p_group))
+                    else: 
+                        raise ParamExpandError(
+                            "ERROR, parameter %s is not defined: %s" % (pname, p_group))
                 if offs:
-                    # Check for legal offset values.
                     if offs.startswith('+'):
                         raise ParamExpandError(
                             "ERROR, +ve parameter offsets are not"
                             " supported: %s%s" % (pname, offs))
                     elif offs.startswith('='):
-                        # Check for specific parameter values that are too big.
-                        if offs:
-                            max_val = self.suite_parameter_map[pname]
-                            if int(offs[1:]) > max_val:
-                                raise ParamExpandError(
-                                    "ERROR, max value of parameter %s is"
-                                    " %d: %s" % (pname, max_val, p_group))
+                        # Check that specific parameter values exist.
+                        if offs[1:] not in self.suite_parameter_map[pname]:
+                            raise ParamExpandError(
+                                "ERROR, parameter %s out of range: %s" % (pname, p_group))
                 used_pnames.add(pname)
         used_params = [(p, self.suite_parameter_map[p]) for p in used_pnames]
-        self._expand_graph(line, used_params, line_set)
+        self._expand_graph(line, dict(used_params), used_params, line_set)
         return line_set
 
-    def _expand_graph(self, line, param_list, line_set, values=None):
+    def _expand_graph(self, line, all_params, param_list, line_set, values=None):
         """Expand line into line_set for any number of parameters.
 
         line is a graph string line as described above in the calling method.
         param_list is a list of tuples (name, max-val) for each parameter.
         results is a set to hold each expanded line.
         """
-
         if values is None:
             values = {}
         if not param_list:
             # Inner loop.
-            for p_group in set(self.__class__.REC_P_GROUP.findall(line)):
+            for p_group in set(REC_P_GROUP.findall(line)):
                 param_values = {}
                 tmpl = ""
                 for item in p_group.split(','):
-                    pname, offs = self.__class__.REC_P_OFFS.match(
-                        item.strip()).groups()
+                    pname, offs = REC_P_OFFS.match(item.strip()).groups()
                     if offs is None:
                         param_values[pname] = values[pname]
                     elif offs.startswith('='):
-                        # Absolute value (not a relative offs).
-                        param_values[pname] = int(offs[1:])
+                        # Specific value.
+                        param_values[pname] = offs[1:]
                     else:
-                        # Relative offset.
-                        offval = values[pname] + int(offs)
-                        if offval < 0:
+                        # Index offset.
+                        plist = all_params[pname]
+                        cur_idx = plist.index(values[pname])
+                        off_idx = cur_idx + int(offs)
+                        if off_idx < 0:
                             offval = "--<REMOVE>--"
+                        else:
+                            offval = plist[off_idx]
                         param_values[pname] = offval
-                    tmpl += "_" + pname + "%(" + pname + ")s"
+                    try:
+                        int(self.suite_parameter_map[pname][0])
+                    except:
+                        # Don't prefix string values with the parameter name.
+                        tmpl += "_%(" + pname + ")s"
+                    else:
+                        # Do prefix integer values with the parameter name.
+                        tmpl += "_" + pname + "%(" + pname + ")s"
                 match = '<' + p_group + '>'
                 repl = tmpl % param_values
                 line = re.sub(match, repl, line)
@@ -306,9 +311,9 @@ class GraphExpander(object):
             line_set.add(line.strip())
         else:
             # Recurse through index ranges.
-            for param_val in range(0, param_list[0][1]):
+            for param_val in param_list[0][1]:
                 values[param_list[0][0]] = param_val
-                self._expand_graph(line, param_list[1:], line_set, values)
+                self._expand_graph(line, all_params, param_list[1:], line_set, values)
 
 
 class TestParamExpand(unittest.TestCase):
@@ -318,50 +323,53 @@ class TestParamExpand(unittest.TestCase):
     """
 
     def setUp(self):
-        params_map = {'i': 2, 'j': 3, 'k': 2}
+        ivals = [str(i) for i in range(2)]
+        jvals = [str(j) for j in range(3)]
+        kvals = [str(k) for k in range(2)]
+        params_map = {'i': ivals,  'j': jvals, 'k': kvals}
         self.name_expander = NameExpander(params_map)
         self.graph_expander = GraphExpander(params_map)
 
     def test_name_two_params(self):
         self.assertEqual(
             self.name_expander.expand('foo<i,j>'),
-            [('foo_i0_j0', {'i': 0, 'j': 0}),
-             ('foo_i0_j1', {'i': 0, 'j': 1}),
-             ('foo_i0_j2', {'i': 0, 'j': 2}),
-             ('foo_i1_j0', {'i': 1, 'j': 0}),
-             ('foo_i1_j1', {'i': 1, 'j': 1}),
-             ('foo_i1_j2', {'i': 1, 'j': 2})]
+            [('foo_i0_j0', {'i': '0', 'j': '0'}),
+             ('foo_i0_j1', {'i': '0', 'j': '1'}),
+             ('foo_i0_j2', {'i': '0', 'j': '2'}),
+             ('foo_i1_j0', {'i': '1', 'j': '0'}),
+             ('foo_i1_j1', {'i': '1', 'j': '1'}),
+             ('foo_i1_j2', {'i': '1', 'j': '2'})]
         )
 
     def test_name_two_names(self):
         self.assertEqual(
             self.name_expander.expand('foo<i>, bar<j>'),
-            [('foo_i0', {'i': 0}),
-             ('foo_i1', {'i': 1}),
-             ('bar_j0', {'j': 0}),
-             ('bar_j1', {'j': 1}),
-             ('bar_j2', {'j': 2})]
+            [('foo_i0', {'i': '0'}),
+             ('foo_i1', {'i': '1'}),
+             ('bar_j0', {'j': '0'}),
+             ('bar_j1', {'j': '1'}),
+             ('bar_j2', {'j': '2'})]
         )
 
     def test_name_specific_val_1(self):
         self.assertEqual(
             self.name_expander.expand('foo<i=0>'),
-            [('foo_i0', {'i': 0})]
+            [('foo_i0', {'i': '0'})]
         )
 
     def test_name_specific_val_2(self):
         self.assertEqual(
             self.name_expander.expand('foo<i=0,j>'),
-            [('foo_i0_j0', {'i': 0, 'j': 0}),
-             ('foo_i0_j1', {'i': 0, 'j': 1}),
-             ('foo_i0_j2', {'i': 0, 'j': 2})]
+            [('foo_i0_j0', {'i': '0', 'j': '0'}),
+             ('foo_i0_j1', {'i': '0', 'j': '1'}),
+             ('foo_i0_j2', {'i': '0', 'j': '2'})]
         )
 
     def test_name_specific_val_3(self):
         self.assertEqual(
             self.name_expander.expand('foo<i,j=1>'),
-            [('foo_i0_j1', {'i': 0, 'j': 1}),
-             ('foo_i1_j1', {'i': 1, 'j': 1})]
+            [('foo_i0_j1', {'i': '0', 'j': '1'}),
+             ('foo_i1_j1', {'i': '1', 'j': '1'})]
         )
 
     def test_name_fail_bare_value(self):
@@ -383,14 +391,14 @@ class TestParamExpand(unittest.TestCase):
     def test_name_multiple(self):
         self.assertEqual(
             self.name_expander.expand('foo<i>, bar<i,j>'),
-            [('foo_i0', {'i': 0}),
-             ('foo_i1', {'i': 1}),
-             ('bar_i0_j0', {'i': 0, 'j': 0}),
-             ('bar_i0_j1', {'i': 0, 'j': 1}),
-             ('bar_i0_j2', {'i': 0, 'j': 2}),
-             ('bar_i1_j0', {'i': 1, 'j': 0}),
-             ('bar_i1_j1', {'i': 1, 'j': 1}),
-             ('bar_i1_j2', {'i': 1, 'j': 2})]
+            [('foo_i0', {'i': '0'}),
+             ('foo_i1', {'i': '1'}),
+             ('bar_i0_j0', {'i': '0', 'j': '0'}),
+             ('bar_i0_j1', {'i': '0', 'j': '1'}),
+             ('bar_i0_j2', {'i': '0', 'j': '2'}),
+             ('bar_i1_j0', {'i': '1', 'j': '0'}),
+             ('bar_i1_j1', {'i': '1', 'j': '1'}),
+             ('bar_i1_j2', {'i': '1', 'j': '2'})]
         )
 
     def test_graph_expand_1(self):

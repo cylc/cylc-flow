@@ -610,7 +610,7 @@ class TestGraphParser(unittest.TestCase):
             'FAM_m0': ['fa_m0', 'fb_m0'],
             'FAM_m1': ['fa_m1', 'fb_m1'],
         }
-        params = {'m': 2, 'n': 2}
+        params = {'m': ['0', '1'], 'n': ['0', '1']}
         gp1 = GraphParser(fam_map, params)
         gp1.parse_graph("""
             pre => foo<m,n> => bar<n>

@@ -162,6 +162,15 @@ def _coerce_final_cycletime(value, keys, _):
     """Coerce final cycle point."""
     return _strip_and_unquote(keys, value)
 
+def _coerce_parameter_list(value, keys, _):
+    """Coerce parameter list."""
+    try:
+        int(value)
+    except ValueError:
+        pass
+    else:
+        return [str(i) for i in range(int(value))]
+    return [_strip_and_unquote(keys, i.strip()) for i in value.split(',')]
 
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
@@ -176,6 +185,7 @@ coercers['interval_list'] = coerce_interval_list
 coercers['interval_minutes_list'] = lambda *a: coerce_interval_list(
     *a, back_comp_unit_factor=60)
 coercers['interval_seconds_list'] = coerce_interval_list
+coercers['parameter_list'] = _coerce_parameter_list
 
 
 SPEC = {
@@ -202,7 +212,7 @@ SPEC = {
             '__MANY__': vdr(vtype='string'),
         },
         'parameters': {
-            '__MANY__': vdr(vtype='integer'),
+            '__MANY__': vdr(vtype='parameter_list'),
         },
         'events': {
             'handlers': vdr(vtype='string_list'),

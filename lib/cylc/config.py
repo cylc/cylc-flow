@@ -303,7 +303,9 @@ class SuiteConfig(object):
                     if 'environment' not in newruntime[name]:
                         newruntime[name]['environment'] = (
                             OrderedDictWithDefaults())
-                    newruntime[name]['environment'].update(indices)
+                    for p_name, p_val in indices.items():
+                        p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
+                        newruntime[name]['environment'][p_var_name] = p_val
                     if 'inherit' in newruntime[name]:
                         parents = newruntime[name]['inherit']
                         repl_parents = []
