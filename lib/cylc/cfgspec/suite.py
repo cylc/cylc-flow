@@ -423,8 +423,11 @@ SPEC = {
         'final cycle point': vdr(vtype='final_cycletime'),
         'number of cycle points': vdr(vtype='integer', default=3),
         'collapsed families': vdr(vtype='string_list', default=[]),
-        'use node color for edges': vdr(vtype='boolean', default=True),
+        'use node color for edges': vdr(vtype='boolean', default=False),
+        'use node fillcolor for edges': vdr(vtype='boolean', default=False),
         'use node color for labels': vdr(vtype='boolean', default=False),
+        'node penwidth': vdr(vtype='integer', default=2),
+        'edge penwidth': vdr(vtype='integer', default=2),
         'default node attributes': vdr(
             vtype='string_list',
             default=['style=unfilled', 'color=black', 'shape=box']),

@@ -1889,13 +1889,40 @@ nodes at will.
 
 \subsubsection[use node color for edges]{[visualization] \textrightarrow use node color for edges}
 
-Graph edges (dependency arrows) can be plotted in the same color
-as the upstream node (task or family) to make paths through a complex
-graph easier to follow.
+Plot graph edges (dependency arrows) with the same color as the upstream
+node, otherwise default to black.
 
 \begin{myitemize}
     \item {\em type:} boolean
-    \item {\em default:} True
+    \item {\em default:} False
+\end{myitemize}
+
+\subsubsection[use node fillcolor for edges]{[visualization] \textrightarrow use node fillcolor for edges}
+
+Plot graph edges (i.e. dependency arrows) with the same fillcolor as the
+upstream node, if it is filled, otherwise default to black.
+
+\begin{myitemize}
+    \item {\em type:} boolean
+    \item {\em default:} False
+\end{myitemize}
+
+\subsubsection[node penwidth]{[visualization] \textrightarrow node penwidth}
+
+Line width of node shape borders.
+
+\begin{myitemize}
+    \item {\em type:} integer
+    \item {\em default:} 2
+\end{myitemize}
+
+\subsubsection[edge penwidth]{[visualization] \textrightarrow edge penwidth}
+
+Line width of graph edges (dependency arrows).
+
+\begin{myitemize}
+    \item {\em type:} integer
+    \item {\em default:} 2
 \end{myitemize}
 
 \subsubsection[use node color for labels]{[visualization] \textrightarrow use node color for labels}

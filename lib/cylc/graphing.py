@@ -350,16 +350,18 @@ class CGraph(CGraphPlain):
             node.attr[attr] = value
         if self.vizconfig['use node color for labels']:
             node.attr['fontcolor'] = node.attr['color']
+        node.attr['penwidth'] = self.vizconfig['node penwidth']
 
     def style_edge(self, left, right):
         super(self.__class__, self).style_edge(left, right)
         left_node = self.get_node(left)
         edge = self.get_edge(left, right)
         if self.vizconfig['use node color for edges']:
+            edge.attr['color'] = left_node.attr['color']
+        elif self.vizconfig['use node fillcolor for edges']:
             if left_node.attr['style'] == 'filled':
                 edge.attr['color'] = left_node.attr['fillcolor']
-            else:
-                edge.attr['color'] = left_node.attr['color']
+        edge.attr['penwidth'] = self.vizconfig['edge penwidth']
 
 
 class edge(object):

@@ -35,12 +35,15 @@ sleep 10"""
     [[init<r>, comb<r>, sim<r,n,c>, post<r,n,c>, start<r,n>, stop<r,n>]]
         inherit = RUN<r>
 [visualization]
+    use node color for edges = True
     [[node attributes]]
         RUN<r=0> = "color=red"
         RUN<r=1> = "color=blue"
-        RUN<r=2> = "color=limegreen"
-        sim<r,n,c=0> = "style=filled", "fillcolor=yellow2"
-        sim<r,n,c=1> = "style=filled", "fillcolor=yellow3"
-        sim<r,n,c=2> = "style=filled", "fillcolor=yellow4"
+        RUN<r=2> = "color=darkgreen"
+        sim<r,n,c=0> = "style=filled", "fillcolor=LemonChiffon1"
+        sim<r,n,c=1> = "style=filled", "fillcolor=LemonChiffon2"
+        sim<r,n,c=2> = "style=filled", "fillcolor=LemonChiffon3"
+        post<r,n,c=0> = "style=filled", "fillcolor=thistle1"
+        post<r,n,c=1> = "style=filled", "fillcolor=thistle2"
+        post<r,n,c=2> = "style=filled", "fillcolor=thistle3"
         ENDS = "style=filled", "fillcolor=gray"
-        boo = "style=filled", "fillcolor=red"
