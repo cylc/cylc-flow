@@ -595,8 +595,8 @@ class SuiteConfig(object):
                         "ERROR: external triggers must be used only once.")
 
         # Parameter expansion of visualization node attributes.
-        # TODO - 'node groups' also need this treatment, but they should really
-        # be deprecated (the pre-date families, which can be used for the same).
+        # TODO - 'node groups' should really have this too, but I'd rather
+        # deprecate them (just use families for visualization groups now).
         name_expander = NameExpander(self.parameter_map)
         expanded_node_attrs = OrderedDictWithDefaults()
         for node, val in self.cfg['visualization']['node attributes'].items():

@@ -449,7 +449,7 @@ class GraphParser(object):
 
 class TestGraphParser(unittest.TestCase):
     """Unit tests for the GraphParser class.
-    
+
     Method doc strings are ommitted; the tests should self-explanatory.
     """
 

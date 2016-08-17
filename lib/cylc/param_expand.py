@@ -313,7 +313,7 @@ class GraphExpander(object):
 
 class TestParamExpand(unittest.TestCase):
     """Unit tests for the parameter expansion functionality.
-    
+
     Method doc strings are ommitted; the tests should self-explanatory.
     """
 
