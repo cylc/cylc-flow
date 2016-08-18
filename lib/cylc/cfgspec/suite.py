@@ -20,7 +20,8 @@
 import re
 
 from parsec.validate import validator as vdr
-from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
+from parsec.validate import (
+    coercers, _strip_and_unquote, _strip_and_unquote_list, IllegalValueError)
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.config import config
@@ -162,15 +163,16 @@ def _coerce_final_cycletime(value, keys, _):
     """Coerce final cycle point."""
     return _strip_and_unquote(keys, value)
 
+
 def _coerce_parameter_list(value, keys, _):
     """Coerce parameter list."""
-    try:
-        int(value)
-    except ValueError:
-        pass
-    else:
-        return [str(i) for i in range(int(value))]
-    return [_strip_and_unquote(keys, i.strip()) for i in value.split(',')]
+    value = _strip_and_unquote_list(keys, value)
+    if len(value) == 1:
+        try:
+            value = [str(i) for i in range(int(value[0]))]
+        except ValueError:
+            pass
+    return value
 
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format

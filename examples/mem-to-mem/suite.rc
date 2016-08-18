@@ -1,7 +1,10 @@
 title = "Example of family member-to-member dependence"
 [scheduling]
     [[dependencies]]
-        graph = pre => GET_PETS => FEED_PETS => post
+        graph = """
+            pre => GET_PETS
+        GET_PETS:succeed-mem => FEED_PETS
+        FEED_PETS:succeed-all => post"""
 [runtime]
     [[pre]]
     [[post]]

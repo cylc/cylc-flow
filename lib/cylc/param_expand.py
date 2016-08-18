@@ -78,7 +78,6 @@ REC_P_NAME = re.compile(r"(%s)(<.*?>)?" % TaskID.NAME_RE)
 REC_P_GROUP = re.compile(r"<(.*?)>")
 
 
-
 class ParamExpandError(Exception):
     """For parameter expansion errors."""
     pass
@@ -96,16 +95,26 @@ class NameExpander(object):
             return name
         # List of parameter names used in this name: ['m', 'n']
         used_param_names = [i.strip() for i in p_tmpl[1:-1].split(',')]
-        # String template: "_m%(m)s_n%(n)s".
-        str_template = name + ''.join(
-            ["_" + p + "%(" + p + ")s" for p in used_param_names])
+        try:
+            int(parameters.values()[0])
+        except:
+            # Don't prefix string values with the parameter name.
+            # String template: "_m%(m)s_n%(n)s".
+            str_template = name + ''.join(
+                ["_%(" + p + ")s" for p in used_param_names])
+        else:
+            # String template: "_m%(m)s_n%(n)s".
+            str_template = name + ''.join(
+                ["_" + p + "%(" + p + ")s" for p in used_param_names])
         return str_template % parameters
 
     def __init__(self, suite_parameter_map):
         """Store the suite parameter map."""
         self.suite_parameter_map = suite_parameter_map
         if self.suite_parameter_map:
-            self.all_p_vals = [i for sublist in self.suite_parameter_map.values() for i in sublist]
+            self.all_p_vals = [i for sublist in
+                               self.suite_parameter_map.values() for
+                               i in sublist]
         else:
             self.all_p_vals = []
 
@@ -143,20 +152,24 @@ class NameExpander(object):
                 if pname not in self.suite_parameter_map:
                     if pname in self.all_p_vals:
                         raise ParamExpandError(
-                            "ERROR, write parameter name with specific values, e.g. <param=%s>: %s" % (pname, p_tmpl))
-                    else: 
+                            "ERROR, write parameter name with specific values,"
+                            " e.g. <param=%s>: %s" % (pname, p_tmpl))
+                    else:
                         raise ParamExpandError(
-                            "ERROR, parameter %s is not defined: %s" % (pname, p_tmpl))
+                            "ERROR, parameter %s is not defined: %s" % (
+                                pname, p_tmpl))
                 if sval:
                     if sval.startswith('+') or sval.startswith('-'):
                         raise ParamExpandError(
                             "ERROR, parameter index offsets are not"
-                            " supported in name expansion: %s%s" % (pname, sval))
+                            " supported in name expansion: %s%s" % (
+                                pname, sval))
                     elif sval.startswith('='):
                         # Check that specific parameter values exist.
                         if sval[1:] not in self.suite_parameter_map[pname]:
                             raise ParamExpandError(
-                                "ERROR, parameter %s out of range: %s" % (pname, p_tmpl))
+                                "ERROR, parameter %s out of range: %s" % (
+                                    pname, p_tmpl))
                     spec_vals[pname] = sval[1:]
                 else:
                     used_param_names.append(pname)
@@ -208,7 +221,9 @@ class GraphExpander(object):
         """Store the suite parameter map."""
         self.suite_parameter_map = suite_parameter_map
         if self.suite_parameter_map:
-            self.all_p_vals = [i for sublist in self.suite_parameter_map.values() for i in sublist]
+            self.all_p_vals = [i for sublist in
+                               self.suite_parameter_map.values() for
+                               i in sublist]
         else:
             self.all_p_vals = []
 
@@ -245,10 +260,12 @@ class GraphExpander(object):
                 if pname not in self.suite_parameter_map:
                     if pname in self.all_p_vals:
                         raise ParamExpandError(
-                            "ERROR, write parameter name with specific values, e.g. <name=%s>: %s" % (pname, p_group))
-                    else: 
+                            "ERROR, write parameter name with specific values,"
+                            " e.g. <name=%s>: %s" % (pname, p_group))
+                    else:
                         raise ParamExpandError(
-                            "ERROR, parameter %s is not defined: %s" % (pname, p_group))
+                            "ERROR, parameter %s is not defined: %s" % (
+                                pname, p_group))
                 if offs:
                     if offs.startswith('+'):
                         raise ParamExpandError(
@@ -258,13 +275,15 @@ class GraphExpander(object):
                         # Check that specific parameter values exist.
                         if offs[1:] not in self.suite_parameter_map[pname]:
                             raise ParamExpandError(
-                                "ERROR, parameter %s out of range: %s" % (pname, p_group))
+                                "ERROR, parameter %s out of range: %s" % (
+                                    pname, p_group))
                 used_pnames.add(pname)
         used_params = [(p, self.suite_parameter_map[p]) for p in used_pnames]
         self._expand_graph(line, dict(used_params), used_params, line_set)
         return line_set
 
-    def _expand_graph(self, line, all_params, param_list, line_set, values=None):
+    def _expand_graph(self, line, all_params,
+                      param_list, line_set, values=None):
         """Expand line into line_set for any number of parameters.
 
         line is a graph string line as described above in the calling method.
@@ -313,7 +332,8 @@ class GraphExpander(object):
             # Recurse through index ranges.
             for param_val in param_list[0][1]:
                 values[param_list[0][0]] = param_val
-                self._expand_graph(line, all_params, param_list[1:], line_set, values)
+                self._expand_graph(line, all_params,
+                                   param_list[1:], line_set, values)
 
 
 class TestParamExpand(unittest.TestCase):
@@ -326,7 +346,7 @@ class TestParamExpand(unittest.TestCase):
         ivals = [str(i) for i in range(2)]
         jvals = [str(j) for j in range(3)]
         kvals = [str(k) for k in range(2)]
-        params_map = {'i': ivals,  'j': jvals, 'k': kvals}
+        params_map = {'i': ivals, 'j': jvals, 'k': kvals}
         self.name_expander = NameExpander(params_map)
         self.graph_expander = GraphExpander(params_map)
 

@@ -6,12 +6,15 @@ title = "How to parameterise a workflow that contains families."
 
 [cylc]
     [[parameters]]
-        m = 3  # number of times to replicate obs processing and DA.
+        m = a, b, c  # number of times to replicate obs processing and DA.
 [scheduling]
     [[dependencies]]
         graph = """
-            prep => OBS_GET<m> => OBS_PROC<m>
-            OBS_PROC<m>:succeed-all => DA<m> => done"""
+            prep => OBS_GET<m>
+            OBS_GET<m>:succeed-mem => OBS_PROC<m>
+            OBS_PROC<m>:succeed-all => DA<m>
+            DA<m>:succeed-mem => done
+            DA<m=a>:succeed-mem => bob"""
 [runtime]
     [[MEM<m>]]
     [[OBS_GET<m>, OBS_PROC<m>, DA<m>]]
@@ -24,6 +27,6 @@ title = "How to parameterise a workflow that contains families."
         inherit = DA<m>
 [visualization]
     [[node attributes]]
-        MEM<m=0> = "color=orange"
-        MEM<m=1> = "color=limegreen"
-        MEM<m=2> = "color=steelblue"
+        MEM<m=a> = "color=orange"
+        MEM<m=b> = "color=limegreen"
+        MEM<m=c> = "color=steelblue"

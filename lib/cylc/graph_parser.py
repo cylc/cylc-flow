@@ -48,9 +48,22 @@ class Replacement(object):
 class GraphParser(object):
     """Class for extracting dependency information from cylc graph strings.
 
-    The general form of a dependency is "QUALIFIED-NODE-EXPRESSION => NODE".
-        * A NODE is a task or family name, optionally parameterized.
-        * An expression can involve parentheses, '&' (AND), and '|' (OR).
+    For each task in the graph string, results are stored as:
+        self.triggers[task_name][expression] = ([expr_task_names], suicide)
+        self.original[task_name][expression] = original_expression
+
+    (original_expression is separated out to allow comparison of triggers
+    from different equivalent expressions, e.g. family vs member).
+
+    This is currently intended to process a single multi-line graph string
+    (i.e. the content of a single graph section). But it could be extended to
+    store dependencies for the whole suite (call parse_graph multiple times
+    and key results by graph section).
+
+    The general form of a dependency is "EXPRESSION => NODE", where:
+        * On the right, NODE is a task or family name
+        * On the left, an EXPRESSION of nodes involving parentheses, and
+          logical operators '&' (AND), and '|' (OR).
         * Node names may be parameterized (any number of parameters):
             NODE<i,j,k>
             NODE<i=0,j,k>  # specific parameter value
@@ -66,19 +79,9 @@ class GraphParser(object):
           would be equivalent to:
              "foo:succeed => bar", and "bar:fail => baz"
 
-    Results stored as:
-        self.triggers[name][expr] = ([nodes], suicide)
-        self.original[name][expr] = original_expression
-    Original expression is held separately to allow test comparisons of
-    triggers from different expressions (e.g. family vs member expressions).
-
-    Currently intended to process a single graph string as results are used
-    immediately in the config module, but could easily be extended to store
-    dependencies for the whole suite (call parse_graph multiple times with
-    results keyed by graph section).
     """
 
-    DEP_ARROW = '=>'
+    ARROW = '=>'
     OP_AND = '&'
     OP_OR = '|'
     OP_AND_ERR = '&&'
@@ -90,8 +93,10 @@ class GraphParser(object):
     TRIG_FINISH = ':finish'
     FAM_TRIG_EXT_ALL = '-all'
     FAM_TRIG_EXT_ANY = '-any'
+    FAM_TRIG_EXT_MEM = '-mem'
     LEN_FAM_TRIG_EXT_ALL = len(FAM_TRIG_EXT_ALL)
     LEN_FAM_TRIG_EXT_ANY = len(FAM_TRIG_EXT_ANY)
+    LEN_FAM_TRIG_EXT_MEM = len(FAM_TRIG_EXT_MEM)
 
     # Match full parameterized single nodes.
     REC_NODE_FULL_SINGLE = re.compile(r'''
@@ -153,20 +158,20 @@ class GraphParser(object):
             this_line = non_blank_lines[i]
             if i == 0:
                 # First line can't start with an arrow.
-                if this_line.startswith(self.__class__.DEP_ARROW):
+                if this_line.startswith(self.__class__.ARROW):
                     raise GraphParseError(
                         "ERROR, leading arrow: %s" % this_line)
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
                 next_line = ''
-                if this_line.endswith(self.__class__.DEP_ARROW):
+                if this_line.endswith(self.__class__.ARROW):
                     # Last line can't end with an arrow.
                     raise GraphParseError(
                         "ERROR, trailing arrow: %s" % this_line)
             part_lines.append(this_line)
-            if (this_line.endswith(self.__class__.DEP_ARROW) or
-                    next_line.startswith(self.__class__.DEP_ARROW)):
+            if (this_line.endswith(self.__class__.ARROW) or
+                    next_line.startswith(self.__class__.ARROW)):
                 continue
             full_line = ''.join(part_lines)
 
@@ -225,7 +230,7 @@ class GraphParser(object):
         pairs = set()
         for line in line_set:
             # "foo => bar => baz" becomes [foo, bar, baz]
-            chain = line.split(self.__class__.DEP_ARROW)
+            chain = line.split(self.__class__.ARROW)
             # Auto-trigger lone nodes and initial nodes in a chain.
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
                 if not offset:
@@ -298,23 +303,29 @@ class GraphParser(object):
             semantics = set()
             for name, offset, trig in info:
                 if name in self.family_map:
+                    # TODO - USE OF 'semantics' HERE IS A BIT POINTLESS;
+                    # ALL-TO-ALL SHOULD DISTINGUISH ALL-TO-ANY HERE INSTEAD OF
+                    # DEFERRING TO LATER.
                     if trig.endswith(self.__class__.FAM_TRIG_EXT_ANY):
                         ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ANY]
                         ext = self.__class__.FAM_TRIG_EXT_ANY
+                        semantics.add('all-to-all')
                     elif trig.endswith(self.__class__.FAM_TRIG_EXT_ALL):
                         ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ALL]
                         ext = self.__class__.FAM_TRIG_EXT_ALL
-                    else:
-                        ttype = trig
-                        ext = None
-                    families[name] = (ttype, ext)
-                    if ext is None:
+                        semantics.add('all-to-all')
+                    elif trig.endswith(self.__class__.FAM_TRIG_EXT_MEM):
+                        ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_MEM]
+                        ext = self.__class__.FAM_TRIG_EXT_MEM
                         semantics.add('mem-to-mem')
                     else:
-                        semantics.add('all-to-all')
+                        raise GraphParseError(
+                            "ERROR, unqualified family trigger in %s" % expr)
+                    families[name] = (ttype, ext)
                 else:
                     if (trig.endswith(self.__class__.FAM_TRIG_EXT_ANY) or
-                            trig.endswith(self.__class__.FAM_TRIG_EXT_ALL)):
+                            trig.endswith(self.__class__.FAM_TRIG_EXT_ALL) or
+                            trig.endswith(self.__class__.FAM_TRIG_EXT_MEM)):
                         raise GraphParseError("ERROR, family trigger on non-"
                                               "family namespace %s" % expr)
             if len(set(semantics)) > 1:
@@ -346,14 +357,15 @@ class GraphParser(object):
             i_info = []
             i_expr = expr
             for name, offset, trig in info:
+                ttype, _ = families[name]
                 if name in families:
                     mem = sorted(self.family_map[name])[i]
                     this = r'\b%s%s%s\b' % (name, re.escape(offset), trig)
-                    that = '%s%s%s' % (mem, offset, trig)
+                    that = '%s%s%s' % (mem, offset, ttype)
                     i_expr = re.sub(this, that, i_expr)
-                    i_info.append((mem, offset, trig))
+                    i_info.append((mem, offset, ttype))
                 else:
-                    i_info.append((name, offset, trig))
+                    i_info.append((name, offset, ttype))
 
             for right in rights:
                 if right.startswith(self.__class__.SUICIDE_MARK):
@@ -512,7 +524,7 @@ class TestGraphParser(unittest.TestCase):
             'BAM': ['b1', 'b2'],
             'WAM': ['w1', 'w2']}
         gp1 = GraphParser(fam_map)
-        gp1.parse_graph("FAM | BAM => WAM")
+        gp1.parse_graph("FAM:succeed-mem | BAM:succeed-mem => WAM")
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("""
             f1 | b1 => w1
@@ -557,7 +569,7 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
         gp1 = GraphParser(fam_map)
-        gp1.parse_graph("FAM => post")
+        gp1.parse_graph("FAM:succeed-mem => post")
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("""
             m1 => post
@@ -616,7 +628,7 @@ class TestGraphParser(unittest.TestCase):
             pre => foo<m,n> => bar<n>
             bar<n=0> => baz  # specific case
             bar<n-1> => bar<n>  # inter-chunk
-            FAM<m> => post
+            FAM<m>:succeed-mem => post
             """)
         gp2 = GraphParser()
         gp2.parse_graph("""

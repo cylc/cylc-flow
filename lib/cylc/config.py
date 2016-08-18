@@ -29,7 +29,6 @@ structures.
 #    now must be "foo => FAM" and "FAM:succeed-all => bar".
 #  * note cannot get-config retrieve an async graph anymore, it is moved to R1.
 # TODO: CONSIDER OBSOLETING ALL cylc-5 syntax?
-# TODO: REMOVE ALL REFERENCE TO 'pruned' (old back-compate initial tasks)
 # TODO: check tutorial suites and CUG are consistent post cold-start remove.
 
 from copy import deepcopy, copy
@@ -1288,7 +1287,7 @@ class SuiteConfig(object):
             # Right is a lone node.
             # TODO - CAN WE DO THIS MORE SENSIBLY (e.g. put loner as left?)
             self.edges.append(
-                graphing.edge(right, None, seq, suicide, conditional))
+                cylc.graphing.edge(right, None, seq, suicide, conditional))
 
         for left in left_nodes:
             # if left is None:
@@ -1308,7 +1307,7 @@ class SuiteConfig(object):
                     "ERROR, self-edge detected: %s => %s" % (
                         left, right))
             self.edges.append(
-                graphing.edge(left, right, seq, suicide, conditional))
+                cylc.graphing.edge(left, right, seq, suicide, conditional))
 
     def generate_taskdefs(self, orig_expr, left_nodes, right, section, seq,
                           base_interval):
