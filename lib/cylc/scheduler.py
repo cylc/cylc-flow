@@ -884,6 +884,7 @@ conditions; see `cylc conditions`.
         add = set(self.config.get_task_name_list()) - old_tasks
         for task in add:
             LOG.warning("Added task: '%s'" % (task,))
+        self.pool.new_tasks.update(add)
 
         self.configure_suite_environment()
         if self.gen_reference_log or self.reference_test_mode:
@@ -1376,6 +1377,9 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             if self.pool.do_reload:
                 self.pool.reload_taskdefs()
                 self.do_update_state_summary = True
+
+            if self.pool.new_tasks:
+                self.pool.auto_insert()
 
             self.process_command_queue()
             if self.pool.release_runahead_tasks():

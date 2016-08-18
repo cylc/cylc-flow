@@ -46,6 +46,7 @@ from cylc.batch_sys_manager import BATCH_SYS_MANAGER
 from cylc.broker import broker
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.config import SuiteConfig
+from cylc.cycling import PointBase
 from cylc.cycling.loader import (
     get_interval, get_interval_cls, get_point, ISO8601_CYCLING_TYPE,
     standardise_point_string)
@@ -64,10 +65,12 @@ from cylc.task_state import (
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
-    TASK_STATUS_RETRYING)
+    TASK_STATUS_RETRYING, TASK_STATUSES_ALL)
+from cylc.task_trigger import _ALT_TRIGGER_NAMES
 from cylc.wallclock import (get_current_time_string,
                             get_time_string_from_unix_time)
 
+from cylc.cycling.loader import get_point_relative
 
 class TaskPool(object):
     """Task pool of a suite."""
@@ -138,6 +141,8 @@ class TaskPool(object):
             self.TABLE_SUITE_TEMPLATE_VARS: [],
             self.TABLE_CHECKPOINT_ID: [],
             self.TABLE_TASK_POOL: []}
+
+        self.new_tasks = set([])
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
@@ -724,6 +729,7 @@ class TaskPool(object):
 
     def reload_taskdefs(self):
         """Reload task definitions."""
+        self.auto_insert()
         self.log.info("Reloading task definitions.")
         # Log tasks orphaned by a reload that were not in the task pool.
         for task in self.orphans:
@@ -812,6 +818,234 @@ class TaskPool(object):
                     itask.state.status not in TASK_STATUSES_FINAL):
                 return False
         return True
+
+    class TempTask(object):  # TODO: Move and rename.
+        """Represents a cylc task. To be used for determining which tasks can
+        be auto-inserted on reload."""
+        def __init__(self, name, new, old, is_new_task=True):
+            self.name = name
+            self.new = new
+            self.old = old
+            self.prereqs = None
+            self.postreqs = None
+            self.point_string = None
+            self.is_new_task = is_new_task
+            if is_new_task:
+                new.append(self)
+            else:
+                old.append(self)
+            self.status = None
+
+        class Requisite(object):
+            """Represents a requisite (pre or post)."""
+            def __init__(self, task, offset, trigger):
+                self.task = task
+                self.offset = offset
+                self.trigger = trigger
+
+        def parse_graph_node(self, node_str):
+            """Returns a requisite instance representing the provided graph
+            node string (e.g. foo[-PT1H]:failed), or None."""
+            if not node_str:
+                return None
+            regex = re.compile('([\w]+)(?:\[([+-]P\w+)\])?(?::(\w+))?')
+            match = regex.search(node_str)
+            if match:
+                name, offset, trigger = match.groups()
+                task = self.__class__(name, self.new, self.old,
+                                      is_new_task=False)
+                for task_ in self.new:
+                    if task_.name == name:
+                        task = task_
+                        break
+                return self.Requisite(task, offset, trigger)
+            return None
+
+        def get_requisites(self):
+            """Populate the pre-requisites and post-requisites for this
+            task."""
+            config = SuiteConfig.get_inst()
+            self.prereqs = set([])
+            self.postreqs = set([])
+            for edge in config.edges:
+                left = self.parse_graph_node(edge.left)
+                right = self.parse_graph_node(edge.right)
+                if left.offset and not right.offset:
+                    if left.offset.startswith('-'):
+                        right.offset = '+' + left.offset[1:]
+                    else:
+                        right.offset = '-' + left.offset[1:]
+                if left and right and left.task.name == self.name:
+                    self.postreqs.add(right)
+                elif left and right and right.task.name == self.name:
+                    self.prereqs.add(left)
+
+    TRIGGER_MAP = {}
+    for trigger, alts in _ALT_TRIGGER_NAMES.iteritems():
+        for alt in alts:
+            TRIGGER_MAP[alt] = trigger
+            TRIGGER_MAP[trigger] = trigger
+
+    DONE = set([TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
+                TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_EXPIRED])
+    DOING = set([TASK_STATUS_RUNNING, TASK_STATUS_READY,
+                 TASK_STATUS_QUEUED, TASK_STATUS_SUBMITTED,
+                 TASK_STATUS_SUBMIT_RETRYING, TASK_STATUS_RETRYING])
+    #WAITING = set([TASK_STATUS_WAITING, TASK_STATUS_HELD])
+    DEAD = set([TASK_STATUS_FAILED, TASK_STATUS_EXPIRED])
+
+    def auto_insert(self):
+        """Automatically insert any tasks in self.new_tasks if it is
+        applicable to do so."""
+        # Gen new tasks.
+        new_tasks = []
+        old_tasks = []
+        for task_name in self.new_tasks:
+            self.TempTask(task_name, new_tasks, old_tasks)
+
+        # Acquire Requisites.
+        for task in new_tasks:
+            task.get_requisites()
+
+        # Get list of tasks in the pool.
+        cur_tasks = {}
+        for task in self.get_tasks():
+            task_name, point_string = task.identity.split('.')
+            if task_name not in cur_tasks:
+                cur_tasks[task_name] = (point_string, task.state.status,)
+            else:
+                if cur_tasks[task_name][0] > point_string:
+                    # This task proxy is for an earlier cycle point than the
+                    # one already assessed.
+                    cur_tasks[task_name] = (point_string, task.state.status,)
+
+        # Extract point strings from the pool to their requisites.
+        for task in old_tasks:
+            # TODO: Rename.
+            for c_name, (c_point_string, c_status,) in cur_tasks.iteritems():
+                if c_name == task.name:
+                    task.point_string = c_point_string
+                    # Add status as well
+                    task.status = c_status
+                    break
+
+        def transform_point_by_offset(offset, point, reverse=False):
+            """Appends a duration to a cycle point."""
+            if type(point) == str:
+                point = get_point(point)
+            if not offset:
+                return point
+            if reverse:
+                offset = str(get_interval_cls().get_null_offset().sub(
+                    get_interval_cls()(offset)))
+            return get_point_relative(offset, point)
+
+        def is_insertable(task, visited_nodes=None):
+            """Returns true if the task is insertable along with the cycle
+            point at which the node can be inserted at."""
+            if not visited_nodes:
+                visited_nodes = [task]
+            else:
+                visited_nodes.append(task)
+
+            # If task is currently in the pool...
+            if task in old_tasks:
+                if task.point_string:
+                    return True, get_point(task.point_string)
+                return False, None
+
+            # If task has been brought in by reload...
+            point_string = None
+            for req in task.prereqs:  # Loop over pre-requisites...
+                # Skip task if already assessed.
+                if req.task in visited_nodes:
+                    continue
+                # Cannot insert if requisite is in pool and has an incompatible
+                # state.
+                if req.task in old_tasks:
+                    if not (req.task.status == self.TRIGGER_MAP[req.trigger] or
+                            req.task.status not in self.DEAD):
+                        return False, None
+                insertable, point_str = is_insertable(req.task, visited_nodes)
+                if not insertable:
+                    return False, None
+                if point_str:  # TODO: Rename.
+                    # Task is insertable, determine cycle point to insert at.
+                    point = transform_point_by_offset(
+                        req.offset,
+                        point_str,
+                        reverse=True  # TODO: Remove need for this.
+                    )
+                    if point_string and point_string != point:
+                        # Some pre-existing tasks have changed cycle points,
+                        # wait until a future cycle to insert here.
+                        print ('ERROR: points do not match', str(point),
+                             str(point_string))
+                        return False, None
+                    elif not point_string:
+                        point_string = point
+            for req in task.postreqs:  # Loop over post-requisites...
+                # TODO: Consolidate with pre-requisites method.
+                if req.task in visited_nodes:
+                    continue
+                if req.task in old_tasks:
+                    if not req.task.status not in self.DONE | self.DOING:
+                        return False, None
+                insertable, point_str = is_insertable(req.task, visited_nodes)
+                if not insertable:
+                    return False, None
+                if point_str:  # TODO: Rename.
+                    # Task is insertable, determine cycle point to insert at.
+                    point = transform_point_by_offset(
+                        req.offset,
+                        point_str,
+                        reverse=True  # TODO: Remove need for this.
+                    )
+                    if point_string and point_string != point:
+                        # Some pre-existing tasks have changed cycle points,
+                        # wait until a future cycle to insert here.
+                        print ('ERROR: points do not match', str(point),
+                            str(point_string))
+                        return False, None
+                    elif not point_string:
+                        point_string = point
+            return True, point_string
+
+        # Determine which tasks are eligible for inserting and at which cycle
+        # point they can be inserted at.
+        to_insert = []
+        for task in sorted(new_tasks):
+            insertable, point = is_insertable(task)
+            if insertable:
+                if not point:
+                    # Task is a not connected to any active graph, insert at
+                    # the earliest sensible point.
+                    config = SuiteConfig.get_inst()
+                    point = self.get_min_point()
+                    flag = False
+                    # Check if oldest, active cycle point is on the tasks
+                    # sequence...
+                    for sequence in config.taskdefs[task.name].sequences:
+                        if sequence.is_on_sequence(point):
+                            flag = True
+                            break
+                    # ...if not insert at the first point on the tasks sequence
+                    # after the oldest active cycle point.
+                    if not flag:
+                        point = min([sequence.get_next_point(point) for sequence
+                                     in config.taskdefs[task.name].sequences])
+                        if not point:
+                            print ('ERROR: Could not determine cycle point to '
+                                   'insert "%s" at' % task.name)
+                            continue
+                to_insert.append((task, point,))
+
+        # Auto-insert eligible tasks.
+        for task, point in to_insert:
+            task_str = task.name + '.' + str(point)
+            self.log.warning('AutoInsert: inserting ' + task_str)
+            self.insert_tasks([task_str], None)
+            self.new_tasks.remove(task.name)
 
     def report_stalled_task_deps(self):
         """Return a set of unmet dependencies"""
