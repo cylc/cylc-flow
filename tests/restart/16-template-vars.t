@@ -15,20 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test compliance with PEP8.
+# Test automatic custom template variables on restart.
 . "$(dirname "$0")/test_header"
-
-if ! pep8 --version 1>'/dev/null' 2>&1; then
-    skip_all '"pep8" command not available'
-fi
 
 set_test_number 3
 
-run_ok "${TEST_NAME_BASE}" pep8 --ignore=E402 \
-    "${CYLC_DIR}/lib/cylc" \
-    "${CYLC_DIR}/lib/parsec"/*.py \
-    $(grep -l '#!.*\<python\>' "${CYLC_DIR}/bin/"*)
-cmp_ok "${TEST_NAME_BASE}.stdout" <'/dev/null'
-cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
+install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+run_ok "${TEST_NAME_BASE}-validate" \
+    cylc validate "${SUITE_NAME}" \
+    --set='FINAL_CYCLE_POINT=2020' --set='COMMAND=true'
+
+suite_run_ok "${TEST_NAME_BASE}-run" \
+    cylc run "${SUITE_NAME}" \
+    --set='FINAL_CYCLE_POINT=2020' --set='COMMAND=true' \
+    --until=2018 --debug
+
+suite_run_ok "${TEST_NAME_BASE}-restart" \
+    cylc restart "${SUITE_NAME}" --debug --reference-test
+
+purge_suite "${SUITE_NAME}"
 exit

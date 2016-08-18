@@ -60,6 +60,7 @@ import re
 from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.option_parsers import CylcOptionParser as COP
 import cylc.flags
+from cylc.templatevars import load_template_vars
 
 
 def main():
@@ -118,8 +119,7 @@ def main():
 
     config = SuiteConfig(
         suite, suiterc,
-        template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file,
+        load_template_vars(options.templatevars, options.templatevars_file),
         owner=owner)
     if options.tasks:
         for task in config.get_task_name_list():

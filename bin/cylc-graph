@@ -68,6 +68,7 @@ import StringIO
 import cylc.flags
 from cylc.remote import remrun
 from cylc.task_id import TaskID
+from cylc.templatevars import load_template_vars
 
 try:
     import gtk
@@ -231,15 +232,15 @@ def main():
     if len(args) == 3:
         stop_point_string = args[2]
 
+    template_vars = load_template_vars(
+        options.templatevars, options.templatevars_file)
     if options.namespaces:
-        window = MyDotWindow2(suite, suiterc, options.templatevars,
-                              options.templatevars_file,
+        window = MyDotWindow2(suite, suiterc, template_vars,
                               should_hide=should_hide_gtk_window)
     else:
         hide_suicide = not options.show_suicide
         window = MyDotWindow(suite, suiterc, start_point_string,
-                             stop_point_string, options.templatevars,
-                             options.templatevars_file,
+                             stop_point_string, template_vars,
                              should_hide=should_hide_gtk_window,
                              ignore_suicide=hide_suicide)
 

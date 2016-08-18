@@ -56,6 +56,7 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.mp_pool import SuiteProcPool
 import cylc.version  # Ensures '$CYLC_VERSION' is set.
 from cylc.task_state import TASK_STATUS_SUBMIT_FAILED
+from cylc.templatevars import load_template_vars
 
 
 def commandline_parser():
@@ -102,8 +103,8 @@ def main():
 
     # load suite config
     config = SuiteConfig.get_inst(
-        suite, suiterc, template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file)
+        suite, suiterc,
+        load_template_vars(options.templatevars, options.templatevars_file))
 
     # No TASK EVENT HOOKS are set for the submit command because there is
     # no scheduler instance watching for task failure etc.

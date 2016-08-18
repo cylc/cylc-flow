@@ -15,18 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import os
-import sys
-import re
-import traceback
-
-from parsec import ParsecError
-from parsec.OrderedDict import OrderedDictWithDefaults
-from parsec.include import inline, IncludeFileNotFoundError
-from parsec.util import itemstr
-import cylc.flags
-
 """
 parsec config file parsing:
 
@@ -44,8 +32,21 @@ parsec config file parsing:
       value type is known).
 """
 
+import os
+import sys
+import re
+import traceback
+
+from parsec import ParsecError
+from parsec.OrderedDict import OrderedDictWithDefaults
+from parsec.include import inline, IncludeFileNotFoundError
+from parsec.util import itemstr
+import cylc.flags
+
+
 try:
-    from Jinja2Support import Jinja2Process, TemplateError, UndefinedError
+    from parsec.jinja2support import (
+        jinja2process, TemplateError, UndefinedError)
 except ImportError:
     jinja2_disabled = True
 else:
@@ -55,7 +56,8 @@ else:
 # heading/sections can contain commas (namespace name lists) and any
 # regex pattern characters (this was for pre cylc-6 satellite tasks).
 # Proper task names are checked later in config.py.
-_HEADING = re.compile(r'''^
+_HEADING = re.compile(
+    r'''^
     (\s*)                     # 1: indentation
     ((?:\[)+)                 # 2: section marker open
     \s*
@@ -66,7 +68,8 @@ _HEADING = re.compile(r'''^
     $''',
     re.VERBOSE)
 
-_KEY_VALUE = re.compile(r'''^
+_KEY_VALUE = re.compile(
+    r'''^
     (\s*)                   # indentation
     ([\.\-\w \,]+?)         # key
     \s*=\s*                 # =
@@ -79,8 +82,8 @@ _KEY_VALUE = re.compile(r'''^
 #   http://stackoverflow.com/questions/5452655/
 #       python-regex-to-match-text-in-single-quotes-ignoring-escaped-quotes-and-tabs-n
 
-_LINECOMMENT = re.compile( '^\s*#' )
-_BLANKLINE = re.compile( '^\s*$' )
+_LINECOMMENT = re.compile('^\s*#')
+_BLANKLINE = re.compile('^\s*$')
 
 # triple quoted values on one line
 _SINGLE_LINE_SINGLE = re.compile(r"^'''(.*?)'''\s*(#.*)?$")
@@ -102,7 +105,7 @@ class FileParseError(ParsecError):
                  error_name="FileParseError"):
         self.msg = error_name + ":\n" + reason
         if index:
-            self.msg += " (line " + str(index+1) + ")"
+            self.msg += " (line " + str(index + 1) + ")"
         if line:
             self.msg += ":\n   " + line.strip()
         if lines:
@@ -113,11 +116,7 @@ class FileParseError(ParsecError):
             self.msg += "\n(line numbers match 'cylc view -p')"
 
 
-class FileNotFoundError(FileParseError):
-    pass
-
-
-def _concatenate( lines ):
+def _concatenate(lines):
     """concatenate continuation lines"""
     index = 0
     clines = []
@@ -125,7 +124,7 @@ def _concatenate( lines ):
     while index < maxline:
         line = lines[index]
         while line.endswith('\\'):
-            if index == maxline-1:
+            if index == maxline - 1:
                 # continuation char on the last line
                 # must be an error - safe to strip it
                 line = line[:-1]
@@ -133,10 +132,11 @@ def _concatenate( lines ):
                 index += 1
                 line = line[:-1] + lines[index]
         clines.append(line)
-        index +=1
+        index += 1
     return clines
 
-def addsect( cfig, sname, parents ):
+
+def addsect(cfig, sname, parents):
     """Add a new section to a nested dict."""
     for p in parents:
         # drop down the parent list
@@ -144,36 +144,41 @@ def addsect( cfig, sname, parents ):
     if sname in cfig:
         # this doesn't warrant a warning unless contained items are repeated
         if cylc.flags.verbose:
-            print 'Section already encountered: ' + itemstr( parents + [sname] )
+            print 'Section already encountered: ' + itemstr(parents + [sname])
     else:
         cfig[sname] = OrderedDictWithDefaults()
 
-def addict( cfig, key, val, parents, index ):
+
+def addict(cfig, key, val, parents, index):
     """Add a new [parents...]key=value pair to a nested dict."""
     for p in parents:
         # drop down the parent list
         cfig = cfig[p]
 
-    if not isinstance( cfig, dict ):
+    if not isinstance(cfig, dict):
         # an item of this name has already been encountered at this level
-        print >> sys.stderr, itemstr( parents, key, val )
-        raise FileParseError( 'ERROR line ' + str(index) + ': already encountered ' + itemstr( parents ))
+        print >> sys.stderr, itemstr(parents, key, val)
+        raise FileParseError(
+            'ERROR line ' + str(index) + ': already encountered ' +
+            itemstr(parents))
 
     if key in cfig:
         # this item already exists
-        if key == 'graph' and \
-                ( len( parents ) == 2 and parents == ['scheduling','dependencies'] or \
-                len( parents ) == 3 and parents[-3:-1] == ['scheduling','dependencies'] ):
+        if (key == 'graph' and (
+                parents == ['scheduling', 'dependencies'] or
+                len(parents) == 3 and
+                parents[-3:-1] == ['scheduling', 'dependencies'])):
             # append the new graph string to the existing one
-           if cylc.flags.verbose:
-               print 'Merging graph strings under ' + itemstr( parents )
-           if not isinstance( cfig[key], list ):
-               cfig[key] = [cfig[key]]
-           cfig[key].append(val)
+            if cylc.flags.verbose:
+                print 'Merging graph strings under ' + itemstr(parents)
+            if not isinstance(cfig[key], list):
+                cfig[key] = [cfig[key]]
+            cfig[key].append(val)
         else:
             # otherwise override the existing item
             if cylc.flags.verbose:
-                print >> sys.stderr, 'WARNING: overriding ' + itemstr( parents, key )
+                print >> sys.stderr, (
+                    'WARNING: overriding ' + itemstr(parents, key))
                 print >> sys.stderr, ' old value: ' + cfig[key]
                 print >> sys.stderr, ' new value: ' + val
             cfig[key] = val
@@ -181,7 +186,7 @@ def addict( cfig, key, val, parents, index ):
         cfig[key] = val
 
 
-def multiline( flines, value, index, maxline ):
+def multiline(flines, value, index, maxline):
     """Consume lines for multiline strings."""
     o_index = index
     quot = value[:3]
@@ -197,7 +202,7 @@ def multiline( flines, value, index, maxline ):
     elif newvalue.find(quot) != -1:
         # TODO - this should be handled by validation?:
         # e.g. non-comment follows single-line triple-quoted string
-        raise FileParseError( 'Invalid line', o_index, flines[index] )
+        raise FileParseError('Invalid line', o_index, flines[index])
 
     while index < maxline:
         index += 1
@@ -209,26 +214,25 @@ def multiline( flines, value, index, maxline ):
             # end of multiline, process it
             break
     else:
-        raise FileParseError( 'Multiline string not closed', o_index, flines[o_index] )
+        raise FileParseError(
+            'Multiline string not closed', o_index, flines[o_index])
 
     mat = multi_line.match(line)
     if not mat:
         # e.g. end multi-line string followed by a non-comment
-        raise FileParseError( 'Invalid line', o_index, line )
+        raise FileParseError('Invalid line', o_index, line)
 
-    #value, comment = mat.groups()
+    # value, comment = mat.groups()
     return quot + newvalue + line, index
 
-def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=None, asedit=False ):
+
+def read_and_proc(fpath, template_vars=None, viewcfg=None, asedit=False):
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
     Jinja2 processing must be done before concatenation - it could be
     used to generate continuation lines.
     """
-    if not os.path.isfile( fpath ):
-        raise FileNotFoundError, 'File not found: ' + fpath
-
     fdir = os.path.dirname(fpath)
 
     # Allow Python modules in lib/python/ (e.g. for use by Jinja2 filters).
@@ -240,8 +244,8 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
         print "Reading file", fpath
 
     # read the file into a list, stripping newlines
-    with open( fpath ) as f:
-        flines = [ line.rstrip('\n') for line in f ]
+    with open(fpath) as f:
+        flines = [line.rstrip('\n') for line in f]
 
     do_inline = True
     do_jinja2 = True
@@ -257,20 +261,20 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
     # inline any cylc include-files
     if do_inline:
         try:
-            flines = inline( flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit )
+            flines = inline(
+                flines, fdir, fpath, False, viewcfg=viewcfg, for_edit=asedit)
         except IncludeFileNotFoundError, x:
-            raise FileParseError( str(x) )
+            raise FileParseError(str(x))
 
     # process with Jinja2
     if do_jinja2:
-        if flines and re.match( '^#![jJ]inja2\s*', flines[0] ):
+        if flines and re.match('^#![jJ]inja2\s*', flines[0]):
             if jinja2_disabled:
-                raise FileParseError( 'Jinja2 is not installed' )
+                raise FileParseError('Jinja2 is not installed')
             if cylc.flags.verbose:
                 print "Processing with Jinja2"
             try:
-                flines = Jinja2Process(
-                        flines, fdir, template_vars, template_vars_file)
+                flines = jinja2process(flines, fdir, template_vars)
             except (TemplateError, TypeError, UndefinedError) as exc:
                 # Extract diagnostic info from the end of the Jinja2 traceback.
                 exc_lines = traceback.format_exc().splitlines()
@@ -285,7 +289,7 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
                 if hasattr(exc, 'lineno'):
                     lineno = exc.lineno
                 elif (isinstance(exc, TypeError) or
-                          isinstance(exc, UndefinedError)):
+                        isinstance(exc, UndefinedError)):
                     match = re.search(r'File "<template>", line (\d+)', msg)
                     if match:
                         lineno = int(match.groups()[0])
@@ -305,24 +309,24 @@ def read_and_proc( fpath, template_vars=[], template_vars_file=None, viewcfg=Non
 
     # concatenate continuation lines
     if do_contin:
-        flines = _concatenate( flines )
+        flines = _concatenate(flines)
 
     # return rstripped lines
-    return [ fl.rstrip() for fl in flines ]
+    return [fl.rstrip() for fl in flines]
 
-def parse( fpath, write_proc=False,
-        template_vars=[], template_vars_file=None ):
+
+def parse(fpath, write_proc=False, template_vars=None):
     "Parse file items line-by-line into a corresponding nested dict."
 
     # read and process the file (jinja2, include-files, line continuation)
-    flines = read_and_proc( fpath, template_vars, template_vars_file )
+    flines = read_and_proc(fpath, template_vars)
     # write the processed for suite.rc if it lives in a writable directory
     if write_proc and \
             os.access(os.path.dirname(fpath), os.W_OK):
         fpath_processed = fpath + '.processed'
         if cylc.flags.verbose:
             print "Writing file " + fpath_processed
-        f = open( fpath_processed, 'w' )
+        f = open(fpath_processed, 'w')
         f.write('\n'.join(flines) + '\n')
         f.close()
 
@@ -331,29 +335,29 @@ def parse( fpath, write_proc=False,
     sect_name = None
     parents = []
 
-    maxline = len(flines)-1
+    maxline = len(flines) - 1
     index = -1
 
     while index < maxline:
         index += 1
         line = flines[index]
 
-        if re.match( _LINECOMMENT, line ):
+        if re.match(_LINECOMMENT, line):
             # skip full-line comments
             continue
 
-        if re.match( _BLANKLINE, line ):
+        if re.match(_BLANKLINE, line):
             # skip blank lines
             continue
 
-        m = re.match( _HEADING, line )
+        m = re.match(_HEADING, line)
         if m:
             # matched a section heading
             indent, s_open, sect_name, s_close, comment = m.groups()
             nb = len(s_open)
 
             if nb != len(s_close):
-                raise FileParseError('bracket mismatch', index, line )
+                raise FileParseError('bracket mismatch', index, line)
             elif nb == nesting_level:
                 # sibling section
                 parents = parents[:-1] + [sect_name]
@@ -362,24 +366,26 @@ def parse( fpath, write_proc=False,
                 parents = parents + [sect_name]
             elif nb < nesting_level:
                 # back up one or more levels
-                ndif = nesting_level -nb
-                parents = parents[:-ndif-1] + [sect_name]
+                ndif = nesting_level - nb
+                parents = parents[:-ndif - 1] + [sect_name]
             else:
-                raise FileParseError( 'Error line ' + str(index+1) + ': ' + line )
+                raise FileParseError(
+                    'Error line ' + str(index + 1) + ': ' + line)
             nesting_level = nb
-            addsect( config, sect_name, parents[:-1] )
+            addsect(config, sect_name, parents[:-1])
 
         else:
-            m = re.match( _KEY_VALUE, line )
+            m = re.match(_KEY_VALUE, line)
             if m:
                 # matched a key=value item
                 indent, key, val = m.groups()
                 if val.startswith('"""') or val.startswith("'''"):
                     # triple quoted - may be a multiline value
-                    val, index = multiline( flines, val, index, maxline )
-                addict( config, key, val, parents, index )
+                    val, index = multiline(flines, val, index, maxline)
+                addict(config, key, val, parents, index)
             else:
                 # no match
-                raise FileParseError( 'Invalid line ' + str(index+1) + ': ' + line )
+                raise FileParseError(
+                    'Invalid line ' + str(index + 1) + ': ' + line)
 
     return config

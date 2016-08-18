@@ -35,6 +35,7 @@ if remrun().execute():
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.config import SuiteConfig
+from cylc.templatevars import load_template_vars
 
 
 def main():
@@ -115,8 +116,7 @@ def main():
 
     config = SuiteConfig(
         suite, suiterc,
-        template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file)
+        load_template_vars(options.templatevars, options.templatevars_file))
     if options.tree:
         config.print_first_parent_tree(
             pretty=options.box, titles=options.titles)

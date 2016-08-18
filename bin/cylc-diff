@@ -40,6 +40,7 @@ if remrun().execute():
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.config import SuiteConfig
+from cylc.templatevars import load_template_vars
 
 n_oone = 0
 n_otwo = 0
@@ -133,16 +134,12 @@ def main():
     if suite1 == suite2:
         parser.error("You can't diff a single suite.")
     print "Parsing %s (%s)" % (suite1, suite1rc)
-    config1 = SuiteConfig.get_inst(
-        suite1, suite1rc,
-        template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file).cfg
+    template_vars = load_template_vars(
+        options.templatevars, options.templatevars_file)
+    config1 = SuiteConfig.get_inst(suite1, suite1rc, template_vars).cfg
     SuiteConfig._FORCE = True
     print "Parsing %s (%s)" % (suite2, suite2rc)
-    config2 = SuiteConfig.get_inst(
-        suite2, suite2rc,
-        template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file).cfg
+    config2 = SuiteConfig.get_inst(suite2, suite2rc, template_vars).cfg
 
     if config1 == config2:
         print "Suite definitions %s and %s are identical" % (suite1, suite2)

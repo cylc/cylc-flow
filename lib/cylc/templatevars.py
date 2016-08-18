@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env python
+
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2016 NIWA
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -14,21 +15,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test compliance with PEP8.
-. "$(dirname "$0")/test_header"
+"""Load custom variables for template processor."""
 
-if ! pep8 --version 1>'/dev/null' 2>&1; then
-    skip_all '"pep8" command not available'
-fi
 
-set_test_number 3
-
-run_ok "${TEST_NAME_BASE}" pep8 --ignore=E402 \
-    "${CYLC_DIR}/lib/cylc" \
-    "${CYLC_DIR}/lib/parsec"/*.py \
-    $(grep -l '#!.*\<python\>' "${CYLC_DIR}/bin/"*)
-cmp_ok "${TEST_NAME_BASE}.stdout" <'/dev/null'
-cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
-
-exit
+def load_template_vars(template_vars=None, template_vars_file=None):
+    """Load template variables from key=value strings."""
+    res = {}
+    if template_vars_file:
+        for line in open(template_vars_file):
+            line = line.strip().split("#", 1)[0]
+            if not line:
+                continue
+            key, val = line.split("=", 1)
+            res[key.strip()] = val.strip()
+    if template_vars:
+        for pair in template_vars:
+            key, val = pair.split("=", 1)
+            res[key.strip()] = val.strip()
+    return res
