@@ -1342,6 +1342,10 @@ conditions; see `cylc conditions`.
         suite_run_dir = GLOBAL_CFG.get_derived_host_item(
             self.suite, 'suite run directory')
 
+        if self.options.profile_mode:
+            previous_profile_point = 0
+            count = 0
+
         while True:  # MAIN LOOP
 
             # Periodic check that the suite directory still exists
@@ -1368,6 +1372,11 @@ conditions; see `cylc conditions`.
                         warned = True
                     self.process_command_queue()
                     time.sleep(0.5)
+
+                if self.options.profile_mode:
+                    self.log_memory("scheduler.py: end main loop "
+                                    "(total loops " + str(count) + "): " +
+                                    get_current_time_string())
                 raise SchedulerStop("Finished")
 
             tinit = time.time()
@@ -1496,10 +1505,12 @@ conditions; see `cylc conditions`.
                 self._update_profile_info("scheduler loop dt (s)", now - tinit,
                                           amount_format="%.3f")
                 self._update_cpu_usage()
-                if (int(now) % 60 == 0):
+                if now - previous_profile_point >= 60:
                     # Only get this every minute.
-                    self.log_memory("scheduler.py: loop: " +
-                                    get_current_time_string())
+                    previous_profile_point = now
+                    self.log_memory("scheduler.py: loop #" + str(count) +
+                                    ": " + get_current_time_string())
+                count += 1
 
             if (self._get_events_conf(self.EVENT_TIMEOUT) is not None and
                     not (self.shut_down_cleanly or auto_stop)):
@@ -1507,7 +1518,6 @@ conditions; see `cylc conditions`.
 
             time.sleep(1)
 
-        self.log_memory("scheduler.py: end main loop")
         # END MAIN LOOP
 
     def update_state_summary(self):
