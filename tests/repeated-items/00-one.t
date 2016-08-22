@@ -26,20 +26,22 @@ TEST_NAME=$TEST_NAME_BASE-validate
 run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-a
-cylc get-config -i title $SUITE_NAME > a.txt
+cylc get-config -i title $SUITE_NAME >a.txt 2>/dev/null
 cmp_ok a.txt <<'__END'
 the quick brown fox
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-b
-cylc get-config -i '[scheduling][dependencies]graph' $SUITE_NAME > b.txt
+cylc get-config -i '[scheduling][dependencies]graph' $SUITE_NAME >b.txt \
+    2>/dev/null
 cmp_ok b.txt <<'__END'
 foo => bar
 bar => baz
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-c
-cylc get-config -i '[scheduling][dependencies][0]graph' $SUITE_NAME > c.txt
+cylc get-config -i '[scheduling][dependencies][0]graph' $SUITE_NAME >c.txt \
+    2>/dev/null
 cmp_ok c.txt <<'__END'
 cfoo => cbar
 cbar => cbaz
@@ -48,19 +50,19 @@ dbar => dbaz
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-d
-cylc get-config -i '[runtime][FOO]title' $SUITE_NAME > d.txt
+cylc get-config -i '[runtime][FOO]title' $SUITE_NAME >d.txt 2>/dev/null
 cmp_ok d.txt <<'__END'
 the quick brown fox
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-e
-cylc get-config -i '[runtime][FOO]description' $SUITE_NAME > e.txt
+cylc get-config -i '[runtime][FOO]description' $SUITE_NAME >e.txt 2>/dev/null
 cmp_ok e.txt <<'__END'
 jumped over the lazy dog
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-f
-cylc get-config -i '[runtime][FOO][environment]' $SUITE_NAME > f.txt
+cylc get-config -i '[runtime][FOO][environment]' $SUITE_NAME >f.txt 2>/dev/null
 cmp_ok f.txt <<'__END'
 VAR1 = the quick brown fox
 __END

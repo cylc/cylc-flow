@@ -27,6 +27,10 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-cmp
 cmp_ok $TEST_NAME_BASE-validate.stderr <<__ERR__
+WARNING: pre cylc 6 syntax is deprecated: integer interval: [cylc][reference test]live mode suite timeout = 30
+WARNING: pre cylc 6 syntax is deprecated: initial/final cycle point format: CCYYMMDDhh
+WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[00]]]: old-style cycling
+WARNING: pre cylc 6 syntax is deprecated: graphnode foo[T-24]: old-style offset
 WARNING, foo: not explicitly defined in dependency graphs (deprecated)
 __ERR__
 #-------------------------------------------------------------------------------

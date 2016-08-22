@@ -18,9 +18,14 @@
 
 """Global syntax flags used in cylc"""
 
+import sys
 
 VERSION_PREV = "pre-cylc-6"  # < cylc-6
 VERSION_NEW = "post-cylc-6"  # cylc 6 +
+
+DEPRECATED_SYNTAX_WARNING = {
+    VERSION_PREV: "WARNING: pre cylc 6 syntax is deprecated: {0}\n"
+}
 
 
 class SyntaxVersion(object):
@@ -28,6 +33,7 @@ class SyntaxVersion(object):
     """Store the syntax version used in the suite.rc."""
     VERSION_REASON = None
     VERSION = None
+    WARNING_MESSAGES = set()
 
 
 class SyntaxVersionError(ValueError):
@@ -53,3 +59,9 @@ def set_syntax_version(version, message):
         SyntaxVersion.VERSION_REASON = message
     elif SyntaxVersion.VERSION != version:
         raise SyntaxVersionError(version, message)
+    if SyntaxVersion.VERSION in DEPRECATED_SYNTAX_WARNING:
+        warning = (
+            DEPRECATED_SYNTAX_WARNING[SyntaxVersion.VERSION].format(message))
+        if warning not in SyntaxVersion.WARNING_MESSAGES:
+            sys.stderr.write(warning)
+            SyntaxVersion.WARNING_MESSAGES.add(warning)

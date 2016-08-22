@@ -475,6 +475,22 @@ def upg(cfg, descr):
         ['visualization', 'final cycle point'],
         converter(
             lambda x: x, 'changed naming to reflect non-date-time cycling'))
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'cycling']
+    )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'special tasks', 'sequential']
+    )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'special tasks', 'start-up']
+    )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'special tasks', 'cold-start']
+    )
     u.obsolete('6.0.0', ['cylc', 'job submission'])
     u.obsolete('6.0.0', ['cylc', 'event handler submission'])
     u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
