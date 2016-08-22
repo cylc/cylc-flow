@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test event mail.
-CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 if ! mail -V 2>'/dev/null'; then
     skip_all '"mail" command not available'
