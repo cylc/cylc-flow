@@ -274,6 +274,8 @@ SPEC = {
             options=(Calendar.MODES.keys() + ["integer"])),
         'runahead limit': vdr(vtype='cycleinterval'),
         'max active cycle points': vdr(vtype='integer', default=3),
+        'spawn to max active cycle points': vdr(
+            vtype='boolean', default=False),
         'queues': {
             'default': {
                 'limit': vdr(vtype='integer', default=0),
