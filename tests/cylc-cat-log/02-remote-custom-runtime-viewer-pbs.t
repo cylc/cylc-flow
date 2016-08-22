@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc cat-log" for viewing PBS runtime STDOUT/STDERR by a custom command
+CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
 RC_PREF='[test battery][batch systems][pbs]'

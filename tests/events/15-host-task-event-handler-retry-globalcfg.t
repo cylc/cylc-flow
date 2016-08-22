@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test general task event handler + retry.
+CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
 if [[ -z "${HOST}" ]]; then

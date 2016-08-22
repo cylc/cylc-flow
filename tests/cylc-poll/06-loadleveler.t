@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test "cylc poll" for loadleveler, slurm, or pbs jobs.
+CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"

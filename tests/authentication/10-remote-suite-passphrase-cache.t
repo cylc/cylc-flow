@@ -19,6 +19,7 @@
 # HOME file system, but with non-interactive SSH access.
 # This test assumes compatible version of cylc is available on the configured
 # remote host.
+CYLC_TEST_IS_GENERIC=false
 . "$(dirname "$0")/test_header"
 
 export CYLC_TEST_HOST=$( \

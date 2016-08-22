@@ -1,3 +1,10 @@
+
+[cylc]
+    [[events]]
+        abort on timeout = True
+    [[reference test]]
+        live mode suite timeout = 1.5
+
 [scheduling]
     initial cycle time = 2014010100
     final cycle time = 2014010300

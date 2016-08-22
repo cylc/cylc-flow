@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Test killing of jobs submitted to loadleveler, slurm, pbs...
+CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 BATCH_SYS_NAME="${TEST_NAME_BASE##??-}"

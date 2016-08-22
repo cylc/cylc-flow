@@ -19,6 +19,7 @@
 # A job for a task with the restart=yes directive will have the trap.
 # This does not test loadleveler job vacation itself, because the test will
 # require a site admin to pre-empt a job.
+CYLC_TEST_IS_GENERIC=false
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 RC_PREV="[test battery][batch systems][loadleveler]"

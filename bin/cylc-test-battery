@@ -58,6 +58,21 @@ The command normally uses "diff -u" to compare files.  However, if an alternate
 command such as "xxdiff -D" is desirable (e.g. for debugging), "export
 CYLC_TEST_DIFF_CMD=xxdiff -D".
 
+Commits or Pull Requests to cylc/cylc on GitHub will trigger Travis CI to run
+generic (non platform-specific) tests - see $CYLC_DIR/.travis.yml.
+After enabling Travis CI for your own cylc fork, you can skip generic tests
+locally by setting CYLC_TEST_RUN_GENERIC=false.
+
+By default all tests are executed.  To run just a subset of them:
+  * list individual tests or test directories to run on the comand line
+  * list individual tests or test directories to skip in \$CYLC_TEST_SKIP
+  * skip all generic tests with CYLC_TEST_RUN_GENERIC=false
+  * skip all platform-specific tests with CYLC_TEST_RUN_PLATFORM=false
+  List specific tests relative to $CYLC_DIR (i.e. starting with "test/").
+Some platform-specific tests are automatically skipped, depending on platform.
+DEVELOPERS: new platform-specific tests must set "CYLC_TEST_IS_GENERIC=false"
+before sourcing the test_header.
+
 For more information see "Reference Tests" in the User Guide.
 
 Options:
@@ -68,15 +83,25 @@ Examples:
 Run the full test suite with the default options.
   cylc test-battery
 Run the full test suite with 12 processes.
-  cylc test-battery- j 12
+  cylc test-battery -j 12
 Run only tests under "tests/cyclers/" with 12 processes.
   cylc test-battery -j 12 tests/cyclers
 Run only "tests/cyclers/16-weekly.t" in verbose mode
   cylc test-battery -v tests/cyclers/16-weekly.t
+Run only tests under "tests/cyclers/" with 12 processes, and skip 00-daily.t
+  export CYLC_TEST_SKIP=tests/cyclers/00-daily.t
+  cylc test-battery -j 12 tests/cyclers
 eof
 }
 
 TESTS=""
+
+# Defaults.
+export CYLC_TEST_RUN_GENERIC=${CYLC_TEST_RUN_GENERIC:-true}
+export CYLC_TEST_RUN_PLATFORM=${CYLC_TEST_RUN_PLATFORM:-true}
+export CYLC_TEST_SKIP=${CYLC_TEST_SKIP:-}
+export CYLC_TEST_IS_GENERIC=true
+
 for ARG in "$@"; do
     if [[ "$ARG" == '--help' || "$ARG" == '-h' ]]; then
         usage
@@ -85,7 +110,7 @@ for ARG in "$@"; do
 done
 
 if [[ "$PWD" != "$CYLC_DIR" ]]; then
-    echo "[INFO] cd \"$CYLC_DIR\""
+    echo "cd \"$CYLC_DIR\""
     cd "$CYLC_DIR"
 fi
 
