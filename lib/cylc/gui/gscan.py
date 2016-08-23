@@ -694,9 +694,11 @@ class ScanApp(object):
                 if (suite, host) not in self.warnings or not self.warnings[
                         (suite, host)]:
                     return False
-                tooltip.set_markup(tooltip_prefix +
-                                   '\n<b>New failures</b> (<i>last 5</i>)\n' +
-                                   self.warnings[(suite, host)])
+                tooltip.set_markup(
+                    tooltip_prefix +
+                    '\n<b>New failures</b> (<i>last 5</i>) <i><span ' +
+                    'foreground="#2222BB">click to dismiss</span></i>\n' +
+                    self.warnings[(suite, host)])
                 return True
             else:
                 # Hovering over a status indicator.
