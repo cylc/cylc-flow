@@ -66,9 +66,6 @@ script:
     - export CYLC_TEST_DIFF_CMD='diff -I Xlib'
     # Only run the generic tests on Travis CI.
     - export CYLC_TEST_RUN_PLATFORM=false
-    # Temporarily exclude some tests from Travis CI.
-    - export CYLC_TEST_SKIP="tests/pre-initial/10-warm-insert.t
-                             tests/pre-initial/11-warm-insert-stall.t"
     # Run tests with virtual frame buffer for X support.
     - xvfb-run -a cylc test-battery -j 5
 
