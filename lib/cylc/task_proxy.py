@@ -1495,7 +1495,7 @@ class TaskProxy(object):
 
     def ready_to_spawn(self):
         """Return True if ready to spawn my next-cycle successor.
-        
+
         A task proxy is never ready to spawn if:
            * it has spawned already
            * its state is submit-failed (avoid running multiple instances
