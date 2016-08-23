@@ -1512,8 +1512,7 @@ conditions; see `cylc conditions`.
                                     ": " + get_current_time_string())
                 count += 1
 
-            if (self._get_events_conf(self.EVENT_TIMEOUT) is not None and
-                    not (self.shut_down_cleanly or auto_stop)):
+            if not (self.shut_down_cleanly or auto_stop):
                 self.check_suite_stalled()
 
             time.sleep(1)
@@ -1575,7 +1574,8 @@ conditions; see `cylc conditions`.
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
             # start suite timer
-            self.set_suite_timer()
+            if self._get_events_conf(self.EVENT_TIMEOUT) is not None:
+                self.set_suite_timer()
         else:
             self.stalled_last = self.pool.pool_is_stalled()
 
