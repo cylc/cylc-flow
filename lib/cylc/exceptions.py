@@ -24,6 +24,7 @@ class CylcError(Exception):
         message - what the problem is.
     """
     def __init__(self, msg):
+        Exception.__init__(self, msg)
         self.msg = msg
 
     def __str__(self):

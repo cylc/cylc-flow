@@ -1008,8 +1008,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         self.put_pyro_command('set_stop_cleanly')
 
     def stopsuite(self, bt, window, kill_rb, stop_rb, stopat_rb, stopct_rb,
-                  stoptt_rb, stopnow_rb, stoppoint_entry, stopclock_entry,
-                  stoptask_entry):
+                  stoptt_rb, stopnow_rb, stopnownow_rb, stoppoint_entry,
+                  stopclock_entry, stoptask_entry):
         stop = False
         stopat = False
         stopnow = False
@@ -1031,6 +1031,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 return
         elif stopnow_rb.get_active():
             stopnow = True
+        elif stopnownow_rb.get_active():
+            stopnownow = True
         elif stopct_rb.get_active():
             stopclock = True
             stopclock_time = stopclock_entry.get_text()
@@ -1077,6 +1079,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.put_pyro_command('set_stop_after_point', stop_point_string)
         elif stopnow:
             self.put_pyro_command('stop_now')
+        elif stopnownow:
+            self.put_pyro_command('stop_now', True)
         elif stopclock:
             self.put_pyro_command('set_stop_after_clock_time', stopclock_time)
         elif stoptask:
@@ -1788,6 +1792,17 @@ shown here in the state they were in at the time of triggering.''')
         rb_vbox.pack_start(vbox, True)
 
         vbox = gtk.VBox()
+        stopnownow_rb = gtk.RadioButton(
+            stop_rb,
+            "Terminate _now (restart will follow up on orphaned tasks)")
+        label = gtk.Label("   cylc stop --now --now %s" % self.cfg.suite)
+        label.modify_font(pango.FontDescription("monospace"))
+        label.set_alignment(0, 0)
+        vbox.pack_start(stopnownow_rb, True)
+        vbox.pack_start(label, True)
+        rb_vbox.pack_start(vbox, True)
+
+        vbox = gtk.VBox()
         stopat_rb = gtk.RadioButton(stop_rb, "Stop after _cycle point")
         label = gtk.Label("   cylc stop %s CYCLE_POINT" % self.cfg.suite)
         label.modify_font(pango.FontDescription("monospace"))
@@ -1855,6 +1870,8 @@ shown here in the state they were in at the time of triggering.''')
             "toggled", self.stop_method, "stopat", st_box, sc_box, tt_box)
         stopnow_rb.connect(
             "toggled", self.stop_method, "stopnow", st_box, sc_box, tt_box)
+        stopnownow_rb.connect(
+            "toggled", self.stop_method, "stopnownow", st_box, sc_box, tt_box)
         stopct_rb.connect(
             "toggled", self.stop_method, "stopclock", st_box, sc_box, tt_box)
         stoptt_rb.connect(
@@ -1865,7 +1882,7 @@ shown here in the state they were in at the time of triggering.''')
         stop_button = gtk.Button(" _OK ")
         stop_button.connect("clicked", self.stopsuite, window, kill_rb,
                             stop_rb, stopat_rb, stopct_rb, stoptt_rb,
-                            stopnow_rb, stop_point_string_entry,
+                            stopnow_rb, stopnownow_rb, stop_point_string_entry,
                             stopclock_entry, stoptask_entry)
         help_button = gtk.Button("_Help")
         help_button.connect("clicked", self.command_help, "control", "stop")
@@ -1938,7 +1955,11 @@ shown here in the state they were in at the time of triggering.''')
         box.pack_start(restart_rb, True)
         warmstart_rb = gtk.RadioButton(coldstart_rb, "Warm-start")
         box.pack_start(warmstart_rb, True)
-        coldstart_rb.set_active(True)
+        if self.updater is not None and self.updater.stop_summary is not None:
+            # Restart is more likely for a suite that has run before?
+            restart_rb.set_active(True)
+        else:
+            coldstart_rb.set_active(True)
         vbox.pack_start(box)
 
         box = gtk.HBox()

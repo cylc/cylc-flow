@@ -89,8 +89,13 @@ def main():
 
     parser.add_option(
         "-n", "--now",
-        help="Shut down immediately, orphaning currently active tasks.",
-        action="store_true", default=False, dest="now")
+        help=(
+            "Shut down without waiting for active tasks to complete." +
+            " If this option is specified once," +
+            " wait for task event handler, job poll/kill to complete." +
+            " If this option is specified more than once," +
+            " tell the suite to terminate immediately."),
+        action="count", default=0, dest="now")
 
     parser.add_option(
         "-w", "--wall-clock", metavar="STOP",
@@ -130,25 +135,27 @@ def main():
             }
         )
 
-    method = None
     if options.wall_clock:
-        method = 'set_stop_after_clock_time'
-        prompt_text = 'Set shutdown at wall clock %s' % options.wall_clock
-        shutdown_arg = options.wall_clock
-    elif shutdown_at:
+        prompt(
+            'Set shutdown at wall clock %s for %s' % (
+                options.wall_clock, suite),
+            options.force)
+        pclient.put_command('set_stop_after_clock_time', options.wall_clock)
+    elif shutdown_at and TaskID.is_valid_id(shutdown_arg):
         # STOP argument detected
-        if TaskID.is_valid_id(shutdown_arg):
-            # is a task ID
-            method = 'set_stop_after_task'
-            prompt_text = 'Set shutdown after task %s' % shutdown_arg
-        else:
-            # not a task ID, may be a cycle point
-            method = 'set_stop_after_point'
-            prompt_text = 'Set shutdown at cycle point %s' % shutdown_arg
-
-    if method:
-        prompt(prompt_text + ' for ' + suite, options.force)
-        pclient.put_command(method, shutdown_arg)
+        prompt(
+            'Set shutdown after task %s for %s' % (shutdown_arg, suite),
+            options.force)
+        pclient.put_command('set_stop_after_task', shutdown_arg)
+    elif shutdown_at:
+        # not a task ID, may be a cycle point
+        prompt(
+            'Set shutdown at cycle point %s for %s' % (shutdown_arg, suite),
+            options.force)
+        pclient.put_command('set_stop_after_point', shutdown_arg)
+    elif options.now > 1:
+        prompt('Shut down and terminate %s now' % suite, options.force)
+        pclient.put_command('stop_now', True)
     elif options.now:
         prompt('Shut down %s now' % suite, options.force)
         pclient.put_command('stop_now')
