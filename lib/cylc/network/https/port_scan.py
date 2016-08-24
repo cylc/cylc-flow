@@ -31,7 +31,7 @@ from cylc.network.https.suite_identifier_client import (
     SuiteIdClientAnon, SuiteIdClient)
 from cylc.owner import USER
 from cylc.registration import RegistrationDB
-from cylc.suite_host import get_hostname, is_remote_host
+from cylc.suite_host import get_hostname, is_remote_host, get_host_ip_by_name
 
 
 def scan(host=None, db=None, timeout=None):
@@ -54,8 +54,12 @@ def scan(host=None, db=None, timeout=None):
     reg_db = RegistrationDB(db)
     results = []
     my_uuid = uuid4()
+    host_for_anon = host
+    if is_remote_host(host):
+        host_for_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic.
     for port in range(base_port, last_port):
-        client = SuiteIdClientAnon(None, host=host, port=port, my_uuid=my_uuid)
+        client = SuiteIdClientAnon(None, host=host_for_anon, port=port,
+                                   my_uuid=my_uuid)
         try:
             result = (port, client.identify())
         except ConnectionDeniedError as exc:

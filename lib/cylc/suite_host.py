@@ -104,6 +104,11 @@ class SuiteHostUtil(object):
             pass
         return ipaddr
 
+    @staticmethod
+    def get_host_ip_by_name(target):
+        """Return internal IP address of target."""
+        return socket.gethostbyname(target)
+
     def get_hostname(self):
         """Return the fully qualified domain name for current host."""
         if self._host_name is None:
@@ -176,6 +181,11 @@ def get_hostname():
 def get_local_ip_address(target):
     """Shorthand for SuiteHostUtil.get_inst().get_local_ip_address(target)."""
     return SuiteHostUtil.get_inst().get_local_ip_address(target)
+
+
+def get_host_ip_by_name(target):
+    """Shorthand for SuiteHostUtil.get_inst().get_host_ip_by_name(target)."""
+    return SuiteHostUtil.get_inst().get_host_ip_by_name(target)
 
 
 def get_suite_host():

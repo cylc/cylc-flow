@@ -157,7 +157,7 @@ def main():
         pclient.put_command('set_stop_after_point', point_string=shutdown_arg)
     elif options.now > 1:
         prompt('Shut down and terminate %s now' % suite, options.force)
-        pclient.put_command('stop_now', kill_active_tasks=True)
+        pclient.put_command('stop_now', terminate=True)
     elif options.now:
         prompt('Shut down %s now' % suite, options.force)
         pclient.put_command('stop_now')

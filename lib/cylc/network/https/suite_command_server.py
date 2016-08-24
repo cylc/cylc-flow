@@ -45,8 +45,10 @@ class SuiteCommandServer(BaseCommsServer):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def stop_now(self):
-        return self._put("stop_now", None)
+    def stop_now(self, terminate=False):
+        if isinstance(terminate, basestring):
+            terminate = ast.literal_eval(terminate)
+        return self._put("stop_now", None, {"terminate": terminate})
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

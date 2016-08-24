@@ -136,7 +136,8 @@ class InitData(object):
 Class to hold initialisation data.
     """
     def __init__(self, suite, owner, host, port, db,
-                 comms_timeout, template_vars, ungrouped_views, use_defn_order):
+                 comms_timeout, template_vars, ungrouped_views,
+                 use_defn_order):
         self.suite = suite
         self.owner = owner
         self.host = host
@@ -523,13 +524,8 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS["graph"] = ControlGraph
         VIEWS_ORDERED.append("graph")
 
-<<<<<<< HEAD
-    def __init__(self, suite, db, owner, host, port, pyro_timeout,
-                 template_vars, restricted_display):
-=======
     def __init__(self, suite, db, owner, host, port, comms_timeout,
-                 template_vars, template_vars_file, restricted_display):
->>>>>>> 30b4022...  #1872: comms layer to https
+                 template_vars, restricted_display):
 
         gobject.threads_init()
 
@@ -541,17 +537,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if "graph" in self.__class__.VIEWS_ORDERED:
                 self.__class__.VIEWS_ORDERED.remove('graph')
 
-<<<<<<< HEAD
         self.cfg = InitData(
-            suite, owner, host, port, db, pyro_timeout, template_vars,
+            suite, owner, host, port, db, comms_timeout, template_vars,
             gcfg.get(["ungrouped views"]),
             gcfg.get(["sort by definition order"]))
-=======
-        self.cfg = InitData(suite, owner, host, port, db, comms_timeout,
-                            template_vars, template_vars_file,
-                            gcfg.get(["ungrouped views"]),
-                            gcfg.get(["sort by definition order"]))
->>>>>>> 30b4022...  #1872: comms layer to https
 
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])
@@ -1093,13 +1082,9 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.put_comms_command('set_stop_after_point',
                                    point_string=stop_point_string)
         elif stopnow:
-<<<<<<< HEAD
-            self.put_pyro_command('stop_now')
-        elif stopnownow:
-            self.put_pyro_command('stop_now', True)
-=======
             self.put_comms_command('stop_now')
->>>>>>> 30b4022...  #1872: comms layer to https
+        elif stopnownow:
+            self.put_comms_command('stop_now', terminate=True)
         elif stopclock:
             self.put_comms_command('set_stop_after_clock_time',
                                    datetime_string=stopclock_time)
@@ -1747,7 +1732,7 @@ shown here in the state they were in at the time of triggering.''')
                 return False
             if not self.get_confirmation("reset %s to %s?" % (task_id, state)):
                 return
-        self.put_comms_command('reset_task_state', items=task_ids,
+        self.put_comms_command('reset_task_states', items=task_ids,
                                state=state)
 
     def remove_task(self, b, task_ids, is_family):
