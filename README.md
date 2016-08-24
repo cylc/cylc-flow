@@ -1,5 +1,7 @@
 # The Cylc Suite Engine
 
+[![Build Status](https://travis-ci.org/cylc/cylc.svg?branch=master)](https://travis-ci.org/cylc/cylc)
+
 ## A Workflow Engine and Meta-Scheduler
 
 Cylc specialises in continuous workflows of cycling (repeating) tasks such as
