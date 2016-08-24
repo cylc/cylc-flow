@@ -278,10 +278,9 @@ Arguments:"""
                         "Set the value of a Jinja2 template variable in the "
                         "suite definition. This option can be used multiple "
                         "times on the command line. "
-                        "WARNING: these settings do not persist across suite "
-                        "restarts; "
-                        "they need to be set again on the \"cylc restart\" "
-                        "command line."
+                        "NOTE: these settings persist across suite restarts, "
+                        "but can be set again on the \"cylc restart\" "
+                        "command line if they need to be overridden."
                     ),
                     action="append", default=[], dest="templatevars")
             except OptionConflictError:
@@ -294,10 +293,9 @@ Arguments:"""
                         "Set the value of Jinja2 template variables in the "
                         "suite definition from a file containing NAME=VALUE "
                         "pairs (one per line). "
-                        "WARNING: these settings do not persist across suite "
-                        "restarts; "
-                        "they need to be set again on the \"cylc restart\" "
-                        "command line."
+                        "NOTE: these settings persist across suite restarts, "
+                        "but can be set again on the \"cylc restart\" "
+                        "command line if they need to be overridden."
                     ),
                     action="store", default=None, dest="templatevars_file")
             except OptionConflictError:
