@@ -1,9 +1,9 @@
 [cylc]
     UTC mode = true
     [[event hooks]]
-        stalled handler = cylc reset %(suite)s foo -s ready
-    [[reference test]]
-        live mode suite timeout=PT2M
+        stalled handler = cylc reset %(suite)s foo.20100101T1200Z -s ready
+        abort on timeout = True
+        timeout = PT2M
 
 [scheduling]
     initial cycle point = 20100101T0000Z
@@ -12,7 +12,7 @@
         [[[T00, T06, T12, T18]]]
             graph = bar[-PT6H] => foo => bar
         [[[T18]]]
-            graph = bar => inserter
+            graph = inserter => bar
 
 [runtime]
     [[root]]
