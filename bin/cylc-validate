@@ -36,6 +36,7 @@ from cylc.version import CYLC_VERSION
 from cylc.config import SuiteConfig, SuiteConfigError
 from cylc.prerequisite import TriggerExpressionError
 from cylc.task_proxy import TaskProxy
+from cylc.templatevars import load_template_vars
 
 
 def main():
@@ -66,9 +67,8 @@ def main():
 
     cfg = SuiteConfig.get_inst(
         suite, suiterc,
+        load_template_vars(options.templatevars, options.templatevars_file),
         cli_initial_point_string=options.ict,
-        template_vars=options.templatevars,
-        template_vars_file=options.templatevars_file,
         validation=True, strict=options.strict,
         write_proc=not options.nowrite)
 

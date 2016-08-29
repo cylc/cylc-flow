@@ -38,12 +38,13 @@ if remrun().execute():
 
 import os
 import re
-import tempfile
+from tempfile import NamedTemporaryFile
 import subprocess
 
 import cylc.flags
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.templatevars import load_template_vars
 from parsec.fileparse import read_and_proc
 
 
@@ -104,7 +105,7 @@ def main():
              "for 'cylc edit --inline'.",
         action="store_true", default=False, dest="asedit")
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()[0]
 
     suite, suiterc = parser.get_suite()
 
@@ -113,9 +114,6 @@ def main():
         editor = GLOBAL_CFG.get(['editors', 'gui'])
     else:
         editor = GLOBAL_CFG.get(['editors', 'terminal'])
-
-    global suitedir
-    suitedir = os.path.dirname(suiterc)
 
     # read in the suite.rc file
     viewcfg = {'mark': options.mark,
@@ -126,7 +124,8 @@ def main():
                'inline': options.inline or options.jinja2 or options.process,
                }
     lines = read_and_proc(
-        suiterc, options.templatevars, options.templatevars_file,
+        suiterc,
+        load_template_vars(options.templatevars, options.templatevars_file),
         viewcfg=viewcfg, asedit=options.asedit)
 
     if options.stdout:
@@ -135,23 +134,22 @@ def main():
         sys.exit(0)
 
     # write to a temporary file
-    viewfile = tempfile.mktemp(suffix=".suite.rc", prefix=suite + '.',
-                               dir=cylc_tmpdir)
-    h = open(viewfile, 'wb')
+    viewfile = NamedTemporaryFile(
+        suffix=".suite.rc", prefix=suite + '.', dir=cylc_tmpdir)
     for line in lines:
-        h.write(line + '\n')
-    h.close()
+        viewfile.write(line + '\n')
+    viewfile.seek(0, 0)
 
     # set the file to be read only
-    os.chmod(viewfile, 0444)
+    os.chmod(viewfile.name, 0400)
 
     # capture the temp file's mod time in case the user edits it
     # and overrides the readonly mode.
-    modtime1 = os.stat(viewfile).st_mtime
+    modtime1 = os.stat(viewfile.name).st_mtime
 
     # in case editor has options, e.g. 'emacs -nw':
     command_list = re.split(' ', editor)
-    command_list.append(viewfile)
+    command_list.append(viewfile.name)
     command = ' '.join(command_list)
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
     retcode = subprocess.call(command_list)
@@ -163,17 +161,18 @@ def main():
     # !!!VIEWING FINISHED!!!
 
     # Did the user edit the file
-    modtime2 = os.stat(viewfile).st_mtime
+    modtime2 = os.stat(viewfile.name).st_mtime
 
     if modtime2 > modtime1:
         print
         print >> sys.stderr, (
             'WARNING: YOU HAVE EDITED A TEMPORARY READ-ONLY SUITE COPY:')
-        print >> sys.stderr, viewfile
+        print >> sys.stderr, viewfile.name
         print >> sys.stderr, (
             'In future use \'cylc [prep] edit\' to edit a suite.')
         print
     # DONE
+    viewfile.close()
 
 
 if __name__ == "__main__":

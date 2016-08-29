@@ -76,6 +76,7 @@ class TaskPool(object):
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
 
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
+    TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
 
@@ -125,6 +126,7 @@ class TaskPool(object):
         self.db_deletes_map = {self.TABLE_TASK_POOL: []}
         self.db_inserts_map = {
             self.TABLE_SUITE_PARAMS: [],
+            self.TABLE_SUITE_TEMPLATE_VARS: [],
             self.TABLE_CHECKPOINT_ID: [],
             self.TABLE_TASK_POOL: []}
 
@@ -1606,6 +1608,15 @@ class TaskPool(object):
             {"key": "initial_point", "value": str(initial_point)},
             {"key": "final_point", "value": str(final_point)},
         ])
+
+    def put_rundb_suite_template_vars(self, template_vars):
+        """Put template_vars in runtime database.
+
+        This method queues the relevant insert statements.
+        """
+        for key, value in template_vars.items():
+            self.db_inserts_map[self.TABLE_SUITE_TEMPLATE_VARS].append(
+                {"key": key, "value": value})
 
     def put_rundb_task_pool(self):
         """Put statements to update the task_spawned table in runtime database.

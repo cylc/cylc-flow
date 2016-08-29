@@ -16,18 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import xdot
-from gui import util
-import subprocess
 import gtk
-import time
-import gobject
-from cylc.config import SuiteConfig
 import os
-import sys
 import re
-from graphing import CGraphPlain
+import sys
+import xdot
+from cylc.config import SuiteConfig
+from cylc.graphing import CGraphPlain
+from cylc.gui import util
 from cylc.task_id import TaskID
+from cylc.templatevars import load_template_vars
 
 """
 Cylc-modified xdot windows for the "cylc graph" command.
@@ -45,9 +43,7 @@ class CylcDotViewerCommon(xdot.DotWindow):
             collapsed = []
         try:
             self.suiterc = SuiteConfig(
-                self.suite, self.file,
-                template_vars=self.template_vars,
-                template_vars_file=self.template_vars_file,
+                self.suite, self.file, self.template_vars,
                 is_reload=is_reload, collapsed=collapsed,
                 vis_start_string=self.start_point_string,
                 vis_stop_string=self.stop_point_string)
@@ -94,8 +90,8 @@ class MyDotWindow2(CylcDotViewerCommon):
     </ui>
     '''
 
-    def __init__(self, suite, suiterc, template_vars,
-                 template_vars_file, orientation="TB", should_hide=False):
+    def __init__(self, suite, suiterc, template_vars, orientation="TB",
+                 should_hide=False):
         self.outfile = None
         self.disable_output_image = False
         self.suite = suite
@@ -103,7 +99,6 @@ class MyDotWindow2(CylcDotViewerCommon):
         self.suiterc = None
         self.orientation = orientation
         self.template_vars = template_vars
-        self.template_vars_file = template_vars_file
         self.start_point_string = None
         self.stop_point_string = None
         self.filter_recs = []
@@ -267,7 +262,7 @@ class MyDotWindow(CylcDotViewerCommon):
     '''
 
     def __init__(self, suite, suiterc, start_point_string, stop_point_string,
-                 template_vars, template_vars_file, orientation="TB",
+                 template_vars, orientation="TB",
                  subgraphs_on=False, ignore_suicide=True, should_hide=False):
         self.outfile = None
         self.disable_output_image = False
@@ -277,7 +272,6 @@ class MyDotWindow(CylcDotViewerCommon):
         self.orientation = orientation
         self.subgraphs_on = subgraphs_on
         self.template_vars = template_vars
-        self.template_vars_file = template_vars_file
         self.ignore_suicide = ignore_suicide
         self.start_point_string = start_point_string
         self.stop_point_string = stop_point_string

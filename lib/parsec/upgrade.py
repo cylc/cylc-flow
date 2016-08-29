@@ -15,36 +15,40 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Support automatic deprecation and obsoletion of parsec config items."""
 
 import sys
 if __name__ == '__main__':
     import os
-    here = os.path.dirname( __file__ )
-    sys.path.append( here + '/..' )
+    sys.path.append(os.path.dirname(__file__) + '/..')
 
 from parsec import ParsecError
 from parsec.OrderedDict import OrderedDict
 import cylc.flags
 
-"""Support automatic deprecation and obsoletion of parsec config items."""
 
 class UpgradeError(ParsecError):
     pass
 
-class converter( object ):
+
+class converter(object):
     """Create custom config value converters."""
-    def __init__( self, callback, descr ):
+
+    def __init__(self, callback, descr):
         self.callback = callback
         self.descr = descr
-    def describe( self ):
-        return self.descr
-    def convert( self, val ):
-        return self.callback( val)
 
-class upgrader( object ):
+    def describe(self):
+        return self.descr
+
+    def convert(self, val):
+        return self.callback(val)
+
+
+class upgrader(object):
     """Handles upgrading of deprecated config values."""
 
-    def __init__( self, cfg, descr ):
+    def __init__(self, cfg, descr):
         """Store the config dict to be upgraded if necessary."""
         self.cfg = cfg
         self.descr = descr
@@ -55,36 +59,24 @@ class upgrader( object ):
         if vn not in self.upgrades:
             self.upgrades[vn] = []
         if cvtr is None:
-            cvtr = converter(lambda x: x, "value unchanged") # identity
+            cvtr = converter(lambda x: x, "value unchanged")  # identity
         self.upgrades[vn].append(
-            {
-                'old': oldkeys,
-                'new': newkeys,
-                'cvt': cvtr,
-                'silent': silent
-            }
-        )
+            {'old': oldkeys, 'new': newkeys, 'cvt': cvtr, 'silent': silent})
 
     def obsolete(self, vn, oldkeys, newkeys=None, silent=False):
         if vn not in self.upgrades:
             self.upgrades[vn] = []
-        cvtr = converter(lambda x: x, "DELETED (OBSOLETE)") # identity
+        cvtr = converter(lambda x: x, "DELETED (OBSOLETE)")  # identity
         self.upgrades[vn].append(
-            {
-                'old' : oldkeys,
-                'new' : newkeys,
-                'cvt' : cvtr,
-                'silent': silent 
-            }
-        )
+            {'old': oldkeys, 'new': newkeys, 'cvt': cvtr, 'silent': silent})
 
-    def get_item( self, keys ):
+    def get_item(self, keys):
         item = self.cfg
         for key in keys:
             item = item[key]
         return item
 
-    def put_item( self, keys, val ):
+    def put_item(self, keys, val):
         item = self.cfg
         for key in keys[:-1]:
             if key not in item:
@@ -92,20 +84,20 @@ class upgrader( object ):
             item = item[key]
         item[keys[-1]] = val
 
-    def del_item( self, keys ):
+    def del_item(self, keys):
         item = self.cfg
         for key in keys[:-1]:
             item = item[key]
         del item[keys[-1]]
 
-    def show_keys( self, keys ):
+    def show_keys(self, keys):
         return '[' + ']['.join(keys) + ']'
 
-    def expand( self, upg ):
+    def expand(self, upg):
         """Expands __MANY__ items."""
         if '__MANY__' not in upg['old']:
             return [upg]
-        if upg['old'].count( '__MANY__' ) > 1:
+        if upg['old'].count('__MANY__') > 1:
             print >> sys.stderr, upg['old']
             raise UpgradeError("Multiple simultaneous __MANY__ not supported")
         exp_upgs = []
@@ -118,14 +110,14 @@ class upgrader( object ):
             i += 1
             if k == "__MANY__":
                 pre = okeys[:i]
-                post = okeys[i+1:]
+                post = okeys[i + 1:]
                 tmp = self.cfg
                 for j in pre:
                     tmp = tmp[j]
                 many = tmp.keys()
                 break
         if not many:
-            exp_upgs.append( upg )
+            exp_upgs.append(upg)
         else:
             i = -1
             nkeys = upg['new']
@@ -135,19 +127,19 @@ class upgrader( object ):
                 i += 1
                 if k == "__MANY__":
                     npre = nkeys[:i]
-                    npost = nkeys[i+1:]
+                    npost = nkeys[i + 1:]
             if not npre or not npost:
                 raise UpgradeError('ERROR: __MANY__ mismatch')
             for m in many:
-                exp_upgs.append( {
+                exp_upgs.append({
                     'old': pre + [m] + post,
                     'new': npre + [m] + npost,
                     'cvt': upg['cvt'],
-                    'silent': upg['silent']
-                    })
+                    'silent': upg['silent'],
+                })
         return exp_upgs
 
-    def upgrade( self ):
+    def upgrade(self):
         warnings = OrderedDict()
         do_warn = False
         for vn, upgs in self.upgrades.items():
@@ -161,7 +153,7 @@ class upgrader( object ):
 
                 for upg in exp:
                     try:
-                        old = self.get_item( upg['old'] )
+                        old = self.get_item(upg['old'])
                     except:
                         # OK: deprecated item not found
                         pass
@@ -173,14 +165,16 @@ class upgrader( object ):
                             upg['new'] = upg['old']
                         msg += " - " + upg['cvt'].describe()
                         if not upg['silent']:
-                            warnings[vn].append( msg )
+                            warnings[vn].append(msg)
                             do_warn = True
-                        self.del_item( upg['old'] )
+                        self.del_item(upg['old'])
                         if upg['cvt'].describe() != "DELETED (OBSOLETE)":
-                            self.put_item( upg['new'], upg['cvt'].convert(old) )
+                            self.put_item(upg['new'], upg['cvt'].convert(old))
         if do_warn and cylc.flags.verbose:
-            print >> sys.stderr, "WARNING: deprecated items were automatically upgraded in '" + self.descr + "':"
-            for vn,msgs in warnings.items():
+            print >> sys.stderr, (
+                "WARNING: deprecated items were automatically upgraded in '" +
+                self.descr + "':")
+            for vn, msgs in warnings.items():
                 for m in msgs:
                     print >> sys.stderr, " * (" + vn + ")", m
 
@@ -189,42 +183,42 @@ if __name__ == "__main__":
     cylc.flags.verbose = True
 
     cfg = {
-            'item one' : 1,
-            'item two' : 'move me up',
-            'section A' :
-            {
-                'abc' : 5,
-                'cde' : 'foo',
-                },
-            'hostnames' :
-            {
-                'host 1' :
-                {
-                    'work dir' : '/a/b/c',
-                    'running dir' : '/a/b/c/d'
-                    },
-                'host 2' :
-                {
-                    'work dir' : '/x/b/c',
-                    'running dir' : '/x/b/c/d'
-                    },
-                }
-            }
-    x2 = converter( lambda x: 2*x, 'value x 2' )
+        'item one': 1,
+        'item two': 'move me up',
+        'section A': {
+            'abc': 5,
+            'cde': 'foo',
+        },
+        'hostnames': {
+            'host 1': {
+                'work dir': '/a/b/c',
+                'running dir': '/a/b/c/d'
+            },
+            'host 2': {
+                'work dir': '/x/b/c',
+                'running dir': '/x/b/c/d'
+            },
+        }
+    }
+    x2 = converter(lambda x: 2 * x, 'value x 2')
 
     printcfg(cfg)
     print
 
-    upg = upgrader( cfg, 'test file' )
+    upg = upgrader(cfg, 'test file')
     # successive upgrades are incremental - at least until I think of a
     # good way to remember what items have already been translated...
-    upg.deprecate( '1.3', ['item one' ], ['item ONE'], x2 )
-    upg.deprecate( '1.3', ['section A'], ['Heading A'] )
-    upg.deprecate( '1.3', ['Heading A','cde'], ['Heading A', 'CDE'] ) # NOTE change to new item keys here!
-    upg.deprecate( '1.4', ['Heading A','abc'], cvtr=x2, silent=True )
-    upg.deprecate( '1.4.1', ['item two'], ['Heading A','item two'], silent=True )
-    upg.deprecate( '1.5', ['hostnames'], ['hosts'] )
-    upg.deprecate( '1.5', ['hosts', '__MANY__', 'running dir'], ['hosts','__MANY__', 'run dir'] )
+    upg.deprecate('1.3', ['item one'], ['item ONE'], x2)
+    upg.deprecate('1.3', ['section A'], ['Heading A'])
+    # NOTE change to new item keys here!
+    upg.deprecate('1.3', ['Heading A', 'cde'], ['Heading A', 'CDE'])
+    upg.deprecate('1.4', ['Heading A', 'abc'], cvtr=x2, silent=True)
+    upg.deprecate(
+        '1.4.1', ['item two'], ['Heading A', 'item two'], silent=True)
+    upg.deprecate('1.5', ['hostnames'], ['hosts'])
+    upg.deprecate(
+        '1.5',
+        ['hosts', '__MANY__', 'running dir'], ['hosts', '__MANY__', 'run dir'])
 
     upg.upgrade()
 

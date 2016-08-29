@@ -50,7 +50,7 @@ class OrderedDictWithDefaults(OrderedDict):
         super(OrderedDictWithDefaults, self).__init__(*args, **kwargs)
 
     def __getitem__(self, key):
-        """Override to look in our special .defaults attribute, if it exists."""
+        """Override to look in our special defaults attribute, if it exists."""
         try:
             return OrderedDict.__getitem__(self, key)
         except KeyError:

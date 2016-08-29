@@ -45,6 +45,7 @@ if '--use-ssh' in sys.argv[1:]:
 import os
 from cylc.option_parsers import CylcOptionParser as COP
 import cylc.flags
+from cylc.templatevars import load_template_vars
 
 
 def main():
@@ -95,9 +96,11 @@ def main():
         suite = args[0]
     else:
         suite = None
-    app = ControlApp(suite, options.db, options.owner, options.host,
-                     options.port, options.pyro_timeout, options.templatevars,
-                     options.templatevars_file, options.restricted)
+    app = ControlApp(
+        suite, options.db, options.owner, options.host,
+        options.port, options.pyro_timeout,
+        load_template_vars(options.templatevars, options.templatevars_file),
+        options.restricted)
     gtk.main()
 
 

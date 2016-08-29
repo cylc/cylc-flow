@@ -608,16 +608,13 @@ class RawSuiteConfig(config):
     _CFPATH = None
 
     @classmethod
-    def get_inst(cls, fpath, force=False, tvars=None, tvars_file=None,
-                 write_proc=False):
+    def get_inst(cls, fpath, force=False, tvars=None, write_proc=False):
         """Return the default instance."""
         if cls._SUITECFG is None or fpath != cls._CFPATH or force:
             cls._CFPATH = fpath
             if tvars is None:
                 tvars = []
             # TODO - write_proc should be in loadcfg
-            cls._SUITECFG = cls(
-                SPEC, upg, tvars=tvars, tvars_file=tvars_file,
-                write_proc=write_proc)
+            cls._SUITECFG = cls(SPEC, upg, tvars=tvars, write_proc=write_proc)
             cls._SUITECFG.loadcfg(fpath, "suite definition")
         return cls._SUITECFG

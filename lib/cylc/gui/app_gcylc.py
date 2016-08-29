@@ -136,8 +136,7 @@ class InitData(object):
 Class to hold initialisation data.
     """
     def __init__(self, suite, owner, host, port, db,
-                 pyro_timeout, template_vars, template_vars_file,
-                 ungrouped_views, use_defn_order):
+                 pyro_timeout, template_vars, ungrouped_views, use_defn_order):
         self.suite = suite
         self.owner = owner
         self.host = host
@@ -149,12 +148,9 @@ Class to hold initialisation data.
             self.pyro_timeout = None
 
         self.template_vars_opts = ""
-        for tv in template_vars:
-            self.template_vars_opts += " --set " + tv
-        if template_vars_file:
-            self.template_vars_opts += " --set-file " + template_vars_file
+        for item in template_vars.items():
+            self.template_vars_opts += " --set=%s=%s" % item
         self.template_vars = template_vars
-        self.template_vars_file = template_vars_file
         self.ungrouped_views = ungrouped_views
         self.use_defn_order = use_defn_order
 
@@ -528,7 +524,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS_ORDERED.append("graph")
 
     def __init__(self, suite, db, owner, host, port, pyro_timeout,
-                 template_vars, template_vars_file, restricted_display):
+                 template_vars, restricted_display):
 
         gobject.threads_init()
 
@@ -540,10 +536,10 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             if "graph" in self.__class__.VIEWS_ORDERED:
                 self.__class__.VIEWS_ORDERED.remove('graph')
 
-        self.cfg = InitData(suite, owner, host, port, db, pyro_timeout,
-                            template_vars, template_vars_file,
-                            gcfg.get(["ungrouped views"]),
-                            gcfg.get(["sort by definition order"]))
+        self.cfg = InitData(
+            suite, owner, host, port, db, pyro_timeout, template_vars,
+            gcfg.get(["ungrouped views"]),
+            gcfg.get(["sort by definition order"]))
 
         self.theme_name = gcfg.get(['use theme'])
         self.theme = gcfg.get(['themes', self.theme_name])

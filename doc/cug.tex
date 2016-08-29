@@ -4817,9 +4817,10 @@ Note also that
 \lstinline=cylc view --set FIRST_TASK=bob --jinja2 SUITE= will show the
 suite with the Jinja2 variables as set.
 
-{\em Warning:} suites started with template variables set on the command
-line do not currently {\em restart} with the same settings - you have to
-set them again on the \lstinline=cylc restart= command line.
+{\em Note:} suites started with template variables set on the command
+line will {\em restart} with the same settings. However, you can set
+them again on the \lstinline=cylc restart= command line if they need to
+be overridden.
 
 
 \subsection{Omitting Tasks At Runtime}

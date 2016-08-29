@@ -173,6 +173,7 @@ class CylcSuiteDAO(object):
     TABLE_BROADCAST_STATES_CHECKPOINTS = "broadcast_states_checkpoints"
     TABLE_SUITE_PARAMS = "suite_params"
     TABLE_SUITE_PARAMS_CHECKPOINTS = "suite_params_checkpoints"
+    TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_JOB_LOGS = "task_job_logs"
     TABLE_TASK_EVENTS = "task_events"
@@ -214,6 +215,10 @@ class CylcSuiteDAO(object):
         ],
         TABLE_SUITE_PARAMS_CHECKPOINTS: [
             ["id", {"datatype": "INTEGER", "is_primary_key": True}],
+            ["key", {"is_primary_key": True}],
+            ["value"],
+        ],
+        TABLE_SUITE_TEMPLATE_VARS: [
             ["key", {"is_primary_key": True}],
             ["value"],
         ],
@@ -347,10 +352,12 @@ class CylcSuiteDAO(object):
                 "SELECT name FROM sqlite_master WHERE type==? ORDER BY name",
                 ["table"]):
             names.append(row[0])
+        cur = None
         for name, table in self.tables.items():
             if name not in names:
-                self.conn.execute(table.get_create_stmt())
-                self.conn.commit()
+                cur = self.conn.execute(table.get_create_stmt())
+        if cur is not None:
+            self.conn.commit()
 
     def execute_queued_items(self):
         """Execute queued items for each table."""
@@ -491,6 +498,16 @@ class CylcSuiteDAO(object):
                     r" WHERE id==?")
             stmt_args = [id_key]
         for row_idx, row in enumerate(self.connect().execute(stmt, stmt_args)):
+            callback(row_idx, list(row))
+
+    def select_suite_template_vars(self, callback):
+        """Select from suite_template_vars.
+
+        Invoke callback(row_idx, row) on each row, where each row contains:
+            [key,value]
+        """
+        for row_idx, row in enumerate(self.connect().execute(
+                r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
             callback(row_idx, list(row))
 
     def select_task_job(self, keys, cycle, name, submit_num=None):

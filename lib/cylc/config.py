@@ -15,12 +15,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Parse and validate the suite definition file
 
-import re
+Do some consistency checking, then construct task proxy objects and graph
+structures.
+"""
+
+from copy import deepcopy, copy
 import os
+import re
 import sys
 import traceback
-from cylc.taskdef import TaskDef, TaskDefError
+
+from cylc.c3mro import C3
 from cylc.cfgspec.suite import RawSuiteConfig
 from cylc.cycling.loader import (get_point, get_point_relative,
                                  get_interval, get_interval_cls,
@@ -28,27 +35,23 @@ from cylc.cycling.loader import (get_point, get_point_relative,
                                  init_cyclers, INTEGER_CYCLING_TYPE,
                                  ISO8601_CYCLING_TYPE)
 from cylc.cycling import IntervalParsingError
-from cylc.wallclock import get_current_time_string
-from isodatetime.data import Calendar
-from envvar import check_varnames
-from copy import deepcopy, copy
-from message_output import MessageOutput
-from graphnode import graphnode, GraphNodeError
-from print_tree import print_tree
-from regpath import RegPath
-from task_trigger import TaskTrigger
-from parsec.util import replicate
-from cylc.task_id import TaskID
-from cylc.c3mro import C3
-from parsec.OrderedDict import OrderedDictWithDefaults
-import flags
-from syntax_flags import (
+from cylc.envvar import check_varnames
+import cylc.flags
+from cylc.graphnode import graphnode, GraphNodeError
+from cylc.message_output import MessageOutput
+from cylc.print_tree import print_tree
+from cylc.regpath import RegPath
+from cylc.syntax_flags import (
     SyntaxVersion, set_syntax_version, VERSION_PREV, VERSION_NEW)
+from cylc.taskdef import TaskDef, TaskDefError
+from cylc.task_id import TaskID
+from cylc.task_trigger import TaskTrigger
+from cylc.wallclock import get_current_time_string
 
-"""
-Parse and validate the suite definition file, do some consistency
-checking, then construct task proxy objects and graph structures.
-"""
+from isodatetime.data import Calendar
+from parsec.OrderedDict import OrderedDictWithDefaults
+from parsec.util import replicate
+
 
 RE_SUITE_NAME_VAR = re.compile('\${?CYLC_SUITE_(REG_)?NAME}?')
 RE_TASK_NAME_VAR = re.compile('\${?CYLC_TASK_NAME}?')
@@ -73,7 +76,7 @@ CONDITIONAL_REGEX_REPLACEMENTS = [
 ]
 
 try:
-    import graphing
+    import cylc.graphing
 except ImportError:
     graphing_disabled = True
 else:
@@ -124,8 +127,7 @@ class SuiteConfig(object):
     _FORCE = False  # Override singleton behaviour (only used by "cylc diff"!)
 
     @classmethod
-    def get_inst(cls, suite=None, fpath=None,
-                 template_vars=[], template_vars_file=None,
+    def get_inst(cls, suite=None, fpath=None, template_vars=None,
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
@@ -141,14 +143,14 @@ class SuiteConfig(object):
         if cls._INSTANCE is None or cls._FORCE:
             cls._FORCE = False
             cls._INSTANCE = cls(
-                suite, fpath, template_vars, template_vars_file, owner,
+                suite, fpath, template_vars, owner,
                 run_mode, validation, strict, collapsed,
                 cli_initial_point_string, cli_start_point_string,
                 cli_final_point_string, is_restart, is_reload, write_proc,
                 vis_start_string, vis_stop_string, mem_log_func)
         return cls._INSTANCE
 
-    def __init__(self, suite, fpath, template_vars=[], template_vars_file=None,
+    def __init__(self, suite, fpath, template_vars=None,
                  owner=None, run_mode='live', validation=False, strict=False,
                  collapsed=[], cli_initial_point_string=None,
                  cli_start_point_string=None, cli_final_point_string=None,
@@ -216,8 +218,7 @@ class SuiteConfig(object):
         # items
         self.mem_log("config.py: before RawSuiteConfig.get_inst")
         self.pcfg = RawSuiteConfig.get_inst(
-            fpath, force=is_reload, tvars=template_vars,
-            tvars_file=template_vars_file, write_proc=write_proc)
+            fpath, force=is_reload, tvars=template_vars, write_proc=write_proc)
         self.mem_log("config.py: after RawSuiteConfig.get_inst")
         self.mem_log("config.py: before get(sparse=True")
         self.cfg = self.pcfg.get(sparse=True)
@@ -287,7 +288,7 @@ class SuiteConfig(object):
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         # Replace [runtime][name1,name2,...] with separate namespaces.
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "Expanding [runtime] name lists"
         # This requires expansion into a new OrderedDict to preserve the
         # correct order of the final list of namespaces (add-or-override
@@ -332,9 +333,9 @@ class SuiteConfig(object):
         init_cyclers(self.cfg)
 
         # Running in UTC time? (else just use the system clock)
-        flags.utc = self.cfg['cylc']['UTC mode']
+        cylc.flags.utc = self.cfg['cylc']['UTC mode']
         # Capture cycling mode
-        flags.cycling_mode = self.cfg['scheduling']['cycling mode']
+        cylc.flags.cycling_mode = self.cfg['scheduling']['cycling mode']
 
         # Initial point from suite definition (or CLI override above).
         icp = self.cfg['scheduling']['initial cycle point']
@@ -430,7 +431,7 @@ class SuiteConfig(object):
                         str(final_point), constraints_str))
 
         # Parse special task cycle point offsets, and replace family names.
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "Parsing [special tasks]"
         for type in self.cfg['scheduling']['special tasks']:
             result = copy(self.cfg['scheduling']['special tasks'][type])
@@ -462,11 +463,11 @@ class SuiteConfig(object):
                     name, offset_string = m.groups()
                     if not offset_string:
                         offset_string = "PT0M"
-                    if flags.verbose:
+                    if cylc.flags.verbose:
                         if offset_string.startswith("-"):
-                                print >> sys.stderr, (
-                                    "WARNING: %s offsets are "
-                                    "normally positive: %s" % (type, item))
+                            print >> sys.stderr, (
+                                "WARNING: %s offsets are "
+                                "normally positive: %s" % (type, item))
                     offset_converted_from_prev = False
                     try:
                         float(offset_string)
@@ -536,7 +537,7 @@ class SuiteConfig(object):
         for cfam in self.closed_families:
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
-                if fromrc and flags.verbose:
+                if fromrc and cylc.flags.verbose:
                     print >> sys.stderr, (
                         'WARNING, [visualization][collapsed families]: ' +
                         'family ' + cfam + ' not defined')
@@ -558,7 +559,7 @@ class SuiteConfig(object):
         # Warn or abort (if --strict) if naked dummy tasks (no runtime
         # section) are found in graph or queue config.
         if len(self.naked_dummy_tasks) > 0:
-            if self.strict or flags.verbose:
+            if self.strict or cylc.flags.verbose:
                 print >> sys.stderr, (
                     'WARNING: naked dummy tasks detected (no entry under ' +
                     '[runtime]):')
@@ -605,7 +606,7 @@ class SuiteConfig(object):
             if fam not in ngs:
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
 
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "Checking [visualization] node attributes"
             # TODO - these should probably be done in non-verbose mode too.
             # 1. node groups should contain valid namespace names
@@ -683,7 +684,7 @@ class SuiteConfig(object):
                 self.cfg['scheduling']['initial cycle point'])
             # If viz initial point is None don't accept a final point.
             if self.cfg['visualization']['final cycle point'] is not None:
-                if flags.verbose:
+                if cylc.flags.verbose:
                     print >> sys.stderr, (
                         "WARNING: ignoring [visualization]final cycle point\n"
                         "  (it must be defined with an initial cycle point)")
@@ -850,7 +851,7 @@ class SuiteConfig(object):
                 first_parents[name] = [pts[0]]
             self.runtime['parents'][name] = pts
 
-        if flags.verbose and demoted:
+        if cylc.flags.verbose and demoted:
             print "First parent(s) demoted to secondary:"
             for n, p in demoted.items():
                 print " +", p, "as parent of '" + n + "'"
@@ -864,7 +865,7 @@ class SuiteConfig(object):
                 self.runtime['first-parent ancestors'][name] = (
                     c3_single.mro(name))
             except RuntimeError as exc:
-                if flags.debug:
+                if cylc.flags.debug:
                     raise
                 exc_lines = traceback.format_exc().splitlines()
                 if exc_lines[-1].startswith(
@@ -891,7 +892,7 @@ class SuiteConfig(object):
         #     print name, self.runtime['linearized ancestors'][name]
 
     def compute_inheritance(self, use_simple_method=True):
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "Parsing the runtime namespace hierarchy"
 
         results = OrderedDictWithDefaults()
@@ -1006,7 +1007,7 @@ class SuiteConfig(object):
         # Note this modifies the parsed config dict.
         queues = self.cfg['scheduling']['queues']
 
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "Configuring internal queues"
 
         # First add all tasks to the default queue.
@@ -1073,7 +1074,7 @@ class SuiteConfig(object):
             else:
                 del queues[queue]
 
-        if flags.verbose and len(queues.keys()) > 1:
+        if cylc.flags.verbose and len(queues.keys()) > 1:
             print "Internal queues created:"
             for queue in queues:
                 if queue == 'default':
@@ -1208,7 +1209,7 @@ class SuiteConfig(object):
             except TaskDefError as exc:
                 raise SuiteConfigError(str(exc))
 
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "Checking for defined tasks not used in the graph"
             for name in self.cfg['runtime']:
                 if name not in self.taskdefs:
@@ -1428,7 +1429,7 @@ class SuiteConfig(object):
             r'(\1:succeed | \1:fail)',
             line)
 
-        if flags.verbose and line != orig_line:
+        if cylc.flags.verbose and line != orig_line:
             print 'Graph line substitutions occurred:'
             print '  IN:', orig_line
             print '  OUT:', line
@@ -1601,7 +1602,7 @@ class SuiteConfig(object):
                         raise SuiteConfigError(
                             "ERROR, self-edge detected: %s => %s" % (
                                 left, right))
-            e = graphing.edge(left, right, seq, suicide, conditional)
+            e = cylc.graphing.edge(left, right, seq, suicide, conditional)
             self.edges.append(e)
 
     def generate_taskdefs(self, line, left_nodes, right, section, seq,
@@ -1961,7 +1962,7 @@ class SuiteConfig(object):
             group_nodes, ungroup_nodes, ungroup_recursive,
             group_all, ungroup_all
         )
-        graph = graphing.CGraph(
+        graph = cylc.graphing.CGraph(
             self.suite, self.suite_polling_tasks, self.cfg['visualization'])
         graph.add_edges(gr_edges, ignore_suicide)
         if subgraphs_on:
@@ -2020,7 +2021,7 @@ class SuiteConfig(object):
         return nl, nr
 
     def load_graph(self):
-        if flags.verbose:
+        if cylc.flags.verbose:
             print "Parsing the dependency graph"
 
         start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
@@ -2059,7 +2060,6 @@ class SuiteConfig(object):
 
         back_comp_initial_dep_points = {}
         initial_point = get_point(icp)
-        back_comp_initial_tasks_graphed = []
         while items:
             item, value, tasks_to_prune = items.pop(0)
 

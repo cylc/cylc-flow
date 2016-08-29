@@ -78,6 +78,7 @@ from cylc.task_state import (
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_RETRYING)
+from cylc.templatevars import load_template_vars
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
@@ -157,6 +158,8 @@ class Scheduler(object):
             self._cli_start_point_string = start_point_str
         else:
             self._cli_initial_point_string = start_point_str
+        self.template_vars = load_template_vars(
+            self.options.templatevars, self.options.templatevars_file)
 
         self.run_mode = self.options.run_mode
 
@@ -439,6 +442,7 @@ conditions; see `cylc conditions`.
         self.log_memory("scheduler.py: after load_tasks")
 
         self.pool.put_rundb_suite_params(self.initial_point, self.final_point)
+        self.pool.put_rundb_suite_template_vars(self.template_vars)
         self.configure_suite_environment()
 
         # Write suite contact environment file
@@ -940,12 +944,10 @@ conditions; see `cylc conditions`.
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
-
         SuiteConfig._FORCE = True  # Reset the singleton!
         self.config = SuiteConfig.get_inst(
-            self.suite, self.suiterc,
-            self.options.templatevars,
-            self.options.templatevars_file, run_mode=self.run_mode,
+            self.suite, self.suiterc, self.template_vars,
+            run_mode=self.run_mode,
             cli_initial_point_string=self._cli_initial_point_string,
             cli_start_point_string=self._cli_start_point_string,
             cli_final_point_string=self.options.final_point_string,
@@ -986,6 +988,13 @@ conditions; see `cylc conditions`.
             self._cli_initial_point_string = value
             self.do_process_tasks = True
 
+    def _load_template_vars(self, _, row):
+        """Load suite start up template variables."""
+        key, value = row
+        # Command line argument takes precedence
+        if key not in self.template_vars:
+            self.template_vars[key] = value
+
     def configure_suite(self, reconfigure=False):
         """Load and process the suite definition."""
 
@@ -1001,6 +1010,7 @@ conditions; see `cylc conditions`.
                 run_dir, CylcSuiteDAO.PRI_DB_FILE_BASE_NAME)
             self.pri_dao = CylcSuiteDAO(pri_db_path)
             self.pri_dao.select_suite_params(self._load_initial_cycle_point)
+            self.pri_dao.select_suite_template_vars(self._load_template_vars)
             # Take checkpoint and commit immediately so that checkpoint can be
             # copied to the public database.
             self.pri_dao.take_checkpoints("restart")
