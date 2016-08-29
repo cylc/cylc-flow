@@ -38,6 +38,9 @@ from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PRIVILEGE_LEVELS
 
 
+REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)')
+
+
 def _coerce_cycleinterval(value, keys, _):
     """Coerce value to a cycle interval."""
     if not value:
@@ -168,10 +171,15 @@ def _coerce_parameter_list(value, keys, _):
     """Coerce parameter list."""
     value = _strip_and_unquote_list(keys, value)
     if len(value) == 1:
+        # May be a range e.g. '1..5' (bounds inclusive)
         try:
-            value = [str(i) for i in range(int(value[0]))]
-        except ValueError:
+            lower, upper = REC_PARAM_INT_RANGE.match(value[0]).groups()
+        except AttributeError:
             pass
+        else:
+            n_dig = len(upper)
+            return [
+                str(i).zfill(n_dig) for i in range(int(lower), int(upper)+1)]
     return value
 
 coercers['cycletime'] = _coerce_cycletime

@@ -2,7 +2,7 @@ title = "Example of family member-to-member dependence"
 [cylc]
     [[parameters]]
         pets = cats, dogs, fish
-        run = 2
+        run = 0..2
 [scheduling]
     [[dependencies]]
         graph = """

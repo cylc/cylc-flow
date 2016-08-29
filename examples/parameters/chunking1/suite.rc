@@ -6,9 +6,9 @@ description = "See chunking2 for the same without redundant dependencies."
 {% set MODEL_CHUNK_MONTHS = 4 %}
 [cylc]
     [[parameters]]
-        r = 3  # number of runs
-        n = 2  # number of members per run
-        c = 3  # number of model chunks, per member, per run
+        r = 0..3  # number of runs
+        n = 0..2  # number of members per run
+        c = 0..3  # number of model chunks, per member, per run
 [scheduling]
     [[dependencies]]
         graph = """

@@ -307,10 +307,11 @@ class SuiteConfig(object):
                         newruntime[name]['environment'][p_var_name] = p_val
                     if 'inherit' in newruntime[name]:
                         parents = newruntime[name]['inherit']
+                        origin = 'inherit = %s' % ' '.join(parents)
                         repl_parents = []
                         for parent in parents:
                             repl_parents.append(
-                                NameExpander.replace_params(parent, indices))
+                                NameExpander.replace_params(parent, indices, origin))
                         newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
 

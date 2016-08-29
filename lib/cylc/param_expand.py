@@ -78,6 +78,20 @@ REC_P_NAME = re.compile(r"(%s)(<.*?>)?" % TaskID.NAME_RE)
 REC_P_GROUP = re.compile(r"<(.*?)>")
 
 
+def item_in_list(item, lst):
+    """Return True if item is in lst, by string or int comparison.
+
+    Items may be general strings, or strings of zero-padded integers.
+    """
+    if item in lst:
+        return True
+    try:
+        int(item)
+    except ValueError:
+        return False
+    return int(item) in [int(i) for i in lst]
+
+
 class ParamExpandError(Exception):
     """For parameter expansion errors."""
     pass
@@ -87,14 +101,23 @@ class NameExpander(object):
     """Handle parameter expansion in runtime namespace headings."""
 
     @staticmethod
-    def replace_params(name, parameters):
+    def replace_params(name_in, parameters, origin):
         """Replace <m,n,..> in name<m,n,...> with given values."""
-        name, p_tmpl = REC_P_NAME.match(name).groups()
+        name, p_tmpl = REC_P_NAME.match(name_in).groups()
         if not p_tmpl:
-            # Name is not parameterized.
-            return name
+            # name_in is not parameterized.
+            return name_in
         # List of parameter names used in this name: ['m', 'n']
         used_param_names = [i.strip() for i in p_tmpl[1:-1].split(',')]
+        for p_name in used_param_names:
+            msg = None
+            if '=' in p_name:
+                msg = 'values'
+            elif '-' in p_name or '+' in p_name:
+                msg = 'offsets'
+            if msg is not None:
+                raise ParamExpandError(
+                    "ERROR, parameter %s are not supported here: %s" % (msg, origin))
         try:
             int(parameters.values()[0])
         except:
@@ -109,14 +132,12 @@ class NameExpander(object):
         return str_template % parameters
 
     def __init__(self, suite_parameter_map):
-        """Store the suite parameter map."""
+        """Store the suite parameter map.
+
+        Parameter values are expected to be strings, zero-padded if derived
+        from an integer range.
+        """
         self.suite_parameter_map = suite_parameter_map
-        if self.suite_parameter_map:
-            self.all_p_vals = [i for sublist in
-                               self.suite_parameter_map.values() for
-                               i in sublist]
-        else:
-            self.all_p_vals = []
 
     def expand(self, runtime_heading):
         """Expand runtime namespace names for a subset of suite parameters.
@@ -150,14 +171,9 @@ class NameExpander(object):
             for item in p_tmpl[1:-1].split(','):
                 pname, sval = REC_P_OFFS.match(item.strip()).groups()
                 if pname not in self.suite_parameter_map:
-                    if pname in self.all_p_vals:
-                        raise ParamExpandError(
-                            "ERROR, write parameter name with specific values,"
-                            " e.g. <param=%s>: %s" % (pname, p_tmpl))
-                    else:
-                        raise ParamExpandError(
-                            "ERROR, parameter %s is not defined: %s" % (
-                                pname, p_tmpl))
+                    raise ParamExpandError(
+                        "ERROR, parameter %s is not defined in %s" % (
+                            pname, runtime_heading))
                 if sval:
                     if sval.startswith('+') or sval.startswith('-'):
                         raise ParamExpandError(
@@ -166,11 +182,21 @@ class NameExpander(object):
                                 pname, sval))
                     elif sval.startswith('='):
                         # Check that specific parameter values exist.
-                        if sval[1:] not in self.suite_parameter_map[pname]:
+                        val = sval[1:]
+                        # Pad integer values here.
+                        try:
+                            int(val)
+                        except ValueError:
+                            nval = val
+                        else:
+                            nval = val.zfill(len(self.suite_parameter_map[pname][0]))
+                            if nval != val:
+                                line = re.sub(item, '%s=%s' % (pname, nval), tmpl)
+                        if not item_in_list(nval, self.suite_parameter_map[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_tmpl))
-                    spec_vals[pname] = sval[1:]
+                        spec_vals[pname] = nval
                 else:
                     used_param_names.append(pname)
                 try:
@@ -218,14 +244,12 @@ class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
 
     def __init__(self, suite_parameter_map):
-        """Store the suite parameter map."""
+        """Store the suite parameter map.
+        
+        Parameter values are expected to be strings, zero-padded if derived
+        from an integer range.
+        """
         self.suite_parameter_map = suite_parameter_map
-        if self.suite_parameter_map:
-            self.all_p_vals = [i for sublist in
-                               self.suite_parameter_map.values() for
-                               i in sublist]
-        else:
-            self.all_p_vals = []
 
     def expand(self, line):
         """Expand a graph line for subset of suite parameters.
@@ -258,14 +282,9 @@ class GraphExpander(object):
             for item in p_group.split(','):
                 pname, offs = REC_P_OFFS.match(item.strip()).groups()
                 if pname not in self.suite_parameter_map:
-                    if pname in self.all_p_vals:
-                        raise ParamExpandError(
-                            "ERROR, write parameter name with specific values,"
-                            " e.g. <name=%s>: %s" % (pname, p_group))
-                    else:
-                        raise ParamExpandError(
-                            "ERROR, parameter %s is not defined: %s" % (
-                                pname, p_group))
+                    raise ParamExpandError(
+                        "ERROR, parameter %s is not defined in <%s>: %s" % (
+                            pname, p_group, line))
                 if offs:
                     if offs.startswith('+'):
                         raise ParamExpandError(
@@ -273,7 +292,17 @@ class GraphExpander(object):
                             " supported: %s%s" % (pname, offs))
                     elif offs.startswith('='):
                         # Check that specific parameter values exist.
-                        if offs[1:] not in self.suite_parameter_map[pname]:
+                        val = offs[1:]
+                        # Pad integer values here.
+                        try:
+                            int(val)
+                        except ValueError:
+                            nval = val
+                        else:
+                            nval = val.zfill(len(self.suite_parameter_map[pname][0]))
+                            if nval != val:
+                                line = re.sub(item, '%s=%s' % (pname, nval), line)
+                        if not item_in_list(nval, self.suite_parameter_map[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_group))
