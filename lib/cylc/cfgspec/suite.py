@@ -179,7 +179,7 @@ def _coerce_parameter_list(value, keys, _):
         else:
             n_dig = len(upper)
             return [
-                str(i).zfill(n_dig) for i in range(int(lower), int(upper)+1)]
+                str(i).zfill(n_dig) for i in range(int(lower), int(upper) + 1)]
     return value
 
 coercers['cycletime'] = _coerce_cycletime

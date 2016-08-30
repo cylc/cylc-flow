@@ -117,8 +117,8 @@ class NameExpander(object):
             elif '-' in p_name or '+' in p_name:
                 msg = 'offsets'
             if msg is not None:
-                raise ParamExpandError(
-                    "ERROR, parameter %s are not supported here: %s" % (msg, origin))
+                raise ParamExpandError("ERROR, parameter %s not supported"
+                                       " here: %s" % (msg, origin))
         str_template = name
         for pname in used_param_names:
             str_template += param_cfg['templates'][pname]
@@ -183,8 +183,6 @@ class NameExpander(object):
                             nval = val
                         else:
                             nval = val.zfill(len(self.param_cfg[pname][0]))
-                            #if nval != val:
-                            #    line = re.sub(item, '%s=%s' % (pname, nval), tmpl)
                         if not item_in_list(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
@@ -231,7 +229,7 @@ class GraphExpander(object):
 
     def __init__(self, param_cfg):
         """Store the suite parameter map.
-        
+
         Parameter values are expected to be strings, zero-padded if derived
         from an integer range.
         """
@@ -287,7 +285,8 @@ class GraphExpander(object):
                         else:
                             nval = val.zfill(len(self.param_cfg[pname][0]))
                             if nval != val:
-                                line = re.sub(item, '%s=%s' % (pname, nval), line)
+                                line = re.sub(item,
+                                              '%s=%s' % (pname, nval), line)
                         if not item_in_list(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
@@ -356,13 +355,14 @@ class TestParamExpand(unittest.TestCase):
         ivals = [str(i) for i in range(2)]
         jvals = [str(j) for j in range(3)]
         kvals = [str(k) for k in range(2)]
-        params_map = {'i': ivals, 'j': jvals, 'k': kvals,
-                'templates': {
-                    'i': '_i%(i)s',
-                    'j': '_j%(j)s',
-                    'k': '_k%(k)s',
-                    }
-                }
+        params_map = {
+            'i': ivals, 'j': jvals, 'k': kvals,
+            'templates': {
+                'i': '_i%(i)s',
+                'j': '_j%(j)s',
+                'k': '_k%(k)s',
+            }
+        }
         self.name_expander = NameExpander(params_map)
         self.graph_expander = GraphExpander(params_map)
 
