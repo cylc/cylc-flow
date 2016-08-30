@@ -6,9 +6,9 @@ of the previous year."""
 [cylc]
     cycle point format = %Y-%m
     [[parameters]]
-        r = 0..2
-        m = 0..2
-        c = 0..3
+        r = 0..1
+        m = 0..1
+        c = 0..2
 [scheduling]
     initial cycle point = 2010-01
     final cycle point = 2012-01
