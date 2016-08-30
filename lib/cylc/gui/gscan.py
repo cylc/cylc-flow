@@ -486,6 +486,7 @@ class ScanApp(object):
             self.warn_icon_grey, 0, False)  # b&w warn icon pixbuf
         status_column.pack_start(warn_icon, expand=False)
         status_column.set_cell_data_func(warn_icon, self._set_error_icon_state)
+        warn_icon.set_property('visible', False)
 
         # Task status icons.
         for i in range(len(TASK_STATUSES_ORDERED)):
@@ -521,6 +522,8 @@ class ScanApp(object):
         self.window.set_default_size(300, 150)
         self.suite_treeview.grab_focus()
         self.window.show()
+
+        self.warning_icon_shown = []
 
     def _on_button_press_event(self, treeview, event):
         x = int(event.x)
@@ -681,8 +684,8 @@ class ScanApp(object):
         # If hovering over a status indicator set tooltip to show most recent
         # tasks.
         dot_offset, dot_width = tuple(column.cell_get_position(
-            column.get_cell_renderers()[1]))
-        cell_index = (cell_x - dot_offset) // dot_width
+            column.get_cell_renderers()[2]))
+        cell_index = ((cell_x - dot_offset) // dot_width) + 1
         if cell_index >= 0:
             # NOTE: TreeViewColumn.get_cell_renderers() does not always return
             # cell renderers for the correct row.
@@ -754,10 +757,16 @@ class ScanApp(object):
             cell.set_property('pixbuf', None)
         elif warnings:
             cell.set_property('pixbuf', self.warn_icon_colour)
+            self.warning_icon_shown.append((suite, host))
+            cell.set_property('visible', True)
             self.warnings[(suite, host)] = warnings
         else:
             cell.set_property('pixbuf', self.warn_icon_grey)
             self.warnings[(suite, host)] = None
+            if (suite, host) in self.warning_icon_shown:
+                cell.set_property('visible', True)
+            else:
+                cell.set_property('visible', False)
 
     def _set_cell_text_host(self, column, cell, model, iter_):
         host = model.get_value(iter_, self.HOST_COLUMN)
