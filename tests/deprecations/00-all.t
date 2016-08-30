@@ -46,8 +46,6 @@ cmp_ok val.out <<__END__
  * (6.0.0) [cylc][poll and kill command submission] - DELETED (OBSOLETE)
  * (6.0.0) [cylc][lockserver] - DELETED (OBSOLETE)
  * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)
- * (7.0.0) [scheduling][special tasks][cold-start] - DELETED (OBSOLETE)
- * (7.0.0) [scheduling][special tasks][start-up] - DELETED (OBSOLETE)
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

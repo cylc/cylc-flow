@@ -23,8 +23,6 @@
     final cycle time = 20150808T00 # deprecate
     [[special tasks]]
         explicit restart outputs = foo # obsolete
-        cold-start = cat # obsolete
-        start-up = dog # obsolete
     [[dependencies]]
         [[[P1D]]]
             graph = foo => cat & dog

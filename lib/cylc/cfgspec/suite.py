@@ -512,14 +512,6 @@ def upg(cfg, descr):
         '6.0.0',
         ['scheduling', 'special tasks', 'sequential']
     )
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'special tasks', 'start-up']
-    )
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'special tasks', 'cold-start']
-    )
     u.obsolete('6.0.0', ['cylc', 'job submission'])
     u.obsolete('6.0.0', ['cylc', 'event handler submission'])
     u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
@@ -591,8 +583,6 @@ def upg(cfg, descr):
         '6.10.3',
         ['runtime', '__MANY__', 'execution polling intervals'],
         ['runtime', '__MANY__', 'job', 'execution polling intervals'])
-    u.obsolete('7.0.0', ['scheduling', 'special tasks', 'cold-start'])
-    u.obsolete('7.0.0', ['scheduling', 'special tasks', 'start-up'])
     u.upgrade()
     if 'cylc' in cfg and 'event hooks' in cfg['cylc']:
         del cfg['cylc']['event hooks']
