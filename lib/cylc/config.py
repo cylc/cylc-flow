@@ -279,19 +279,36 @@ class SuiteConfig(object):
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
         try:
-            self.parameter_map = self.cfg['cylc']['parameters']
+            self.param_cfg = self.cfg['cylc']['parameters']
         except KeyError:
-            self.parameter_map = {}
+            self.param_cfg = {}
 
         # Replace [[name1<m,n>, name2, ...]] with separate namespaces.
         if cylc.flags.verbose:
             print "Expanding [runtime] namespace lists and parameters"
 
+        # Set default parameter expansion templates if necessary.
+        if 'templates' not in self.param_cfg:
+            self.param_cfg['templates'] = {}
+        for pname in self.param_cfg:
+            if pname == 'templates':
+                continue
+            if pname not in self.param_cfg['templates']:
+                try:
+                    [int(i) for i in self.param_cfg[pname]]
+                except ValueError:
+                    # Don't prefix string values with the parameter name.
+                    self.param_cfg['templates'][pname] = "_%(" + pname + ")s"
+                else:
+                    # All int values, prefix values with the parameter name.
+                    self.param_cfg['templates'][pname] = (
+                        "_" + pname + "%(" + pname + ")s")
+
         # This requires expansion into a new OrderedDict to preserve the
         # correct order of the final list of namespaces (add-or-override
         # by repeated namespace depends on this).
         newruntime = OrderedDictWithDefaults()
-        name_expander = NameExpander(self.parameter_map)
+        name_expander = NameExpander(self.param_cfg)
         for namespace_heading, namespace_dict in self.cfg['runtime'].items():
             for name, indices in name_expander.expand(namespace_heading):
                 if name not in newruntime:
@@ -310,10 +327,25 @@ class SuiteConfig(object):
                         origin = 'inherit = %s' % ' '.join(parents)
                         repl_parents = []
                         for parent in parents:
-                            repl_parents.append(
-                                NameExpander.replace_params(parent, indices, origin))
+                            repl_parents.append(NameExpander.replace_params(
+                                parent, indices, self.param_cfg, origin))
                         newruntime[name]['inherit'] = repl_parents
         self.cfg['runtime'] = newruntime
+
+        # Parameter expansion of visualization node attributes.
+        # TODO - 'node groups' should really have this too, but I'd rather
+        # deprecate them (just use families for visualization groups now).
+        name_expander = NameExpander(self.param_cfg)
+        expanded_node_attrs = OrderedDictWithDefaults()
+        if 'visualization' not in self.cfg:
+            self.cfg['visualization'] = OrderedDictWithDefaults()
+        if 'node attributes' not in self.cfg['visualization']:
+            self.cfg['visualization']['node attributes'] = (
+                OrderedDictWithDefaults())
+        for node, val in self.cfg['visualization']['node attributes'].items():
+            for name, _ in name_expander.expand(node):
+                expanded_node_attrs[name] = val
+        self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
         self.ns_defn_order = newruntime.keys()
 
@@ -333,7 +365,8 @@ class SuiteConfig(object):
         # filter task environment variables after inheritance
         self.filter_env()
 
-        # now expand with defaults
+        # Now add config defaults.  Items added prior to this ends up in the
+        # sparse dict (e.g. parameter-expanded namepaces).
         self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
@@ -595,16 +628,6 @@ class SuiteConfig(object):
                             msg, name, seen[msg]))
                     raise SuiteConfigError(
                         "ERROR: external triggers must be used only once.")
-
-        # Parameter expansion of visualization node attributes.
-        # TODO - 'node groups' should really have this too, but I'd rather
-        # deprecate them (just use families for visualization groups now).
-        name_expander = NameExpander(self.parameter_map)
-        expanded_node_attrs = OrderedDictWithDefaults()
-        for node, val in self.cfg['visualization']['node attributes'].items():
-            for name, _ in name_expander.expand(node):
-                expanded_node_attrs[name] = val
-        self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
         ngs = self.cfg['visualization']['node groups']
         # If a node group member is a family, include its descendants too.
@@ -1767,7 +1790,7 @@ class SuiteConfig(object):
                                self.cfg['scheduling']['initial cycle point'],
                                self.cfg['scheduling']['final cycle point'])
             base_interval = seq.get_interval()
-            gp = GraphParser(family_map, self.parameter_map)
+            gp = GraphParser(family_map, self.param_cfg)
             self.sequences.append(seq)
 
             gp.parse_graph(graph)

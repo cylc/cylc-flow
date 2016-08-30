@@ -6,13 +6,13 @@ description = "See chunking2 for the same without redundant dependencies."
 {% set MODEL_CHUNK_MONTHS = 4 %}
 [cylc]
     [[parameters]]
-        r = 0..3  # number of runs
-        n = 0..2  # number of members per run
-        c = 0..3  # number of model chunks, per member, per run
+        r = 0..2  # runs
+        n = 0..2  # members per run
+        c = 0..3  # chunks, per member, per run
 [scheduling]
     [[dependencies]]
         graph = """
-prep => init<r> => start<r,n> => sim<r,n,c> => post<r,n,c> => 
+prep => init<r> => start<r,n> => sim<r,n,c> => post<r,n,c> =>
     stop<r,n> => comb<r> => end
 sim<r,n,c-1> => sim<r,n,c>  # inter-chunk dependence
                 """

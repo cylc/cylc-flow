@@ -123,10 +123,10 @@ class GraphParser(object):
     # Detect and extract suite state polling task info.
     REC_SUITE_STATE = re.compile('(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)')
 
-    def __init__(self, family_map=None, parameter_map=[]):
+    def __init__(self, family_map=None, parameters=None):
         """Store suite data that affects graph parsing."""
         self.family_map = family_map or {}
-        self.parameter_map = parameter_map
+        self.parameters = parameters or {}
         self.triggers = {}
         self.original = {}
         self.suite_state_polling_tasks = {}
@@ -217,7 +217,7 @@ class GraphParser(object):
 
         # Expand parameterized lines.
         line_set = set()
-        graph_expander = GraphExpander(self.parameter_map)
+        graph_expander = GraphExpander(self.parameters)
         for line in full_lines:
             if not self.__class__.REC_PARAMETERS.search(line):
                 line_set.add(line)
@@ -622,7 +622,12 @@ class TestGraphParser(unittest.TestCase):
             'FAM_m0': ['fa_m0', 'fb_m0'],
             'FAM_m1': ['fa_m1', 'fb_m1'],
         }
-        params = {'m': ['0', '1'], 'n': ['0', '1']}
+        params = {'m': ['0', '1'], 'n': ['0', '1'],
+                'templates': {
+                    'm': '_m%(m)s',
+                    'n': '_n%(n)s',
+                    }
+                }
         gp1 = GraphParser(fam_map, params)
         gp1.parse_graph("""
             pre => foo<m,n> => bar<n>

@@ -20,6 +20,7 @@ import re
 import unittest
 from copy import copy
 from task_id import TaskID
+from parsec.OrderedDict import OrderedDictWithDefaults
 
 """Parameter expansion for runtime namespace names and graph strings.
 
@@ -101,7 +102,7 @@ class NameExpander(object):
     """Handle parameter expansion in runtime namespace headings."""
 
     @staticmethod
-    def replace_params(name_in, parameters, origin):
+    def replace_params(name_in, indices, param_cfg, origin):
         """Replace <m,n,..> in name<m,n,...> with given values."""
         name, p_tmpl = REC_P_NAME.match(name_in).groups()
         if not p_tmpl:
@@ -118,26 +119,18 @@ class NameExpander(object):
             if msg is not None:
                 raise ParamExpandError(
                     "ERROR, parameter %s are not supported here: %s" % (msg, origin))
-        try:
-            int(parameters.values()[0])
-        except:
-            # Don't prefix string values with the parameter name.
-            # String template: "_m%(m)s_n%(n)s".
-            str_template = name + ''.join(
-                ["_%(" + p + ")s" for p in used_param_names])
-        else:
-            # String template: "_m%(m)s_n%(n)s".
-            str_template = name + ''.join(
-                ["_" + p + "%(" + p + ")s" for p in used_param_names])
-        return str_template % parameters
+        str_template = name
+        for pname in used_param_names:
+            str_template += param_cfg['templates'][pname]
+        return str_template % indices
 
-    def __init__(self, suite_parameter_map):
+    def __init__(self, param_cfg):
         """Store the suite parameter map.
 
         Parameter values are expected to be strings, zero-padded if derived
         from an integer range.
         """
-        self.suite_parameter_map = suite_parameter_map
+        self.param_cfg = param_cfg
 
     def expand(self, runtime_heading):
         """Expand runtime namespace names for a subset of suite parameters.
@@ -170,7 +163,7 @@ class NameExpander(object):
             spec_vals = {}
             for item in p_tmpl[1:-1].split(','):
                 pname, sval = REC_P_OFFS.match(item.strip()).groups()
-                if pname not in self.suite_parameter_map:
+                if pname not in self.param_cfg:
                     raise ParamExpandError(
                         "ERROR, parameter %s is not defined in %s" % (
                             pname, runtime_heading))
@@ -189,26 +182,19 @@ class NameExpander(object):
                         except ValueError:
                             nval = val
                         else:
-                            nval = val.zfill(len(self.suite_parameter_map[pname][0]))
-                            if nval != val:
-                                line = re.sub(item, '%s=%s' % (pname, nval), tmpl)
-                        if not item_in_list(nval, self.suite_parameter_map[pname]):
+                            nval = val.zfill(len(self.param_cfg[pname][0]))
+                            #if nval != val:
+                            #    line = re.sub(item, '%s=%s' % (pname, nval), tmpl)
+                        if not item_in_list(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_tmpl))
                         spec_vals[pname] = nval
                 else:
                     used_param_names.append(pname)
-                try:
-                    int(self.suite_parameter_map[pname][0])
-                except:
-                    # Don't prefix string values with the parameter name.
-                    tmpl += "_%(" + pname + ")s"
-                else:
-                    # Do prefix integer values with the parameter name.
-                    tmpl += "_" + pname + "%(" + pname + ")s"
+                tmpl += self.param_cfg['templates'][pname]
             used_params = [
-                (p, self.suite_parameter_map[p]) for p in used_param_names]
+                (p, self.param_cfg[p]) for p in used_param_names]
             self._expand_name(tmpl, used_params, expanded, spec_vals)
         return expanded
 
@@ -243,13 +229,13 @@ class NameExpander(object):
 class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
 
-    def __init__(self, suite_parameter_map):
+    def __init__(self, param_cfg):
         """Store the suite parameter map.
         
         Parameter values are expected to be strings, zero-padded if derived
         from an integer range.
         """
-        self.suite_parameter_map = suite_parameter_map
+        self.param_cfg = param_cfg
 
     def expand(self, line):
         """Expand a graph line for subset of suite parameters.
@@ -277,11 +263,11 @@ class GraphExpander(object):
         to less than 0 the node will be removed to leave just "sim<m,n>").
         """
         line_set = set()
-        used_pnames = set()
+        used_pnames = []
         for p_group in set(REC_P_GROUP.findall(line)):
             for item in p_group.split(','):
                 pname, offs = REC_P_OFFS.match(item.strip()).groups()
-                if pname not in self.suite_parameter_map:
+                if pname not in self.param_cfg:
                     raise ParamExpandError(
                         "ERROR, parameter %s is not defined in <%s>: %s" % (
                             pname, p_group, line))
@@ -299,15 +285,16 @@ class GraphExpander(object):
                         except ValueError:
                             nval = val
                         else:
-                            nval = val.zfill(len(self.suite_parameter_map[pname][0]))
+                            nval = val.zfill(len(self.param_cfg[pname][0]))
                             if nval != val:
                                 line = re.sub(item, '%s=%s' % (pname, nval), line)
-                        if not item_in_list(nval, self.suite_parameter_map[pname]):
+                        if not item_in_list(nval, self.param_cfg[pname]):
                             raise ParamExpandError(
                                 "ERROR, parameter %s out of range: %s" % (
                                     pname, p_group))
-                used_pnames.add(pname)
-        used_params = [(p, self.suite_parameter_map[p]) for p in used_pnames]
+                if pname not in used_pnames:
+                    used_pnames.append(pname)
+        used_params = [(p, self.param_cfg[p]) for p in used_pnames]
         self._expand_graph(line, dict(used_params), used_params, line_set)
         return line_set
 
@@ -324,7 +311,8 @@ class GraphExpander(object):
         if not param_list:
             # Inner loop.
             for p_group in set(REC_P_GROUP.findall(line)):
-                param_values = {}
+                # Parameters must be expanded in the order found.
+                param_values = OrderedDictWithDefaults()
                 tmpl = ""
                 for item in p_group.split(','):
                     pname, offs = REC_P_OFFS.match(item.strip()).groups()
@@ -343,17 +331,10 @@ class GraphExpander(object):
                         else:
                             offval = plist[off_idx]
                         param_values[pname] = offval
-                    try:
-                        int(self.suite_parameter_map[pname][0])
-                    except:
-                        # Don't prefix string values with the parameter name.
-                        tmpl += "_%(" + pname + ")s"
-                    else:
-                        # Do prefix integer values with the parameter name.
-                        tmpl += "_" + pname + "%(" + pname + ")s"
-                match = '<' + p_group + '>'
+                for pname in param_values:
+                    tmpl += self.param_cfg['templates'][pname]
                 repl = tmpl % param_values
-                line = re.sub(match, repl, line)
+                line = re.sub('<' + p_group + '>', repl, line)
                 # Remove out-of-range nodes to first arrow.
                 line = re.sub('^.*--<REMOVE>--.*?=>\s*?', '', line)
             line_set.add(line.strip())
@@ -375,7 +356,13 @@ class TestParamExpand(unittest.TestCase):
         ivals = [str(i) for i in range(2)]
         jvals = [str(j) for j in range(3)]
         kvals = [str(k) for k in range(2)]
-        params_map = {'i': ivals, 'j': jvals, 'k': kvals}
+        params_map = {'i': ivals, 'j': jvals, 'k': kvals,
+                'templates': {
+                    'i': '_i%(i)s',
+                    'j': '_j%(j)s',
+                    'k': '_k%(k)s',
+                    }
+                }
         self.name_expander = NameExpander(params_map)
         self.graph_expander = GraphExpander(params_map)
 

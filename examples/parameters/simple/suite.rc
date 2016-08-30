@@ -1,7 +1,7 @@
 title = "Task parameterisation example, two parameters."
 [cylc]
     [[parameters]]
-        r = 0..3
+        r = 0..2
         n = 0..10
 [scheduling]
     [[dependencies]]
