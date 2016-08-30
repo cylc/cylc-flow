@@ -240,11 +240,7 @@ class TaskProxy(object):
                 self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
-        if self.tdef.is_coldstart:
-            # Cylc-5 cold-start tasks have no successor.
-            self.has_spawned = True
-        else:
-            self.has_spawned = has_spawned
+        self.has_spawned = has_spawned
 
         self.point_as_seconds = None
 
