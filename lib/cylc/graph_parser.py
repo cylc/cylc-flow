@@ -99,26 +99,26 @@ class GraphParser(object):
     LEN_FAM_TRIG_EXT_MEM = len(FAM_TRIG_EXT_MEM)
 
     # Match full parameterized single nodes.
-    REC_NODE_FULL_SINGLE = re.compile(r'''
-    ^                     # beginning of string
-    ((?:!)?\w[\w\-+%@]*)  # node name
-    (<[\w,=\-+ ]+>)?      # optional parameter list
-    (\[[\w\-\+\^]+\])?    # optional cycle point offset
-    (:[\w\-]+)?           # optional trigger type
-    $
+    REC_NODE_FULL = re.compile(r'''
+    (
+    (?:(?:!)?\w[\w\-+%@]*)  # node name
+    (?:<[\w,=\-+\s]+>)?     # optional parameter list
+    (?:\[[\w\-\+\^\s]+\])?  # optional cycle point offset
+    (?::[\w\-]+)?           # optional trigger type
+    )
     ''', re.X)           # end of string
 
     # To extract node info from a left-side dependency group.
     REC_NODES = re.compile(r'''
     ((?:!)?\w[\w\-+%@]*)  # node name
-    (\[[\w\-\+\^]+\])?    # optional cycle point offset
+    (\[[\w\-\+\^\s]+\])?  # optional cycle point offset
     (:[\w\-]+)?           # optional trigger type
     ''', re.X)
 
     REC_COMMENT = re.compile('#.*$')
 
     # Detect presence of expansion parameters in a graph line.
-    REC_PARAMETERS = re.compile(r'<[\w,=\-+ ]+>')
+    REC_PARAMETERS = re.compile(r'<[\w,=\-+\s]+>')
 
     # Detect and extract suite state polling task info.
     REC_SUITE_STATE = re.compile('(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)')
@@ -192,7 +192,7 @@ class GraphParser(object):
 
         # Check for double-char conditional operators (a common mistake),
         # and bad node syntax (order of qualifiers).
-        bad_nodes = set()
+        bad_lines = []
         for line in full_lines:
             if self.__class__.OP_AND_ERR in line:
                 raise GraphParseError(
@@ -202,18 +202,24 @@ class GraphParser(object):
                 raise GraphParseError(
                     "ERROR, the graph OR operator is '%s': %s" % (
                         self.__class__.OP_OR, line))
-            # Check node syntax (first drop all non-node characters).
+            # Check node syntax. First drop all non-node characters.
             node_str = line
             for s in ['=>', '|', '&', '(', ')', '!']:
                 node_str = node_str.replace(s, ' ')
-            for node in node_str.split():
-                if not self.__class__.REC_NODE_FULL_SINGLE.match(node):
-                    bad_nodes.add(node)
-        if bad_nodes:
+            # Then drop all valid nodes, longest first to avoid sub-strings.
+            nodes = self.__class__.REC_NODE_FULL.findall(node_str)
+            nodes.sort(key=len, reverse=True)
+            for node in nodes:
+                node_str = node_str.replace(node, '')
+            # Result should be empty string.
+            if node_str.strip():
+                bad_lines.append(line)
+
+        if bad_lines:
             raise GraphParseError(
-                "Syntax error; graph nodes must match: \n"
-                "     NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n" +
-                "  " + "\n  ".join(bad_nodes))
+                "ERROR, graph node format (round brackets means optional): \n"
+                "    NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n" +
+                "  " + "\n  ".join(bad_lines))
 
         # Expand parameterized lines.
         line_set = set()

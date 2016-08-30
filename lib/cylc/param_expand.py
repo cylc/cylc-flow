@@ -65,10 +65,6 @@ with input already expressed as a string template) the method looks like this:
 #------------------------------------------------------------------------------
 """
 
-# TODO - ALLOW WHITESPACE INSIDE PARAMETER NOTATION.
-# TODO - BETTER ERROR MESSAGE FOR undefined or possibly bare parameter.
-# TODO - TEST FOR MIXED STRING INT PARAMETER GROUPS <cat,j>.
-
 # Extract name and optional offset or specific value e.g. 'm-1'.
 REC_P_OFFS = re.compile(r'(\w+)(?:\s*([-+=]\s*[\w]+))?')
 # To split heading name lists.
@@ -175,7 +171,7 @@ class NameExpander(object):
                                 pname, sval))
                     elif sval.startswith('='):
                         # Check that specific parameter values exist.
-                        val = sval[1:]
+                        val = sval[1:].strip()
                         # Pad integer values here.
                         try:
                             int(val)
@@ -276,7 +272,7 @@ class GraphExpander(object):
                             " supported: %s%s" % (pname, offs))
                     elif offs.startswith('='):
                         # Check that specific parameter values exist.
-                        val = offs[1:]
+                        val = offs[1:].strip()
                         # Pad integer values here.
                         try:
                             int(val)
