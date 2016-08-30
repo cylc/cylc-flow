@@ -44,15 +44,16 @@ class TaskDef(object):
                  "clocktrigger_offset", "expiration_offset",
                  "namespace_hierarchy", "triggers", "outputs",
                  "external_triggers", "name", "elapsed_times",
-                 "mean_total_elapsed_time"]
+                 "mean_total_elapsed_time", "spawn_ahead"]
 
-    def __init__(self, name, rtcfg, run_mode, start_point):
+    def __init__(self, name, rtcfg, run_mode, start_point, spawn_ahead):
         if not TaskID.is_valid_name(name):
             raise TaskDefError("Illegal task name: %s" % name)
 
         self.run_mode = run_mode
         self.rtconfig = rtcfg
         self.start_point = start_point
+        self.spawn_ahead = spawn_ahead
 
         self.sequences = []
         self.implicit_sequences = []  # Implicit sequences are deprecated.

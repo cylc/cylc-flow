@@ -2,6 +2,7 @@ runahead limit =
 hold after point = 
 max active cycle points = 3
 final cycle point constraints = 
+spawn to max active cycle points = False
 cycling mode = integer
 initial cycle point = 1
 initial cycle point constraints = 

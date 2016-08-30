@@ -240,7 +240,12 @@ class TaskProxy(object):
                 self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
-        self.has_spawned = has_spawned
+        if self.tdef.is_coldstart:
+            # Cylc-5 cold-start tasks have no successor.
+            self.has_spawned = True
+        else:
+            self.has_spawned = has_spawned
+
         self.point_as_seconds = None
 
         # Manually inserted tasks may have a final cycle point set.
@@ -1489,17 +1494,24 @@ class TaskProxy(object):
             return None
 
     def ready_to_spawn(self):
-        """Spawn successor on any state beyond submit (except submit-failed, to
-        prevent multi-spawning a task with bad job submission config).
+        """Return True if ready to spawn my next-cycle successor.
 
-        Allows successive instances to run in parallel, but not out of order.
-
+        A task proxy is never ready to spawn if:
+           * it has spawned already
+           * its state is submit-failed (avoid running multiple instances
+             of a task with bad job submission config).
+        Otherwise a task proxy is ready to spawn if either:
+           * self.tdef.spawn ahead is True (results in spawning out to max
+             active cycle points), OR
+           * its state is >= submitted (allows successive instances
+             to run concurrently, but not out of order).
         """
-        if self.tdef.is_coldstart:
-            self.has_spawned = True
-        return (not self.has_spawned and
-                self.state.is_greater_than(TASK_STATUS_READY) and
-                self.state.status != TASK_STATUS_SUBMIT_FAILED)
+        if (self.has_spawned or
+                self.state.status == TASK_STATUS_SUBMIT_FAILED):
+            return False
+        else:
+            return (self.tdef.spawn_ahead or
+                    self.state.is_greater_than(TASK_STATUS_READY))
 
     def get_state_summary(self):
         """Return a dict containing the state summary of this task proxy."""
