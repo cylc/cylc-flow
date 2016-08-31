@@ -83,7 +83,8 @@ def inline(lines, dir, file, for_grep=False, for_edit=False, viewcfg={},
             if m:
                 outf.append(m.groups()[0])
                 initial_line_index = 1
-            outf.append("""# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
+            outf.append(
+                """# !WARNING! CYLC EDIT INLINED (DO NOT MODIFY THIS LINE).
 # !WARNING! This is an inlined parsec config file; include-files are split
 # !WARNING! out again on exiting the edit session.  If you are editing
 # !WARNING! this file manually then a previous inlined session may have

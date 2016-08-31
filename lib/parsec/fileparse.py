@@ -80,7 +80,8 @@ _KEY_VALUE = re.compile(
 
 # quoted value regex reference:
 #   http://stackoverflow.com/questions/5452655/
-#       python-regex-to-match-text-in-single-quotes-ignoring-escaped-quotes-and-tabs-n
+#       python-regex-to-match-text-in-single-quotes-
+#           ignoring-escaped-quotes-and-tabs-n
 
 _LINECOMMENT = re.compile('^\s*#')
 _BLANKLINE = re.compile('^\s*$')

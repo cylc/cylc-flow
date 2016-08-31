@@ -70,12 +70,12 @@ class GraphParser(object):
             NODE<i-1,j,k>  # offset parameter value
         * A parameterized qualified node name looks like this:
             NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
-        * Default trigger type is ':succeed'.
-        * Chaining of default triggers is allowed ("foo => bar => baz"). 
-          TODO: we COULD choose to ignore qualifiers on the right, e.g.:
-             "foo => bar:fail => baz"
-          could be interpreted as:
-             "foo:succeed => bar", and "bar:fail => baz"
+        * The default trigger type is ':succeed'.
+        * Trigger qualifiers are ignored on the right to allow chaining:
+             - "foo => bar => baz"
+                    means "foo:succeed => bar" and "bar:succeed => baz"
+             - "foo => bar:fail => baz"
+                    means "foo:succeed => bar", and "bar:fail => baz"
     """
 
     ARROW = '=>'
@@ -84,7 +84,6 @@ class GraphParser(object):
     OP_AND_ERR = '&&'
     OP_OR_ERR = '||'
     SUICIDE_MARK = '!'
-    TRIG_SEP = ':'
     TRIG_SUCCEED = ':succeed'
     TRIG_FAIL = ':fail'
     TRIG_FINISH = ':finish'
@@ -95,19 +94,24 @@ class GraphParser(object):
 
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(r'''
-    (
-    (?:(?:!)?\w[\w\-+%@]*)  # node name
-    (?:<[\w,=\-+\s]+>)?     # optional parameter list
-    (?:\[[\w\-\+\^\s]+\])?  # optional cycle point offset
-    (?::[\w\-]+)?           # optional trigger type
-    )
+        (
+        (?:(?:!)?\w[\w\-+%@]*)  # node name
+        (?:<[\w,=\-+\s]+>)?     # optional parameter list
+        (?:\[[\w\-\+\^\s]+\])?  # optional cycle point offset
+        (?::[\w\-]+)?           # optional trigger type
+        )
     ''', re.X)           # end of string
 
     # Extract node info from a left-side expression, after parameter expansion.
     REC_NODES = re.compile(r'''
-    ((?:!)?\w[\w\-+%@]*)  # node name
-    (\[[\w\-\+\^\s]+\])?  # optional cycle point offset
-    (:[\w\-]+)?           # optional trigger type
+        ((?:!)?\w[\w\-+%@]*)  # node name
+        (\[[\w\-\+\^\s]+\])?  # optional cycle point offset
+        (:[\w\-]+)?           # optional trigger type
+    ''', re.X)
+
+    REC_TRIG_QUAL = re.compile(r'''
+        (?:(?:!)?\w[\w\-+%@]*)   # node name (ignore)
+        (:[\w\-]+)?              # optional trigger type
     ''', re.X)
 
     REC_COMMENT = re.compile('#.*$')
@@ -209,7 +213,6 @@ class GraphParser(object):
             # Result should be empty string.
             if node_str.strip():
                 bad_lines.append(line)
-
         if bad_lines:
             raise GraphParseError(
                 "ERROR, graph node format (round brackets means optional): \n"
@@ -249,15 +252,17 @@ class GraphParser(object):
         """Process a single dependency pair 'left => right'.
 
         'left' can be a logical expression of qualified node names.
-        'right' can be one or more unqualified node names joined by AND.
+        'right' can be one or more node names joined by AND.
         A node name is a task name or a family name.
         A qualified name is NAME([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE).
+        Trigger qualifiers, but not cycle offsets, are ignored on the right to
+        allow chaining.
         """
         if self.__class__.OP_OR in right:
             raise GraphParseError("ERROR, illegal OR on RHS: %s" % right)
-        if self.__class__.TRIG_SEP in right:
-            raise GraphParseError(
-                "ERROR, illegal trigger qualifier on RHS: %s" % right)
+        # Remove aualifiers from right-side nodes.
+        for qual in self.__class__.REC_TRIG_QUAL.findall(right):
+            right = right.replace(qual, '')
         if self.__class__.SUICIDE_MARK in left:
             raise GraphParseError(
                 "ERROR, suicide markers must be"
@@ -358,6 +363,7 @@ class GraphParser(object):
                     self._add_trigger(expr, mem, n_expr, info, suicide)
             else:
                 self._add_trigger(expr, right, n_expr, info, suicide)
+        self._tidy_triggers()
 
     def _add_trigger(self, orig_expr, right, expr, info, suicide):
         """Store trigger info from "expr => right" for a single task ('right').
@@ -379,12 +385,25 @@ class GraphParser(object):
                     "%s%s%s" % (name, offset, self.__class__.TRIG_FAIL)]
             else:
                 trigs += ["%s%s%s" % (name, offset, trigger)]
-
         if right not in self.triggers:
             self.triggers[right] = {}
             self.original[right] = {}
         self.triggers[right][expr] = (trigs, suicide)
         self.original[right][expr] = orig_expr
+
+    def _tidy_triggers(self):
+        """Remove any null triggers for tasks that have non-null triggers.
+
+        (They're only needed for initial or lone nodes.)
+        """
+        clean_me = set()
+        for right, val in self.triggers.items():
+            exprs = val.keys()
+            if len(exprs) > 1:
+                if '' in exprs:
+                    clean_me.add(right)
+        for right in clean_me:
+            del self.triggers[right]['']
 
     def print_triggers(self):
         for right, val in self.triggers.items():
@@ -402,13 +421,10 @@ class GraphParser(object):
 
 
 class TestGraphParser(unittest.TestCase):
-    """Unit tests for the GraphParser class.
-
-    Method doc strings are ommitted; the tests should self-explanatory.
-    """
+    """Unit tests for the GraphParser class."""
 
     def test_line_continuation(self):
-        """Text syntax-driven line continuation."""
+        """Test syntax-driven line continuation."""
 
         graph1 = "a => b => c"
         graph2 = """a =>
@@ -441,8 +457,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertRaises(GraphParseError, gp.parse_graph, graph)
 
     def test_def_trigger(self):
-        """Test default trigger is :succeed.
-        """
+        """Test default trigger is :succeed."""
+
         gp1 = GraphParser()
         gp1.parse_graph("foo => bar")
         gp2 = GraphParser()
@@ -450,8 +466,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_finish_trigger(self):
-        """Test finish trigger expansion.
-        """
+        """Test finish trigger expansion."""
+
         gp1 = GraphParser()
         gp1.parse_graph("foo:finish => bar")
         gp2 = GraphParser()
@@ -459,8 +475,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_fam_all_to_all(self):
-        """Test family all-to-all semantics.
-        """
+        """Test family all-to-all semantics."""
+
         fam_map = {'FAM': ['m1', 'm2'], 'BAM': ['b1', 'b2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:succeed-all => BAM")
@@ -472,8 +488,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_fam_one_to_all(self):
-        """Test family one-to-all semantics.
-        """
+        """Test family one-to-all semantics."""
+
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("pre => FAM")
@@ -486,8 +502,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_fam_all_to_one(self):
-        """Test family all-to-one semantics.
-        """
+        """Test family all-to-one semantics."""
+
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:succeed-all => post")
@@ -496,8 +512,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_fam_any_to_one(self):
-        """Test family any-to-one semantics.
-        """
+        """Test family any-to-one semantics."""
+
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:succeed-any => post")
@@ -506,8 +522,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_fam_any_to_all(self):
-        """Test family any-to-all semantics.
-        """
+        """Test family any-to-all semantics."""
+
         fam_map = {'FAM': ['m1', 'm2'], 'BAM': ['b1', 'b2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:fail-any => BAM")
@@ -519,8 +535,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_fam_finish(self):
-        """Test family finish semantics.
-        """
+        """Test family finish semantics."""
+
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:finish-all => post")
@@ -530,7 +546,10 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_parameter_expand(self):
-        # See also the unit tests in lib/cylc/param_expand.py.
+        """Test parameter expansion in the graph.
+
+        See also the unit tests in the param_expand module.
+        """
         fam_map = {
             'FAM_m0': ['fa_m0', 'fb_m0'],
             'FAM_m1': ['fa_m1', 'fb_m1'],
@@ -560,6 +579,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_conditional(self):
+        """Test generation of conditional triggers."""
+
         gp1 = GraphParser()
         gp1.parse_graph("(foo:start | bar) => baz")
         res = {
@@ -577,7 +598,8 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, res)
 
     def test_repeat_trigger(self):
-        # Repeating a trigger should have no effect.
+        """Test that repeating a trigger has no effect."""
+
         gp1 = GraphParser()
         gp2 = GraphParser()
         gp1.parse_graph("foo => bar")
@@ -586,18 +608,26 @@ class TestGraphParser(unittest.TestCase):
             foo => bar""")
         self.assertEqual(gp1.triggers, gp2.triggers)
 
-    def test_suicide_trigger(self):
-        # Test whitespace before a suicide trigger.
+    def test_whitespace(self):
+        """Test that whitespace is ignored all over the place."""
+
+        # TODO FINISH THIS
         gp1 = GraphParser()
         gp2 = GraphParser()
         gp1.parse_graph("foo => !bar")
         gp2.parse_graph("foo => ! bar")
         self.assertEqual(gp1.triggers, gp2.triggers)
 
-    def test_fam_qualifiers_rhs(self):
-        graph = "foo => FAM:succeed-all => bar"
-        gp = GraphParser()
-        self.assertRaises(GraphParseError, gp.parse_graph, graph)
+    def test_non_default_chaining(self):
+        gp1 = GraphParser()
+        gp1.parse_graph("""
+        bar
+        foo => bar:fail => baz""")
+        gp2 = GraphParser()
+        gp2.parse_graph("""
+            foo => bar
+            bar:fail => baz""")
+        self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_double_oper(self):
         graph = "foo && bar => baz"
