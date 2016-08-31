@@ -21,10 +21,11 @@ sleep 10"""
     [[init<r>, comb<r>, sim<r,n>, post<r,n>]]
         inherit = RUN<r>
 [visualization]
+    use node color for edges = True
     [[node attributes]]
         RUN<r=0> = "color=red"
         RUN<r=1> = "color=blue"
-        RUN<r=2> = "color=limegreen"
+        RUN<r=2> = "color=darkgreen"
         comb<r> = "color=orange"
         ENDS = "style=filled", "fillcolor=gray"
         boo = "style=filled", "fillcolor=red"

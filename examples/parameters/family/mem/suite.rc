@@ -25,6 +25,7 @@
     [[assim<run>]]
         inherit = RUN<run>
 [visualization]
+    use node color for edges = True
     [[node attributes]]
         RUN<run=1> = "color=red", "fontcolor=red"
         RUN<run=2> = "color=darkgreen", "fontcolor=darkgreen"

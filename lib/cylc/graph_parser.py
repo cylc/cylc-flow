@@ -123,9 +123,15 @@ class GraphParser(object):
     REC_SUITE_STATE = re.compile('(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)')
 
     def __init__(self, family_map=None, parameters=None):
-        """Store suite data that affects graph parsing."""
+        """Initializing the graph string parser.
+
+        family_map (empty or None if no families) is:
+            {family_name: [task member names]}
+        parameters (empty or None if no parameters) is just passed on to the
+        parameter expander classes (documented there).
+        """
         self.family_map = family_map or {}
-        self.parameters = parameters or {}
+        self.parameters = parameters
         self.triggers = {}
         self.original = {}
         self.suite_state_polling_tasks = {}
@@ -219,7 +225,7 @@ class GraphParser(object):
                 "    NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n" +
                 "  " + "\n  ".join(bad_lines))
 
-        # Expand parameterized lines.
+        # Expand parameterized lines (or detect undefined parameters).
         line_set = set()
         graph_expander = GraphExpander(self.parameters)
         for line in full_lines:
@@ -555,14 +561,9 @@ class TestGraphParser(unittest.TestCase):
             'FAM_m0': ['fa_m0', 'fb_m0'],
             'FAM_m1': ['fa_m1', 'fb_m1'],
         }
-        params = {
-            'm': ['0', '1'], 'n': ['0', '1'],
-            'templates': {
-                'm': '_m%(m)s',
-                'n': '_n%(n)s',
-            }
-        }
-        gp1 = GraphParser(fam_map, params)
+        params = {'m': ['0', '1'], 'n': ['0', '1']}
+        templates = {'m': '_m%(m)s', 'n': '_n%(n)s'}
+        gp1 = GraphParser(fam_map, (params, templates))
         gp1.parse_graph("""
             pre => foo<m,n> => bar<n>
             bar<n=0> => baz  # specific case

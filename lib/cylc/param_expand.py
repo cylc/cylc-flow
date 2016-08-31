@@ -29,50 +29,50 @@ simplest form (without allowing for parameter offsets and specific values, and
 with input already expressed as a string template) the method looks like this:
 
 #------------------------------------------------------------------------------
-# def expand(template, params, results, values=None):
-#     '''Recursive parameter expansion.
-#
-#     template: e.g. "foo_m(m)s => bar_m%(m)s_n%(n)s".
-#     results: output list of expanded strings.
-#     params: list of parameter (name, max-value) tuples.
-#     '''
-#     if values is None:
-#         values = {}
-#     if not params:
-#         results.add(template % values)
-#     else:
-#         param = params[0]
-#         for value in range(param[1]):
-#             values[param[0]] = value
-#             expand(template, params[1:], results, values)
-#
-# if __name__ == "__main__":
-#     results = []
-#     expand(
-#         "foo_m%(m)s => bar_m%(m)s_n%(n)s",
-#         results,
-#         [('m', 2), ('n', 3)]
-#     )
-#     for result in results:
-#         print result
-#
-# foo_m0 => bar_m0_n0
-# foo_m0 => bar_m0_n1
-# foo_m0 => bar_m0_n2
-# foo_m1 => bar_m1_n0
-# foo_m1 => bar_m1_n1
-# foo_m1 => bar_m1_n2
+def expand(template, params, results, values=None):
+    '''Recursive parameter expansion.
+
+    template: e.g. "foo_m(m)s => bar_m%(m)s_n%(n)s".
+    results: output list of expanded strings.
+    params: list of parameter (name, max-value) tuples.
+    '''
+    if values is None:
+        values = {}
+    if not params:
+        results.add(template % values)
+    else:
+        param = params[0]
+        for value in range(param[1]):
+            values[param[0]] = value
+            expand(template, params[1:], results, values)
+#------------------------------------------------------------------------------
+if __name__ == "__main__":
+    results = []
+    expand(
+        "foo_m%(m)s => bar_m%(m)s_n%(n)s",
+        results,
+        [('m', 2), ('n', 3)]
+    )
+    for result in results:
+        print result
+
+foo_m0 => bar_m0_n0
+foo_m0 => bar_m0_n1
+foo_m0 => bar_m0_n2
+foo_m1 => bar_m1_n0
+foo_m1 => bar_m1_n1
+foo_m1 => bar_m1_n2
 #------------------------------------------------------------------------------
 """
 
-# Extract name and optional offset or specific value e.g. 'm-1'.
-REC_P_OFFS = re.compile(r'(\w+)(?:\s*([-+=]\s*[\w]+))?')
-# To split heading name lists.
+# To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
-# Extract 'name' and '<parameters>' from 'name<parameters>'.
+# To extract 'name' and '<parameters>' from 'name<parameters>'.
 REC_P_NAME = re.compile(r"(%s)(<.*?>)?" % TaskID.NAME_RE)
-# Extract parameter list 'm,n,o' from '<m,n,o>'.
+# To extract all parameter lists e.g. 'm,n,o' (from '<m,n,o>').
 REC_P_GROUP = re.compile(r"<(.*?)>")
+# To extract parameter name and optional offset or value e.g. 'm-1'.
+REC_P_OFFS = re.compile(r'(\w+)(?:\s*([-+=]\s*[\w]+))?')
 
 
 def item_in_list(item, lst):
@@ -97,36 +97,16 @@ class ParamExpandError(Exception):
 class NameExpander(object):
     """Handle parameter expansion in runtime namespace headings."""
 
-    @staticmethod
-    def replace_params(name_in, indices, param_cfg, origin):
-        """Replace <m,n,..> in name<m,n,...> with given values."""
-        name, p_tmpl = REC_P_NAME.match(name_in).groups()
-        if not p_tmpl:
-            # name_in is not parameterized.
-            return name_in
-        # List of parameter names used in this name: ['m', 'n']
-        used_param_names = [i.strip() for i in p_tmpl[1:-1].split(',')]
-        for p_name in used_param_names:
-            msg = None
-            if '=' in p_name:
-                msg = 'values'
-            elif '-' in p_name or '+' in p_name:
-                msg = 'offsets'
-            if msg is not None:
-                raise ParamExpandError("ERROR, parameter %s not supported"
-                                       " here: %s" % (msg, origin))
-        str_template = name
-        for pname in used_param_names:
-            str_template += param_cfg['templates'][pname]
-        return str_template % indices
+    def __init__(self, parameters=None):
+        """Initialize the parameterized task name expander.
 
-    def __init__(self, param_cfg):
-        """Store the suite parameter map.
-
-        Parameter values are expected to be strings, zero-padded if derived
-        from an integer range.
+        parameters (None if no parameters are defined) is:
+            ({param_name: [param_values],  # list of strings
+             {param_name: param_template}) # e.g. "_m%(m)s"
         """
-        self.param_cfg = param_cfg
+        self.parameters = parameters or ({}, {})
+        self.param_cfg = self.parameters[0]
+        self.param_tmpl_cfg = self.parameters[1]
 
     def expand(self, runtime_heading):
         """Expand runtime namespace names for a subset of suite parameters.
@@ -186,7 +166,7 @@ class NameExpander(object):
                         spec_vals[pname] = nval
                 else:
                     used_param_names.append(pname)
-                tmpl += self.param_cfg['templates'][pname]
+                tmpl += self.param_tmpl_cfg[pname]
             used_params = [
                 (p, self.param_cfg[p]) for p in used_param_names]
             self._expand_name(tmpl, used_params, expanded, spec_vals)
@@ -219,17 +199,45 @@ class NameExpander(object):
                 spec_vals[param_list[0][0]] = param_val
                 self._expand_name(str_tmpl, param_list[1:], results, spec_vals)
 
+    def replace_params(self, name_in, param_values, origin):
+        """Replace parameters in name_in with values in param_values.
+
+        Note this is "expansion" for specific values, not all values.
+        """
+        name, p_tmpl = REC_P_NAME.match(name_in).groups()
+        if not p_tmpl:
+            # name_in is not parameterized.
+            return name_in
+        # List of parameter names used in this name: ['m', 'n']
+        used_param_names = [i.strip() for i in p_tmpl[1:-1].split(',')]
+        for p_name in used_param_names:
+            msg = None
+            if '=' in p_name:
+                msg = 'values'
+            elif '-' in p_name or '+' in p_name:
+                msg = 'offsets'
+            if msg is not None:
+                raise ParamExpandError("ERROR, parameter %s not supported"
+                                       " here: %s" % (msg, origin))
+        str_template = name
+        for pname in used_param_names:
+            str_template += self.param_tmpl_cfg[pname]
+        return str_template % param_values
+
 
 class GraphExpander(object):
     """Handle parameter expansion of graph string lines."""
 
-    def __init__(self, param_cfg):
-        """Store the suite parameter map.
+    def __init__(self, parameters=None):
+        """Initialize the parameterized task name expander.
 
-        Parameter values are expected to be strings, zero-padded if derived
-        from an integer range.
+        parameters (None if no parameters are defined) is:
+            ({param_name: [param_values],  # list of strings
+             {param_name: param_template}) # e.g. "_m%(m)s"
         """
-        self.param_cfg = param_cfg
+        self.parameters = parameters or ({}, {})
+        self.param_cfg = self.parameters[0]
+        self.param_tmpl_cfg = self.parameters[1]
 
     def expand(self, line):
         """Expand a graph line for subset of suite parameters.
@@ -327,7 +335,7 @@ class GraphExpander(object):
                             offval = plist[off_idx]
                         param_values[pname] = offval
                 for pname in param_values:
-                    tmpl += self.param_cfg['templates'][pname]
+                    tmpl += self.param_tmpl_cfg[pname]
                 repl = tmpl % param_values
                 line = re.sub('<' + p_group + '>', repl, line)
                 # Remove out-of-range nodes to first arrow.
@@ -351,16 +359,12 @@ class TestParamExpand(unittest.TestCase):
         ivals = [str(i) for i in range(2)]
         jvals = [str(j) for j in range(3)]
         kvals = [str(k) for k in range(2)]
-        params_map = {
-            'i': ivals, 'j': jvals, 'k': kvals,
-            'templates': {
-                'i': '_i%(i)s',
-                'j': '_j%(j)s',
-                'k': '_k%(k)s',
-            }
-        }
-        self.name_expander = NameExpander(params_map)
-        self.graph_expander = GraphExpander(params_map)
+        params_map = {'i': ivals, 'j': jvals, 'k': kvals}
+        templates = {'i': '_i%(i)s',
+                     'j': '_j%(j)s',
+                     'k': '_k%(k)s'}
+        self.name_expander = NameExpander((params_map, templates))
+        self.graph_expander = GraphExpander((params_map, templates))
 
     def test_name_two_params(self):
         self.assertEqual(

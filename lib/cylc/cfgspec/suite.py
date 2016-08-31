@@ -225,9 +225,9 @@ SPEC = {
         },
         'parameters': {
             '__MANY__': vdr(vtype='parameter_list'),
-            'templates': {
-                '__MANY__': vdr(vtype='string'),
-            },
+        },
+        'parameter templates': {
+            '__MANY__': vdr(vtype='string'),
         },
         'events': {
             'handlers': vdr(vtype='string_list'),
