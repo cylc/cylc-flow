@@ -1800,8 +1800,9 @@ class SuiteConfig(object):
                 for expr, trigs in val.items():
                     lefts, suicide = trigs
                     orig_expr = gp.original[right][expr]
-                    self.generate_edges(expr, orig_expr, lefts,
-                                        right, seq, suicide)
+                    if not graphing_disabled:
+                        self.generate_edges(expr, orig_expr, lefts,
+                                            right, seq, suicide)
                     self.generate_taskdefs(
                         orig_expr, lefts, right, section, seq, base_interval)
                     self.generate_triggers(
