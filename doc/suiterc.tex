@@ -197,6 +197,50 @@ used for cylc testing and development.
     \item {\em default:} False
 \end{myitemize}
 
+\subsubsection[parameters]{[cylc] \textrightarrow parameters}
+
+Define parameter values here for use in expanding {\em parameterized tasks} -
+see Section~\ref{Parameterized Tasks}.
+\begin{myitemize}
+    \item {\em type:} list of strings, or an integer range
+        \lstinline=LOWER..UPPER= (two dots, inclusive bounds)
+    \item {\em default:} (none)
+    \item {\em examples:}
+        \begin{myitemize}
+            \item \lstinline@run = control, test1, test2@
+            \item \lstinline@mem = 1..5@  (equivalent to \lstinline@1, 2, 3, 4, 5@).
+        \end{myitemize}
+\end{myitemize}
+
+\subsubsection[parameter templates]{[cylc] \textrightarrow parameter templates}
+\label{RefParameterTemplates}
+
+Parameterized task names (see previous item, and Section~\ref{Parameterized
+Tasks}) are expanded, for each parameter value, using string templates.  You
+can assign templates to parameter names here, to override the default templates.
+
+\begin{myitemize}
+    \item {\em type:} a Python-style string template
+    \item {\em default} for an integer-valued parameter \lstinline=p=:
+        \lstinline=_p%(p)s= \\
+        e.g.\ \lstinline=foo<run>= becomes \lstinline=foo_run3= for
+            \lstinline@run@ value \lstinline@3@.
+    \item {\em default} for a non integer-valued parameter \lstinline=p=:
+        \lstinline=_%(p)s= \\
+        e.g.\ \lstinline=foo<run>= becomes \lstinline=foo_top= for
+            \lstinline@run@ value \lstinline@top@.
+    \item {\em example:} \lstinline@run = -R%(run)s@ \\
+            e.g.\ \lstinline=foo<run>= becomes \lstinline=foo-R3= for
+            \lstinline@run@ value \lstinline@3@.
+\end{myitemize}
+
+Note that the values of a parameter named \lstinline=p= are substituted for
+\lstinline=%(p)s=.  The \lstinline=s= indicates a string value and should
+be used even for integer-valued parameters, because cylc converts integer
+parameter values to strings, with (depending on size) zero-padding. In
+\lstinline=_run%(run)s= the first ``run'' is a string literal, and the second
+gets substituted with each value of the parameter.
+
 \subsubsection[{[[}events{]]}]{[cylc] \textrightarrow [[events]]}
 \label{SuiteEventHandling}
 
