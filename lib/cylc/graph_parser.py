@@ -71,14 +71,11 @@ class GraphParser(object):
         * A parameterized qualified node name looks like this:
             NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
         * Default trigger type is ':succeed'.
-        * Chaining is allowed ("foo => bar => baz") but only unqualified nodes
-          can appear on the right of an arrow because expressions and
-          trigger-types make no sense there.
-          TODO: however we COULD choose to ignore qualifiers on the right? E.g.
+        * Chaining of default triggers is allowed ("foo => bar => baz"). 
+          TODO: we COULD choose to ignore qualifiers on the right, e.g.:
              "foo => bar:fail => baz"
-          would be equivalent to:
+          could be interpreted as:
              "foo:succeed => bar", and "bar:fail => baz"
-
     """
 
     ARROW = '=>'
@@ -93,12 +90,10 @@ class GraphParser(object):
     TRIG_FINISH = ':finish'
     FAM_TRIG_EXT_ALL = '-all'
     FAM_TRIG_EXT_ANY = '-any'
-    FAM_TRIG_EXT_MEM = '-mem'
     LEN_FAM_TRIG_EXT_ALL = len(FAM_TRIG_EXT_ALL)
     LEN_FAM_TRIG_EXT_ANY = len(FAM_TRIG_EXT_ANY)
-    LEN_FAM_TRIG_EXT_MEM = len(FAM_TRIG_EXT_MEM)
 
-    # Match full parameterized single nodes.
+    # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(r'''
     (
     (?:(?:!)?\w[\w\-+%@]*)  # node name
@@ -108,7 +103,7 @@ class GraphParser(object):
     )
     ''', re.X)           # end of string
 
-    # To extract node info from a left-side dependency group.
+    # Extract node info from a left-side expression, after parameter expansion.
     REC_NODES = re.compile(r'''
     ((?:!)?\w[\w\-+%@]*)  # node name
     (\[[\w\-\+\^\s]+\])?  # optional cycle point offset
@@ -139,7 +134,7 @@ class GraphParser(object):
            2. Join incomplete lines starting or ending with '=>'.
            3. Replicate and expand any parameterized lines.
            4. Split and process by pairs "left-expression => right-node":
-              i. Replace families with members (member, all, or any semantics).
+              i. Replace families with members (any or all semantics).
              ii. Record parsed dependency information for each right-side node.
         """
         # Strip comments and skip blank lines.
@@ -306,84 +301,25 @@ class GraphParser(object):
 
             # Determine semantics of all family triggers present.
             families = {}
-            semantics = set()
             for name, offset, trig in info:
                 if name in self.family_map:
-                    # TODO - USE OF 'semantics' HERE IS A BIT POINTLESS;
-                    # ALL-TO-ALL SHOULD DISTINGUISH ALL-TO-ANY HERE INSTEAD OF
-                    # DEFERRING TO LATER.
                     if trig.endswith(self.__class__.FAM_TRIG_EXT_ANY):
                         ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ANY]
                         ext = self.__class__.FAM_TRIG_EXT_ANY
-                        semantics.add('all-to-all')
                     elif trig.endswith(self.__class__.FAM_TRIG_EXT_ALL):
                         ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_ALL]
                         ext = self.__class__.FAM_TRIG_EXT_ALL
-                        semantics.add('all-to-all')
-                    elif trig.endswith(self.__class__.FAM_TRIG_EXT_MEM):
-                        ttype = trig[:-self.__class__.LEN_FAM_TRIG_EXT_MEM]
-                        ext = self.__class__.FAM_TRIG_EXT_MEM
-                        semantics.add('mem-to-mem')
                     else:
+                        # Unqualified (FAM => foo) or bad (FAM:bad => foo).
                         raise GraphParseError(
-                            "ERROR, unqualified family trigger in %s" % expr)
+                            "ERROR, bad family trigger in %s" % expr)
                     families[name] = (ttype, ext)
                 else:
                     if (trig.endswith(self.__class__.FAM_TRIG_EXT_ANY) or
-                            trig.endswith(self.__class__.FAM_TRIG_EXT_ALL) or
-                            trig.endswith(self.__class__.FAM_TRIG_EXT_MEM)):
+                            trig.endswith(self.__class__.FAM_TRIG_EXT_ALL)):
                         raise GraphParseError("ERROR, family trigger on non-"
                                               "family namespace %s" % expr)
-            if len(set(semantics)) > 1:
-                raise GraphParseError(
-                    "ERROR, mixed family semantics: %s" % expr)
-
-            if 'mem-to-mem' in semantics:
-                # This requires duplication of the graph line segment.
-                self._families_mem_to_mem(expr, rights, info, families)
-            else:
-                # Non-family or all/any family semantics.
-                self._families_all_to_all(expr, rights, info, families)
-
-    def _families_mem_to_mem(self, expr, rights, info, families):
-        """Expand for member-to-member family semantics.
-
-        Valid for same-size same-sort families.
-        E.g. "FAM => BAM" means "fam_a => bam_a", "fam_b => bam_b", etc.
-        """
-        sizes = set()
-        for fam in families:
-            sizes.add(len(self.family_map[fam]))
-        if len(sizes) > 1:
-            raise GraphParseError(
-                "ERROR, member-to-member family triggers require"
-                " family sizes to be the same: %s" % expr)
-
-        for i in range(0, sizes.pop()):
-            i_info = []
-            i_expr = expr
-            for name, offset, trig in info:
-                ttype, _ = families[name]
-                if name in families:
-                    mem = sorted(self.family_map[name])[i]
-                    this = r'\b%s%s%s\b' % (name, re.escape(offset), trig)
-                    that = '%s%s%s' % (mem, offset, ttype)
-                    i_expr = re.sub(this, that, i_expr)
-                    i_info.append((mem, offset, ttype))
-                else:
-                    i_info.append((name, offset, ttype))
-
-            for right in rights:
-                if right.startswith(self.__class__.SUICIDE_MARK):
-                    right = right[1:].strip()
-                    suicide = True
-                else:
-                    suicide = False
-                if right in self.family_map:
-                    mem = sorted(self.family_map[right])[i]
-                    self._add_trigger(expr, mem, i_expr, i_info, suicide)
-                else:
-                    self._add_trigger(expr, right, i_expr, i_info, suicide)
+            self._families_all_to_all(expr, rights, info, families)
 
     def _families_all_to_all(self, expr, rights, info, families):
         """Replace all family names with member names, for all/any semantics.
@@ -522,21 +458,6 @@ class TestGraphParser(unittest.TestCase):
         gp2.parse_graph("(foo:succeed | foo:fail) => bar")
         self.assertEqual(gp1.triggers, gp2.triggers)
 
-    def test_fam_mem_to_mem(self):
-        """Test family member-to-member semantics.
-        """
-        fam_map = {
-            'FAM': ['f1', 'f2'],
-            'BAM': ['b1', 'b2'],
-            'WAM': ['w1', 'w2']}
-        gp1 = GraphParser(fam_map)
-        gp1.parse_graph("FAM:succeed-mem | BAM:succeed-mem => WAM")
-        gp2 = GraphParser(fam_map)
-        gp2.parse_graph("""
-            f1 | b1 => w1
-            f2 | b2 => w2""")
-        self.assertEqual(gp1.triggers, gp2.triggers)
-
     def test_fam_all_to_all(self):
         """Test family all-to-all semantics.
         """
@@ -573,20 +494,6 @@ class TestGraphParser(unittest.TestCase):
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("(m1 & m2) => post")
         self.assertEqual(gp1.triggers, gp2.triggers)
-
-        gp1 = GraphParser(fam_map)
-        gp1.parse_graph("FAM:succeed-mem => post")
-        gp2 = GraphParser(fam_map)
-        gp2.parse_graph("""
-            m1 => post
-            m2 => post
-            """)
-        self.assertEqual(gp1.triggers, gp2.triggers)
-        gp3 = GraphParser(fam_map)
-        gp3.parse_graph("""
-            m1 & m2 => post
-            """)
-        self.assertEqual(gp1.triggers, gp3.triggers)
 
     def test_fam_any_to_one(self):
         """Test family any-to-one semantics.
@@ -640,7 +547,6 @@ class TestGraphParser(unittest.TestCase):
             pre => foo<m,n> => bar<n>
             bar<n=0> => baz  # specific case
             bar<n-1> => bar<n>  # inter-chunk
-            FAM<m>:succeed-mem => post
             """)
         gp2 = GraphParser()
         gp2.parse_graph("""
@@ -650,7 +556,6 @@ class TestGraphParser(unittest.TestCase):
             pre => foo_m1_n1 => bar_n1
             bar_n0 => baz
             bar_n0 => bar_n1
-            fa_m0 & fa_m1 & fb_m0 & fb_m1 => post
             """)
         self.assertEqual(gp1.triggers, gp2.triggers)
 
