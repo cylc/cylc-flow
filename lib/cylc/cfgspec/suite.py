@@ -175,7 +175,9 @@ def _coerce_parameter_list(value, keys, _):
         try:
             lower, upper = REC_PARAM_INT_RANGE.match(value[0]).groups()
         except AttributeError:
-            pass
+            if '.' in value[0]:
+                # Dot is illegal in node names, probably bad range syntax.
+                raise IllegalValueError("parameter", keys, value)
         else:
             n_dig = len(upper)
             return [
