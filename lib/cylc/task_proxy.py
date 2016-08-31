@@ -811,6 +811,9 @@ class TaskProxy(object):
             pass
         if self.sub_try_state.next() is None:
             # No submission retry lined up: definitive failure.
+            self.summary['finished_time'] = float(
+                get_unix_time_from_time_string(event_time))
+            self.summary['finished_time_string'] = event_time
             flags.pflag = True
             # See github #476.
             self.setup_event_handlers(
