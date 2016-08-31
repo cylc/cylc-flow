@@ -270,7 +270,8 @@ class GraphParser(object):
         # Cycle point offsets are not allowed on the right side (yet).
         if '[' in right:
             raise GraphParseError(
-                "ERROR, illegal cycle point offset on the right: %s" % right)
+                "ERROR, illegal cycle point offset on the right: %s => %s" % (
+                    left, right))
         # Check that parentheses match.
         if left.count("(") != left.count(")"):
             raise GraphParseError(
