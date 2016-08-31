@@ -19,7 +19,7 @@
 
 from datetime import datetime, timedelta
 
-from isodatetime.data import Duration
+from isodatetime.data import CALENDAR, Duration
 from isodatetime.parsers import TimePointParser
 from isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone)
@@ -212,7 +212,15 @@ def get_unix_time_from_time_string(time_string):
     """Convert a time string into a unix timestamp."""
     parser = TimePointParser()
     time_point = parser.parse(time_string)
-    return time_point.get("seconds_since_unix_epoch")
+    # Unix time is always Gregorian
+    prev_calendar_mode = CALENDAR.mode
+    if prev_calendar_mode != CALENDAR.MODE_GREGORIAN:
+        CALENDAR.set_mode(CALENDAR.MODE_GREGORIAN)
+    try:
+        return time_point.get("seconds_since_unix_epoch")
+    finally:
+        if prev_calendar_mode != CALENDAR.mode:
+            CALENDAR.set_mode(prev_calendar_mode)
 
 
 def get_seconds_as_interval_string(seconds):
