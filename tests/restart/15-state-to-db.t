@@ -28,8 +28,7 @@ sqlite3 "${SUITE_RUN_DIR}/state/cylc-suite.db" <"cylc-suite-db.dump"
 cp -p 'state/state' "${SUITE_RUN_DIR}/state/"
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
 suite_run_ok "${TEST_NAME_BASE}-restart" cylc restart --debug "${SUITE_NAME}"
-contains_ok "${TEST_NAME_BASE}-restart.stdout" <<__OUT__
-Populating suite_params table
+greps_ok "Populating suite_params table
  + run_mode=live
  + initial_point=20000101T0000Z
  + final_point=20030101T0000Z
@@ -41,12 +40,11 @@ LOADING suite parameters
 + initial cycle point = 20000101T0000Z
 + final cycle point = 20030101T0000Z
 LOADING broadcast states
-+ [root.*] [environment]CYLC_TEST_VAR=hello
++ \[root.*\] \[environment\]CYLC_TEST_VAR=hello
 LOADING task proxies
 + bar.20030101T0000Z succeeded
 + bar.20040101T0000Z held
-+ foo.20040101T0000Z held
-__OUT__
++ foo.20040101T0000Z held" "${TEST_NAME_BASE}-restart.stdout"
 exists_ok "${SUITE_RUN_DIR}/state.tar.gz"
 exists_ok "${SUITE_RUN_DIR}/cylc-suite-private.db" 
 exists_ok "${SUITE_RUN_DIR}/cylc-suite-public.db" 

@@ -301,7 +301,7 @@ class SuiteLog(object):
     def _create_logs(self, log_logger_level=logging.INFO):
         """Sets up the log files and their file handlers."""
         # Logging formatters.
-        plain_formatter = logging.Formatter('%(message)s')
+        # plain_formatter = logging.Formatter('%(message)s')
         if self.is_test:
             iso8601_formatter = logging.Formatter(
                 '<TIME> %(levelname)-2s - %(message)s')
@@ -357,13 +357,13 @@ class SuiteLog(object):
                                     archive_length=self.archive_length,
                                     file_stamp_fcn=self.stamp)
         out_fh.setLevel(logging.INFO)
-        out_fh.setFormatter(plain_formatter)
+        out_fh.setFormatter(iso8601_formatter)
         out.addHandler(out_fh)
 
         # Output to stdout.
         out_stdout_fh = logging.StreamHandler(sys.stdout)
         out_stdout_fh.setLevel(logging.INFO)
-        out_stdout_fh.setFormatter(plain_formatter)
+        out_stdout_fh.setFormatter(iso8601_formatter)
         out.addHandler(out_stdout_fh)
 
         # --- Create the 'err' logger. ---
@@ -434,7 +434,7 @@ class STDLogger(object):
         if self.logger.handlers:
             self.logger.log(level, *args, **kwargs)
         elif self.log_ == SuiteLog.OUT:
-            # Print message with no deccoration.
+            # Print message in plain format
             print(*args)
         elif self.log_ == SuiteLog.ERR:
             # Print message prefixed by the logging level
@@ -503,7 +503,7 @@ def test_back_compat(ldir):
             log_file.write(file_ + ':')
     for file_ in ['log.1', 'out.1', 'err.1']:
         with open(os.path.join(ldir, file_), 'w') as log_file:
-            log_file.write(file_)
+            log_file.write(file_ + '\n')
 
     # Populate logs.
     suite_log.pimp()
@@ -540,4 +540,3 @@ if __name__ == '__main__':
         test_back_compat(os.path.join(sys.argv[1], 'test_back_compat'))
     elif sys.argv[2] == 'test-housekeep':
         test_housekeeping(os.path.join(sys.argv[1], 'test_housekeep'))
-
