@@ -75,6 +75,12 @@ class TaskPool(object):
     JOBS_POLL = "jobs-poll"
     JOBS_SUBMIT = SuiteProcPool.JOBS_SUBMIT
 
+    STOP_AUTO = 'AUTOMATIC'
+    STOP_AUTO_ON_TASK_FAILURE = 'AUTOMATIC(ON-TASK-FAILURE)'
+    STOP_REQUEST_CLEAN = 'REQUEST(CLEAN)'
+    STOP_REQUEST_NOW = 'REQUEST(NOW)'
+    STOP_REQUEST_NOW_NOW = 'REQUEST(NOW-NOW)'
+
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
     TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
@@ -753,26 +759,40 @@ class TaskPool(object):
                           str(self.stop_point))
                 itask.state.reset_state(TASK_STATUS_HELD)
 
-    def no_active_tasks(self):
-        """Return True if no more active tasks."""
+    def can_stop(self, stop_mode):
+        """Return True if suite can stop.
+
+        A task is considered active if:
+        * It is in the active state and not marked with a kill failure.
+        * It has pending event handlers.
+        """
+        if stop_mode is None:
+            return False
+        if stop_mode == self.STOP_REQUEST_NOW_NOW:
+            return True
         for itask in self.get_tasks():
-            if (itask.state.status in TASK_STATUSES_ACTIVE or
-                    itask.event_handler_try_states):
+            if itask.event_handler_try_states:
+                return False
+            if (stop_mode == self.STOP_REQUEST_CLEAN and
+                    itask.state.status in TASK_STATUSES_ACTIVE and
+                    not itask.state.kill_failed):
                 return False
         return True
 
-    def has_unkillable_tasks_only(self):
-        """Used to identify if a task pool contains unkillable tasks.
-
-        Return True if all running and submitted tasks in the pool have had
-        kill operations fail, False otherwise.
-        """
+    def warn_stop_orphans(self):
+        """Log (warning) orphaned tasks on suite stop."""
         for itask in self.get_tasks():
-            if itask.state.status in [TASK_STATUS_RUNNING,
-                                      TASK_STATUS_SUBMITTED]:
-                if not itask.state.kill_failed:
-                    return False
-        return True
+            if (itask.state.status in TASK_STATUSES_ACTIVE and
+                    itask.state.kill_failed):
+                self.log.warning("%s: orphaned task (%s, kill failed)" % (
+                    itask.identity, itask.state.status))
+            elif itask.state.status in TASK_STATUSES_ACTIVE:
+                self.log.warning("%s: orphaned task (%s)" % (
+                    itask.identity, itask.state.status))
+            elif itask.event_handler_try_states:
+                for key in itask.event_handler_try_states:
+                    self.log.warning("%s: incomplete task event handler %s" % (
+                        itask.identity, key))
 
     def pool_is_stalled(self):
         """Return True if no active, queued or clock trigger awaiting tasks"""
@@ -1504,11 +1524,6 @@ class TaskPool(object):
                 if itask.sim_time_check():
                     sim_task_succeeded = True
         return sim_task_succeeded
-
-    def shutdown(self):
-        if not self.no_active_tasks():
-            self.log.warning("some active tasks will be orphaned")
-        self.pyro.disconnect(self.message_queue)
 
     def waiting_tasks_ready(self):
         """Waiting tasks can become ready for internal reasons.

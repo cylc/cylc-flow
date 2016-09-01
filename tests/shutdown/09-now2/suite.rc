@@ -1,0 +1,22 @@
+[cylc]
+    [[events]]
+        abort on timeout = True
+        timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = t1:finish => t2
+
+[runtime]
+    [[t1]]
+        script = """
+sleep 1
+cylc stop --now --now "${CYLC_SUITE_NAME}"
+trap '' EXIT
+exit
+"""
+        [[[events]]]
+            started handler = sleep 10 && echo 'Hello %(id)s %(event)s'
+            succeeded handler = echo 'Well done %(id)s %(event)s'
+    [[t2]]
+        script = true
