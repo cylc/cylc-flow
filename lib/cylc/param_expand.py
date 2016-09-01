@@ -32,7 +32,7 @@ with input already expressed as a string template) the method looks like this:
 def expand(template, params, results, values=None):
     '''Recursive parameter expansion.
 
-    template: e.g. "foo_m(m)s => bar_m%(m)s_n%(n)s".
+    template: e.g. "foo_m(m)s=>bar_m%(m)s_n%(n)s".
     results: output list of expanded strings.
     params: list of parameter (name, max-value) tuples.
     '''
@@ -49,19 +49,19 @@ def expand(template, params, results, values=None):
 if __name__ == "__main__":
     results = []
     expand(
-        "foo_m%(m)s => bar_m%(m)s_n%(n)s",
+        "foo_m%(m)s=>bar_m%(m)s_n%(n)s",
         results,
         [('m', 2), ('n', 3)]
     )
     for result in results:
         print result
 
-foo_m0 => bar_m0_n0
-foo_m0 => bar_m0_n1
-foo_m0 => bar_m0_n2
-foo_m1 => bar_m1_n0
-foo_m1 => bar_m1_n1
-foo_m1 => bar_m1_n2
+foo_m0=>bar_m0_n0
+foo_m0=>bar_m0_n1
+foo_m0=>bar_m0_n2
+foo_m1=>bar_m1_n0
+foo_m1=>bar_m1_n1
+foo_m1=>bar_m1_n2
 #------------------------------------------------------------------------------
 """
 
@@ -243,7 +243,7 @@ class GraphExpander(object):
         """Expand a graph line for subset of suite parameters.
 
         Input line is a string that may contain multiple parameterized node
-        names, e.g. "pre => init<m> => sim<m,n> => post<m,n> => done".
+        names, e.g. "pre=>init<m>=>sim<m,n>=>post<m,n>=>done".
 
         Unlike NameExpander this supports offsets like "foo<m-1,n>", which
         means (because the parameter substitutions have to be computed on the
@@ -251,16 +251,16 @@ class GraphExpander(object):
         inner loop of the recursive expansion function.
 
         Returns a set containing lines expanded for all used parameters, e.g.
-        for "foo => bar<m,n>" with m=2 and n=2 the result would be:
-            set([foo => bar_m0_n0,
-                 foo => bar_m0_n1,
-                 foo => bar_m1_n0,
-                 foo => bar_m1_n1])
+        for "foo=>bar<m,n>" with m=2 and n=2 the result would be:
+            set([foo=>bar_m0_n0,
+                 foo=>bar_m0_n1,
+                 foo=>bar_m1_n0,
+                 foo=>bar_m1_n1])
 
         Specific parameter values can be singled out like this:
-            "sim<m=0,n> => sim<m,n>"
+            "sim<m=0,n>=>sim<m,n>"
         Offset (negative only) values can be specified like this:
-            "sim<m-1,n> => sim<m,n>"
+            "sim<m-1,n>=>sim<m,n>"
         (Here the offset node must be the first in a line, and if m-1 evaluates
         to less than 0 the node will be removed to leave just "sim<m,n>").
         """
@@ -268,7 +268,7 @@ class GraphExpander(object):
         used_pnames = []
         for p_group in set(REC_P_GROUP.findall(line)):
             for item in p_group.split(','):
-                pname, offs = REC_P_OFFS.match(item.strip()).groups()
+                pname, offs = REC_P_OFFS.match(item).groups()
                 if pname not in self.param_cfg:
                     raise ParamExpandError(
                         "ERROR, parameter %s is not defined in <%s>: %s" % (
@@ -280,7 +280,7 @@ class GraphExpander(object):
                             " supported: %s%s" % (pname, offs))
                     elif offs.startswith('='):
                         # Check that specific parameter values exist.
-                        val = offs[1:].strip()
+                        val = offs[1:]
                         # Pad integer values here.
                         try:
                             int(val)
@@ -318,7 +318,7 @@ class GraphExpander(object):
                 param_values = OrderedDictWithDefaults()
                 tmpl = ""
                 for item in p_group.split(','):
-                    pname, offs = REC_P_OFFS.match(item.strip()).groups()
+                    pname, offs = REC_P_OFFS.match(item).groups()
                     if offs is None:
                         param_values[pname] = values[pname]
                     elif offs.startswith('='):
@@ -340,7 +340,7 @@ class GraphExpander(object):
                 line = re.sub('<' + p_group + '>', repl, line)
                 # Remove out-of-range nodes to first arrow.
                 line = re.sub('^.*--<REMOVE>--.*?=>\s*?', '', line)
-            line_set.add(line.strip())
+            line_set.add(line)
         else:
             # Recurse through index ranges.
             for param_val in param_list[0][1]:
@@ -439,59 +439,59 @@ class TestParamExpand(unittest.TestCase):
 
     def test_graph_expand_1(self):
         self.assertEqual(
-            self.graph_expander.expand("bar<i,j> => baz<i,j>"),
-            set(["bar_i0_j1 => baz_i0_j1",
-                 "bar_i1_j2 => baz_i1_j2",
-                 "bar_i0_j2 => baz_i0_j2",
-                 "bar_i1_j1 => baz_i1_j1",
-                 "bar_i1_j0 => baz_i1_j0",
-                 "bar_i0_j0 => baz_i0_j0"])
+            self.graph_expander.expand("bar<i,j>=>baz<i,j>"),
+            set(["bar_i0_j1=>baz_i0_j1",
+                 "bar_i1_j2=>baz_i1_j2",
+                 "bar_i0_j2=>baz_i0_j2",
+                 "bar_i1_j1=>baz_i1_j1",
+                 "bar_i1_j0=>baz_i1_j0",
+                 "bar_i0_j0=>baz_i0_j0"])
         )
 
     def test_graph_expand_2(self):
         self.assertEqual(
             self.graph_expander.expand(
-                "pre => bar<i> => baz<i,j> => post"),
-            set(["pre => bar_i0 => baz_i0_j1 => post",
-                 "pre => bar_i1 => baz_i1_j2 => post",
-                 "pre => bar_i0 => baz_i0_j2 => post",
-                 "pre => bar_i1 => baz_i1_j1 => post",
-                 "pre => bar_i1 => baz_i1_j0 => post",
-                 "pre => bar_i0 => baz_i0_j0 => post"])
+                "pre=>bar<i>=>baz<i,j>=>post"),
+            set(["pre=>bar_i0=>baz_i0_j1=>post",
+                 "pre=>bar_i1=>baz_i1_j2=>post",
+                 "pre=>bar_i0=>baz_i0_j2=>post",
+                 "pre=>bar_i1=>baz_i1_j1=>post",
+                 "pre=>bar_i1=>baz_i1_j0=>post",
+                 "pre=>bar_i0=>baz_i0_j0=>post"])
         )
 
     def test_graph_expand_offset(self):
         self.assertEqual(
             self.graph_expander.expand(
-                "bar<i-1,j> => baz<i,j>"),
+                "bar<i-1,j>=>baz<i,j>"),
             set(["baz_i0_j0",
                  "baz_i0_j1",
                  "baz_i0_j2",
-                 "bar_i0_j0 => baz_i1_j0",
-                 "bar_i0_j1 => baz_i1_j1",
-                 "bar_i0_j2 => baz_i1_j2"])
+                 "bar_i0_j0=>baz_i1_j0",
+                 "bar_i0_j1=>baz_i1_j1",
+                 "bar_i0_j2=>baz_i1_j2"])
         )
 
     def test_graph_expand_specific(self):
         self.assertEqual(
-            self.graph_expander.expand("bar<i=1,j> => baz<i,j>"),
-            set(["bar_i1_j0 => baz_i0_j0",
-                 "bar_i1_j1 => baz_i0_j1",
-                 "bar_i1_j2 => baz_i0_j2",
-                 "bar_i1_j0 => baz_i1_j0",
-                 "bar_i1_j1 => baz_i1_j1",
-                 "bar_i1_j2 => baz_i1_j2"])
+            self.graph_expander.expand("bar<i=1,j>=>baz<i,j>"),
+            set(["bar_i1_j0=>baz_i0_j0",
+                 "bar_i1_j1=>baz_i0_j1",
+                 "bar_i1_j2=>baz_i0_j2",
+                 "bar_i1_j0=>baz_i1_j0",
+                 "bar_i1_j1=>baz_i1_j1",
+                 "bar_i1_j2=>baz_i1_j2"])
         )
 
     def test_graph_fail_bare_value(self):
         self.assertRaises(ParamExpandError,
                           self.graph_expander.expand,
-                          'foo<0,j> => bar<i,j>')
+                          'foo<0,j>=>bar<i,j>')
 
     def test_graph_fail_undefined_param(self):
         self.assertRaises(ParamExpandError,
                           self.graph_expander.expand,
-                          'foo<m,j> => bar<i,j>')
+                          'foo<m,j>=>bar<i,j>')
 
     def test_graph_fail_param_value_too_high(self):
         self.assertRaises(ParamExpandError,

@@ -27,7 +27,9 @@ from cylc.param_expand import GraphExpander
 
 class GraphParseError(Exception):
     """For graph string parsing errors."""
-    pass
+    def __str__(self):
+        # Restore some spaces for readability.
+        return self.message.replace('=>', ' => ')
 
 
 class Replacement(object):
@@ -96,8 +98,8 @@ class GraphParser(object):
     REC_NODE_FULL = re.compile(r'''
         (
         (?:(?:!)?\w[\w\-+%@]*)  # node name
-        (?:<[\w,=\-+\s]+>)?     # optional parameter list
-        (?:\[[\w\-\+\^\s]+\])?  # optional cycle point offset
+        (?:<[\w,=\-+]+>)?       # optional parameter list
+        (?:\[[\w\-\+\^]+\])?    # optional cycle point offset
         (?::[\w\-]+)?           # optional trigger type
         )
     ''', re.X)           # end of string
@@ -105,7 +107,7 @@ class GraphParser(object):
     # Extract node info from a left-side expression, after parameter expansion.
     REC_NODES = re.compile(r'''
         ((?:!)?\w[\w\-+%@]*)  # node name
-        (\[[\w\-\+\^\s]+\])?  # optional cycle point offset
+        (\[[\w\-\+\^]+\])?    # optional cycle point offset
         (:[\w\-]+)?           # optional trigger type
     ''', re.X)
 
@@ -117,7 +119,7 @@ class GraphParser(object):
     REC_COMMENT = re.compile('#.*$')
 
     # Detect presence of expansion parameters in a graph line.
-    REC_PARAMETERS = re.compile(r'<[\w,=\-+\s]+>')
+    REC_PARAMETERS = re.compile(r'<[\w,=\-+]+>')
 
     # Detect and extract suite state polling task info.
     REC_SUITE_STATE = re.compile('(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)')
@@ -140,18 +142,19 @@ class GraphParser(object):
         """Parse the graph string for a single graph section.
 
         (Assumes any general line-continuation markers have been processed).
-           1. Strip comments and blank lines.
+           1. Strip comments, whitespace, and blank lines.
            2. Join incomplete lines starting or ending with '=>'.
            3. Replicate and expand any parameterized lines.
            4. Split and process by pairs "left-expression => right-node":
               i. Replace families with members (any or all semantics).
              ii. Record parsed dependency information for each right-side node.
         """
-        # Strip comments and skip blank lines.
+        # Strip comments, whitespace, and blank lines.
         non_blank_lines = []
         for line in graph_string.split('\n'):
             line = self.__class__.REC_COMMENT.sub('', line)
-            line = line.strip()
+            # Apparently this is the fastest way to strip all whitespace!:
+            line = "".join(line.split())
             if not line:
                 continue
             non_blank_lines.append(line)
@@ -218,7 +221,7 @@ class GraphParser(object):
                 node_str = node_str.replace(node, '')
             # Result should be empty string.
             if node_str.strip():
-                bad_lines.append(line)
+                bad_lines.append(line.strip())
         if bad_lines:
             raise GraphParseError(
                 "ERROR, graph node format (round brackets means optional): \n"
@@ -246,7 +249,7 @@ class GraphParser(object):
                 if not offset:
                     pairs.add(('', name))
             for i in range(0, len(chain) - 1):
-                pairs.add((chain[i].strip(), chain[i + 1].strip()))
+                pairs.add((chain[i], chain[i + 1]))
 
         for pair in pairs:
             self._proc_dep_pair(pair[0], pair[1])
@@ -284,15 +287,14 @@ class GraphParser(object):
                 "ERROR, parenthesis mismatch in: \"" + left + "\"")
 
         # Split right side on AND.
-        rights = [r.strip() for r in right.split(self.__class__.OP_AND)]
+        rights = right.split(self.__class__.OP_AND)
 
         if self.__class__.OP_OR in left or '(' in left:
             # Treat conditional or bracketed expressions as a single entity.
             lefts = [left]
         else:
             # Split non-conditional left-side expressions on AND.
-            lefts = [
-                l.strip() for l in left.split(self.__class__.OP_AND)]
+            lefts = left.split(self.__class__.OP_AND)
 
         for left in lefts:
             # Extract infomation about all nodes on the left.
@@ -350,9 +352,9 @@ class GraphParser(object):
                     m_expr.append("%s%s%s" % (mem, offset, ttype))
                 this = r'\b%s%s%s\b' % (name, re.escape(offset), trig)
                 if extn == self.__class__.FAM_TRIG_EXT_ALL:
-                    that = '(%s)' % ' & '.join(m_expr)
+                    that = '(%s)' % '&'.join(m_expr)
                 elif extn == self.__class__.FAM_TRIG_EXT_ANY:
-                    that = '(%s)' % ' | '.join(m_expr)
+                    that = '(%s)' % '|'.join(m_expr)
                 n_expr = re.sub(this, that, n_expr)
                 n_info += m_info
             else:
@@ -361,7 +363,7 @@ class GraphParser(object):
 
         for right in rights:
             if right.startswith(self.__class__.SUICIDE_MARK):
-                right = right[1:].strip()
+                right = right[1:]
                 suicide = True
             else:
                 suicide = False
@@ -382,7 +384,7 @@ class GraphParser(object):
         for name, offset, trigger in info:
             if trigger == self.__class__.TRIG_FINISH:
                 this = "%s%s%s" % (name, re.escape(offset), trigger)
-                that = "(%s%s%s %s %s%s%s)" % (
+                that = "(%s%s%s%s%s%s%s)" % (
                     name, offset, self.__class__.TRIG_SUCCEED,
                     self.__class__.OP_OR,
                     name, offset, self.__class__.TRIG_FAIL)
@@ -550,6 +552,11 @@ class TestGraphParser(unittest.TestCase):
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("""
             ((m1:succeed | m1:fail) & (m2:succeed | m2:fail)) => post""")
+        print 1
+        print gp1.triggers
+        print 2
+        print gp2.triggers
+ 
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_parameter_expand(self):
@@ -587,7 +594,7 @@ class TestGraphParser(unittest.TestCase):
         gp1.parse_graph("(foo:start | bar) => baz")
         res = {
             'baz': {
-                '(foo:start | bar:succeed)': (
+                '(foo:start|bar:succeed)': (
                     ['foo:start', 'bar:succeed'], False)
             },
             'foo': {
@@ -608,16 +615,6 @@ class TestGraphParser(unittest.TestCase):
         gp2.parse_graph("""
             foo => bar
             foo => bar""")
-        self.assertEqual(gp1.triggers, gp2.triggers)
-
-    def test_whitespace(self):
-        """Test that whitespace is ignored all over the place."""
-
-        # TODO FINISH THIS
-        gp1 = GraphParser()
-        gp2 = GraphParser()
-        gp1.parse_graph("foo => !bar")
-        gp2.parse_graph("foo => ! bar")
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_non_default_chaining(self):
