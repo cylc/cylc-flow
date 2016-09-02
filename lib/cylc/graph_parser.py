@@ -74,10 +74,11 @@ class GraphParser(object):
             NODE(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)
         * The default trigger type is ':succeed'.
         * Trigger qualifiers are ignored on the right to allow chaining:
-             - "foo => bar => baz"
-                    means "foo:succeed => bar" and "bar:succeed => baz"
-             - "foo => bar:fail => baz"
-                    means "foo:succeed => bar", and "bar:fail => baz"
+               "foo => bar => baz & qux"
+          Think of this as describing the graph structure first, then
+          annotating each node with a trigger type that is only meaningful on
+          the left side of each pair (in the default ':succeed' case the
+          trigger type can be ommitted, but it is still there in principle).
     """
 
     ARROW = '=>'
@@ -143,6 +144,8 @@ class GraphParser(object):
 
         (Assumes any general line-continuation markers have been processed).
            1. Strip comments, whitespace, and blank lines.
+              (all whitespace is removed up front so we don't have to consider
+              it in regexes and strip it from matched elements)
            2. Join incomplete lines starting or ending with '=>'.
            3. Replicate and expand any parameterized lines.
            4. Split and process by pairs "left-expression => right-node":
@@ -224,9 +227,10 @@ class GraphParser(object):
                 bad_lines.append(line.strip())
         if bad_lines:
             raise GraphParseError(
-                "ERROR, graph node format (round brackets means optional): \n"
-                "    NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)\n" +
-                "  " + "\n  ".join(bad_lines))
+                "ERROR, bad graph node format:\n"
+                "  " + "\n  ".join(bad_lines) + "\n"
+                "Correct format is"
+                " NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
 
         # Expand parameterized lines (or detect undefined parameters).
         line_set = set()
@@ -434,7 +438,6 @@ class TestGraphParser(unittest.TestCase):
 
     def test_line_continuation(self):
         """Test syntax-driven line continuation."""
-
         graph1 = "a => b => c"
         graph2 = """a =>
  b => c"""
@@ -454,12 +457,10 @@ class TestGraphParser(unittest.TestCase):
         self.assertEqual(gp1.triggers, res)
         self.assertEqual(gp1.triggers, gp2.triggers)
         self.assertEqual(gp1.triggers, gp3.triggers)
-
         graph = """foo => bar
             a => b =>"""
         gp = GraphParser()
         self.assertRaises(GraphParseError, gp.parse_graph, graph)
-
         graph = """ => a => b
             foo => bar"""
         gp = GraphParser()
@@ -467,7 +468,6 @@ class TestGraphParser(unittest.TestCase):
 
     def test_def_trigger(self):
         """Test default trigger is :succeed."""
-
         gp1 = GraphParser()
         gp1.parse_graph("foo => bar")
         gp2 = GraphParser()
@@ -476,7 +476,6 @@ class TestGraphParser(unittest.TestCase):
 
     def test_finish_trigger(self):
         """Test finish trigger expansion."""
-
         gp1 = GraphParser()
         gp1.parse_graph("foo:finish => bar")
         gp2 = GraphParser()
@@ -485,11 +484,9 @@ class TestGraphParser(unittest.TestCase):
 
     def test_fam_all_to_all(self):
         """Test family all-to-all semantics."""
-
         fam_map = {'FAM': ['m1', 'm2'], 'BAM': ['b1', 'b2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:succeed-all => BAM")
-
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("""
             (m1 & m2) => b1
@@ -498,11 +495,9 @@ class TestGraphParser(unittest.TestCase):
 
     def test_fam_one_to_all(self):
         """Test family one-to-all semantics."""
-
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("pre => FAM")
-
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("""
             pre => m1
@@ -512,7 +507,6 @@ class TestGraphParser(unittest.TestCase):
 
     def test_fam_all_to_one(self):
         """Test family all-to-one semantics."""
-
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:succeed-all => post")
@@ -522,7 +516,6 @@ class TestGraphParser(unittest.TestCase):
 
     def test_fam_any_to_one(self):
         """Test family any-to-one semantics."""
-
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:succeed-any => post")
@@ -532,7 +525,6 @@ class TestGraphParser(unittest.TestCase):
 
     def test_fam_any_to_all(self):
         """Test family any-to-all semantics."""
-
         fam_map = {'FAM': ['m1', 'm2'], 'BAM': ['b1', 'b2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:fail-any => BAM")
@@ -545,25 +537,16 @@ class TestGraphParser(unittest.TestCase):
 
     def test_fam_finish(self):
         """Test family finish semantics."""
-
         fam_map = {'FAM': ['m1', 'm2']}
         gp1 = GraphParser(fam_map)
         gp1.parse_graph("FAM:finish-all => post")
         gp2 = GraphParser(fam_map)
         gp2.parse_graph("""
             ((m1:succeed | m1:fail) & (m2:succeed | m2:fail)) => post""")
-        print 1
-        print gp1.triggers
-        print 2
-        print gp2.triggers
- 
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_parameter_expand(self):
-        """Test parameter expansion in the graph.
-
-        See also the unit tests in the param_expand module.
-        """
+        """Test graph parameter expansion."""
         fam_map = {
             'FAM_m0': ['fa_m0', 'fb_m0'],
             'FAM_m1': ['fa_m1', 'fb_m1'],
@@ -587,9 +570,43 @@ class TestGraphParser(unittest.TestCase):
             """)
         self.assertEqual(gp1.triggers, gp2.triggers)
 
+    def test_parameter_specific(self):
+        """Test graph parameter expansion with a specific value."""
+        params = {'i': ['0', '1'], 'j': ['0', '1', '2']}
+        templates = {'i': '_i%(i)s', 'j': '_j%(j)s'}
+        gp1 = GraphParser(family_map=None, parameters=(params, templates))
+        gp1.parse_graph("bar<i-1,j> => baz<i,j>\nfoo<i=1,j> => qux")
+        gp2 = GraphParser()
+        gp2.parse_graph("""
+           baz_i0_j0
+           baz_i0_j1
+           baz_i0_j2
+           foo_i1_j0 => qux
+           foo_i1_j1 => qux
+           foo_i1_j2 => qux
+           bar_i0_j0 => baz_i1_j0
+           bar_i0_j1 => baz_i1_j1
+           bar_i0_j2 => baz_i1_j2""")
+        self.assertEqual(gp1.triggers, gp2.triggers)
+
+    def test_parameter_offset(self):
+        """Test graph parameter expansion with an offset."""
+        params = {'i': ['0', '1'], 'j': ['0', '1', '2']}
+        templates = {'i': '_i%(i)s', 'j': '_j%(j)s'}
+        gp1 = GraphParser(family_map=None, parameters=(params, templates))
+        gp1.parse_graph("bar<i-1,j> => baz<i,j>")
+        gp2 = GraphParser()
+        gp2.parse_graph("""
+           baz_i0_j0
+           baz_i0_j1
+           baz_i0_j2
+           bar_i0_j0 => baz_i1_j0
+           bar_i0_j1 => baz_i1_j1
+           bar_i0_j2 => baz_i1_j2""")
+        self.assertEqual(gp1.triggers, gp2.triggers)
+
     def test_conditional(self):
         """Test generation of conditional triggers."""
-
         gp1 = GraphParser()
         gp1.parse_graph("(foo:start | bar) => baz")
         res = {
@@ -608,7 +625,6 @@ class TestGraphParser(unittest.TestCase):
 
     def test_repeat_trigger(self):
         """Test that repeating a trigger has no effect."""
-
         gp1 = GraphParser()
         gp2 = GraphParser()
         gp1.parse_graph("foo => bar")
@@ -617,18 +633,20 @@ class TestGraphParser(unittest.TestCase):
             foo => bar""")
         self.assertEqual(gp1.triggers, gp2.triggers)
 
-    def test_non_default_chaining(self):
+    def test_chain_stripping(self):
+        """Test that trigger type is stripped off right-side nodes."""
         gp1 = GraphParser()
         gp1.parse_graph("""
         bar
-        foo => bar:fail => baz""")
+        foo => bar:succeed => baz""")
         gp2 = GraphParser()
         gp2.parse_graph("""
             foo => bar
-            bar:fail => baz""")
+            bar:succeed => baz""")
         self.assertEqual(gp1.triggers, gp2.triggers)
 
     def test_double_oper(self):
+        """Test that illegal forms of the logical operators are detected."""
         graph = "foo && bar => baz"
         gp = GraphParser()
         self.assertRaises(GraphParseError, gp.parse_graph, graph)
@@ -637,8 +655,11 @@ class TestGraphParser(unittest.TestCase):
         self.assertRaises(GraphParseError, gp.parse_graph, graph)
 
     def test_bad_node_syntax(self):
-        # Should be:
-        #   NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
+        """Test that badly formatted graph nodes are detected.
+
+        The correct format is:
+          NAME(<PARAMS>)([CYCLE-POINT-OFFSET])(:TRIGGER-TYPE)")
+        """
         graphs = [
             "foo[-P1Y]<m,n> => bar",
             "foo[-P1Y]<m,n> => bar",
@@ -648,9 +669,14 @@ class TestGraphParser(unittest.TestCase):
             "foo<m,n>:fail[-P1Y] => bar",
             "foo:fail<m,n>[-P1Y] => bar"
         ]
+        detected = 0
         for graph in graphs:
             gp = GraphParser()
-            self.assertRaises(GraphParseError, gp.parse_graph, graph)
+            try:
+                gp.parse_graph(graph)
+            except GraphParseError:
+                detected += 1
+        self.assertEqual(detected, len(graphs))
 
 if __name__ == "__main__":
     unittest.main()

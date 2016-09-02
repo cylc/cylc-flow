@@ -350,12 +350,10 @@ class GraphExpander(object):
 
 
 class TestParamExpand(unittest.TestCase):
-    """Unit tests for the parameter expansion functionality.
-
-    Method doc strings are ommitted; the tests should self-explanatory.
-    """
+    """Unit tests for the parameter expansion module."""
 
     def setUp(self):
+        """Create some parameters and templates for use in tests."""
         ivals = [str(i) for i in range(2)]
         jvals = [str(j) for j in range(3)]
         kvals = [str(k) for k in range(2)]
@@ -366,7 +364,17 @@ class TestParamExpand(unittest.TestCase):
         self.name_expander = NameExpander((params_map, templates))
         self.graph_expander = GraphExpander((params_map, templates))
 
+    def test_name_one_param(self):
+        """Test name expansion and returned value for a single parameter."""
+        self.assertEqual(
+            self.name_expander.expand('foo<j>'),
+            [('foo_j0', {'j': '0'}),
+             ('foo_j1', {'j': '1'}),
+             ('foo_j2', {'j': '2'})]
+        )
+
     def test_name_two_params(self):
+        """Test name expansion and returned values for two parameters."""
         self.assertEqual(
             self.name_expander.expand('foo<i,j>'),
             [('foo_i0_j0', {'i': '0', 'j': '0'}),
@@ -378,6 +386,7 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_name_two_names(self):
+        """Test name expansion for two names."""
         self.assertEqual(
             self.name_expander.expand('foo<i>, bar<j>'),
             [('foo_i0', {'i': '0'}),
@@ -388,12 +397,14 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_name_specific_val_1(self):
+        """Test singling out a specific value, in name expansion."""
         self.assertEqual(
             self.name_expander.expand('foo<i=0>'),
             [('foo_i0', {'i': '0'})]
         )
 
     def test_name_specific_val_2(self):
+        """Test specific value in the first parameter of a pair."""
         self.assertEqual(
             self.name_expander.expand('foo<i=0,j>'),
             [('foo_i0_j0', {'i': '0', 'j': '0'}),
@@ -402,6 +413,7 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_name_specific_val_3(self):
+        """Test specific value in the second parameter of a pair."""
         self.assertEqual(
             self.name_expander.expand('foo<i,j=1>'),
             [('foo_i0_j1', {'i': '0', 'j': '1'}),
@@ -409,22 +421,28 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_name_fail_bare_value(self):
-        """Test foo<0,j> fails, should be foo<i=0,j>."""
+        """Test foo<0,j> fails."""
+        # It should be foo<i=0,j>.
         self.assertRaises(ParamExpandError,
                           self.name_expander.expand,
                           'foo<0,j>')
 
     def test_name_fail_undefined_param(self):
+        """Test that an undefined parameter gets failed."""
+        # m is not defined.
         self.assertRaises(ParamExpandError,
                           self.name_expander.expand,
                           'foo<m,j>')
 
     def test_name_fail_param_value_too_high(self):
+        """Test that an out-of-range parameter gets failed."""
+        # i stops at 3.
         self.assertRaises(ParamExpandError,
                           self.name_expander.expand,
                           'foo<i=4,j>')
 
     def test_name_multiple(self):
+        """Test expansion of two names, with one and two parameters."""
         self.assertEqual(
             self.name_expander.expand('foo<i>, bar<i,j>'),
             [('foo_i0', {'i': '0'}),
@@ -438,6 +456,7 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_graph_expand_1(self):
+        """Test graph expansion with two parameters each side of an arrow."""
         self.assertEqual(
             self.graph_expander.expand("bar<i,j>=>baz<i,j>"),
             set(["bar_i0_j1=>baz_i0_j1",
@@ -449,6 +468,7 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_graph_expand_2(self):
+        """Test graph expansion to 'branch and merge' a workflow."""
         self.assertEqual(
             self.graph_expander.expand(
                 "pre=>bar<i>=>baz<i,j>=>post"),
@@ -461,6 +481,7 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_graph_expand_offset(self):
+        """Test graph expansion with an offset."""
         self.assertEqual(
             self.graph_expander.expand(
                 "bar<i-1,j>=>baz<i,j>"),
@@ -473,6 +494,7 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_graph_expand_specific(self):
+        """Test graph expansion with a specific value."""
         self.assertEqual(
             self.graph_expander.expand("bar<i=1,j>=>baz<i,j>"),
             set(["bar_i1_j0=>baz_i0_j0",
@@ -484,16 +506,19 @@ class TestParamExpand(unittest.TestCase):
         )
 
     def test_graph_fail_bare_value(self):
+        """Test that a bare parameter value fails in the graph."""
         self.assertRaises(ParamExpandError,
                           self.graph_expander.expand,
                           'foo<0,j>=>bar<i,j>')
 
     def test_graph_fail_undefined_param(self):
+        """Test that an undefined parameter value fails in the graph."""
         self.assertRaises(ParamExpandError,
                           self.graph_expander.expand,
                           'foo<m,j>=>bar<i,j>')
 
     def test_graph_fail_param_value_too_high(self):
+        """Test that an out-of-range parameter value fails in the graph."""
         self.assertRaises(ParamExpandError,
                           self.graph_expander.expand,
                           'foo<i=4,j><i,j>')
