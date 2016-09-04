@@ -34,7 +34,7 @@ right-click menu, or at run time with the \lstinline=cylc show= command.
 \item {\em default:} (none)
 \end{myitemize}
 
-\subsubsection{URL} \label{SuiteURL} 
+\subsubsection{URL} \label{SuiteURL}
 
 A web URL to suite documentation.  If present it can be browsed with the
 \lstinline=cylc doc= command, or from the gcylc Suite menu.  The variable
@@ -414,7 +414,7 @@ possible to set a default for this at the site level
 \paragraph[abort on timeout]{[cylc] \textrightarrow [[events]] \textrightarrow abort on timeout}
 
 If a suite timer is set (above) this will cause the suite to abort with
-error status if the suite times out while still running. It is possible to set 
+error status if the suite times out while still running. It is possible to set
 a default for this at the site level (see ~\ref{SiteCylcHooks}).
 
 \begin{myitemize}
@@ -456,7 +456,7 @@ task event handlers.
         variables for that. Similarly, task runtime variables are not
         available to event handlers - which are executed by the suite daemon,
         (not by running tasks) in response to task events.
-        
+
     \item Cylc-defined environment variables such as
         \lstinline=$CYLC_SUITE_RUN_DIR= are not passed to task event
         handlers by default, but you can make them available by
@@ -482,7 +482,7 @@ definition is preserved) and are not evaluated or manipulated by
 cylc, so any variable assignment expression that is legal in the
 shell in which cylc is running can be used (but see the warning
 above on variable expansions, which will not be evaluated).
-White space around the `$=$' is allowed (as far as cylc's file 
+White space around the `$=$' is allowed (as far as cylc's file
 parser is concerned these are just suite configuration items).
 
 \begin{myitemize}
@@ -613,14 +613,14 @@ This section allows cylc to determine when tasks are ready to run.
 \label{cycling-mode}
 
 Cylc runs using the proleptic Gregorian calendar by default. This item allows
-you to either run the suite using the 360 day calendar (12 months of 30 days 
+you to either run the suite using the 360 day calendar (12 months of 30 days
 in a year) or using integer cycling.
 
 \begin{myitemize}
     \item {\em type:} string
     \item {\em legal values:} gregorian, 360day, integer
     \item {\em default:} gregorian
-    
+
 \end{myitemize}
 
 \subsubsection[initial cycle point]{[scheduling] \textrightarrow initial cycle point}
@@ -669,7 +669,7 @@ the \ref{cycle-point-time-zone} if that is set.
 \label{initial cycle point constraints}
 
 In a cycling suite it is possible to restrict the initial cycle point by
-defining a list of truncated time points under the initial cycle point 
+defining a list of truncated time points under the initial cycle point
 constraints.
 
 \begin{myitemize}
@@ -682,7 +682,7 @@ constraints.
 \label{final cycle point constraints}
 
 In a cycling suite it is possible to restrict the final cycle point by
-defining a list of truncated time points under the final cycle point 
+defining a list of truncated time points under the final cycle point
 constraints.
 
 \begin{myitemize}
@@ -695,7 +695,7 @@ constraints.
 
 Cycling tasks are held once they pass the hold after cycle point, if one is
 specified. Unlike the final cycle point suite will not shut down once all tasks
-have passed this point. If this item is provided you can override it on the 
+have passed this point. If this item is provided you can override it on the
 command line or in the gcylc suite start panel.
 
 \subsubsection[runahead limit]{[scheduling] \textrightarrow runahead limit}
@@ -705,7 +705,7 @@ Runahead limiting prevents the fastest tasks in a suite from getting too far
 ahead of the slowest ones, as documented in~\ref{RunaheadLimit}.
 
 This config item specifies a hard limit as a cycle interval between the
-slowest and fastest tasks. It is deprecated in favour of the newer default 
+slowest and fastest tasks. It is deprecated in favour of the newer default
 limiting by \lstinline=max active cycle points= (\ref{max active cycle points}).
 
 \begin{myitemize}
@@ -721,7 +721,7 @@ limiting by \lstinline=max active cycle points= (\ref{max active cycle points}).
 Runahead limiting prevents the fastest tasks in a suite from getting too far
 ahead of the slowest ones, as documented in~\ref{RunaheadLimit}.
 
-This config item supersedes the deprecated hard \lstinline=runahead limit= 
+This config item supersedes the deprecated hard \lstinline=runahead limit=
 (\ref{runahead limit}). It allows up to \lstinline=N= (default 3) consecutive
 cycle points to be active at any time, adjusted up if necessary for
 any future triggering.
@@ -796,7 +796,7 @@ specified as an offset from their own cycle point.
 Clock-expire tasks enter the {\em expired} state and skip job submission if too
 far behind the wall clock when they become ready to run.  The expiry time is
 specified as an offset from wall-clock time; typically it should be negative -
-see~\ref{ClockExpireTasks}. 
+see~\ref{ClockExpireTasks}.
 
 \begin{myitemize}
     \item {\em type:} Comma-separated list of task or family names with
@@ -1132,7 +1132,7 @@ simply read and write from their from current working directory, this item
 can be used to override the default to make them all use the same workspace.
 
 The top level share and work directory location can be changed (e.g.\ to a
-large data area) by a global config setting (see~\ref{workdirectory}). 
+large data area) by a global config setting (see~\ref{workdirectory}).
 
 \begin{myitemize}
 \item {\em type:} string (directory path, can contain environment variables)
@@ -1478,8 +1478,7 @@ interpretation on the remote host.
 
 Cylc can call nominated event handlers when certain task events occur. This
 section configures specific task event handlers; see~\ref{SuiteEventHandling} for
-suite event hooks. See ~\ref{TaskEventHandling2} for general and built-in
-task event handlers.
+suite event hooks.
 
 Event handler commands can be located in the suite \lstinline=bin/= directory,
 otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
@@ -1781,7 +1780,7 @@ in~\ref{AvailableMethods}.
 \paragraph[{[[[}outputs{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[outputs]]]}
 
 Register custom task outputs for use in message triggering in this section
-(\ref{MessageTriggers}) 
+(\ref{MessageTriggers})
 
 \subparagraph[\_\_OUTPUT\_\_ ]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[outputs]]] \textrightarrow \_\_OUTPUT\_\_}
 
