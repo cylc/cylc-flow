@@ -142,9 +142,11 @@ class graphnode(object):
                 if sign and offset_string:
                     offset_string = sign + offset_string
                 prev_format = True
+                # Strip :succeed etc. off here, to avoid double warning for
+                # adding edges (with :succeed) and getting nodes (without).
                 set_syntax_version(
                     VERSION_PREV,
-                    "graphnode %s: old-style offset" % node
+                    "graphnode %s: old-style offset" % re.sub(':.*', '', node)
                 )
 
         if outp:

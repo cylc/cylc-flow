@@ -1,0 +1,6 @@
+[scheduling]
+    initial cycle time = 2014
+    cycling = Yearly
+    [[dependencies]]
+        [[[2014,2]]]
+            graph = "foo"

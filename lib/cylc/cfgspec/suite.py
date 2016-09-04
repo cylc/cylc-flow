@@ -319,6 +319,8 @@ SPEC = {
             'external-trigger': vdr(vtype='string_list', default=[]),
             'clock-expire': vdr(vtype='string_list', default=[]),
             'sequential': vdr(vtype='string_list', default=[]),
+            'start-up': vdr(vtype='string_list', default=[]),
+            'cold-start': vdr(vtype='string_list', default=[]),
             'exclude at start-up': vdr(vtype='string_list', default=[]),
             'include at start-up': vdr(vtype='string_list', default=[]),
         },
@@ -513,6 +515,14 @@ def upg(cfg, descr):
     u.deprecate(
         '6.0.0',
         ['scheduling', 'special tasks', 'sequential']
+    )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'special tasks', 'start-up']
+    )
+    u.deprecate(
+        '6.0.0',
+        ['scheduling', 'special tasks', 'cold-start']
     )
     u.obsolete('6.0.0', ['cylc', 'job submission'])
     u.obsolete('6.0.0', ['cylc', 'event handler submission'])

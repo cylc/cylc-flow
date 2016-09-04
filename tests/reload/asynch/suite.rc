@@ -1,0 +1,18 @@
+[cylc]
+   [[reference test]]
+       required run mode = live
+       live mode suite timeout = 2.0 # minutes
+[scheduling]
+    initial cycle time = 2010010100
+    final cycle time = 2010010200
+    [[dependencies]]
+        graph = "asynch"
+        [[[0, 6]]]
+            graph = "asynch & c[T-6] => a => b => c"
+        [[[18 ]]]
+            graph = "c"
+[runtime]
+    [[a,c,asynch]]
+        script = "true"
+    [[b]]
+        script = "cylc reload $CYLC_SUITE_REG_NAME -f; sleep 5"

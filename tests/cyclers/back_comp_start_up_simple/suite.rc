@@ -1,0 +1,11 @@
+[scheduling]
+    initial cycle time = 2014090100
+    final cycle time = 2014090112
+    [[special tasks]]
+        start-up = cold_foo
+    [[dependencies]]
+        [[[0,6,12,18]]]
+            graph = cold_foo => foo
+[visualization]
+    initial cycle time = 2014090100
+    final cycle time = 2014090112

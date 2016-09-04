@@ -15,20 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a new-style cycle point and a prev-style offset.
+# Check that implicit cycling is ok in cylc-5 back compat mode.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 2
+set_test_number 3
 #-------------------------------------------------------------------------------
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
-TEST_NAME=$TEST_NAME_BASE
-run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "Conflicting syntax: post-cylc-6 syntax \
-(cycle point: \[scheduling\]initial cycle point = 20100101T00) \
-vs pre-cylc-6 syntax \
-(graphnode foo\[T-24\]: old-style offset)" \
-    $TEST_NAME.stderr
+TEST_NAME=$TEST_NAME_BASE-validate
+run_ok $TEST_NAME cylc validate $SUITE_NAME
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-cmp
+cmp_ok $TEST_NAME_BASE-validate.stderr <<__ERR__
+WARNING: pre cylc 6 syntax is deprecated: integer interval: [cylc][reference test]live mode suite timeout = 30
+WARNING: pre cylc 6 syntax is deprecated: initial/final cycle point format: CCYYMMDDhh
+WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[00]]]: old-style cycling
+WARNING: pre cylc 6 syntax is deprecated: graphnode foo[T-24]: old-style offset
+WARNING, foo: not explicitly defined in dependency graphs (deprecated)
+__ERR__
+#-------------------------------------------------------------------------------
+TEST_NAME=$TEST_NAME_BASE-run
+suite_run_ok $TEST_NAME cylc run --reference-test --debug $SUITE_NAME
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
-exit
