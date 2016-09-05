@@ -64,7 +64,8 @@ from cylc.task_state import (
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED,
     TASK_STATUS_RETRYING)
-from cylc.wallclock import get_current_time_string
+from cylc.wallclock import (get_current_time_string,
+                            get_time_string_from_unix_time)
 
 
 class TaskPool(object):
@@ -1422,6 +1423,12 @@ class TaskPool(object):
                 itask.state.set_prerequisites_all_satisfied()
                 itask.state.unset_special_outputs()
                 itask.state.outputs.set_all_incomplete()
+            elif status in [TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED]:
+                itask.state.reset_state(status)
+                time_ = time()
+                itask.summary['finished_time'] = time_
+                itask.summary['finished_time_string'] = (
+                    get_time_string_from_unix_time(time_))
             else:
                 itask.state.reset_state(status)
         return n_warnings
