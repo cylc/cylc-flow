@@ -54,7 +54,6 @@
         <RegExpr attribute='Keyword' String=' reset timer '/>
         <RegExpr attribute='Keyword' String=' reset inactivity timer '/>
         <RegExpr attribute='Keyword' String=' required run mode '/>
-        <RegExpr attribute='Keyword' String=' register job logs retry delays '/>
         <RegExpr attribute='Keyword' String=' public '/>
         <RegExpr attribute='Keyword' String=' pre-script '/>
         <RegExpr attribute='Keyword' String=' post-script '/>

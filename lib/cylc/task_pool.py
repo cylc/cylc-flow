@@ -1105,8 +1105,6 @@ class TaskPool(object):
         for ctx, id_keys in ctx_groups.items():
             if ctx.ctx_type == TaskProxy.EVENT_MAIL:
                 self._process_task_event_email(ctx, id_keys)
-            elif ctx.ctx_type == TaskProxy.JOB_LOGS_REGISTER:
-                self._process_task_job_logs_register(ctx, id_keys)
             elif ctx.ctx_type == TaskProxy.JOB_LOGS_RETRIEVE:
                 self._process_task_job_logs_retrieval(ctx, id_keys)
 
@@ -1153,29 +1151,6 @@ class TaskPool(object):
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     itask.command_log(log_ctx)
-                else:
-                    try_states[(key1, submit_num)].unset_waiting()
-            except KeyError:
-                if cylc.flags.debug:
-                    traceback.print_exc()
-
-    def _process_task_job_logs_register(self, _, id_keys):
-        """Register task job logs."""
-        tasks = {}
-        for itask in self.get_tasks():
-            if itask.point is not None and itask.submit_num:
-                tasks[(str(itask.point), itask.tdef.name)] = itask
-        for id_key in id_keys:
-            key1, point, name, submit_num = id_key
-            try:
-                itask = tasks[(point, name)]
-                try_states = itask.event_handler_try_states
-                filenames = itask.register_job_logs(submit_num)
-                if "job.out" in filenames or "job.err" in filenames:
-                    log_ctx = SuiteProcContext((key1, submit_num), None)
-                    log_ctx.ret_code = 0
-                    itask.command_log(log_ctx)
-                    del try_states[(key1, submit_num)]
                 else:
                     try_states[(key1, submit_num)].unset_waiting()
             except KeyError:
@@ -1229,10 +1204,11 @@ class TaskPool(object):
             try:
                 itask = tasks[(point, name)]
                 try_states = itask.event_handler_try_states
-                filenames = []
-                if ctx.ret_code == 0:
-                    filenames = itask.register_job_logs(submit_num)
-                if "job.out" in filenames or "job.err" in filenames:
+                job_out = itask.get_job_log_path(
+                    itask.HEAD_MODE_LOCAL, submit_num, "job.out")
+                job_err = itask.get_job_log_path(
+                    itask.HEAD_MODE_LOCAL, submit_num, "job.err")
+                if os.path.exists(job_out) or os.path.exists(job_err):
                     log_ctx = SuiteProcContext((key1, submit_num), None)
                     log_ctx.ret_code = 0
                     itask.command_log(log_ctx)
