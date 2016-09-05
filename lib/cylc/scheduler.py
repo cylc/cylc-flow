@@ -68,7 +68,7 @@ from cylc.regpath import RegPath
 from cylc.rundb import CylcSuiteDAO
 from cylc.suite_env import CylcSuiteEnv
 from cylc.suite_host import get_suite_host
-from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
+from cylc.suite_logging import SuiteLog, OUT, ERR, LOG, ERR_IF_DEF
 from cylc.task_id import TaskID
 from cylc.task_pool import TaskPool
 from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
@@ -338,9 +338,9 @@ class Scheduler(object):
             # or if port file does not contain good values of port and host.
             return port_file_path
         else:
-            ERR.error(
+            ERR_IF_DEF.error(
                 (
-                    r"""ERROR: port file exists: %(port_file_path)s
+                    r"""port file exists: %(port_file_path)s
 
 If %(suite)s is not running, delete the port file and try again.  If it is
 running but not responsive, kill any left over suite processes too.""" +
