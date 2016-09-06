@@ -846,7 +846,8 @@ class TaskProxy(object):
             self.log(
                 INFO, 'submit_method_id=' + self.summary['submit_method_id'])
         self.log(INFO, 'submission succeeded')
-        now = get_current_time_string()
+        now = time.time()
+        now_string = get_time_string_from_unix_time(now)
         self.db_updates_map[self.TABLE_TASK_JOBS].append({
             "time_submit_exit": now,
             "submit_status": 0,
@@ -857,9 +858,8 @@ class TaskProxy(object):
             if self.__class__.stop_sim_mode_job_submission:
                 self.state.set_ready_to_submit()
             else:
-                self.summary['started_time'] = float(
-                    get_unix_time_from_time_string(now))
-                self.summary['started_time_string'] = now
+                self.summary['started_time'] = now
+                self.summary['started_time_string'] = now_string
                 self.state.set_executing()
             return
 
@@ -868,9 +868,8 @@ class TaskProxy(object):
         self.summary['finished_time'] = None
         self.summary['finished_time_string'] = None
 
-        self.summary['submitted_time'] = float(
-            get_unix_time_from_time_string(now))
-        self.summary['submitted_time_string'] = now
+        self.summary['submitted_time'] = now
+        self.summary['submitted_time_string'] = now_string
         self.summary['latest_message'] = TASK_STATUS_SUBMITTED
         self.setup_event_handlers("submitted", 'job submitted',
                                   db_event='submission succeeded')
