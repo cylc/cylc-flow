@@ -1812,87 +1812,13 @@ class SuiteConfig(object):
             else:
                 sections.append((section, sec_map['graph']))
 
-        # Back-compat for cylc-5 "start-up tasks" (which appear in general
-        # cycling sections but only run once at the initial cycle point):
-        # Parse each graph string twice: 1) extract all start-up triggers
-        # for an R1 section and prune the rest out; 2) extract all normal
-        # triggers prune start-up triggers identified in step 1.
+        # Back-compat a): extract cylc-5 start-up triggers.
         startup_tasks = self.cfg['scheduling']['special tasks']['start-up']
         if startup_tasks:
-            startup_trigs = {}
-            r1_points = []
-            set_syntax_version(VERSION_PREV,
-                               "start-up tasks: %s" % ",".join(startup_tasks))
-            for section, graph in sections:
-                seq = get_sequence(
-                    section,
-                    self.cfg['scheduling']['initial cycle point'],
-                    self.cfg['scheduling']['final cycle point'])
-                first_point = seq.get_first_point(
-                    get_point(self.cfg['scheduling']['initial cycle point']))
-                if first_point != self.initial_point:
-                    r1_point = str(first_point)
-                    r1_sec = 'R1/%s' % r1_point
-                else:
-                    r1_point = None
-                    r1_sec = 'R1'
-                gp = GraphParser(family_map, self.parameters, startup_tasks)
-                gp.parse_graph(graph, get_startup=True, r1_point=r1_point)
-                self.suite_polling_tasks.update(gp.suite_state_polling_tasks)
-                r1_seq = get_sequence(
-                    r1_sec,
-                    self.cfg['scheduling']['initial cycle point'],
-                    self.cfg['scheduling']['final cycle point'])
-                if r1_point in startup_trigs:
-                    _, _, trigs, origs, texts = startup_trigs[r1_point]
-                    trigs.update(gp.triggers)
-                    origs.update(gp.original)
-                    if gp.startup_graph_text not in texts:
-                        texts += gp.startup_graph_text
-                else:
-                    trigs = gp.triggers
-                    origs = gp.original
-                    texts = gp.startup_graph_text
-                startup_trigs[r1_point] = (r1_seq, r1_sec, trigs, origs, texts)
-            r1_points = startup_trigs.keys()
-            r1_points_sorted = []
-            if None in r1_points:
-                pts = [None]
-                r1_points.remove(None)
-            else:
-                pts = []
-            r1_points_sorted = pts + sorted(r1_points)
-            seen = set()
-            for r1p in r1_points_sorted:
-                r1_seq, r1_sec, r1_trigs, r1_orig, r1_text = startup_trigs[r1p]
-                proc_trigs = {}
-                for name, trigs in r1_trigs.items():
-                    use = True
-                    proc_inner = {}
-                    for expr, info in trigs.items():
-                        if not use:
-                            break
-                        for upstream_name, _, _ in (
-                                GraphParser.REC_NODES.findall(expr)):
-                            key = '%s=>%s' % (upstream_name, name)
-                            if upstream_name in startup_tasks:
-                                if key in seen:
-                                    use = False
-                                    break
-                            seen.add(key)
-                        if use:
-                            proc_inner[expr] = info
-                    proc_trigs[name] = proc_inner
-                if proc_trigs:
-                    self.sequences.append(r1_seq)
-                    self._proc_triggers(proc_trigs, r1_orig, r1_sec, r1_seq)
-                    if self.validation:
-                        print '''\
-# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
-# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
-    [[[%s]]]
-        graph = """%s"""''' % (r1_sec, r1_text)
+            self._load_startup_graph(startup_tasks, sections, family_map)
 
+        # Parse and process each graph section.
+        # Back-compat b): ignoring cylc-5 start-up triggers (now extracted).
         for section, graph in sections:
             seq = get_sequence(section,
                                self.cfg['scheduling']['initial cycle point'],
@@ -1904,6 +1830,7 @@ class SuiteConfig(object):
             self._proc_triggers(gp.triggers, gp.original, section, seq)
 
     def _proc_triggers(self, triggers, original, section, seq):
+        """Define graph edges, taskdefs, and triggers, from graph sections."""
         base_interval = seq.get_interval()
         for right, val in triggers.items():
             for expr, trigs in val.items():
@@ -1916,6 +1843,95 @@ class SuiteConfig(object):
                     orig_expr, lefts, right, section, seq, base_interval)
                 self.generate_triggers(
                     expr, lefts, right, seq, suicide, base_interval)
+
+    def _load_startup_graph(self, startup_tasks, sections, family_map):
+        """Back-compat for cylc-5 "start-up tasks".
+
+        These appear in general cycling sections but only run once at the
+        initial cycle point. To support these in cylc-6 we need to pre-parse
+        each graph string to extract all start-up triggers into R1 sections.
+        Then in the main parse, prune start-up triggers from cycling sections.
+
+        TODO - REMOVE THIS AT cylc-7.
+        """
+        startup_trigs = {}
+        r1_points = []
+        set_syntax_version(VERSION_PREV,
+                           "start-up tasks: %s" % ",".join(startup_tasks))
+        for section, graph in sections:
+            seq = get_sequence(
+                section,
+                self.cfg['scheduling']['initial cycle point'],
+                self.cfg['scheduling']['final cycle point'])
+            first_point = seq.get_first_point(
+                get_point(self.cfg['scheduling']['initial cycle point']))
+            # Define the R1 section for start-up triggers in this section.
+            if first_point != self.initial_point:
+                r1_point = str(first_point)
+                r1_sec = 'R1/%s' % r1_point
+            else:
+                r1_point = None
+                r1_sec = 'R1'
+            # Parse the graph string.
+            gp = GraphParser(family_map, self.parameters, startup_tasks)
+            gp.parse_graph(graph, get_startup=True, r1_point=r1_point)
+            self.suite_polling_tasks.update(gp.suite_state_polling_tasks)
+            r1_seq = get_sequence(
+                r1_sec, self.cfg['scheduling']['initial cycle point'],
+                self.cfg['scheduling']['final cycle point'])
+            if r1_point in startup_trigs:
+                _, _, trigs, origs, texts = startup_trigs[r1_point]
+                trigs.update(gp.triggers)
+                origs.update(gp.original)
+                if gp.startup_graph_text not in texts:
+                    texts += gp.startup_graph_text
+            else:
+                trigs = gp.triggers
+                origs = gp.original
+                texts = gp.startup_graph_text
+            startup_trigs[r1_point] = (r1_seq, r1_sec, trigs, origs, texts)
+        # Sort parsed start-up triggers in order of section start points, and
+        # if a trigger appears at multiple R1 points keep only the first.
+        # This is messy.
+        r1_points = startup_trigs.keys()
+        r1_points_sorted = []
+        if None in r1_points:
+            pts = [None]
+            r1_points.remove(None)
+        else:
+            pts = []
+        r1_points_sorted = pts + sorted(r1_points)
+        seen = set()
+        for r1p in r1_points_sorted:
+            r1_seq, r1_sec, r1_trigs, r1_orig, r1_text = startup_trigs[r1p]
+            proc_trigs = {}
+            for name, trigs in r1_trigs.items():
+                use = True
+                proc_inner = {}
+                for expr, info in trigs.items():
+                    if not use:
+                        break
+                    for upstream_name, _, _ in (
+                            GraphParser.REC_NODES.findall(expr)):
+                        key = '%s=>%s' % (upstream_name, name)
+                        if upstream_name in startup_tasks:
+                            if key in seen:
+                                use = False
+                                break
+                        seen.add(key)
+                    if use:
+                        proc_inner[expr] = info
+                proc_trigs[name] = proc_inner
+            # Process the parsed graph information.
+            if proc_trigs:
+                self.sequences.append(r1_seq)
+                self._proc_triggers(proc_trigs, r1_orig, r1_sec, r1_seq)
+                if self.validation:
+                    print '''\
+# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
+# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
+    [[[%s]]]
+        graph = """%s"""''' % (r1_sec, r1_text)
 
     def get_taskdef(self, name):
         """Get the dense task runtime."""

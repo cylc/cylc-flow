@@ -391,13 +391,48 @@ class GraphParser(object):
 
         Arg info is [(name, offset, trigger_type)] for each name in expr.
         """
+        if self.startup_tasks:
+            self._add_trigger_back_compat(
+                orig_expr, right, expr, info, suicide)
+        else:
+            self._add_trigger_new(orig_expr, right, expr, info, suicide)
 
+    def _add_trigger_new(self, orig_expr, right, expr, info, suicide):
+        """New __add_trigger() for cylc-7+ or if no cylc-5 start-up tasks."""
+        trigs = []
+        for name, offset, trigger in info:
+            # Replace finish triggers (must be done after member substn).
+            if trigger == self.__class__.TRIG_FINISH:
+                this = "%s%s%s" % (name, re.escape(offset), trigger)
+                that = "(%s%s%s%s%s%s%s)" % (
+                    name, offset, self.__class__.TRIG_SUCCEED,
+                    self.__class__.OP_OR,
+                    name, offset, self.__class__.TRIG_FAIL)
+                expr = re.sub(this, that, expr)
+                trigs += [
+                    "%s%s%s" % (name, offset, self.__class__.TRIG_SUCCEED),
+                    "%s%s%s" % (name, offset, self.__class__.TRIG_FAIL)]
+            else:
+                this = "%s%s%s" % (name, re.escape(offset), trigger)
+                that = "%s%s%s" % (name, offset, trigger)
+                expr = re.sub(this, that, expr)
+                trigs += ["%s%s%s" % (name, offset, trigger)]
+        if right not in self.triggers:
+            self.triggers[right] = {}
+            self.original[right] = {}
+        self.triggers[right][expr] = (trigs, suicide)
+        self.original[right][expr] = orig_expr
+
+    def _add_trigger_back_compat(self, orig_expr, right, expr, info, suicide):
+        """Temporary (pre cylc-7) __add_trigger() for cylc-5 start-up tasks.
+
+        Extract all start-up triggers for use in new R1 sections.
+        """
         if right in self.startup_tasks:
             if not self.get_startup or self.r1_point:
                 return
             elif self.r1_point and suicide:
                 return
-
         # Replace finish triggers here (must be done after member substn).
         trigs = []
         pruned = []
@@ -429,23 +464,19 @@ class GraphParser(object):
                 that = "%s%s%s" % (name, that_offset, trigger)
                 expr = re.sub(this, that, expr)
                 trigs += ["%s%s%s" % (name, that_offset, trigger)]
-
         if (self.get_startup and not startup_found and
                 right not in self.startup_tasks):
             return
-
         for node in pruned:
             expr = re.sub(re.escape(node) + '&', '', expr)
             expr = re.sub('&' + re.escape(node), '', expr)
             # TODO - IS THIS NEEDED?:
             expr = re.sub(re.escape(node), '', expr)
-
         if self.get_startup:
             if expr and right:
                 self.startup_graph_text += '\n%s => %s' % (expr, right)
             elif right:
                 self.startup_graph_text += '\n%s' % right
-
         if right not in self.triggers:
             self.triggers[right] = {}
             self.original[right] = {}
