@@ -310,50 +310,11 @@ class SuiteConfig(object):
                     parameter_templates[pname] = (
                         "_" + pname + "%(" + pname + ")s")
 
-        # This requires expansion into a new OrderedDict to preserve the
-        # correct order of the final list of namespaces (add-or-override
-        # by repeated namespace depends on this).
-        newruntime = OrderedDictWithDefaults()
-        name_expander = NameExpander(self.parameters)
-        for namespace_heading, namespace_dict in self.cfg['runtime'].items():
-            for name, indices in name_expander.expand(namespace_heading):
-                if name not in newruntime:
-                    newruntime[name] = OrderedDictWithDefaults()
-                # Put parameter index values in task environment.
-                replicate(newruntime[name], namespace_dict)
-                if indices:
-                    if 'environment' not in newruntime[name]:
-                        newruntime[name]['environment'] = (
-                            OrderedDictWithDefaults())
-                    for p_name, p_val in indices.items():
-                        p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
-                        newruntime[name]['environment'][p_var_name] = p_val
-                    if 'inherit' in newruntime[name]:
-                        parents = newruntime[name]['inherit']
-                        origin = 'inherit = %s' % ' '.join(parents)
-                        repl_parents = []
-                        for parent in parents:
-                            repl_parents.append(name_expander.replace_params(
-                                parent, indices, origin))
-                        newruntime[name]['inherit'] = repl_parents
-        self.cfg['runtime'] = newruntime
+        self.mem_log("config.py: before _expand_runtime")
+        self._expand_runtime()
+        self.mem_log("config.py: after _expand_runtime")
 
-        # Parameter expansion of visualization node attributes.
-        # TODO - 'node groups' should really have this too, but I'd rather
-        # deprecate them (just use families for visualization groups now).
-        name_expander = NameExpander(self.parameters)
-        expanded_node_attrs = OrderedDictWithDefaults()
-        if 'visualization' not in self.cfg:
-            self.cfg['visualization'] = OrderedDictWithDefaults()
-        if 'node attributes' not in self.cfg['visualization']:
-            self.cfg['visualization']['node attributes'] = (
-                OrderedDictWithDefaults())
-        for node, val in self.cfg['visualization']['node attributes'].items():
-            for name, _ in name_expander.expand(node):
-                expanded_node_attrs[name] = val
-        self.cfg['visualization']['node attributes'] = expanded_node_attrs
-
-        self.ns_defn_order = newruntime.keys()
+        self.ns_defn_order = self.cfg['runtime'].keys()
 
         # check var names before inheritance to avoid repetition
         self.check_env_names()
@@ -799,6 +760,64 @@ class SuiteConfig(object):
                         '(graph the suite to see back-edges).')
 
         self.mem_log("config.py: end init config")
+
+    def _expand_runtime(self):
+        """Expand [runtime] name lists or parameterized names.
+
+        This makes individual runtime namespaces out of any headings that
+        represent multiple namespaces, like [[foo, bar]] or [[foo<m,n>]].
+        It requires replicating the sparse runtime OrderedDict into a new
+        OrderedDict - we can't just stick expanded names on the end because the
+        order matters (for add-or-override by repeated namespaces).
+
+        TODO - this will have an impact on memory footprint for large suites
+        with a lot of runtime config. We should consider ditching OrderedDict
+        and instead using an ordinary dict with a separate list of keys.
+        """
+
+        if (not self.parameters[0] and
+                not any(',' in ns for ns in self.cfg['runtime'])):
+            # No parameters, no namespace lists: no expansion needed.
+            return
+
+        newruntime = OrderedDictWithDefaults()
+        name_expander = NameExpander(self.parameters)
+        for namespace_heading, namespace_dict in self.cfg['runtime'].items():
+            for name, indices in name_expander.expand(namespace_heading):
+                if name not in newruntime:
+                    newruntime[name] = OrderedDictWithDefaults()
+                # Put parameter index values in task environment.
+                replicate(newruntime[name], namespace_dict)
+                if indices:
+                    if 'environment' not in newruntime[name]:
+                        newruntime[name]['environment'] = (
+                            OrderedDictWithDefaults())
+                    for p_name, p_val in indices.items():
+                        p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
+                        newruntime[name]['environment'][p_var_name] = p_val
+                    if 'inherit' in newruntime[name]:
+                        parents = newruntime[name]['inherit']
+                        origin = 'inherit = %s' % ' '.join(parents)
+                        repl_parents = []
+                        for parent in parents:
+                            repl_parents.append(name_expander.replace_params(
+                                parent, indices, origin))
+                        newruntime[name]['inherit'] = repl_parents
+        self.cfg['runtime'] = newruntime
+
+        # Parameter expansion of visualization node attributes. TODO - do vis
+        # 'node groups' too, or deprecate them (use families in 'node attrs').
+        name_expander = NameExpander(self.parameters)
+        expanded_node_attrs = OrderedDictWithDefaults()
+        if 'visualization' not in self.cfg:
+            self.cfg['visualization'] = OrderedDictWithDefaults()
+        if 'node attributes' not in self.cfg['visualization']:
+            self.cfg['visualization']['node attributes'] = (
+                OrderedDictWithDefaults())
+        for node, val in self.cfg['visualization']['node attributes'].items():
+            for name, _ in name_expander.expand(node):
+                expanded_node_attrs[name] = val
+        self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
     def is_graph_defined(self, dependency_map):
         for item, value in dependency_map.items():

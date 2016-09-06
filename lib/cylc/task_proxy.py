@@ -1506,7 +1506,6 @@ class TaskProxy(object):
         """
         if (self.has_spawned or self.tdef.is_coldstart or
                 self.state.status == TASK_STATUS_SUBMIT_FAILED):
-            print 'NOPE', self.identity
             return False
         else:
             return (self.tdef.spawn_ahead or

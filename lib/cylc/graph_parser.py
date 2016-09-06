@@ -384,6 +384,7 @@ class GraphParser(object):
                     self._add_trigger(expr, mem, n_expr, info, suicide)
             else:
                 self._add_trigger(expr, right, n_expr, info, suicide)
+
         self._tidy_triggers()
 
     def _add_trigger(self, orig_expr, right, expr, info, suicide):
@@ -488,6 +489,11 @@ class GraphParser(object):
 
         (Null triggers are only needed for initial or lone nodes.)
         """
+        # NOT USED, but leaving this here for reference.
+        # Extra null triggers have no adverse effect, but this method has a big
+        # negative performance impact on the dev/suites/busy.
+        return
+
         clean_me = set()
         for right, val in self.triggers.items():
             exprs = val.keys()
