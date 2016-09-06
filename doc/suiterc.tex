@@ -628,9 +628,9 @@ in a year) or using integer cycling.
 
 In a cold start each cycling task (unless specifically excluded under
 [special tasks]) will be loaded into the suite with this cycle point,
-or with the closest subsequent valid cycle point for the task. If this item is
-provided you can override it on the command line or in the gcylc suite start
-panel.
+or with the closest subsequent valid cycle point for the task.  This item can
+be overridden on the command line or in the gcylc suite start panel.  Note that
+cylc-5 {\em cold-start tasks} are not loaded in a warm start.  
 
 In date-time cycling, if you do not provide time zone information for this,
 it will be assumed to be local time, or in UTC if~\ref{UTC-mode} is set, or in
@@ -790,6 +790,24 @@ specified as an offset from their own cycle point.
 \end{lstlisting}
 \end{myitemize}
 
+\paragraph[cold-start]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow cold-start}
+
+{\em This pre cylc-6 feature is deprecated and will be removed at cylc-7.}
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of task or family names.
+    \item {\em default:} (none)
+\end{myitemize}
+
+\paragraph[start-up]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow start-up}
+
+{\em This pre cylc-6 feature is deprecated and will be removed at cylc-7.}
+
+\begin{myitemize}
+    \item {\em type:} Comma-separated list of task or family names.
+    \item {\em default:} (none)
+\end{myitemize}
+
 \paragraph[clock-expire]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow clock-expire}
 \label{ClockExpireRef}
 
@@ -841,16 +859,6 @@ and~\ref{LimitPID}.
     \item {\em type:} Comma-separated list of task or family names.
     \item {\em default:} (none)
     \item {\em example:} \lstinline@sequential = foo, bar@
-\end{myitemize}
-
-\paragraph[one-off]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow one-off}
-
-Synchronous one-off tasks have an associated cycle point but do not spawn
-a successor.  Dependence on one-off tasks is not restricted to the first cycle.
-
-\begin{myitemize}
-\item {\em type:} Comma-separated list of task or family names.
-\item {\em default:} (none)
 \end{myitemize}
 
 \paragraph[exclude at start-up]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow exclude at start-up}
