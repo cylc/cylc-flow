@@ -238,7 +238,11 @@ class Scheduler(object):
 
     def start(self):
         """Start the server."""
-        self._check_port_file_does_not_exist(self.suite)
+        try:
+            self._check_port_file_does_not_exist(self.suite)
+        except SchedulerError:
+            sys.exit(1)
+
         self._print_blurb()
 
         GLOBAL_CFG.create_cylc_run_tree(self.suite)
