@@ -25,11 +25,14 @@ from cylc.param_expand import GraphExpander
 """Module for parsing cylc graph strings."""
 
 
+ARROW = '=>'
+
+
 class GraphParseError(Exception):
     """For graph string parsing errors."""
     def __str__(self):
         # Restore some spaces for readability.
-        return self.message.replace('=>', ' => ')
+        return self.args[0].replace(ARROW, ' %s ' % ARROW)
 
 
 class Replacement(object):
@@ -81,7 +84,6 @@ class GraphParser(object):
           trigger type can be ommitted, but it is still there in principle).
     """
 
-    ARROW = '=>'
     OP_AND = '&'
     OP_OR = '|'
     OP_AND_ERR = '&&'
@@ -177,20 +179,19 @@ class GraphParser(object):
             this_line = non_blank_lines[i]
             if i == 0:
                 # First line can't start with an arrow.
-                if this_line.startswith(self.__class__.ARROW):
+                if this_line.startswith(ARROW):
                     raise GraphParseError(
                         "ERROR, leading arrow: %s" % this_line)
             try:
                 next_line = non_blank_lines[i + 1]
             except IndexError:
                 next_line = ''
-                if this_line.endswith(self.__class__.ARROW):
+                if this_line.endswith(ARROW):
                     # Last line can't end with an arrow.
                     raise GraphParseError(
                         "ERROR, trailing arrow: %s" % this_line)
             part_lines.append(this_line)
-            if (this_line.endswith(self.__class__.ARROW) or
-                    next_line.startswith(self.__class__.ARROW)):
+            if (this_line.endswith(ARROW) or next_line.startswith(ARROW)):
                 continue
             full_line = ''.join(part_lines)
 
@@ -255,7 +256,7 @@ class GraphParser(object):
         pairs = set()
         for line in line_set:
             # "foo => bar => baz" becomes [foo, bar, baz]
-            chain = line.split(self.__class__.ARROW)
+            chain = line.split(ARROW)
             # Auto-trigger lone nodes and initial nodes in a chain.
             for name, offset, _ in self.__class__.REC_NODES.findall(chain[0]):
                 if not offset:
