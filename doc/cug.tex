@@ -1013,7 +1013,7 @@ editor:
 shell$ cylc edit tut.oneoff.basic # in-terminal
 shell$ cylc edit -g tut.oneoff.basic & # or GUI
 \end{lstlisting}
-Alternatively, start gcylc on the suite,
+Alternatively, start gcylc on the suite:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ gcylc tut.oneoff.basic &
@@ -1171,7 +1171,7 @@ shell$ cylc log tut.oneoff.basic hello.1
 This command can also print the suite log (and stdout and stderr for suites
 in daemon mode) and task stdout and stderr logs (see
 \lstinline=cylc log --help=).
-A new job script can also be generated on the fly for inspection,
+A new job script can also be generated on the fly for inspection:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc jobscript tut.oneoff.basic hello.1
@@ -1573,7 +1573,7 @@ is required, as shown below.
 
 Task families defined by runtime inheritance can also be used as
 shorthand in graph trigger expressions. To see this, consider two
-``greeter'' tasks that trigger off another task \lstinline=foo=,
+``greeter'' tasks that trigger off another task \lstinline=foo=:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -1701,7 +1701,7 @@ You can style dependency graphs with an optional
         bar = "fillcolor=#89ab67"
 \end{lstlisting}
 
-To display the graph in an interactive viewer,
+To display the graph in an interactive viewer:
 \lstset{language=transcript}
 \begin{lstlisting}
 shell$ cylc graph tut.oneoff.ftrigger2 &    # dependency graph
@@ -2093,7 +2093,7 @@ will need to copy their suite passphrase to
     $HOME/.cylc/SUITE_OWNER@SUITE_HOST/SUITE_NAME/passphrase
 \end{lstlisting}
 (use of the host and owner names is optional here - see~\ref{passphrases})
-{\em and} also retrieve the port number of the running suite from,
+{\em and} also retrieve the port number of the running suite from:
 \begin{lstlisting}
     ~SUITE_OWNER/.cylc/ports/SUITE_NAME
 \end{lstlisting}
@@ -2593,7 +2593,7 @@ see~\ref{TriggerTypes} for other available triggers.
 
 In the case of cycling tasks, the triggers defined by a graph string are
 valid for cycle points matching the list of hours specified for the
-graph section. For example this graph,
+graph section. For example this graph:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -2777,7 +2777,7 @@ title = some cycling tasks
 
 Graph section headings define recurrence expressions, the graph within a graph
 section heading defines a workflow at each point of the recurrence. For
-example in the following scenario,
+example in the following scenario:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -3802,7 +3802,7 @@ The {\em sequential} declaration also results in each instance of
 the explicit version. The only difference is that implicit triggers will
 not appear in graph visualizations. The implicit version can also be
 considerably simpler when the task appears in multiple graph sections or
-in a non-uniform cycling sequence: this suite,
+in a non-uniform cycling sequence: this suite:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -4354,7 +4354,7 @@ evaluation on the task host.
 If a task declares an owner other than the suite owner and/or
 a host other than the suite host, cylc will use non-interactive ssh to
 execute the task on the \lstinline=owner@host= account by the configured
-job submission method,
+job submission method:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -4366,7 +4366,7 @@ job submission method,
             batch system = pbs
 \end{lstlisting}
 \lstset{language=transcript}
-For this to work,
+For this to work:
 \begin{myitemize}
     \item non-interactive ssh/scp is required from the suite host to the task
     host accounts. Note: Your shell initialization (.profile, .bashrc, .cshrc,
@@ -4515,19 +4515,19 @@ Parameter values can be lists of strings, or integer ranges (both bounds include
         run = 1..5  # 1, 2, 3, 4, 5
 \end{lstlisting}
 
-Angle brackets denote parameterization.  For example,
+Angle brackets denote parameterization.  For example:
 \begin{lstlisting}
     model<run>  # for run = 1..2
 \end{lstlisting}
-expands to,
+expands to:
 \begin{lstlisting}
     model_run1, model_run2
 \end{lstlisting}
-and,
+and:
 \begin{lstlisting}
     proc<obs>  # for obs = ship, buoy, plane
 \end{lstlisting}
-expands to,
+expands to:
 \begin{lstlisting}
     proc_ship, proc_buoy, proc_plane
 \end{lstlisting}
@@ -4544,11 +4544,11 @@ overridden if necessary:
 \end{lstlisting}
 (See~\ref{RefParameterTemplates} for more on the string template syntax.)
 
-Any number of parameters can be used at once.  This parameterization,
+Any number of parameters can be used at once.  This parameterization:
 \begin{lstlisting}
     model<run,obs>  # for run = 1..2 and obs = ship, buoy, plane
 \end{lstlisting}
-expands to these tasks names,
+expands to these tasks names:
 \begin{lstlisting}
     model_run1_ship, model_run1_buoy, model_run1_plane,
     model_run2_ship, model_run2_buoy, model_run2_plane
@@ -4569,24 +4569,24 @@ group they are, and so to vary their behaviour accordingly.
 \subsubsection{Parameterized Tasks In The Graph}
 
 Using a different number of parameters on each side of an arrow in the graph
-will branch or join a workflow.  For example this,
+will branch or join a workflow.  For example this:
 \begin{lstlisting}
     graph = "prep => model<run>"  # for run = 1, 2
 \end{lstlisting}
-expands to this,
+expands to this:
 \begin{lstlisting}
     prep => model_run1
     prep => model_run2
       # or equivalently:
     prep => model_run1 & model_run2
 \end{lstlisting}
-and this,
+and this:
 \begin{lstlisting}
     # for run = 1, 2 and mem = cat, dog
     graph = """prep => init<run> => model<run,mem> =>
                     post<run,mem> => wrap<run> => done"""
 \end{lstlisting}
-expands to this,
+expands to this:
 \begin{lstlisting}
     prep => init_run1 => model_run1_cat => post_run1_cat => wrap_run1 => done
             init_run1 => model_run1_dog => post_run2_dog => wrap_run1
@@ -4609,7 +4609,7 @@ This is visualized by \lstinline=cylc graph= in Figure~\ref{fig-params-1}.
 Specific parameter values can be singled out in the graph and under
 \lstinline=[runtime]= with this notation: \lstinline@<param_name=param_value>@.
 For example, here's how to make a special task trigger off just the first of a
-set of model runs,
+set of model runs:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
@@ -4651,7 +4651,7 @@ expands to this:
 \subsubsection{Task Families And Parameterization}
 
 Family names can be parameterized just like task names.  For instance, to
-define a family for tasks that share common values of a parameter,
+define a family for tasks that share common values of a parameter:
 \begin{lstlisting}
 [runtime]
     [[RUN<r>]]
@@ -4663,7 +4663,7 @@ define a family for tasks that share common values of a parameter,
 \end{lstlisting}
 
 As described in Section~\ref{FamilyTriggers} family names can be used to
-trigger all members at once,
+trigger all members at once:
 \begin{lstlisting}
     graph = "foo => FAMILY"
 \end{lstlisting}
@@ -4699,11 +4699,11 @@ efficiency reasons  though - see Section~\ref{EfficientInterFamilyTriggering}).
 For family {\em member-to-member} triggering just use parameterized members
 on each side of the arrow.  For example, if
 family \lstinline=OBS_GET= has members \lstinline=get<obs>= and
-family \lstinline=OBS_PROC= has members \lstinline=proc<obs>= then this,
+family \lstinline=OBS_PROC= has members \lstinline=proc<obs>= then this:
 \begin{lstlisting}
     graph = "get<obs> => proc<obs>"  # for obs = ship, buoy, plane
 \end{lstlisting}
-expands to this,
+expands to this:
 \begin{lstlisting}
     get_ship => proc_ship
     get_buoy => proc_buoy
@@ -4837,20 +4837,20 @@ chunks and using more chunks on the slower platform.
 Finally, there is one other feature of static chunking that can provide a small
 advantage.  In dynamic cycling cylc automatically ignores any dependence on
 cycle points earlier than the suite initial point (this isn't strictly
-necessary but it does simplify scheduling configuration a little).  So this,
+necessary but it does simplify scheduling configuration a little).  So this:
 \begin{lstlisting}
     graph = "model[-P1D] => model"
 \end{lstlisting}
-simplifies at the suite initial cycle point to this,
+simplifies at the suite initial cycle point to this:
 \begin{lstlisting}
     graph = "model"
 \end{lstlisting}
 Similarly, parameter offsets are ignored if they extend beyond the start of the
-list of parameter values.  So this,
+list of parameter values.  So this:
 \begin{lstlisting}
     graph = "model<chunk-1> => model<chunk>"
 \end{lstlisting}
-simplifies for \lstinline@chunk=1@ to this,
+simplifies for \lstinline@chunk=1@ to this:
 \begin{lstlisting}
     graph = "model_chunk1"
 \end{lstlisting}
@@ -5980,7 +5980,7 @@ were orphaned when the suite went down.
 \subsection{Alternatives To Polling When Routing Is Blocked}
 
 If Pyro and ssh ports are blocked but you don't want to use polling from
-the suite host,
+the suite host:
 \begin{myitemize}
 \item it has been suggested that network {\em port forwarding} may
 provide a solution;
@@ -6581,7 +6581,7 @@ line or hardwired into the suite.rc file:
 \begin{lstlisting}
 cylc run foo 20120808T06Z
 \end{lstlisting}
-or,
+or:
 \begin{lstlisting}
 [scheduling]
     initial cycle point = 20100808T06Z
@@ -6634,7 +6634,7 @@ The run mode, which defaults to {\em live}, is set on the command line
 \begin{lstlisting}
 shell$ cylc run --mode=dummy SUITE
 \end{lstlisting}
-but you can configure the suite to force a particular run mode,
+but you can configure the suite to force a particular run mode:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -6700,110 +6700,6 @@ run a live suite forward in simulation mode without copying it, do this:
           \lstinline=cylc-suite-private.db= file.
     \item Later, restart the live suite from the restored back up.
 \end{myenumerate}
-
-%{\em Finally, it should be noted that cylc previously had the ability to
-%create an instant safe simulation mode clone of the current state of any
-%suite, running or stopped, but this ``practice mode'' has been disabled
-%since the upgrade to cylc-3, pending testing; it could easily be
-%restored if needed.}
-
-%\subsubsection{Practice Mode}
-%
-%Practice mode allows quick and easy testing of potentially complex
-%suite interventions, with complete safety.
-%
-%\begin{lstlisting}
-%cylc restart --practice examples:CUG_1
-%\end{lstlisting}
-%
-%This will start a simulation mode clone of an existing suite from the
-%current state of that suite (which may be paused, still running, or
-%halted), but using different state and log files so that the original
-%suite will not be corrupted by the clone.
-%
-%{\em At start-up in practice mode, failed tasks are not reset to waiting}
-%because the whole point of practice mode is to ``practice'' how to
-%recover from failures.
-%
-%Note that other cylc commands for monitoring or interacting with the
-%suite must also use the \lstinline=--practice= option in order to
-%target the practice suite and not the real one. Be sure to set
-%\lstinline=cylc lock= on the original suite first, to avoid
-%accidentally messing with it (even if you do screw up, however, cylc's
-%automatic pre-intervention state dumps will save you!).
-%
-%
-%\subsubsection{Roll Your Own Practice Mode}
-%
-%A less automated way to ``practice'' on a copy of an existing suite
-%that starts up from the current (or previous) state of that suite,
-%\lstinline=cylc run --practice= is this:
-%
-%\begin{myitemize}
-%    \item register your suite again under a different name. This allows
-%        you to run a simulation mode copy of the same suite without
-%        interfering with the original suite (it also allows you to run
-%        a copy of the live mode suite without interference, but only if
-%        the real suite tasks are configured to use the registered
-%        suite name in all important input and output filenames and/or
-%        directory paths - see~\ref{register}).
-%
-%    \item start-up the newly registered suite in simulation mode using:
-%        \begin{lstlisting}
-%cylc restart --simulation-mode SUITE PATH
-%        \end{lstlisting}
-%        where PATH is a state dump file from the original suite. The
-%        absolute path is required here because the default state
-%        dump location depends on the registered suite name (so that
-%        different suites don't interfere with each other's state
-%        dumps).
-%
-%\end{myitemize}
-%
-
-
-
-%\pagebreak
-
-%\section{Network Issues}
-%
-%Cylc can control tasks on a distributed system (multiple hosts).  If you
-%do have a distributed suite, in any or all of these ways, be aware of
-%the following issues:
-%
-%\begin{myitemize}
-%
-%    \item In addition to the cylc host, cylc must be installed on all
-%        task hosts; and the remote task scripts must
-%        themselves be installed on their host machines.
-%        Refer to~\ref{RunningTasksOnARemoteHost}) for more on this.
-%
-%    \item Pyro must be installed on every host used by the suite.
-%         Ideally all relevant machines should have the same version of
-%         Pyro, but you can easily check for Pyro version
-%         compatibility by attempting to run one of the cylc example
-%         system.
-%
-%\end{myitemize}
-%
-%Other notes relevant to the last point above: the \lstinline=--host=
-%cylc command option defaults to Python \lstinline=socket.getfqdn()=,
-%which retrieves the fully qualified domain name of the local host
-%if possible.  But \lstinline=/etc/hosts= may cause this to return
-%just the hostname, which locally may resolve to the local-only IP
-%address that is not accessible on the network.  Short of reconfiguring
-%the hosts file, you may be able to workaround these problems by:
-%
-%\begin{myitemize}
-%
-%    \item and, get cylc to configure the Pyro daemon
-%        with \lstinline@Pyro.config.PYRO_DNS_URI = True@
-%
-%    \item and, use the \lstinline=--host= cylc command option where
-%        required.
-%
-%\end{myitemize}
-
 
 \subsection{Automated Reference Test Suites}
 \label{AutoRefTests}
@@ -6896,7 +6792,7 @@ a remote suite called \lstinline=other.suite=:
 \end{lstlisting}
 Local task \lstinline=my-foo= will poll for the success of \lstinline=foo=
 in suite \lstinline=other.suite=, at the same cycle point, succeeding only when
-or if it succeeds. Other task states can also be polled,
+or if it succeeds. Other task states can also be polled:
 \begin{lstlisting}
    graph = "my-foo<other.suite::foo:fail> => bar"
 \end{lstlisting}
@@ -6929,7 +6825,7 @@ If the remote task has a different cycling sequence, just arrange for the
 local polling task to be on the same sequence as the remote task that it
 represents. For instance, if local task \lstinline=cat= cycles 6-hourly at
 \lstinline=0,6,12,18= but needs to trigger off a remote task \lstinline=dog=
-at \lstinline=3,9,15,21=,
+at \lstinline=3,9,15,21=:
 \begin{lstlisting}
 [scheduling]
     [[dependencies]]
@@ -7418,7 +7314,7 @@ pollutes your revision history with spurious changes:
     \item  {\em script strings} are interpreted by the
         associated task job script, not by cylc, so strictly speaking
         their internal lines should not be indented as if part of the
-        suite.rc syntax. This, for example,
+        suite.rc syntax. This, for example:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [runtime]
@@ -7935,191 +7831,3 @@ ignored. (You should probably still investigate the failure, however!)
 
 \section{GNU GENERAL PUBLIC LICENSE v3.0}
 \input{gpl-3.0}
-
-%\subsection{Understanding Suite Evolution}
-%\label{UnderstandingSuiteEvolution}
-%
-%On a cold-start all tasks (including one-off tasks) in the system will be
-%instantiated at the initial cycle point, or at the next subsequent valid
-%cycle point for the task. Any tasks that have no prerequisites (and, if
-%they are contact tasks, have reached their trigger time) will submit to
-%run immediately. Any cycling (i.e.\ non one-off) tasks that have no
-%prerequisites (and, if they are contact tasks, have reached their
-%trigger time) will rapidly spawn ahead until stopped by the suite's
-%runahead limit (observe task X in the User Guide example suite).
-%Thereafter, each task will, of its own accord, submit to run as soon as
-%its prerequisites have been satisfied by other tasks already running or
-%succeeded in the suite (and trigger time etc.).  Each task spawns a
-%successor at a point in its life-cycle that depends on its type: tied
-%tasks spawn has soon as their restart prerequisites have been completed,
-%and free tasks spawn at the instant they start running.  Once a task
-%exists it is free to run as soon as its prerequisites are satisfied,
-%thus successive instances of a free task can run entirely in parallel,
-%and successive instances of a tied task can overlap if the opportunity
-%arises (other prerequisites allowing).
-
-%\subsection{Automatic State Dumps}
-%\label{AutomaticStateDumps}
-%
-%Cylc updates its configured state dump file (e.g.\
-%\lstinline=$HOME/cylc-state/state=) every time the state of a task
-%changes. Previous states are maintained in a rolling archive
-%(length specified in the {\em suite.rc} file):
-%
-%\begin{lstlisting}
-%nwp_oper> ls .cylc/state/SUITE/
-%state       # current state
-%state-1     # most recent previous state
-%state-2     # next most recent previous state
-%...
-%state-N     # oldest state dump; will be deleted at next update
-%\end{lstlisting}
-%
-%If you accidentally intervene wrongly in a suite, just shut it down
-%and restart from the pre-intervention state dump:
-%
-%\begin{lstlisting}
-%cylc restart SUITE state.2010:3:30:14:54:29
-%\end{lstlisting}
-
-%\subsection{Suite Log Files}
-%\label{SuiteLogFiles}
-%
-%Earlier versions of cylc created a main suite log file and a
-%task-specific log for every task. However, because when all logged
-%events were made to percolate up to the main log the task-specific logs
-%became superfluous. Instead, cylc provides facilities for filtering the
-%main log for task-specific messages (or you can just use
-%\lstinline=grep= for this purpose).
-%
-%\begin{lstlisting}
-%$ tail $HOME/cylc-logs/intro/log
-%2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
-%2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
-%2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
-%2010/03/28 00:33:52 INFO main.C - [2010010400] C.2010010400 completed
-%2010/03/28 00:33:52 INFO main.C - [2010010400] C.2010010400 succeeded
-%2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
-%2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
-%2010/03/28 00:33:53 INFO main.A - [2010010412] A.2010010412 completed
-%2010/03/28 00:33:53 INFO main.A - [2010010412] A.2010010412 succeeded
-%2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS SUCCEEDED
-%\end{lstlisting}
-%
-%Each entry shows the time of logging, the name and cycle point of the
-%reporting task (in square brackets), and the logged message.
-%
-%Existing log files are automatically rotated at start-up and,
-%individually, when they reach a size of 10 MB.  This maximum file
-%size should be configurable, but it is currently hardwired in
-%\lstinline=$CYLC_DIR/src/pimp_my_logger.py=.
-
-%\subsection{Diagnosing A Stalled Suite}
-%\label{DiagnosingAStalledSuite}
-%
-%In certain situations a suite may appear to be ``stuck'', i.e.\ no
-%tasks are running and nothing appears to be happening. There are several
-%possible reasons for this (it does not necessarily indicate a problem!):
-%
-%\begin{myitemize}
-%    \item In {\em normal real time operation}, when all running tasks
-%        have finished for the most recent cycle point, nothing will happen
-%        until the one or more contact tasks in the suite trigger at the
-%        start of the next cycle point. \lstinline=cylc show= tells if a
-%        contact task has yet to reach its trigger time.
-%
-%    \item if every task in the suite has one or more unsatisfied
-%        prerequisites, the suite will be stalled. This could happen,
-%        for example, if you start a suite that contains tied (forecast
-%        model) tasks without the corresponding one-off cold-start tasks to
-%        satisfy their initial restart prerequisites.
-%
-%\end{myitemize}
-%
-%Operational suites should have automated means of alerting the
-%operators to any failure that occurs
-%
-%\begin{myitemize}
-%    \item If the system operator, perhaps in a post-task-failure
-%    intervention, kills some tasks that are required to satisfy the
-%    prerequisites of other tasks that still exist in the system, then
-%    the suite will eventually stall as a result of these tasks being
-%    unable to run. Solution: insert tasks (possibly one-off cold-start
-%    tasks) to get the suite running again.
-%
-%    \item If a failed task has not yet been removed or reset by the
-%    system operator it will eventually stall the suite. Solution:
-%    Fix, or otherwise deal with, failed tasks as quickly as possible.
-%
-%    \item If through a suite design error error, a task exists that
-%        cannot get its prerequisites satisfied by any other task in the
-%        suite, that task will never run and will eventually cause the
-%        suite to stall.  Solution: test the suite in simulation mode to
-%        check that all prerequisites and outputs, suite-wide, are
-%        compatible.
-%
-%    \item If a misconfigured external task does not report an output
-%        that it is supposed to (i.e.\ as registered in its task proxy
-%        definition file), then its task proxy will not record that
-%        output as complete and cylc will set it to the 'failed' state
-%        when it finishes without completing a registered output. A
-%        failed task will eventually stall the suite, as explained above,
-%        if it is not fixed and re-run, or removed from the suite.
-%        Solution: ensure all external tasks report their outputs
-%        correctly.
-%
-%\end{myitemize}
-%
-%
-%\subsection{Failure Recovery Scenarios}
-%\label{FailureRecoveryScenarios}
-%
-%\begin{myitemize}
-%    \item {\em One forecast cycle point runs into the next, after a delay in
-%        operations}. This is never a problem for cylc; every task runs
-%        as soon as it can run, regardless of forecast cycle point, and any
-%        task that can't run before its predecessor has finished will
-%        wait.
-%
-%    \item {\em A delayed parallel trial or case study catches up to real
-%        time operation}. This is no problem for cylc; any cylc suite
-%        will seamlessly transition in and out of ``normal real time
-%        operation'' (distinct cycle points triggered by the wall clock) as
-%        needed.
-%
-%    \item {\em An external task fails, but can be fixed}. For example, a
-%        forecast model aborts trying to read a corrupted data file that
-%        can be regenerated correctly. The failed task will be noted by
-%        cylc, and its downstream dependants will not be able to run,
-%        but other tasks will carry on as normal while you address the
-%        problem. When fixed, use `cylc reset' to get the failed task to
-%        run again, after which it and its downstream dependants will
-%        catch up to the rest of the suite as quickly as possible.
-%
-%\end{myitemize}
-%
-%\subsection{Dead Suite Cleanup}
-%%\label{Deadcleanup}
-%
-%\subsubsection{Normal Shutdown}
-%
-%Cylc waits for any currently running tasks to finish before shutting
-%down cleanly. There will be nothing to clean up.
-%
-%\subsubsection{Shutdown NOW or Controlled Abort}
-%
-%If a critical error of some kind, or use of \lstinline=cylc stop --now=,
-%results in an immediate suite shutdown while there are still external
-%tasks running, any subsequent cylc messaging calls made by the
-%still-running tasks will fail because the parent suite no longer
-%exists. Depending on the exact circumstances this may result in some
-%orphaned processes that need to be killed manually.
-%
-%\subsubsection{Uncontrolled Suite Abort}
-%
-%(To Do, check: currently no ill effects - maybe sockets (ports) remain
-%tied up until they time out?).
-%
-%
-%
-%\pagebreak
