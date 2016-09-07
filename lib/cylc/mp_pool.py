@@ -100,9 +100,9 @@ class SuiteProcContext(object):
     """Represent the context of a command to run."""
 
     # Format string for single line output
-    JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_key)s %(attr)s] %(mesg)s"
+    JOB_LOG_FMT_1 = "[%(cmd_key)s %(attr)s] %(mesg)s"
     # Format string for multi-line output
-    JOB_LOG_FMT_M = "%(timestamp)s [%(cmd_key)s %(attr)s]\n\n%(mesg)s\n"
+    JOB_LOG_FMT_M = "[%(cmd_key)s %(attr)s]\n%(mesg)s"
 
     def __init__(self, cmd_key, cmd, **cmd_kwargs):
         self.timestamp = get_current_time_string()
@@ -138,11 +138,10 @@ class SuiteProcContext(object):
                 if not mesg.endswith("\n"):
                     mesg += "\n"
                 ret += fmt % {
-                    "timestamp": self.timestamp,
                     "cmd_key": self.cmd_key,
                     "attr": attr,
                     "mesg": mesg}
-        return ret
+        return ret.rstrip()
 
 
 class SuiteProcPool(object):

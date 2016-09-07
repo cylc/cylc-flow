@@ -406,13 +406,14 @@ class TaskProxy(object):
             self.HEAD_MODE_LOCAL, submit_num, "job-activity.log")
         try:
             with open(job_activity_log, "ab") as handle:
-                handle.write(ctx_str)
+                handle.write(ctx_str + '\n')
         except IOError as exc:
-            self.log(WARNING, "%s: write failed\n%s" % (job_activity_log, exc))
+            self.logger.warning(
+                "%s: write failed\n%s" % (job_activity_log, exc))
         if ctx.cmd and ctx.ret_code:
-            self.log(ERROR, ctx_str)
+            self.logger.error(ctx_str)
         elif ctx.cmd:
-            self.log(DEBUG, ctx_str)
+            self.logger.debug(ctx_str)
 
     def db_events_insert(self, event="", message=""):
         """Record an event to the DB."""
