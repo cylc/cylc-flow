@@ -4507,7 +4507,7 @@ the clarity of a suite definition.}
 
 \subsubsection{Parameter Expansion}
 
-Parameters values can be lists of strings, or integer ranges (both bounds included):
+Parameter values can be lists of strings, or integer ranges (both bounds included):
 \begin{lstlisting}
 [cylc]
     [[parameters]]
@@ -4533,7 +4533,7 @@ expands to,
 \end{lstlisting}
 For integer values the parameter name appears in the expanded task name, but
 for string values it doesn't.  These default expansion templates  can be
-overridden if necesasry:
+overridden if necessary:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
@@ -4783,7 +4783,7 @@ flexible and powerful for the following reasons:
                 have the same name and are labelled with their proper date-time
                 cycle points.  In the static workflow successive instances of
                 the same task have different names that incorporate the integer
-                chunk index.
+                chunk index (i.e.\ the expanded parameter).
         \end{myitemize}
 \end{myitemize}
 
