@@ -82,6 +82,7 @@ from cylc.templatevars import load_template_vars
 from cylc.version import CYLC_VERSION
 from cylc.wallclock import (
     get_current_time_string, get_seconds_as_interval_string)
+from cylc.profiler import Profiler
 
 
 class SchedulerError(CylcError):
@@ -149,6 +150,7 @@ class Scheduler(object):
     def __init__(self, is_restart, options, args):
 
         self.options = options
+        self.profiler = Profiler(self.options.profile_mode)
         self.suite = args[0]
         self.suiterc = RegistrationDB(self.options.db).get_suiterc(self.suite)
         self.suite_dir = os.path.dirname(self.suiterc)
@@ -282,11 +284,7 @@ class Scheduler(object):
             if not self.options.no_detach and not cylc.flags.debug:
                 daemonize(self)
             self.configure()
-            if self.options.profile_mode:
-                import cProfile
-                import pstats
-                prof = cProfile.Profile()
-                prof.enable()
+            self.profiler.start()
             self.run()
         except SchedulerStop as exc:
             # deliberate stop
@@ -321,14 +319,7 @@ class Scheduler(object):
             # main loop ends (not used?)
             self.shutdown()
 
-        if self.options.profile_mode:
-            prof.disable()
-            import StringIO
-            string_stream = StringIO.StringIO()
-            stats = pstats.Stats(prof, stream=string_stream)
-            stats.sort_stats('cumulative')
-            stats.print_stats()
-            print string_stream.getvalue()
+        self.profiler.stop()
         print
 
     @staticmethod
@@ -408,12 +399,12 @@ conditions; see `cylc conditions`.
 
     def configure(self):
         """Configure suite daemon."""
-        self.log_memory("scheduler.py: start configure")
+        self.profiler.log_memory("scheduler.py: start configure")
         SuiteProcPool.get_inst()
 
-        self.log_memory("scheduler.py: before configure_suite")
+        self.profiler.log_memory("scheduler.py: before configure_suite")
         self.configure_suite()
-        self.log_memory("scheduler.py: after configure_suite")
+        self.profiler.log_memory("scheduler.py: after configure_suite")
 
         reqmode = self.config.cfg['cylc']['required run mode']
         if reqmode:
@@ -439,12 +430,12 @@ conditions; see `cylc conditions`.
         self.request_handler = PyroRequestHandler(self.pyro)
         self.request_handler.start()
 
-        self.log_memory("scheduler.py: before load_tasks")
+        self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
             self.load_tasks_for_restart()
         else:
             self.load_tasks_for_run()
-        self.log_memory("scheduler.py: after load_tasks")
+        self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.pool.put_rundb_suite_params(self.initial_point, self.final_point)
         self.pool.put_rundb_suite_template_vars(self.template_vars)
@@ -489,7 +480,7 @@ conditions; see `cylc conditions`.
         if self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT):
             self.set_suite_inactivity_timer()
 
-        self.log_memory("scheduler.py: end configure")
+        self.profiler.log_memory("scheduler.py: end configure")
 
     def load_tasks_for_run(self):
         """Load tasks for a new run."""
@@ -961,7 +952,7 @@ conditions; see `cylc conditions`.
             cli_start_point_string=self._cli_start_point_string,
             cli_final_point_string=self.options.final_point_string,
             is_restart=self.is_restart, is_reload=reconfigure,
-            mem_log_func=self.log_memory
+            mem_log_func=self.profiler.log_memory
         )
         # Dump the loaded suiterc for future reference.
         cfg_logdir = GLOBAL_CFG.get_derived_host_item(
@@ -1353,7 +1344,7 @@ conditions; see `cylc conditions`.
 
         self.run_event_handlers(self.EVENT_STARTUP, 'suite starting')
 
-        self.log_memory("scheduler.py: begin run while loop")
+        self.profiler.log_memory("scheduler.py: begin run while loop")
         proc_pool = SuiteProcPool.get_inst()
 
         time_next_fs_check = None
@@ -1486,7 +1477,7 @@ conditions; see `cylc conditions`.
                         proc_pool.handle_results_async()
                         self.process_command_queue()
                 if self.options.profile_mode:
-                    self.log_memory(
+                    self.profiler.log_memory(
                         "scheduler.py: end main loop (total loops %d): %s" %
                         (count, get_current_time_string()))
                 if self.stop_mode == TaskPool.STOP_AUTO_ON_TASK_FAILURE:
@@ -1517,7 +1508,7 @@ conditions; see `cylc conditions`.
                 if now - previous_profile_point >= 60:
                     # Only get this every minute.
                     previous_profile_point = now
-                    self.log_memory("scheduler.py: loop #%d: %s" % (
+                    self.profiler.log_memory("scheduler.py: loop #%d: %s" % (
                         count, get_current_time_string()))
                 count += 1
 
@@ -1868,14 +1859,6 @@ conditions; see `cylc conditions`.
             if temp_pub_db_file_name:
                 os.unlink(temp_pub_db_file_name)
             raise
-
-    def log_memory(self, message):
-        """Print a message to standard out with the current memory usage."""
-        if not self.options.profile_mode:
-            return
-        proc = Popen(["ps", "h", "-orss", str(os.getpid())], stdout=PIPE)
-        memory = int(proc.communicate()[0])
-        print "PROFILE: Memory: %d KiB: %s" % (memory, message)
 
     def _update_profile_info(self, category, amount, amount_format="%s"):
         """Update the 1, 5, 15 minute dt averages for a given category."""
