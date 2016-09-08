@@ -281,7 +281,7 @@ class TaskPool(object):
         """Release tasks from the runahead pool to the main pool."""
 
         if not self.runahead_pool:
-            return
+            return False
 
         # Any finished tasks can be released immediately (this can happen at
         # restart when all tasks are initially loaded into the runahead pool).
@@ -311,7 +311,7 @@ class TaskPool(object):
             points.append(point)
 
         if not points:
-            return
+            return False
 
         # Get the earliest point with unfinished tasks.
         runahead_base_point = min(points)
@@ -362,10 +362,13 @@ class TaskPool(object):
                     )
             self._prev_runahead_base_point = runahead_base_point
 
+        released = False
         for point, itask_id_map in self.runahead_pool.items():
             if point <= latest_allowed_point:
                 for itask in itask_id_map.values():
                     self.release_runahead_task(itask)
+                    released = True
+        return released
 
     def release_runahead_task(self, itask):
         """Release itask to the appropriate queue in the active pool."""
