@@ -668,39 +668,7 @@ Upgrading is just a matter of unpacking the new cylc release. Successive
 cylc releases can be installed in parallel as suggested in the
 \lstinline=INSTALL= file (\ref{INSTALL}).
 
-\section{On The Meaning Of {\em Cycle } And {\em Cycle Point} In Cylc}
-
-The problem with the word ``cycle'' is that it is often used to refer to a
-series of times (e.g. ``an hourly cycle'') as well as a particular time
-(e.g. ``current cycle'' or ``current cycle point''). Here, we use
-``cycle point'' to refer to a particular (usually date-time) item. If a task
-has an hourly date-time cycle that starts at 2014-01-01T00 and ends at
-2014-01-02T00, the first ``cycle point'' will be 2014-01-01T01, the second
-``cycle point'' will be 2014-01-01T02, etc.
-
-You may be accustomed to the idea that a forecasting suite has a
-``current cycle'' (our nomenclature: ``current cycle point''), which is
-typically the analysis time or nominal start time of the main forecast
-model(s) in the suite, and that the whole suite advances to the next forecast
-cycle point when all tasks in the current cycle point have finished
-(or even when a particular wall clock time is reached, in real time
-operation). As explained in the Introduction, this is not how cylc works.
-
-Cylc suites advance by means of individual tasks with private cycle points
-(times) independently spawning successors at the next valid cycle point for
-the task, not by incrementing a suite-wide forecast cycle point. Each task
-will be submitted when its own prerequisites are satisfied, regardless
-of other tasks with other cycle points running, or not, at the time.
-It may still be convenient at times, however, to refer to the ``current
-cycle point'', the ``previous cycle point'', or the ``next cycle point'' and
-so forth, with reference to a particular task, or in the sense of
-all tasks that ``belong to'' a particular forecast cycle point. But keep in
-mind that the members of these groups may not be present simultaneously
-in the running suite - i.e.\ different tasks may pass through the
-``current cycle point'' (etc.) at different times as the suite evolves,
-particularly in delayed (catch up) operation.
-
-\section{Cycling: Dynamic vs Static }
+\section{{\em Cycling} And {\em Cycle Points} In Cylc}
 
 There are several reasons why an atmospheric model (say) may need to be cycled:
 \begin{myitemize}
@@ -710,52 +678,81 @@ There are several reasons why an atmospheric model (say) may need to be cycled:
         runs to be split into multiple shorter runs. (This also makes
         incremental post-processing easier.)
 \end{myitemize}
-And there are several ways this could be achieved in principle:
-\begin{myitemize}
-    \item {\em Dynamic Cycling:} A workflow can be extended as needed at run
-        time, {\em potentially indefinitely}.  Each time a task runs it will be
-        assigned a different cycle point. For example, a task called
-        \lstinline=model= might repeat yearly with cycle points
-        \lstinline=2021=, \lstinline=2022=, etc.  Dynamic cycling has
-        traditionally involved repeating entire single-cycle workflows
-        sequentially, but cylc does it without any hard cycle boundaries -
-        see Section~\ref{HowCylcWorks}.
+This section defines the terminology associated with cycling, and explains the
+two main ways that a workflow engine can implement cycling.
 
-    \item {\em Static Cycling:} If a workflow is finite and not too big it
-        can be pre-defined as a single monolithic workflow, so that the
-        scheduler does not need to cycle anything at run time. (This is how
-        workflow tools that do not know about cycling can still run cycling
-        tasks).  Each model run is represented by a different task:
-        \lstinline=model_runA= might represent the \lstinline=2020= run,
-        \lstinline=model_runB= the \lstinline=2021= run, and so on; or the
-        tasks might be called \lstinline=model_1=, \lstinline=model_2=, etc.,
-        with integer values mapping to the proper date-time cycle points; or
-        even \lstinline=model_2020=, \lstinline=model_2021= etc. {\em It is not
-            possible to continue a static workflow indefinitely}.
+\subsection{Cycling Terminology}
+
+In general usage, depending on context the word ``cycle'' can refer to a
+sequence of date-times, e.g.\ ``an hourly cycle''; or to a particular
+date-time, e.g.\ ``the current cycle''.
+
+Cylc terminology is more precise: a {\em cycle point} refers to a particular
+date-time (or integer) point in a sequence. If a task has an hourly date-time
+cycle that starts at 2014-01-01T00 and ends at 2014-01-02T00, the first cycle
+point will be 2014-01-01T01, the second will be 2014-01-01T02, and so on.
+
+You may be accustomed to the idea that a forecasting suite has a global (in the
+suite-wide, not geographic, sense) cycle point that only advances when all
+tasks in the current cycle point have finished (or even when a particular wall
+clock time is reached, in real time operation). As explained in the
+Introduction, that is not how cylc works. Rather, each task has a private cycle
+point and can advance independently. The workflow is constrained only by the
+dependencies of individual tasks, which may cross over to other cycle points.
+It may still be convenient at times, however, to refer to the ``current cycle
+point'', the ``previous cycle point'', or the ``next cycle point'' and so
+forth, with reference to a particular task, or in the sense of all tasks that
+``belong to'' a particular cycle point. But keep in mind that the members of
+these groups may not be present simultaneously in the running suite - different
+tasks may pass through the ``current cycle point'' at different times as the
+suite evolves.
+
+\subsection{Ways Of Cycling: Dynamic and Static}
+
+There are two main ways that a workflow engine could implement cycling, in
+principle:
+\begin{myitemize}
+    \item {\em Dynamic Cycling:} A workflow could be extended to future cycle
+        points as needed at run time, {\em potentially indefinitely}.  Each
+        time a task runs it will be labelled with its next cycle point. For
+        example, a task called \lstinline=model= might repeat yearly with cycle
+        points \lstinline=2021=, \lstinline=2022=, and so on.  Dynamic cycling
+        has traditionally involved repeating entire workflows sequentially, but
+        cylc does it without any hard cycle point boundaries - see
+        Section~\ref{HowCylcWorks}.
+
+    \item {\em Static Cycling:} If a suite is finite in extent and not too big,
+        it could be handled as single monolithic workflow so that no cycling is
+        needed at run time. Each model run is represented by a different
+        logical task, e.g.\ \lstinline=model_runA= might represent the
+        \lstinline=2020= run, \lstinline=model_runB= the \lstinline=2021= run,
+        and so on; or the tasks might be called \lstinline=model_1=,
+        \lstinline=model_2=, and so on., with integer values
+        mapping to the proper date-time cycle points; or even
+        \lstinline=model_2020=, \lstinline=model_2021= and so on. {\em It is not
+        possible to continue a static workflow indefinitely}.
 
     \item {\em Mixed Cycling:} Both static and dynamic cycling can be combined
         in the same suite (although there may be no good reason to do this in
         cylc!).  For example, instead of an ongoing 6-hourly dynamic cycle, we
-        could have a daily dynamic cycle with four static ``chunks'' inside
-        each daily cycle point.
+        could have a ongoing daily dynamic cycle with four static ``chunks''
+        inside each daily cycle point.
 \end{myitemize}
 
 Dynamic cycling (or simply ``cycling'') in cylc is configured by associating
 workflows with general ISO 8601 recurrence expressions, for any date-time (or
 integer) sequence.  Multiple cycling sequences can be used at once.   See
-Section~\ref{ConfiguringScheduling}. 
+Section~\ref{ConfiguringScheduling} and many other parts of the User Guide.
 
-Static cycling in cylc can be configured by writing out every task
-individually; or by expanding {\em suite parameters} to auto-generate tasks
-(statically, before the scheduler starts up) - see Section~\ref{Parameterized
-Tasks}, or with Jinja2 loops to auto-generate tasks (statically again) - see 
-Section~\ref{Jinja2}.
+Static cycling in cylc can be configured by defining every task instance
+(for every cycle point) individually; or by expanding {\em parameterized tasks}
+(Section~\ref{Parameterized Tasks}) or Jinja2 loops (Section~\ref{Jinja2}) to
+do the same automatically.
 
-Dynamic cycling is the most powerful and flexible method. It is the only good
-way to run large operational suites that need to continue cycling indefinitely;
-cylc does the difficult date-time arithmetic automatically; and there is a
-performance advantage too (no need to manage and monitor {\em all} the tasks in
-the entire workflow at once).
+Dynamic cycling is the most powerful and flexible method, and it is the only
+way to run large operational suites that need to continue indefinitely (plus
+cylc does the difficult date-time arithmetic for you, and it is easier to
+manage and monitor an incrementally evolving non-monolithic workflow).
 
 \section{Global (Site, User) Configuration Files}
 \label{SiteAndUserConfiguration}
