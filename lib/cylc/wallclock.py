@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Wall clock related utilities."""
 
+from calendar import timegm
 from datetime import datetime, timedelta
 
 from isodatetime.data import Duration
@@ -62,6 +63,8 @@ TIME_ZONE_UTC_INFO = {
     "string_basic": TIME_ZONE_STRING_UTC,
     "string_extended": TIME_ZONE_STRING_UTC
 }
+
+PARSER = TimePointParser()
 
 
 def now(override_use_utc=None):
@@ -208,11 +211,34 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
                            custom_time_zone_info=custom_time_zone_info)
 
 
-def get_unix_time_from_time_string(time_string):
-    """Convert a time string into a unix timestamp."""
-    parser = TimePointParser()
-    time_point = parser.parse(time_string)
-    return time_point.get("seconds_since_unix_epoch")
+def get_unix_time_from_time_string(datetime_string):
+    """Convert a datetime string into a unix timestamp.
+
+    The datetime_string must match DATE_TIME_FORMAT_EXTENDED above,
+    which is the extended ISO 8601 year-month-dayThour:minute:second format,
+    plus a valid ISO 8601 time zone. For example, 2016-09-07T11:21:00+01:00,
+    2016-12-25T06:00:00Z, or 2016-12-25T06:00:00+13.
+
+    isodatetime is not used to do the whole parsing, partly for performance,
+    but mostly because the calendar may be in non-Gregorian mode.
+
+    """
+    try:
+        date_time_utc = datetime.strptime(
+            datetime_string, DATE_TIME_FORMAT_EXTENDED + "Z")
+    except ValueError:
+        time_zone_info = PARSER.get_info(datetime_string)[1]
+        time_zone_hour = int(time_zone_info["time_zone_hour"])
+        time_zone_minute = int(time_zone_info.get("time_zone_minute", 0))
+        offset_seconds = 3600 * time_zone_hour + 60 * time_zone_minute
+        if "+" in datetime_string:
+            datetime_string, time_zone_string = datetime_string.split("+")
+        else:
+            datetime_string, time_zone_string = datetime_string.rsplit("-", 1)
+        date_time = datetime.strptime(
+            datetime_string, DATE_TIME_FORMAT_EXTENDED)
+        date_time_utc = date_time - timedelta(seconds=offset_seconds)
+    return timegm(date_time_utc.timetuple())
 
 
 def get_seconds_as_interval_string(seconds):
