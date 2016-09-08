@@ -668,7 +668,7 @@ Upgrading is just a matter of unpacking the new cylc release. Successive
 cylc releases can be installed in parallel as suggested in the
 \lstinline=INSTALL= file (\ref{INSTALL}).
 
-\section{On The Meaning Of {\em Cycle } and {\em Cycle Point} In Cylc}
+\section{On The Meaning Of {\em Cycle } And {\em Cycle Point} In Cylc}
 
 The problem with the word ``cycle'' is that it is often used to refer to a
 series of times (e.g. ``an hourly cycle'') as well as a particular time
@@ -699,6 +699,73 @@ mind that the members of these groups may not be present simultaneously
 in the running suite - i.e.\ different tasks may pass through the
 ``current cycle point'' (etc.) at different times as the suite evolves,
 particularly in delayed (catch up) operation.
+
+\section{Dynamic Vs Static Cycling}
+
+An atmospheric model (say) may need to be cycled for the following reasons:
+\begin{myitemize}
+    \item In operational forecasting it may need to wait on real time data
+        before each new run.
+    \item Job run length limits on compute hosts may dictate that single long
+        runs are split into multiple shorter runs. (This also makes
+        incremental post-processing easier.)
+\end{myitemize}
+There are several ways to do this in principle (and cylc can do them all):
+\begin{myitemize}
+    \item {\em Dynamic Cycling:} A minimal workflow - everything that needs to
+        be repeated - is repeatedly extended as required, as the suite runs.
+        This could stop at a final cycle point, or {\em it could continue
+        indefinitely}.  The task names are always the same, but they have a
+        different cycle point each time they run. For example, a yearly-cycling
+        task called \lstinline=model= might repeat with cycle points
+        \lstinline=2021=, \lstinline=2022=, etc. As explained in the
+        introduction, dynamic cycling was traditionally done by repeating
+        entire single-cycle workflows sequentially, but cylc does it without
+        any hard cycle boundaries.
+        \begin{myitemize}
+            \item {\em Dynamic cycling in cylc} is configured by associating
+                workflows with general ISO 8601 recurrence expressions, for any
+                date-time (or integer) sequence.  Multiple cycling sequences
+                can be used at once.
+        \end{myitemize}
+    \item {\em Static Cycling:} If the workflow is finite and not too long we
+        could statically define it from start to finish as a single monolithic
+        workflow. This is how a workflow engine that does not know about
+        cycling would have to do it. The underlying model jobs are
+        still repeated, but there is no cycling as far as the workflow engine
+        is concerned: each job is launched by a different task, and each task
+        is predefined from the start. For example, task
+        \lstinline=model_runA= might represent the
+        \lstinline=2020= run, \lstinline=model_runB= the \lstinline=2021= run,
+        and so on. Or the tasks might be called \lstinline=model_1=,
+        \lstinline=model_2=, etc., with the integer values mapping to the
+        date-time cycle points needed by the jobs. The task names could
+        even have the actual cycle point date-times hard-coded, such as
+        \lstinline=model_2020=.  {\em It is not possible to continue a static
+        workflow indefinitely}.
+        \begin{myitemize}
+            \item {\em Static cycling in cylc} can be configured by writing out
+                every single task individually, or by expanding {\em suite
+                parameters} to automatically generate each task (statically,
+                before the scheduler starts up), or by doing the same (again,
+                statically) with Jinja2 loops in the suite definition.
+
+        \end{myitemize}
+
+    \item {\em Mixed Dynamic/Static Cycling:} Both static and dynamic cycling
+        can be combined in the same suite, although there are few good reasons
+        to do so.  For example, 6-hourly cycling could be achieved with four
+        static ``chunks'' within a daily dynamic cycle (c.f. a 6-hourly dynamic
+        cycle).
+\end{myitemize}
+
+Dynamic cycling (which we normally just refer to as ``cycling'') is the most
+powerful and flexible cycling method. It is the only good way to run large
+operational suites that need to continue running indefinitely, and it has
+performance advantages too (cylc doesn't need to manage and monitor {\em all}
+the tasks in the entire workflow at once).  Nevertheless static cycling should
+be understood, particularly for context and comparison with workflow engines
+that do not know about cycling.
 
 \section{Global (Site, User) Configuration Files}
 \label{SiteAndUserConfiguration}
@@ -4514,7 +4581,6 @@ Parameter values can be lists of strings, or integer ranges (both bounds include
         obs = ship, buoy, plane
         run = 1..5  # 1, 2, 3, 4, 5
 \end{lstlisting}
-
 Angle brackets denote parameterization.  For example:
 \begin{lstlisting}
     model<run>  # for run = 1..2
@@ -4531,16 +4597,19 @@ expands to:
 \begin{lstlisting}
     proc_ship, proc_buoy, proc_plane
 \end{lstlisting}
-For integer values the parameter name appears in the expanded task name, but
-for string values it doesn't.  These default expansion templates  can be
-overridden if necessary:
+Note that the parameter name appears in the expanded task names for integer
+parameters (e.g.\ \lstinline=model_run1= for \lstinline@run = 1@ as above),
+but not for string parameters (e.g.\ \lstinline=proc_ship= for
+\lstinline@obs = ship@ as above). This is to ensure the order is clear if
+multiple integer parameters are used. These default expansion templates can be
+overridden, however:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
         obs = ship, buoy, plane
         run = 1..5
     [[parameter templates]]
-        run = -R%(run)s  # make foo<run> expand to foo-R1 etc.
+        run = -R%(run)s  # Make foo<run> expand to foo-R1 etc.
 \end{lstlisting}
 (See~\ref{RefParameterTemplates} for more on the string template syntax.)
 
