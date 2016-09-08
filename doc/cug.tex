@@ -700,72 +700,62 @@ in the running suite - i.e.\ different tasks may pass through the
 ``current cycle point'' (etc.) at different times as the suite evolves,
 particularly in delayed (catch up) operation.
 
-\section{Dynamic Vs Static Cycling}
+\section{Cycling: Dynamic vs Static }
 
-An atmospheric model (say) may need to be cycled for the following reasons:
+There are several reasons why an atmospheric model (say) may need to be cycled:
 \begin{myitemize}
-    \item In operational forecasting it may need to wait on real time data
-        before each new run.
-    \item Job run length limits on compute hosts may dictate that single long
-        runs are split into multiple shorter runs. (This also makes
+    \item In real time forecasting it may need to wait on new real time data
+        before each run.
+    \item Job run length limits on compute hosts may require single long
+        runs to be split into multiple shorter runs. (This also makes
         incremental post-processing easier.)
 \end{myitemize}
-There are several ways to do this in principle (and cylc can do them all):
+And there are several ways this could be achieved in principle:
 \begin{myitemize}
-    \item {\em Dynamic Cycling:} A minimal workflow - everything that needs to
-        be repeated - is repeatedly extended as required, as the suite runs.
-        This could stop at a final cycle point, or {\em it could continue
-        indefinitely}.  The task names are always the same, but they have a
-        different cycle point each time they run. For example, a yearly-cycling
-        task called \lstinline=model= might repeat with cycle points
-        \lstinline=2021=, \lstinline=2022=, etc. As explained in the
-        introduction, dynamic cycling was traditionally done by repeating
-        entire single-cycle workflows sequentially, but cylc does it without
-        any hard cycle boundaries.
-        \begin{myitemize}
-            \item {\em Dynamic cycling in cylc} is configured by associating
-                workflows with general ISO 8601 recurrence expressions, for any
-                date-time (or integer) sequence.  Multiple cycling sequences
-                can be used at once.
-        \end{myitemize}
-    \item {\em Static Cycling:} If the workflow is finite and not too long we
-        could statically define it from start to finish as a single monolithic
-        workflow. This is how a workflow engine that does not know about
-        cycling would have to do it. The underlying model jobs are
-        still repeated, but there is no cycling as far as the workflow engine
-        is concerned: each job is launched by a different task, and each task
-        is predefined from the start. For example, task
-        \lstinline=model_runA= might represent the
-        \lstinline=2020= run, \lstinline=model_runB= the \lstinline=2021= run,
-        and so on. Or the tasks might be called \lstinline=model_1=,
-        \lstinline=model_2=, etc., with the integer values mapping to the
-        date-time cycle points needed by the jobs. The task names could
-        even have the actual cycle point date-times hard-coded, such as
-        \lstinline=model_2020=.  {\em It is not possible to continue a static
-        workflow indefinitely}.
-        \begin{myitemize}
-            \item {\em Static cycling in cylc} can be configured by writing out
-                every single task individually, or by expanding {\em suite
-                parameters} to automatically generate each task (statically,
-                before the scheduler starts up), or by doing the same (again,
-                statically) with Jinja2 loops in the suite definition.
+    \item {\em Dynamic Cycling:} A workflow can be extended as needed at run
+        time, {\em potentially indefinitely}.  Each time a task runs it will be
+        assigned a different cycle point. For example, a task called
+        \lstinline=model= might repeat yearly with cycle points
+        \lstinline=2021=, \lstinline=2022=, etc.  Dynamic cycling has
+        traditionally involved repeating entire single-cycle workflows
+        sequentially, but cylc does it without any hard cycle boundaries -
+        see Section~\ref{HowCylcWorks}.
 
-        \end{myitemize}
+    \item {\em Static Cycling:} If a workflow is finite and not too big it
+        can be pre-defined as a single monolithic workflow, so that the
+        scheduler does not need to cycle anything at run time. (This is how
+        workflow tools that do not know about cycling can still run cycling
+        tasks).  Each model run is represented by a different task:
+        \lstinline=model_runA= might represent the \lstinline=2020= run,
+        \lstinline=model_runB= the \lstinline=2021= run, and so on; or the
+        tasks might be called \lstinline=model_1=, \lstinline=model_2=, etc.,
+        with integer values mapping to the proper date-time cycle points; or
+        even \lstinline=model_2020=, \lstinline=model_2021= etc. {\em It is not
+            possible to continue a static workflow indefinitely}.
 
-    \item {\em Mixed Dynamic/Static Cycling:} Both static and dynamic cycling
-        can be combined in the same suite, although there are few good reasons
-        to do so.  For example, 6-hourly cycling could be achieved with four
-        static ``chunks'' within a daily dynamic cycle (c.f. a 6-hourly dynamic
-        cycle).
+    \item {\em Mixed Cycling:} Both static and dynamic cycling can be combined
+        in the same suite (although there may be no good reason to do this in
+        cylc!).  For example, instead of an ongoing 6-hourly dynamic cycle, we
+        could have a daily dynamic cycle with four static ``chunks'' inside
+        each daily cycle point.
 \end{myitemize}
 
-Dynamic cycling (which we normally just refer to as ``cycling'') is the most
-powerful and flexible cycling method. It is the only good way to run large
-operational suites that need to continue running indefinitely, and it has
-performance advantages too (cylc doesn't need to manage and monitor {\em all}
-the tasks in the entire workflow at once).  Nevertheless static cycling should
-be understood, particularly for context and comparison with workflow engines
-that do not know about cycling.
+Dynamic cycling (or simply ``cycling'') in cylc is configured by associating
+workflows with general ISO 8601 recurrence expressions, for any date-time (or
+integer) sequence.  Multiple cycling sequences can be used at once.   See
+Section~\ref{ConfiguringScheduling}. 
+
+Static cycling in cylc can be configured by writing out every task
+individually; or by expanding {\em suite parameters} to auto-generate tasks
+(statically, before the scheduler starts up) - see Section~\ref{Parameterized
+Tasks}, or with Jinja2 loops to auto-generate tasks (statically again) - see 
+Section~\ref{Jinja2}.
+
+Dynamic cycling is the most powerful and flexible method. It is the only good
+way to run large operational suites that need to continue cycling indefinitely;
+cylc does the difficult date-time arithmetic automatically; and there is a
+performance advantage too (no need to manage and monitor {\em all} the tasks in
+the entire workflow at once).
 
 \section{Global (Site, User) Configuration Files}
 \label{SiteAndUserConfiguration}
