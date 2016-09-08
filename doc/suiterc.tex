@@ -1643,23 +1643,6 @@ anything accepted by the \lstinline=mail= command.
     \item {\em example:} \lstinline@mail to = your.colleague@
 \end{myitemize}
 
-\subparagraph[register job logs retry delays]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[events]]] \textrightarrow register job logs retry delays}
-
-Some batch systems have considerable delays between the time when the job
-completes and when it writes the job logs in its normal location. Consequently,
-the suite may be unable to register the existence of some job log files in its
-runtime database until the job log files become available at their expected
-location. If this is the case, you can configure an initial delay and some
-retry delays between subsequent attempts. The default behaviour is to attempt
-once without any delay.
-
-\begin{myitemize}
-    \item {\em type:} Comma-separated list of ISO 8601 duration/interval
-        representations, optionally {\em preceded} by multipliers.
-    \item {\em example:} \lstinline@PT5S, PT1M, PT5M@
-    \item {\em default:} (none)
-\end{myitemize}
-
 \paragraph[{[[[}environment{]]]}]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[environment]]]}
 
 The user defined task execution environment. Variables defined here can

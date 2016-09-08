@@ -178,7 +178,6 @@ class TaskProxy(object):
     HEAD_MODE_REMOTE = "remote"
     JOB_FILE_BASE = BATCH_SYS_MANAGER.JOB_FILE_BASE
     JOB_KILL = "job-kill"
-    JOB_LOGS_REGISTER = "job-logs-register"
     JOB_LOGS_RETRIEVE = "job-logs-retrieve"
     JOB_POLL = "job-poll"
     JOB_SUBMIT = "job-submit"
@@ -197,7 +196,6 @@ class TaskProxy(object):
         '\A(.+) at (' + RE_DATE_TIME_FORMAT_EXTENDED + ')\Z')
 
     TABLE_TASK_JOBS = CylcSuiteDAO.TABLE_TASK_JOBS
-    TABLE_TASK_JOB_LOGS = CylcSuiteDAO.TABLE_TASK_JOB_LOGS
     TABLE_TASK_EVENTS = CylcSuiteDAO.TABLE_TASK_EVENTS
     TABLE_TASK_STATES = CylcSuiteDAO.TABLE_TASK_STATES
 
@@ -285,7 +283,6 @@ class TaskProxy(object):
 
         self.db_inserts_map = {
             self.TABLE_TASK_JOBS: [],
-            self.TABLE_TASK_JOB_LOGS: [],
             self.TABLE_TASK_STATES: [],
             self.TABLE_TASK_EVENTS: [],
         }
@@ -651,7 +648,6 @@ class TaskProxy(object):
             self.summary['submit_method_id'] = items[3]
         except IndexError:
             self.summary['submit_method_id'] = None
-        self.register_job_logs(self.submit_num)
         if self.summary['submit_method_id'] and ctx.ret_code == 0:
             self.job_submission_succeeded()
         else:
@@ -702,34 +698,23 @@ class TaskProxy(object):
     def setup_job_logs_retrieval(self, event, _=None):
         """Set up remote job logs retrieval."""
         # TODO - use string constants for event names.
-        if event not in ['failed', 'retry', 'succeeded']:
+        key2 = (self.JOB_LOGS_RETRIEVE, self.submit_num)
+        if (event not in ['failed', 'retry', 'succeeded'] or
+                self.user_at_host in [USER + '@localhost', 'localhost'] or
+                not self._get_host_conf("retrieve job logs") or
+                key2 in self.event_handler_try_states):
             return
-        if (self.user_at_host in [USER + '@localhost', 'localhost'] or
-                not self._get_host_conf("retrieve job logs")):
-            key2 = (self.JOB_LOGS_REGISTER, self.submit_num)
-            if key2 in self.event_handler_try_states:
-                return
-            self.event_handler_try_states[key2] = TryState(
-                TaskJobLogsRegisterContext(
-                    # key, ctx_type
-                    self.JOB_LOGS_REGISTER, self.JOB_LOGS_REGISTER,
-                ),
-                self._get_events_conf("register job logs retry delays", []))
-        else:
-            key2 = (self.JOB_LOGS_RETRIEVE, self.submit_num)
-            if key2 in self.event_handler_try_states:
-                return
-            self.event_handler_try_states[key2] = TryState(
-                TaskJobLogsRetrieveContext(
-                    # key
-                    self.JOB_LOGS_RETRIEVE,
-                    # ctx_type
-                    self.JOB_LOGS_RETRIEVE,
-                    self.user_at_host,
-                    # max_size
-                    self._get_host_conf("retrieve job logs max size"),
-                ),
-                self._get_host_conf("retrieve job logs retry delays", []))
+        self.event_handler_try_states[key2] = TryState(
+            TaskJobLogsRetrieveContext(
+                # key
+                self.JOB_LOGS_RETRIEVE,
+                # ctx_type
+                self.JOB_LOGS_RETRIEVE,
+                self.user_at_host,
+                # max_size
+                self._get_host_conf("retrieve job logs max size"),
+            ),
+            self._get_host_conf("retrieve job logs retry delays", []))
 
     def setup_event_mail(self, event, _):
         """Event notification, by email."""
@@ -982,36 +967,6 @@ class TaskProxy(object):
             copy(rtconfig['job']['execution polling intervals']),
             copy(GLOBAL_CFG.get(['execution polling intervals'])),
             'execution', self.log)
-
-    def register_job_logs(self, submit_num):
-        """Register job logs in the runtime database.
-
-        Return a list containing the names of the job logs.
-
-        """
-        data = []
-        job_file_dir = self.get_job_log_path(self.HEAD_MODE_LOCAL, submit_num)
-        try:
-            for filename in os.listdir(job_file_dir):
-                try:
-                    stat = os.stat(os.path.join(job_file_dir, filename))
-                except OSError:
-                    continue
-                else:
-                    data.append((stat.st_mtime, stat.st_size, filename))
-        except OSError:
-            pass
-
-        rel_job_file_dir = self.get_job_log_path(submit_num=submit_num)
-        for mtime, size, filename in data:
-            self.db_inserts_map[self.TABLE_TASK_JOB_LOGS].append({
-                "submit_num": submit_num,
-                "filename": filename,
-                "location": os.path.join(rel_job_file_dir, filename),
-                "mtime": mtime,
-                "size": size})
-
-        return [datum[2] for datum in data]
 
     def submit(self):
         """For "cylc submit". See also "TaskPool.submit_task_jobs"."""

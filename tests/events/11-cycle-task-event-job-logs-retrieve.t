@@ -23,7 +23,7 @@ HOST=$(cylc get-global-config -i '[test battery]remote host' 2>'/dev/null')
 if [[ -z "${HOST}" ]]; then
     skip_all '"[test battery]remote host": not defined'
 fi
-set_test_number 4
+set_test_number 3
 create_test_globalrc
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
@@ -35,32 +35,6 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 # There are 2 remote tasks. One with "retrieve job logs = True", one without.
 # Only t1 should have job.err and job.out retrieved.
 SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}"
-sqlite3 "${SUITE_RUN_DIR}/cylc-suite.db" \
-    'select cycle,name,submit_num,filename,location from task_job_logs
-     ORDER BY cycle,name,submit_num,filename' >'select-task-job-logs.out'
-cmp_ok 'select-task-job-logs.out' <<'__OUT__'
-2020-02-02T02:02Z|t1|1|job|2020-02-02T02:02Z/t1/01/job
-2020-02-02T02:02Z|t1|1|job-activity.log|2020-02-02T02:02Z/t1/01/job-activity.log
-2020-02-02T02:02Z|t1|1|job.err|2020-02-02T02:02Z/t1/01/job.err
-2020-02-02T02:02Z|t1|1|job.out|2020-02-02T02:02Z/t1/01/job.out
-2020-02-02T02:02Z|t1|1|job.status|2020-02-02T02:02Z/t1/01/job.status
-2020-02-02T02:02Z|t1|2|job|2020-02-02T02:02Z/t1/02/job
-2020-02-02T02:02Z|t1|2|job-activity.log|2020-02-02T02:02Z/t1/02/job-activity.log
-2020-02-02T02:02Z|t1|2|job.err|2020-02-02T02:02Z/t1/02/job.err
-2020-02-02T02:02Z|t1|2|job.out|2020-02-02T02:02Z/t1/02/job.out
-2020-02-02T02:02Z|t1|2|job.status|2020-02-02T02:02Z/t1/02/job.status
-2020-02-02T02:02Z|t1|3|job|2020-02-02T02:02Z/t1/03/job
-2020-02-02T02:02Z|t1|3|job-activity.log|2020-02-02T02:02Z/t1/03/job-activity.log
-2020-02-02T02:02Z|t1|3|job.err|2020-02-02T02:02Z/t1/03/job.err
-2020-02-02T02:02Z|t1|3|job.out|2020-02-02T02:02Z/t1/03/job.out
-2020-02-02T02:02Z|t1|3|job.status|2020-02-02T02:02Z/t1/03/job.status
-2020-02-02T02:02Z|t2|1|job|2020-02-02T02:02Z/t2/01/job
-2020-02-02T02:02Z|t2|1|job-activity.log|2020-02-02T02:02Z/t2/01/job-activity.log
-2020-02-02T02:02Z|t2|2|job|2020-02-02T02:02Z/t2/02/job
-2020-02-02T02:02Z|t2|2|job-activity.log|2020-02-02T02:02Z/t2/02/job-activity.log
-2020-02-02T02:02Z|t2|3|job|2020-02-02T02:02Z/t2/03/job
-2020-02-02T02:02Z|t2|3|job-activity.log|2020-02-02T02:02Z/t2/03/job-activity.log
-__OUT__
 
 sed "/'job-logs-retrieve'/!d; s/^[^ ]* //" \
     "${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \

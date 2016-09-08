@@ -175,7 +175,6 @@ class CylcSuiteDAO(object):
     TABLE_SUITE_PARAMS_CHECKPOINTS = "suite_params_checkpoints"
     TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
-    TABLE_TASK_JOB_LOGS = "task_job_logs"
     TABLE_TASK_EVENTS = "task_events"
     TABLE_CHECKPOINT_ID = "checkpoint_id"
     TABLE_TASK_POOL = "task_pool"
@@ -238,15 +237,6 @@ class CylcSuiteDAO(object):
             ["user_at_host"],
             ["batch_sys_name"],
             ["batch_sys_job_id"],
-        ],
-        TABLE_TASK_JOB_LOGS: [
-            ["cycle", {"is_primary_key": True}],
-            ["name", {"is_primary_key": True}],
-            ["submit_num", {"datatype": "INTEGER", "is_primary_key": True}],
-            ["filename", {"is_primary_key": True}],
-            ["location"],
-            ["mtime"],
-            ["size", {"datatype": "INTEGER"}],
         ],
         TABLE_TASK_EVENTS: [
             ["name"],
