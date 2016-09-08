@@ -1367,7 +1367,8 @@ conditions; see `cylc conditions`.
                 self.do_update_state_summary = True
 
             self.process_command_queue()
-            self.pool.release_runahead_tasks()
+            if self.pool.release_runahead_tasks():
+                self.do_update_state_summary = True
             proc_pool.handle_results_async()
 
             # External triggers must be matched now. If any are matched pflag
