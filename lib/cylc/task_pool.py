@@ -278,7 +278,10 @@ class TaskPool(object):
         return True
 
     def release_runahead_tasks(self):
-        """Release tasks from the runahead pool to the main pool."""
+        """Release tasks from the runahead pool to the main pool.
+        
+        Return True if any tasks are released, else False.
+        """
 
         if not self.runahead_pool:
             return False
