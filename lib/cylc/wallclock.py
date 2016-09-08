@@ -20,7 +20,6 @@
 from calendar import timegm
 from datetime import datetime, timedelta
 
-from isodatetime.parsers import TimePointParser
 from isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone)
 
@@ -63,7 +62,7 @@ TIME_ZONE_UTC_INFO = {
     "string_extended": TIME_ZONE_STRING_UTC
 }
 
-PARSER = TimePointParser()
+PARSER = None
 
 
 def now(override_use_utc=None):
@@ -226,6 +225,10 @@ def get_unix_time_from_time_string(datetime_string):
         date_time_utc = datetime.strptime(
             datetime_string, DATE_TIME_FORMAT_EXTENDED + "Z")
     except ValueError:
+        global PARSER
+        if PARSER is None:
+            from isodatetime.parsers import TimePointParser
+            PARSER = TimePointParser()
         time_zone_info = PARSER.get_info(datetime_string)[1]
         time_zone_hour = int(time_zone_info["time_zone_hour"])
         time_zone_minute = int(time_zone_info.get("time_zone_minute", 0))
