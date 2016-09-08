@@ -86,20 +86,32 @@ TASK_STATUSES_CAN_RESET_TO = set([
     TASK_STATUS_FAILED
 ])
 
-# Task statuses that are killable.
-TASK_STATUSES_KILLABLE = set([
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING
+# Task statuses that are final.
+TASK_STATUSES_FINAL = set([
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_SUBMIT_FAILED,
 ])
 
-# Task statuses that are externally active.
-TASK_STATUSES_ACTIVE = TASK_STATUSES_KILLABLE
-
-# Task statuses that are pollable.
-TASK_STATUSES_POLLABLE = set([
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING
+# Task statuses that are to be externally active
+TASK_STATUSES_TO_BE_ACTIVE = set([
+    TASK_STATUS_QUEUED,
+    TASK_STATUS_READY,
+    TASK_STATUS_SUBMIT_RETRYING,
+    TASK_STATUS_RETRYING,
 ])
+
+# Task statuses that are externally active, i.e. pollable and killable
+TASK_STATUSES_ACTIVE = set([
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_RUNNING,
+])
+
+# Task statuses in which tasks cannot be considered stalled
+TASK_STATUSES_NOT_STALLED = (
+    TASK_STATUSES_ACTIVE | TASK_STATUSES_TO_BE_ACTIVE |
+    set([TASK_STATUS_HELD]))
 
 # Task statuses that can be manually triggered.
 TASK_STATUSES_TRIGGERABLE = set([

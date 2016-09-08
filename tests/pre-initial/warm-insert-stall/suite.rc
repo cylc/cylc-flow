@@ -1,13 +1,15 @@
 [cylc]
-    UTC mode = true
-    [[event hooks]]
-        abort on stalled = true
+    UTC mode = True
+    [[events]]
+        abort on inactivity = True
+        abort on stalled = True
+        inactivity = PT1M
     [[reference test]]
-        live mode suite timeout=PT1M
+        live mode suite timeout = PT1M
 
 [scheduling]
     initial cycle point = 20100101T0000Z
-    final cycle point   = 20100102T0000Z
+    final cycle point = 20100102T0000Z
     [[dependencies]]
         [[[T00, T06, T12, T18]]]
             graph = foo[-PT6H] => foo
@@ -16,7 +18,9 @@
 
 [runtime]
     [[root]]
-        script = sleep 5
+        script = true
     [[foo]]
     [[inserter]]
-        script = cylc insert $CYLC_SUITE_NAME foo.20100101T1200Z --stop-point=20100101T1200Z
+        script = """
+cylc insert "${CYLC_SUITE_NAME}" 'foo.20100101T1200Z' --stop-point='20100101T1200Z'
+"""

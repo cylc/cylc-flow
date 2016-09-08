@@ -1564,7 +1564,8 @@ conditions; see `cylc conditions`.
         # scheduler loops meet the criteria. This caters for pauses between
         # tasks succeeding and those triggering off them moving to ready
         # e.g. foo[-P1D] => foo
-        if self.stalled_last and self.pool.pool_is_stalled():
+        pool_is_stalled = self.pool.pool_is_stalled()
+        if self.stalled_last and pool_is_stalled:
             self.is_stalled = True
             message = 'suite stalled'
             self.log.warning(message)
@@ -1572,20 +1573,19 @@ conditions; see `cylc conditions`.
             self.pool.report_stalled_task_deps()
             if self._get_events_conf('abort on stalled'):
                 raise SchedulerError('Abort on suite stalled is set')
-            # start suite timer
+            # Start suite timer
             if self._get_events_conf(self.EVENT_TIMEOUT) is not None:
                 self.set_suite_timer()
         else:
-            self.stalled_last = self.pool.pool_is_stalled()
-
-        # De-activate suite timeout timer if not stalled
-        if self.suite_timer_active and not self.stalled_last:
-            self.suite_timer_active = False
-            if cylc.flags.verbose:
-                print "%s suite timer stopped NOW: %s" % (
-                    get_seconds_as_interval_string(
-                        self._get_events_conf(self.EVENT_TIMEOUT)),
-                    get_current_time_string())
+            self.stalled_last = pool_is_stalled
+            # De-activate suite timeout timer if not stalled
+            if self.suite_timer_active:
+                self.suite_timer_active = False
+                if cylc.flags.verbose:
+                    print "%s suite timer stopped NOW: %s" % (
+                        get_seconds_as_interval_string(
+                            self._get_events_conf(self.EVENT_TIMEOUT)),
+                        get_current_time_string())
 
     def process_tasks(self):
         """Return True if waiting tasks are ready."""

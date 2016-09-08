@@ -58,7 +58,7 @@ from cylc.rundb import CylcSuiteDAO
 from cylc.suite_host import is_remote_host
 from cylc.task_proxy import TaskProxy
 from cylc.task_state import (
-    TASK_STATUSES_ACTIVE, TASK_STATUSES_POLLABLE, TASK_STATUSES_KILLABLE,
+    TASK_STATUSES_ACTIVE, TASK_STATUSES_NOT_STALLED, TASK_STATUSES_FINAL,
     TASK_STATUS_HELD, TASK_STATUS_WAITING, TASK_STATUS_EXPIRED,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUBMIT_FAILED, TASK_STATUS_SUBMIT_RETRYING,
@@ -804,16 +804,12 @@ class TaskPool(object):
     def pool_is_stalled(self):
         """Return True if no active, queued or clock trigger awaiting tasks"""
         for itask in self.get_tasks():
-            if (itask.state.status in [TASK_STATUS_QUEUED,
-                                       TASK_STATUS_READY,
-                                       TASK_STATUS_HELD,
-                                       TASK_STATUS_RETRYING] or
-                    itask.state.status in TASK_STATUSES_ACTIVE):
-                return False
-            if (not itask.start_time_reached() and
-                itask.state.status not in [TASK_STATUS_SUCCEEDED,
-                                           TASK_STATUS_FAILED,
-                                           TASK_STATUS_SUBMIT_FAILED]):
+            if itask.point > self.stop_point:
+                # Don't consider task beyond stop point
+                continue
+            if itask.state.status in TASK_STATUSES_NOT_STALLED or (
+                    not itask.start_time_reached() and
+                    itask.state.status not in TASK_STATUSES_FINAL):
                 return False
         return True
 
@@ -868,7 +864,7 @@ class TaskPool(object):
         itasks, n_warnings = self._filter_task_proxies(items, compat)
         active_itasks = []
         for itask in itasks:
-            if itask.state.status in TASK_STATUSES_POLLABLE:
+            if itask.state.status in TASK_STATUSES_ACTIVE:
                 active_itasks.append(itask)
             elif items:  # and not active
                 self.log.warning(
@@ -898,7 +894,7 @@ class TaskPool(object):
         itasks, n_warnings = self._filter_task_proxies(items, compat)
         active_itasks = []
         for itask in itasks:
-            is_active = itask.state.status in TASK_STATUSES_KILLABLE
+            is_active = itask.state.status in TASK_STATUSES_ACTIVE
             if is_active and self.run_mode == 'simulation':
                 itask.state.reset_state(TASK_STATUS_FAILED)
             elif is_active:
