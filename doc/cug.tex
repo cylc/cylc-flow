@@ -46,7 +46,7 @@ it supplies surface winds and pressure to several downstream models that
 run only twice daily, and precipitation accumulations to catchment river
 models that run on an hourly cycle assimilating real time stream flow
 observations and using the most recently available regional weather
-forecast.  EcoConnect runs on heterogeneous distributed hardware,
+forecast. EcoConnect runs on heterogeneous distributed hardware,
 including a massively parallel supercomputer and several Linux servers.
 
 
@@ -97,7 +97,7 @@ Figure~\ref{fig-time-one} shows the optimal job schedule for two
 consecutive cycle points of the example suite in real time operation, given
 execution times represented by the horizontal extent of the task bars.
 There is a time gap between cycle points as the suite waits on new external
-driving data.  Each task in the example suite happens to trigger off
+driving data. Each task in the example suite happens to trigger off
 upstream tasks {\em finishing}, rather than off any intermediate output
 or event; this is merely a simplification that makes for clearer
 diagrams.
@@ -143,7 +143,7 @@ typically also depend on its own previous instance for the model {\em
 background state} used in initializing the new forecast. Thus, as
 alluded to in Figure~\ref{fig-dep-two-linked}, task {\em a} could in
 principle start
-as soon as its predecessor has finished.  Figure~\ref{fig-overlap}
+as soon as its predecessor has finished. Figure~\ref{fig-overlap}
 shows, however, that starting a whole new cycle point at this point is
 dangerous - it results in dependency violations in half of the tasks in
 the example suite. In fact the situation could be even worse than this
@@ -159,7 +159,7 @@ Figure~\ref{fig-job-no-overlap}.
 Forecast models typically depend on their own most recent previous
 forecast for background state or restart files of some kind (this is
 called {\em warm cycling}) but there can also be inter-cycle dependence
-between different tasks.  In an atmospheric forecast analysis suite, for
+between different tasks. In an atmospheric forecast analysis suite, for
 instance, the weather model may generate background states for observation
 processing and data-assimilation tasks in the next cycle point as well as for
 the next forecast model run. In real time operation inter-cycle
@@ -173,7 +173,7 @@ cycled models ($a$, $b$, and $c$) each depend on their own previous instances.
 For this reason, and because we tend to see forecasting suites in terms of
 their real time characteristics, other metaschedulers have ignored
 inter-cycle dependence and are thus restricted to running entire cycle
-points in sequence at all times.  This does not affect normal real time
+points in sequence at all times. This does not affect normal real time
 operation but it can be a serious impediment when advance availability of
 external driving data makes it possible, in principle, to run some tasks from
 upcoming cycle points before the current cycle point is finished - as was
@@ -218,7 +218,7 @@ contention or task failures) won't result in dependency violations.
 
 Figure~\ref{fig-optimal-two} shows, in contrast to
 Figure~\ref{fig-overlap}, the optimal two cycle point job schedule obtained by
-respecting all inter-cycle dependence.  This assumes no delays due to
+respecting all inter-cycle dependence. This assumes no delays due to
 resource contention or otherwise - i.e.\ every task runs
 as soon as it is ready to run. The scheduler running
 this suite must be able to adapt dynamically to external conditions
@@ -273,7 +273,7 @@ operation.
 Similarly, Figure~\ref{fig-time-two} shows example suite job schedules
 for an historical case study, or when catching up after a very long
 delay; i.e.\ when the external driving data are available many cycle
-points in advance.  Task {\em a}, which as the most upstream forecast
+points in advance. Task {\em a}, which as the most upstream forecast
 model is likely to be a resource intensive atmosphere or ocean model,
 has no upstream dependence on co-temporal tasks and can therefore run
 continuously, regardless of how much downstream processing is yet to be
@@ -448,7 +448,7 @@ and client programs (running tasks, the gcylc GUI, user commands). \newline
 \url{https://pypi.python.org/pypi/Pyro/}
 
 Finally, cylc makes heavy use of Python {\em ordered dictionary}
-data structures.  Significant speedup in parsing large suites can be had
+data structures. Significant speedup in parsing large suites can be had
 by installing the
 fast C-coded \lstinline=ordereddict= module by Anthon van der Neut:
 \begin{myitemize}
@@ -707,16 +707,17 @@ these groups may not be present simultaneously in the running suite - different
 tasks may pass through the ``current cycle point'' at different times as the
 suite evolves.
 
-\subsection{Ways Of Cycling: Dynamic and Static}
+\subsubsection{Ways Of Cycling: Dynamic and Static}
+\label{Ways Of Cycling}
 
 There are two main ways that a workflow engine could implement cycling, in
 principle:
 \begin{myitemize}
     \item {\em Dynamic Cycling:} A workflow could be extended to future cycle
-        points as needed at run time, {\em potentially indefinitely}.  Each
+        points as needed at run time, {\em potentially indefinitely}. Each
         time a task runs it will be labelled with its next cycle point. For
         example, a task called \lstinline=model= might repeat yearly with cycle
-        points \lstinline=2021=, \lstinline=2022=, and so on.  Dynamic cycling
+        points \lstinline=2021=, \lstinline=2022=, and so on. Dynamic cycling
         has traditionally involved repeating entire workflows sequentially, but
         cylc does it without any hard cycle point boundaries - see
         Section~\ref{HowCylcWorks}.
@@ -734,20 +735,20 @@ principle:
 
     \item {\em Mixed Cycling:} Both static and dynamic cycling can be combined
         in the same suite (although there may be no good reason to do this in
-        cylc!).  For example, instead of an ongoing 6-hourly dynamic cycle, we
-        could have a ongoing daily dynamic cycle with four static ``chunks''
-        inside each daily cycle point.
+        cylc!). For example, instead of an ongoing 6-hourly dynamic cycle, we
+        could have a ongoing daily dynamic cycle with four static steps in each
+        daily cycle point.
 \end{myitemize}
 
 Dynamic cycling (or simply ``cycling'') in cylc is configured by associating
 workflows with general ISO 8601 recurrence expressions, for any date-time (or
-integer) sequence.  Multiple cycling sequences can be used at once.   See
+integer) sequence. Multiple cycling sequences can be used at once. See
 Section~\ref{ConfiguringScheduling} and many other parts of the User Guide.
 
 Static cycling in cylc can be configured by defining every task instance
 (for every cycle point) individually; or by expanding {\em parameterized tasks}
-(Section~\ref{Parameterized Tasks}) or Jinja2 loops (Section~\ref{Jinja2}) to
-do the same automatically.
+(Section~\ref{Using Parameters For Static Cycling}) or Jinja2 loops
+(Section~\ref{Jinja2}) to do the same automatically.
 
 Dynamic cycling is the most powerful and flexible method, and it is the only
 way to run large operational suites that need to continue indefinitely (plus
@@ -901,7 +902,7 @@ in {\em suite definition directories} that may also contain a
 \subsection{Suite Name Registration}
 
 Suite registration associates a name with a suite definition directory,
-in a simple database.  Cylc commands that parse suite definition files
+in a simple database. Cylc commands that parse suite definition files
 can take the file path or the suite name as input; commands that
 interact with running suites have to target the suite by name.
 \lstset{language=transcript}
@@ -940,7 +941,7 @@ the passphrase manually. (A client will attempt to install the passphrase
 automatically via non-interactive SSH.)
 
 Possession of a suite passphrase gives full control and full read-access to the
-suite.  Without it, client access is determined by the suite's public access
+suite. Without it, client access is determined by the suite's public access
 privilege level.
 
 For more on connection authentication, suite passphrases, and public access,
@@ -1075,7 +1076,7 @@ shell$ gcylc tut.oneoff.basic &
 and choose {\em Suite } \textrightarrow {\em Edit} from the menu.
 
 The editor will be invoked from within the suite definition directory for easy
-access to other suite files (in this case there are none).  There are syntax
+access to other suite files (in this case there are none). There are syntax
 highlighting control files for several text editors under
 \lstinline=/path/to/cylc/conf/=; see in-file comments for installation
 instructions.
@@ -1214,7 +1215,7 @@ still has to be used to target the task instance with cylc commands.
 Task {\em job scripts} are generated by cylc to wrap the task implementation
 specified in the suite definition (environment, script, etc.) in
 error trapping code, messaging calls to report task progress back to the suite
-daemon, and so forth.  Job scripts are written to the {\em suite job log
+daemon, and so forth. Job scripts are written to the {\em suite job log
 directory} where they can be viewed alongside the job output logs. They
 can be accessed at run time by right-clicking on the task in the cylc GUI, or
 printed to the terminal:
@@ -1232,7 +1233,7 @@ shell$ cylc jobscript tut.oneoff.basic hello.1
 \end{lstlisting}
 
 Take a look at the job script generated for \lstinline=hello.1= during
-the suite run above.  The custom scripting should be clearly visible
+the suite run above. The custom scripting should be clearly visible
 toward the bottom of the file.
 
 The \lstinline=hello= task in the first tutorial suite defaults to
@@ -1603,9 +1604,9 @@ works.
 \vspace{3mm}
 
 The \lstinline=[runtime]= section is actually a {\em multiple
-inheritance} hierarchy.  Each subsection is a {\em namespace} that
+inheritance} hierarchy. Each subsection is a {\em namespace} that
 represents a task, or if it is inherited by other namespaces, a {\em
-family}.  This allows common configuration to be factored out of related
+family}. This allows common configuration to be factored out of related
 tasks very efficiently.
 \lstset{language=suiterc}
 \lstinputlisting{../examples/tutorial/oneoff/inherit/suite.rc}
@@ -1644,7 +1645,7 @@ the graph can be expressed more efficiently like this:
         graph = "foo => GREETERS"
 \end{lstlisting}
 i.e.\ if \lstinline=foo= succeeds, trigger all members of
-\lstinline=GREETERS= at once.  Here's the full suite with runtime
+\lstinline=GREETERS= at once. Here's the full suite with runtime
 hierarchy shown:
 \lstset{language=suiterc}
 \lstinputlisting{../examples/tutorial/oneoff/ftrigger1/suite.rc}
@@ -1836,7 +1837,7 @@ Open the \lstinline=tut.cycling.one= suite:
 The difference between cycling and non-cycling suites is all in the
 \lstinline=[scheduling]= section, so we will leave the
 \lstinline=[runtime]= section alone for now (this will result in
-cycling dummy tasks).  Note that the graph is now defined under a new
+cycling dummy tasks). Note that the graph is now defined under a new
 section heading that makes each task under it have a succession of cycle points
 ending in $00$ or $12$ hours, between specified initial and final cycle
 points (or indefinitely if no final cycle point is given), as shown in
@@ -1855,7 +1856,7 @@ Figure~\ref{fig-tut-one}.
 
 If you run this suite instances of \lstinline=foo= will spawn in parallel out
 to the {\em runahead limit}, and each \lstinline=bar= will trigger off the
-corresponding instance of \lstinline=foo= at the same cycle point.  The
+corresponding instance of \lstinline=foo= at the same cycle point. The
 runahead limit, which defaults to a few cycles but is configurable, prevents
 uncontrolled spawning of cycling tasks in suites that are not constrained by
 clock triggers in real time operation.
@@ -1866,7 +1867,7 @@ Experiment with \lstinline=tut.cycling.one= to see how cycling tasks work.
 
 The suite above is a very simple example of a cycling date-time workflow. More
 generally, cylc comprehensively supports the ISO 8601 standard for date-time
-instants, intervals, and sequences.  Cycling graph sections can be specified
+instants, intervals, and sequences. Cycling graph sections can be specified
 using full ISO 8601 recurrence expressions, but these may be simplified
 by assuming context information from the suite - namely initial and final cycle
 points. One form of the recurrence syntax looks like
@@ -1913,9 +1914,9 @@ to the previous example:
 For any given cycle point in the sequence defined by the
 cycling graph section heading, \lstinline=bar= triggers off
 \lstinline=foo= as before, but now \lstinline=foo= triggers off its own
-previous instance \lstinline=foo[-PT12H]=.  Date-time offsets in
+previous instance \lstinline=foo[-PT12H]=. Date-time offsets in
 inter-cycle triggers are expressed as ISO 8601 intervals (12 hours
-in this case).  Figure~\ref{fig-tut-two} shows how this connects the cycling
+in this case). Figure~\ref{fig-tut-two} shows how this connects the cycling
 graph sections together.
 \begin{figure}
     \begin{center}
@@ -2045,14 +2046,14 @@ Figure~\ref{fig-tut-int}.
 \end{figure}
 
 The integer cycling notation is intended to look similar to the ISO 8601
-date-time notation, but it is simpler for obvious reasons.  The example suite
+date-time notation, but it is simpler for obvious reasons. The example suite
 illustrates two recurrence forms,
 \lstinline=Rn/start-point/period= and
 \lstinline=Rn/period/stop-point=, simplified somewhat using suite context
-information (namely the initial and final cycle points).  The first form is
+information (namely the initial and final cycle points). The first form is
 used to run one special task called \lstinline=start= at start-up, and for the
 main cycling body of the suite; and the second form to run another special task
-called \lstinline=stop= in the final two cycles.  The \lstinline=P= character
+called \lstinline=stop= in the final two cycles. The \lstinline=P= character
 denotes period (interval) just like in the date-time notation.
 \lstinline=R/1/P2= would generate the sequence of points \lstinline=1,3,5,...=.
 
@@ -2131,7 +2132,7 @@ different behaviour on the retry:
 
 When a task with configured retries fails, its cylc task proxy goes
 into the {\em retrying} state until the next retry delay is up, then it
-resubmits.  It only enters the {\em failed} state on a final definitive
+resubmits. It only enters the {\em failed} state on a final definitive
 failure.
 
 Experiment with \lstinline=tut.oneoff.retry= to see how this works.
@@ -2223,7 +2224,7 @@ as the suite runs.
 \label{SuiteRegistration}
 
 Cylc commands target suites via names registered in a {\em suite name
-database} located at \lstinline=$HOME/.cylc/REGDB/=.  Suite names are
+database} located at \lstinline=$HOME/.cylc/REGDB/=. Suite names are
 hierarchical like directory paths, allowing nested tree-like grouping,
 but use the `.' character as a delimiter. This :
 \begin{lstlisting}
@@ -2242,7 +2243,7 @@ title later use \lstinline=cylc db refresh= to update the database.
 
 Name groups are entirely virtual, they do not need to be
 explicitly created before use, and they automatically disappear if all
-tasks are removed from them.  From the listing above, for example, to
+tasks are removed from them. From the listing above, for example, to
 move the suite \lstinline=nwp.oper.region2= into the
 \lstinline=nwp.test= group:
 \begin{lstlisting}
@@ -2311,9 +2312,9 @@ COMMANDS:
 \end{lstlisting}
 
 Groups of suites (at any level in the name hierarchy) can be deleted,
-copied, imported, and exported; as well as individual suites.  To do this,
+copied, imported, and exported; as well as individual suites. To do this,
 just use suite group names as source and/or target for operations, as
-appropriate.  For instance, if a group \lstinline=foo.bar= contains the
+appropriate. For instance, if a group \lstinline=foo.bar= contains the
 suites \lstinline=foo.bar.baz= and \lstinline=foo.bar.qux=, you can copy
 a single suite like this:
 \lstset{language=transcript}
@@ -2422,7 +2423,7 @@ Suite.rc files are an extended-INI format with section nesting.
 
 Embedded template processor expressions may also be used in the file, to
 programatically generate the final suite definition seen by
-cylc.  Currently the Jinja2 template processor is supported
+cylc. Currently the Jinja2 template processor is supported
 (\url{http://jinja.pocoo.org/docs}); see~\ref{Jinja2} for examples. In the
 future cylc may provide a plug-in interface to allow use of other template
 engines too.
@@ -2460,8 +2461,8 @@ process to raw suite.rc syntax.
 Cylc has native support for suite.rc include-files, which may help to
 organize large suites. Inclusion boundaries are completely arbitrary -
 you can think of include-files as chunks of the suite.rc file simply
-cut-and-pasted into another file.  Include-files may be included
-multiple times in the same file, and even nested.  Include-file paths
+cut-and-pasted into another file. Include-files may be included
+multiple times in the same file, and even nested. Include-file paths
 can be specified portably relative to the suite definition directory,
 e.g.:
 \lstset{language=suiterc}
@@ -2481,7 +2482,7 @@ shell$ cylc edit --inline SUITE
 The suite will be split back into its constituent include-files when you
 exit the edit session. While editing, the inlined file becomes the
 official suite definition so that changes take effect whenever you save
-the file.  See \lstinline=cylc prep edit --help= for more information.
+the file. See \lstinline=cylc prep edit --help= for more information.
 
 \paragraph{Include-Files via Jinja2}
 
@@ -2566,7 +2567,7 @@ cylc to determine when tasks are ready to run. The most important
 component of this is the suite dependency graph. Cylc graph notation
 makes clear textual graph representations that are very concise because
 sections of the graph that repeat at different hours of the day, say,
-only have to be defined once.  Here's an example with dependencies that
+only have to be defined once. Here's an example with dependencies that
 vary depending on the particular cycle point:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -2641,7 +2642,7 @@ side (which may be a single task or family, or several that are
 conditionally related) defines a trigger for the task or family on the
 right. For instance the ``word graph'' {\em C triggers off B which
 triggers off A} can be deconstructed into pairs {\em C triggers off B}
-and {\em B triggers off A}.  In this section we use only the default
+and {\em B triggers off A}. In this section we use only the default
 trigger type, which is to trigger off the upstream task succeeding;
 see~\ref{TriggerTypes} for other available triggers.
 
@@ -2674,7 +2675,7 @@ points with hours matching $00$ or $12$. $time$ is implicit because this keeps
 graphs clean and concise, given that the majority of tasks will typically
 depend only on others with the same cycle point. Cycle point offsets can only
 appear on the left of a pair, because a pairs define triggers for the right
-task at cycle point $time$.  However, \lstinline@A => B[-PT6H]@, which is
+task at cycle point $time$. However, \lstinline@A => B[-PT6H]@, which is
 illegal, can be reformulated as a {\em future trigger}
 \lstinline@A[+PT6H] => B@ (see~\ref{InterCyclePointTriggers}). It is also
 possible to combine multiple offsets within a cycle point offset e.g.
@@ -2776,7 +2777,7 @@ to generate the final graph.
 
 Figure~\ref{fig-test1} shows a small suite of one-off non-cycling
 tasks; these all share a single cycle point (\lstinline=1=) and don't spawn
-successors (once they're all finished the suite just exits).  The integer
+successors (once they're all finished the suite just exits). The integer
 \lstinline=1= attached to each graph node is just an arbitrary label here.
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
@@ -2802,7 +2803,7 @@ title = some one-off tasks
 \paragraph{Cycling Graphs}
 
 For cycling tasks the graph section heading defines a sequence of cycle points
-for which the subsequent graph section is valid.  Figure~\ref{fig-test2} shows
+for which the subsequent graph section is valid. Figure~\ref{fig-test2} shows
 a small suite of cycling tasks.
 \begin{figure}
 \begin{minipage}[b]{0.5\textwidth}
@@ -3269,7 +3270,7 @@ The full integer recurrence expressions supported are:
     \item \lstinline@Rn/interval/end-point # e.g. R3/P2/9@
 \end{myitemize}
 But, as for date-time cycling, sequence start and end points can be omitted
-where suite initial and final cycle points can be assumed.  Some examples:
+where suite initial and final cycle points can be assumed. Some examples:
 
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -3517,7 +3518,7 @@ graph in Figure~\ref{fig-suicide} show how to define a chain of failure
 recovery tasks
 that trigger if they're needed but otherwise remove themselves from the
 suite (you can run the {\em AutoRecover.async} example suite to see how
-this works).  The dashed graph edges ending in solid dots indicate
+this works). The dashed graph edges ending in solid dots indicate
 suicide triggers, and the open arrowheads indicate conditional triggers
 as usual. Suicide triggers are ignored by default in the graph view, unless you toggle them on with {\em View} -> {\em Options} -> {\em Ignore Suicide Triggers}.
 
@@ -3610,7 +3611,7 @@ Families defined by the namespace inheritance hierarchy
 tasks at the same time (e.g.\ forecast model ensembles and groups of
 tasks for processing different observation types at the same time) and
 for triggering downstream tasks off families as a whole. Higher level
-families, i.e.  families of families, can also be used, and are reduced
+families, i.e.\ families of families, can also be used, and are reduced
 to the lowest level member tasks. Note that tasks can also trigger off
 individual family members if necessary.
 
@@ -3748,7 +3749,7 @@ restart files, for instance, then an initial set of restart files has to be
 generated somehow or the first model task will presumably fail with
 missing input files. There are several ways to handle this in cylc
 using different kinds of one-off (non-cycling) tasks that run at suite
-start-up.  They are illustrated in the Tutorial
+start-up. They are illustrated in the Tutorial
 (\ref{TutInterCyclePointTriggers}); to summarize here briefly:
 
 \begin{myitemize}
@@ -3897,8 +3898,8 @@ respect to cycle point):
         """
 \end{lstlisting}
 (Recall that \lstinline=A[t+PT6H]= can run before B[t] because tasks in cylc
-have private cycle points).  Future triggers present a problem at the suite
-shutdown rather than at start-up.  Here, \lstinline=B= at the final cycle
+have private cycle points). Future triggers present a problem at the suite
+shutdown rather than at start-up. Here, \lstinline=B= at the final cycle
 point wants to trigger off an instance of \lstinline=A= that will never exist
 because it is beyond the suite stop point. Consequently cylc prevents tasks
 from spawning successors that depend on other tasks beyond the stop point.
@@ -3934,15 +3935,15 @@ point, have already passed.
 
 Tasks can be configured to {\em expire} - i.e.\ to skip job submission and
 enter the {\em expired} state - if they are too far behind the wall clock when
-they become ready to run, and other tasks can trigger off this.  As a possible
+they become ready to run, and other tasks can trigger off this. As a possible
 use case, consider a cycling task that copies the latest of a set of files to
 overwrite the previous set: if the task is delayed by more than one cycle there
 may be no point in running it because the freshly copied files will just be
 overwritten immediately by the next task instance as the suite catches back up
-to real time operation.  Clock-expire tasks are configured like clock-trigger
+to real time operation. Clock-expire tasks are configured like clock-trigger
 tasks, with a date-time offset relative to cycle point (\ref{ClockExpireRef}).
 The offset should be positive to make the task expire if the wall-clock time
-has gone beyond the cycle point.  Triggering off an expired task typically
+has gone beyond the cycle point. Triggering off an expired task typically
 requires suicide triggers to remove the workflow that runs if the task has not
 expired. Here a task called \lstinline=copy= expires, and its downstream
 workflow is skipped, if it is more than one day behind the wall-clock (see also
@@ -3967,7 +3968,7 @@ workflow is skipped, if it is more than one day behind the wall-clock (see also
 
 In addition to depending on other tasks (and on the wall clock -
 see~\ref{ClockTriggerTasks}) tasks can trigger off events reported by an
-external system.  For example, an external process could detect incoming data
+external system. For example, an external process could detect incoming data
 on an ftp server, and then notify a suite containing a task to retrieve the
 new data for processing. This is an alternative to long-running tasks that poll
 for external events.
@@ -3980,13 +3981,13 @@ before notifying a suite with our general external event system.
 The external triggering process must call \lstinline=cylc ext-trigger= with the
 name of the target suite, the message that identifies this type of event to the
 suite, and an ID that distinguishes this particular event instance from others
-(the name of the target task or its current cycle point is not required).  The
+(the name of the target task or its current cycle point is not required). The
 event ID is just an arbitary string to cylc, but it typically identifies the
-filename(s) of the latest dataset in some way.  When the suite daemon receives
+filename(s) of the latest dataset in some way. When the suite daemon receives
 the external event notification it will trigger the next instance of any task
 waiting on that trigger (whatever its cycle point) and then broadcast
 (see~\ref{cylc-broadcast}) the event ID to the cycle point of the triggered
-task as \lstinline=$CYLC_EXT_TRIGGER_ID=.  Downstream tasks with the same cycle
+task as \lstinline=$CYLC_EXT_TRIGGER_ID=. Downstream tasks with the same cycle
 point therefore know the new event ID too and can use it, if they need to, to
 identify the same new dataset. In this way a whole workflow can be associated
 with each new dataset, and multiple datasets can be processed in parallel if
@@ -4014,7 +4015,7 @@ notify the suite like this:
 shell$ cylc ext-trigger sat-proc "new sat X data avail" passX12334a
 \end{lstlisting}
 where ``sat-proc'' is the suite name and ``passX12334a'' is the ID string for
-the new event.  The suite passphrase must be installed on triggering account.
+the new event. The suite passphrase must be installed on triggering account.
 
 Note that only one task in a suite can trigger off a particular external
 message. Other tasks can trigger off the externally triggered task as required,
@@ -4024,10 +4025,10 @@ of course.
 example of a simulated satellite processing suite.
 
 External triggers are not normally needed in date-time cycling suites driven
-by real time data that comes in at regular intervals.  In these cases a data
+by real time data that comes in at regular intervals. In these cases a data
 retrieval task can be clock-triggered (and have appropriate retry intervals
 supplied) to submit at the expected data arrival time, so little time if any
-is wasted in polling.  However, if the arrival time of the cycle-point-specific
+is wasted in polling. However, if the arrival time of the cycle-point-specific
 data is highly variable, external triggering may be used with the cycle point
 embedded in the message:
 \lstset{language=suiterc}
@@ -4051,8 +4052,8 @@ shell$ cylc ext-trigger data-proc "data arrived for 20150126T00" passX12334a
 \end{lstlisting}
 where ``data-proc'' is the suite name, the cycle point has replaced the
 variable in the trigger string, and ``passX12334a'' is the ID string for
-the new event.  The suite passphrase must be installed on the triggering
-account.  In this case, the event will trigger for the second cycle point but
+the new event. The suite passphrase must be installed on the triggering
+account. In this case, the event will trigger for the second cycle point but
 not the first because of the cycle-point matching.
 
 \subsubsection{Model Restart Dependencies}
@@ -4104,7 +4105,7 @@ inherit from the {\em root} namespace (below).
 Nested namespaces define {\em task families} that can be used in the
 graph as convenient shorthand for triggering all member tasks at once,
 or for triggering other tasks off all members at once -
-see~\ref{FamilyTriggers}.  Nested namespaces can be
+see~\ref{FamilyTriggers}. Nested namespaces can be
 progressively expanded and collapsed in the dependency graph viewer, and
 in the gcylc graph and text views. Only the first parent of each
 namespace (as for single-inheritance) is used for suite visualization
@@ -4231,7 +4232,7 @@ using the C3 algorithm. Then any runtime items that are explicitly
 configured in the suite definition are ``inherited'' up the linearized
 hierarchy for each task, starting at the root namespace: if a particular
 item is defined at multiple levels in the hierarchy, the level nearest
-the final task namespace takes precedence.  Finally, root namespace
+the final task namespace takes precedence. Finally, root namespace
 defaults are applied for every item that has not been configured in the
 inheritance process (this is more efficient than carrying the full dense
 namespace structure through from root from the beginning).
@@ -4301,7 +4302,7 @@ environment variable you cannot also access the original parent value:
             COLOR = dark-$tmp   # !! as this overrides COLOR in FOO.
 \end{lstlisting}
 The compressed variant of this, \lstinline@COLOR = dark-$COLOR@, is
-also in error for the same reason.  To achieve the desired result you
+also in error for the same reason. To achieve the desired result you
 must use a different name for the parent variable:
 \begin{lstlisting}
 [runtime]
@@ -4397,7 +4398,7 @@ run time to the home directory of task owner on the task host.
 
 Tasks can use \lstinline=$CYLC_SUITE_DEF_PATH= to access suite files on
 the task host, and the suite bin directory is automatically added
-\lstinline=$PATH=.  If a remote suite definition directory is not
+\lstinline=$PATH=. If a remote suite definition directory is not
 specified the local (suite host) path will be assumed with the local
 home directory, if present, swapped for literal \lstinline=$HOME= for
 evaluation on the task host.
@@ -4547,7 +4548,8 @@ right-clicking on tasks in the gcylc graph view.}
 \label{Parameterized Tasks}
 
 Cylc can automatically generate tasks and dependencies by expanding
-parameterized task names over lists of parameter values.  Uses include:
+parameterized task names over lists of parameter values. Uses for this
+include:
 \begin{myitemize}
     \item generating an ensemble of similar model runs
     \item generating chains of tasks to process similar datasets
@@ -4556,40 +4558,40 @@ parameterized task names over lists of parameter values.  Uses include:
 \end{myitemize}
 
 {\em Note that this can be done with Jinja2 loops too (Section~\ref{Jinja2})
-    but parameterization is much cleaner: nested loops can seriously reduce
-the clarity of a suite definition.}
+    but parameterization is much cleaner (nested loops can seriously reduce
+the clarity of a suite definition).}
 
 \subsubsection{Parameter Expansion}
 
-Parameter values can be lists of strings, or integer ranges (both bounds included):
+Parameter values can be lists of strings, or integer ranges (with inclusive bounds):
 \begin{lstlisting}
 [cylc]
     [[parameters]]
         obs = ship, buoy, plane
         run = 1..5  # 1, 2, 3, 4, 5
 \end{lstlisting}
-Angle brackets denote parameterization.  For example:
+Then angle brackets denote use of these parameters throughout the suite
+definition. For the values above, this parameterized name:
 \begin{lstlisting}
     model<run>  # for run = 1..2
 \end{lstlisting}
-expands to:
+expands to these concrete task names:
 \begin{lstlisting}
     model_run1, model_run2
 \end{lstlisting}
-and:
+and this parameterized name:
 \begin{lstlisting}
     proc<obs>  # for obs = ship, buoy, plane
 \end{lstlisting}
-expands to:
+expands to these concrete task names:
 \begin{lstlisting}
     proc_ship, proc_buoy, proc_plane
 \end{lstlisting}
-Note that the parameter name appears in the expanded task names for integer
-parameters (e.g.\ \lstinline=model_run1= for \lstinline@run = 1@ as above),
-but not for string parameters (e.g.\ \lstinline=proc_ship= for
-\lstinline@obs = ship@ as above). This is to ensure the order is clear if
-multiple integer parameters are used. These default expansion templates can be
-overridden, however:
+By default, to avoid any ambiguity, the parameter name appears in the expanded
+task names for integer values, but not for string values. For example,
+\lstinline=model_run1= for \lstinline@run = 1@, but \lstinline=proc_ship= for
+\lstinline@obs = ship@. However, the default expansion templates can be
+overridden if need be:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
@@ -4600,7 +4602,7 @@ overridden, however:
 \end{lstlisting}
 (See~\ref{RefParameterTemplates} for more on the string template syntax.)
 
-Any number of parameters can be used at once.  This parameterization:
+Any number of parameters can be used at once. This parameterization:
 \begin{lstlisting}
     model<run,obs>  # for run = 1..2 and obs = ship, buoy, plane
 \end{lstlisting}
@@ -4610,47 +4612,52 @@ expands to these tasks names:
     model_run2_ship, model_run2_buoy, model_run2_plane
 \end{lstlisting}
 
-\subsubsection{Passing Parameter Values To Tasks}
+Here's a simple but complete example suite:
+\begin{lstlisting}
+[cylc]
+    [[parameters]]
+        run = 1..2
+[scheduling]
+    [[dependencies]]
+        graph = "prep => model<run>"
+[runtime]
+    [[model<run>]]
+        # ...
+\end{lstlisting}
+The result, post parameter expansion, is this:
+\begin{lstlisting}
+[scheduling]
+    [[dependencies]]
+        graph = "prep => model_run1 & model_run2"
+[runtime]
+    [[model_run1]]
+        # ...
+    [[model_run2]]
+        # ...
+\end{lstlisting}
 
-Parameter values are passed as environment variables to tasks generated by
-parameter expansion.  For the example above, task \lstinline=model_run2_ship=
-would get the following environment variables:
+Here's a more complex graph using two parameters (\lstinline@[runtime]@ omitted):
 \begin{lstlisting}
-    $CYLC_TASK_PARAM_run  # value "2"
-    $CYLC_TASK_PARAM_obs  # value "ship"
+[cylc]
+    [[parameters]]
+        run = 1..2
+        mem = cat, dog
+[scheduling]
+    [[dependencies]]
+        graph = """prep => init<run> => model<run,mem> =>
+                      post<run,mem> => wrap<run> => done"""
 \end{lstlisting}
-These variables allow tasks to determine which member of a parameterized
-group they are, and so to vary their behaviour accordingly.
-
-\subsubsection{Parameterized Tasks In The Graph}
-
-Using a different number of parameters on each side of an arrow in the graph
-will branch or join a workflow.  For example this:
-\begin{lstlisting}
-    graph = "prep => model<run>"  # for run = 1, 2
-\end{lstlisting}
-expands to this:
-\begin{lstlisting}
-    prep => model_run1
-    prep => model_run2
-      # or equivalently:
-    prep => model_run1 & model_run2
-\end{lstlisting}
-and this:
-\begin{lstlisting}
-    # for run = 1, 2 and mem = cat, dog
-    graph = """prep => init<run> => model<run,mem> =>
-                    post<run,mem> => wrap<run> => done"""
-\end{lstlisting}
-expands to this:
-\begin{lstlisting}
-    prep => init_run1 => model_run1_cat => post_run1_cat => wrap_run1 => done
-            init_run1 => model_run1_dog => post_run2_dog => wrap_run1
-    prep => init_run2 => model_run2_cat => post_run2_cat => wrap_run2 => done
-            init_run2 => model_run2_dog => post_run2_dog => wrap_run2
-\end{lstlisting}
-This is visualized by \lstinline=cylc graph= in Figure~\ref{fig-params-1}.
-
+%which expands to:
+%\begin{lstlisting}
+%[scheduling]
+%    [[dependencies]]
+%        graph = """
+%            prep => init_run1 => model_run1_cat => post_run1_cat => wrap_run1 => done
+%                init_run1 => model_run1_dog => post_run2_dog => wrap_run1
+%            prep => init_run2 => model_run2_cat => post_run2_cat => wrap_run2 => done
+%                init_run2 => model_run2_dog => post_run2_dog => wrap_run2"""
+%\end{lstlisting}
+Figure~\ref{fig-params-1} shows the result as visualized by \lstinline=cylc graph=.
 \begin{figure}
     \begin{center}
         \includegraphics[width=10cm]{graphics/png/orig/params1.png}
@@ -4660,11 +4667,24 @@ This is visualized by \lstinline=cylc graph= in Figure~\ref{fig-params-1}.
     \label{fig-params-1}
 \end{figure}
 
+\subsubsection{Passing Parameter Values To Tasks}
+
+Parameter values are passed as environment variables to tasks generated by
+parameter expansion. For the example above, task \lstinline=model_run2_ship=
+would get the following environment variables:
+\begin{lstlisting}
+    $CYLC_TASK_PARAM_run  # value "2" etc.
+    $CYLC_TASK_PARAM_obs  # value "ship" etc.
+\end{lstlisting}
+These variables allow tasks to determine which member of a parameterized
+group they are, and so to vary their behaviour accordingly.
+
+
 \subsubsection{Singling Out Specific Parameter Values}
 
 Specific parameter values can be singled out in the graph and under
-\lstinline=[runtime]= with this notation: \lstinline@<param_name=param_value>@.
-For example, here's how to make a special task trigger off just the first of a
+\lstinline=[runtime]= with the notation \lstinline@<NAME=VALUE>@.
+Here's how to make a special task trigger off just the first of a
 set of model runs:
 \begin{lstlisting}
 [cylc]
@@ -4673,41 +4693,54 @@ set of model runs:
 [scheduling]
     [[dependencies]]
         graph = """model<run> => post_proc<run>  # general case
-                   model<run=1> => check_first_run  # special case"""
+                   model<run=1> => check_first_model  # special case"""
 [runtime]
     [[model<run>]]
         # config for all "model" runs...
     [[model<run=1>
-        # special config for the first model run (if any)...
+        # special config (if any) for the first model run...
     #...
 \end{lstlisting}
 
 \subsubsection{Parameter Offsets In The Graph}
 
-A negative offset notation \lstinline@<param_name=-1>@ is interpreted as the
-previous value in the ordered list of parameter values (integer or string).
-For example, to split a model run into multiple chunks with each chunk
-depending on the previous one, this graph:
+A negative offset notation \lstinline@<NAME-1>@ is interpreted as the
+previous value in the ordered list of parameter values. For example, to split
+a model run into multiple steps with each step depending on the previous one,
+this graph:
 \begin{lstlisting}
     graph = "model<run-1> => model<run>"  # for run = 1, 2, 3
 \end{lstlisting}
-expands to this:
+expands to:
 \begin{lstlisting}
     model_run1 => model_run2 => model_run3
 \end{lstlisting}
-and this graph:
+And this graph:
 \begin{lstlisting}
     graph = "proc<size-1> => proc<size>"  # for size = small, big, huge
 \end{lstlisting}
-expands to this:
+expands to:
+\begin{lstlisting}
+    graph = """proc_small => proc_big
+               proc_big => proc_huge"""
+\end{lstlisting}
+or equivalently:
 \begin{lstlisting}
     graph = "proc_small => proc_big => proc_huge"
 \end{lstlisting}
 
 \subsubsection{Task Families And Parameterization}
 
-Family names can be parameterized just like task names.  For instance, to
-define a family for tasks that share common values of a parameter:
+Task family members can be generated by parameter expansion:
+\begin{lstlisting}
+[runtime]
+    [[FAM]]
+    [[member<r>]]
+        inherit = FAM
+# Result: family FAM contains member_r1, member_r2, etc.
+\end{lstlisting}
+
+Family names can be parameterized too, just like task names:
 \begin{lstlisting}
 [runtime]
     [[RUN<r>]]
@@ -4715,7 +4748,8 @@ define a family for tasks that share common values of a parameter:
         inherit = RUN<r>
     [[post_proc<r>]]
         inherit = RUN<r>
-# result: RUN_r1 contains model_r1 and post_proc_r1, and so on.
+# Result: family RUN_r1 contains model_r1 and post_proc_r1,
+#         family RUN_r2 contains model_r2 and post_proc_r1, etc.
 \end{lstlisting}
 
 As described in Section~\ref{FamilyTriggers} family names can be used to
@@ -4723,57 +4757,55 @@ trigger all members at once:
 \begin{lstlisting}
     graph = "foo => FAMILY"
 \end{lstlisting}
-or to trigger another task off {\em all} members succeeding (or failing etc.):
+or to trigger off all members:
 \begin{lstlisting}
-    graph = "FAMILY:succeed-all => foo"
+    graph = "FAMILY:succeed-all => bar"
 \end{lstlisting}
-or to trigger another task off {\em any} members succeeding (or failing etc.):
+or to trigger off any members:
 \begin{lstlisting}
-    graph = "FAMILY:succeed-any => foo"
+    graph = "FAMILY:succeed-any => bar"
 \end{lstlisting}
 
-If the members of \lstinline=FAMILY= were generated with parameters such as
-\lstinline=member<m>=, you can just as easily trigger all members at once using
-parameter notation.
+If the members of \lstinline=FAMILY= were generated with parameters, you can
+also trigger them all at once with parameter notation:
 \begin{lstlisting}
     graph = "foo => member<m>"
 \end{lstlisting}
-Similarly, to trigger another task off {\em all} members succeeding (or failing
-etc.):
+Similarly, to trigger off all members:
 \begin{lstlisting}
-    graph = "member<m> => foo"
+    graph = "member<m> => bar"
+    # (member<m>:fail etc., for other trigger types)
 \end{lstlisting}
 
 Family names are still needed in the graph, however, to succinctly express
 ``succeed-any'' triggering semantics, and all-to-all or any-to-all triggering:
 \begin{lstlisting}
-    graph = "FAM1:succeed-all => FAM2"
+    graph = "FAM1:succeed-any => FAM2"
 \end{lstlisting}
 (Direct all-to-all and any-to-all family triggering is not recommended for
-efficiency reasons  though - see Section~\ref{EfficientInterFamilyTriggering}).
+efficiency reasons though - see Section~\ref{EfficientInterFamilyTriggering}).
 
-For family {\em member-to-member} triggering just use parameterized members
-on each side of the arrow.  For example, if
-family \lstinline=OBS_GET= has members \lstinline=get<obs>= and
-family \lstinline=OBS_PROC= has members \lstinline=proc<obs>= then this:
+For family {\em member-to-member} triggering use parameterized members.
+For example, if family \lstinline=OBS_GET= has members \lstinline=get<obs>= and
+family \lstinline=OBS_PROC= has members \lstinline=proc<obs>= then this graph:
 \begin{lstlisting}
     graph = "get<obs> => proc<obs>"  # for obs = ship, buoy, plane
 \end{lstlisting}
-expands to this:
+expands to:
 \begin{lstlisting}
     get_ship => proc_ship
     get_buoy => proc_buoy
     get_plane => proc_plane
 \end{lstlisting}
 
-\subsubsection{Static Chunking vs Dynamic Cycling}
+\subsubsection{Using Parameters For Static Cycling}
+\label{Using Parameters For Static Cycling}
 
-Parameter expansion can be used instead of using dynamic cycling to generate
-repeated task runs.  The resulting series of tasks may then be referred to as
-steps or ``chunks''. The fundamental difference between these approaches is
-that {\em parameter expansion is static} (parameters are expanded at start-up,
-when the suite is parsed), whereas dynamic cycling extends a workflow at run
-time, potentially indefinitely.
+Static and dynamic cycling are contrasted in Section~\ref{Ways Of Cycling}. We
+generally recommend using dynamic cycling in cylc. Nevertheless, parameter
+expansion can be used to efficiently generate static workflows in which a long
+model run (and associated tasks) is split into multiple shorter steps (or
+``chunks''), with each run represented by a different task.
 
 Here's a dynamic cycling workflow of two-monthly model runs for one year, with
 previous-instance model dependence (e.g.\ for model restart files):
@@ -4791,7 +4823,7 @@ previous-instance model dependence (e.g.\ for model restart files):
     [[model]]
         script = "run-model $CYLC_TASK_CYCLE_POINT"
 \end{lstlisting}
-And here's how to do the same thing with parameterized tasks:
+And here's how to do the same thing statically, with parameterized tasks:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -4813,35 +4845,11 @@ OFFSET=P${OFFSET_MONTHS}M  # e.g. P4M for chunk=3
 run-model $(cylc cyclepoint --offset=$OFFSET $INITIAL_POINT)"""
 \end{lstlisting}
 
-For this simple case both suites achieve the same result. Scheduling efficiency
-is more or less the same (because dynamic cycling generates continuous
-workflows with no global cycle boundaries in cylc - see \ref{HowCylcWorks}).
-Special behaviour at the start or end of a workflow, or anywhere in between,
-can be added in both cases. In general, however, dynamic cycling is more
-flexible and powerful for the following reasons:
-\begin{myitemize}
-    \item In the dynamic case you can use ISO 8601 recurrence expressions
-        to define any date-time cycle, and cylc does the difficult date-time
-        arithmetic for you.
-    \item The static suite must be finite in extent (and not too big) because
-        every task in the entire workflow, from beginning to end, is
-        predefined.  In the dynamic case it makes no difference if the final
-        cycle point is far in the future, or if there is no final point at all.
-    \item Dynamic cycling is also better for suite visualization and monitoring.
-        \begin{myitemize}
-            \item Every task in the entire static workflow is necessarily
-                visible at once, which is a problem in large or long suites. In
-                the dynamic case you can visualize as little or as much of it as
-                you like, and at run time you'll only see cycle points that are
-                currently active.  The two workflows are shown together in
-                Figure~\ref{fig-eg2}.
-            \item In the dynamic workflow successive instances of the same task
-                have the same name and are labelled with their proper date-time
-                cycle points.  In the static workflow successive instances of
-                the same task have different names that incorporate the integer
-                chunk index (i.e.\ the expanded parameter).
-        \end{myitemize}
-\end{myitemize}
+The two workflows are shown together in Figure~\ref{fig-eg2}. They both achieve
+the same result, and special tasks at the start or end, or anywhere in between,
+can easily be added in both cases. But note that the cycle point arithmetic has
+to be done manually in the static case, and large or long-running suites must
+use dynamic cycling (see Section~\ref{Ways Of Cycling}).
 
 \begin{figure}
     \begin{center}
@@ -4850,15 +4858,15 @@ flexible and powerful for the following reasons:
     \begin{center}
         \includegraphics[width=10cm]{graphics/png/orig/eg2-dynamic.png}
     \end{center}
-    \caption[Static chunked (top) and dynamic cycled (bottom) versions of the
-    same workflow.]{\scriptsize Static chunked and dynamic cycled versions of
-    the same workflow.}
+    \caption[Static (top) and dynamic cycling (bottom) versions of the same
+    workflow.]{\scriptsize Static and dynamic cycling versions of
+    the same workflow. The only the first three cycle points is shown in the
+dynamic case - which is not an option in the static case.}
     \label{fig-eg2}
 \end{figure}
 
-Dynamic cycling and static chunking can both be used in the same suite. Here's
-a yearly dynamic cycle with four static chunks within each cycle:
-
+Static and dynamic cycling can be combined. Here's a yearly dynamic cycling
+suite with four static chunks in each cycle point:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
@@ -4870,10 +4878,9 @@ a yearly dynamic cycle with four static chunks within each cycle:
             graph = """model<chunk-1> => model<chunk>
                     model<chunk=4>[-P1Y] => model<chunk=1>"""
 \end{lstlisting}
-
-Note the inter-cycle trigger that connects the first chunk in each cycle to
-the last chunk in the previous cycle.  Of course it would be easier to use
-a three-month dynamic cycle:
+Note the inter-cycle trigger that connects the first chunk in each cycle point
+to the last chunk in the previous cycle point. Of course it would be simpler
+to just use 3-monthly dynamic cycling:
 \begin{lstlisting}
 [scheduling]
     initial cycle point = 2020-01
@@ -4882,27 +4889,27 @@ a three-month dynamic cycle:
             graph = "model[-P3M] => model"
 \end{lstlisting}
 
-There is at least one genuine use-case for mixed static and dynamic cycling,
-however.  Consider a dynamic date-time cycling workflow of model runs that
-can take too long to run (and get killed for exceeding a wall clock limit), or
-not, depending on which of several platforms is available to run on at the
-time.  This could be handled without changing the date-time cycling structure
-of the whole suite, by splitting each run into a variable number of short
-chunks and using more chunks on the slower platform.
+There is at least one genuine use-case for mixed static and dynamic cycling.
+Consider a portable dynamic date-time cycling workflow of model jobs that can
+each take too long to run, or not, depending on the host platform. This could
+be handled without changing the cycling structure of the whole suite, by
+splitting each run into a variable number of shorter steps, and using more
+steps on less powerful hosts.
 
-Finally, there is one other feature of static chunking that can provide a small
-advantage.  In dynamic cycling cylc automatically ignores any dependence on
-cycle points earlier than the suite initial point (this isn't strictly
-necessary but it does simplify scheduling configuration a little).  So this:
+\paragraph{Cycle Point And Parameter Offsets At Start-Up}
+
+In dynamic cycling, cylc ignores anything earlier than the suite initial
+cycle point. So this graph:
 \begin{lstlisting}
     graph = "model[-P1D] => model"
 \end{lstlisting}
-simplifies at the suite initial cycle point to this:
+simplifies at the initial cycle point to:
 \begin{lstlisting}
     graph = "model"
 \end{lstlisting}
+
 Similarly, parameter offsets are ignored if they extend beyond the start of the
-list of parameter values.  So this:
+parameter value list. So this graph:
 \begin{lstlisting}
     graph = "model<chunk-1> => model<chunk>"
 \end{lstlisting}
@@ -4910,18 +4917,23 @@ simplifies for \lstinline@chunk=1@ to this:
 \begin{lstlisting}
     graph = "model_chunk1"
 \end{lstlisting}
-There is a parameter offset cutoff for every suite parameter list, but there is
-only one cycle point cutoff at the suite initial cycle point.  Because of this,
-if you want to replicate a workflow over several runs {\em with different start
-points} this simplification helps with all of the runs in the static case, but
-only one of them in the dynamic case - namely the one that starts at the suite
-initial cycle point.  In the future we plan to provide this kind of
-simplification at the start of any date-time sequence, not just the suite
-initial point.  It will be optional though, because delayed-start cycling tasks
-sometimes need to be triggered off earlier tasks.
+
+Note however that the initial cut-off applies to every parameter list, but only
+to cycle point sequences that start at the suite initial cycle point. Therefore
+it may be somewhat easier to use static cycling if you need multiple date-time
+sequences {\em with different start points} in the same suite. We plan to
+allow this sequence-start simplification for any date-time sequence in the
+future, not just at the suite initial point, but it needs to be optional
+because delayed-start cycling tasks sometimes need to trigger off earlier
+cycling tasks.
 
 \subsection{Jinja2}
 \label{Jinja2}
+
+{\em This section needs to be revised - the Parameterized Task feature
+    introduced in cylc-6.11.0 (see Section~\ref{Parameterized Tasks}) provides
+    a cleaner way to auto-generate suite structure without coding messy Jinja2
+loops.}
 
 Cylc has built in support for the Jinja2 template processor in suite
 definitions. Jinja2 variables, mathematical expressions, loop control
@@ -4937,7 +4949,7 @@ comment as the first line of the suite.rc file:
 
 Potential uses for this include automatic generation of repeated groups
 of similar tasks and dependencies, and inclusion or exclusion of entire
-suite sections according to the value of a single flag.  Consider a
+suite sections according to the value of a single flag. Consider a
 large complicated operational suite and several related parallel test
 suites with slightly different task content and structure (the parallel
 suites, for instance, might take certain large input files from the
@@ -5199,7 +5211,7 @@ runtime without actually deleting their definitions from the suite.
 Defining [runtime] properties for tasks that do not appear in the suite
 graph results in verbose-mode validation warnings that the tasks are
 disabled. They cannot be used because the suite graph is what defines
-their dependencies and valid cycle points.  Nevertheless, it is legal to
+their dependencies and valid cycle points. Nevertheless, it is legal to
 leave these orphaned runtime sections in the suite definition because it
 allows you to temporarily remove tasks from the suite by simply
 commenting them out of the graph.
@@ -5327,7 +5339,7 @@ logs to determine what the problem was.
 If a task script starts background sub-processes and does not wait on them, or
 internally submits jobs to a batch scheduler and then exits immediately, the
 detached processes will not be visible to cylc and the task will appear to
-finish when the top-level script finishes.  You will need to modify scripts
+finish when the top-level script finishes. You will need to modify scripts
 like this to make them execute all sub-processes in the foreground (or use the
 shell \lstinline=wait= command to wait on them before exiting) and to prevent
 job submission commands from returning before the job completes (e.g.\
@@ -5385,7 +5397,7 @@ As shown in the Tutorial (\ref{RunningSuitesCLI}) job scripts are
 saved to the suite run directory; the commands used to submit them are
 printed to stdout by cylc in debug mode; and they can be printed with the
 \lstinline=cylc log= command or new ones generated and printed with the
-\lstinline=cylc jobscript= command.  Take a look at one to see exactly
+\lstinline=cylc jobscript= command. Take a look at one to see exactly
 how cylc wraps and runs your tasks.
 
 \subsection{Supported Job Submission Methods}
@@ -5483,7 +5495,7 @@ submitted to the batch system.
 
 \subsubsection{pbs}
 
-Submits tasks to PBS (or Torque) by the \lstinline=qsub= command.  PBS
+Submits tasks to PBS (or Torque) by the \lstinline=qsub= command. PBS
 directives can be provided in the suite.rc file:
 \lstset{language=suiterc}
 \begin{lstlisting}
@@ -5586,7 +5598,7 @@ what is submitted to the batch system.
 \subsubsection{slurm}
 
 Submits tasks to Simple Linux Utility for Resource Management by the
-\lstinline=sbatch= command.  SLURM directives can be provided in the
+\lstinline=sbatch= command. SLURM directives can be provided in the
 suite.rc file (note that since not all SLURM commands have a short form,
 cylc requires the long form directives):
 \lstset{language=suiterc}
@@ -5819,7 +5831,7 @@ ignored.
 \subsection{Custom Job Submission Methods}
 \label{CustomJobSubmissionMethods}
 
-Defining a new job submission method requires a little Python programming.  You
+Defining a new job submission method requires a little Python programming. You
 can use one of the built-in methods as an example, and read the documentation
 in the header of the \lstinline=cylc.batch_sys_manager= module.
 
@@ -5910,7 +5922,7 @@ plenty of examples.
 
 There are three ways to start a suite running: {\em cold start} and {\em warm
 start}, which start from scratch; and {\em restart}, which loads a prior suite
-state.  There is no difference between cold and warm start, except that the
+state. There is no difference between cold and warm start, except that the
 latter starts from a point beyond the suite initial cycle point.
 
 Once a suite is up and running it is typically a restart that is needed most
@@ -5948,7 +5960,7 @@ determine what happened to them while the suite was down.
 A warm start runs a suite from scratch like a cold start, but from a given
 cycle point that is later than the suite's initial cycle point. All tasks from
 the given cycle point will run. It can be considered an inferior alternative
-to a restart because it may result in some tasks rerunning.  A warm start may
+to a restart because it may result in some tasks rerunning. A warm start may
 be required if a restart is not possible because the suite run databases were
 accidentally deleted (for instance). The warm start cycle point must be given
 on the command line:
@@ -6124,7 +6136,7 @@ command reveals which suites are running on scanned hosts, and what ports they
 are listening on.
 
 Client programs have to authenticate with the target suite daemon before
-issuing commands or requesting information.  Cylc has two authentication
+issuing commands or requesting information. Cylc has two authentication
 levels: full read and control via a suite-specific passphrase
 (see~\ref{passphrases}); and configurable free ``public'' access
 (see~\ref{PublicAccess}).
@@ -6159,7 +6171,7 @@ non-interactive SSH to the first location listed above.
 \label{PublicAccess}
 
 Possession of a suite passphrase gives full read and control access to the
-suite.  Without the passphrase the amount of information revealed by a suite
+suite. Without the passphrase the amount of information revealed by a suite
 daemon is determined by the public access privilege level set in global
 site/user config (\ref{GlobalAuth}) and optionally overidden in suites
 (\ref{SuiteAuth}):
@@ -6181,7 +6193,7 @@ the requested information is revealed publicly.
 \label{HowTasksGetAccessToCylc}
 
 Running tasks need access to cylc via \lstinline=$PATH=, principally for
-the task messaging commands.  To allow this, the first thing a task job
+the task messaging commands. To allow this, the first thing a task job
 script does is set \lstinline=$CYLC_VERSION= to the cylc version number of the
 running suite. If you need to run several suites at once under different
 incompatible versions of cylc, check that your site is using the cylc
@@ -6329,8 +6341,8 @@ suite-connecting user commands, with the \lstinline=--pyro-timeout= option.
 \label{RunaheadLimit}
 
 Runahead limiting prevents the fastest tasks in a suite from getting too far
-ahead of the slowest ones.  Newly spawned tasks are released to the task pool
-only when they fall below the runahead limit.  A low runhead limit can prevent
+ahead of the slowest ones. Newly spawned tasks are released to the task pool
+only when they fall below the runahead limit. A low runhead limit can prevent
 cylc from interleaving cycles, but it will not stall a suite unless it fails to
 extend out past a future trigger (see~\ref{InterCyclePointTriggers}).
 A high runahead limit may allow fast tasks that are not constrained by
@@ -6444,7 +6456,7 @@ otherwise it is up to you to ensure their location is in \lstinline=$PATH= (in
 the shell in which cylc runs, on the suite host). The commands should require
 very little resource to run and should return quickly. (Each event
 handler is invoked by a child process in a finite process pool that is also
-used to submit, poll and kill jobs.  The child process will wait for the event
+used to submit, poll and kill jobs. The child process will wait for the event
 handler to complete before moving on to the next item in the queue. If the
 process pool is saturated with long running event handlers, the suite will
 appear to hang.)
@@ -6573,7 +6585,7 @@ task failure in this case) and then later restarted, it will just appear
 to cylc as if it takes longer than normal to run. If the job is
 soft-killed the signal will be trapped by the task job script and a
 failure message sent, resulting in cylc putting the task into the failed
-state.  When the preempted task restarts and sends its started message
+state. When the preempted task restarts and sends its started message
 cylc would normally treat this as an error condition (a dead task is not
 supposed to be sending messages) - a warning will be logged and the task
 will remain in the failed state. However, if you know that preemption is
@@ -6665,7 +6677,7 @@ way to get different behaviour at suite start-up.
 \label{SimulationMode}
 
 Since cylc-4.6.0 any cylc suite can run in {\em live}, {\em simulation},
-or {\em dummy} mode.  Prior to that release simulation mode was a
+or {\em dummy} mode. Prior to that release simulation mode was a
 hybrid mode that replaced real tasks with local dummy tasks. This
 allowed local simulation testing of any suite, to get the scheduling
 right without running real tasks, but running dummy tasks locally does
@@ -6786,7 +6798,7 @@ comprehensive test without running real tasks) with the
 \lstinline=--reference-test= option.
 
 A battery of automated reference tests is used to test cylc before
-posting a new release version.  Reference tests can also be used to check that
+posting a new release version. Reference tests can also be used to check that
 a cylc upgrade will not break your own complex
 suites - the triggering check will catch any bug that causes a task to
 run when it shouldn't, for instance; even in a dummy mode reference
@@ -7007,7 +7019,7 @@ re-triggering it within the running suite, when debugging a problem.
 If a warm-cycled model uses the exact same file names for its restart files
 regardless of current cycle point, the only cycle point that can subsequently
 run successfully is the next one. Instead, restart files should be labelled
-with current cycle point and maintained in a simple rolling archive.  Then you
+with current cycle point and maintained in a simple rolling archive. Then you
 can easily rerun the task for any cycle point still in the archive.
 
 \subsection{Avoid False Dependence}
@@ -7016,7 +7028,7 @@ can easily rerun the task for any cycle point still in the archive.
 If a task does not depend on files generated by another task then generally
 speaking it should not trigger off that task in the suite scheduling graph.
 Unnecessary dependence between tasks restricts functional parallelism at run
-time, and it makes the suite more difficult to understand.  If you need to
+time, and it makes the suite more difficult to understand. If you need to
 restrict the number of tasks that are active at once, use runahead limiting
 (\ref{RunaheadLimit}) and internal queues (\ref{InternalQueues}).
 
@@ -7044,13 +7056,13 @@ hard wired I/O locations.
 
 You may be able to have all tasks, or groups of tasks that need to cooperate,
 read and write from a common workspace, thereby avoiding the need to explicitly
-move files around.  The suite share directory
+move files around. The suite share directory
 (\lstinline=$CYLC_SUITE_SHARE_DIR=) is provided for this purpose.
 Similarly, task work directories are private to each task by default but they
 can be shared to allow multiple tasks to simply read and write from their
 current working directory. Even if you use other custom I/O directories, define
 their locations in the suite.rc file rather than hard wiring them into task
-implementation.  Shared workspace locations can be passed to tasks as needed
+implementation. Shared workspace locations can be passed to tasks as needed
 without modifying the task implementation, like this:
 
 \lstset{language=suiterc}
@@ -7074,7 +7086,7 @@ without modifying the task implementation, like this:
 \subsubsection{Connector Tasks}
 
 Special tasks can be used to move files around, from one task's output
-directory to another's input directory.  This should only be necessary across
+directory to another's input directory. This should only be necessary across
 host or filesystem boundaries, however; otherwise simply reference shared
 locations as shown above.
 
@@ -7101,7 +7113,7 @@ the inputs embodied in the suite dependency graph that it has no choice but to
 depend on. This makes it as easy as possible to run single tasks alone during
 suite development and debugging. For example, tasks should create their own
 output directories if necessary rather than assuming their existence due to the
-action of another task.  Note that if the existing task implementation does not
+action of another task. Note that if the existing task implementation does not
 handle output directory creation you can do it in suite
 \lstinline=pre-script= or similar.
 
@@ -7112,7 +7124,7 @@ can read or otherwise make use of external files. In some cases this may be
 necessary, but it does leave suites vulnerable to external breakages.
 Alternatively, suites can be more or less completely self-contained (aside from
 exposure to network, filesystem, and OS problems) if they have private copies
-of every file they need at run time.  Tasks can access files stored under their
+of every file they need at run time. Tasks can access files stored under their
 suite definition directory via \lstinline=$CYLC_SUITE_DEF_PATH=, and the suite
 bin directory is automatically added to \lstinline=$PATH= in the task execution
 environment. If you have multiple suites there may be a tradeoff between
@@ -7172,9 +7184,9 @@ retries for the task (see~\ref{TaskRetries}).
 \subsection{Do Not Treat Real Time Operation As Special}
 
 Cylc suites, without modification, can handle real time and delayed operation
-equally well.  In caught-up real time operation, clock-trigger tasks
+equally well. In caught-up real time operation, clock-trigger tasks
 constrain the behaviour of the whole suite, or at least of any tasks
-downstream of them in the dependency graph.  In delayed or historical operation
+downstream of them in the dependency graph. In delayed or historical operation
 clock-trigger tasks will not constrain the suite at all, and cylc's cycle
 point interleaving abilities come to the fore, because the clock-trigger times
 have already passed. But if a clock-trigger task catches up to the wall
@@ -7241,7 +7253,7 @@ scripts, just translate them directly in environment sections:
 If you find yourself writing runtime scripting to change a task's behaviour
 in some cycle points, consider that the graph is usually the proper place to
 express this sort of thing. Use different task names, but have them inherit
-common properties to avoid duplication.  Instead of this:
+common properties to avoid duplication. Instead of this:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -7468,7 +7480,7 @@ worse than having no comments at all.
 
 \subsection{Line Length}
 
-Keep to the standard maximum line length of 79 characters where possible.  Very
+Keep to the standard maximum line length of 79 characters where possible. Very
 long lines affect readability, may pose a problem for auto-line-breaking in
 text editors, and make side-by-side diff display less effective.
 
@@ -7839,7 +7851,7 @@ instances have not been created. Note that if you graph the suite the offset
 \lstinline=foo= instances do appear. That's because the graph expresses
 dependence, and \lstinline=bar= really does depend on these instances of
 \lstinline=foo=. The problem is just that the tasks don't get created at run
-time, which is why the suite stalls.  Here's the correct way to get the desired
+time, which is why the suite stalls. Here's the correct way to get the desired
 behaviour in cylc-6+:
 \lstset{language=suiterc}
 \begin{lstlisting}
