@@ -34,6 +34,7 @@ tasks against the new stop cycle.
 from fnmatch import fnmatchcase
 from logging import DEBUG, INFO, WARNING, getLogger
 import os
+import pickle
 import Queue
 from time import time
 import traceback
@@ -83,6 +84,8 @@ class TaskPool(object):
     TABLE_SUITE_PARAMS = CylcSuiteDAO.TABLE_SUITE_PARAMS
     TABLE_SUITE_TEMPLATE_VARS = CylcSuiteDAO.TABLE_SUITE_TEMPLATE_VARS
     TABLE_TASK_POOL = CylcSuiteDAO.TABLE_TASK_POOL
+    TABLE_TASK_EVENT_HANDLER_TRY_STATES = (
+        CylcSuiteDAO.TABLE_TASK_EVENT_HANDLER_TRY_STATES)
     TABLE_CHECKPOINT_ID = CylcSuiteDAO.TABLE_CHECKPOINT_ID
 
     def __init__(self, suite, pri_dao, pub_dao, stop_point, comms_daemon, log,
@@ -129,12 +132,15 @@ class TaskPool(object):
         self.orphans = []
         self.task_name_list = config.get_task_name_list()
 
-        self.db_deletes_map = {self.TABLE_TASK_POOL: []}
+        self.db_deletes_map = {
+            self.TABLE_TASK_POOL: [],
+            self.TABLE_TASK_EVENT_HANDLER_TRY_STATES: []}
         self.db_inserts_map = {
             self.TABLE_SUITE_PARAMS: [],
             self.TABLE_SUITE_TEMPLATE_VARS: [],
             self.TABLE_CHECKPOINT_ID: [],
-            self.TABLE_TASK_POOL: []}
+            self.TABLE_TASK_POOL: [],
+            self.TABLE_TASK_EVENT_HANDLER_TRY_STATES: []}
 
     def assign_queues(self):
         """self.myq[taskname] = qfoo"""
@@ -227,7 +233,7 @@ class TaskPool(object):
 
         # do not add if a task with the same ID already exists
         # e.g. an inserted task caught up with an existing one
-        if self.id_exists(itask.identity):
+        if self.get_task_by_id(itask.identity) is not None:
             self.log.warning(
                 itask.identity +
                 ' cannot be added to pool: task ID already exists')
@@ -463,15 +469,16 @@ class TaskPool(object):
             point_itasks[point].extend(itask_id_map.values())
         return point_itasks
 
-    def id_exists(self, id_):
-        """Check if task id is in the runahead_pool or pool"""
-        for itask_ids in self.runahead_pool.values():
-            if id_ in itask_ids:
-                return True
-        for queue in self.queues:
-            if id_ in self.queues[queue]:
-                return True
-        return False
+    def get_task_by_id(self, id_):
+        """Return task by ID is in the runahead_pool or pool.
+
+        Return None if task does not exist.
+        """
+        for itask_ids in self.runahead_pool.values() + self.queues.values():
+            try:
+                return itask_ids[id_]
+            except KeyError:
+                pass
 
     def submit_tasks(self):
         """
@@ -1443,18 +1450,33 @@ class TaskPool(object):
                 {"key": key, "value": value})
 
     def put_rundb_task_pool(self):
-        """Put statements to update the task_spawned table in runtime database.
+        """Put statements to update the task_pool table in runtime database.
 
-        This method queues the relevant insert statements for the
-        current tasks in the pool, and the delete statements for old states.
+        Update the task_pool table and the task_event_handler_try_states table.
+        Queue delete (everything) statements to wipe the tables, and queue the
+        relevant insert statements for the current tasks in the pool.
         """
         self.db_deletes_map[self.TABLE_TASK_POOL].append({})
+        self.db_deletes_map[self.TABLE_TASK_EVENT_HANDLER_TRY_STATES].append(
+            {})
         for itask in self.get_all_tasks():
             self.db_inserts_map[self.TABLE_TASK_POOL].append({
                 "name": itask.tdef.name,
                 "cycle": str(itask.point),
                 "spawned": int(itask.has_spawned),
                 "status": itask.state.status})
+            for ctx_key, try_state in itask.event_handler_try_states.items():
+                self.db_inserts_map[
+                    self.TABLE_TASK_EVENT_HANDLER_TRY_STATES
+                ].append({
+                    "name": itask.tdef.name,
+                    "cycle": str(itask.point),
+                    "ctx_key_pickle": pickle.dumps(ctx_key),
+                    "ctx_pickle": pickle.dumps(try_state.ctx),
+                    "delays_pickle": pickle.dumps(try_state.delays),
+                    "num": try_state.num,
+                    "delay": try_state.delay,
+                    "timeout": try_state.timeout})
         self.db_inserts_map[self.TABLE_CHECKPOINT_ID].append({
             # id = -1 for latest
             "id": CylcSuiteDAO.CHECKPOINT_LATEST_ID,

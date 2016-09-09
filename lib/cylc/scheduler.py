@@ -20,6 +20,7 @@
 from copy import copy, deepcopy
 import logging
 import os
+import pickle
 from pipes import quote
 from Queue import Empty
 import shlex
@@ -70,7 +71,7 @@ from cylc.suite_host import get_suite_host
 from cylc.suite_logging import SuiteLog, OUT, ERR, LOG
 from cylc.task_id import TaskID
 from cylc.task_pool import TaskPool
-from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError
+from cylc.task_proxy import TaskProxy, TaskProxySequenceBoundsError, TryState
 from cylc.task_state import (
     TASK_STATUS_HELD, TASK_STATUS_WAITING,
     TASK_STATUS_QUEUED, TASK_STATUS_READY, TASK_STATUS_SUBMITTED,
@@ -257,7 +258,7 @@ class Scheduler(object):
                         os.unlink(os.path.join(run_dir, "state.tar.gz"))
                     except OSError:
                         pass
-                    print >> sys.stderr, (
+                    ERR.warning(
                         "ERROR: cannot tar-gzip + remove old state/ directory")
             else:
                 pri_dao = CylcSuiteDAO(pri_db_path)
@@ -497,6 +498,8 @@ conditions; see `cylc conditions`.
             self._load_broadcast_states, self.options.checkpoint)
         self.pri_dao.select_task_pool_for_restart(
             self._load_task_pool, self.options.checkpoint)
+        self.pri_dao.select_task_event_handler_try_states(
+            self._load_task_event_handler_try_state)
         self.pool.poll_task_jobs()
 
     def _load_broadcast_states(self, row_idx, row):
@@ -634,8 +637,39 @@ conditions; see `cylc conditions`.
 
             if user_at_host:
                 itask.summary['job_hosts'][int(submit_num)] = user_at_host
-            OUT.info("\n+ %s.%s %s" % (name, cycle, status))
+            OUT.info("+ %s.%s %s" % (name, cycle, status))
             self.pool.add_to_runahead_pool(itask)
+
+    def _load_task_event_handler_try_state(self, row_idx, row):
+        """Load a task event handler try state."""
+        if row_idx == 0:
+            OUT.info("LOADING task event handler try states")
+        (
+            cycle, name, ctx_key_pickle, ctx_pickle, delays_pickle, num, delay,
+            timeout,
+        ) = row
+        id_ = TaskID.get(name, cycle)
+        itask = self.pool.get_task_by_id(id_)
+        if itask is None:
+            ERR.warning("%(id)s: task not found, skip" % {"id": id_})
+            return
+        ctx_key = "?"
+        try:
+            ctx_key = pickle.loads(str(ctx_key_pickle))
+            ctx = pickle.loads(str(ctx_pickle))
+            delays = pickle.loads(str(delays_pickle))
+            num = int(num)
+            delay = float(delay)
+            timeout = float(timeout)
+        except (EOFError, TypeError, LookupError):
+            ERR.warning(
+                "%(id)s: skip event handler try state %(ctx_key)s" %
+                {"id": id_, "ctx_key": ctx_key})
+            ERR.warning(traceback.format_exc())
+            return
+        itask.event_handler_try_states[ctx_key] = TryState(
+            ctx, delays, num, delay, timeout)
+        OUT.info("+ %s.%s %s" % (name, cycle, ctx_key))
 
     def process_command_queue(self):
         """Process queued commands."""
@@ -918,10 +952,10 @@ conditions; see `cylc conditions`.
             self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)
         )
         if cylc.flags.verbose:
-            print "%s suite inactivity timer starts NOW: %s" % (
+            OUT.info("%s suite inactivity timer starts NOW: %s" % (
                 get_seconds_as_interval_string(
                     self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
-                get_current_time_string())
+                get_current_time_string()))
 
     def configure_comms_daemon(self):
         """Create and configure daemon."""
@@ -1511,7 +1545,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                         sleep(self.INTERVAL_STOP_PROCESS_POOL_EMPTY)
                         if stop_process_pool_empty_msg:
                             self.log.info(stop_process_pool_empty_msg)
-                            print(stop_process_pool_empty_msg)
+                            OUT.info(stop_process_pool_empty_msg)
                             stop_process_pool_empty_msg = None
                         proc_pool.handle_results_async()
                         self.process_command_queue()
@@ -1620,10 +1654,10 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             if self.suite_timer_active:
                 self.suite_timer_active = False
                 if cylc.flags.verbose:
-                    print "%s suite timer stopped NOW: %s" % (
+                    OUT.info("%s suite timer stopped NOW: %s" % (
                         get_seconds_as_interval_string(
                             self._get_events_conf(self.EVENT_TIMEOUT)),
-                        get_current_time_string())
+                        get_current_time_string()))
 
     def process_tasks(self):
         """Return True if waiting tasks are ready."""
@@ -1868,7 +1902,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
     def shutdown(self, reason=None):
         """Shutdown the suite."""
-        msg = "Suite shutting down at " + get_current_time_string()
+        msg = "Suite shutting down"
         if isinstance(reason, CylcError):
             msg += ' - %s' % reason.args[0]
             if isinstance(reason, SchedulerError):
@@ -1896,6 +1930,11 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
 
         if self.pool is not None:
             self.pool.warn_stop_orphans()
+            try:
+                self.pool.put_rundb_task_pool()
+                self.pool.process_queued_db_ops()
+            except Exception as exc:
+                ERR.error(str(exc))
 
         proc_pool = SuiteProcPool.get_inst()
         if proc_pool:

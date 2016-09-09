@@ -177,6 +177,7 @@ class CylcSuiteDAO(object):
     TABLE_SUITE_TEMPLATE_VARS = "suite_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
     TABLE_TASK_EVENTS = "task_events"
+    TABLE_TASK_EVENT_HANDLER_TRY_STATES = "task_event_handler_try_states"
     TABLE_CHECKPOINT_ID = "checkpoint_id"
     TABLE_TASK_POOL = "task_pool"
     TABLE_TASK_POOL_CHECKPOINTS = "task_pool_checkpoints"
@@ -246,6 +247,16 @@ class CylcSuiteDAO(object):
             ["submit_num", {"datatype": "INTEGER"}],
             ["event"],
             ["message"],
+        ],
+        TABLE_TASK_EVENT_HANDLER_TRY_STATES: [
+            ["cycle", {"is_primary_key": True}],
+            ["name", {"is_primary_key": True}],
+            ["ctx_key_pickle", {"is_primary_key": True}],
+            ["ctx_pickle"],
+            ["delays_pickle"],
+            ["num", {"datatype": "INTEGER"}],
+            ["delay"],
+            ["timeout"],
         ],
         TABLE_TASK_POOL: [
             ["cycle", {"is_primary_key": True}],
@@ -495,6 +506,20 @@ class CylcSuiteDAO(object):
         """
         for row_idx, row in enumerate(self.connect().execute(
                 r"SELECT key,value FROM %s" % self.TABLE_SUITE_TEMPLATE_VARS)):
+            callback(row_idx, list(row))
+
+    def select_task_event_handler_try_states(self, callback):
+        """Select from task_event_handler_try_states for restart.
+
+        Invoke callback(row_idx, row) on each row.
+        """
+        attrs = []
+        for item in self.TABLES_ATTRS[
+                self.TABLE_TASK_EVENT_HANDLER_TRY_STATES]:
+            attrs.append(item[0])
+        stmt = r"SELECT %s FROM %s" % (
+            ",".join(attrs), self.TABLE_TASK_EVENT_HANDLER_TRY_STATES)
+        for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
     def select_task_job(self, keys, cycle, name, submit_num=None):
