@@ -19,10 +19,12 @@
 import gtk
 import pygtk
 import os
+
 from cylc.gui.logviewer import logviewer
 from cylc.gui.tailer import Tailer
 from cylc.gui.util import get_icon
 from cylc.gui.warning_dialog import warning_dialog
+from cylc.suite_logging import get_logs
 
 
 class cylc_logviewer(logviewer):
@@ -30,6 +32,7 @@ class cylc_logviewer(logviewer):
     def __init__(self, name, dirname, task_list):
         self.task_list = task_list
         self.main_log = name
+        self.dirname = dirname
         self.level = 0
         self.task_filter = None
         self.custom_filter = None
@@ -116,10 +119,10 @@ class cylc_logviewer(logviewer):
         return False
 
     def current_log(self):
-        if self.level == 0:
-            return self.main_log
-        else:
-            return self.main_log + '.' + str(self.level)
+        try:
+            return get_logs(self.dirname, self.main_log, False)[self.level]
+        except IndexError:
+            return None
 
     def rotate_log(self, bt, go_older):
         if go_older:

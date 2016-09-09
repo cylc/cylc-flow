@@ -55,6 +55,7 @@ from cylc.wallclock import get_current_time_string
 from isodatetime.data import Calendar
 from parsec.OrderedDict import OrderedDictWithDefaults
 from parsec.util import replicate
+from cylc.suite_logging import OUT_IF_DEF, ERR_IF_DEF
 
 
 RE_SUITE_NAME_VAR = re.compile('\${?CYLC_SUITE_(REG_)?NAME}?')
@@ -295,7 +296,8 @@ class SuiteConfig(object):
         self.parameters = (parameter_values, parameter_templates)
 
         if cylc.flags.verbose:
-            print "Expanding [runtime] namespace lists and parameters"
+            OUT_IF_DEF.info(
+                "Expanding [runtime] namespace lists and parameters")
 
         # Set default parameter expansion templates if necessary.
         for pname, pvalues in parameter_values.items():
@@ -441,7 +443,7 @@ class SuiteConfig(object):
 
         # Parse special task cycle point offsets, and replace family names.
         if cylc.flags.verbose:
-            print "Parsing [special tasks]"
+            OUT_IF_DEF.info("Parsing [special tasks]")
         for type in self.cfg['scheduling']['special tasks']:
             result = copy(self.cfg['scheduling']['special tasks'][type])
             extn = ''
@@ -474,9 +476,9 @@ class SuiteConfig(object):
                         offset_string = "PT0M"
                     if cylc.flags.verbose:
                         if offset_string.startswith("-"):
-                            print >> sys.stderr, (
-                                "WARNING: %s offsets are "
-                                "normally positive: %s" % (type, item))
+                            ERR_IF_DEF.warning(
+                                "%s offsets are normally positive: %s" % (
+                                    type, item))
                     offset_converted_from_prev = False
                     try:
                         float(offset_string)
@@ -547,8 +549,8 @@ class SuiteConfig(object):
             if cfam not in self.runtime['descendants']:
                 self.closed_families.remove(cfam)
                 if fromrc and cylc.flags.verbose:
-                    print >> sys.stderr, (
-                        'WARNING, [visualization][collapsed families]: ' +
+                    ERR_IF_DEF.warning(
+                        '[visualization][collapsed families]: ' +
                         'family ' + cfam + ' not defined')
 
         # check for run mode override at suite level
@@ -569,11 +571,11 @@ class SuiteConfig(object):
         # section) are found in graph or queue config.
         if len(self.naked_dummy_tasks) > 0:
             if self.strict or cylc.flags.verbose:
-                print >> sys.stderr, (
-                    'WARNING: naked dummy tasks detected (no entry under ' +
-                    '[runtime]):')
+                err_msg = ('naked dummy tasks detected (no entry'
+                           ' under [runtime]):')
                 for ndt in self.naked_dummy_tasks:
-                    print >> sys.stderr, '  +', ndt
+                    err_msg += '\n+\t' + str(ndt)
+                ERR_IF_DEF.warning(err_msg)
             if self.strict:
                 raise SuiteConfigError(
                     'ERROR: strict validation fails naked dummy tasks')
@@ -590,7 +592,7 @@ class SuiteConfig(object):
                 if msg not in seen:
                     seen[msg] = name
                 else:
-                    print >> sys.stderr, (
+                    ERR_IF_DEF.error(
                         "External trigger '%s'\n  used in tasks %s and %s." % (
                             msg, name, seen[msg]))
                     raise SuiteConfigError(
@@ -616,7 +618,7 @@ class SuiteConfig(object):
                 ngs[fam] = [fam] + self.runtime['descendants'][fam]
 
         if cylc.flags.verbose:
-            print "Checking [visualization] node attributes"
+            OUT_IF_DEF.info("Checking [visualization] node attributes")
             # TODO - these should probably be done in non-verbose mode too.
             # 1. node groups should contain valid namespace names
             nspaces = self.cfg['runtime'].keys()
@@ -629,9 +631,10 @@ class SuiteConfig(object):
                 if n_bad:
                     bad[ng] = n_bad
             if bad:
-                print >> sys.stderr, "  WARNING: undefined node group members"
+                err_msg = "undefined node group members"
                 for ng, mems in bad.items():
-                    print >> sys.stderr, " + " + ng + ":", ','.join(mems)
+                    err_msg += "\n+ " + ng + ":\t,".join(mems)
+                ERR_IF_DEF.warning(err_msg)
 
             # 2. node attributes must refer to node groups or namespaces
             bad = []
@@ -639,10 +642,10 @@ class SuiteConfig(object):
                 if na not in ngs and na not in nspaces:
                     bad.append(na)
             if bad:
-                print >> sys.stderr, (
-                    "  WARNING: undefined node attribute targets")
+                err_msg = "undefined node attribute targets"
                 for na in bad:
-                    print >> sys.stderr, " + " + na
+                    err_msg += "\n+ " + str(na)
+                ERR_IF_DEF.warning(err_msg)
 
         # 3. node attributes must be lists of quoted "key=value" pairs.
         fail = False
@@ -653,8 +656,8 @@ class SuiteConfig(object):
                     key, value = re.split('\s*=\s*', attr)
                 except ValueError as exc:
                     fail = True
-                    print >> sys.stderr, (
-                        "ERROR: [visualization][node attributes]%s = %s" % (
+                    ERR_IF_DEF.error(
+                        "[visualization][node attributes]%s = %s" % (
                             node, attr))
         if fail:
             raise SuiteConfigError("Node attributes must be of the form "
@@ -694,9 +697,9 @@ class SuiteConfig(object):
             # If viz initial point is None don't accept a final point.
             if self.cfg['visualization']['final cycle point'] is not None:
                 if cylc.flags.verbose:
-                    print >> sys.stderr, (
-                        "WARNING: ignoring [visualization]final cycle point\n"
-                        "  (it must be defined with an initial cycle point)")
+                    ERR_IF_DEF.warning(
+                        "ignoring [visualization]final cycle point\n"
+                        "(it must be defined with an initial cycle point)")
                 self.cfg['visualization']['final cycle point'] = None
 
         vfcp = self.cfg['visualization']['final cycle point']
@@ -731,9 +734,8 @@ class SuiteConfig(object):
 
         if self.validation:
             if graphing_disabled:
-                print >> sys.stderr, (
-                    "WARNING: skipping cyclic dependence check"
-                    "  (could not import graphviz library)")
+                ERR_IF_DEF.warning("skipping cyclic dependence check (could "
+                                   "not import graphviz library)")
             else:
                 # Detect cyclic dependence.
                 # (ignore suicide triggers as they look like cyclic dependence:
@@ -752,9 +754,10 @@ class SuiteConfig(object):
 
                 back_edges = [x for x in o_edges if x not in n_edges]
                 if len(back_edges) > 0:
-                    print >> sys.stderr, "Back-edges:"
-                    for e in back_edges:
-                        print >> sys.stderr, '  %s => %s' % e
+                    err_msg = "Back-edges:"
+                    for edg in back_edges:
+                        err_msg += '  %s => %s' % edg
+                    ERR_IF_DEF.error(err_msg)
                     raise SuiteConfigError(
                         'ERROR: cyclic dependence detected '
                         '(graph the suite to see back-edges).')
@@ -849,11 +852,12 @@ class SuiteConfig(object):
             if res:
                 bad[label] = res
         if bad:
-            print >> sys.stderr, "ERROR, bad env variable names:"
-            for label, vars in bad.items():
-                print >> sys.stderr, 'Namespace:', label
-                for var in vars:
-                    print >> sys.stderr, "  ", var
+            err_msg = "bad env variable names:"
+            for label, vars_ in bad.items():
+                err_msg += '\nNamespace:\t' + label
+                for var in vars_:
+                    err_msg += "\n\t\t" + var
+            ERR_IF_DEF.error(err_msg)
             raise SuiteConfigError(
                 "Illegal environment variable name(s) detected")
 
@@ -919,9 +923,10 @@ class SuiteConfig(object):
             self.runtime['parents'][name] = pts
 
         if cylc.flags.verbose and demoted:
-            print "First parent(s) demoted to secondary:"
+            log_msg = "First parent(s) demoted to secondary:"
             for n, p in demoted.items():
-                print " +", p, "as parent of '" + n + "'"
+                log_msg += " +", p, "as parent of '" + n + "'"
+            OUT_IF_DEF.info(log_msg)
 
         c3 = C3(self.runtime['parents'])
         c3_single = C3(first_parents)
@@ -960,7 +965,7 @@ class SuiteConfig(object):
 
     def compute_inheritance(self, use_simple_method=True):
         if cylc.flags.verbose:
-            print "Parsing the runtime namespace hierarchy"
+            OUT_IF_DEF.info("Parsing the runtime namespace hierarchy")
 
         results = OrderedDictWithDefaults()
         n_reps = 0
@@ -1023,9 +1028,10 @@ class SuiteConfig(object):
     def print_inheritance(self):
         # (use for debugging)
         for foo in self.runtime:
-            print '  ', foo
+            log_msg = '\t' + foo
             for item, val in self.runtime[foo].items():
-                print '  ', '  ', item, val
+                log_msg += '\t\t' + item + '\t' + val
+            OUT_IF_DEF.info(log_msg)
 
     def compute_runahead_limits(self):
         """Extract the runahead limits information."""
@@ -1075,7 +1081,7 @@ class SuiteConfig(object):
         queues = self.cfg['scheduling']['queues']
 
         if cylc.flags.verbose:
-            print "Configuring internal queues"
+            OUT_IF_DEF.info("Configuring internal queues")
 
         # First add all tasks to the default queue.
         all_task_names = self.get_task_name_list()
@@ -1132,9 +1138,10 @@ class SuiteConfig(object):
                             requeued.append(qmember)
 
             if len(warnings) > 0:
-                print >> sys.stderr, "Queue configuration WARNINGS:"
+                err_msg = "Queue configuration warnings:"
                 for msg in warnings:
-                    print >> sys.stderr, " + %s" % msg
+                    err_msg += "\n+ %s" % msg
+                ERR_IF_DEF.warning(err_msg)
 
             if len(qmembers) > 0:
                 queues[queue]['members'] = qmembers
@@ -1142,12 +1149,13 @@ class SuiteConfig(object):
                 del queues[queue]
 
         if cylc.flags.verbose and len(queues.keys()) > 1:
-            print "Internal queues created:"
+            log_msg = "Internal queues created:"
             for queue in queues:
                 if queue == 'default':
                     continue
-                print "  + %s: %s" % (
+                log_msg += "\n+ %s: %s" % (
                     queue, ', '.join(queues[queue]['members']))
+            OUT_IF_DEF.info(log_msg)
 
     def get_parent_lists(self):
         return self.runtime['parents']
@@ -1277,14 +1285,13 @@ class SuiteConfig(object):
                 raise SuiteConfigError(str(exc))
 
         if cylc.flags.verbose:
-            print "Checking for defined tasks not used in the graph"
+            OUT_IF_DEF.info("Checking for defined tasks not used in the graph")
             for name in self.cfg['runtime']:
                 if name not in self.taskdefs:
                     if name not in self.runtime['descendants']:
                         # Family triggers have been replaced with members.
-                        print >> sys.stderr, (
-                            '  WARNING: task "%s" not used in the graph.' % (
-                                name))
+                        ERR_IF_DEF.warning(
+                            'task "%s" not used in the graph.' % (name))
         # Check declared special tasks are valid.
         for task_type in self.cfg['scheduling']['special tasks']:
             for name in self.cfg['scheduling']['special tasks'][task_type]:
@@ -1300,7 +1307,7 @@ class SuiteConfig(object):
                     if self.strict:
                         raise SuiteConfigError("ERROR: " + msg)
                     else:
-                        print >> sys.stderr, "WARNING: " + msg
+                        ERR_IF_DEF.warning(msg)
 
         # Check custom script is not defined for automatic suite polling tasks
         for l_task in self.suite_polling_tasks:
@@ -1310,7 +1317,7 @@ class SuiteConfig(object):
                 pass
             else:
                 if cs:
-                    print cs
+                    OUT_IF_DEF.info(cs)
                     # (allow explicit blanking of inherited script)
                     raise SuiteConfigError(
                         "ERROR: script cannot be defined for automatic" +
@@ -1353,8 +1360,7 @@ class SuiteConfig(object):
                 if suicide:
                     continue
                 if orig_lexpr != lexpr:
-                    print >> sys.stderr, (
-                        "%s => %s" % (orig_lexpr, right))
+                    ERR_IF_DEF.error("%s => %s" % (orig_lexpr, right))
                 raise SuiteConfigError(
                     "ERROR, self-edge detected: %s => %s" % (
                         left, right))
@@ -1373,7 +1379,7 @@ class SuiteConfig(object):
             try:
                 my_taskdef_node = graphnode(node, base_interval=base_interval)
             except GraphNodeError, x:
-                print >> sys.stderr, orig_expr
+                ERR_IF_DEF.error(orig_expr)
                 raise SuiteConfigError(str(x))
 
             name = my_taskdef_node.name
@@ -1405,7 +1411,7 @@ class SuiteConfig(object):
                 try:
                     self.taskdefs[name] = self.get_taskdef(name)
                 except TaskDefError as exc:
-                    print >> sys.stderr, orig_expr
+                    ERR_IF_DEF.error(orig_expr)
                     raise SuiteConfigError(str(exc))
 
             if name in self.suite_polling_tasks:
@@ -1778,7 +1784,7 @@ class SuiteConfig(object):
 
     def load_graph(self):
         if cylc.flags.verbose:
-            print "Parsing the dependency graph"
+            OUT_IF_DEF.info("Parsing the dependency graph")
 
         # Generate a map of *task* members of each family.
         # Note we could exclude 'root' from this and disallow use of 'root' in

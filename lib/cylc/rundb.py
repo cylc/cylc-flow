@@ -17,12 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the suite runtime database."""
 
-from logging import getLogger, WARNING
 import sqlite3
 import sys
 import traceback
+
 import cylc.flags
 from cylc.wallclock import get_current_time_string
+from cylc.suite_logging import LOG, ERR, ERR_IF_DEF
 
 
 class CylcSuiteDAOTableColumn(object):
@@ -375,9 +376,7 @@ class CylcSuiteDAO(object):
             if not self.is_public:
                 raise
             self.n_tries += 1
-            logger = getLogger("main")
-            logger.log(
-                WARNING,
+            LOG.warning(
                 "%(file)s: write attempt (%(attempt)d) did not complete\n" % {
                     "file": self.db_file_name, "attempt": self.n_tries})
             if self.conn is not None:
@@ -394,9 +393,7 @@ class CylcSuiteDAO(object):
                 table.update_queues.clear()
             # Report public database retry recovery if necessary
             if self.n_tries:
-                logger = getLogger("main")
-                logger.log(
-                    WARNING,
+                LOG.warning(
                     "%(file)s: recovered after (%(attempt)d) attempt(s)\n" % {
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
@@ -421,14 +418,14 @@ class CylcSuiteDAO(object):
                 raise
             if cylc.flags.debug:
                 traceback.print_exc()
-            sys.stderr.write(
-                (
-                    "WARNING: cannot execute database statement:\n" +
-                    "\tfile=%(file)s:\n\tstmt=%(stmt)s\n"
-                ) % {"file": self.db_file_name, "stmt": stmt})
+            err_log = (
+                "cannot execute database statement:\n" +
+                "file=%(file)s:\nstmt=%(stmt)s"
+            ) % {"file": self.db_file_name, "stmt": stmt}
             for i, stmt_args in enumerate(stmt_args_list):
-                sys.stderr.write("\tstmt_args[%(i)d]=%(stmt_args)s\n" % {
+                err_log += ("\nstmt_args[%(i)d]=%(stmt_args)s" % {
                     "i": i, "stmt_args": stmt_args})
+            ERR_IF_DEF.warning(err_log)
             raise
 
     def select_broadcast_states(self, callback, id_key=None):

@@ -52,6 +52,9 @@
 #         (stdin if FILE_CONTROL is "-" or missing).
 #     grep_ok PATTERN FILE
 #         Run "grep -q PATTERN FILE".
+#     greps_ok PATTERNS FILE
+#         Runs "grep -p PATTERN FILE" where PATTERN is one line of PATTERNS,
+#         for each line in PATTERNS.
 #     count_ok PATTERN FILE COUNT
 #         Test that PATTERN occurs in exactly COUNT lines of FILE.
 #     exists_ok FILE
@@ -235,6 +238,25 @@ function grep_ok() {
     mkdir -p $TEST_LOG_DIR
     cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
     fail $TEST_NAME
+}
+
+function greps_ok() {
+    local IFS=$'\n'
+    local BRES=("$1")
+    local FILE=$2
+    local TEST_NAME=$(basename "$FILE")-grep-ok
+    for BRE in ${BRES[@]}
+    do
+        if ! grep -q -e "$BRE" "$FILE"
+        then
+            echo "Can't find $BRE in $FILE" > $TEST_NAME.stderr
+            mkdir -p $TEST_LOG_DIR
+            cp $TEST_NAME.stderr $TEST_LOG_DIR/$TEST_NAME.stderr
+            fail $TEST_NAME
+            return
+        fi
+    done
+    ok $TEST_NAME
 }
 
 function count_ok() {

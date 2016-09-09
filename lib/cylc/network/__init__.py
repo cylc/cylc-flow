@@ -81,6 +81,6 @@ def check_access_priv(server_obj, required_privilege_level):
         err = CONNECT_DENIED_PRIV_TMPL % (
             client_privilege_level, required_privilege_level,
             caller.user, caller.host, caller.prog_name, caller.uuid)
-        getLogger("main").warn(err)
+        getLogger("log").warn(err)
         # Raise an exception to be sent back to the client.
         raise Exception(err)

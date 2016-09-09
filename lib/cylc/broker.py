@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
+from cylc.suite_logging import OUT
 
 # BROKER:
 # A collection of output messages with associated owner ids (of the
@@ -32,7 +32,6 @@ class broker(object):
     # outputs.
 
     def __init__(self):
-        self.log = logging.getLogger('main')
         self.all_outputs = {}   # all_outputs[ message ] = taskid
         self.all_output_msgs = set()
 
@@ -52,9 +51,10 @@ class broker(object):
 
     def dump(self):
         # for debugging
-        print "BROKER DUMP:"
+        log_msg = "BROKER DUMP:"
         for msg in self.all_outputs:
-            print " + " + self.all_outputs[msg], msg
+            log_msg += "\n+ " + self.all_outputs[msg] + '\t' + msg
+        OUT.info(log_msg)
 
     def negotiate(self, task):
         # can my outputs satisfy any of task's prerequisites

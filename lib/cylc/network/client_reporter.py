@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import datetime
 import threading
 import time
+
 import cylc.flags
+from cylc.suite_logging import LOG
 
 
 class PyroClientReporter(object):
@@ -67,7 +68,7 @@ class PyroClientReporter(object):
             (name not in ["SuiteIdServer", "TaskMessageServer"] and
              caller.uuid not in self.clients))
         if log_me:
-            logging.getLogger("main").info(
+            LOG.info(
                 self.__class__.LOG_COMMAND_TMPL % (
                     request, caller.user, caller.host, caller.prog_name,
                     caller.uuid))
@@ -84,12 +85,12 @@ class PyroClientReporter(object):
         if interval > self.CLIENT_ID_REPORT_SECONDS:
             rate = float(self._num_id_requests) / interval
             if rate > self.CLIENT_ID_MIN_REPORT_RATE:
-                logging.getLogger("main").warning(
+                LOG.warning(
                     self.__class__.LOG_IDENTIFY_TMPL % (
                         self._num_id_requests, interval)
                 )
             elif cylc.flags.debug:
-                logging.getLogger("main").info(
+                LOG.info(
                     self.__class__.LOG_IDENTIFY_TMPL % (
                         self._num_id_requests, interval)
                 )
@@ -100,7 +101,7 @@ class PyroClientReporter(object):
         """Force forget this client (for use by GUI etc.)."""
 
         caller = server_obj.getLocalStorage().caller
-        logging.getLogger("main").info(
+        LOG.info(
             self.__class__.LOG_SIGNOUT_TMPL % (
                 caller.user, caller.host, caller.prog_name, caller.uuid))
         try:
@@ -118,7 +119,7 @@ class PyroClientReporter(object):
             if (self._total_seconds(datetime.datetime.utcnow() - dtime) >
                     self.__class__.CLIENT_FORGET_SEC):
                 del self.clients[uuid]
-                logging.getLogger("main").debug(
+                LOG.debug(
                     self.__class__.LOG_FORGET_TMPL % uuid)
 
     def _total_seconds(self, td):
