@@ -312,6 +312,20 @@ class SuiteConfig(object):
                     parameter_templates[pname] = (
                         "_" + pname + "%(" + pname + ")s")
 
+        # Expand parameters in 'special task' lists.
+        if 'special tasks' in self.cfg['scheduling']:
+            for spec, names in self.cfg['scheduling']['special tasks'].items():
+                self.cfg['scheduling']['special tasks'][spec] = (
+                    self._expand_name_list(names))
+
+        # Expand parameters in internal queue member lists.
+        if 'queues' in self.cfg['scheduling']:
+            for queue, cfg in self.cfg['scheduling']['queues'].items():
+                if 'members' not in cfg:
+                    continue
+                self.cfg['scheduling']['queues'][queue]['members'] = (
+                    self._expand_name_list(cfg['members']))
+
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
@@ -763,6 +777,14 @@ class SuiteConfig(object):
                         '(graph the suite to see back-edges).')
 
         self.mem_log("config.py: end init config")
+
+    def _expand_name_list(self, orig_names):
+        """Expand any parameters in lists of names."""
+        name_expander = NameExpander(self.parameters)
+        exp_names = []
+        for orig_name in orig_names:
+            exp_names += [name for name, _ in name_expander.expand(orig_name)]
+        return exp_names
 
     def _expand_runtime(self):
         """Expand [runtime] name lists or parameterized names.

@@ -67,8 +67,9 @@ foo_m1=>bar_m1_n2
 
 # To split runtime heading name lists.
 REC_NAMES = re.compile(r'(?:[^,<]|\<[^>]*\>)+')
-# To extract 'name' and '<parameters>' from 'name<parameters>'.
-REC_P_NAME = re.compile(r"(%s)(<.*?>)?" % TaskID.NAME_RE)
+# To extract 'name', '<parameters>', and 'other' from
+#   'name<parameters>other' (other is used for clock-offsets).
+REC_P_NAME = re.compile(r"(%s)(<.*?>)?(.+)?" % TaskID.NAME_RE)
 # To extract all parameter lists e.g. 'm,n,o' (from '<m,n,o>').
 REC_P_GROUP = re.compile(r"<(.*?)>")
 # To extract parameter name and optional offset or value e.g. 'm-1'.
@@ -128,10 +129,13 @@ class NameExpander(object):
         expanded = []
         for namespace in REC_NAMES.findall(runtime_heading):
             template = namespace.strip()
-            name, p_tmpl = REC_P_NAME.match(template).groups()
+            name, p_tmpl, other = REC_P_NAME.match(template).groups()
             if not p_tmpl:
                 # Not parameterized.
-                expanded.append((name, {}))
+                if other:
+                    expanded.append((name + other, {}))
+                else:
+                    expanded.append((name, {}))
                 continue
             tmpl = name
             # Get the subset of parameters used in this case.
@@ -167,6 +171,8 @@ class NameExpander(object):
                 else:
                     used_param_names.append(pname)
                 tmpl += self.param_tmpl_cfg[pname]
+            if other:
+                tmpl += other
             used_params = [
                 (p, self.param_cfg[p]) for p in used_param_names]
             self._expand_name(tmpl, used_params, expanded, spec_vals)
@@ -204,7 +210,7 @@ class NameExpander(object):
 
         Note this is "expansion" for specific values, not all values.
         """
-        name, p_tmpl = REC_P_NAME.match(name_in).groups()
+        name, p_tmpl, _ = REC_P_NAME.match(name_in).groups()
         if not p_tmpl:
             # name_in is not parameterized.
             return name_in
