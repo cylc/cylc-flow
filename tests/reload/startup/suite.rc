@@ -1,16 +1,17 @@
 [cylc]
+    cycle point format = "%Y%m%dT%H"
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 1.5 # minutes
+       live mode suite timeout = PT90S
 [scheduling]
-    initial cycle time = 2010010100
-    final cycle time = 2010010200
-    [[special tasks]]
-        start-up = start
+    initial cycle time = 20100101T00
+    final cycle time = 20100102T00
     [[dependencies]]
-        [[[0, 6]]]
-            graph = "start & c[T-6] => a => b => c"
-        [[[18]]]
+        [[[R1]]]
+            graph = "start => a"
+        [[[T00, T06]]]
+            graph = "c[-PT6H] => a => b => c"
+        [[[T18]]]
             graph = "c"
 [runtime]
     [[a,c,start]]

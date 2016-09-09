@@ -766,10 +766,6 @@ conditions; see `cylc conditions`.
         else:
             return fams
 
-    def info_get_triggering_families(self):
-        """Return info of triggering families."""
-        return self.config.triggering_families
-
     def info_get_first_parent_descendants(self):
         """Families for single-inheritance hierarchy based on first parents"""
         return deepcopy(self.config.get_first_parent_descendants())

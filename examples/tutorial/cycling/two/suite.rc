@@ -1,5 +1,4 @@
-
-title = "Two cycling tasks with inter-cycle-point dependence"
+title = "Two cycling tasks with inter-cycle dependence."
 [cylc]
     cycle point time zone = Z
 [scheduling]

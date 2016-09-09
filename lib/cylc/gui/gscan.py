@@ -713,10 +713,9 @@ class ScanApp(object):
                 point_string = model.get(iter_, self.CYCLE_COLUMN)[0]
                 tasks = self.updater.get_last_n_tasks(
                     suite, host, state, point_string)
-                tooltip.set_markup(
-                    tooltip_prefix + ('\n<b>Recent {state} tasks</b>'
-                                      '\n{tasks}').format(
-                                          state=state, tasks='\n'.join(tasks))
+                tooltip.set_markup(tooltip_prefix + (
+                    '\n<b>Recent {state} tasks</b>\n{tasks}').format(
+                    state=state, tasks='\n'.join(tasks))
                 )
                 return True
 

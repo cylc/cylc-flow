@@ -146,7 +146,6 @@ class Updater(threading.Thread):
         self.fam_state_summary = {}
         self.full_fam_state_summary = {}
         self.all_families = {}
-        self.triggering_families = {}
         self.global_summary = {}
 
         self.daemon_version = None
@@ -322,8 +321,6 @@ class Updater(threading.Thread):
         self.descendants = self.suite_info_client.get_info(
             'get_first_parent_descendants')
         self.all_families = self.suite_info_client.get_info('get_all_families')
-        self.triggering_families = self.suite_info_client.get_info(
-            'get_triggering_families')
 
         self.mode = glbl['run_mode']
 
@@ -373,7 +370,6 @@ class Updater(threading.Thread):
         self.fam_state_summary = {}
         self.full_fam_state_summary = {}
         self.all_families = {}
-        self.triggering_families = {}
         self.global_summary = {}
         self.cfg.port = None
         for client in [self.state_summary_client, self.suite_info_client,

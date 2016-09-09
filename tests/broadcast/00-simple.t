@@ -31,20 +31,20 @@ sqlite3 "${DB_FILE}" \
      ORDER BY time, change, point, namespace, key' >"${NAME}"
 cmp_ok "${NAME}" <<'__SELECT__'
 +|*|root|[environment]BCAST|ROOT
-+|2010080800|foo|[environment]BCAST|FOO
++|20100808T00|foo|[environment]BCAST|FOO
 +|*|bar|[environment]BCAST|BAR
-+|2010080900|baz|[environment]BCAST|BAZ
-+|2010080900|qux|[environment]BCAST|QUX
--|2010080900|qux|[environment]BCAST|QUX
++|20100809T00|baz|[environment]BCAST|BAZ
++|20100809T00|qux|[environment]BCAST|QUX
+-|20100809T00|qux|[environment]BCAST|QUX
 +|*|wibble|[environment]BCAST|WIBBLE
 -|*|wibble|[environment]BCAST|WIBBLE
 +|*|ENS|[environment]BCAST|ENS
 +|*|ENS1|[environment]BCAST|ENS1
-+|2010080900|m2|[environment]BCAST|M2
++|20100809T00|m2|[environment]BCAST|M2
 +|*|m7|[environment]BCAST|M7
 +|*|m8|[environment]BCAST|M8
 +|*|m9|[environment]BCAST|M9
--|2010080800|foo|[environment]BCAST|FOO
+-|20100808T00|foo|[environment]BCAST|FOO
 __SELECT__
 
 NAME='select-broadcast-states.out'
@@ -59,8 +59,8 @@ cmp_ok "${NAME}" <<'__SELECT__'
 *|m8|[environment]BCAST|M8
 *|m9|[environment]BCAST|M9
 *|root|[environment]BCAST|ROOT
-2010080900|baz|[environment]BCAST|BAZ
-2010080900|m2|[environment]BCAST|M2
+20100809T00|baz|[environment]BCAST|BAZ
+20100809T00|m2|[environment]BCAST|M2
 __SELECT__
 
 purge_suite "${SUITE_NAME}"

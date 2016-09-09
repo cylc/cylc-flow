@@ -8,16 +8,18 @@ GUI (waiting to held to waiting)"""
 # ref: bug-fix GitHub Pull Request #843 (5412d01)
 
 [cylc]
+    cycle point format = %Y%m%dT%H
     [[reference test]]
-        live mode suite timeout = 0.5
+        live mode suite timeout = PT30S
 
 [scheduling]
-    initial cycle time = 2014010100
-    final cycle time   = 2014010100
+    initial cycle time = 20140101T00
+    final cycle time   = 20140101T00
     [[dependencies]]
-        graph = "holdrelease => foo"
-        [[[0,6]]]
-            graph = "holdrelease => bar"
+        [[[R1]]]
+            graph = "holdrelease => foo & bar"
+        [[[T00, T06]]]
+            graph = "bar"
 [runtime]
     [[holdrelease]]
         script = """

@@ -5,7 +5,7 @@
     initial cycle time = 2014010100
     [[  special tasks  ]]    
         sequential = foo , bar ,  baz   
-        start-up =   \
+        include at start-up =   \
             foo {% if HELLO %}   ,    \
             bar    
             {% endif %}   

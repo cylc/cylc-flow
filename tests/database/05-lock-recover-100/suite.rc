@@ -6,7 +6,7 @@
 [scheduling]
     [[dependencies]]
         graph = """
-locker:lock => TRUES:succeed-all
+locker:lock => TRUES
 """
 [runtime]
     [[locker]]

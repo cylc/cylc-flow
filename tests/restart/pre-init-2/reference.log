@@ -1,6 +1,6 @@
-2014/05/10 22:17:20 INFO - Initial point: 2010080800
-2014/05/10 22:17:20 INFO - Final point: 2010081000
-2014/05/10 22:17:20 INFO - [bar.2010080900] -triggered off ['foo.2010080800']
-2014/05/10 22:17:20 INFO - [foo.2010080900] -triggered off []
-2014/05/10 22:17:25 INFO - [foo.2010081000] -triggered off []
-2014/05/10 22:17:35 INFO - [bar.2010081000] -triggered off ['foo.2010080900']
+2014/05/10 22:17:20 INFO - Initial point: 20100808T00
+2014/05/10 22:17:20 INFO - Final point: 20100810T00
+2014/05/10 22:17:20 INFO - [bar.20100809T00] -triggered off ['foo.20100808T00']
+2014/05/10 22:17:20 INFO - [foo.20100809T00] -triggered off []
+2014/05/10 22:17:25 INFO - [foo.20100810T00] -triggered off []
+2014/05/10 22:17:35 INFO - [bar.20100810T00] -triggered off ['foo.20100809T00']

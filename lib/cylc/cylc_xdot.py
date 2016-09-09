@@ -388,7 +388,6 @@ class MyDotWindow(CylcDotViewerCommon):
         if not self.suiterc:
             return
         family_nodes = self.suiterc.get_first_parent_descendants().keys()
-        graphed_family_nodes = self.suiterc.triggering_families
         suite_polling_tasks = self.suiterc.suite_polling_tasks
         # Note this is used by "cylc graph" but not gcylc.
         # self.start_ and self.stop_point_string come from CLI.
@@ -405,10 +404,7 @@ class MyDotWindow(CylcDotViewerCommon):
         for node in graph.nodes():
             name, point_string = TaskID.split(node.get_name())
             if name in family_nodes:
-                if name in graphed_family_nodes:
-                    node.attr['shape'] = 'doubleoctagon'
-                else:
-                    node.attr['shape'] = 'tripleoctagon'
+                node.attr['shape'] = 'doubleoctagon'
 
         self.graph = graph
         self.filter_graph()

@@ -71,7 +71,7 @@ _HEADING = re.compile(
 _KEY_VALUE = re.compile(
     r'''^
     (\s*)                   # indentation
-    ([\.\-\w \,]+?)         # key
+    ([\.\-\w \,]+?(\s*<.*?>)?)  # key with optional parameters, e.g. foo<m,n>
     \s*=\s*                 # =
     (.*)                    # value (quoted any style + comment)
     $   # line end
@@ -80,7 +80,8 @@ _KEY_VALUE = re.compile(
 
 # quoted value regex reference:
 #   http://stackoverflow.com/questions/5452655/
-#       python-regex-to-match-text-in-single-quotes-ignoring-escaped-quotes-and-tabs-n
+#       python-regex-to-match-text-in-single-quotes-
+#           ignoring-escaped-quotes-and-tabs-n
 
 _LINECOMMENT = re.compile('^\s*#')
 _BLANKLINE = re.compile('^\s*$')
@@ -378,7 +379,7 @@ def parse(fpath, write_proc=False, template_vars=None):
             m = re.match(_KEY_VALUE, line)
             if m:
                 # matched a key=value item
-                indent, key, val = m.groups()
+                indent, key, _, val = m.groups()
                 if val.startswith('"""') or val.startswith("'''"):
                     # triple quoted - may be a multiline value
                     val, index = multiline(flines, val, index, maxline)

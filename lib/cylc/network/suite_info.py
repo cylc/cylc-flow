@@ -32,7 +32,6 @@ back_compat = {
     'get_suite_info': 'suite info',
     'get_task_info': 'task info',
     'get_all_families': 'all families',
-    'get_triggering_families': 'triggering families',
     'get_first_parent_ancestors': 'first-parent ancestors',
     'get_first_parent_descendants': 'first-parent descendants',
     'get_graph_raw': 'graph raw',

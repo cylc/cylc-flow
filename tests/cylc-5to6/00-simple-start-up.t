@@ -24,23 +24,28 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
 run_ok "$TEST_NAME" cylc validate $SUITE_NAME
-sed -n '/REPLACING .* DEPENDENCIES/,/^"""/p' "$TEST_NAME.stdout" \
-    >"$TEST_NAME.dep-replace"
+#sed -n '/REPLACING .* DEPENDENCIES/,/^Valid/p' "$TEST_NAME.stdout" \
+#    >"$TEST_NAME.dep-replace"
+cat $TEST_NAME.stdout | grep -v Valid > $TEST_NAME.dep-replace
 cmp_ok "$TEST_NAME.dep-replace" <<'__DEP_INFO__'
 # REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
 # (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
-        [[[R1]]]
-            graph = """
+    [[[R1]]]
+        graph = """
 cold_foo
-cold_foo => foo_midnight
-cold_foo => foo_twelves
-"""
+cold_foo:succeed => foo_midnight
+cold_foo:succeed => foo_twelves
+cold_foo"""
 # REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
 # (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
-        [[[R1/2014010106]]]
-            graph = """
-cold_foo[^] => foo_dawn
-"""
+    [[[R1/2014010106]]]
+        graph = """
+cold_foo[^]:succeed => foo_dawn"""
+# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
+# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
+    [[[R1/2014010112]]]
+        graph = """
+cold_foo[^]:succeed => foo_twelves"""
 __DEP_INFO__
 contains_ok "$TEST_NAME.stderr" <<'__STDERR__'
 WARNING: pre cylc 6 syntax is deprecated: integer interval: [cylc][reference test]live mode suite timeout = 120
@@ -103,13 +108,13 @@ title = Simple start-up suite.
             graph = foo_twelves[-PT12H] & cold_foo => foo_twelves # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
         [[[T06]]] # UPGRADE CHANGE: ISO 8601-like recurrence abbreviations
             graph = foo_dawn[-P1D] & cold_foo => foo_dawn # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
-        [[[Daily(20131231 ,2)  ]]]  # UPGRADE INFO: manually convert. [[[P2D]]]?
+        [[[Daily(20131231 ,2)  ]]] # UPGRADE INFO: manually convert. [[[P2D]]]?
             # UPGRADE INFO: change any mistaken [-PTnH] to [-PnD].
-            graph = "foo_d => bar_d" 
-        [[[Monthly(201402,1)]]]  # UPGRADE INFO: manually convert. [[[P1M]]]?
+            graph = "foo_d => bar_d"
+        [[[Monthly(201402,1)]]] # UPGRADE INFO: manually convert. [[[P1M]]]?
             # UPGRADE INFO: change any mistaken [-PTnH] to [-PnM].
-            graph = "foo_m[-PT2H] => bar_m & foo_m"  # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
-        [[[  Yearly( 2010 , 3 ) ]]]  # UPGRADE INFO: manually convert. [[[P3Y]]]?
+            graph = "foo_m[-PT2H] => bar_m & foo_m" # UPGRADE CHANGE: offset as ISO 8601 duration (assume hourly cycling)
+        [[[  Yearly( 2010 , 3 ) ]]] # UPGRADE INFO: manually convert. [[[P3Y]]]?
             # UPGRADE INFO: change any mistaken [-PTnH] to [-PnY].
             graph = "foo_y => bar_y"
     [[special tasks]]

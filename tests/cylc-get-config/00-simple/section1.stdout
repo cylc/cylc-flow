@@ -8,7 +8,8 @@ initial cycle point = 1
 initial cycle point constraints = 
 final cycle point = 1
 [[dependencies]]
-    graph = OPS:finish-all => VAR
+    [[[R1]]]
+        graph = OPS:finish-all => VAR
 [[queues]]
     [[[default]]]
         limit = 0

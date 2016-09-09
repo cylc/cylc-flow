@@ -25,9 +25,9 @@
         explicit restart outputs = foo # obsolete
     [[dependencies]]
         [[[P1D]]]
-            graph = foo
+            graph = foo => cat & dog
 [runtime]
-    [[foo]]
+    [[foo, cat, dog]]
         initial scripting = "echo init-script" # deprecate
         environment scripting = "echo env-script" # deprecate
         pre-command scripting = "echo pre-script" # deprecate

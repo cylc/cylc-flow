@@ -32,7 +32,7 @@ the quick brown fox
 __END
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-b
-cylc get-config -i '[scheduling][dependencies]graph' $SUITE_NAME >b.txt \
+cylc get-config -i '[scheduling][dependencies][R1]graph' $SUITE_NAME >b.txt \
     2>/dev/null
 cmp_ok b.txt <<'__END'
 foo => bar

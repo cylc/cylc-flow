@@ -27,7 +27,7 @@ run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
 grep_ok "Conflicting syntax: pre-cylc-6 syntax \
 (initial/final cycle point format: CCYYMMDDhh) \
 vs post-cylc-6 syntax \
-(graphnode: foo\[-PT24H\]: ISO 8601 offset)" $TEST_NAME.stderr
+(graphnode: foo\[-PT24H\]:succeed: ISO 8601 offset)" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

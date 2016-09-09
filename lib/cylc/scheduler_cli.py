@@ -32,19 +32,14 @@ The scheduler runs in daemon mode unless you specify --no-detach or --debug.
 
 Any dependence on cycle points earlier than the start cycle point is ignored.
 
-A "cold start" (the default) starts from the suite's initial cycle point
-(specified in the suite.rc or on the command line), and loads any special
-one-off cold-start tasks (see below).
+A "cold start" (the default) starts from the suite initial cycle point
+(specified in the suite.rc or on the command line).  Any dependence on tasks
+prior to the suite initial cycle point is ignored.
 
-A "warm start" (-w/--warm) starts from a given cycle point that is later than
-the initial cycle point (specified in the suite.rc), and loads any cold-start
-tasks as succeeded just to satisfy initial dependence on them.  The original
-suite initial cycle point is preserved, but all tasks and dependencies before
-the given start cycle point are ignored.
-
-Aside from the starting cycle point there is no difference between cold and
-warm start unless you use special cold-start tasks. See "Suite Start-up" and
-"Cold-Start Tasks" in the User Guide for more."""
+A "warm start" (-w/--warm) starts from a given cycle point later than the suite
+initial cycle point (specified in the suite.rc).  Any dependence on tasks prior
+to the given warm start cycle point is ignored.  The suite initial cycle point
+is preserved."""
 
 RESTART_DOC = r"""cylc [control] restart [OPTIONS] ARGS
 

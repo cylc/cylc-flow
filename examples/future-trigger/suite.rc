@@ -2,12 +2,12 @@
 [scheduling]
     initial cycle point = 20100808T00
     runahead limit = P1D
-    [[special tasks]]
-        cold-start = cold
     [[dependencies]]
+        [[[R1]]]
+            graph = cold => ObSensitivity
         [[[PT6H]]]
             graph = """
-( LongForecast[-PT6H] & LongForecast ) | cold => ObSensitivity
+( LongForecast[-PT6H] & LongForecast ) => ObSensitivity
 Analysis[+PT12H] => ObSensitivity
 Analysis
                 """

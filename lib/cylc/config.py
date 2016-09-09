@@ -21,13 +21,17 @@ Do some consistency checking, then construct task proxy objects and graph
 structures.
 """
 
+
 from copy import deepcopy, copy
+import re
 import os
 import re
 import sys
 import traceback
 
 from cylc.c3mro import C3
+from cylc.graph_parser import GraphParser
+from cylc.param_expand import NameExpander
 from cylc.cfgspec.suite import RawSuiteConfig
 from cylc.cycling.loader import (get_point, get_point_relative,
                                  get_interval, get_interval_cls,
@@ -59,12 +63,6 @@ CLOCK_OFFSET_RE = re.compile(r'(' + TaskID.NAME_RE + r')(?:\(\s*(.+)\s*\))?')
 EXT_TRIGGER_RE = re.compile('(.*)\s*\(\s*(.+)\s*\)\s*')
 NUM_RUNAHEAD_SEQ_POINTS = 5  # Number of cycle points to look at per sequence.
 
-# TODO - unify this with task_state.py:
-TRIGGER_TYPES = ['submit', 'submit-fail', 'start', 'succeed', 'fail', 'finish']
-FAM_TRIGGER_TYPES = (
-    [trig_type + "-any" for trig_type in TRIGGER_TYPES] +
-    [trig_type + "-all" for trig_type in TRIGGER_TYPES])
-
 # Replace \W characters in conditional graph expressions.
 CONDITIONAL_REGEX_REPLACEMENTS = [
     ("\[", "_leftsquarebracket_"),
@@ -81,21 +79,6 @@ except ImportError:
     graphing_disabled = True
 else:
     graphing_disabled = False
-
-
-class Replacement(object):
-    """A class to remember match group information in re.sub() calls"""
-    def __init__(self, replacement):
-        self.replacement = replacement
-        self.substitutions = []
-        self.match_groups = []
-
-    def __call__(self, match):
-        matched = match.group(0)
-        replaced = match.expand(self.replacement)
-        self.substitutions.append((matched, replaced))
-        self.match_groups.append(match.groups())
-        return replaced
 
 
 class SuiteConfigError(Exception):
@@ -180,7 +163,6 @@ class SuiteConfig(object):
         self.expiration_offsets = {}
         self.ext_triggers = {}
         self.suite_polling_tasks = {}
-        self.triggering_families = []
         self.vis_start_point_string = vis_start_string
         self.vis_stop_point_string = vis_stop_string
         self._last_graph_raw_id = None
@@ -279,6 +261,19 @@ class SuiteConfig(object):
                         self.cfg['scheduling']['initial cycle point'] = "1"
                     if 'final cycle point' not in self.cfg['scheduling']:
                         self.cfg['scheduling']['final cycle point'] = "1"
+                else:
+                    # A cylc-5 async graph in a cycling suite defines a bunch
+                    # of cylc-5 start-up tasks.
+                    if 'special tasks' not in self.cfg['scheduling']:
+                        self.cfg['scheduling']['special tasks'] = {}
+                    if 'start-up' not in self.cfg['scheduling'][
+                            'special tasks']:
+                        self.cfg['scheduling'][
+                            'special tasks']['start-up'] = []
+                    for name, _, _ in GraphParser.REC_NODES.findall(
+                            self.cfg['scheduling']['dependencies']['graph']):
+                        self.cfg['scheduling'][
+                            'special tasks']['start-up'].append(name)
 
         # allow test suites with no [runtime]:
         if 'runtime' not in self.cfg:
@@ -287,26 +282,39 @@ class SuiteConfig(object):
         if 'root' not in self.cfg['runtime']:
             self.cfg['runtime']['root'] = OrderedDictWithDefaults()
 
-        # Replace [runtime][name1,name2,...] with separate namespaces.
-        if cylc.flags.verbose:
-            print "Expanding [runtime] name lists"
-        # This requires expansion into a new OrderedDict to preserve the
-        # correct order of the final list of namespaces (add-or-override
-        # by repeated namespace depends on this).
-        newruntime = OrderedDictWithDefaults()
-        for key, val in self.cfg['runtime'].items():
-            if ',' in key:
-                for name in re.split(' *, *', key.rstrip(', ')):
-                    if name not in newruntime:
-                        newruntime[name] = OrderedDictWithDefaults()
-                    replicate(newruntime[name], val)
-            else:
-                if key not in newruntime:
-                    newruntime[key] = OrderedDictWithDefaults()
-                replicate(newruntime[key], val)
-        self.cfg['runtime'] = newruntime
+        try:
+            parameter_values = self.cfg['cylc']['parameters']
+        except KeyError:
+            # (Suite config defaults not put in yet.)
+            parameter_values = {}
+        try:
+            parameter_templates = self.cfg['cylc']['parameter templates']
+        except KeyError:
+            parameter_templates = {}
+        # parameter values and templates are normally needed together.
+        self.parameters = (parameter_values, parameter_templates)
 
-        self.ns_defn_order = newruntime.keys()
+        if cylc.flags.verbose:
+            print "Expanding [runtime] namespace lists and parameters"
+
+        # Set default parameter expansion templates if necessary.
+        for pname, pvalues in parameter_values.items():
+            if pname not in parameter_templates:
+                try:
+                    [int(i) for i in pvalues]
+                except ValueError:
+                    # Don't prefix string values with the parameter name.
+                    parameter_templates[pname] = "_%(" + pname + ")s"
+                else:
+                    # All int values, prefix values with the parameter name.
+                    parameter_templates[pname] = (
+                        "_" + pname + "%(" + pname + ")s")
+
+        self.mem_log("config.py: before _expand_runtime")
+        self._expand_runtime()
+        self.mem_log("config.py: after _expand_runtime")
+
+        self.ns_defn_order = self.cfg['runtime'].keys()
 
         # check var names before inheritance to avoid repetition
         self.check_env_names()
@@ -324,7 +332,8 @@ class SuiteConfig(object):
         # filter task environment variables after inheritance
         self.filter_env()
 
-        # now expand with defaults
+        # Now add config defaults.  Items added prior to this ends up in the
+        # sparse dict (e.g. parameter-expanded namepaces).
         self.mem_log("config.py: before get(sparse=False)")
         self.cfg = self.pcfg.get(sparse=False)
         self.mem_log("config.py: after get(sparse=False)")
@@ -751,6 +760,64 @@ class SuiteConfig(object):
                         '(graph the suite to see back-edges).')
 
         self.mem_log("config.py: end init config")
+
+    def _expand_runtime(self):
+        """Expand [runtime] name lists or parameterized names.
+
+        This makes individual runtime namespaces out of any headings that
+        represent multiple namespaces, like [[foo, bar]] or [[foo<m,n>]].
+        It requires replicating the sparse runtime OrderedDict into a new
+        OrderedDict - we can't just stick expanded names on the end because the
+        order matters (for add-or-override by repeated namespaces).
+
+        TODO - this will have an impact on memory footprint for large suites
+        with a lot of runtime config. We should consider ditching OrderedDict
+        and instead using an ordinary dict with a separate list of keys.
+        """
+
+        if (not self.parameters[0] and
+                not any(',' in ns for ns in self.cfg['runtime'])):
+            # No parameters, no namespace lists: no expansion needed.
+            return
+
+        newruntime = OrderedDictWithDefaults()
+        name_expander = NameExpander(self.parameters)
+        for namespace_heading, namespace_dict in self.cfg['runtime'].items():
+            for name, indices in name_expander.expand(namespace_heading):
+                if name not in newruntime:
+                    newruntime[name] = OrderedDictWithDefaults()
+                # Put parameter index values in task environment.
+                replicate(newruntime[name], namespace_dict)
+                if indices:
+                    if 'environment' not in newruntime[name]:
+                        newruntime[name]['environment'] = (
+                            OrderedDictWithDefaults())
+                    for p_name, p_val in indices.items():
+                        p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
+                        newruntime[name]['environment'][p_var_name] = p_val
+                    if 'inherit' in newruntime[name]:
+                        parents = newruntime[name]['inherit']
+                        origin = 'inherit = %s' % ' '.join(parents)
+                        repl_parents = []
+                        for parent in parents:
+                            repl_parents.append(name_expander.replace_params(
+                                parent, indices, origin))
+                        newruntime[name]['inherit'] = repl_parents
+        self.cfg['runtime'] = newruntime
+
+        # Parameter expansion of visualization node attributes. TODO - do vis
+        # 'node groups' too, or deprecate them (use families in 'node attrs').
+        name_expander = NameExpander(self.parameters)
+        expanded_node_attrs = OrderedDictWithDefaults()
+        if 'visualization' not in self.cfg:
+            self.cfg['visualization'] = OrderedDictWithDefaults()
+        if 'node attributes' not in self.cfg['visualization']:
+            self.cfg['visualization']['node attributes'] = (
+                OrderedDictWithDefaults())
+        for node, val in self.cfg['visualization']['node attributes'].items():
+            for name, _ in name_expander.expand(node):
+                expanded_node_attrs[name] = val
+        self.cfg['visualization']['node attributes'] = expanded_node_attrs
 
     def is_graph_defined(self, dependency_map):
         for item, value in dependency_map.items():
@@ -1256,325 +1323,7 @@ class SuiteConfig(object):
         # return a list of all tasks used in the dependency graph
         return self.taskdefs.keys()
 
-    def replace_family_triggers(self, line_in, fam, members, orig=''):
-        # Replace family trigger expressions with member trigger expressions.
-        # The replacements below handle optional [T-n] cycle offsets.
-
-        if orig and orig not in line_in:
-            return line_in
-        line = line_in
-        paren_open = ''
-        paren_close = ''
-        connector = ' & '
-        if orig.endswith('-all'):
-            pass
-        elif orig.endswith('-any'):
-            connector = ' | '
-            paren_open = '('
-            paren_close = ')'
-        elif orig != '':
-            print >> sys.stderr, line
-            raise SuiteConfigError(
-                'ERROR, illegal family trigger type: ' + orig)
-        repl = orig[:-4]
-
-        # TODO - can we use Replacement here instead of findall and sub:
-        m = re.findall(
-            "(!){0,1}" + r"\b" + fam + r"\b(\[.*?]){0,1}" + orig, line)
-        m.sort()  # put empty offset '' first ...
-        m.reverse()  # ... then last
-        for grp in m:
-            exclam, foffset = grp
-            if fam not in self.triggering_families:
-                self.triggering_families.append(fam)
-            mems = paren_open + connector.join(
-                [exclam + i + foffset + repl for i in members]) + paren_close
-            line = re.sub(exclam + r"\b" + fam + r"\b" + re.escape(foffset) +
-                          orig, mems, line)
-        return line
-
-    def prune_expression(self, expression, pruned):
-        """Remove pruned nodes from a graph string left-side.
-
-        Used for pruning back-compat (cylc-5) start-up tasks from non-R1
-        sections.
-        """
-        # TODO - MAKE THIS TIDIER AND MORE GENERAL? (e.g. 'OR' EXPRESSIONS?)
-        for node in pruned:
-            expression = re.sub(node + ' *&', '', expression)
-            expression = re.sub('& *' + node, '', expression)
-        return expression
-
-    def process_graph_line(self, line, section, seq, offset_seq_map,
-                           tasks_to_prune=None,
-                           return_all_dependencies=False):
-        """Extract dependent pairs from the suite.rc dependency text.
-
-        Extract dependent pairs from the suite.rc textual dependency
-        graph to use in constructing graphviz graphs.
-
-        Return a list of dependencies involving 'start-up' tasks
-        (backwards compatibility) or all dependencies if
-        return_all_dependencies keyword argument is True.
-
-        line is the line of text within the 'graph' attribute of
-        this dependency section.
-        section is the text describing this dependency section (e.g.
-        T00).
-        seq is the sequence generated from 'section' given the initial
-        and final cycle point.
-        offset_seq_map is a cache of seq with various offsets for
-        speeding up backwards-compatible cycling.
-        tasks_to_prune, if not None, is a list of tasks to remove
-        from dependency expressions (backwards compatibility for
-        start-up tasks and async graph tasks).
-        return_all_dependencies, if True, indicates that all
-        dependencies between tasks in this graph should be returned.
-        Otherwise, just return tasks_to_prune dependencies, if any.
-
-        'A => B => C'    : [A => B], [B => C]
-        'A & B => C'     : [A => C], [B => C]
-        'A => C & D'     : [A => C], [A => D]
-        'A & B => C & D' : [A => C], [A => D], [B => C], [B => D]
-
-        '&' groups aren't really "conditional expressions"; they're
-        equivalent to adding another line:
-        'A & B => C'
-        is the same as:
-        'A => C' and 'B => C'
-
-        An 'or' on the right side is an ERROR:
-        'A = > B | C' # ?!
-
-        """
-
-        if tasks_to_prune is None:
-            tasks_to_prune = []
-
-        orig_line = line
-
-        base_interval = seq.get_interval()
-
-        # Find any dependence on other suites, record the polling target
-        # info and replace with just the local task name, e.g.:
-        # "foo<SUITE::TASK:fail> => bar"  becomes "foo => bar"
-        # (and record that foo must automatically poll for TASK in SUITE)
-        repl = Replacement('\\1')
-        line = re.sub('(\w+)(<([\w\.\-]+)::(\w+)(:\w+)?>)', repl, line)
-        for item in repl.match_groups:
-            l_task, r_all, r_suite, r_task, r_status = item
-            if r_status:
-                r_status = r_status[1:]
-            else:  # default
-                r_status = 'succeed'
-            self.suite_polling_tasks[l_task] = (
-                r_suite, r_task, r_status, r_all)
-
-        # REPLACE FAMILY NAMES WITH MEMBER DEPENDENCIES
-        # Sort so that longer family names get expanded first.
-        # This expands e.g. FOO-BAR before FOO in FOO-BAR:succeed-all => baz.
-        for fam in reversed(sorted(self.runtime['descendants'])):
-            members = copy(self.runtime['descendants'][fam])
-            for member in copy(members):
-                # (another copy here: don't remove items from the iterating
-                # list) remove family names from the member list, leave just
-                # tasks (allows using higher-level family names in the graph)
-                if member in self.runtime['descendants']:
-                    members.remove(member)
-            # Note, in the regular expressions below, the word boundary
-            # marker before the time offset pattern is required to close
-            # the match in the no-offset case (offset and no-offset
-            # cases are being matched by the same regular expression).
-
-            # raw strings (r'\bfoo\b') are needed to protect special
-            # backslashed re markers like \b from being interpreted as
-            # normal escapeded characters.
-
-            if fam not in re.findall(TaskID.NAME_RE, line):
-                continue
-
-            # Replace family triggers with member triggers
-            for trig_type in FAM_TRIGGER_TYPES:
-                line = self.replace_family_triggers(
-                    line, fam, members, ':' + trig_type)
-
-            if re.search(r"\b" + fam + r"\b:", line):
-                # fam:illegal
-                print >> sys.stderr, line
-                raise SuiteConfigError(
-                    'ERROR, illegal family trigger detected')
-
-            if (re.search(r"\b" + fam + r"\b[^:].*=>", line) or
-                    re.search(r"\b" + fam + "\s*=>$", line)):
-                # plain family names are not allowed on the left of a trigger
-                print >> sys.stderr, line
-                raise SuiteConfigError(
-                    'ERROR, family triggers must be qualified, e.g. ' +
-                    fam + ':succeed-all')
-
-            # finally replace plain family names on the right of a trigger
-            line = self.replace_family_triggers(line, fam, members)
-
-        # any remaining use of '-all' or '-any' implies a family trigger
-        # on a non-family task, which is illegal.
-        if any([":" + trig_type in line for trig_type in FAM_TRIGGER_TYPES]):
-            print >> sys.stderr, line
-            raise SuiteConfigError(
-                "ERROR: family triggers cannot be used on non-family" +
-                " namespaces")
-
-        # Replace "foo:finish" with "(foo:succeed | foo:fail)"
-        line = re.sub(
-            r'\b(' + TaskID.NAME_RE + r'(\[.*?\]){0,1}):finish\b',
-            r'(\1:succeed | \1:fail)',
-            line)
-
-        if cylc.flags.verbose and line != orig_line:
-            print 'Graph line substitutions occurred:'
-            print '  IN:', orig_line
-            print '  OUT:', line
-
-        # Split line on dependency arrows.
-        tasks = re.split('\s*=>\s*', line)
-        # NOTE:  we currently use only one kind of arrow, but to use
-        # several kinds we can split the string like this:
-        #     tokens = re.split('\s*(=[>x])\s*', line) # a => b =x c
-        #     tasks = tokens[0::2]                       # [a, b, c]
-        #     arrow = tokens[1::2]                       # [=>, =x]
-
-        # Check for missing task names, e.g. '=> a => => b =>; this
-        # results in empty or blank strings in the list of task names.
-        arrowerr = False
-        for task in tasks:
-            if re.match('^\s*$', task):
-                arrowerr = True
-                break
-        if arrowerr:
-            print >> sys.stderr, orig_line
-            raise SuiteConfigError("ERROR: missing task name in graph line?")
-
-        # get list of pairs
-        special_dependencies = []
-        for i in [0] + range(1, len(tasks) - 1):
-            lexpression = tasks[i]
-
-            if len(tasks) == 1:
-                # single node: no rhs group
-                rgroup = None
-                if re.search('\|', lexpression):
-                    print >> sys.stderr, orig_line
-                    raise SuiteConfigError(
-                        "ERROR: Lone node groups cannot contain OR" +
-                        " conditionals: " + lexpression)
-            else:
-                rgroup = tasks[i + 1]
-
-            if rgroup:
-                # '|' (OR) is not allowed on the right side
-                if re.search('\|', rgroup):
-                    print >> sys.stderr, orig_line
-                    raise SuiteConfigError(
-                        "ERROR: OR '|' is not legal on the right side of" +
-                        " dependencies: " + rgroup)
-
-                # (T+/-N) offsets not allowed on the right side (as yet)
-                if re.search('\[\s*T\s*[+-]\s*\w+\s*\]', rgroup):
-                    print >> sys.stderr, orig_line
-                    raise SuiteConfigError(
-                        "ERROR: time offsets are not legal on the right" +
-                        " side of dependencies: " + rgroup)
-
-                # now split on '&' (AND) and generate corresponding pairs
-                right_nodes = re.split('\s*&\s*', rgroup)
-            else:
-                right_nodes = [None]
-
-            new_right_nodes = []
-            for right_node in right_nodes:
-                if right_node:
-                    # ignore output labels on the right (for chained
-                    # tasks they are only meaningful on the left)
-                    new_right_nodes.append(re.sub(':\w+', '', right_node))
-                else:
-                    # retain None's in order to handle lone nodes on the left
-                    new_right_nodes.append(None)
-
-            right_nodes = new_right_nodes
-
-            # extract task names from lexpression
-            n_open_brackets = lexpression.count("(")
-            n_close_brackets = lexpression.count(")")
-            if n_open_brackets != n_close_brackets:
-                raise SuiteConfigError(
-                    "ERROR: missing bracket in: \"" + lexpression + "\"")
-            nstr = re.sub('[(|&)]', ' ', lexpression)
-            nstr = nstr.strip()
-            left_nodes = re.split(' +', nstr)
-            for lnode in left_nodes:
-                if lnode.startswith('!'):
-                    print >> sys.stderr, line
-                    raise SuiteConfigError(
-                        "ERROR: suicide must be on the right of a trigger"
-                        " (%s)" % lnode)
-
-            for right_node in right_nodes:
-                # foo => '!bar' means task bar should suicide if foo succeeds.
-                suicide = False
-                if right_node and right_node.startswith('!'):
-                    right_name = right_node[1:]
-                    suicide = True
-                else:
-                    right_name = right_node
-
-                # Create copy of LHS tasks.
-                pruned_left_nodes = list(left_nodes)
-
-                for left_node in left_nodes:
-                    try:
-                        left_graph_node = graphnode(left_node, base_interval)
-                    except GraphNodeError, x:
-                        print >> sys.stderr, orig_line
-                        raise SuiteConfigError(str(x))
-                    left_name = left_graph_node.name
-                    left_output = left_graph_node.output
-                    if (left_name in tasks_to_prune or
-                            return_all_dependencies or
-                            right_name in tasks_to_prune):
-                        special_dep = (left_name, left_output, right_name)
-                        if (left_name + ":finish" in orig_line and
-                                left_output in ["succeed", "fail"]):
-                            # Handle 'finish' explicitly to avoid OR cases.
-                            special_dep = (left_name, "finish", right_name)
-                            if special_dep not in special_dependencies:
-                                # Avoid repeating for succeed and fail.
-                                special_dependencies.append(special_dep)
-                        else:
-                            special_dependencies.append(special_dep)
-                    if left_name in tasks_to_prune:
-                        pruned_left_nodes.remove(left_node)
-                        lexpression = self.prune_expression(lexpression,
-                                                            tasks_to_prune)
-                if right_name in tasks_to_prune:
-                    continue
-
-                if not graphing_disabled:
-                    left_edge_nodes = pruned_left_nodes
-                    right_edge_node = right_name
-                    if not left_edge_nodes and left_nodes:
-                        # All the left nodes have been pruned.
-                        left_edge_nodes = [right_name]
-                        right_edge_node = None
-                    self.generate_edges(lexpression, left_edge_nodes,
-                                        right_edge_node, seq, suicide)
-                self.generate_taskdefs(orig_line, pruned_left_nodes,
-                                       right_name, section,
-                                       seq, offset_seq_map,
-                                       base_interval)
-                self.generate_triggers(lexpression, pruned_left_nodes,
-                                       right_name, seq, suicide)
-        return special_dependencies
-
-    def generate_edges(self, lexpression, left_nodes, right, seq,
+    def generate_edges(self, lexpr, orig_lexpr, left_nodes, right, seq,
                        suicide=False):
         """Generate edges.
 
@@ -1582,32 +1331,40 @@ class SuiteConfig(object):
         structure.
         """
         conditional = False
-        if re.search('\|', lexpression):
+        if '|' in lexpr:
             # plot conditional triggers differently
             conditional = True
 
-        for left in left_nodes:
-            if left is None:
-                continue
-            if right is not None:
-                # Check for self-suicide and self-edges.
-                if left == right or left.startswith(right + ':'):
-                    # (This passes inter-cycle offsets: left[-P1D] => left)
-                    # (TODO - but not explicit null offsets like [-P0D]!)
-                    if not suicide:
-                        # Self-edge.
-                        if left != lexpression:
-                            print >> sys.stderr, (
-                                "%s => %s" % (lexpression, right))
-                        raise SuiteConfigError(
-                            "ERROR, self-edge detected: %s => %s" % (
-                                left, right))
-            e = cylc.graphing.edge(left, right, seq, suicide, conditional)
-            self.edges.append(e)
+        if not left_nodes:
+            # Right is a lone node.
+            # TODO - CAN WE DO THIS MORE SENSIBLY (e.g. put loner as left?)
+            self.edges.append(
+                cylc.graphing.edge(right, None, seq, suicide, conditional))
 
-    def generate_taskdefs(self, line, left_nodes, right, section, seq,
-                          offset_seq_map, base_interval):
-        """Generate task definitions for nodes on a given line."""
+        for left in left_nodes:
+            # if left is None:
+            #    continue
+            # TODO - RIGHT CANNOT BE NONE NOW?
+            # if right is not None:
+            # Check for self-edges.
+            if left == right or left.startswith(right + ':'):
+                # (This passes inter-cycle offsets: left[-P1D] => left)
+                # (TODO - but not explicit null offsets like [-P0D]!)
+                if suicide:
+                    continue
+                if orig_lexpr != lexpr:
+                    print >> sys.stderr, (
+                        "%s => %s" % (orig_lexpr, right))
+                raise SuiteConfigError(
+                    "ERROR, self-edge detected: %s => %s" % (
+                        left, right))
+            self.edges.append(
+                cylc.graphing.edge(left, right, seq, suicide, conditional))
+
+    def generate_taskdefs(self, orig_expr, left_nodes, right, section, seq,
+                          base_interval):
+        """Generate task definitions for all nodes in orig_expr."""
+
         for node in left_nodes + [right]:
             if not node:
                 # if right is None, lefts are lone nodes
@@ -1616,7 +1373,7 @@ class SuiteConfig(object):
             try:
                 my_taskdef_node = graphnode(node, base_interval=base_interval)
             except GraphNodeError, x:
-                print >> sys.stderr, line
+                print >> sys.stderr, orig_expr
                 raise SuiteConfigError(str(x))
 
             name = my_taskdef_node.name
@@ -1648,7 +1405,7 @@ class SuiteConfig(object):
                 try:
                     self.taskdefs[name] = self.get_taskdef(name)
                 except TaskDefError as exc:
-                    print >> sys.stderr, line
+                    print >> sys.stderr, orig_expr
                     raise SuiteConfigError(str(exc))
 
             if name in self.suite_polling_tasks:
@@ -1661,19 +1418,19 @@ class SuiteConfig(object):
                 if offset_string:
                     self.taskdefs[name].used_in_offset_trigger = True
                     if SyntaxVersion.VERSION == VERSION_PREV:
-                        # Implicit cycling means foo[T+6] generates a +6
-                        # sequence.
-                        if offset_string in offset_seq_map:
-                            seq_offset = offset_seq_map[offset_string]
-                        else:
-                            seq_offset = get_sequence(
-                                section,
-                                self.cfg['scheduling']['initial cycle point'],
-                                self.cfg['scheduling']['final cycle point']
-                            )
-                            seq_offset.set_offset(
-                                get_interval(offset_string))
-                            offset_seq_map[offset_string] = seq_offset
+                        # Implicit cycling: foo[T+6] generates a +6 sequence.
+                        # TODO: old version cached sequences:
+                        # if offset_string in offset_seq_map:
+                        #    seq_offset = offset_seq_map[offset_string]
+                        # else:
+                        seq_offset = get_sequence(
+                            section,
+                            self.cfg['scheduling']['initial cycle point'],
+                            self.cfg['scheduling']['final cycle point']
+                        )
+                        seq_offset.set_offset(
+                            get_interval(offset_string))
+                        # TODO: offset_seq_map[offset_string] = seq_offset
                         self.taskdefs[name].add_sequence(
                             seq_offset, is_implicit=True)
                         if seq_offset not in self.sequences:
@@ -1692,12 +1449,11 @@ class SuiteConfig(object):
                     dm_scrpt += "\nsleep 2; cylc message '%s'" % msg
                 self.taskdefs[name].rtconfig['dummy mode']['script'] = dm_scrpt
 
-    def generate_triggers(self, lexpression, left_nodes, right, seq, suicide):
+    def generate_triggers(self, lexpression, left_nodes,
+                          right, seq, suicide, base_interval):
         if not right or not left_nodes:
             # Lone nodes have no triggers.
             return
-
-        base_interval = seq.get_interval()
 
         ctrig = {}
         cname = {}
@@ -2024,198 +1780,177 @@ class SuiteConfig(object):
         if cylc.flags.verbose:
             print "Parsing the dependency graph"
 
-        start_up_tasks = self.cfg['scheduling']['special tasks']['start-up']
-        if start_up_tasks:
-            set_syntax_version(
-                VERSION_PREV,
-                "start-up tasks: %s" % ",".join(start_up_tasks)
-            )
-        back_comp_initial_tasks = list(start_up_tasks)
+        # Generate a map of *task* members of each family.
+        # Note we could exclude 'root' from this and disallow use of 'root' in
+        # the graph (which would probably be quite reasonable).
+        family_map = {}
+        runtime_families = self.runtime['descendants'].keys()
+        runtime_tasks = [
+            t for t in self.runtime['parents'].keys()
+            if t not in runtime_families]
+        for fam in runtime_families:
+            desc = self.runtime['descendants'][fam]
+            family_map[fam] = [t for t in desc if t in runtime_tasks]
 
-        section_seq_map = {}
-
-        # Set up our backwards-compatibility handling of async graphs.
-        async_graph = self.cfg['scheduling']['dependencies']['graph']
-        if async_graph:
+        # Move a cylc-5 non-cycling graph to an R1 section.
+        non_cycling_graph = self.cfg['scheduling']['dependencies']['graph']
+        if non_cycling_graph:
             section = get_sequence_cls().get_async_expr()
-            async_dependencies = self.parse_graph(
-                section, async_graph, section_seq_map=section_seq_map,
-                return_all_dependencies=True
-            )
-            for left, left_output, right in async_dependencies:
-                if left:
-                    back_comp_initial_tasks.append(left)
-                if right:
-                    back_comp_initial_tasks.append(right)
-
-        # Create a stack of sections (sequence strings) and graphs.
-        items = []
-        for item, value in self.cfg['scheduling']['dependencies'].items():
-            if item == 'graph':
-                continue
-            items.append((item, value, back_comp_initial_tasks))
+            self.cfg['scheduling']['dependencies'][section] = (
+                OrderedDictWithDefaults())
+            self.cfg['scheduling']['dependencies'][section]['graph'] = (
+                non_cycling_graph)
+        del self.cfg['scheduling']['dependencies']['graph']
 
         icp = self.cfg['scheduling']['initial cycle point']
         fcp = self.cfg['scheduling']['final cycle point']
-
-        back_comp_initial_dep_points = {}
         initial_point = get_point(icp)
-        while items:
-            item, value, tasks_to_prune = items.pop(0)
 
-            # substitute initial and final cycle points
+        # Make a stack of sections and graphs [(sec1, graph1), ...]
+        sections = []
+        for section, sec_map in self.cfg['scheduling']['dependencies'].items():
+            # Substitute initial and final cycle points.
+            if not sec_map['graph']:
+                # Empty section.
+                continue
             if icp:
-                item = item.replace("^", icp)
-            elif "^" in item:
+                section = section.replace("^", icp)
+            elif "^" in section:
                 raise SuiteConfigError("ERROR: Initial cycle point referenced"
                                        " (^) but not defined.")
             if fcp:
-                item = item.replace("$", fcp)
-            elif "$" in item:
+                section = section.replace("$", fcp)
+            elif "$" in section:
                 raise SuiteConfigError("ERROR: Final cycle point referenced"
                                        " ($) but not defined.")
-
             # If the section consists of more than one sequence, split it up.
-            if re.search("(?![^(]+\)),", item):
-                new_items = re.split("(?![^(]+\)),", item)
-                for new_item in new_items:
-                    items.append((new_item.strip(), value, tasks_to_prune))
-                continue
-
-            try:
-                graph = value['graph']
-            except KeyError:
-                continue
-            if not graph:
-                continue
-
-            section = item
-            special_dependencies = self.parse_graph(
-                section, graph, section_seq_map=section_seq_map,
-                tasks_to_prune=tasks_to_prune
-            )
-            if special_dependencies and tasks_to_prune:
-                section_seq = get_sequence(section, icp, fcp)
-                first_point = section_seq.get_first_point(initial_point)
-                for dep in special_dependencies:
-                    # Set e.g. (foo, fail, bar) => foo, foo[^]:fail => bar.
-                    left, left_output, right = dep
-                    if left in back_comp_initial_tasks:
-                        # Start-up/Async tasks now always run at R1.
-                        pure_left_dep = (left, None, None)
-                        back_comp_initial_dep_points.setdefault(
-                            pure_left_dep, [])
-                        back_comp_initial_dep_points[pure_left_dep].append(
-                            first_point)
-                    # Sort out the dependencies on R1 at R1/some-time.
-                    back_comp_initial_dep_points.setdefault(tuple(dep), [])
-                    back_comp_initial_dep_points[tuple(dep)].append(
-                        first_point)
-
-        back_comp_initial_section_graphs = {}
-        for dep in sorted(back_comp_initial_dep_points):
-            first_common_point = min(back_comp_initial_dep_points[dep])
-            at_initial_point = (first_common_point == initial_point)
-            left, left_output, right = dep
-            graph_text = left
-            if not at_initial_point:
-                # Reference the initial left task.
-                left_points = (
-                    back_comp_initial_dep_points[(left, None, None)])
-                left_min_point = min(left_points)
-                if left_min_point == initial_point:
-                    graph_text += "[^]"
-                elif left_min_point != first_common_point:
-                    graph_text += "[%s]" % left_min_point
-            if left_output:
-                if left_output == "finish":
-                    graph_text = (graph_text + ":succeed" + " | " +
-                                  graph_text + ":fail")
-                else:
-                    graph_text += ":" + left_output
-            if right:
-                graph_text += " => " + right
-            if at_initial_point:
-                section = get_sequence_cls().get_async_expr()
+            if re.search("(?![^(]+\)),", section):
+                new_sections = re.split("(?![^(]+\)),", section)
+                for new_section in new_sections:
+                    sections.append((new_section.strip(), sec_map['graph']))
             else:
-                section = get_sequence_cls().get_async_expr(
-                    first_common_point)
-            back_comp_initial_section_graphs.setdefault(section, [])
-            back_comp_initial_section_graphs[section].append(graph_text)
+                sections.append((section, sec_map['graph']))
 
-        for section in sorted(back_comp_initial_section_graphs):
-            total_graph_text = "\n".join(
-                back_comp_initial_section_graphs[section])
-            if self.validation:
-                print("# REPLACING START-UP/ASYNC DEPENDENCIES " +
-                      "WITH AN R1* SECTION")
-                print "# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)"
-                print "        [[[" + section + "]]]"
-                print "            " + 'graph = """'
-                print total_graph_text + '\n"""'
-            self.parse_graph(
-                section, total_graph_text,
-                section_seq_map=section_seq_map, tasks_to_prune=[]
-            )
+        # Back-compat a): extract cylc-5 start-up triggers.
+        startup_tasks = self.cfg['scheduling']['special tasks']['start-up']
+        if startup_tasks:
+            self._load_startup_graph(startup_tasks, sections, family_map)
 
-    def parse_graph(self, section, graph, section_seq_map=None,
-                    tasks_to_prune=None, return_all_dependencies=False):
-        """Parse a multi-line graph string for section.
+        # Parse and process each graph section.
+        # Back-compat b): ignoring cylc-5 start-up triggers (now extracted).
+        for section, graph in sections:
+            seq = get_sequence(section,
+                               self.cfg['scheduling']['initial cycle point'],
+                               self.cfg['scheduling']['final cycle point'])
+            self.sequences.append(seq)
+            gp = GraphParser(family_map, self.parameters, startup_tasks)
+            gp.parse_graph(graph)
+            self.suite_polling_tasks.update(gp.suite_state_polling_tasks)
+            self._proc_triggers(gp.triggers, gp.original, section, seq)
 
-        section should be a string like "R1" or "T00".
-        graph should be a single or multi-line string like "foo => bar"
-        section_seq_map should be a dictionary that indexes cycling
-        sequences by their section string
-        tasks_to_prune is a list of task names that should be
-        automatically removed when processing graph
-        return_all_dependencies is a boolean that, if True, returns a
-        list of task dependencies - e.g. [('foo', 'start', 'bar')] for
-        a graph of 'foo:start => bar'.
+    def _proc_triggers(self, triggers, original, section, seq):
+        """Define graph edges, taskdefs, and triggers, from graph sections."""
+        base_interval = seq.get_interval()
+        for right, val in triggers.items():
+            for expr, trigs in val.items():
+                lefts, suicide = trigs
+                orig_expr = original[right][expr]
+                if not graphing_disabled:
+                    self.generate_edges(expr, orig_expr, lefts,
+                                        right, seq, suicide)
+                self.generate_taskdefs(
+                    orig_expr, lefts, right, section, seq, base_interval)
+                self.generate_triggers(
+                    expr, lefts, right, seq, suicide, base_interval)
 
+    def _load_startup_graph(self, startup_tasks, sections, family_map):
+        """Back-compat for cylc-5 "start-up tasks".
+
+        These appear in general cycling sections but only run once at the
+        initial cycle point. To support these in cylc-6 we need to pre-parse
+        each graph string to extract all start-up triggers into R1 sections.
+        Then in the main parse, prune start-up triggers from cycling sections.
+
+        TODO - REMOVE THIS AT cylc-7.
         """
-
-        sec = section
-
-        if section in section_seq_map:
-            seq = section_seq_map[section]
-        else:
+        startup_trigs = {}
+        r1_points = []
+        set_syntax_version(VERSION_PREV,
+                           "start-up tasks: %s" % ",".join(startup_tasks))
+        for section, graph in sections:
             seq = get_sequence(
                 section,
                 self.cfg['scheduling']['initial cycle point'],
-                self.cfg['scheduling']['final cycle point']
-            )
-            section_seq_map[section] = seq
-        offset_seq_map = {}
-
-        if seq not in self.sequences:
-            self.sequences.append(seq)
-
-        # split the graph string into successive lines
-        special_dependencies = []
-        for xline in graph.splitlines():
-            # strip comments
-            line = re.sub('#.*', '', xline).strip()
-            # ignore blank lines
-            if not line:
-                continue
-            # Check for illegal double-char conditional operators.
-            m = re.search(r"(&&)|(\|\|)", line)
-            if m:
-                bad_opr = m.groups()[0]
-                if bad_opr == '&&':
-                    raise SuiteConfigError(
-                        "ERROR: the graph AND operator is '&': %s" % line)
-                else:
-                    raise SuiteConfigError(
-                        "ERROR: the graph OR operator is '|': %s" % line)
-
-            # generate pygraphviz graph nodes and edges, and task definitions
-            special_dependencies.extend(self.process_graph_line(
-                line, section, seq, offset_seq_map,
-                tasks_to_prune=tasks_to_prune,
-                return_all_dependencies=return_all_dependencies
-            ))
-        return special_dependencies
+                self.cfg['scheduling']['final cycle point'])
+            first_point = seq.get_first_point(
+                get_point(self.cfg['scheduling']['initial cycle point']))
+            # Define the R1 section for start-up triggers in this section.
+            if first_point != self.initial_point:
+                r1_point = str(first_point)
+                r1_sec = 'R1/%s' % r1_point
+            else:
+                r1_point = None
+                r1_sec = 'R1'
+            # Parse the graph string.
+            gp = GraphParser(family_map, self.parameters, startup_tasks)
+            gp.parse_graph(graph, get_startup=True, r1_point=r1_point)
+            self.suite_polling_tasks.update(gp.suite_state_polling_tasks)
+            r1_seq = get_sequence(
+                r1_sec, self.cfg['scheduling']['initial cycle point'],
+                self.cfg['scheduling']['final cycle point'])
+            if r1_point in startup_trigs:
+                _, _, trigs, origs, texts = startup_trigs[r1_point]
+                trigs.update(gp.triggers)
+                origs.update(gp.original)
+                if gp.startup_graph_text not in texts:
+                    texts += gp.startup_graph_text
+            else:
+                trigs = gp.triggers
+                origs = gp.original
+                texts = gp.startup_graph_text
+            startup_trigs[r1_point] = (r1_seq, r1_sec, trigs, origs, texts)
+        # Sort parsed start-up triggers in order of section start points, and
+        # if a trigger appears at multiple R1 points keep only the first.
+        # This is messy.
+        r1_points = startup_trigs.keys()
+        r1_points_sorted = []
+        if None in r1_points:
+            pts = [None]
+            r1_points.remove(None)
+        else:
+            pts = []
+        r1_points_sorted = pts + sorted(r1_points)
+        seen = set()
+        for r1p in r1_points_sorted:
+            r1_seq, r1_sec, r1_trigs, r1_orig, r1_text = startup_trigs[r1p]
+            proc_trigs = {}
+            for name, trigs in r1_trigs.items():
+                use = True
+                proc_inner = {}
+                for expr, info in trigs.items():
+                    if not use:
+                        break
+                    for upstream_name, _, _ in (
+                            GraphParser.REC_NODES.findall(expr)):
+                        key = '%s=>%s' % (upstream_name, name)
+                        if upstream_name in startup_tasks:
+                            if key in seen:
+                                use = False
+                                break
+                        seen.add(key)
+                    if use:
+                        proc_inner[expr] = info
+                proc_trigs[name] = proc_inner
+            # Process the parsed graph information.
+            if proc_trigs:
+                self.sequences.append(r1_seq)
+                self._proc_triggers(proc_trigs, r1_orig, r1_sec, r1_seq)
+                if self.validation:
+                    print '''\
+# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
+# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
+    [[[%s]]]
+        graph = """%s"""''' % (r1_sec, r1_text)
 
     def get_taskdef(self, name):
         """Get the dense task runtime."""
@@ -2233,9 +1968,6 @@ class SuiteConfig(object):
             self.cfg['scheduling']['spawn to max active cycle points'])
 
         # TODO - put all taskd.foo items in a single config dict
-        # Set cold-start task indicators.
-        if name in self.cfg['scheduling']['special tasks']['cold-start']:
-            taskd.is_coldstart = True
 
         if name in self.clock_offsets:
             taskd.clocktrigger_offset = self.clock_offsets[name]
@@ -2246,6 +1978,9 @@ class SuiteConfig(object):
 
         taskd.sequential = (
             name in self.cfg['scheduling']['special tasks']['sequential'])
+
+        taskd.is_coldstart = (
+            name in self.cfg['scheduling']['special tasks']['cold-start'])
 
         foo = copy(self.runtime['linearized ancestors'][name])
         foo.reverse()

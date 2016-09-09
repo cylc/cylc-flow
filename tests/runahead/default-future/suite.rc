@@ -23,3 +23,6 @@
         script = false
     [[bar,baz,wibble]]
         script = true
+
+[visualization]
+    number of cycle points = 10

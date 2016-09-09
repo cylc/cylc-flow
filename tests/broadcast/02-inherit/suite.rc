@@ -2,29 +2,30 @@
 title=broadcast
 description=Test Broadcast Inheritance
 [cylc]
+    cycle point format = %Y%m%dT%H
     [[reference test]]
         required run mode=live
-        live mode suite timeout=1.0
+        live mode suite timeout=PT1M
 [scheduling]
-    initial cycle time = 2014010100
-    final cycle time   = 2014010100
-    [[special tasks]]
-        start-up = broadcast_all
+    initial cycle time = 20140101T00
+    final cycle time   = 20140101T00
     [[dependencies]]
-        [[[0]]]
-            graph=broadcast_all=>broadcast_tag=>t1
+        [[[R1]]]
+            graph = broadcast_all => broadcast_tag
+        [[[T00]]]
+            graph = broadcast_tag => t1
 [runtime]
     [[broadcast_all]]
         script="""
-cylc broadcast -s "[environment]ALL_0=true" -n F1 $CYLC_SUITE_REG_NAME
-cylc broadcast -s "[environment]ALL_1=true" -n t1 $CYLC_SUITE_REG_NAME
+cylc broadcast -s "[environment]ALL_0=true" -n F1 $CYLC_SUITE_NAME
+cylc broadcast -s "[environment]ALL_1=true" -n t1 $CYLC_SUITE_NAME
 """
     [[broadcast_tag]]
         script="""
-cylc broadcast -s "[environment]TAG_0=true" -n F1 -t $CYLC_TASK_CYCLE_TIME \
-    $CYLC_SUITE_REG_NAME
-cylc broadcast -s "[environment]TAG_1=true" -n t1 -t $CYLC_TASK_CYCLE_TIME \
-    $CYLC_SUITE_REG_NAME
+cylc broadcast -s "[environment]TAG_0=true" -n F1 -t $CYLC_TASK_CYCLE_POINT \
+    $CYLC_SUITE_NAME
+cylc broadcast -s "[environment]TAG_1=true" -n t1 -t $CYLC_TASK_CYCLE_POINT \
+    $CYLC_SUITE_NAME
 """
     [[F1]]
         script="""

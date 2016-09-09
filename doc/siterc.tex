@@ -367,14 +367,14 @@ Configurable settings for the command line \lstinline=cylc monitor= tool.
 
 The sort order for tasks in the monitor view.
 \begin{myitemize}
-\item {\em type:} string
-\item {\em options:}
+    \item {\em type:} string
+    \item {\em options:}
     \begin{myitemize}
-    \item {\bf alphanumeric}
-    \item {\bf definition} -  the order that tasks appear under
-	    \lstinline=[runtime]= in the suite definition.
-  \end{myitemize}
-\item {\em default:} definition
+        \item {\bf alphanumeric}
+        \item {\bf definition} -  the order that tasks appear under
+            \lstinline=[runtime]= in the suite definition.
+    \end{myitemize}
+    \item {\em default:} definition
 \end{myitemize}
 
 \subsection{[hosts]}
@@ -486,14 +486,14 @@ being a placeholder for the name of the host. This is no longer the case. Any
 \paragraph[use login shell]{[hosts] \textrightarrow [[HOST]] \textrightarrow use login shell }
 
 Whether to use a login shell or not for remote command invocation. By
-default cylc runs remote ssh commands using a login shell,
+default cylc runs remote ssh commands using a login shell:
 \begin{lstlisting}
   ssh user@host 'bash --login cylc ...'
 \end{lstlisting}
 which will source \lstinline=/etc/profile= and
 \lstinline=~/.profile= to set up the user environment.  However, for
 security reasons some institutions do not allow unattended commands to
-start login shells, so you can turn off this behaviour to get,
+start login shells, so you can turn off this behaviour to get:
 \begin{lstlisting}
   ssh user@host 'cylc ...'
 \end{lstlisting}
@@ -508,7 +508,7 @@ environment.
 
 \paragraph[cylc executable]{[hosts] \textrightarrow [[HOST]] \textrightarrow cylc executable }
 
-The \lstinline=cylc= executable on a remote host. Note this should point to the 
+The \lstinline=cylc= executable on a remote host. Note this should point to the
 cylc multi-version wrapper (see~\ref{CUI}) on the host, not
 \lstinline=bin/cylc= for a specific installed version.
 Specify a full path if \lstinline=cylc= is not in \lstinline=\$PATH= when it is
@@ -580,7 +580,7 @@ tail-follow local job logs, used by the gcylc log viewer and
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} \lstinline@tail -n +1 -F %(filename)s@ 
+\item {\em default:} \lstinline@tail -n +1 -F %(filename)s@
 \end{myitemize}
 
 \paragraph[remote tail command template]{[hosts] \textrightarrow [[HOST]] \textrightarrow remote tail command template}
@@ -595,7 +595,7 @@ not equivalent to the Gnu Linux versions.
 
 \begin{myitemize}
 \item {\em type:} string
-\item {\em default:} \lstinline@tail --pid=$(ps h -o ppid $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@ 
+\item {\em default:} \lstinline@tail --pid=$(ps h -o ppid $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@
 \item {\em example:} for AIX hosts:\\
     \lstinline@/gnu/tail --pid=$(ps -o ppid= -p $$ | sed -e 's/[[:space:]]//g') -n +1 -F %(filename)s@
 \end{myitemize}
@@ -784,7 +784,7 @@ A list of hosts to scan for running suites.
 
 \subsection{[task events]}
 
-Global site/user defaults for~\ref{TaskEventHandling2}.
+Global site/user defaults for~\ref{TaskEventHandling}.
 
 \subsection{[test battery]}
 
@@ -846,7 +846,7 @@ See ~\ref{UTC-mode} for details.
 \subsubsection[{[}events{]}]{[cylc] \textrightarrow [[events]]}
 \label{SiteCylcHooks}
 
-You can define site defaults for each of the following options, details 
+You can define site defaults for each of the following options, details
 of which can be found under ~\ref{SuiteEventHandling}:
 
 \subparagraph[handlers]{[cylc] \textrightarrow [[events]] \textrightarrow handlers}

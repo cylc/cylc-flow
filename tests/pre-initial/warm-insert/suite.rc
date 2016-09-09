@@ -1,9 +1,12 @@
 [cylc]
     UTC mode = true
     [[event hooks]]
+        # Reset the pre-start foo inserted by the inserter task.
         stalled handler = cylc reset %(suite)s foo.20100101T1200Z -s ready
         abort on timeout = True
         timeout = PT2M
+    [[reference test]]
+        live mode suite timeout=PT2M
 
 [scheduling]
     initial cycle point = 20100101T0000Z

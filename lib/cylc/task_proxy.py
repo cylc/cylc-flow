@@ -238,11 +238,7 @@ class TaskProxy(object):
                 self.point, self.tdef.intercycle_offsets)
             self.identity = TaskID.get(self.tdef.name, self.point)
 
-        if self.tdef.is_coldstart:
-            # Cylc-5 cold-start tasks have no successor.
-            self.has_spawned = True
-        else:
-            self.has_spawned = has_spawned
+        self.has_spawned = has_spawned
 
         self.point_as_seconds = None
 
@@ -1123,7 +1119,6 @@ class TaskProxy(object):
             'env-script': rtconfig['env-script'],
             'host': self.task_host,
             'init-script': rtconfig['init-script'],
-            'is cold-start': self.tdef.is_coldstart,
             'job file path': self.get_job_log_path(
                 self.HEAD_MODE_REMOTE, tail=self.JOB_FILE_BASE),
             'job log dir': self.get_job_log_path(),
@@ -1463,7 +1458,7 @@ class TaskProxy(object):
            * its state is >= submitted (allows successive instances
              to run concurrently, but not out of order).
         """
-        if (self.has_spawned or
+        if (self.has_spawned or self.tdef.is_coldstart or
                 self.state.status == TASK_STATUS_SUBMIT_FAILED):
             return False
         else:

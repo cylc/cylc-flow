@@ -281,9 +281,6 @@ unset S""" % args)
         handle.write("\nexport CYLC_TASK_CYCLE_TIME=" + point_string)
         handle.write("\nexport CYLC_TASK_ID=" + job_conf['task id'])
         handle.write(
-            "\nexport CYLC_TASK_IS_COLDSTART=" +
-            str(job_conf['is cold-start']))
-        handle.write(
             "\nexport CYLC_TASK_LOG_ROOT=" + job_conf['job file path'])
         handle.write(
             "\nexport CYLC_TASK_MSG_MAX_TRIES=" +

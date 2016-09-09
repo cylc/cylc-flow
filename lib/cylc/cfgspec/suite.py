@@ -20,7 +20,8 @@
 import re
 
 from parsec.validate import validator as vdr
-from parsec.validate import coercers, _strip_and_unquote, IllegalValueError
+from parsec.validate import (
+    coercers, _strip_and_unquote, _strip_and_unquote_list, IllegalValueError)
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.config import config
@@ -35,6 +36,9 @@ from cylc.cfgspec.utils import (
     coerce_interval, coerce_interval_list, DurationFloat)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.network import PRIVILEGE_LEVELS
+
+
+REC_PARAM_INT_RANGE = re.compile('(\d+)\.\.(\d+)')
 
 
 def _coerce_cycleinterval(value, keys, _):
@@ -163,6 +167,23 @@ def _coerce_final_cycletime(value, keys, _):
     return _strip_and_unquote(keys, value)
 
 
+def _coerce_parameter_list(value, keys, _):
+    """Coerce parameter list."""
+    value = _strip_and_unquote_list(keys, value)
+    if len(value) == 1:
+        # May be a range e.g. '1..5' (bounds inclusive)
+        try:
+            lower, upper = REC_PARAM_INT_RANGE.match(value[0]).groups()
+        except AttributeError:
+            if '.' in value[0]:
+                # Dot is illegal in node names, probably bad range syntax.
+                raise IllegalValueError("parameter", keys, value)
+        else:
+            n_dig = len(upper)
+            return [
+                str(i).zfill(n_dig) for i in range(int(lower), int(upper) + 1)]
+    return value
+
 coercers['cycletime'] = _coerce_cycletime
 coercers['cycletime_format'] = _coerce_cycletime_format
 coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
@@ -176,6 +197,7 @@ coercers['interval_list'] = coerce_interval_list
 coercers['interval_minutes_list'] = lambda *a: coerce_interval_list(
     *a, back_comp_unit_factor=60)
 coercers['interval_seconds_list'] = coerce_interval_list
+coercers['parameter_list'] = _coerce_parameter_list
 
 
 SPEC = {
@@ -199,6 +221,12 @@ SPEC = {
         'log resolved dependencies': vdr(vtype='boolean', default=False),
         'disable automatic shutdown': vdr(vtype='boolean', default=False),
         'environment': {
+            '__MANY__': vdr(vtype='string'),
+        },
+        'parameters': {
+            '__MANY__': vdr(vtype='parameter_list'),
+        },
+        'parameter templates': {
             '__MANY__': vdr(vtype='string'),
         },
         'events': {
@@ -420,8 +448,11 @@ SPEC = {
         'final cycle point': vdr(vtype='final_cycletime'),
         'number of cycle points': vdr(vtype='integer', default=3),
         'collapsed families': vdr(vtype='string_list', default=[]),
-        'use node color for edges': vdr(vtype='boolean', default=True),
+        'use node color for edges': vdr(vtype='boolean', default=False),
+        'use node fillcolor for edges': vdr(vtype='boolean', default=False),
         'use node color for labels': vdr(vtype='boolean', default=False),
+        'node penwidth': vdr(vtype='integer', default=2),
+        'edge penwidth': vdr(vtype='integer', default=2),
         'default node attributes': vdr(
             vtype='string_list',
             default=['style=unfilled', 'color=black', 'shape=box']),

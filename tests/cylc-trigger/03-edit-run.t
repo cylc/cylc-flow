@@ -39,7 +39,7 @@ sed -i 's/^--- original $/--- original/; s/^+++ edited $/+++ edited/' $DIFF_LOG
 cmp_ok $DIFF_LOG - <<__END__
 --- original
 +++ edited
-@@ -126,7 +126,7 @@
+@@ -125,7 +125,7 @@
  echo
  
  # SCRIPT:

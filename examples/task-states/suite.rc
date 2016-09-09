@@ -11,12 +11,12 @@ to show what they look like live in gcylc."""
         [[[fam_queue]]]
             limit = 2
             members = FAMILY
-    [[special tasks]]
-        cold-start = cfoo
     [[dependencies]]
+        [[[R1]]]
+            graph = cfoo => foo
         [[[T00]]]
             graph =  """
-    cfoo | foo[-P1D] => foo => FAMILY
+    foo[-P1D] => foo => FAMILY
     FAMILY:finish-all => bar
     foo => bad & bad2 & bad_good
     bar => !bad & !bad2

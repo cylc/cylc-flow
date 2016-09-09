@@ -1,19 +1,19 @@
 [cylc]
+   cycle point format = %Y%m%dT%H
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 2 # minutes
+       live mode suite timeout = PT2M
 [scheduling]
-    initial cycle time = 2010010100
-    final cycle time   = 2010010118
-    runahead limit = 18
+    initial cycle time = 20100101T00
+    final cycle time   = 20100101T18
+    runahead limit = PT18H
     [[special tasks]]
         sequential = "foo"
     [[dependencies]]
-        graph = "monitor"
-        [[[0,6,12,18]]]
-            graph = """
-                monitor:start => foo
-            """
+        [[[R1]]]
+            graph = monitor:start => foo
+        [[[PT6H]]]
+            graph = foo
 [runtime]
     [[foo]]
         script = sleep 10
