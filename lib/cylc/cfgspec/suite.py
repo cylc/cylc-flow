@@ -556,41 +556,41 @@ def upg(cfg, descr):
     )
     for key in SPEC['cylc']['events']:
         u.deprecate(
-            '6.10.3', ['cylc', 'event hooks', key], ['cylc', 'events', key])
-    u.deprecate('6.10.3', ['cylc', 'event hooks'])
+            '6.11.0', ['cylc', 'event hooks', key], ['cylc', 'events', key])
+    u.deprecate('6.11.0', ['cylc', 'event hooks'])
     for key in SPEC['runtime']['__MANY__']['events']:
         u.deprecate(
-            '6.10.3',
+            '6.11.0',
             ['runtime', '__MANY__', 'event hooks', key],
             ['runtime', '__MANY__', 'events', key])
-    u.deprecate('6.10.3', ['runtime', '__MANY__', 'event hooks'])
+    u.deprecate('6.11.0', ['runtime', '__MANY__', 'event hooks'])
     u.deprecate(
-        '6.10.3',
+        '6.11.0',
         ['runtime', '__MANY__', 'job submission', 'method'],
         ['runtime', '__MANY__', 'job', 'batch system'])
     u.deprecate(
-        '6.10.3',
+        '6.11.0',
         ['runtime', '__MANY__', 'job submission', 'command template'],
         ['runtime', '__MANY__', 'job', 'batch submit command template'])
     u.deprecate(
-        '6.10.3',
+        '6.11.0',
         ['runtime', '__MANY__', 'job submission', 'shell'],
         ['runtime', '__MANY__', 'job', 'shell'])
     u.deprecate(
-        '6.10.3',
+        '6.11.0',
         ['runtime', '__MANY__', 'job submission', 'retry delays'],
         ['runtime', '__MANY__', 'job', 'submission retry delays'])
-    u.deprecate('6.10.3', ['runtime', '__MANY__', 'job submission'])
+    u.deprecate('6.11.0', ['runtime', '__MANY__', 'job submission'])
     u.deprecate(
-        '6.10.3',
+        '6.11.0',
         ['runtime', '__MANY__', 'retry delays'],
         ['runtime', '__MANY__', 'job', 'execution retry delays'])
     u.deprecate(
-        '6.10.3',
+        '6.11.0',
         ['runtime', '__MANY__', 'submission polling intervals'],
         ['runtime', '__MANY__', 'job', 'submission polling intervals'])
     u.deprecate(
-        '6.10.3',
+        '6.11.0',
         ['runtime', '__MANY__', 'execution polling intervals'],
         ['runtime', '__MANY__', 'job', 'execution polling intervals'])
     u.upgrade()
