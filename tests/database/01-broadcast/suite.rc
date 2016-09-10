@@ -1,6 +1,5 @@
 [cylc]
     [[reference test]]
-        allow task failures = True
         live mode suite timeout = PT1M
 [scheduling]
     [[dependencies]]
@@ -11,11 +10,12 @@ t1:submit => recover-t1
     [[t1]]
         script=test -n "${HELLO}"
         [[[job]]]
-            execution retry delays=PT1M
+            execution retry delays=PT10M  # prevent task failure
         [[[environment]]]
             HELLO=
     [[recover-t1]]
         script="""
 cylc broadcast -p 1 -n t1 -s'[environment]HELLO=Hello' "${CYLC_SUITE_NAME}"
+sleep 1
 cylc trigger "${CYLC_SUITE_NAME}" t1 1
 """

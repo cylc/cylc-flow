@@ -28,5 +28,6 @@ done
 cylc kill "${CYLC_SUITE_NAME}" 't1'
 sleep 1
 cylc poll "${CYLC_SUITE_NAME}" 't1'
+sleep 1
 cylc shutdown "${CYLC_SUITE_NAME}"
 """

@@ -36,7 +36,7 @@ suite_run_ok "${TEST_NAME_BASE}-run" \
 # Only t1 should have job.err and job.out retrieved.
 SUITE_RUN_DIR="$(cylc get-global-config '--print-run-dir')/${SUITE_NAME}"
 
-sed "/'job-logs-retrieve'/!d; s/^[^ ]* //" \
+sed "/'job-logs-retrieve'/!d" \
     "${SUITE_RUN_DIR}/log/job/2020-02-02T02:02Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<__LOG__
