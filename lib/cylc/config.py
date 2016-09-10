@@ -814,12 +814,14 @@ class SuiteConfig(object):
                 # Put parameter index values in task environment.
                 replicate(newruntime[name], namespace_dict)
                 if indices:
-                    if 'environment' not in newruntime[name]:
-                        newruntime[name]['environment'] = (
-                            OrderedDictWithDefaults())
+                    new_environ = OrderedDictWithDefaults()
                     for p_name, p_val in indices.items():
                         p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
-                        newruntime[name]['environment'][p_var_name] = p_val
+                        new_environ[p_var_name] = p_val
+                    if 'environment' in newruntime[name]:
+                        for k, v in newruntime[name]['environment'].items():
+                            new_environ[k] = v
+                    newruntime[name]['environment'] = new_environ
                     if 'inherit' in newruntime[name]:
                         parents = newruntime[name]['inherit']
                         origin = 'inherit = %s' % ' '.join(parents)
