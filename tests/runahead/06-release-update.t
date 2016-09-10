@@ -28,7 +28,9 @@ run_ok $TEST_NAME cylc validate $SUITE_NAME
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-check-states
 cylc run $SUITE_NAME
-sleep 10
+LOG="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log/suite/log"
+poll "! grep -q -F '[bar.2016] -(current:running)> succeeded' '${LOG}' 2>'/dev/null'"
+sleep 1
 cylc dump -t $SUITE_NAME | awk '{print $1 $3}' > log
 cmp_ok log - << __END__
 bar,succeeded,
