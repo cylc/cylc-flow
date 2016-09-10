@@ -335,10 +335,10 @@ def upg(cfg, descr):
             ['test battery', 'directives', batch_sys_name + ' directives'],
             ['test battery', 'batch systems', batch_sys_name, 'directives'])
     u.obsolete('6.4.1', ['test battery', 'directives'])
-    u.deprecate('6.10.3', ['cylc', 'event hooks'], ['cylc', 'events'])
+    u.deprecate('6.11.0', ['cylc', 'event hooks'], ['cylc', 'events'])
     for key in SPEC['cylc']['events']:
         u.deprecate(
-            '6.10.3', ['cylc', 'event hooks', key], ['cylc', 'events', key])
+            '6.11.0', ['cylc', 'event hooks', key], ['cylc', 'events', key])
     u.upgrade()
 
 
