@@ -46,9 +46,21 @@ _UQLP = re.compile(r"""(['"]?)(.*?)\1(,|$)""")
 _SQV = re.compile("((?:^[^']*(?:'[^']*')*[^']*)*)(#.*)$")
 _DQV = re.compile('((?:^[^"]*(?:"[^"]*")*[^"]*)*)(#.*)$')
 
+# Paramterized names containing at least one comma.
+REC_MULTI_PARAM = re.compile(r'<[\w]+,.*?>')
+
 
 class ValidationError(ParsecError):
     pass
+
+
+class ListValueError(ValidationError):
+    def __init__(self, keys, value, exc=None):
+        self.msg = (
+            "ERROR: names containing commas must be quoted"
+            " (e.g. 'foo<m,n>'):\n   %s" % itemstr(keys, value=value))
+        if exc:
+            self.msg += ": %s" % exc
 
 
 class IllegalValueError(ValidationError):
@@ -186,6 +198,11 @@ def _unquoted_list_parse(keys, value):
     # http://stackoverflow.com/questions/4982531/
     # how-do-i-split-a-comma-delimited-string-in-python-except-
     # for-the-commas-that-are
+
+    # First detect multi-parameter lists like <m,n>.
+    if REC_MULTI_PARAM.search(value):
+        raise ListValueError(keys, value)
+
     pos = 0
     while True:
         m = _UQLP.search(value, pos)

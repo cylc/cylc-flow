@@ -18,10 +18,7 @@
 # Run graph parser unit tests.
 . $(dirname $0)/test_header
 
-set_test_number 2
+set_test_number 1
 
-TEST_NAME=$TEST_NAME_BASE-param_expand
-run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/param_expand.py
-
-TEST_NAME=$TEST_NAME_BASE-graph_parser
+TEST_NAME=$TEST_NAME_BASE-unit-tests
 run_ok $TEST_NAME python $CYLC_DIR/lib/cylc/graph_parser.py

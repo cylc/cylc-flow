@@ -11,9 +11,11 @@ prep => init<r> => sim<r,n> => post<r,n> => comb<r> => stop
 [runtime]
     [[root]]
         script = """
-[[ -n ${r:-} ]] && echo "parameter r is $r"
-[[ -n ${n:-} ]] && echo "parameter n is $n"
-sleep 10"""
+r=${CYLC_TASK_PARAM_r:-}
+n=${CYLC_TASK_PARAM_n:-}
+[[ -n $r ]] && echo "parameter r is $r"
+[[ -n $n ]] && echo "parameter n is $n"
+sleep 5"""
     [[ENDS]]
     [[prep, stop]]
         inherit = None, ENDS

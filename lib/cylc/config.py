@@ -312,6 +312,20 @@ class SuiteConfig(object):
                     parameter_templates[pname] = (
                         "_" + pname + "%(" + pname + ")s")
 
+        # Expand parameters in 'special task' lists.
+        if 'special tasks' in self.cfg['scheduling']:
+            for spec, names in self.cfg['scheduling']['special tasks'].items():
+                self.cfg['scheduling']['special tasks'][spec] = (
+                    self._expand_name_list(names))
+
+        # Expand parameters in internal queue member lists.
+        if 'queues' in self.cfg['scheduling']:
+            for queue, cfg in self.cfg['scheduling']['queues'].items():
+                if 'members' not in cfg:
+                    continue
+                self.cfg['scheduling']['queues'][queue]['members'] = (
+                    self._expand_name_list(cfg['members']))
+
         self.mem_log("config.py: before _expand_runtime")
         self._expand_runtime()
         self.mem_log("config.py: after _expand_runtime")
@@ -764,6 +778,14 @@ class SuiteConfig(object):
 
         self.mem_log("config.py: end init config")
 
+    def _expand_name_list(self, orig_names):
+        """Expand any parameters in lists of names."""
+        name_expander = NameExpander(self.parameters)
+        exp_names = []
+        for orig_name in orig_names:
+            exp_names += [name for name, _ in name_expander.expand(orig_name)]
+        return exp_names
+
     def _expand_runtime(self):
         """Expand [runtime] name lists or parameterized names.
 
@@ -792,12 +814,14 @@ class SuiteConfig(object):
                 # Put parameter index values in task environment.
                 replicate(newruntime[name], namespace_dict)
                 if indices:
-                    if 'environment' not in newruntime[name]:
-                        newruntime[name]['environment'] = (
-                            OrderedDictWithDefaults())
+                    new_environ = OrderedDictWithDefaults()
                     for p_name, p_val in indices.items():
                         p_var_name = 'CYLC_TASK_PARAM_%s' % p_name
-                        newruntime[name]['environment'][p_var_name] = p_val
+                        new_environ[p_var_name] = p_val
+                    if 'environment' in newruntime[name]:
+                        for k, v in newruntime[name]['environment'].items():
+                            new_environ[k] = v
+                    newruntime[name]['environment'] = new_environ
                     if 'inherit' in newruntime[name]:
                         parents = newruntime[name]['inherit']
                         origin = 'inherit = %s' % ' '.join(parents)
