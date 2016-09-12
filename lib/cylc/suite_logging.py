@@ -270,6 +270,12 @@ class SuiteLog(object):
         """Returns the logging directory."""
         return self.ldir
 
+    @staticmethod
+    def get_dir_for_suite(suite):
+        """Returns the logging directory for a given suite without setting up
+        suite logging."""
+        return GLOBAL_CFG.get_derived_host_item(suite, 'suite log directory')
+
     def get_log(self, log):
         """Return the requested logger."""
         if log in self.loggers:
@@ -422,10 +428,12 @@ class MultiLineFilter(logging.Filter):
 class STDLogger(object):
     """Stand-in for the OUT, ERR loggers which logs messages to the out, err
     logs if present otherwise to stdout, stderr.
-    For use in code which can be run be run within a suite or standalone."""
+    For use in code which can be run be run within a suite or standalone.
+    If used with the LOG logger then output will only be printed if suite
+    logging has been set up."""
 
     def __init__(self, log):
-        if log not in [SuiteLog.OUT, SuiteLog.ERR]:
+        if log not in SuiteLog.ALL_LOGS:
             raise Exception('Unknown logger provided "{0}"'.format(log))
         self.log_ = log
         self.logger = logging.getLogger(log)
@@ -467,6 +475,7 @@ class STDLogger(object):
 LOG, OUT, ERR = SuiteLog.get_logs()  # Log to suite log.
 OUT_IF_DEF = STDLogger(SuiteLog.OUT)  # Log to suite if defined || print out.
 ERR_IF_DEF = STDLogger(SuiteLog.ERR)  # Log to suite if defined || print err.
+LOG_IF_DEF = STDLogger(SuiteLog.LOG)  # Log to suite if defined
 
 
 def test_log_rolling(ldir):

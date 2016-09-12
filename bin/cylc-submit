@@ -116,8 +116,7 @@ def main():
     os.environ['CYLC_MODE'] = 'submit'
 
     GLOBAL_CFG.create_cylc_run_tree(suite)
-    slog = SuiteLog.get_inst(suite)
-    suite_log_dir = slog.get_dir()
+    suite_log_dir = SuiteLog.get_dir_for_suite(suite)
 
     RemoteJobHostManager.get_inst().single_task_mode = True
 
