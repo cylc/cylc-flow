@@ -947,9 +947,9 @@ class SuiteConfig(object):
             self.runtime['parents'][name] = pts
 
         if cylc.flags.verbose and demoted:
-            log_msg = "First parent(s) demoted to secondary:"
+            log_msg = "First parent(s) demoted to secondary:\n"
             for n, p in demoted.items():
-                log_msg += " +", p, "as parent of '" + n + "'"
+                log_msg += " + %s as parent of '%s'\n" % (p, n)
             OUT_IF_DEF.info(log_msg)
 
         c3 = C3(self.runtime['parents'])
