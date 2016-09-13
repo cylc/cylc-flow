@@ -64,7 +64,7 @@ from cylc.task_state import (
     TASK_STATUS_RUNNING, TASK_STATUS_SUCCEEDED, TASK_STATUS_FAILED)
 from cylc.task_outputs import (
     TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED)
-from cylc.suite_logging import LOG_IF_DEF
+from cylc.suite_logging import LOG
 
 
 CustomTaskEventHandlerContext = namedtuple(
@@ -391,7 +391,7 @@ class TaskProxy(object):
     def log(self, lvl=INFO, msg=""):
         """Log a message of this task proxy."""
         msg = "[%s] -%s" % (self.identity, msg)
-        LOG_IF_DEF.log(lvl, msg)
+        LOG.log(lvl, msg)
 
     def command_log(self, ctx):
         """Log an activity for a job of this task proxy."""
@@ -407,12 +407,12 @@ class TaskProxy(object):
             with open(job_activity_log, "ab") as handle:
                 handle.write(ctx_str + '\n')
         except IOError as exc:
-            LOG_IF_DEF.warning(
+            LOG.warning(
                 "%s: write failed\n%s" % (job_activity_log, exc))
         if ctx.cmd and ctx.ret_code:
-            LOG_IF_DEF.error(ctx_str)
+            LOG.error(ctx_str)
         elif ctx.cmd:
-            LOG_IF_DEF.debug(ctx_str)
+            LOG.debug(ctx_str)
 
     def db_events_insert(self, event="", message=""):
         """Record an event to the DB."""
