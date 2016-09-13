@@ -444,8 +444,9 @@ class STDLogger(object):
             self.logger.log(level, *args, **kwargs)
         else:
             # No file handlers, write out to stdout/stderr.
-            msg = (get_current_time_string() + ' ' + logging._levelNames[level]
-                   + ' - ' + str(args[0]),) + tuple(*args[1:])
+            msg = (get_current_time_string() + ' ' +
+                   logging._levelNames[level] + ' - ' +
+                   str(args[0]),) + tuple(*args[1:])
             if self.log_ in [SuiteLog.OUT, SuiteLog.LOG]:
                 print(*msg)
             else:
