@@ -20,7 +20,7 @@ import re
 import sys
 from cylc.conditional_simplifier import ConditionalSimplifier
 from cylc.cycling.loader import get_point
-from cylc.suite_logging import ERR
+from cylc.suite_logging import ERR_IF_DEF
 from cylc.task_id import TaskID
 
 
@@ -159,7 +159,7 @@ class Prerequisite(object):
             if str(exc).find("unexpected EOF") != -1:
                 err_msg += ("\n(?could be unmatched parentheses in the graph "
                             "string?)")
-            ERR.error(err_msg)
+            ERR_IF_DEF.error(err_msg)
             raise TriggerExpressionError(
                 '"' + self.raw_conditional_expression + '"')
         return res
