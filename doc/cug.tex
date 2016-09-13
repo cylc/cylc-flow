@@ -307,7 +307,8 @@ even more efficient job schedule.
         \includegraphics[width=8cm]{graphics/png/orig/task-pool.png}
     \end{center}
     \caption[The cylc task pool]{\scriptsize How cylc sees a suite, in
-    contrast to the multi-cycle-point dependency graph of Figure~\ref{fig-dep-multi}.
+    contrast to the multi-cycle-point dependency graph of
+    Figure~\ref{fig-dep-multi}.
     Task colors represent different cycle points, and the small squares
     and circles represent different prerequisites and outputs. A task
     can run when its prerequisites are satisfied by the outputs
@@ -674,20 +675,16 @@ There are several reasons why an atmospheric model (say) may need to be cycled:
 \begin{myitemize}
     \item In real time forecasting it may need to wait on new real time data
         before each run.
-    \item Job run length limits on compute hosts may require single long
-        runs to be split into multiple shorter runs. (This also makes
+    \item Job run length limits on compute hosts may require long jobs
+        to be split into multiple shorter jobs. (This also makes
         incremental post-processing easier.)
 \end{myitemize}
-This section defines the terminology associated with cycling, and explains the
-two main ways that a workflow engine can implement cycling.
+This section defines the terminology associated with cycling, and describes the
+two ways to make a cylc workflow that cycles a model and associated jobs.
 
-\subsection{Cycling Terminology}
+\subsection{Cycle Points}
 
-In general usage, depending on context the word ``cycle'' can refer to a
-sequence of date-times, e.g.\ ``an hourly cycle''; or to a particular
-date-time, e.g.\ ``the current cycle''.
-
-Cylc terminology is more precise: a {\em cycle point} refers to a particular
+In cylc terminology, a {\em cycle point} is a particular
 date-time (or integer) point in a sequence. If a task has an hourly date-time
 cycle that starts at 2014-01-01T00 and ends at 2014-01-02T00, the first cycle
 point will be 2014-01-01T01, the second will be 2014-01-01T02, and so on.
@@ -707,53 +704,56 @@ these groups may not be present simultaneously in the running suite - different
 tasks may pass through the ``current cycle point'' at different times as the
 suite evolves.
 
-\subsubsection{Ways Of Cycling: Dynamic and Static}
+\subsection{Ways Of Cycling}
 \label{Ways Of Cycling}
 
-There are two main ways that a workflow engine could implement cycling, in
-principle:
-\begin{myitemize}
-    \item {\em Dynamic Cycling:} A workflow could be extended to future cycle
-        points as needed at run time, {\em potentially indefinitely}. Each
-        time a task runs it will be labelled with its next cycle point. For
-        example, a task called \lstinline=model= might repeat yearly with cycle
-        points \lstinline=2021=, \lstinline=2022=, and so on. Dynamic cycling
-        has traditionally involved repeating entire workflows sequentially, but
-        cylc does it without any hard cycle point boundaries - see
-        Section~\ref{HowCylcWorks}.
+\subsubsection{Iterative Cycling}
 
-    \item {\em Static Cycling:} If a suite is finite in extent and not too big,
-        it could be handled as single monolithic workflow so that no cycling is
-        needed at run time. Each model run is represented by a different
-        logical task, e.g.\ \lstinline=model_runA= might represent the
-        \lstinline=2020= run, \lstinline=model_runB= the \lstinline=2021= run,
-        and so on; or the tasks might be called \lstinline=model_1=,
-        \lstinline=model_2=, and so on., with integer values
-        mapping to the proper date-time cycle points; or even
-        \lstinline=model_2020=, \lstinline=model_2021= and so on. {\em It is not
-        possible to continue a static workflow indefinitely}.
+Cylc's classic cycling mode, as described in the Introduction, can be termed
+{\em iterative cycling.} The scheduler continually extends the workflow to
+future cycle points as the suite runs, and each instance of a repeated job is
+represented by the same logical task with a different cycle point.  For
+example, a program \lstinline=model.exe= could be executed by a task
+\lstinline@model@ that runs repeatedly for a series of cycle points
+\lstinline=2016-01-01, 2016-01-02, 2016-01-03, ...=
 
-    \item {\em Mixed Cycling:} Both static and dynamic cycling can be combined
-        in the same suite (although there may be no good reason to do this in
-        cylc!). For example, instead of an ongoing 6-hourly dynamic cycle, we
-        could have a ongoing daily dynamic cycle with four static steps in each
-        daily cycle point.
-\end{myitemize}
+This is the most powerful and flexible way of running cycling jobs in cylc, and
+it is really the only way to run large operational suites that need to continue
+indefinitely. The cycling is configured with general standards-based (ISO 8601)
+{\em recurrence expressions} for any date-time sequence. Multiple cycling
+sequences can be used at once. See Section~\ref{ConfiguringScheduling}.
 
-Dynamic cycling (or simply ``cycling'') in cylc is configured by associating
-workflows with general ISO 8601 recurrence expressions, for any date-time (or
-integer) sequence. Multiple cycling sequences can be used at once. See
-Section~\ref{ConfiguringScheduling} and many other parts of the User Guide.
+\subsubsection{Parameterized Cycling}
 
-Static cycling in cylc can be configured by defining every task instance
-(for every cycle point) individually; or by expanding {\em parameterized tasks}
-(Section~\ref{Using Parameters For Static Cycling}) or Jinja2 loops
-(Section~\ref{Jinja2}) to do the same automatically.
+{\em Parameterized cycling} is alternative cycling mode for workflows that are
+{\em finite in extent and not too large}. Parameter expansion (or Jinja2 loops)
+can be used to generate the entire workflow from start to finish, at start-up.
+Once this is done, there is no sequence of cycle points in the sense defined
+above, and every single instance of a repeated job is represented by a
+different logical task with a different task name.  Functionally this is
+entirely equivalent to defining every task instance separately in the suite
+definition; parameter expansion is just a very efficient way to do that.
+For example, a program \lstinline=model.exe= could be executed by each
+of a series of tasks called
+\lstinline=model-run0, model-run1, model-run2, ...=, where the integer
+parameter values in the task names can be multiplied by an interval
+(e.g.\ \lstinline=P1D= for one day) to get to the correct ``cycle point'' for
+the job.
 
-Dynamic cycling is the most powerful and flexible method, and it is the only
-way to run large operational suites that need to continue indefinitely (plus
-cylc does the difficult date-time arithmetic for you, and it is easier to
-manage and monitor an incrementally evolving non-monolithic workflow).
+This is generally not as flexible or powerful as iterative cycling, and it has
+several significant disadvantages: it is necessarily bounded (i.e.\ it can't go
+on indefinitely), the difficult date-time arithmetic is not done automatically,
+and at run time the full extent of the workflow (every single task instance
+from start to finish) is visible at all times.  However, for smaller suites of
+relatively short duration, it may be useful.  See Section~\ref{Parameterized
+Cycling}.
+
+\subsubsection{Mixed Cycling}
+
+The two cycling approaches can be combined within a single suite.  In a daily
+iterative cycling suite, for instance, long daily model runs could be split
+into multiple shorter steps or chunks by parameterized cycling. (However, you
+should first consider simply using a shorter iterative cycle).
 
 \section{Global (Site, User) Configuration Files}
 \label{SiteAndUserConfiguration}
@@ -4554,7 +4554,8 @@ include:
     \item generating an ensemble of similar model runs
     \item generating chains of tasks to process similar datasets
     \item replicating an entire workflow, or part thereof, over several runs
-    \item splitting a model run into steps or ``chunks`` without dynamic cycling
+    \item splitting a long model run into smaller steps or ``chunks``
+        (parameterized cycling)
 \end{myitemize}
 
 {\em Note that this can be done with Jinja2 loops too (Section~\ref{Jinja2})
@@ -4836,17 +4837,22 @@ expands to:
     get_plane => proc_plane
 \end{lstlisting}
 
-\subsubsection{Using Parameters For Static Cycling}
-\label{Using Parameters For Static Cycling}
+\subsubsection{Parameterized Cycling}
+\label{Parameterized Cycling}
 
-Static and dynamic cycling are contrasted in Section~\ref{Ways Of Cycling}. We
-generally recommend using dynamic cycling in cylc. Nevertheless, parameter
-expansion can be used to efficiently generate static workflows in which a long
-model run (and associated tasks) is split into multiple shorter steps (or
-``chunks''), with each run represented by a different task.
+Parameterized cycling is described and contrasted with iterative cycling in
+Section~\ref{Ways Of Cycling}. In iterative cycling (which is recommended in
+most cases) each instance of a cycled job is run by the same logical task at
+different cycle points, and the scheduler extends the workflow to future cycle
+points as the suite runs, potentially indefinitely.  In parameterized cycling,
+parameter expansion (or Jinja2 loops) is used to generate the entire workflow
+(every task instance from start to finish) at start-up. Each instance of a
+cycled job is run by a different logical task with a different task name, and
+the only ``cycling'' that occurs in the scheduler is during the workflow
+definition phase at start-up.
 
-Here's a dynamic cycling workflow of two-monthly model runs for one year, with
-previous-instance model dependence (e.g.\ for model restart files):
+Here's an iterative cycling workflow of two-monthly model runs for one year,
+with previous-instance model dependence (e.g.\ for model restart files):
 \lstset{language=suiterc}
 \begin{lstlisting}
 [scheduling]
@@ -4855,13 +4861,14 @@ previous-instance model dependence (e.g.\ for model restart files):
     [[dependencies]]
         [[[R1]]]  # Run once, at the initial point.
             graph = "prep => model"
-        [[[P2M]]]  # 2-month intervals between the initial and final points.
+        [[[P2M]]]  # Run at 2-month intervals between the initial and final points.
             graph = "model[-P2M] => model => post_proc & archive"
 [runtime]
     [[model]]
         script = "run-model $CYLC_TASK_CYCLE_POINT"
 \end{lstlisting}
-And here's how to do the same thing statically, with parameterized tasks:
+
+And here's how to do the same thing with parameterized tasks:
 \lstset{language=suiterc}
 \begin{lstlisting}
 [cylc]
@@ -4885,9 +4892,11 @@ run-model $(cylc cyclepoint --offset=$OFFSET $INITIAL_POINT)"""
 
 The two workflows are shown together in Figure~\ref{fig-eg2}. They both achieve
 the same result, and special tasks at the start or end, or anywhere in between,
-can easily be added in both cases. But note that the cycle point arithmetic has
-to be done manually in the static case, and large or long-running suites must
-use dynamic cycling (see Section~\ref{Ways Of Cycling}).
+can easily be added in both cases. But note that parameterized version has
+several disadvantages: it must be finite in extent and not too large; the
+date-time arithmetic has to be done manually; and the full extent of the workflow
+will be visible at all times as the suite runs - because it does not have
+``cycle points''.
 
 \begin{figure}
     \begin{center}
@@ -4896,29 +4905,30 @@ use dynamic cycling (see Section~\ref{Ways Of Cycling}).
     \begin{center}
         \includegraphics[width=10cm]{graphics/png/orig/eg2-dynamic.png}
     \end{center}
-    \caption[Static (top) and dynamic cycling (bottom) versions of the same
-    workflow.]{\scriptsize Static and dynamic cycling versions of
-    the same workflow. The only the first three cycle points is shown in the
-dynamic case - which is not an option in the static case.}
+    \caption[Parameterized (top) and iterative cycling (bottom) versions of the
+        same workflow.]{\scriptsize parameterized and iterative cycling versions
+            of the same workflow. The first three cycle points are shown in the
+            iterative case (the parameterized case does not have ``cycle
+        points'').}
     \label{fig-eg2}
 \end{figure}
 
-Static and dynamic cycling can be combined. Here's a yearly dynamic cycling
-suite with four static chunks in each cycle point:
+Here's a yearly-cycling suite with four parameterized chunks in each cycle
+point:
 \begin{lstlisting}
 [cylc]
     [[parameters]]
         chunk = 1..4
 [scheduling]
     initial cycle point = 2020-01
-    [[dependencies]]<chunk=4>
+    [[dependencies]]
         [[[P1Y]]]
             graph = """model<chunk-1> => model<chunk>
                     model<chunk=4>[-P1Y] => model<chunk=1>"""
 \end{lstlisting}
 Note the inter-cycle trigger that connects the first chunk in each cycle point
 to the last chunk in the previous cycle point. Of course it would be simpler
-to just use 3-monthly dynamic cycling:
+to just use 3-monthly iterative cycling:
 \begin{lstlisting}
 [scheduling]
     initial cycle point = 2020-01
@@ -4927,16 +4937,16 @@ to just use 3-monthly dynamic cycling:
             graph = "model[-P3M] => model"
 \end{lstlisting}
 
-There is at least one genuine use-case for mixed static and dynamic cycling.
-Consider a portable dynamic date-time cycling workflow of model jobs that can
-each take too long to run, or not, depending on the host platform. This could
-be handled without changing the cycling structure of the whole suite, by
-splitting each run into a variable number of shorter steps, and using more
-steps on less powerful hosts.
+A possible use-case for mixed iterative and parameterized cycling: consider a
+portable date-time cycling workflow of model jobs that can each take too long
+to run, or not, depending on the host platform.  This could be handled without
+changing the (iterative) cycling structure of the suite, by splitting the run
+(at each cycle point) into a variable number of shorter steps, using more steps
+on less powerful hosts.
 
 \paragraph{Cycle Point And Parameter Offsets At Start-Up}
 
-In dynamic cycling, cylc ignores anything earlier than the suite initial
+In iterative cycling, cylc ignores anything earlier than the suite initial
 cycle point. So this graph:
 \begin{lstlisting}
     graph = "model[-P1D] => model"
@@ -4958,10 +4968,10 @@ simplifies for \lstinline@chunk=1@ to this:
 
 Note however that the initial cut-off applies to every parameter list, but only
 to cycle point sequences that start at the suite initial cycle point. Therefore
-it may be somewhat easier to use static cycling if you need multiple date-time
-sequences {\em with different start points} in the same suite. We plan to
-allow this sequence-start simplification for any date-time sequence in the
-future, not just at the suite initial point, but it needs to be optional
+it may be somewhat easier to use parameterized cycling if you need multiple
+date-time sequences {\em with different start points} in the same suite. We
+plan to allow this sequence-start simplification for any date-time sequence in
+the future, not just at the suite initial point, but it needs to be optional
 because delayed-start cycling tasks sometimes need to trigger off earlier
 cycling tasks.
 
