@@ -23,7 +23,7 @@ import traceback
 
 import cylc.flags
 from cylc.wallclock import get_current_time_string
-from cylc.suite_logging import LOG, ERR, ERR_IF_DEF
+from cylc.suite_logging import LOG, ERR
 
 
 class CylcSuiteDAOTableColumn(object):
@@ -425,7 +425,7 @@ class CylcSuiteDAO(object):
             for i, stmt_args in enumerate(stmt_args_list):
                 err_log += ("\nstmt_args[%(i)d]=%(stmt_args)s" % {
                     "i": i, "stmt_args": stmt_args})
-            ERR_IF_DEF.warning(err_log)
+            ERR.warning(err_log)
             raise
 
     def select_broadcast_states(self, callback, id_key=None):
