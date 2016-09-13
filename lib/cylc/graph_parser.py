@@ -320,7 +320,7 @@ class GraphParser(object):
                 offset = offset or ''
                 if not trig:
                     trig = self.__class__.TRIG_SUCCEED
-                    this = r'\b%s\b%s' % (name, re.escape(offset))
+                    this = r'\b%s\b%s(?!:)' % (name, re.escape(offset))
                     that = name + offset + trig
                     expr = re.sub(this, that, expr)
                 n_info.append((name, offset, trig))
