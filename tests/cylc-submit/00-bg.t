@@ -92,9 +92,7 @@ else
     poll ! grep -q 'CYLC_BATCH_SYS_JOB_ID=' "${ST_FILE}" 2>/dev/null
     JOB_ID=$(awk -F= '$1 == "CYLC_BATCH_SYS_JOB_ID" {print $2}' "${ST_FILE}")
 fi
-cmp_ok "${TEST_NAME_BASE}.stdout" <<__OUT__
-Job ID: ${JOB_ID}
-__OUT__
+grep_ok "Job ID: ${JOB_ID}" "${TEST_NAME_BASE}.stdout"
 cmp_ok "${TEST_NAME_BASE}.stderr" <'/dev/null'
 #-------------------------------------------------------------------------------
 if [[ -n "${SSH}" ]]; then
