@@ -1,6 +1,0 @@
-2013/09/11 10:39:10 INFO - Initial point: 2013010106
-2013/09/11 10:39:10 INFO - Final point: 2013010200
-2013/09/11 10:39:10 INFO - [foo.2013010106] -triggered off []
-2013/09/11 10:39:14 INFO - [foo.2013010112] -triggered off ['foo.2013010106']
-2013/09/11 10:39:17 INFO - [foo.2013010118] -triggered off ['foo.2013010112']
-2013/09/11 10:39:20 INFO - [foo.2013010200] -triggered off ['foo.2013010118']

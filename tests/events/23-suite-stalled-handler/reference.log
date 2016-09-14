@@ -1,5 +1,0 @@
-2016-05-20T10:22:52Z INFO - Initial point: 1
-2016-05-20T10:22:52Z INFO - Final point: 1
-2016-05-20T10:22:52Z INFO - [foo.1] -triggered off []
-2016-05-20T10:22:55Z INFO - [bar.1] -triggered off ['foo.1']
-2016-05-20T10:23:01Z INFO - [baz.1] -triggered off ['bar.1']

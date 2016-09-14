@@ -66,6 +66,14 @@ script:
     - export CYLC_TEST_DIFF_CMD='diff -I Xlib'
     # Only run the generic tests on Travis CI.
     - export CYLC_TEST_RUN_PLATFORM=false
+    # Echo version number
+    - echo "Version number should be:" $(cylc version --long)
+    - ls $HOME/virtualenv/cylc/admin
+    - $(git describe --abbrev=4 --tags HEAD 2>/dev/null)
+    - echo $CYLC_HOME
+    - admin/get-repo-version
+    - admin/create-version-file
+
     # Run tests with virtual frame buffer for X support.
     - xvfb-run -a cylc test-battery -j 5
 

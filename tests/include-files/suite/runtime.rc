@@ -1,3 +1,0 @@
-[runtime]
-    [[root]]
-        script = "echo Hello World"

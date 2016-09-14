@@ -1,5 +1,0 @@
-2016-01-14T11:55:10Z INFO - Initial point: 1
-2016-01-14T11:55:10Z INFO - Final point: 1
-2016-01-14T11:55:10Z INFO - [fixable.1] -triggered off []
-2016-01-14T11:55:13Z INFO - [fixer.1] -triggered off ['fixable.1']
-2016-01-14T11:55:18Z INFO - [z.1] -triggered off ['fixable.1']

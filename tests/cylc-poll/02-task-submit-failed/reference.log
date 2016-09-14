@@ -1,6 +1,0 @@
-2014-10-22T10:14:15+01 INFO - Initial point: 1
-2014-10-22T10:14:15+01 INFO - Final point: 1
-2014-10-22T10:14:15+01 INFO - [foo.1] -triggered off []
-2014-10-22T10:14:16+01 INFO - [kill_foo_submit.1] -triggered off ['foo.1']
-2014-10-22T10:14:24+01 INFO - [poll_foo.1] -triggered off ['kill_foo_submit.1']
-2014-10-22T10:14:32+01 INFO - [stop.1] -triggered off ['foo.1']

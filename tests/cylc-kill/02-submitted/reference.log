@@ -1,8 +1,0 @@
-2015-08-24T15:20:15Z INFO - Initial point: 1
-2015-08-24T15:20:15Z INFO - Final point: 1
-2015-08-24T15:20:16Z INFO - [killable-1.1] -triggered off []
-2015-08-24T15:20:16Z INFO - [killable-2.1] -triggered off []
-2015-08-24T15:20:16Z INFO - [killable-3.1] -triggered off []
-2015-08-24T15:20:16Z INFO - [sleeper.1] -triggered off []
-2015-08-24T15:20:19Z INFO - [killer.1] -triggered off ['killable-1.1', 'killable-2.1', 'killable-3.1', 'sleeper.1']
-2015-08-24T15:20:19Z INFO - [stopper.1] -triggered off ['killable-1.1', 'killable-2.1', 'killable-3.1', 'sleeper.1']

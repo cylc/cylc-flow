@@ -1,5 +1,0 @@
-2014/03/21 11:39:23 INFO - Initial point: 2010080800
-2014/03/21 11:39:23 INFO - Final point: 2010080900
-2014/03/21 11:39:24 INFO - [bar.2010080800] -triggered off ['foo.2010080800']
-2014/03/21 11:39:24 INFO - [foo.2010080900] -triggered off ['foo.2010080800']
-2014/03/21 11:39:28 INFO - [bar.2010080900] -triggered off ['foo.2010080900']

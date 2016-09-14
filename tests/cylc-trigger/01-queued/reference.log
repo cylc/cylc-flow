@@ -1,4 +1,0 @@
-2014-10-14T16:46:26+01 INFO - Initial point: 1
-2014-10-14T16:46:26+01 INFO - Final point: 1
-2014-10-14T16:46:26+01 INFO - [foo.1] -triggered off []
-2014-10-14T16:46:39+01 INFO - [bar.1] -triggered off ['foo.1']

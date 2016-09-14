@@ -38,4 +38,4 @@ case "$VN" in
         fi
 esac
 # echo to stdout
-echo "$VN"
+printf "6.10.2-272-gf73691-dirty"\\n

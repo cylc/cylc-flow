@@ -1,5 +1,0 @@
-2013/08/19 15:51:11 INFO - Initial point: 2010010100
-2013/08/19 15:51:11 INFO - Final point: 2010010500
-2013/08/19 15:51:11 INFO - [a.2010010100] -triggered off []
-2013/08/19 15:51:14 INFO - [stopper.2010010100] -triggered off ['a.2010010100']
-2013/08/19 15:51:17 INFO - [c.2010010100] -triggered off ['stopper.2010010100']

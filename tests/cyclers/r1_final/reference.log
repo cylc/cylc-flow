@@ -1,4 +1,0 @@
-2014/03/31 10:14:53 INFO - Initial point: 20140101
-2014/03/31 10:14:53 INFO - Final point: 20140102T12
-2014/03/31 10:14:53 INFO - [foo.20140102T1200Z] -triggered off []
-2014/03/31 10:15:06 INFO - [final_foo.20140102T1200Z] -triggered off ['foo.20140102T1200Z']
