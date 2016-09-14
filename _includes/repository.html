@@ -3,8 +3,8 @@
     {% assign latest_release = site.github.releases | first %}
     {% assign pubdate = latest_release.published_at %}
     <p>
-    <a class="button" href="{{ site.github.releases_url }}/tag/{{ latest_release.tag_name }}">
-        Download {{latest_release.name}}<br />
+    <a class="button" href="{{ site.github.releases_url }}/latest">
+        DOWNLOAD {{latest_release.name}}<br />
         <small>Released <time datetime="{{ pubdate }}">{{ pubdate }}</time></small>
     </a>
     </p>
