@@ -25,7 +25,7 @@ from uuid import uuid4
 
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 import cylc.flags
-from cylc.network import NO_PASSPHRASE, ConnectionDeniedError
+from cylc.network import NO_PASSPHRASE, ConnectionError
 from cylc.network.https.suite_state_client import SuiteStillInitialisingError
 from cylc.network.https.suite_identifier_client import (
     SuiteIdClientAnon, SuiteIdClient)
@@ -59,10 +59,10 @@ def scan(host=None, db=None, timeout=None):
         host_for_anon = get_host_ip_by_name(host)  # IP reduces DNS traffic.
     for port in range(base_port, last_port):
         client = SuiteIdClientAnon(None, host=host_for_anon, port=port,
-                                   my_uuid=my_uuid)
+                                   my_uuid=my_uuid, timeout=timeout)
         try:
             result = (port, client.identify())
-        except ConnectionDeniedError as exc:
+        except ConnectionError as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
             continue

@@ -27,7 +27,8 @@ warnings.filterwarnings("ignore", "Certificate has no `subjectAltName`")
 
 from cylc.exceptions import PortFileError
 import cylc.flags
-from cylc.network import ConnectionDeniedError, NO_PASSPHRASE, handle_proxies
+from cylc.network import (
+    ConnectionError, ConnectionDeniedError, NO_PASSPHRASE, handle_proxies)
 from cylc.owner import is_remote_user, USER
 from cylc.registration import RegistrationDB, PassphraseError
 from cylc.suite_host import get_hostname, is_remote_host
@@ -129,11 +130,15 @@ class BaseCommsClient(object):
                 sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
                 return self.get_data_from_url_with_requests(
                     url.replace("https:", "http:", 1), json_data)
-            raise ConnectionDeniedError(url, self.prog_name,
-                                        self.ACCESS_DESCRIPTION)
-        except requests.exceptions.ConnectionError:
-            raise ConnectionDeniedError(url, self.prog_name,
-                                        self.ACCESS_DESCRIPTION)
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()
+            raise ConnectionError(url, exc)
+        except Exception as exc:
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()
+            raise ConnectionError(url, exc)
         if ret.status_code == 401:
             raise ConnectionDeniedError(url, self.prog_name,
                                         self.ACCESS_DESCRIPTION)
@@ -144,7 +149,13 @@ class BaseCommsClient(object):
                 sys.stderr.write(exception_text)
             else:
                 sys.stderr.write(ret.text)
-        ret.raise_for_status()
+        try:
+            ret.raise_for_status()
+        except Exception as exc:
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()
+            raise ConnectionError(url, exc)
         try:
             return ret.json()
         except ValueError:
@@ -189,8 +200,15 @@ class BaseCommsClient(object):
                 sys.stderr.write(WARNING_NO_HTTPS_SUPPORT.format(exc))
                 return self.get_data_from_url_with_urllib2(
                     url.replace("https:", "http:", 1), orig_json_data)
-            raise ConnectionDeniedError(url, self.prog_name,
-                                        self.ACCESS_DESCRIPTION)
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()
+            raise ConnectionError(url, exc)
+        except Exception as exc:
+            if cylc.flags.debug:
+                import traceback
+                traceback.print_exc()
+            raise ConnectionError(url, exc)
 
         if response.getcode() == 401:
             raise ConnectionDeniedError(url, self.prog_name,
@@ -203,7 +221,8 @@ class BaseCommsClient(object):
                 sys.stderr.write(exception_text)
             else:
                 sys.stderr.write(response_text)
-            raise Exception("%s HTTP return code" % response.getcode())
+            raise ConnectionError(url,
+                                  "%s HTTP return code" % response.getcode())
         try:
             return json.loads(response_text)
         except ValueError:

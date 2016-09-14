@@ -50,7 +50,17 @@ CONNECT_DENIED_PRIV_TMPL = (
 NO_PASSPHRASE = 'the quick brown fox'
 
 
-class ConnectionDeniedError(Exception):
+class ConnectionError(Exception):
+
+    """An error raised when the client cannot connect."""
+
+    MESSAGE = "Cannot connect: %s: %s"
+
+    def __str__(self):
+        return self.MESSAGE % (self.args[0], self.args[1])
+
+
+class ConnectionDeniedError(ConnectionError):
 
     """An error raised when the client is not permitted to connect."""
 
