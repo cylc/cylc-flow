@@ -7,41 +7,41 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-06-23 08:28:00"> 
+<meta name="date" content="2016-09-14 12:22:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 4796--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5304--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse11.html" >next</a>] [<a 
 href="cug-htmlse9.html" >prev</a>] [<a 
 href="cug-htmlse9.html#tailcug-htmlse9.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse10.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse10.html" >up</a>] </p></div>
-<!--l. 4796--><p class="indent" >    <h3 id="10" class="sectionHead"><span class="titlemark"> <a href="#10">10</a>  <a 
- id="x11-13400010"></a>Task Implementation </span></h3> <div class="sectionTOCS">
+<!--l. 5304--><p class="indent" >    <h3 id="10" class="sectionHead"><span class="titlemark"> <a href="#10">10</a>  <a 
+ id="x11-15400010"></a>Task Implementation </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >10.1 <a 
-href="#x11-13500010.1">Inlined Tasks</a></span>
+href="#x11-15500010.1">Inlined Tasks</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.2 <a 
-href="#x11-13600010.2">Returning Proper Error Status</a></span>
+href="#x11-15600010.2">Returning Proper Error Status</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.3 <a 
-href="#x11-13700010.3">Other Task Messages</a></span>
+href="#x11-15700010.3">Other Task Messages</a></span>
 <br />   &#x00A0;<span class="subsectionToc" >10.4 <a 
-href="#x11-13800010.4">Avoid Detaching Processes</a></span>
+href="#x11-15800010.4">Avoid Detaching Processes</a></span>
    </div>
-<!--l. 4799--><p class="indent" >   Existing scripts or executables can be used as cylc tasks without any modification so long as they
+<!--l. 5307--><p class="indent" >   Existing scripts or executables can be used as cylc tasks without any modification so long as they
 return standard exit status on success or failure, and do not internally spawn detaching processes
 (see&#x00A0;<a 
-href="#x11-13800010.4">10.4<!--tex4ht:ref: DetachingJobs --></a>).
-<!--l. 4804--><p class="noindent" >
-<!--l. 4804--><p class="indent" >    <h4 id="10.1" class="subsectionHead"> <span class="titlemark"> <a href="#10.1"> 10.1</a>  <a 
- id="x11-13500010.1"></a>Inlined Tasks </span></h4>
-<!--l. 4806--><p class="indent" >   Simple tasks can be entirely implemented within the suite.rc file, as the task <span 
+href="#x11-15800010.4">10.4<!--tex4ht:ref: DetachingJobs --></a>).
+<!--l. 5312--><p class="noindent" >
+<!--l. 5312--><p class="indent" >    <h4 id="10.1" class="subsectionHead"> <span class="titlemark"> <a href="#10.1"> 10.1</a>  <a 
+ id="x11-15500010.1"></a>Inlined Tasks </span></h4>
+<!--l. 5314--><p class="indent" >   Simple tasks can be entirely implemented within the suite.rc file, as the task <span 
 class="cmti-10">script </span>items can be multi-line
 strings.
-<!--l. 4809--><p class="noindent" >
-<!--l. 4809--><p class="indent" >    <h4 id="10.2" class="subsectionHead"> <span class="titlemark"> <a href="#10.2"> 10.2</a>  <a 
- id="x11-13600010.2"></a>Returning Proper Error Status </span></h4>
-<!--l. 4811--><p class="indent" >   Tasks should abort with non-zero exit status if a fatal error occurs (this is just good coding practice anyway).
+<!--l. 5317--><p class="noindent" >
+<!--l. 5317--><p class="indent" >    <h4 id="10.2" class="subsectionHead"> <span class="titlemark"> <a href="#10.2"> 10.2</a>  <a 
+ id="x11-15600010.2"></a>Returning Proper Error Status </span></h4>
+<!--l. 5319--><p class="indent" >   Tasks should abort with non-zero exit status if a fatal error occurs (this is just good coding practice anyway).
 This allows cylc&#8217;s task job scripts to automatically trap errors and send <span class="lstinline"><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -57,16 +57,16 @@ class="pcrr7t-">set</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span></span> option can be used in lieu of explicit error checks for every command:
-<!--l. 4818-->
-   <div class="lstlisting" id="listing-173"><span class="label"><a 
- id="x11-136001r1"></a></span><span 
+<!--l. 5326-->
+   <div class="lstlisting" id="listing-214"><span class="label"><a 
+ id="x11-156001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136002r2"></a></span><span 
+ id="x11-156002r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -81,7 +81,7 @@ class="pcrro7t-">on</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">error</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-136003r3"></a></span><span 
+ id="x11-156003r3"></a></span><span 
 class="pcrr7t-">mkdir</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">/</span><span 
@@ -109,19 +109,19 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">status</span>
    
    </div>
-<!--l. 4825--><p class="noindent" >
-<!--l. 4825--><p class="indent" >    <h4 id="10.3" class="subsectionHead"> <span class="titlemark"> <a href="#10.3"> 10.3</a>  <a 
- id="x11-13700010.3"></a>Other Task Messages </span></h4>
-<!--l. 4827--><p class="indent" >   General (non-output) messages can also be sent to report progress, warnings, and so on, e.g.:  <!--l. 4830-->
-   <div class="lstlisting" id="listing-174"><span class="label"><a 
- id="x11-137001r1"></a></span><span 
+<!--l. 5333--><p class="noindent" >
+<!--l. 5333--><p class="indent" >    <h4 id="10.3" class="subsectionHead"> <span class="titlemark"> <a href="#10.3"> 10.3</a>  <a 
+ id="x11-15700010.3"></a>Other Task Messages </span></h4>
+<!--l. 5335--><p class="indent" >   General (non-output) messages can also be sent to report progress, warnings, and so on, e.g.:  <!--l. 5338-->
+   <div class="lstlisting" id="listing-215"><span class="label"><a 
+ id="x11-157001r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137002r2"></a></span><span 
+ id="x11-157002r2"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">a</span><span 
@@ -146,7 +146,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">suite</span><span 
 class="pcrro7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137003r3"></a></span><span 
+ id="x11-157003r3"></a></span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">task</span><span 
@@ -171,7 +171,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">here</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137004r4"></a></span><span 
+ id="x11-157004r4"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">information</span><span 
@@ -194,7 +194,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">suite</span><span 
 class="pcrro7t-">):</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137005r5"></a></span><span 
+ id="x11-157005r5"></a></span><span 
 class="pcrr7t-">cylc</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">task</span><span 
@@ -212,16 +212,16 @@ class="pcrr7t-">foo</span><span
 class="pcrr7t-">"</span>
    
    </div>
-<!--l. 4838--><p class="indent" >   Explanatory messages can be sent before aborting on error:  <!--l. 4840-->
-   <div class="lstlisting" id="listing-175"><span class="label"><a 
- id="x11-137006r1"></a></span><span 
+<!--l. 5346--><p class="indent" >   Explanatory messages can be sent before aborting on error:  <!--l. 5348-->
+   <div class="lstlisting" id="listing-216"><span class="label"><a 
+ id="x11-157006r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137007r2"></a></span><span 
+ id="x11-157007r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
@@ -236,7 +236,7 @@ class="pcrro7t-">on</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">error</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137008r3"></a></span><span 
+ id="x11-157008r3"></a></span><span 
 class="pcrb7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">!</span><span 
@@ -251,7 +251,7 @@ class="pcrr7t-">;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrb7t-">then</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137009r4"></a></span><span 
+ id="x11-157009r4"></a></span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">&#x00A0;</span><span 
@@ -284,7 +284,7 @@ class="pcrro7t-">-</span><span
 class="pcrro7t-">e</span><span 
 class="pcrro7t-">')</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137010r5"></a></span><span 
+ id="x11-157010r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -315,7 +315,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">dir</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137011r6"></a></span><span 
+ id="x11-157011r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -350,29 +350,29 @@ class="pcrro7t-">failed</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">message</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137012r7"></a></span><span 
+ id="x11-157012r7"></a></span><span 
 class="pcrb7t-">fi</span>
    
                                                                                          
 
                                                                                          
    </div>
-<!--l. 4849--><p class="indent" >   Or equivalently, with different syntax:  <!--l. 4851-->
-   <div class="lstlisting" id="listing-176"><span class="label"><a 
- id="x11-137013r1"></a></span><span 
+<!--l. 5357--><p class="indent" >   Or equivalently, with different syntax:  <!--l. 5359-->
+   <div class="lstlisting" id="listing-217"><span class="label"><a 
+ id="x11-157013r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137014r2"></a></span><span 
+ id="x11-157014r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137015r3"></a></span><span 
+ id="x11-157015r3"></a></span><span 
 class="pcrr7t-">mkdir</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">/</span><span 
@@ -399,7 +399,7 @@ class="pcrro7t-">OR</span><span
 class="pcrro7t-">&#x00A0;</span><span 
 class="pcrro7t-">operator</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137016r4"></a></span><span 
+ id="x11-157016r4"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -430,7 +430,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">dir</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137017r5"></a></span><span 
+ id="x11-157017r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -439,26 +439,26 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137018r6"></a></span><span 
+ id="x11-157018r6"></a></span><span 
 class="pcrr7t-">}</span>
    
    </div>
-<!--l. 4859--><p class="indent" >   But not this:  <!--l. 4861-->
-   <div class="lstlisting" id="listing-177"><span class="label"><a 
- id="x11-137019r1"></a></span><span 
+<!--l. 5367--><p class="indent" >   But not this:  <!--l. 5369-->
+   <div class="lstlisting" id="listing-218"><span class="label"><a 
+ id="x11-157019r1"></a></span><span 
 class="pcrro7t-">#</span><span 
 class="pcrro7t-">!/</span><span 
 class="pcrro7t-">bin</span><span 
 class="pcrro7t-">/</span><span 
 class="pcrro7t-">bash</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137020r2"></a></span><span 
+ id="x11-157020r2"></a></span><span 
 class="pcrb7t-">set</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">e</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137021r3"></a></span><span 
+ id="x11-157021r3"></a></span><span 
 class="pcrr7t-">mkdir</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">/</span><span 
@@ -480,7 +480,7 @@ class="pcrro7t-">-</span><span
 class="pcrro7t-">e</span><span 
 class="pcrro7t-">'</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137022r4"></a></span><span 
+ id="x11-157022r4"></a></span><span 
 class="pcrb7t-">if</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">[[</span><span 
@@ -512,7 +512,7 @@ class="pcrro7t-">&#x00A0;</span><span
 class="pcrro7t-">reached</span><span 
 class="pcrro7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137023r5"></a></span><span 
+ id="x11-157023r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -543,7 +543,7 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">dir</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137024r6"></a></span><span 
+ id="x11-157024r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -552,16 +552,16 @@ class="pcrb7t-">exit</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">1</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-137025r7"></a></span><span 
+ id="x11-157025r7"></a></span><span 
 class="pcrb7t-">fi</span>
    
    </div>
-<!--l. 4870--><p class="indent" >   If critical errors are not reported in this way task failures will still be detected and logged by the suite daemon,
+<!--l. 5378--><p class="indent" >   If critical errors are not reported in this way task failures will still be detected and logged by the suite daemon,
 but you may have to examine task logs to determine what the problem was.
-<!--l. 4874--><p class="noindent" >
-<!--l. 4874--><p class="indent" >    <h4 id="10.4" class="subsectionHead"> <span class="titlemark"> <a href="#10.4"> 10.4</a>  <a 
- id="x11-13800010.4"></a>Avoid Detaching Processes </span></h4>
-<!--l. 4878--><p class="indent" >   If a task script starts background sub-processes and does not wait on them, or internally submits jobs to a batch
+<!--l. 5382--><p class="noindent" >
+<!--l. 5382--><p class="indent" >    <h4 id="10.4" class="subsectionHead"> <span class="titlemark"> <a href="#10.4"> 10.4</a>  <a 
+ id="x11-15800010.4"></a>Avoid Detaching Processes </span></h4>
+<!--l. 5386--><p class="indent" >   If a task script starts background sub-processes and does not wait on them, or internally submits jobs to a batch
 scheduler and then exits immediately, the detached processes will not be visible to cylc and the task will
 appear to finish when the top-level script finishes. You will need to modify scripts like this to make
 them execute all sub-processes in the foreground (or use the shell <span class="lstinline"><span 
@@ -587,16 +587,16 @@ class="pcrr7t-">block</span><span
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">true</span></span> for
 PBS).
-<!--l. 4889--><p class="indent" >   If this is not possible - perhaps you don&#8217;t have control over the script or can&#8217;t work out how to fix it - one
+<!--l. 5397--><p class="indent" >   If this is not possible - perhaps you don&#8217;t have control over the script or can&#8217;t work out how to fix it - one
 alternative approach is to use another task to repeatedly poll for the results of the detached processes:
-<!--l. 4892-->
-   <div class="lstlisting" id="listing-178"><span class="label"><a 
- id="x11-138001r1"></a></span><span 
+<!--l. 5400-->
+   <div class="lstlisting" id="listing-219"><span class="label"><a 
+ id="x11-158001r1"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">scheduling</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138002r2"></a></span><span 
+ id="x11-158002r2"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -605,7 +605,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">dependencies</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138003r3"></a></span><span 
+ id="x11-158003r3"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -632,12 +632,12 @@ class="pcrr7t-">-</span><span
 class="pcrr7t-">proc</span><span 
 class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138004r4"></a></span><span 
+ id="x11-158004r4"></a></span><span 
 class="pcrr7t-">[</span><span 
 class="pcrr7t-">runtime</span><span 
 class="pcrr7t-">]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138005r5"></a></span><span 
+ id="x11-158005r5"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -646,7 +646,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138006r6"></a></span><span 
+ id="x11-158006r6"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -685,7 +685,7 @@ class="pcrr7t-">.</span><span
 class="pcrr7t-">exe</span><span 
 class="pcrr7t-">:</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138007r7"></a></span><span 
+ id="x11-158007r7"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -698,13 +698,15 @@ class="pcrr7t-">script</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">=</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">"</span><span 
 class="pcrr7t-">run</span><span 
 class="pcrr7t-">-</span><span 
 class="pcrr7t-">model</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">sh</span><span 
+class="pcrr7t-">"</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138008r8"></a></span><span 
+ id="x11-158008r8"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -713,7 +715,7 @@ class="pcrr7t-">[[</span><span
 class="pcrr7t-">checker</span><span 
 class="pcrr7t-">]]</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138009r9"></a></span><span 
+ id="x11-158009r9"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -756,7 +758,7 @@ class="pcrr7t-">model</span><span
 class="pcrr7t-">'</span><span 
 class="pcrr7t-">s</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138010r10"></a></span><span 
+ id="x11-158010r10"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -784,7 +786,7 @@ class="pcrr7t-">&#x00A0;</span><span
 class="pcrr7t-">yet</span><span 
 class="pcrr7t-">.</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138011r11"></a></span><span 
+ id="x11-158011r11"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -805,7 +807,7 @@ class="pcrr7t-">&#x22C6;</span><span
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">PT1M</span><span 
 class="pcrr7t-">&#x00A0;</span><br /><span class="label"><a 
- id="x11-138012r12"></a></span><span 
+ id="x11-158012r12"></a></span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
 class="pcrr7t-">&#x00A0;</span><span 
@@ -846,12 +848,12 @@ class="pcrr7t-">"</span>
                                                                                          
 
                                                                                          
-   <!--l. 4907--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 5415--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse11.html" >next</a>] [<a 
 href="cug-htmlse9.html" >prev</a>] [<a 
 href="cug-htmlse9.html#tailcug-htmlse9.html" >prev-tail</a>] [<a 
 href="cug-htmlse10.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse10.html" >up</a>] </p></div>
-<!--l. 4907--><p class="indent" >   <a 
+<!--l. 5415--><p class="indent" >   <a 
  id="tailcug-htmlse10.html"></a>   
 </body></html> 

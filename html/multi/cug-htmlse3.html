@@ -7,17 +7,17 @@
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-06-23 08:28:00"> 
+<meta name="date" content="2016-09-14 12:22:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 380--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 381--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse3.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 380--><p class="indent" >    <h3 id="3" class="sectionHead"><span class="titlemark"> <a href="#3">3</a>  <a 
+<!--l. 381--><p class="indent" >    <h3 id="3" class="sectionHead"><span class="titlemark"> <a href="#3">3</a>  <a 
  id="x4-90003"></a>Required Software </span></h3> <div class="sectionTOCS">
    &#x00A0;<span class="subsectionToc" >3.1 <a 
 href="#x4-100003.1">Known Version Compatibility Issues</a></span>
@@ -26,7 +26,7 @@ href="#x4-120003.2">Other Software Used Internally By Cylc</a></span>
    </div>
      <ul class="itemize1">
      <li class="itemize"><span 
-class="cmbx-10">Cylc</span>, the version associated with this document is: 6.10.2 . <br 
+class="cmbx-10">Cylc</span>, the version associated with this document is: 6.11.0 . <br 
 class="newline" />Cylc can be downloaded from from GitHub: <a 
 href="https://cylc.github.com/cylc" class="url" ><span 
 class="pcrr7t-">https://cylc.github.com/cylc</span></a>
@@ -48,7 +48,7 @@ class="cmbx-10">sqlite (a server-less, zero-configuration, SQL database engine</
 class="newline" /><a 
 href="http://sqlite.org" class="url" ><span 
 class="pcrr7t-">http://sqlite.org</span></a></li></ul>
-<!--l. 397--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
+<!--l. 398--><p class="indent" >   The following packages are technically optional as you can construct and run cylc suites without dependency
 graphing, the gcylc GUI, or template processing <span 
 class="cmti-10">but this is not recommended, and without Jinja2 you will not be able</span>
 <span 
@@ -78,7 +78,7 @@ class="cmbx-10">Jinja2</span>, a template processor for Python (latest tested: 2
 class="newline" /><a 
 href="http://jinja.pocoo.org/docs" class="url" ><span 
 class="pcrr7t-">http://jinja.pocoo.org/docs</span></a></li></ul>
-<!--l. 418--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
+<!--l. 419--><p class="indent" >   If you use a binary package manager to install graphviz you may also need a couple of <span 
 class="cmti-10">devel </span>packages for the
 pygraphviz build:
      <ul class="itemize1">
@@ -88,7 +88,7 @@ pygraphviz build:
                                                                                          
      </li>
      <li class="itemize">graphviz-devel</li></ul>
-<!--l. 426--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
+<!--l. 427--><p class="indent" >   This user guide can be generated from the <span class="LATEX">L<span class="A">A</span><span class="TEX">T<span 
 class="E">E</span>X</span></span>source by running <span class="lstinline"><span 
 class="pcrr7t-">make</span></span> in the top level cylc directory after
 download. The following <span class="TEX">T<span 
@@ -102,19 +102,19 @@ OS or distribution-dependent):
      <li class="itemize">texlive-framed
      </li>
      <li class="itemize">texlive-preprint (for fullpage.sty, formerly in tetex)</li></ul>
-<!--l. 437--><p class="noindent" >And for HTML versions of the User Guide:
+<!--l. 438--><p class="noindent" >And for HTML versions of the User Guide:
      <ul class="itemize1">
      <li class="itemize">texlive-tex4ht
      </li>
      <li class="itemize">ImageMagick (for image scaling)</li></ul>
-<!--l. 444--><p class="indent" >   Note: Older versions of cylc require Pyro-3 (Python Remote Objects). Current version of cylc includes a
+<!--l. 445--><p class="indent" >   Note: Older versions of cylc require Pyro-3 (Python Remote Objects). Current version of cylc includes a
 modified version of Pyro 3.16 in its distribution. Pyro is used for network communication between
 server processes (cylc suites) and client programs (running tasks, the gcylc GUI, user commands).
 <br 
 class="newline" /><a 
 href="https://pypi.python.org/pypi/Pyro/" class="url" ><span 
 class="pcrr7t-">https://pypi.python.org/pypi/Pyro/</span></a>
-<!--l. 450--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
+<!--l. 451--><p class="indent" >   Finally, cylc makes heavy use of Python <span 
 class="cmti-10">ordered dictionary </span>data structures. Significant speedup in
 parsing large suites can be had by installing the fast C-coded <span class="lstinline"><span 
 class="pcrr7t-">ordereddict</span></span> module by Anthon van der
@@ -125,7 +125,7 @@ class="cmbx-10">ordereddict </span>(latest tested 0.4.5) <br
 class="newline" /><a 
 href="https://anthon.home.xs4all.nl/Python/ordereddict/" class="url" ><span 
 class="pcrr7t-">https://anthon.home.xs4all.nl/Python/ordereddict/</span></a></li></ul>
-<!--l. 458--><p class="noindent" ><span 
+<!--l. 459--><p class="noindent" ><span 
 class="cmti-10">This module is currently included with cylc </span>under <span class="lstinline"><span 
 class="pcrr8c-">$</span><span 
 class="pcrr7t-">CYLC_DIR</span><span 
@@ -133,14 +133,14 @@ class="pcrr7t-">/</span><span
 class="pcrr7t-">ext</span></span>, and is built by the top level cylc Makefile. If you
 install the resulting library appropriately cylc will automatically use it in place of a slower Python implementation
 of the ordered dictionary structure.
-<!--l. 464--><p class="noindent" >
-<!--l. 464--><p class="indent" >    <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
+<!--l. 465--><p class="noindent" >
+<!--l. 465--><p class="indent" >    <h4 id="3.1" class="subsectionHead"> <span class="titlemark"> <a href="#3.1"> 3.1</a>  <a 
  id="x4-100003.1"></a>Known Version Compatibility Issues </span></h4>
-<!--l. 466--><p class="indent" >   Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
-<!--l. 468--><p class="noindent" >
-<!--l. 468--><p class="indent" >    <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
+<!--l. 467--><p class="indent" >   Cylc should run &#8220;out of the box&#8221; on recent Linux distributions.
+<!--l. 469--><p class="noindent" >
+<!--l. 469--><p class="indent" >    <h4 id="3.1.1" class="subsubsectionHead"><span class="titlemark"> <a href="#3.1.1"> 3.1.1</a>  <a 
  id="x4-110003.1.1"></a>Apple Mac OSX </span></h4>
-<!--l. 470--><p class="indent" >   It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
+<!--l. 471--><p class="indent" >   It has been reported that cylc runs fine on OSX 10.6 SnowLeopard, but on OSX 10.7 Lion there is an issue with
 constructing proper FQDNs (Fully Qualified Domain Names) that requires a change to the DNS service. Here&#8217;s how
 to solve the problem:
                                                                                          
@@ -169,7 +169,7 @@ class="pcrr7t-">&#x003E;-</span><span
 class="pcrr7t-">AlwaysAppendSearchDomains</span><span 
 class="pcrr7t-">&#x003C;/</span><span 
 class="pcrr7t-">string</span><span 
-class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 478-->
+class="pcrr7t-">&#x003E;</span></span> after line 16: <!--l. 479-->
      <div class="lstlisting" id="listing-1"><span class="label"><a 
  id="x4-11001r1"></a></span><span 
 class="pcrr7t-">&#x003C;</span><span 
@@ -243,7 +243,7 @@ class="pcrr7t-">&#x003E;</span>
      
      </div>
      </li>
-     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 487-->
+     <li class="itemize">Now unload and reload the mDNSResponder service: <!--l. 488-->
      <div class="lstlisting" id="listing-2"><span class="label"><a 
  id="x4-11007r1"></a></span><span 
 class="pcrr7t-">%</span><span 
@@ -303,10 +303,10 @@ class="pcrr7t-">plist</span>
      
      </div>
      </li></ul>
-<!--l. 496--><p class="noindent" >
-<!--l. 496--><p class="indent" >    <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
+<!--l. 497--><p class="noindent" >
+<!--l. 497--><p class="indent" >    <h4 id="3.2" class="subsectionHead"> <span class="titlemark"> <a href="#3.2"> 3.2</a>  <a 
  id="x4-120003.2"></a>Other Software Used Internally By Cylc </span></h4>
-<!--l. 498--><p class="indent" >   Cylc has incorporated a custom-modified version the <span 
+<!--l. 499--><p class="indent" >   Cylc has incorporated a custom-modified version the <span 
 class="cmti-10">xdot </span>graph viewer (<a 
 href="https://github.com/jrfonseca/xdot.py" class="url" ><span 
 class="pcrr7t-">https://github.com/jrfonseca/xdot.py</span></a>,
@@ -314,12 +314,12 @@ LGPL license).
                                                                                          
 
                                                                                          
-   <!--l. 502--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 503--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse4.html" >next</a>] [<a 
 href="cug-htmlse2.html" >prev</a>] [<a 
 href="cug-htmlse2.html#tailcug-htmlse2.html" >prev-tail</a>] [<a 
 href="cug-htmlse3.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse3.html" >up</a>] </p></div>
-<!--l. 502--><p class="indent" >   <a 
+<!--l. 503--><p class="indent" >   <a 
  id="tailcug-htmlse3.html"></a>   
 </body></html> 

@@ -1,55 +1,143 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>On The Meaning Of Cycle  and Cycle Point In Cylc</title> 
+<head><title>Cycling And Cycle Points In Cylc</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- html,fn-in,2,next --> 
 <meta name="src" content="cug-html.tex"> 
-<meta name="date" content="2016-06-23 08:28:00"> 
+<meta name="date" content="2016-09-14 12:22:00"> 
 <link rel="stylesheet" type="text/css" href="cug-html.css"> 
 </head><body 
 >
-   <!--l. 671--><div class="crosslinks"><p class="noindent">[<a 
+   <!--l. 672--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse6.html" >next</a>] [<a 
 href="cug-htmlse4.html" >prev</a>] [<a 
 href="cug-htmlse4.html#tailcug-htmlse4.html" >prev-tail</a>] [<a 
 href="#tailcug-htmlse5.html">tail</a>] [<a 
 href="cug-html.html#cug-htmlse5.html" >up</a>] </p></div>
-<!--l. 671--><p class="indent" >    <h3 id="5" class="sectionHead"><span class="titlemark"> <a href="#5">5</a>  <a 
- id="x6-220005"></a>On The Meaning Of <span 
-class="cmti-10">Cycle  </span>and <span 
-class="cmti-10">Cycle Point </span>In Cylc </span></h3> <div class="sectionTOCS">
+<!--l. 672--><p class="indent" >    <h3 id="5" class="sectionHead"><span class="titlemark"> <a href="#5">5</a>  <a 
+ id="x6-220005"></a><span 
+class="cmti-10">Cycling </span>And <span 
+class="cmti-10">Cycle Points </span>In Cylc </span></h3> <div class="sectionTOCS">
+   &#x00A0;<span class="subsectionToc" >5.1 <a 
+href="#x6-230005.1">Cycle Points</a></span>
+<br />   &#x00A0;<span class="subsectionToc" >5.2 <a 
+href="#x6-240005.2">Ways Of Cycling</a></span>
    </div>
-<!--l. 673--><p class="indent" >   The problem with the word &#8220;cycle&#8221; is that it is often used to refer to a series of times (e.g. &#8220;an hourly cycle&#8221;) as
-well as a particular time (e.g. &#8220;current cycle&#8221; or &#8220;current cycle point&#8221;). Here, we use &#8220;cycle point&#8221; to refer to a
-particular (usually date-time) item. If a task has an hourly date-time cycle that starts at 2014-01-01T00 and ends at
-2014-01-02T00, the first &#8220;cycle point&#8221; will be 2014-01-01T01, the second &#8220;cycle point&#8221; will be 2014-01-01T02,
-etc.
-<!--l. 681--><p class="indent" >   You may be accustomed to the idea that a forecasting suite has a &#8220;current cycle&#8221; (our nomenclature: &#8220;current
-cycle point&#8221;), which is typically the analysis time or nominal start time of the main forecast model(s) in the suite,
-and that the whole suite advances to the next forecast cycle point when all tasks in the current cycle point have
-finished (or even when a particular wall clock time is reached, in real time operation). As explained in the
-Introduction, this is not how cylc works.
-<!--l. 689--><p class="indent" >   Cylc suites advance by means of individual tasks with private cycle points (times) independently spawning
-successors at the next valid cycle point for the task, not by incrementing a suite-wide forecast cycle point. Each task
-will be submitted when its own prerequisites are satisfied, regardless of other tasks with other cycle points running,
-or not, at the time. It may still be convenient at times, however, to refer to the &#8220;current cycle point&#8221;, the &#8220;previous
-cycle point&#8221;, or the &#8220;next cycle point&#8221; and so forth, with reference to a particular task, or in the sense of all tasks
-that &#8220;belong to&#8221; a particular forecast cycle point. But keep in mind that the members of these groups
-may not be present simultaneously in the running suite - i.e.&#x00A0;different tasks may pass through the
-&#8220;current cycle point&#8221; (etc.) at different times as the suite evolves, particularly in delayed (catch up)
-operation.
+<!--l. 674--><p class="indent" >   There are several reasons why an atmospheric model (say) may need to be cycled:
+     <ul class="itemize1">
+     <li class="itemize">In real time forecasting it may need to wait on new real time data before each run.
+     </li>
+     <li class="itemize">Job run length limits on compute hosts may require long jobs to be split into multiple shorter jobs.
+     (This also makes incremental post-processing easier.)</li></ul>
+<!--l. 682--><p class="noindent" >This section defines the terminology associated with cycling, and describes the two ways to make a cylc workflow that
+cycles a model and associated jobs.
+<!--l. 685--><p class="noindent" >
+<!--l. 685--><p class="indent" >    <h4 id="5.1" class="subsectionHead"> <span class="titlemark"> <a href="#5.1"> 5.1</a>  <a 
+ id="x6-230005.1"></a>Cycle Points </span></h4>
+<!--l. 687--><p class="indent" >   In cylc terminology, a <span 
+class="cmti-10">cycle point </span>is a particular date-time (or integer) point in a sequence. If a task has an
+hourly date-time cycle that starts at 2014-01-01T00 and ends at 2014-01-02T00, the first cycle point will be
+2014-01-01T01, the second will be 2014-01-01T02, and so on.
+<!--l. 692--><p class="indent" >   You may be accustomed to the idea that a forecasting suite has a global (in the suite-wide, not geographic,
+sense) cycle point that only advances when all tasks in the current cycle point have finished (or even when a
+particular wall clock time is reached, in real time operation). As explained in the Introduction, that is not how cylc
+works. Rather, each task has a private cycle point and can advance independently. The workflow is constrained only
+by the dependencies of individual tasks, which may cross over to other cycle points. It may still be convenient at
+times, however, to refer to the &#8220;current cycle point&#8221;, the &#8220;previous cycle point&#8221;, or the &#8220;next cycle point&#8221; and so
+forth, with reference to a particular task, or in the sense of all tasks that &#8220;belong to&#8221; a particular cycle
+point. But keep in mind that the members of these groups may not be present simultaneously in the
+running suite - different tasks may pass through the &#8220;current cycle point&#8221; at different times as the suite
+evolves.
+<!--l. 707--><p class="noindent" >
+<!--l. 707--><p class="indent" >    <h4 id="5.2" class="subsectionHead"> <span class="titlemark"> <a href="#5.2"> 5.2</a>  <a 
+ id="x6-240005.2"></a>Ways Of Cycling </span></h4>
+<!--l. 710--><p class="noindent" >
+<!--l. 710--><p class="indent" >    <h4 id="5.2.1" class="subsubsectionHead"><span class="titlemark"> <a href="#5.2.1"> 5.2.1</a>  <a 
+ id="x6-250005.2.1"></a>Iterative Cycling </span></h4>
+<!--l. 712--><p class="indent" >   Cylc&#8217;s classic cycling mode, as described in the Introduction, can be termed <span 
+class="cmti-10">iterative cycling. </span>The
+scheduler continually extends the workflow to future cycle points as the suite runs, and each instance of
+a repeated job is represented by the same logical task with a different cycle point. For example, a
+program <span class="lstinline"><span 
+class="pcrr7t-">model</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">exe</span></span> could be executed by a task <span class="lstinline"><span 
+class="pcrr7t-">model</span></span> that runs repeatedly for a series of cycle points
+<span class="lstinline"><span 
+class="pcrr7t-">2016-01-01,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2016-01-02,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">2016-01-03,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">...</span></span>
                                                                                          
 
                                                                                          
-   <!--l. 703--><div class="crosslinks"><p class="noindent">[<a 
+<!--l. 720--><p class="indent" >   This is the most powerful and flexible way of running cycling jobs in cylc, and it is really the only way to run
+large operational suites that need to continue indefinitely. The cycling is configured with general standards-based
+(ISO 8601) <span 
+class="cmti-10">recurrence expressions </span>for any date-time sequence. Multiple cycling sequences can be used at once. See
+Section&#x00A0;<a 
+href="cug-htmlse9.html#x10-800009.3">9.3<!--tex4ht:ref: ConfiguringScheduling --></a>.
+<!--l. 726--><p class="noindent" >
+<!--l. 726--><p class="indent" >    <h4 id="5.2.2" class="subsubsectionHead"><span class="titlemark"> <a href="#5.2.2"> 5.2.2</a>  <a 
+ id="x6-260005.2.2"></a>Parameterized Cycling </span></h4>
+<!--l. 728--><p class="indent" >   <span 
+class="cmti-10">Parameterized cycling </span>is alternative cycling mode for workflows that are <span 
+class="cmti-10">finite in extent and not too large</span>.
+Parameter expansion (or Jinja2 loops) can be used to generate the entire workflow from start to finish, at start-up.
+Once this is done, there is no sequence of cycle points in the sense defined above, and every single instance of a
+repeated job is represented by a different logical task with a different task name. Functionally this is entirely
+equivalent to defining every task instance separately in the suite definition; parameter expansion is just a very
+efficient way to do that. For example, a program <span class="lstinline"><span 
+class="pcrr7t-">model</span><span 
+class="pcrr7t-">.</span><span 
+class="pcrr7t-">exe</span></span> could be executed by each of a series of tasks called
+<span class="lstinline"><span 
+class="pcrr7t-">model</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">run0</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">model</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">run1</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">model</span><span 
+class="pcrr7t-">-</span><span 
+class="pcrr7t-">run2</span><span 
+class="pcrr7t-">,</span><span 
+class="pcrr7t-">&#x00A0;</span><span 
+class="pcrr7t-">...</span></span>, where the integer parameter values in the task names
+can be multiplied by an interval (e.g.&#x00A0;<span class="lstinline"><span 
+class="pcrr7t-">P1D</span></span> for one day) to get to the correct &#8220;cycle point&#8221; for the
+job.
+<!--l. 743--><p class="indent" >   This is generally not as flexible or powerful as iterative cycling, and it has several significant disadvantages: it is
+necessarily bounded (i.e.&#x00A0;it can&#8217;t go on indefinitely), the difficult date-time arithmetic is not done
+automatically, and at run time the full extent of the workflow (every single task instance from start to finish)
+is visible at all times. However, for smaller suites of relatively short duration, it may be useful. See
+Section&#x00A0;<a 
+href="cug-htmlse9.html#x10-1450009.6.7">9.6.7<!--tex4ht:ref: Parameterized Cycling --></a>.
+<!--l. 751--><p class="noindent" >
+<!--l. 751--><p class="indent" >    <h4 id="5.2.3" class="subsubsectionHead"><span class="titlemark"> <a href="#5.2.3"> 5.2.3</a>  <a 
+ id="x6-270005.2.3"></a>Mixed Cycling </span></h4>
+<!--l. 753--><p class="indent" >   The two cycling approaches can be combined within a single suite. In a daily iterative cycling suite, for instance,
+long daily model runs could be split into multiple shorter steps or chunks by parameterized cycling. (However, you
+should first consider simply using a shorter iterative cycle).
+                                                                                         
+
+                                                                                         
+   <!--l. 758--><div class="crosslinks"><p class="noindent">[<a 
 href="cug-htmlse6.html" >next</a>] [<a 
 href="cug-htmlse4.html" >prev</a>] [<a 
 href="cug-htmlse4.html#tailcug-htmlse4.html" >prev-tail</a>] [<a 
 href="cug-htmlse5.html" >front</a>] [<a 
 href="cug-html.html#cug-htmlse5.html" >up</a>] </p></div>
-<!--l. 703--><p class="indent" >   <a 
- id="tailcug-htmlse5.html"></a>  
+<!--l. 758--><p class="indent" >   <a 
+ id="tailcug-htmlse5.html"></a>    
 </body></html> 
