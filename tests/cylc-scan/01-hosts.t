@@ -55,7 +55,7 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
 done
 # Wait a bit before scanning, to ensure suites have initialized.
 sleep 5
-run_ok "${TEST_NAME_BASE}" cylc scan
+run_ok "${TEST_NAME_BASE}" cylc scan --comms-timeout=5
 for ITEM in $(<'host-work-dirs.list'); do
     HOST="${ITEM%%:*}"
     HOST_WORK_DIR="${ITEM#*:}"

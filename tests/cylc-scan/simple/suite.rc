@@ -7,4 +7,4 @@
         graph = "foo"
 [runtime]
     [[foo]]
-        script = cylc scan | grep "^${CYLC_SUITE_NAME} "
+        script = cylc scan --comms-timeout=5 | grep "^${CYLC_SUITE_NAME} "
