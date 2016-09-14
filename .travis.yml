@@ -68,7 +68,7 @@ script:
     - export CYLC_TEST_RUN_PLATFORM=false
     # Echo version number
     - echo "Version number should be:"
-    - $HOME/virtualenv/cylc/admin/get-repo-version
+    - $HOME/cylc/admin/get-repo-version
     
     # Run tests with virtual frame buffer for X support.
     - xvfb-run -a cylc test-battery -j 5
