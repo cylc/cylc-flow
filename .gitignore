@@ -1,0 +1,14 @@
+*.dvi
+*.tex
+*.log
+*.4ct
+*.4tc
+*.aux
+*.idv
+*.lg
+*.tmp
+*.toc
+*.xref
+*.sty
+*.txt
+*.cfg
