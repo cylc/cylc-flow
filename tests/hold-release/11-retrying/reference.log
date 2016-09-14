@@ -1,7 +1,0 @@
-2014-12-17T15:48:59Z INFO - Initial point: 1
-2014-12-17T15:48:59Z INFO - Final point: 1
-2014-12-17T15:48:59Z INFO - [t-retry-able.1] -triggered off []
-2014-12-17T15:49:00Z INFO - [t-hold-release.1] -triggered off ['t-retry-able.1']
-2014-12-17T15:49:16Z INFO - [t-retry-able.1] -triggered off []
-2014-12-17T15:49:19Z INFO - [t-retry-able.1] -triggered off []
-2014-12-17T15:49:22Z INFO - [t-analyse.1] -triggered off ['t-retry-able.1']

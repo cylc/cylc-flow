@@ -1,5 +1,0 @@
-[runtime]
-    [[foo, bar]]
-        script=true
-        [[[job]]]
-            execution retry delays = 0.1

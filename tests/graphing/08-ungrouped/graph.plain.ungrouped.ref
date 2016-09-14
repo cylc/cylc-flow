@@ -1,9 +1,0 @@
-edge "foo.1" "bar1.1" solid
-edge "foo.1" "bar2.1" solid
-edge "foo.1" "bar3.1" solid
-graph
-node "bar1.1" "bar1\n1" unfilled box black
-node "bar2.1" "bar2\n1" unfilled box black
-node "bar3.1" "bar3\n1" unfilled box black
-node "foo.1" "foo\n1" unfilled box black
-stop

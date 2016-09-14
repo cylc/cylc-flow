@@ -1,6 +1,0 @@
-2013/11/05 16:10:08 INFO - Initial point: 1
-2013/11/05 16:10:08 INFO - Final point: 1
-2013/11/05 16:10:08 INFO - [a.1] -triggered off []
-2013/11/05 16:10:08 INFO - [c.1] -triggered off []
-2013/11/05 16:10:08 INFO - [b.1] -triggered off []
-2013/11/05 16:10:12 INFO - [foo.1] -triggered off ['b.1']

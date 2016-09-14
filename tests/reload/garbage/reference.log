@@ -1,4 +1,0 @@
-2013/11/06 10:27:36 INFO - Initial point: 1
-2013/11/06 10:27:36 INFO - Final point: 1
-2013/11/06 10:27:36 INFO - [reloader.1] -triggered off []
-2013/11/06 10:27:45 INFO - [foo.1] -triggered off ['reloader.1']

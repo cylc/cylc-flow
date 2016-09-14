@@ -1,6 +1,0 @@
-2013/10/02 11:54:04 INFO - Initial point: 1
-2013/10/02 11:54:04 INFO - Final point: 1
-2013/10/02 11:54:04 INFO - [a.1] -triggered off []
-2013/10/02 11:54:07 INFO - [b.1] -triggered off ['a.1']
-2013/10/02 11:54:09 INFO - [c.1] -triggered off ['b.1']
-2013/10/02 11:54:11 INFO - [cleaner.1] -triggered off ['c.1']

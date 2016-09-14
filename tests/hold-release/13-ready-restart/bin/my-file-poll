@@ -1,6 +1,0 @@
-#!/bin/bash
-set -eu
-while [[ ! -e "$1" ]]; do
-    sleep 1
-done
-test -e "$1"

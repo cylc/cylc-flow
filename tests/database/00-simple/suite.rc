@@ -1,6 +1,0 @@
-[scheduling]
-    [[dependencies]]
-        graph = "foo => bar => baz"
-[runtime]
-    [[foo, bar, baz]]
-        script = true

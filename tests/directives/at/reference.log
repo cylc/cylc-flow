@@ -1,5 +1,0 @@
-2013/10/15 12:23:16 INFO - Initial point: 1
-2013/10/15 12:23:16 INFO - Final point: 1
-2013/10/15 12:23:16 INFO - [rem1.1] -triggered off []
-2013/10/15 12:23:31 INFO - [rem2.1] -triggered off ['rem1.1']
-2013/10/15 12:23:34 INFO - [killer.1] -triggered off ['rem2.1']

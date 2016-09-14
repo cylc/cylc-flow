@@ -1,3 +1,0 @@
-#!/bin/bash
-
-sed -i 's/retry delays = 0.1/retry delays = PT6S/' "$@"

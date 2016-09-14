@@ -1,5 +1,0 @@
-2013/12/18 09:33:35 INFO - Initial point: 1
-2013/12/18 09:33:35 INFO - Final point: 1
-2013/12/18 09:33:35 INFO - [t2.1] -triggered off []
-2013/12/18 09:33:35 INFO - [t1.1] -triggered off []
-2013/12/18 09:33:39 INFO - [stop.1] -triggered off ['t1.1', 't2.1']

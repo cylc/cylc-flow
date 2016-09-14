@@ -1,5 +1,0 @@
-2014-10-30T14:37:53Z INFO - Initial point: 2014010100
-2014-10-30T14:37:53Z INFO - Final point: 2014010200
-2014-10-30T14:37:53Z INFO - [my_start_up.2014010100] -triggered off []
-2014-10-30T14:37:56Z INFO - [my_task.2014010100] -triggered off ['my_start_up.2014010100']
-2014-10-30T14:37:58Z INFO - [my_task.2014010200] -triggered off []

@@ -1,4 +1,0 @@
-2015-07-24T01:13:30Z INFO - Initial point: 1
-2015-07-24T01:13:30Z INFO - Final point: 1
-2015-07-24T01:13:30Z INFO - [foo.1] -triggered off []
-2015-07-24T01:13:33Z INFO - [run_me.1] -triggered off ['foo.1']

@@ -1,4 +1,0 @@
-2015-05-01T07:41:43Z INFO - Initial point: 20100808T0000Z
-2015-05-01T07:41:43Z INFO - Final point: 20100809T0000Z
-2015-05-01T07:41:43Z INFO - [send_broadcast.20100808T0000Z] -triggered off []
-2015-05-01T07:41:58Z INFO - [timeout.20100808T0000Z] -triggered off ['send_broadcast.20100808T0000Z']

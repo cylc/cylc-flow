@@ -1,7 +1,0 @@
-2014/01/07 16:58:20 INFO - Initial point: 20100101T00
-2014/01/07 16:58:20 INFO - Final point: 20100101T18
-2014/01/07 16:58:20 INFO - [monitor.20100101T00] -triggered off []
-2014/01/07 16:58:24 INFO - [foo.20100101T00] -triggered off ['monitor.20100101T00']
-2014/01/07 16:58:37 INFO - [foo.20100101T06] -triggered off ['foo.20100101T00']
-2014/01/07 16:58:49 INFO - [foo.20100101T12] -triggered off ['foo.20100101T06']
-2014/01/07 16:59:01 INFO - [foo.20100101T18] -triggered off ['foo.20100101T12']

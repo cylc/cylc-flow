@@ -1,5 +1,0 @@
-2014/01/08 10:04:17 INFO - Initial point: 1
-2014/01/08 10:04:17 INFO - Final point: 1
-2014/01/08 10:04:17 INFO - [hello.1] -triggered off []
-2014/01/08 10:04:30 INFO - [goodbye.1] -triggered off ['hello.1']
-2014/01/08 10:04:44 INFO - [really_goodbye.1] -triggered off ['goodbye.1']

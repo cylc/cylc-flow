@@ -1,3 +1,0 @@
-[scheduling]
-    [[dependencies]]
-        graph = fooble => barble
