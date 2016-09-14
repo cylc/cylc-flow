@@ -67,9 +67,8 @@ script:
     # Only run the generic tests on Travis CI.
     - export CYLC_TEST_RUN_PLATFORM=false
     # Echo version number
-    - echo "Version number should be:"
-    - $HOME/cylc/admin/get-repo-version
-    
+    - echo "Version number should be:" $(cylc version --long)
+
     # Run tests with virtual frame buffer for X support.
     - xvfb-run -a cylc test-battery -j 5
 
