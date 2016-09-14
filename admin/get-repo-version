@@ -38,4 +38,4 @@ case "$VN" in
         fi
 esac
 # echo to stdout
-echo "$VN"
+printf "$VN"\\n

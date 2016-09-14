@@ -69,6 +69,7 @@ script:
     # Echo version number
     - echo "Version number should be:" $(cylc version --long)
     - ls $HOME/virtualenv/cylc/admin
+    - $(git describe --abbrev=4 --tags HEAD 2>/dev/null)
     - echo $CYLC_HOME
     - admin/get-repo-version
     - admin/create-version-file
