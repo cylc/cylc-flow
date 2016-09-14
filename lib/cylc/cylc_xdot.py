@@ -26,7 +26,7 @@ from cylc.graphing import CGraphPlain
 from cylc.gui import util
 from cylc.task_id import TaskID
 from cylc.templatevars import load_template_vars
-from cylc.suite_logging import ERR_IF_DEF
+from cylc.suite_logging import ERR
 
 """
 Cylc-modified xdot windows for the "cylc graph" command.
@@ -49,7 +49,7 @@ class CylcDotViewerCommon(xdot.DotWindow):
                 vis_start_string=self.start_point_string,
                 vis_stop_string=self.stop_point_string)
         except Exception, x:
-            ERR_IF_DEF.error("Failed - parsing error?\n" + str(x))
+            ERR.error("Failed - parsing error?\n" + str(x))
             return False
         self.inherit = self.suiterc.get_parent_lists()
         return True

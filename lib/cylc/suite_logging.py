@@ -440,14 +440,16 @@ class STDLogger(object):
 
     def log(self, level, *args, **kwargs):
         if self.logger.handlers:
+            # If this logger has file handlers write out to it.
             self.logger.log(level, *args, **kwargs)
-        elif self.log_ == SuiteLog.OUT:
-            # Print message in plain format
-            print(*args)
-        elif self.log_ == SuiteLog.ERR:
-            # Print message prefixed by the logging level
-            print(logging._levelNames[level] + ' - ' + str(args[0]),
-                  *args[1:], file=sys.stderr)
+        else:
+            # No file handlers, write out to stdout/stderr.
+            msg = (get_current_time_string() + ' ' + logging._levelNames[level]
+                   + ' - ' + str(args[0]),) + tuple(*args[1:])
+            if self.log_ in [SuiteLog.OUT, SuiteLog.LOG]:
+                print(*msg)
+            else:
+                print(*msg, file=sys.stderr)
 
     def debug(self, msg, *args, **kwargs):
         self.log(logging.DEBUG, msg, *args, **kwargs)
@@ -456,6 +458,9 @@ class STDLogger(object):
         self.log(logging.INFO, msg, *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
+        self.log(logging.WARNING, msg, *args, **kwargs)
+
+    def warn(self, msg, *args, **kwargs):
         self.log(logging.WARNING, msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
@@ -472,10 +477,9 @@ class STDLogger(object):
 
 
 # Loggers as constants for convenience.
-LOG, OUT, ERR = SuiteLog.get_logs()  # Log to suite log.
-OUT_IF_DEF = STDLogger(SuiteLog.OUT)  # Log to suite if defined || print out.
-ERR_IF_DEF = STDLogger(SuiteLog.ERR)  # Log to suite if defined || print err.
-LOG_IF_DEF = STDLogger(SuiteLog.LOG)  # Log to suite if defined
+OUT = STDLogger(SuiteLog.OUT)  # Log to suite if defined || print out.
+ERR = STDLogger(SuiteLog.ERR)  # Log to suite if defined || print err.
+LOG = STDLogger(SuiteLog.LOG)  # Log to suite if defined || print out.
 
 
 def test_log_rolling(ldir):
