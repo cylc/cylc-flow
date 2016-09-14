@@ -38,6 +38,15 @@ class SuiteCommandServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def set_stop_cleanly(self, kill_active_tasks=False):
+        """Command to stop the suite after current active tasks finish.
+
+        Kwargs:
+
+        * kill_active_tasks - boolean
+            If kill_active_tasks is True, kill all current tasks before
+            stopping.
+
+        """
         if isinstance(kill_active_tasks, basestring):
             kill_active_tasks = ast.literal_eval(kill_active_tasks)
         return self._put("set_stop_cleanly",
@@ -46,6 +55,17 @@ class SuiteCommandServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def stop_now(self, terminate=False):
+        """Command to stop the suite right now, orphaning current active tasks.
+
+        By default, wait for event handlers to finish.
+
+        Kwargs:
+
+        * terminate - boolean
+            If terminate is True, terminate without waiting for event
+            handlers to finish.
+
+        """
         if isinstance(terminate, basestring):
             terminate = ast.literal_eval(terminate)
         return self._put("stop_now", None, {"terminate": terminate})

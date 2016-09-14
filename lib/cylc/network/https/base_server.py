@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Base classes for HTTPS subsystem server."""
 
+import cherrypy
+import inspect
+
 from cylc.network.https.client_reporter import CommsClientReporter
 
 
@@ -33,3 +36,20 @@ class BaseCommsServer(object):
     def report(self, command):
         """Wrap client_reporter.report."""
         self.client_reporter.report(command, self)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()    
+    def index(self):
+        exposed_methods = inspect.getmembers(
+            self, lambda _: inspect.ismethod(_) and hasattr(_, "exposed"))
+        method_info = []
+        for method, value in sorted(exposed_methods):
+            doc = inspect.getdoc(value)
+            argspec = inspect.getargspec(value)
+            if "self" in argspec.args:
+                argspec.args.remove("self")
+            argdoc = inspect.formatargspec(*argspec)
+            method_info.append({"name": method,
+                                "argdoc": argdoc,
+                                "doc": inspect.getdoc(value)})
+        return method_info
