@@ -1,5 +1,6 @@
 [cylc]
     [[events]]
+        abort on inactivity = False
         abort on stalled = True
         inactivity handler = cylc release '%(suite)s'
         inactivity = PT5S
