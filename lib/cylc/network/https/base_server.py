@@ -19,6 +19,7 @@
 
 import cherrypy
 import inspect
+import json
 
 from cylc.network.https.client_reporter import CommsClientReporter
 
@@ -38,8 +39,20 @@ class BaseCommsServer(object):
         self.client_reporter.report(command, self)
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()    
-    def index(self):
+    def index(self, form="html"):
+        """Return the methods (=sub-urls) within this class.
+
+        Example URL:
+
+        * https://host:port/CLASS/
+
+        Kwargs:
+
+        * form - string
+            form can be either 'html' (default) or 'json' for easily
+            machine readable output.
+
+        """
         exposed_methods = inspect.getmembers(
             self, lambda _: inspect.ismethod(_) and hasattr(_, "exposed"))
         method_info = []
@@ -52,4 +65,15 @@ class BaseCommsServer(object):
             method_info.append({"name": method,
                                 "argdoc": argdoc,
                                 "doc": inspect.getdoc(value)})
-        return method_info
+        if form == "json":
+            return json.dumps(method_info)
+        name = type(self).__name__
+        html = '<html><head>\n'
+        html += '<title>Cylc Comms API for ' + name + '</title></head>\n'
+        html += "<h1>" + type(self).__name__ + "</h1>\n"
+        for info in method_info:
+            html += "<h2>" + info["name"] + "</h2>\n"
+            html += "<p>" + info["name"] + info["argdoc"] + "</p>\n"
+            html += "<pre>" + str(info["doc"]) + "</pre>\n"
+        html += '</html>\n'
+        return html

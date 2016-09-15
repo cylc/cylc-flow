@@ -128,7 +128,7 @@ def _ws_init(service_inst, *args, **kwargs):
         cherrypy.config['server.ssl_private_key'] = service_inst.pkey
     else:
         sys.stderr.write("WARNING: no HTTPS support: cannot import OpenSSL\n")
-    cherrypy.config['log.screen'] = None
+    #cherrypy.config['log.screen'] = None
     key = binascii.hexlify(os.urandom(16))
     cherrypy.config.update({
         'tools.auth_digest.on': True,

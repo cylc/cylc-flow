@@ -45,6 +45,7 @@ class BroadcastServer(BaseCommsServer):
     Examples:
     self.settings['*']['root'] = {'environment': {'FOO': 'bar'}}
     self.settings['20100808T06Z']['root'] = {'command scripting': 'stuff'}
+
     """
 
     _INSTANCE = None
@@ -121,6 +122,16 @@ class BroadcastServer(BaseCommsServer):
             not_from_client=False):
         """Add new broadcast settings (server side interface).
 
+        Kwargs:
+
+        * point_strings - list
+            List of applicable cycle points for these settings. Can
+            be ['*'] to cover all cycle points.
+        * namespaces - list
+            List of applicable namespaces. Can also be ["root"].
+        * settings - list
+            List of setting key value dictionaries to apply.
+
         Return a tuple (modified_settings, bad_options) where:
           modified_settings is list of modified settings in the form:
             [("20200202", "foo", {"command scripting": "true"}, ...]
@@ -182,7 +193,15 @@ class BroadcastServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get(self, task_id=None):
-        """Retrieve all broadcast variables that target a given task ID."""
+        """Retrieve all broadcast variables that target a given task ID.
+
+        Kwargs:
+
+        * task_id - string or None
+            If given, return the broadcasts set for this task_id.
+            If None, return all currently set broadcasts.
+
+        """
         check_access_priv(self, 'full-read')
         self.report('broadcast_get')
         if task_id == "None":
@@ -210,7 +229,15 @@ class BroadcastServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def expire(self, cutoff=None):
-        """Clear all settings targeting cycle points earlier than cutoff."""
+        """Clear all settings targeting cycle points earlier than cutoff.
+
+        Kwargs:
+
+        * cutoff - string or None
+            If cutoff is a point string, expire all broadcasts < cutoff
+            If cutoff is None, expire all broadcasts.
+
+        """
         point_strings = []
         cutoff_point = None
         if cutoff is not None:
@@ -231,6 +258,18 @@ class BroadcastServer(BaseCommsServer):
     def clear(self, point_strings=None, namespaces=None, cancel_settings=None):
         """Clear settings globally, or for listed namespaces and/or points.
 
+        Accepts a JSON payload or kwargs containing:
+
+        * point_strings - list or None
+            List of target point strings to clear. None or empty list means
+            clear all point strings.
+        * namespaces - list or None
+            List of target namespaces. None or empty list means clear all
+            namespaces.
+        * cancel_settings - list or NOne
+            List of particular settings to clear. None or empty list means
+            clear all settings.
+
         Return a tuple (modified_settings, bad_options), where:
         * modified_settings is similar to the return value of the "put" method,
           but for removed settings.
@@ -242,6 +281,7 @@ class BroadcastServer(BaseCommsServer):
           * namespaces: a list of bad namespaces.
           * cancel: a list of tuples. Each tuple contains the keys of a bad
             setting.
+
         """
 
         if hasattr(cherrypy.request, "json"):

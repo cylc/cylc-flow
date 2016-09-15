@@ -193,7 +193,13 @@ class StateSummaryServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_state_summary(self):
-        """Return the global, task, and family summary data structures."""
+        """Return the global, task, and family summary data structures.
+
+        Example URL:
+
+        * /get_state_summary
+
+        """
         check_access_priv(self, 'full-read')
         self.report('get_state_summary')
         if not self.first_update_completed:
@@ -203,7 +209,13 @@ class StateSummaryServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_summary_update_time(self):
-        """Return the last time the summaries were changed (Unix time)."""
+        """Return the last time the summaries were changed (Unix time).
+
+        Example URL:
+
+        * /get_summary_update_time
+
+        """
         check_access_priv(self, 'state-totals')
         self.report('get_state_summary_update_time')
         if not self.first_update_completed:
@@ -213,8 +225,17 @@ class StateSummaryServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def get_tasks_by_state(self):
-        """Returns a dictionary containing lists of tasks by state in the form:
-        {state: [(most_recent_time_string, task_name, point_string), ...]}."""
+        """Returns a dictionary containing lists of tasks by state.
+        
+        The dictionary is in the form:
+        {state:
+         [(most_recent_time_string, task_name, point_string), ...]}.
+
+        Example URL:
+
+        * /get_tasks_by_state
+
+        """
         check_access_priv(self, 'state-totals')
 
         # Get tasks.

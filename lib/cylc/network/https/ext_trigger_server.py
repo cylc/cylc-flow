@@ -45,8 +45,22 @@ class ExtTriggerServer(BaseCommsServer):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def put(self, event_message, event_id):
-        """Server-side external event trigger interface."""
+        """Put a new external trigger event.
 
+        Example usage:
+
+        *    /put?event_message=new+sat+X+data+avail&event=passX12334a
+
+        See 'cylc ext-trigger'.
+
+        Args:
+
+        * event_message - string
+            External trigger message string
+        * event_id - string
+            Unique ID of the event.
+
+        """
         check_access_priv(self, 'full-control')
         self.report("ext_trigger")
         self.queue.put((event_message, event_id))
