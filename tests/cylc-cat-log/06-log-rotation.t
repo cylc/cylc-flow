@@ -15,37 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-. $(dirname $0)/test_header
-#-------------------------------------------------------------------------------
-set_test_number 1
-#-------------------------------------------------------------------------------
 # Tests that cylc cat-log correctly handes log rotation.
-
-# Create dummy suite.
-TMP_DIR=$(mktemp -d)
-SUITE_NAME="$(basename ${TMP_DIR})-cat-log"
-echo '' >> $TMP_DIR/suite.rc
-cylc register ${SUITE_NAME} ${TMP_DIR}
+. "$(dirname "$0")/test_header"
+set_test_number 1
+init_suite "${TEST_NAME_BASE}" '/dev/null'
 
 # Populate its cylc-run dir with empty log files.
-LOG_DIR=$(dirname $(cylc cat-log ${SUITE_NAME} -l))
-mkdir -p ${LOG_DIR}
-touch $LOG_DIR/out.20000103T00Z
-touch $LOG_DIR/out.20000102T00Z
-touch $LOG_DIR/out.20000101T00Z
-touch $LOG_DIR/out.0  # Back compatability to old log rotation system.
-touch $LOG_DIR/out.1
-touch $LOG_DIR/out.2
+LOG_DIR="$(dirname "$(cylc cat-log "${SUITE_NAME}" -l)")"
+mkdir -p "${LOG_DIR}"
+# Note: .0 .1 .2: back compatability to old log rotation system
+touch \
+    "${LOG_DIR}/out.20000103T00Z" \
+    "${LOG_DIR}/out.20000102T00Z" \
+    "${LOG_DIR}/out.20000101T00Z" \
+    "${LOG_DIR}/out.0" \
+    "${LOG_DIR}/out.1" \
+    "${LOG_DIR}/out.2"
 
 # Test log rotation.
-cylc cat-log ${SUITE_NAME} -o -l -r 0 |xargs basename >> "$TMP_DIR/result"
-cylc cat-log ${SUITE_NAME} -o -l -r 1 |xargs basename >> "$TMP_DIR/result"
-cylc cat-log ${SUITE_NAME} -o -l -r 2 |xargs basename >> "$TMP_DIR/result"
-cylc cat-log ${SUITE_NAME} -o -l -r 3 |xargs basename >> "$TMP_DIR/result"
-cylc cat-log ${SUITE_NAME} -o -l -r 4 |xargs basename >> "$TMP_DIR/result"
-cylc cat-log ${SUITE_NAME} -o -l -r 5 |xargs basename >> "$TMP_DIR/result"
-cylc unregister ${SUITE_NAME}
-cmp_ok "$TMP_DIR/result" <<__CMP__
+for I in {0..5}; do
+    basename "$(cylc cat-log "${SUITE_NAME}" -o -l -r "${I}")"
+done >'result'
+
+cmp_ok 'result' <<'__CMP__'
 out.20000103T00Z
 out.20000102T00Z
 out.20000101T00Z
@@ -53,10 +45,6 @@ out.0
 out.1
 out.2
 __CMP__
-#-------------------------------------------------------------------------------
-# Tidy up.
-#rm -rf $TMP_DIR
-#rm -rf $LOG_DIR
-echo $TMP_DIR
-echo $LOG_DIR
-#-------------------------------------------------------------------------------
+
+purge_suite "${SUITE_NAME}"
+exit
