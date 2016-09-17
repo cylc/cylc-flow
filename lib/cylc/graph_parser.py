@@ -317,10 +317,13 @@ class GraphParser(object):
             n_info = []
             expr = left
             for name, offset, trig in info:
-                offset = offset or ''
                 if not trig:
                     trig = self.__class__.TRIG_SUCCEED
-                    this = r'\b%s\b%s(?!:)' % (name, re.escape(offset))
+                    if offset:
+                        this = r'\b%s\b%s(?!:)' % (name, re.escape(offset))
+                    else:
+                        this = r'\b%s\b(?![\[:])' % name
+
                     that = name + offset + trig
                     expr = re.sub(this, that, expr)
                 n_info.append((name, offset, trig))
