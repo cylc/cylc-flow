@@ -53,7 +53,7 @@ from cylc.gui.updater import Updater
 from cylc.gui.util import (
     get_icon, get_image_dir, get_logo, EntryTempText,
     EntryDialog, setup_icons, set_exception_hook_dialog)
-from cylc.network.suite_state import (
+from cylc.network.suite_state_client import (
     extract_group_state, SUITE_STATUS_STOPPED_WITH)
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
@@ -136,16 +136,17 @@ class InitData(object):
 Class to hold initialisation data.
     """
     def __init__(self, suite, owner, host, port, db,
-                 pyro_timeout, template_vars, ungrouped_views, use_defn_order):
+                 comms_timeout, template_vars, ungrouped_views,
+                 use_defn_order):
         self.suite = suite
         self.owner = owner
         self.host = host
         self.port = port
         self.db = db
-        if pyro_timeout:
-            self.pyro_timeout = float(pyro_timeout)
+        if comms_timeout:
+            self.comms_timeout = float(comms_timeout)
         else:
-            self.pyro_timeout = None
+            self.comms_timeout = None
 
         self.template_vars_opts = ""
         for item in template_vars.items():
@@ -523,7 +524,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
         VIEWS["graph"] = ControlGraph
         VIEWS_ORDERED.append("graph")
 
-    def __init__(self, suite, db, owner, host, port, pyro_timeout,
+    def __init__(self, suite, db, owner, host, port, comms_timeout,
                  template_vars, restricted_display):
 
         gobject.threads_init()
@@ -537,7 +538,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
                 self.__class__.VIEWS_ORDERED.remove('graph')
 
         self.cfg = InitData(
-            suite, owner, host, port, db, pyro_timeout, template_vars,
+            suite, owner, host, port, db, comms_timeout, template_vars,
             gcfg.get(["ungrouped views"]),
             gcfg.get(["sort by definition order"]))
 
@@ -977,7 +978,7 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
     def click_open(self, foo=None):
         app = dbchooser(self.window, self.cfg.db, self.cfg.owner,
-                        self.cfg.cylc_tmpdir, self.cfg.pyro_timeout)
+                        self.cfg.cylc_tmpdir, self.cfg.comms_timeout)
         reg, auth = None, None
         while True:
             response = app.window.run()
@@ -996,16 +997,16 @@ Main Control GUI that displays one or more views or interfaces to the suite.
             self.reset(reg, auth)
 
     def pause_suite(self, bt):
-        self.put_pyro_command('hold_suite')
+        self.put_comms_command('hold_suite')
 
     def resume_suite(self, bt):
-        self.put_pyro_command('release_suite')
+        self.put_comms_command('release_suite')
 
     def stopsuite_default(self, *args):
         """Try to stop the suite (after currently running tasks...)."""
         if not self.get_confirmation("Stop suite %s?" % self.cfg.suite):
             return
-        self.put_pyro_command('set_stop_cleanly')
+        self.put_comms_command('set_stop_cleanly')
 
     def stopsuite(self, bt, window, kill_rb, stop_rb, stopat_rb, stopct_rb,
                   stoptt_rb, stopnow_rb, stopnownow_rb, stoppoint_entry,
@@ -1072,19 +1073,24 @@ Main Control GUI that displays one or more views or interfaces to the suite.
 
         window.destroy()
         if stop:
-            self.put_pyro_command('set_stop_cleanly', False)
+            self.put_comms_command('set_stop_cleanly',
+                                   kill_active_tasks=False)
         elif stopkill:
-            self.put_pyro_command('set_stop_cleanly', True)
+            self.put_comms_command('set_stop_cleanly',
+                                   kill_active_tasks=True)
         elif stopat:
-            self.put_pyro_command('set_stop_after_point', stop_point_string)
+            self.put_comms_command('set_stop_after_point',
+                                   point_string=stop_point_string)
         elif stopnow:
-            self.put_pyro_command('stop_now')
+            self.put_comms_command('stop_now')
         elif stopnownow:
-            self.put_pyro_command('stop_now', True)
+            self.put_comms_command('stop_now', terminate=True)
         elif stopclock:
-            self.put_pyro_command('set_stop_after_clock_time', stopclock_time)
+            self.put_comms_command('set_stop_after_clock_time',
+                                   datetime_string=stopclock_time)
         elif stoptask:
-            self.put_pyro_command('set_stop_after_task', stoptask_id)
+            self.put_comms_command('set_stop_after_task',
+                                   task_id=stoptask_id)
 
     def load_point_strings(self, bt, startentry, stopentry):
         item1 = " -i '[scheduling]initial cycle point'"
@@ -1533,7 +1539,7 @@ been defined for this suite""").inform()
             else:
                 limit = ent
         window.destroy()
-        self.put_pyro_command('set_runahead', limit)
+        self.put_comms_command('set_runahead', interval=limit)
 
     def update_tb(self, tb, line, tags=None):
         if tags:
@@ -1543,7 +1549,8 @@ been defined for this suite""").inform()
 
     def popup_requisites(self, w, e, task_id):
         name, point_string = TaskID.split(task_id)
-        result = self.get_pyro_info('get_task_requisites', name, point_string)
+        result = self.get_comms_info(
+            'get_task_requisites', name=name, point_string=point_string)
         if result:
             # (else no tasks were found at all -suite shutting down)
             if task_id not in result:
@@ -1653,12 +1660,12 @@ shown here in the state they were in at the time of triggering.''')
             for task_id in task_ids:
                 if not self.get_confirmation("Hold %s?" % (task_id)):
                     return
-            self.put_pyro_command('hold_task', task_ids)
+            self.put_comms_command('hold_tasks', items=task_ids)
         else:
             for task_id in task_ids:
                 if not self.get_confirmation("Release %s?" % (task_id)):
                     return
-            self.put_pyro_command('release_task', task_ids)
+            self.put_comms_command('release_tasks', items=task_ids)
 
     def trigger_task_now(self, b, task_ids, is_family=False):
         """Trigger task via the suite daemon's command interface."""
@@ -1668,7 +1675,7 @@ shown here in the state they were in at the time of triggering.''')
         for task_id in task_ids:
             if not self.get_confirmation("Trigger %s?" % task_id):
                 return
-        self.put_pyro_command('trigger_task', task_ids)
+        self.put_comms_command('trigger_tasks', items=task_ids)
 
     def trigger_task_edit_run(self, b, task_id):
         """
@@ -1690,7 +1697,7 @@ shown here in the state they were in at the time of triggering.''')
         for task_id in task_ids:
             if not self.get_confirmation("Poll %s?" % task_id):
                 return
-        self.put_pyro_command('poll_tasks', task_ids)
+        self.put_comms_command('poll_tasks', items=task_ids)
 
     def kill_task(self, b, task_ids, is_family=False):
         """Kill a task/family."""
@@ -1701,7 +1708,7 @@ shown here in the state they were in at the time of triggering.''')
             if not self.get_confirmation("Kill %s?" % task_id,
                                          force_prompt=True):
                 return
-        self.put_pyro_command('kill_tasks', task_ids)
+        self.put_comms_command('kill_tasks', items=task_ids)
 
     def spawn_task(self, b, e, task_ids, is_family=False):
         """For tasks to spawn their successors."""
@@ -1713,7 +1720,7 @@ shown here in the state they were in at the time of triggering.''')
                 return False
             if not self.get_confirmation("Force spawn %s?" % task_id):
                 return
-        self.put_pyro_command('spawn_tasks', task_ids, None)
+        self.put_comms_command('spawn_tasks', items=task_ids)
 
     def reset_task_state(self, b, e, task_ids, state, is_family=False):
         """Reset the state of a task/family."""
@@ -1725,7 +1732,8 @@ shown here in the state they were in at the time of triggering.''')
                 return False
             if not self.get_confirmation("reset %s to %s?" % (task_id, state)):
                 return
-        self.put_pyro_command('reset_task_state', task_ids, None, state)
+        self.put_comms_command('reset_task_states', items=task_ids,
+                               state=state)
 
     def remove_task(self, b, task_ids, is_family):
         """Remove a task."""
@@ -1737,7 +1745,7 @@ shown here in the state they were in at the time of triggering.''')
                     "Remove %s after spawning?" % task_id):
                 return
             name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('remove_task', task_ids, None, True)
+        self.put_comms_command('remove_task', task_ids, spawn=True)
 
     def remove_task_nospawn(self, b, task_ids, is_family=False):
         """Remove a task, without spawn."""
@@ -1748,7 +1756,7 @@ shown here in the state they were in at the time of triggering.''')
             if not self.get_confirmation(
                     "Remove %s without spawning?" % task_id):
                 return
-        self.put_pyro_command('remove_task', task_ids, None, False)
+        self.put_comms_command('remove_tasks', task_ids, spawn=False)
 
     def stopsuite_popup(self, b):
         window = gtk.Window()
@@ -2184,24 +2192,26 @@ shown here in the state they were in at the time of triggering.''')
         window.destroy()
         if not stop_point_str.strip():
             stop_point_str = None
-        self.put_pyro_command(
-            'insert_task', task_ids, None, None, stop_point_str)
+        self.put_comms_command(
+            'insert_tasks', items=task_ids,
+            stop_point_string=stop_point_str
+        )
 
     def poll_all(self, w):
         """Poll all active tasks."""
         if not self.get_confirmation("Poll all submitted/running task jobs?"):
             return
-        self.put_pyro_command('poll_tasks', None, None, None)
+        self.put_comms_command('poll_tasks')
 
     def reload_suite(self, w):
         if not self.get_confirmation("Reload suite definition?"):
             return
-        self.put_pyro_command('reload_suite')
+        self.put_comms_command('reload_suite')
 
     def nudge_suite(self, w):
         if not self.get_confirmation("Nudge suite?"):
             return
-        self.put_pyro_command('nudge')
+        self.put_comms_command('nudge')
 
     def _popup_logview(self, task_id, task_state_summary, choice=None):
         """Display task job log files in a combo log viewer."""
@@ -2226,7 +2236,7 @@ shown here in the state they were in at the time of triggering.''')
             )
             for submit_num, job_user_at_host in sorted(
                     job_hosts.items(), reverse=True):
-                submit_num_str = "%02d" % submit_num
+                submit_num_str = "%02d" % int(submit_num)
                 local_job_log_dir = os.path.join(itask_log_dir, submit_num_str)
                 for filename in ["job", "job-activity.log"]:
                     filenames.append(os.path.join(local_job_log_dir, filename))
@@ -2811,7 +2821,7 @@ to reduce network traffic.""")
         # Show suite title and description.
         if self.updater.connected:
             # Interrogate the suite daemon.
-            info = self.get_pyro_info('get_suite_info')
+            info = self.get_comms_info('get_suite_info')
             descr = '\n'.join(
                 "%s: %s" % (key, val) for key, val in info.items())
             info_dialog(descr, self.window).inform()
@@ -3331,19 +3341,19 @@ For more Stop options use the Control menu.""")
         """Handle a destroy of the theme legend window."""
         self.theme_legend_window = None
 
-    def put_pyro_command(self, command, *args):
+    def put_comms_command(self, command, **kwargs):
         try:
             success, msg = self.updater.suite_command_client.put_command(
-                command, *args)
+                command, **kwargs)
         except Exception, x:
             warning_dialog(x.__str__(), self.window).warn()
         else:
             if not success:
                 warning_dialog(msg, self.window).warn()
 
-    def get_pyro_info(self, command, *args):
+    def get_comms_info(self, command, **kwargs):
         try:
-            return self.updater.suite_info_client.get_info(command, *args)
+            return self.updater.suite_info_client.get_info(command, **kwargs)
         except Exception as exc:
             warning_dialog(str(exc), self.window).warn()
 

@@ -1325,7 +1325,7 @@ submitted state.
 
 For the polling task communication method this overrides the default
 submission polling interval in the site/user config files
-(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications,
+(\ref{SiteAndUserConfiguration}). For default and ssh task communications,
 polling is not done by default but it can still be configured here as a
 regular check on the health of submitted tasks.
 
@@ -1351,7 +1351,7 @@ running state.
 
 For the polling task communication method this overrides the default
 execution polling interval in the site/user config files
-(\ref{SiteAndUserConfiguration}). For pyro and ssh task communications,
+(\ref{SiteAndUserConfiguration}). For default and ssh task communications,
 polling is not done by default but it can still be configured here as a
 regular check on the health of submitted tasks.
 
@@ -1372,9 +1372,8 @@ until finished.
 Configure host and username, for tasks that do not run on the suite host
 account. Non-interactive ssh is used to submit the task by the configured
 batch system, so you must distribute your ssh key to allow
-this. Cylc must be installed on remote task hosts, but of the external
-software dependencies only Pyro is required there (not even that if {\em
-ssh messaging} is used; see below).
+this. Cylc must be installed on remote task hosts, but no external
+software dependencies are required there.
 
 \subparagraph[host]{[runtime] \textrightarrow [[\_\_NAME\_\_]] \textrightarrow [[[remote]]] \textrightarrow host}
 \label{DynamicHostSelection}

@@ -34,13 +34,13 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.prompt import prompt
-from cylc.network.suite_command import SuiteCommandClient
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.network.suite_command_client import SuiteCommandClient
 
 
 def main():
     parser = COP(
-        __doc__, pyro=True,
+        __doc__, comms=True,
         argdoc=[('REG', 'Suite name'),
                 ('[HOURS]', 'Runahead limit (default: no limit)')])
 
@@ -52,14 +52,14 @@ def main():
         runahead = args[1]
 
     pclient = SuiteCommandClient(
-        suite, options.owner, options.host, options.pyro_timeout,
+        suite, options.owner, options.host, options.comms_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 
     if runahead:
         prompt('Change runahead limit in %s to %s' % (suite, runahead),
                options.force)
-        pclient.put_command('set_runahead', runahead)
+        pclient.put_command('set_runahead', interval=runahead)
     else:
         # no limit!
         prompt('Change runahead limit in %s to NO LIMIT' % suite,

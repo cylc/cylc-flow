@@ -40,13 +40,13 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.network.suite_state import StateSummaryClient
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.network.suite_state_client import StateSummaryClient
 from cylc.dump import dump_to_stdout
 
 
 def main():
-    parser = COP(__doc__, pyro=True, noforce=True)
+    parser = COP(__doc__, comms=True, noforce=True)
 
     parser.add_option(
         "-g", "--global", help="Global information only.",
@@ -78,7 +78,7 @@ def main():
 
     try:
         pclient = StateSummaryClient(
-            suite, options.owner, options.host, options.pyro_timeout,
+            suite, options.owner, options.host, options.comms_timeout,
             options.port, options.db, my_uuid=options.set_uuid,
             print_uuid=options.print_uuid)
         # get state summary, task names, cycle points

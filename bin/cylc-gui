@@ -55,7 +55,7 @@ def main():
     sys.path.append(
         os.path.dirname(os.path.realpath(os.path.abspath(__file__))) + '/../')
 
-    parser = COP(__doc__, pyro=True, noforce=True, jset=True,
+    parser = COP(__doc__, comms=True, noforce=True, jset=True,
                  argdoc=[('[REG]', 'Suite name')])
 
     parser.add_option(
@@ -78,11 +78,9 @@ def main():
     warnings.filterwarnings('ignore', 'use the new', Warning)
     from cylc.gui.app_gcylc import ControlApp
 
-    # Make current working directory be $HOME. Otherwise (1) if the user
-    # attempts to start gcylc from a CWD that has been removed, Pyro will
-    # not be importable below; and (2) if the CWD gets removed later while
-    # gcylc is running, subprocesses spawned by gcylc will fail when they
-    # attempt to determine their CWD.
+    # Make current working directory be $HOME. Otherwise if the CWD gets
+    # removed later while gcylc is running, subprocesses spawned by gcylc will
+    # fail when they attempt to determine their CWD.
     os.chdir(os.environ['HOME'])
 
     gtk.settings_get_default().set_long_property(
@@ -98,7 +96,7 @@ def main():
         suite = None
     app = ControlApp(
         suite, options.db, options.owner, options.host,
-        options.port, options.pyro_timeout,
+        options.port, options.comms_timeout,
         load_template_vars(options.templatevars, options.templatevars_file),
         options.restricted)
     gtk.main()

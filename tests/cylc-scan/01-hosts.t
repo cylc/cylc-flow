@@ -46,6 +46,8 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
         mkdir -p "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}"
         ${SCP} -p "${HOST}:${HOST_WORK_DIR}/passphrase" \
             "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
+        ${SCP} -p "${HOST}:${HOST_WORK_DIR}/ssl.*" \
+            "${HOME}/.cylc/passphrases/${USER}@${HOST}/${UUID}-${HOST}/"
         cylc run "--host=${HOST}" "${UUID}-${HOST}" 1>/dev/null 2>&1
         poll '!' ${SSH} -n "${HOST}" "test -e '.cylc/ports/${UUID}-${HOST}'"
     fi
@@ -53,7 +55,7 @@ for HOST in $(tr -d ',' <<<"${HOSTS}"); do
 done
 # Wait a bit before scanning, to ensure suites have initialized.
 sleep 5
-run_ok "${TEST_NAME_BASE}" cylc scan
+run_ok "${TEST_NAME_BASE}" cylc scan --comms-timeout=5
 for ITEM in $(<'host-work-dirs.list'); do
     HOST="${ITEM%%:*}"
     HOST_WORK_DIR="${ITEM#*:}"

@@ -31,13 +31,13 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
-from cylc.network.suite_info import SuiteInfoClient
+from cylc.network.suite_info_client import SuiteInfoClientAnon
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
 def main():
     parser = COP(
-        __doc__, pyro=True,
+        __doc__, comms=True,
         argdoc=[('REG', 'Suite name'), ('[TASK]', 'Task ' + TaskID.SYNTAX)])
 
     parser.add_option(
@@ -48,18 +48,17 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.print_ports:
-        base = GLOBAL_CFG.get(['pyro', 'base port'])
-        range = GLOBAL_CFG.get(['pyro', 'maximum number of ports'])
+        base = GLOBAL_CFG.get(['comms', 'base port'])
+        range = GLOBAL_CFG.get(['comms', 'maximum number of ports'])
         print base, '<= port <=', base + range
         sys.exit(0)
 
     suite = args[0]
 
-    pclient = SuiteInfoClient(
-        suite, options.owner, options.host, options.pyro_timeout,
+    pclient = SuiteInfoClientAnon(
+        suite, options.owner, options.host, options.comms_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
-    pclient.set_use_scan_hash()
 
     # cylc ping SUITE
     pclient.get_info('ping_suite')  # (no need to check the result)
@@ -72,7 +71,7 @@ def main():
     task_id = args[1]
     if not TaskID.is_valid_id(task_id):
         sys.exit("Invalid task ID: " + task_id)
-    success, msg = pclient.get_info('ping_task', task_id)
+    success, msg = pclient.get_info('ping_task', task_id=task_id)
     if not success:
         sys.exit('ERROR: ' + msg)
 

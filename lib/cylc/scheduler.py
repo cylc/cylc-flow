@@ -51,17 +51,17 @@ from cylc.job_host import RemoteJobHostManager, RemoteJobHostInitError
 from cylc.log_diagnosis import LogSpec
 from cylc.mp_pool import SuiteProcContext, SuiteProcPool
 from cylc.network import (
-    PYRO_SUITEID_OBJ_NAME, PYRO_STATE_OBJ_NAME,
-    PYRO_CMD_OBJ_NAME, PYRO_BCAST_OBJ_NAME, PYRO_EXT_TRIG_OBJ_NAME,
-    PYRO_INFO_OBJ_NAME, PYRO_LOG_OBJ_NAME)
-from cylc.network.ext_trigger import ExtTriggerServer
-from cylc.network.pyro_daemon import PyroDaemon
-from cylc.network.suite_broadcast import BroadcastServer
-from cylc.network.suite_command import SuiteCommandServer
-from cylc.network.suite_identifier import SuiteIdServer
-from cylc.network.suite_info import SuiteInfoServer
-from cylc.network.suite_log import SuiteLogServer
-from cylc.network.suite_state import StateSummaryServer
+    COMMS_SUITEID_OBJ_NAME, COMMS_STATE_OBJ_NAME,
+    COMMS_CMD_OBJ_NAME, COMMS_BCAST_OBJ_NAME, COMMS_EXT_TRIG_OBJ_NAME,
+    COMMS_INFO_OBJ_NAME, COMMS_LOG_OBJ_NAME)
+from cylc.network.ext_trigger_server import ExtTriggerServer
+from cylc.network.daemon import CommsDaemon
+from cylc.network.suite_broadcast_server import BroadcastServer
+from cylc.network.suite_command_server import SuiteCommandServer
+from cylc.network.suite_identifier_server import SuiteIdServer
+from cylc.network.suite_info_server import SuiteInfoServer
+from cylc.network.suite_log_server import SuiteLogServer
+from cylc.network.suite_state_server import StateSummaryServer
 from cylc.owner import USER
 from cylc.registration import RegistrationDB
 from cylc.regpath import RegPath
@@ -95,24 +95,6 @@ class SchedulerStop(CylcError):
     pass
 
 
-class PyroRequestHandler(threading.Thread):
-    """Pyro request handler."""
-
-    def __init__(self, pyro):
-        threading.Thread.__init__(self)
-        self.pyro = pyro
-        self.quit = False
-        self.log = LOG
-        self.log.debug("request handling thread starting")
-
-    def run(self):
-        while True:
-            self.pyro.handle_requests(timeout=1)
-            if self.quit:
-                break
-        self.log.debug("request handling thread exiting")
-
-
 class Scheduler(object):
     """Cylc scheduler server."""
 
@@ -134,15 +116,16 @@ class Scheduler(object):
     # Dependency negotation etc. will run after these commands
     PROC_CMDS = (
         'release_suite',
-        'release_task',
+        'release_tasks',
         'kill_tasks',
         'set_runahead',
-        'reset_task_state',
+        'reset_task_states',
         'spawn_tasks',
-        'trigger_task',
+        'trigger_tasks',
         'nudge',
-        'insert_task',
-        'reload_suite')
+        'insert_tasks',
+        'reload_suite'
+    )
 
     REF_LOG_TEXTS = (
         'triggered off', 'Initial point', 'Start point', 'Final point')
@@ -201,7 +184,7 @@ class Scheduler(object):
         self.command_queue = None
         self.pool = None
         self.request_handler = None
-        self.pyro = None
+        self.comms_daemon = None
 
         self._profile_amounts = {}
         self._profile_update_times = {}
@@ -284,14 +267,16 @@ class Scheduler(object):
             pri_dao.close()
 
         try:
-            self._configure_pyro()
             if not self.options.no_detach and not cylc.flags.debug:
                 daemonize(self)
+
             slog = SuiteLog.get_inst(self.suite)
             if cylc.flags.debug:
                 slog.pimp(logging.DEBUG)
             else:
                 slog.pimp()
+
+            self.configure_comms_daemon()
             self.configure()
             self.profiler.start()
             self.run()
@@ -334,7 +319,7 @@ class Scheduler(object):
     def _check_port_file_does_not_exist(suite):
         """Fail if port file exists. Return port file path otherwise."""
         port_file_path = os.path.join(
-            GLOBAL_CFG.get(['pyro', 'ports directory']), suite)
+            GLOBAL_CFG.get(['communication', 'ports directory']), suite)
         try:
             port, host = open(port_file_path).read().splitlines()
         except (IOError, ValueError):
@@ -389,21 +374,6 @@ conditions; see `cylc conditions`.
         for i in range(len(logo_lines)):
             print logo_lines[i], ('{0: ^%s}' % lmax).format(license_lines[i])
 
-    def _configure_pyro(self):
-        """Create and configure Pyro daemon."""
-        self.pyro = PyroDaemon(self.suite, self.suite_dir)
-        self.port = self.pyro.get_port()
-        port_file_path = self._check_port_file_does_not_exist(self.suite)
-        try:
-            with open(port_file_path, 'w') as handle:
-                handle.write("%d\n%s\n" % (self.port, self.host))
-        except IOError as exc:
-            ERR.error(str(exc))
-            raise SchedulerError(
-                'ERROR, cannot write port file: %s' % port_file_path)
-        else:
-            self.port_file = port_file_path
-
     def configure(self):
         """Configure suite daemon."""
         self.profiler.log_memory("scheduler.py: start configure")
@@ -433,9 +403,7 @@ conditions; see `cylc conditions`.
 
         self.pool = TaskPool(
             self.suite, self.pri_dao, self.pub_dao, self.final_point,
-            self.pyro, self.log, self.run_mode)
-        self.request_handler = PyroRequestHandler(self.pyro)
-        self.request_handler.start()
+            self.comms_daemon, self.log, self.run_mode)
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
@@ -675,13 +643,20 @@ conditions; see `cylc conditions`.
 
         while True:
             try:
-                name, args = queue.get(False)
+                name, args, kwargs = queue.get(False)
             except Empty:
                 break
-            log_msg += '\n+\t' + name
-            cmdstr = name + '(' + ','.join([str(a) for a in args]) + ')'
+            args_string = ', '.join([str(a) for a in args])
+            cmdstr = name + '(' + args_string
+            kwargs_string = ', '.join(
+                [key + '=' + str(value) for key, value in kwargs.items()])
+            if kwargs_string and args_string:
+                cmdstr += ', '
+            cmdstr += kwargs_string + ')'
+            log_msg += '\n+\t' + cmdstr
             try:
-                n_warnings = getattr(self, "command_%s" % name)(*args)
+                n_warnings = getattr(self, "command_%s" % name)(
+                    *args, **kwargs)
             except SchedulerStop:
                 self.log.info('Command succeeded: ' + cmdstr)
                 raise
@@ -779,8 +754,10 @@ conditions; see `cylc conditions`.
         """Single-inheritance hierarchy based on first parents"""
         return deepcopy(self.config.get_first_parent_ancestors(pruned))
 
-    def info_get_graph_raw(self, cto, ctn, group_nodes, ungroup_nodes,
-                           ungroup_recursive, group_all, ungroup_all):
+    def info_get_graph_raw(self, cto, ctn, group_nodes=None,
+                           ungroup_nodes=None,
+                           ungroup_recursive=False, group_all=False,
+                           ungroup_all=False):
         """Return raw graph."""
         rgraph = self.config.get_graph_raw(
             cto, ctn, group_nodes, ungroup_nodes, ungroup_recursive, group_all,
@@ -842,25 +819,25 @@ conditions; see `cylc conditions`.
         if TaskID.is_valid_id(task_id):
             self.set_stop_task(task_id)
 
-    def command_release_task(self, items, compat=None, _=None):
+    def command_release_tasks(self, items):
         """Release tasks."""
-        return self.pool.release_tasks(items, compat)
+        return self.pool.release_tasks(items)
 
-    def command_poll_tasks(self, items, compat=None, _=None):
+    def command_poll_tasks(self, items):
         """Poll all tasks or a task/family if options are provided."""
-        return self.pool.poll_task_jobs(items, compat)
+        return self.pool.poll_task_jobs(items)
 
-    def command_kill_tasks(self, items, compat=None, _=False):
+    def command_kill_tasks(self, items):
         """Kill all tasks or a task/family if options are provided."""
-        return self.pool.kill_task_jobs(items, compat)
+        return self.pool.kill_task_jobs(items)
 
     def command_release_suite(self):
         """Release all task proxies in the suite."""
         self.release_suite()
 
-    def command_hold_task(self, items, compat=None, _=False):
+    def command_hold_tasks(self, items):
         """Hold selected task proxies in the suite."""
-        return self.pool.hold_tasks(items, compat)
+        return self.pool.hold_tasks(items)
 
     def command_hold_suite(self):
         """Hold all task proxies in the suite."""
@@ -883,14 +860,13 @@ conditions; see `cylc conditions`.
         """Remove tasks in a cycle."""
         return self.pool.remove_tasks(point_string + "/*", spawn)
 
-    def command_remove_task(self, items, compat=None, _=None, spawn=False):
+    def command_remove_tasks(self, items, spawn=False):
         """Remove tasks."""
-        return self.pool.remove_tasks(items, spawn, compat)
+        return self.pool.remove_tasks(items, spawn)
 
-    def command_insert_task(
-            self, items, compat=None, _=None, stop_point_string=None):
+    def command_insert_tasks(self, items, stop_point_string=None):
         """Insert tasks."""
-        return self.pool.insert_tasks(items, stop_point_string, compat)
+        return self.pool.insert_tasks(items, stop_point_string)
 
     def command_nudge(self):
         """Cause the task processing loop to be invoked"""
@@ -915,9 +891,9 @@ conditions; see `cylc conditions`.
         self.pool.put_rundb_suite_params(self.initial_point, self.final_point)
         self.do_update_state_summary = True
 
-    def command_set_runahead(self, *args):
+    def command_set_runahead(self, interval=None):
         """Set runahead limit."""
-        self.pool.set_runahead(*args)
+        self.pool.set_runahead(interval=interval)
 
     def set_suite_timer(self):
         """Set suite's timeout timer."""
@@ -941,6 +917,49 @@ conditions; see `cylc conditions`.
                 get_seconds_as_interval_string(
                     self._get_events_conf(self.EVENT_INACTIVITY_TIMEOUT)),
                 get_current_time_string())
+
+    def configure_comms_daemon(self):
+        """Create and configure daemon."""
+        self.comms_daemon = CommsDaemon(self.suite, self.suite_dir)
+        self.port = self.comms_daemon.get_port()
+        self.port_file = os.path.join(
+            GLOBAL_CFG.get(['communication', 'ports directory']), self.suite)
+        try:
+            port, host = open(self.port_file).read().splitlines()
+        except (IOError, ValueError):
+            # Suite is not likely to be running if port file does not exist
+            # or if port file does not contain good values of port and host.
+            pass
+        else:
+            sys.stderr.write(
+                (
+                    r"""ERROR: port file exists: %(port_file)s
+
+If %(suite)s is not running, delete the port file and try again.  If it is
+running but not responsive, kill any left over suite processes too.
+
+To see if %(suite)s is running on '%(host)s:%(port)s':
+ * cylc scan -n '\b%(suite)s\b' %(host)s
+ * cylc ping -v --host=%(host)s %(suite)s
+ * ssh %(host)s "pgrep -a -P 1 -fu $USER 'cylc-r.* \b%(suite)s\b'"
+
+"""
+                ) % {
+                    "host": host,
+                    "port": port,
+                    "port_file": self.port_file,
+                    "suite": self.suite,
+                }
+            )
+            raise SchedulerError(
+                "ERROR, port file exists: %s" % self.port_file)
+        try:
+            with open(self.port_file, 'w') as handle:
+                handle.write("%d\n%s\n" % (self.port, self.host))
+        except IOError as exc:
+            sys.stderr.write(str(exc) + "\n")
+            raise SchedulerError(
+                'ERROR, cannot write port file: %s' % self.port_file)
 
     def load_suiterc(self, reconfigure):
         """Load and log the suite definition."""
@@ -1087,32 +1106,32 @@ conditions; see `cylc conditions`.
                 OUT.info("Suite will hold after " + str(self.pool_hold_point))
 
             suite_id = SuiteIdServer.get_inst(self.suite, self.owner)
-            self.pyro.connect(suite_id, PYRO_SUITEID_OBJ_NAME)
+            self.comms_daemon.connect(suite_id, COMMS_SUITEID_OBJ_NAME)
 
             bcast = BroadcastServer.get_inst(
                 self.config.get_linearized_ancestors())
-            self.pyro.connect(bcast, PYRO_BCAST_OBJ_NAME)
+            self.comms_daemon.connect(bcast, COMMS_BCAST_OBJ_NAME)
 
             self.command_queue = SuiteCommandServer()
-            self.pyro.connect(self.command_queue, PYRO_CMD_OBJ_NAME)
+            self.comms_daemon.connect(self.command_queue, COMMS_CMD_OBJ_NAME)
 
             ets = ExtTriggerServer.get_inst()
-            self.pyro.connect(ets, PYRO_EXT_TRIG_OBJ_NAME)
+            self.comms_daemon.connect(ets, COMMS_EXT_TRIG_OBJ_NAME)
 
             info_commands = {}
             for attr_name in dir(self):
                 attr = getattr(self, attr_name)
                 if callable(attr) and attr_name.startswith('info_'):
                     info_commands[attr_name.replace('info_', '')] = attr
-            self.pyro.connect(
-                SuiteInfoServer(info_commands), PYRO_INFO_OBJ_NAME)
+            self.info_interface = SuiteInfoServer(info_commands)
+            self.comms_daemon.connect(self.info_interface, COMMS_INFO_OBJ_NAME)
 
             self.suite_log = SuiteLog.get_inst(self.suite)
-            self.pyro.connect(
-                SuiteLogServer(self.suite_log), PYRO_LOG_OBJ_NAME)
+            log_interface = SuiteLogServer(self.suite_log)
+            self.comms_daemon.connect(log_interface, COMMS_LOG_OBJ_NAME)
 
             self.suite_state = StateSummaryServer.get_inst(self.run_mode)
-            self.pyro.connect(self.suite_state, PYRO_STATE_OBJ_NAME)
+            self.comms_daemon.connect(self.suite_state, COMMS_STATE_OBJ_NAME)
 
     def configure_suite_environment(self):
         """Configure suite environment."""
@@ -1128,7 +1147,7 @@ conditions; see `cylc conditions`.
             'CYLC_SUITE_REG_NAME': self.suite,  # DEPRECATED
             'CYLC_SUITE_HOST': str(self.host),
             'CYLC_SUITE_OWNER': self.owner,
-            'CYLC_SUITE_PORT': str(self.pyro.get_port()),
+            'CYLC_SUITE_PORT': str(self.comms_daemon.get_port()),
             # DEPRECATED
             'CYLC_SUITE_REG_PATH': RegPath(self.suite).get_fpath(),
             'CYLC_SUITE_DEF_PATH_ON_SUITE_HOST': self.suite_dir,
@@ -1670,24 +1689,25 @@ conditions; see `cylc conditions`.
             proc_pool.join()
             proc_pool.handle_results_async()
 
-        if self.request_handler:
-            self.request_handler.quit = True
-            self.request_handler.join()
-
-        if self.pyro:
-            ifaces = [
-                self.command_queue, SuiteIdServer.get_inst(),
-                StateSummaryServer.get_inst(), ExtTriggerServer.get_inst(),
-                BroadcastServer.get_inst()]
+        if self.comms_daemon:
+            ifaces = [self.command_queue,
+                      SuiteIdServer.get_inst(), StateSummaryServer.get_inst(),
+                      ExtTriggerServer.get_inst(), BroadcastServer.get_inst()]
             if self.pool is not None:
                 ifaces.append(self.pool.message_queue)
             for iface in ifaces:
                 try:
-                    self.pyro.disconnect(iface)
+                    self.comms_daemon.disconnect(iface)
                 except KeyError:
                     # Wasn't connected yet.
                     pass
-            self.pyro.shutdown()
+            self.comms_daemon.shutdown()
+
+        # Make sure errors and info are written before the port file goes.
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+        if self.comms_daemon:
             try:
                 os.unlink(self.port_file)
             except OSError as exc:
@@ -1783,21 +1803,22 @@ conditions; see `cylc conditions`.
         """Return self.pool.get_hold_point()."""
         return self.pool.get_hold_point()
 
-    def command_trigger_task(self, items, compat=None, _=None):
+    def command_trigger_tasks(self, items):
         """Trigger tasks."""
-        return self.pool.trigger_tasks(items, compat)
+        print "Trigger", items
+        return self.pool.trigger_tasks(items)
 
-    def command_dry_run_task(self, items, compat=None):
-        """Dry-run a task, e.g. edit run."""
-        return self.pool.dry_run_task(items, compat)
+    def command_dry_run_tasks(self, items):
+        """Dry-run tasks, e.g. edit run."""
+        return self.pool.dry_run_task(items)
 
-    def command_reset_task_state(self, items, compat=None, state=None, _=None):
+    def command_reset_task_states(self, items, state=None):
         """Reset the state of tasks."""
-        return self.pool.reset_task_states(items, state, compat)
+        return self.pool.reset_task_states(items, state)
 
-    def command_spawn_tasks(self, items, compat=None, _=None):
+    def command_spawn_tasks(self, items):
         """Force spawn task successors."""
-        return self.pool.spawn_tasks(items, compat)
+        return self.pool.spawn_tasks(items)
 
     def filter_initial_task_list(self, inlist):
         """Return list of initial tasks after applying a filter."""

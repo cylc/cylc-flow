@@ -18,7 +18,7 @@
 
 from cylc.graphing import CGraphPlain
 from cylc.mkdir_p import mkdir_p
-from cylc.network.suite_state import get_id_summary
+from cylc.network.suite_state_client import get_id_summary
 from cylc.task_id import TaskID
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 from cylc.gui.warning_dialog import warning_dialog
@@ -300,38 +300,31 @@ class GraphUpdater(threading.Thread):
             oldest = self.oldest_point_string
             newest = self.newest_point_string
 
+        group_for_server = self.group
+        if self.group == []:
+            group_for_server = None
+
+        ungroup_for_server = self.ungroup
+        if self.ungroup == []:
+            ungroup_for_server = None
+
         try:
             res = self.updater.suite_info_client.get_info(
-                'get_graph_raw', oldest, newest, self.group, self.ungroup,
-                self.ungroup_recursive, self.group_all, self.ungroup_all)
-        except TypeError:
-            # Back compat with pre cylc-6 suite daemons.
-            res = self.updater.suite_info_client.get(
-                'get_graph_raw', oldest, newest, False, self.group,
-                self.ungroup, self.ungroup_recursive, self.group_all,
-                self.ungroup_all)
-        except Exception as exc:  # PyroError?
+                'get_graph_raw', start_point_string=oldest,
+                stop_point_string=newest,
+                group_nodes=group_for_server,
+                ungroup_nodes=ungroup_for_server,
+                ungroup_recursive=self.ungroup_recursive,
+                group_all=self.group_all,
+                ungroup_all=self.ungroup_all
+            )
+        except Exception as exc:
             print >> sys.stderr, str(exc)
             return False
 
-        # backward compatibility for old suite daemons still running
-        self.have_leaves_and_feet = False
-        if isinstance(res, list):
-            # prior to suite-polling tasks in 5.4.0
-            gr_edges = res
-            suite_polling_tasks = []
-            self.leaves = []
-            self.feet = []
-        else:
-            if len(res) == 2:
-                # prior to graph view grouping fix in 5.4.2
-                gr_edges, suite_polling_tasks = res
-                self.leaves = []
-                self.feet = []
-            elif len(res) == 4:
-                # 5.4.2 and later
-                self.have_leaves_and_feet = True
-                gr_edges, suite_polling_tasks, self.leaves, self.feet = res
+        self.have_leaves_and_feet = True
+        gr_edges, suite_polling_tasks, self.leaves, self.feet = res
+        gr_edges = [tuple(edge) for edge in gr_edges]
 
         current_id = self.get_graph_id(gr_edges)
         needs_redraw = current_id != self.prev_graph_id

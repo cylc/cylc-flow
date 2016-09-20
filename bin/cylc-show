@@ -30,14 +30,15 @@ if '--use-ssh' in sys.argv[1:]:
         sys.exit(0)
 
 import cylc.flags
-from cylc.network.suite_info import SuiteInfoClient
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.network.suite_info_client import (
+    SuiteInfoClient, SuiteInfoClientAnon)
 from cylc.task_id import TaskID
 
 
 def main():
     parser = COP(
-        __doc__, pyro=True, noforce=True,
+        __doc__, comms=True, noforce=True,
         argdoc=[('REG', 'Suite name'),
                 ('[' + TaskID.SYNTAX_OPT_POINT + ']', 'Task name or ID')])
 
@@ -45,9 +46,10 @@ def main():
     suite = args[0]
 
     pclient = SuiteInfoClient(
-        suite, options.owner, options.host, options.pyro_timeout,
+        suite, options.owner, options.host, options.comms_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
-        print_uuid=options.print_uuid)
+        print_uuid=options.print_uuid
+    )
 
     if len(args) == 1:
         # Print suite info.
@@ -67,14 +69,16 @@ def main():
         # Print task instance info.
         task_id = arg
 
-    info = pclient.get_info('get_task_info', name)
+    info = pclient.get_info('get_task_info', name=name)
     if not info:
         sys.exit("ERROR: task not found: %s" % name)
     for key, value in sorted(info.items(), reverse=True):
         print "%s: %s" % (key, value or "(not given)")
 
     if point_string is not None:
-        result = pclient.get_info('get_task_requisites', name, point_string)
+        result = pclient.get_info('get_task_requisites',
+                                  name=name,
+                                  point_string=point_string)
         if not result:
             sys.exit("ERROR: task instance not found: %s" % task_id)
 

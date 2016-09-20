@@ -48,13 +48,13 @@ cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 ## Acknowledgement For Non-Cylc Work:
 Licences for non-cylc work included in this distribution can be found in the
 `licences/` directory.
+ * `lib/cherrypy`:
+    External software library released under a BSD license.
+    Minor modification to ignore an import warning.
+    See [cherrypy](http://www.cherrypy.org).
  * `lib/isodatetime/`:
     Unmodified external software library released under the LGPL license.
     See [metomi/isodatetime](https://github.com/metomi/isodatetime).
- * `lib/Pyro/`:
-    External software library released under the MIT license.
-    Minor modification based on version 3.16.
-    See [Pyro 3.16](https://pypi.python.org/pypi/Pyro).
  * `lib/xdot.py`:
     External software released under the LGPL license.
     Modifications based on version 0.6. See

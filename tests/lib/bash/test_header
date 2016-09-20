@@ -198,7 +198,7 @@ function cmp_ok() {
     local FILE_CONTROL=${2:--}
     local TEST_NAME=$(basename $FILE_TEST)-cmp-ok
     local DIFF_CMD=${CYLC_TEST_DIFF_CMD:-'diff -u'}
-    if ${DIFF_CMD} "$FILE_TEST" "$FILE_CONTROL" >"${TEST_NAME}.stderr" 2>&1;then
+    if ${DIFF_CMD} "$FILE_CONTROL" "$FILE_TEST" >"${TEST_NAME}.stderr" 2>&1;then
         ok $TEST_NAME
         return
     else

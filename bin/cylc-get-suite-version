@@ -32,18 +32,18 @@ if '--use-ssh' in sys.argv[1:]:
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
 from cylc.task_id import TaskID
-from cylc.network.suite_info import SuiteInfoClient
+from cylc.network.suite_info_client import SuiteInfoClient
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
 
 
 def main():
-    parser = COP(__doc__, pyro=True, argdoc=[('REG', 'Suite name')])
+    parser = COP(__doc__, comms=True, argdoc=[('REG', 'Suite name')])
 
     (options, args) = parser.parse_args()
     suite = args[0]
 
     pclient = SuiteInfoClient(
-        suite, options.owner, options.host, options.pyro_timeout,
+        suite, options.owner, options.host, options.comms_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     print pclient.get_info('get_cylc_version')

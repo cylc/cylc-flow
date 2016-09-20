@@ -1571,11 +1571,15 @@ class SuiteConfig(object):
         return label
 
     def get_graph_raw(self, start_point_string, stop_point_string,
-                      group_nodes=[], ungroup_nodes=[],
+                      group_nodes=None, ungroup_nodes=None,
                       ungroup_recursive=False, group_all=False,
                       ungroup_all=False):
         """Convert the abstract graph edges held in self.edges (etc.) to
         actual edges for a concrete range of cycle points."""
+        if group_nodes is None:
+            group_nodes = []
+        if ungroup_nodes is None:
+            ungroup_nodes = []
 
         members = self.runtime['first-parent descendants']
         hierarchy = self.runtime['first-parent ancestors']

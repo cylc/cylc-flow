@@ -13,7 +13,7 @@
             graph="""t1 => t2"""
 [runtime]
     [[t1]]
-        script = cylc broadcast "${CYLC_SUITE_NAME}" -n t2 -s 'script=true'
+        script = cylc broadcast -v -v --debug "${CYLC_SUITE_NAME}" -n t2 -s 'script=true'
         [[[remote]]]
             host = {{environ["CYLC_TEST_HOST"]}}
     [[t2]]

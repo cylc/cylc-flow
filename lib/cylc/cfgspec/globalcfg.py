@@ -127,10 +127,14 @@ SPEC = {
         'gui': vdr(vtype='string', default="gvim -f"),
     },
 
-    'pyro': {
-        'base port': vdr(vtype='integer', default=7766),
+    'communication': {
+        'method': vdr(vtype='string', default="https",
+                      options=["https"]),
+        'base port': vdr(vtype='integer', default=43001),
         'maximum number of ports': vdr(vtype='integer', default=100),
         'ports directory': vdr(vtype='string', default="$HOME/.cylc/ports/"),
+        'proxies on': vdr(vtype='boolean', default=False),
+        'options': vdr(vtype='string_list', default=[]),
     },
 
     'monitor': {
@@ -145,7 +149,7 @@ SPEC = {
             'work directory': vdr(vtype='string', default="$HOME/cylc-run"),
             'task communication method': vdr(
                 vtype='string',
-                options=["pyro", "ssh", "poll"], default="pyro"),
+                options=["default", "ssh", "poll"], default="default"),
             'remote copy template': vdr(
                 vtype='string',
                 default='scp -oBatchMode=yes -oConnectTimeout=10'),
@@ -197,7 +201,7 @@ SPEC = {
             'run directory': vdr(vtype='string'),
             'work directory': vdr(vtype='string'),
             'task communication method': vdr(
-                vtype='string', options=["pyro", "ssh", "poll"]),
+                vtype='string', options=["default", "ssh", "poll"]),
             'remote copy template': vdr(vtype='string'),
             'remote shell template': vdr(vtype='string'),
             'use login shell': vdr(vtype='boolean', default=None),
@@ -275,14 +279,6 @@ SPEC = {
             vtype='string',
             options=PRIVILEGE_LEVELS[:PRIVILEGE_LEVELS.index('shutdown') + 1],
             default="state-totals"),
-        'hashes': vdr(
-            vtype='string_list',
-            options=['md5', 'sha1', 'sha256', 'sha512'],
-            default=['sha256', 'md5']),
-        'scan hash': vdr(
-            vtype='string',
-            options=['md5', 'sha1', 'sha256', 'sha512'],
-            default='md5'),
     },
 }
 
@@ -339,6 +335,32 @@ def upg(cfg, descr):
     for key in SPEC['cylc']['events']:
         u.deprecate(
             '6.11.0', ['cylc', 'event hooks', key], ['cylc', 'events', key])
+    u.obsolete(
+        '7.0.0',
+        ['pyro', 'base port']
+    )
+    u.obsolete(
+        '7.0.0',
+        ['pyro', 'maximum number of ports'],
+        ['communication', 'maximum number of ports']
+    )
+    u.obsolete(
+        '7.0.0',
+        ['pyro', 'ports directory'],
+        ['communication', 'ports directory']
+    )
+    u.obsolete(
+        '7.0.0',
+        ['pyro']
+    )
+    u.obsolete(
+        '7.0.0',
+        ['authentication', 'hashes']
+    )
+    u.obsolete(
+        '7.0.0',
+        ['authentication', 'scan hash']
+    )
     u.upgrade()
 
 
@@ -543,8 +565,8 @@ class GlobalConfig(config):
         if value:
             self.create_directory(value, item)
 
-        item = '[pyro]ports directory'
-        value = cfg['pyro']['ports directory']
+        item = '[communication]ports directory'
+        value = cfg['communication']['ports directory']
         self.create_directory(value, item)
 
     def get_tmpdir(self):
@@ -593,8 +615,8 @@ class GlobalConfig(config):
         for key, val in cfg['documentation']['files'].items():
             cfg['documentation']['files'][key] = expandvars(val)
 
-        cfg['pyro']['ports directory'] = expandvars(
-            cfg['pyro']['ports directory'])
+        cfg['communication']['ports directory'] = expandvars(
+            cfg['communication']['ports directory'])
 
         for key, val in cfg['hosts']['localhost'].items():
             if val and 'directory' in key:

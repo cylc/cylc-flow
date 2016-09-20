@@ -77,7 +77,7 @@ The old 'MATCH POINT' syntax will be automatically detected and supported. To
 avoid this, use the '--no-multitask-compat' option, or use the new syntax
 (with a '/' or a '.') when specifying 2 TASKID arguments."""
 
-    def __init__(self, usage, argdoc=None, pyro=False, noforce=False,
+    def __init__(self, usage, argdoc=None, comms=False, noforce=False,
                  jset=False, multitask=False, prep=False, twosuites=False,
                  auto_add=True):
 
@@ -100,7 +100,7 @@ Arguments:"""
         self.n_compulsory_args = 0
         self.n_optional_args = 0
         self.unlimited_args = False
-        self.pyro = pyro
+        self.comms = comms
         self.jset = jset
         self.noforce = noforce
 
@@ -185,7 +185,7 @@ Arguments:"""
         except OptionConflictError:
             pass
 
-        if self.pyro:
+        if self.comms:
             try:
                 self.add_option(
                     "--port",
@@ -219,14 +219,14 @@ Arguments:"""
 
             try:
                 self.add_option(
-                    "--pyro-timeout", metavar='SEC',
+                    "--comms-timeout", "--pyro-timeout", metavar='SEC',
                     help=(
                         "Set a timeout for network connections "
                         "to the running suite. The default is no timeout. "
                         "For task messaging connections see "
                         "site/user config file documentation."
                     ),
-                    action="store", default=None, dest="pyro_timeout")
+                    action="store", default=None, dest="comms_timeout")
             except OptionConflictError:
                 pass
 
@@ -418,6 +418,5 @@ Arguments:"""
             # Element 1 may be a regular expression, so it may contain "." but
             # should not contain a "/".
             # All other elements should contain no "." and "/".
-            return (mtask_args[0], mtask_args[1])
-        else:
-            return (mtask_args, None)
+            return (mtask_args[0] + "." + mtask_args[1],)
+        return mtask_args

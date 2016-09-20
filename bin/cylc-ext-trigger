@@ -40,12 +40,12 @@ import sys
 
 import cylc.flags
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.network.ext_trigger import ExtTriggerClient
+from cylc.network.ext_trigger_client import ExtTriggerClient
 
 
 def main():
     parser = COP(
-        __doc__, pyro=True,
+        __doc__, comms=True,
         argdoc=[("REG", "Suite name"),
                 ("MSG", "External trigger message"),
                 ("ID", "Unique trigger ID")])
@@ -70,7 +70,7 @@ def main():
     print 'Send to suite %s: "%s" (%s)' % (suite, event_msg, event_id)
 
     pclient = ExtTriggerClient(
-        suite, options.owner, options.host, options.pyro_timeout,
+        suite, options.owner, options.host, options.comms_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
 

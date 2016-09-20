@@ -19,7 +19,6 @@
 
 import re
 import sys
-import Pyro
 import atexit
 import gobject
 import threading
@@ -30,17 +29,20 @@ from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
-from cylc.network.suite_state import (
+from cylc.network import ConnectionDeniedError
+from cylc.network.suite_state_client import (
     StateSummaryClient, SuiteStillInitialisingError, get_suite_status_string,
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
-    SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING)
-from cylc.network.suite_info import SuiteInfoClient
-from cylc.network.suite_log import SuiteLogClient
-from cylc.network.suite_command import SuiteCommandClient
+    SUITE_STATUS_INITIALISING, SUITE_STATUS_STOPPED, SUITE_STATUS_STOPPING
+)
+from cylc.network.suite_info_client import SuiteInfoClient
+from cylc.network.suite_log_client import SuiteLogClient
+from cylc.network.suite_command_client import SuiteCommandClient
 from cylc.wallclock import (
     get_current_time_string,
     get_seconds_as_interval_string,
-    get_time_string_from_unix_time)
+    get_time_string_from_unix_time
+)
 from cylc.task_id import TaskID
 from cylc.version import CYLC_VERSION
 from cylc.gui.warning_dialog import warning_dialog
@@ -174,7 +176,7 @@ class Updater(threading.Thread):
         self.version_mismatch_warned = False
 
         client_args = (self.cfg.suite, self.cfg.owner, self.cfg.host,
-                       self.cfg.pyro_timeout, self.cfg.port, self.cfg.db,
+                       self.cfg.comms_timeout, self.cfg.port, self.cfg.db,
                        self.cfg.my_uuid)
         self.state_summary_client = StateSummaryClient(*client_args)
         self.suite_info_client = SuiteInfoClient(*client_args)
@@ -187,7 +189,7 @@ class Updater(threading.Thread):
         """Try to reconnect to the suite daemon."""
         if cylc.flags.debug:
             print >> sys.stderr, "  reconnection...",
-        # Reset Pyro clients.
+        # Reset comms clients.
         self.suite_log_client.reset()
         self.state_summary_client.reset()
         self.suite_info_client.reset()
@@ -195,10 +197,6 @@ class Updater(threading.Thread):
         try:
             self.daemon_version = self.suite_info_client.get_info(
                 'get_cylc_version')
-        except KeyError:
-            self.daemon_version = "??? (pre 6.1.2?)"
-            if cylc.flags.debug:
-                print >> sys.stderr, "succeeded (old daemon)"
         except PortFileError as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
@@ -218,16 +216,12 @@ class Updater(threading.Thread):
                 self.info_bar.set_update_time(
                     None, self.info_bar.DISCONNECTED_TEXT)
             return
-        except Pyro.errors.NamingError as exc:
-            if cylc.flags.debug:
-                traceback.print_exc()
-            return
         except Exception as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
             if not self.connect_fail_warned:
                 self.connect_fail_warned = True
-                if isinstance(exc, Pyro.errors.ConnectionDeniedError):
+                if isinstance(exc, ConnectionDeniedError):
                     gobject.idle_add(
                         self.warn,
                         "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
@@ -276,15 +270,10 @@ class Updater(threading.Thread):
 
     def retrieve_err_log(self):
         """Retrieve suite err log; return True if it has changed."""
-        try:
-            new_err_content, new_err_size = (
-                self.suite_log_client.get_err_content(
-                    self.err_log_size, self._err_num_log_lines))
-        except AttributeError:
-            # TODO: post-backwards compatibility concerns, remove this handling
-            new_err_content = ""
-            new_err_size = self.err_log_size
-
+        new_err_content, new_err_size = (
+            self.suite_log_client.get_err_content(
+                self.err_log_size, self._err_num_log_lines)
+        )
         err_log_changed = (new_err_size != self.err_log_size)
         if err_log_changed:
             self.err_log_lines += new_err_content.splitlines()
@@ -294,48 +283,39 @@ class Updater(threading.Thread):
 
     def retrieve_summary_update_time(self):
         """Retrieve suite summary update time; return True if changed."""
-        do_update = False
-        try:
-            summary_update_time = (
-                self.state_summary_client.get_suite_state_summary_update_time()
-            )
-            if (summary_update_time is None or
-                    self._summary_update_time is None or
-                    summary_update_time != self._summary_update_time):
-                self._summary_update_time = summary_update_time
-                do_update = True
-        except AttributeError:
-            # TODO: post-backwards compatibility concerns, remove this handling
-            # Force an update for daemons using the old API
-            do_update = True
-        return do_update
+        summary_update_time = float(
+            self.state_summary_client.get_suite_state_summary_update_time()
+        )
+        if (summary_update_time is None or
+                self._summary_update_time is None or
+                summary_update_time != self._summary_update_time):
+            self._summary_update_time = summary_update_time
+            return True
+        return False
 
     def retrieve_state_summaries(self):
         """Retrieve suite summary."""
+        ret = self.state_summary_client.get_suite_state_summary()
         glbl, states, fam_states = (
             self.state_summary_client.get_suite_state_summary())
         self.ancestors = self.suite_info_client.get_info(
             'get_first_parent_ancestors')
         self.ancestors_pruned = self.suite_info_client.get_info(
-            'get_first_parent_ancestors', True)
+            'get_first_parent_ancestors', pruned=True)
         self.descendants = self.suite_info_client.get_info(
             'get_first_parent_descendants')
         self.all_families = self.suite_info_client.get_info('get_all_families')
 
         self.mode = glbl['run_mode']
 
-        if self.cfg.use_defn_order and 'namespace definition order' in glbl:
-            # (protect for compat with old suite daemons)
+        if self.cfg.use_defn_order:
             nsdo = glbl['namespace definition order']
             if self.ns_defn_order != nsdo:
                 self.ns_defn_order = nsdo
                 self.dict_ns_defn_order = dict(zip(nsdo, range(0, len(nsdo))))
-        try:
-            self.update_time_str = get_time_string_from_unix_time(
-                glbl['last_updated'])
-        except (TypeError, ValueError):
-            # Older suite...
-            self.update_time_str = glbl['last_updated'].isoformat()
+
+        self.update_time_str = get_time_string_from_unix_time(
+            glbl['last_updated'])
         self.global_summary = glbl
 
         if self.restricted_display:
@@ -345,19 +325,8 @@ class Updater(threading.Thread):
         self.full_fam_state_summary = fam_states
         self.refilter()
 
-        try:
-            self.status = glbl['status_string']
-        except KeyError:
-            # Back compat for suite daemons <= 6.9.1.
-            self.status = get_suite_status_string(
-                glbl['paused'], glbl['stopping'], glbl['will_pause_at'],
-                glbl['will_stop_at'])
-
-        try:
-            self.is_reloading = glbl['reloading']
-        except KeyError:
-            # Back compat.
-            pass
+        self.status = glbl['status_string']
+        self.is_reloading = glbl['reloading']
 
     def set_stopped(self):
         """Reset data and clients when suite is stopped."""
@@ -434,29 +403,6 @@ class Updater(threading.Thread):
                     self.info_bar.prog_bar_start, SUITE_STATUS_INITIALISING)
                 self.info_bar.set_state([])
             return False
-        except Pyro.errors.NamingError as exc:
-            if self.daemon_version is not None:
-                # Back compat <= 6.4.0 the state summary object was not
-                # connected to Pyro until initialisation was completed.
-                if cylc.flags.debug:
-                    print >> sys.stderr, (
-                        "  daemon <= 6.4.0, suite initializing ...")
-                self.set_status(SUITE_STATUS_INITIALISING)
-                if self.info_bar.prog_bar_can_start():
-                    gobject.idle_add(self.info_bar.prog_bar_start,
-                                     SUITE_STATUS_INITIALISING)
-                    self.info_bar.set_state([])
-                # Reconnect till we get the suite state object.
-                self.reconnect()
-                return False
-            else:
-                if cylc.flags.debug:
-                    print >> sys.stderr, "  CONNECTION LOST", str(exc)
-                self.set_stopped()
-                if self.info_bar.prog_bar_active():
-                    gobject.idle_add(self.info_bar.prog_bar_stop)
-                self.reconnect()
-                return False
         except Exception as exc:
             if self.status == SUITE_STATUS_STOPPING:
                 # Expected stop: prevent the reconnection warning dialog.

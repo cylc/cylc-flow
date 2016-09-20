@@ -36,7 +36,7 @@ try:
     os.getcwd()
 except OSError as exc:
     # The current working directory has been deleted (or filesystem
-    # problems of some kind...). This results in Pyro not being found,
+    # problems of some kind...). This results in cherrypy not being found,
     # immediately below. We cannot just chdir to $HOME as gcylc does
     # because that would break relative directory path command arguments
     # (cylc reg SUITE PATH).

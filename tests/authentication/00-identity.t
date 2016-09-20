@@ -42,7 +42,8 @@ mv "${TEST_DIR}/${SUITE_NAME}/passphrase" \
 
 # Check scan output.
 PORT=$(cylc ping -v "${SUITE_NAME}" | cut -d':' -f 2)
-cylc scan -fb -n "${SUITE_NAME}" 'localhost' >'scan.out' 2>'/dev/null'
+cylc scan --comms-timeout=5 -fb -n "${SUITE_NAME}" 'localhost' \
+    >'scan.out' 2>'/dev/null'
 cmp_ok scan.out << __END__
 ${SUITE_NAME} ${USER}@localhost:${PORT}
    (description and state totals withheld)
@@ -52,13 +53,13 @@ __END__
 TEST_NAME="${TEST_NAME_BASE}-show"
 run_fail "${TEST_NAME}" cylc show "${SUITE_NAME}"
 cylc log "${SUITE_NAME}" > suite.log1
-grep_ok "\[client-connect] DENIED (privilege 'identity' < 'description') ${USER}@.*:cylc-show" suite.log1
+grep_ok "\[client-connect\] DENIED (privilege 'identity' < 'description') ${USER}@.*:cylc-show" suite.log1
 
 # Commands should be denied.
 TEST_NAME="${TEST_NAME_BASE}-stop"
 run_fail "${TEST_NAME}" cylc stop "${SUITE_NAME}"
 cylc log "${SUITE_NAME}" > suite.log2
-grep_ok "\[client-connect] DENIED (privilege 'identity' < 'shutdown') ${USER}@.*:cylc-stop" suite.log2
+grep_ok "\[client-connect\] DENIED (privilege 'identity' < 'shutdown') ${USER}@.*:cylc-stop" suite.log2
 
 # Restore the passphrase.
 mv "${TEST_DIR}/${SUITE_NAME}/passphrase.DIS" \

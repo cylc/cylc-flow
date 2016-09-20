@@ -25,7 +25,7 @@ from time import sleep
 
 from cylc.task_id import TaskID
 from cylc.gui.dot_maker import DotMaker
-from cylc.network.suite_state import get_id_summary
+from cylc.network.suite_state_client import get_id_summary
 from cylc.wallclock import get_time_string_from_unix_time
 from cylc.task_state import TASK_STATUSES_AUTO_EXPAND
 

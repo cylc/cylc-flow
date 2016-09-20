@@ -43,7 +43,6 @@ from cylc.task_state import (TASK_STATUSES_ORDERED, TASK_STATUS_RUNAHEAD,
                              TASK_STATUS_FAILED, TASK_STATUS_SUBMIT_FAILED)
 from cylc.cfgspec.gscan import gsfg
 
-PYRO_TIMEOUT = 2
 KEY_NAME = "name"
 KEY_OWNER = "owner"
 KEY_STATES = "states"
@@ -54,7 +53,7 @@ def get_hosts_suites_info(hosts, timeout=None, owner=None):
     """Return a dictionary of hosts, suites, and their properties."""
     host_suites_map = {}
     for host, (port, result) in scan_all(
-            hosts=hosts, pyro_timeout=timeout):
+            hosts=hosts, timeout=timeout):
         if owner and owner != result.get(KEY_OWNER):
             continue
         if host not in host_suites_map:

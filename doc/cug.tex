@@ -442,11 +442,14 @@ And for HTML versions of the User Guide:
     \item ImageMagick (for image scaling)
 \end{myitemize}
 
-Note: Older versions of cylc require Pyro-3 (Python Remote Objects). Current
-version of cylc includes a modified version of Pyro 3.16 in its distribution.
-Pyro is used for network communication between server processes (cylc suites)
-and client programs (running tasks, the gcylc GUI, user commands). \newline
-\url{https://pypi.python.org/pypi/Pyro/}
+Cylc includes a slightly modified version of cherrypy 6.0.2, a pure Python
+HTTP framework that we use as a web server for communication
+between server processes (cylc suites) and client programs (running tasks,
+the gcylc GUI, user commands). Client communication is done via the
+Python requests library if available (recommended) or via pure Python via
+urllib2.
+\newline \url{http://www.cherrypy.org/}
+\newline \url{http://docs.python-requests.org/}
 
 Finally, cylc makes heavy use of Python {\em ordered dictionary}
 data structures. Significant speedup in parsing large suites can be had
@@ -526,7 +529,6 @@ shell$ yum install texlive-preprint
 shell$ yum install ImageMagick
 
 # Python packages:
-shell$ easy_install pyro   # (3.16)
 shell$ easy_install Jinja2 # (2.6)
 shell$ easy_install pygraphviz
 
@@ -1380,7 +1382,7 @@ host must not produce any standard output as it may confuse commands such as
 scp. See \url{http://www.openssh.com/faq.html#2.9} for more information.
 
 \item Networking settings must allow communication {\em back} from
-the task host to the suite host, either by network ports (Pyro) or ssh,
+the task host to the suite host, either by network ports or ssh,
 unless the last-resort one way {\em task polling} communication method
 is used.
 
@@ -4437,8 +4439,8 @@ For this to work:
         requirement.
         \item If SSH task communication is configured, non-interactive ssh is
         required from the task host to the suite host.
-        \item If Pyro (default) task communication is configured, the task host
-        should have access to the Pyro port on the suite host.
+        \item If (default) task communication is configured, the task host
+        should have access to the port on the suite host.
     \end{myitemize}
     \item the suite definition directory, or some fraction of its
         content, can be installed on the task host, if needed.
@@ -6038,19 +6040,19 @@ scripting in a wrapper that automatically invokes messaging commands to
 report progress back to the suite. The messaging commands can be
 configured to work in two different ways:
     \begin{myenumerate}
-        \item {\bf Pyro:} direct messaging via network sockets using
-        Pyro (Python Remote Objects).
+        \item {\bf default:} direct messaging via network sockets using
+        HTTPS.
         \item {\bf ssh:} for tasks hosts that block access to the
-        network ports required by Pyro, cylc can use non-interactive ssh to
+        network ports required, cylc can use non-interactive ssh to
         re-invoke task messaging commands on the suite host (where
-        ultimately Pyro is still used to connect to the server process).
+        ultimately HTTPS is still used to connect to the server process).
     \end{myenumerate}
 \item {\bf polling:} for task hosts that do not allow return routing to
-the suite host for Pyro or ssh, cylc can poll tasks at configurable
+the suite host or ssh, cylc can poll tasks at configurable
 intervals, using non-interactive ssh.
 \end{myenumerate}
 
-The Pyro communication method is the default because it is the most
+The remote HTTPS communication method is the default because it is the most
 direct and efficient; the ssh method inserts an extra step in the
 process (command re-invocation on the suite host); and task polling is
 the least efficient because results are checked at predetermined
@@ -6094,8 +6096,8 @@ were orphaned when the suite went down.
 
 \subsection{Alternatives To Polling When Routing Is Blocked}
 
-If Pyro and ssh ports are blocked but you don't want to use polling from
-the suite host:
+If remote ports are blocked and non-interactive ssh doesn't work, but you
+don't want to use polling from the suite host:
 \begin{myitemize}
 \item it has been suggested that network {\em port forwarding} may
 provide a solution;
@@ -6122,20 +6124,25 @@ tracking (see these with \lstinline=cylc get-site-config=):
     # If send fails after this many tries, give up trying:
     maximum number of tries = 7
 
-    # This timeout is the same as --pyro-timeout for user commands. If
+    # This timeout is the same as --comms-timeout for user commands. If
     # set to None (no timeout) message send to non-responsive suite
     # (e.g. suspended with Ctrl-Z) could hang indefinitely.
     connection timeout in seconds = 30
 
-# Pyro is required for communications between cylc clients and servers
-# (i.e. between suite-connecting commands and guis, and running suite
-# server processes).
-[pyro]
+# Setup the communication method details. This is required for
+# communications between cylc clients and servers (i.e. between
+# suite-connecting commands and guis, and running suite server processes).
+[communications]
+
+    # Configure the choice of communication method. Only https is supported
+    # at the moment.
+# SITE ONLY 
+    method = https
 
     # Each suite listens on a dedicated network port.
     # Servers bind on the first port available from the base port up:
 # SITE ONLY
-    base port = 7766
+    base port = 43001
 
     # This sets the maximum number of suites that can run at once.
 # SITE ONLY
@@ -6149,28 +6156,28 @@ tracking (see these with \lstinline=cylc get-site-config=):
     # Add task host sections if local defaults are not sufficient.
     [[HOST]]
        # Method of communication of task progress back to the suite:
-        #   1) pyro - direct client-server RPC via network ports
-        #   2) ssh  - re-invoke pyro messaging commands on suite server
+        #   1) default - direct client-server RPC via network ports
+        #   2) ssh  - re-invoke messaging commands on suite server
         #   3) poll - the suite polls for status of passive tasks
-        # Pyro RPC is still required in all cases *on the suite host*
+        # HTTPS comms are still required in all cases *on the suite host*
         # for cylc clients (commands etc.) to communicate with suites.
-        task communication method = "pyro" # or "ssh" or "poll"
+        task communication method = "default" # or "ssh" or "poll"
         # The "poll" method sets a default interval here to ensure no
         # tasks are accidentally left unpolled. You should override this
         # with run-length appropriate intervals under task [runtime] -
         # which will also result in routine polling to check task health
-        # under the pyro or ssh communications methods.
+        # under the default or ssh communications methods.
         default polling interval in minutes = 1.0
 \end{lstlisting}
 
 \subsection{How Commands Interact With Running Suites}
 
 User-invoked commands that connect to running suites can also choose
-between direct communication across network sockets (Pyro) and
+between direct communication across network sockets (HTTPS) and
 re-invocation of commands on the suite host using non-interactive ssh
 (there is a \lstinline=--use-ssh= command option for this purpose).
 
-The gcylc GUI requires direct Pyro connections to its target suite. If
+The gcylc GUI requires direct HTTPS connections to its target suite. If
 that is not possible, run gcylc on the suite host.
 
 
@@ -6382,7 +6389,7 @@ A connection timeout can be set in site and user global config files
 cannot hang indefinitely if the suite is not responding (this can be
 caused by suspending a suite with Ctrl-Z) thereby preventing the task
 from completing. The same can be done on the command line for other
-suite-connecting user commands, with the \lstinline=--pyro-timeout= option.
+suite-connecting user commands, with the \lstinline=--comms-timeout= option.
 
 \subsection{Runahead Limiting}
 \label{RunaheadLimit}
@@ -7674,20 +7681,19 @@ mitigate any jumping layout problems:
 
 \end{myitemize}
 
-\section{Pyro}
-\label{Pyro}
+\section{Communication Method}
+\label{Communication}
 
-Pyro (Python Remote Objects) is a widely used open source objected
-oriented Remote Procedure Call technology developed by Irmen de Jong.
+Cylc suite daemons and clients (commands, cylc gui, task messaging)
+communicate via particular ports using the HTTPS protocol, secured
+by HTTP Digest Authentication using the suite's 20-random-character
+private passphrase and private SSL certificate.
 
-Earlier versions of cylc used the Pyro Nameserver to marshal
-communication between client programs (tasks, commands, viewers, etc.)
-and their target suites. This worked well, but in principle it
-provided a route for one suite or user on the network to bring down
-all running suites by killing the nameserver. Consequently cylc now
-uses Pyro simply as a lightweight object oriented wrapper for
-direct network socket communication between client programs and their
-target suites - all suites are thus entirely isolated from one another.
+This is enabled via the included-in-cylc cherrypy library (for the
+server) and either the Python requests library (if available) or
+the built-in Python libraries for the clients.
+
+All suites are entirely isolated from one another.
 
 \section{Cylc 6 Migration Reference}
 \label{cylc-6-migration}

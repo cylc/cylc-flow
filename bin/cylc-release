@@ -34,13 +34,13 @@ if '--use-ssh' in sys.argv[1:]:
 
 import cylc.flags
 from cylc.prompt import prompt
-from cylc.network.suite_command import SuiteCommandClient
 from cylc.option_parsers import CylcOptionParser as COP
+from cylc.network.suite_command_client import SuiteCommandClient
 
 
 def main():
     parser = COP(
-        __doc__, pyro=True, multitask=True,
+        __doc__, comms=True, multitask=True,
         argdoc=[
             ("REG", 'Suite name'),
             ('[TASKID ...]', 'Task identifiers')])
@@ -53,12 +53,12 @@ def main():
     else:
         prompt('Release suite %s' % suite, options.force)
     pclient = SuiteCommandClient(
-        suite, options.owner, options.host, options.pyro_timeout,
+        suite, options.owner, options.host, options.comms_timeout,
         options.port, options.db, my_uuid=options.set_uuid,
         print_uuid=options.print_uuid)
     if args:
-        items, compat = parser.parse_multitask_compat(options, args)
-        pclient.put_command('release_task', items, compat)
+        items = parser.parse_multitask_compat(options, args)
+        pclient.put_command('release_tasks', items=items)
     else:
         pclient.put_command('release_suite')
 

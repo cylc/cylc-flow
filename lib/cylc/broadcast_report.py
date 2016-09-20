@@ -39,7 +39,7 @@ def get_broadcast_bad_options_report(bad_options, is_set=False):
         msg = BAD_OPTIONS_TITLE
     for key, values in sorted(bad_options.items()):
         for value in values:
-            if isinstance(value, tuple):
+            if isinstance(value, tuple) or isinstance(value, list):
                 value_str = ""
                 values = list(value)
                 while values:
