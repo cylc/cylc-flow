@@ -78,7 +78,7 @@ class BgCommandHandler(object):
             # subprocess.Popen has a bad habit of not setting the
             # filename of the executable when it raises an OSError.
             if not exc.filename:
-                exc.filename = command[0]
+                exc.filename = "nohup"
             return (1, None, str(exc))
         else:
             return (0, "%d\n" % (proc.pid), None)
