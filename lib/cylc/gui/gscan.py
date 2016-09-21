@@ -539,6 +539,8 @@ class ScanApp(object):
             if column.get_title() == "Status":
                 dot_offset, dot_width = tuple(column.cell_get_position(
                     column.get_cell_renderers()[1]))
+                if not dot_width:
+                    return False
                 cell_index = (cell_x - dot_offset) // dot_width
                 if cell_index == 0:
 
