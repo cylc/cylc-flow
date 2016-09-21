@@ -5,6 +5,20 @@ milestones](https://github.com/cylc/cylc/milestones?state=closed).
 
 -------------------------------------------------------------------------------
 
+## __cylc-6.11.1 (2016-09-22)__
+
+Three minor bug fixes on top of 6.11.0:
+
+[#2002](https://github.com/cylc/cylc/pull/2002): fix a bug in the graph string 
+parser - if a task appears both with and without a cycle point offset in the 
+same conditional trigger epression (unlikely, but possible!)
+
+[#2007](https://github.com/cylc/cylc/pull/2007): fix handling of OS Error if
+the user run into the limit for number of forked processes.
+
+[#2008](https://github.com/cylc/cylc/pull/2008): fix occasional traceback from
+`cylc gsan`.
+
 
 ## __cylc-6.11.0 (2016-09-13)__
 
