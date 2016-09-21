@@ -1,0 +1,22 @@
+[cylc]
+    health check interval = PT10S
+    abort if any task fails = True
+    [[events]]
+        abort on stalled = False
+        abort on timeout = True
+        timeout = PT1M
+
+[scheduling]
+    [[dependencies]]
+        graph = t1
+
+[runtime]
+    [[t1]]
+        script = """
+wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>/dev/null || true
+# Corrupt port file and don't report back to suite
+PORTSD="$(cylc get-global-config --item='[communication]ports directory')"
+echo 'Haha! I have corrupted the port file!' >"${PORTSD}/${CYLC_SUITE_NAME}"
+trap '' EXIT
+exit
+"""

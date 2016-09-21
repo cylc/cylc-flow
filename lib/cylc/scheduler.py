@@ -105,7 +105,6 @@ class Scheduler(object):
     EVENT_STALLED = 'stalled'
 
     # Intervals in seconds
-    INTERVAL_FS_CHECK = 600.0
     INTERVAL_MAIN_LOOP = 1.0
     INTERVAL_STOP_KILL = 10.0
     INTERVAL_STOP_PROCESS_POOL_EMPTY = 0.5
@@ -1568,10 +1567,22 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                 self.check_suite_stalled()
             now = time()
             if time_next_fs_check is None or now > time_next_fs_check:
-                if os.path.exists(suite_run_dir):
-                    time_next_fs_check = now + self.INTERVAL_FS_CHECK
-                else:
-                    raise SchedulerError("Suite run directory not found")
+                for message, item in [
+                        ("%s: suite run directory not found", suite_run_dir),
+                        ("%s: port file not found", self.port_file)]:
+                    if not os.path.exists(item):
+                        raise SchedulerError(message % (item))
+                try:
+                    port, host = open(self.port_file).read().splitlines()
+                    assert self.port == int(port) and self.host == host
+                except (AssertionError, IOError, IndexError, ValueError):
+                    exc = SchedulerError(
+                        ("%s: port file corrupted/modified and" +
+                         " will be left") % self.port_file)
+                    self.port_file = None
+                    raise exc
+                time_next_fs_check = (
+                    now + self.config.cfg['cylc']['health check interval'])
 
             if self.options.profile_mode:
                 now = time()
@@ -1962,7 +1973,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
         sys.stdout.flush()
         sys.stderr.flush()
 
-        if self.comms_daemon:
+        if self.comms_daemon and self.port_file:
             try:
                 os.unlink(self.port_file)
             except OSError as exc:

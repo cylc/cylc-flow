@@ -171,6 +171,19 @@ on it will abort with exit status 1 if any task fails.
     \item {\em default:} False
 \end{myitemize}
 
+\subsubsection[health check interval]{[cylc] \textrightarrow health check interval}
+
+Specify an time interval when a running cylc suite will attempt to check that
+its run directory and port file exist, and that the port file contains the
+expected information.
+
+\begin{myitemize}
+    \item {\em type:} ISO 8601 duration/interval representation (e.g.
+ \lstinline=PT5M=, 5 minutes (note: by contrast, \lstinline=P5M= means 5
+ months, so remember the \lstinline=T=!)).
+    \item {\em default:} PT10M
+\end{myitemize}
+
 \subsubsection[disable automatic shutdown]{[cylc] \textrightarrow disable automatic shutdown}
 
 This has the same effect as the \lstinline{--no-auto-shutdown} flag for

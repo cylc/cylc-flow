@@ -218,6 +218,8 @@ SPEC = {
         'force run mode': vdr(
             vtype='string', options=['live', 'dummy', 'simulation', '']),
         'abort if any task fails': vdr(vtype='boolean', default=False),
+        'health check interval': vdr(
+            vtype='interval_minutes', default=DurationFloat(600)),
         'log resolved dependencies': vdr(vtype='boolean', default=False),
         'disable automatic shutdown': vdr(vtype='boolean', default=False),
         'environment': {

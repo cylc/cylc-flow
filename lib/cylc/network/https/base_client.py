@@ -267,8 +267,9 @@ class BaseCommsClient(object):
         specified.
 
         """
-        if ((self.host is None or self.port is None) and
-                'CYLC_SUITE_RUN_DIR' in os.environ):
+        if self.host and self.port:
+            return
+        if 'CYLC_SUITE_RUN_DIR' in os.environ:
             # Looks like we are in a running task job, so we should be able to
             # use "cylc-suite-env" file under the suite running directory
             try:
@@ -282,61 +283,68 @@ class BaseCommsClient(object):
                 self.host = suite_env.suite_host
                 self.port = suite_env.suite_port
                 self.owner = suite_env.suite_owner
-
         if self.host is None or self.port is None:
-            from cylc.cfgspec.globalcfg import GLOBAL_CFG
-            port_file_path = os.path.join(
-                GLOBAL_CFG.get(
-                    ['communication', 'ports directory']), self.suite)
-            if is_remote_host(self.host) or is_remote_user(self.owner):
-                import shlex
-                from subprocess import Popen, PIPE
-                ssh_tmpl = str(GLOBAL_CFG.get_host_item(
-                    'remote shell template', self.host, self.owner))
-                ssh_tmpl = ssh_tmpl.replace(' %s', '')
-                user_at_host = ''
-                if self.owner:
-                    user_at_host = self.owner + '@'
-                if self.host:
-                    user_at_host += self.host
-                else:
-                    user_at_host += 'localhost'
-                r_port_file_path = port_file_path.replace(
-                    os.environ['HOME'], '$HOME')
-                command = shlex.split(ssh_tmpl) + [
-                    user_at_host, 'cat', r_port_file_path]
-                proc = Popen(command, stdout=PIPE, stderr=PIPE)
-                out, err = proc.communicate()
-                ret_code = proc.wait()
-                if ret_code:
-                    if cylc.flags.debug:
-                        print >> sys.stderr, {
-                            "code": ret_code,
-                            "command": command,
-                            "stdout": out,
-                            "stderr": err}
+            self._load_port_file()
+
+    def _load_port_file(self):
+        """Load port, host, etc from port file."""
+        # GLOBAL_CFG is expensive to import, so only load on demand
+        from cylc.cfgspec.globalcfg import GLOBAL_CFG
+        port_file_path = os.path.join(
+            GLOBAL_CFG.get(['communication', 'ports directory']), self.suite)
+        out = ""
+        if is_remote_host(self.host) or is_remote_user(self.owner):
+            # Only load these modules on demand, as they may be expensive
+            import shlex
+            from subprocess import Popen, PIPE
+            ssh_tmpl = str(GLOBAL_CFG.get_host_item(
+                'remote shell template', self.host, self.owner))
+            ssh_tmpl = ssh_tmpl.replace(' %s', '')
+            user_at_host = ''
+            if self.owner:
+                user_at_host = self.owner + '@'
+            if self.host:
+                user_at_host += self.host
+            else:
+                user_at_host += 'localhost'
+            r_port_file_path = port_file_path.replace(
+                os.environ['HOME'], '$HOME')
+            command = shlex.split(ssh_tmpl) + [
+                user_at_host, 'cat', r_port_file_path]
+            proc = Popen(command, stdout=PIPE, stderr=PIPE)
+            out, err = proc.communicate()
+            ret_code = proc.wait()
+            if ret_code:
+                if cylc.flags.debug:
+                    print >> sys.stderr, {
+                        "code": ret_code,
+                        "command": command,
+                        "stdout": out,
+                        "stderr": err}
+                if self.port is None:
                     raise PortFileError(
                         "Port file '%s:%s' not found - suite not running?." %
                         (user_at_host, r_port_file_path))
-            else:
-                try:
-                    out = open(port_file_path).read()
-                except IOError:
+        else:
+            try:
+                out = open(port_file_path).read()
+            except IOError:
+                if self.port is None:
                     raise PortFileError(
                         "Port file '%s' not found - suite not running?." %
                         (port_file_path))
-            lines = out.splitlines()
+        lines = out.splitlines()
+        if self.port is None:
             try:
-                if self.port is None:
-                    self.port = int(lines[0])
+                self.port = int(lines[0])
             except (IndexError, ValueError):
                 raise PortFileError(
                     "ERROR, bad content in port file: %s" % port_file_path)
-            if self.host is None:
-                if len(lines) >= 2:
-                    self.host = lines[1].strip()
-                else:
-                    self.host = get_hostname()
+        if self.host is None:
+            if len(lines) >= 2:
+                self.host = lines[1].strip()
+            else:
+                self.host = get_hostname()
 
     def reset(self, *args, **kwargs):
         pass
