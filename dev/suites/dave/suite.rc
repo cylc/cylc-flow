@@ -7,20 +7,21 @@ background thread; (c) job submission in a background worker thread."""
 
 {% set N_LOCAL = 10 %}
 {% set N_REMOTE_PER_LOCAL = 2 %}
-[cylc]
-    [[job submission]]
-        delay between batches = 0
+#[cylc]
+#    [[job submission]]
+#        delay between batches = 0
 [scheduling]
-    initial cycle time = 20120101
-    final cycle time   = 20120110
-    runahead limit     = 100
-    [[special tasks]]
-        cold-start = cold_start
+    initial cycle point = 20120101
+    final cycle point   = 20120110
+    cycling mode        = integer
+    max active cycle points = 100
+#    [[special tasks]]
+#        cold-start = cold_start
     [[dependencies]]
-        [[[0]]]
+        [[[R1]]]
             graph = """
                 {% for X in range( 1, N_LOCAL + 1 ) %}
-                  local_{{ X }}[T-24] | cold_start => local_{{ X }}
+                  local_{{ X }}[-P24] | cold_start => local_{{ X }}
                   {% for Y in range( 1, N_REMOTE_PER_LOCAL + 1 ) %}
                     local_{{ X }} => remote_{{ X }}_{{ Y }}
                   {% endfor %}

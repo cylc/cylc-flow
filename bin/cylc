@@ -253,6 +253,7 @@ hook_commands['check-triggering'] = ['check-triggering']
 
 admin_commands = OrderedDict()
 admin_commands['test-battery'] = ['test-battery']
+admin_commands['profile-battery'] = ['profile-battery']
 admin_commands['import-examples'] = ['import-examples']
 admin_commands['upgrade-run-dir'] = ['upgrade-run-dir']
 admin_commands['check-software'] = ['check-software']
@@ -371,6 +372,7 @@ Command CATEGORIES:"""
 comsum = OrderedDict()
 # admin
 comsum['test-battery'] = 'Run a battery of self-diagnosing test suites'
+comsum['profile-battery'] = 'Run a battery of profiling tests'
 comsum['import-examples'] = 'Import example suites your suite run directory'
 comsum['upgrade-run-dir'] = 'Upgrade a pre-cylc-6 suite run directory'
 comsum['check-software'] = 'Check required software is installed.'

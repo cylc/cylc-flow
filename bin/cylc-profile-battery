@@ -1,0 +1,945 @@
+#!/usr/bin/env python
+# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# Copyright (C) 2008-2017 NIWA
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Orchestrates experiments to profile the performance of cylc at different
+versions."""
+
+import glob
+import hashlib
+import itertools
+import json
+import optparse
+import os
+import random
+import shutil
+import sys
+import tempfile
+import time
+
+# Write out floats to one decimal place only.
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.1f')
+
+import cylc.profiling as prof
+from cylc.profiling.analysis import (make_table, print_table, plot_results)
+import cylc.profiling.git as git
+
+RUN_DOC = r"""cylc profile-battery [-e [EXPERIMENT ...]] [-v [VERSION ...]]
+
+Run profiling experiments against different versions of cylc. A list of
+experiments can be specified after the -e flag, if not provided the experiment
+"complex" will be chosen. A list of versions to profile against can be
+specified after the -v flag, if not provided the current version will be used.
+
+Experiments are stored in dev/profile-experiments, user experiments can be
+stored in .profiling/experiments. Experiments are specified without the file
+extension, experiments in .profiling/ will be chosen before those in dev/.
+
+IMPORTANT: See dev/profile-experiments/example for an experiment template with
+further details.
+
+Versions are any valid git identifiers i.e. tags, branches, commits. To compare
+results to different cylc versions either:
+    * Supply cylc profile-battery with a complete list of the versions you wish
+      to profile, it will then provide the option to checkout the required
+      versions automatically.
+    * Checkout each version manually running cylc profile-battery against only
+      one version at a time. Once all results have been gathered you can then
+      run cylc profile-battery with a complete list of versions.
+
+Profiling will save results to .profiling/results.json where they can be used
+for future comparisons. To list profiling results run:
+    * cylc profile-battery --ls  # list all results
+    * cylc profile-battery --ls -e experiment  # list all results for
+                                               # experiment "experiment".
+    * cylc profile-battery --ls --delete -v  6.1.2  # Delete all results for
+                                                    # version 6.1.2 (prompted).
+
+If matplotlib and numpy are installed profiling generates plots which are
+saved to .profiling/plots or presented in an interactive window using the -i
+flag.
+
+Results are stored along with a checksum for the experiment file. When an
+experiment file is changed previous results are maintained, future results will
+be stored separately. To copy results from an older version of an experiment
+into those from the current one run:
+    * cylc profile-battery --promote experiment@checksum
+NOTE: At present results cannot be analysed without the experiment file so old
+results must be "copied" in this way to be re-used.
+
+The results output contain only a small number of metrics, to see a full list
+of results use the --full option.
+"""
+
+
+def create_profile_directory():
+    """Creates a directory for storing results and user experiments in."""
+    profile_dir = os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME)
+    os.mkdir(profile_dir)
+    os.mkdir(os.path.join(profile_dir, prof.PROFILE_PLOT_DIR_NAME))
+    os.mkdir(os.path.join(profile_dir, prof.USER_EXPERIMENT_DIR_NAME))
+    print 'creating', os.path.join(profile_dir, prof.PROFILE_FILE_NAME)
+    with open(os.path.join(profile_dir, prof.PROFILE_FILE_NAME),
+              'w+') as profile_file:
+        profile_file.write('{}')
+
+
+def parse_args():
+    """Parse command line arguments for this script."""
+    def multi_arg_callback(option, _, value, parser):
+        """Allows an unkonwn number of arguments to be passed as an option."""
+        assert value is None
+        value = []
+        for arg in parser.rargs:
+            if arg[0] == '-':
+                break
+            value.append(arg)
+        del parser.rargs[:len(value)]
+        setattr(parser.values, option.dest, value)
+
+    parser = optparse.OptionParser(RUN_DOC)
+    parser.add_option('-e', '--experiments',
+                      help='Specify list of experiments to run.',
+                      dest='experiments', callback=multi_arg_callback,
+                      action='callback')
+    parser.add_option('-v', '--versions',
+                      help='Specify cylc versions to profile. Git tags, ' +
+                      'branches, commits are all valid.',
+                      dest='versions', callback=multi_arg_callback,
+                      action='callback')
+    parser.add_option('-i', '--interactive', action='store_true',
+                      help='Open any plots in interactive window rather '
+                      'saving them to files.', default=False)
+    parser.add_option('-p', '--no-plots', action='store_true', default=False,
+                      help='Don\'t generate any plots.')
+    parser.add_option('--ls', '--list-results', action='store_true',
+                      default=False, help='List all stored results. ' +
+                      'Experiments and versions to list can be specified ' +
+                      'using --experiments and --versions.')
+    parser.add_option('--delete', action='store_true', default=False,
+                      help='Delete stored results (to be used in ' +
+                      'combination with --list-results).')
+    parser.add_option('--yes', '-y', action='store_true', default=False,
+                      help='Answer yes to any user input. Will check-out '
+                      'cylc versions as required.')
+    parser.add_option('--full-results', '--full', action='store_true',
+                      default=False, help='Display all gathered metrics.')
+    parser.add_option('--lobf-order', dest='lobf_order', help='The order (int)'
+                      'of the line of best fit to be drawn. 0 for no lobf, '
+                      '1 for linear, 2 for quadratic ect.', default=2,
+                      type='int')
+    parser.add_option('--promote', type='str', help='Promote results from an '
+                      'older version of an experiment to the current version. '
+                      'To be used when making non-functional changes to an '
+                      'experiment.')
+    parser.add_option('--test', action='store_true', default=False,
+                      help='For development purposes, run experiment without '
+                      'saving results and regardless of any prior runs.')
+    opts, _ = parser.parse_args()
+
+    # Defaults for experiments and versions if we are not in list mode.
+    if not (opts.ls or opts.delete):
+        if not opts.experiments:
+            opts.experiments = ["complex"]
+        if not opts.versions:
+            opts.versions = ["HEAD"]
+    else:
+        if not opts.experiments:
+            opts.experiments = []
+        if not opts.versions:
+            opts.versions = []
+
+    return opts
+
+
+def get_results():
+    """Return data from the results file."""
+    if not os.path.exists(os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME,
+                                       prof.PROFILE_FILE_NAME)):
+        # Profile file does not exist, create it.
+        create_profile_directory()
+        return {}
+    else:
+        # Profile file exists, git list of results contained.
+        profile_file_path = os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME,
+                                         prof.PROFILE_FILE_NAME)
+        with open(profile_file_path, 'r') as profile_file:
+            try:
+                profile_results = json.load(profile_file)
+            except ValueError as exc:
+                print exc
+                sys.exit('ERROR: Could not read "%s". Check that it is valid'
+                         ' JSON or delete the file.' % profile_file_path)
+        return profile_results
+
+
+def get_result_keys():
+    """Return a list of (version_id, experiment_id,) tuples."""
+    profile_results = get_results()
+    result_keys = []
+    for version_id, experiment_ids in profile_results.iteritems():
+        result_keys.extend([(version_id, experiment_id) for experiment_id
+                            in experiment_ids.keys()])
+    return result_keys
+
+
+def get_schedule(versions, experiments, test=False):
+    """Determine which experiments to run with which versions.
+
+    Return:
+        tuple - (schedule, experiments_to_run)
+            - schedule (dict) - Dictionary of cylc version ids containing lists
+              of the experiments to run for each.
+            - experiments_to_run (set) - Set of (version_id, experiment_id)
+              tuples of the experiments to run.
+    """
+    experiment_keys = itertools.product(
+        [version['id'] for version in versions],
+        [experiment['id'] for experiment in experiments])
+    result_keys = get_result_keys()
+
+    # Exclude any previously acquired results so that experiments are not run
+    # twice.
+    if test:
+        # Don't exclude experiments if in "test" mode.
+        experiments_to_run = set(experiment_keys)
+    else:
+        experiments_to_run = set(experiment_keys) - set(result_keys)
+
+    ret = {}
+    for version_id, experiment_id in experiments_to_run:
+        if version_id not in ret:
+            ret[version_id] = []
+        for experiment in experiments:
+            if experiment_id == experiment['id']:
+                ret[version_id].append(experiment)
+                break
+    return ret, set([item[1] for item in experiments_to_run])
+
+
+def get_versions(version_names):
+    """Produces a list of version objects from a list of cylc version names."""
+    versions = []
+    for version_name in version_names:
+        version_id = git.describe(version_name)
+        if version_id:
+            versions.append({
+                'name': version_name,
+                'id': version_id
+            })
+        else:
+            sys.exit('ERROR: cylc version "%s" not reccognised' % version_name)
+    return versions
+
+
+def get_checksum(file_path, chunk_size=4096):
+    """Returns a hash of a file."""
+    hash_ = hashlib.sha256()
+    with open(file_path, 'rb') as file_:
+        for chunk in iter(lambda: file_.read(chunk_size), b""):
+            hash_.update(chunk)
+        return hash_.hexdigest()[:15]
+
+
+def load_experiment_config(experiment_file):
+    """Returns a dictionary containing the contents of the experiment file."""
+    with open(experiment_file, 'r') as file_:
+        try:
+            ret = json.load(file_)
+        except ValueError as exc:
+            sys.exit('ERROR: Invalid JSON in experiment file"{0}"\n{1}'.format(
+                experiment_file, exc))
+
+    # Prepend CYLC_DIR to suite definition paths if they aren't provided as
+    # absolute paths.
+    try:
+        for run in ret['runs']:
+            if not os.path.isabs(os.path.expanduser(run['suite dir'])):
+                run['suite dir'] = os.path.join(prof.CYLC_DIR,
+                                                run['suite dir'])
+            run['suite dir'] = os.path.realpath(run['suite dir'])
+    except KeyError as exc:
+        print exc
+        sys.exit('Error: Experiment definition not complete.')
+
+    # Apply defaults.
+    for run in ret['runs']:
+        if 'repeats' not in run:
+            run['repeats'] = 0
+        if 'options' not in run:
+            run['options'] = []
+    if 'profile modes' not in ret:
+        ret['profile modes'] = prof.DEFAULT_PROFILE_MODES
+    if 'analysis' not in ret:
+        ret['analysis'] = 'single'
+
+    return ret
+
+
+def install_experiments(experiment_ids, experiments, install_dir,
+                        checkout_required=False):
+    """Install experiments with the provided ids as necessary."""
+    codicil_path = os.path.join(prof.CYLC_DIR, prof.EXPERIMENTS_PATH,
+                                'profile-simulation', 'suite.rc')
+    install_sdir = os.path.join(install_dir, 'suites')
+    os.mkdir(install_sdir)
+
+    install_modes = {
+        'copy': shutil.copyfile,
+        'symlink': os.symlink
+    }
+
+    # Determine which suites require installation.
+    suite_dirs = {}
+    for experiment_id in experiment_ids:
+        experiment = None
+        for exp in experiments:
+            if exp['id'] == experiment_id:
+                experiment = exp
+                break
+        if not experiment:
+            raise Exception('Could not find experiment definition.')
+        append_codicil = ('mode' in experiment['config'] and
+                          experiment['config']['mode'] == 'profile-simulation')
+        for run in experiment['config']['runs']:
+            sdir = os.path.realpath(run['suite dir'])
+            # Is suite within the cylc repository.
+            in_cylc_repo = (
+                sdir.startswith(os.path.realpath(prof.CYLC_DIR)) and not
+                sdir.startswith(os.path.realpath(os.path.join(
+                    prof.CYLC_DIR,
+                    prof.PROFILE_DIR_NAME))))
+            if not append_codicil and not (in_cylc_repo and checkout_required):
+                # Don't install suite unless:
+                # - We are in profile-battery mode
+                # - The suite is in the cylc repo and we need to checkout
+                #   another cylc version
+                continue
+            if in_cylc_repo:
+                install_mode = install_modes['copy']
+            else:
+                install_mode = install_modes['symlink']
+            key = (sdir, append_codicil,)
+            if sdir not in suite_dirs:
+                new_sdir = os.path.join(install_sdir, str(random.random())[2:])
+                os.mkdir(new_sdir)
+                suite_dirs[key] = {'install dir': new_sdir, 'runs': [run],
+                                   'install fcn': install_mode}
+            else:
+                suite_dirs[key]['runs'].append(run)
+
+    # Install suites.
+    dont_symlink = ['passphrase', 'ssl.cert', 'ssl.pem', 'suite.rc.processed']
+    for key in suite_dirs:
+        sdir, append_codicil = key
+        install_dir = suite_dirs[key]['install dir']
+        install_fcn = suite_dirs[key]['install fcn']
+        # Symlink / copy files as appropriate
+        for filepath in glob.glob(os.path.join(sdir, '*')):
+            filename = os.path.basename(filepath)
+            if filename in dont_symlink:
+                continue
+            dest = os.path.join(install_dir, filename)
+            if append_codicil and filename == 'suite.rc':
+                # Symlink the suite.rc file as suite.rc-orig.
+                install_fcn(filepath, dest + '-orig')
+            else:
+                # Symlink suite files / directories.
+                install_fcn(filepath, dest)
+        # Include suite.rc-orig and codicil.rc if in profile-simulation mode.
+        if append_codicil:
+            install_fcn(codicil_path, os.path.join(install_dir, 'codicil.rc'))
+            with open(os.path.join(install_dir, 'suite.rc'), 'a') as suite_rc:
+                suite_rc.write('#!jinja2\n'
+                               '{% include "suite.rc-orig" %}\n'
+                               '{% include "codicil.rc" %}')
+
+    # Update experiments to installation directories.
+    for sdir, append_codicil in suite_dirs:
+        key = (sdir, append_codicil,)
+        for run in suite_dirs[key]['runs']:
+            print 'installing suite "%s" => "%s"' % (
+                sdir, suite_dirs[key]['install dir'])
+            run['suite dir'] = suite_dirs[key]['install dir']
+
+
+def get_experiments(experiment_names):
+    """Returns a dictionary of experiment names against experiment ids (which
+    contain a checksum)."""
+    experiments = []
+    for experiment_name in experiment_names:
+        file_name = experiment_name + '.json'
+        # Look for experiment file in the users experiment directory.
+        file_path = os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME,
+                                 prof.USER_EXPERIMENT_DIR_NAME, file_name)
+        if not os.path.exists(file_path):
+            # Look for experiment file in built-in experiment directory.
+            file_path = os.path.join(prof.CYLC_DIR, prof.EXPERIMENTS_PATH,
+                                     file_name)
+            if not os.path.exists(file_path):
+                # Could not find experiment file in either path. Exit!
+                print 'ERROR: Could not find experiment file for "%s"' % (
+                    experiment_name)
+                experiments.append({'name': experiment_name,
+                                    'id': 'Invalid',
+                                    'file': None})
+                continue
+        config = load_experiment_config(file_path)
+        experiments.append({
+            'name': experiment_name,
+            'id': '{0}@{1}'.format(experiment_name, get_checksum(file_path)),
+            'file': file_path,
+            'config': config
+        })
+    return experiments
+
+
+def print_manual_scheme(versions, experiments, all_versions=None):
+    """Writes a list of bash commands to run in order to perform profing
+    without automation of checkout out cylc versions."""
+    # TODO: Generate from schedule.
+    if all_versions:
+        ver = ' '.join([version['id'] for version in all_versions])
+    else:
+        ver = ' '.join([version['id'] for version in versions])
+    exp = ' '.join([experiment['name'] for experiment in experiments])
+    for version in versions:
+        print '\t$ git checkout ' + version['id']
+        print '\t$ cylc profile-battery --experiments ' + exp
+    print ('\t$ cylc profile-battery --versions {versions} --experiments '
+           '{experiments}'.format(versions=ver, experiments=exp))
+
+
+def determine_action(schedule, versions, experiments, non_interactive=False):
+    """Determines whether it is necessary to checkout differnet cylc
+    version(s).
+
+    Prompts user as to whether they want to use automated
+    checkout and if so for what.
+    """
+    # Determine which versions need to be checked out.
+    current_version = git.describe('HEAD')
+    other_versions = []
+    for version_id in schedule:
+        if version_id != current_version:
+            for version in versions:
+                if version_id == version['id']:
+                    other_versions.append(version)
+
+    # Check for potential incompatability with PROFILE_MODE_CYLC.
+    temp = []
+    for experiment in experiments:
+        for mode in experiment['config']['profile modes']:
+            if prof.PROFILE_MODES[mode] != prof.PROFILE_MODE_CYLC:
+                continue
+            for version_id in schedule:
+                if not git.is_ancestor_commit(prof.CYLC_PROFILING_COMMIT,
+                                              version_id):
+                    for version in versions:
+                        if version['id'] == version_id:
+                            temp.append(version)
+        if temp and not non_interactive:
+            print('WARNING: You are trying to use the "cylc" profile mode with'
+                  ' versions of cylc which predate the profiling module '
+                  'namely:')
+            print '\t', ' '.join([version['name'] for version in temp])
+            print('\nTo profile these versions you will need to back port the '
+                  'profiling module as well as some of the memory '
+                  'checkpointing in the main loop.\n')
+            usr = None
+            while usr not in ['y', 'n']:
+                usr = raw_input('proceed? (y/n): ')
+            if usr == 'n':
+                sys.exit('Profiling aborted by user.')
+            print
+
+    # Prompt user over using automated checkout.
+    to_checkout = []
+    if other_versions and not non_interactive:
+        manual_versions = []
+        automatic_only_versions = []
+        for version in other_versions:
+            if git.is_ancestor_commit(prof.PROFILE_COMMIT, version['id']):
+                manual_versions.append(version)
+            else:
+                automatic_only_versions.append(version)
+
+        print ('To perform profiling different cylc versions will need to be '
+               'checked out. I can checkout and profile versions '
+               'automatically.')
+        print ('If using the automatic checkout system ensure that there are '
+               'no un-commited changes before proceeding and do not make '
+               'any changes to the local repository whist the profiling is '
+               'running\n')
+
+        if automatic_only_versions:
+            print ('These versions can only be profiled '
+                   'automatically:\n\t{0}'.format(
+                       ' '.join([version['name'] for version in
+                                 automatic_only_versions])
+                   ))
+        if manual_versions:
+            print ('These versions you can profile manually if you '
+                   'prefer:\n\t{0}'.format(
+                       ' '.join([version['name'] for version in
+                                 manual_versions])))
+
+        print
+
+        if manual_versions and not automatic_only_versions:
+            response = None
+            while response not in ['y', 'n']:
+                response = raw_input('Do you want to checkout these versions '
+                                     'automatically? (y/n): ')
+            if response == 'n':
+                print ('You can perform this profiling manually by doing '
+                       'something like:')
+                print_manual_scheme(manual_versions, experiments,
+                                    all_versions=versions)
+                sys.exit('Profiling aborted by user.')
+            else:
+                to_checkout = manual_versions
+        elif manual_versions and automatic_only_versions:
+            response = None
+            while response not in ['some', 'all', 'none']:
+                response = raw_input(
+                    'Which versions should I check out:\n\t'
+                    'Only those which cannot be profiled otherwise (some)\n\t'
+                    'All versions (all)\n\t'
+                    'None (none)\n> ')
+            if response == 'some':
+                print 'The remainder can be profiled by doing something like:'
+                print_manual_scheme(manual_versions, experiments,
+                                    all_versions=versions)
+                to_checkout = automatic_only_versions
+            if response == 'none':
+                print ('Some versions can be profiled manually by doing '
+                       'something like:')
+                print_manual_scheme(manual_versions, experiments,
+                                    all_versions=manual_versions)
+                sys.exit('Profiling aborted by user.')
+            else:
+                to_checkout = manual_versions + automatic_only_versions
+        elif automatic_only_versions:
+            response = None
+            while response not in ['y', 'n']:
+                response = raw_input('Do you want to checkout these versions '
+                                     'automatically? (y/n): ')
+            if response == 'y':
+                to_checkout = automatic_only_versions
+            else:
+                sys.exit('Profiling aborted by user.')
+    if other_versions and non_interactive:
+        to_checkout = other_versions
+    return to_checkout
+
+
+def update_nested_dictionaries(old, new):
+    """Merges entries from new into old (overwrites old with new in the event
+    of a conflict."""
+    old = old.copy()
+    new = new.copy()
+    for key, value in new.iteritems():
+        if key in old:
+            if type(value) is dict:
+                old[key] = update_nested_dictionaries(old[key], new[key])
+            else:
+                old[key] = value
+        else:
+            old[key] = value
+    return old
+
+
+def append_new_results(results):
+    """Append new profiling results to results file."""
+    profile_file_path = os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME,
+                                     prof.PROFILE_FILE_NAME)
+    try:
+        with open(profile_file_path, 'r') as file_:
+            previous_results = json.load(file_)
+    except IOError as exc:
+        if exc.errno == 2:
+            previous_results = {}
+        else:
+            raise
+
+    ret = update_nested_dictionaries(previous_results, results)
+    os.remove(profile_file_path)
+    with open(profile_file_path, 'w+') as file_:
+        json.dump(ret, file_)
+
+
+def delete_results(result_keys, interactive=False):
+    """Delete results from the results file provided as a list of version_id,
+    experiment_id tuples."""
+    if interactive:
+        usr = None
+        while usr not in ['y', 'n']:
+            usr = raw_input('Delete these results (y/n)? ')
+        if usr != 'y':
+            sys.exit(0)
+
+    results = get_results()
+
+    for version_id, experiment_id in result_keys:
+        try:
+            del results[version_id][experiment_id]
+            if not results[version_id]:
+                del results[version_id]
+        except KeyError:
+            pass
+
+    profile_file_path = os.path.join(prof.CYLC_DIR, prof.PROFILE_DIR_NAME,
+                                     prof.PROFILE_FILE_NAME)
+    os.remove(profile_file_path)
+    with open(profile_file_path, 'w+') as results_file:
+        json.dump(results, results_file)
+
+
+def install_profiler():
+    """Transfer profiling code and resources to a temporary directory to enable
+    different cylc versions to be checked out."""
+    try:
+        # Temp dir to install files to
+        tempdir = tempfile.mkdtemp()
+        print 'Installing profiler to:', tempdir
+
+        shutil.copytree(
+            os.path.join(prof.CYLC_DIR, 'lib', 'cylc', 'profiling'),
+            os.path.join(tempdir, 'tempprofiling')
+        )
+
+        # Append profiling code to $PATH
+        sys.path.insert(0, os.path.join(tempdir))
+        sys.path.insert(0, os.path.join(tempdir, 'tempprofiling'))
+    except Exception as exc:
+        # Slightest hint of trouble => abort.
+        print exc
+        sys.exit('ERROR: Problem installing profiling.')
+    return tempdir
+
+
+def run_schedule(schedule, experiments, versions, exps_to_run,
+                 non_interactive=False, test=False):
+    """Orchestrates profiling the versions/experiments contained in the
+    schedule.
+
+    Args:
+        schedule (dict): A dictionary of cylc version_ids containing lists of
+            experiments to run for each.
+        experiments (list): List of experiment dicts.
+        versions (list): List of version dicts.
+        exps_to_run (set): Set of (version_id, experiment_id) tuples for the
+            experiments to run.
+        non_interactive (bool - optional): If True prompting is disabled.
+        test (bool - optional): If True all experiments will be run
+            irrespective of any previous results. New results will not be
+            saved.
+
+    Return:
+        bool: True if ALL profiling has been successfull.
+
+    """
+    # Ask the user which versions to profile.
+    other_versions = determine_action(schedule, versions, experiments,
+                                      non_interactive or test)
+
+    # Install profiler if necessary.
+    if other_versions:
+        # Some versions will need to be checked-out. Install the profiling code
+        # outside the working tree then proceed.
+        if git.has_changes_to_be_committed():
+            sys.exit('Please commit any changes before proceeding.')
+        profiler_install_dir = install_profiler()
+        try:
+            from tempprofiling.profile import profile
+            from tempprofiling.git import (
+                checkout, has_changes_to_be_committed, GitCheckoutError)
+        except ImportError:
+            shutil.rmtree(profiler_install_dir, ignore_errors=True)
+            sys.exit('ERROR: Failed to install profiler.')
+    else:
+        # No cylc versions need to be checkout-out.
+        from cylc.profiling.profile import profile
+        profiler_install_dir = tempfile.mkdtemp()
+
+    # Install experiments as necessary
+    install_experiments(exps_to_run, experiments, profiler_install_dir,
+                        checkout_required=True if other_versions else False)
+
+    # Run profiling.
+    results, checkout_count, success = profile(schedule)
+
+    # Delete profiler and experiments if created.
+    if success:
+        shutil.rmtree(profiler_install_dir, ignore_errors=True)
+
+    # Append results to results file.
+    if not test:
+        append_new_results(results)
+
+    # Return git repo to original location (if changed).
+    if checkout_count > 0:
+        try:
+            if git.has_changes_to_be_committed():
+                raise GitCheckoutError()
+            checkout(r'@{-%d}' % checkout_count, delete_pyc=True)
+        except GitCheckoutError:
+            print ('ERROR: Could not checkout git repo to original location. '
+                   r'\n\t$ git checkout @{-%d}' % checkout_count)
+
+    # Stop here if profiling was un-successfull.
+    if not success:
+        print ('ERROR: Some experiments failed to run, no plotting will be '
+               'attempted.')
+
+    return success
+
+
+def run_analysis(experiments, versions, interactive=False,
+                 quick_analysis=True, lobf_order=2, plot=True):
+    """Runs analysis over the results already acquired.
+
+    Args:
+        versions (list): List of version dicts.
+        experiments (list): List of experiment dicts.
+        interactive (bool - optional): If True then interractive matplotlib
+            windows will display rather than being rendered to a file.
+        quick_analysis (bool - optional): If True then only a small set of the
+            gathered metrics will be output.
+        lobf_order (int - optional): The polynomial order to be used for
+            generating the lines of best fit on all plots produced.
+        plot (bool - optional): If True then plotting will be performed.
+
+    """
+    # Get results
+    with open(os.path.join(prof.CYLC_DIR,
+                           prof.PROFILE_DIR_NAME,
+                           prof.PROFILE_FILE_NAME), 'r') as profile_file:
+        full_results = json.load(profile_file)
+
+    # Run analysis for each experiment requested.
+    for experiment in experiments:
+        plt_dir = False
+        if not interactive:
+            plt_dir = os.path.join(prof.CYLC_DIR,
+                                   prof.PROFILE_DIR_NAME,
+                                   prof.PROFILE_PLOT_DIR_NAME,
+                                   experiment['name'] + '-' +
+                                   str(int(time.time())))
+            os.makedirs(plt_dir)
+
+        # Print a table of results.
+        print
+        print_table(
+            make_table(full_results, versions, experiment,
+                       quick_analysis=quick_analysis),
+            transpose=not quick_analysis
+        )
+        print
+
+        # Plot results.
+        if not plot:
+            continue
+        plot_results(full_results, versions, experiment, plt_dir,
+                     quick_analysis=quick_analysis, lobf_order=lobf_order)
+        if plt_dir:
+            print ('Results for experiment "{exp}" have been written out to '
+                   '"{dir}"'.format(exp=experiment['name'], dir=plt_dir))
+
+
+def ls(exp_names, ver_names, delete=False):
+    """List all results for the provided experiment and version names.
+
+    Args:
+        delete (bool - optional): If true the user is prompted whether to
+            delete the selected results.
+
+    """
+    results = get_results()  # Get contents of results file.
+    include = {}  # Dict of all results to list, exp_name: exp_id: [ver_id]
+    all_versions = []  # List of all version ids contained in 'include'
+
+    def include_result(experiment_name, experiment_id, version_id):
+        if experiment_name not in include:
+            include[experiment_name] = {}
+        if experiment_id not in include[experiment_name]:
+            include[experiment_name][experiment_id] = []
+        include[experiment_name][experiment_id].append(version_id)
+        if version_id not in all_versions:
+            all_versions.append(version_id)
+
+    if not exp_names and not ver_names:
+        # No experiments or versions specified => list all results.
+        for version_id in results:
+            for experiment_id in results[version_id]:
+                experiment_name = experiment_id.split('@')[0]
+                include_result(experiment_name, experiment_id, version_id)
+    else:
+        # List only specified experiments and versions.
+        version_ids = map(git.describe, ver_names)
+        experiment_ids = set([name for name in exp_names if '@' in name])
+        experiment_names = set(exp_names) - experiment_ids
+
+        for version_id in results:
+            if ver_names and version_id not in version_ids:
+                continue
+            for experiment_id in results[version_id]:
+                experiment_name = experiment_id.split('@')[0]
+                if (not exp_names or (experiment_name in experiment_names or
+                                      experiment_id in experiment_ids)):
+                    include_result(experiment_name, experiment_id, version_id)
+
+    git.order_identifiers_by_date(all_versions)
+
+    experiments = get_experiments(include.keys())
+    current_experiment_ids = []
+    for experiment in experiments:
+        current_experiment_ids.append(experiment['id'])
+
+    table = [['Experiment Name', 'Experiment ID', 'Version ID'],
+             [None, None, None]]
+    for experiment_name in sorted(include):
+        table.append([experiment_name, None, None])
+        for experiment_id in include[experiment_name]:
+            if experiment_id in current_experiment_ids:
+                table.append(['', '* ' + experiment_id, None])
+            else:
+                table.append(['', experiment_id, None])
+            for version_id in all_versions:
+                if version_id in include[experiment_name][experiment_id]:
+                    table.append(['', '', version_id])
+
+    print_table(table)
+
+    if delete:
+        filtered_keys = []
+        for experiment_name in include:
+            for experiment_id in include[experiment_name]:
+                for version_id in include[experiment_name][experiment_id]:
+                    filtered_keys.append((version_id, experiment_id,))
+        delete_results(filtered_keys, interactive=True)
+
+
+def promote(experiment_id, yes=False):
+    """Promote any results for the provided experiment version to the current
+    version."""
+    if '@' not in experiment_id:
+        sys.exit('A version must be supplied to promote an experiment e.g. '
+                 'exp@a1b2c3d4e5')
+    experiment_name, experiment_version = experiment_id.rsplit('@', 1)
+
+    results = get_results()  # Get contents of results file.
+
+    cur_exp_id = get_experiments([experiment_name])[0]['id']
+
+    candidate_versions = []
+    target_versions = []
+    for version in results:
+        for exp_id in results[version]:
+            exp_name, exp_ver = exp_id.rsplit('@', 1)
+            if exp_name != experiment_name:
+                continue
+            if exp_ver == experiment_version:
+                candidate_versions.append(version)
+            elif exp_id == cur_exp_id:
+                target_versions.append(version)
+
+    if not candidate_versions:
+        sys.exit('There are no results for experiment "{experiment_id}".'
+                 ''.format(experiment_id=experiment_id))
+    ls([experiment_name], [])
+    if target_versions:
+        candidate_versions = [version for version in candidate_versions if
+                              version not in target_versions]
+        print
+        print ('Only the results for cylc versions not already profiled in '
+               'the current experiment version will be promoted.')
+    git.order_identifiers_by_date(candidate_versions)
+
+    print
+    print ('Promote the following results for experiment "{name}" at version '
+           '"{candidate}" to the current version "{target}":'.format(
+               name=experiment_name,
+               candidate=experiment_version,
+               target=cur_exp_id.rsplit('@', 1)[1]
+           ))
+    print '\t', ' '.join(candidate_versions)
+
+    if not yes:
+        response = None
+        while response not in ['y', 'n']:
+            response = raw_input('Upgrade these versions? (y/n): ')
+    if yes or response == 'y':
+        # Promote results.
+        try:
+            for version in candidate_versions:
+                results[version][cur_exp_id] = results[version][experiment_id]
+        except KeyError as exc:
+            print exc
+            sys.exit('Unexpected error.')
+        else:
+            append_new_results(results)
+        # Provide option to delete duplicates.
+        ls([experiment_id], candidate_versions, delete=True)
+    else:
+        sys.exit('Aborted, not changes made.')
+
+
+def main():
+    """cylc profile-battery"""
+    opts = parse_args()
+
+    # Promote mode.
+    if opts.promote:
+        promote(opts.promote, opts.yes)
+        sys.exit(0)
+
+    # If in "list" mode print out results then exit.
+    if opts.ls or opts.delete:
+        ls(opts.experiments, opts.versions, delete=opts.delete)
+        sys.exit(0)
+
+    # Generate list of requested experiments and versions.
+    experiments = get_experiments(opts.experiments)
+    versions = get_versions(opts.versions)
+
+    # Order versions.
+    git.order_versions_by_date(versions)
+
+    # Fail in the event that an experiment file cannot be found.
+    if not all([experiment['file'] for experiment in experiments]):
+        sys.exit('Experiment file(s) could not be loaded, profiling aborted.')
+
+    # Run experiments as necessary.
+    schedule, exps_to_run = get_schedule(versions, experiments, test=opts.test)
+    if schedule:
+        if not run_schedule(schedule, experiments, versions, exps_to_run,
+                            opts.yes, opts.test):
+            sys.exit('Profiling failed.')
+
+    # Don't run analysis if in "test" mode.
+    if opts.test:
+        sys.exit(0)
+
+    # Run analysis
+    run_analysis(experiments, versions, opts.interactive,
+                 not opts.full_results, opts.lobf_order,
+                 plot=not opts.no_plots)
+
+
+if __name__ == '__main__':
+    main()
