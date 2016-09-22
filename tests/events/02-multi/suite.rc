@@ -4,7 +4,7 @@ title = "Test list of task event handlers"
 
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.5
+        live mode suite timeout = PT30S
         expected task failures = bar.1
 
 [scheduling]

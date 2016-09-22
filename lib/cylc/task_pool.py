@@ -1156,9 +1156,7 @@ class TaskPool(object):
                         itask.log(WARNING, 'suiciding while active')
                     else:
                         itask.log(INFO, 'suiciding')
-                    # Spawn successor, if not a cylc-5 cold-start task.
-                    if not itask.tdef.is_coldstart:
-                        self.force_spawn(itask)
+                    self.force_spawn(itask)
                     self.remove(itask, 'suicide')
                     num_removed += 1
         return num_removed

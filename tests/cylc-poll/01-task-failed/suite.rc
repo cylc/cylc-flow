@@ -7,7 +7,7 @@ suicide via a :fail trigger, and the suite to shut down successfully."""
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.5 # minutes
+       live mode suite timeout = PT30S
        expected task failures = a.1
 
 [scheduling]

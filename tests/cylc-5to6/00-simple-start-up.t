@@ -19,63 +19,14 @@
 # TODO - another test for nested file inclusion
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 5
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok "$TEST_NAME" cylc validate $SUITE_NAME
-#sed -n '/REPLACING .* DEPENDENCIES/,/^Valid/p' "$TEST_NAME.stdout" \
-#    >"$TEST_NAME.dep-replace"
-cat $TEST_NAME.stdout | grep -v Valid > $TEST_NAME.dep-replace
-cmp_ok "$TEST_NAME.dep-replace" <<'__DEP_INFO__'
-# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
-# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
-    [[[R1]]]
-        graph = """
-cold_foo
-cold_foo:succeed => foo_midnight
-cold_foo:succeed => foo_twelves
-cold_foo"""
-# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
-# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
-    [[[R1/2014010106]]]
-        graph = """
-cold_foo[^]:succeed => foo_dawn"""
-# REPLACING START-UP/ASYNC DEPENDENCIES WITH AN R1* SECTION
-# (VARYING INITIAL CYCLE POINT MAY AFFECT VALIDITY)
-    [[[R1/2014010112]]]
-        graph = """
-cold_foo[^]:succeed => foo_twelves"""
-__DEP_INFO__
-contains_ok "$TEST_NAME.stderr" <<'__STDERR__'
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [cylc][reference test]live mode suite timeout = 120
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [cylc][reference test]dummy mode suite timeout = 60.0
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [cylc][reference test]simulation mode suite timeout = 60
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [cylc][events]timeout = 1440
-WARNING: pre cylc 6 syntax is deprecated: integer interval for [scheduling]runahead limit = 6
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][suite state polling]interval = 5
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][events]execution timeout = 180
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][events]submission timeout = 360
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][job]submission retry delays = 5
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][job]execution retry delays = 0.5
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][job]execution retry delays = 10
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][job]execution retry delays = 30
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][job]execution retry delays = 60
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][job]execution retry delays = 180
-WARNING: pre cylc 6 syntax is deprecated: integer interval: [runtime][root][job]execution retry delays = 1440
-WARNING: pre cylc 6 syntax is deprecated: initial/final cycle point format: CCYYMMDDhh
-WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[0]]]: old-style cycling
-WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[6]]]: old-style cycling
-WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[Daily(20131231 ,2)]]]: old-style cycling
-WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[Monthly(201402,1)]]]: old-style cycling
-WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[Yearly( 2010 , 3 )]]]: old-style cycling
-WARNING: pre cylc 6 syntax is deprecated: [scheduling][[dependencies]][[[12]]]: old-style cycling
-WARNING: pre cylc 6 syntax is deprecated: start-up tasks: cold_foo
-WARNING: pre cylc 6 syntax is deprecated: graphnode foo_midnight[T-24]: old-style offset
-WARNING: pre cylc 6 syntax is deprecated: graphnode foo_dawn[T-24]: old-style offset
-WARNING: pre cylc 6 syntax is deprecated: graphnode foo_m[T-2]: old-style offset
-WARNING: pre cylc 6 syntax is deprecated: graphnode foo_twelves[T-12]: old-style offset
-__STDERR__
+run_fail "$TEST_NAME" cylc validate $SUITE_NAME
+cmp_ok "$TEST_NAME.stderr" <<'__ERR__'
+Illegal ISO 8601 interval value: [cylc][reference test]live mode suite timeout = 120
+__ERR__
 #-------------------------------------------------------------------------------
 # Run the convert-suggest-tool.
 TEST_NAME=$TEST_NAME_BASE-5to6
@@ -118,7 +69,7 @@ title = Simple start-up suite.
             # UPGRADE INFO: change any mistaken [-PTnH] to [-PnY].
             graph = "foo_y => bar_y"
     [[special tasks]]
-        start-up = cold_foo # UPGRADE INFO: Replace this and *all* start-up/async graph deps with 'cylc validate' 'R1*' output
+        start-up = cold_foo # UPGRADE INFO: Replace this and *all* start-up/async graph deps with *cylc 6* 'cylc validate' 'R1*' output
 [runtime]
     [[root]]
         script = true

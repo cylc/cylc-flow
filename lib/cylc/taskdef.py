@@ -68,7 +68,6 @@ class TaskDef(object):
         self.max_future_prereq_offset = None
         self.intercycle_offsets = []
         self.sequential = False
-        self.is_coldstart = False
         self.suite_polling_cfg = {}
 
         self.clocktrigger_offset = None

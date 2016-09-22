@@ -1,13 +1,14 @@
 [cylc]
+   UTC mode = True
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 1.0 # minutes
+       live mode suite timeout = PT1M
 [scheduling]
-    initial cycle time = 201002
-    final cycle time = 201008
-    runahead limit = 24 # enforce sequential running
+    initial cycle point = 2010-02
+    final cycle point = 2010-08
+    runahead limit = P1D # Enforce sequential running
     [[dependencies]]
-        [[[Monthly(201001,3)]]]
+        [[[2010-01/P3M]]]
             graph = "a"
 [runtime]
     [[a]]

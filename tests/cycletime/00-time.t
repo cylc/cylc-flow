@@ -21,7 +21,7 @@
 set_test_number 27
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-use-env-var
-export CYLC_TASK_CYCLE_POINT=2010010203
+export CYLC_TASK_CYCLE_POINT=20100102T0300
 run_ok $TEST_NAME.check-env cylc cycle-point
 run_ok $TEST_NAME.year-only cylc cycle-point --print-year
 cmp_ok $TEST_NAME.year-only.stdout - << __OUT__
@@ -43,45 +43,43 @@ __OUT__
 TEST_NAME=$TEST_NAME_BASE-offset-env-var
 run_ok $TEST_NAME.year cylc cycle-point --offset-years=10
 cmp_ok $TEST_NAME.year.stdout - << __OUT__
-2020010203
+20200102T0300
 __OUT__
 run_ok $TEST_NAME.year-neg cylc cycle-point --offset-years=-11
 cmp_ok $TEST_NAME.year-neg.stdout - << __OUT__
-1999010203
+19990102T0300
 __OUT__
 run_ok $TEST_NAME.month cylc cycle-point --offset-months=2
 cmp_ok $TEST_NAME.month.stdout - << __OUT__
-2010030203
+20100302T0300
 __OUT__
 run_ok $TEST_NAME.month-neg cylc cycle-point --offset-months=-1
 cmp_ok $TEST_NAME.month-neg.stdout - << __OUT__
-2009120203
+20091202T0300
 __OUT__
 run_ok $TEST_NAME.day cylc cycle-point --offset-days=10
 cmp_ok $TEST_NAME.day.stdout - << __OUT__
-2010011203
+20100112T0300
 __OUT__
 run_ok $TEST_NAME.day-neg cylc cycle-point --offset-days=-2
 cmp_ok $TEST_NAME.day-neg.stdout - << __OUT__
-2009123103
+20091231T0300
 __OUT__
 run_ok $TEST_NAME.hour cylc cycle-point --offset-hours=10
 cmp_ok $TEST_NAME.hour.stdout - << __OUT__
-2010010213
+20100102T1300
 __OUT__
 run_ok $TEST_NAME.hour-neg cylc cycle-point --offset-hours=-3
 cmp_ok $TEST_NAME.hour-neg.stdout - << __OUT__
-2010010200
+20100102T0000
 __OUT__
 #-------------------------------------------------------------------------------
 #Test with a supplied cycle time 
 # N.B. this also checks environment variable being by CLI options
 TEST_NAME=$TEST_NAME_BASE-print-supplied-ctime
-run_ok $TEST_NAME.full cylc cycle-point 20110101T01
+run_ok $TEST_NAME.full cylc cycle-point 2011-01-01
 cmp_ok $TEST_NAME.full.stdout - << __OUT__
-20110101T01
+2011-01-01
 __OUT__
 #-------------------------------------------------------------------------------
 unset CYLC_TASK_CYCLE_TIME
-
-#TODO add tests either in here for ISO8601 or in separate ISO8601 test with same operations

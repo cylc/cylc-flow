@@ -45,8 +45,8 @@ def main():
     parser = COP(__doc__, jset=True, prep=True)
 
     parser.add_option(
-        "--ict",
-        help="Set an initial cycle time to validate against. This "
+        "--icp",
+        help="Set an initial cycle point to validate against. This "
              "may be required if the suite does not supply one.")
 
     parser.add_option(
@@ -76,7 +76,7 @@ def main():
     cfg = SuiteConfig.get_inst(
         suite, suiterc,
         load_template_vars(options.templatevars, options.templatevars_file),
-        cli_initial_point_string=options.ict,
+        cli_initial_point_string=options.icp,
         validation=True, strict=options.strict,
         write_proc=not options.nowrite,
         mem_log_func=profiler.log_memory)

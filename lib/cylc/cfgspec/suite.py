@@ -25,8 +25,6 @@ from parsec.validate import (
 from parsec.util import itemstr
 from parsec.upgrade import upgrader, converter
 from parsec.config import config
-from cylc.syntax_flags import (
-    set_syntax_version, VERSION_PREV, VERSION_NEW, SyntaxVersionError)
 from isodatetime.dumpers import TimePointDumper
 from isodatetime.data import Calendar, TimePoint
 from isodatetime.parsers import TimePointParser, DurationParser
@@ -46,26 +44,11 @@ def _coerce_cycleinterval(value, keys, _):
     if not value:
         return None
     value = _strip_and_unquote(keys, value)
-    if value.isdigit():
-        # Old runahead limit format.
-        set_syntax_version(VERSION_PREV,
-                           "integer interval for %s" % itemstr(
-                               keys[:-1], keys[-1], value))
-        return value
-    if REC_INTEGER_INTERVAL.match(value):
-        # New integer cycling format.
-        set_syntax_version(VERSION_NEW,
-                           "integer interval for %s" % itemstr(
-                               keys[:-1], keys[-1], value))
-        return value
     parser = DurationParser()
     try:
         parser.parse(value)
     except ValueError:
         raise IllegalValueError("interval", keys, value)
-    set_syntax_version(VERSION_NEW,
-                       "ISO 8601 interval for %s" % itemstr(
-                           keys[:-1], keys[-1], value))
     return value
 
 
@@ -95,9 +78,6 @@ def _coerce_cycletime(value, keys, _):
         parser.parse(value)
     except ValueError:
         raise IllegalValueError("cycle point", keys, value)
-    set_syntax_version(VERSION_NEW,
-                       "cycle point: %s" % itemstr(
-                           keys[:-1], keys[-1], value))
     return value
 
 
@@ -106,10 +86,6 @@ def _coerce_cycletime_format(value, keys, _):
     value = _strip_and_unquote(keys, value)
     if not value:
         return None
-    try:
-        set_syntax_version(VERSION_NEW, "use of [cylc]cycle point format")
-    except SyntaxVersionError:
-        raise IllegalValueError("cycle point format", keys, value)
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -143,11 +119,6 @@ def _coerce_cycletime_time_zone(value, keys, _):
     value = _strip_and_unquote(keys, value)
     if not value:
         return None
-    try:
-        set_syntax_version(
-            VERSION_NEW, "use of [cylc]cycle point time zone format")
-    except SyntaxVersionError:
-        raise IllegalValueError("cycle point time zone format", keys, value)
     test_timepoint = TimePoint(year=2001, month_of_year=3, day_of_month=1,
                                hour_of_day=4, minute_of_hour=30,
                                second_of_minute=54)
@@ -190,13 +161,7 @@ coercers['cycletime_time_zone'] = _coerce_cycletime_time_zone
 coercers['cycleinterval'] = _coerce_cycleinterval
 coercers['final_cycletime'] = _coerce_final_cycletime
 coercers['interval'] = coerce_interval
-coercers['interval_minutes'] = lambda *a: coerce_interval(
-    *a, back_comp_unit_factor=60)
-coercers['interval_seconds'] = coerce_interval
 coercers['interval_list'] = coerce_interval_list
-coercers['interval_minutes_list'] = lambda *a: coerce_interval_list(
-    *a, back_comp_unit_factor=60)
-coercers['interval_seconds_list'] = coerce_interval_list
 coercers['parameter_list'] = _coerce_parameter_list
 
 
@@ -238,8 +203,8 @@ SPEC = {
             'inactivity handler': vdr(vtype='string_list'),
             'shutdown handler': vdr(vtype='string_list'),
             'stalled handler': vdr(vtype='string_list'),
-            'timeout': vdr(vtype='interval_minutes'),
-            'inactivity': vdr(vtype='interval_minutes'),
+            'timeout': vdr(vtype='interval'),
+            'inactivity': vdr(vtype='interval'),
             'reset timer': vdr(vtype='boolean', default=True),
             'reset inactivity timer': vdr(vtype='boolean', default=True),
             'abort if startup handler fails': vdr(
@@ -275,11 +240,11 @@ SPEC = {
             'allow task failures': vdr(vtype='boolean', default=False),
             'expected task failures': vdr(vtype='string_list', default=[]),
             'live mode suite timeout': vdr(
-                vtype='interval_minutes', default=DurationFloat(60)),
+                vtype='interval', default=DurationFloat(60)),
             'dummy mode suite timeout': vdr(
-                vtype='interval_minutes', default=DurationFloat(60)),
+                vtype='interval', default=DurationFloat(60)),
             'simulation mode suite timeout': vdr(
-                vtype='interval_minutes', default=DurationFloat(60)),
+                vtype='interval', default=DurationFloat(60)),
         },
         'authentication': {
             # Allow owners to grant public shutdown rights at the most, not
@@ -321,8 +286,6 @@ SPEC = {
             'external-trigger': vdr(vtype='string_list', default=[]),
             'clock-expire': vdr(vtype='string_list', default=[]),
             'sequential': vdr(vtype='string_list', default=[]),
-            'start-up': vdr(vtype='string_list', default=[]),
-            'cold-start': vdr(vtype='string_list', default=[]),
             'exclude at start-up': vdr(vtype='string_list', default=[]),
             'include at start-up': vdr(vtype='string_list', default=[]),
         },
@@ -358,7 +321,7 @@ SPEC = {
             },
             'simulation mode': {
                 'run time range': vdr(
-                    vtype='interval_seconds_list',
+                    vtype='interval_list',
                     default=[DurationFloat(1), DurationFloat(16)]),
                 'simulate failure': vdr(vtype='boolean', default=False),
                 'disable task event hooks': vdr(vtype='boolean', default=True),
@@ -377,15 +340,15 @@ SPEC = {
                 'batch system': vdr(vtype='string', default='background'),
                 'batch submit command template': vdr(vtype='string'),
                 'execution polling intervals': vdr(
-                    vtype='interval_minutes_list'),
+                    vtype='interval_list'),
                 'execution retry delays': vdr(
-                    vtype='interval_minutes_list', default=[]),
-                'execution time limit': vdr(vtype='interval_seconds'),
+                    vtype='interval_list', default=[]),
+                'execution time limit': vdr(vtype='interval'),
                 'shell': vdr(vtype='string', default='/bin/bash'),
                 'submission polling intervals': vdr(
-                    vtype='interval_minutes_list'),
+                    vtype='interval_list'),
                 'submission retry delays': vdr(
-                    vtype='interval_minutes_list', default=[]),
+                    vtype='interval_list', default=[]),
             },
             'remote': {
                 'host': vdr(vtype='string'),
@@ -394,20 +357,20 @@ SPEC = {
                 'retrieve job logs': vdr(vtype='boolean', default=None),
                 'retrieve job logs max size': vdr(vtype='string'),
                 'retrieve job logs retry delays': vdr(
-                    vtype='interval_minutes_list'),
+                    vtype='interval_list'),
             },
             'events': {
-                'execution timeout': vdr(vtype='interval_minutes'),
+                'execution timeout': vdr(vtype='interval'),
                 'handlers': vdr(vtype='string_list'),
                 'handler events': vdr(vtype='string_list'),
-                'handler retry delays': vdr(vtype='interval_minutes_list'),
+                'handler retry delays': vdr(vtype='interval_list'),
                 'mail events': vdr(vtype='string_list'),
                 'mail from': vdr(vtype='string'),
-                'mail retry delays': vdr(vtype='interval_minutes_list'),
+                'mail retry delays': vdr(vtype='interval_list'),
                 'mail smtp': vdr(vtype='string'),
                 'mail to': vdr(vtype='string'),
                 'reset timer': vdr(vtype='boolean', default=None),
-                'submission timeout': vdr(vtype='interval_minutes'),
+                'submission timeout': vdr(vtype='interval'),
 
                 'expired handler': vdr(vtype='string_list', default=[]),
                 'submitted handler': vdr(vtype='string_list', default=[]),
@@ -428,7 +391,7 @@ SPEC = {
             'suite state polling': {
                 'user': vdr(vtype='string'),
                 'host': vdr(vtype='string'),
-                'interval': vdr(vtype='interval_seconds'),
+                'interval': vdr(vtype='interval'),
                 'max-polls': vdr(vtype='integer'),
                 'run-dir': vdr(vtype='string'),
                 'template': vdr(vtype='string'),
@@ -473,61 +436,7 @@ SPEC = {
 def upg(cfg, descr):
     """Upgrade old suite configuration."""
     u = upgrader(cfg, descr)
-    u.deprecate(
-        '5.2.0',
-        ['cylc', 'event handler execution'],
-        ['cylc', 'event handler submission'])
-    # TODO - should abort if obsoleted items are encountered
-    u.obsolete(
-        '5.4.7', ['scheduling', 'special tasks', 'explicit restart outputs'])
-    u.obsolete('5.4.11', ['cylc', 'accelerated clock'])
-    u.obsolete('6.0.0', ['visualization', 'runtime graph'])
     u.obsolete('6.1.3', ['visualization', 'enable live graph movie'])
-    u.obsolete('6.0.0', ['development'])
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'initial cycle time'],
-        ['scheduling', 'initial cycle point'],
-        converter(
-            lambda x: x, 'changed naming to reflect non-date-time cycling'))
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'final cycle time'],
-        ['scheduling', 'final cycle point'],
-        converter(
-            lambda x: x, 'changed naming to reflect non-date-time cycling'))
-    u.deprecate(
-        '6.0.0',
-        ['visualization', 'initial cycle time'],
-        ['visualization', 'initial cycle point'],
-        converter(
-            lambda x: x, 'changed naming to reflect non-date-time cycling'))
-    u.deprecate(
-        '6.0.0',
-        ['visualization', 'final cycle time'],
-        ['visualization', 'final cycle point'],
-        converter(
-            lambda x: x, 'changed naming to reflect non-date-time cycling'))
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'cycling']
-    )
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'special tasks', 'sequential']
-    )
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'special tasks', 'start-up']
-    )
-    u.deprecate(
-        '6.0.0',
-        ['scheduling', 'special tasks', 'cold-start']
-    )
-    u.obsolete('6.0.0', ['cylc', 'job submission'])
-    u.obsolete('6.0.0', ['cylc', 'event handler submission'])
-    u.obsolete('6.0.0', ['cylc', 'poll and kill command submission'])
-    u.obsolete('6.0.0', ['cylc', 'lockserver'])
     dep = {
         'pre-command scripting': 'pre-script',
         'command scripting': 'script',
@@ -539,13 +448,11 @@ def upg(cfg, descr):
         u.deprecate(
             '6.4.0',
             ['runtime', '__MANY__', old],
-            ['runtime', '__MANY__', new],
-            silent=True)
+            ['runtime', '__MANY__', new])
         u.deprecate(
             '6.4.0',
             ['runtime', '__MANY__', 'dummy mode', old],
-            ['runtime', '__MANY__', 'dummy mode', new],
-            silent=True)
+            ['runtime', '__MANY__', 'dummy mode', new])
     u.deprecate(
         '6.5.0',
         ['scheduling', 'special tasks', 'clock-triggered'],
@@ -603,36 +510,6 @@ def upg(cfg, descr):
             for key in ['event hooks', 'job submission']:
                 if key in section:
                     del section[key]
-
-    # Force pre cylc-6 "cycling = Yearly" type suites to the explicit
-    # dependency heading form for which backward compatibility is provided:
-    # ___________________________
-    # [scheduling]
-    #    cycling = Yearly
-    #    [[dependencies]]
-    #        [[[2014,2]]]
-    # ---------------------------
-    # Same as (for auto upgrade):
-    # ---------------------------
-    # [scheduling]
-    #    [[dependencies]]
-    #        [[[Yearly(2014,2)]]]
-    # ___________________________
-    try:
-        old_cycling_mode = cfg['scheduling']['cycling']
-    except KeyError:
-        pass
-    else:
-        if old_cycling_mode in ['Yearly', 'Monthly', 'Daily']:
-            del cfg['scheduling']['cycling']
-            for old_key, val in cfg['scheduling']['dependencies'].items():
-                if re.match('\s*\d+,\s*\d+\s*$', old_key):
-                    new_key = "%s(%s)" % (old_cycling_mode, old_key)
-                    del cfg['scheduling']['dependencies'][old_key]
-                    cfg['scheduling']['dependencies'][new_key] = val
-        else:
-            # Could be misspelled new "cycling mode" - leave it to fail.
-            pass
 
 
 class RawSuiteConfig(config):

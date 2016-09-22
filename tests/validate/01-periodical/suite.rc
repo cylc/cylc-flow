@@ -1,16 +1,16 @@
 [cylc]
     [[reference test]]
         required run mode = live
-        live mode suite timeout = 1.0 # minutes
+        live mode suite timeout = PT1M
 [scheduling]
-    initial cycle time = 2010010100
-    final cycle time   = 2010010200
+    initial cycle point = 20100101T00
+    final cycle point = 20100102T00
     [[dependencies]]
-        [[[Daily(2010010100,1)]]]
+        [[[P1D]]]
             graph = "daily"
-        [[[Monthly(2010010100,1)]]]
+        [[[P1M]]]
             graph = "monthly"
-        [[[Yearly(2010010100,1)]]]
+        [[[P1Y]]]
             graph = "yearly"
 [runtime]
     [[root]]

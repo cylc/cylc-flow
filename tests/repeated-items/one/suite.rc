@@ -1,14 +1,17 @@
 title = "override this"
 title = "the quick brown fox"
+[cylc]
+    UTC mode = True
 [scheduling]
-    initial cycle time = 2013010100
+    initial cycle point = 20130101T0000Z
     [[dependencies]]
-        graph = "foo => bar"
-        graph = "bar => baz"
-        [[[0]]]
+        [[[R1]]]
+            graph = "foo => bar"
+            graph = "bar => baz"
+        [[[T00]]]
             graph = "cfoo => cbar"
             graph = "cbar => cbaz"
-        [[[0]]]
+        [[[T00]]]
             graph = "dfoo => dbar"
             graph = "dbar => dbaz"
 [runtime]

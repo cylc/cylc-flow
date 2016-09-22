@@ -4,8 +4,8 @@
        required run mode = live
        live mode suite timeout = PT1M
 [scheduling]
-    initial cycle time = 20130130T00
-    final cycle time =   20130202T00
+    initial cycle point = 20130130T00
+    final cycle point =   20130202T00
     runahead limit = PT12H # Enforces sequential behaviour
     [[dependencies]]
         # (this triggers a monthly task off the last daily task each month)

@@ -13,8 +13,8 @@ duration of the suite; and the other is set to stop after two cycles."""
         live mode suite timeout = PT1M
 
 [scheduling]
-    initial cycle time = 20140101T00
-    final cycle time   = 20140103T00 # 3 cycles
+    initial cycle point = 20140101T00
+    final cycle point   = 20140103T00 # 3 cycles
     [[special tasks]]
         exclude at start-up = bar, baz
     [[dependencies]]

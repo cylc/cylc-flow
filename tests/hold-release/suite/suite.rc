@@ -13,8 +13,8 @@ GUI (waiting to held to waiting)"""
         live mode suite timeout = PT30S
 
 [scheduling]
-    initial cycle time = 20140101T00
-    final cycle time   = 20140101T00
+    initial cycle point = 20140101T00
+    final cycle point   = 20140101T00
     [[dependencies]]
         [[[R1]]]
             graph = "holdrelease => foo & bar"
