@@ -2,7 +2,7 @@
     [[reference test]]
         required run mode = live
         expected task failures = c.1
-        live mode suite timeout = 1 # minutes
+        live mode suite timeout=PT1M
 
 [scheduling]
     [[dependencies]]

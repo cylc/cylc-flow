@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test clean up of port file, on bad start with invalid initial cycle time.
+# Test clean up of port file, on bad start with invalid initial cycle point.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2

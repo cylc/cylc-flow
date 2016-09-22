@@ -32,20 +32,22 @@ cylc validate -v "${SUITE_NAME}" 2>&1 \
     -e '/Expanding \[runtime\] namespace lists and parameters/,$d' \
     > 'val.out'
 cmp_ok val.out <<__END__
- * (5.2.0) [cylc][event handler execution] -> [cylc][event handler submission] - value unchanged
- * (5.4.7) [scheduling][special tasks][explicit restart outputs] - DELETED (OBSOLETE)
- * (5.4.11) [cylc][accelerated clock] - DELETED (OBSOLETE)
- * (6.0.0) [visualization][runtime graph] - DELETED (OBSOLETE)
- * (6.0.0) [development] - DELETED (OBSOLETE)
- * (6.0.0) [scheduling][initial cycle time] -> [scheduling][initial cycle point] - changed naming to reflect non-date-time cycling
- * (6.0.0) [scheduling][final cycle time] -> [scheduling][final cycle point] - changed naming to reflect non-date-time cycling
- * (6.0.0) [visualization][initial cycle time] -> [visualization][initial cycle point] - changed naming to reflect non-date-time cycling
- * (6.0.0) [visualization][final cycle time] -> [visualization][final cycle point] - changed naming to reflect non-date-time cycling
- * (6.0.0) [cylc][job submission] - DELETED (OBSOLETE)
- * (6.0.0) [cylc][event handler submission] - DELETED (OBSOLETE)
- * (6.0.0) [cylc][poll and kill command submission] - DELETED (OBSOLETE)
- * (6.0.0) [cylc][lockserver] - DELETED (OBSOLETE)
  * (6.1.3) [visualization][enable live graph movie] - DELETED (OBSOLETE)
+ * (6.4.0) [runtime][foo, cat, dog][environment scripting] -> [runtime][foo, cat, dog][env-script] - value unchanged
+ * (6.4.0) [runtime][foo, cat, dog][initial scripting] -> [runtime][foo, cat, dog][init-script] - value unchanged
+ * (6.4.0) [runtime][foo, cat, dog][post-command scripting] -> [runtime][foo, cat, dog][post-script] - value unchanged
+ * (6.4.0) [runtime][foo, cat, dog][pre-command scripting] -> [runtime][foo, cat, dog][pre-script] - value unchanged
+ * (6.4.0) [runtime][foo, cat, dog][command scripting] -> [runtime][foo, cat, dog][script] - value unchanged
+ * (6.4.0) [runtime][foo, cat, dog][dummy mode][command scripting] -> [runtime][foo, cat, dog][dummy mode][script] - value unchanged
+ * (6.5.0) [scheduling][special tasks][clock-triggered] -> [scheduling][special tasks][clock-trigger] - value unchanged
+ * (6.5.0) [scheduling][special tasks][external-triggered] -> [scheduling][special tasks][external-trigger] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][event hooks][retry handler] -> [runtime][foo, cat, dog][events][retry handler] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][job submission][method] -> [runtime][foo, cat, dog][job][batch system] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][job submission][command template] -> [runtime][foo, cat, dog][job][batch submit command template] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][job submission][retry delays] -> [runtime][foo, cat, dog][job][submission retry delays] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][retry delays] -> [runtime][foo, cat, dog][job][execution retry delays] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][submission polling intervals] -> [runtime][foo, cat, dog][job][submission polling intervals] - value unchanged
+ * (6.11.0) [runtime][foo, cat, dog][execution polling intervals] -> [runtime][foo, cat, dog][job][execution polling intervals] - value unchanged
 __END__
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME

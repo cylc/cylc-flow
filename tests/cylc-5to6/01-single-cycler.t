@@ -19,11 +19,14 @@
 # TODO - another test for nested file inclusion
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
-set_test_number 4
+set_test_number 5
 install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok "$TEST_NAME" cylc validate $SUITE_NAME
+run_fail "$TEST_NAME" cylc validate $SUITE_NAME
+cmp_ok "$TEST_NAME.stderr" <<'__ERR__'
+Illegal item: [scheduling]initial cycle time
+__ERR__
 #-------------------------------------------------------------------------------
 # Run the convert-suggest-tool.
 TEST_NAME=$TEST_NAME_BASE-5to6

@@ -5,7 +5,7 @@
         abort on timeout = True
 [scheduling]
     runahead limit = PT18H
-    initial cycle time = 20100101T00
+    initial cycle point = 20100101T00
     [[dependencies]]
         [[[PT6H]]]
             graph = "foo => bar"

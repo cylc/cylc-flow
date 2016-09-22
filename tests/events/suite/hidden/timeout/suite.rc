@@ -5,7 +5,7 @@ deliberately fails."""
 
 [cylc]
     [[events]]
-        timeout = 0.083 # 5 seconds
+        timeout = PT5S
         timeout handler = "/bin/false"
         abort if timeout handler fails = True
 

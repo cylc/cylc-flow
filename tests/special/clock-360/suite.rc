@@ -5,8 +5,8 @@
         abort on timeout = True
         timeout = PT0.5M
 [scheduling]
-    initial cycle time = 20130101T00
-    final cycle time   = 20150101T00
+    initial cycle point = 20130101T00
+    final cycle point   = 20150101T00
     cycling mode = 360day
     [[special tasks]]
         clock-triggered = clock(0)

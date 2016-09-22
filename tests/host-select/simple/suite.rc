@@ -11,7 +11,7 @@ by many of the other test suites (see "cylc test-battery --help")."""
 
 [cylc]
     [[reference test]]
-        live mode suite timeout = 0.5
+        live mode suite timeout = PT30S
         suite shutdown event handler = cleanup.sh
 [scheduling]
     [[dependencies]]

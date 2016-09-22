@@ -31,7 +31,7 @@ have to be complicated by reference test configuration details.
  1) set task 'sleep' intervals to zero, to make tasks run faster
  2) replace any 'host = HOST' item with 'host = $CYLC_TEST_TASK_HOST'
  3) detect and declare expected task failures (else the test will abort)
- 4) set initial and final cycle times to cover two 12-hourly cycles 
+ 4) set initial and final cycle points to cover two 12-hourly cycles 
 
  ASSUMPTIONS: - failed tasks are automatically cleaned up by the suite
  (else the suite will time out) cycling suites are on a 12-hour cycle

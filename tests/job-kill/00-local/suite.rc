@@ -3,7 +3,7 @@
    [[reference test]]
        required run mode=live
        expected task failures = t1.1, t2.1
-       live mode suite timeout=2 # minutes
+       live mode suite timeout = PT2M
 [scheduling]
     [[dependencies]]
         graph="""
