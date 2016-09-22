@@ -61,13 +61,13 @@ from cylc.option_parsers import CylcOptionParser as COP
 from cylc.dbstatecheck import (
     CylcSuiteDBChecker, DBNotFoundError, DBOperationError)
 from cylc.cfgspec.globalcfg import GLOBAL_CFG
-from cylc.command_polling import poller
+from cylc.command_polling import Poller
 from cylc.task_state import TASK_STATUSES_ORDERED
 
 from isodatetime.parsers import TimePointParser, DurationParser
 
 
-class suite_poller(poller):
+class SuitePoller(Poller):
     """A polling object that checks suite state."""
 
     def connect(self):
@@ -174,7 +174,7 @@ def main():
              "check for. " + conds + states,
         action="store", dest="status", default=None)
 
-    suite_poller.add_to_cmd_options(parser)
+    SuitePoller.add_to_cmd_options(parser)
     (options, args) = parser.parse_args(remove_opts=["--db", "--debug"])
 
     suite = args[0]
@@ -232,7 +232,7 @@ def main():
         os.path.expanduser(
             options.run_dir or GLOBAL_CFG.get_host_item('run directory')))
 
-    spoller = suite_poller(
+    spoller = SuitePoller(
         "requested state",
         options.interval, options.max_polls,
         args={'suite': suite,
