@@ -6,7 +6,7 @@ new task proxy; ref github #945"""
 [cylc]
    [[reference test]]
        required run mode = live
-       live mode suite timeout = 0.5 # minutes
+       live mode suite timeout = PT30S
 [scheduling]
     [[dependencies]]
         graph = "retrier & reloader"
@@ -15,9 +15,9 @@ new task proxy; ref github #945"""
         script = "((CYLC_TASK_TRY_NUMBER >= 2)) || exit 1"
         # ( '|| exit 1' required to trigger error trap in bash 4.2.0)
         [[[job]]]
-            execution retry delays = 1*0.1
+            execution retry delays = 1*PT6S
     [[reloader]]
         script = """
-cylc suite-state --max-polls=10 --interval=1 --task=retrier --cycle=1 \
+cylc suite-state --max-polls=10 --interval=1 --task=retrier --point=1 \
     --status=retrying $CYLC_SUITE_NAME
 cylc reload $CYLC_SUITE_NAME"""
