@@ -10,7 +10,7 @@ Yearly(2010,3)   : 2010,     2013,     2016,     ...
 
 The reference log is for a test run starting one unit in from the anchor
 cycle time. Cylc should get exactly the same result for test runs that
-start one, two, or three units in because the initial cycle time gets
+start one, two, or three units in because the initial cycle point gets
 adjusted up to the next on-sequence cycle time, so additional tests are
 done to confirm this - by modifying the test start time in the installed
 reference log on the fly.
