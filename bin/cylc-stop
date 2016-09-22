@@ -51,10 +51,10 @@ from cylc.task_id import TaskID
 from cylc.network.suite_command import SuiteCommandClient
 from cylc.network.suite_info import SuiteInfoClient
 from cylc.option_parsers import CylcOptionParser as COP
-from cylc.command_polling import poller
+from cylc.command_polling import Poller
 
 
-class stop_poller(poller):
+class StopPoller(Poller):
     """A polling object that checks if a suite has stopped yet."""
 
     def load(self):
@@ -102,7 +102,7 @@ def main():
         help="Shut down after time STOP (ISO 8601 formatted)",
         action="store", dest="wall_clock")
 
-    stop_poller.add_to_cmd_options(parser, d_max_polls=0)
+    StopPoller.add_to_cmd_options(parser, d_max_polls=0)
     (options, args) = parser.parse_args()
     suite = args[0]
 
@@ -123,7 +123,7 @@ def main():
 
     if int(options.max_polls) > 0:
         # (test to avoid the "nothing to do" warning for # --max-polls=0)
-        spoller = stop_poller(
+        spoller = StopPoller(
             "suite stopped", options.interval, options.max_polls,
             args={
                 'suite': suite,
