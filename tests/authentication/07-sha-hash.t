@@ -37,7 +37,7 @@ cylc run "${SUITE_NAME}"
 unset CYLC_CONF_PATH
 
 # Wait for first task 'foo' to fail.
-cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --cycle=1 \
+cylc suite-state "${SUITE_NAME}" --task=foo --status=failed --point=1 \
     --interval=1 --max-polls=10 || exit 1
 
 # Check scan output.

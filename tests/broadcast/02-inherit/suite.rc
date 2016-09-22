@@ -7,8 +7,8 @@ description=Test Broadcast Inheritance
         required run mode=live
         live mode suite timeout=PT1M
 [scheduling]
-    initial cycle time = 20140101T00
-    final cycle time   = 20140101T00
+    initial cycle point = 20140101T00
+    final cycle point   = 20140101T00
     [[dependencies]]
         [[[R1]]]
             graph = broadcast_all => broadcast_tag
@@ -22,9 +22,9 @@ cylc broadcast -s "[environment]ALL_1=true" -n t1 $CYLC_SUITE_NAME
 """
     [[broadcast_tag]]
         script="""
-cylc broadcast -s "[environment]TAG_0=true" -n F1 -t $CYLC_TASK_CYCLE_POINT \
+cylc broadcast -s "[environment]TAG_0=true" -n F1 -p $CYLC_TASK_CYCLE_POINT \
     $CYLC_SUITE_NAME
-cylc broadcast -s "[environment]TAG_1=true" -n t1 -t $CYLC_TASK_CYCLE_POINT \
+cylc broadcast -s "[environment]TAG_1=true" -n t1 -p $CYLC_TASK_CYCLE_POINT \
     $CYLC_SUITE_NAME
 """
     [[F1]]

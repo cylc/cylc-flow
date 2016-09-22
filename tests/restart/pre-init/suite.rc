@@ -1,17 +1,18 @@
 #!jinja2
 {%- set TEST_DIR = environ['TEST_DIR'] %}
 [cylc]
+    UTC mode = True
     [[events]]
         timeout handler = "touch {{ TEST_DIR }}/suite-stopping && shutdown_this_suite_hook"
-        timeout = 1
+        timeout = PT1M
 [scheduling]
-    initial cycle time = 2010080800
-    final cycle time = 2010080806
+    initial cycle point = 20100808T00
+    final cycle point = 20100808T06
     [[dependencies]]
-        graph = "p1 => p2"
-        [[[0]]]
-            graph = """p2 => foo
-                foo[T-24] => foo => bar"""
+        [[[R1]]]
+            graph = "p1 => p2 => foo"
+        [[[T00]]]
+            graph = foo[-P1D] => foo => bar
 [runtime]
     [[p1]]
         script = """

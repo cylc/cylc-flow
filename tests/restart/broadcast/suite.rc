@@ -6,8 +6,8 @@
         timeout handler = shutdown_this_suite_hook
         timeout = PT1M
 [scheduling]
-    initial cycle time = 20130923T00
-    final cycle time   = 20130923T00
+    initial cycle point = 20130923T00
+    final cycle point   = 20130923T00
     [[dependencies]]
         [[[R1]]]
             graph = """
@@ -23,7 +23,7 @@
     [[send_a_broadcast_task]]
         description = "Broadcast setup task"
         script = """
-            cylc broadcast -n broadcast_task -t $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_SUITE_REG_NAME
+            cylc broadcast -n broadcast_task -p $CYLC_TASK_CYCLE_POINT -s "[environment]MY_VALUE='something'" $CYLC_SUITE_REG_NAME
             cylc broadcast -d $CYLC_SUITE_REG_NAME
         """
     [[broadcast_task]]
