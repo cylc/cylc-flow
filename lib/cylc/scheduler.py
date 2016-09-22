@@ -630,7 +630,8 @@ conditions; see `cylc conditions`.
                 # TODO - just poll for outputs in the job status file.
                 itask.state.outputs.set_all_completed()
 
-            itask.summary['job_hosts'][int(submit_num)] = user_at_host
+            if user_at_host:
+                itask.summary['job_hosts'][int(submit_num)] = user_at_host
             OUT.info("\n+ %s.%s %s" % (name, cycle, status))
             self.pool.add_to_runahead_pool(itask)
 
