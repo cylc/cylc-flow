@@ -10,7 +10,7 @@ The template variable N_MEMBERS can be set on the command line with
 
 [scheduling]
     initial cycle point = 20100808T00
-    final cycle time   = 20100816T00
+    final cycle point   = 20100816T00
     [[dependencies]]
         [[[T00]]]
             graph = """foo => ENS

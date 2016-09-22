@@ -35,7 +35,6 @@
         <RegExpr attribute='Keyword' String=' submission failed handler '/>
         <RegExpr attribute='Keyword' String=' startup handler '/>
         <RegExpr attribute='Keyword' String=' started handler '/>
-        <RegExpr attribute='Keyword' String=' start-up '/>
         <RegExpr attribute='Keyword' String=' stalled handler '/>
         <RegExpr attribute='Keyword' String=' simulation mode suite timeout '/>
         <RegExpr attribute='Keyword' String=' simulate failure '/>
@@ -117,7 +116,6 @@
         <RegExpr attribute='Keyword' String=' cycle point num expanded year digits '/>
         <RegExpr attribute='Keyword' String=' cycle point format '/>
         <RegExpr attribute='Keyword' String=' collapsed families '/>
-        <RegExpr attribute='Keyword' String=' cold-start '/>
         <RegExpr attribute='Keyword' String=' clock-trigger '/>
         <RegExpr attribute='Keyword' String=' clock-expire '/>
         <RegExpr attribute='Keyword' String=' batch system '/>

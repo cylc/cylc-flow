@@ -664,8 +664,7 @@ in a year) or using integer cycling.
 In a cold start each cycling task (unless specifically excluded under
 [special tasks]) will be loaded into the suite with this cycle point,
 or with the closest subsequent valid cycle point for the task.  This item can
-be overridden on the command line or in the gcylc suite start panel.  Note that
-cylc-5 {\em cold-start tasks} are not loaded in a warm start.
+be overridden on the command line or in the gcylc suite start panel.
 
 In date-time cycling, if you do not provide time zone information for this,
 it will be assumed to be local time, or in UTC if~\ref{UTC-mode} is set, or in
@@ -848,24 +847,6 @@ specified as an offset from their own cycle point.
 \end{lstlisting}
 \end{myitemize}
 
-\paragraph[cold-start]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow cold-start}
-
-{\em This pre cylc-6 feature is deprecated and will be removed at cylc-7.}
-
-\begin{myitemize}
-    \item {\em type:} Comma-separated list of task or family names.
-    \item {\em default:} (none)
-\end{myitemize}
-
-\paragraph[start-up]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow start-up}
-
-{\em This pre cylc-6 feature is deprecated and will be removed at cylc-7.}
-
-\begin{myitemize}
-    \item {\em type:} Comma-separated list of task or family names.
-    \item {\em default:} (none)
-\end{myitemize}
-
 \paragraph[clock-expire]{[scheduling] \textrightarrow [[special tasks]] \textrightarrow clock-expire}
 \label{ClockExpireRef}
 
@@ -1002,7 +983,6 @@ graph = """
    foo => bar => baz & waz     # baz and waz both trigger off bar
    foo[-P1D-PT6H] => bar       # bar triggers off foo[-P1D-PT6H]
    baz:out1 => faz             # faz triggers off a message output of baz
-   ColdFoo | foo[-PT6H] => foo # cold-start or restart for foo
    X:start => Y                # Y triggers if X starts executing
    X:fail => Y                 # Y triggers if X fails
    foo[-PT6H]:fail => bar      # bar triggers if foo[-PT6H] fails
