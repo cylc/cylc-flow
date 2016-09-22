@@ -122,6 +122,13 @@ class BroadcastServer(BaseCommsServer):
             not_from_client=False):
         """Add new broadcast settings (server side interface).
 
+        Example URL:
+
+        * /put (plus JSON payload)
+
+        Usually accepts a JSON payload formatted as the kwargs dict
+        would be for this method.
+
         Kwargs:
 
         * point_strings - list
@@ -130,11 +137,15 @@ class BroadcastServer(BaseCommsServer):
         * namespaces - list
             List of applicable namespaces. Can also be ["root"].
         * settings - list
-            List of setting key value dictionaries to apply.
+            List of setting key value dictionaries to apply. For
+            example, [{"pre-script": "sleep 10"}].
+        * not_from_client - boolean
+            If True, do not attempt to read in JSON - use keyword
+            arguments instead. If False (default), read in JSON.
 
         Return a tuple (modified_settings, bad_options) where:
           modified_settings is list of modified settings in the form:
-            [("20200202", "foo", {"command scripting": "true"}, ...]
+            [("20200202", "foo", {"script": "true"}, ...]
           bad_options is as described in the docstring for self.clear().
         """
         check_access_priv(self, 'full-control')
@@ -195,10 +206,17 @@ class BroadcastServer(BaseCommsServer):
     def get(self, task_id=None):
         """Retrieve all broadcast variables that target a given task ID.
 
+        Example URLs:
+
+        * /get
+        * /get?task_id=:failed
+        * /get?task_id=20200202T0000Z/*
+        * /get?task_id=foo.20101225T0600Z
+
         Kwargs:
 
         * task_id - string or None
-            If given, return the broadcasts set for this task_id.
+            If given, return the broadcasts set for this task_id spec.
             If None, return all currently set broadcasts.
 
         """
@@ -231,6 +249,11 @@ class BroadcastServer(BaseCommsServer):
     def expire(self, cutoff=None):
         """Clear all settings targeting cycle points earlier than cutoff.
 
+        Example URLs:
+
+        * /expire
+        * /expire?cutoff=20100504T1200Z
+
         Kwargs:
 
         * cutoff - string or None
@@ -258,7 +281,10 @@ class BroadcastServer(BaseCommsServer):
     def clear(self, point_strings=None, namespaces=None, cancel_settings=None):
         """Clear settings globally, or for listed namespaces and/or points.
 
-        Accepts a JSON payload or kwargs containing:
+        Usually accepts a JSON payload formatted as the kwargs dict
+        would be for this method.
+
+        Kwargs:
 
         * point_strings - list or None
             List of target point strings to clear. None or empty list means

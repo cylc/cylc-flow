@@ -53,19 +53,19 @@ TEST_NAME="${TEST_NAME_BASE}-print-json"
 run_ok "${TEST_NAME}" python -c "import json, pprint, sys; pprint.pprint(json.loads(sys.stdin.read()))" <index
 cmp_ok "${TEST_NAME}.stdout" <<__OUT__
 [{u'argdoc': u'(point_strings=None, namespaces=None, cancel_settings=None)',
-  u'doc': u'Clear settings globally, or for listed namespaces and/or points.\n\nAccepts a JSON payload or kwargs containing:\n\n* point_strings - list or None\n    List of target point strings to clear. None or empty list means\n    clear all point strings.\n* namespaces - list or None\n    List of target namespaces. None or empty list means clear all\n    namespaces.\n* cancel_settings - list or NOne\n    List of particular settings to clear. None or empty list means\n    clear all settings.\n\nReturn a tuple (modified_settings, bad_options), where:\n* modified_settings is similar to the return value of the "put" method,\n  but for removed settings.\n* bad_options is a dict in the form:\n      {"point_strings": ["20020202", ..."], ...}\n  The dict is only populated if there are options not associated with\n  previous broadcasts. The keys can be:\n  * point_strings: a list of bad point strings.\n  * namespaces: a list of bad namespaces.\n  * cancel: a list of tuples. Each tuple contains the keys of a bad\n    setting.',
+  u'doc': u'Clear settings globally, or for listed namespaces and/or points.\n\nUsually accepts a JSON payload formatted as the kwargs dict\nwould be for this method.\n\nKwargs:\n\n* point_strings - list or None\n    List of target point strings to clear. None or empty list means\n    clear all point strings.\n* namespaces - list or None\n    List of target namespaces. None or empty list means clear all\n    namespaces.\n* cancel_settings - list or NOne\n    List of particular settings to clear. None or empty list means\n    clear all settings.\n\nReturn a tuple (modified_settings, bad_options), where:\n* modified_settings is similar to the return value of the "put" method,\n  but for removed settings.\n* bad_options is a dict in the form:\n      {"point_strings": ["20020202", ..."], ...}\n  The dict is only populated if there are options not associated with\n  previous broadcasts. The keys can be:\n  * point_strings: a list of bad point strings.\n  * namespaces: a list of bad namespaces.\n  * cancel: a list of tuples. Each tuple contains the keys of a bad\n    setting.',
   u'name': u'clear'},
  {u'argdoc': u'(cutoff=None)',
-  u'doc': u'Clear all settings targeting cycle points earlier than cutoff.\n\nKwargs:\n\n* cutoff - string or None\n    If cutoff is a point string, expire all broadcasts < cutoff\n    If cutoff is None, expire all broadcasts.',
+  u'doc': u'Clear all settings targeting cycle points earlier than cutoff.\n\nExample URLs:\n\n* /expire\n* /expire?cutoff=20100504T1200Z\n\nKwargs:\n\n* cutoff - string or None\n    If cutoff is a point string, expire all broadcasts < cutoff\n    If cutoff is None, expire all broadcasts.',
   u'name': u'expire'},
  {u'argdoc': u'(task_id=None)',
-  u'doc': u'Retrieve all broadcast variables that target a given task ID.\n\nKwargs:\n\n* task_id - string or None\n    If given, return the broadcasts set for this task_id.\n    If None, return all currently set broadcasts.',
+  u'doc': u'Retrieve all broadcast variables that target a given task ID.\n\nExample URLs:\n\n* /get\n* /get?task_id=:failed\n* /get?task_id=20200202T0000Z/*\n* /get?task_id=foo.20101225T0600Z\n\nKwargs:\n\n* task_id - string or None\n    If given, return the broadcasts set for this task_id spec.\n    If None, return all currently set broadcasts.',
   u'name': u'get'},
  {u'argdoc': u"(form='html')",
   u'doc': u"Return the methods (=sub-urls) within this class.\n\nExample URL:\n\n* https://host:port/CLASS/\n\nKwargs:\n\n* form - string\n    form can be either 'html' (default) or 'json' for easily\n    machine readable output.",
   u'name': u'index'},
  {u'argdoc': u'(point_strings=None, namespaces=None, settings=None, not_from_client=False)',
-  u'doc': u'Add new broadcast settings (server side interface).\n\nKwargs:\n\n* point_strings - list\n    List of applicable cycle points for these settings. Can\n    be [\'*\'] to cover all cycle points.\n* namespaces - list\n    List of applicable namespaces. Can also be ["root"].\n* settings - list\n    List of setting key value dictionaries to apply.\n\nReturn a tuple (modified_settings, bad_options) where:\n  modified_settings is list of modified settings in the form:\n    [("20200202", "foo", {"command scripting": "true"}, ...]\n  bad_options is as described in the docstring for self.clear().',
+  u'doc': u'Add new broadcast settings (server side interface).\n\nExample URL:\n\n* /put (plus JSON payload)\n\nUsually accepts a JSON payload formatted as the kwargs dict\nwould be for this method.\n\nKwargs:\n\n* point_strings - list\n    List of applicable cycle points for these settings. Can\n    be [\'*\'] to cover all cycle points.\n* namespaces - list\n    List of applicable namespaces. Can also be ["root"].\n* settings - list\n    List of setting key value dictionaries to apply. For\n    example, [{"pre-script": "sleep 10"}].\n* not_from_client - boolean\n    If True, do not attempt to read in JSON - use keyword\n    arguments instead. If False (default), read in JSON.\n\nReturn a tuple (modified_settings, bad_options) where:\n  modified_settings is list of modified settings in the form:\n    [("20200202", "foo", {"script": "true"}, ...]\n  bad_options is as described in the docstring for self.clear().',
   u'name': u'put'}]
 __OUT__
 
@@ -80,7 +80,10 @@ cmp_ok "${TEST_NAME_BASE}-index.html" <<__OUT__
 <p>clear(point_strings=None, namespaces=None, cancel_settings=None)</p>
 <pre>Clear settings globally, or for listed namespaces and/or points.
 
-Accepts a JSON payload or kwargs containing:
+Usually accepts a JSON payload formatted as the kwargs dict
+would be for this method.
+
+Kwargs:
 
 * point_strings - list or None
     List of target point strings to clear. None or empty list means
@@ -107,6 +110,11 @@ Return a tuple (modified_settings, bad_options), where:
 <p>expire(cutoff=None)</p>
 <pre>Clear all settings targeting cycle points earlier than cutoff.
 
+Example URLs:
+
+* /expire
+* /expire?cutoff=20100504T1200Z
+
 Kwargs:
 
 * cutoff - string or None
@@ -116,10 +124,17 @@ Kwargs:
 <p>get(task_id=None)</p>
 <pre>Retrieve all broadcast variables that target a given task ID.
 
+Example URLs:
+
+* /get
+* /get?task_id=:failed
+* /get?task_id=20200202T0000Z/*
+* /get?task_id=foo.20101225T0600Z
+
 Kwargs:
 
 * task_id - string or None
-    If given, return the broadcasts set for this task_id.
+    If given, return the broadcasts set for this task_id spec.
     If None, return all currently set broadcasts.</pre>
 <h2>index</h2>
 <p>index(form='html')</p>
@@ -138,6 +153,13 @@ Kwargs:
 <p>put(point_strings=None, namespaces=None, settings=None, not_from_client=False)</p>
 <pre>Add new broadcast settings (server side interface).
 
+Example URL:
+
+* /put (plus JSON payload)
+
+Usually accepts a JSON payload formatted as the kwargs dict
+would be for this method.
+
 Kwargs:
 
 * point_strings - list
@@ -146,11 +168,15 @@ Kwargs:
 * namespaces - list
     List of applicable namespaces. Can also be ["root"].
 * settings - list
-    List of setting key value dictionaries to apply.
+    List of setting key value dictionaries to apply. For
+    example, [{"pre-script": "sleep 10"}].
+* not_from_client - boolean
+    If True, do not attempt to read in JSON - use keyword
+    arguments instead. If False (default), read in JSON.
 
 Return a tuple (modified_settings, bad_options) where:
   modified_settings is list of modified settings in the form:
-    [("20200202", "foo", {"command scripting": "true"}, ...]
+    [("20200202", "foo", {"script": "true"}, ...]
   bad_options is as described in the docstring for self.clear().</pre>
 </html>
 __OUT__
