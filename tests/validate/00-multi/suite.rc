@@ -5,7 +5,7 @@ description = """Bug identified at 5.1.1-314-g4960684."""
 [cylc]
 [[reference test]]
 required run mode = live
-live mode suite timeout = 1.0 # minutes
+live mode suite timeout = PT1M
 [scheduling]
 [[dependencies]]
 graph = """foo"""

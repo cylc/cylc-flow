@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a prev-style cycle point and a new-style cycling section
+# Test validation with a new-style cycle point and a prev-style limit.
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -24,11 +24,8 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "Conflicting syntax: pre-cylc-6 syntax \
-(initial/final cycle point format: CCYYMMDDhh) \
-vs post-cylc-6 syntax \
-(\[scheduling\]\[\[dependencies\]\]\[\[\[T12\]\]\]: ISO 8601-style cycling)" \
-    $TEST_NAME.stderr
+grep_ok "Illegal ISO 8601 interval value: \
+\[runtime\]\[root\]\[events\]execution timeout = 3" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit

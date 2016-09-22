@@ -1,7 +1,7 @@
 #!/bin/bash
 # THIS FILE IS PART OF THE CYLC SUITE ENGINE.
 # Copyright (C) 2008-2016 NIWA
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test validation with a  prev-style cycle synax and post-style retry syntax
+# Test validation with a prev-style cycle point and a new-style cycling section
 . $(dirname $0)/test_header
 #-------------------------------------------------------------------------------
 set_test_number 2
@@ -24,11 +24,8 @@ install_suite $TEST_NAME_BASE $TEST_NAME_BASE
 #-------------------------------------------------------------------------------
 TEST_NAME=$TEST_NAME_BASE
 run_fail $TEST_NAME cylc validate --debug -v -v $SUITE_NAME
-grep_ok "Conflicting syntax: pre-cylc-6 syntax \
-(integer interval: \[cylc\]\[events\]timeout = 4320) \
-vs post-cylc-6 syntax \
-(ISO 8601 interval: \[runtime\]\[A\]\[job\]execution retry delays = PT30M)" \
-    $TEST_NAME.stderr
+grep_ok "Incompatible value for <class 'cylc.cycling.iso8601.ISO8601Point'>: \
+2010010100: Invalid ISO 8601 date representation: 2010010100" $TEST_NAME.stderr
 #-------------------------------------------------------------------------------
 purge_suite $SUITE_NAME
 exit
