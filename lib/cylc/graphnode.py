@@ -17,27 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.cycling.loader import get_interval, get_interval_cls
-from cylc.syntax_flags import set_syntax_version, VERSION_PREV, VERSION_NEW
 from cylc.task_id import TaskID
 import re
-
-# Previous node format.
-NODE_PREV_RE = re.compile(
-    r"^" +
-    r"(" + TaskID.NAME_RE + r")" +
-    r"""\s*             # Optional whitespace
-        (?:\[           # Begin optional [offset] syntax, start [
-         \s*            # Optional whitespace
-         T              # T as in T-6, T+1, etc
-         \s*            # Optional whitespace
-         ([+-])         # Either + or - in e.g. T-6, T+1
-         (\s*\w+)       # Offset amount
-         \s*            # Optional whitespace
-         \]             # End ]
-        ){0,1}          # End optional [offset] syntax
-        (:[\w-]+){0,1}  # Optional type (e.g. :fail, :finish-all)
-        $               # End
-    """, re.X)
 
 # Cylc's ISO 8601 format.
 NODE_ISO_RE = re.compile(
@@ -120,9 +101,6 @@ class graphnode(object):
             sign = ""
             prev_format = False
             # Can't always set syntax here, as we use [^] for backwards comp.
-            if offset_string:
-                set_syntax_version(
-                    VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
         else:
             m = re.match(NODE_ISO_RE, node)
             if m:
@@ -130,24 +108,8 @@ class graphnode(object):
                 name, offset_string, outp = m.groups()
                 sign = ""
                 prev_format = False
-                if offset_string:
-                    set_syntax_version(
-                        VERSION_NEW, "graphnode: %s: ISO 8601 offset" % node)
             else:
-                m = re.match(NODE_PREV_RE, node)
-                if not m:
-                    raise GraphNodeError('Illegal graph node: ' + node)
-                # node looks like foo[T-6], foo[T-12]:fail...
-                name, sign, offset_string, outp = m.groups()
-                if sign and offset_string:
-                    offset_string = sign + offset_string
-                prev_format = True
-                # Strip :succeed etc. off here, to avoid double warning for
-                # adding edges (with :succeed) and getting nodes (without).
-                set_syntax_version(
-                    VERSION_PREV,
-                    "graphnode %s: old-style offset" % re.sub(':.*', '', node)
-                )
+                raise GraphNodeError('Illegal graph node: ' + node)
 
         if outp:
             self.special_output = True

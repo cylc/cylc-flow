@@ -474,7 +474,6 @@ conditions; see `cylc conditions`.
 
         task_list = self.filter_initial_task_list(
             self.config.get_task_name_list())
-        coldstart_tasks = self.config.get_coldstart_task_list()
 
         for name in task_list:
             if self.start_point is None:
@@ -487,10 +486,6 @@ conditions; see `cylc conditions`.
             except TaskProxySequenceBoundsError as exc:
                 self.log.debug(str(exc))
                 continue
-            if name in coldstart_tasks and self.options.warm:
-                itask.state.set_state(TASK_STATUS_SUCCEEDED)
-                itask.state.set_prerequisites_all_satisfied()
-                itask.state.outputs.set_all_completed()
             # Load task.
             self.pool.add_to_runahead_pool(itask)
 
@@ -545,9 +540,10 @@ conditions; see `cylc conditions`.
                 # Given in the suite.rc file
                 if my_point != point:
                     ERR.warning(
-                        "old %s cycle point " +
-                        "%s, overriding suite.rc %s"
-                    ) % (key_str, point, my_point)
+                        ("old %s cycle point " +
+                         "%s, overriding suite.rc %s") % (
+                             key_str, point, my_point)
+                    )
                     setattr(self, self_attr, point)
             else:
                 # reinstate from old

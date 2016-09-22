@@ -111,7 +111,6 @@ class CylcTimeParser(object):
     def __init__(self, context_start_point,
                  context_end_point, num_expanded_year_digits=0,
                  dump_format=None,
-                 custom_point_parse_function=None,
                  assumed_time_zone=None):
         if context_start_point is not None:
             context_start_point = str(context_start_point)
@@ -139,7 +138,6 @@ class CylcTimeParser(object):
             (re.compile(regex), msg) for (regex, msg) in
             self.POINT_INVALID_FOR_CYLC_REGEXES
         ]
-        self.custom_point_parse_function = custom_point_parse_function
         if isinstance(context_start_point, basestring):
             context_start_point, offset = self._get_point_from_expression(
                 context_start_point, None)
@@ -358,11 +356,8 @@ class CylcTimeParser(object):
         expr_to_parse = expr
         if expr.endswith("T"):
             expr_to_parse = expr + "00"
-        parse_function = self.timepoint_parser.parse
-        if self.custom_point_parse_function is not None:
-            parse_function = self.custom_point_parse_function
         try:
-            expr_point = parse_function(expr_to_parse)
+            expr_point = self.timepoint_parser.parse(expr_to_parse)
         except ValueError:
             pass
         else:
@@ -372,7 +367,7 @@ class CylcTimeParser(object):
                 for rec in recs:
                     if rec.search(expr):
                         try:
-                            expr_point = parse_function(
+                            expr_point = self.timepoint_parser.parse(
                                 truncation_string + expr_to_parse)
                         except ValueError:
                             continue
