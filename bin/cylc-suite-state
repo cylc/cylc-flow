@@ -35,11 +35,11 @@ site/user config. For other suites, e.g. those owned by others, or
 mirrored suite databases, use --run-dir=DIR to specify the location.
 
 Example usages:
-  cylc suite-state REG --task=TASK --cycle=CYCLE --status=STATUS
-returns 0 if TASK.CYCLE reaches STATUS before the maximum number of
+  cylc suite-state REG --task=TASK --point=POINT --status=STATUS
+returns 0 if TASK.POINT reaches STATUS before the maximum number of
 polls, otherwise returns 1.
 
-  cylc suite-state REG --task=TASK --cycle=CYCLE --status=STATUS --offset=PT6H
+  cylc suite-state REG --task=TASK --point=POINT --status=STATUS --offset=PT6H
 adds 6 hours to the value of CYCLE for carrying out the polling operation.
 
   cylc suite-state REG --task=TASK --status=STATUS --task-point
@@ -125,11 +125,6 @@ def main():
         action="store", dest="task", default=None)
 
     parser.add_option(
-        "-c", "--cycle",
-        help="Deprecated. Specify the cycle to check task states for.",
-        action="store", dest="cycle", default=None)
-
-    parser.add_option(
         "-p", "--point",
         help="Specify the cycle point to check task states for.",
         action="store", dest="cycle", default=None)
@@ -137,8 +132,8 @@ def main():
     parser.add_option(
         "-T", "--task-point",
         help="Use the CYLC_TASK_CYCLE_POINT environment variable as the "
-             "cycle to check task states for. "
-             "Shorthand for --cycle=$CYLC_TASK_CYCLE_POINT",
+             "cycle point to check task states for. "
+             "Shorthand for --point=$CYLC_TASK_CYCLE_POINT",
         action="store_true", dest="use_task_point", default=False)
 
     parser.add_option(
@@ -224,7 +219,7 @@ def main():
                                               dump_format=options.template)
             options.cycle = str(my_target_point)
         else:
-            sys.exit("ERROR: No cyclepoint to reformat using template")
+            sys.exit("ERROR: No cycle point to reformat using template")
 
     # this only runs locally (use of --host or --user results in remote
     # re-invocation).

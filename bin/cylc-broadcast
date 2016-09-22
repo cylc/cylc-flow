@@ -110,14 +110,6 @@ def main():
     parser = COP(__doc__, comms=True)
 
     parser.add_option(
-        "-t", "--tag", metavar="CYCLE_POINT",
-        help="(Deprecated). "
-             "Target cycle point. More than one can be added. "
-             "Defaults to '*' for all cycle points with --set and --cancel, "
-             "and nothing with --clear.",
-        action="append", dest="point_strings", default=[])
-
-    parser.add_option(
         "-p", "--point", metavar="CYCLE_POINT",
         help="Target cycle point. More than one can be added. "
              "Defaults to '*' with --set and --cancel, "
