@@ -1455,8 +1455,7 @@ been defined for this suite""").inform()
 
         remove_item.set_image(img)
         menu.append(remove_item)
-        remove_item.connect('activate', self.remove_task, task_ids,
-                            task_is_family)
+        remove_item.connect('activate', self.remove_tasks, task_ids, True)
 
         # Remove without spawning.
         remove_nospawn_item = gtk.ImageMenuItem('Remove without spawning')
@@ -1464,8 +1463,8 @@ been defined for this suite""").inform()
 
         remove_nospawn_item.set_image(img)
         menu.append(remove_nospawn_item)
-        remove_nospawn_item.connect('activate', self.remove_task_nospawn,
-                                    task_ids, task_is_family)
+        remove_nospawn_item.connect(
+            'activate', self.remove_tasks, task_ids, False)
 
         menu.show_all()
         return menu
@@ -1727,28 +1726,17 @@ shown here in the state they were in at the time of triggering.''')
                 return
         self.put_pyro_command('reset_task_state', task_ids, None, state)
 
-    def remove_task(self, b, task_ids, is_family):
-        """Remove a task."""
-        if type(task_ids) is not list:
+    def remove_tasks(self, b, task_ids, spawn):
+        """Send command to suite to remove tasks matching task_ids."""
+        if not isinstance(task_ids, list):
             task_ids = [task_ids]
-
-        for task_id in task_ids:
-            if not self.get_confirmation(
-                    "Remove %s after spawning?" % task_id):
-                return
-            name, point_string = TaskID.split(task_id)
-        self.put_pyro_command('remove_task', task_ids, None, True)
-
-    def remove_task_nospawn(self, b, task_ids, is_family=False):
-        """Remove a task, without spawn."""
-        if type(task_ids) is not list:
-            task_ids = [task_ids]
-
-        for task_id in task_ids:
-            if not self.get_confirmation(
-                    "Remove %s without spawning?" % task_id):
-                return
-        self.put_pyro_command('remove_task', task_ids, None, False)
+        if spawn:
+            message = "Remove %s after spawning?"
+        else:
+            message = "Remove %s without spawning?"
+        if not self.get_confirmation(message % task_ids):
+            return
+        self.put_pyro_command('remove_task', task_ids, None, None, spawn)
 
     def stopsuite_popup(self, b):
         window = gtk.Window()
