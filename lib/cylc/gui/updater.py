@@ -29,7 +29,7 @@ from cylc.exceptions import PortFileError
 import cylc.flags
 from cylc.dump import get_stop_state_summary
 from cylc.gui.cat_state import cat_state
-from cylc.network import ConnectionDeniedError
+from cylc.network import ConnectionError, ConnectionDeniedError
 from cylc.network.suite_state_client import (
     StateSummaryClient, SuiteStillInitialisingError, get_suite_status_string,
     SUITE_STATUS_NOT_CONNECTED, SUITE_STATUS_CONNECTED,
@@ -197,14 +197,13 @@ class Updater(threading.Thread):
         try:
             self.daemon_version = self.suite_info_client.get_info(
                 'get_cylc_version')
-        except PortFileError as exc:
+        except (ConnectionError, PortFileError) as exc:
+            # Failed to (re)connect
+            # Suite not running, starting up or just stopped.
             if cylc.flags.debug:
                 traceback.print_exc()
-            # Failed to (re)connect.
-            # Probably normal shutdown; get a stop summary if available.
-            if not self.connect_fail_warned:
-                self.connect_fail_warned = True
-                gobject.idle_add(self.warn, str(exc))
+            # Use info bar to display stop summary if available.
+            # Otherwise, just display the reconnect count down.
             if self.cfg.suite and self.stop_summary is None:
                 self.stop_summary = get_stop_state_summary(
                     cat_state(self.cfg.suite, self.cfg.host, self.cfg.owner))
@@ -216,17 +215,21 @@ class Updater(threading.Thread):
                 self.info_bar.set_update_time(
                     None, self.info_bar.DISCONNECTED_TEXT)
             return
+        except ConnectionDeniedError as exc:
+            if cylc.flags.debug:
+                traceback.print_exc()
+            if not self.connect_fail_warned:
+                self.connect_fail_warned = True
+                gobject.idle_add(
+                    self.warn,
+                    "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
+            return
         except Exception as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
             if not self.connect_fail_warned:
                 self.connect_fail_warned = True
-                if isinstance(exc, ConnectionDeniedError):
-                    gobject.idle_add(
-                        self.warn,
-                        "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
-                else:
-                    gobject.idle_add(self.warn, str(exc))
+                gobject.idle_add(self.warn, str(exc))
             return
 
         gobject.idle_add(
