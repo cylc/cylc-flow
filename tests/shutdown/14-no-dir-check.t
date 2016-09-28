@@ -20,12 +20,21 @@
 set_test_number 3
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
+OPT_SET=
+if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
+    create_test_globalrc "" "
+[cylc]
+    health check interval = PT10S"
+    OPT_SET='-s GLOBALCFG=True'
+fi
+
+run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
 # Suite run directory is now a symbolic link, so we can easily delete it.
 RUND="$(cylc get-global-config --print-run-dir)"
 REAL_SUITE_RUND="$(mktemp -d "${RUND}/${SUITE_NAME}XXXXXXXX")"
 ln -s "$(basename "${REAL_SUITE_RUND}")" "${RUND}/${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+suite_run_fail "${TEST_NAME_BASE}-run" \
+    cylc run --no-detach ${OPT_SET} "${SUITE_NAME}"
 LOGD="${REAL_SUITE_RUND}/log"
 grep_ok "${RUND}/${SUITE_NAME}: suite run directory not found" \
     "${LOGD}/suite/log"

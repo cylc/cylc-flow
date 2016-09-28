@@ -20,9 +20,18 @@
 
 set_test_number 3
 
+OPT_SET=
+if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
+    create_test_globalrc "" "
+[cylc]
+    health check interval = PT10S"
+    OPT_SET='-s GLOBALCFG=True'
+fi
+
 install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${SUITE_NAME}"
-suite_run_fail "${TEST_NAME_BASE}-run" cylc run --no-detach "${SUITE_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate ${OPT_SET} "${SUITE_NAME}"
+suite_run_fail "${TEST_NAME_BASE}-run" \
+    cylc run --no-detach ${OPT_SET} "${SUITE_NAME}"
 LOGD="$(cylc get-global-config --print-run-dir)/${SUITE_NAME}/log"
 PORTSD="$(cylc get-global-config --item='[communication]ports directory')"
 while [[ "${PORTSD}" == */ ]]; do  # remove trailing slashes

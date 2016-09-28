@@ -1582,7 +1582,7 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
                     self.port_file = None
                     raise exc
                 time_next_fs_check = (
-                    now + self.config.cfg['cylc']['health check interval'])
+                    now + self._get_cylc_conf('health check interval'))
 
             if self.options.profile_mode:
                 now = time()
@@ -2176,6 +2176,18 @@ To see if %(suite)s is running on '%(host)s:%(port)s':
             self.log.warning("Cannot get CPU % statistics: %s" % exc)
             return
         self._update_profile_info("CPU %", cpu_frac, amount_format="%.1f")
+
+    def _get_cylc_conf(self, key, default=None):
+        """Return a named setting under [cylc] from suite.rc or global.rc."""
+        for getter in [self.config.cfg['cylc'], GLOBAL_CFG.get(['cylc'])]:
+            try:
+                value = getter[key]
+            except KeyError:
+                pass
+            else:
+                if value is not None:
+                    return value
+        return default
 
     def _get_events_conf(self, key, default=None):
         """Return a named [cylc][[events]] configuration."""
