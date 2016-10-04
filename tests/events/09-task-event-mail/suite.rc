@@ -3,6 +3,10 @@
 title=Task Event Mail
 
 [cylc]
+{% if GLOBALCFG is not defined %}
+    [[events]]
+        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
+{% endif %}{# not GLOBALCFG is not defined #}
     [[reference test]]
         live mode suite timeout=PT1M
 

@@ -20,7 +20,7 @@
 if ! mail -V 2>'/dev/null'; then
     skip_all '"mail" command not available'
 fi
-set_test_number 4
+set_test_number 3
 mock_smtpd_init
 OPT_SET=
 if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
@@ -28,6 +28,7 @@ if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
 [cylc]
     [[events]]
         mail events = startup, shutdown
+        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
         mail smtp = ${TEST_SMTPD_HOST}"
     OPT_SET='-s GLOBALCFG=True'
 else
@@ -40,8 +41,13 @@ run_ok "${TEST_NAME_BASE}-validate" \
 suite_run_ok "${TEST_NAME_BASE}-run" \
     cylc run --reference-test --debug ${OPT_SET} "${SUITE_NAME}"
 
-grep_ok "\[suite startup\] ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
-grep_ok "\[suite shutdown\] ${SUITE_NAME}" "${TEST_SMTPD_LOG}"
+contains_ok "${TEST_SMTPD_LOG}" <<__LOG__
+suite event: startup
+reason: suite starting
+suite event: shutdown
+reason: AUTOMATIC
+see: http://localhost/stuff/${USER}/${SUITE_NAME}/
+__LOG__
 
 purge_suite "${SUITE_NAME}"
 mock_smtpd_kill

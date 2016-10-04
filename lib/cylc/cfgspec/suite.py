@@ -258,6 +258,7 @@ SPEC = {
             'mail from': vdr(vtype='string'),
             'mail smtp': vdr(vtype='string'),
             'mail to': vdr(vtype='string'),
+            'mail footer': vdr(vtype='string'),
         },
         'simulation mode': {
             'disable suite event hooks': vdr(vtype='boolean', default=True),
