@@ -78,6 +78,7 @@ SPEC = {
             'mail from': vdr(vtype='string'),
             'mail smtp': vdr(vtype='string'),
             'mail to': vdr(vtype='string'),
+            'mail footer': vdr(vtype='string'),
             'startup handler': vdr(vtype='string_list', default=[]),
             'timeout handler': vdr(vtype='string_list', default=[]),
             'inactivity handler': vdr(vtype='string_list', default=[]),
