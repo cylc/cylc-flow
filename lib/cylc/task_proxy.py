@@ -168,6 +168,27 @@ class TaskProxy(object):
     # if execution retries are configured; and is passed to task
     # environments to allow changed behaviour after previous failures.
 
+    # Memory optimization - constrain possible attributes to this list.
+    __slots__ = ["JOB_LOG_FMT_1", "JOB_LOG_FMT_M", "CUSTOM_EVENT_HANDLER",
+                 "EVENT_MAIL", "HEAD_MODE_LOCAL", "HEAD_MODE_REMOTE",
+                 "JOB_FILE_BASE", "JOB_KILL", "JOB_LOGS_RETRIEVE", "JOB_POLL",
+                 "JOB_SUBMIT", "MANAGE_JOB_LOGS_TRY_DELAYS", "NN",
+                 "LOGGING_LVL_OF", "RE_MESSAGE_TIME", "TABLE_TASK_JOBS",
+                 "TABLE_TASK_EVENTS", "TABLE_TASK_STATES", "POLLED_INDICATOR",
+                 "event_handler_env", "stop_sim_mode_job_submission", "tdef",
+                 "submit_num", "validate_mode", "message_queue", "point",
+                 "cleanup_cutoff", "identity", "has_spawned",
+                 "point_as_seconds", "stop_point", "manual_trigger",
+                 "is_manual_submit", "summary", "local_job_file_path",
+                 "retries_configured", "run_try_state", "sub_try_state",
+                 "event_handler_try_states",
+                 "execution_time_limit_poll_try_state", "db_inserts_map",
+                 "db_updates_map", "suite_name", "task_host", "task_owner",
+                 "user_at_host", "job_vacated", "submission_poll_timer",
+                 "execution_poll_timer", "event_hooks", "sim_mode_run_length",
+                 "delayed_start_str", "delayed_start", "expire_time_str",
+                 "expire_time", "state", "log"]
+
     # Format string for single line output
     JOB_LOG_FMT_1 = "%(timestamp)s [%(cmd_key)s %(attr)s] %(mesg)s"
     # Format string for multi-line output
