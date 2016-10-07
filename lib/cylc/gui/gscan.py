@@ -485,8 +485,8 @@ class ScanApp(object):
             self.warn_icon_grey, 0, False)  # b&w warn icon pixbuf
         status_column.pack_start(warn_icon, expand=False)
         status_column.set_cell_data_func(warn_icon, self._set_error_icon_state)
-        warn_icon.set_property('visible', False)
-
+        self.warn_icon_blank = gtk.gdk.Pixbuf(  # Transparent pixbuff.
+            gtk.gdk.COLORSPACE_RGB, True, 8, 17, 17).fill(0x00000000)
         # Task status icons.
         for i in range(len(TASK_STATUSES_ORDERED)):
             cell_pixbuf_state = gtk.CellRendererPixbuf()
@@ -754,19 +754,16 @@ class ScanApp(object):
             self.WARNINGS_COLUMN, self.CYCLE_COLUMN)
         if point_string:
             # Error icon only for first row.
-            cell.set_property('pixbuf', None)
+            cell.set_property('pixbuf', self.warn_icon_blank)
         elif warnings:
             cell.set_property('pixbuf', self.warn_icon_colour)
             self.warning_icon_shown.append((suite, host))
-            cell.set_property('visible', True)
             self.warnings[(suite, host)] = warnings
         else:
             cell.set_property('pixbuf', self.warn_icon_grey)
             self.warnings[(suite, host)] = None
-            if (suite, host) in self.warning_icon_shown:
-                cell.set_property('visible', True)
-            else:
-                cell.set_property('visible', False)
+            if not (suite, host) in self.warning_icon_shown:
+                cell.set_property('pixbuf', self.warn_icon_blank)
 
     def _set_cell_text_host(self, column, cell, model, iter_):
         host = model.get_value(iter_, self.HOST_COLUMN)
