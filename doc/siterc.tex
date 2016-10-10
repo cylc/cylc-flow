@@ -575,7 +575,7 @@ setting.
 \label{local-tail-template}
 
 A template (with \lstinline=%(filename)s= substitution) for the command used to
-tail-follow local job logs, used by the gcylc log viewer and
+tail-follow local job logs, used by the gcylc cat-log viewer and
 \lstinline=cylc cat-log --tail=.  You are unlikely to need to override this.
 
 \begin{myitemize}
@@ -587,7 +587,7 @@ tail-follow local job logs, used by the gcylc log viewer and
 \label{remote-tail-template}
 
 A template (with \lstinline=%(filename)s= substitution) for the command used
-to tail-follow remote job logs, used by the gcylc log viewer and
+to tail-follow remote job logs, used by the gcylc cat-log viewer and
 \lstinline=cylc cat-log --tail=.  The remote tail command needs to be told to
 die when its parent process exits. You may need to override this command for
 task hosts where the default \lstinline=tail= or \lstinline=ps= commands are
