@@ -491,28 +491,31 @@ conditions; see `cylc conditions`.
 
     def load_tasks_for_restart(self):
         """Load tasks for restart."""
-        self.pri_dao.select_suite_params(self._load_suite_params)
-        self.pri_dao.select_broadcast_states(self._load_broadcast_states)
-        self.pri_dao.select_task_pool_for_restart(self._load_task_pool)
+        self.pri_dao.select_suite_params(
+            self._load_suite_params, self.options.checkpoint)
+        self.pri_dao.select_broadcast_states(
+            self._load_broadcast_states, self.options.checkpoint)
+        self.pri_dao.select_task_pool_for_restart(
+            self._load_task_pool, self.options.checkpoint)
         self.pool.poll_task_jobs()
 
     def _load_broadcast_states(self, row_idx, row):
         """Load a setting in the previous broadcast states."""
         if row_idx == 0:
-            print "LOADING broadcast states"
+            OUT.info("LOADING broadcast states")
         point, namespace, key, value = row
         BroadcastServer.get_inst().load_state(point, namespace, key, value)
-        print BROADCAST_LOAD_FMT.strip() % {
+        OUT.info(BROADCAST_LOAD_FMT.strip() % {
             "change": BROADCAST_LOAD_PREFIX,
             "point": point,
             "namespace": namespace,
             "key": key,
-            "value": value}
+            "value": value})
 
     def _load_suite_params(self, row_idx, row):
         """Load previous initial/final cycle point."""
         if row_idx == 0:
-            print "LOADING suite parameters"
+            OUT.info("LOADING suite parameters")
         key, value = row
         for key_str, self_attr, option_ignore_attr in [
                 ("initial", "start_point", "ignore_start_point"),

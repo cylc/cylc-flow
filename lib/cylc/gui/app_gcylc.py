@@ -1124,8 +1124,15 @@ been defined for this suite""").inform()
 
     def startsuite(self, bt, window, coldstart_rb, warmstart_rb, restart_rb,
                    entry_point_string, stop_point_string_entry,
-                   statedump_entry, optgroups, mode_live_rb, mode_sim_rb,
+                   checkpoint_entry, optgroups, mode_live_rb, mode_sim_rb,
                    mode_dum_rb, hold_cb, holdpoint_entry):
+        """Call back for "Run Suite" dialog box.
+
+        Build "cylc run/restart" command from dialog box options and entries,
+        and run the command.
+        Destroy the dialog box.
+        Reset connection.
+        """
 
         command = 'cylc run ' + self.cfg.template_vars_opts
         options = ''
@@ -1145,6 +1152,9 @@ been defined for this suite""").inform()
             command += ' --mode=simulation'
         elif mode_dum_rb.get_active():
             command += ' --mode=dummy'
+
+        if method == 'restart' and checkpoint_entry.get_text():
+            command += ' --checkpoint=' + checkpoint_entry.get_text()
 
         point_string = ''
         if method != 'restart':
@@ -1169,10 +1179,6 @@ been defined for this suite""").inform()
 
         command += ' ' + options + ' ' + self.cfg.suite + ' ' + point_string
         print command
-
-        if method == 'restart':
-            if statedump_entry.get_text():
-                command += ' ' + statedump_entry.get_text()
 
         try:
             subprocess.Popen([command], shell=True)
@@ -2004,13 +2010,16 @@ shown here in the state they were in at the time of triggering.''')
         vbox.pack_start(nhbox)
 
         is_box = gtk.HBox()
-        label = gtk.Label('[State Dump FILE]')
+        label = gtk.Label('Restart checkpoint')
         is_box.pack_start(label, True)
-        statedump_entry = gtk.Entry()
-        statedump_entry.set_text('state')
-        statedump_entry.set_sensitive(False)
-        label.set_sensitive(False)
-        is_box.pack_start(statedump_entry, True)
+        checkpoint_entry = gtk.Entry()
+        if self.updater is not None and self.updater.stop_summary is not None:
+            checkpoint_entry.set_sensitive(True)
+            label.set_sensitive(True)
+        else:
+            checkpoint_entry.set_sensitive(False)
+            label.set_sensitive(False)
+        is_box.pack_start(checkpoint_entry, True)
         vbox.pack_start(is_box)
 
         coldstart_rb.connect(
@@ -2058,7 +2067,7 @@ shown here in the state they were in at the time of triggering.''')
         start_button = gtk.Button("_Start")
         start_button.connect("clicked", self.startsuite, window, coldstart_rb,
                              warmstart_rb, restart_rb, point_string_entry,
-                             stop_point_string_entry, statedump_entry,
+                             stop_point_string_entry, checkpoint_entry,
                              optgroups, mode_live_rb, mode_sim_rb,
                              mode_dum_rb, hold_cb, holdpoint_entry)
 
