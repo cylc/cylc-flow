@@ -29,20 +29,21 @@ cylc.  If not, see [GNU licenses](http://www.gnu.org/licenses/).
 ## Code Contributors
 <!--  git shortlog -s -n -->
  *  Hilary Oliver
- *  Ben Fitzpatrick
  *  Matt Shin
+ *  Ben Fitzpatrick
  *  Andrew Clark
+ *  Oliver Sanders
  *  Luis Kornblueh
  *  Kerry Day
  *  David Matthews
- *  Scott Wales
  *  Tim Whitcomb
- *  Oliver Sanders
+ *  Scott Wales
  *  Annette Osprey
- *  Domingo Manubens Gil
- *  Alex Reinecke
  *  Bruno Kinoshita
- *  Chandin Wilson
+ *  Domingo Manubens Gil
+ *  Jonny Williams
+ *  Alex Reinecke
+ *  Chan Wilson
  *  Kevin Pulo
  
 ## Acknowledgement For Non-Cylc Work:
