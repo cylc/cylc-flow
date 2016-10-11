@@ -202,11 +202,8 @@ class Updater(threading.Thread):
         except PortFileError as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
-            # Failed to (re)connect.
-            # Probably normal shutdown; get a stop summary if available.
-            if not self.connect_fail_warned:
-                self.connect_fail_warned = True
-                gobject.idle_add(self.warn, str(exc))
+            # Use info bar to display stop summary if available.
+            # Otherwise, just display the reconnect count down.
             if self.cfg.suite and self.stop_summary is None:
                 self.stop_summary = get_stop_state_summary(
                     cat_state(self.cfg.suite, self.cfg.host, self.cfg.owner))
@@ -218,21 +215,18 @@ class Updater(threading.Thread):
                 self.info_bar.set_update_time(
                     None, self.info_bar.DISCONNECTED_TEXT)
             return
-        except Pyro.errors.NamingError as exc:
+        except Pyro.errors.ConnectionDeniedError as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
+            if not self.connect_fail_warned:
+                gobject.idle_add(
+                    self.warn,
+                    "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
             return
         except Exception as exc:
             if cylc.flags.debug:
                 traceback.print_exc()
-            if not self.connect_fail_warned:
-                self.connect_fail_warned = True
-                if isinstance(exc, Pyro.errors.ConnectionDeniedError):
-                    gobject.idle_add(
-                        self.warn,
-                        "ERROR: %s\n\nIncorrect suite passphrase?" % exc)
-                else:
-                    gobject.idle_add(self.warn, str(exc))
+                gobject.idle_add(self.warn, str(exc))
             return
 
         gobject.idle_add(
