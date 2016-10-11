@@ -6,6 +6,7 @@ title=Suite Event Mail
     [[events]]
 {% if GLOBALCFG is not defined %}
         mail events = startup, shutdown
+        mail footer = see: http://localhost/stuff/%(owner)s/%(suite)s/
         mail smtp = {{MAIL_SMTP}}
 {% endif %}{# not GLOBALCFG is not defined #}
     [[reference test]]
